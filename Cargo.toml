@@ -1,0 +1,17 @@
+[package]
+name = "grit-cli"
+version = "1.0.0"
+authors = ["Sebastian Thiel <sthiel@thoughtworks.com>"]
+publish = false
+
+[dependencies]
+failure = "0.1.1"
+failure-tools = "4.0.2"
+
+[[bin]]
+name="grit"
+path="src/main.rs"
+
+[profile.release]
+panic = 'unwind'
+incremental = false
