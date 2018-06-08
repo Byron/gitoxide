@@ -1,0 +1,11 @@
+[package]
+name = "git-odb"
+version = "0.1.0"
+authors = ["Sebastian Thiel <byronimo@gmail.com>"]
+publish = false
+
+[dependencies]
+failure = "0.1.1"
+
+[dev-dependencies]
+hex = "0.3.2"

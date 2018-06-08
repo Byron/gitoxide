@@ -22,3 +22,4 @@ panic = 'unwind'
 incremental = false
 
 [workspace]
+exclude = ["lib/git-odb"]

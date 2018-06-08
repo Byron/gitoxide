@@ -10,7 +10,9 @@ help:
 	$(info lint                         | run lints with clippy)
 	$(info benchmark                    | just for fun, really)
 	$(info profile                      | only on linux - run callgrind and annotate it)
+	$(info unit-tests                   | run all unit tests)
 	$(info journey-tests                | run all stateless journey test)
+	$(info continuous-unit-tests        | run all unit tests whenever something changes)
 	$(info continuous-journey-tests     | run all stateless journey test whenever something changes)
 
 always:
@@ -38,6 +40,11 @@ benchmark: target/release/grit
 journey-tests: target/debug/grit
 	./tests/stateless-journey.sh $<
 
+unit-tests: 
+	cd lib/git-odb && cargo test --tests
+
 continuous-journey-tests:
 	watchexec $(MAKE) journey-tests
 
+continuous-unit-tests:
+	watchexec -i '*target*' $(MAKE) unit-tests
