@@ -4,8 +4,6 @@ extern crate hex;
 use std::path::PathBuf;
 use hex::FromHex;
 
-use odb::LooseObjectDb;
-
 fn fixture(path: &str) -> PathBuf {
     let mut b = PathBuf::from(file!());
     b.pop();
@@ -20,8 +18,9 @@ fn bin(hex: &str) -> [u8; 20] {
 
 #[test]
 fn loose_iter() {
-    let mut oids = LooseObjectDb::at(fixture("objects"))
+    let mut oids = odb::loose::at(fixture("objects"))
         .iter()
+        .map(|o| o.unwrap())
         .collect::<Vec<_>>();
     oids.sort();
     assert_eq!(
