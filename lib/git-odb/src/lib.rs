@@ -3,9 +3,14 @@ extern crate hex;
 extern crate walkdir;
 
 pub type ObjectId = [u8; 20];
+#[derive(PartialEq, Eq, Debug)]
+pub enum ObjectKind {
+    Tag,
+}
 
 pub mod loose {
     use ObjectId;
+    use ObjectKind;
 
     use std::path::PathBuf;
 
@@ -13,11 +18,23 @@ pub mod loose {
     use failure::Error;
     use hex::FromHex;
 
-    pub struct LooseObjectDb {
+    pub struct Db {
         pub path: PathBuf,
     }
 
-    impl LooseObjectDb {
+    pub struct Object {}
+
+    impl Object {
+        pub fn kind(&self) -> ObjectKind {
+            unimplemented!()
+        }
+
+        pub fn size(&self) -> usize {
+            unimplemented!()
+        }
+    }
+
+    impl Db {
         pub fn iter(&self) -> impl Iterator<Item = Result<ObjectId, Error>> {
             use std::path::Component::Normal;
             WalkDir::new(&self.path)
@@ -25,14 +42,13 @@ pub mod loose {
                 .max_depth(3)
                 .follow_links(false)
                 .into_iter()
-                .map(|e| e.map_err(Error::from))
                 .filter_map(|e| {
                     let mut is_valid_path = false;
-                    let e = e.map(|e| {
+                    let e = e.map_err(Error::from).map(|e| {
                         let p = e.path();
-                        let mut pc = p.components();
-                        println!("{}", p.display());
-                        if let (Some(Normal(c1)), Some(Normal(c2))) = (pc.next(), pc.next()) {
+                        let (c1, c2) = p.components()
+                            .fold((None, None), |(_c1, c2), cn| (c2, Some(cn)));
+                        if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
                             if c1.len() == 2 && c2.len() == 38 {
                                 if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
                                     let mut buf = [0u8; 40];
@@ -57,9 +73,13 @@ pub mod loose {
                     }
                 })
         }
+
+        pub fn find(&self, id: &ObjectId) -> Result<Object, Error> {
+            unimplemented!()
+        }
     }
 
-    pub fn at(path: impl Into<PathBuf>) -> LooseObjectDb {
-        LooseObjectDb { path: path.into() }
+    pub fn at(path: impl Into<PathBuf>) -> Db {
+        Db { path: path.into() }
     }
 }

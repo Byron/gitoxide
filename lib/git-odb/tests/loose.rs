@@ -4,6 +4,9 @@ extern crate hex;
 use std::path::PathBuf;
 use hex::FromHex;
 
+use odb::loose::Db;
+use odb::ObjectKind;
+
 fn fixture(path: &str) -> PathBuf {
     let mut b = PathBuf::from(file!());
     b.pop();
@@ -15,13 +18,13 @@ fn fixture(path: &str) -> PathBuf {
 fn bin(hex: &str) -> [u8; 20] {
     <[u8; 20]>::from_hex(hex).unwrap()
 }
+fn ldb() -> Db {
+    odb::loose::at(fixture("objects"))
+}
 
 #[test]
 fn loose_iter() {
-    let mut oids = odb::loose::at(fixture("objects"))
-        .iter()
-        .map(|o| o.unwrap())
-        .collect::<Vec<_>>();
+    let mut oids = ldb().iter().map(|o| o.unwrap()).collect::<Vec<_>>();
     oids.sort();
     assert_eq!(
         oids,
@@ -34,4 +37,13 @@ fn loose_iter() {
             bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
         ]
     )
+}
+
+#[test]
+fn loose_find() {
+    let object = ldb()
+        .find(&bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
+        .unwrap();
+    assert_eq!(object.kind(), ObjectKind::Tag);
+    assert_eq!(object.size(), 42)
 }
