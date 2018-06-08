@@ -19,23 +19,23 @@ interactive-developer-environment-in-docker:
 	docker build -t $(docker_image) - < etc/developer.Dockerfile
 	docker run -v $$PWD:/volume -w /volume -it $(docker_image)
 
-target/debug/rit: always
+target/debug/grit: always
 	cargo build
 
-target/release/rit: always
+target/release/grit: always
 	cargo build --release
 
 lint:
 	cargo clippy
 
-profile: target/release/rit
+profile: target/release/grit
 	valgrind --callgrind-out-file=callgrind.profile --tool=callgrind  $< $(bench_fixture) >/dev/null
 	callgrind_annotate --auto=yes callgrind.profile
 
-benchmark: target/release/rit
+benchmark: target/release/grit
 	hyperfine '$< $(bench_fixture)'
 
-journey-tests: target/debug/rit
+journey-tests: target/debug/grit
 	./tests/stateless-journey.sh $<
 
 continuous-journey-tests:

@@ -14,6 +14,12 @@ The CLI uses various libraries to implement
 * **git-core**
   * **Repository**
     * [ ] initialize
+    * [ ] references
+    * [ ] index
+    * [ ] odb
+    * [ ] remotes with push and pull
+    * [ ] merging
+    * [ ] configuration
 * **git-odb**
   * **loose objects**
     * [ ] traverse
@@ -32,6 +38,13 @@ The CLI uses various libraries to implement
     * [ ] decode
       * [ ] any object, most code is reused from loose objects
     * [ ] create new packs
+* **git-transport**
+  * [ ] via ssh
+    * [ ] push
+    * [ ] pull
+  * [ ] via https
+    * [ ] push
+    * [ ] pull
 
 ## Installation
 
@@ -48,6 +61,9 @@ The CLI uses various libraries to implement
    * use Rust's type system to make misuse impossible
  * **be the best performaing implementation**
    * use Rust's type system to optimize for work not done without being hard to use
+ * assure on-disk consistency
+   * assure reads never interfere with concurrent writes
+   * assure multiple concurrent writes don't cause trouble
 
 ## Non-Goals
 
@@ -56,12 +72,22 @@ The CLI uses various libraries to implement
      getting started with git easy.
  * **be incompatible to git**
    * the on-disk format must remain compatible, and we will never contend with it.
+ * **use async IO everywhere**
+   * it's too young and makes things so much more difficult right now.
+   * (it's considered on option as upgrade when async is stabilized)
 
 ## Roadmap to Future
 
 As you can see from the version numbers, this project dispenses major version generously.
 
 ### Roadmap to 1.0
+
+Provide a CLI to for the most basic user journey:
+
+* [ ] initialize a repository
+* [ ] create a commit
+* [ ] add a remote
+* [ ] push
  
 ## Development Practices
 
