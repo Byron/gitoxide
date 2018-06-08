@@ -1,0 +1,8 @@
+[package]
+name = "git-core"
+version = "0.1.0"
+authors = ["Sebastian Thiel <byronimo@gmail.com>"]
+publish = false
+
+[dependencies]
+failure = "0.1.1"

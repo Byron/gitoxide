@@ -13,7 +13,7 @@ The CLI uses various libraries to implement
 
 * **git-core**
   * **Repository**
-    * [ ] initialize
+    * [x] initialize
     * [ ] references
     * [ ] index
     * [ ] odb

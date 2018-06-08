@@ -9,28 +9,37 @@ exe="${root}/../$exe"
 # shellcheck disable=1090
 source "$root/utilities.sh"
 snapshot="$root/snapshots/cli"
-fixture="$root/fixtures"
+# fixture="$root/fixtures"
 
 SUCCESSFULLY=0
 WITH_FAILURE=1
 
 title "CLI"
 (when "initializing a repository"
-  (sandbox
-    precondition "an initialized baseline repository" && {
-      git init &>/dev/null
-      expect_snapshot "$snapshot/baseline-init" .git
-    }
-  )
-  (sandbox
-    it "succeeds" && {
-      WITH_SNAPSHOT="$snapshot/init-success" \
-      expect_run $SUCCESSFULLY "$exe" init
-    }
+  (with "an empty directory"
+    (sandbox
+      precondition "an initialized baseline repository" && {
+        git init &>/dev/null
+        expect_snapshot "$snapshot/baseline-init" .git
+      }
+    )
+    (sandbox
+      it "succeeds" && {
+        WITH_SNAPSHOT="$snapshot/init-success" \
+        expect_run $SUCCESSFULLY "$exe" init
+      }
 
-    it "matches the output of baseline git init" && {
-      expect_snapshot "$snapshot/baseline-init" .git
-    }
+      it "matches the output of baseline git init" && {
+        expect_snapshot "$snapshot/baseline-init" .git
+      }
+      
+      (when "trying to initialize the same directory again"
+        it "fails" && {
+          WITH_SNAPSHOT="$snapshot/init-fail" \
+          expect_run $WITH_FAILURE "$exe" init
+        }
+      )
+    )
   )
 )
 

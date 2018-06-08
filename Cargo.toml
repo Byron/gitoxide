@@ -1,12 +1,17 @@
 [package]
 name = "grit-cli"
 version = "1.0.0"
-authors = ["Sebastian Thiel <sthiel@thoughtworks.com>"]
+authors = ["Sebastian Thiel <byronimo@gmail.com>"]
 publish = false
 
 [dependencies]
 failure = "0.1.1"
 failure-tools = "4.0.2"
+clap = "2.31.2"
+
+[dependencies.git-core]
+path = "lib/git-core"
+version = "0.1.0"
 
 [[bin]]
 name="grit"
@@ -15,3 +20,5 @@ path="src/main.rs"
 [profile.release]
 panic = 'unwind'
 incremental = false
+
+[workspace]
