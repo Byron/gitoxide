@@ -27,13 +27,14 @@ impl Kind {
 pub mod parsed {
     use failure::Error;
     use object::{Id, Kind};
+    use std::ops::Range;
 
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-    pub enum Object {
-        Tag(Tag),
+    #[derive(PartialEq, Eq, Debug, Hash)]
+    pub enum Object<'data> {
+        Tag(Tag<'data>),
     }
 
-    impl Object {
+    impl<'data> Object<'data> {
         pub fn kind(&self) -> Kind {
             match self {
                 Object::Tag(_) => Kind::Tag,
@@ -41,14 +42,15 @@ pub mod parsed {
         }
     }
 
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-    pub struct Tag {
-        pub target: Id,
+    #[derive(PartialEq, Eq, Debug, Hash)]
+    pub struct Tag<'data> {
+        pub data: &'data [u8],
+        pub target: Range<usize>,
         pub target_kind: Kind,
     }
 
-    impl Tag {
-        pub fn from_bytes(_input: &[u8]) -> Result<Tag, Error> {
+    impl<'data> Tag<'data> {
+        pub fn from_bytes(_input: &'data [u8]) -> Result<Tag<'data>, Error> {
             unimplemented!()
         }
     }

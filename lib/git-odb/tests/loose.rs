@@ -66,9 +66,10 @@ fn loose_tag_parse() {
     );
 }
 
-fn tag_fixture() -> parsed::Tag {
+fn tag_fixture() -> parsed::Tag<'static> {
     parsed::Tag {
-        target: bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
+        data: include_bytes!("fixtures/objects/tag.txt"),
+        target: 7..46,
         target_kind: Kind::Commit,
     }
 }

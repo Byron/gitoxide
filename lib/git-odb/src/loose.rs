@@ -9,8 +9,8 @@ use std::os::unix::fs::MetadataExt;
 use zlib;
 use object::parsed;
 
-const HEADER_READ_COMPRESSED_BYTES: usize = 64;
-const HEADER_READ_UNCOMPRESSED_BYTES: usize = 256;
+const HEADER_READ_COMPRESSED_BYTES: usize = 512;
+const HEADER_READ_UNCOMPRESSED_BYTES: usize = 1024;
 
 pub struct Db {
     pub path: PathBuf,
