@@ -28,6 +28,7 @@ pub mod parsed {
     use failure::Error;
     use object::Kind;
     use std::{str, ops::Range};
+    use hex::FromHex;
 
     #[derive(PartialEq, Eq, Debug, Hash)]
     pub enum Object<'data> {
@@ -66,9 +67,7 @@ pub mod parsed {
     }
 
     fn range_of(from: &[u8], to: &[u8]) -> Range<usize> {
-        let start = from.as_ptr()
-            .offset_to(to.as_ptr())
-            .expect("valid ptr offset") as usize;
+        let start = to.as_ptr().wrapping_offset_from(from.as_ptr()) as usize;
         start..start + to.len()
     }
 
@@ -85,10 +84,13 @@ pub mod parsed {
             let mut lines = d.split(|&b| b == b'\n');
             let (target, target_kind) =
                 match (lines.next(), lines.next(), lines.next(), lines.next()) {
-                    (Some(target), Some(_kind), Some(_tag), Some(_tagger)) => {
-                        let target =
-                            range_to_second_token(target, |f, v| f == b"object" && v.len() == 40)?;
-                        unimplemented!()
+                    (Some(target), Some(kind), Some(_tag), Some(_tagger)) => {
+                        let target = range_to_second_token(target, |f, v| {
+                            f == b"object" && v.len() == 40 && <[u8; 20]>::from_hex(v).is_ok()
+                        })?;
+                        let kind = split2(kind, |f, _v| f == b"type")
+                            .and_then(|(_, kind)| Kind::from_bytes(kind))?;
+                        (target, kind)
                     }
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };

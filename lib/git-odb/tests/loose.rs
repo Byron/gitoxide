@@ -69,7 +69,7 @@ fn loose_tag_parse() {
 fn tag_fixture() -> parsed::Tag<'static> {
     parsed::Tag {
         data: include_bytes!("fixtures/objects/tag.txt"),
-        target: 7..46,
+        target: 7..47,
         target_kind: Kind::Commit,
     }
 }

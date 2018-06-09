@@ -1,4 +1,4 @@
-#![feature(offset_to)]
+#![feature(ptr_wrapping_offset_from)]
 
 #[macro_use]
 extern crate failure;
