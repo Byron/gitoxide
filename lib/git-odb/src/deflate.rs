@@ -3,7 +3,7 @@ use miniz_oxide::inflate::core::DecompressorOxide;
 use std::io::Cursor;
 use miniz_oxide::inflate::{TINFLStatus,
                            core::{decompress,
-                                  inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER,
+                                  inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER, TINFL_FLAG_HAS_MORE_INPUT,
                                                   TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}}};
 use miniz_oxide::inflate::core::inflate_flags;
 
@@ -31,7 +31,7 @@ impl State {
             &mut self.inner,
             rbuf,
             out,
-            TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+            TINFL_FLAG_HAS_MORE_INPUT | TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
 
         use miniz_oxide::inflate::TINFLStatus::*;
