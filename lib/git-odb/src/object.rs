@@ -150,6 +150,38 @@ pub mod parsed {
         })
     }
 
+    fn parse_message<'data>(
+        d: &'data [u8],
+        mut lines: impl Iterator<Item = &'data [u8]>,
+    ) -> Result<(Option<&'data [u8]>, Option<&'data [u8]>), Error> {
+        Ok(match lines.next() {
+            Some(l) if l.len() == 0 => {
+                let msg_begin = (l.as_ptr().wrapping_offset_from(d.as_ptr()) + 1) as usize;
+                if msg_begin >= d.len() {
+                    bail!("Message separator was not followed by message")
+                }
+                let mut msg_end = d.len();
+                let mut pgp_signature = None;
+                if let Some(pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN)) {
+                    match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
+                        None => bail!("Didn't find end of signature marker"),
+                        Some(_) => {
+                            msg_end =
+                                pgp_begin_line.as_ptr().wrapping_offset_from(d.as_ptr()) as usize;
+                            pgp_signature = Some(&d[msg_end..])
+                        }
+                    }
+                }
+                (Some(&d[msg_begin..msg_end]), pgp_signature)
+            }
+            Some(l) => bail!(
+                "Expected empty newline to separate message, got {:?}",
+                str::from_utf8(l),
+            ),
+            None => (None, None),
+        })
+    }
+
     impl<'data> Tag<'data> {
         pub fn target(&self) -> Id {
             <[u8; 20]>::from_hex(self.target_raw).expect("prior validation")
@@ -174,33 +206,7 @@ pub mod parsed {
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };
 
-            let (message, pgp_signature) = match lines.next() {
-                Some(l) if l.len() == 0 => {
-                    let msg_begin = (l.as_ptr().wrapping_offset_from(d.as_ptr()) + 1) as usize;
-                    if msg_begin >= d.len() {
-                        bail!("Message separator was not followed by message")
-                    }
-                    let mut msg_end = d.len();
-                    let mut pgp_signature = None;
-                    if let Some(pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN))
-                    {
-                        match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
-                            None => bail!("Didn't find end of signature marker"),
-                            Some(_) => {
-                                msg_end = pgp_begin_line.as_ptr().wrapping_offset_from(d.as_ptr())
-                                    as usize;
-                                pgp_signature = Some(&d[msg_end..])
-                            }
-                        }
-                    }
-                    (Some(&d[msg_begin..msg_end]), pgp_signature)
-                }
-                Some(l) => bail!(
-                    "Expected empty newline to separate message, got {:?}",
-                    str::from_utf8(l),
-                ),
-                None => (None, None),
-            };
+            let (message, pgp_signature) = parse_message(d, &mut lines)?;
 
             Ok(Tag {
                 target_raw: target,

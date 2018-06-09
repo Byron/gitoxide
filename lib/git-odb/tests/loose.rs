@@ -29,9 +29,6 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 fn bin(hex: &str) -> [u8; 20] {
     <[u8; 20]>::from_hex(hex).unwrap()
 }
-fn as_str(d: &[u8]) -> &str {
-    ::std::str::from_utf8(d).unwrap()
-}
 
 fn ldb() -> Db {
     odb::loose::at(fixture("objects"))
@@ -68,7 +65,6 @@ fn loose_find() {
 fn loose_tag_parse() {
     let fixture = fixture_bytes("objects/tag.txt");
     let actual = parsed::Tag::from_bytes(&fixture).unwrap();
-    println!("{}", as_str(actual.pgp_signature.unwrap()));
     assert_eq!(actual, tag_fixture(9000));
     assert_eq!(
         actual.target(),
