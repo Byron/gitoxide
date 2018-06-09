@@ -1,15 +1,11 @@
 use object::{Id, Kind};
 
-use std::path::PathBuf;
-
 use walkdir::WalkDir;
 use failure::{Error, ResultExt};
 use hex::{FromHex, ToHex};
-use miniz_oxide::inflate::core::{decompress, DecompressorOxide,
-                                 inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER,
-                                                 TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}};
 use smallvec::SmallVec;
-use std::{fs::File, io::{Cursor, Read}};
+use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
+use deflate;
 
 const HEADER_READ_COMPRESSED_BYTES: usize = 512;
 
@@ -21,57 +17,7 @@ pub struct Object {
     pub kind: Kind,
     pub size: usize,
     data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
-}
-
-mod deflate {
-    use failure::Error;
-    use miniz_oxide::inflate::core::DecompressorOxide;
-    use std::io::Cursor;
-    use miniz_oxide::inflate::core::{decompress,
-                                     inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER,
-                                                     TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}};
-
-    pub struct State {
-        inner: DecompressorOxide,
-        pub read_in: usize,
-        pub read_out: usize,
-    }
-
-    impl Default for State {
-        fn default() -> Self {
-            State {
-                inner: DecompressorOxide::default(),
-                read_in: 0,
-                read_out: 0,
-            }
-        }
-    }
-
-    impl State {
-        pub fn once(&mut self, rbuf: &[u8], out: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
-            let (status, read_in, read_out) = decompress(
-                &mut self.inner,
-                rbuf,
-                out,
-                TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
-            );
-
-            self.read_in = read_in;
-            self.read_out = read_out;
-
-            use miniz_oxide::inflate::TINFLStatus::*;
-            match status {
-                Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch | NeedsMoreInput => {
-                    bail!(
-                        "Could not decode zip stream for reading header, status was '{:?}'",
-                        status
-                    )
-                }
-                Done | HasMoreOutput => {}
-            };
-            Ok(read_out)
-        }
-    }
+    deflate: deflate::State,
 }
 
 impl Db {
@@ -125,31 +71,21 @@ impl Db {
             path
         };
 
+        let mut deflate = deflate::State::default();
         let mut out = [0; HEADER_READ_COMPRESSED_BYTES];
-        let read_out = {
-            let mut rbuf = [0; HEADER_READ_COMPRESSED_BYTES];
+        let mut rbuf = [0; HEADER_READ_COMPRESSED_BYTES];
+        let (_read_in, read_out) = {
             let bytes_read = File::open(&path)?.read(&mut rbuf[..])?;
-            let mut state = DecompressorOxide::default();
             let mut out = Cursor::new(&mut out[..]);
 
-            let (status, _read_in, read_out) = decompress(
-                &mut state,
-                &rbuf[..bytes_read],
-                &mut out,
-                TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
-            );
-            use miniz_oxide::inflate::TINFLStatus::*;
-            match status {
-                Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch | NeedsMoreInput => {
-                    bail!(
-                    "Could not decode zip stream for reading header in '{}', zip status was '{:?}'",
-                    path.display(),
-                    status
-                )
-                }
-                Done | HasMoreOutput => {}
-            };
-            read_out
+            deflate
+                .once(&rbuf[..bytes_read], &mut out)
+                .with_context(|_| {
+                    format!(
+                        "Could not decode zip stream for reading header in '{}'",
+                        path.display()
+                    )
+                })?
         };
 
         parse::header(&out[..read_out])
@@ -157,6 +93,7 @@ impl Db {
                 kind,
                 size,
                 data: SmallVec::from_buf(out),
+                deflate,
             })
             .with_context(|_| {
                 format!(
