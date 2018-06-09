@@ -1,7 +1,7 @@
 object ffa700b4aca13b80cb6b98a078e7c96804f8e0ec
 type commit
 tag 1.0.0
-tagger Sebastian Thiel <byronimo@gmail.com> 1528473343 +0200
+tagger Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230
 
 for the signature
 -----BEGIN PGP SIGNATURE-----

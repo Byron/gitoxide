@@ -27,8 +27,9 @@ impl Kind {
 pub mod parsed {
     use failure::Error;
     use object::{Id, Kind};
-    use std::{str, ops::Range};
+    use std::str;
     use hex::FromHex;
+    use {Sign, Time};
 
     #[derive(PartialEq, Eq, Debug, Hash)]
     pub enum Object<'data> {
@@ -44,11 +45,18 @@ pub mod parsed {
     }
 
     #[derive(PartialEq, Eq, Debug, Hash)]
+    pub struct Signature<'data> {
+        pub name: &'data [u8],
+        pub email: &'data [u8],
+        pub time: Time,
+    }
+
+    #[derive(PartialEq, Eq, Debug, Hash)]
     pub struct Tag<'data> {
-        pub data: &'data [u8],
-        pub target: Range<usize>,
-        pub name: Range<usize>,
+        pub target_raw: &'data [u8],
+        pub name_raw: &'data [u8],
         pub target_kind: Kind,
+        pub signature: Signature<'data>,
     }
 
     fn split2(d: &[u8], v: impl FnOnce(&[u8], &[u8]) -> bool) -> Result<(&[u8], &[u8]), Error> {
@@ -67,50 +75,43 @@ pub mod parsed {
         })
     }
 
-    fn range_of(from: &[u8], to: &[u8]) -> Range<usize> {
-        let start = to.as_ptr().wrapping_offset_from(from.as_ptr()) as usize;
-        start..start + to.len()
-    }
-
-    fn range_to_second_token(
-        od: &[u8],
-        d: &[u8],
-        v: impl FnOnce(&[u8], &[u8]) -> bool,
-    ) -> Result<Range<usize>, Error> {
-        let (_, t2) = split2(d, v)?;
-        Ok(range_of(od, t2))
-    }
-
     impl<'data> Tag<'data> {
         pub fn target(&self) -> Id {
-            <[u8; 20]>::from_hex(&self.data[self.target.clone()]).expect("prior validation")
-        }
-        pub fn name(&self) -> &[u8] {
-           &self.data[self.name.clone()]
+            <[u8; 20]>::from_hex(self.target_raw).expect("prior validation")
         }
         pub fn name_str(&self) -> Result<&str, str::Utf8Error> {
-            str::from_utf8(self.name())
+            str::from_utf8(self.name_raw)
         }
         pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
             let mut lines = d.split(|&b| b == b'\n');
-            let (target, target_kind, name) =
+            let (target, target_kind, name, signature) =
                 match (lines.next(), lines.next(), lines.next(), lines.next()) {
                     (Some(target), Some(kind), Some(name), Some(_tagger)) => {
-                        let target = range_to_second_token(d, target, |f, v| {
+                        let (_, target) = split2(target, |f, v| {
                             f == b"object" && v.len() == 40 && <[u8; 20]>::from_hex(v).is_ok()
                         })?;
                         let kind = split2(kind, |f, _v| f == b"type")
                             .and_then(|(_, kind)| Kind::from_bytes(kind))?;
-                        let name = range_to_second_token(d, name, |f, _v| f == b"tag")?;
-                        (target, kind, name)
+                        let (_, name) = split2(name, |f, _v| f == b"tag")?;
+
+                        let signature = Signature {
+                            name: b"",
+                            email: b"",
+                            time: Time {
+                                time: 0,
+                                offset: 0,
+                                sign: Sign::Plus,
+                            },
+                        };
+                        (target, kind, name, signature)
                     }
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };
             Ok(Tag {
-                data: d,
-                target,
-                name,
+                target_raw: target,
+                name_raw: name,
                 target_kind,
+                signature,
             })
         }
     }

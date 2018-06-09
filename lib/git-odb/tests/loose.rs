@@ -6,6 +6,8 @@ use hex::FromHex;
 
 use odb::{loose::Db, object::{parsed, Kind}};
 use std::{fs::File, io::Read};
+use odb::Time;
+use odb::Sign;
 
 fn fixture(path: &str) -> PathBuf {
     let mut b = PathBuf::from(file!());
@@ -65,18 +67,30 @@ fn loose_tag_parse() {
     assert_eq!(actual, tag_fixture());
     assert_eq!(actual.target_kind, Kind::Commit);
     assert_eq!(
+        actual.target_raw,
+        &b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"[..]
+    );
+    assert_eq!(
         actual.target(),
         bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
     );
     assert_eq!(actual.name_str().unwrap(), "1.0.0");
-    assert_eq!(actual.name(), b"1.0.0");
+    assert_eq!(actual.name_raw, b"1.0.0");
 }
 
 fn tag_fixture() -> parsed::Tag<'static> {
     parsed::Tag {
-        data: include_bytes!("fixtures/objects/tag.txt"),
-        target: 7..47,
-        name: 64..69,
+        target_raw: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec",
+        name_raw: b"1.0.0",
         target_kind: Kind::Commit,
+        signature: parsed::Signature {
+            name: b"Sebastian Thiel",
+            email: b"byronimo@gmail.com",
+            time: Time {
+                time: 1528473343,
+                offset: 9000,
+                sign: Sign::Plus,
+            },
+        },
     }
 }
