@@ -23,14 +23,14 @@ pub struct Object {
     compressed_data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
     header_size: usize,
     path: Option<PathBuf>,
-    deflate: zlib::Inflate,
+    is_decompressed: bool,
 }
 
 impl Object {
     pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
         Ok(match self.kind {
             Kind::Tag | Kind::Commit | Kind::Tree => {
-                if !self.deflate.is_done {
+                if !self.is_decompressed {
                     let total_size = self.header_size + self.size;
                     let cap = self.decompressed_data.capacity();
                     if cap < total_size {
@@ -44,10 +44,10 @@ impl Object {
                     // TODO Performance opportunity
                     // here we do a lot of additional work, which could be saved if we
                     // could re-use the previous state. This doesn't work for some reason.
-                    self.deflate = Default::default();
-                    self.deflate
-                        .all_till_done(&self.compressed_data[..], &mut cursor)?;
-                    debug_assert!(self.deflate.is_done);
+                    let mut deflate = zlib::Inflate::default();
+                    deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
+                    self.is_decompressed = deflate.is_done;
+                    debug_assert!(deflate.is_done);
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
                 match self.kind {
@@ -101,15 +101,7 @@ impl Db {
     }
 
     pub fn find(&self, id: &Id) -> Result<Object, Error> {
-        let path = {
-            let mut path = self.path.clone();
-            let mut buf = String::with_capacity(40);
-            id.write_hex(&mut buf)
-                .expect("no failure as everything is preset by now");
-            path.push(&buf[..2]);
-            path.push(&buf[2..]);
-            path
-        };
+        let path = sha1_path(id, self.path.clone());
 
         let mut deflate = zlib::Inflate::default();
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
@@ -161,7 +153,7 @@ impl Db {
                     None
                 }
             }
-            Kind::Blob => Some(path),
+            Kind::Blob => Some(path), // we will open the file again when needed. Maybe we can load small sized objects anyway
         };
 
         Ok(Object {
@@ -171,7 +163,7 @@ impl Db {
             compressed_data: compressed,
             header_size,
             path,
-            deflate,
+            is_decompressed: deflate.is_done,
         })
     }
 }
@@ -198,6 +190,15 @@ pub mod parse {
             _ => bail!("expected '<type> <size>'"),
         }
     }
+}
+
+fn sha1_path(id: &[u8; 20], mut root: PathBuf) -> PathBuf {
+    let mut buf = String::with_capacity(40);
+    id.write_hex(&mut buf)
+        .expect("no failure as everything is preset by now");
+    root.push(&buf[..2]);
+    root.push(&buf[2..]);
+    root
 }
 
 pub fn at(path: impl Into<PathBuf>) -> Db {
