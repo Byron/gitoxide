@@ -26,7 +26,7 @@ impl Kind {
 
 pub mod parsed {
     use failure::Error;
-    use object::Kind;
+    use object::{Id, Kind};
     use std::{str, ops::Range};
     use hex::FromHex;
 
@@ -80,6 +80,9 @@ pub mod parsed {
     }
 
     impl<'data> Tag<'data> {
+        pub fn target(&self) -> Id {
+            <[u8; 20]>::from_hex(&self.data[self.target.clone()]).expect("prior validation")
+        }
         pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
             let mut lines = d.split(|&b| b == b'\n');
             let (target, target_kind) =

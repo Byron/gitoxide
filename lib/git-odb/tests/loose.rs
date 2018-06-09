@@ -60,9 +60,13 @@ fn loose_find() {
 
 #[test]
 fn loose_tag_parse() {
+    let fixture = fixture_bytes("objects/tag.txt");
+    let actual = parsed::Tag::from_bytes(&fixture).unwrap();
+    assert_eq!(actual, tag_fixture());
+    assert_eq!(actual.target_kind, Kind::Commit);
     assert_eq!(
-        parsed::Tag::from_bytes(&fixture_bytes("objects/tag.txt")).unwrap(),
-        tag_fixture()
+        actual.target(),
+        bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
     );
 }
 
