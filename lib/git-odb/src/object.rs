@@ -47,6 +47,7 @@ pub mod parsed {
     pub struct Tag<'data> {
         pub data: &'data [u8],
         pub target: Range<usize>,
+        pub name: Range<usize>,
         pub target_kind: Kind,
     }
 
@@ -72,34 +73,43 @@ pub mod parsed {
     }
 
     fn range_to_second_token(
+        od: &[u8],
         d: &[u8],
         v: impl FnOnce(&[u8], &[u8]) -> bool,
     ) -> Result<Range<usize>, Error> {
         let (_, t2) = split2(d, v)?;
-        Ok(range_of(d, t2))
+        Ok(range_of(od, t2))
     }
 
     impl<'data> Tag<'data> {
         pub fn target(&self) -> Id {
             <[u8; 20]>::from_hex(&self.data[self.target.clone()]).expect("prior validation")
         }
+        pub fn name(&self) -> &[u8] {
+           &self.data[self.name.clone()]
+        }
+        pub fn name_str(&self) -> Result<&str, str::Utf8Error> {
+            str::from_utf8(self.name())
+        }
         pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
             let mut lines = d.split(|&b| b == b'\n');
-            let (target, target_kind) =
+            let (target, target_kind, name) =
                 match (lines.next(), lines.next(), lines.next(), lines.next()) {
-                    (Some(target), Some(kind), Some(_tag), Some(_tagger)) => {
-                        let target = range_to_second_token(target, |f, v| {
+                    (Some(target), Some(kind), Some(name), Some(_tagger)) => {
+                        let target = range_to_second_token(d, target, |f, v| {
                             f == b"object" && v.len() == 40 && <[u8; 20]>::from_hex(v).is_ok()
                         })?;
                         let kind = split2(kind, |f, _v| f == b"type")
                             .and_then(|(_, kind)| Kind::from_bytes(kind))?;
-                        (target, kind)
+                        let name = range_to_second_token(d, name, |f, _v| f == b"tag")?;
+                        (target, kind, name)
                     }
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };
             Ok(Tag {
                 data: d,
                 target,
+                name,
                 target_kind,
             })
         }

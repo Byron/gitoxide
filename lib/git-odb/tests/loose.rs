@@ -68,12 +68,15 @@ fn loose_tag_parse() {
         actual.target(),
         bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
     );
+    assert_eq!(actual.name_str().unwrap(), "1.0.0");
+    assert_eq!(actual.name(), b"1.0.0");
 }
 
 fn tag_fixture() -> parsed::Tag<'static> {
     parsed::Tag {
         data: include_bytes!("fixtures/objects/tag.txt"),
         target: 7..47,
+        name: 64..69,
         target_kind: Kind::Commit,
     }
 }
