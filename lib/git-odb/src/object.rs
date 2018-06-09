@@ -60,6 +60,7 @@ pub mod parsed {
         pub name_raw: &'data [u8],
         pub target_kind: Kind,
         pub message: Option<&'data [u8]>,
+        pub pgp_signature: Option<&'data [u8]>,
         pub signature: Signature<'data>,
     }
 
@@ -173,29 +174,32 @@ pub mod parsed {
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };
 
-            let message = match lines.next() {
+            let (message, pgp_signature) = match lines.next() {
                 Some(l) if l.len() == 0 => {
                     let msg_begin = (l.as_ptr().wrapping_offset_from(d.as_ptr()) + 1) as usize;
                     if msg_begin >= d.len() {
                         bail!("Message separator was not followed by message")
                     }
                     let mut msg_end = d.len();
-                    if let Some(pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN)) {
+                    let mut pgp_signature = None;
+                    if let Some(pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN))
+                    {
                         match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
                             None => bail!("Didn't find end of signature marker"),
-                            Some(pgp_end_line) => {
+                            Some(_) => {
                                 msg_end = pgp_begin_line.as_ptr().wrapping_offset_from(d.as_ptr())
                                     as usize;
+                                pgp_signature = Some(&d[msg_end..])
                             }
                         }
                     }
-                    Some(&d[msg_begin..msg_end])
+                    (Some(&d[msg_begin..msg_end]), pgp_signature)
                 }
                 Some(l) => bail!(
                     "Expected empty newline to separate message, got {:?}",
                     str::from_utf8(l),
                 ),
-                None => None,
+                None => (None, None),
             };
 
             Ok(Tag {
@@ -204,6 +208,7 @@ pub mod parsed {
                 target_kind,
                 message,
                 signature,
+                pgp_signature,
             })
         }
     }
