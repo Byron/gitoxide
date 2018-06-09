@@ -20,7 +20,20 @@ impl Kind {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub enum Parsed {
+    Tag(Tag),
+}
+
+impl Parsed {
+    pub fn kind(&self) -> Kind {
+        match self {
+            Parsed::Tag(_) => Kind::Tag,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
 pub struct Tag {
     pub target: Id,
     pub target_kind: Kind,

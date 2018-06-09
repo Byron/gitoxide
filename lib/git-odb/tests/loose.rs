@@ -4,7 +4,7 @@ extern crate hex;
 use std::path::PathBuf;
 use hex::FromHex;
 
-use odb::{loose::Db, object::{Kind, Tag}};
+use odb::{loose::Db, object::{Kind, Parsed, Tag}};
 use std::{fs::File, io::Read};
 
 fn fixture(path: &str) -> PathBuf {
@@ -50,20 +50,25 @@ fn loose_iter() {
 
 #[test]
 fn loose_find() {
-    let o = ldb()
+    let mut o = ldb()
         .find(&bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
         .unwrap();
     assert_eq!(o.kind, Kind::Tag);
-    assert_eq!(o.size, 1024)
+    assert_eq!(o.size, 1024);
+    assert_eq!(o.parsed().unwrap(), Parsed::Tag(tag_fixture()))
 }
 
 #[test]
 fn loose_tag_parse() {
     assert_eq!(
         Tag::from_bytes(&fixture_bytes("objects/tag.txt")).unwrap(),
-        Tag {
-            target: bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
-            target_kind: Kind::Commit
-        }
+        tag_fixture()
     );
+}
+
+fn tag_fixture() -> Tag {
+    Tag {
+        target: bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
+        target_kind: Kind::Commit,
+    }
 }
