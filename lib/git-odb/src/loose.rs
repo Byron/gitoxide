@@ -73,34 +73,37 @@ impl Db {
             path
         };
 
-        let mut rbuf = [0; HEADER_READ_COMPRESSED_BYTES];
-        let bytes_read = File::open(&path)?.read(&mut rbuf[..])?;
-        let mut state = DecompressorOxide::default();
         let mut out = [0; HEADER_READ_COMPRESSED_BYTES];
-        let mut out = Cursor::new(&mut out[..]);
+        let (out, read_out) = {
+            let mut rbuf = [0; HEADER_READ_COMPRESSED_BYTES];
+            let bytes_read = File::open(&path)?.read(&mut rbuf[..])?;
+            let mut state = DecompressorOxide::default();
+            let mut out = Cursor::new(&mut out[..]);
 
-        let (status, _read_in, read_out) = decompress(
-            &mut state,
-            &rbuf[..bytes_read],
-            &mut out,
-            TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
-        );
-        use miniz_oxide::inflate::TINFLStatus::*;
-        match status {
-            Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch | NeedsMoreInput => {
-                bail!(
+            let (status, _read_in, read_out) = decompress(
+                &mut state,
+                &rbuf[..bytes_read],
+                &mut out,
+                TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+            );
+            use miniz_oxide::inflate::TINFLStatus::*;
+            match status {
+                Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch | NeedsMoreInput => {
+                    bail!(
                     "Could not decode zip stream for reading header in '{}', zip status was '{:?}'",
                     path.display(),
                     status
                 )
-            }
-            Done | HasMoreOutput => {}
+                }
+                Done | HasMoreOutput => {}
+            };
+            (out.into_inner(), read_out)
         };
-        let out = out.into_inner();
+
         let header_end = out[..read_out]
             .iter()
             .position(|&b| b == 0)
-            .ok_or_else(|| err_msg("Invalid header"))?;
+            .ok_or_else(|| err_msg("Invalid header, did not find 0 byte"))?;
         let header = &out[..header_end];
         let mut split = header.split(|&b| b == b' ');
         match (split.next(), split.next()) {
@@ -108,7 +111,10 @@ impl Db {
                 kind: ObjectKind::from_bytes(kind)?,
                 size: str::from_utf8(size)?.parse()?,
             }),
-            _ => bail!("Invalid header layout at '{}'", path.display()),
+            _ => bail!(
+                "Invalid header layout at '{}', expected '<type> <size>'",
+                path.display()
+            ),
         }
     }
 }
