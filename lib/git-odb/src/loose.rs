@@ -6,7 +6,7 @@ use hex::{FromHex, ToHex};
 use smallvec::SmallVec;
 use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
 use deflate;
-use object;
+use object::parsed;
 
 const HEADER_READ_COMPRESSED_BYTES: usize = 512;
 
@@ -23,9 +23,9 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn parsed(&mut self) -> Result<object::Parsed, Error> {
+    pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
         Ok(match self.kind {
-            Kind::Tag => object::Parsed::Tag(object::Tag::from_bytes(&[])?),
+            Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(&[])?),
             Kind::Commit => unimplemented!(),
         })
     }

@@ -20,27 +20,32 @@ impl Kind {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-pub enum Parsed {
-    Tag(Tag),
-}
+pub mod parsed {
+    use failure::Error;
+    use object::{Id, Kind};
 
-impl Parsed {
-    pub fn kind(&self) -> Kind {
-        match self {
-            Parsed::Tag(_) => Kind::Tag,
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+    pub enum Object {
+        Tag(Tag),
+    }
+
+    impl Object {
+        pub fn kind(&self) -> Kind {
+            match self {
+                Object::Tag(_) => Kind::Tag,
+            }
         }
     }
-}
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-pub struct Tag {
-    pub target: Id,
-    pub target_kind: Kind,
-}
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+    pub struct Tag {
+        pub target: Id,
+        pub target_kind: Kind,
+    }
 
-impl Tag {
-    pub fn from_bytes(input: &[u8]) -> Result<Self, Error> {
-        unimplemented!()
+    impl Tag {
+        pub fn from_bytes(input: &[u8]) -> Result<Tag, Error> {
+            unimplemented!()
+        }
     }
 }
