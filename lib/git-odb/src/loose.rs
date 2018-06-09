@@ -8,9 +8,10 @@ use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
 use std::os::unix::fs::MetadataExt;
 use deflate;
 use object::parsed;
+use miniz_oxide::inflate::core::inflate_flags::TINFL_FLAG_PARSE_ZLIB_HEADER;
 
 const HEADER_READ_COMPRESSED_BYTES: usize = 256;
-const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
+const HEADER_READ_UNCOMPRESSED_BYTES: usize = 256;
 
 pub struct Db {
     pub path: PathBuf,
@@ -19,10 +20,10 @@ pub struct Db {
 pub struct Object {
     pub kind: Kind,
     pub size: usize,
-    uncompressed_data: SmallVec<[u8; HEADER_READ_UNCOMPRESSED_BYTES]>,
+    decompressed_data: SmallVec<[u8; HEADER_READ_UNCOMPRESSED_BYTES]>,
     compressed_data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
-    consumed_compressed_bytes: usize,
-    consumed_uncompressed_bytes: usize,
+    end_of_consumed_compressed_bytes: usize,
+    end_of_decompressed_bytes: usize,
     path: Option<PathBuf>,
     deflate: deflate::State,
 }
@@ -31,7 +32,29 @@ impl Object {
     pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
         Ok(match self.kind {
             Kind::Tag | Kind::Commit | Kind::Tree => {
-                let bytes = self.uncompressed_data.as_slice();
+                if !self.deflate.is_done {
+                    self.decompressed_data
+                        .reserve_exact(self.size - self.end_of_decompressed_bytes);
+                    unsafe {
+                        debug_assert!(self.decompressed_data.capacity() >= self.size);
+                        self.decompressed_data.set_len(self.size);
+                    }
+                    let mut cursor = Cursor::new(&mut self.decompressed_data[..]);
+                    cursor.set_position(self.end_of_decompressed_bytes as u64);
+                    println!("{} - num consumed", self.end_of_consumed_compressed_bytes);
+                    println!("{} - output produced", self.end_of_decompressed_bytes);
+                    let (consumed_in, consumed_out) = self.deflate.to_end(
+                        &self.compressed_data[self.end_of_consumed_compressed_bytes..],
+//                                                &self.compressed_data[..],
+                        &mut cursor,
+                        0,
+                    )?;
+                    debug_assert!(self.deflate.is_done);
+                    self.end_of_decompressed_bytes += consumed_out;
+                    self.end_of_consumed_compressed_bytes += consumed_in;
+                    debug_assert!(self.end_of_decompressed_bytes == self.size);
+                }
+                let bytes = &self.decompressed_data[..self.end_of_decompressed_bytes];
                 match self.kind {
                     Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
                     _ => unimplemented!(),
@@ -94,16 +117,16 @@ impl Db {
         };
 
         let mut deflate = deflate::State::default();
-        let mut uncompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
+        let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
-        let ((consumed_in, consumed_out), bytes_read, mut input_stream) = {
+        let ((_status, consumed_in, consumed_out), bytes_read, mut input_stream) = {
             let mut istream = File::open(&path)?;
             let bytes_read = istream.read(&mut compressed[..])?;
-            let mut out = Cursor::new(&mut uncompressed[..]);
+            let mut out = Cursor::new(&mut decompressed[..]);
 
             (
                 deflate
-                    .once(&compressed[..bytes_read], &mut out)
+                    .once(&compressed[..bytes_read], &mut out, TINFL_FLAG_PARSE_ZLIB_HEADER)
                     .with_context(|_| {
                         format!(
                             "Could not decode zip stream for reading header in '{}'",
@@ -114,15 +137,16 @@ impl Db {
                 istream,
             )
         };
+        println!("{:?} = stauts", _status);
 
-        let (kind, size) = parse::header(&uncompressed[..consumed_out]).with_context(|_| {
+        let (kind, size) = parse::header(&decompressed[..consumed_out]).with_context(|_| {
             format!(
                 "Invalid header layout at '{}', expected '<type> <size>'",
                 path.display()
             )
         })?;
 
-        let uncompressed = SmallVec::from_buf(uncompressed);
+        let decompressed = SmallVec::from_buf(decompressed);
         let mut compressed = SmallVec::from_buf(compressed);
 
         let path = match kind {
@@ -134,14 +158,17 @@ impl Db {
                     None
                 } else {
                     let cap = compressed.capacity();
+                    println!("cap before resize: {}", cap);
                     if cap < fsize {
                         compressed.reserve_exact(fsize - cap);
                         debug_assert!(fsize == compressed.capacity());
-                        unsafe {
-                            compressed.set_len(fsize);
-                        }
+                    }
+                    unsafe {
+                        compressed.set_len(fsize);
                     }
                     input_stream.read_exact(&mut compressed[bytes_read..])?;
+                    println!("len compressed = {}", compressed.len());
+                    ::miniz_oxide::inflate::decompress_to_vec_zlib(&compressed).unwrap();
                     None
                 }
             }
@@ -151,10 +178,10 @@ impl Db {
         Ok(Object {
             kind,
             size,
-            uncompressed_data: uncompressed,
+            decompressed_data: decompressed,
             compressed_data: compressed,
-            consumed_compressed_bytes: consumed_in,
-            consumed_uncompressed_bytes: consumed_out,
+            end_of_consumed_compressed_bytes: consumed_in,
+            end_of_decompressed_bytes: consumed_out,
             path,
             deflate,
         })

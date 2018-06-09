@@ -3,9 +3,9 @@ use miniz_oxide::inflate::core::DecompressorOxide;
 use std::io::Cursor;
 use miniz_oxide::inflate::{TINFLStatus,
                            core::{decompress,
-                                  inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER, TINFL_FLAG_HAS_MORE_INPUT,
+                                  inflate_flags::{TINFL_FLAG_HAS_MORE_INPUT,
                                                   TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}}};
-use miniz_oxide::inflate::core::inflate_flags;
+use std::io;
 
 pub struct State {
     inner: DecompressorOxide,
@@ -22,80 +22,67 @@ impl Default for State {
 }
 
 impl State {
+    pub fn to_end(
+        &mut self,
+        input: &[u8],
+        mut out: impl io::Write,
+        mut flags: u32
+    ) -> Result<(usize, usize), Error> {
+        let mut buf = [0; 512];
+        let mut in_pos = 0;
+        let mut out_pos = 0;
+        loop {
+            let (status, in_consumed, out_consumed) = {
+                // Wrap the whole output slice so we know we have enough of the
+                // decompressed data for matches.
+                let mut c = Cursor::new(&mut buf[..]);
+                self.once(&input[in_pos..], &mut c, flags)?
+            };
+            flags = 0;
+            out.write_all(&buf[..out_consumed])?;
+            in_pos += in_consumed;
+            out_pos += out_consumed;
+
+            match status {
+                TINFLStatus::Done => {
+                    return Ok((in_pos, out_pos));
+                }
+
+                TINFLStatus::HasMoreOutput => {
+                    // just try again with fresh cursor
+                }
+                TINFLStatus::NeedsMoreInput | _ => unreachable!(
+                    "This should all be covered by once, we expect a complete input buffer"
+                ),
+            }
+        }
+    }
+
     pub fn once(
         &mut self,
-        rbuf: &[u8],
+        input: &[u8],
         out: &mut Cursor<&mut [u8]>,
-    ) -> Result<(usize, usize), Error> {
+        flags: u32
+    ) -> Result<(TINFLStatus, usize, usize), Error> {
         let (status, in_consumed, out_consumed) = decompress(
             &mut self.inner,
-            rbuf,
+            input,
             out,
-            TINFL_FLAG_HAS_MORE_INPUT | TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+            flags | TINFL_FLAG_HAS_MORE_INPUT
+                | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
 
         use miniz_oxide::inflate::TINFLStatus::*;
         match status {
-            Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch | NeedsMoreInput => {
-                bail!(
-                    "Could not decode zip stream for reading header, status was '{:?}'",
-                    status
-                )
-            }
-            HasMoreOutput => {}
+            Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch => bail!(
+                "Could not decode zip stream, status was '{:?}'",
+                status
+            ),
+            HasMoreOutput | NeedsMoreInput => {}
             Done => {
                 self.is_done = true;
             }
         };
-        Ok((in_consumed, out_consumed))
-    }
-}
-
-fn decompress_to_vec_inner(input: &[u8], flags: u32) -> Result<Vec<u8>, TINFLStatus> {
-    let flags = flags | inflate_flags::TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF;
-    let mut ret = Vec::with_capacity(input.len() * 2);
-
-    // # Unsafe
-    // We trust decompress to not read the unitialized bytes as it's wrapped
-    // in a cursor that's position is set to the end of the initialized data.
-    unsafe {
-        let cap = ret.capacity();
-        ret.set_len(cap);
-    };
-    let mut decomp = unsafe { DecompressorOxide::with_init_state_only() };
-
-    let mut in_pos = 0;
-    let mut out_pos = 0;
-    loop {
-        let (status, in_consumed, out_consumed) = {
-            // Wrap the whole output slice so we know we have enough of the
-            // decompressed data for matches.
-            let mut c = Cursor::new(ret.as_mut_slice());
-            c.set_position(out_pos as u64);
-            decompress(&mut decomp, &input[in_pos..], &mut c, flags)
-        };
-        in_pos += in_consumed;
-        out_pos += out_consumed;
-
-        match status {
-            TINFLStatus::Done => {
-                ret.truncate(out_pos);
-                return Ok(ret);
-            }
-
-            TINFLStatus::HasMoreOutput => {
-                // We need more space so extend the buffer.
-                ret.reserve(out_pos);
-                // # Unsafe
-                // We trust decompress to not read the unitialized bytes as it's wrapped
-                // in a cursor that's position is set to the end of the initialized data.
-                unsafe {
-                    let cap = ret.capacity();
-                    ret.set_len(cap);
-                }
-            }
-
-            _ => return Err(status),
-        }
+        Ok((status, in_consumed, out_consumed))
     }
 }

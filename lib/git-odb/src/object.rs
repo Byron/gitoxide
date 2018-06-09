@@ -48,7 +48,7 @@ pub mod parsed {
     }
 
     impl Tag {
-        pub fn from_bytes(input: &[u8]) -> Result<Tag, Error> {
+        pub fn from_bytes(_input: &[u8]) -> Result<Tag, Error> {
             unimplemented!()
         }
     }
