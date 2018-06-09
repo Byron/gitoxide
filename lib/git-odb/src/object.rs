@@ -25,7 +25,7 @@ impl Kind {
 }
 
 pub mod parsed {
-    use failure::Error;
+    use failure::{err_msg, Error, ResultExt};
     use object::{Id, Kind};
     use std::str;
     use hex::FromHex;
@@ -59,7 +59,10 @@ pub mod parsed {
         pub signature: Signature<'data>,
     }
 
-    fn split2(d: &[u8], v: impl FnOnce(&[u8], &[u8]) -> bool) -> Result<(&[u8], &[u8]), Error> {
+    fn split2_at_space(
+        d: &[u8],
+        v: impl FnOnce(&[u8], &[u8]) -> bool,
+    ) -> Result<(&[u8], &[u8]), Error> {
         let mut t = d.splitn(2, |&b| b == b' ');
         Ok(match (t.next(), t.next()) {
             (Some(t1), Some(t2)) => {
@@ -75,6 +78,72 @@ pub mod parsed {
         })
     }
 
+    fn parse_timezone_offset(d: &str) -> Result<(i32, Sign), Error> {
+        let db = d.as_bytes();
+        if d.len() < 5 || !(db[0] == b'+' || db[0] == b'-') {
+            bail!("Invalid timezone offset: '{}'", d);
+        }
+        let sign = if db[0] == b'-' {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+        let hours = str::from_utf8(&db[..3])
+            .expect("valid utf8")
+            .parse::<i32>()?;
+        let minutes = str::from_utf8(&db[3..])
+            .expect("valid utf8")
+            .parse::<i32>()?;
+        Ok((hours * 3600 + minutes * 60, sign))
+    }
+
+    fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
+        const ONE_SPACE: usize = 1;
+        let email_begin = d.iter()
+            .position(|&b| b == b'<')
+            .ok_or_else(|| err_msg("Could not find beginning of email marked by '<'"))
+            .and_then(|pos| {
+                if pos == 0 {
+                    Err(err_msg("Email found in place of author name"))
+                } else {
+                    Ok(pos)
+                }
+            })?;
+        let email_end = email_begin + d.iter()
+            .skip(email_begin)
+            .position(|&b| b == b'>')
+            .ok_or_else(|| err_msg("Could not find end of email marked by '>'"))
+            .and_then(|pos| {
+                if pos >= d.len() - 1 - ONE_SPACE {
+                    Err(err_msg("There is no time after email"))
+                } else {
+                    Ok(pos)
+                }
+            })?;
+        let (time_in_seconds, tzofz) = split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| {
+            true
+        }).and_then(|(t1, t2)| {
+            str::from_utf8(t1)
+                .map_err(Into::into)
+                .and_then(|t1| str::from_utf8(t2).map_err(Into::into).map(|t2| (t1, t2)))
+        })
+            .with_context(|_| "Could not convert time to utf8, even though it should be ascii")?;
+        let (offset, sign) = parse_timezone_offset(tzofz)
+            .with_context(|_| format!("Timezone parsing failed for '{}'", tzofz))?;
+
+        Ok(Signature {
+            name: &d[..email_begin - ONE_SPACE],
+            email: &d[email_begin + 1..email_end],
+            time: Time {
+                time: time_in_seconds
+                    .parse::<u32>()
+                    .with_context(|_| format!("Could not parse '{}' to seconds", time_in_seconds))?,
+                offset,
+                sign,
+            },
+        })
+    }
+
     impl<'data> Tag<'data> {
         pub fn target(&self) -> Id {
             <[u8; 20]>::from_hex(self.target_raw).expect("prior validation")
@@ -86,24 +155,15 @@ pub mod parsed {
             let mut lines = d.split(|&b| b == b'\n');
             let (target, target_kind, name, signature) =
                 match (lines.next(), lines.next(), lines.next(), lines.next()) {
-                    (Some(target), Some(kind), Some(name), Some(_tagger)) => {
-                        let (_, target) = split2(target, |f, v| {
+                    (Some(target), Some(kind), Some(name), Some(tagger)) => {
+                        let (_, target) = split2_at_space(target, |f, v| {
                             f == b"object" && v.len() == 40 && <[u8; 20]>::from_hex(v).is_ok()
                         })?;
-                        let kind = split2(kind, |f, _v| f == b"type")
+                        let kind = split2_at_space(kind, |f, _v| f == b"type")
                             .and_then(|(_, kind)| Kind::from_bytes(kind))?;
-                        let (_, name) = split2(name, |f, _v| f == b"tag")?;
-
-                        let signature = Signature {
-                            name: b"",
-                            email: b"",
-                            time: Time {
-                                time: 0,
-                                offset: 0,
-                                sign: Sign::Plus,
-                            },
-                        };
-                        (target, kind, name, signature)
+                        let (_, name) = split2_at_space(name, |f, _v| f == b"tag")?;
+                        let (_, tagger) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
+                        (target, kind, name, parse_signature(tagger)?)
                     }
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };

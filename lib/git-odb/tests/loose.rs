@@ -57,14 +57,14 @@ fn loose_find() {
         .unwrap();
     assert_eq!(o.kind, Kind::Tag);
     assert_eq!(o.size, 1024);
-    assert_eq!(o.parsed().unwrap(), parsed::Object::Tag(tag_fixture()))
+    assert_eq!(o.parsed().unwrap(), parsed::Object::Tag(tag_fixture(7200)))
 }
 
 #[test]
 fn loose_tag_parse() {
     let fixture = fixture_bytes("objects/tag.txt");
     let actual = parsed::Tag::from_bytes(&fixture).unwrap();
-    assert_eq!(actual, tag_fixture());
+    assert_eq!(actual, tag_fixture(9000));
     assert_eq!(actual.target_kind, Kind::Commit);
     assert_eq!(
         actual.target_raw,
@@ -78,7 +78,7 @@ fn loose_tag_parse() {
     assert_eq!(actual.name_raw, b"1.0.0");
 }
 
-fn tag_fixture() -> parsed::Tag<'static> {
+fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
     parsed::Tag {
         target_raw: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec",
         name_raw: b"1.0.0",
@@ -88,7 +88,7 @@ fn tag_fixture() -> parsed::Tag<'static> {
             email: b"byronimo@gmail.com",
             time: Time {
                 time: 1528473343,
-                offset: 9000,
+                offset,
                 sign: Sign::Plus,
             },
         },
