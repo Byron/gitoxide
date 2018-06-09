@@ -1,6 +1,10 @@
+#[macro_use]
 extern crate failure;
 extern crate hex;
+extern crate miniz_oxide;
 extern crate walkdir;
+
+use failure::Error;
 
 pub type ObjectId = [u8; 20];
 #[derive(PartialEq, Eq, Debug)]
@@ -8,78 +12,13 @@ pub enum ObjectKind {
     Tag,
 }
 
-pub mod loose {
-    use ObjectId;
-    use ObjectKind;
-
-    use std::path::PathBuf;
-
-    use walkdir::WalkDir;
-    use failure::Error;
-    use hex::FromHex;
-
-    pub struct Db {
-        pub path: PathBuf,
-    }
-
-    pub struct Object {}
-
-    impl Object {
-        pub fn kind(&self) -> ObjectKind {
-            unimplemented!()
-        }
-
-        pub fn size(&self) -> usize {
-            unimplemented!()
-        }
-    }
-
-    impl Db {
-        pub fn iter(&self) -> impl Iterator<Item = Result<ObjectId, Error>> {
-            use std::path::Component::Normal;
-            WalkDir::new(&self.path)
-                .min_depth(2)
-                .max_depth(3)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(|e| {
-                    let mut is_valid_path = false;
-                    let e = e.map_err(Error::from).map(|e| {
-                        let p = e.path();
-                        let (c1, c2) = p.components()
-                            .fold((None, None), |(_c1, c2), cn| (c2, Some(cn)));
-                        if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
-                            if c1.len() == 2 && c2.len() == 38 {
-                                if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
-                                    let mut buf = [0u8; 40];
-                                    {
-                                        let (first_byte, rest) = buf.split_at_mut(2);
-                                        first_byte.copy_from_slice(c1.as_bytes());
-                                        rest.copy_from_slice(c2.as_bytes());
-                                    }
-                                    if let Ok(b) = <[u8; 20]>::from_hex(&buf[..]) {
-                                        is_valid_path = true;
-                                        return b;
-                                    }
-                                }
-                            }
-                        }
-                        [0u8; 20]
-                    });
-                    if is_valid_path {
-                        Some(e)
-                    } else {
-                        None
-                    }
-                })
-        }
-
-        pub fn find(&self, id: &ObjectId) -> Result<Object, Error> {
-            unimplemented!()
-        }
-    }
-
-    pub fn at(path: impl Into<PathBuf>) -> Db {
-        Db { path: path.into() }
+impl ObjectKind {
+    fn from_bytes(s: &[u8]) -> Result<ObjectKind, Error> {
+        Ok(match s {
+            b"tag" => ObjectKind::Tag,
+            _ => bail!("Unknown object kind: {:?}", std::str::from_utf8(s)),
+        })
     }
 }
+
+pub mod loose;

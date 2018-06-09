@@ -41,9 +41,9 @@ fn loose_iter() {
 
 #[test]
 fn loose_find() {
-    let object = ldb()
+    let o = ldb()
         .find(&bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
         .unwrap();
-    assert_eq!(object.kind(), ObjectKind::Tag);
-    assert_eq!(object.size(), 42)
+    assert_eq!(o.kind, ObjectKind::Tag);
+    assert_eq!(o.size, 1024)
 }

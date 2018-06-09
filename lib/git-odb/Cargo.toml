@@ -8,3 +8,4 @@ publish = false
 failure = "0.1.1"
 walkdir = "2.1.4"
 hex = "0.3.2"
+miniz_oxide = "0.1.2"
