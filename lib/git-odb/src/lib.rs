@@ -1,3 +1,5 @@
+#![feature(offset_to)]
+
 #[macro_use]
 extern crate failure;
 extern crate hex;

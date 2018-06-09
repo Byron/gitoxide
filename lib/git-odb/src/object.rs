@@ -26,8 +26,8 @@ impl Kind {
 
 pub mod parsed {
     use failure::Error;
-    use object::{Id, Kind};
-    use std::ops::Range;
+    use object::Kind;
+    use std::{str, ops::Range};
 
     #[derive(PartialEq, Eq, Debug, Hash)]
     pub enum Object<'data> {
@@ -49,9 +49,54 @@ pub mod parsed {
         pub target_kind: Kind,
     }
 
+    fn split2(d: &[u8], v: impl FnOnce(&[u8], &[u8]) -> bool) -> Result<(&[u8], &[u8]), Error> {
+        let mut t = d.splitn(2, |&b| b == b' ');
+        Ok(match (t.next(), t.next()) {
+            (Some(t1), Some(t2)) => {
+                if !v(t1, t2) {
+                    bail!("Tokens in {:?} are invalid", str::from_utf8(d))
+                }
+                (t1, t2)
+            }
+            _ => bail!(
+                "didnt find two tokens separated by space in {:?}'",
+                str::from_utf8(d)
+            ),
+        })
+    }
+
+    fn range_of(from: &[u8], to: &[u8]) -> Range<usize> {
+        let start = from.as_ptr()
+            .offset_to(to.as_ptr())
+            .expect("valid ptr offset") as usize;
+        start..start + to.len()
+    }
+
+    fn range_to_second_token(
+        d: &[u8],
+        v: impl FnOnce(&[u8], &[u8]) -> bool,
+    ) -> Result<Range<usize>, Error> {
+        let (_, t2) = split2(d, v)?;
+        Ok(range_of(d, t2))
+    }
+
     impl<'data> Tag<'data> {
-        pub fn from_bytes(_input: &'data [u8]) -> Result<Tag<'data>, Error> {
-            unimplemented!()
+        pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
+            let mut lines = d.split(|&b| b == b'\n');
+            let (target, target_kind) =
+                match (lines.next(), lines.next(), lines.next(), lines.next()) {
+                    (Some(target), Some(_kind), Some(_tag), Some(_tagger)) => {
+                        let target =
+                            range_to_second_token(target, |f, v| f == b"object" && v.len() == 40)?;
+                        unimplemented!()
+                    }
+                    _ => bail!("Expected four lines: target, type, tag and tagger"),
+                };
+            Ok(Tag {
+                data: d,
+                target,
+                target_kind,
+            })
         }
     }
 }
