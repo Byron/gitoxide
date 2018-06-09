@@ -17,8 +17,11 @@ pub struct Object {
     pub kind: Kind,
     pub size: usize,
     data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
+    path: PathBuf,
     deflate: deflate::State,
 }
+
+
 
 impl Db {
     pub fn iter(&self) -> impl Iterator<Item = Result<Id, Error>> {
@@ -88,20 +91,20 @@ impl Db {
                 })?
         };
 
-        parse::header(&out[..read_out])
-            .map(|(kind, size)| Object {
-                kind,
-                size,
-                data: SmallVec::from_buf(out),
-                deflate,
-            })
-            .with_context(|_| {
-                format!(
-                    "Invalid header layout at '{}', expected '<type> <size>'",
-                    path.display()
-                )
-            })
-            .map_err(Into::into)
+        let (kind, size) = parse::header(&out[..read_out]).with_context(|_| {
+            format!(
+                "Invalid header layout at '{}', expected '<type> <size>'",
+                path.display()
+            )
+        })?;
+
+        Ok(Object {
+            kind,
+            size,
+            data: SmallVec::from_buf(out),
+            path,
+            deflate,
+        })
     }
 }
 
