@@ -31,6 +31,9 @@ pub mod parsed {
     use hex::FromHex;
     use {Sign, Time};
 
+    const PGP_SIGNATURE_BEGIN: &'static [u8] = b"-----BEGIN PGP SIGNATURE-----";
+    const PGP_SIGNATURE_END: &'static [u8] = b"-----END PGP SIGNATURE-----";
+
     #[derive(PartialEq, Eq, Debug, Hash)]
     pub enum Object<'data> {
         Tag(Tag<'data>),
@@ -56,6 +59,7 @@ pub mod parsed {
         pub target_raw: &'data [u8],
         pub name_raw: &'data [u8],
         pub target_kind: Kind,
+        pub message: Option<&'data [u8]>,
         pub signature: Signature<'data>,
     }
 
@@ -109,17 +113,18 @@ pub mod parsed {
                     Ok(pos)
                 }
             })?;
-        let email_end = email_begin + d.iter()
-            .skip(email_begin)
-            .position(|&b| b == b'>')
-            .ok_or_else(|| err_msg("Could not find end of email marked by '>'"))
-            .and_then(|pos| {
-                if pos >= d.len() - 1 - ONE_SPACE {
-                    Err(err_msg("There is no time after email"))
-                } else {
-                    Ok(pos)
-                }
-            })?;
+        let email_end = email_begin
+            + d.iter()
+                .skip(email_begin)
+                .position(|&b| b == b'>')
+                .ok_or_else(|| err_msg("Could not find end of email marked by '>'"))
+                .and_then(|pos| {
+                    if pos >= d.len() - 1 - ONE_SPACE {
+                        Err(err_msg("There is no time after email"))
+                    } else {
+                        Ok(pos)
+                    }
+                })?;
         let (time_in_seconds, tzofz) = split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| {
             true
         }).and_then(|(t1, t2)| {
@@ -167,10 +172,37 @@ pub mod parsed {
                     }
                     _ => bail!("Expected four lines: target, type, tag and tagger"),
                 };
+
+            let message = match lines.next() {
+                Some(l) if l.len() == 0 => {
+                    let msg_begin = (l.as_ptr().wrapping_offset_from(d.as_ptr()) + 1) as usize;
+                    if msg_begin >= d.len() {
+                        bail!("Message separator was not followed by message")
+                    }
+                    let mut msg_end = d.len();
+                    if let Some(pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN)) {
+                        match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
+                            None => bail!("Didn't find end of signature marker"),
+                            Some(pgp_end_line) => {
+                                msg_end = pgp_begin_line.as_ptr().wrapping_offset_from(d.as_ptr())
+                                    as usize;
+                            }
+                        }
+                    }
+                    Some(&d[msg_begin..msg_end])
+                }
+                Some(l) => bail!(
+                    "Expected empty newline to separate message, got {:?}",
+                    str::from_utf8(l),
+                ),
+                None => None,
+            };
+
             Ok(Tag {
                 target_raw: target,
                 name_raw: name,
                 target_kind,
+                message,
                 signature,
             })
         }

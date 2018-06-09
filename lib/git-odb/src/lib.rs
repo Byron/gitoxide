@@ -1,3 +1,4 @@
+#![feature(ptr_wrapping_offset_from)]
 #[macro_use]
 extern crate failure;
 extern crate hex;

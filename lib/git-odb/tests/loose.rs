@@ -65,17 +65,11 @@ fn loose_tag_parse() {
     let fixture = fixture_bytes("objects/tag.txt");
     let actual = parsed::Tag::from_bytes(&fixture).unwrap();
     assert_eq!(actual, tag_fixture(9000));
-    assert_eq!(actual.target_kind, Kind::Commit);
-    assert_eq!(
-        actual.target_raw,
-        &b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"[..]
-    );
     assert_eq!(
         actual.target(),
         bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
     );
     assert_eq!(actual.name_str().unwrap(), "1.0.0");
-    assert_eq!(actual.name_raw, b"1.0.0");
 }
 
 fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
@@ -83,6 +77,7 @@ fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
         target_raw: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec",
         name_raw: b"1.0.0",
         target_kind: Kind::Commit,
+        message: Some(b"for the signature\n"),
         signature: parsed::Signature {
             name: b"Sebastian Thiel",
             email: b"byronimo@gmail.com",
