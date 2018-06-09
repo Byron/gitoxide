@@ -22,11 +22,11 @@ The CLI uses various libraries to implement
     * [ ] configuration
 * **git-odb**
   * **loose objects**
-    * [ ] traverse
-    * [ ] decode
+    * [x] traverse
+    * [-] decode
       * [ ] commit
       * [ ] tree
-      * [ ] tag
+      * [x] tag
       * [ ] blob
     * [ ] encode
       * [ ] commit

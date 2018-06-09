@@ -186,9 +186,6 @@ pub mod parsed {
         pub fn target(&self) -> Id {
             <[u8; 20]>::from_hex(self.target_raw).expect("prior validation")
         }
-        pub fn name_str(&self) -> Result<&str, str::Utf8Error> {
-            str::from_utf8(self.name_raw)
-        }
         pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
             let mut lines = d.split(|&b| b == b'\n');
             let (target, target_kind, name, signature) =
