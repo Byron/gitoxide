@@ -8,7 +8,6 @@ use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
 use std::os::unix::fs::MetadataExt;
 use deflate;
 use object::parsed;
-use miniz_oxide::inflate::core::inflate_flags::TINFL_FLAG_PARSE_ZLIB_HEADER;
 
 const HEADER_READ_COMPRESSED_BYTES: usize = 256;
 const HEADER_READ_UNCOMPRESSED_BYTES: usize = 256;
@@ -37,27 +36,25 @@ impl Object {
                     let total_size = self.header_size + self.size;
                     let cap = self.decompressed_data.capacity();
                     if cap < total_size {
-                        self.decompressed_data
-                            .reserve_exact(total_size - cap);
+                        self.decompressed_data.reserve_exact(total_size - cap);
                     }
                     unsafe {
                         debug_assert!(self.decompressed_data.capacity() >= total_size);
                         self.decompressed_data.set_len(total_size);
                     }
-                    println!("out capacity: {}", self.decompressed_data.len());
                     let mut cursor = Cursor::new(&mut self.decompressed_data[..]);
+                    // TODO Performance opportunity
+                    // here we do a lot of additional work, which could be saved if we
+                    // could re-use the previous state. This doesn't work for some reason.
                     self.deflate = Default::default();
-                    let (consumed_in, consumed_out) = self.deflate.to_end(
-                        &self.compressed_data[..],
-                        &mut cursor,
-                        TINFL_FLAG_PARSE_ZLIB_HEADER,
-                    )?;
+                    let (consumed_in, consumed_out) =
+                        self.deflate.to_end(&self.compressed_data[..], &mut cursor)?;
                     debug_assert!(self.deflate.is_done);
                     self.end_of_decompressed_bytes = consumed_out;
                     self.end_of_consumed_compressed_bytes = consumed_in;
                     debug_assert!(self.end_of_decompressed_bytes == total_size);
                 }
-                let bytes = &self.decompressed_data[..self.end_of_decompressed_bytes];
+                let bytes = &self.decompressed_data[self.header_size..];
                 match self.kind {
                     Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
                     _ => unimplemented!(),
@@ -129,11 +126,7 @@ impl Db {
 
             (
                 deflate
-                    .once(
-                        &compressed[..bytes_read],
-                        &mut out,
-                        TINFL_FLAG_PARSE_ZLIB_HEADER,
-                    )
+                    .once(&compressed[..bytes_read], &mut out)
                     .with_context(|_| {
                         format!("ZIP inflating failed while reading '{}'", path.display())
                     })?,
@@ -141,7 +134,6 @@ impl Db {
                 istream,
             )
         };
-        println!("{:?} = stauts", _status);
 
         let (kind, size, header_size) =
             parse::header(&decompressed[..consumed_out]).with_context(|_| {
@@ -208,7 +200,7 @@ pub mod parse {
             (Some(kind), Some(size)) => Ok((
                 object::Kind::from_bytes(kind)?,
                 str::from_utf8(size)?.parse()?,
-                header_end + 1 // account for 0 byte
+                header_end + 1, // account for 0 byte
             )),
             _ => bail!("expected '<type> <size>'"),
         }

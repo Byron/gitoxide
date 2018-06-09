@@ -1,11 +1,11 @@
 use failure::Error;
 use miniz_oxide::inflate::core::DecompressorOxide;
-use std::io::Cursor;
+use std::io::{self, Cursor};
 use miniz_oxide::inflate::{TINFLStatus,
                            core::{decompress,
                                   inflate_flags::{TINFL_FLAG_HAS_MORE_INPUT,
+                                                  TINFL_FLAG_PARSE_ZLIB_HEADER,
                                                   TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}}};
-use std::io;
 
 pub struct State {
     inner: DecompressorOxide,
@@ -26,34 +26,15 @@ impl State {
         &mut self,
         input: &[u8],
         mut out: impl io::Write,
-        flags: u32,
     ) -> Result<(usize, usize), Error> {
-        let mut buf = [0; 1024];
+        let mut buf = [0; 8192]; // as per git itself
         let mut in_pos = 0;
         let mut out_pos = 0;
         loop {
-            //            let (status, in_consumed, out_consumed) = {
-            //                let mut c = Cursor::new(&mut buf[..]);
-            //                decompress(
-            //                    &mut self.inner,
-            //                    &input[in_pos..],
-            //                    &mut c,
-            //                    flags | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF
-            //
-            //                )
-            //            };
             let (status, in_consumed, out_consumed) = {
                 let mut c = Cursor::new(&mut buf[..]);
-                self.once(&input[in_pos..], &mut c, flags)?
+                self.once(&input[in_pos..], &mut c)?
             };
-            println!(
-                "in {} + {} of {}\nout {} + {}",
-                in_pos,
-                in_consumed,
-                input.len(),
-                out_pos,
-                out_consumed
-            );
             out.write_all(&buf[..out_consumed])?;
             in_pos += in_consumed;
             out_pos += out_consumed;
@@ -78,13 +59,13 @@ impl State {
         &mut self,
         input: &[u8],
         out: &mut Cursor<&mut [u8]>,
-        flags: u32,
     ) -> Result<(TINFLStatus, usize, usize), Error> {
         let (status, in_consumed, out_consumed) = decompress(
             &mut self.inner,
             input,
             out,
-            flags | TINFL_FLAG_HAS_MORE_INPUT | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+            TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_HAS_MORE_INPUT
+                | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
 
         use miniz_oxide::inflate::TINFLStatus::*;
