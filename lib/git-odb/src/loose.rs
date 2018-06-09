@@ -8,9 +8,10 @@ use hex::{FromHex, ToHex};
 use miniz_oxide::inflate::core::{decompress, DecompressorOxide,
                                  inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER,
                                                  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}};
+use smallvec::SmallVec;
 use std::{fs::File, io::{Cursor, Read}};
 
-const HEADER_READ_COMPRESSED_BYTES: usize = 1024;
+const HEADER_READ_COMPRESSED_BYTES: usize = 512;
 
 pub struct Db {
     pub path: PathBuf,
@@ -19,6 +20,58 @@ pub struct Db {
 pub struct Object {
     pub kind: Kind,
     pub size: usize,
+    data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
+}
+
+mod deflate {
+    use failure::Error;
+    use miniz_oxide::inflate::core::DecompressorOxide;
+    use std::io::Cursor;
+    use miniz_oxide::inflate::core::{decompress,
+                                     inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER,
+                                                     TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}};
+
+    pub struct State {
+        inner: DecompressorOxide,
+        pub read_in: usize,
+        pub read_out: usize,
+    }
+
+    impl Default for State {
+        fn default() -> Self {
+            State {
+                inner: DecompressorOxide::default(),
+                read_in: 0,
+                read_out: 0,
+            }
+        }
+    }
+
+    impl State {
+        pub fn once(&mut self, rbuf: &[u8], out: &mut Cursor<&mut [u8]>) -> Result<usize, Error> {
+            let (status, read_in, read_out) = decompress(
+                &mut self.inner,
+                rbuf,
+                out,
+                TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+            );
+
+            self.read_in = read_in;
+            self.read_out = read_out;
+
+            use miniz_oxide::inflate::TINFLStatus::*;
+            match status {
+                Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch | NeedsMoreInput => {
+                    bail!(
+                        "Could not decode zip stream for reading header, status was '{:?}'",
+                        status
+                    )
+                }
+                Done | HasMoreOutput => {}
+            };
+            Ok(read_out)
+        }
+    }
 }
 
 impl Db {
@@ -73,7 +126,7 @@ impl Db {
         };
 
         let mut out = [0; HEADER_READ_COMPRESSED_BYTES];
-        let (out, read_out) = {
+        let read_out = {
             let mut rbuf = [0; HEADER_READ_COMPRESSED_BYTES];
             let bytes_read = File::open(&path)?.read(&mut rbuf[..])?;
             let mut state = DecompressorOxide::default();
@@ -96,11 +149,15 @@ impl Db {
                 }
                 Done | HasMoreOutput => {}
             };
-            (out.into_inner(), read_out)
+            read_out
         };
 
         parse::header(&out[..read_out])
-            .map(|(kind, size)| Object { kind, size })
+            .map(|(kind, size)| Object {
+                kind,
+                size,
+                data: SmallVec::from_buf(out),
+            })
             .with_context(|_| {
                 format!(
                     "Invalid header layout at '{}', expected '<type> <size>'",

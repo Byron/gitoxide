@@ -2,6 +2,7 @@
 extern crate failure;
 extern crate hex;
 extern crate miniz_oxide;
+extern crate smallvec;
 extern crate walkdir;
 
 pub mod object {
