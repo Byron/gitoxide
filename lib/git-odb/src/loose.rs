@@ -5,6 +5,7 @@ use failure::{Error, ResultExt};
 use hex::{FromHex, ToHex};
 use smallvec::SmallVec;
 use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
+use std::os::unix::fs::MetadataExt;
 use deflate;
 use object::parsed;
 
@@ -22,23 +23,21 @@ pub struct Object {
     compressed_data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
     consumed_compressed_bytes: usize,
     consumed_uncompressed_bytes: usize,
-    path: PathBuf,
+    path: Option<PathBuf>,
     deflate: deflate::State,
 }
 
 impl Object {
     pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
         Ok(match self.kind {
-            Kind::Tag | Kind::Commit => {
+            Kind::Tag | Kind::Commit | Kind::Tree => {
                 let bytes = self.uncompressed_data.as_slice();
-                if !self.deflate.is_done {
-                    //                    File::open(&self.path)?.read_to_end()?;
-                }
                 match self.kind {
                     Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
-                    Kind::Commit => unimplemented!(),
+                    _ => unimplemented!(),
                 }
             }
+            Kind::Blob => unimplemented!(),
         })
     }
 }
@@ -97,7 +96,7 @@ impl Db {
         let mut deflate = deflate::State::default();
         let mut uncompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
-        let ((consumed_in, consumed_out), input_stream) = {
+        let ((consumed_in, consumed_out), bytes_read, mut input_stream) = {
             let mut istream = File::open(&path)?;
             let bytes_read = istream.read(&mut compressed[..])?;
             let mut out = Cursor::new(&mut uncompressed[..]);
@@ -111,6 +110,7 @@ impl Db {
                             path.display()
                         )
                     })?,
+                bytes_read,
                 istream,
             )
         };
@@ -123,14 +123,30 @@ impl Db {
         })?;
 
         let uncompressed = SmallVec::from_buf(uncompressed);
-        let compressed = SmallVec::from_buf(compressed);
+        let mut compressed = SmallVec::from_buf(compressed);
 
-        match kind {
+        let path = match kind {
             Kind::Tag | Kind::Commit | Kind::Tree => {
-                unimplemented!()
+                let fsize = input_stream.metadata()?.size();
+                assert!(fsize <= ::std::usize::MAX as u64);
+                let fsize = fsize as usize;
+                if bytes_read == fsize {
+                    None
+                } else {
+                    let cap = compressed.capacity();
+                    if cap < fsize {
+                        compressed.reserve_exact(fsize - cap);
+                        debug_assert!(fsize == compressed.capacity());
+                        unsafe {
+                            compressed.set_len(fsize);
+                        }
+                    }
+                    input_stream.read_exact(&mut compressed[bytes_read..])?;
+                    None
+                }
             }
-            Kind::Blob => {}
-        }
+            Kind::Blob => Some(path),
+        };
 
         Ok(Object {
             kind,

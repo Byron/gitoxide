@@ -9,7 +9,7 @@ pub enum Kind {
     Tag,
     Commit,
     Tree,
-    Blob
+    Blob,
 }
 
 impl Kind {
