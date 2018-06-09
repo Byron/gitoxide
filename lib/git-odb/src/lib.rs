@@ -4,20 +4,25 @@ extern crate hex;
 extern crate miniz_oxide;
 extern crate walkdir;
 
-use failure::Error;
+pub mod object {
+    use std::str;
 
-pub type ObjectId = [u8; 20];
-#[derive(PartialEq, Eq, Debug)]
-pub enum ObjectKind {
-    Tag,
-}
+    use failure::Error;
 
-impl ObjectKind {
-    fn from_bytes(s: &[u8]) -> Result<ObjectKind, Error> {
-        Ok(match s {
-            b"tag" => ObjectKind::Tag,
-            _ => bail!("Unknown object kind: {:?}", std::str::from_utf8(s)),
-        })
+    pub type Id = [u8; 20];
+
+    #[derive(PartialEq, Eq, Debug)]
+    pub enum Kind {
+        Tag,
+    }
+
+    impl Kind {
+        pub fn from_bytes(s: &[u8]) -> Result<Kind, Error> {
+            Ok(match s {
+                b"tag" => Kind::Tag,
+                _ => bail!("Unknown object kind: {:?}", str::from_utf8(s)),
+            })
+        }
     }
 }
 

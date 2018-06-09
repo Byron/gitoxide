@@ -1,15 +1,14 @@
-use ObjectId;
-use ObjectKind;
+use object::{Id, Kind};
 
 use std::path::PathBuf;
 
 use walkdir::WalkDir;
-use failure::{err_msg, Error};
+use failure::{Error, ResultExt};
 use hex::{FromHex, ToHex};
 use miniz_oxide::inflate::core::{decompress, DecompressorOxide,
                                  inflate_flags::{TINFL_FLAG_PARSE_ZLIB_HEADER,
                                                  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}};
-use std::{str, fs::File, io::{Cursor, Read}};
+use std::{fs::File, io::{Cursor, Read}};
 
 const HEADER_READ_COMPRESSED_BYTES: usize = 1024;
 
@@ -18,12 +17,12 @@ pub struct Db {
 }
 
 pub struct Object {
-    pub kind: ObjectKind,
+    pub kind: Kind,
     pub size: usize,
 }
 
 impl Db {
-    pub fn iter(&self) -> impl Iterator<Item = Result<ObjectId, Error>> {
+    pub fn iter(&self) -> impl Iterator<Item = Result<Id, Error>> {
         use std::path::Component::Normal;
         WalkDir::new(&self.path)
             .min_depth(2)
@@ -62,7 +61,7 @@ impl Db {
             })
     }
 
-    pub fn find(&self, id: &ObjectId) -> Result<Object, Error> {
+    pub fn find(&self, id: &Id) -> Result<Object, Error> {
         let path = {
             let mut path = self.path.clone();
             let mut buf = String::with_capacity(40);
@@ -100,21 +99,37 @@ impl Db {
             (out.into_inner(), read_out)
         };
 
-        let header_end = out[..read_out]
+        parse::header(&out[..read_out])
+            .map(|(kind, size)| Object { kind, size })
+            .with_context(|_| {
+                format!(
+                    "Invalid header layout at '{}', expected '<type> <size>'",
+                    path.display()
+                )
+            })
+            .map_err(Into::into)
+    }
+}
+
+pub mod parse {
+    use failure::{err_msg, Error};
+
+    use object;
+    use std::str;
+
+    pub fn header(input: &[u8]) -> Result<(object::Kind, usize), Error> {
+        let header_end = input
             .iter()
             .position(|&b| b == 0)
             .ok_or_else(|| err_msg("Invalid header, did not find 0 byte"))?;
-        let header = &out[..header_end];
+        let header = &input[..header_end];
         let mut split = header.split(|&b| b == b' ');
         match (split.next(), split.next()) {
-            (Some(kind), Some(size)) => Ok(Object {
-                kind: ObjectKind::from_bytes(kind)?,
-                size: str::from_utf8(size)?.parse()?,
-            }),
-            _ => bail!(
-                "Invalid header layout at '{}', expected '<type> <size>'",
-                path.display()
-            ),
+            (Some(kind), Some(size)) => Ok((
+                object::Kind::from_bytes(kind)?,
+                str::from_utf8(size)?.parse()?,
+            )),
+            _ => bail!("expected '<type> <size>'"),
         }
     }
 }

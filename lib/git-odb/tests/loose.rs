@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use hex::FromHex;
 
 use odb::loose::Db;
-use odb::ObjectKind;
+use odb::object::Kind;
 
 fn fixture(path: &str) -> PathBuf {
     let mut b = PathBuf::from(file!());
@@ -44,6 +44,6 @@ fn loose_find() {
     let o = ldb()
         .find(&bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
         .unwrap();
-    assert_eq!(o.kind, ObjectKind::Tag);
+    assert_eq!(o.kind, Kind::Tag);
     assert_eq!(o.size, 1024)
 }
