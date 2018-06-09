@@ -8,7 +8,8 @@ use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
 use deflate;
 use object::parsed;
 
-const HEADER_READ_COMPRESSED_BYTES: usize = 512;
+const HEADER_READ_COMPRESSED_BYTES: usize = 256;
+const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 
 pub struct Db {
     pub path: PathBuf,
@@ -17,7 +18,10 @@ pub struct Db {
 pub struct Object {
     pub kind: Kind,
     pub size: usize,
-    data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
+    uncompressed_data: SmallVec<[u8; HEADER_READ_UNCOMPRESSED_BYTES]>,
+    compressed_data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
+    consumed_compressed_bytes: usize,
+    consumed_uncompressed_bytes: usize,
     path: PathBuf,
     deflate: deflate::State,
 }
@@ -25,8 +29,16 @@ pub struct Object {
 impl Object {
     pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
         Ok(match self.kind {
-            Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(&[])?),
-            Kind::Commit => unimplemented!(),
+            Kind::Tag | Kind::Commit => {
+                let bytes = self.uncompressed_data.as_slice();
+                if !self.deflate.is_done {
+                    //                    File::open(&self.path)?.read_to_end()?;
+                }
+                match self.kind {
+                    Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
+                    Kind::Commit => unimplemented!(),
+                }
+            }
         })
     }
 }
@@ -83,33 +95,50 @@ impl Db {
         };
 
         let mut deflate = deflate::State::default();
-        let mut out = [0; HEADER_READ_COMPRESSED_BYTES];
-        let mut rbuf = [0; HEADER_READ_COMPRESSED_BYTES];
-        let (_read_in, read_out) = {
-            let bytes_read = File::open(&path)?.read(&mut rbuf[..])?;
-            let mut out = Cursor::new(&mut out[..]);
+        let mut uncompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
+        let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
+        let ((consumed_in, consumed_out), input_stream) = {
+            let mut istream = File::open(&path)?;
+            let bytes_read = istream.read(&mut compressed[..])?;
+            let mut out = Cursor::new(&mut uncompressed[..]);
 
-            deflate
-                .once(&rbuf[..bytes_read], &mut out)
-                .with_context(|_| {
-                    format!(
-                        "Could not decode zip stream for reading header in '{}'",
-                        path.display()
-                    )
-                })?
+            (
+                deflate
+                    .once(&compressed[..bytes_read], &mut out)
+                    .with_context(|_| {
+                        format!(
+                            "Could not decode zip stream for reading header in '{}'",
+                            path.display()
+                        )
+                    })?,
+                istream,
+            )
         };
 
-        let (kind, size) = parse::header(&out[..read_out]).with_context(|_| {
+        let (kind, size) = parse::header(&uncompressed[..consumed_out]).with_context(|_| {
             format!(
                 "Invalid header layout at '{}', expected '<type> <size>'",
                 path.display()
             )
         })?;
 
+        let uncompressed = SmallVec::from_buf(uncompressed);
+        let compressed = SmallVec::from_buf(compressed);
+
+        match kind {
+            Kind::Tag | Kind::Commit | Kind::Tree => {
+                unimplemented!()
+            }
+            Kind::Blob => {}
+        }
+
         Ok(Object {
             kind,
             size,
-            data: SmallVec::from_buf(out),
+            uncompressed_data: uncompressed,
+            compressed_data: compressed,
+            consumed_compressed_bytes: consumed_in,
+            consumed_uncompressed_bytes: consumed_out,
             path,
             deflate,
         })
