@@ -21,8 +21,6 @@ pub struct Object {
     deflate: deflate::State,
 }
 
-
-
 impl Db {
     pub fn iter(&self) -> impl Iterator<Item = Result<Id, Error>> {
         use std::path::Component::Normal;

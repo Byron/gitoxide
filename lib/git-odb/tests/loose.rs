@@ -4,8 +4,8 @@ extern crate hex;
 use std::path::PathBuf;
 use hex::FromHex;
 
-use odb::loose::Db;
-use odb::object::Kind;
+use odb::{loose::Db, object::{Kind, Tag}};
+use std::{fs::File, io::Read};
 
 fn fixture(path: &str) -> PathBuf {
     let mut b = PathBuf::from(file!());
@@ -13,6 +13,15 @@ fn fixture(path: &str) -> PathBuf {
     b.push("fixtures");
     b.push(path);
     b
+}
+
+fn fixture_bytes(path: &str) -> Vec<u8> {
+    let mut buf = Vec::new();
+    File::open(fixture(path))
+        .unwrap()
+        .read_to_end(&mut buf)
+        .unwrap();
+    buf
 }
 
 fn bin(hex: &str) -> [u8; 20] {
@@ -46,4 +55,15 @@ fn loose_find() {
         .unwrap();
     assert_eq!(o.kind, Kind::Tag);
     assert_eq!(o.size, 1024)
+}
+
+#[test]
+fn loose_tag_parse() {
+    assert_eq!(
+        Tag::from_bytes(&fixture_bytes("objects/tag.txt")).unwrap(),
+        Tag {
+            target: bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
+            target_kind: Kind::Commit
+        }
+    );
 }
