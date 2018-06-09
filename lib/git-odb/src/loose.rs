@@ -6,10 +6,10 @@ use hex::{FromHex, ToHex};
 use smallvec::SmallVec;
 use std::{fs::File, io::{Cursor, Read}, path::PathBuf};
 use std::os::unix::fs::MetadataExt;
-use deflate;
+use zlib;
 use object::parsed;
 
-const HEADER_READ_COMPRESSED_BYTES: usize = 256;
+const HEADER_READ_COMPRESSED_BYTES: usize = 64;
 const HEADER_READ_UNCOMPRESSED_BYTES: usize = 256;
 
 pub struct Db {
@@ -21,11 +21,9 @@ pub struct Object {
     pub size: usize,
     decompressed_data: SmallVec<[u8; HEADER_READ_UNCOMPRESSED_BYTES]>,
     compressed_data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
-    end_of_consumed_compressed_bytes: usize,
-    end_of_decompressed_bytes: usize,
     header_size: usize,
     path: Option<PathBuf>,
-    deflate: deflate::State,
+    deflate: zlib::Inflate,
 }
 
 impl Object {
@@ -47,12 +45,9 @@ impl Object {
                     // here we do a lot of additional work, which could be saved if we
                     // could re-use the previous state. This doesn't work for some reason.
                     self.deflate = Default::default();
-                    let (consumed_in, consumed_out) =
-                        self.deflate.to_end(&self.compressed_data[..], &mut cursor)?;
+                    self.deflate
+                        .all_till_done(&self.compressed_data[..], &mut cursor)?;
                     debug_assert!(self.deflate.is_done);
-                    self.end_of_decompressed_bytes = consumed_out;
-                    self.end_of_consumed_compressed_bytes = consumed_in;
-                    debug_assert!(self.end_of_decompressed_bytes == total_size);
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
                 match self.kind {
@@ -116,10 +111,10 @@ impl Db {
             path
         };
 
-        let mut deflate = deflate::State::default();
+        let mut deflate = zlib::Inflate::default();
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
-        let ((_status, consumed_in, consumed_out), bytes_read, mut input_stream) = {
+        let ((_status, _consumed_in, consumed_out), bytes_read, mut input_stream) = {
             let mut istream = File::open(&path)?;
             let bytes_read = istream.read(&mut compressed[..])?;
             let mut out = Cursor::new(&mut decompressed[..]);
@@ -174,8 +169,6 @@ impl Db {
             size,
             decompressed_data: decompressed,
             compressed_data: compressed,
-            end_of_consumed_compressed_bytes: consumed_in,
-            end_of_decompressed_bytes: consumed_out,
             header_size,
             path,
             deflate,

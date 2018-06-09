@@ -7,22 +7,22 @@ use miniz_oxide::inflate::{TINFLStatus,
                                                   TINFL_FLAG_PARSE_ZLIB_HEADER,
                                                   TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}}};
 
-pub struct State {
+pub struct Inflate {
     inner: DecompressorOxide,
     pub is_done: bool,
 }
 
-impl Default for State {
+impl Default for Inflate {
     fn default() -> Self {
-        State {
+        Inflate {
             inner: DecompressorOxide::default(),
             is_done: false,
         }
     }
 }
 
-impl State {
-    pub fn to_end(
+impl Inflate {
+    pub fn all_till_done(
         &mut self,
         input: &[u8],
         mut out: impl io::Write,

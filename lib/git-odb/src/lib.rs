@@ -5,7 +5,7 @@ extern crate miniz_oxide;
 extern crate smallvec;
 extern crate walkdir;
 
-mod deflate;
+mod zlib;
 
 pub mod object;
 pub mod loose;
