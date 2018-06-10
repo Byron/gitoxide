@@ -47,6 +47,12 @@ pub mod index {
             sha1.copy_from_slice(&self.data[self.data.len() - SHA1_LEN..]);
             sha1
         }
+        pub fn checksum_of_pack(&self) -> Sha1 {
+            let mut sha1 = [0; SHA1_LEN];
+            let from = self.data.len() - SHA1_LEN * 2;
+            sha1.copy_from_slice(&self.data[from..from + SHA1_LEN]);
+            sha1
+        }
 
         pub fn at(path: &Path) -> Result<File, Error> {
             let data = FileBuffer::open(path)
