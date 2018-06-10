@@ -2,13 +2,13 @@ use std::str;
 
 use failure::Error;
 
-pub const SHA1_LEN: usize = 20;
+pub const SHA1_SIZE: usize = 20;
 
 /// A SHA1 identifying objects
-pub type Id = [u8; SHA1_LEN];
+pub type Id = [u8; SHA1_SIZE];
 
 pub fn id_from_20_bytes(b: &[u8]) -> Id {
-    let mut id = [0; SHA1_LEN];
+    let mut id = [0; SHA1_SIZE];
     id.copy_from_slice(b);
     id
 }
