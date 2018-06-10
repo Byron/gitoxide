@@ -53,13 +53,17 @@ impl File {
         assert!(offset as usize <= self.data.len(), "offset out of bounds");
 
         let obj_begin = &self.data[offset as usize..];
-        let (object,  decompressed_size, consumed_bytes) = parsed::Object::from_bytes(obj_begin);
-        Entry { object, decompressed_size, offset: offset + consumed_bytes }
+        let (object, decompressed_size, consumed_bytes) = parsed::Object::from_bytes(obj_begin);
+        Entry {
+            object,
+            decompressed_size,
+            offset: offset + consumed_bytes,
+        }
     }
 
-    pub fn at(path: &Path) -> Result<Self, Error> {
-        let data = FileBuffer::open(path)
-            .with_context(|_| format!("Could not map pack file at '{}'", path.display()))?;
+    pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
+        let data = FileBuffer::open(path.as_ref())
+            .with_context(|_| format!("Could not map pack file at '{}'", path.as_ref().display()))?;
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + SHA1_SIZE {
             bail!(
@@ -158,18 +162,10 @@ pub mod parsed {
                     consumed += SHA1_SIZE;
                     o
                 }
-                BLOB => {
-                    Blob
-                }
-                TREE => {
-                    Tree
-                }
-                COMMIT => {
-                    Commit
-                }
-                TAG => {
-                    Tag
-                }
+                BLOB => Blob,
+                TREE => Tree,
+                COMMIT => Commit,
+                TAG => Tag,
                 _ => panic!("We currently don't support any V3 features or extensions"),
             };
             (object, size, consumed as u64)

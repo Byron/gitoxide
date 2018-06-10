@@ -120,9 +120,13 @@ impl File {
         }
     }
 
-    pub fn at(path: &Path) -> Result<File, Error> {
-        let data = FileBuffer::open(path)
-            .with_context(|_| format!("Could not map pack index file at '{}'", path.display()))?;
+    pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
+        let data = FileBuffer::open(path.as_ref()).with_context(|_| {
+            format!(
+                "Could not map pack index file at '{}'",
+                path.as_ref().display()
+            )
+        })?;
         let idx_len = data.len();
         if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
             bail!(

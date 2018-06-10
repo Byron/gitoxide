@@ -34,9 +34,11 @@ The CLI uses various libraries to implement
       * [ ] tag
       * [ ] blob
   * **packs**
-    * [ ] traverse
+    * [x] traverse pack index
+    * [x] decode pack entries
     * [ ] decode
-      * [ ] any object, most code is reused from loose objects
+      * [ ] full objects
+      * [ ] deltified objects
     * [ ] create new packs
 * **git-transport**
   * [ ] via ssh
