@@ -5,7 +5,6 @@ mod utils;
 
 use utils::*;
 
-use hex::FromHex;
 use std::{fs::File, io::Read};
 use odb::{loose::Db, object::{parsed, Kind}};
 use odb::Time;
@@ -18,10 +17,6 @@ pub fn fixture_bytes(path: &str) -> Vec<u8> {
         .read_to_end(&mut buf)
         .unwrap();
     buf
-}
-
-pub fn bin(hex: &str) -> [u8; 20] {
-    <[u8; 20]>::from_hex(hex).unwrap()
 }
 
 fn ldb() -> Db {

@@ -5,9 +5,12 @@ pub mod index {
     use byteorder::{BigEndian, ByteOrder};
 
     const V2_SIGNATURE: &'static [u8] = b"\xfftOc";
-    const FOOTER_LEN: usize = 20;
+    const SHA1_LEN: usize = 20;
+    const FOOTER_LEN: usize = SHA1_LEN * 2;
     const N32_SIZE: usize = 4;
     const FAN_LEN: usize = 256;
+
+    pub type Sha1 = [u8; SHA1_LEN];
 
     #[derive(PartialEq, Eq, Debug, Hash, Clone)]
     pub enum Kind {
@@ -22,7 +25,7 @@ pub mod index {
     }
 
     pub struct File {
-        _data: FileBuffer,
+        data: FileBuffer,
         kind: Kind,
         version: u32,
         size: u32,
@@ -38,6 +41,11 @@ pub mod index {
         }
         pub fn version(&self) -> u32 {
             self.version
+        }
+        pub fn checksum_of_index(&self) -> Sha1 {
+            let mut sha1 = [0; SHA1_LEN];
+            sha1.copy_from_slice(&self.data[self.data.len() - SHA1_LEN..]);
+            sha1
         }
 
         pub fn at(path: &Path) -> Result<File, Error> {
@@ -75,7 +83,7 @@ pub mod index {
                 (kind, version, fan, size)
             };
             Ok(File {
-                _data: data,
+                data: data,
                 kind,
                 size,
                 version,
