@@ -58,6 +58,9 @@ The CLI uses various libraries to implement
    * including *transport*, *object database*, *references* and *cli*
    * a simple command-line interface is provided for the most common git operations, optimized for
      user experience. A *simple-git* if you so will.
+   * be the go-to implementation for anyone who wants to solve problems around git, and become
+     *the* alternative to `GitPython` in the process.
+   * become the foundation for a free distributed alternative to github.
  * **learn from the best to write the best possible idiomatic Rust**
    * *libgit2* is a fantastic resource to see what abstractions work, we will use them
    * use Rust's type system to make misuse impossible
