@@ -25,7 +25,7 @@ pub mod index {
         _data: FileBuffer,
         kind: Kind,
         version: u32,
-        len: usize,
+        size: u32,
         _fan: [u32; FAN_LEN],
     }
 
@@ -33,8 +33,8 @@ pub mod index {
         pub fn kind(&self) -> Kind {
             self.kind.clone()
         }
-        pub fn len(&self) -> usize {
-            self.len
+        pub fn size(&self) -> u32 {
+            self.size
         }
         pub fn version(&self) -> u32 {
             self.version
@@ -47,15 +47,14 @@ pub mod index {
             if idx_len < FAN_LEN * N32_SIZE + FOOTER_LEN {
                 bail!("Pack index is truncated and not even empty");
             }
-            let (kind, version, fan) = {
+            let (kind, version, fan, size) = {
                 let (kind, d) = {
                     let (sig, d) = data.split_at(V2_SIGNATURE.len());
-                    let kind = if sig == V2_SIGNATURE {
-                        Kind::V2
+                    if sig == V2_SIGNATURE {
+                        (Kind::V2, d)
                     } else {
-                        Kind::V1
-                    };
-                    (kind, d)
+                        (Kind::V1, &data[..])
+                    }
                 };
                 let (version, d) = {
                     let (mut v, mut d) = (1, d);
@@ -70,14 +69,15 @@ pub mod index {
                     (v, d)
                 };
                 let (fan, bytes_read) = read_fan(d);
-                let (_, d) = d.split_at(bytes_read);
+                let (_, _d) = d.split_at(bytes_read);
+                let size = fan[FAN_LEN - 1];
 
-                (kind, version, fan)
+                (kind, version, fan, size)
             };
             Ok(File {
                 _data: data,
                 kind,
-                len: 0,
+                size,
                 version,
                 _fan: fan,
             })

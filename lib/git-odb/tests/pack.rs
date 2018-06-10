@@ -13,12 +13,12 @@ mod index {
     #[test]
     fn index_iter_v1() {
         for (path, kind, len, version) in
-            &[(INDEX_V1, Kind::V1, 67, 1), (INDEX_V2, Kind::V2, 30, 2)]
+            &[(INDEX_V2, Kind::V2, 30, 2), (INDEX_V1, Kind::V1, 67, 1)]
         {
             let idx = File::at(&fixture(path)).unwrap();
             assert_eq!(idx.kind(), *kind);
             assert_eq!(idx.version(), *version);
-            assert_eq!(idx.len(), *len);
+            assert_eq!(idx.size(), *len);
         }
     }
 }
