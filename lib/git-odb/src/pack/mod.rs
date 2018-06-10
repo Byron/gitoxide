@@ -21,7 +21,7 @@ pub mod index {
     }
 
     pub struct File {
-        data: FileBuffer,
+        _data: FileBuffer,
         kind: Kind,
         version: u32,
         len: usize,
@@ -38,46 +38,34 @@ pub mod index {
             self.version
         }
 
-        fn init(mut self) -> Result<Self, Error> {
-            let idx_len = self.data.len();
+        pub fn at(path: &Path) -> Result<File, Error> {
+            let d = FileBuffer::open(path)
+                .with_context(|_| format!("Could not map file at '{}'", path.display()))?;
+            let idx_len = d.len();
             if idx_len < V2_SIGNATURE.len() + FOOTER_LEN {
                 bail!("Pack index is truncated and not even empty");
             }
-            let (kind, version) = {
-                let d = &self.data;
-                let kind = if &d[..V2_SIGNATURE.len()] == V2_SIGNATURE {
-                    Kind::V2
-                } else {
-                    Kind::V1
-                };
-                let version = {
-                    let mut v = 1;
-                    if let &Kind::V2 = &kind {
-                        v = BigEndian::read_u32(
-                            &d[V2_SIGNATURE.len()..V2_SIGNATURE.len() + N32_SIZE],
-                        );
-                        if v != 2 {
-                            bail!("Unsupported index version: {}", v);
-                        }
+            let kind = if &d[..V2_SIGNATURE.len()] == V2_SIGNATURE {
+                Kind::V2
+            } else {
+                Kind::V1
+            };
+            let version = {
+                let mut v = 1;
+                if let &Kind::V2 = &kind {
+                    v = BigEndian::read_u32(&d[V2_SIGNATURE.len()..V2_SIGNATURE.len() + N32_SIZE]);
+                    if v != 2 {
+                        bail!("Unsupported index version: {}", v);
                     }
-                    v
-                };
-                (kind, version)
+                }
+                v
             };
-            self.kind = kind;
-            self.version = version;
-            Ok(self)
-        }
-
-        pub fn at(path: &Path) -> Result<File, Error> {
-            let file = File {
-                data: FileBuffer::open(path)
-                    .with_context(|_| format!("Could not map file at '{}'", path.display()))?,
-                kind: Default::default(),
+            Ok(File {
+                _data: d,
+                kind,
                 len: 0,
-                version: 0,
-            };
-            Ok(file.init()?)
+                version,
+            })
         }
     }
 }
