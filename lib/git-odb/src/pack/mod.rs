@@ -39,29 +39,38 @@ pub mod index {
         }
 
         pub fn at(path: &Path) -> Result<File, Error> {
-            let d = FileBuffer::open(path)
+            let data = FileBuffer::open(path)
                 .with_context(|_| format!("Could not map file at '{}'", path.display()))?;
-            let idx_len = d.len();
+            let idx_len = data.len();
             if idx_len < V2_SIGNATURE.len() + FOOTER_LEN {
                 bail!("Pack index is truncated and not even empty");
             }
-            let kind = if &d[..V2_SIGNATURE.len()] == V2_SIGNATURE {
-                Kind::V2
-            } else {
-                Kind::V1
-            };
-            let version = {
-                let mut v = 1;
-                if let &Kind::V2 = &kind {
-                    v = BigEndian::read_u32(&d[V2_SIGNATURE.len()..V2_SIGNATURE.len() + N32_SIZE]);
-                    if v != 2 {
-                        bail!("Unsupported index version: {}", v);
+            let (kind, version) = {
+                let (kind, d) = {
+                    let (sig, d) = data.split_at(V2_SIGNATURE.len());
+                    let kind = if sig == V2_SIGNATURE {
+                        Kind::V2
+                    } else {
+                        Kind::V1
+                    };
+                    (kind, d)
+                };
+                let (version, d) = {
+                    let (mut v, mut d) = (1, d);
+                    if let &Kind::V2 = &kind {
+                        let (vd, dr) = d.split_at(N32_SIZE);
+                        d = dr;
+                        v = BigEndian::read_u32(vd);
+                        if v != 2 {
+                            bail!("Unsupported index version: {}", v);
+                        }
                     }
-                }
-                v
+                    (v, d)
+                };
+                (kind, version)
             };
             Ok(File {
-                _data: d,
+                _data: data,
                 kind,
                 len: 0,
                 version,
