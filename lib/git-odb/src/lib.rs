@@ -8,6 +8,8 @@ extern crate hex;
 extern crate miniz_oxide;
 extern crate smallvec;
 extern crate walkdir;
+#[macro_use]
+extern crate itertools;
 
 mod zlib;
 mod types;

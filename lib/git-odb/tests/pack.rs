@@ -17,16 +17,31 @@ mod index {
 
     #[test]
     fn index_iter() {
-        for (path, kind, len, version, index_checksum, pack_checksum) in &[
-            (INDEX_V1, Kind::V1, 67, 1, INDEX_V1_CHECKSUM, PACK_V1_CHECKSUM),
-            (INDEX_V2, Kind::V2, 30, 2, INDEX_V2_CHECKSUM, PACK_V2_CHECKSUM),
+        for (path, kind, num_objects, version, index_checksum, pack_checksum) in &[
+            (
+                INDEX_V1,
+                Kind::V1,
+                67,
+                1,
+                INDEX_V1_CHECKSUM,
+                PACK_V1_CHECKSUM,
+            ),
+            (
+                INDEX_V2,
+                Kind::V2,
+                30,
+                2,
+                INDEX_V2_CHECKSUM,
+                PACK_V2_CHECKSUM,
+            ),
         ] {
             let idx = File::at(&fixture(path)).unwrap();
             assert_eq!(idx.kind(), *kind);
             assert_eq!(idx.version(), *version);
-            assert_eq!(idx.size(), *len);
+            assert_eq!(idx.size(), *num_objects);
             assert_eq!(idx.checksum_of_index(), bin(index_checksum));
             assert_eq!(idx.checksum_of_pack(), bin(pack_checksum));
+            assert_eq!(idx.iter().count(), *num_objects as usize);
         }
     }
 }
