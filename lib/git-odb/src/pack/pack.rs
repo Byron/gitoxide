@@ -5,7 +5,6 @@ use std::{mem::size_of, path::Path};
 use filebuffer::FileBuffer;
 
 use object::SHA1_SIZE;
-use object;
 
 const N32_SIZE: usize = size_of::<u32>();
 
@@ -17,7 +16,6 @@ pub enum Kind {
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Entry<'a> {
-    pub oid: object::Id,
     pub object: parsed::Object,
     pub compressed: &'a [u8],
 }
@@ -50,15 +48,12 @@ impl File {
     pub fn entry<'a>(&'a self, offset: u64) -> Entry<'a> {
         self.assure_v2();
         assert!(offset <= usize::max_value() as u64);
+        assert!(offset as usize <= self.data.len(), "offset out of bounds");
 
         let obj_begin = &self.data[offset as usize..];
         let (object, compressed) = parsed::Object::from_bytes(obj_begin);
 
-        Entry {
-            oid: [0; 20],
-            object,
-            compressed,
-        }
+        Entry { object, compressed }
     }
 
     pub fn at(path: &Path) -> Result<Self, Error> {
@@ -92,15 +87,16 @@ pub mod parsed {
     use object;
 
     use std::mem;
+    use object::SHA1_SIZE;
 
     const _TYPE_EXT1: u8 = 0;
-    const _COMMIT: u8 = 1;
-    const _TREE: u8 = 2;
-    const _BLOB: u8 = 3;
-    const _TAG: u8 = 4;
+    const COMMIT: u8 = 1;
+    const TREE: u8 = 2;
+    const BLOB: u8 = 3;
+    const TAG: u8 = 4;
     const _TYPE_EXT2: u8 = 5;
-    const _OFS_DELTA: u8 = 6;
-    const _REF_DELTA: u8 = 7;
+    const OFS_DELTA: u8 = 6;
+    const REF_DELTA: u8 = 7;
 
     #[derive(PartialEq, Eq, Debug, Hash, Clone)]
     pub enum Object {
@@ -112,32 +108,76 @@ pub mod parsed {
         OfsDelta { offset: u64 },
     }
 
+    #[inline]
+    fn leb64decode(
+        d: &[u8],
+        initial_result: Option<u64>,
+        initial_shift: Option<usize>,
+    ) -> (u64, &[u8]) {
+        let mut count = 0;
+        let mut result = initial_result.unwrap_or(0);
+        let mut shift = initial_shift.unwrap_or(0);
+
+        for b in d {
+            count += 1;
+            result |= ((b & 0b0111_1111) as u64) << shift;
+            shift += 7;
+            if b & 0b1000_0000 == 0 {
+                assert!(
+                    shift + 1 - b.leading_zeros() as usize <= mem::size_of::<u64>() * 8,
+                    "overflow, expected {} byte(s), got {} bits",
+                    mem::size_of::<u64>(),
+                    shift + 1 - b.leading_zeros() as usize
+                );
+                break;
+            }
+        }
+
+        (result, &d[count..])
+    }
+
     impl Object {
         pub fn from_bytes(d: &[u8]) -> (Object, &[u8]) {
+            println!("original d.len == {}", d.len());
             let c = d[0];
             let type_id = (c >> 4) & 0b0000_0111;
-
-            let mut count = 1;
-            let mut size = (c & 15) as u64;
-            let mut shift = 4;
-
-            for b in &d[1..] {
-                count += 1;
-                size |= ((b & 0b0111_1111) as u64) << shift;
-                shift += 7;
-                if b & 0b1000_0000 == 0 {
-                    assert!(
-                        shift + 1 - b.leading_zeros() as usize <= mem::size_of::<u64>() * 8,
-                        "overflow, expected {} byte(s), got {} bits",
-                        mem::size_of::<u64>(),
-                        shift + 1 - b.leading_zeros() as usize
-                    );
-                    break;
+            let (size, mut d) = leb64decode(&d[1..], Some((c & 15) as u64), Some(4));
+            let size = size as usize;
+            use self::Object::*;
+            println!("type {} d[..{}] of {}", type_id, size, d.len());
+            let object = match type_id {
+                OFS_DELTA => {
+                    let (offset, nd) = leb64decode(d, None, None);
+                    let o = OfsDelta { offset };
+                    d = nd;
+                    o
                 }
-            }
-
-            let d = &d[count..];
-            unimplemented!()
+                REF_DELTA => {
+                    let o = RefDelta {
+                        oid: object::id_from_20_bytes(&d[..SHA1_SIZE]),
+                    };
+                    d = &d[SHA1_SIZE..];
+                    o
+                }
+                BLOB => {
+                    d = &d[..size];
+                    Blob
+                }
+                TREE => {
+                    d = &d[..size];
+                    Tree
+                }
+                COMMIT => {
+                    d = &d[..size];
+                    Commit
+                }
+                TAG => {
+                    d = &d[..size];
+                    Tag
+                }
+                _ => panic!("We currently don't support any V3 features or extensions"),
+            };
+            (object, d)
         }
     }
 }
