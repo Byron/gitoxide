@@ -4,13 +4,16 @@ pub mod index {
     use filebuffer::FileBuffer;
     use byteorder::{BigEndian, ByteOrder};
     use object::{self, SHA1_SIZE};
+    use std::mem::size_of;
 
     const V2_SIGNATURE: &'static [u8] = b"\xfftOc";
     const FOOTER_SIZE: usize = SHA1_SIZE * 2;
-    const N32_SIZE: usize = 4;
+    const N32_SIZE: usize = size_of::<u32>();
+    const N64_SIZE: usize = size_of::<u64>();
     const FAN_LEN: usize = 256;
     const V1_OFFSET: usize = FAN_LEN * N32_SIZE;
     const V2_SHA1_OFFSET: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
+    const MAX_N31: u32 = u32::max_value() >> 1;
 
     #[derive(PartialEq, Eq, Debug, Hash, Clone)]
     pub enum Kind {
@@ -87,15 +90,24 @@ pub mod index {
         }
 
         pub fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
+            let pack64_offset = self.offset_pack_offset64_v2();
             Ok(match self.kind {
                 Kind::V2 => izip!(
                     self.data[V2_SHA1_OFFSET..].chunks(SHA1_SIZE),
                     self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
                     self.data[self.offset_pack_offset_v2()..].chunks(N32_SIZE)
                 ).take(self.size as usize)
-                    .map(|(oid, crc32, ofs32)| Entry {
+                    .map(move |(oid, crc32, ofs32)| Entry {
                         oid: object::id_from_20_bytes(oid),
-                        ofs: BigEndian::read_u32(ofs32) as u64,
+                        ofs: {
+                            let ofs32 = BigEndian::read_u32(ofs32);
+                            if ofs32 > MAX_N31 {
+                                let from = pack64_offset + (ofs32 as usize >> 1) * N64_SIZE;
+                                BigEndian::read_u64(&self.data[from..from + N64_SIZE])
+                            } else {
+                                ofs32 as u64
+                            }
+                        },
                         crc32: Some(BigEndian::read_u32(crc32)),
                     }),
                 _ => bail!("Cannot use iter_v2() on index of type {:?}", self.kind),
