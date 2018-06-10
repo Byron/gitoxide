@@ -9,6 +9,10 @@ The CLI uses various libraries to implement
  * [ ] a transport layer for push and pull (see `git-transport`)
 
  **This project is early in development and currently strictly for fun**
+ 
+ **Currently I am implementing whatever is needed to set a new record for solving
+ [this
+ problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)**
 
 ## Tasks
 
