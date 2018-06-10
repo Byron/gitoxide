@@ -48,6 +48,7 @@ impl Object {
                     deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
                     self.is_decompressed = deflate.is_done;
                     debug_assert!(deflate.is_done);
+                    self.compressed_data = Default::default();
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
                 match self.kind {

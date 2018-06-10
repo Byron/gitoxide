@@ -61,9 +61,14 @@ The CLI uses various libraries to implement
    * use Rust's type system to make misuse impossible
  * **be the best performaing implementation**
    * use Rust's type system to optimize for work not done without being hard to use
- * assure on-disk consistency
+ * **assure on-disk consistency**
    * assure reads never interfere with concurrent writes
    * assure multiple concurrent writes don't cause trouble
+ * **take shortcuts, but not in quality**
+   * libraries my use `failure::Error` exhaustively, knowing that these errors are solely
+     user-facing.
+   * internationalization is nothing we are concerned with right now - when fixing `failure::Error`
+     this may be possible.
 
 ## Non-Goals
 
