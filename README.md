@@ -4,7 +4,8 @@ user-experience, and perform as good or better than the native implementation.
 The CLI uses various libraries to implement
 
  * [ ] a git *repository* and *references* (see `git-core`)
- * [ ] a git object database (see `git-odb`)
+ * [ ] a git object database (see `git-odb` and
+   [examples](https://github.com/Byron/grit-rs/tree/master/lib/git-odb/examples))
  * [ ] a transport layer for push and pull (see `git-transport`)
 
  **This project is early in development and currently strictly for fun**
