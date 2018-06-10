@@ -106,8 +106,8 @@ impl Db {
             )
         };
 
-        let (kind, size, header_size) = parse_header(&decompressed[..consumed_out])
-            .with_context(|_| {
+        let (kind, size, header_size) =
+            parse_header(&decompressed[..consumed_out]).with_context(|_| {
                 format!(
                     "Invalid header layout at '{}', expected '<type> <size>'",
                     path.display()

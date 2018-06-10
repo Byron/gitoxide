@@ -1,34 +1,13 @@
 extern crate git_odb as odb;
 extern crate hex;
 
-use std::path::PathBuf;
-use hex::FromHex;
+mod utils;
 
+use utils::*;
 use odb::{loose::Db, object::{parsed, Kind}};
-use std::{fs::File, io::Read};
 use odb::Time;
 use odb::Sign;
 
-fn fixture(path: &str) -> PathBuf {
-    let mut b = PathBuf::from(file!());
-    b.pop();
-    b.push("fixtures");
-    b.push(path);
-    b
-}
-
-fn fixture_bytes(path: &str) -> Vec<u8> {
-    let mut buf = Vec::new();
-    File::open(fixture(path))
-        .unwrap()
-        .read_to_end(&mut buf)
-        .unwrap();
-    buf
-}
-
-fn bin(hex: &str) -> [u8; 20] {
-    <[u8; 20]>::from_hex(hex).unwrap()
-}
 
 fn ldb() -> Db {
     odb::loose::at(fixture("objects"))
