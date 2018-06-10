@@ -6,7 +6,6 @@ mod utils;
 use odb::pack::{self, index};
 use utils::fixture;
 use utils::bin;
-use std::mem;
 
 const INDEX_V1: &'static str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
 const PACK_FOR_INDEX_V1: &'static str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";
@@ -20,15 +19,15 @@ const PACK_V2_CHECKSUM: &'static str = "f1cd3cc7bc63a4a2b357a475a58ad49b40355470
 
 #[test]
 fn pack_lookup() {
-    for (index_path, pack_path) in &[(INDEX_V1, PACK_FOR_INDEX_V1), (INDEX_V2, PACK_FOR_INDEX_V2)] {
+    for (index_path, pack_path) in &[(INDEX_V2, PACK_FOR_INDEX_V2), (INDEX_V1, PACK_FOR_INDEX_V1)] {
         let idx = index::File::at(&fixture(index_path)).unwrap();
         let pack = pack::File::at(&fixture(pack_path)).unwrap();
 
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.size(), idx.size());
-        println!("{}", pack_path);
         for entry in idx.iter() {
-            mem::drop(pack.entry(entry.offset));
+            let pack_entry = pack.entry(entry.offset);
+            assert_ne!(pack_entry.offset, entry.offset);
         }
     }
 }

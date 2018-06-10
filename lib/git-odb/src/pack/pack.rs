@@ -15,9 +15,11 @@ pub enum Kind {
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
-pub struct Entry<'a> {
+pub struct Entry {
     pub object: parsed::Object,
-    pub compressed: &'a [u8],
+    pub decompressed_size: u64,
+    /// absolute offset to compressed object data in the pack
+    pub offset: u64,
 }
 
 pub struct File {
@@ -45,15 +47,14 @@ impl File {
         );
     }
 
-    pub fn entry<'a>(&'a self, offset: u64) -> Entry<'a> {
+    pub fn entry(&self, offset: u64) -> Entry {
         self.assure_v2();
         assert!(offset <= usize::max_value() as u64);
         assert!(offset as usize <= self.data.len(), "offset out of bounds");
 
         let obj_begin = &self.data[offset as usize..];
-        let (object, compressed) = parsed::Object::from_bytes(obj_begin);
-
-        Entry { object, compressed }
+        let (object,  decompressed_size, consumed_bytes) = parsed::Object::from_bytes(obj_begin);
+        Entry { object, decompressed_size, offset: offset + consumed_bytes }
     }
 
     pub fn at(path: &Path) -> Result<Self, Error> {
@@ -113,7 +114,7 @@ pub mod parsed {
         d: &[u8],
         initial_result: Option<u64>,
         initial_shift: Option<usize>,
-    ) -> (u64, &[u8]) {
+    ) -> (u64, usize) {
         let mut count = 0;
         let mut result = initial_result.unwrap_or(0);
         let mut shift = initial_shift.unwrap_or(0);
@@ -132,52 +133,46 @@ pub mod parsed {
                 break;
             }
         }
-
-        (result, &d[count..])
+        (result, count)
     }
 
     impl Object {
-        pub fn from_bytes(d: &[u8]) -> (Object, &[u8]) {
-            println!("original d.len == {}", d.len());
+        pub fn from_bytes(d: &[u8]) -> (Object, u64, u64) {
             let c = d[0];
             let type_id = (c >> 4) & 0b0000_0111;
-            let (size, mut d) = leb64decode(&d[1..], Some((c & 15) as u64), Some(4));
-            let size = size as usize;
+            let (size, leb_bytes) = leb64decode(&d[1..], Some((c & 15) as u64), Some(4));
+            let mut consumed = 1 + leb_bytes;
+
             use self::Object::*;
-            println!("type {} d[..{}] of {}", type_id, size, d.len());
             let object = match type_id {
                 OFS_DELTA => {
-                    let (offset, nd) = leb64decode(d, None, None);
+                    let (offset, leb_bytes) = leb64decode(d, None, None);
                     let o = OfsDelta { offset };
-                    d = nd;
+                    consumed += leb_bytes;
                     o
                 }
                 REF_DELTA => {
                     let o = RefDelta {
                         oid: object::id_from_20_bytes(&d[..SHA1_SIZE]),
                     };
-                    d = &d[SHA1_SIZE..];
+                    consumed += SHA1_SIZE;
                     o
                 }
                 BLOB => {
-                    d = &d[..size];
                     Blob
                 }
                 TREE => {
-                    d = &d[..size];
                     Tree
                 }
                 COMMIT => {
-                    d = &d[..size];
                     Commit
                 }
                 TAG => {
-                    d = &d[..size];
                     Tag
                 }
                 _ => panic!("We currently don't support any V3 features or extensions"),
             };
-            (object, d)
+            (object, size, consumed as u64)
         }
     }
 }
