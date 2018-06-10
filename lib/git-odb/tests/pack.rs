@@ -25,6 +25,10 @@ fn pack_lookup() {
 
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.size(), idx.size());
+        for entry in idx.iter() {
+            let pack_entry = pack.entry(entry.offset);
+            assert_eq!(pack_entry.oid, entry.oid);
+        }
     }
 }
 

@@ -28,9 +28,9 @@ impl Default for Kind {
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Entry {
-    oid: object::Id,
-    ofs: u64,
-    crc32: Option<u32>,
+    pub oid: object::Id,
+    pub offset: u64,
+    pub crc32: Option<u32>,
 }
 
 pub struct File {
@@ -68,7 +68,7 @@ impl File {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
                         oid: object::id_from_20_bytes(oid),
-                        ofs: BigEndian::read_u32(ofs) as u64,
+                        offset: BigEndian::read_u32(ofs) as u64,
                         crc32: None,
                     }
                 }),
@@ -98,7 +98,7 @@ impl File {
             ).take(self.size as usize)
                 .map(move |(oid, crc32, ofs32)| Entry {
                     oid: object::id_from_20_bytes(oid),
-                    ofs: {
+                    offset: {
                         let ofs32 = BigEndian::read_u32(ofs32);
                         if ofs32 > MAX_N31 {
                             let from = pack64_offset + (ofs32 as usize >> 1) * N64_SIZE;
