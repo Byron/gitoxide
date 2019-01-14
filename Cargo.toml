@@ -3,6 +3,7 @@ name = "grit-cli"
 version = "1.0.0"
 authors = ["Sebastian Thiel <byronimo@gmail.com>"]
 publish = false
+license = "MIT"
 
 [dependencies]
 failure = "0.1.1"
