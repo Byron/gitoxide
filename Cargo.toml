@@ -1,23 +1,20 @@
 [package]
 name = "grit-cli"
 version = "1.0.0"
-authors = ["Sebastian Thiel <byronimo@gmail.com>"]
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 publish = false
 license = "MIT"
 edition = "2018"
+
+[[bin]]
+name="grit"
+path="src/main.rs"
 
 [dependencies]
 failure = "0.1.1"
 failure-tools = "4.0.2"
 clap = "2.31.2"
-
-[dependencies.git-core]
-path = "lib/git-core"
-version = "0.1.0"
-
-[[bin]]
-name="grit"
-path="src/main.rs"
+git-core = { version = "0.1.0", path = "git-core" }
 
 [profile.release]
 panic = 'unwind'
@@ -25,6 +22,6 @@ incremental = false
 
 [workspace]
 members = [
-    "lib/git-odb",
-    "lib/git-core"
+    "git-odb",
+    "git-core"
 ]

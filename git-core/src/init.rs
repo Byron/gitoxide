@@ -9,34 +9,34 @@ use std::{
 const GIT_DIR_NAME: &'static str = ".git";
 
 const TPL_INFO_EXCLUDE: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/info/exclude");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/info/exclude");
 const TPL_HOOKS_APPLYPATCH_MSG: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/applypatch-msg.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/applypatch-msg.sample");
 const TPL_HOOKS_COMMIT_MSG: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/commit-msg.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/commit-msg.sample");
 const TPL_HOOKS_FSMONITOR_WATCHMAN: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/fsmonitor-watchman.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/fsmonitor-watchman.sample");
 const TPL_HOOKS_POST_UPDATE: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/post-update.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/post-update.sample");
 const TPL_HOOKS_PRE_APPLYPATCH: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/pre-applypatch.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-applypatch.sample");
 const TPL_HOOKS_PRE_COMMIT: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/pre-commit.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-commit.sample");
 const TPL_HOOKS_PRE_PUSH: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/pre-push.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-push.sample");
 const TPL_HOOKS_PRE_REBASE: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/pre-rebase.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-rebase.sample");
 const TPL_HOOKS_PRE_RECEIVE: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/pre-receive.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-receive.sample");
 const TPL_HOOKS_PREPARE_COMMIT_MSG: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/prepare-commit-msg.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/prepare-commit-msg.sample");
 const TPL_HOOKS_UPDATE: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/hooks/update.sample");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/update.sample");
 const TPL_CONFIG: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/config");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/config");
 const TPL_DESCRIPTION: &'static [u8] =
-    include_bytes!("../../../tests/snapshots/cli/baseline-init/description");
-const TPL_HEAD: &'static [u8] = include_bytes!("../../../tests/snapshots/cli/baseline-init/HEAD");
+    include_bytes!("../../tests/snapshots/cli/baseline-init/description");
+const TPL_HEAD: &'static [u8] = include_bytes!("../../tests/snapshots/cli/baseline-init/HEAD");
 
 struct PathCursor<'a>(&'a mut PathBuf);
 
