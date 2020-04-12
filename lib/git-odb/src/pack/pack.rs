@@ -4,7 +4,7 @@ use byteorder::{BigEndian, ByteOrder};
 use std::{mem::size_of, path::Path};
 use filebuffer::FileBuffer;
 
-use object::SHA1_SIZE;
+use crate::object::SHA1_SIZE;
 
 const N32_SIZE: usize = size_of::<u32>();
 
@@ -89,10 +89,10 @@ impl File {
 }
 
 pub mod parsed {
-    use object;
+    use crate::object;
 
     use std::mem;
-    use object::SHA1_SIZE;
+    use crate::object::SHA1_SIZE;
 
     const _TYPE_EXT1: u8 = 0;
     const COMMIT: u8 = 1;

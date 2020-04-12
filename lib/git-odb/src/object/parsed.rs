@@ -1,8 +1,11 @@
 use failure::{err_msg, Error, ResultExt};
-use object::{Id, Kind};
+use crate::{
+    object::{Id, Kind},
+    Sign,
+    Time
+};
 use std::str;
 use hex::FromHex;
-use {Sign, Time};
 
 const PGP_SIGNATURE_BEGIN: &'static [u8] = b"-----BEGIN PGP SIGNATURE-----";
 const PGP_SIGNATURE_END: &'static [u8] = b"-----END PGP SIGNATURE-----";

@@ -1,9 +1,25 @@
-use object::{parsed, Kind};
-use failure::Error;
+use crate::{
+    zlib,
+    object::{parsed, Kind},
+    loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
+    loose::Db,
+    object::Id
+};
+use failure::{
+    err_msg,
+    ResultExt,
+    Error
+};
+use hex::ToHex;
 use smallvec::SmallVec;
-use std::{io::Cursor, path::PathBuf};
-use zlib;
-use loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES};
+use std::{
+    io::Cursor,
+    path::PathBuf,
+    str,
+    fs::File,
+    io::Read,
+    os::unix::fs::MetadataExt
+};
 
 pub struct Object {
     pub kind: Kind,
@@ -49,13 +65,6 @@ impl Object {
         })
     }
 }
-
-use loose::Db;
-use object::Id;
-use failure::{err_msg, ResultExt};
-use hex::ToHex;
-use std::{str, fs::File, io::Read};
-use std::os::unix::fs::MetadataExt;
 
 pub fn parse_header(input: &[u8]) -> Result<(Kind, usize, usize), Error> {
     let header_end = input

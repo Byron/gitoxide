@@ -1,4 +1,4 @@
-use object::Id;
+use crate::object::Id;
 
 use walkdir::WalkDir;
 use failure::Error;

@@ -2,7 +2,7 @@ use failure::{Error, ResultExt};
 use std::path::Path;
 use filebuffer::FileBuffer;
 use byteorder::{BigEndian, ByteOrder};
-use object::{self, SHA1_SIZE};
+use crate::object::{self, SHA1_SIZE};
 use std::mem::size_of;
 
 const V2_SIGNATURE: &'static [u8] = b"\xfftOc";
