@@ -19,7 +19,7 @@ jobs:
         profile: minimal
         toolchain: nightly
         override: true
-        components: clippy
+        components: rustfmt, clippy
     - name: Build
       run: cargo build --verbose
     - name: clippy
