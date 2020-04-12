@@ -1,5 +1,10 @@
 use failure::{Error, ResultExt};
-use std::{fs::{create_dir, OpenOptions}, io::Write, path::Path, path::PathBuf};
+use std::{
+    fs::{create_dir, OpenOptions},
+    io::Write,
+    path::Path,
+    path::PathBuf,
+};
 
 const GIT_DIR_NAME: &'static str = ".git";
 
