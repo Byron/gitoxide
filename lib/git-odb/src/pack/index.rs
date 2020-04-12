@@ -113,7 +113,7 @@ impl File {
         })
     }
 
-    pub fn iter<'a>(&'a self) -> Box<Iterator<Item = Entry> + 'a> {
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
         match self.kind {
             Kind::V1 => Box::new(self.iter_v1().expect("correct check")),
             Kind::V2 => Box::new(self.iter_v2().expect("correct check")),
