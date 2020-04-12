@@ -1,3 +1,5 @@
+[![Rust](https://github.com/Byron/grit-rs/workflows/Rust/badge.svg)](https://github.com/Byron/grit-rs/actions)
+
 **grit** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
 user-experience, and perform as good or better than the native implementation.
 
