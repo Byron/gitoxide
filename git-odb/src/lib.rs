@@ -11,11 +11,11 @@ extern crate walkdir;
 #[macro_use]
 extern crate itertools;
 
-mod zlib;
 mod types;
+mod zlib;
 
-pub mod object;
 pub mod loose;
+pub mod object;
 pub mod pack;
 
 pub use types::*;

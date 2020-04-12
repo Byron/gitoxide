@@ -1,9 +1,9 @@
 use crate::object::Id;
 
-use walkdir::WalkDir;
 use failure::Error;
 use hex::FromHex;
 use std::path::PathBuf;
+use walkdir::WalkDir;
 
 pub struct Db {
     pub path: PathBuf,
@@ -21,7 +21,8 @@ impl Db {
                 let mut is_valid_path = false;
                 let e = e.map_err(Error::from).map(|e| {
                     let p = e.path();
-                    let (c1, c2) = p.components()
+                    let (c1, c2) = p
+                        .components()
                         .fold((None, None), |(_c1, c2), cn| (c2, Some(cn)));
                     if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
                         if c1.len() == 2 && c2.len() == 38 {

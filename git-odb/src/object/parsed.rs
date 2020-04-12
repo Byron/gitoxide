@@ -1,11 +1,10 @@
-use failure::{err_msg, Error, ResultExt};
 use crate::{
     object::{Id, Kind},
-    Sign,
-    Time
+    Sign, Time,
 };
-use std::str;
+use failure::{err_msg, Error, ResultExt};
 use hex::FromHex;
+use std::str;
 
 const PGP_SIGNATURE_BEGIN: &'static [u8] = b"-----BEGIN PGP SIGNATURE-----";
 const PGP_SIGNATURE_END: &'static [u8] = b"-----END PGP SIGNATURE-----";
@@ -80,7 +79,8 @@ fn parse_timezone_offset(d: &str) -> Result<(i32, Sign), Error> {
 
 fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
     const ONE_SPACE: usize = 1;
-    let email_begin = d.iter()
+    let email_begin = d
+        .iter()
         .position(|&b| b == b'<')
         .ok_or_else(|| err_msg("Could not find beginning of email marked by '<'"))
         .and_then(|pos| {

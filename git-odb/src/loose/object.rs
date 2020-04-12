@@ -1,25 +1,14 @@
 use crate::{
-    zlib,
-    object::{parsed, Kind},
-    loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
     loose::Db,
-    object::Id
+    loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
+    object::Id,
+    object::{parsed, Kind},
+    zlib,
 };
-use failure::{
-    err_msg,
-    ResultExt,
-    Error
-};
+use failure::{err_msg, Error, ResultExt};
 use hex::ToHex;
 use smallvec::SmallVec;
-use std::{
-    io::Cursor,
-    path::PathBuf,
-    str,
-    fs::File,
-    io::Read,
-    os::unix::fs::MetadataExt
-};
+use std::{fs::File, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf, str};
 
 pub struct Object {
     pub kind: Kind,

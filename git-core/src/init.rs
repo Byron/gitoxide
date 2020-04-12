@@ -32,8 +32,7 @@ const TPL_HOOKS_PREPARE_COMMIT_MSG: &'static [u8] =
     include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/prepare-commit-msg.sample");
 const TPL_HOOKS_UPDATE: &'static [u8] =
     include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/update.sample");
-const TPL_CONFIG: &'static [u8] =
-    include_bytes!("../../tests/snapshots/cli/baseline-init/config");
+const TPL_CONFIG: &'static [u8] = include_bytes!("../../tests/snapshots/cli/baseline-init/config");
 const TPL_DESCRIPTION: &'static [u8] =
     include_bytes!("../../tests/snapshots/cli/baseline-init/description");
 const TPL_HEAD: &'static [u8] = include_bytes!("../../tests/snapshots/cli/baseline-init/HEAD");

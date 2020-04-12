@@ -1,8 +1,8 @@
 use failure::{Error, ResultExt};
 
 use byteorder::{BigEndian, ByteOrder};
-use std::{mem::size_of, path::Path};
 use filebuffer::FileBuffer;
+use std::{mem::size_of, path::Path};
 
 use crate::object::SHA1_SIZE;
 
@@ -62,8 +62,9 @@ impl File {
     }
 
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
-        let data = FileBuffer::open(path.as_ref())
-            .with_context(|_| format!("Could not map pack file at '{}'", path.as_ref().display()))?;
+        let data = FileBuffer::open(path.as_ref()).with_context(|_| {
+            format!("Could not map pack file at '{}'", path.as_ref().display())
+        })?;
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + SHA1_SIZE {
             bail!(
@@ -91,8 +92,8 @@ impl File {
 pub mod parsed {
     use crate::object;
 
-    use std::mem;
     use crate::object::SHA1_SIZE;
+    use std::mem;
 
     const _TYPE_EXT1: u8 = 0;
     const COMMIT: u8 = 1;

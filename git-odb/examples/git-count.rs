@@ -3,7 +3,10 @@ extern crate failure;
 extern crate git_odb as odb;
 
 use failure::{Error, ResultExt};
-use std::{env, io::{stdout, Write}};
+use std::{
+    env,
+    io::{stdout, Write},
+};
 
 fn run() -> Result<(), Error> {
     let mut args = env::args().skip(1);
@@ -37,7 +40,8 @@ fn run() -> Result<(), Error> {
         blobs,
         tags,
         deltas,
-    ).map_err(Into::into)
+    )
+    .map_err(Into::into)
 }
 
 fn main() -> Result<(), Error> {

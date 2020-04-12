@@ -1,11 +1,16 @@
 use failure::Error;
 use miniz_oxide::inflate::core::DecompressorOxide;
+use miniz_oxide::inflate::{
+    core::{
+        decompress,
+        inflate_flags::{
+            TINFL_FLAG_HAS_MORE_INPUT, TINFL_FLAG_PARSE_ZLIB_HEADER,
+            TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+        },
+    },
+    TINFLStatus,
+};
 use std::io::{self, Cursor};
-use miniz_oxide::inflate::{TINFLStatus,
-                           core::{decompress,
-                                  inflate_flags::{TINFL_FLAG_HAS_MORE_INPUT,
-                                                  TINFL_FLAG_PARSE_ZLIB_HEADER,
-                                                  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF}}};
 
 pub struct Inflate {
     inner: DecompressorOxide,
@@ -64,7 +69,8 @@ impl Inflate {
             &mut self.inner,
             input,
             out,
-            TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_HAS_MORE_INPUT
+            TINFL_FLAG_PARSE_ZLIB_HEADER
+                | TINFL_FLAG_HAS_MORE_INPUT
                 | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
 

@@ -5,10 +5,13 @@ mod utils;
 
 use utils::*;
 
-use std::{fs::File, io::Read};
-use odb::{loose::Db, object::{parsed, Kind}};
-use odb::Time;
 use odb::Sign;
+use odb::Time;
+use odb::{
+    loose::Db,
+    object::{parsed, Kind},
+};
+use std::{fs::File, io::Read};
 
 pub fn fixture_bytes(path: &str) -> Vec<u8> {
     let mut buf = Vec::new();
