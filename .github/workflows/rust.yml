@@ -1,0 +1,25 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-lint-test-benchmark:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: clippy
+      run: cargo clippy
+    - name: fmt
+      run: cargo fmt --all -- --check
+    - name: test
+      run: cargo test
+    - name: doc
+      run: cargo doc
