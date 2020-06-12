@@ -42,6 +42,8 @@ const TPL_HOOKS_PRE_APPLYPATCH: &'static [u8] =
     include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-applypatch.sample");
 const TPL_HOOKS_PRE_COMMIT: &'static [u8] =
     include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-commit.sample");
+const TPL_HOOKS_PRE_MERGE_COMMIT: &'static [u8] =
+    include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-merge-commit.sample");
 const TPL_HOOKS_PRE_PUSH: &'static [u8] =
     include_bytes!("../../tests/snapshots/cli/baseline-init/hooks/pre-push.sample");
 const TPL_HOOKS_PRE_REBASE: &'static [u8] =
@@ -127,6 +129,7 @@ pub fn init() -> Result<(), InitError> {
             (TPL_HOOKS_PRE_REBASE, "pre-rebase.sample"),
             (TPL_HOOKS_PRE_PUSH, "pre-push.sample"),
             (TPL_HOOKS_PRE_COMMIT, "pre-commit.sample"),
+            (TPL_HOOKS_PRE_MERGE_COMMIT, "pre-merge-commit.sample"),
             (TPL_HOOKS_PRE_APPLYPATCH, "pre-applypatch.sample"),
             (TPL_HOOKS_POST_UPDATE, "post-update.sample"),
             (TPL_HOOKS_FSMONITOR_WATCHMAN, "fsmonitor-watchman.sample"),
