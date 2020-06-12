@@ -12,21 +12,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Install nightly toolchain with clippy available
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: nightly
-        override: true
-        components: rustfmt, clippy
     - name: Build
-      run: cargo build --verbose
+      run: cargo build
     - name: clippy
       run: cargo clippy
     - name: fmt
-      run: cargo fmt --all -- --check
+      run: cargo fmt --all --examples -- --check
     - name: test
-      run: cargo test
+      run: make tests
+    - name: journey-tests
+      run: make journey-tests
     - name: doc
       run: cargo doc
