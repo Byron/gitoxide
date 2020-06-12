@@ -131,7 +131,7 @@ fn parse_message<'data>(
 ) -> Result<(Option<&'data [u8]>, Option<&'data [u8]>), Error> {
     Ok(match lines.next() {
         Some(l) if l.len() == 0 => {
-            let msg_begin = (l.as_ptr().wrapping_offset_from(d.as_ptr()) + 1) as usize;
+            let msg_begin = 0; // TODO: use nom to parse this or do it without needing nightly
             if msg_begin >= d.len() {
                 bail!("Message separator was not followed by message")
             }
@@ -141,7 +141,7 @@ fn parse_message<'data>(
                 match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
                     None => bail!("Didn't find end of signature marker"),
                     Some(_) => {
-                        msg_end = pgp_begin_line.as_ptr().wrapping_offset_from(d.as_ptr()) as usize;
+                        msg_end = d.len(); // TODO: use nom to parse this or do it without needing nightly
                         pgp_signature = Some(&d[msg_end..])
                     }
                 }

@@ -6,6 +6,16 @@ use std::{
     path::PathBuf,
 };
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum InitError {
+        IoOpen(err: std::io::Error, path: PathBuf) {
+            display("Could not open file at {:#?}", path.display())
+            cause(err)
+        }
+    }
+}
+
 const GIT_DIR_NAME: &'static str = ".git";
 
 const TPL_INFO_EXCLUDE: &'static [u8] =

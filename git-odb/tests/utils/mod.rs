@@ -6,10 +6,5 @@ pub fn bin(hex: &str) -> [u8; 20] {
 }
 
 pub fn fixture(path: &str) -> PathBuf {
-    let mut b = PathBuf::from(file!());
-    b.pop();
-    b.pop();
-    b.push("fixtures");
-    b.push(path);
-    b
+    PathBuf::from("tests").join("fixtures").join(path)
 }

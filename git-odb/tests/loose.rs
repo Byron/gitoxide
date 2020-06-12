@@ -11,15 +11,9 @@ use odb::{
     loose::Db,
     object::{parsed, Kind},
 };
-use std::{fs::File, io::Read};
 
 pub fn fixture_bytes(path: &str) -> Vec<u8> {
-    let mut buf = Vec::new();
-    File::open(fixture(path))
-        .unwrap()
-        .read_to_end(&mut buf)
-        .unwrap();
-    buf
+    std::fs::read(fixture(path)).unwrap()
 }
 
 fn ldb() -> Db {
