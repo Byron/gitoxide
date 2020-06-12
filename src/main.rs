@@ -24,7 +24,9 @@ fn run() -> Result<(), Error> {
     let app = app::new();
     let matches = app.get_matches();
     match matches.subcommand() {
-        ("init", Some(_args)) => git::init().with_context(|_| "Repository initialization failed"),
+        ("init", Some(_args)) => {
+            git::init::repository().with_context(|_| "Repository initialization failed")
+        }
         _ => unreachable!(),
     }
     .map_err(Into::into)

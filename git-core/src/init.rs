@@ -7,7 +7,7 @@ use std::{
 
 quick_error! {
     #[derive(Debug)]
-    pub enum InitError {
+    pub enum Error {
         IoOpen(err: std::io::Error, path: PathBuf) {
             display("Could not open file at '{}'", path.display())
             cause(err)
@@ -71,7 +71,7 @@ impl<'a> PathCursor<'a> {
 }
 
 impl<'a> NewDir<'a> {
-    fn at(self, component: &str) -> Result<Self, InitError> {
+    fn at(self, component: &str) -> Result<Self, Error> {
         self.0.push(component);
         create_dir(&self.0)?;
         Ok(self)
@@ -93,25 +93,25 @@ impl<'a> Drop for PathCursor<'a> {
     }
 }
 
-fn write_file(data: &[u8], path: &Path) -> Result<(), InitError> {
+fn write_file(data: &[u8], path: &Path) -> Result<(), Error> {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .append(false)
         .open(path)
-        .map_err(|e| InitError::IoOpen(e, path.to_owned()))?;
+        .map_err(|e| Error::IoOpen(e, path.to_owned()))?;
     file.write_all(data)
-        .map_err(|e| InitError::IoWrite(e, path.to_owned()))
+        .map_err(|e| Error::IoWrite(e, path.to_owned()))
 }
 
-fn create_dir(p: &Path) -> Result<(), InitError> {
-    fs::create_dir(p).map_err(|e| InitError::CreateDirectory(e, p.to_owned()))
+fn create_dir(p: &Path) -> Result<(), Error> {
+    fs::create_dir(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
 }
 
-pub fn init() -> Result<(), InitError> {
+pub fn repository() -> Result<(), Error> {
     let mut cursor = PathBuf::from(GIT_DIR_NAME);
     if cursor.is_dir() {
-        return Err(InitError::DirectoryExists(cursor));
+        return Err(Error::DirectoryExists(cursor));
     }
     create_dir(&cursor)?;
 

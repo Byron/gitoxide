@@ -138,7 +138,6 @@ checksum = "bcc8e0c9bce37868955864dbecd2b1ab2bdf967e6f28066d65aaac620444b65c"
 name = "git-core"
 version = "0.1.0"
 dependencies = [
- "failure",
  "quick-error",
 ]
 
@@ -152,6 +151,7 @@ dependencies = [
  "hex",
  "itertools",
  "miniz_oxide",
+ "quick-error",
  "smallvec",
  "walkdir",
 ]

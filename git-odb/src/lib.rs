@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate failure;
+// #[macro_use]
+// extern crate quick_error;
 extern crate byteorder;
 extern crate filebuffer;
 extern crate hex;
