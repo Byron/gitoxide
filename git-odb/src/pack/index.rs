@@ -1,9 +1,7 @@
 use crate::object::{self, SHA1_SIZE};
 use byteorder::{BigEndian, ByteOrder};
-use failure::{Error, ResultExt};
 use filebuffer::FileBuffer;
-use std::mem::size_of;
-use std::path::Path;
+use std::{mem::size_of, path::Path};
 
 const V2_SIGNATURE: &'static [u8] = b"\xfftOc";
 const FOOTER_SIZE: usize = SHA1_SIZE * 2;
@@ -13,6 +11,22 @@ const FAN_LEN: usize = 256;
 const V1_OFFSET: usize = FAN_LEN * N32_SIZE;
 const V2_SHA1_OFFSET: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
 const MAX_N31: u32 = u32::max_value() >> 1;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        MapIndexIo(err: std::io::Error, path: std::path::PathBuf) {
+            display("Could not map pack index file at '{}'", path.display())
+            cause(err)
+        }
+        Corrupt(msg: String) {
+            display("{}", msg)
+        }
+        UnsupportedVersion(version: u32) {
+            display("Unsupported index version: {}", version)
+        }
+    }
+}
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub enum Kind {
@@ -72,7 +86,8 @@ impl File {
                         crc32: None,
                     }
                 }),
-            _ => bail!("Cannot use iter_v1() on index of type {:?}", self.kind),
+            // FIXME: why two methods for this - can this be unified?
+            _ => panic!("Cannot use iter_v1() on index of type {:?}", self.kind),
         })
     }
 
@@ -110,7 +125,8 @@ impl File {
                 },
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
-            _ => bail!("Cannot use iter_v2() on index of type {:?}", self.kind),
+            // FIXME: why two methods for this - can this be unified?
+            _ => panic!("Cannot use iter_v2() on index of type {:?}", self.kind),
         })
     }
 
@@ -122,18 +138,14 @@ impl File {
     }
 
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
-        let data = FileBuffer::open(path.as_ref()).with_context(|_| {
-            format!(
-                "Could not map pack index file at '{}'",
-                path.as_ref().display()
-            )
-        })?;
+        let data = FileBuffer::open(path.as_ref())
+            .map_err(|e| Error::MapIndexIo(e, path.as_ref().to_owned()))?;
         let idx_len = data.len();
         if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
-            bail!(
+            return Err(Error::Corrupt(format!(
                 "Pack index of size {} is too small for even an empty index",
                 idx_len
-            );
+            )));
         }
         let (kind, version, fan, size) = {
             let (kind, d) = {
@@ -151,7 +163,7 @@ impl File {
                     d = dr;
                     v = BigEndian::read_u32(vd);
                     if v != 2 {
-                        bail!("Unsupported index version: {}", v);
+                        return Err(Error::UnsupportedVersion(v));
                     }
                 }
                 (v, d)
