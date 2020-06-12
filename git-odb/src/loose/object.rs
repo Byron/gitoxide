@@ -111,7 +111,7 @@ pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error>
             },
             header_end + 1, // account for 0 byte
         )),
-        _ => return Err(Error::InvalidHeader("Expected '<type> <size>'")),
+        _ => Err(Error::InvalidHeader("Expected '<type> <size>'")),
     }
 }
 

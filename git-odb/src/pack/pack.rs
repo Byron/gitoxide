@@ -93,7 +93,7 @@ impl File {
         let kind = match BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]) {
             2 => Kind::V2,
             3 => Kind::V3,
-            v @ _ => return Err(Error::UnsupportedVersion(v)),
+            v => return Err(Error::UnsupportedVersion(v)),
         };
         ofs += N32_SIZE;
         let size = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);

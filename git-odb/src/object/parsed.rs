@@ -18,8 +18,8 @@ quick_error! {
     }
 }
 
-const PGP_SIGNATURE_BEGIN: &'static [u8] = b"-----BEGIN PGP SIGNATURE-----";
-const PGP_SIGNATURE_END: &'static [u8] = b"-----END PGP SIGNATURE-----";
+const PGP_SIGNATURE_BEGIN: &[u8] = b"-----BEGIN PGP SIGNATURE-----";
+const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub enum Object<'data> {
@@ -167,7 +167,7 @@ fn parse_message<'data>(
     mut lines: impl Iterator<Item = &'data [u8]>,
 ) -> Result<(Option<&'data [u8]>, Option<&'data [u8]>), Error> {
     Ok(match lines.next() {
-        Some(l) if l.len() == 0 => {
+        Some(l) if l.is_empty() => {
             let msg_begin = 0; // TODO: use nom to parse this or do it without needing nightly
             if msg_begin >= d.len() {
                 return Err(Error::ParseError(

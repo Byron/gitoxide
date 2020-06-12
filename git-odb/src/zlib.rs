@@ -65,7 +65,7 @@ impl Inflate {
                 TINFLStatus::HasMoreOutput => {
                     // just try again with fresh cursor
                 }
-                TINFLStatus::NeedsMoreInput | _ => unreachable!(
+                _ => unreachable!(
                     "This should all be covered by once, we expect a complete input buffer: {:?}",
                     status
                 ),

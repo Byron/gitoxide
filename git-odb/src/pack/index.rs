@@ -3,7 +3,7 @@ use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use std::{mem::size_of, path::Path};
 
-const V2_SIGNATURE: &'static [u8] = b"\xfftOc";
+const V2_SIGNATURE: &[u8] = b"\xfftOc";
 const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 const N32_SIZE: usize = size_of::<u32>();
 const N64_SIZE: usize = size_of::<u64>();
@@ -156,7 +156,7 @@ impl File {
             };
             let (version, d) = {
                 let (mut v, mut d) = (1, d);
-                if let &Kind::V2 = &kind {
+                if let Kind::V2 = kind {
                     let (vd, dr) = d.split_at(N32_SIZE);
                     d = dr;
                     v = BigEndian::read_u32(vd);
@@ -173,7 +173,7 @@ impl File {
             (kind, version, fan, size)
         };
         Ok(File {
-            data: data,
+            data,
             kind,
             size,
             version,

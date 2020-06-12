@@ -30,7 +30,7 @@ impl Db {
             .into_iter()
             .filter_map(|res| {
                 let mut is_valid_path = false;
-                let e = res.map_err(|e| Error::WalkDir(e)).map(|e| {
+                let e = res.map_err(Error::WalkDir).map(|e| {
                     let p = e.path();
                     let (c1, c2) = p
                         .components()

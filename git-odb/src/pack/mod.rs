@@ -1,5 +1,5 @@
 pub mod index;
 
-pub mod pack;
+mod pack;
 
 pub use self::pack::*;
