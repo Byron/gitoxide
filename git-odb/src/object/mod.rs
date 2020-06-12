@@ -1,7 +1,3 @@
-mod error;
-
-pub use error::Error;
-
 pub const SHA1_SIZE: usize = 20;
 
 /// A SHA1 identifying objects
@@ -19,6 +15,14 @@ pub enum Kind {
     Commit,
     Tree,
     Blob,
+}
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        InvalidObjectKind(kind: Vec<u8>) {
+            display("Unknown object kind: {:?}", std::str::from_utf8(&kind))
+        }
+    }
 }
 
 impl Kind {

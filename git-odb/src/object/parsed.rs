@@ -1,10 +1,22 @@
-use super::Error;
-use crate::{
-    object::{Id, Kind},
-    Sign, Time,
-};
+use crate::{object, Sign, Time};
 use hex::FromHex;
 use std::str;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        InvalidObjectKind(kind: Vec<u8>) {
+            display("Unknown object kind: {:?}", std::str::from_utf8(&kind))
+        }
+        ParseError(msg: &'static str, kind: Vec<u8>) {
+            display("{}: {:?}", msg, std::str::from_utf8(&kind))
+        }
+        ObjectKind(err: object::Error) {
+            from()
+            cause(err)
+        }
+    }
+}
 
 const PGP_SIGNATURE_BEGIN: &'static [u8] = b"-----BEGIN PGP SIGNATURE-----";
 const PGP_SIGNATURE_END: &'static [u8] = b"-----END PGP SIGNATURE-----";
@@ -15,9 +27,9 @@ pub enum Object<'data> {
 }
 
 impl<'data> Object<'data> {
-    pub fn kind(&self) -> Kind {
+    pub fn kind(&self) -> object::Kind {
         match self {
-            Object::Tag(_) => Kind::Tag,
+            Object::Tag(_) => object::Kind::Tag,
         }
     }
 }
@@ -33,7 +45,7 @@ pub struct Signature<'data> {
 pub struct Tag<'data> {
     pub target_raw: &'data [u8],
     pub name_raw: &'data [u8],
-    pub target_kind: Kind,
+    pub target_kind: object::Kind,
     pub message: Option<&'data [u8]>,
     pub pgp_signature: Option<&'data [u8]>,
     pub signature: Signature<'data>,
@@ -192,7 +204,7 @@ fn parse_message<'data>(
 }
 
 impl<'data> Tag<'data> {
-    pub fn target(&self) -> Id {
+    pub fn target(&self) -> object::Id {
         <[u8; 20]>::from_hex(self.target_raw).expect("prior validation")
     }
     pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
@@ -204,7 +216,7 @@ impl<'data> Tag<'data> {
                         f == b"object" && v.len() == 40 && <[u8; 20]>::from_hex(v).is_ok()
                     })?;
                     let kind = split2_at_space(kind, |f, _v| f == b"type")
-                        .and_then(|(_, kind)| Kind::from_bytes(kind))?;
+                        .and_then(|(_, kind)| object::Kind::from_bytes(kind).map_err(Into::into))?;
                     let (_, name) = split2_at_space(name, |f, _v| f == b"tag")?;
                     let (_, tagger) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
                     (target, kind, name, parse_signature(tagger)?)

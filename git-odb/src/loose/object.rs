@@ -1,17 +1,52 @@
 use crate::{
-    loose::Db,
-    loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
-    object::Id,
-    object::{parsed, Kind},
+    loose::{Db, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
+    object::{self, parsed},
     zlib,
 };
-use failure::{err_msg, Error, ResultExt};
 use hex::ToHex;
 use smallvec::SmallVec;
-use std::{fs::File, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf, str};
+use std::{
+    fs::File, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf, str, str::FromStr,
+};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Decompress(err: zlib::Error) {
+            display("decompression of object data failed")
+            from()
+            cause(err)
+        }
+        DecompressFile(err: zlib::Error, path: PathBuf) {
+            display("decompression of loose object at '{}' failed", path.display())
+            cause(err)
+        }
+        ParseTag(err: parsed::Error) {
+            display("Could not parse tag object")
+            from()
+            cause(err)
+        }
+        ObjectHeader(err: object::Error) {
+            display("Could not parse object kind")
+            from()
+            cause(err)
+        }
+        InvalidHeader(msg: &'static str) {
+            display("{}", msg)
+        }
+        ParseUsize(number: String, err: std::num::ParseIntError) {
+            display("Number '{}' could not be parsed", number)
+            cause(err)
+        }
+        Io(err: std::io::Error, action: &'static str, path: PathBuf) {
+            display("Could not {} file at '{}'", action, path.display())
+            cause(err)
+        }
+    }
+}
 
 pub struct Object {
-    pub kind: Kind,
+    pub kind: object::Kind,
     pub size: usize,
     decompressed_data: SmallVec<[u8; HEADER_READ_UNCOMPRESSED_BYTES]>,
     compressed_data: SmallVec<[u8; HEADER_READ_COMPRESSED_BYTES]>,
@@ -23,7 +58,7 @@ pub struct Object {
 impl Object {
     pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
         Ok(match self.kind {
-            Kind::Tag | Kind::Commit | Kind::Tree => {
+            object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                 if !self.is_decompressed {
                     let total_size = self.header_size + self.size;
                     let cap = self.decompressed_data.capacity();
@@ -46,29 +81,37 @@ impl Object {
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
                 match self.kind {
-                    Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
+                    object::Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
                     _ => unimplemented!(),
                 }
             }
-            Kind::Blob => unimplemented!(),
+            object::Kind::Blob => unimplemented!(),
         })
     }
 }
 
-pub fn parse_header(input: &[u8]) -> Result<(Kind, usize, usize), Error> {
+pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
     let header_end = input
         .iter()
         .position(|&b| b == 0)
-        .ok_or_else(|| err_msg("Invalid header, did not find 0 byte"))?;
+        .ok_or_else(|| Error::InvalidHeader("Did not find 0 byte in header"))?;
     let header = &input[..header_end];
     let mut split = header.split(|&b| b == b' ');
     match (split.next(), split.next()) {
         (Some(kind), Some(size)) => Ok((
-            Kind::from_bytes(kind)?,
-            str::from_utf8(size)?.parse()?,
+            object::Kind::from_bytes(kind)?,
+            {
+                let size = str::from_utf8(size).map_err(|_| {
+                    parsed::Error::ParseError(
+                        "Object size was not valid UTF-8 or ascii for that matter",
+                        size.to_owned(),
+                    )
+                })?;
+                usize::from_str(size).map_err(|e| Error::ParseUsize(size.to_owned(), e))?
+            },
             header_end + 1, // account for 0 byte
         )),
-        _ => bail!("expected '<type> <size>'"),
+        _ => return Err(Error::InvalidHeader("Expected '<type> <size>'")),
     }
 }
 
@@ -82,42 +125,40 @@ fn sha1_path(id: &[u8; 20], mut root: PathBuf) -> PathBuf {
 }
 
 impl Db {
-    pub fn find(&self, id: &Id) -> Result<Object, Error> {
+    pub fn find(&self, id: &object::Id) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut deflate = zlib::Inflate::default();
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
         let ((_status, _consumed_in, consumed_out), bytes_read, mut input_stream) = {
-            let mut istream = File::open(&path)?;
-            let bytes_read = istream.read(&mut compressed[..])?;
+            let mut istream =
+                File::open(&path).map_err(|e| Error::Io(e, "open", path.to_owned()))?;
+            let bytes_read = istream
+                .read(&mut compressed[..])
+                .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
             let mut out = Cursor::new(&mut decompressed[..]);
 
             (
                 deflate
                     .once(&compressed[..bytes_read], &mut out)
-                    .with_context(|_| {
-                        format!("ZIP inflating failed while reading '{}'", path.display())
-                    })?,
+                    .map_err(|e| Error::DecompressFile(e, path.to_owned()))?,
                 bytes_read,
                 istream,
             )
         };
 
-        let (kind, size, header_size) =
-            parse_header(&decompressed[..consumed_out]).with_context(|_| {
-                format!(
-                    "Invalid header layout at '{}', expected '<type> <size>'",
-                    path.display()
-                )
-            })?;
+        let (kind, size, header_size) = parse_header(&decompressed[..consumed_out])?;
 
         let decompressed = SmallVec::from_buf(decompressed);
         let mut compressed = SmallVec::from_buf(compressed);
 
         let path = match kind {
-            Kind::Tag | Kind::Commit | Kind::Tree => {
-                let fsize = input_stream.metadata()?.size();
+            object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
+                let fsize = input_stream
+                    .metadata()
+                    .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
+                    .size();
                 assert!(fsize <= ::std::usize::MAX as u64);
                 let fsize = fsize as usize;
                 if bytes_read == fsize {
@@ -131,11 +172,13 @@ impl Db {
                     unsafe {
                         compressed.set_len(fsize);
                     }
-                    input_stream.read_exact(&mut compressed[bytes_read..])?;
+                    input_stream
+                        .read_exact(&mut compressed[bytes_read..])
+                        .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
                     None
                 }
             }
-            Kind::Blob => Some(path), // we will open the file again when needed. Maybe we can load small sized objects anyway
+            object::Kind::Blob => Some(path), // we will open the file again when needed. Maybe we can load small sized objects anyway
         };
 
         Ok(Object {

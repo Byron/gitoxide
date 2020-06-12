@@ -1,6 +1,5 @@
 use crate::object;
 
-use super::Error;
 use hex::FromHex;
 use std::path::PathBuf;
 use walkdir::WalkDir;
@@ -9,7 +8,19 @@ pub struct Db {
     pub path: PathBuf,
 }
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        WalkDir(err: walkdir::Error) {
+            cause(err)
+        }
+    }
+}
+
 impl Db {
+    pub fn at(path: impl Into<PathBuf>) -> Db {
+        Db { path: path.into() }
+    }
     pub fn iter(&self) -> impl Iterator<Item = Result<object::Id, Error>> {
         use std::path::Component::Normal;
         WalkDir::new(&self.path)
@@ -49,8 +60,4 @@ impl Db {
                 }
             })
     }
-}
-
-pub fn at(path: impl Into<PathBuf>) -> Db {
-    Db { path: path.into() }
 }
