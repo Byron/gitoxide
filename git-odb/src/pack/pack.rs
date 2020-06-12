@@ -1,8 +1,22 @@
-use failure::{Error, ResultExt};
-
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use std::{mem::size_of, path::Path};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Io(err: std::io::Error, path: std::path::PathBuf) {
+            display("Could not open pack file at '{}'", path.display())
+            cause(err)
+        }
+        Corrupt(msg: String) {
+            display("{}", msg)
+        }
+        UnsupportedVersion(version: u32) {
+            display("Unsupported pack version: {}", version)
+        }
+    }
+}
 
 use crate::object::SHA1_SIZE;
 
@@ -62,25 +76,24 @@ impl File {
     }
 
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
-        let data = FileBuffer::open(path.as_ref()).with_context(|_| {
-            format!("Could not map pack file at '{}'", path.as_ref().display())
-        })?;
+        let data =
+            FileBuffer::open(path.as_ref()).map_err(|e| Error::Io(e, path.as_ref().to_owned()))?;
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + SHA1_SIZE {
-            bail!(
+            return Err(Error::Corrupt(format!(
                 "Pack file of size {} is too small for even an empty pack",
                 pack_len
-            );
+            )));
         }
         let mut ofs = 0;
         if &data[ofs..ofs + N32_SIZE] != b"PACK" {
-            bail!("Pack file type not recognized")
+            return Err(Error::Corrupt("Pack file type not recognized".into()));
         }
         ofs += N32_SIZE;
         let kind = match BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]) {
             2 => Kind::V2,
             3 => Kind::V3,
-            v @ _ => bail!("Unknown pack version: {}", v),
+            v @ _ => return Err(Error::UnsupportedVersion(v)),
         };
         ofs += N32_SIZE;
         let size = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);

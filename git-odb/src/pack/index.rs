@@ -15,8 +15,8 @@ const MAX_N31: u32 = u32::max_value() >> 1;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        MapIndexIo(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not map pack index file at '{}'", path.display())
+        Io(err: std::io::Error, path: std::path::PathBuf) {
+            display("Could not open pack index file at '{}'", path.display())
             cause(err)
         }
         Corrupt(msg: String) {
@@ -73,7 +73,7 @@ impl File {
         object::id_from_20_bytes(&self.data[from..from + SHA1_SIZE])
     }
 
-    pub fn iter_v1<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
+    fn iter_v1<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
         Ok(match self.kind {
             Kind::V1 => self.data[V1_OFFSET..]
                 .chunks(N32_SIZE + SHA1_SIZE)
@@ -86,8 +86,7 @@ impl File {
                         crc32: None,
                     }
                 }),
-            // FIXME: why two methods for this - can this be unified?
-            _ => panic!("Cannot use iter_v1() on index of type {:?}", self.kind),
+            _ => unreachable!("Cannot use iter_v1() on index of type {:?}", self.kind),
         })
     }
 
@@ -103,7 +102,7 @@ impl File {
         self.offset_pack_offset_v2() + self.size as usize * N32_SIZE
     }
 
-    pub fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
+    fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
         let pack64_offset = self.offset_pack_offset64_v2();
         Ok(match self.kind {
             Kind::V2 => izip!(
@@ -125,8 +124,7 @@ impl File {
                 },
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
-            // FIXME: why two methods for this - can this be unified?
-            _ => panic!("Cannot use iter_v2() on index of type {:?}", self.kind),
+            _ => unreachable!("Cannot use iter_v2() on index of type {:?}", self.kind),
         })
     }
 
@@ -138,8 +136,8 @@ impl File {
     }
 
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
-        let data = FileBuffer::open(path.as_ref())
-            .map_err(|e| Error::MapIndexIo(e, path.as_ref().to_owned()))?;
+        let data =
+            FileBuffer::open(path.as_ref()).map_err(|e| Error::Io(e, path.as_ref().to_owned()))?;
         let idx_len = data.len();
         if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
             return Err(Error::Corrupt(format!(

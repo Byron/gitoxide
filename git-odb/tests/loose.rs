@@ -17,7 +17,7 @@ pub fn fixture_bytes(path: &str) -> Vec<u8> {
 }
 
 fn ldb() -> Db {
-    odb::loose::at(fixture("objects"))
+    odb::loose::Db::at(fixture("objects"))
 }
 
 #[test]

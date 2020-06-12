@@ -1,21 +1,21 @@
-#[macro_use]
-extern crate failure;
+use anyhow::{anyhow, Context, Result};
 extern crate git_odb as odb;
 
-use failure::{Error, ResultExt};
 use std::{
     env,
     io::{stdout, Write},
 };
 
-fn run() -> Result<(), Error> {
+fn run() -> Result<()> {
     let mut args = env::args().skip(1);
     let (index, pack) = match (args.next(), args.next()) {
         (Some(index), Some(pack)) => (index, pack),
-        _ => bail!(
-            "USAGE: {} <index-file> <pack-file>",
-            env::current_exe()?.display()
-        ),
+        _ => {
+            return Err(anyhow!(
+                "USAGE: {} <index-file> <pack-file>",
+                env::current_exe()?.display()
+            ))
+        }
     };
     let index = odb::pack::index::File::at(index)?;
     let pack = odb::pack::File::at(pack)?;
@@ -44,8 +44,6 @@ fn run() -> Result<(), Error> {
     .map_err(Into::into)
 }
 
-fn main() -> Result<(), Error> {
-    run()
-        .with_context(|_| "Failed to count git objects")
-        .map_err(Into::into)
+fn main() -> Result<()> {
+    run().with_context(|| "Failed to count git objects")
 }

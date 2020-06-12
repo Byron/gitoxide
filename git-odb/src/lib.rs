@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate failure;
-#[macro_use]
 extern crate quick_error;
 #[macro_use]
 extern crate itertools;
