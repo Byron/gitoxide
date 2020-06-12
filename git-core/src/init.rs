@@ -1,6 +1,5 @@
-use failure::{Error, ResultExt};
 use std::{
-    fs::{create_dir, OpenOptions},
+    fs::{self, OpenOptions},
     io::Write,
     path::Path,
     path::PathBuf,
@@ -10,7 +9,18 @@ quick_error! {
     #[derive(Debug)]
     pub enum InitError {
         IoOpen(err: std::io::Error, path: PathBuf) {
-            display("Could not open file at {:#?}", path.display())
+            display("Could not open file at '{}'", path.display())
+            cause(err)
+        }
+        IoWrite(err: std::io::Error, path: PathBuf) {
+            display("Could not write file at '{}'", path.display())
+            cause(err)
+        }
+        DirectoryExists(path: PathBuf) {
+            display("Refusing to initialize the existing '{}' directory", path.display())
+        }
+        CreateDirectory(err: std::io::Error, path: PathBuf) {
+            display("Cold not create directory at '{}'", path.display())
             cause(err)
         }
     }
@@ -59,7 +69,7 @@ impl<'a> PathCursor<'a> {
 }
 
 impl<'a> NewDir<'a> {
-    fn at(self, component: &str) -> Result<Self, Error> {
+    fn at(self, component: &str) -> Result<Self, InitError> {
         self.0.push(component);
         create_dir(&self.0)?;
         Ok(self)
@@ -81,24 +91,25 @@ impl<'a> Drop for PathCursor<'a> {
     }
 }
 
-fn write_file(data: &[u8], path: &Path) -> Result<(), Error> {
+fn write_file(data: &[u8], path: &Path) -> Result<(), InitError> {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .append(false)
-        .open(path)?;
+        .open(path)
+        .map_err(|e| InitError::IoOpen(e, path.to_owned()))?;
     file.write_all(data)
-        .with_context(|_| format!("Could not initialize file at '{}'", path.display()))
-        .map_err(Into::into)
+        .map_err(|e| InitError::IoWrite(e, path.to_owned()))
 }
 
-pub fn init() -> Result<(), Error> {
+fn create_dir(p: &Path) -> Result<(), InitError> {
+    fs::create_dir(p).map_err(|e| InitError::CreateDirectory(e, p.to_owned()))
+}
+
+pub fn init() -> Result<(), InitError> {
     let mut cursor = PathBuf::from(GIT_DIR_NAME);
     if cursor.is_dir() {
-        bail!(
-            "Refusing to initialize the existing '{}' directory",
-            cursor.display()
-        )
+        return Err(InitError::DirectoryExists(cursor));
     }
     create_dir(&cursor)?;
 

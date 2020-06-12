@@ -137,7 +137,7 @@ fn parse_message<'data>(
             }
             let mut msg_end = d.len();
             let mut pgp_signature = None;
-            if let Some(pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN)) {
+            if let Some(_pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN)) {
                 match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
                     None => bail!("Didn't find end of signature marker"),
                     Some(_) => {
