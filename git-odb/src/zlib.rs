@@ -1,4 +1,3 @@
-use failure::Error;
 use miniz_oxide::inflate::core::DecompressorOxide;
 use miniz_oxide::inflate::{
     core::{
@@ -11,6 +10,20 @@ use miniz_oxide::inflate::{
     TINFLStatus,
 };
 use std::io::{self, Cursor};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        WriteInflated(err: std::io::Error) {
+            display("Could not write all bytes when decompressing content")
+            from()
+            cause(err)
+        }
+        Inflate(status: miniz_oxide::inflate::TINFLStatus) {
+            display("Could not decode zip stream, status was '{:?}'", status)
+        }
+    }
+}
 
 pub struct Inflate {
     inner: DecompressorOxide,
@@ -77,7 +90,7 @@ impl Inflate {
         use miniz_oxide::inflate::TINFLStatus::*;
         match status {
             Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch => {
-                bail!("Could not decode zip stream, status was '{:?}'", status)
+                return Err(Error::Inflate(status))
             }
             HasMoreOutput | NeedsMoreInput => {}
             Done => {

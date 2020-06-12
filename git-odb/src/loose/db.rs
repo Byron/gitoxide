@@ -1,6 +1,6 @@
-use crate::object::Id;
+use crate::object;
 
-use failure::Error;
+use super::Error;
 use hex::FromHex;
 use std::path::PathBuf;
 use walkdir::WalkDir;
@@ -10,16 +10,16 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn iter(&self) -> impl Iterator<Item = Result<Id, Error>> {
+    pub fn iter(&self) -> impl Iterator<Item = Result<object::Id, Error>> {
         use std::path::Component::Normal;
         WalkDir::new(&self.path)
             .min_depth(2)
             .max_depth(3)
             .follow_links(false)
             .into_iter()
-            .filter_map(|e| {
+            .filter_map(|res| {
                 let mut is_valid_path = false;
-                let e = e.map_err(Error::from).map(|e| {
+                let e = res.map_err(|e| Error::WalkDir(e)).map(|e| {
                     let p = e.path();
                     let (c1, c2) = p
                         .components()

@@ -1,13 +1,7 @@
 #[macro_use]
 extern crate failure;
-// #[macro_use]
-// extern crate quick_error;
-extern crate byteorder;
-extern crate filebuffer;
-extern crate hex;
-extern crate miniz_oxide;
-extern crate smallvec;
-extern crate walkdir;
+#[macro_use]
+extern crate quick_error;
 #[macro_use]
 extern crate itertools;
 

@@ -1,8 +1,8 @@
+use super::Error;
 use crate::{
     object::{Id, Kind},
     Sign, Time,
 };
-use failure::{err_msg, Error, ResultExt};
 use hex::FromHex;
 use std::str;
 
@@ -41,27 +41,35 @@ pub struct Tag<'data> {
 
 fn split2_at_space(
     d: &[u8],
-    v: impl FnOnce(&[u8], &[u8]) -> bool,
+    is_valid: impl FnOnce(&[u8], &[u8]) -> bool,
 ) -> Result<(&[u8], &[u8]), Error> {
     let mut t = d.splitn(2, |&b| b == b' ');
     Ok(match (t.next(), t.next()) {
         (Some(t1), Some(t2)) => {
-            if !v(t1, t2) {
-                bail!("Tokens in {:?} are invalid", str::from_utf8(d))
+            if !is_valid(t1, t2) {
+                return Err(Error::ParseError(
+                    "Invalid space separated tokens - validation failed",
+                    d.to_owned(),
+                ));
             }
             (t1, t2)
         }
-        _ => bail!(
-            "didnt find two tokens separated by space in {:?}'",
-            str::from_utf8(d)
-        ),
+        _ => {
+            return Err(Error::ParseError(
+                "Invalid tokens - expected 2 when split at space",
+                d.to_owned(),
+            ))
+        }
     })
 }
 
 fn parse_timezone_offset(d: &str) -> Result<(i32, Sign), Error> {
     let db = d.as_bytes();
     if d.len() < 5 || !(db[0] == b'+' || db[0] == b'-') {
-        bail!("Invalid timezone offset: '{}'", d);
+        return Err(Error::ParseError(
+            "invalid timezone offset",
+            d.as_bytes().to_owned(),
+        ));
     }
     let sign = if db[0] == b'-' {
         Sign::Minus
@@ -70,10 +78,12 @@ fn parse_timezone_offset(d: &str) -> Result<(i32, Sign), Error> {
     };
     let hours = str::from_utf8(&db[..3])
         .expect("valid utf8")
-        .parse::<i32>()?;
+        .parse::<i32>()
+        .map_err(|_| Error::ParseError("invalid 'hours' string", db[..3].to_owned()))?;
     let minutes = str::from_utf8(&db[3..])
         .expect("valid utf8")
-        .parse::<i32>()?;
+        .parse::<i32>()
+        .map_err(|_| Error::ParseError("invalid 'minutes' string", db[3..].to_owned()))?;
     Ok((hours * 3600 + minutes * 60, sign))
 }
 
@@ -82,10 +92,18 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
     let email_begin = d
         .iter()
         .position(|&b| b == b'<')
-        .ok_or_else(|| err_msg("Could not find beginning of email marked by '<'"))
+        .ok_or_else(|| {
+            Error::ParseError(
+                "Could not find beginning of email marked by '<'",
+                d.to_owned(),
+            )
+        })
         .and_then(|pos| {
             if pos == 0 {
-                Err(err_msg("Email found in place of author name"))
+                Err(Error::ParseError(
+                    "Email found in place of author name",
+                    d.to_owned(),
+                ))
             } else {
                 Ok(pos)
             }
@@ -94,31 +112,38 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
         + d.iter()
             .skip(email_begin)
             .position(|&b| b == b'>')
-            .ok_or_else(|| err_msg("Could not find end of email marked by '>'"))
+            .ok_or_else(|| {
+                Error::ParseError("Could not find end of email marked by '>'", d.to_owned())
+            })
             .and_then(|pos| {
                 if pos >= d.len() - 1 - ONE_SPACE {
-                    Err(err_msg("There is no time after email"))
+                    Err(Error::ParseError(
+                        "There is no time after email",
+                        d.to_owned(),
+                    ))
                 } else {
                     Ok(pos)
                 }
             })?;
     let (time_in_seconds, tzofz) = split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| true)
-        .and_then(|(t1, t2)| {
-            str::from_utf8(t1)
-                .map_err(Into::into)
-                .and_then(|t1| str::from_utf8(t2).map_err(Into::into).map(|t2| (t1, t2)))
-        })
-        .with_context(|_| "Could not convert time to utf8, even though it should be ascii")?;
-    let (offset, sign) = parse_timezone_offset(tzofz)
-        .with_context(|_| format!("Timezone parsing failed for '{}'", tzofz))?;
+        .map(|(t1, t2)| {
+            (
+                str::from_utf8(t1).expect("utf-8 encoded time in seconds"),
+                str::from_utf8(t2).expect("utf=8 encoded timezone offset"),
+            )
+        })?;
+    let (offset, sign) = parse_timezone_offset(tzofz)?;
 
     Ok(Signature {
         name: &d[..email_begin - ONE_SPACE],
         email: &d[email_begin + 1..email_end],
         time: Time {
-            time: time_in_seconds
-                .parse::<u32>()
-                .with_context(|_| format!("Could not parse '{}' to seconds", time_in_seconds))?,
+            time: time_in_seconds.parse::<u32>().map_err(|_| {
+                Error::ParseError(
+                    "Could parse to seconds",
+                    time_in_seconds.as_bytes().to_owned(),
+                )
+            })?,
             offset,
             sign,
         },
@@ -133,13 +158,21 @@ fn parse_message<'data>(
         Some(l) if l.len() == 0 => {
             let msg_begin = 0; // TODO: use nom to parse this or do it without needing nightly
             if msg_begin >= d.len() {
-                bail!("Message separator was not followed by message")
+                return Err(Error::ParseError(
+                    "Message separator was not followed by message",
+                    d.to_owned(),
+                ));
             }
             let mut msg_end = d.len();
             let mut pgp_signature = None;
             if let Some(_pgp_begin_line) = lines.find(|l| l.starts_with(PGP_SIGNATURE_BEGIN)) {
                 match lines.find(|l| l.starts_with(PGP_SIGNATURE_END)) {
-                    None => bail!("Didn't find end of signature marker"),
+                    None => {
+                        return Err(Error::ParseError(
+                            "Didn't find end of signature marker",
+                            d.to_owned(),
+                        ))
+                    }
                     Some(_) => {
                         msg_end = d.len(); // TODO: use nom to parse this or do it without needing nightly
                         pgp_signature = Some(&d[msg_end..])
@@ -148,10 +181,12 @@ fn parse_message<'data>(
             }
             (Some(&d[msg_begin..msg_end]), pgp_signature)
         }
-        Some(l) => bail!(
-            "Expected empty newline to separate message, got {:?}",
-            str::from_utf8(l),
-        ),
+        Some(l) => {
+            return Err(Error::ParseError(
+                "Expected empty newline to separate message",
+                l.to_owned(),
+            ))
+        }
         None => (None, None),
     })
 }
@@ -174,7 +209,12 @@ impl<'data> Tag<'data> {
                     let (_, tagger) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
                     (target, kind, name, parse_signature(tagger)?)
                 }
-                _ => bail!("Expected four lines: target, type, tag and tagger"),
+                _ => {
+                    return Err(Error::ParseError(
+                        "Expected four lines: target, type, tag and tagger",
+                        d.to_owned(),
+                    ))
+                }
             };
 
         let (message, pgp_signature) = parse_message(d, &mut lines)?;

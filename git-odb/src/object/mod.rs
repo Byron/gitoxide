@@ -1,6 +1,6 @@
-use std::str;
+mod error;
 
-use failure::Error;
+pub use error::Error;
 
 pub const SHA1_SIZE: usize = 20;
 
@@ -28,7 +28,7 @@ impl Kind {
             b"commit" => Kind::Commit,
             b"tree" => Kind::Tree,
             b"blob" => Kind::Blob,
-            _ => bail!("Unknown object kind: {:?}", str::from_utf8(s)),
+            _ => return Err(Error::InvalidObjectKind(s.to_owned())),
         })
     }
 }
