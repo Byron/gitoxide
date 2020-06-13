@@ -74,12 +74,15 @@ The CLI uses various libraries to implement
  * **be the best performing implementation**
    * use Rust's type system to optimize for work not done without being hard to use
    * use multiple cores when available
+   * make it easy to control concurrency and parallelism
  * **assure on-disk consistency**
    * assure reads never interfere with concurrent writes
    * assure multiple concurrent writes don't cause trouble
  * **take shortcuts, but not in quality**
-   * binaries my use `anyhow::Error` exhaustively, knowing that these errors are solely user-facing.
-   * internationalization is nothing we are concerned with right now
+   * binaries may use `anyhow::Error` exhaustively, knowing these errors are solely user-facing.
+   * libraries use light-weight custom errors implemented using `quick-error`.
+   * internationalization is nothing we are concerned with right now.
+   * IO errors due to insufficient amount of open file handles don't always lead to operation failure
 
 ## Non-Goals
 
@@ -89,8 +92,7 @@ The CLI uses various libraries to implement
  * **be incompatible to git**
    * the on-disk format must remain compatible, and we will never contend with it.
  * **use async IO everywhere**
-   * it's too young and makes things so much more difficult right now.
-   * (it's considered on option as upgrade when async is stabilized)
+   * but don't tie it to `async-std` or `tokio`
 
 ## Roadmap to Future
 
@@ -110,13 +112,13 @@ Provide a CLI to for the most basic user journey:
  * **test-first development**
    * protect against regression and make implementing features easy
    * user docker to test more elaborate user interactions
-   * keep it practical, knowing that the Rust compiler already has your back
+   * keep it practical, knowing the Rust compiler already has your back
      for the mundane things, like unhappy code paths.
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
      appropriate
    * *use libgit2* test fixtures and cases where appropriate
  * **safety first**
-   * handle all errors, never unwrap
+   * handle all errors, never unwrap.
    * provide an error chain and make it easy to understand what went wrong.
  * **strive for an MVP and version 1.0 fast...**
    * ...even if that includes only the most common usecases.
