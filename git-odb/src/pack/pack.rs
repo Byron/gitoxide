@@ -46,7 +46,7 @@ impl File {
     pub fn kind(&self) -> Kind {
         self.kind.clone()
     }
-    pub fn size(&self) -> u32 {
+    pub fn num_objects(&self) -> u32 {
         self.num_objects
     }
 
@@ -98,7 +98,11 @@ impl File {
         ofs += N32_SIZE;
         let num_objects = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);
 
-        Ok(File { data, kind, num_objects })
+        Ok(File {
+            data,
+            kind,
+            num_objects,
+        })
     }
 }
 

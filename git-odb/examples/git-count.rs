@@ -22,6 +22,22 @@ fn run() -> Result<()> {
     use odb::pack::parsed::Object::*;
 
     let (mut deltas, mut commits, mut trees, mut blobs, mut tags) = (0, 0, 0, 0, 0);
+    writeln!(
+        stdout(),
+        "pack: kind = {:?}, num_objects = {}",
+        pack.kind(),
+        pack.num_objects()
+    )?;
+    writeln!(
+        stdout(),
+        "index: kind = {:?}, num_objects = {}, version = {}, checksum_of_index = {}, checksum_of_pack = {}",
+        index.kind(),
+        index.num_objects(),
+        index.version(),
+        hex::encode(index.checksum_of_index()),
+        hex::encode(index.checksum_of_pack()),
+    )?;
+
     for entry in index.iter() {
         match pack.entry(entry.offset).object {
             Commit => commits += 1,
@@ -34,14 +50,15 @@ fn run() -> Result<()> {
     }
     writeln!(
         stdout(),
-        "commits: {}, trees: {}, blobs: {}, tags: {}, deltas: {}",
+        "commits: {}, trees: {}, blobs: {}, tags: {}, deltas: {} == {}",
         commits,
         trees,
         blobs,
         tags,
         deltas,
-    )
-    .map_err(Into::into)
+        commits + trees + blobs + tags + deltas
+    )?;
+    Ok(())
 }
 
 fn main() -> Result<()> {

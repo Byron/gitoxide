@@ -24,10 +24,10 @@ fn pack_lookup() {
         let pack = pack::File::at(&fixture(pack_path)).unwrap();
 
         assert_eq!(pack.kind(), pack::Kind::V2);
-        assert_eq!(pack.size(), idx.size());
-        for entry in idx.iter() {
-            let pack_entry = pack.entry(entry.offset);
-            assert_ne!(pack_entry.offset, entry.offset);
+        assert_eq!(pack.num_objects(), idx.num_objects());
+        for idx_entry in idx.iter() {
+            let pack_entry = pack.entry(idx_entry.offset);
+            assert_ne!(pack_entry.offset, idx_entry.offset);
         }
     }
 }
@@ -55,7 +55,7 @@ fn index_iter() {
         let idx = index::File::at(&fixture(path)).unwrap();
         assert_eq!(idx.kind(), *kind);
         assert_eq!(idx.version(), *version);
-        assert_eq!(idx.size(), *num_objects);
+        assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(idx.checksum_of_index(), bin(index_checksum));
         assert_eq!(idx.checksum_of_pack(), bin(pack_checksum));
         assert_eq!(idx.iter().count(), *num_objects as usize);

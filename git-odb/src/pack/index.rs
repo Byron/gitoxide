@@ -8,8 +8,8 @@ const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 const N32_SIZE: usize = size_of::<u32>();
 const N64_SIZE: usize = size_of::<u64>();
 const FAN_LEN: usize = 256;
-const V1_OFFSET: usize = FAN_LEN * N32_SIZE;
-const V2_SHA1_OFFSET: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
+const V1_HEADER_SIZE: usize = FAN_LEN * N32_SIZE;
+const V2_HEADER_SIZE: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
 const MAX_N31: u32 = u32::max_value() >> 1;
 
 quick_error! {
@@ -51,7 +51,7 @@ pub struct File {
     data: FileBuffer,
     kind: Kind,
     version: u32,
-    size: u32,
+    num_objects: u32,
     _fan: [u32; FAN_LEN],
 }
 
@@ -59,8 +59,8 @@ impl File {
     pub fn kind(&self) -> Kind {
         self.kind.clone()
     }
-    pub fn size(&self) -> u32 {
-        self.size
+    pub fn num_objects(&self) -> u32 {
+        self.num_objects
     }
     pub fn version(&self) -> u32 {
         self.version
@@ -73,11 +73,23 @@ impl File {
         object::id_from_20_bytes(&self.data[from..from + SHA1_SIZE])
     }
 
+    fn offset_crc32_v2(&self) -> usize {
+        V2_HEADER_SIZE + self.num_objects as usize * SHA1_SIZE
+    }
+
+    fn offset_pack_offset_v2(&self) -> usize {
+        self.offset_crc32_v2() + self.num_objects as usize * N32_SIZE
+    }
+
+    fn offset_pack_offset64_v2(&self) -> usize {
+        self.offset_pack_offset_v2() + self.num_objects as usize * N32_SIZE
+    }
+
     fn iter_v1<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
         Ok(match self.kind {
-            Kind::V1 => self.data[V1_OFFSET..]
+            Kind::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
-                .take(self.size as usize)
+                .take(self.num_objects as usize)
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
@@ -90,33 +102,21 @@ impl File {
         })
     }
 
-    fn offset_crc32_v2(&self) -> usize {
-        V2_SHA1_OFFSET + self.size as usize * SHA1_SIZE
-    }
-
-    fn offset_pack_offset_v2(&self) -> usize {
-        self.offset_crc32_v2() + self.size as usize * N32_SIZE
-    }
-
-    fn offset_pack_offset64_v2(&self) -> usize {
-        self.offset_pack_offset_v2() + self.size as usize * N32_SIZE
-    }
-
     fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
         let pack64_offset = self.offset_pack_offset64_v2();
         Ok(match self.kind {
             Kind::V2 => izip!(
-                self.data[V2_SHA1_OFFSET..].chunks(SHA1_SIZE),
+                self.data[V2_HEADER_SIZE..].chunks(SHA1_SIZE),
                 self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
                 self.data[self.offset_pack_offset_v2()..].chunks(N32_SIZE)
             )
-            .take(self.size as usize)
+            .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
                 oid: object::id_from_20_bytes(oid),
                 offset: {
                     let ofs32 = BigEndian::read_u32(ofs32);
                     if ofs32 > MAX_N31 {
-                        let from = pack64_offset + (ofs32 as usize >> 1) * N64_SIZE;
+                        let from = pack64_offset + (ofs32 ^ 0b10000000_00000000_00000000_00000000) as usize * N64_SIZE;
                         BigEndian::read_u64(&self.data[from..from + N64_SIZE])
                     } else {
                         ofs32 as u64
@@ -145,7 +145,7 @@ impl File {
                 idx_len
             )));
         }
-        let (kind, version, fan, size) = {
+        let (kind, version, fan, num_objects) = {
             let (kind, d) = {
                 let (sig, d) = data.split_at(V2_SIGNATURE.len());
                 if sig == V2_SIGNATURE {
@@ -168,14 +168,14 @@ impl File {
             };
             let (fan, bytes_read) = read_fan(d);
             let (_, _d) = d.split_at(bytes_read);
-            let size = fan[FAN_LEN - 1];
+            let num_objects = fan[FAN_LEN - 1];
 
-            (kind, version, fan, size)
+            (kind, version, fan, num_objects)
         };
         Ok(File {
             data,
             kind,
-            size,
+            num_objects,
             version,
             _fan: fan,
         })

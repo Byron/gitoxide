@@ -46,6 +46,7 @@ The CLI uses various libraries to implement
     * [ ] decode
       * [ ] full objects
       * [ ] deltified objects
+    * [ ] Multi-Pack index file (MIDX)
     * [ ] create new packs
 * **git-transport**
   * [ ] via ssh
