@@ -39,7 +39,7 @@ pub struct Entry {
 pub struct File {
     data: FileBuffer,
     kind: Kind,
-    size: u32,
+    num_objects: u32,
 }
 
 impl File {
@@ -47,7 +47,7 @@ impl File {
         self.kind.clone()
     }
     pub fn size(&self) -> u32 {
-        self.size
+        self.num_objects
     }
 
     fn assure_v2(&self) {
@@ -86,7 +86,7 @@ impl File {
             )));
         }
         let mut ofs = 0;
-        if &data[ofs..ofs + N32_SIZE] != b"PACK" {
+        if &data[ofs..ofs + b"PACK".len()] != b"PACK" {
             return Err(Error::Corrupt("Pack file type not recognized".into()));
         }
         ofs += N32_SIZE;
@@ -96,9 +96,9 @@ impl File {
             v => return Err(Error::UnsupportedVersion(v)),
         };
         ofs += N32_SIZE;
-        let size = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);
+        let num_objects = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);
 
-        Ok(File { data, kind, size })
+        Ok(File { data, kind, num_objects })
     }
 }
 
@@ -165,16 +165,16 @@ pub mod parsed {
             let object = match type_id {
                 OFS_DELTA => {
                     let (offset, leb_bytes) = leb64decode(d, None, None);
-                    let o = OfsDelta { offset };
+                    let delta = OfsDelta { offset };
                     consumed += leb_bytes;
-                    o
+                    delta
                 }
                 REF_DELTA => {
-                    let o = RefDelta {
+                    let delta = RefDelta {
                         oid: object::id_from_20_bytes(&d[..SHA1_SIZE]),
                     };
                     consumed += SHA1_SIZE;
-                    o
+                    delta
                 }
                 BLOB => Blob,
                 TREE => Tree,
