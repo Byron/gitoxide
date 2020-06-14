@@ -168,14 +168,14 @@ pub mod parsed {
             use self::Object::*;
             let object = match type_id {
                 OFS_DELTA => {
-                    let (offset, leb_bytes) = leb64decode(d, None, None);
+                    let (offset, leb_bytes) = leb64decode(&d[consumed..], None, None);
                     let delta = OfsDelta { offset };
                     consumed += leb_bytes;
                     delta
                 }
                 REF_DELTA => {
                     let delta = RefDelta {
-                        oid: object::id_from_20_bytes(&d[..SHA1_SIZE]),
+                        oid: object::id_from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
                     };
                     consumed += SHA1_SIZE;
                     delta
