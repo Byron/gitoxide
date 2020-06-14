@@ -10,7 +10,7 @@ const N64_SIZE: usize = size_of::<u64>();
 const FAN_LEN: usize = 256;
 const V1_HEADER_SIZE: usize = FAN_LEN * N32_SIZE;
 const V2_HEADER_SIZE: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
-const MAX_N31: u32 = u32::max_value() >> 1;
+const N32_HIGH_BIT: u32 = 1 << 31;
 
 quick_error! {
     #[derive(Debug)]
@@ -115,8 +115,8 @@ impl File {
                 oid: object::id_from_20_bytes(oid),
                 offset: {
                     let ofs32 = BigEndian::read_u32(ofs32);
-                    if ofs32 > MAX_N31 {
-                        let from = pack64_offset + (ofs32 ^ 0b10000000_00000000_00000000_00000000) as usize * N64_SIZE;
+                    if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
+                        let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;
                         BigEndian::read_u64(&self.data[from..from + N64_SIZE])
                     } else {
                         ofs32 as u64
