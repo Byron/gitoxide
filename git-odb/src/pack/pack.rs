@@ -146,7 +146,7 @@ pub mod parsed {
             result |= ((b & 0b0111_1111) as u64) << shift;
             shift += 7;
             if b & 0b1000_0000 == 0 {
-                assert!(
+                debug_assert!(
                     shift + 1 - b.leading_zeros() as usize <= mem::size_of::<u64>() * 8,
                     "overflow, expected {} byte(s), got {} bits",
                     mem::size_of::<u64>(),

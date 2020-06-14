@@ -85,7 +85,7 @@ impl File {
         self.offset_pack_offset_v2() + self.num_objects as usize * N32_SIZE
     }
 
-    fn iter_v1<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
+    pub fn iter_v1<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
         Ok(match self.kind {
             Kind::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
@@ -102,7 +102,7 @@ impl File {
         })
     }
 
-    fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
+    pub fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
         let pack64_offset = self.offset_pack_offset64_v2();
         Ok(match self.kind {
             Kind::V2 => izip!(

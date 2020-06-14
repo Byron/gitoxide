@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
-extern crate git_odb as odb;
+use git_odb as odb;
+use rayon::prelude::*;
 
 use std::{
     env,
@@ -21,7 +22,6 @@ fn run() -> Result<()> {
     let pack = odb::pack::File::at(pack)?;
     use odb::pack::parsed::Object::*;
 
-    let (mut deltas, mut commits, mut trees, mut blobs, mut tags) = (0, 0, 0, 0, 0);
     writeln!(
         stdout(),
         "pack: kind = {:?}, num_objects = {}",
@@ -38,16 +38,35 @@ fn run() -> Result<()> {
         hex::encode(index.checksum_of_pack()),
     )?;
 
-    for entry in index.iter() {
-        match pack.entry(entry.offset).object {
-            Commit => commits += 1,
-            Tag => tags += 1,
-            Tree => trees += 1,
-            Blob => blobs += 1,
-            OfsDelta { .. } => deltas += 1,
-            RefDelta { .. } => deltas += 1,
-        }
-    }
+    let (deltas, commits, trees, blobs, tags) = index
+        .iter()
+        .collect::<Vec<_>>()
+        .par_iter()
+        .fold(
+            || (0, 0, 0, 0, 0),
+            |(mut deltas, mut commits, mut trees, mut blobs, mut tags): (
+                u32,
+                u32,
+                u32,
+                u32,
+                u32,
+            ),
+             entry| {
+                match pack.entry(entry.offset).object {
+                    Commit => commits += 1,
+                    Tag => tags += 1,
+                    Tree => trees += 1,
+                    Blob => blobs += 1,
+                    OfsDelta { .. } => deltas += 1,
+                    RefDelta { .. } => deltas += 1,
+                };
+                (deltas, commits, trees, blobs, tags)
+            },
+        )
+        .reduce(
+            || (0, 0, 0, 0, 0),
+            |l, r| (l.0 + r.0, l.1 + r.1, l.2 + r.2, l.3 + r.3, l.4 + r.4),
+        );
     writeln!(
         stdout(),
         "commits: {}, trees: {}, blobs: {}, tags: {}, deltas: {} == {}",
