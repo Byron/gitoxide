@@ -130,8 +130,8 @@ impl<'data> Tag<'data> {
                     let kind = split2_at_space(kind, |f, _v| f == b"type")
                         .and_then(|(_, kind)| object::Kind::from_bytes(kind).map_err(Into::into))?;
                     let (_, name) = split2_at_space(name, |f, _v| f == b"tag")?;
-                    let (_, tagger) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
-                    (target.as_bstr(), kind, name.as_bstr(), parse_signature(tagger)?)
+                    let (_, rest) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
+                    (target.as_bstr(), kind, name.as_bstr(), parse_signature(rest)?)
                 }
                 _ => {
                     return Err(Error::ParseError(

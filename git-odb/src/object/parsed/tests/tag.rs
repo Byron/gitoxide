@@ -1,27 +1,21 @@
-use super::*;
-use crate::{
-    object::{parsed, Kind},
-    Sign,
-};
+use super::fixture_bytes;
 use bstr::ByteSlice;
-use hex::FromHex;
-use std::path::PathBuf;
-
-pub fn bin(hex: &str) -> [u8; 20] {
-    <[u8; 20]>::from_hex(hex).unwrap()
-}
-
-pub fn fixture(path: &str) -> PathBuf {
-    PathBuf::from("tests").join("fixtures").join(path)
-}
-
-fn fixture_bytes(path: &str) -> Vec<u8> {
-    std::fs::read(fixture(path)).unwrap()
-}
+use crate::{
+    Time,
+    Sign,
+    object::{
+        parsed::{
+            self,
+            tests::bin
+        },
+        Kind,
+    }
+};
+use pretty_assertions::{assert_eq};
 
 #[test]
 fn tag_parse() {
-    let fixture = fixture_bytes("objects/tag.txt");
+    let fixture = fixture_bytes("tag.txt");
     let actual = parsed::Tag::from_bytes(&fixture).unwrap();
     assert_eq!(actual, tag_fixture(9000));
     assert_eq!(
@@ -55,7 +49,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 =aIns
 -----END PGP SIGNATURE-----
 "
-            .as_bstr(),
+                .as_bstr(),
         ),
         signature: parsed::Signature {
             name: b"Sebastian Thiel".as_bstr(),

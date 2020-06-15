@@ -1,11 +1,11 @@
-extern crate git_odb as odb;
-extern crate hex;
-
 mod utils;
 
-use odb::pack::{self, index};
-use utils::bin;
-use utils::fixture;
+use git_odb::pack::{self, index};
+use utils::{
+    bin,
+    fixture
+};
+use pretty_assertions::{assert_eq};
 
 const INDEX_V1: &'static str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
 const PACK_FOR_INDEX_V1: &'static str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";

@@ -9,7 +9,7 @@ exe="${root}/../$exe"
 # shellcheck disable=1090
 source "$root/utilities.sh"
 snapshot="$root/snapshots/cli"
-# fixture="$root/fixtures"
+# fixtures="$root/fixtures"
 
 SUCCESSFULLY=0
 WITH_FAILURE=1

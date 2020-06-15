@@ -35,7 +35,7 @@ check: ## Build all code in suitable configurations
 	cargo check --all
 
 unit-tests: ## run all unit tests
-	cargo test --all
+	cargo test --all --no-fail-fast
 
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests

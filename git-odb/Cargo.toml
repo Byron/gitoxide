@@ -19,3 +19,6 @@ byteorder = "1.2.3"
 itertools = "0.9.0"
 btoi = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+pretty_assertions = "0.6.1"

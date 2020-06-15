@@ -11,6 +11,7 @@ use odb::{
     object::{parsed, Kind},
     Sign, Time,
 };
+use pretty_assertions::{assert_eq};
 
 pub fn fixture_bytes(path: &str) -> Vec<u8> {
     std::fs::read(fixture(path)).unwrap()
