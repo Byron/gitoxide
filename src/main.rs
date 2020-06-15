@@ -4,10 +4,12 @@ use structopt::StructOpt;
 
 mod options {
     use structopt::StructOpt;
+    use structopt::clap::AppSettings;
 
     #[derive(Debug, StructOpt)]
     #[structopt(about = "The git, simply swift")]
-    #[structopt(setting = structopt::clap::AppSettings::SubcommandRequired)]
+    #[structopt(settings = &[AppSettings::SubcommandRequired,
+                            AppSettings::ColoredHelp])]
     pub struct Args {
         #[structopt(subcommand)]
         pub cmd: Subcommands,
@@ -17,6 +19,7 @@ mod options {
     pub enum Subcommands {
         /// Initialize the repository in the current directory.
         #[structopt(alias = "initialize")]
+        #[structopt(setting = AppSettings::ColoredHelp)]
         Init,
     }
 }
