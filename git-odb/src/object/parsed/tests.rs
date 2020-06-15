@@ -1,40 +1,28 @@
-extern crate git_odb as odb;
-extern crate hex;
+use super::*;
+use crate::object::{parsed, Kind};
+use std::path::PathBuf;
 
-mod utils;
+pub fn bin(hex: &str) -> [u8; 20] {
+    <[u8; 20]>::from_hex(hex).unwrap()
+}
 
-use utils::*;
+pub fn fixture(path: &str) -> PathBuf {
+    PathBuf::from("tests").join("fixtures").join(path)
+}
 
-use odb::Sign;
-use odb::Time;
-use odb::{
-    loose::Db,
-    object::{parsed, Kind},
-};
-
-pub fn fixture_bytes(path: &str) -> Vec<u8> {
+fn fixture_bytes(path: &str) -> Vec<u8> {
     std::fs::read(fixture(path)).unwrap()
 }
 
-fn ldb() -> Db {
-    odb::loose::Db::at(fixture("objects"))
-}
-
 #[test]
-fn loose_iter() {
-    let mut oids = ldb().iter().map(|o| o.unwrap()).collect::<Vec<_>>();
-    oids.sort();
+fn tag_parse() {
+    let fixture = fixture_bytes("objects/tag.txt");
+    let actual = parsed::Tag::from_bytes(&fixture).unwrap();
+    assert_eq!(actual, tag_fixture(9000));
     assert_eq!(
-        oids,
-        vec![
-            bin("37d4e6c5c48ba0d245164c4e10d5f41140cab980"),
-            bin("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"),
-            bin("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"),
-            bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"),
-            bin("96ae868b3539f551c88fd5f02394d022581b11b0"),
-            bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
-        ]
-    )
+        actual.target(),
+        bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
+    );
 }
 
 fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
@@ -73,14 +61,4 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             },
         },
     }
-}
-
-#[test]
-fn loose_find() {
-    let mut o = ldb()
-        .find(&bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
-        .unwrap();
-    assert_eq!(o.kind, Kind::Tag);
-    assert_eq!(o.size, 1024);
-    assert_eq!(o.parsed().unwrap(), parsed::Object::Tag(tag_fixture(7200)))
 }

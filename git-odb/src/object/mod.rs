@@ -38,8 +38,3 @@ impl Kind {
 }
 
 pub mod parsed;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}

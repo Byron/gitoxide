@@ -3,8 +3,8 @@ use git_core;
 use structopt::StructOpt;
 
 mod options {
-    use structopt::StructOpt;
     use structopt::clap::AppSettings;
+    use structopt::StructOpt;
 
     #[derive(Debug, StructOpt)]
     #[structopt(about = "The git, simply swift")]

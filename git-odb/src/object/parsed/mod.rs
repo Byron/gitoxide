@@ -2,6 +2,9 @@ use crate::{object, Sign, Time};
 use hex::FromHex;
 use std::str;
 
+#[cfg(test)]
+mod tests;
+
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
