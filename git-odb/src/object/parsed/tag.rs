@@ -54,13 +54,7 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
                     Ok(pos)
                 }
             })?;
-    let (time_in_seconds, tzofz) = split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| true)
-        .map(|(t1, t2)| {
-            (
-                t1,
-                std::str::from_utf8(t2).expect("utf=8 encoded timezone offset"),
-            )
-        })?;
+    let (time_in_seconds, tzofz) = split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| true)?;
     let (offset, sign) = parse_timezone_offset(tzofz)?;
 
     Ok(Signature {

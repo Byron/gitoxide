@@ -26,22 +26,18 @@ pub(crate) fn split2_at_space(
     })
 }
 
-pub(crate) fn parse_timezone_offset(d: &str) -> Result<(i32, Sign), Error> {
-    let db = d.as_bytes();
-    if d.len() < 5 || !(db[0] == b'+' || db[0] == b'-') {
-        return Err(Error::ParseError(
-            "invalid timezone offset",
-            d.as_bytes().to_owned(),
-        ));
+pub(crate) fn parse_timezone_offset(d: &[u8]) -> Result<(i32, Sign), Error> {
+    if d.len() < 5 || !(d[0] == b'+' || d[0] == b'-') {
+        return Err(Error::ParseError("invalid timezone offset", d.to_owned()));
     }
-    let sign = if db[0] == b'-' {
+    let sign = if d[0] == b'-' {
         Sign::Minus
     } else {
         Sign::Plus
     };
-    let hours = btoi::<i32>(&db[..3])
-        .map_err(|e| Error::ParseIntegerError("invalid 'hours' string", db[..3].to_owned(), e))?;
-    let minutes = btoi::<i32>(&db[3..])
-        .map_err(|e| Error::ParseIntegerError("invalid 'minutes' string", db[3..].to_owned(), e))?;
+    let hours = btoi::<i32>(&d[..3])
+        .map_err(|e| Error::ParseIntegerError("invalid 'hours' string", d[..3].to_owned(), e))?;
+    let minutes = btoi::<i32>(&d[3..])
+        .map_err(|e| Error::ParseIntegerError("invalid 'minutes' string", d[3..].to_owned(), e))?;
     Ok((hours * 3600 + minutes * 60, sign))
 }
