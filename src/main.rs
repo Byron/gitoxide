@@ -1,11 +1,7 @@
-extern crate failure;
-extern crate failure_tools;
 #[macro_use]
 extern crate clap;
 extern crate git_core as git;
-
-use failure::{Error, ResultExt};
-use failure_tools::ok_or_exit;
+use anyhow::{Context, Result};
 
 mod app {
     use clap::{App, AppSettings, SubCommand};
@@ -20,18 +16,14 @@ mod app {
     }
 }
 
-fn run() -> Result<(), Error> {
+fn main() -> Result<()> {
     let app = app::new();
     let matches = app.get_matches();
     match matches.subcommand() {
         ("init", Some(_args)) => {
-            git::init::repository().with_context(|_| "Repository initialization failed")
+            git::init::repository().with_context(|| "Repository initialization failed")
         }
         _ => unreachable!(),
-    }
-    .map_err(Into::into)
-}
-
-fn main() {
-    ok_or_exit(run())
+    }?;
+    Ok(())
 }

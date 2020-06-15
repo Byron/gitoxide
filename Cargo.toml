@@ -13,10 +13,9 @@ test = false
 doctest = false
 
 [dependencies]
-failure = "0.1.1"
-failure-tools = "4.0.2"
 clap = "2.31.2"
 git-core = { version = "0.1.0", path = "git-core" }
+anyhow = "1.0.31"
 
 [profile.release]
 panic = 'unwind'
