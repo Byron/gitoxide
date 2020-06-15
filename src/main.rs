@@ -1,29 +1,32 @@
-#[macro_use]
-extern crate clap;
-extern crate git_core as git;
 use anyhow::{Context, Result};
+use git_core;
+use structopt::StructOpt;
 
-mod app {
-    use clap::{App, AppSettings, SubCommand};
+mod options {
+    use structopt::StructOpt;
 
-    pub fn new<'a, 'b>() -> App<'a, 'b> {
-        let app: App = app_from_crate!();
-        app.setting(AppSettings::SubcommandRequired).subcommand(
-            SubCommand::with_name("init")
-                .alias("initialize")
-                .about("Initialize the repository in the current directory."),
-        )
+    #[derive(Debug, StructOpt)]
+    #[structopt(about = "The git, simply swift")]
+    #[structopt(setting = structopt::clap::AppSettings::SubcommandRequired)]
+    pub struct Args {
+        #[structopt(subcommand)]
+        pub cmd: Subcommands,
+    }
+
+    #[derive(Debug, StructOpt)]
+    pub enum Subcommands {
+        /// Initialize the repository in the current directory.
+        #[structopt(alias = "initialize")]
+        Init,
     }
 }
 
 fn main() -> Result<()> {
-    let app = app::new();
-    let matches = app.get_matches();
-    match matches.subcommand() {
-        ("init", Some(_args)) => {
-            git::init::repository().with_context(|| "Repository initialization failed")
+    let args = options::Args::from_args();
+    match args.cmd {
+        options::Subcommands::Init => {
+            git_core::init::repository().with_context(|| "Repository initialization failed")
         }
-        _ => unreachable!(),
     }?;
     Ok(())
 }

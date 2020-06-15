@@ -13,9 +13,9 @@ test = false
 doctest = false
 
 [dependencies]
-clap = "2.31.2"
 git-core = { version = "0.1.0", path = "git-core" }
 anyhow = "1.0.31"
+structopt = "0.3.14"
 
 [profile.release]
 panic = 'unwind'
