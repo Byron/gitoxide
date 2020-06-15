@@ -187,6 +187,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-object"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "btoi",
+ "hex",
+ "nom",
+ "pretty_assertions",
+ "quick-error",
+]
+
+[[package]]
 name = "git-odb"
 version = "0.1.0"
 dependencies = [

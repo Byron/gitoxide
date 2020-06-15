@@ -1,0 +1,19 @@
+[package]
+name = "git-object"
+version = "0.1.0"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+publish = false
+edition = "2018"
+
+[lib]
+doctest = false
+
+[dependencies]
+quick-error = "1.2.3"
+hex = "0.3.2"
+btoi = "0.4.2"
+bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+nom = { version = "6.0.0-alpha1", default-features = false }
+
+[dev-dependencies]
+pretty_assertions = "0.6.1"

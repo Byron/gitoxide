@@ -23,6 +23,7 @@ incremental = false
 
 [workspace]
 members = [
+    "git-object",
     "git-odb",
     "git-core",
     "demos"
