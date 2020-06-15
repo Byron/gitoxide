@@ -1,5 +1,9 @@
 use super::*;
-use crate::object::{parsed, Kind};
+use crate::{
+    object::{parsed, Kind},
+    Sign,
+};
+use hex::FromHex;
 use std::path::PathBuf;
 
 pub fn bin(hex: &str) -> [u8; 20] {
