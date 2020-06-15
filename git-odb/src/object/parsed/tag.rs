@@ -3,17 +3,18 @@ use super::{
     Error,
 };
 use crate::{object, object::parsed::Signature, Time};
+use bstr::{BStr, ByteSlice};
 use btoi::btoi;
 use hex::FromHex;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Tag<'data> {
-    pub target_raw: &'data [u8],
-    pub name_raw: &'data [u8],
+    pub target: &'data BStr,
+    pub name: &'data BStr,
     pub target_kind: object::Kind,
-    pub message: Option<&'data [u8]>,
+    pub message: Option<&'data BStr>,
     pub signature: Signature<'data>,
-    pub pgp_signature: Option<&'data [u8]>,
+    pub pgp_signature: Option<&'data BStr>,
 }
 
 fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
@@ -58,8 +59,8 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
     let (offset, sign) = parse_timezone_offset(tzofz)?;
 
     Ok(Signature {
-        name: &d[..email_begin - ONE_SPACE],
-        email: &d[email_begin + 1..email_end],
+        name: (&d[..email_begin - ONE_SPACE]).as_bstr(),
+        email: (&d[email_begin + 1..email_end]).as_bstr(),
         time: Time {
             time: btoi::<u32>(time_in_seconds).map_err(|e| {
                 Error::ParseIntegerError("Could parse to seconds", time_in_seconds.to_owned(), e)
@@ -73,7 +74,7 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
 fn parse_message<'data>(
     d: &'data [u8],
     mut lines: impl Iterator<Item = &'data [u8]>,
-) -> Result<(Option<&'data [u8]>, Option<&'data [u8]>), Error> {
+) -> Result<(Option<&'data BStr>, Option<&'data BStr>), Error> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
@@ -98,11 +99,11 @@ fn parse_message<'data>(
                     }
                     Some(_) => {
                         msg_end = d.len(); // TODO: use nom to parse this or do it without needing nightly
-                        pgp_signature = Some(&d[msg_end..])
+                        pgp_signature = Some((&d[msg_end..]).as_bstr())
                     }
                 }
             }
-            (Some(&d[msg_begin..msg_end]), pgp_signature)
+            (Some((&d[msg_begin..msg_end]).as_bstr()), pgp_signature)
         }
         Some(l) => {
             return Err(Error::ParseError(
@@ -116,7 +117,7 @@ fn parse_message<'data>(
 
 impl<'data> Tag<'data> {
     pub fn target(&self) -> object::Id {
-        <[u8; 20]>::from_hex(self.target_raw).expect("prior validation")
+        <[u8; 20]>::from_hex(self.target).expect("prior validation")
     }
     pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
         let mut lines = d.split(|&b| b == b'\n');
@@ -130,7 +131,7 @@ impl<'data> Tag<'data> {
                         .and_then(|(_, kind)| object::Kind::from_bytes(kind).map_err(Into::into))?;
                     let (_, name) = split2_at_space(name, |f, _v| f == b"tag")?;
                     let (_, tagger) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
-                    (target, kind, name, parse_signature(tagger)?)
+                    (target.as_bstr(), kind, name.as_bstr(), parse_signature(tagger)?)
                 }
                 _ => {
                     return Err(Error::ParseError(
@@ -143,8 +144,8 @@ impl<'data> Tag<'data> {
         let (message, pgp_signature) = parse_message(d, &mut lines)?;
 
         Ok(Tag {
-            target_raw: target,
-            name_raw: name,
+            target,
+            name,
             target_kind,
             message,
             signature,

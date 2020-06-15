@@ -4,6 +4,7 @@ use std::str;
 mod tag;
 mod util;
 pub use tag::Tag;
+use bstr::BStr;
 
 #[cfg(test)]
 mod tests;
@@ -40,7 +41,7 @@ impl<'data> Object<'data> {
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Signature<'data> {
-    pub name: &'data [u8],
-    pub email: &'data [u8],
+    pub name: &'data BStr,
+    pub email: &'data BStr,
     pub time: Time,
 }

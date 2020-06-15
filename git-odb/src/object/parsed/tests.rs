@@ -3,6 +3,7 @@ use crate::{
     object::{parsed, Kind},
     Sign,
 };
+use bstr::ByteSlice;
 use hex::FromHex;
 use std::path::PathBuf;
 
@@ -31,10 +32,10 @@ fn tag_parse() {
 
 fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
     parsed::Tag {
-        target_raw: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec",
-        name_raw: b"1.0.0",
+        target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
+        name: b"1.0.0".as_bstr(),
         target_kind: Kind::Commit,
-        message: Some(b"for the signature\n"),
+        message: Some(b"for the signature\n".as_bstr()),
         pgp_signature: Some(
             b"-----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - https://gpgtools.org
@@ -53,11 +54,12 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 2n8f2douw6624Tn/6Lm4a7AoxmU+CMiYagDxDL3RuZ8CAfh3bn0=
 =aIns
 -----END PGP SIGNATURE-----
-",
+"
+            .as_bstr(),
         ),
         signature: parsed::Signature {
-            name: b"Sebastian Thiel",
-            email: b"byronimo@gmail.com",
+            name: b"Sebastian Thiel".as_bstr(),
+            email: b"byronimo@gmail.com".as_bstr(),
             time: Time {
                 time: 1528473343,
                 offset,
