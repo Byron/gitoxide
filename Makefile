@@ -29,7 +29,10 @@ profile: target/release/grit ## run callgrind and annotate its output - linux on
 benchmark: target/release/grit ## see how fast things are, powered by hyperfine
 	hyperfine '$<'
 
-tests: unit-tests journey-tests ## run all tests
+tests: check unit-tests journey-tests ## run all tests
+
+check: ## Build all code in suitable configurations
+	cargo check --all
 
 unit-tests: ## run all unit tests
 	cargo test --all
