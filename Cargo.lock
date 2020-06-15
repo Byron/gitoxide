@@ -197,6 +197,7 @@ dependencies = [
  "hex",
  "itertools",
  "miniz_oxide",
+ "nom",
  "pretty_assertions",
  "quick-error",
  "smallvec",
@@ -285,6 +286,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "791daaae1ed6889560f8c4359194f56648355540573244a5448a83ba1ecc7435"
 dependencies = [
  "adler32",
+]
+
+[[package]]
+name = "nom"
+version = "6.0.0-alpha1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25020779544bf717b917323b42f23c9dbef1bd2b97b576df6484a0c8709705c6"
+dependencies = [
+ "memchr",
+ "version_check",
 ]
 
 [[package]]
