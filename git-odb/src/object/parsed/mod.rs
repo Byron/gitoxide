@@ -1,8 +1,8 @@
 use crate::{object, Time};
 use std::str;
 
-mod util;
 mod tag;
+mod util;
 pub use tag::Tag;
 
 #[cfg(test)]
@@ -11,6 +11,10 @@ mod tests;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        ParseIntegerError(msg: &'static str, kind: Vec<u8>, err: btoi::ParseIntegerError) {
+            display("{}: {:?}", msg, std::str::from_utf8(&kind))
+            cause(err)
+        }
         ParseError(msg: &'static str, kind: Vec<u8>) {
             display("{}: {:?}", msg, std::str::from_utf8(&kind))
         }

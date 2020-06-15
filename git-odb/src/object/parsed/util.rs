@@ -1,5 +1,6 @@
 use super::Error;
 use crate::Sign;
+use btoi::btoi;
 
 pub(crate) fn split2_at_space(
     d: &[u8],
@@ -38,13 +39,9 @@ pub(crate) fn parse_timezone_offset(d: &str) -> Result<(i32, Sign), Error> {
     } else {
         Sign::Plus
     };
-    let hours = std::str::from_utf8(&db[..3])
-        .expect("valid utf8")
-        .parse::<i32>()
-        .map_err(|_| Error::ParseError("invalid 'hours' string", db[..3].to_owned()))?;
-    let minutes = std::str::from_utf8(&db[3..])
-        .expect("valid utf8")
-        .parse::<i32>()
-        .map_err(|_| Error::ParseError("invalid 'minutes' string", db[3..].to_owned()))?;
+    let hours = btoi::<i32>(&db[..3])
+        .map_err(|e| Error::ParseIntegerError("invalid 'hours' string", db[..3].to_owned(), e))?;
+    let minutes = btoi::<i32>(&db[3..])
+        .map_err(|e| Error::ParseIntegerError("invalid 'minutes' string", db[3..].to_owned(), e))?;
     Ok((hours * 3600 + minutes * 60, sign))
 }

@@ -3,6 +3,7 @@ use super::{
     Error,
 };
 use crate::{object, object::parsed::Signature, Time};
+use btoi::btoi;
 use hex::FromHex;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
@@ -53,10 +54,10 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
                     Ok(pos)
                 }
             })?;
-    let (time_in_seconds, tzofz) =
-        split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| true).map(|(t1, t2)| {
+    let (time_in_seconds, tzofz) = split2_at_space(&d[email_end + ONE_SPACE + 1..], |_, _| true)
+        .map(|(t1, t2)| {
             (
-                std::str::from_utf8(t1).expect("utf-8 encoded time in seconds"),
+                t1,
                 std::str::from_utf8(t2).expect("utf=8 encoded timezone offset"),
             )
         })?;
@@ -66,11 +67,8 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
         name: &d[..email_begin - ONE_SPACE],
         email: &d[email_begin + 1..email_end],
         time: Time {
-            time: time_in_seconds.parse::<u32>().map_err(|_| {
-                Error::ParseError(
-                    "Could parse to seconds",
-                    time_in_seconds.as_bytes().to_owned(),
-                )
+            time: btoi::<u32>(time_in_seconds).map_err(|e| {
+                Error::ParseIntegerError("Could parse to seconds", time_in_seconds.to_owned(), e)
             })?,
             offset,
             sign,
@@ -134,10 +132,8 @@ impl<'data> Tag<'data> {
                     let (_, target) = split2_at_space(target, |f, v| {
                         f == b"object" && v.len() == 40 && <[u8; 20]>::from_hex(v).is_ok()
                     })?;
-                    let kind =
-                        split2_at_space(kind, |f, _v| f == b"type").and_then(|(_, kind)| {
-                            object::Kind::from_bytes(kind).map_err(Into::into)
-                        })?;
+                    let kind = split2_at_space(kind, |f, _v| f == b"type")
+                        .and_then(|(_, kind)| object::Kind::from_bytes(kind).map_err(Into::into))?;
                     let (_, name) = split2_at_space(name, |f, _v| f == b"tag")?;
                     let (_, tagger) = split2_at_space(tagger, |f, _v| f == b"tagger")?;
                     (target, kind, name, parse_signature(tagger)?)
