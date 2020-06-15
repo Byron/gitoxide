@@ -5,6 +5,7 @@ use crate::{
 use git_object as object;
 use hex::ToHex;
 use object::parsed;
+use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{
     fs::File, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf, str, str::FromStr,

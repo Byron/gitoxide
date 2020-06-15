@@ -1,14 +1,17 @@
-use miniz_oxide::inflate::core::DecompressorOxide;
-use miniz_oxide::inflate::{
-    core::{
-        decompress,
-        inflate_flags::{
-            TINFL_FLAG_HAS_MORE_INPUT, TINFL_FLAG_PARSE_ZLIB_HEADER,
-            TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+use miniz_oxide::{
+    inflate::core::DecompressorOxide,
+    inflate::{
+        core::{
+            decompress,
+            inflate_flags::{
+                TINFL_FLAG_HAS_MORE_INPUT, TINFL_FLAG_PARSE_ZLIB_HEADER,
+                TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+            },
         },
+        TINFLStatus,
     },
-    TINFLStatus,
 };
+use quick_error::quick_error;
 use std::io::{self, Cursor};
 
 quick_error! {

@@ -1,5 +1,6 @@
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
+use quick_error::quick_error;
 use std::{mem::size_of, path::Path};
 
 quick_error! {

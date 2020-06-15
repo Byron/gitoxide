@@ -1,4 +1,5 @@
 use git_object as object;
+use quick_error::quick_error;
 
 use hex::FromHex;
 use std::path::PathBuf;
