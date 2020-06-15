@@ -9,6 +9,8 @@ edition = "2018"
 [[bin]]
 name="grit"
 path="src/main.rs"
+test = false
+doctest = false
 
 [dependencies]
 failure = "0.1.1"
@@ -23,5 +25,6 @@ incremental = false
 [workspace]
 members = [
     "git-odb",
-    "git-core"
+    "git-core",
+    "demos"
 ]

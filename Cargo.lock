@@ -202,17 +202,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-odb"
+name = "git-demos"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "git-odb",
+ "hex",
+ "rayon",
+]
+
+[[package]]
+name = "git-odb"
+version = "0.1.0"
+dependencies = [
  "byteorder",
  "filebuffer",
  "hex",
  "itertools",
  "miniz_oxide",
  "quick-error",
- "rayon",
  "smallvec",
  "walkdir",
 ]
