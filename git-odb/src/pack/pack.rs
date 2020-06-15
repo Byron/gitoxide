@@ -18,7 +18,7 @@ quick_error! {
     }
 }
 
-use crate::object::SHA1_SIZE;
+use git_object::SHA1_SIZE;
 
 const N32_SIZE: usize = size_of::<u32>();
 
@@ -107,9 +107,8 @@ impl File {
 }
 
 pub mod parsed {
-    use crate::object;
-
-    use crate::object::SHA1_SIZE;
+    use git_object as object;
+    use object::SHA1_SIZE;
     use std::mem;
 
     const _TYPE_EXT1: u8 = 0;

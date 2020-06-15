@@ -1,7 +1,7 @@
-use quick_error::quick_error;
-use crate::{Time};
-use std::str;
+use crate::Time;
 use bstr::BStr;
+use quick_error::quick_error;
+use std::str;
 
 mod tag;
 mod util;

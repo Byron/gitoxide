@@ -6,12 +6,9 @@ mod utils;
 use utils::*;
 
 use bstr::ByteSlice;
-use odb::{
-    loose::Db,
-    object::{parsed, Kind},
-    Sign, Time,
-};
-use pretty_assertions::{assert_eq};
+use git_object::{parsed, Kind, Sign, Time};
+use odb::loose::Db;
+use pretty_assertions::assert_eq;
 
 pub fn fixture_bytes(path: &str) -> Vec<u8> {
     std::fs::read(fixture(path)).unwrap()

@@ -1,6 +1,7 @@
-use crate::object::{self, SHA1_SIZE};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
+use git_object as object;
+use object::SHA1_SIZE;
 use std::{mem::size_of, path::Path};
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";

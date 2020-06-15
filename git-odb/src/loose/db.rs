@@ -1,4 +1,4 @@
-use crate::object;
+use git_object as object;
 
 use hex::FromHex;
 use std::path::PathBuf;

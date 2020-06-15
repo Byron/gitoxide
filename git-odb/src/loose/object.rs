@@ -1,9 +1,10 @@
 use crate::{
     loose::{Db, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
-    object::{self, parsed},
     zlib,
 };
+use git_object as object;
 use hex::ToHex;
+use object::parsed;
 use smallvec::SmallVec;
 use std::{
     fs::File, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf, str, str::FromStr,

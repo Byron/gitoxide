@@ -1,15 +1,10 @@
 use super::fixture_bytes;
-use bstr::ByteSlice;
 use crate::{
-    Time,
-    Sign,
-        parsed::{
-            self,
-            tests::bin
-        },
-        Kind,
+    parsed::{self, tests::bin},
+    Kind, Sign, Time,
 };
-use pretty_assertions::{assert_eq};
+use bstr::ByteSlice;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn tag_parse() {
@@ -47,7 +42,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 =aIns
 -----END PGP SIGNATURE-----
 "
-                .as_bstr(),
+            .as_bstr(),
         ),
         signature: parsed::Signature {
             name: b"Sebastian Thiel".as_bstr(),
