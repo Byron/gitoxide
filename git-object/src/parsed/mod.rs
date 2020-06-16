@@ -33,12 +33,16 @@ quick_error! {
 }
 
 impl Error {
-    pub fn parse_context(mut self, ctx: &'static str) -> Self{
+    fn set_parse_context(mut self, ctx: &'static str) -> Self {
         match self {
             Error::Nom(_, ref mut message) => *message = ctx,
             _ => {}
         };
         self
+    }
+
+    fn context(msg: &'static str) -> impl Fn(nom::Err<Self>) -> nom::Err<Self> {
+        move |e: nom::Err<Self>| e.map(|e| e.set_parse_context(msg))
     }
 }
 

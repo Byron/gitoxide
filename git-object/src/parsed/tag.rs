@@ -6,10 +6,10 @@ use crate::{parsed::Signature, Time};
 use bstr::{BStr, ByteSlice};
 use btoi::btoi;
 use hex::FromHex;
-use nom::{bytes::complete::tag, IResult, };
-use nom::sequence::{tuple, preceded, terminated};
 use nom::bytes::complete::{take, take_while, take_while_m_n};
 use nom::combinator::map;
+use nom::sequence::{preceded, terminated, tuple};
+use nom::{bytes::complete::tag, IResult};
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Tag<'data> {
@@ -75,10 +75,6 @@ fn parse_signature(d: &[u8]) -> Result<Signature, Error> {
     })
 }
 
-fn context(msg: &'static str) -> impl Fn(nom::Err<Error>) -> nom::Err<Error> {
-    move |e: nom::Err<Error>| e.map(|e| e.parse_context(msg))
-}
-
 fn is_hex_digit_lc(b: u8) -> bool {
     match b {
         b'0'..=b'9' => true,
@@ -89,7 +85,14 @@ fn is_hex_digit_lc(b: u8) -> bool {
 
 pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     const NL: &[u8] = b"\n";
-    let (i, _) = terminated(preceded(tag(b"object "), take_while_m_n(40usize, 40, is_hex_digit_lc)), tag(NL))(i).map_err(context("object <40 lowercase hex char>"))?;
+    let (i, _) = terminated(
+        preceded(
+            tag(b"object "),
+            take_while_m_n(40usize, 40, is_hex_digit_lc),
+        ),
+        tag(NL),
+    )(i)
+    .map_err(Error::context("object <40 lowercase hex char>"))?;
     unimplemented!("parse message nom")
 }
 
