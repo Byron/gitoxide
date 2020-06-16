@@ -7,6 +7,7 @@ use bstr::{BStr, ByteSlice};
 use btoi::btoi;
 use hex::FromHex;
 use nom::bytes::complete::{is_not, take_till};
+use nom::combinator::{all_consuming, recognize};
 use nom::sequence::delimited;
 use nom::{
     branch::alt,
@@ -167,7 +168,7 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
 
     let (i, signature) = terminated(preceded(tag(b"tagger "), parse_signature_nom), tag(NL))(i)
         .map_err(Error::context("tagger <signature>"))?;
-    let (i, (message, pgp_signature)) = parse_message_nom(i)?;
+    let (i, (message, pgp_signature)) = all_consuming(parse_message_nom)(i)?;
     Ok((
         i,
         Tag {
@@ -182,9 +183,8 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
 }
 
 pub(crate) fn parse_message_nom(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
-    let NLNL: &[u8] = b"\n\n";
-    const PGP_SIGNATURE_BEGIN: &[u8] = b"-----BEGIN PGP SIGNATURE-----";
-    const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
+    const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
+    const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----\n";
 
     let (i, _) = tag(NL)(i)?;
     if i.is_empty() {
@@ -197,16 +197,23 @@ pub(crate) fn parse_message_nom(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr
                 "tag message is missing",
             )));
         }
-        tag(NL)(&i[i.len() - 1..]).map_err(Error::context("tag message must end with newline"))?;
-        Ok((&[], (&i[..i.len() - 1], &[])))
+        let (i, _) = tag(NL)(&i[i.len() - 1..])
+            .map_err(Error::context("tag message must end with newline"))?;
+        // an empty signature message signals that there is none - the function signature is needed
+        // to work with 'alt(…)'. PGP signatures are never empty
+        Ok((i, (&i[..i.len() - 1], &[])))
     }
     let (i, (message, signature)) = alt((
         tuple((
             take_until(PGP_SIGNATURE_BEGIN),
             delimited(
-                tag(PGP_SIGNATURE_BEGIN),
-                take_until(PGP_SIGNATURE_END),
-                tag(PGP_SIGNATURE_END),
+                tag(NL),
+                recognize(delimited(
+                    tag(&PGP_SIGNATURE_BEGIN[1..]),
+                    take_until(PGP_SIGNATURE_END),
+                    tag(&PGP_SIGNATURE_END[..PGP_SIGNATURE_END.len() - 1]),
+                )),
+                tag(NL),
             ),
         )),
         all_but_trailing_newline,

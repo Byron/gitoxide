@@ -34,7 +34,7 @@ fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
         target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
         name: b"1.0.0".as_bstr(),
         target_kind: Kind::Commit,
-        message: b"for the signature\n".as_bstr(),
+        message: b"for the signature".as_bstr(),
         pgp_signature: Some(
             b"-----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - https://gpgtools.org
@@ -52,9 +52,8 @@ Z5fFXEUCO8d5WT56jzKDjmVoY01lA87O1YsP/J+zQAlc9v1k6jqeQ53LZNgTN+ue
 cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 2n8f2douw6624Tn/6Lm4a7AoxmU+CMiYagDxDL3RuZ8CAfh3bn0=
 =aIns
------END PGP SIGNATURE-----
-"
-            .as_bstr(),
+-----END PGP SIGNATURE-----"
+                .as_bstr(),
         ),
         signature: parsed::Signature {
             name: b"Sebastian Thiel".as_bstr(),
