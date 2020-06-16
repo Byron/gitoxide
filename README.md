@@ -6,6 +6,7 @@ user-experience, and perform as good or better than the native implementation.
 The CLI uses various libraries to implement
 
  * [ ] a git *repository* and *references* (see `git-core`)
+ * [ ] encoding and decoding git objects (see `git-object`)
  * [ ] a git object database (see `git-odb` and
    [examples](https://github.com/Byron/grit-rs/tree/master/lib/git-odb/examples))
  * [ ] a transport layer for push and pull (see `git-transport`)
@@ -27,9 +28,7 @@ The CLI uses various libraries to implement
     * [ ] remotes with push and pull
     * [ ] merging
     * [ ] configuration
-* **git-odb**
-  * **loose objects**
-    * [x] traverse
+* **git-object**
     * [-] decode
       * [ ] commit
       * [ ] tree
@@ -40,6 +39,11 @@ The CLI uses various libraries to implement
       * [ ] tree
       * [ ] tag
       * [ ] blob
+* **git-odb**
+  * **loose objects**
+    * [x] traverse
+    * [x] read
+    * [ ] write
   * **packs**
     * [x] traverse pack index
     * [x] decode pack entries
