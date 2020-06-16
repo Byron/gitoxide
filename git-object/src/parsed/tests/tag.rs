@@ -34,7 +34,7 @@ fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
         target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
         name: b"1.0.0".as_bstr(),
         target_kind: Kind::Commit,
-        message: Some(b"for the signature\n".as_bstr()),
+        message: b"for the signature\n".as_bstr(),
         pgp_signature: Some(
             b"-----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - https://gpgtools.org

@@ -6,39 +6,24 @@ use crate::{parsed::Signature, Sign, Time};
 use bstr::{BStr, ByteSlice};
 use btoi::btoi;
 use hex::FromHex;
+use nom::bytes::complete::{is_not, take_till};
+use nom::sequence::delimited;
 use nom::{
-    bytes::{
-        complete::{
-            take_till,
-            take_until,
-            take_while,
-            tag,
-            take_while1,
-            take_while_m_n
-        }
-    },
     branch::alt,
-    character::{
-        is_digit,
-        is_alphabetic
-    },
-    sequence::{
-        delimited,
-        pair,
-        tuple,
-        preceded,
-        terminated
-    },
-    IResult
+    bytes::complete::take,
+    bytes::complete::{tag, take_until, take_while1, take_while_m_n},
+    character::{is_alphabetic, is_digit},
+    combinator::opt,
+    sequence::{preceded, terminated, tuple},
+    IResult,
 };
-use nom::bytes::complete::take;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Tag<'data> {
     pub target: &'data BStr,
     pub name: &'data BStr,
     pub target_kind: crate::Kind,
-    pub message: Option<&'data BStr>,
+    pub message: &'data BStr,
     pub signature: Signature<'data>,
     pub pgp_signature: Option<&'data BStr>,
 }
@@ -125,23 +110,40 @@ pub(crate) fn parse_signature_nom(i: &[u8]) -> IResult<&[u8], Signature, Error> 
     } else {
         Sign::Plus
     };
-    let hours = btoi::<i32>(&tzhour)
-        .map_err(|e| nom::Err::Error(Error::ParseIntegerError("invalid 'hours' string", tzhour.to_owned(), e)))?;
-    let minutes = btoi::<i32>(&tzminute)
-        .map_err(|e| nom::Err::Error(Error::ParseIntegerError("invalid 'minutes' string", tzminute.to_owned(), e)))?;
-    let offset = (hours * 3600 + minutes * 60);
+    let hours = btoi::<i32>(&tzhour).map_err(|e| {
+        nom::Err::Error(Error::ParseIntegerError(
+            "invalid 'hours' string",
+            tzhour.to_owned(),
+            e,
+        ))
+    })?;
+    let minutes = btoi::<i32>(&tzminute).map_err(|e| {
+        nom::Err::Error(Error::ParseIntegerError(
+            "invalid 'minutes' string",
+            tzminute.to_owned(),
+            e,
+        ))
+    })?;
+    let offset = hours * 3600 + minutes * 60;
 
-    Ok((i, Signature {
-        name: name.as_bstr(),
-        email: email.as_bstr(),
-        time: Time {
-            time: btoi::<u32>(time_in_seconds).map_err(|e| {
-                nom::Err::Error(Error::ParseIntegerError("Could parse to seconds", time_in_seconds.to_owned(), e))
-            })?,
-            offset,
-            sign
-        }
-    }))
+    Ok((
+        i,
+        Signature {
+            name: name.as_bstr(),
+            email: email.as_bstr(),
+            time: Time {
+                time: btoi::<u32>(time_in_seconds).map_err(|e| {
+                    nom::Err::Error(Error::ParseIntegerError(
+                        "Could parse to seconds",
+                        time_in_seconds.to_owned(),
+                        e,
+                    ))
+                })?,
+                offset,
+                sign,
+            },
+        },
+    ))
 }
 
 pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
@@ -156,29 +158,76 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
 
     let (i, kind) = terminated(preceded(tag(b"type "), take_while1(is_alphabetic)), tag(NL))(i)
         .map_err(Error::context("type <object kind>"))?;
-    let kind = crate::Kind::from_bytes(kind)?;
+    let kind =
+        crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(Error::ParseKindError(e)))?;
 
     let (i, tag_version) =
         terminated(preceded(tag(b"tag "), take_while1(|b| b != NL[0])), tag(NL))(i)
             .map_err(Error::context("tag <version>"))?;
 
-    let (i, tagger) = terminated(
-        preceded(tag(b"tagger "), take_while1(|b| b != NL[0])),
-        tag(NL),
-    )(i)
-    .map_err(Error::context("tagger <signature>"))?;
-    unimplemented!("parse message nom")
+    let (i, signature) = terminated(preceded(tag(b"tagger "), parse_signature_nom), tag(NL))(i)
+        .map_err(Error::context("tagger <signature>"))?;
+    let (i, (message, pgp_signature)) = parse_message_nom(i)?;
+    Ok((
+        i,
+        Tag {
+            target: target.as_bstr(),
+            name: tag_version.as_bstr(),
+            target_kind: kind,
+            message,
+            signature,
+            pgp_signature,
+        },
+    ))
 }
 
-pub(crate) fn parse_message_nom(i: &[u8]) -> IResult<&[u8], (Option<&BStr>, Option<&BStr>), Error> {
-    let (i, _) = tag(b"\n")(i)?;
-    unimplemented!("parse message nom")
+pub(crate) fn parse_message_nom(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
+    let NLNL: &[u8] = b"\n\n";
+    const PGP_SIGNATURE_BEGIN: &[u8] = b"-----BEGIN PGP SIGNATURE-----";
+    const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
+
+    let (i, _) = tag(NL)(i)?;
+    if i.is_empty() {
+        return Err(nom::Err::Error(Error::Nom(i.into(), "Missing tag message")));
+    }
+    fn all_but_trailing_newline(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), Error> {
+        if i.len() < 2 {
+            return Err(nom::Err::Error(Error::Nom(
+                i.into(),
+                "tag message is missing",
+            )));
+        }
+        tag(NL)(&i[i.len() - 1..]).map_err(Error::context("tag message must end with newline"))?;
+        Ok((&[], (&i[..i.len() - 1], &[])))
+    }
+    let (i, (message, signature)) = alt((
+        tuple((
+            take_until(PGP_SIGNATURE_BEGIN),
+            delimited(
+                tag(PGP_SIGNATURE_BEGIN),
+                take_until(PGP_SIGNATURE_END),
+                tag(PGP_SIGNATURE_END),
+            ),
+        )),
+        all_but_trailing_newline,
+    ))(i)?;
+    Ok((
+        i,
+        (
+            message.as_bstr(),
+            if signature.is_empty() {
+                None
+            } else {
+                Some(signature.as_bstr())
+            },
+        ),
+    ))
 }
 
 fn parse_message<'data>(
     d: &'data [u8],
     mut lines: impl Iterator<Item = &'data [u8]>,
-) -> Result<(Option<&'data BStr>, Option<&'data BStr>), Error> {
+) -> Result<(&'data BStr, Option<&'data BStr>), Error> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
@@ -207,7 +256,7 @@ fn parse_message<'data>(
                     }
                 }
             }
-            (Some((&d[msg_begin..msg_end]).as_bstr()), pgp_signature)
+            ((&d[msg_begin..msg_end]).as_bstr(), pgp_signature)
         }
         Some(l) => {
             return Err(Error::ParseError(
@@ -215,7 +264,7 @@ fn parse_message<'data>(
                 l.to_owned(),
             ))
         }
-        None => (None, None),
+        None => (b"".as_bstr(), None),
     })
 }
 
