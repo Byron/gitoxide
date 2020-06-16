@@ -25,10 +25,20 @@ quick_error! {
         Nom(input: bstr::BString, msg: &'static str) {
             display("{}: '{}' could not be parsed", msg, input)
         }
+        NomWithCause(err: crate::types::Error) {
+            display("{}", err)
+            cause(err)
+        }
         ObjectKind(err: crate::Error) {
             from()
             cause(err)
         }
+    }
+}
+
+impl From<crate::types::Error> for nom::Err<Error> {
+    fn from(e: crate::types::Error) -> Self {
+        nom::Err::Error(Error::NomWithCause(e))
     }
 }
 

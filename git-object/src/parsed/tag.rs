@@ -6,10 +6,13 @@ use crate::{parsed::Signature, Time};
 use bstr::{BStr, ByteSlice};
 use btoi::btoi;
 use hex::FromHex;
-use nom::bytes::complete::{take, take_while, take_while_m_n};
-use nom::combinator::map;
-use nom::sequence::{preceded, terminated, tuple};
-use nom::{bytes::complete::tag, IResult};
+use nom::{
+    bytes::complete::tag,
+    bytes::complete::{take_while1, take_while_m_n},
+    character::is_alphabetic,
+    sequence::{preceded, terminated},
+    IResult,
+};
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Tag<'data> {
@@ -85,7 +88,7 @@ fn is_hex_digit_lc(b: u8) -> bool {
 
 pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     const NL: &[u8] = b"\n";
-    let (i, _) = terminated(
+    let (i, target) = terminated(
         preceded(
             tag(b"object "),
             take_while_m_n(40usize, 40, is_hex_digit_lc),
@@ -93,6 +96,9 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
         tag(NL),
     )(i)
     .map_err(Error::context("object <40 lowercase hex char>"))?;
+    let (i, kind) = terminated(preceded(tag(b"type "), take_while1(is_alphabetic)), tag(NL))(i)
+        .map_err(Error::context("type <object kind>"))?;
+    let kind = crate::Kind::from_bytes(kind)?;
     unimplemented!("parse message nom")
 }
 
