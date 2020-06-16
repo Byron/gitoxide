@@ -25,9 +25,9 @@ quick_error! {
         Nom(input: bstr::BString, msg: &'static str) {
             display("{}: '{}' could not be parsed", msg, input)
         }
-        NomWithCause(err: crate::types::Error) {
+        NomWithCause(err: Box<dyn std::error::Error>) {
             display("{}", err)
-            cause(err)
+            cause(&**err)
         }
         ObjectKind(err: crate::Error) {
             from()
@@ -38,7 +38,7 @@ quick_error! {
 
 impl From<crate::types::Error> for nom::Err<Error> {
     fn from(e: crate::types::Error) -> Self {
-        nom::Err::Error(Error::NomWithCause(e))
+        nom::Err::Error(Error::NomWithCause(Box::new(e)))
     }
 }
 
