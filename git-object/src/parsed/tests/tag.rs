@@ -6,16 +6,17 @@ use crate::{
 use bstr::ByteSlice;
 use pretty_assertions::assert_eq;
 
-mod message {
+mod nom {
     use super::fixture_bytes;
-    use super::parsed::tag::parse_tag_nom;
     use crate::parsed::tests::tag::tag_fixture;
+    use crate::parsed::tag::{parse_signature_nom, parse_tag_nom};
 
     #[test]
-    fn parse() {
+    fn parse_tag() {
         let fixture = fixture_bytes("tag.txt");
         assert_eq!(parse_tag_nom(&fixture).unwrap().1, tag_fixture(9000));
     }
+
 }
 
 #[test]

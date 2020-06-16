@@ -13,6 +13,10 @@ use nom::{
     sequence::{preceded, terminated},
     IResult,
 };
+use nom::sequence::{delimited, pair, tuple};
+use nom::bytes::complete::{take_until, take_till, take_while};
+use nom::character::is_digit;
+use nom::branch::alt;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Tag<'data> {
@@ -86,8 +90,17 @@ fn is_hex_digit_lc(b: u8) -> bool {
     }
 }
 
+const NL: &[u8] = b"\n";
+const SPACE: &[u8] = b" ";
+pub(crate) fn parse_signature_nom(i: &[u8]) -> IResult<&[u8], Signature, Error> {
+    let (i, (name, email, time_in_seconds, tzofs)) = tuple((terminated(take_till(|b| b == b'<'), tag(b"<")),
+                                                           terminated(take_till(|b| b == b'>'), tag(b"> ")),
+                                                           terminated(take_till(|b| b == SPACE[0]), tag(SPACE)),
+                                                           pair(alt((tag(b"-"), tag(b"+"))), take_while_m_n(4usize, 4, |b| is_digit(b)))))(i)?;
+    unimplemented!("parse signature")
+}
+
 pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
-    const NL: &[u8] = b"\n";
     let (i, target) = terminated(
         preceded(
             tag(b"object "),
@@ -96,9 +109,16 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
         tag(NL),
     )(i)
     .map_err(Error::context("object <40 lowercase hex char>"))?;
+
     let (i, kind) = terminated(preceded(tag(b"type "), take_while1(is_alphabetic)), tag(NL))(i)
         .map_err(Error::context("type <object kind>"))?;
     let kind = crate::Kind::from_bytes(kind)?;
+
+    let (i, tag_version) = terminated(preceded(tag(b"tag "), take_while1(|b| b != NL[0])), tag(NL))(i)
+        .map_err(Error::context("tag <version>"))?;
+
+    let (i, tagger) = terminated(preceded(tag(b"tagger "), take_while1(|b| b != NL[0])), tag(NL))(i)
+        .map_err(Error::context("tagger <signature>"))?;
     unimplemented!("parse message nom")
 }
 
