@@ -28,6 +28,9 @@ quick_error! {
             from()
             cause(err)
         }
+        ParseError(msg: &'static str, kind: Vec<u8>) {
+            display("{}: {:?}", msg, std::str::from_utf8(&kind))
+        }
         ObjectHeader(err: object::Error) {
             display("Could not parse object kind")
             from()
@@ -104,7 +107,7 @@ pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error>
             object::Kind::from_bytes(kind)?,
             {
                 let size = str::from_utf8(size).map_err(|_| {
-                    parsed::Error::ParseError(
+                    Error::ParseError(
                         "Object size was not valid UTF-8 or ascii for that matter",
                         size.to_owned(),
                     )

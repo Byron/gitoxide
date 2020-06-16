@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 
 mod nom {
     use super::fixture_bytes;
-    use crate::parsed::tag::{parse_signature_nom, parse_tag_nom};
+    use crate::parsed::tag::parse_tag_nom;
     use crate::parsed::tests::tag::tag_fixture;
 
     #[test]

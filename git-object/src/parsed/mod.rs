@@ -4,7 +4,6 @@ use quick_error::quick_error;
 use std::str;
 
 mod tag;
-mod util;
 
 use nom::error::ParseError;
 pub use tag::Tag;
@@ -19,10 +18,10 @@ quick_error! {
             display("{}: {:?}", msg, std::str::from_utf8(&kind))
             cause(err)
         }
-        ParseError(msg: &'static str, kind: Vec<u8>) {
-            display("{}: {:?}", msg, std::str::from_utf8(&kind))
+        Nom(err_msg: String) {
+            display("{}", err_msg)
         }
-        Nom(input: bstr::BString, msg: &'static str) {
+        NomDetail(input: bstr::BString, msg: &'static str) {
             display("{}: '{}' could not be parsed", msg, input)
         }
         ParseKindError(err: crate::types::Error) {
@@ -39,7 +38,7 @@ quick_error! {
 impl Error {
     fn set_parse_context(mut self, ctx: &'static str) -> Self {
         match self {
-            Error::Nom(_, ref mut message) => *message = ctx,
+            Error::NomDetail(_, ref mut message) => *message = ctx,
             _ => {}
         };
         self
@@ -51,12 +50,21 @@ impl Error {
 }
 
 impl ParseError<&[u8]> for Error {
-    fn from_error_kind(input: &[u8], kind: nom::error::ErrorKind) -> Self {
-        Error::Nom(input.into(), "parse error")
+    fn from_error_kind(input: &[u8], _kind: nom::error::ErrorKind) -> Self {
+        Error::NomDetail(input.into(), "parse error")
     }
 
     fn append(_: &[u8], _: nom::error::ErrorKind, other: Self) -> Self {
         other
+    }
+}
+
+impl From<nom::Err<Error>> for Error {
+    fn from(e: nom::Err<Error>) -> Self {
+        match e {
+            nom::Err::Error(err) | nom::Err::Failure(err) => Error::Nom(err.to_string()),
+            nom::Err::Incomplete(_) => unreachable!("we do not implement streaming parsers"),
+        }
     }
 }
 
