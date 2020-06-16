@@ -6,6 +6,7 @@ use std::str;
 mod tag;
 mod util;
 
+use nom::error::ParseError;
 pub use tag::Tag;
 
 #[cfg(test)]
@@ -21,10 +22,33 @@ quick_error! {
         ParseError(msg: &'static str, kind: Vec<u8>) {
             display("{}: {:?}", msg, std::str::from_utf8(&kind))
         }
+        Nom(input: bstr::BString, msg: &'static str) {
+            display("{}: '{}' could not be parsed", msg, input)
+        }
         ObjectKind(err: crate::Error) {
             from()
             cause(err)
         }
+    }
+}
+
+impl Error {
+    pub fn parse_context(mut self, ctx: &'static str) -> Self{
+        match self {
+            Error::Nom(_, ref mut message) => *message = ctx,
+            _ => {}
+        };
+        self
+    }
+}
+
+impl ParseError<&[u8]> for Error {
+    fn from_error_kind(input: &[u8], kind: nom::error::ErrorKind) -> Self {
+        Error::Nom(input.into(), "parse error")
+    }
+
+    fn append(_: &[u8], _: nom::error::ErrorKind, other: Self) -> Self {
+        other
     }
 }
 

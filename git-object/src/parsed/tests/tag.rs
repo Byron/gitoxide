@@ -6,8 +6,20 @@ use crate::{
 use bstr::ByteSlice;
 use pretty_assertions::assert_eq;
 
+mod message {
+    use super::fixture_bytes;
+    use super::parsed::tag::parse_tag_nom;
+    use crate::parsed::tests::tag::tag_fixture;
+
+    #[test]
+    fn parse() {
+        let fixture = fixture_bytes("tag.txt");
+        assert_eq!(parse_tag_nom(&fixture).unwrap().1, tag_fixture(9000));
+    }
+}
+
 #[test]
-fn tag_parse() {
+fn parse() {
     let fixture = fixture_bytes("tag.txt");
     let actual = parsed::Tag::from_bytes(&fixture).unwrap();
     assert_eq!(actual, tag_fixture(9000));
