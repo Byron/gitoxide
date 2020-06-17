@@ -4,7 +4,7 @@ use crate::{
 };
 use git_object as object;
 use hex::ToHex;
-use object::parsed;
+use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{
@@ -23,7 +23,7 @@ quick_error! {
             display("decompression of loose object at '{}' failed", path.display())
             cause(err)
         }
-        ParseTag(err: parsed::Error) {
+        ParseTag(err: borrowed::Error) {
             display("Could not parse tag object")
             from()
             cause(err)
@@ -40,7 +40,7 @@ quick_error! {
             display("{}", msg)
         }
         ParseUsize(number: String, err: std::num::ParseIntError) {
-            display("Number '{}' could not be parsed", number)
+            display("Number '{}' could not be borrowed", number)
             cause(err)
         }
         Io(err: std::io::Error, action: &'static str, path: PathBuf) {
@@ -61,7 +61,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn parsed(&mut self) -> Result<parsed::Object, Error> {
+    pub fn parsed(&mut self) -> Result<borrowed::Object, Error> {
         Ok(match self.kind {
             object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                 if !self.is_decompressed {
@@ -86,7 +86,7 @@ impl Object {
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
                 match self.kind {
-                    object::Kind::Tag => parsed::Object::Tag(parsed::Tag::from_bytes(bytes)?),
+                    object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(bytes)?),
                     _ => unimplemented!(),
                 }
             }

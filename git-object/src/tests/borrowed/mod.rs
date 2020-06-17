@@ -7,8 +7,8 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 }
 
 mod parse_signature {
-    use crate::parsed::util::parse_signature;
-    use crate::parsed::Signature;
+    use crate::borrowed::util::parse_signature;
+    use crate::borrowed::Signature;
     use crate::{Sign, Time};
     use bstr::ByteSlice;
 

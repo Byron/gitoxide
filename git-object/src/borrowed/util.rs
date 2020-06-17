@@ -1,4 +1,4 @@
-use crate::parsed::{Error, Signature};
+use crate::borrowed::{Error, Signature};
 use crate::{Sign, Time};
 use bstr::ByteSlice;
 use btoi::btoi;

@@ -1,5 +1,5 @@
 use super::Error;
-use crate::parsed::{
+use crate::borrowed::{
     util::{parse_signature, NL},
     Signature,
 };

@@ -6,7 +6,7 @@ mod utils;
 use utils::*;
 
 use bstr::ByteSlice;
-use git_object::{parsed, Kind, Sign, Time};
+use git_object::{borrowed, Kind, Sign, Time};
 use odb::loose::Db;
 use pretty_assertions::assert_eq;
 
@@ -35,8 +35,8 @@ fn loose_iter() {
     )
 }
 
-fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
-    parsed::Tag {
+fn tag_fixture(offset: i32) -> borrowed::Tag<'static> {
+    borrowed::Tag {
         target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
         name: b"1.0.0".as_bstr(),
         target_kind: Kind::Commit,
@@ -61,7 +61,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                 .as_bstr(),
         ),
-        signature: parsed::Signature {
+        signature: borrowed::Signature {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
             time: Time {
@@ -80,5 +80,8 @@ fn loose_find() {
         .unwrap();
     assert_eq!(o.kind, Kind::Tag);
     assert_eq!(o.size, 1024);
-    assert_eq!(o.parsed().unwrap(), parsed::Object::Tag(tag_fixture(7200)))
+    assert_eq!(
+        o.parsed().unwrap(),
+        borrowed::Object::Tag(tag_fixture(7200))
+    )
 }

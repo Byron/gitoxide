@@ -1,12 +1,12 @@
 use crate::{
-    parsed::{Signature, Tag},
+    borrowed::{Signature, Tag},
     Kind, Sign, Time,
 };
 use bstr::ByteSlice;
 
 mod method {
     use crate::tests::bin;
-    use crate::tests::parsed::tag::tag_fixture;
+    use crate::tests::borrowed::tag::tag_fixture;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -19,9 +19,9 @@ mod method {
 }
 
 mod parse_tag {
-    use crate::parsed::tag::parse_tag;
-    use crate::tests::parsed::fixture_bytes;
-    use crate::tests::parsed::tag::tag_fixture;
+    use crate::borrowed::tag::parse_tag;
+    use crate::tests::borrowed::fixture_bytes;
+    use crate::tests::borrowed::tag::tag_fixture;
 
     #[test]
     fn signed() {
