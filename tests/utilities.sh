@@ -20,7 +20,7 @@ function with_program () {
 }
 
 function on_ci () {
-  [ -z "${CI-}" ] && {
+  [ -n "${CI-}" ] || {
     function expect_run () {
       echo 1>&2 "${WHITE} - skipped (runs only on CI)"
     }
