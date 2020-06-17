@@ -69,7 +69,7 @@ impl Inflate {
                     // just try again with fresh cursor
                 }
                 _ => unreachable!(
-                    "This should all be covered by once, we expect a complete input buffer: {:?}",
+                    "This should all be covered by `once()`, we expect a complete input buffer: {:?}",
                     status
                 ),
             }

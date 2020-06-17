@@ -74,14 +74,19 @@ impl Object {
                     if cap < total_size {
                         self.decompressed_data.reserve_exact(total_size - cap);
                     }
+                    // This works because above we assured there is total_size bytes available.
+                    // Those may not be initialized, but it will be overwritten entirely by zlib
+                    // which decompresses everything into the memory region.
+                    #[allow(unsafe_code)]
                     unsafe {
-                        debug_assert!(self.decompressed_data.capacity() >= total_size);
+                        assert!(self.decompressed_data.capacity() >= total_size);
                         self.decompressed_data.set_len(total_size);
                     }
                     let mut cursor = Cursor::new(&mut self.decompressed_data[..]);
                     // TODO Performance opportunity
-                    // here we do a lot of additional work, which could be saved if we
-                    // could re-use the previous state. This doesn't work for some reason.
+                    // here we do some additional work as we decompress parts again that we already covered
+                    // when getting the header, if we could re-use the previous state.
+                    // This didn't work for some reason in 2018! Maybe worth another try
                     let mut deflate = zlib::Inflate::default();
                     deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
                     self.is_decompressed = deflate.is_done;
@@ -176,7 +181,13 @@ impl Db {
                         compressed.reserve_exact(fsize - cap);
                         debug_assert!(fsize == compressed.capacity());
                     }
+
+                    // This works because above we assured there is fsize bytes available.
+                    // Those may not be initialized, but it will be overwritten entirely reading
+                    // the input stream of compressed bytes.
+                    #[allow(unsafe_code)]
                     unsafe {
+                        assert!(compressed.capacity() >= fsize);
                         compressed.set_len(fsize);
                     }
                     input_stream

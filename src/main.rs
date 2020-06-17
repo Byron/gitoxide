@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use anyhow::{Context, Result};
 use structopt::StructOpt;
 
