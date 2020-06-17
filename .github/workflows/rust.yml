@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: clippy
-      run: cargo clippy
+      run: cargo clippy --all
     - name: fmt
       run: cargo fmt --all -- --check
     - name: test

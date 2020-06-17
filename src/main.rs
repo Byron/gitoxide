@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use git_core;
 use structopt::StructOpt;
 
 mod options {
