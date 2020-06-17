@@ -17,7 +17,7 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 mod tag;
 
 mod signature {
-    use crate::parsed::util::parse_signature_nom;
+    use crate::parsed::util::parse_signature;
     use crate::parsed::Signature;
     use crate::{Sign, Time};
     use bstr::ByteSlice;
@@ -39,7 +39,7 @@ mod signature {
     #[test]
     fn tz_minus() {
         assert_eq!(
-            parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
+            parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
                 .unwrap()
                 .1,
             signature(
@@ -55,7 +55,7 @@ mod signature {
     #[test]
     fn tz_plus() {
         assert_eq!(
-            parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
+            parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
                 .unwrap()
                 .1,
             signature(
@@ -71,7 +71,7 @@ mod signature {
     #[test]
     fn negative_offset_0000() {
         assert_eq!(
-            parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
+            parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
                 .unwrap()
                 .1,
             signature(
@@ -87,7 +87,7 @@ mod signature {
     #[test]
     fn empty_name_and_email() {
         assert_eq!(
-            parse_signature_nom(b" <> 12345 -1215").unwrap().1,
+            parse_signature(b" <> 12345 -1215").unwrap().1,
             signature("", "", 12345, Sign::Minus, -44100)
         );
     }

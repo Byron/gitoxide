@@ -13,7 +13,7 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn parse_signature_nom(i: &[u8]) -> IResult<&[u8], Signature, Error> {
+pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
     let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
         terminated(take_until(&b" <"[..]), take(2usize)),
         terminated(take_until(&b"> "[..]), take(2usize)),

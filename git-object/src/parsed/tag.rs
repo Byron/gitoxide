@@ -1,6 +1,8 @@
 use super::Error;
-use crate::parsed::util::{parse_signature_nom, NL};
-use crate::parsed::Signature;
+use crate::parsed::{
+    util::{parse_signature, NL},
+    Signature,
+};
 use bstr::{BStr, ByteSlice};
 use hex::FromHex;
 use nom::{
@@ -30,7 +32,7 @@ fn is_hex_digit_lc(b: u8) -> bool {
     }
 }
 
-pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
+pub(crate) fn parse_tag(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     let (i, target) = terminated(
         preceded(
             tag(b"object "),
@@ -49,9 +51,9 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
         terminated(preceded(tag(b"tag "), take_while1(|b| b != NL[0])), tag(NL))(i)
             .map_err(Error::context("tag <version>"))?;
 
-    let (i, signature) = terminated(preceded(tag(b"tagger "), parse_signature_nom), tag(NL))(i)
+    let (i, signature) = terminated(preceded(tag(b"tagger "), parse_signature), tag(NL))(i)
         .map_err(Error::context("tagger <signature>"))?;
-    let (i, (message, pgp_signature)) = all_consuming(parse_message_nom)(i)?;
+    let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
         i,
         Tag {
@@ -65,7 +67,7 @@ pub(crate) fn parse_tag_nom(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     ))
 }
 
-pub(crate) fn parse_message_nom(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
+pub(crate) fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----\n";
 
@@ -122,6 +124,6 @@ impl<'data> Tag<'data> {
         <[u8; 20]>::from_hex(self.target).expect("prior validation")
     }
     pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
-        parse_tag_nom(d).map(|(_, t)| t).map_err(Error::from)
+        parse_tag(d).map(|(_, t)| t).map_err(Error::from)
     }
 }

@@ -8,13 +8,13 @@ use pretty_assertions::assert_eq;
 
 mod nom {
     use super::fixture_bytes;
-    use crate::parsed::tag::parse_tag_nom;
+    use crate::parsed::tag::parse_tag;
     use crate::parsed::tests::tag::tag_fixture;
 
     #[test]
     fn parse_tag() {
         let fixture = fixture_bytes("tag.txt");
-        assert_eq!(parse_tag_nom(&fixture).unwrap().1, tag_fixture(9000));
+        assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
     }
 }
 
