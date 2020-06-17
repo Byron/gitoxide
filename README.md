@@ -132,4 +132,10 @@ Provide a CLI to for the most basic user journey:
 
 ## Maintenance Guide
 
-*TBD*
+Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`.
+
+Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
+compatibility_). Certain tests only run on CI, designed to validate certain assumptions still hold against possibly changed
+git program versions.
+
+This also means that CI may fail despite everything being alright locally, and the fix depends on the problem at hand.

@@ -28,8 +28,7 @@ quick_error! {
 
 const GIT_DIR_NAME: &'static str = ".git";
 
-const TPL_INFO_EXCLUDE: &'static [u8] =
-    include_bytes!("./assets/baseline-init/info/exclude");
+const TPL_INFO_EXCLUDE: &'static [u8] = include_bytes!("./assets/baseline-init/info/exclude");
 const TPL_HOOKS_APPLYPATCH_MSG: &'static [u8] =
     include_bytes!("./assets/baseline-init/hooks/applypatch-msg.sample");
 const TPL_HOOKS_COMMIT_MSG: &'static [u8] =
@@ -55,8 +54,7 @@ const TPL_HOOKS_PREPARE_COMMIT_MSG: &'static [u8] =
 const TPL_HOOKS_UPDATE: &'static [u8] =
     include_bytes!("./assets/baseline-init/hooks/update.sample");
 const TPL_CONFIG: &'static [u8] = include_bytes!("./assets/baseline-init/config");
-const TPL_DESCRIPTION: &'static [u8] =
-    include_bytes!("./assets/baseline-init/description");
+const TPL_DESCRIPTION: &'static [u8] = include_bytes!("./assets/baseline-init/description");
 const TPL_HEAD: &'static [u8] = include_bytes!("./assets/baseline-init/HEAD");
 
 struct PathCursor<'a>(&'a mut PathBuf);
