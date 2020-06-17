@@ -73,10 +73,7 @@ pub(crate) fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), 
 
     let (i, _) = tag(NL)(i)?;
     if i.is_empty() {
-        return Err(nom::Err::Error(Error::NomDetail(
-            i.into(),
-            "Missing tag message",
-        )));
+        return Ok((i, (i.as_bstr(), None)));
     }
     fn all_but_trailing_newline(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), Error> {
         if i.len() < 2 {
@@ -85,11 +82,11 @@ pub(crate) fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), 
                 "tag message is missing",
             )));
         }
-        let (i, _) = tag(NL)(&i[i.len() - 1..])
+        let (x, _) = tag(NL)(&i[i.len() - 1..])
             .map_err(Error::context("tag message must end with newline"))?;
         // an empty signature message signals that there is none - the function signature is needed
         // to work with 'alt(…)'. PGP signatures are never empty
-        Ok((i, (&i[..i.len() - 1], &[])))
+        Ok((x, (&i[..i.len() - 1], &[])))
     }
     let (i, (message, signature)) = alt((
         tuple((

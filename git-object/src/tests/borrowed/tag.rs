@@ -19,14 +19,89 @@ mod method {
 }
 
 mod parse_tag {
-    use crate::borrowed::tag::parse_tag;
-    use crate::tests::borrowed::fixture_bytes;
-    use crate::tests::borrowed::tag::tag_fixture;
+    use crate::{
+        borrowed::{tag::parse_tag, Signature, Tag},
+        tests::{borrowed::fixture_bytes, borrowed::tag::tag_fixture},
+        Kind, Sign, Time,
+    };
+    use bstr::ByteSlice;
 
     #[test]
     fn signed() {
         let fixture = fixture_bytes("signed.txt");
         assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
+    }
+
+    #[test]
+    fn empty() {
+        let fixture = fixture_bytes("empty.txt");
+        assert_eq!(
+            parse_tag(&fixture).unwrap().1,
+            Tag {
+                target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
+                name: b"empty".as_bstr(),
+                target_kind: Kind::Commit,
+                message: b"".as_bstr(),
+                signature: Signature {
+                    name: b"Sebastian Thiel".as_bstr(),
+                    email: b"sebastian.thiel@icloud.com".as_bstr(),
+                    time: Time {
+                        time: 1592381636,
+                        offset: 28800,
+                        sign: Sign::Plus,
+                    },
+                },
+                pgp_signature: None
+            }
+        );
+    }
+
+    #[test]
+    fn with_newlines() {
+        let fixture = fixture_bytes("with-newlines.txt");
+        assert_eq!(
+            parse_tag(&fixture).unwrap().1,
+            Tag {
+                target: b"ebdf205038b66108c0331aa590388431427493b7".as_bstr(),
+                name: b"baz".as_bstr(),
+                target_kind: Kind::Commit,
+                message: b"hello\n\nworld".as_bstr(),
+                signature: Signature {
+                    name: b"Sebastian Thiel".as_bstr(),
+                    email: b"sebastian.thiel@icloud.com".as_bstr(),
+                    time: Time {
+                        time: 1592311808,
+                        offset: 28800,
+                        sign: Sign::Plus,
+                    },
+                },
+                pgp_signature: None
+            }
+        );
+    }
+
+    #[test]
+    fn whitespace() {
+        let fixture = fixture_bytes("whitespace.txt");
+        assert_eq!(
+            parse_tag(&fixture).unwrap().1,
+            Tag {
+                target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
+                name: b"whitespace".as_bstr(),
+                target_kind: Kind::Commit,
+                message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(), // odd, was created with \n\n actually
+                signature: Signature {
+                    name: b"Sebastian Thiel".as_bstr(),
+                    email: b"sebastian.thiel@icloud.com".as_bstr(),
+                    time: Time {
+                        time: 1592382888,
+                        offset: 28800,
+                        sign: Sign::Plus,
+                    },
+                },
+                pgp_signature: None
+            }
+        );
     }
 }
 

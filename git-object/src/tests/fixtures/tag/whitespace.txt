@@ -1,0 +1,10 @@
+object 01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc
+type commit
+tag whitespace
+tagger Sebastian Thiel <sebastian.thiel@icloud.com> 1592382888 +0800
+
+ 	tab
+newline
+
+last-with-trailer
+
