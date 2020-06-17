@@ -128,9 +128,21 @@ pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error>
 }
 
 fn sha1_path(id: &[u8; 20], mut root: PathBuf) -> PathBuf {
-    let mut buf = String::with_capacity(40);
-    id.write_hex(&mut buf)
-        .expect("no failure as everything is preset by now");
+    struct Buf([u8; 40], usize);
+    let mut buf = Buf([0u8; 40], 0);
+
+    impl std::fmt::Write for Buf {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            self.0[self.1..self.1 + buf.len()].copy_from_slice(buf);
+            self.1 += buf.len();
+            Ok(())
+        }
+    }
+
+    {
+        id.write_hex(&mut buf)
+            .expect("no failure as everything is preset by now");
+    }
     root.push(&buf[..2]);
     root.push(&buf[2..]);
     root
