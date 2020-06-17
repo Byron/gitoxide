@@ -12,8 +12,8 @@ pub use tag::Tag;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        ParseIntegerError(msg: &'static str, kind: Vec<u8>, err: btoi::ParseIntegerError) {
-            display("{}: {:?}", msg, std::str::from_utf8(&kind))
+        ParseIntegerError(msg: &'static str, kind: bstr::BString, err: btoi::ParseIntegerError) {
+            display("{}: {:?}", msg, kind)
             cause(err)
         }
         Nom(err_msg: String) {

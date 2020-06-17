@@ -34,14 +34,14 @@ pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
     let hours = btoi::<i32>(&tzhour).map_err(|e| {
         nom::Err::Error(Error::ParseIntegerError(
             "invalid 'hours' string",
-            tzhour.to_owned(),
+            tzhour.into(),
             e,
         ))
     })?;
     let minutes = btoi::<i32>(&tzminute).map_err(|e| {
         nom::Err::Error(Error::ParseIntegerError(
             "invalid 'minutes' string",
-            tzminute.to_owned(),
+            tzminute.into(),
             e,
         ))
     })?;
@@ -56,7 +56,7 @@ pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
                 time: btoi::<u32>(time_in_seconds).map_err(|e| {
                     nom::Err::Error(Error::ParseIntegerError(
                         "Could parse to seconds",
-                        time_in_seconds.to_owned(),
+                        time_in_seconds.into(),
                         e,
                     ))
                 })?,

@@ -37,7 +37,7 @@ pub enum Kind {
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        InvalidObjectKind(kind: Vec<u8>) {
+        InvalidObjectKind(kind: bstr::BString) {
             display("Unknown object kind: {:?}", std::str::from_utf8(&kind))
         }
     }
@@ -50,7 +50,7 @@ impl Kind {
             b"commit" => Kind::Commit,
             b"tree" => Kind::Tree,
             b"blob" => Kind::Blob,
-            _ => return Err(Error::InvalidObjectKind(s.to_owned())),
+            _ => return Err(Error::InvalidObjectKind(s.into())),
         })
     }
 }
