@@ -1,7 +1,4 @@
 use super::*;
-use crate::parsed::tag::parse_signature_nom;
-use crate::{parsed, Sign};
-use bstr::ByteSlice;
 use hex::FromHex;
 use std::path::PathBuf;
 
@@ -19,20 +16,79 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 
 mod tag;
 
-#[test]
-fn parse_signature() {
-    assert_eq!(
-        parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
-            .unwrap()
-            .1,
-        parsed::Signature {
-            name: b"Sebastian Thiel".as_bstr(),
-            email: b"byronimo@gmail.com".as_bstr(),
-            time: Time {
-                time: 1528473343,
-                offset: 9000,
-                sign: Sign::Plus,
-            },
+mod signature {
+    use crate::parsed::util::parse_signature_nom;
+    use crate::parsed::Signature;
+    use crate::{Sign, Time};
+    use bstr::ByteSlice;
+
+    fn signature(
+        name: &'static str,
+        email: &'static str,
+        time: u32,
+        sign: Sign,
+        offset: i32,
+    ) -> Signature<'static> {
+        Signature {
+            name: name.as_bytes().as_bstr(),
+            email: email.as_bytes().as_bstr(),
+            time: Time { time, offset, sign },
         }
-    );
+    }
+
+    #[test]
+    fn tz_minus() {
+        assert_eq!(
+            parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
+                .unwrap()
+                .1,
+            signature(
+                "Sebastian Thiel",
+                "byronimo@gmail.com",
+                1528473343,
+                Sign::Minus,
+                -9000
+            )
+        );
+    }
+
+    #[test]
+    fn tz_plus() {
+        assert_eq!(
+            parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
+                .unwrap()
+                .1,
+            signature(
+                "Sebastian Thiel",
+                "byronimo@gmail.com",
+                1528473343,
+                Sign::Plus,
+                9000
+            )
+        );
+    }
+
+    #[test]
+    fn negative_offset_0000() {
+        assert_eq!(
+            parse_signature_nom(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
+                .unwrap()
+                .1,
+            signature(
+                "Sebastian Thiel",
+                "byronimo@gmail.com",
+                1528473343,
+                Sign::Minus,
+                0
+            )
+        );
+    }
+
+    #[test]
+    fn empty_name_and_email() {
+        assert_eq!(
+            parse_signature_nom(b" <> 12345 -1215").unwrap().1,
+            signature("", "", 12345, Sign::Minus, -44100)
+        );
+    }
 }

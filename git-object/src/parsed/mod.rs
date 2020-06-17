@@ -4,6 +4,7 @@ use quick_error::quick_error;
 use std::str;
 
 mod tag;
+mod util;
 
 use nom::error::ParseError;
 pub use tag::Tag;
