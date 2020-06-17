@@ -7,7 +7,8 @@ use bstr::ByteSlice;
 use pretty_assertions::assert_eq;
 
 mod method {
-    use crate::parsed::{tests::bin, tests::tag::tag_fixture};
+    use crate::tests::bin;
+    use crate::tests::parsed::tag::tag_fixture;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -21,7 +22,7 @@ mod method {
 
 #[test]
 fn signed() {
-    let fixture = fixture_bytes("tag/signed.txt");
+    let fixture = fixture_bytes("signed.txt");
     assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
 }
 

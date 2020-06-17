@@ -3,14 +3,11 @@ use bstr::BStr;
 use quick_error::quick_error;
 use std::str;
 
-mod tag;
-mod util;
+pub(crate) mod tag;
+pub(crate) mod util;
 
 use nom::error::ParseError;
 pub use tag::Tag;
-
-#[cfg(test)]
-mod tests;
 
 quick_error! {
     #[derive(Debug)]
