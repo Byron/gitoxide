@@ -6,7 +6,7 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
     super::fixture_bytes(PathBuf::from("tag").join(path).to_str().unwrap())
 }
 
-mod signature {
+mod parse_signature {
     use crate::parsed::util::parse_signature;
     use crate::parsed::Signature;
     use crate::{Sign, Time};

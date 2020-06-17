@@ -1,10 +1,8 @@
-use super::fixture_bytes;
 use crate::{
-    parsed::{tag::parse_tag, Signature, Tag},
+    parsed::{Signature, Tag},
     Kind, Sign, Time,
 };
 use bstr::ByteSlice;
-use pretty_assertions::assert_eq;
 
 mod method {
     use crate::tests::bin;
@@ -20,10 +18,16 @@ mod method {
     }
 }
 
-#[test]
-fn signed() {
-    let fixture = fixture_bytes("signed.txt");
-    assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
+mod parse_tag {
+    use crate::parsed::tag::parse_tag;
+    use crate::tests::parsed::fixture_bytes;
+    use crate::tests::parsed::tag::tag_fixture;
+
+    #[test]
+    fn signed() {
+        let fixture = fixture_bytes("signed.txt");
+        assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
+    }
 }
 
 fn tag_fixture(offset: i32) -> Tag<'static> {
