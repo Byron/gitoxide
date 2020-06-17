@@ -18,10 +18,12 @@ title "CLI"
 (when "initializing a repository"
   (with "an empty directory"
     (sandbox
-      precondition "an initialized baseline repository" && {
-        git init &>/dev/null
-        expect_snapshot "$snapshot/baseline-init" .git
-      }
+      (on_ci
+        precondition "git init still matches our copy of it" && {
+          expect_run ${SUCCESSFULLY} git init &>/dev/null
+          expect_snapshot "$snapshot/baseline-init" .git
+        }
+      )
     )
     (sandbox
       it "succeeds" && {

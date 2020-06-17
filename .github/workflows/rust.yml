@@ -10,7 +10,6 @@ jobs:
   build-lint-test-benchmark:
 
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: clippy
@@ -18,8 +17,8 @@ jobs:
     - name: fmt
       run: cargo fmt --all -- --check
     - name: test
+      env:
+        CI: true
       run: make tests
-    - name: journey-tests
-      run: make journey-tests
     - name: doc
       run: cargo doc

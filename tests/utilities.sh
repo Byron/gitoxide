@@ -19,6 +19,17 @@ function with_program () {
   }
 }
 
+function on_ci () {
+  [ -z "${CI-}" ] && {
+    function expect_run () {
+      echo 1>&2 "${WHITE} - skipped (runs only on CI)"
+    }
+    function expect_run_sh () {
+      echo 1>&2 "${WHITE} - skipped (runs only on CI)"
+    }
+  }
+}
+
 function title () {
   echo "$WHITE-----------------------------------------------------"
   echo "${GREEN}$*"
