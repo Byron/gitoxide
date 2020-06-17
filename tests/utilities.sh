@@ -7,6 +7,18 @@ RED="$(tput setaf 1 2>/dev/null || echo -n '')"
 OFFSET=( )
 STEP="  "
 
+function with_program () {
+  local program="${1:?}"
+  hash "$program" &>/dev/null || {
+    function expect_run () {
+      echo 1>&2 "${WHITE} - skipped (missing program)"
+    }
+    function expect_run_sh () {
+      echo 1>&2 "${WHITE} - skipped (missing program)"
+    }
+  }
+}
+
 function title () {
   echo "$WHITE-----------------------------------------------------"
   echo "${GREEN}$*"
@@ -18,6 +30,14 @@ function _context () {
   shift
   echo 1>&2 "${YELLOW}${OFFSET[*]:-}[$name] $*"
   OFFSET+=("$STEP")
+}
+
+function step () {
+  _note step "${WHITE}" "$*"
+}
+
+function stepn () {
+  step "$*" $'\n'
 }
 
 function with () {
@@ -47,6 +67,14 @@ function shortcoming () {
   _note shortcoming "${RED}" "$*"
 }
 
+function step () {
+  _note step "${WHITE}" "$*"
+}
+
+function stepn () {
+  step "$*" $'\n'
+}
+
 function fail () {
   echo 1>&2 "${RED} $*"
   exit 1
@@ -74,7 +102,7 @@ function expect_exists () {
 }
 
 function expect_run_sh () {
-  expect_run "${1:?}" bash -c "${2:?}"
+  expect_run "${1:?}" bash -c -eu -o pipefail "${2:?}"
 }
 
 function expect_snapshot () {
@@ -92,7 +120,11 @@ function expect_run () {
   shift
   local output=
   set +e
-  output="$("$@" 2>&1)"
+  if [[ -n "${SNAPSHOT_FILTER-}" ]]; then
+    output="$("$@" 2>&1 | "$SNAPSHOT_FILTER")"
+  else
+    output="$("$@" 2>&1)"
+  fi
 
   local actual_exit_code=$?
   if [[ "$actual_exit_code" == "$expected_exit_code" ]]; then
@@ -107,6 +139,9 @@ function expect_run () {
         echo 1>&2 "${WHITE}\$ $*"
         echo 1>&2 "Output snapshot did not match snapshot at '$expected'"
         echo 1>&2 "$output"
+        if [ -n "${ON_ERROR:-}" ]; then
+          eval "$ON_ERROR"
+        fi
         exit 1
       fi
     fi
@@ -116,6 +151,9 @@ function expect_run () {
     echo 1>&2 "${WHITE}\$ $*"
     echo 1>&2 "${RED}Expected actual status $actual_exit_code to be $expected_exit_code"
     echo 1>&2 "$output"
+    if [ -n "${ON_ERROR:-}" ]; then
+      eval "$ON_ERROR"
+    fi
     exit 1
   fi
   set -e
