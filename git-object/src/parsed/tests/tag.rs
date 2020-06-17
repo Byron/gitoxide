@@ -1,36 +1,32 @@
 use super::fixture_bytes;
 use crate::{
-    parsed::{self, tests::bin},
+    parsed::{tag::parse_tag, Signature, Tag},
     Kind, Sign, Time,
 };
 use bstr::ByteSlice;
 use pretty_assertions::assert_eq;
 
-mod nom {
-    use super::fixture_bytes;
-    use crate::parsed::tag::parse_tag;
-    use crate::parsed::tests::tag::tag_fixture;
+mod method {
+    use crate::parsed::{tests::bin, tests::tag::tag_fixture};
+    use pretty_assertions::assert_eq;
 
     #[test]
-    fn parse_tag() {
-        let fixture = fixture_bytes("tag.txt");
-        assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
+    fn target() {
+        assert_eq!(
+            tag_fixture(9000).target(),
+            bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
+        )
     }
 }
 
 #[test]
-fn parse() {
-    let fixture = fixture_bytes("tag.txt");
-    let actual = parsed::Tag::from_bytes(&fixture).unwrap();
-    assert_eq!(actual, tag_fixture(9000));
-    assert_eq!(
-        actual.target(),
-        bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
-    );
+fn signed() {
+    let fixture = fixture_bytes("tag/signed.txt");
+    assert_eq!(parse_tag(&fixture).unwrap().1, tag_fixture(9000));
 }
 
-fn tag_fixture(offset: i32) -> parsed::Tag<'static> {
-    parsed::Tag {
+fn tag_fixture(offset: i32) -> Tag<'static> {
+    Tag {
         target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
         name: b"1.0.0".as_bstr(),
         target_kind: Kind::Commit,
@@ -55,7 +51,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                 .as_bstr(),
         ),
-        signature: parsed::Signature {
+        signature: Signature {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
             time: Time {
