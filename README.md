@@ -78,8 +78,7 @@ The CLI uses various libraries to implement
    * use Rust's type system to make misuse impossible
  * **be the best performing implementation**
    * use Rust's type system to optimize for work not done without being hard to use
-   * use multiple cores when available
-   * make it easy to control concurrency and parallelism
+   * make use of parallelism from the get go
  * **assure on-disk consistency**
    * assure reads never interfere with concurrent writes
    * assure multiple concurrent writes don't cause trouble
@@ -88,6 +87,13 @@ The CLI uses various libraries to implement
    * libraries use light-weight custom errors implemented using `quick-error`.
    * internationalization is nothing we are concerned with right now.
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
+ * **async as opt-in**
+   * Making certain capabilities available through `async` APIs allows for abortable operations, which
+     may be interesting for interactive user interfaces. Thus it is something worth considering, but only
+     behind a feature flag and once the need transpire.
+   * Ideally many operations powered by implementors of `std::io::{Read, Write}` and `std::iter::Iterator`,
+     which makes unblocking them trivial using the fantastic `blocking` crate. Only when these are used internally,
+     providing a separate async version of these operations can be beneficial to make them abortable.
 
 ## Non-Goals
 
@@ -97,7 +103,8 @@ The CLI uses various libraries to implement
  * **be incompatible to git**
    * the on-disk format must remain compatible, and we will never contend with it.
  * **use async IO everywhere**
-   * but don't tie it to `async-std` or `tokio`
+   * for the most part, git operations are heavily relying on memory mapped IO as well as CPU to decompress data,
+     which doesn't lend itself well to async IO out of the box.
 
 ## Roadmap to Future
 
@@ -107,7 +114,7 @@ As you can see from the version numbers, this project dispenses major version ge
 
 Provide a CLI to for the most basic user journey:
 
-* [ ] initialize a repository
+* [x] initialize a repository
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push
