@@ -12,8 +12,8 @@ pub use tag::Tag;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        ParseIntegerError(msg: &'static str, kind: bstr::BString, err: btoi::ParseIntegerError) {
-            display("{}: {:?}", msg, kind)
+        ParseIntegerError(msg: &'static str, number: bstr::BString, err: btoi::ParseIntegerError) {
+            display("{}: {:?}", msg, number)
             cause(err)
         }
         Nom(err_msg: String) {

@@ -8,7 +8,10 @@ use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{
-    fs::File, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf, str, str::FromStr,
+    fs::File,
+    io::{Cursor, Read},
+    os::unix::fs::MetadataExt,
+    path::PathBuf,
 };
 
 quick_error! {
@@ -28,8 +31,9 @@ quick_error! {
             from()
             cause(err)
         }
-        ParseError(msg: &'static str, kind: Vec<u8>) {
-            display("{}: {:?}", msg, std::str::from_utf8(&kind))
+        ParseIntegerError(msg: &'static str, number: Vec<u8>, err: btoi::ParseIntegerError) {
+            display("{}: {:?}", msg, std::str::from_utf8(number))
+            cause(err)
         }
         ObjectHeader(err: object::Error) {
             display("Could not parse object kind")
@@ -105,15 +109,13 @@ pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error>
     match (split.next(), split.next()) {
         (Some(kind), Some(size)) => Ok((
             object::Kind::from_bytes(kind)?,
-            {
-                let size = str::from_utf8(size).map_err(|_| {
-                    Error::ParseError(
-                        "Object size was not valid UTF-8 or ascii for that matter",
-                        size.to_owned(),
-                    )
-                })?;
-                usize::from_str(size).map_err(|e| Error::ParseUsize(size.to_owned(), e))?
-            },
+            btoi::btoi(size).map_err(|e| {
+                Error::ParseIntegerError(
+                    "Object size was not valid UTF-8 or ascii for that matter",
+                    size.to_owned(),
+                    e,
+                )
+            })?,
             header_end + 1, // account for 0 byte
         )),
         _ => Err(Error::InvalidHeader("Expected '<type> <size>'")),

@@ -8,4 +8,4 @@
 * [x] parser tests handle binary strings nicely
 * [x] switch parsing to nom (binary only)
 * [x] test tags without signature
-* [ ] Review loose object parsing, but don't use Nom for that
+* [x] Review loose object parsing, but don't use Nom for that
