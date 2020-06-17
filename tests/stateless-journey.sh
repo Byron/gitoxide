@@ -8,8 +8,8 @@ exe="${root}/../$exe"
 
 # shellcheck disable=1090
 source "$root/utilities.sh"
-snapshot="$root/snapshots/cli"
-# fixtures="$root/fixtures"
+snapshot="$root/snapshots"
+fixtures="$root/fixtures"
 
 SUCCESSFULLY=0
 WITH_FAILURE=1
@@ -21,7 +21,7 @@ title "CLI"
       (on_ci
         precondition "git init still matches our copy of it" && {
           expect_run ${SUCCESSFULLY} git init &>/dev/null
-          expect_snapshot "$snapshot/baseline-init" .git
+          expect_snapshot "$fixtures/baseline-init" .git
         }
       )
     )
@@ -32,7 +32,7 @@ title "CLI"
       }
 
       it "matches the output of baseline git init" && {
-        expect_snapshot "$snapshot/baseline-init" .git
+        expect_snapshot "$fixtures/baseline-init" .git
       }
       
       (when "trying to initialize the same directory again"

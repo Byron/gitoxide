@@ -46,3 +46,9 @@ journey-tests: target/debug/grit ## run stateless journey tests
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
 
+##@ Maintenance
+
+update-assets: ## refresh assets compiles into the binaries from their source
+	-rm -Rf git-core/assets/baseline-init
+	mkdir -p git-core/assets
+	cp -R tests/fixtures/baseline-init git-core/assets/baseline-init
