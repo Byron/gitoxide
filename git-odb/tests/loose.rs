@@ -59,7 +59,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 2n8f2douw6624Tn/6Lm4a7AoxmU+CMiYagDxDL3RuZ8CAfh3bn0=
 =aIns
 -----END PGP SIGNATURE-----"
-            .as_bstr(),
+                .as_bstr(),
         ),
         signature: parsed::Signature {
             name: b"Sebastian Thiel".as_bstr(),

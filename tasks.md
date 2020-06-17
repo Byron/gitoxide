@@ -6,4 +6,5 @@
 * [x] use btoi to parse integers (avoiding UTF8 conversion)
 * [x] make parser tests unit tests that are close to the code they test
 * [x] parser tests handle binary strings nicely
-* [ ] switch parsing to nom (binary only)
+* [x] switch parsing to nom (binary only)
+* [ ] test tags without signature
