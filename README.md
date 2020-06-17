@@ -52,6 +52,7 @@ The CLI uses various libraries to implement
       * [ ] deltified objects
     * [ ] Multi-Pack index file (MIDX)
     * [ ] create new packs
+    * [ ] verify pack
 * **git-transport**
   * [ ] via ssh
     * [ ] push
