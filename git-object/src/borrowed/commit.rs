@@ -1,14 +1,16 @@
 use super::Error;
-use crate::borrowed::util::{parse_signature, NL};
 use crate::borrowed::{
-    util::{parse_header_field, parse_hex_sha1},
+    util::{parse_header_field, parse_hex_sha1, parse_signature, NL},
     Signature,
 };
 use bstr::{BStr, ByteSlice};
-use nom::bytes::complete::tag;
-use nom::combinator::all_consuming;
-use nom::multi::many0;
-use nom::IResult;
+use nom::bytes::complete::is_not;
+use nom::{
+    bytes::complete::tag,
+    combinator::{all_consuming, opt},
+    multi::many0,
+    IResult,
+};
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Commit<'data> {
@@ -51,6 +53,8 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
         .map_err(Error::context("author <signature>"))?;
     let (i, committer) = parse_header_field(i, b"committer", parse_signature)
         .map_err(Error::context("author <signature>"))?;
+    let (i, encoding) = opt(|i| parse_header_field(i, b"encoding", is_not(NL)))(i)
+        .map_err(Error::context("author <signature>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((
@@ -60,7 +64,7 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
             parents,
             author,
             committer,
-            encoding: None,
+            encoding: encoding.map(ByteSlice::as_bstr),
             message,
             pgp_signature: None,
         },

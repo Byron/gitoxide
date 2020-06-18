@@ -38,19 +38,18 @@ mod parse {
     }
 
     #[test]
-    #[ignore]
     fn with_encoding() {
         assert_eq!(
             parse(&fixture_bytes("commit", "with-encoding.txt"))
                 .unwrap()
                 .1,
             Commit {
-                tree: b"9bed6275068a0575243ba8409253e61af81ab2ff".as_bstr(),
-                parents: vec![b"26b4df046d1776c123ac69d918f5aec247b58cc6".as_bstr()],
-                author: signature(1592448450),
-                committer: signature(1592448450),
-                encoding: None,
-                message: b" nl".as_bstr(), // this one had a \n trailing it, but git seems to trim that
+                tree: b"4a1c03029e7407c0afe9fc0320b3258e188b115e".as_bstr(),
+                parents: vec![b"7ca98aad461a5c302cb4c9e3acaaa6053cc67a62".as_bstr()],
+                author: signature(1592438199),
+                committer: signature(1592438199),
+                encoding: Some("ISO-8859-1".into()),
+                message: b"commit with encoding".as_bstr(),
                 pgp_signature: None
             }
         );
