@@ -1,17 +1,16 @@
 use super::Error;
-use crate::borrowed::util::parse_oneline_header;
 use crate::borrowed::{
-    util::{parse_signature, NL},
+    util::{parse_hex_sha1, parse_oneline_header, parse_signature, NL},
     Signature,
 };
 use bstr::{BStr, ByteSlice};
 use hex::FromHex;
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_until, take_while1, take_while_m_n},
+    bytes::complete::{tag, take_until, take_while1},
     character::is_alphabetic,
     combinator::{all_consuming, recognize},
-    sequence::{delimited, preceded, terminated, tuple},
+    sequence::{delimited, tuple},
     IResult,
 };
 
@@ -25,18 +24,9 @@ pub struct Tag<'data> {
     pub pgp_signature: Option<&'data BStr>,
 }
 
-fn is_hex_digit_lc(b: u8) -> bool {
-    match b {
-        b'0'..=b'9' => true,
-        b'a'..=b'f' => true,
-        _ => false,
-    }
-}
-
 pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
-    let (i, target) =
-        parse_oneline_header(i, b"object", take_while_m_n(40usize, 40, is_hex_digit_lc))
-            .map_err(Error::context("object <40 lowercase hex char>"))?;
+    let (i, target) = parse_oneline_header(i, b"object", parse_hex_sha1)
+        .map_err(Error::context("object <40 lowercase hex char>"))?;
 
     let (i, kind) = parse_oneline_header(i, b"type", take_while1(is_alphabetic))
         .map_err(Error::context("type <object kind>"))?;

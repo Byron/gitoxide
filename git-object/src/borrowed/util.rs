@@ -25,6 +25,18 @@ pub(crate) fn parse_oneline_header<'a, T>(
     )(i)
 }
 
+fn is_hex_digit_lc(b: u8) -> bool {
+    match b {
+        b'0'..=b'9' => true,
+        b'a'..=b'f' => true,
+        _ => false,
+    }
+}
+
+pub(crate) fn parse_hex_sha1(i: &[u8]) -> IResult<&[u8], &[u8], Error> {
+    take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
+}
+
 pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
     let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
         terminated(take_until(&b" <"[..]), take(2usize)),
