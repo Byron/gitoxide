@@ -30,7 +30,7 @@ The CLI uses various libraries to implement
     * [ ] configuration
 * **git-object**
     * [-] decode
-      * [ ] commit
+      * [x] commit
       * [ ] tree
       * [x] tag
       * [ ] blob

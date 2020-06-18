@@ -1,3 +1,21 @@
+mod method {
+    use crate::borrowed::commit::Commit;
+    use crate::tests::borrowed::fixture_bytes;
+    use crate::tests::hex_to_id;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn tree() {
+        let fixture = fixture_bytes("commit", "unsigned.txt");
+        let commit = Commit::from_bytes(&fixture).unwrap();
+        assert_eq!(
+            commit.tree(),
+            hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d")
+        );
+        assert_eq!(commit.tree, "1b2dfb4ac5e42080b682fc676e9738c94ce6d54d");
+    }
+}
+
 mod parse {
     use crate::{
         borrowed::{commit::parse, commit::Commit},

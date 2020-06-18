@@ -80,8 +80,7 @@ fn loose_find() {
         .unwrap();
     assert_eq!(o.kind, Kind::Tag);
     assert_eq!(o.size, 1024);
-    assert_eq!(
-        o.parsed().unwrap(),
-        borrowed::Object::Tag(tag_fixture(7200))
-    )
+    let tag = o.parsed().unwrap();
+    let expected = borrowed::Object::Tag(tag_fixture(7200));
+    assert_eq!(tag, expected)
 }

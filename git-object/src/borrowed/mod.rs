@@ -7,6 +7,7 @@ pub(crate) mod commit;
 pub(crate) mod tag;
 pub(crate) mod util;
 
+pub use commit::Commit;
 use nom::error::ParseError;
 pub use tag::Tag;
 
@@ -70,12 +71,14 @@ impl From<nom::Err<Error>> for Error {
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub enum Object<'data> {
     Tag(Tag<'data>),
+    Commit(Commit<'data>),
 }
 
 impl<'data> Object<'data> {
     pub fn kind(&self) -> crate::Kind {
         match self {
             Object::Tag(_) => crate::Kind::Tag,
+            Object::Commit(_) => crate::Kind::Commit,
         }
     }
 }

@@ -5,23 +5,27 @@ use crate::{
 use bstr::ByteSlice;
 
 mod method {
-    use crate::tests::bin;
-    use crate::tests::borrowed::tag::tag_fixture;
+    use crate::borrowed::Tag;
+    use crate::tests::borrowed::fixture_bytes;
+    use crate::tests::hex_to_id;
     use pretty_assertions::assert_eq;
 
     #[test]
     fn target() {
+        let fixture = fixture_bytes("tag", "signed.txt");
+        let tag = Tag::from_bytes(&fixture).unwrap();
         assert_eq!(
-            tag_fixture(9000).target(),
-            bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
-        )
+            tag.target(),
+            hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
+        );
+        assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
     }
 }
 
 mod parse {
-    use crate::tests::borrowed::signature;
     use crate::{
         borrowed::{tag::parse, Tag},
+        tests::borrowed::signature,
         tests::{borrowed::fixture_bytes, borrowed::tag::tag_fixture},
         Kind,
     };

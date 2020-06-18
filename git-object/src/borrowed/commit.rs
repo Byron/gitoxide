@@ -5,6 +5,7 @@ use crate::borrowed::{
     Signature,
 };
 use bstr::{BStr, ByteSlice};
+use hex::FromHex;
 use nom::{
     branch::alt,
     bytes::{complete::is_not, complete::tag},
@@ -76,4 +77,13 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
             pgp_signature: pgp_signature.map(ByteSlice::as_bstr),
         },
     ))
+}
+
+impl<'data> Commit<'data> {
+    pub fn tree(&self) -> crate::Id {
+        <[u8; 20]>::from_hex(self.tree).expect("prior validation")
+    }
+    pub fn from_bytes(d: &'data [u8]) -> Result<Commit<'data>, Error> {
+        parse(d).map(|(_, t)| t).map_err(Error::from)
+    }
 }
