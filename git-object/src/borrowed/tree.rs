@@ -3,6 +3,7 @@ use crate::borrowed::Error;
 use bstr::{BStr, ByteSlice};
 use nom::bytes::complete::{tag, take, take_while1, take_while_m_n};
 use nom::character::is_digit;
+use nom::combinator::all_consuming;
 use nom::multi::many1;
 use nom::sequence::terminated;
 use nom::IResult;
@@ -62,7 +63,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
 }
 
 pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tree, Error> {
-    let (i, mut entries) = many1(parse_entry)(i)?;
+    let (i, mut entries) = all_consuming(many1(parse_entry))(i)?;
     entries.shrink_to_fit();
     Ok((i, Tree(entries)))
 }
