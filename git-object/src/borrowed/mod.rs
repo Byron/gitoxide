@@ -5,6 +5,7 @@ use std::str;
 
 pub(crate) mod commit;
 pub(crate) mod tag;
+pub(crate) mod tree;
 pub(crate) mod util;
 
 pub use commit::Commit;

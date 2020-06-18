@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 mod commit;
 mod tag;
+mod tree;
 
 fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
     super::fixture_bytes(PathBuf::from(kind).join(path).to_str().unwrap())
