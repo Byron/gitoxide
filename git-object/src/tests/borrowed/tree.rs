@@ -6,11 +6,14 @@ mod parse {
         tests::borrowed::fixture_bytes,
     };
     use bstr::ByteSlice;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn everything() {
+        let fixture = fixture_bytes("tree", "everything.tree");
+        let (i, tree) = parse(&fixture).unwrap();
         assert_eq!(
-            parse(&fixture_bytes("tree", "everything.tree")).unwrap().1,
+            tree,
             Tree(vec![
                 Entry {
                     mode: Mode::BlobExecutable,
@@ -39,5 +42,7 @@ mod parse {
                 }
             ])
         );
+        // FIXME
+        assert_eq!(i.as_bstr(), b"\n".as_bstr(), "for some reason there is a newline, I think it's an issue with the fixture produced by cat-file")
     }
 }
