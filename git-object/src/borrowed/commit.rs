@@ -5,21 +5,21 @@ use crate::borrowed::{
     Signature,
 };
 use bstr::{BStr, ByteSlice};
-use nom::branch::alt;
-use nom::bytes::complete::is_not;
 use nom::{
-    bytes::complete::tag,
+    branch::alt,
+    bytes::{complete::is_not, complete::tag},
     combinator::{all_consuming, opt},
     multi::many0,
     IResult,
 };
+use smallvec::SmallVec;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Commit<'data> {
     // SHA1 of tree object we point to
     pub tree: &'data BStr,
     // SHA1 of each parent commit. Empty for first commit in repository.
-    pub parents: Vec<&'data BStr>,
+    pub parents: SmallVec<[&'data BStr; 1]>,
     pub author: Signature<'data>,
     pub committer: Signature<'data>,
     // The name of the message encoding, otherwise UTF-8 should be assumed.
@@ -68,7 +68,7 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
         i,
         Commit {
             tree,
-            parents,
+            parents: SmallVec::from(parents),
             author,
             committer,
             encoding: encoding.map(ByteSlice::as_bstr),

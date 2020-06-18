@@ -196,6 +196,7 @@ dependencies = [
  "nom",
  "pretty_assertions",
  "quick-error",
+ "smallvec",
 ]
 
 [[package]]

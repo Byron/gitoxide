@@ -4,6 +4,7 @@ mod parse {
         tests::{borrowed::fixture_bytes, borrowed::signature},
     };
     use bstr::ByteSlice;
+    use smallvec::SmallVec;
 
     #[test]
     fn unsigned() {
@@ -11,7 +12,7 @@ mod parse {
             parse(&fixture_bytes("commit", "unsigned.txt")).unwrap().1,
             Commit {
                 tree: b"1b2dfb4ac5e42080b682fc676e9738c94ce6d54d".as_bstr(),
-                parents: vec![],
+                parents: SmallVec::default(),
                 author: signature(1592437401),
                 committer: signature(1592437401),
                 encoding: None,
@@ -27,7 +28,9 @@ mod parse {
             parse(&fixture_bytes("commit", "whitespace.txt")).unwrap().1,
             Commit {
                 tree: b"9bed6275068a0575243ba8409253e61af81ab2ff".as_bstr(),
-                parents: vec![b"26b4df046d1776c123ac69d918f5aec247b58cc6".as_bstr()],
+                parents: SmallVec::from(
+                    vec![b"26b4df046d1776c123ac69d918f5aec247b58cc6".as_bstr()]
+                ),
                 author: signature(1592448450),
                 committer: signature(1592448450),
                 encoding: None,
@@ -45,7 +48,9 @@ mod parse {
                 .1,
             Commit {
                 tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
-                parents: vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()],
+                parents: SmallVec::from(
+                    vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]
+                ),
                 author: signature(1592391367),
                 committer: signature(1592391367),
                 encoding: None,
@@ -61,7 +66,7 @@ mod parse {
             parse(&fixture_bytes("commit", "signed.txt")).unwrap().1,
             Commit {
                 tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
-                parents: vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()],
+                parents: SmallVec::from(vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]),
                 author: signature(1592391367),
                 committer: signature(1592391367),
                 encoding: None,
@@ -77,7 +82,7 @@ mod parse {
             parse(&fixture_bytes("commit", "signed-with-encoding.txt")).unwrap().1,
             Commit {
                 tree: b"1973afa74d87b2bb73fa884aaaa8752aec43ea88".as_bstr(),
-                parents: vec![b"79c51cc86923e2b8ca0ee5c4eb75e48027133f9a".as_bstr()],
+                parents: SmallVec::from(vec![b"79c51cc86923e2b8ca0ee5c4eb75e48027133f9a".as_bstr()]),
                 author: signature(1592448995),
                 committer: signature(1592449083),
                 encoding: Some(b"ISO-8859-1".as_bstr()),
@@ -95,7 +100,9 @@ mod parse {
                 .1,
             Commit {
                 tree: b"4a1c03029e7407c0afe9fc0320b3258e188b115e".as_bstr(),
-                parents: vec![b"7ca98aad461a5c302cb4c9e3acaaa6053cc67a62".as_bstr()],
+                parents: SmallVec::from(
+                    vec![b"7ca98aad461a5c302cb4c9e3acaaa6053cc67a62".as_bstr()]
+                ),
                 author: signature(1592438199),
                 committer: signature(1592438199),
                 encoding: Some("ISO-8859-1".into()),
@@ -111,10 +118,10 @@ mod parse {
             parse(&fixture_bytes("commit", "merge.txt")).unwrap().1,
             Commit {
                 tree: b"0cf16ce8e229b59a761198975f0c0263229faf82".as_bstr(),
-                parents: vec![
+                parents: SmallVec::from(vec![
                     b"6a6054db4ce3c1e4e6a37f8c4d7acb63a4d6ad71".as_bstr(),
                     b"c91d592913d47ac4e4a76daf16fd649b276e211e".as_bstr()
-                ],
+                ]),
                 author: signature(1592454703),
                 committer: signature(1592454738),
                 encoding: Some("ISO-8859-1".into()),
