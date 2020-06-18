@@ -14,15 +14,15 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn parse_oneline_header(
+pub(crate) fn parse_oneline_header<'a, T>(
+    i: &'a [u8],
     name: &'static [u8],
-) -> impl Fn(&[u8]) -> IResult<&[u8], &[u8], Error> {
-    move |i: &[u8]| {
-        terminated(
-            preceded(terminated(tag(name), tag(SPACE)), take_until(NL)),
-            tag(NL),
-        )(i)
-    }
+    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
+) -> IResult<&'a [u8], T, Error> {
+    terminated(
+        preceded(terminated(tag(name), tag(SPACE)), parse_value),
+        tag(NL),
+    )(i)
 }
 
 pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {

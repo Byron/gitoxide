@@ -34,27 +34,19 @@ fn is_hex_digit_lc(b: u8) -> bool {
 }
 
 pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
-    let (i, target) = parse_oneline_header(b"object")(i)
-        .map_err(Error::context("object <40 lowercase hex char>"))?;
-    // let (i, target) = terminated(
-    //     preceded(
-    //         tag(b"object "),
-    //         take_while_m_n(40usize, 40, is_hex_digit_lc),
-    //     ),
-    //     tag(NL),
-    // )(i)
-    // .map_err(Error::context("object <40 lowercase hex char>"))?;
+    let (i, target) =
+        parse_oneline_header(i, b"object", take_while_m_n(40usize, 40, is_hex_digit_lc))
+            .map_err(Error::context("object <40 lowercase hex char>"))?;
 
-    let (i, kind) = terminated(preceded(tag(b"type "), take_while1(is_alphabetic)), tag(NL))(i)
+    let (i, kind) = parse_oneline_header(i, b"type", take_while1(is_alphabetic))
         .map_err(Error::context("type <object kind>"))?;
     let kind =
         crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(Error::ParseKindError(e)))?;
 
-    let (i, tag_version) =
-        terminated(preceded(tag(b"tag "), take_while1(|b| b != NL[0])), tag(NL))(i)
-            .map_err(Error::context("tag <version>"))?;
+    let (i, tag_version) = parse_oneline_header(i, b"tag", take_while1(|b| b != NL[0]))
+        .map_err(Error::context("tag <version>"))?;
 
-    let (i, signature) = terminated(preceded(tag(b"tagger "), parse_signature), tag(NL))(i)
+    let (i, signature) = parse_oneline_header(i, b"tagger", parse_signature)
         .map_err(Error::context("tagger <signature>"))?;
     let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
