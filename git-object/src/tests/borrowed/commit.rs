@@ -72,6 +72,22 @@ mod parse {
     }
 
     #[test]
+    fn signed_with_encoding() {
+        assert_eq!(
+            parse(&fixture_bytes("commit", "signed-with-encoding.txt")).unwrap().1,
+            Commit {
+                tree: b"1973afa74d87b2bb73fa884aaaa8752aec43ea88".as_bstr(),
+                parents: vec![b"79c51cc86923e2b8ca0ee5c4eb75e48027133f9a".as_bstr()],
+                author: signature(1592448995),
+                committer: signature(1592449083),
+                encoding: Some(b"ISO-8859-1".as_bstr()),
+                message: b"encoding & sig".as_bstr(),
+                pgp_signature: Some(b"-----BEGIN PGP SIGNATURE-----\n \n iQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7q2DsACgkQ7gKdHl60\n AwDvewgAkL5UjEztzeVXlzceom0uCrAkCw9wSGLTmYcMKW3JwEaTRgQ4FX+sDuFT\n LZ8DoPu3UHUP0QnKrUwHulTTlKcOAvsczHbVPIKtXCxo6QpUfhsJQwz/J29kiE4L\n sOd+lqKGnn4oati/de2xwqNGi081fO5KILX75z6KfsAe7Qz7R3jxRF4uzHI033O+\n Jc2Y827XeaELxW40SmzoLanWgEcdreXf3PstXEWW77CAu0ozXmvYj56vTviVybxx\n G7bc8lwc+SSKVe2VVB+CCfVbs0i541gmghUpZfMhUgaqttcCH8ysrUJDhne1BLG8\n CrOJIWTwAeEDtomV1p76qrMeqr1GFg==\n =qlSN\n -----END PGP SIGNATURE-----".as_bstr())
+            }
+        );
+    }
+
+    #[test]
     fn with_encoding() {
         assert_eq!(
             parse(&fixture_bytes("commit", "with-encoding.txt"))
@@ -84,6 +100,25 @@ mod parse {
                 committer: signature(1592438199),
                 encoding: Some("ISO-8859-1".into()),
                 message: b"commit with encoding".as_bstr(),
+                pgp_signature: None
+            }
+        );
+    }
+
+    #[test]
+    fn merge() {
+        assert_eq!(
+            parse(&fixture_bytes("commit", "merge.txt")).unwrap().1,
+            Commit {
+                tree: b"0cf16ce8e229b59a761198975f0c0263229faf82".as_bstr(),
+                parents: vec![
+                    b"6a6054db4ce3c1e4e6a37f8c4d7acb63a4d6ad71".as_bstr(),
+                    b"c91d592913d47ac4e4a76daf16fd649b276e211e".as_bstr()
+                ],
+                author: signature(1592454703),
+                committer: signature(1592454738),
+                encoding: Some("ISO-8859-1".into()),
+                message: b"Merge branch 'branch'".as_bstr(),
                 pgp_signature: None
             }
         );
