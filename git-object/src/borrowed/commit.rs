@@ -1,9 +1,11 @@
 use super::Error;
+use crate::borrowed::util::parse_header_field_multiline;
 use crate::borrowed::{
     util::{parse_header_field, parse_hex_sha1, parse_signature, NL},
     Signature,
 };
 use bstr::{BStr, ByteSlice};
+use nom::branch::alt;
 use nom::bytes::complete::is_not;
 use nom::{
     bytes::complete::tag,
@@ -55,8 +57,12 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
         .map_err(Error::context("author <signature>"))?;
     let (i, encoding) = opt(|i| parse_header_field(i, b"encoding", is_not(NL)))(i)
         .map_err(Error::context("author <signature>"))?;
-    let (i, pgp_signature) = opt(|i| parse_header_field(i, b"gpgsig", is_not(NL)))(i)
-        .map_err(Error::context("author <signature>"))?;
+    dbg!(parse_header_field_multiline(i, b"gpgsig").map(|(_, d)| d.as_bstr()));
+    let (i, pgp_signature) = opt(alt((
+        |i| parse_header_field_multiline(i, b"gpgsig"),
+        |i| parse_header_field(i, b"gpgsig", is_not(NL)),
+    )))(i)
+    .map_err(Error::context("author <signature>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((

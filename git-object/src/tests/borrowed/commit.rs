@@ -56,6 +56,22 @@ mod parse {
     }
 
     #[test]
+    fn signed() {
+        assert_eq!(
+            parse(&fixture_bytes("commit", "signed.txt")).unwrap().1,
+            Commit {
+                tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
+                parents: vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()],
+                author: signature(1592391367),
+                committer: signature(1592391367),
+                encoding: None,
+                message: b"update tasks\n".as_bstr(),
+                pgp_signature: Some(b"-----BEGIN PGP SIGNATURE-----\n \n iQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7p9tgACgkQ7gKdHl60\n AwBpegf+KQciv9AOIN7+yPmowecGxBnSfpKWTDzFxnyGR8dq63SpWT8WEKG5mf3a\n G6iUqpsDWaMHlzihaMKRvgRpZxFRbjnNPFBj6F4RRqfE+5R7k6DRSLUV5PqnsdSH\n uccfIDWi1imhsm7AaP5trwl1t+83U2JhHqPcPVFLMODYwWeO6NLR/JCzGSTQRa8t\n RgaVMKI19O/fge5OT5Ua8D47VKEhsJX0LfmkP5RfZQ8JJvNd40TupqKRdlv0sAzP\n ya7NXkSHXCavHNR6kA+KpWxn900UoGK8/IDlwU6MeOkpPVawb3NFMqnc7KJDaC2p\n SMzpuEG8LTrCx2YSpHNLqHyzvQ1CZA==\n =5ITV\n -----END PGP SIGNATURE-----\n".as_bstr())
+            }
+        );
+    }
+
+    #[test]
     fn with_encoding() {
         assert_eq!(
             parse(&fixture_bytes("commit", "with-encoding.txt"))
