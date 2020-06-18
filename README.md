@@ -142,8 +142,21 @@ Provide a CLI to for the most basic user journey:
 
 Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`.
 
+### Which git-version to chase?
+
 Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
 compatibility_). Certain tests only run on CI, designed to validate certain assumptions still hold against possibly changed
 git program versions.
 
 This also means that CI may fail despite everything being alright locally, and the fix depends on the problem at hand.
+
+### How to update fixtures
+
+Fixtures are created by using a line like this which produces a line we ignore via `tail +1` followed by the un-prettified object payload
+trailed by a newline.
+```sh
+echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 > fixture
+```
+
+Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, removing the newline byte.
+

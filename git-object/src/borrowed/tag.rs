@@ -5,6 +5,7 @@ use crate::borrowed::{
 };
 use bstr::{BStr, ByteSlice};
 use hex::FromHex;
+use nom::sequence::preceded;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while1},
@@ -56,39 +57,36 @@ pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
 
 fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
-    const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----\n";
+    const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 
-    let (i, _) = tag(NL)(i)?;
     if i.is_empty() {
         return Ok((i, (i.as_bstr(), None)));
     }
-    fn all_but_trailing_newline(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), Error> {
-        if i.len() < 2 {
+    let (i, _) = tag(NL)(i)?;
+    fn all_to_end(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), Error> {
+        if i.is_empty() {
             return Err(nom::Err::Error(Error::NomDetail(
                 i.into(),
                 "tag message is missing",
             )));
         }
-        let (x, _) = tag(NL)(&i[i.len() - 1..])
-            .map_err(Error::context("tag message must end with newline"))?;
         // an empty signature message signals that there is none - the function signature is needed
         // to work with 'alt(…)'. PGP signatures are never empty
-        Ok((x, (&i[..i.len() - 1], &[])))
+        Ok((&[], (&i[..i.len()], &[])))
     }
     let (i, (message, signature)) = alt((
         tuple((
             take_until(PGP_SIGNATURE_BEGIN),
-            delimited(
+            preceded(
                 tag(NL),
                 recognize(delimited(
                     tag(&PGP_SIGNATURE_BEGIN[1..]),
                     take_until(PGP_SIGNATURE_END),
-                    tag(&PGP_SIGNATURE_END[..PGP_SIGNATURE_END.len() - 1]),
+                    tag(PGP_SIGNATURE_END),
                 )),
-                tag(NL),
             ),
         )),
-        all_but_trailing_newline,
+        all_to_end,
     ))(i)?;
     Ok((
         i,

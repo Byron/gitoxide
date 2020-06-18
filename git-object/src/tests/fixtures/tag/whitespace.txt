@@ -7,4 +7,3 @@ tagger Sebastian Thiel <sebastian.thiel@icloud.com> 1592382888 +0800
 newline
 
 last-with-trailer
-
