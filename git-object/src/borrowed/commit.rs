@@ -1,7 +1,7 @@
 use super::Error;
 use crate::borrowed::util::{parse_signature, NL};
 use crate::borrowed::{
-    util::{parse_hex_sha1, parse_oneline_header},
+    util::{parse_header_field, parse_hex_sha1},
     Signature,
 };
 use bstr::{BStr, ByteSlice};
@@ -42,14 +42,14 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
 }
 
 pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
-    let (i, tree) = parse_oneline_header(i, b"tree", parse_hex_sha1)
+    let (i, tree) = parse_header_field(i, b"tree", parse_hex_sha1)
         .map_err(Error::context("tree <40 lowercase hex char>"))?;
-    let (i, parents) = many0(|i| parse_oneline_header(i, b"parent", parse_hex_sha1))(i).map_err(
+    let (i, parents) = many0(|i| parse_header_field(i, b"parent", parse_hex_sha1))(i).map_err(
         Error::context("zero or more 'parent <40 lowercase hex char>'"),
     )?;
-    let (i, author) = parse_oneline_header(i, b"author", parse_signature)
+    let (i, author) = parse_header_field(i, b"author", parse_signature)
         .map_err(Error::context("author <signature>"))?;
-    let (i, committer) = parse_oneline_header(i, b"committer", parse_signature)
+    let (i, committer) = parse_header_field(i, b"committer", parse_signature)
         .map_err(Error::context("author <signature>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
 

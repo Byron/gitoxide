@@ -14,7 +14,7 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn parse_oneline_header<'a, T>(
+pub(crate) fn parse_header_field<'a, T>(
     i: &'a [u8],
     name: &'static [u8],
     parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,

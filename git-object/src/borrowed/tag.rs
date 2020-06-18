@@ -1,6 +1,6 @@
 use super::Error;
 use crate::borrowed::{
-    util::{parse_hex_sha1, parse_oneline_header, parse_signature, NL},
+    util::{parse_header_field, parse_hex_sha1, parse_signature, NL},
     Signature,
 };
 use bstr::{BStr, ByteSlice};
@@ -27,18 +27,18 @@ pub struct Tag<'data> {
 }
 
 pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
-    let (i, target) = parse_oneline_header(i, b"object", parse_hex_sha1)
+    let (i, target) = parse_header_field(i, b"object", parse_hex_sha1)
         .map_err(Error::context("object <40 lowercase hex char>"))?;
 
-    let (i, kind) = parse_oneline_header(i, b"type", take_while1(is_alphabetic))
+    let (i, kind) = parse_header_field(i, b"type", take_while1(is_alphabetic))
         .map_err(Error::context("type <object kind>"))?;
     let kind =
         crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(Error::ParseKindError(e)))?;
 
-    let (i, tag_version) = parse_oneline_header(i, b"tag", take_while1(|b| b != NL[0]))
+    let (i, tag_version) = parse_header_field(i, b"tag", take_while1(|b| b != NL[0]))
         .map_err(Error::context("tag <version>"))?;
 
-    let (i, signature) = parse_oneline_header(i, b"tagger", parse_signature)
+    let (i, signature) = parse_header_field(i, b"tagger", parse_signature)
         .map_err(Error::context("tagger <signature>"))?;
     let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
