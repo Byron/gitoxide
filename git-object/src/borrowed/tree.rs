@@ -67,3 +67,9 @@ pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tree, Error> {
     entries.shrink_to_fit();
     Ok((i, Tree(entries)))
 }
+
+impl<'data> Tree<'data> {
+    pub fn from_bytes(d: &'data [u8]) -> Result<Tree<'data>, Error> {
+        parse(d).map(|(_, t)| t).map_err(Error::from)
+    }
+}

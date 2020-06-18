@@ -11,6 +11,7 @@ pub(crate) mod util;
 pub use commit::Commit;
 use nom::error::ParseError;
 pub use tag::Tag;
+pub use tree::Tree;
 
 quick_error! {
     #[derive(Debug)]
@@ -73,10 +74,11 @@ impl From<nom::Err<Error>> for Error {
 pub enum Object<'data> {
     Tag(Tag<'data>),
     Commit(Commit<'data>),
+    Tree(Tree<'data>),
 }
 
 mod convert {
-    use crate::borrowed::{Commit, Object, Tag};
+    use crate::borrowed::{Commit, Object, Tag, Tree};
     use std::convert::TryFrom;
 
     impl<'data> Object<'data> {
@@ -84,6 +86,7 @@ mod convert {
             match self {
                 Object::Tag(_) => crate::Kind::Tag,
                 Object::Commit(_) => crate::Kind::Commit,
+                Object::Tree(_) => crate::Kind::Tree,
             }
         }
     }
@@ -97,6 +100,12 @@ mod convert {
     impl<'data> From<Commit<'data>> for Object<'data> {
         fn from(v: Commit<'data>) -> Self {
             Object::Commit(v)
+        }
+    }
+
+    impl<'data> From<Tree<'data>> for Object<'data> {
+        fn from(v: Tree<'data>) -> Self {
+            Object::Tree(v)
         }
     }
 
@@ -117,6 +126,17 @@ mod convert {
         fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
             Ok(match value {
                 Object::Commit(v) => v,
+                _ => return Err(value),
+            })
+        }
+    }
+
+    impl<'data> TryFrom<Object<'data>> for Tree<'data> {
+        type Error = Object<'data>;
+
+        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Tree(v) => v,
                 _ => return Err(value),
             })
         }

@@ -1,7 +1,7 @@
 ### TODO
 
 * [x] decode commit
-* [ ] decode tree
+* [x] decode tree
 * [ ] represent blob
 * **pack**
    * [ ] iterate pack entries

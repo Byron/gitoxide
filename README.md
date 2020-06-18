@@ -31,7 +31,7 @@ The CLI uses various libraries to implement
 * **git-object**
     * [-] decode
       * [x] commit
-      * [ ] tree
+      * [x] tree
       * [x] tag
       * [ ] blob
     * [ ] encode
