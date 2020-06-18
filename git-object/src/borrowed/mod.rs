@@ -1,7 +1,7 @@
 use crate::Time;
 use bstr::BStr;
 use quick_error::quick_error;
-use std::str;
+use std::{convert::TryFrom, str};
 
 pub(crate) mod commit;
 pub(crate) mod tag;
@@ -80,6 +80,39 @@ impl<'data> Object<'data> {
             Object::Tag(_) => crate::Kind::Tag,
             Object::Commit(_) => crate::Kind::Commit,
         }
+    }
+}
+
+impl<'data> From<Tag<'data>> for Object<'data> {
+    fn from(v: Tag<'data>) -> Self {
+        Object::Tag(v)
+    }
+}
+impl<'data> From<Commit<'data>> for Object<'data> {
+    fn from(v: Commit<'data>) -> Self {
+        Object::Commit(v)
+    }
+}
+
+impl<'data> TryFrom<Object<'data>> for Tag<'data> {
+    type Error = Object<'data>;
+
+    fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Object::Tag(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl<'data> TryFrom<Object<'data>> for Commit<'data> {
+    type Error = Object<'data>;
+
+    fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Object::Commit(v) => v,
+            _ => return Err(value),
+        })
     }
 }
 
