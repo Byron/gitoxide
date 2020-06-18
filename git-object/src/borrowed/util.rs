@@ -2,12 +2,12 @@ use crate::borrowed::{Error, Signature};
 use crate::{Sign, Time};
 use bstr::{BStr, ByteSlice};
 use btoi::btoi;
-use nom::combinator::recognize;
-use nom::multi::{many1_count, many1_countc};
 use nom::{
     branch::alt,
     bytes::complete::{is_not, tag, take, take_until, take_while_m_n},
     character::is_digit,
+    combinator::{peek, recognize},
+    multi::many1_count,
     sequence::{preceded, terminated, tuple},
     IResult,
 };
@@ -19,14 +19,18 @@ pub(crate) fn parse_header_field_multiline<'a>(
     i: &'a [u8],
     name: &'static [u8],
 ) -> IResult<&'a [u8], &'a [u8], Error> {
-    preceded(
+    let (i, o) = peek(preceded(
         terminated(tag(name), tag(SPACE)),
         recognize(tuple((
             is_not(NL),
             tag(NL),
             many1_count(terminated(tuple((tag(SPACE), take_until(NL))), tag(NL))),
         ))),
-    )(i)
+    ))(i)?;
+    assert!(!o.is_empty());
+    let end = &o[o.len() - 1] as *const u8 as usize;
+    let start_input = &i[0] as *const u8 as usize;
+    Ok((&i[end - start_input + 1..], &o[..o.len() - 1]))
 }
 
 pub(crate) fn parse_header_field<'a, T>(
