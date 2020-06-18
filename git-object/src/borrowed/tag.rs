@@ -54,7 +54,7 @@ pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     ))
 }
 
-pub(crate) fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
+fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----\n";
 
