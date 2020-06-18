@@ -1,8 +1,8 @@
 mod parse {
-    use crate::borrowed::commit::Commit;
-    use crate::tests::bin;
-    use crate::tests::borrowed::signature;
-    use crate::{borrowed::commit::parse, tests::borrowed::fixture_bytes};
+    use crate::{
+        borrowed::{commit::parse, commit::Commit},
+        tests::{borrowed::fixture_bytes, borrowed::signature},
+    };
     use bstr::ByteSlice;
 
     #[test]
@@ -10,7 +10,7 @@ mod parse {
         assert_eq!(
             parse(&fixture_bytes("commit", "unsigned.txt")).unwrap().1,
             Commit {
-                tree: bin("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"),
+                tree: b"1b2dfb4ac5e42080b682fc676e9738c94ce6d54d".as_bstr(),
                 parents: vec![],
                 author: signature(1592437401),
                 committer: signature(1592437401),

@@ -16,7 +16,9 @@ use nom::{
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Tag<'data> {
+    // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
     pub target: &'data BStr,
+    // The name of the tag, e.g. "v1.0"
     pub name: &'data BStr,
     pub target_kind: crate::Kind,
     pub message: &'data BStr,
