@@ -5,12 +5,13 @@ use crate::borrowed::{
 };
 use bstr::{BStr, ByteSlice};
 use hex::FromHex;
-use nom::sequence::preceded;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while1},
     character::is_alphabetic,
+    combinator::opt,
     combinator::{all_consuming, recognize},
+    sequence::preceded,
     sequence::{delimited, tuple},
     IResult,
 };
@@ -72,7 +73,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
         }
         // an empty signature message signals that there is none - the function signature is needed
         // to work with 'alt(…)'. PGP signatures are never empty
-        Ok((&[], (&i[..i.len()], &[])))
+        Ok((&[], (&i, &[])))
     }
     let (i, (message, signature)) = alt((
         tuple((
@@ -88,6 +89,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
         )),
         all_to_end,
     ))(i)?;
+    let (i, _) = opt(tag(NL))(i)?;
     Ok((
         i,
         (

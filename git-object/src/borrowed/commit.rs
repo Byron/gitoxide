@@ -30,8 +30,8 @@ pub struct Commit<'data> {
 }
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
-    if i.len() < 2 {
-        // newline + [message] + newline
+    if i.is_empty() {
+        // newline + [message]
         return Err(nom::Err::Error(Error::NomDetail(
             i.into(),
             "commit message is missing",
@@ -41,9 +41,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
         "a newline separates headers from the message",
     ))?;
     debug_assert!(!i.is_empty());
-    let (x, _) = tag(NL)(&i[i.len() - 1..])
-        .map_err(Error::context("commit message must end with newline"))?;
-    Ok((x, &i[..i.len() - 1].as_bstr()))
+    Ok((&[], &i.as_bstr()))
 }
 
 pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {

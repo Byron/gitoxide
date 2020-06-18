@@ -43,7 +43,7 @@ quick_error! {
             display("{}", msg)
         }
         ParseUsize(number: String, err: std::num::ParseIntError) {
-            display("Number '{}' could not be borrowed", number)
+            display("Number '{}' could not be parsed", number)
             cause(err)
         }
         Io(err: std::io::Error, action: &'static str, path: PathBuf) {

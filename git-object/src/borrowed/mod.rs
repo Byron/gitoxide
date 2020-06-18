@@ -23,7 +23,7 @@ quick_error! {
             display("{}", err_msg)
         }
         NomDetail(input: bstr::BString, msg: &'static str) {
-            display("{}: '{}' could not be borrowed", msg, input)
+            display("{}: '{}' could not be parsed", msg, input)
         }
         ParseKindError(err: crate::types::Error) {
             display("{}", err)
