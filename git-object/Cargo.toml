@@ -13,7 +13,7 @@ quick-error = "1.2.3"
 hex = "0.4.2"
 btoi = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
-nom = { version = "6.0.0-alpha1", default-features = false }
+nom = { version = "6.0.0-alpha1", default-features = false, features = ["alloc"]}
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"

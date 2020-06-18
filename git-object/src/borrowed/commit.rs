@@ -4,6 +4,7 @@ use crate::borrowed::{
     Signature,
 };
 use bstr::BStr;
+use nom::multi::many0;
 use nom::IResult;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
@@ -21,9 +22,10 @@ pub struct Commit<'data> {
 }
 
 pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
-    let (i, target) = parse_oneline_header(i, b"tree", parse_hex_sha1)
+    let (i, tree) = parse_oneline_header(i, b"tree", parse_hex_sha1)
         .map_err(Error::context("tree <40 lowercase hex char>"))?;
-    // let (i, target) = parse_oneline_header(i, b"tree", parse_hex_sha1)
-    //     .map_err(Error::context("tree <40 lowercase hex char>"))?;
+    let (i, parents) = many0(|i| parse_oneline_header(i, b"parent", parse_hex_sha1))(i).map_err(
+        Error::context("zero or more 'parent <40 lowercase hex char>'"),
+    )?;
     unimplemented!("todo parse commit");
 }
