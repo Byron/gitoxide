@@ -2,7 +2,7 @@ tree 00fc39317701176e326974ce44f5bd545a32ec0b
 parent 09d8d3a12e161a7f6afb522dbe8900a9c09bce06
 author Sebastian Thiel <sebastian.thiel@icloud.com> 1592391367 +0800
 committer Sebastian Thiel <sebastian.thiel@icloud.com> 1592391367 +0800
-supersig magic:signature
+gpgsig magic:signature
 
 update tasks
 

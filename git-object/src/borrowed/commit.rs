@@ -55,6 +55,8 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
         .map_err(Error::context("author <signature>"))?;
     let (i, encoding) = opt(|i| parse_header_field(i, b"encoding", is_not(NL)))(i)
         .map_err(Error::context("author <signature>"))?;
+    let (i, pgp_signature) = opt(|i| parse_header_field(i, b"gpgsig", is_not(NL)))(i)
+        .map_err(Error::context("author <signature>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((
@@ -66,7 +68,7 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
             committer,
             encoding: encoding.map(ByteSlice::as_bstr),
             message,
-            pgp_signature: None,
+            pgp_signature: pgp_signature.map(ByteSlice::as_bstr),
         },
     ))
 }

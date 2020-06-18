@@ -38,6 +38,24 @@ mod parse {
     }
 
     #[test]
+    fn signed_singleline() {
+        assert_eq!(
+            parse(&fixture_bytes("commit", "signed-singleline.txt"))
+                .unwrap()
+                .1,
+            Commit {
+                tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
+                parents: vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()],
+                author: signature(1592391367),
+                committer: signature(1592391367),
+                encoding: None,
+                message: b"update tasks\n".as_bstr(),
+                pgp_signature: Some(b"magic:signature".as_bstr())
+            }
+        );
+    }
+
+    #[test]
     fn with_encoding() {
         assert_eq!(
             parse(&fixture_bytes("commit", "with-encoding.txt"))
