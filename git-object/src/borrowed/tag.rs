@@ -44,7 +44,7 @@ pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     Ok((
         i,
         Tag {
-            target: target.as_bstr(),
+            target,
             name: tag_version.as_bstr(),
             target_kind: kind,
             message,

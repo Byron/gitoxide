@@ -1,12 +1,12 @@
 use crate::borrowed::{Error, Signature};
 use crate::{Sign, Time};
-use bstr::ByteSlice;
+use bstr::{BStr, ByteSlice};
 use btoi::btoi;
-use nom::sequence::preceded;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_until, take_while_m_n},
     character::is_digit,
+    sequence::preceded,
     sequence::{terminated, tuple},
     IResult,
 };
@@ -33,8 +33,8 @@ fn is_hex_digit_lc(b: u8) -> bool {
     }
 }
 
-pub(crate) fn parse_hex_sha1(i: &[u8]) -> IResult<&[u8], &[u8], Error> {
-    take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
+pub(crate) fn parse_hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+    take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
 }
 
 pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
