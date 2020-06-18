@@ -1,9 +1,25 @@
+use crate::borrowed::Signature;
 use std::path::PathBuf;
 
+mod commit;
 mod tag;
 
-fn fixture_bytes(path: &str) -> Vec<u8> {
-    super::fixture_bytes(PathBuf::from("tag").join(path).to_str().unwrap())
+fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
+    super::fixture_bytes(PathBuf::from(kind).join(path).to_str().unwrap())
+}
+
+fn signature(time: u32) -> Signature<'static> {
+    use crate::{Sign, Time};
+    use bstr::ByteSlice;
+    Signature {
+        name: b"Sebastian Thiel".as_bstr(),
+        email: b"sebastian.thiel@icloud.com".as_bstr(),
+        time: Time {
+            time,
+            offset: 28800,
+            sign: Sign::Plus,
+        },
+    }
 }
 
 mod parse_signature {

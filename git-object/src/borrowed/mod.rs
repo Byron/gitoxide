@@ -3,6 +3,7 @@ use bstr::BStr;
 use quick_error::quick_error;
 use std::str;
 
+pub(crate) mod commit;
 pub(crate) mod tag;
 pub(crate) mod util;
 

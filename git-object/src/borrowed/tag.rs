@@ -32,7 +32,7 @@ fn is_hex_digit_lc(b: u8) -> bool {
     }
 }
 
-pub(crate) fn parse_tag(i: &[u8]) -> IResult<&[u8], Tag, Error> {
+pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     let (i, target) = terminated(
         preceded(
             tag(b"object "),
@@ -121,6 +121,6 @@ impl<'data> Tag<'data> {
         <[u8; 20]>::from_hex(self.target).expect("prior validation")
     }
     pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
-        parse_tag(d).map(|(_, t)| t).map_err(Error::from)
+        parse(d).map(|(_, t)| t).map_err(Error::from)
     }
 }
