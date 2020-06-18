@@ -18,7 +18,7 @@ mod method {
     }
 }
 
-mod parse_tag {
+mod parse {
     use crate::tests::borrowed::signature;
     use crate::{
         borrowed::{tag::parse, Tag},

@@ -1,4 +1,5 @@
 use super::Error;
+use crate::borrowed::util::parse_oneline_header;
 use crate::borrowed::{
     util::{parse_signature, NL},
     Signature,
@@ -33,14 +34,16 @@ fn is_hex_digit_lc(b: u8) -> bool {
 }
 
 pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
-    let (i, target) = terminated(
-        preceded(
-            tag(b"object "),
-            take_while_m_n(40usize, 40, is_hex_digit_lc),
-        ),
-        tag(NL),
-    )(i)
-    .map_err(Error::context("object <40 lowercase hex char>"))?;
+    let (i, target) = parse_oneline_header(b"object")(i)
+        .map_err(Error::context("object <40 lowercase hex char>"))?;
+    // let (i, target) = terminated(
+    //     preceded(
+    //         tag(b"object "),
+    //         take_while_m_n(40usize, 40, is_hex_digit_lc),
+    //     ),
+    //     tag(NL),
+    // )(i)
+    // .map_err(Error::context("object <40 lowercase hex char>"))?;
 
     let (i, kind) = terminated(preceded(tag(b"type "), take_while1(is_alphabetic)), tag(NL))(i)
         .map_err(Error::context("type <object kind>"))?;

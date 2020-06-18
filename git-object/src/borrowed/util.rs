@@ -2,6 +2,7 @@ use crate::borrowed::{Error, Signature};
 use crate::{Sign, Time};
 use bstr::ByteSlice;
 use btoi::btoi;
+use nom::sequence::preceded;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_until, take_while_m_n},
@@ -12,6 +13,17 @@ use nom::{
 
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
+
+pub(crate) fn parse_oneline_header(
+    name: &'static [u8],
+) -> impl Fn(&[u8]) -> IResult<&[u8], &[u8], Error> {
+    move |i: &[u8]| {
+        terminated(
+            preceded(terminated(tag(name), tag(SPACE)), take_until(NL)),
+            tag(NL),
+        )(i)
+    }
+}
 
 pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
     let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
