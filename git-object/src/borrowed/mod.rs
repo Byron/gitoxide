@@ -1,7 +1,7 @@
 use crate::Time;
 use bstr::BStr;
 use quick_error::quick_error;
-use std::{convert::TryFrom, str};
+use std::str;
 
 pub(crate) mod commit;
 pub(crate) mod tag;
@@ -74,45 +74,51 @@ pub enum Object<'data> {
     Commit(Commit<'data>),
 }
 
-impl<'data> Object<'data> {
-    pub fn kind(&self) -> crate::Kind {
-        match self {
-            Object::Tag(_) => crate::Kind::Tag,
-            Object::Commit(_) => crate::Kind::Commit,
+mod convert {
+    use crate::borrowed::{Commit, Object, Tag};
+    use std::convert::TryFrom;
+
+    impl<'data> Object<'data> {
+        pub fn kind(&self) -> crate::Kind {
+            match self {
+                Object::Tag(_) => crate::Kind::Tag,
+                Object::Commit(_) => crate::Kind::Commit,
+            }
         }
     }
-}
 
-impl<'data> From<Tag<'data>> for Object<'data> {
-    fn from(v: Tag<'data>) -> Self {
-        Object::Tag(v)
+    impl<'data> From<Tag<'data>> for Object<'data> {
+        fn from(v: Tag<'data>) -> Self {
+            Object::Tag(v)
+        }
     }
-}
-impl<'data> From<Commit<'data>> for Object<'data> {
-    fn from(v: Commit<'data>) -> Self {
-        Object::Commit(v)
+
+    impl<'data> From<Commit<'data>> for Object<'data> {
+        fn from(v: Commit<'data>) -> Self {
+            Object::Commit(v)
+        }
     }
-}
 
-impl<'data> TryFrom<Object<'data>> for Tag<'data> {
-    type Error = Object<'data>;
+    impl<'data> TryFrom<Object<'data>> for Tag<'data> {
+        type Error = Object<'data>;
 
-    fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
-        Ok(match value {
-            Object::Tag(v) => v,
-            _ => return Err(value),
-        })
+        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Tag(v) => v,
+                _ => return Err(value),
+            })
+        }
     }
-}
 
-impl<'data> TryFrom<Object<'data>> for Commit<'data> {
-    type Error = Object<'data>;
+    impl<'data> TryFrom<Object<'data>> for Commit<'data> {
+        type Error = Object<'data>;
 
-    fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
-        Ok(match value {
-            Object::Commit(v) => v,
-            _ => return Err(value),
-        })
+        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Commit(v) => v,
+                _ => return Err(value),
+            })
+        }
     }
 }
 
