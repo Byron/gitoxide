@@ -148,33 +148,37 @@ impl Db {
 
         let mut compressed = SmallVec::from_buf(compressed);
 
-        let path = match kind {
-            object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
-                // Read small objects right away and store them in memory while we
-                // have a file handle available and 'hot'. Note that we don't decompress yet!
-                let file_size = input_stream
-                    .metadata()
-                    .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
-                    .size();
-                assert!(file_size <= ::std::u64::MAX);
-                let file_size = file_size as usize;
-                if bytes_read == file_size {
-                    None
-                } else {
-                    let cap = compressed.capacity();
-                    if cap < file_size {
-                        compressed.reserve_exact(file_size - cap);
-                        debug_assert!(file_size == compressed.capacity());
-                    }
+        let path = if inflate.is_done {
+            None
+        } else {
+            match kind {
+                object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
+                    // Read small objects right away and store them in memory while we
+                    // have a file handle available and 'hot'. Note that we don't decompress yet!
+                    let file_size = input_stream
+                        .metadata()
+                        .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
+                        .size();
+                    assert!(file_size <= ::std::u64::MAX);
+                    let file_size = file_size as usize;
+                    if bytes_read == file_size {
+                        None
+                    } else {
+                        let cap = compressed.capacity();
+                        if cap < file_size {
+                            compressed.reserve_exact(file_size - cap);
+                            debug_assert!(file_size == compressed.capacity());
+                        }
 
-                    compressed.resize(file_size, 0);
-                    input_stream
-                        .read_exact(&mut compressed[bytes_read..])
-                        .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
-                    None
+                        compressed.resize(file_size, 0);
+                        input_stream
+                            .read_exact(&mut compressed[bytes_read..])
+                            .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
+                        None
+                    }
                 }
+                object::Kind::Blob => Some(path), // we will open the file again when needed. Maybe we can load small sized objects anyway
             }
-            object::Kind::Blob => Some(path), // we will open the file again when needed. Maybe we can load small sized objects anyway
         };
 
         Ok(Object {
