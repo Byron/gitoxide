@@ -42,7 +42,7 @@ mod db {
             let mut o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9");
             assert_eq!(o.kind, Kind::Tag);
             assert_eq!(o.size, 1024);
-            let tag = o.parsed().unwrap().unwrap();
+            let tag = o.parsed().unwrap();
             let expected = borrowed::Object::Tag(borrowed::Tag {
                 target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
                 name: b"1.0.0".as_bstr(),
@@ -78,7 +78,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             let mut o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec");
             assert_eq!(o.kind, Kind::Commit);
             assert_eq!(o.size, 1084);
-            let commit = o.parsed().unwrap().unwrap();
+            let commit = o.parsed().unwrap();
             let expected = borrowed::Object::Commit(borrowed::Commit {
                 tree: b"6ba2a0ded519f737fd5b8d5ccfb141125ef3176f".as_bstr(),
                 parents: vec![].into(),
@@ -91,15 +91,15 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(commit, expected)
         }
 
-        #[test]
-        fn blob() {
-            let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-            assert_eq!(
-                o.parsed().unwrap(),
-                None,
-                "blobs cannot be parsed, but it's not an error either"
-            );
-        }
+        // #[test]
+        // fn blob() {
+        //     let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+        //     assert_eq!(
+        //         o.parsed(),
+        //         None,
+        //         "blobs cannot be parsed, but it's not an error either"
+        //     );
+        // }
 
         fn locate(hex: &str) -> loose::Object {
             ldb().locate(&hex_to_id(hex)).unwrap()
@@ -129,7 +129,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                     ],
                 },
             ]));
-            let tree = o.parsed().unwrap().unwrap();
+            let tree = o.parsed().unwrap();
             assert_eq!(tree, expected)
         }
     }

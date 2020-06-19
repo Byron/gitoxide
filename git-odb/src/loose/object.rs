@@ -36,7 +36,7 @@ pub struct Object {
 
 impl Object {
     // Returns `Some(borrowed::Object)` unless the object is actually a Blob, which is when None is returned.
-    pub fn parsed(&mut self) -> Result<Option<borrowed::Object>, Error> {
+    pub fn parsed(&mut self) -> Result<borrowed::Object, Error> {
         Ok(match self.kind {
             object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                 if !self.decompression_complete {
@@ -58,7 +58,7 @@ impl Object {
                     self.compressed_data = Default::default();
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
-                Some(match self.kind {
+                match self.kind {
                     object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(bytes)?),
                     object::Kind::Tree => {
                         borrowed::Object::Tree(borrowed::Tree::from_bytes(bytes)?)
@@ -67,9 +67,9 @@ impl Object {
                         borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?)
                     }
                     object::Kind::Blob => unreachable!("Blobs are handled in another branch"),
-                })
+                }
             }
-            object::Kind::Blob => None,
+            object::Kind::Blob => unimplemented!("blob object"),
         })
     }
 }
