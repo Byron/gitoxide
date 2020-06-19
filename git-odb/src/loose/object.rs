@@ -21,9 +21,6 @@ quick_error! {
             from()
             cause(err)
         }
-        BlobsCannotBeParsed {
-            display("Blob objects cannot be parsed - they can only be streamed")
-        }
     }
 }
 
@@ -38,9 +35,10 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn parsed(&mut self) -> Result<borrowed::Object, Error> {
+    // Returns `Some(borrowed::Object)` unless the object is actually a Blob, which is when None is returned.
+    pub fn parsed(&mut self) -> Result<Option<borrowed::Object>, Error> {
         Ok(match self.kind {
-            object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
+            object::Kind::Tag | object::Ki nd::Commit | object::Kind::Tree => {
                 if !self.decompression_complete {
                     let total_size = self.header_size + self.size;
                     if self.decompressed_data.capacity() < total_size {
@@ -60,7 +58,7 @@ impl Object {
                     self.compressed_data = Default::default();
                 }
                 let bytes = &self.decompressed_data[self.header_size..];
-                match self.kind {
+                Some(match self.kind {
                     object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(bytes)?),
                     object::Kind::Tree => {
                         borrowed::Object::Tree(borrowed::Tree::from_bytes(bytes)?)
@@ -69,9 +67,9 @@ impl Object {
                         borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?)
                     }
                     object::Kind::Blob => unreachable!("Blobs are handled in another branch"),
-                }
+                })
             }
-            object::Kind::Blob => return Err(Error::BlobsCannotBeParsed),
+            object::Kind::Blob => None,
         })
     }
 }
