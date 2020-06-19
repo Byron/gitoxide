@@ -33,12 +33,10 @@ The CLI uses various libraries to implement
       * [x] commit
       * [x] tree
       * [x] tag
-      * [ ] blob
     * [ ] encode
       * [ ] commit
       * [ ] tree
       * [ ] tag
-      * [ ] blob
 * **git-odb**
   * **loose objects**
     * [x] traverse
@@ -47,7 +45,7 @@ The CLI uses various libraries to implement
   * **packs**
     * [x] traverse pack index
     * [ ] traverse pack entries
-    * [-] decode
+    * [ ] decode
       * [ ] deltified objects
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
@@ -62,6 +60,10 @@ The CLI uses various libraries to implement
   * [ ] via https
     * [ ] push
     * [ ] pull
+ **Stress Testing**
+  * [ ] Verify huge packs
+  * [ ] Explode huge packs to disk and validate loose objects
+  * [ ] Generate huge back from a lot of loose objects
 
 ## Installation
 
