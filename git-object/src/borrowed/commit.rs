@@ -15,7 +15,7 @@ use nom::{
 };
 use smallvec::SmallVec;
 
-#[derive(PartialEq, Eq, Debug, Hash)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Commit<'data> {
     // SHA1 of tree object we point to
     pub tree: &'data BStr,

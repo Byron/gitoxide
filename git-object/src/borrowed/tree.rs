@@ -10,12 +10,12 @@ use nom::{
 };
 use std::convert::TryFrom;
 
-#[derive(PartialEq, Eq, Debug, Hash)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Tree<'data> {
     pub entries: Vec<Entry<'data>>,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Entry<'data> {
     pub mode: Mode,
     pub filename: &'data BStr,

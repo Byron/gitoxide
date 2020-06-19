@@ -1,12 +1,12 @@
 use quick_error::quick_error;
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
 pub enum Sign {
     Plus,
     Minus,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
 pub struct Time {
     /// time in seconds from epoch
     pub time: u32,
@@ -27,7 +27,7 @@ pub fn id_from_20_bytes(b: &[u8]) -> Id {
     id
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Kind {
     Tag,
     Commit,

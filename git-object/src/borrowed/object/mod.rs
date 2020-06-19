@@ -7,14 +7,14 @@ use crate::{
 };
 use bstr::BStr;
 
-#[derive(PartialEq, Eq, Debug, Hash)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Signature<'data> {
     pub name: &'data BStr,
     pub email: &'data BStr,
     pub time: Time,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub enum Object<'data> {
     Tag(Tag<'data>),
     Commit(Commit<'data>),
