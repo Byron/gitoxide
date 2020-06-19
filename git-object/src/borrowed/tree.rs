@@ -1,13 +1,27 @@
-use crate::borrowed::util::SPACE;
-use crate::borrowed::Error;
+use crate::{borrowed::util::SPACE, borrowed::Error};
 use bstr::{BStr, ByteSlice};
-use nom::bytes::complete::{tag, take, take_while1, take_while_m_n};
-use nom::character::is_digit;
-use nom::combinator::all_consuming;
-use nom::multi::many1;
-use nom::sequence::terminated;
-use nom::IResult;
+use nom::{
+    bytes::complete::{tag, take, take_while1, take_while_m_n},
+    character::is_digit,
+    combinator::all_consuming,
+    multi::many1,
+    sequence::terminated,
+    IResult,
+};
 use std::convert::TryFrom;
+
+#[derive(PartialEq, Eq, Debug, Hash)]
+pub struct Tree<'data> {
+    pub entries: Vec<Entry<'data>>,
+}
+
+#[derive(PartialEq, Eq, Debug, Hash)]
+pub struct Entry<'data> {
+    pub mode: Mode,
+    pub filename: &'data BStr,
+    // 20 bytes SHA1
+    pub oid: &'data [u8],
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 #[repr(u16)]
@@ -34,17 +48,6 @@ impl TryFrom<&[u8]> for Mode {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash)]
-pub struct Entry<'data> {
-    pub mode: Mode,
-    pub filename: &'data BStr,
-    // 20 bytes SHA1
-    pub oid: &'data [u8],
-}
-
-#[derive(PartialEq, Eq, Debug, Hash)]
-pub struct Tree<'data>(pub Vec<Entry<'data>>);
-
 const NULL: &[u8] = b"\0";
 fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
     let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
@@ -65,7 +68,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
 fn parse(i: &[u8]) -> IResult<&[u8], Tree, Error> {
     let (i, mut entries) = all_consuming(many1(parse_entry))(i)?;
     entries.shrink_to_fit();
-    Ok((i, Tree(entries)))
+    Ok((i, Tree { entries }))
 }
 
 impl<'data> Tree<'data> {

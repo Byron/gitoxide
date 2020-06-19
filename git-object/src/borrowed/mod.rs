@@ -9,7 +9,9 @@ mod tree;
 pub use tree::{Entry as TreeEntry, Mode as TreeMode, Tree};
 
 #[derive(PartialEq, Eq, Debug, Hash)]
-pub struct Blob<'data>(pub &'data [u8]);
+pub struct Blob<'data> {
+    pub data: &'data [u8],
+}
 
 mod object;
 pub use object::*;
