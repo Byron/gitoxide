@@ -46,12 +46,14 @@ The CLI uses various libraries to implement
     * [ ] write
   * **packs**
     * [x] traverse pack index
-    * [x] decode pack entries
-    * [ ] decode
-      * [ ] full objects
+    * [ ] traverse pack entries
+    * [-] decode
       * [ ] deltified objects
-    * [ ] Multi-Pack index file (MIDX)
-    * [ ] create new packs
+      * [ ] Multi-Pack index file (MIDX)
+      * [ ] 'bitmap' file
+      * [ ] full objects
+    * [ ] encode
+      * [ ] create new packs
     * [ ] verify pack
 * **git-transport**
   * [ ] via ssh
