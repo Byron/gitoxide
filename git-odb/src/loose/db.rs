@@ -122,7 +122,7 @@ impl Db {
     pub fn locate(&self, id: &object::Id) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
-        let mut deflate = zlib::Inflate::default();
+        let mut inflate = zlib::Inflate::default();
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
         let ((_status, _consumed_in, consumed_out), bytes_read, mut input_stream) = {
@@ -134,7 +134,7 @@ impl Db {
             let mut out = Cursor::new(&mut decompressed[..]);
 
             (
-                deflate
+                inflate
                     .once(&compressed[..bytes_read], &mut out)
                     .map_err(|e| Error::DecompressFile(e, path.to_owned()))?,
                 bytes_read,
@@ -143,31 +143,31 @@ impl Db {
         };
 
         let (kind, size, header_size) = parse_header(&decompressed[..consumed_out])?;
-
         let mut decompressed = SmallVec::from_buf(decompressed);
         decompressed.resize(consumed_out, 0);
+
         let mut compressed = SmallVec::from_buf(compressed);
 
         let path = match kind {
             object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                 // Read small objects right away and store them in memory while we
                 // have a file handle available and 'hot'. Note that we don't decompress yet!
-                let fsize = input_stream
+                let file_size = input_stream
                     .metadata()
                     .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
                     .size();
-                assert!(fsize <= ::std::usize::MAX as u64);
-                let fsize = fsize as usize;
-                if bytes_read == fsize {
+                assert!(file_size <= ::std::u64::MAX);
+                let file_size = file_size as usize;
+                if bytes_read == file_size {
                     None
                 } else {
                     let cap = compressed.capacity();
-                    if cap < fsize {
-                        compressed.reserve_exact(fsize - cap);
-                        debug_assert!(fsize == compressed.capacity());
+                    if cap < file_size {
+                        compressed.reserve_exact(file_size - cap);
+                        debug_assert!(file_size == compressed.capacity());
                     }
 
-                    compressed.resize(fsize, 0);
+                    compressed.resize(file_size, 0);
                     input_stream
                         .read_exact(&mut compressed[bytes_read..])
                         .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
@@ -184,7 +184,7 @@ impl Db {
             compressed_data: compressed,
             header_size,
             path,
-            decompression_complete: deflate.is_done,
+            decompression_complete: inflate.is_done,
         })
     }
 }

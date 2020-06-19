@@ -38,45 +38,40 @@ impl Object {
     // Note: Blobs are loaded or mapped into memory and are made available that way.
     // Consider the streaming API if large Blobs are expected.
     pub fn decode(&mut self) -> Result<borrowed::Object, Error> {
+        self.decompress_all()?;
+        let bytes = &self.decompressed_data[self.header_size..];
         Ok(match self.kind {
-            object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
-                if !self.decompression_complete {
-                    let total_size = self.header_size + self.size;
-                    if self.decompressed_data.capacity() < total_size {
-                        self.decompressed_data
-                            .reserve_exact(total_size - self.decompressed_data.len());
-                    }
-                    self.decompressed_data.resize(total_size, 0);
-                    let mut cursor = Cursor::new(&mut self.decompressed_data[..]);
-                    // TODO Performance opportunity
-                    // here we do some additional work as we decompress parts again that we already covered
-                    // when getting the header, if we could re-use the previous state.
-                    // This didn't work for some reason in 2018! Maybe worth another try
-                    let mut deflate = zlib::Inflate::default();
-                    deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
-                    self.decompression_complete = deflate.is_done;
-                    debug_assert!(deflate.is_done);
-                    self.compressed_data = Default::default();
-                }
-                let bytes = &self.decompressed_data[self.header_size..];
-                match self.kind {
-                    object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(bytes)?),
-                    object::Kind::Tree => {
-                        borrowed::Object::Tree(borrowed::Tree::from_bytes(bytes)?)
-                    }
-                    object::Kind::Commit => {
-                        borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?)
-                    }
-                    object::Kind::Blob => unreachable!("Blobs are handled in another branch"),
-                }
-            }
-            object::Kind::Blob => borrowed::Object::Blob(if self.decompression_complete {
-                borrowed::Blob {
-                    data: self.decompressed_data.as_slice(),
-                }
-            } else {
-                unimplemented!("object read all")
-            }),
+            object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(bytes)?),
+            object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(bytes)?),
+            object::Kind::Commit => borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?),
+            object::Kind::Blob => borrowed::Object::Blob(borrowed::Blob { data: bytes }),
         })
+    }
+
+    fn decompress_all(&mut self) -> Result<(), Error> {
+        if self.decompression_complete {
+            debug_assert!(
+                self.size + self.header_size == self.decompressed_data.len(),
+                "when decompression is done, we have stored everything in memory"
+            );
+            return Ok(());
+        }
+        let total_size = self.header_size + self.size;
+        if self.decompressed_data.capacity() < total_size {
+            self.decompressed_data
+                .reserve_exact(total_size - self.decompressed_data.len());
+        }
+        self.decompressed_data.resize(total_size, 0);
+        let mut cursor = Cursor::new(&mut self.decompressed_data[..]);
+        // TODO Performance opportunity
+        // here we do some additional work as we decompress parts again that we already covered
+        // when getting the header, if we could re-use the previous state.
+        // This didn't work for some reason in 2018! Maybe worth another try
+        let mut deflate = zlib::Inflate::default();
+        deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
+        self.decompression_complete = deflate.is_done;
+        assert!(deflate.is_done);
+        self.compressed_data = Default::default();
+        Ok(())
     }
 }

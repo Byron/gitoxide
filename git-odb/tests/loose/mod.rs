@@ -111,9 +111,19 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(
                 o.decode().unwrap().as_blob().unwrap(),
                 &borrowed::Blob {
-                    data: &[98, 108, 111, 98, 32, 57, 0, 104, 105, 32, 116, 104, 101, 114, 101, 10]
+                    data: &[104, 105, 32, 116, 104, 101, 114, 101, 10]
                 },
-                "blobs cannot be parsed, but it's not an error either"
+                "small blobs are treated similarly to other object types and are read into memory at once when the header is read"
+            );
+        }
+
+        #[test]
+        fn blob_big() {
+            let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
+            assert_eq!(
+                o.decode().unwrap().as_blob().unwrap().data.len(),
+                56915,
+                "bigger blobs are not read completely when the header is parsed and thus need an extra step"
             );
         }
 
