@@ -1,8 +1,6 @@
-mod utils;
-
+use crate::{bin, fixture};
 use git_odb::pack::{self, index};
 use pretty_assertions::assert_eq;
-use utils::{bin, fixture};
 
 const INDEX_V1: &'static str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
 const PACK_FOR_INDEX_V1: &'static str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";

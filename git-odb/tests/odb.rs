@@ -8,3 +8,6 @@ pub fn bin(hex: &str) -> [u8; 20] {
 pub fn fixture(path: &str) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path)
 }
+
+mod loose;
+mod pack;

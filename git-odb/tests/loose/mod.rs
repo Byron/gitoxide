@@ -1,18 +1,10 @@
-extern crate git_odb as odb;
-extern crate hex;
+use git_odb as odb;
 
-mod utils;
-
-use utils::*;
-
+use crate::{bin, fixture};
 use bstr::ByteSlice;
 use git_object::{borrowed, Kind, Sign, Time};
 use odb::loose::Db;
 use pretty_assertions::assert_eq;
-
-pub fn fixture_bytes(path: &str) -> Vec<u8> {
-    std::fs::read(fixture(path)).unwrap()
-}
 
 fn ldb() -> Db {
     odb::loose::Db::at(fixture("objects"))
