@@ -75,7 +75,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         }
 
         #[test]
-        fn foo() {
+        fn commit() {
             let mut o = ldb()
                 .locate(&hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"))
                 .unwrap();

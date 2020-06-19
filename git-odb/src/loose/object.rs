@@ -65,7 +65,7 @@ impl Object {
                     object::Kind::Commit => {
                         borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?)
                     }
-                    _ => unimplemented!(),
+                    object::Kind::Blob => unreachable!("Blobs are handled in another branch"),
                 }
             }
             object::Kind::Blob => unimplemented!("todo implement blob streaming!"),

@@ -1,3 +1,4 @@
+use quick_error::quick_error;
 use std::{
     fs::{self, OpenOptions},
     io::Write,
