@@ -35,7 +35,8 @@ pub struct Object {
 }
 
 impl Object {
-    // Returns `Some(borrowed::Object)` unless the object is actually a Blob, which is when None is returned.
+    // Note: Blobs are loaded or mapped into memory and are made available that way.
+    // Consider the streaming API if large Blobs are expected.
     pub fn decode(&mut self) -> Result<borrowed::Object, Error> {
         Ok(match self.kind {
             object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
@@ -69,7 +70,13 @@ impl Object {
                     object::Kind::Blob => unreachable!("Blobs are handled in another branch"),
                 }
             }
-            object::Kind::Blob => unimplemented!("blob object"),
+            object::Kind::Blob => borrowed::Object::Blob(if self.decompression_complete {
+                borrowed::Blob {
+                    data: self.decompressed_data.as_slice(),
+                }
+            } else {
+                unimplemented!("object read all")
+            }),
         })
     }
 }

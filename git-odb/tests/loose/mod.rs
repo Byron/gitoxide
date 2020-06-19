@@ -91,15 +91,17 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(commit, expected)
         }
 
-        // #[test]
-        // fn blob() {
-        //     let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-        //     assert_eq!(
-        //         o.parsed(),
-        //         None,
-        //         "blobs cannot be parsed, but it's not an error either"
-        //     );
-        // }
+        #[test]
+        fn blob() {
+            let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+            assert_eq!(
+                o.decode().unwrap(),
+                borrowed::Object::Blob(borrowed::Blob {
+                    data: &[98, 108, 111, 98, 32, 57, 0, 104, 105, 32, 116, 104, 101, 114, 101, 10]
+                }),
+                "blobs cannot be parsed, but it's not an error either"
+            );
+        }
 
         fn locate(hex: &str) -> loose::Object {
             ldb().locate(&hex_to_id(hex)).unwrap()
