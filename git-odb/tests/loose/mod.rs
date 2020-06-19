@@ -13,6 +13,7 @@ mod object {
         )
     }
 }
+
 mod db {
     use crate::{fixture, hex_to_id};
     use git_odb::loose::Db;

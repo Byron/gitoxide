@@ -31,8 +31,9 @@ pub enum Kind {
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Entry {
-    pub object: parsed::Object,
-    pub decompressed_size: u64,
+    object: parsed::Object,
+    /// The decompressed size of the object in bytes
+    pub size: u64,
     /// absolute offset to compressed object data in the pack
     pub offset: u64,
 }
@@ -71,7 +72,7 @@ impl File {
         let (object, decompressed_size, consumed_bytes) = parsed::Object::from_bytes(obj_begin);
         Entry {
             object,
-            decompressed_size,
+            size: decompressed_size,
             offset: offset + consumed_bytes,
         }
     }
@@ -122,7 +123,7 @@ pub mod parsed {
     const REF_DELTA: u8 = 7;
 
     #[derive(PartialEq, Eq, Debug, Hash, Clone)]
-    pub enum Object {
+    pub(crate) enum Object {
         Commit,
         Tree,
         Blob,
