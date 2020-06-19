@@ -35,6 +35,7 @@ mod db {
                 hex_to_id("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"), // tree
                 hex_to_id("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"), // tag
                 hex_to_id("96ae868b3539f551c88fd5f02394d022581b11b0"), // tree
+                hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"), // blob (big)
                 hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"), // commit
             ]
         )
@@ -56,7 +57,7 @@ mod db {
             assert_eq!(o.kind, Kind::Tag);
             assert_eq!(o.size, 1024);
             let tag = o.decode().unwrap();
-            let expected = borrowed::Object::Tag(borrowed::Tag {
+            let expected = borrowed::Tag {
                 target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
                 name: b"1.0.0".as_bstr(),
                 target_kind: Kind::Commit,
@@ -82,8 +83,8 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                         .as_bstr(),
                 ),
                 signature: signature(1528473343),
-            });
-            assert_eq!(tag, expected)
+            };
+            assert_eq!(tag.as_tag().unwrap(), &expected)
         }
 
         #[test]
@@ -91,8 +92,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             let mut o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec");
             assert_eq!(o.kind, Kind::Commit);
             assert_eq!(o.size, 1084);
-            let commit = o.decode().unwrap();
-            let expected = borrowed::Object::Commit(borrowed::Commit {
+            let expected = borrowed::Commit {
                 tree: b"6ba2a0ded519f737fd5b8d5ccfb141125ef3176f".as_bstr(),
                 parents: vec![].into(),
                 author: signature(1528473303),
@@ -100,18 +100,19 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                 encoding: None,
                 message: b"initial commit\n".as_bstr(),
                 pgp_signature: Some(b"-----BEGIN PGP SIGNATURE-----\n Comment: GPGTools - https://gpgtools.org\n \n iQIzBAABCgAdFiEEw7xSvXbiwjusbsBqZl+Z+p2ZlmwFAlsaptwACgkQZl+Z+p2Z\n lmxXSQ//fj6t7aWoEKeMdFigfj6OXWPUyrRbS0N9kpJeOfA0BIOea/6Jbn8J5qh1\n YRfrySOzHPXR5Y+w4GwLiVas66qyhAbk4yeqZM0JxBjHDyPyRGhjUd3y7WjEa6bj\n P0ACAIkYZQ/Q/LDE3eubmhAwEobBH3nZbwE+/zDIG0i265bD5C0iDumVOiKkSelw\n cr6FZVw1HH+GcabFkeLRZLNGmPqGdbeBwYERqb0U1aRCzV1xLYteoKwyWcYaH8E3\n 97z1rwhUO/L7o8WUEJtP3CLB0zuocslMxskf6bCeubBnRNJ0YrRmxGarxCP3vn4D\n 3a/MwECnl6mnUU9t+OnfvrzLDN73rlq8iasUq6hGe7Sje7waX6b2UGpxHqwykmXg\n VimD6Ah7svJanHryfJn38DvJW/wOMqmAnSUAp+Y8W9EIe0xVntCmtMyoKuqBoY7T\n JlZ1kHJte6ELIM5JOY9Gx7D0ZCSKZJQqyjoqtl36dsomT0I78/+7QS1DP4S6XB7d\n c3BYH0JkW81p7AAFbE543ttN0Z4wKXErMFqUKnPZUIEuybtlNYV+krRdfDBWQysT\n 3MBebjguVQ60oGs06PzeYBosKGQrHggAcwduLFuqXhLTJqN4UQ18RkE0vbtG3YA0\n +XtZQM13vURdfwFI5qitAGgw4EzPVrkWWzApzLCrRPEMbvP+b9A=\n =2qqN\n -----END PGP SIGNATURE-----".as_bstr()),
-            });
-            assert_eq!(commit, expected)
+            };
+            let object = o.decode().unwrap();
+            assert_eq!(object.as_commit().unwrap(), &expected)
         }
 
         #[test]
         fn blob() {
             let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
             assert_eq!(
-                o.decode().unwrap(),
-                borrowed::Object::Blob(borrowed::Blob {
+                o.decode().unwrap().as_blob().unwrap(),
+                &borrowed::Blob {
                     data: &[98, 108, 111, 98, 32, 57, 0, 104, 105, 32, 116, 104, 101, 114, 101, 10]
-                }),
+                },
                 "blobs cannot be parsed, but it's not an error either"
             );
         }
@@ -126,7 +127,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(o.kind, Kind::Tree);
             assert_eq!(o.size, 66);
 
-            let expected = borrowed::Object::Tree(borrowed::Tree {
+            let expected = borrowed::Tree {
                 entries: vec![
                     TreeEntry {
                         mode: TreeMode::Tree,
@@ -145,9 +146,9 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                         ],
                     },
                 ],
-            });
+            };
             let tree = o.decode().unwrap();
-            assert_eq!(tree, expected)
+            assert_eq!(tree.as_tree().unwrap(), &expected)
         }
     }
 }

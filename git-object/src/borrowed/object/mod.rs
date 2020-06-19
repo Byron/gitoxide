@@ -2,6 +2,7 @@ mod error;
 pub use error::Error;
 
 use crate::{
+    borrowed,
     borrowed::{Blob, Commit, Tag, Tree},
     Time,
 };
@@ -23,6 +24,30 @@ pub enum Object<'data> {
 }
 
 impl<'data> Object<'data> {
+    pub fn as_blob(&self) -> Option<&borrowed::Blob> {
+        match self {
+            Object::Blob(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_commit(&self) -> Option<&borrowed::Commit<'data>> {
+        match self {
+            Object::Commit(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_tree(&self) -> Option<&borrowed::Tree> {
+        match self {
+            Object::Tree(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_tag(&self) -> Option<&borrowed::Tag> {
+        match self {
+            Object::Tag(v) => Some(v),
+            _ => None,
+        }
+    }
     pub fn kind(&self) -> crate::Kind {
         match self {
             Object::Tag(_) => crate::Kind::Tag,
