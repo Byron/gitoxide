@@ -1,5 +1,4 @@
-use git_object::borrowed::Signature;
-use git_object::{Sign, Time};
+use git_object::{borrowed::Signature, Sign, Time};
 use std::path::PathBuf;
 
 mod commit;

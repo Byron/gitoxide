@@ -22,11 +22,9 @@ mod method {
 }
 
 mod parse {
-    use crate::borrowed::tag::tag_fixture;
-    use crate::{borrowed::fixture_bytes, borrowed::signature};
+    use crate::{borrowed::fixture_bytes, borrowed::signature, borrowed::tag::tag_fixture};
     use bstr::ByteSlice;
-    use git_object::borrowed::Tag;
-    use git_object::Kind;
+    use git_object::{borrowed::Tag, Kind};
 
     #[test]
     fn signed() {
