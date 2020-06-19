@@ -21,6 +21,9 @@ quick_error! {
             from()
             cause(err)
         }
+        BlobsCannotBeParsed {
+            display("Blob objects cannot be parsed - they can only be streamed")
+        }
     }
 }
 
@@ -68,7 +71,7 @@ impl Object {
                     object::Kind::Blob => unreachable!("Blobs are handled in another branch"),
                 }
             }
-            object::Kind::Blob => unimplemented!("todo implement blob streaming!"),
+            object::Kind::Blob => return Err(Error::BlobsCannotBeParsed),
         })
     }
 }
