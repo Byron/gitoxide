@@ -2,7 +2,7 @@ mod error;
 pub use error::Error;
 
 use crate::{
-    borrowed::{Commit, Tag, Tree},
+    borrowed::{Blob, Commit, Tag, Tree},
     Time,
 };
 use bstr::BStr;
@@ -19,6 +19,7 @@ pub enum Object<'data> {
     Tag(Tag<'data>),
     Commit(Commit<'data>),
     Tree(Tree<'data>),
+    Blob(Blob<'data>),
 }
 
 impl<'data> Object<'data> {
@@ -27,12 +28,13 @@ impl<'data> Object<'data> {
             Object::Tag(_) => crate::Kind::Tag,
             Object::Commit(_) => crate::Kind::Commit,
             Object::Tree(_) => crate::Kind::Tree,
+            Object::Blob(_) => crate::Kind::Blob,
         }
     }
 }
 
 mod convert {
-    use crate::borrowed::{Commit, Object, Tag, Tree};
+    use crate::borrowed::{Blob, Commit, Object, Tag, Tree};
     use std::convert::TryFrom;
 
     impl<'data> From<Tag<'data>> for Object<'data> {
@@ -50,6 +52,12 @@ mod convert {
     impl<'data> From<Tree<'data>> for Object<'data> {
         fn from(v: Tree<'data>) -> Self {
             Object::Tree(v)
+        }
+    }
+
+    impl<'data> From<Blob<'data>> for Object<'data> {
+        fn from(v: Blob<'data>) -> Self {
+            Object::Blob(v)
         }
     }
 
@@ -81,6 +89,17 @@ mod convert {
         fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
             Ok(match value {
                 Object::Tree(v) => v,
+                _ => return Err(value),
+            })
+        }
+    }
+
+    impl<'data> TryFrom<Object<'data>> for Blob<'data> {
+        type Error = Object<'data>;
+
+        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Blob(v) => v,
                 _ => return Err(value),
             })
         }

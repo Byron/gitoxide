@@ -36,7 +36,7 @@ pub struct Object {
 
 impl Object {
     // Returns `Some(borrowed::Object)` unless the object is actually a Blob, which is when None is returned.
-    pub fn parsed(&mut self) -> Result<borrowed::Object, Error> {
+    pub fn decode(&mut self) -> Result<borrowed::Object, Error> {
         Ok(match self.kind {
             object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                 if !self.decompression_complete {
