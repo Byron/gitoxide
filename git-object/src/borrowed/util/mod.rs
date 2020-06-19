@@ -109,3 +109,6 @@ pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
         },
     ))
 }
+
+#[cfg(test)]
+mod tests;
