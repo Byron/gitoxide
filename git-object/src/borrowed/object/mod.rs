@@ -1,10 +1,11 @@
 mod error;
 pub use error::Error;
 
-use crate::Time;
+use crate::{
+    borrowed::{Commit, Tag, Tree},
+    Time,
+};
 use bstr::BStr;
-
-use crate::borrowed::{Commit, Tag, Tree};
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct Signature<'data> {
