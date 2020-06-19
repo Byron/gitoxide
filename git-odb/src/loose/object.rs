@@ -3,11 +3,11 @@ use crate::{
     zlib,
 };
 use git_object as object;
+use miniz_oxide::inflate::decompress_to_vec_zlib;
 use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
-use std::io::Read;
-use std::{io::Cursor, path::PathBuf};
+use std::{io::Read, path::PathBuf};
 
 quick_error! {
     #[derive(Debug)]
@@ -62,16 +62,6 @@ impl Object {
             return Ok(());
         }
         let total_size = self.header_size + self.size;
-        if self.decompressed_data.capacity() < total_size {
-            self.decompressed_data
-                .reserve_exact(total_size - self.decompressed_data.len());
-        }
-        self.decompressed_data.resize(total_size, 0);
-        let mut cursor = Cursor::new(&mut self.decompressed_data[..]);
-        // TODO Performance opportunity
-        // here we do some additional work as we decompress parts again that we already covered
-        // when getting the header, if we could re-use the previous state.
-        // This didn't work for some reason in 2018! Maybe worth another try
         if let Some(path) = self.path.take() {
             // NOTE: For now we just re-read everything from the beginning without seeking, as our buffer
             // is small so the seek might be more expensive than just reading everything.
@@ -86,10 +76,11 @@ impl Object {
                 .map_err(|e| Error::Io(e, "read", path))?;
             self.compressed_data = SmallVec::from(buf);
         }
-        let mut deflate = zlib::Inflate::default();
-        deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
-        self.decompression_complete = deflate.is_done;
-        assert!(deflate.is_done);
+        self.decompressed_data =
+            SmallVec::from(decompress_to_vec_zlib(&self.compressed_data[..]).unwrap());
+        self.decompressed_data.shrink_to_fit();
+        assert!(self.decompressed_data.len() == total_size);
+        self.decompression_complete = true;
         self.compressed_data = Default::default();
         Ok(())
     }

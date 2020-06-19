@@ -12,7 +12,7 @@ use miniz_oxide::{
     },
 };
 use quick_error::quick_error;
-use std::io::{self, Cursor};
+use std::io::Cursor;
 
 quick_error! {
     #[derive(Debug)]
@@ -43,41 +43,6 @@ impl Default for Inflate {
 }
 
 impl Inflate {
-    pub fn all_till_done(
-        &mut self,
-        input: &[u8],
-        mut out: impl io::Write,
-    ) -> Result<(usize, usize), Error> {
-        let mut buf = [0; 8192]; // as per git itself
-        let mut in_pos = 0;
-        let mut out_pos = 0;
-        loop {
-            let (status, in_consumed, out_consumed) = {
-                let mut c = Cursor::new(&mut buf[..]);
-                self.once(&input[in_pos..], &mut c, in_pos == 0)?
-            };
-            dbg!(status, in_consumed, out_consumed);
-            out.write_all(&buf[..out_consumed])?;
-            in_pos += in_consumed;
-            out_pos += out_consumed;
-            dbg!(in_pos, out_pos);
-
-            match status {
-                TINFLStatus::Done => {
-                    return Ok((in_pos, out_pos));
-                }
-
-                TINFLStatus::HasMoreOutput => {
-                    // just try again with fresh cursor
-                }
-                _ => unreachable!(
-                    "This should all be covered by `once()`, we expect a complete input buffer: {:?}",
-                    status
-                ),
-            }
-        }
-    }
-
     pub fn once(
         &mut self,
         input: &[u8],
@@ -95,7 +60,6 @@ impl Inflate {
             } | TINFL_FLAG_HAS_MORE_INPUT
                 | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
-        dbg!(status, in_consumed, out_consumed, parse_header);
 
         use miniz_oxide::inflate::TINFLStatus::*;
         match status {
