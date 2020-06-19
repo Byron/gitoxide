@@ -54,11 +54,13 @@ impl Inflate {
         loop {
             let (status, in_consumed, out_consumed) = {
                 let mut c = Cursor::new(&mut buf[..]);
-                self.once(&input[in_pos..], &mut c)?
+                self.once(&input[in_pos..], &mut c, in_pos == 0)?
             };
+            dbg!(status, in_consumed, out_consumed);
             out.write_all(&buf[..out_consumed])?;
             in_pos += in_consumed;
             out_pos += out_consumed;
+            dbg!(in_pos, out_pos);
 
             match status {
                 TINFLStatus::Done => {
@@ -80,15 +82,20 @@ impl Inflate {
         &mut self,
         input: &[u8],
         out: &mut Cursor<&mut [u8]>,
+        parse_header: bool,
     ) -> Result<(TINFLStatus, usize, usize), Error> {
         let (status, in_consumed, out_consumed) = decompress(
             &mut self.inner,
             input,
             out,
-            TINFL_FLAG_PARSE_ZLIB_HEADER
-                | TINFL_FLAG_HAS_MORE_INPUT
+            if parse_header {
+                TINFL_FLAG_PARSE_ZLIB_HEADER
+            } else {
+                0
+            } | TINFL_FLAG_HAS_MORE_INPUT
                 | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
+        dbg!(status, in_consumed, out_consumed, parse_header);
 
         use miniz_oxide::inflate::TINFLStatus::*;
         match status {

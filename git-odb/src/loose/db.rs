@@ -135,7 +135,7 @@ impl Db {
 
             (
                 inflate
-                    .once(&compressed[..bytes_read], &mut out)
+                    .once(&compressed[..bytes_read], &mut out, true)
                     .map_err(|e| Error::DecompressFile(e, path.to_owned()))?,
                 bytes_read,
                 istream,
@@ -146,13 +146,12 @@ impl Db {
         let mut decompressed = SmallVec::from_buf(decompressed);
         decompressed.resize(consumed_out, 0);
 
-        let mut compressed = SmallVec::from_buf(compressed);
-
-        let path = if inflate.is_done {
-            None
+        let (compressed, path) = if inflate.is_done {
+            (SmallVec::default(), None)
         } else {
             match kind {
                 object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
+                    let mut compressed = SmallVec::from_buf(compressed);
                     // Read small objects right away and store them in memory while we
                     // have a file handle available and 'hot'. Note that we don't decompress yet!
                     let file_size = input_stream
@@ -162,7 +161,7 @@ impl Db {
                     assert!(file_size <= ::std::u64::MAX);
                     let file_size = file_size as usize;
                     if bytes_read == file_size {
-                        None
+                        (compressed, None)
                     } else {
                         let cap = compressed.capacity();
                         if cap < file_size {
@@ -174,10 +173,10 @@ impl Db {
                         input_stream
                             .read_exact(&mut compressed[bytes_read..])
                             .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
-                        None
+                        (compressed, None)
                     }
                 }
-                object::Kind::Blob => Some(path), // we will open the file again when needed. Maybe we can load small sized objects anyway
+                object::Kind::Blob => (SmallVec::default(), Some(path)), // we will open the file again when needed. Maybe we can load small sized objects anyway
             }
         };
 

@@ -6,6 +6,7 @@ use git_object as object;
 use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
+use std::io::Read;
 use std::{io::Cursor, path::PathBuf};
 
 quick_error! {
@@ -19,6 +20,10 @@ quick_error! {
         ParseTag(err: borrowed::Error) {
             display("Could not parse tag object")
             from()
+            cause(err)
+        }
+        Io(err: std::io::Error, action: &'static str, path: PathBuf) {
+            display("Could not {} file at '{}'", action, path.display())
             cause(err)
         }
     }
@@ -67,6 +72,20 @@ impl Object {
         // here we do some additional work as we decompress parts again that we already covered
         // when getting the header, if we could re-use the previous state.
         // This didn't work for some reason in 2018! Maybe worth another try
+        if let Some(path) = self.path.take() {
+            // NOTE: For now we just re-read everything from the beginning without seeking, as our buffer
+            // is small so the seek might be more expensive than just reading everything.
+            let mut file =
+                std::fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.clone()))?;
+            let file_size = file
+                .metadata()
+                .map_err(|e| Error::Io(e, "read metadata", path.clone()))?
+                .len() as usize;
+            let mut buf = Vec::with_capacity(file_size);
+            file.read_to_end(&mut buf)
+                .map_err(|e| Error::Io(e, "read", path))?;
+            self.compressed_data = SmallVec::from(buf);
+        }
         let mut deflate = zlib::Inflate::default();
         deflate.all_till_done(&self.compressed_data[..], &mut cursor)?;
         self.decompression_complete = deflate.is_done;
