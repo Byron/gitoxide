@@ -16,7 +16,7 @@ use nom::{
     IResult,
 };
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Tag<'data> {
     // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
     pub target: &'data BStr,

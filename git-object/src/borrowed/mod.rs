@@ -8,7 +8,7 @@ mod tree;
 //FIXME: keep tree mode and entry in tree export it from there? Alternatively rename to TreeMode, TreeEntry?
 pub use tree::{Entry as TreeEntry, Mode as TreeMode, Tree};
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Blob<'data> {
     pub data: &'data [u8],
 }
