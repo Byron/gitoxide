@@ -1,16 +1,16 @@
 mod parse {
-    use crate::borrowed::tree::{Entry, Mode};
-    use crate::tests::hex_to_id;
     use crate::{
-        borrowed::{tree::parse, tree::Tree},
+        borrowed::tree::Tree,
+        borrowed::tree::{Entry, Mode},
         tests::borrowed::fixture_bytes,
+        tests::hex_to_id,
     };
     use bstr::ByteSlice;
 
     #[test]
     fn everything() {
         assert_eq!(
-            parse(&fixture_bytes("tree", "everything.tree")).unwrap().1,
+            Tree::from_bytes(&fixture_bytes("tree", "everything.tree")).unwrap(),
             Tree(vec![
                 Entry {
                     mode: Mode::BlobExecutable,
