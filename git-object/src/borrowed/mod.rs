@@ -11,6 +11,7 @@ mod util;
 pub use commit::Commit;
 use nom::error::ParseError;
 pub use tag::Tag;
+//FIXME: keep tree mode and entry in tree export it from there? Alternatively rename to TreeMode, TreeEntry?
 pub use tree::{Entry, Mode, Tree};
 
 quick_error! {

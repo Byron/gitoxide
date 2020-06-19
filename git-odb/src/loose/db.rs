@@ -119,7 +119,7 @@ impl Db {
             })
     }
 
-    pub fn find(&self, id: &object::Id) -> Result<Object, Error> {
+    pub fn locate(&self, id: &object::Id) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut deflate = zlib::Inflate::default();
@@ -144,7 +144,8 @@ impl Db {
 
         let (kind, size, header_size) = parse_header(&decompressed[..consumed_out])?;
 
-        let decompressed = SmallVec::from_buf(decompressed);
+        let mut decompressed = SmallVec::from_buf(decompressed);
+        decompressed.resize(consumed_out, 0);
         let mut compressed = SmallVec::from_buf(compressed);
 
         let path = match kind {
@@ -166,14 +167,7 @@ impl Db {
                         debug_assert!(fsize == compressed.capacity());
                     }
 
-                    // This works because above we assured there is fsize bytes available.
-                    // Those may not be initialized, but it will be overwritten entirely reading
-                    // the input stream of compressed bytes.
-                    #[allow(unsafe_code)]
-                    unsafe {
-                        assert!(compressed.capacity() >= fsize);
-                        compressed.set_len(fsize);
-                    }
+                    compressed.resize(fsize, 0);
                     input_stream
                         .read_exact(&mut compressed[bytes_read..])
                         .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
@@ -189,8 +183,8 @@ impl Db {
             decompressed_data: decompressed,
             compressed_data: compressed,
             header_size,
-            _path: path,
-            is_decompressed: deflate.is_done,
+            path,
+            decompression_complete: deflate.is_done,
         })
     }
 }

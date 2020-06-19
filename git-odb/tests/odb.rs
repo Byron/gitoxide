@@ -1,7 +1,7 @@
 use hex::FromHex;
 use std::path::PathBuf;
 
-pub fn bin(hex: &str) -> [u8; 20] {
+pub fn hex_to_id(hex: &str) -> [u8; 20] {
     <[u8; 20]>::from_hex(hex).unwrap()
 }
 

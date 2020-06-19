@@ -1,7 +1,5 @@
 mod db {
-    use crate::{bin, fixture};
-    use bstr::ByteSlice;
-    use git_object::{borrowed, Kind, Sign, Time};
+    use crate::{fixture, hex_to_id};
     use git_odb::loose::Db;
     use pretty_assertions::assert_eq;
 
@@ -16,36 +14,76 @@ mod db {
         assert_eq!(
             oids,
             vec![
-                bin("37d4e6c5c48ba0d245164c4e10d5f41140cab980"),
-                bin("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"),
-                bin("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"),
-                bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"),
-                bin("96ae868b3539f551c88fd5f02394d022581b11b0"),
-                bin("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
+                hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), // blob
+                hex_to_id("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"), // blob
+                hex_to_id("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"),
+                hex_to_id("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"),
+                hex_to_id("96ae868b3539f551c88fd5f02394d022581b11b0"),
+                hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"),
             ]
         )
     }
 
-    #[test]
-    fn find() {
-        let mut o = ldb()
-            .find(&bin("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
-            .unwrap();
-        assert_eq!(o.kind, Kind::Tag);
-        assert_eq!(o.size, 1024);
-        let tag = o.parsed().unwrap();
-        let expected = borrowed::Object::Tag(tag_fixture(7200));
-        assert_eq!(tag, expected)
-    }
+    mod locate {
+        use crate::hex_to_id;
+        use crate::loose::db::ldb;
+        use bstr::ByteSlice;
+        use git_object::{
+            borrowed,
+            borrowed::{Entry, Mode},
+            Kind, Sign, Time,
+        };
 
-    fn tag_fixture(offset: i32) -> borrowed::Tag<'static> {
-        borrowed::Tag {
-            target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
-            name: b"1.0.0".as_bstr(),
-            target_kind: Kind::Commit,
-            message: b"for the signature".as_bstr(),
-            pgp_signature: Some(
-                b"-----BEGIN PGP SIGNATURE-----
+        #[test]
+        fn tag() {
+            let mut o = ldb()
+                .locate(&hex_to_id("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
+                .unwrap();
+            assert_eq!(o.kind, Kind::Tag);
+            assert_eq!(o.size, 1024);
+            let tag = o.parsed().unwrap();
+            let expected = borrowed::Object::Tag(tag_fixture(7200));
+            assert_eq!(tag, expected)
+        }
+
+        #[test]
+        fn tree() {
+            let mut o = ldb()
+                .locate(&hex_to_id("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"))
+                .unwrap();
+            assert_eq!(o.kind, Kind::Tree);
+            assert_eq!(o.size, 66);
+
+            let expected = borrowed::Object::Tree(borrowed::Tree(vec![
+                Entry {
+                    mode: Mode::Tree,
+                    filename: b"dir".as_bstr(),
+                    oid: &[
+                        150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34,
+                        88, 27, 17, 176,
+                    ],
+                },
+                Entry {
+                    mode: Mode::Blob,
+                    filename: b"file.txt".as_bstr(),
+                    oid: &[
+                        55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244, 17,
+                        64, 202, 185, 128,
+                    ],
+                },
+            ]));
+            let tree = o.parsed().unwrap();
+            assert_eq!(tree, expected)
+        }
+
+        fn tag_fixture(offset: i32) -> borrowed::Tag<'static> {
+            borrowed::Tag {
+                target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
+                name: b"1.0.0".as_bstr(),
+                target_kind: Kind::Commit,
+                message: b"for the signature".as_bstr(),
+                pgp_signature: Some(
+                    b"-----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - https://gpgtools.org
 
 iQIzBAABCgAdFiEEw7xSvXbiwjusbsBqZl+Z+p2ZlmwFAlsapyYACgkQZl+Z+p2Z
@@ -62,17 +100,18 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 2n8f2douw6624Tn/6Lm4a7AoxmU+CMiYagDxDL3RuZ8CAfh3bn0=
 =aIns
 -----END PGP SIGNATURE-----"
-                    .as_bstr(),
-            ),
-            signature: borrowed::Signature {
-                name: b"Sebastian Thiel".as_bstr(),
-                email: b"byronimo@gmail.com".as_bstr(),
-                time: Time {
-                    time: 1528473343,
-                    offset,
-                    sign: Sign::Plus,
+                        .as_bstr(),
+                ),
+                signature: borrowed::Signature {
+                    name: b"Sebastian Thiel".as_bstr(),
+                    email: b"byronimo@gmail.com".as_bstr(),
+                    time: Time {
+                        time: 1528473343,
+                        offset,
+                        sign: Sign::Plus,
+                    },
                 },
-            },
+            }
         }
     }
 }

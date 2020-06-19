@@ -1,5 +1,5 @@
 mod index {
-    use crate::{bin, fixture};
+    use crate::{fixture, hex_to_id};
     use git_odb::pack::{self, index};
     use pretty_assertions::assert_eq;
 
@@ -56,8 +56,8 @@ mod index {
             assert_eq!(idx.kind(), *kind);
             assert_eq!(idx.version(), *version);
             assert_eq!(idx.num_objects(), *num_objects);
-            assert_eq!(idx.checksum_of_index(), bin(index_checksum));
-            assert_eq!(idx.checksum_of_pack(), bin(pack_checksum));
+            assert_eq!(idx.checksum_of_index(), hex_to_id(index_checksum));
+            assert_eq!(idx.checksum_of_pack(), hex_to_id(pack_checksum));
             assert_eq!(idx.iter().count(), *num_objects as usize);
         }
     }
