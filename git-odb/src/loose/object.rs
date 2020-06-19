@@ -62,6 +62,9 @@ impl Object {
                     object::Kind::Tree => {
                         borrowed::Object::Tree(borrowed::Tree::from_bytes(bytes)?)
                     }
+                    object::Kind::Commit => {
+                        borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?)
+                    }
                     _ => unimplemented!(),
                 }
             }
