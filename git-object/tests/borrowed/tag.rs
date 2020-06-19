@@ -1,13 +1,12 @@
-use crate::{
+use bstr::ByteSlice;
+use git_object::{
     borrowed::{Signature, Tag},
     Kind, Sign, Time,
 };
-use bstr::ByteSlice;
 
 mod method {
-    use crate::borrowed::Tag;
-    use crate::tests::borrowed::fixture_bytes;
-    use crate::tests::hex_to_id;
+    use crate::{borrowed::fixture_bytes, hex_to_id};
+    use git_object::borrowed::Tag;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -23,18 +22,16 @@ mod method {
 }
 
 mod parse {
-    use crate::{
-        borrowed::{tag::parse, Tag},
-        tests::borrowed::signature,
-        tests::{borrowed::fixture_bytes, borrowed::tag::tag_fixture},
-        Kind,
-    };
+    use crate::borrowed::tag::tag_fixture;
+    use crate::{borrowed::fixture_bytes, borrowed::signature};
     use bstr::ByteSlice;
+    use git_object::borrowed::Tag;
+    use git_object::Kind;
 
     #[test]
     fn signed() {
         assert_eq!(
-            parse(&fixture_bytes("tag", "signed.txt")).unwrap().1,
+            Tag::from_bytes(&fixture_bytes("tag", "signed.txt")).unwrap(),
             tag_fixture(9000)
         );
     }
@@ -42,7 +39,7 @@ mod parse {
     #[test]
     fn empty() {
         assert_eq!(
-            parse(&fixture_bytes("tag", "empty.txt")).unwrap().1,
+            Tag::from_bytes(&fixture_bytes("tag", "empty.txt")).unwrap(),
             Tag {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"empty".as_bstr(),
@@ -57,7 +54,7 @@ mod parse {
     #[test]
     fn with_newlines() {
         assert_eq!(
-            parse(&fixture_bytes("tag", "with-newlines.txt")).unwrap().1,
+            Tag::from_bytes(&fixture_bytes("tag", "with-newlines.txt")).unwrap(),
             Tag {
                 target: b"ebdf205038b66108c0331aa590388431427493b7".as_bstr(),
                 name: b"baz".as_bstr(),
@@ -72,7 +69,7 @@ mod parse {
     #[test]
     fn whitespace() {
         assert_eq!(
-            parse(&fixture_bytes("tag", "whitespace.txt")).unwrap().1,
+            Tag::from_bytes(&fixture_bytes("tag", "whitespace.txt")).unwrap(),
             Tag {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"whitespace".as_bstr(),

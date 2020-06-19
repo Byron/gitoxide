@@ -28,7 +28,7 @@ pub struct Tag<'data> {
     pub pgp_signature: Option<&'data BStr>,
 }
 
-pub(crate) fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
+fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     let (i, target) = parse_header_field(i, b"object", parse_hex_sha1)
         .map_err(Error::context("object <40 lowercase hex char>"))?;
 

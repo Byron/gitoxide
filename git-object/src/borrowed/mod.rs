@@ -3,15 +3,15 @@ use bstr::BStr;
 use quick_error::quick_error;
 use std::str;
 
-pub(crate) mod commit;
-pub(crate) mod tag;
-pub(crate) mod tree;
-pub(crate) mod util;
+mod commit;
+mod tag;
+mod tree;
+mod util;
 
 pub use commit::Commit;
 use nom::error::ParseError;
 pub use tag::Tag;
-pub use tree::Tree;
+pub use tree::{Entry, Mode, Tree};
 
 quick_error! {
     #[derive(Debug)]

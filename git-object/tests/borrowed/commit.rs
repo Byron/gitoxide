@@ -1,7 +1,6 @@
 mod method {
-    use crate::borrowed::commit::Commit;
-    use crate::tests::borrowed::fixture_bytes;
-    use crate::tests::hex_to_id;
+    use crate::{borrowed::fixture_bytes, hex_to_id};
+    use git_object::borrowed::Commit;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -17,17 +16,15 @@ mod method {
 }
 
 mod parse {
-    use crate::{
-        borrowed::{commit::parse, commit::Commit},
-        tests::{borrowed::fixture_bytes, borrowed::signature},
-    };
+    use crate::{borrowed::fixture_bytes, borrowed::signature};
     use bstr::ByteSlice;
+    use git_object::borrowed::Commit;
     use smallvec::SmallVec;
 
     #[test]
     fn unsigned() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "unsigned.txt")).unwrap().1,
+            Commit::from_bytes(&fixture_bytes("commit", "unsigned.txt")).unwrap(),
             Commit {
                 tree: b"1b2dfb4ac5e42080b682fc676e9738c94ce6d54d".as_bstr(),
                 parents: SmallVec::default(),
@@ -43,7 +40,7 @@ mod parse {
     #[test]
     fn whitespace() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "whitespace.txt")).unwrap().1,
+            Commit::from_bytes(&fixture_bytes("commit", "whitespace.txt")).unwrap(),
             Commit {
                 tree: b"9bed6275068a0575243ba8409253e61af81ab2ff".as_bstr(),
                 parents: SmallVec::from(
@@ -61,9 +58,7 @@ mod parse {
     #[test]
     fn signed_singleline() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "signed-singleline.txt"))
-                .unwrap()
-                .1,
+            Commit::from_bytes(&fixture_bytes("commit", "signed-singleline.txt")).unwrap(),
             Commit {
                 tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
                 parents: SmallVec::from(
@@ -81,7 +76,7 @@ mod parse {
     #[test]
     fn signed() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "signed.txt")).unwrap().1,
+            Commit::from_bytes(&fixture_bytes("commit", "signed.txt")).unwrap(),
             Commit {
                 tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
                 parents: SmallVec::from(vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]),
@@ -97,7 +92,7 @@ mod parse {
     #[test]
     fn signed_with_encoding() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "signed-with-encoding.txt")).unwrap().1,
+            Commit::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt")).unwrap(),
             Commit {
                 tree: b"1973afa74d87b2bb73fa884aaaa8752aec43ea88".as_bstr(),
                 parents: SmallVec::from(vec![b"79c51cc86923e2b8ca0ee5c4eb75e48027133f9a".as_bstr()]),
@@ -113,9 +108,7 @@ mod parse {
     #[test]
     fn with_encoding() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "with-encoding.txt"))
-                .unwrap()
-                .1,
+            Commit::from_bytes(&fixture_bytes("commit", "with-encoding.txt")).unwrap(),
             Commit {
                 tree: b"4a1c03029e7407c0afe9fc0320b3258e188b115e".as_bstr(),
                 parents: SmallVec::from(
@@ -133,7 +126,7 @@ mod parse {
     #[test]
     fn merge() {
         assert_eq!(
-            parse(&fixture_bytes("commit", "merge.txt")).unwrap().1,
+            Commit::from_bytes(&fixture_bytes("commit", "merge.txt")).unwrap(),
             Commit {
                 tree: b"0cf16ce8e229b59a761198975f0c0263229faf82".as_bstr(),
                 parents: SmallVec::from(vec![

@@ -1,4 +1,5 @@
-use crate::borrowed::Signature;
+use git_object::borrowed::Signature;
+use git_object::{Sign, Time};
 use std::path::PathBuf;
 
 mod commit;
@@ -10,7 +11,6 @@ fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
 }
 
 fn signature(time: u32) -> Signature<'static> {
-    use crate::{Sign, Time};
     use bstr::ByteSlice;
     Signature {
         name: b"Sebastian Thiel".as_bstr(),

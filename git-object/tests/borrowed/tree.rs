@@ -1,11 +1,7 @@
 mod parse {
-    use crate::{
-        borrowed::tree::Tree,
-        borrowed::tree::{Entry, Mode},
-        tests::borrowed::fixture_bytes,
-        tests::hex_to_id,
-    };
+    use crate::{borrowed::fixture_bytes, hex_to_id};
     use bstr::ByteSlice;
+    use git_object::borrowed::{Entry, Mode, Tree};
 
     #[test]
     fn everything() {

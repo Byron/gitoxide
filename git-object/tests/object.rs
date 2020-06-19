@@ -8,7 +8,7 @@ pub fn hex_to_id(hex: &str) -> [u8; 20] {
 }
 
 pub fn fixture(path: &str) -> PathBuf {
-    PathBuf::from("src/tests/fixtures").join(path)
+    PathBuf::from("tests/fixtures").join(path)
 }
 
 fn fixture_bytes(path: &str) -> Vec<u8> {
