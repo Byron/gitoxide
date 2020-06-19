@@ -21,3 +21,16 @@ fn signature(time: u32) -> Signature<'static> {
         },
     }
 }
+
+mod object {
+    use git_object::borrowed::Object;
+
+    #[test]
+    fn size_in_memory() {
+        assert_eq!(
+            std::mem::size_of::<Object>(),
+            200,
+            "Prevent unexpected growth of what should be lightweight objects"
+        )
+    }
+}

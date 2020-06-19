@@ -1,6 +1,18 @@
 use bstr::ByteSlice;
 use git_object::{borrowed, Sign, Time};
 
+mod object {
+    use git_odb::loose::Object;
+
+    #[test]
+    fn size_in_memory() {
+        assert_eq!(
+            std::mem::size_of::<Object>(),
+            848,
+            "Loose objects should not grow larger unexpectedly"
+        )
+    }
+}
 mod db {
     use crate::{fixture, hex_to_id};
     use git_odb::loose::Db;
