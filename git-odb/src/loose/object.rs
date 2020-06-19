@@ -38,7 +38,7 @@ impl Object {
     // Returns `Some(borrowed::Object)` unless the object is actually a Blob, which is when None is returned.
     pub fn parsed(&mut self) -> Result<Option<borrowed::Object>, Error> {
         Ok(match self.kind {
-            object::Kind::Tag | object::Ki nd::Commit | object::Kind::Tree => {
+            object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                 if !self.decompression_complete {
                     let total_size = self.header_size + self.size;
                     if self.decompressed_data.capacity() < total_size {

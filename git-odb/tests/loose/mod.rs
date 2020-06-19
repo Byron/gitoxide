@@ -35,12 +35,11 @@ mod db {
             borrowed::{TreeEntry, TreeMode},
             Kind,
         };
+        use git_odb::loose;
 
         #[test]
         fn tag() {
-            let mut o = ldb()
-                .locate(&hex_to_id("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"))
-                .unwrap();
+            let mut o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9");
             assert_eq!(o.kind, Kind::Tag);
             assert_eq!(o.size, 1024);
             let tag = o.parsed().unwrap().unwrap();
@@ -76,9 +75,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
         #[test]
         fn commit() {
-            let mut o = ldb()
-                .locate(&hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"))
-                .unwrap();
+            let mut o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec");
             assert_eq!(o.kind, Kind::Commit);
             assert_eq!(o.size, 1084);
             let commit = o.parsed().unwrap().unwrap();
@@ -95,10 +92,22 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         }
 
         #[test]
+        fn blob() {
+            let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+            assert_eq!(
+                o.parsed().unwrap(),
+                None,
+                "blobs cannot be parsed, but it's not an error either"
+            );
+        }
+
+        fn locate(hex: &str) -> loose::Object {
+            ldb().locate(&hex_to_id(hex)).unwrap()
+        }
+
+        #[test]
         fn tree() {
-            let mut o = ldb()
-                .locate(&hex_to_id("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"))
-                .unwrap();
+            let mut o = locate("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f");
             assert_eq!(o.kind, Kind::Tree);
             assert_eq!(o.size, 66);
 
