@@ -164,3 +164,10 @@ echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 
 
 Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, removing the newline byte.
 
+## Credits
+
+* **itertools** _(MIT Licensed)_
+  * We use the `izip!` macro in code
+* **deflate2** _(MIT Licensed)_
+  * We use various abstractions to implement decompression and compression directly on top of the rather low-level `miniz_oxide` crate
+

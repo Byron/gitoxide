@@ -29,6 +29,7 @@ quick_error! {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Object {
     pub kind: object::Kind,
     pub size: usize,

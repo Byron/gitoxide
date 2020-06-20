@@ -105,6 +105,12 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(object.as_commit().unwrap(), &expected)
         }
 
+        // #[test]
+        // fn blob_stream() {
+        //     let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+        //     assert!(o.stream()?.read_to_end()?.as_bstr(), b"hello".as_bstr());
+        // }
+
         #[test]
         fn blob() {
             let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
