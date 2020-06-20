@@ -15,7 +15,7 @@ mod method {
     }
 }
 
-mod parse {
+mod from_bytes {
     use crate::{borrowed::fixture_bytes, borrowed::signature};
     use bstr::ByteSlice;
     use git_object::borrowed::Commit;

@@ -1,4 +1,4 @@
-mod parse {
+mod from_bytes {
     use crate::{borrowed::fixture_bytes, hex_to_id};
     use bstr::ByteSlice;
     use git_object::borrowed::{Tree, TreeEntry as Entry, TreeMode as Mode};

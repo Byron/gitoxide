@@ -62,8 +62,8 @@ pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
         terminated(take_until(&b"> "[..]), take(2usize)),
         terminated(take_until(SPACE), take(1usize)),
         alt((tag(b"-"), tag(b"+"))),
-        take_while_m_n(2usize, 2, |b| is_digit(b)),
-        take_while_m_n(2usize, 2, |b| is_digit(b)),
+        take_while_m_n(2usize, 2, is_digit),
+        take_while_m_n(2usize, 2, is_digit),
     ))(i)
     .map_err(Error::context(
         "tagger <name> <<email>> <time seconds since epoch> <+|-><HHMM>",

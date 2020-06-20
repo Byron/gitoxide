@@ -7,7 +7,7 @@ use crate::{
 };
 use hex::FromHex;
 use smallvec::SmallVec;
-use std::{fs, io::Cursor, io::Read, os::unix::fs::MetadataExt, path::PathBuf};
+use std::{fs, io::Cursor, io::Read, path::PathBuf};
 use walkdir::WalkDir;
 
 pub struct Db {
@@ -157,8 +157,8 @@ impl Db {
                     let file_size = input_stream
                         .metadata()
                         .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
-                        .size();
-                    assert!(file_size <= ::std::u64::MAX);
+                        .len();
+                    assert!(file_size <= ::std::usize::MAX as u64);
                     let file_size = file_size as usize;
                     if bytes_read == file_size {
                         (compressed, None)

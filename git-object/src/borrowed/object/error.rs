@@ -26,10 +26,9 @@ quick_error! {
 
 impl Error {
     fn set_parse_context(mut self, ctx: &'static str) -> Self {
-        match self {
-            Error::NomDetail(_, ref mut message) => *message = ctx,
-            _ => {}
-        };
+        if let Error::NomDetail(_, ref mut message) = self {
+            *message = ctx
+        }
         self
     }
 
