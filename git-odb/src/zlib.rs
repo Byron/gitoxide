@@ -43,6 +43,7 @@ impl Default for Inflate {
 }
 
 impl Inflate {
+    /// Run the decompressor exactly once. Cannot be run mutliple times
     pub fn once(
         &mut self,
         input: &[u8],

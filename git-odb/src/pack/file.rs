@@ -31,7 +31,7 @@ pub enum Kind {
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Entry {
-    pub object: parsed::Object,
+    pub object: decoded::Object,
     /// The decompressed size of the object in bytes
     pub size: u64,
     /// absolute offset to compressed object data in the pack
@@ -69,7 +69,7 @@ impl File {
         assert!(offset as usize <= self.data.len(), "offset out of bounds");
 
         let obj_begin = &self.data[offset as usize..];
-        let (object, decompressed_size, consumed_bytes) = parsed::Object::from_bytes(obj_begin);
+        let (object, decompressed_size, consumed_bytes) = decoded::Object::from_bytes(obj_begin);
         Entry {
             object,
             size: decompressed_size,
@@ -108,7 +108,7 @@ impl File {
     }
 }
 
-pub mod parsed {
+pub mod decoded {
     use git_object as object;
     use object::SHA1_SIZE;
     use std::mem;
