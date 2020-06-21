@@ -95,6 +95,7 @@ pub mod stream {
         }
     }
 
+    #[derive(Default)]
     struct Inflate {
         state: InflateState,
         total_in: u64,
@@ -108,11 +109,23 @@ pub mod stream {
         decompressor: Inflate,
     }
 
-    impl<R> std::io::Read for InflateReader<R>
+    impl<R> InflateReader<R>
+    where
+        R: io::Read,
+    {
+        pub fn new(read: R) -> InflateReader<io::BufReader<R>> {
+            InflateReader {
+                decompressor: Inflate::default(),
+                inner: io::BufReader::new(read),
+            }
+        }
+    }
+
+    impl<R> io::Read for InflateReader<R>
     where
         R: BufRead,
     {
-        fn read(&mut self, into: &mut [u8]) -> std::io::Result<usize> {
+        fn read(&mut self, into: &mut [u8]) -> io::Result<usize> {
             read(&mut self.inner, &mut self.decompressor, into)
         }
     }

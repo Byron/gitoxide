@@ -50,6 +50,7 @@ mod db {
             Kind,
         };
         use git_odb::loose;
+        use std::io::Read;
 
         #[test]
         fn tag() {
@@ -105,11 +106,20 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             assert_eq!(object.as_commit().unwrap(), &expected)
         }
 
-        // #[test]
-        // fn blob_stream() {
-        //     let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-        //     assert!(o.stream()?.read_to_end()?.as_bstr(), b"hello".as_bstr());
-        // }
+        #[test]
+        fn blob_stream() {
+            let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+            assert_eq!(
+                o.stream()
+                    .unwrap()
+                    .bytes()
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap()
+                    .as_slice()
+                    .as_bstr(),
+                b"hello".as_bstr()
+            );
+        }
 
         #[test]
         fn blob() {
@@ -120,6 +130,15 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                     data: &[104, 105, 32, 116, 104, 101, 114, 101, 10]
                 },
                 "small blobs are treated similarly to other object types and are read into memory at once when the header is read"
+            );
+        }
+
+        #[test]
+        fn blob_big_stream() {
+            let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
+            assert_eq!(
+                o.stream().unwrap().bytes().filter(Result::is_ok).count(),
+                56915
             );
         }
 
