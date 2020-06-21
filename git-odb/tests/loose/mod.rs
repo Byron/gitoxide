@@ -136,18 +136,20 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         #[test]
         fn blob_big_stream() {
             let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
+            let size = o.size;
             assert_eq!(
-                o.stream().unwrap().bytes().filter(Result::is_ok).count(),
-                56915
+                o.stream().unwrap().bytes().filter_map(Result::ok).count(),
+                size
             );
         }
 
         #[test]
         fn blob_big() {
             let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
+            let size = o.size;
             assert_eq!(
                 o.decode().unwrap().as_blob().unwrap().data.len(),
-                56915,
+                size,
                 "bigger blobs are not read completely when the header is parsed and thus need an extra step"
             );
         }

@@ -78,7 +78,9 @@ impl Inflate {
 }
 
 pub mod stream {
-    use miniz_oxide::{inflate, inflate::stream::InflateState, MZError, MZFlush, MZStatus};
+    use miniz_oxide::{
+        inflate, inflate::stream::InflateState, DataFormat, MZError, MZFlush, MZStatus,
+    };
     use quick_error::quick_error;
     use std::io;
     use std::io::BufRead;
@@ -95,11 +97,20 @@ pub mod stream {
         }
     }
 
-    #[derive(Default)]
     struct Inflate {
         state: InflateState,
         total_in: u64,
         total_out: u64,
+    }
+
+    impl Default for Inflate {
+        fn default() -> Self {
+            Inflate {
+                state: InflateState::new(DataFormat::Zlib),
+                total_in: 0,
+                total_out: 0,
+            }
+        }
     }
 
     /// Provide streaming decompression using the `std::io::Read` trait.
@@ -223,6 +234,39 @@ pub mod stream {
                     ))
                 }
             }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use bstr::ByteSlice;
+        use std::io::Read;
+        use std::path::PathBuf;
+
+        fn fixture_path(path: &str) -> PathBuf {
+            PathBuf::from("tests/fixtures").join(path)
+        }
+
+        #[test]
+        fn small_file_decompress() {
+            let r = InflateReader::new(
+                std::fs::File::open(fixture_path(
+                    "objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980",
+                ))
+                .unwrap(),
+            );
+            let mut bytes = r.bytes();
+            let content = bytes
+                .by_ref()
+                .take(16)
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap();
+            assert_eq!(
+                content.as_slice().as_bstr(),
+                b"blob 9\0hi there\n".as_bstr()
+            );
+            assert!(bytes.next().is_none());
         }
     }
 }
