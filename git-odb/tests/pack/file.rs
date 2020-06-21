@@ -15,18 +15,27 @@ mod decode_entry {
     fn commit() {
         let buf = decode_entry(1968);
         assert_eq!(buf.as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
+        assert_eq!(buf.len(), 187)
     }
 
     #[test]
     fn blob() {
         let buf = decode_entry(2142);
         assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n".as_bstr());
+        assert_eq!(buf.len(), 93)
     }
 
     #[test]
     fn tree() {
         let buf = decode_entry(2097);
         assert_eq!(buf[..13].as_bstr(), b"100644 README".as_bstr());
+        assert_eq!(buf.len(), 34)
+    }
+
+    #[test]
+    fn blob_ofs_delta_two_links() {
+        let buf = decode_entry(3033);
+        assert_eq!(buf.as_bstr(), b"100644 README".as_bstr());
     }
 
     fn decode_entry(offset: u64) -> Vec<u8> {

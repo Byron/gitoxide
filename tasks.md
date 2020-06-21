@@ -6,7 +6,7 @@
 * [x] stream blob
 * [ ] refactor ID into NewType
 * **pack**
-   * [ ] decode full pack entries
+   * [x] decode full pack entries
    * [ ] iterate pack entries
    * [ ] decode full objects
    * [ ] decode delta objects
