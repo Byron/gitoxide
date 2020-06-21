@@ -6,18 +6,27 @@ fn new_pack(at: &str) -> pack::File {
     pack::File::try_from(fixture_path(at).as_path()).unwrap()
 }
 
+/// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
-    use crate::pack::file::new_pack;
-    use crate::pack::SMALL_PACK;
+    use crate::{pack::file::new_pack, pack::SMALL_PACK};
     use bstr::ByteSlice;
 
     #[test]
-    fn decode_commit() {
+    fn commit() {
+        let buf = decode_entry(1968);
+        assert_eq!(buf.as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
+    }
+
+    fn decode_entry(offset: u64) -> Vec<u8> {
         let p = new_pack(SMALL_PACK);
-        let entry = p.entry(1968);
+        let entry = p.entry(offset);
+
         let mut buf = Vec::with_capacity(entry.size as usize + 20); // simulate slightly bigger buffers, for fun
         buf.resize(entry.size as usize + 20, 0);
-        p.decode_entry(&entry, &mut buf);
-        assert_eq!(buf[..entry.size as usize].as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
+
+        p.decode_entry(&entry, &mut buf).unwrap();
+
+        buf.resize(entry.size as usize, 0);
+        buf
     }
 }

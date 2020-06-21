@@ -19,6 +19,10 @@ quick_error! {
         UnsupportedVersion(version: u32) {
             display("Unsupported pack version: {}", version)
         }
+        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
+            display("{}", msg)
+            cause(err)
+        }
     }
 }
 
@@ -66,10 +70,10 @@ impl File {
 
     pub fn entry(&self, offset: u64) -> Entry {
         self.assure_v2();
-        assert!(offset <= usize::max_value() as u64);
-        assert!(offset as usize <= self.data.len(), "offset out of bounds");
+        let ofs: usize = offset.try_into().expect("offset representable by machine");
+        assert!(ofs <= self.data.len(), "offset out of bounds");
 
-        let obj_begin = &self.data[offset as usize..];
+        let obj_begin = &self.data[ofs..];
         let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(obj_begin);
         Entry {
             header: object,
@@ -82,7 +86,7 @@ impl File {
         File::try_from(path.as_ref())
     }
 
-    pub fn decode_entry(&self, entry: &Entry, out: &mut [u8]) {
+    pub fn decode_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<(), Error> {
         use crate::pack::decoded::Header::*;
         assert!(
             out.len() as u64 >= entry.size,
@@ -90,13 +94,17 @@ impl File {
             entry.size,
             out.len()
         );
-        let offset: usize = entry.offset.try_into().unwrap();
+        let offset: usize = entry
+            .offset
+            .try_into()
+            .expect("offset representable by machine");
+        assert!(offset <= self.data.len(), "entry offset out of bounds");
 
         match entry.header {
             Commit | Tree | Blob | Tag => Inflate::default()
                 .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
-                .map(|_| ())
-                .unwrap(),
+                .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
+                .map(|_| ()),
             RefDelta { .. } => unimplemented!("ref delta"),
             OfsDelta { .. } => unimplemented!("ref ofs"),
         }
