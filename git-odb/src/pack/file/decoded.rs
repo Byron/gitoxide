@@ -29,14 +29,10 @@ pub enum Header {
 }
 
 #[inline]
-fn leb64decode(
-    d: &[u8],
-    initial_result: Option<u64>,
-    initial_shift: Option<usize>,
-) -> (u64, usize) {
+fn leb64decode(d: &[u8]) -> (u64, usize) {
     let mut count = 0;
-    let mut result = initial_result.unwrap_or(0);
-    let mut shift = initial_shift.unwrap_or(0);
+    let mut result = 0;
+    let mut shift = 0;
 
     for b in d {
         count += 1;
@@ -55,17 +51,29 @@ fn leb64decode(
     (result, count)
 }
 
+fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
+    let mut c = data[0];
+    let mut i = 1;
+    let type_id = (c >> 4) & 0b0000_0111;
+    let mut size = c as u64 & 0b0000_1111;
+    let mut s = 4;
+    while c & 0b1000_0000 == 0b1000_0000 {
+        c = data[i];
+        i += 1;
+        size += ((c & 0b0111_1111) as u64) << s;
+        s += 7
+    }
+    return (type_id, size, i);
+}
+
 impl Header {
     pub fn from_bytes(d: &[u8]) -> (Header, u64, u64) {
-        let c = d[0];
-        let type_id = (c >> 4) & 0b0000_0111;
-        let (size, leb_bytes) = leb64decode(&d[1..], Some((c & 0b0000_1111) as u64), Some(4));
-        let mut consumed = 1 + leb_bytes;
+        let (type_id, size, mut consumed) = parse_header_info(d);
 
         use self::Header::*;
         let object = match type_id {
             OFS_DELTA => {
-                let (offset, leb_bytes) = leb64decode(&d[consumed..], None, None);
+                let (offset, leb_bytes) = leb64decode(&d[consumed..]);
                 let delta = OfsDelta { offset };
                 consumed += leb_bytes;
                 delta
