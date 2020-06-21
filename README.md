@@ -166,6 +166,15 @@ echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 
 
 Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, removing the newline byte.
 
+
+## Shortcomings
+
+* **Packfiles use memory maps**
+  * Even though they are comfortable to use and fast, they squelch IO errors.
+  * _potential remedy_: We could generalize the Pack to make it possible to work on in-memory buffers directly. That way, one
+    would initialize a Pack by reading the whole file into memory, thus not squelching IO errors at the expense of latency as well
+    as memory efficiency.
+
 ## Credits
 
 * **itertools** _(MIT Licensed)_

@@ -1,7 +1,9 @@
+use crate::zlib::Inflate;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
+use std::convert::TryInto;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
 quick_error! {
@@ -22,13 +24,13 @@ quick_error! {
 
 const N32_SIZE: usize = size_of::<u32>();
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Kind {
     V2,
     V3,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Entry {
     pub header: decoded::Header,
     /// The decompressed size of the object in bytes
@@ -79,6 +81,26 @@ impl File {
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
         File::try_from(path.as_ref())
     }
+
+    pub fn decode_entry(&self, entry: &Entry, out: &mut [u8]) {
+        use crate::pack::decoded::Header::*;
+        assert!(
+            out.len() as u64 >= entry.size,
+            "output buffer isn't large enough to hold decompressed result, want {}, have {}",
+            entry.size,
+            out.len()
+        );
+        let offset: usize = entry.offset.try_into().unwrap();
+
+        match entry.header {
+            Commit | Tree | Blob | Tag => Inflate::default()
+                .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
+                .map(|_| ())
+                .unwrap(),
+            RefDelta { .. } => unimplemented!("ref delta"),
+            OfsDelta { .. } => unimplemented!("ref ofs"),
+        }
+    }
 }
 
 impl TryFrom<&Path> for File {
@@ -128,7 +150,7 @@ pub mod decoded {
     const OFS_DELTA: u8 = 6;
     const REF_DELTA: u8 = 7;
 
-    #[derive(PartialEq, Eq, Debug, Hash, Clone)]
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     pub enum Header {
         Commit,
         Tree,

@@ -115,7 +115,7 @@ impl Default for Kind {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Entry {
     pub oid: object::Id,
     pub offset: u64,
