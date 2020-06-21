@@ -70,11 +70,12 @@ impl File {
 
     pub fn entry(&self, offset: u64) -> Entry {
         self.assure_v2();
-        let ofs: usize = offset.try_into().expect("offset representable by machine");
-        assert!(ofs <= self.data.len(), "offset out of bounds");
+        let pack_offset: usize = offset.try_into().expect("offset representable by machine");
+        assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
-        let obj_begin = &self.data[ofs..];
-        let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(obj_begin);
+        let object_data = &self.data[pack_offset..];
+        let (object, decompressed_size, consumed_bytes) =
+            decoded::Header::from_bytes(object_data, offset);
         Entry {
             header: object,
             size: decompressed_size,
@@ -105,12 +106,9 @@ impl File {
                 .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
                 .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
                 .map(|_| ()),
-            OfsDelta { offset } => unimplemented!(
-                "{:#b} {:#?}, {:#?}",
-                127,
-                entry,
-                self.entry(entry.offset - offset)
-            ),
+            OfsDelta { pack_offset } => {
+                unimplemented!("{:#b} {:#?}, {:#?}", 127, entry, self.entry(pack_offset))
+            }
             RefDelta { .. } => unimplemented!("ref delta"),
         }
     }

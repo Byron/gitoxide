@@ -1,6 +1,5 @@
 use git_object as object;
 use object::SHA1_SIZE;
-use std::mem;
 
 const _TYPE_EXT1: u8 = 0;
 const COMMIT: u8 = 1;
@@ -22,33 +21,25 @@ pub enum Header {
     RefDelta {
         oid: object::Id,
     },
-    /// The offset from the place this header is located at, pointing to the objects base
+    /// The offset into the pack at which to find the base object
     OfsDelta {
-        offset: u64,
+        pack_offset: u64,
     },
 }
 
 #[inline]
 fn leb64decode(d: &[u8]) -> (u64, usize) {
-    let mut count = 0;
-    let mut result = 0;
-    let mut shift = 0;
-
-    for b in d {
-        count += 1;
-        result |= ((b & 0b0111_1111) as u64) << shift;
-        shift += 7;
-        if b & 0b1000_0000 == 0 {
-            debug_assert!(
-                shift + 1 - b.leading_zeros() as usize <= mem::size_of::<u64>() * 8,
-                "overflow, expected {} byte(s), got {} bits",
-                mem::size_of::<u64>(),
-                shift + 1 - b.leading_zeros() as usize
-            );
-            break;
-        }
+    let mut i = 0;
+    let mut c = d[i];
+    i += 1;
+    let mut value = c as u64 & 0x7f;
+    while c & 0x80 != 0 {
+        c = d[i];
+        i += 1;
+        value += 1;
+        value = (value << 7) + (c as u64 & 0x7f)
     }
-    (result, count)
+    (value, i)
 }
 
 fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
@@ -57,7 +48,7 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     let type_id = (c >> 4) & 0b0000_0111;
     let mut size = c as u64 & 0b0000_1111;
     let mut s = 4;
-    while c & 0b1000_0000 == 0b1000_0000 {
+    while c & 0b1000_0000 != 0 {
         c = data[i];
         i += 1;
         size += ((c & 0b0111_1111) as u64) << s;
@@ -67,14 +58,16 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
 }
 
 impl Header {
-    pub fn from_bytes(d: &[u8]) -> (Header, u64, u64) {
+    pub fn from_bytes(d: &[u8], pack_offset: u64) -> (Header, u64, u64) {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
         use self::Header::*;
         let object = match type_id {
             OFS_DELTA => {
                 let (offset, leb_bytes) = leb64decode(&d[consumed..]);
-                let delta = OfsDelta { offset };
+                let delta = OfsDelta {
+                    pack_offset: pack_offset - offset,
+                };
                 consumed += leb_bytes;
                 delta
             }
