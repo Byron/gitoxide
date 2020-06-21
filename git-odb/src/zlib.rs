@@ -95,13 +95,26 @@ pub mod stream {
         }
     }
 
-    /// Provide streaming decompression using the `std::io::Read` trait.
-    /// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
-    pub struct Inflate<R> {
+    struct Inflate {
         state: InflateState,
-        inner: R,
         total_in: u64,
         total_out: u64,
+    }
+
+    /// Provide streaming decompression using the `std::io::Read` trait.
+    /// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
+    pub struct InflateReader<R> {
+        inner: R,
+        decompressor: Inflate,
+    }
+
+    impl<R> std::io::Read for InflateReader<R>
+    where
+        R: BufRead,
+    {
+        fn read(&mut self, into: &mut [u8]) -> std::io::Result<usize> {
+            read(&mut self.inner, &mut self.decompressor, into)
+        }
     }
 
     /// From Flate2
@@ -134,7 +147,7 @@ pub mod stream {
         StreamEnd,
     }
 
-    impl<R> Inflate<R> {
+    impl Inflate {
         fn decompress(
             &mut self,
             input: &[u8],
@@ -161,17 +174,8 @@ pub mod stream {
         }
     }
 
-    impl<R> std::io::Read for Inflate<R>
-    where
-        R: BufRead,
-    {
-        fn read(&mut self, into: &mut [u8]) -> std::io::Result<usize> {
-            read(&mut self.inner, self, into)
-        }
-    }
-
     /// Adapted from [flate2](https://github.com/alexcrichton/flate2-rs/blob/57972d77dab09acad4aa2fa3beedb1f69fa64b27/src/zio.rs#L118)
-    fn read<R>(obj: &mut R, data: &mut Inflate<R>, dst: &mut [u8]) -> io::Result<usize>
+    fn read<R>(obj: &mut R, data: &mut Inflate, dst: &mut [u8]) -> io::Result<usize>
     where
         R: BufRead,
     {
