@@ -117,7 +117,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                     .unwrap()
                     .as_slice()
                     .as_bstr(),
-                b"hello".as_bstr()
+                b"hi there\n".as_bstr()
             );
         }
 

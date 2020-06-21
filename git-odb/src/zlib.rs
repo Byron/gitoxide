@@ -125,6 +125,7 @@ pub mod stream {
         R: io::Read,
     {
         pub fn new(read: R) -> InflateReader<io::BufReader<R>> {
+            // TODO: Performance opportunity - a buf reader that doesn't allocate
             InflateReader {
                 decompressor: Inflate::default(),
                 inner: io::BufReader::new(read),

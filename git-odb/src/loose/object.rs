@@ -61,7 +61,10 @@ impl Object {
                 self.header_size,
                 std::fs::File::open(path).map_err(|e| Error::Io(e, "open", path.to_owned()))?,
             )),
-            None => unimplemented!("stream with buffer"),
+            None => Ok(ObjectReader::from_data(
+                self.header_size,
+                &self.decompressed_data.as_slice(),
+            )),
         }
     }
 
