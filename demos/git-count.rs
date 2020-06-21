@@ -20,7 +20,7 @@ fn run() -> Result<()> {
     };
     let index = odb::pack::index::File::at(index)?;
     let pack = odb::pack::File::at(pack)?;
-    use odb::pack::decoded::Object::*;
+    use odb::pack::decoded::Header::*;
 
     writeln!(
         stdout(),
@@ -52,7 +52,7 @@ fn run() -> Result<()> {
                 u32,
             ),
              entry| {
-                match pack.entry(entry.offset).object {
+                match pack.entry(entry.offset).header {
                     Commit => commits += 1,
                     Tag => tags += 1,
                     Tree => trees += 1,

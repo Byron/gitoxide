@@ -29,7 +29,7 @@ The CLI uses various libraries to implement
     * [ ] merging
     * [ ] configuration
 * **git-object**
-    * [-] decode
+    * *decode*
       * [x] commit
       * [x] tree
       * [x] tag

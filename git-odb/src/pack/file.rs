@@ -31,7 +31,7 @@ pub enum Kind {
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub struct Entry {
-    pub object: decoded::Object,
+    pub header: decoded::Header,
     /// The decompressed size of the object in bytes
     pub size: u64,
     /// absolute offset to compressed object data in the pack
@@ -69,9 +69,9 @@ impl File {
         assert!(offset as usize <= self.data.len(), "offset out of bounds");
 
         let obj_begin = &self.data[offset as usize..];
-        let (object, decompressed_size, consumed_bytes) = decoded::Object::from_bytes(obj_begin);
+        let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(obj_begin);
         Entry {
-            object,
+            header: object,
             size: decompressed_size,
             offset: offset + consumed_bytes,
         }
@@ -123,7 +123,7 @@ pub mod decoded {
     const REF_DELTA: u8 = 7;
 
     #[derive(PartialEq, Eq, Debug, Hash, Clone)]
-    pub enum Object {
+    pub enum Header {
         Commit,
         Tree,
         Blob,
@@ -159,14 +159,14 @@ pub mod decoded {
         (result, count)
     }
 
-    impl Object {
-        pub fn from_bytes(d: &[u8]) -> (Object, u64, u64) {
+    impl Header {
+        pub fn from_bytes(d: &[u8]) -> (Header, u64, u64) {
             let c = d[0];
             let type_id = (c >> 4) & 0b0000_0111;
             let (size, leb_bytes) = leb64decode(&d[1..], Some((c & 15) as u64), Some(4));
             let mut consumed = 1 + leb_bytes;
 
-            use self::Object::*;
+            use self::Header::*;
             let object = match type_id {
                 OFS_DELTA => {
                     let (offset, leb_bytes) = leb64decode(&d[consumed..], None, None);
