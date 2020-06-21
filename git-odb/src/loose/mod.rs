@@ -26,22 +26,12 @@ pub mod io {
                         r.read(buf)
                     } else {
                         // We must assure we return at least one byte - otherwise it's considered EOF, thus '>='
-                        if *header_size_left >= buf.len() {
-                            {
-                                let mut tmp = [0u8; 32];
-                                assert!(
-                                    *header_size_left <= tmp.len(),
-                                    "encountered unusually large header"
-                                );
-                                r.read_exact(&mut tmp[..*header_size_left])?;
-                                *header_size_left = 0;
-                            }
-                            r.read(buf)
-                        } else {
-                            r.read_exact(&mut buf[..*header_size_left])?;
-                            *header_size_left = 0;
-                            r.read(buf)
+                        while *header_size_left != 0 {
+                            let bytes_to_read = buf.len().min(*header_size_left);
+                            r.read_exact(&mut buf[..bytes_to_read])?;
+                            *header_size_left -= bytes_to_read;
                         }
+                        r.read(buf)
                     }
                 }
             }
