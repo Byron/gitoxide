@@ -15,12 +15,12 @@ mod object {
 }
 
 mod db {
-    use crate::{fixture, hex_to_id};
+    use crate::{fixture_path, hex_to_id};
     use git_odb::loose::Db;
     use pretty_assertions::assert_eq;
 
     fn ldb() -> Db {
-        Db::at(fixture("objects"))
+        Db::at(fixture_path("objects"))
     }
 
     #[test]

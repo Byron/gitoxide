@@ -1,7 +1,8 @@
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
+use git_object::SHA1_SIZE;
 use quick_error::quick_error;
-use std::{mem::size_of, path::Path};
+use std::{convert::TryFrom, mem::size_of, path::Path};
 
 quick_error! {
     #[derive(Debug)]
@@ -18,8 +19,6 @@ quick_error! {
         }
     }
 }
-
-use git_object::SHA1_SIZE;
 
 const N32_SIZE: usize = size_of::<u32>();
 
@@ -77,9 +76,16 @@ impl File {
         }
     }
 
-    pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
-        let data =
-            FileBuffer::open(path.as_ref()).map_err(|e| Error::Io(e, path.as_ref().to_owned()))?;
+    pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
+        File::try_from(path.as_ref())
+    }
+}
+
+impl TryFrom<&Path> for File {
+    type Error = Error;
+
+    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+        let data = FileBuffer::open(path).map_err(|e| Error::Io(e, path.to_owned()))?;
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + SHA1_SIZE {
             return Err(Error::Corrupt(format!(

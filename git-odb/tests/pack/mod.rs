@@ -1,10 +1,18 @@
 const SMALL_PACK_INDEX: &str = "packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx";
 const SMALL_PACK: &str = "packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.pack";
 
-mod pack {}
+mod pack {
+    use crate::fixture_path;
+    use git_odb::pack;
+    use std::convert::TryFrom;
+
+    fn pack(at: &str) -> pack::File {
+        pack::File::try_from(fixture_path(at).as_path()).unwrap()
+    }
+}
 mod index {
     use crate::{
-        fixture, hex_to_id,
+        fixture_path, hex_to_id,
         pack::{SMALL_PACK, SMALL_PACK_INDEX},
     };
     use git_odb::pack::{self, index};
@@ -23,8 +31,8 @@ mod index {
             (INDEX_V1, PACK_FOR_INDEX_V1),
             (SMALL_PACK_INDEX, SMALL_PACK),
         ] {
-            let idx = index::File::at(&fixture(index_path)).unwrap();
-            let pack = pack::File::at(&fixture(pack_path)).unwrap();
+            let idx = index::File::at(&fixture_path(index_path)).unwrap();
+            let pack = pack::File::at(&fixture_path(pack_path)).unwrap();
 
             assert_eq!(pack.kind(), pack::Kind::V2);
             assert_eq!(pack.num_objects(), idx.num_objects());
@@ -63,7 +71,7 @@ mod index {
                 "0f3ea84cd1bba10c2a03d736a460635082833e59",
             ),
         ] {
-            let idx = index::File::at(&fixture(path)).unwrap();
+            let idx = index::File::at(&fixture_path(path)).unwrap();
             assert_eq!(idx.kind(), *kind);
             assert_eq!(idx.version(), *version);
             assert_eq!(idx.num_objects(), *num_objects);
