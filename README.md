@@ -41,8 +41,9 @@ The CLI uses various libraries to implement
   * **loose objects**
     * [x] traverse
     * [x] read
-    * [ ] streaming read
-    * [ ] write
+      * [x] into memory
+      * [x] streaming
+    * [x] streaming write
   * **packs**
     * [x] traverse pack index
     * [ ] traverse pack entries

@@ -3,7 +3,7 @@
 * [x] decode commit
 * [x] decode tree
 * [x] represent blob
-* [ ] stream blob
+* [x] stream blob
 * **pack**
    * [ ] iterate pack entries
    * [ ] decode full objects
