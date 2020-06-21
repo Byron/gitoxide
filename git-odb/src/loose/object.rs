@@ -1,5 +1,5 @@
-use crate::zlib::stream::InflateReader;
 use crate::{
+    loose::io::ObjectReader,
     loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };
@@ -8,7 +8,6 @@ use miniz_oxide::inflate::decompress_to_vec_zlib;
 use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
-use std::io::BufReader;
 use std::{io::Read, path::PathBuf};
 
 quick_error! {
@@ -56,9 +55,10 @@ impl Object {
         })
     }
 
-    pub fn stream(&self) -> Result<InflateReader<BufReader<std::fs::File>>, Error> {
+    pub fn stream(&self) -> Result<ObjectReader, Error> {
         match &self.path {
-            Some(path) => Ok(InflateReader::new(
+            Some(path) => Ok(ObjectReader::from_read(
+                self.header_size,
                 std::fs::File::open(path).map_err(|e| Error::Io(e, "open", path.to_owned()))?,
             )),
             None => unimplemented!("stream with buffer"),
