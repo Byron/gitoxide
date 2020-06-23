@@ -199,16 +199,11 @@ impl File {
         }
         let (source_buffer_range, target_buffer_range) = {
             let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
-            let biggest_result_size: u64 = chain
-                .iter()
-                .map(|d| d.result_size)
-                .max()
-                .expect("at least one delta");
             let base_buffer_range = match first_base_buffer_range {
                 None => {
                     let base_entry = cursor;
                     out.resize(
-                        (base_entry.size + biggest_result_size + delta_instructions_size)
+                        (base_entry.size * 2 + delta_instructions_size) // * 2 for worst-case guess
                             .try_into()
                             .expect("usize to be big enough for all deltas"),
                         0,
@@ -225,8 +220,7 @@ impl File {
                         "We really expect to not start somewhere in the middle of a buffer"
                     );
                     out.resize(
-                        ((range.end - range.start) as u64
-                            + biggest_result_size
+                        ((range.end - range.start) as u64 * 2 // * 2 for worst-case guess
                             + delta_instructions_size)
                             .try_into()
                             .expect("usize to be big enough for all deltas"),
@@ -235,9 +229,8 @@ impl File {
                     range
                 }
             };
-            assert!(base_buffer_range.end >= biggest_result_size as usize, "the first result object should always be bigger than the biggest secondary result object");
-            let target_buffer_range =
-                base_buffer_range.end..(base_buffer_range.end + biggest_result_size as usize);
+            let target_buffer_range = base_buffer_range.end
+                ..(base_buffer_range.end + (base_buffer_range.end - base_buffer_range.start));
             dbg!(&base_buffer_range, &target_buffer_range);
             (base_buffer_range, target_buffer_range)
         };
