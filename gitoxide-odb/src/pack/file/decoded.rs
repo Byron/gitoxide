@@ -21,10 +21,19 @@ pub enum Header {
     RefDelta {
         oid: object::Id,
     },
-    /// The offset into the pack at which to find the base object
+    /// The offset into the pack at which to find the base object header
     OfsDelta {
         pack_offset: u64,
     },
+}
+
+impl Header {
+    pub fn is_delta(&self) -> bool {
+        match self {
+            Header::OfsDelta { .. } | Header::RefDelta { .. } => true,
+            _ => false,
+        }
+    }
 }
 
 #[inline]

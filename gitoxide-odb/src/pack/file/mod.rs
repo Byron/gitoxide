@@ -6,6 +6,10 @@ use quick_error::quick_error;
 use std::convert::TryInto;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
+struct Delta {
+    instruction_buffer_offset: usize,
+}
+
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
@@ -40,7 +44,7 @@ pub struct Entry {
     /// The decompressed size of the object in bytes
     pub size: u64,
     /// absolute offset to compressed object data in the pack
-    pub offset: u64,
+    pub data_offset: u64,
 }
 
 pub struct File {
@@ -79,7 +83,7 @@ impl File {
         Entry {
             header: object,
             size: decompressed_size,
-            offset: offset + consumed_bytes,
+            data_offset: offset + consumed_bytes,
         }
     }
 
@@ -87,8 +91,9 @@ impl File {
         File::try_from(path.as_ref())
     }
 
-    pub fn decode_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<(), Error> {
-        use crate::pack::decoded::Header::*;
+    // Note that this method does not resolve deltified objects, but merely decompresses their content
+    // `out` is expected to be large enough to hold `entry.size` bytes.
+    pub fn decompress_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<(), Error> {
         assert!(
             out.len() as u64 >= entry.size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
@@ -96,20 +101,33 @@ impl File {
             out.len()
         );
         let offset: usize = entry
-            .offset
+            .data_offset
             .try_into()
             .expect("offset representable by machine");
         assert!(offset <= self.data.len(), "entry offset out of bounds");
 
+        Inflate::default()
+            .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
+            .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
+            .map(|_| ())
+    }
+
+    // Decode an entry, resolving delta's as needed, while growing the output vector if there is not enough
+    // space to hold the result object.
+    pub fn decode_entry(&self, entry: &Entry, out: &mut Vec<u8>) -> Result<(), Error> {
+        use crate::pack::decoded::Header::*;
         match entry.header {
-            Commit | Tree | Blob | Tag => Inflate::default()
-                .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
-                .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
-                .map(|_| ()),
-            OfsDelta { pack_offset } => {
-                unimplemented!("{:#b} {:#?}, {:#?}", 127, entry, self.entry(pack_offset))
+            Tree | Blob | Tree | Tag => {
+                out.resize(
+                    entry
+                        .size
+                        .try_into()
+                        .expect("size representable by machine"),
+                    0,
+                );
+                self.decompress_entry(entry, out.as_mut_slice())
             }
-            RefDelta { .. } => unimplemented!("ref delta"),
+            _ => unimplemented!("deltas"),
         }
     }
 }

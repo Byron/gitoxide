@@ -25,7 +25,7 @@ fn pack_lookup() {
         assert_eq!(pack.num_objects(), idx.num_objects());
         for idx_entry in idx.iter() {
             let pack_entry = pack.entry(idx_entry.offset);
-            assert_ne!(pack_entry.offset, idx_entry.offset);
+            assert_ne!(pack_entry.data_offset, idx_entry.offset);
         }
     }
 }

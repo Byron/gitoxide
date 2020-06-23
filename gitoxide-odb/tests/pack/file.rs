@@ -13,39 +13,42 @@ mod decode_entry {
 
     #[test]
     fn commit() {
-        let buf = decode_entry(1968);
+        let buf = decompress_entry_at_offset(1968);
         assert_eq!(buf.as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
         assert_eq!(buf.len(), 187)
     }
 
     #[test]
     fn blob() {
-        let buf = decode_entry(2142);
+        let buf = decompress_entry_at_offset(2142);
         assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n".as_bstr());
         assert_eq!(buf.len(), 93)
     }
 
     #[test]
     fn tree() {
-        let buf = decode_entry(2097);
+        let buf = decompress_entry_at_offset(2097);
         assert_eq!(buf[..13].as_bstr(), b"100644 README".as_bstr());
         assert_eq!(buf.len(), 34)
     }
 
     #[test]
     fn blob_ofs_delta_two_links() {
-        let buf = decode_entry(3033);
+        let p = new_pack(SMALL_PACK);
+        let entry = p.entry(3033);
+        let mut buf = Vec::new();
+        p.decode_entry(&entry, &mut buf).unwrap();
         assert_eq!(buf.as_bstr(), b"100644 README".as_bstr());
     }
 
-    fn decode_entry(offset: u64) -> Vec<u8> {
+    fn decompress_entry_at_offset(offset: u64) -> Vec<u8> {
         let p = new_pack(SMALL_PACK);
         let entry = p.entry(offset);
 
-        let mut buf = Vec::with_capacity(entry.size as usize + 20); // simulate slightly bigger buffers, for fun
-        buf.resize(entry.size as usize + 20, 0);
+        let mut buf = Vec::with_capacity(entry.size as usize);
+        buf.resize(entry.size as usize, 0);
 
-        p.decode_entry(&entry, &mut buf).unwrap();
+        p.decompress_entry(&entry, &mut buf).unwrap();
 
         buf.resize(entry.size as usize, 0);
         buf
