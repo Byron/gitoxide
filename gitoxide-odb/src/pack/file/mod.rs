@@ -10,8 +10,7 @@ use std::{convert::TryFrom, mem::size_of, path::Path};
 
 #[derive(Debug)]
 struct Delta {
-    instruction_buffer_begin: u64,
-    instruction_buffer_end: u64,
+    instructions: Range<usize>,
     base_size: u64,
     result_size: u64,
     header_size: usize,
@@ -24,8 +23,8 @@ pub enum ResolvedBase {
 }
 
 impl Delta {
-    fn size(&self) -> u64 {
-        self.instruction_buffer_end - self.instruction_buffer_begin
+    fn size(&self) -> usize {
+        self.instructions.end - self.instructions.start
     }
 }
 
@@ -170,7 +169,7 @@ impl File {
     ) -> Result<(), Error> {
         use crate::pack::decoded::Header;
         let mut chain = SmallVec::<[Delta; 5]>::default();
-        let mut instruction_buffer_size = 0;
+        let mut instruction_buffer_size = 0usize;
         let mut cursor = last.clone();
         let mut out_offset = 0;
         let mut first_base_range: Option<Range<usize>> = None;
@@ -180,14 +179,19 @@ impl File {
             //     self.decompress_entry(&last, out.as_mut_slice())?;
             //     unimplemented!("decode base and result size, grow the output buffer accordingly")
             // }
+            let end = instruction_buffer_size
+                .checked_add(cursor.size as usize)
+                .expect("no overflow");
             chain.push(Delta {
-                instruction_buffer_begin: instruction_buffer_size,
-                instruction_buffer_end: instruction_buffer_size + cursor.size,
+                instructions: Range {
+                    start: instruction_buffer_size,
+                    end,
+                },
                 header_size: 0,
                 base_size: cursor.data_offset, // keep this value around for later
                 result_size: 0,
             });
-            instruction_buffer_size += cursor.size;
+            instruction_buffer_size = end;
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
                 Header::RefDelta { oid } => match resolve(&oid, out) {
@@ -201,7 +205,7 @@ impl File {
             };
         }
         let base_entry = cursor;
-        let delta_instructions_size: u64 = chain.iter().map(|d| d.size()).sum();
+        let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
         out.resize(
             delta_instructions_size
                 .try_into()
@@ -209,8 +213,7 @@ impl File {
             0,
         );
         for delta in chain.iter_mut() {
-            let buf = &mut out
-                [delta.instruction_buffer_begin as usize..delta.instruction_buffer_end as usize];
+            let buf = &mut out[delta.instructions.clone()];
             self.decompress_entry_inner(
                 delta.base_size, // == entry.data_offset
                 buf,
