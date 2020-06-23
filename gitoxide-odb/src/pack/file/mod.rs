@@ -10,10 +10,10 @@ use std::{convert::TryFrom, mem::size_of, path::Path};
 
 #[derive(Debug)]
 struct Delta {
-    instructions: Range<usize>,
+    data: Range<usize>,
+    header_size: usize,
     base_size: u64,
     result_size: u64,
-    header_size: usize,
 }
 
 #[derive(Debug)]
@@ -24,7 +24,7 @@ pub enum ResolvedBase {
 
 impl Delta {
     fn size(&self) -> usize {
-        self.instructions.end - self.instructions.start
+        self.data.end - self.data.start
     }
 }
 
@@ -176,7 +176,7 @@ impl File {
                 .checked_add(cursor.size as usize)
                 .expect("no overflow");
             chain.push(Delta {
-                instructions: Range {
+                data: Range {
                     start: instruction_buffer_size,
                     end,
                 },
@@ -231,19 +231,19 @@ impl File {
             };
             let target_buffer_range = base_buffer_range.end
                 ..(base_buffer_range.end + (base_buffer_range.end - base_buffer_range.start));
-            dbg!(&base_buffer_range, &target_buffer_range);
             (base_buffer_range, target_buffer_range)
         };
 
         // move the instructions offsets to a range where they won't be overwritten, past the second result buffer
+        // conceptually, `out` is: [source-buffer][target-buffer][delta-1..delta-n]
         for delta in chain.iter_mut() {
-            delta.instructions = Range {
-                start: target_buffer_range.end + delta.instructions.start,
-                end: target_buffer_range.end + delta.instructions.end,
+            let data = Range {
+                start: target_buffer_range.end + delta.data.start,
+                end: target_buffer_range.end + delta.data.end,
             };
-            let buf = &mut out[delta.instructions.clone()];
+            let buf = &mut out[data];
             self.decompress_entry_inner(
-                delta.base_size, // == entry.data_offset
+                delta.base_size, // == entry.data_offset; we just use the slot to carry over necessary information
                 buf,
             )?;
             let (base_size, consumed) = delta_header_size(buf);
@@ -254,13 +254,48 @@ impl File {
             delta.result_size = result_size;
             dbg!(delta);
         }
-        unimplemented!("delta resolution")
+
+        // From oldest to most recent, apply all deltas, swapping the buffer back and forth
+        // FIXME: once we have more tests, we could optimize this memory-intensive work to
+        // analyse the delta-chains to only copy data once.
+        let (buffers, instructions) = out.split_at_mut(target_buffer_range.end);
+        let (mut source_buf, mut target_buf) = buffers.split_at_mut(source_buffer_range.end);
+
+        for Delta {
+            data,
+            header_size,
+            base_size,
+            result_size,
+        } in chain.iter().rev()
+        {
+            apply_delta(
+                &source_buf[..*base_size as usize],
+                &mut target_buf[..*result_size as usize],
+                &instructions[data.start + header_size..data.end],
+            );
+            std::mem::swap(&mut source_buf, &mut target_buf);
+        }
+
+        // uneven chains leave the target buffer at the beginning of the memory region, so copy it
+        if chain.len() % 2 == 1 {}
+        unimplemented!(
+            "finally make sure the target buffer is copied to the start of the `out` vector"
+        );
+        out.resize(
+            chain.last().expect("more than one item").result_size as usize,
+            0,
+        );
+        Ok(())
     }
+}
+
+fn apply_delta(source: &[u8], target: &mut [u8], instructions: &[u8]) {
+    unimplemented!("delta application")
 }
 
 fn delta_header_size(d: &[u8]) -> (u64, usize) {
     let mut i = 0;
-    let mut size = 064;
+    let mut size = 0u64;
     let mut consumed = 0;
     for cmd in d.iter() {
         consumed += 1;
