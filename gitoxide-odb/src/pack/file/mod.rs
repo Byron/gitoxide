@@ -19,7 +19,7 @@ struct Delta {
 #[derive(Debug)]
 pub enum ResolvedBase {
     InPack(Entry),
-    OutOfPack(Range<usize>),
+    OutOfPack { end: usize },
 }
 
 impl Delta {
@@ -171,7 +171,8 @@ impl File {
         let mut chain = SmallVec::<[Delta; 5]>::default();
         let mut instruction_buffer_size = 0usize;
         let mut cursor = last.clone();
-        let mut first_base_buffer_range: Option<Range<usize>> = None;
+        let mut base_buffer_end: Option<usize> = None;
+        // Find the first full base, either an undeltified object in the pack or a reference to another object.
         while cursor.header.is_delta() {
             let end = instruction_buffer_size
                 .checked_add(cursor.size as usize)
@@ -190,8 +191,8 @@ impl File {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
                 Header::RefDelta { oid } => match resolve(&oid, out) {
                     ResolvedBase::InPack(entry) => entry,
-                    ResolvedBase::OutOfPack(range) => {
-                        first_base_buffer_range = Some(range);
+                    ResolvedBase::OutOfPack { end } => {
+                        base_buffer_end = Some(end);
                         break;
                     }
                 },
@@ -200,7 +201,7 @@ impl File {
         }
         let (first_buffer_end, second_buffer_end) = {
             let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
-            let base_buffer_end = match first_base_buffer_range {
+            let base_buffer_end = match base_buffer_end {
                 None => {
                     let base_entry = cursor;
                     out.resize(
@@ -215,19 +216,15 @@ impl File {
                         .try_into()
                         .expect("usize big enough for single entry base object size")
                 }
-                Some(range) => {
-                    assert_eq!(
-                        range.start, 0,
-                        "We really expect to not start somewhere in the middle of a buffer"
-                    );
+                Some(end) => {
                     out.resize(
-                        ((range.end - range.start) as u64 * 2 // * 2 for worst-case guess
+                        (end as u64 * 2 // * 2 for worst-case guess
                             + delta_instructions_size)
                             .try_into()
                             .expect("usize to be big enough for all deltas"),
                         0,
                     );
-                    range.end
+                    end
                 }
             };
             (base_buffer_end, base_buffer_end + base_buffer_end) // works because we have two equally sized sequential regions
