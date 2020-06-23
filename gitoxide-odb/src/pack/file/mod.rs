@@ -167,6 +167,7 @@ impl File {
         out: &mut Vec<u8>,
     ) -> Result<(), Error> {
         use crate::pack::decoded::Header;
+        // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 5]>::default();
         let mut instruction_buffer_size = 0usize;
         let mut cursor = last.clone();
@@ -197,9 +198,9 @@ impl File {
                 _ => unreachable!("cursor.is_delta() only allows deltas here"),
             };
         }
-        let (source_buffer_range, target_buffer_range) = {
+        let (first_buffer_end, second_buffer_end) = {
             let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
-            let base_buffer_range = match first_base_buffer_range {
+            let base_buffer_end = match first_base_buffer_range {
                 None => {
                     let base_entry = cursor;
                     out.resize(
@@ -209,7 +210,7 @@ impl File {
                         0,
                     );
                     self.decompress_entry_inner(base_entry.data_offset, out)?;
-                    0..base_entry
+                    base_entry
                         .size
                         .try_into()
                         .expect("usize big enough for single entry base object size")
@@ -226,20 +227,18 @@ impl File {
                             .expect("usize to be big enough for all deltas"),
                         0,
                     );
-                    range
+                    range.end
                 }
             };
-            let target_buffer_range = base_buffer_range.end
-                ..(base_buffer_range.end + (base_buffer_range.end - base_buffer_range.start));
-            (base_buffer_range, target_buffer_range)
+            (base_buffer_end, base_buffer_end + base_buffer_end) // works because we have two equally sized sequential regions
         };
 
         // move the instructions offsets to a range where they won't be overwritten, past the second result buffer
         // conceptually, `out` is: [source-buffer][target-buffer][delta-1..delta-n]
         for delta in chain.iter_mut() {
             let data = Range {
-                start: target_buffer_range.end + delta.data.start,
-                end: target_buffer_range.end + delta.data.end,
+                start: second_buffer_end + delta.data.start,
+                end: second_buffer_end + delta.data.end,
             };
             let buf = &mut out[data];
             self.decompress_entry_inner(
@@ -256,10 +255,10 @@ impl File {
         }
 
         // From oldest to most recent, apply all deltas, swapping the buffer back and forth
-        // FIXME: once we have more tests, we could optimize this memory-intensive work to
+        // TODO: once we have more tests, we could optimize this memory-intensive work to
         // analyse the delta-chains to only copy data once.
-        let (buffers, instructions) = out.split_at_mut(target_buffer_range.end);
-        let (mut source_buf, mut target_buf) = buffers.split_at_mut(source_buffer_range.end);
+        let (buffers, instructions) = out.split_at_mut(second_buffer_end);
+        let (mut source_buf, mut target_buf) = buffers.split_at_mut(first_buffer_end);
 
         for Delta {
             data,
@@ -276,15 +275,15 @@ impl File {
             std::mem::swap(&mut source_buf, &mut target_buf);
         }
 
-        // uneven chains leave the target buffer at the beginning of the memory region, so copy it
-        if chain.len() % 2 == 1 {}
-        unimplemented!(
-            "finally make sure the target buffer is copied to the start of the `out` vector"
-        );
-        out.resize(
-            chain.last().expect("more than one item").result_size as usize,
-            0,
-        );
+        let result_size = chain
+            .first()
+            .expect("at least one delta chain item")
+            .result_size as usize;
+        // uneven chains leave the target buffer after the source buffer
+        if chain.len() % 2 == 1 {
+            source_buf.copy_from_slice(&target_buf[..result_size]);
+        }
+        out.resize(result_size, 0);
         Ok(())
     }
 }
