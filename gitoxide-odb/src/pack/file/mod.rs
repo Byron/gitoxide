@@ -156,8 +156,7 @@ impl File {
                 );
                 self.decompress_entry(&entry, out.as_mut_slice())
             }
-            OfsDelta { pack_offset } => self.resolve_deltas(entry, resolve, out),
-            RefDelta { oid } => self.resolve_deltas(entry, resolve, out),
+            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out),
         }
     }
 
@@ -171,14 +170,8 @@ impl File {
         let mut chain = SmallVec::<[Delta; 5]>::default();
         let mut instruction_buffer_size = 0usize;
         let mut cursor = last.clone();
-        let mut out_offset = 0;
-        let mut first_base_range: Option<Range<usize>> = None;
+        let mut first_base_buffer_range: Option<Range<usize>> = None;
         while cursor.header.is_delta() {
-            // if cursor.data_offset == last.data_offset {
-            //     out.resize(last.size as usize, 0);
-            //     self.decompress_entry(&last, out.as_mut_slice())?;
-            //     unimplemented!("decode base and result size, grow the output buffer accordingly")
-            // }
             let end = instruction_buffer_size
                 .checked_add(cursor.size as usize)
                 .expect("no overflow");
@@ -197,22 +190,64 @@ impl File {
                 Header::RefDelta { oid } => match resolve(&oid, out) {
                     ResolvedBase::InPack(entry) => entry,
                     ResolvedBase::OutOfPack(range) => {
-                        first_base_range = Some(range);
+                        first_base_buffer_range = Some(range);
                         break;
                     }
                 },
                 _ => unreachable!("cursor.is_delta() only allows deltas here"),
             };
         }
-        let base_entry = cursor;
-        let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
-        out.resize(
-            delta_instructions_size
-                .try_into()
-                .expect("usize to be big enough for all deltas"),
-            0,
-        );
+        let (source_buffer_range, target_buffer_range) = {
+            let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
+            let biggest_result_size: u64 = chain
+                .iter()
+                .map(|d| d.result_size)
+                .max()
+                .expect("at least one delta");
+            let base_buffer_range = match first_base_buffer_range {
+                None => {
+                    let base_entry = cursor;
+                    out.resize(
+                        (base_entry.size + biggest_result_size + delta_instructions_size)
+                            .try_into()
+                            .expect("usize to be big enough for all deltas"),
+                        0,
+                    );
+                    self.decompress_entry_inner(base_entry.data_offset, out)?;
+                    0..base_entry
+                        .size
+                        .try_into()
+                        .expect("usize big enough for single entry base object size")
+                }
+                Some(range) => {
+                    assert_eq!(
+                        range.start, 0,
+                        "We really expect to not start somewhere in the middle of a buffer"
+                    );
+                    out.resize(
+                        ((range.end - range.start) as u64
+                            + biggest_result_size
+                            + delta_instructions_size)
+                            .try_into()
+                            .expect("usize to be big enough for all deltas"),
+                        0,
+                    );
+                    range
+                }
+            };
+            assert!(base_buffer_range.end >= biggest_result_size as usize, "the first result object should always be bigger than the biggest secondary result object");
+            let target_buffer_range =
+                base_buffer_range.end..(base_buffer_range.end + biggest_result_size as usize);
+            dbg!(&base_buffer_range, &target_buffer_range);
+            (base_buffer_range, target_buffer_range)
+        };
+
+        // move the instructions offsets to a range where they won't be overwritten, past the second result buffer
         for delta in chain.iter_mut() {
+            delta.instructions = Range {
+                start: target_buffer_range.end + delta.instructions.start,
+                end: target_buffer_range.end + delta.instructions.end,
+            };
             let buf = &mut out[delta.instructions.clone()];
             self.decompress_entry_inner(
                 delta.base_size, // == entry.data_offset
@@ -226,7 +261,7 @@ impl File {
             delta.result_size = result_size;
             dbg!(delta);
         }
-        unimplemented!("delta resolution, {}", delta_instructions_size)
+        unimplemented!("delta resolution")
     }
 }
 
