@@ -51,6 +51,7 @@ fn leb64decode(d: &[u8]) -> (u64, usize) {
     (value, i)
 }
 
+/// Parses the header of a pack-entry, yielding object type id, decompressed object size, and consumed bytes
 fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     let mut c = data[0];
     let mut i = 1;

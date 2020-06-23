@@ -1,13 +1,25 @@
 use crate::zlib::Inflate;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_object::SHA1_SIZE;
+use git_object::{Id, SHA1_SIZE};
 use quick_error::quick_error;
+use smallvec::SmallVec;
 use std::convert::TryInto;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
+#[derive(Debug)]
 struct Delta {
-    instruction_buffer_offset: usize,
+    instruction_buffer_begin: u64,
+    instruction_buffer_end: u64,
+    base_size: u64,
+    result_size: u64,
+    header_size: usize,
+}
+
+impl Delta {
+    fn size(&self) -> u64 {
+        self.instruction_buffer_end - self.instruction_buffer_begin
+    }
 }
 
 quick_error! {
@@ -100,11 +112,17 @@ impl File {
             entry.size,
             out.len()
         );
-        let offset: usize = entry
-            .data_offset
+
+        self.decompress_entry_inner(entry.data_offset, out)
+    }
+
+    // Note that this method does not resolve deltified objects, but merely decompresses their content
+    // `out` is expected to be large enough to hold `entry.size` bytes.
+    fn decompress_entry_inner(&self, data_offset: u64, out: &mut [u8]) -> Result<(), Error> {
+        let offset: usize = data_offset
             .try_into()
             .expect("offset representable by machine");
-        assert!(offset <= self.data.len(), "entry offset out of bounds");
+        assert!(offset < self.data.len(), "entry offset out of bounds");
 
         Inflate::default()
             .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
@@ -114,10 +132,15 @@ impl File {
 
     // Decode an entry, resolving delta's as needed, while growing the output vector if there is not enough
     // space to hold the result object.
-    pub fn decode_entry(&self, entry: &Entry, out: &mut Vec<u8>) -> Result<(), Error> {
+    pub fn decode_entry(
+        &self,
+        entry: Entry,
+        out: &mut Vec<u8>,
+        resolve: impl Fn(&Id) -> Entry,
+    ) -> Result<(), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
-            Tree | Blob | Tree | Tag => {
+            Tree | Blob | Commit | Tag => {
                 out.resize(
                     entry
                         .size
@@ -125,11 +148,83 @@ impl File {
                         .expect("size representable by machine"),
                     0,
                 );
-                self.decompress_entry(entry, out.as_mut_slice())
+                self.decompress_entry(&entry, out.as_mut_slice())
             }
-            _ => unimplemented!("deltas"),
+            OfsDelta { pack_offset } => self.resolve_deltas(entry, resolve, out),
+            RefDelta { oid } => self.resolve_deltas(entry, resolve, out),
         }
     }
+
+    fn resolve_deltas(
+        &self,
+        last: Entry,
+        resolve: impl Fn(&Id) -> Entry,
+        out: &mut Vec<u8>,
+    ) -> Result<(), Error> {
+        use crate::pack::decoded::Header;
+        let mut chain = SmallVec::<[Delta; 5]>::default();
+        let mut instruction_buffer_size = 0;
+        let mut cursor = last.clone();
+        while cursor.header.is_delta() {
+            // if cursor.data_offset == last.data_offset {
+            //     out.resize(last.size as usize, 0);
+            //     self.decompress_entry(&last, out.as_mut_slice())?;
+            //     unimplemented!("decode base and result size, grow the output buffer accordingly")
+            // }
+            chain.push(Delta {
+                instruction_buffer_begin: instruction_buffer_size,
+                instruction_buffer_end: instruction_buffer_size + cursor.size,
+                header_size: 0,
+                base_size: cursor.data_offset, // keep this value around for later
+                result_size: 0,
+            });
+            instruction_buffer_size += cursor.size;
+            cursor = match cursor.header {
+                Header::OfsDelta { pack_offset } => self.entry(pack_offset),
+                Header::RefDelta { oid } => resolve(&oid),
+                _ => unreachable!("cursor.is_delta() only allows deltas here"),
+            };
+        }
+        let base_entry = cursor;
+        let delta_instructions_size: u64 = chain.iter().map(|d| d.size()).sum();
+        out.resize(
+            delta_instructions_size
+                .try_into()
+                .expect("usize to be big enough for all deltas"),
+            0,
+        );
+        for delta in chain.iter_mut() {
+            let buf = &mut out
+                [delta.instruction_buffer_begin as usize..delta.instruction_buffer_end as usize];
+            self.decompress_entry_inner(
+                delta.base_size, // == entry.data_offset
+                buf,
+            )?;
+            let (base_size, consumed) = delta_header_size(buf);
+            delta.header_size += consumed;
+            delta.base_size = base_size;
+            let (result_size, consumed) = delta_header_size(&buf[consumed..]);
+            delta.header_size += consumed;
+            delta.result_size = result_size;
+            dbg!(delta);
+        }
+        unimplemented!("delta resolution, {}", delta_instructions_size)
+    }
+}
+
+fn delta_header_size(d: &[u8]) -> (u64, usize) {
+    let mut i = 0;
+    let mut size = 064;
+    let mut consumed = 0;
+    for cmd in d.iter() {
+        consumed += 1;
+        size |= (*cmd as u64 & 0x7f) << i;
+        i += 7;
+        if *cmd & 0x80 == 0 {
+            break;
+        }
+    }
+    (size, consumed)
 }
 
 impl TryFrom<&Path> for File {

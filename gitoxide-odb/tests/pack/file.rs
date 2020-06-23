@@ -37,7 +37,10 @@ mod decode_entry {
         let p = new_pack(SMALL_PACK);
         let entry = p.entry(3033);
         let mut buf = Vec::new();
-        p.decode_entry(&entry, &mut buf).unwrap();
+        p.decode_entry(entry, &mut buf, |id| {
+            panic!("should not want to resolve an id here")
+        })
+        .unwrap();
         assert_eq!(buf.as_bstr(), b"100644 README".as_bstr());
     }
 
