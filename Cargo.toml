@@ -1,5 +1,5 @@
 [package]
-name = "grit-cli"
+name = "gitoxide-cli"
 version = "1.0.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 publish = false
@@ -7,13 +7,13 @@ license = "MIT"
 edition = "2018"
 
 [[bin]]
-name="grit"
+name="gio"
 path="src/main.rs"
 test = false
 doctest = false
 
 [dependencies]
-git-core = { version = "0.1.0", path = "git-core" }
+git-core = { version = "0.1.0", path = "gitoxide-core" }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 
@@ -23,8 +23,8 @@ incremental = false
 
 [workspace]
 members = [
-    "git-object",
-    "git-odb",
-    "git-core",
+    "gitoxide-object",
+    "gitoxide-odb",
+    "gitoxide-core",
     "demos"
 ]

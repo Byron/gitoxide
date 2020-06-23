@@ -1,6 +1,6 @@
-[![Rust](https://github.com/Byron/grit-rs/workflows/Rust/badge.svg)](https://github.com/Byron/grit-rs/actions)
+[![Rust](https://github.com/Byron/git-oxide/workflows/Rust/badge.svg)](https://github.com/Byron/git-oxide/actions)
 
-**grit** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
+**gio** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
 user-experience, and perform as good or better than the native implementation.
 
 The CLI uses various libraries to implement
@@ -8,7 +8,7 @@ The CLI uses various libraries to implement
  * [ ] a git *repository* and *references* (see `git-core`)
  * [ ] encoding and decoding git objects (see `git-object`)
  * [ ] a git object database (see `git-odb` and
-   [examples](https://github.com/Byron/grit-rs/tree/master/lib/git-odb/examples))
+   [examples](https://github.com/Byron/git-oxide/tree/master/lib/git-odb/examples))
  * [ ] a transport layer for push and pull (see `git-transport`)
 
  **This project is early in development and currently strictly for fun**

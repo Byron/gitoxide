@@ -217,7 +217,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "grit-cli"
+name = "gitoxide-cli"
 version = "1.0.0"
 dependencies = [
  "anyhow",

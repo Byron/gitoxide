@@ -13,20 +13,20 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 
 ##@ Development
 
-target/debug/grit: always
+target/debug/gio: always
 	cargo build
 
-target/release/grit: always
+target/release/gio: always
 	cargo build --release
 
 lint: ## Run lints with clippy
 	cargo clippy
 
-profile: target/release/grit ## run callgrind and annotate its output - linux only
+profile: target/release/gio ## run callgrind and annotate its output - linux only
 	valgrind --callgrind-out-file=callgrind.profile --tool=callgrind  $< >/dev/null
 	callgrind_annotate --auto=yes callgrind.profile
 
-benchmark: target/release/grit ## see how fast things are, powered by hyperfine
+benchmark: target/release/gio ## see how fast things are, powered by hyperfine
 	hyperfine '$<'
 
 tests: check unit-tests journey-tests ## run all tests, including journey tests
@@ -40,7 +40,7 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
-journey-tests: target/debug/grit ## run stateless journey tests
+journey-tests: target/debug/gio ## run stateless journey tests
 	./tests/stateless-journey.sh $<
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
