@@ -5,6 +5,7 @@ use git_object::{Id, SHA1_SIZE};
 use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::convert::TryInto;
+use std::ops::Range;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
 #[derive(Debug)]
@@ -14,6 +15,12 @@ struct Delta {
     base_size: u64,
     result_size: u64,
     header_size: usize,
+}
+
+#[derive(Debug)]
+pub enum ResolvedBase {
+    InPack(Entry),
+    OutOfPack(Range<usize>),
 }
 
 impl Delta {
@@ -136,7 +143,7 @@ impl File {
         &self,
         entry: Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(&Id) -> Entry,
+        resolve: impl Fn(&Id, &mut Vec<u8>) -> ResolvedBase,
     ) -> Result<(), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
@@ -158,13 +165,15 @@ impl File {
     fn resolve_deltas(
         &self,
         last: Entry,
-        resolve: impl Fn(&Id) -> Entry,
+        resolve: impl Fn(&Id, &mut Vec<u8>) -> ResolvedBase,
         out: &mut Vec<u8>,
     ) -> Result<(), Error> {
         use crate::pack::decoded::Header;
         let mut chain = SmallVec::<[Delta; 5]>::default();
         let mut instruction_buffer_size = 0;
         let mut cursor = last.clone();
+        let mut out_offset = 0;
+        let mut first_base_range: Option<Range<usize>> = None;
         while cursor.header.is_delta() {
             // if cursor.data_offset == last.data_offset {
             //     out.resize(last.size as usize, 0);
@@ -181,7 +190,13 @@ impl File {
             instruction_buffer_size += cursor.size;
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
-                Header::RefDelta { oid } => resolve(&oid),
+                Header::RefDelta { oid } => match resolve(&oid, out) {
+                    ResolvedBase::InPack(entry) => entry,
+                    ResolvedBase::OutOfPack(range) => {
+                        first_base_range = Some(range);
+                        break;
+                    }
+                },
                 _ => unreachable!("cursor.is_delta() only allows deltas here"),
             };
         }

@@ -37,7 +37,7 @@ mod decode_entry {
         let p = new_pack(SMALL_PACK);
         let entry = p.entry(3033);
         let mut buf = Vec::new();
-        p.decode_entry(entry, &mut buf, |id| {
+        p.decode_entry(entry, &mut buf, |_id, _out| {
             panic!("should not want to resolve an id here")
         })
         .unwrap();
