@@ -41,7 +41,9 @@ mod decode_entry {
             panic!("should not want to resolve an id here")
         })
         .unwrap();
-        assert_eq!(buf.as_bstr(), b"100644 README".as_bstr());
+        assert_eq!(buf.len(), 173, "buffer length is the acutal object size");
+        assert_eq!(buf.capacity(), 2381, "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes");
+        assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nGitPython is a port of the grit library in Ruby created by \nTom Preston-Werner and Chris Wanstrath.\n\n\n".as_bstr());
     }
 
     fn decompress_entry_at_offset(offset: u64) -> Vec<u8> {

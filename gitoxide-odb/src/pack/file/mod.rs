@@ -284,32 +284,40 @@ impl File {
     }
 }
 
-fn apply_delta(mut base: &[u8], mut target: &mut [u8], instructions: &[u8]) {
-    let mut iter = instructions.into_iter();
-    while let Some(cmd) = iter.next() {
+fn apply_delta(base: &[u8], mut target: &mut [u8], mut data: &[u8]) {
+    let mut i = 0;
+    while let Some(cmd) = data.get(i) {
+        i += 1;
         match cmd {
             cmd if cmd & 0b1000_0000 != 0 => {
                 let (mut ofs, mut size): (u32, u32) = (0, 0);
                 if cmd & 0b0000_0001 != 0 {
-                    ofs = *iter.next().unwrap() as u32;
+                    ofs = data[i] as u32;
+                    i += 1;
                 }
                 if cmd & 0b0000_0010 != 0 {
-                    ofs |= (*iter.next().unwrap() as u32) << 8;
+                    ofs |= (data[i] as u32) << 8;
+                    i += 1;
                 }
                 if cmd & 0b0000_0100 != 0 {
-                    ofs |= (*iter.next().unwrap() as u32) << 16;
+                    ofs |= (data[i] as u32) << 16;
+                    i += 1;
                 }
                 if cmd & 0b0000_1000 != 0 {
-                    ofs |= (*iter.next().unwrap() as u32) << 24;
+                    ofs |= (data[i] as u32) << 24;
+                    i += 1;
                 }
                 if cmd & 0b0001_0000 != 0 {
-                    size = *iter.next().unwrap() as u32;
+                    size = data[i] as u32;
+                    i += 1;
                 }
                 if cmd & 0b0010_0000 != 0 {
-                    size |= (*iter.next().unwrap() as u32) << 8;
+                    size |= (data[i] as u32) << 8;
+                    i += 1;
                 }
                 if cmd & 0b0100_0000 != 0 {
-                    size |= (*iter.next().unwrap() as u32) << 16;
+                    size |= (data[i] as u32) << 16;
+                    i += 1;
                 }
                 if size == 0 {
                     size = 0x10000; // 65536
@@ -320,11 +328,10 @@ fn apply_delta(mut base: &[u8], mut target: &mut [u8], instructions: &[u8]) {
             }
             0 => panic!("encounted unsupported command code: 0"),
             size => {
-                // Fixme: must copy from instruction buffer!
-                let (dest, rest) = base.split_at(*size as usize);
+                let (dest, rest) = data.split_at(*size as usize);
                 std::io::Write::write(&mut target, dest)
                     .expect("delta copy data: slice sizes to match up");
-                base = rest;
+                data = rest;
             }
         }
     }
