@@ -268,6 +268,7 @@ impl File {
                 &mut target_buf[..*result_size as usize],
                 &instructions[data.start + header_size..data.end],
             );
+            // use the target as source for the next delta
             std::mem::swap(&mut source_buf, &mut target_buf);
         }
 
@@ -277,7 +278,7 @@ impl File {
             .result_size as usize;
         // uneven chains leave the target buffer after the source buffer
         if chain.len() % 2 == 1 {
-            source_buf.copy_from_slice(&target_buf[..result_size]);
+            source_buf[..result_size].copy_from_slice(&target_buf[..result_size]);
         }
         out.resize(result_size, 0);
         Ok(())
