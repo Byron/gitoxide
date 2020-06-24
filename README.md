@@ -164,7 +164,7 @@ trailed by a newline.
 echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 > fixture
 ```
 
-Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, removing the newline byte.
+Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, **removing the newline byte**.
 
 
 ## Shortcomings

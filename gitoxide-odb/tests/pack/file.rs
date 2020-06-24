@@ -2,13 +2,27 @@ use crate::fixture_path;
 use git_odb::pack;
 use std::convert::TryFrom;
 
-fn new_pack(at: &str) -> pack::File {
+fn pack_at(at: &str) -> pack::File {
     pack::File::try_from(fixture_path(at).as_path()).unwrap()
+}
+
+mod method {
+    use crate::pack::file::pack_at;
+    use crate::pack::SMALL_PACK;
+
+    #[test]
+    fn checksum() {
+        let p = pack_at(SMALL_PACK);
+        assert_eq!(
+            hex::encode(p.checksum()),
+            "0f3ea84cd1bba10c2a03d736a460635082833e59"
+        );
+    }
 }
 
 /// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
-    use crate::{pack::file::new_pack, pack::SMALL_PACK};
+    use crate::{pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
     use git_odb::pack::ResolvedBase;
 
@@ -44,7 +58,7 @@ mod decode_entry {
             panic!("should not want to resolve an id here")
         }
 
-        let p = new_pack(SMALL_PACK);
+        let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
         let mut buf = Vec::new();
         p.decode_entry(entry, &mut buf, resolve_with_panic).unwrap();
@@ -53,7 +67,7 @@ mod decode_entry {
 }
 
 mod decompress_entry {
-    use crate::{pack::file::new_pack, pack::SMALL_PACK};
+    use crate::{pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
 
     #[test]
@@ -93,7 +107,7 @@ mod decompress_entry {
     }
 
     fn decompress_entry_at_offset(offset: u64) -> Vec<u8> {
-        let p = new_pack(SMALL_PACK);
+        let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
 
         let size = entry.size as usize;

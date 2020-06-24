@@ -1,6 +1,6 @@
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_object::SHA1_SIZE;
+use git_object::{Id, SHA1_SIZE};
 use quick_error::quick_error;
 use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 
@@ -57,6 +57,11 @@ impl File {
     }
     pub fn num_objects(&self) -> u32 {
         self.num_objects
+    }
+    pub fn checksum(&self) -> Id {
+        let mut v = [0u8; 20];
+        v.copy_from_slice(&self.data[self.data.len() - SHA1_SIZE..]);
+        v
     }
 
     fn assure_v2(&self) {
