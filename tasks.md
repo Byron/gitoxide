@@ -8,6 +8,6 @@
 * **pack**
    * [x] decode full pack entries
    * [ ] iterate pack entries
-   * [ ] decode full objects
-   * [ ] decode delta objects
+   * [x] decode full objects
+   * [x] decode delta objects
 

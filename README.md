@@ -48,10 +48,10 @@ The CLI uses various libraries to implement
     * [x] traverse pack index
     * [ ] traverse pack entries
     * [ ] decode
-      * [ ] deltified objects
+      * [x] full objects
+      * [x] deltified objects
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
-      * [ ] full objects
     * [ ] encode
       * [ ] create new packs
     * [ ] verify pack
