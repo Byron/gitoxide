@@ -14,27 +14,12 @@ mod decode_entry {
 
     #[test]
     fn commit() {
-        let buf = decompress_entry_at_offset(1968);
-        assert_eq!(buf.as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
-        assert_eq!(buf.len(), 187)
-    }
-
-    #[test]
-    fn blob() {
-        let buf = decompress_entry_at_offset(2142);
-        assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n".as_bstr());
-        assert_eq!(buf.len(), 93)
-    }
-
-    #[test]
-    fn tree() {
-        let buf = decompress_entry_at_offset(2097);
-        assert_eq!(buf[..13].as_bstr(), b"100644 README".as_bstr());
-        assert_eq!(buf.len(), 34);
+        let buf = decode_entry_at_offset(1968);
+        assert_eq!(buf.len(), 187);
         assert_eq!(
             buf.capacity(),
-            34,
-            "capacity must be controlled by the caller to be big enough"
+            187,
+            "for undeltified objects, there is no change in allocation or resizing"
         );
     }
 
@@ -65,13 +50,55 @@ mod decode_entry {
         p.decode_entry(entry, &mut buf, resolve_with_panic).unwrap();
         buf
     }
+}
+
+mod decompress_entry {
+    use crate::{pack::file::new_pack, pack::SMALL_PACK};
+    use bstr::ByteSlice;
+
+    #[test]
+    fn commit() {
+        let buf = decompress_entry_at_offset(1968);
+        assert_eq!(buf.as_bstr(), b"tree e90926b07092bccb7bf7da445fae6ffdfacf3eae\nauthor Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\ncommitter Sebastian Thiel <byronimo@gmail.com> 1286529993 +0200\n\nInitial commit\n".as_bstr());
+        assert_eq!(buf.len(), 187)
+    }
+
+    #[test]
+    fn blob() {
+        let buf = decompress_entry_at_offset(2142);
+        assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n".as_bstr());
+        assert_eq!(buf.len(), 93)
+    }
+
+    #[test]
+    fn blob_with_two_chain_links() {
+        let buf = decompress_entry_at_offset(3033);
+        assert_eq!(
+            buf.len(),
+            6,
+            "it decompresses delta objects, but won't resolve them"
+        )
+    }
+
+    #[test]
+    fn tree() {
+        let buf = decompress_entry_at_offset(2097);
+        assert_eq!(buf[..13].as_bstr(), b"100644 README".as_bstr());
+        assert_eq!(buf.len(), 34);
+        assert_eq!(
+            buf.capacity(),
+            34,
+            "capacity must be controlled by the caller to be big enough"
+        );
+    }
 
     fn decompress_entry_at_offset(offset: u64) -> Vec<u8> {
         let p = new_pack(SMALL_PACK);
         let entry = p.entry(offset);
 
-        let mut buf = Vec::with_capacity(entry.size as usize);
-        buf.resize(entry.size as usize, 0);
+        let size = entry.size as usize;
+        let mut buf = Vec::with_capacity(size);
+        buf.resize(size, 0);
 
         p.decompress_entry(&entry, &mut buf).unwrap();
 
