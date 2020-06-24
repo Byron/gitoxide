@@ -248,7 +248,6 @@ impl File {
             let (result_size, consumed) = delta_header_size(&buf[consumed..]);
             delta.header_size += consumed;
             delta.result_size = result_size;
-            dbg!(delta);
         }
 
         // From oldest to most recent, apply all deltas, swapping the buffer back and forth
@@ -285,8 +284,50 @@ impl File {
     }
 }
 
-fn apply_delta(source: &[u8], target: &mut [u8], instructions: &[u8]) {
-    unimplemented!("delta application")
+fn apply_delta(mut base: &[u8], mut target: &mut [u8], instructions: &[u8]) {
+    let mut iter = instructions.into_iter();
+    while let Some(cmd) = iter.next() {
+        match cmd {
+            cmd if cmd & 0b1000_0000 != 0 => {
+                let (mut ofs, mut size): (u32, u32) = (0, 0);
+                if cmd & 0b0000_0001 != 0 {
+                    ofs = *iter.next().unwrap() as u32;
+                }
+                if cmd & 0b0000_0010 != 0 {
+                    ofs |= (*iter.next().unwrap() as u32) << 8;
+                }
+                if cmd & 0b0000_0100 != 0 {
+                    ofs |= (*iter.next().unwrap() as u32) << 16;
+                }
+                if cmd & 0b0000_1000 != 0 {
+                    ofs |= (*iter.next().unwrap() as u32) << 24;
+                }
+                if cmd & 0b0001_0000 != 0 {
+                    size = *iter.next().unwrap() as u32;
+                }
+                if cmd & 0b0010_0000 != 0 {
+                    size |= (*iter.next().unwrap() as u32) << 8;
+                }
+                if cmd & 0b0100_0000 != 0 {
+                    size |= (*iter.next().unwrap() as u32) << 16;
+                }
+                if size == 0 {
+                    size = 0x10000; // 65536
+                }
+                let ofs = ofs as usize;
+                std::io::Write::write(&mut target, &base[ofs..ofs + size as usize])
+                    .expect("delta copy from base: byte slices must match");
+            }
+            0 => panic!("encounted unsupported command code: 0"),
+            size => {
+                // Fixme: must copy from instruction buffer!
+                let (dest, rest) = base.split_at(*size as usize);
+                std::io::Write::write(&mut target, dest)
+                    .expect("delta copy data: slice sizes to match up");
+                base = rest;
+            }
+        }
+    }
 }
 
 fn delta_header_size(d: &[u8]) -> (u64, usize) {
