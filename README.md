@@ -46,7 +46,6 @@ The CLI uses various libraries to implement
     * [x] streaming write
   * **packs**
     * [x] traverse pack index
-    * [ ] traverse pack entries
     * [ ] decode
       * [x] full objects
       * [x] deltified objects
