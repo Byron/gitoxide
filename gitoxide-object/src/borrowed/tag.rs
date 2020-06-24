@@ -4,7 +4,6 @@ use crate::borrowed::{
     Signature,
 };
 use bstr::{BStr, ByteSlice};
-use hex::FromHex;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while1},
@@ -105,7 +104,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
 
 impl<'data> Tag<'data> {
     pub fn target(&self) -> crate::Id {
-        <[u8; 20]>::from_hex(self.target).expect("prior validation")
+        crate::Id::from_hex(self.target).expect("prior validation")
     }
     pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)

@@ -59,9 +59,7 @@ impl File {
         self.num_objects
     }
     pub fn checksum(&self) -> Id {
-        let mut v = [0u8; 20];
-        v.copy_from_slice(&self.data[self.data.len() - SHA1_SIZE..]);
-        v
+        Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
 
     fn assure_v2(&self) {

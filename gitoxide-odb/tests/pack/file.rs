@@ -14,7 +14,7 @@ mod method {
     fn checksum() {
         let p = pack_at(SMALL_PACK);
         assert_eq!(
-            hex::encode(p.checksum()),
+            hex::encode(p.checksum().0),
             "0f3ea84cd1bba10c2a03d736a460635082833e59"
         );
     }

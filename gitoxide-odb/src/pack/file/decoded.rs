@@ -83,7 +83,7 @@ impl Header {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    oid: object::id_from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
+                    oid: object::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
                 };
                 consumed += SHA1_SIZE;
                 delta

@@ -141,11 +141,11 @@ impl File {
         self.version
     }
     pub fn checksum_of_index(&self) -> object::Id {
-        object::id_from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+        object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
     pub fn checksum_of_pack(&self) -> object::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
-        object::id_from_20_bytes(&self.data[from..from + SHA1_SIZE])
+        object::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
     }
 
     fn offset_crc32_v2(&self) -> usize {
@@ -168,7 +168,7 @@ impl File {
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
-                        oid: object::id_from_20_bytes(oid),
+                        oid: object::Id::from_20_bytes(oid),
                         offset: BigEndian::read_u32(ofs) as u64,
                         crc32: None,
                     }
@@ -187,7 +187,7 @@ impl File {
             )
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
-                oid: object::id_from_20_bytes(oid),
+                oid: object::Id::from_20_bytes(oid),
                 offset: {
                     let ofs32 = BigEndian::read_u32(ofs32);
                     if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {

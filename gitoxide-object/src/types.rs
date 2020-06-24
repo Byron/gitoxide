@@ -1,3 +1,5 @@
+use bstr::ByteSlice;
+use nom::lib::std::fmt::Formatter;
 use quick_error::quick_error;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -19,12 +21,36 @@ pub struct Time {
 pub const SHA1_SIZE: usize = 20;
 
 /// A SHA1 identifying objects
-pub type Id = [u8; SHA1_SIZE];
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub struct Id(pub [u8; SHA1_SIZE]);
 
-pub fn id_from_20_bytes(b: &[u8]) -> Id {
-    let mut id = [0; SHA1_SIZE];
-    id.copy_from_slice(b);
-    id
+impl Id {
+    pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
+        hex::encode_to_slice(self.0, out)
+    }
+
+    pub fn from_20_bytes(b: &[u8]) -> Id {
+        let mut id = [0; SHA1_SIZE];
+        id.copy_from_slice(b);
+        Id(id)
+    }
+
+    pub fn from_hex(buf: &[u8]) -> Result<Id, hex::FromHexError> {
+        use hex::FromHex;
+        Ok(Id(<[u8; 20]>::from_hex(buf)?))
+    }
+
+    pub fn null() -> Id {
+        Id([0u8; 20])
+    }
+}
+
+impl std::fmt::Display for Id {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut buf = [0u8; 40];
+        self.encode_to_40_bytes_slice(&mut buf).unwrap();
+        write!(f, "{}", &buf.as_bstr())
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

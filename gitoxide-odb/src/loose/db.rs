@@ -5,7 +5,6 @@ use crate::{
     loose::{Object, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };
-use hex::FromHex;
 use smallvec::SmallVec;
 use std::{fs, io::Cursor, io::Read, path::PathBuf};
 use walkdir::WalkDir;
@@ -66,9 +65,10 @@ pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error>
     }
 }
 
-fn sha1_path(id: &[u8; 20], mut root: PathBuf) -> PathBuf {
+fn sha1_path(id: &object::Id, mut root: PathBuf) -> PathBuf {
     let mut buf = [0u8; 40];
-    hex::encode_to_slice(id, &mut buf).expect("no failure as everything is preset by now");
+    id.encode_to_40_bytes_slice(&mut buf)
+        .expect("no failure as everything is preset by now");
     let buf = std::str::from_utf8(&buf).expect("ascii only in hex");
     root.push(&buf[..2]);
     root.push(&buf[2..]);
@@ -102,14 +102,14 @@ impl Db {
                                     first_byte.copy_from_slice(c1.as_bytes());
                                     rest.copy_from_slice(c2.as_bytes());
                                 }
-                                if let Ok(b) = <[u8; 20]>::from_hex(&buf[..]) {
+                                if let Ok(b) = object::Id::from_hex(&buf[..]) {
                                     is_valid_path = true;
                                     return b;
                                 }
                             }
                         }
                     }
-                    [0u8; 20]
+                    object::Id::null()
                 });
                 if is_valid_path {
                     Some(e)

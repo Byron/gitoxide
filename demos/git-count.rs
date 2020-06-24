@@ -34,8 +34,8 @@ fn run() -> Result<()> {
         index.kind(),
         index.num_objects(),
         index.version(),
-        hex::encode(index.checksum_of_index()),
-        hex::encode(index.checksum_of_pack()),
+        index.checksum_of_index(),
+        index.checksum_of_pack(),
     )?;
 
     let (deltas, commits, trees, blobs, tags) = index

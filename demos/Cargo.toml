@@ -13,6 +13,5 @@ test = false
 
 [dependencies]
 git-odb = { version = "0.1.0", path = "../gitoxide-odb" }
-hex = "0.3.2"
 rayon = "1.3.0"
 anyhow = "1.0.31"

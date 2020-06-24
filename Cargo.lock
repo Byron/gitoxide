@@ -182,7 +182,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "git-odb",
- "hex 0.3.2",
  "rayon",
 ]
 
@@ -192,7 +191,7 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "btoi",
- "hex 0.4.2",
+ "hex",
  "nom",
  "pretty_assertions",
  "quick-error",
@@ -208,7 +207,7 @@ dependencies = [
  "byteorder",
  "filebuffer",
  "git-object",
- "hex 0.4.2",
+ "hex",
  "miniz_oxide",
  "pretty_assertions",
  "quick-error",
@@ -242,12 +241,6 @@ checksum = "b9586eedd4ce6b3c498bc3b4dd92fc9f11166aa908a914071953768066c67909"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "hex"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
 
 [[package]]
 name = "hex"

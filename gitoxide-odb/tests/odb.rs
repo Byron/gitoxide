@@ -1,8 +1,7 @@
-use hex::FromHex;
 use std::path::PathBuf;
 
-pub fn hex_to_id(hex: &str) -> [u8; 20] {
-    <[u8; 20]>::from_hex(hex).unwrap()
+pub fn hex_to_id(hex: &str) -> git_object::Id {
+    git_object::Id::from_hex(hex.as_bytes()).unwrap()
 }
 
 pub fn fixture_path(path: &str) -> PathBuf {

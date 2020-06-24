@@ -4,7 +4,7 @@
 * [x] decode tree
 * [x] represent blob
 * [x] stream blob
-* [ ] refactor ID into NewType
+* [x] refactor ID into NewType
 * **pack**
    * [ ] validate checksum
    * [x] decode full pack entries
