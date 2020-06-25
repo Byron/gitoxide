@@ -18,7 +18,10 @@ anyhow = "1.0.31"
 structopt = "0.3.14"
 
 [profile.release]
-panic = 'unwind'
+overflow-checks = false
+lto = "fat"
+panic = 'abort'
+codegen-units = 1
 incremental = false
 
 [workspace]
