@@ -4,26 +4,18 @@ use crate::{
 };
 use git_object::Id;
 use smallvec::SmallVec;
-use std::{convert::TryInto, ops::Range};
+use std::convert::TryInto;
 
 #[derive(Debug)]
 struct Delta {
-    data: Range<usize>,
-    header_size: usize,
-    base_size: u64,
-    result_size: u64,
+    decompressed_size: usize,
+    data_offset: u64,
 }
 
 #[derive(Debug)]
 pub enum ResolvedBase {
     InPack(Entry),
     OutOfPack { end: usize },
-}
-
-impl Delta {
-    fn size(&self) -> usize {
-        self.data.end - self.data.start
-    }
 }
 
 /// Reading of objects
@@ -88,30 +80,23 @@ impl File {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 5]>::default();
-        let mut instruction_buffer_size = 0usize;
         let mut cursor = last.clone();
-        let mut base_buffer_end: Option<usize> = None;
+        let mut base_buffer_size: Option<usize> = None;
         // Find the first full base, either an undeltified object in the pack or a reference to another object.
         while cursor.header.is_delta() {
-            let end = instruction_buffer_size
-                .checked_add(cursor.size as usize)
-                .expect("no overflow");
             chain.push(Delta {
-                data: Range {
-                    start: instruction_buffer_size,
-                    end,
-                },
-                header_size: 0,
-                base_size: cursor.data_offset, // keep this value around for later
-                result_size: 0,
+                decompressed_size: cursor
+                    .size
+                    .try_into()
+                    .expect("delta sizes small enough to fit a usize"),
+                data_offset: cursor.data_offset,
             });
-            instruction_buffer_size = end;
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
                 Header::RefDelta { oid } => match resolve(&oid, out) {
                     ResolvedBase::InPack(entry) => entry,
                     ResolvedBase::OutOfPack { end } => {
-                        base_buffer_end = Some(end);
+                        base_buffer_size = Some(end);
                         break;
                     }
                 },
@@ -119,12 +104,16 @@ impl File {
             };
         }
         let (first_buffer_end, second_buffer_end) = {
-            let delta_instructions_size: u64 = chain.iter().map(|d| d.size() as u64).sum();
-            let base_buffer_end = match base_buffer_end {
+            let biggest_delta_instructions_size: u64 = chain
+                .iter()
+                .map(|d| d.decompressed_size as u64)
+                .max()
+                .expect("at least one delta");
+            let base_buffer_size = match base_buffer_size {
                 None => {
                     let base_entry = cursor;
                     out.resize(
-                        (base_entry.size * 2 + delta_instructions_size) // * 2 for worst-case guess
+                        (base_entry.size * 2 + biggest_delta_instructions_size) // * 2 for worst-case guess
                             .try_into()
                             .expect("usize to be big enough for all deltas"),
                         0,
@@ -135,39 +124,19 @@ impl File {
                         .try_into()
                         .expect("usize big enough for single entry base object size")
                 }
-                Some(end) => {
+                Some(size) => {
                     out.resize(
-                        (end as u64 * 2 // * 2 for worst-case guess
-                            + delta_instructions_size)
+                        (size as u64 * 2 // * 2 for worst-case guess
+                            + biggest_delta_instructions_size)
                             .try_into()
                             .expect("usize to be big enough for all deltas"),
                         0,
                     );
-                    end
+                    size
                 }
             };
-            (base_buffer_end, base_buffer_end + base_buffer_end) // works because we have two equally sized sequential regions
+            (base_buffer_size, base_buffer_size * 2) // works because we have two equally sized sequential regions
         };
-
-        // move the instructions offsets to a range where they won't be overwritten, past the second result buffer
-        // conceptually, `out` is: [source-buffer][target-buffer][delta-1..delta-n]
-        for delta in chain.iter_mut() {
-            let data = Range {
-                start: second_buffer_end + delta.data.start,
-                end: second_buffer_end + delta.data.end,
-            };
-            let buf = &mut out[data];
-            self.decompress_entry_inner(
-                delta.base_size, // == entry.data_offset; we just use the slot to carry over necessary information
-                buf,
-            )?;
-            let (base_size, consumed) = delta_header_size(buf);
-            delta.header_size += consumed;
-            delta.base_size = base_size;
-            let (result_size, consumed) = delta_header_size(&buf[consumed..]);
-            delta.header_size += consumed;
-            delta.result_size = result_size;
-        }
 
         // From oldest to most recent, apply all deltas, swapping the buffer back and forth
         // TODO: once we have more tests, we could optimize this memory-intensive work to
@@ -175,31 +144,41 @@ impl File {
         let (buffers, instructions) = out.split_at_mut(second_buffer_end);
         let (mut source_buf, mut target_buf) = buffers.split_at_mut(first_buffer_end);
 
-        for Delta {
-            data,
-            header_size,
-            base_size,
-            result_size,
-        } in chain.iter().rev()
+        // `out` is: [source-buffer][target-buffer][delta-1..delta-n]
+        let mut last_result_size = None;
+        for (
+            delta_idx,
+            Delta {
+                decompressed_size,
+                data_offset: pack_offset,
+            },
+        ) in chain.iter().rev().enumerate()
         {
+            let data = &mut instructions[..*decompressed_size];
+            self.decompress_entry_inner(*pack_offset, data)?;
+            let mut offset = 0;
+            let (base_size, consumed) = delta_header_size(data);
+            offset += consumed;
+            let (result_size, consumed) = delta_header_size(&data[consumed..]);
+            offset += consumed;
+            if delta_idx + 1 == chain.len() {
+                last_result_size = Some(result_size);
+            }
             apply_delta(
-                &source_buf[..*base_size as usize],
-                &mut target_buf[..*result_size as usize],
-                &instructions[data.start + header_size..data.end],
+                &source_buf[..base_size as usize],
+                &mut target_buf[..result_size as usize],
+                &data[offset..],
             );
             // use the target as source for the next delta
             std::mem::swap(&mut source_buf, &mut target_buf);
         }
 
-        let result_size = chain
-            .first()
-            .expect("at least one delta chain item")
-            .result_size as usize;
+        let last_result_size = last_result_size.expect("at least one delta chain item") as usize;
         // uneven chains leave the target buffer after the source buffer
         if chain.len() % 2 == 1 {
-            source_buf[..result_size].copy_from_slice(&target_buf[..result_size]);
+            source_buf[..last_result_size].copy_from_slice(&target_buf[..last_result_size]);
         }
-        out.resize(result_size, 0);
+        out.resize(last_result_size, 0);
         Ok(())
     }
 }
