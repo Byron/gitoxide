@@ -10,6 +10,15 @@ const _TYPE_EXT2: u8 = 5;
 const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct Entry {
+    pub header: Header,
+    /// The decompressed size of the object in bytes
+    pub size: u64,
+    /// absolute offset to compressed object data in the pack
+    pub data_offset: u64,
+}
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Header {
     Commit,

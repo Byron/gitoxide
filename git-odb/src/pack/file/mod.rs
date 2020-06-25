@@ -9,6 +9,9 @@ use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 mod read;
 pub use read::ResolvedBase;
 
+pub mod decoded;
+pub use decoded::Entry;
+
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
@@ -49,15 +52,6 @@ const N32_SIZE: usize = size_of::<u32>();
 pub enum Kind {
     V2,
     V3,
-}
-
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Entry {
-    pub header: decoded::Header,
-    /// The decompressed size of the object in bytes
-    pub size: u64,
-    /// absolute offset to compressed object data in the pack
-    pub data_offset: u64,
 }
 
 pub struct File {
@@ -124,7 +118,7 @@ impl File {
         );
     }
 
-    pub fn entry(&self, offset: u64) -> Entry {
+    pub fn entry(&self, offset: u64) -> decoded::Entry {
         self.assure_v2();
         let pack_offset: usize = offset.try_into().expect("offset representable by machine");
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
@@ -132,7 +126,7 @@ impl File {
         let object_data = &self.data[pack_offset..];
         let (object, decompressed_size, consumed_bytes) =
             decoded::Header::from_bytes(object_data, offset);
-        Entry {
+        decoded::Entry {
             header: object,
             size: decompressed_size,
             data_offset: offset + consumed_bytes,
@@ -178,5 +172,3 @@ impl TryFrom<&Path> for File {
         })
     }
 }
-
-pub mod decoded;
