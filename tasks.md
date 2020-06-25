@@ -18,7 +18,7 @@
    * [ ] validate pack checksum
    * [ ] validate each object sha1/crc2
 * **gio**
-   * [ ] validate pack file
+   * [x] validate pack file
    * [ ] validate index and pack
    * [ ] a verbose mode to list each object in a pack, similar to existing git-verify-pack
 

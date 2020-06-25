@@ -8,6 +8,7 @@ use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 
 mod read;
 pub use read::ResolvedBase;
+use std::io::Read;
 
 quick_error! {
     #[derive(Debug)]
@@ -85,7 +86,15 @@ impl File {
 
         let actual = match std::fs::File::open(&self.path) {
             Ok(mut pack) => {
-                std::io::copy(&mut pack, &mut hasher)?;
+                const BUF_SIZE: usize = u16::MAX as usize;
+                let mut buf = [0u8; BUF_SIZE];
+                let mut bytes_left = self.data.len() - SHA1_SIZE;
+                while bytes_left > 0 {
+                    let out = &mut buf[..BUF_SIZE.min(bytes_left)];
+                    pack.read_exact(out)?;
+                    bytes_left -= out.len();
+                    hasher.update(out);
+                }
                 hasher.digest()
             }
             Err(_) => {
