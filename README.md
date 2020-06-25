@@ -8,6 +8,14 @@ The CLI uses various crates, please see _'Development Status'_ for details.
 
 ## Development Status
 
+* **gitoxide**
+  * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
+    and itself relies on all `git-*` crates.
+  * repository
+    * [x] init
+  * plumbing
+    * [x] pack verify
+    * [x] pack index verify including each object sha1
 * **git-repository**
   * [x] initialize
   * [ ] read and write all data types

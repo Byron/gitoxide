@@ -52,6 +52,13 @@ title "CLI"
         expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_FILE"
       }
     )
+    (with "a valid pack file"
+      PACK_INDEX_FILE="$fixtures/packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"
+      it "verifies the pack index successfully and with desired output" && {
+        WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
+        expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_INDEX_FILE"
+      }
+    )
   )
 )
 
