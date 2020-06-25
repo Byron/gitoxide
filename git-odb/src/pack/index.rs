@@ -161,8 +161,8 @@ impl File {
         self.offset_pack_offset_v2() + self.num_objects as usize * N32_SIZE
     }
 
-    pub fn iter_v1<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
-        Ok(match self.kind {
+    pub fn iter_v1<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
+        match self.kind {
             Kind::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
                 .take(self.num_objects as usize)
@@ -175,12 +175,12 @@ impl File {
                     }
                 }),
             _ => unreachable!("Cannot use iter_v1() on index of type {:?}", self.kind),
-        })
+        }
     }
 
-    pub fn iter_v2<'a>(&'a self) -> Result<impl Iterator<Item = Entry> + 'a, Error> {
+    pub fn iter_v2<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         let pack64_offset = self.offset_pack_offset64_v2();
-        Ok(match self.kind {
+        match self.kind {
             Kind::V2 => izip!(
                 self.data[V2_HEADER_SIZE..].chunks(SHA1_SIZE),
                 self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
@@ -201,13 +201,13 @@ impl File {
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
             _ => unreachable!("Cannot use iter_v2() on index of type {:?}", self.kind),
-        })
+        }
     }
 
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
         match self.kind {
-            Kind::V1 => Box::new(self.iter_v1().expect("correct check")),
-            Kind::V2 => Box::new(self.iter_v2().expect("correct check")),
+            Kind::V1 => Box::new(self.iter_v1()),
+            Kind::V2 => Box::new(self.iter_v2()),
         }
     }
 
