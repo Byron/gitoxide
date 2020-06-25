@@ -75,7 +75,9 @@ impl File {
     #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum(&self) -> Result<Id, ChecksumError> {
         let mut hasher = Sha1::default();
-        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+        let right_before_trailer = self.data.len() - SHA1_SIZE;
+        self.data.prefetch(0, right_before_trailer);
+        hasher.update(&self.data[..right_before_trailer]);
         let actual = hasher.digest();
         let expected = self.checksum();
 
