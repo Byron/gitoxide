@@ -252,7 +252,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gitoxide-cli"
+name = "gitoxide"
 version = "1.0.0"
 dependencies = [
  "anyhow",

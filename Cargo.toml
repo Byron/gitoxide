@@ -1,5 +1,5 @@
 [package]
-name = "gitoxide-cli"
+name = "gitoxide"
 version = "1.0.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 publish = false
@@ -13,7 +13,7 @@ test = false
 doctest = false
 
 [dependencies]
-git-core = { version = "0.1.0", path = "gitoxide-core" }
+git-core = { version = "0.1.0", path = "git-core" }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 
@@ -26,8 +26,8 @@ incremental = false
 
 [workspace]
 members = [
-    "gitoxide-object",
-    "gitoxide-odb",
-    "gitoxide-core",
+    "git-object",
+    "git-odb",
+    "git-core",
     "demos"
 ]

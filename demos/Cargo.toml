@@ -12,14 +12,7 @@ doctest = false
 test = false
 
 [dependencies]
-git-odb = { version = "0.1.0", path = "../gitoxide-odb" }
+git-odb = { version = "0.1.0", path = "../git-odb" }
 rayon = "1.3.0"
 anyhow = "1.0.31"
-
-[profile.release]
-overflow-checks = false
-lto = "fat"
-panic = 'abort'
-codegen-units = 1
-incremental = false
 
