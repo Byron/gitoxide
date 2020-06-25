@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use gitoxide_core as core;
-use std::io::stdout;
+use std::io::{stderr, stdout};
 use structopt::StructOpt;
 
 mod options {
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
         options::Subcommands::Init => core::init(),
         options::Subcommands::Plumbing(cmd) => match cmd {
             options::Plumbing::VerifyPack { path } => {
-                core::verify_pack_or_pack_index(path, stdout())
+                core::verify_pack_or_pack_index(path, stdout(), stderr())
             }
         },
     }?;

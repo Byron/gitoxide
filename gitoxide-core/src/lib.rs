@@ -5,7 +5,11 @@ pub fn init() -> Result<()> {
     git_repository::init::repository().with_context(|| "Repository initialization failed")
 }
 
-pub fn verify_pack_or_pack_index(path: impl AsRef<Path>, mut out: impl io::Write) -> Result<()> {
+pub fn verify_pack_or_pack_index(
+    path: impl AsRef<Path>,
+    mut out: impl io::Write,
+    mut err: impl io::Write,
+) -> Result<()> {
     let path = path.as_ref();
     let ext = path.extension()
         .and_then(|ext| ext.to_str())
@@ -18,7 +22,14 @@ pub fn verify_pack_or_pack_index(path: impl AsRef<Path>, mut out: impl io::Write
         "idx" => {
             let idx = git_odb::pack::index::File::at(path)
                 .with_context(|| "Could not open pack index file")?;
-            idx.verify_checksum_of_index()?;
+            let packfile_path = path.with_extension("pack");
+            let pack = git_odb::pack::File::at(&packfile_path)
+                .or_else(|e| {
+                    writeln!(err, "Could not find matching pack file at '{}' - only index file will be verified, error was: {}", packfile_path.display(), e).ok();
+                    Err(e)
+                })
+                .ok();
+            idx.verify_checksum_of_index(pack.as_ref())?;
         }
         ext => {
             return Err(anyhow!(

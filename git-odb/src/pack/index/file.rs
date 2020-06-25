@@ -1,3 +1,4 @@
+use crate::pack;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
@@ -54,6 +55,14 @@ quick_error! {
         Mismatch { expected: object::Id, actual: object::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
+        PackChecksum (err: pack::ChecksumError) {
+            display("The pack of this index file failed to verify its checksums")
+            from()
+            cause(err)
+        }
+        PackMismatch { expected: object::Id, actual: object::Id } {
+            display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
+        }
     }
 }
 
@@ -78,17 +87,39 @@ impl File {
     pub fn checksum_of_index(&self) -> object::Id {
         object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
-    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
-    pub fn verify_checksum_of_index(&self) -> Result<object::Id, ChecksumError> {
-        let mut hasher = crate::sha1::Sha1::default();
-        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-        let actual = hasher.digest();
 
-        let expected = self.checksum_of_index();
-        if actual == expected {
-            Ok(actual)
-        } else {
-            Err(ChecksumError::Mismatch { actual, expected })
+    /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
+    /// It will be used to validate internal integrity of the pack before checking each objects integrity
+    /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC hash.
+    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
+    pub fn verify_checksum_of_index(
+        &self,
+        pack: Option<&pack::File>,
+    ) -> Result<object::Id, ChecksumError> {
+        let verify_self = || {
+            let mut hasher = crate::sha1::Sha1::default();
+            hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+            let actual = hasher.digest();
+
+            let expected = self.checksum_of_index();
+            if actual == expected {
+                Ok(actual)
+            } else {
+                Err(ChecksumError::Mismatch { actual, expected })
+            }
+        };
+        match pack {
+            None => verify_self(),
+            Some(pack) => {
+                if self.checksum_of_pack() != pack.checksum() {
+                    return Err(ChecksumError::PackMismatch {
+                        actual: pack.checksum(),
+                        expected: self.checksum_of_pack(),
+                    });
+                }
+                pack.verify_checksum()?;
+                verify_self()
+            }
         }
     }
 

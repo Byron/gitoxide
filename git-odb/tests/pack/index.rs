@@ -24,7 +24,7 @@ fn pack_lookup() {
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
-            idx.verify_checksum_of_index().unwrap(),
+            idx.verify_checksum_of_index(Some(&pack)).unwrap(),
             idx.checksum_of_index()
         );
         for idx_entry in idx.iter() {
@@ -66,6 +66,10 @@ fn iter() {
         assert_eq!(idx.kind(), *kind);
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
+        assert_eq!(
+            idx.verify_checksum_of_index(None).unwrap(),
+            idx.checksum_of_index()
+        );
         assert_eq!(idx.checksum_of_index(), hex_to_id(index_checksum));
         assert_eq!(idx.checksum_of_pack(), hex_to_id(pack_checksum));
         assert_eq!(idx.iter().count(), *num_objects as usize);
