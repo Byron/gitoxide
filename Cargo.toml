@@ -29,5 +29,6 @@ members = [
     "git-object",
     "git-odb",
     "git-core",
+    "git-transport",
     "demos"
 ]

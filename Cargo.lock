@@ -252,6 +252,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-transport"
+version = "0.0.0"
+
+[[package]]
 name = "gitoxide"
 version = "1.0.0"
 dependencies = [
