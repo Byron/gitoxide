@@ -141,10 +141,10 @@ impl File {
         // From oldest to most recent, apply all deltas, swapping the buffer back and forth
         // TODO: once we have more tests, we could optimize this memory-intensive work to
         // analyse the delta-chains to only copy data once.
+        // `out` is: [source-buffer][target-buffer][max-delta-instructions-buffer]
         let (buffers, instructions) = out.split_at_mut(second_buffer_end);
         let (mut source_buf, mut target_buf) = buffers.split_at_mut(first_buffer_end);
 
-        // `out` is: [source-buffer][target-buffer][delta-1..delta-n]
         let mut last_result_size = None;
         for (
             delta_idx,
@@ -156,18 +156,15 @@ impl File {
         {
             let data = &mut instructions[..*decompressed_size];
             self.decompress_entry_inner(*pack_offset, data)?;
-            let mut offset = 0;
-            let (base_size, consumed) = delta_header_size(data);
-            offset += consumed;
-            let (result_size, consumed) = delta_header_size(&data[consumed..]);
-            offset += consumed;
+            let (base_size, data) = delta_header_size(data);
+            let (result_size, data) = delta_header_size(data);
             if delta_idx + 1 == chain.len() {
                 last_result_size = Some(result_size);
             }
             apply_delta(
                 &source_buf[..base_size as usize],
                 &mut target_buf[..result_size as usize],
-                &data[offset..],
+                data,
             );
             // use the target as source for the next delta
             std::mem::swap(&mut source_buf, &mut target_buf);
@@ -236,7 +233,7 @@ fn apply_delta(base: &[u8], mut target: &mut [u8], mut data: &[u8]) {
     }
 }
 
-fn delta_header_size(d: &[u8]) -> (u64, usize) {
+fn delta_header_size(d: &[u8]) -> (u64, &[u8]) {
     let mut i = 0;
     let mut size = 0u64;
     let mut consumed = 0;
@@ -248,5 +245,5 @@ fn delta_header_size(d: &[u8]) -> (u64, usize) {
             break;
         }
     }
-    (size, consumed)
+    (size, &d[consumed..])
 }
