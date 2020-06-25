@@ -140,8 +140,8 @@ This guide documents which features are available for each of the crates provide
     CPUs that support it, like AMD Ryzen.
 * **`--all-features`**
   * Chooses `minimal-sha1`
-* **`--no-default-features`** (fails)
-  * Cannot work as this prevents any of the sha1 crates from being pulled in, even though a sha1 implementation is strictly required.
+* **`--no-default-features`**
+  * Makes any operation relying on generating Sha1 hashes unavailable.
  
 ## Development Practices
 

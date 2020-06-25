@@ -1,3 +1,4 @@
+#[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
 use crate::sha1::Sha1;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
@@ -71,6 +72,7 @@ impl File {
     pub fn checksum(&self) -> Id {
         Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
+    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum(&self) -> Result<Id, ChecksumError> {
         let mut hasher = Sha1::default();
         hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);

@@ -9,7 +9,7 @@
    * [x] minimal dependencies
    * [x] maximum performance
 * **pack**
-   * [ ] validate checksum
+   * [x] validate checksum
    * [x] decode full pack entries
    * [x] decode full objects
    * [x] decode delta objects
