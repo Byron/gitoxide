@@ -3,6 +3,7 @@ use filebuffer::FileBuffer;
 use git_object as object;
 use object::SHA1_SIZE;
 use quick_error::quick_error;
+use std::convert::TryFrom;
 use std::{mem::size_of, path::Path};
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";
@@ -211,8 +212,15 @@ impl File {
     }
 
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
-        let data =
-            FileBuffer::open(path.as_ref()).map_err(|e| Error::Io(e, path.as_ref().to_owned()))?;
+        Self::try_from(path.as_ref())
+    }
+}
+
+impl TryFrom<&Path> for File {
+    type Error = Error;
+
+    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+        let data = FileBuffer::open(path).map_err(|e| Error::Io(e, path.to_owned()))?;
         let idx_len = data.len();
         if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
             return Err(Error::Corrupt(format!(
