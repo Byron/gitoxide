@@ -55,9 +55,13 @@ quick_error! {
         Mismatch { expected: object::Id, actual: object::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
-        PackChecksum (err: pack::ChecksumError) {
+        PackChecksum(err: pack::ChecksumError) {
             display("The pack of this index file failed to verify its checksums")
             from()
+            cause(err)
+        }
+        PackDecode(err: pack::Error, id: object::Id, offset: u64) {
+            display("Object {} at offset {} could not be decoded", id, offset)
             cause(err)
         }
         PackMismatch { expected: object::Id, actual: object::Id } {
@@ -90,7 +94,7 @@ impl File {
 
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
-    /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC hash.
+    /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum_of_index(
         &self,
@@ -118,7 +122,17 @@ impl File {
                     });
                 }
                 pack.verify_checksum()?;
-                verify_self()
+                let id = verify_self()?;
+
+                let mut buf = Vec::with_capacity(2048);
+                for entry in self.iter() {
+                    pack.decode_entry(pack.entry(entry.offset), &mut buf, |id, _| {
+                        unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
+                    })
+                    .map_err(|e| ChecksumError::PackDecode(e, entry.oid, entry.offset))?;
+                    // TODO: check SHA1 and CRC32
+                }
+                Ok(id)
             }
         }
     }

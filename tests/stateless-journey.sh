@@ -46,14 +46,14 @@ title "CLI"
 
   (when "running 'plumbing verify pack"
     (with "a valid pack file"
-      PACK_FILE="$fixtures/packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack"
+      PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
       it "verifies the pack successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-success" \
         expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_FILE"
       }
     )
     (with "a valid pack file"
-      PACK_INDEX_FILE="$fixtures/packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"
+      PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
       it "verifies the pack index successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
         expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_INDEX_FILE"
