@@ -20,5 +20,5 @@
 * **gio**
    * [ ] validate pack file
    * [ ] validate index and pack
-   * [ ] verbose mode to list each object in pack, similar to existing git-verify-pack
+   * [ ] a verbose mode to list each object in a pack, similar to existing git-verify-pack
 

@@ -19,15 +19,25 @@ The CLI uses various libraries to implement
 
 ## Tasks
 
-* **git-core**
-  * **Repository**
-    * [x] initialize
-    * [ ] references
-    * [ ] index
-    * [ ] odb
-    * [ ] remotes with push and pull
-    * [ ] merging
-    * [ ] configuration
+* **git-repository**
+  * [x] initialize
+  * [ ] read and write all data types
+  * [ ] rev-parsing and ref history
+  * [ ] remotes with push and pull
+  * [ ] configuration
+  * [ ] merging
+* **git-config**
+  * read and write git configuration files
+* **git-refs**
+  * Handle symbolic references and packed references
+  * discover them in typical folder structures
+* **git-index**
+  * read and write a git-index file
+  * add and remove entries
+* **git-diff**
+  * diffing of git-object::Tree structures
+  * diffing, merging, working with hunks of data
+  * find differences between various states, i.e. index, working tree, commit-tree
 * **git-object**
     * *decode*
       * [x] commit
