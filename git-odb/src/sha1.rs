@@ -11,6 +11,18 @@ mod _impl {
             git_object::Id(self.0.digest().bytes())
         }
     }
+
+    use std::io::{Result, Write};
+    impl Write for Sha1 {
+        fn write(&mut self, buf: &[u8]) -> Result<usize> {
+            self.0.update(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> Result<()> {
+            Ok(())
+        }
+    }
 }
 
 #[cfg(all(feature = "fast-sha1", not(feature = "minimal-sha1")))]
@@ -25,6 +37,18 @@ mod _impl {
         }
         pub fn digest(self) -> git_object::Id {
             git_object::Id(self.0.finalize().into())
+        }
+    }
+
+    use std::io::{Result, Write};
+    impl Write for Sha1 {
+        fn write(&mut self, buf: &[u8]) -> Result<usize> {
+            self.0.update(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> Result<()> {
+            Ok(())
         }
     }
 }

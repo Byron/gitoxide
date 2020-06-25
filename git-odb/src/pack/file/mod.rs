@@ -35,6 +35,11 @@ quick_error! {
         Mismatch { expected: Id, actual: Id } {
             display("checksum mismatch: expected {}, got {}", expected, actual)
         }
+        Io(err: std::io::Error) {
+            display("could not read pack file")
+            from()
+            cause(err)
+        }
     }
 }
 
@@ -57,6 +62,8 @@ pub struct Entry {
 
 pub struct File {
     data: FileBuffer,
+    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
+    path: std::path::PathBuf,
     kind: Kind,
     num_objects: u32,
 }
@@ -75,12 +82,21 @@ impl File {
     #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum(&self) -> Result<Id, ChecksumError> {
         let mut hasher = Sha1::default();
-        let right_before_trailer = self.data.len() - SHA1_SIZE;
-        self.data.prefetch(0, right_before_trailer);
-        hasher.update(&self.data[..right_before_trailer]);
-        let actual = hasher.digest();
-        let expected = self.checksum();
 
+        let actual = match std::fs::File::open(&self.path) {
+            Ok(mut pack) => {
+                std::io::copy(&mut pack, &mut hasher)?;
+                hasher.digest()
+            }
+            Err(_) => {
+                let right_before_trailer = self.data.len() - SHA1_SIZE;
+                self.data.prefetch(0, right_before_trailer);
+                hasher.update(&self.data[..right_before_trailer]);
+                hasher.digest()
+            }
+        };
+
+        let expected = self.checksum();
         if actual == expected {
             Ok(actual)
         } else {
@@ -146,6 +162,8 @@ impl TryFrom<&Path> for File {
 
         Ok(File {
             data,
+            #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
+            path: path.to_owned(),
             kind,
             num_objects,
         })
