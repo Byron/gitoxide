@@ -7,6 +7,10 @@ publish = false
 license = "MIT"
 edition = "2018"
 
+[lib]
+doctest = false
+test = false
+
 [dependencies]
 git-repository = { version = "0.1.0", path = "../git-repository" }
 git-odb = { version = "0.1.0", path = "../git-odb", default-features = false, features = ["fast-sha1"] }
