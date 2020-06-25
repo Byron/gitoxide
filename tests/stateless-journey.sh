@@ -43,5 +43,13 @@ title "CLI"
       )
     )
   )
+  (with "TODO: a packfile that we built ourselves"
+    it "verifies the pack correctly" && {
+      expect_run $SUCCESSFULLY true
+    }
+    it "verifies the index correctly" && {
+      expect_run $SUCCESSFULLY true
+    }
+  )
 )
 
