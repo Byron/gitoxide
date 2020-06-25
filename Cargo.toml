@@ -15,7 +15,7 @@ doctest = false
 
 [dependencies]
 git-repository = { version = "0.1.0", path = "git-repository" }
-git-odb = { version = "0.1.0", path = "git-odb" }
+git-odb = { version = "0.1.0", path = "git-odb", default-features = false, features = ["fast-sha1"] }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 
