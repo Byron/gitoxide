@@ -1,5 +1,6 @@
 [package]
 name = "gitoxide"
+description = "A command-line application for interacting with git repositories"
 version = "1.0.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 publish = false
@@ -14,6 +15,7 @@ doctest = false
 
 [dependencies]
 git-repository = { version = "0.1.0", path = "git-repository" }
+git-odb = { version = "0.1.0", path = "git-odb" }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 

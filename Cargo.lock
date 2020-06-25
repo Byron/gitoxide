@@ -260,6 +260,7 @@ name = "gitoxide"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "git-odb",
  "git-repository",
  "structopt",
 ]
