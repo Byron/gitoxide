@@ -1,10 +1,8 @@
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_object as object;
-use object::SHA1_SIZE;
+use git_object::{self as object, SHA1_SIZE};
 use quick_error::quick_error;
-use std::convert::TryFrom;
-use std::{mem::size_of, path::Path};
+use std::{convert::TryFrom, mem::size_of, path::Path};
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";
 const FOOTER_SIZE: usize = SHA1_SIZE * 2;
@@ -50,6 +48,15 @@ pub struct Entry {
     pub crc32: Option<u32>,
 }
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum ChecksumError {
+        Mismatch { expected: object::Id, actual: object::Id } {
+            display("index checksum mismatch: expected {}, got {}", expected, actual)
+        }
+    }
+}
+
 pub struct File {
     data: FileBuffer,
     kind: Kind,
@@ -71,6 +78,20 @@ impl File {
     pub fn checksum_of_index(&self) -> object::Id {
         object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
+    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
+    pub fn verify_checksum_of_index(&self) -> Result<object::Id, ChecksumError> {
+        let mut hasher = crate::sha1::Sha1::default();
+        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+        let actual = hasher.digest();
+
+        let expected = self.checksum_of_index();
+        if actual == expected {
+            Ok(actual)
+        } else {
+            Err(ChecksumError::Mismatch { actual, expected })
+        }
+    }
+
     pub fn checksum_of_pack(&self) -> object::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
         object::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])

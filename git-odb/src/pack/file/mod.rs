@@ -1,8 +1,6 @@
-#[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
-use crate::sha1::Sha1;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_object::{Id, SHA1_SIZE};
+use git_object::{self as object, SHA1_SIZE};
 use quick_error::quick_error;
 use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 
@@ -35,8 +33,8 @@ quick_error! {
 quick_error! {
     #[derive(Debug)]
     pub enum ChecksumError {
-        Mismatch { expected: Id, actual: Id } {
-            display("checksum mismatch: expected {}, got {}", expected, actual)
+        Mismatch { expected: object::Id, actual: object::Id } {
+            display("pack checksum mismatch: expected {}, got {}", expected, actual)
         }
         Io(err: std::io::Error) {
             display("could not read pack file")
@@ -70,12 +68,12 @@ impl File {
     pub fn num_objects(&self) -> u32 {
         self.num_objects
     }
-    pub fn checksum(&self) -> Id {
-        Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    pub fn checksum(&self) -> object::Id {
+        object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
     #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
-    pub fn verify_checksum(&self) -> Result<Id, ChecksumError> {
-        let mut hasher = Sha1::default();
+    pub fn verify_checksum(&self) -> Result<object::Id, ChecksumError> {
+        let mut hasher = crate::sha1::Sha1::default();
 
         let actual = match std::fs::File::open(&self.path) {
             Ok(mut pack) => {
