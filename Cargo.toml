@@ -14,8 +14,7 @@ test = false
 doctest = false
 
 [dependencies]
-git-repository = { version = "0.1.0", path = "git-repository" }
-git-odb = { version = "0.1.0", path = "git-odb", default-features = false, features = ["fast-sha1"] }
+gitoxide-core = { version = "0.1.0", path = "gitoxide-core" }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 
@@ -28,6 +27,7 @@ incremental = false
 
 [workspace]
 members = [
+    "gitoxide-core",
     "git-object",
     "git-odb",
     "git-repository",

@@ -1,6 +1,8 @@
 #![forbid(unsafe_code)]
 
-use anyhow::{Context, Result};
+use anyhow::Result;
+use gitoxide_core as core;
+use std::io::stdout;
 use structopt::StructOpt;
 
 mod options {
@@ -48,16 +50,10 @@ mod options {
 fn main() -> Result<()> {
     let args = options::Args::from_args();
     match args.cmd {
-        options::Subcommands::Init => {
-            git_repository::init::repository().with_context(|| "Repository initialization failed")
-        }
+        options::Subcommands::Init => core::init(),
         options::Subcommands::Plumbing(cmd) => match cmd {
             options::Plumbing::VerifyPack { path } => {
-                let pack =
-                    git_odb::pack::File::at(path).with_context(|| "Could not open pack file")?;
-                pack.verify_checksum().with_context(|| "Failed")?;
-                println!("OK");
-                Ok(())
+                core::verify_pack_or_pack_index(path, stdout())
             }
         },
     }?;

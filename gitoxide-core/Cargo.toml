@@ -1,0 +1,13 @@
+[package]
+name = "gitoxide-core"
+description = "The library implementating all capabilities of the gitoxide CLI"
+version = "0.1.0"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+publish = false
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+git-repository = { version = "0.1.0", path = "../git-repository" }
+git-odb = { version = "0.1.0", path = "../git-odb", default-features = false, features = ["fast-sha1"] }
+anyhow = "1.0.31"

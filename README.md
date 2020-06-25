@@ -1,23 +1,12 @@
 [![Rust](https://github.com/Byron/git-oxide/workflows/Rust/badge.svg)](https://github.com/Byron/git-oxide/actions)
 
 **gio** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
-user-experience, and perform as good or better than the native implementation.
+user-experience, and perform as good or better than the native implementation, and make git tooling more
+hackable.
 
-The CLI uses various libraries to implement
+The CLI uses various crates, please see _'Development Status'_ for details.
 
- * [ ] a git *repository* and *references* (see `git-core`)
- * [ ] encoding and decoding git objects (see `git-object`)
- * [ ] a git object database (see `git-odb` and
-   [examples](https://github.com/Byron/git-oxide/tree/master/lib/git-odb/examples))
- * [ ] a transport layer for push and pull (see `git-transport`)
-
- **This project is early in development and currently strictly for fun**
- 
- **Currently I am implementing whatever is needed to set a new record for solving
- [this
- problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)**
-
-## Tasks
+## Development Status
 
 * **git-repository**
   * [x] initialize
@@ -211,4 +200,9 @@ Thus one has to post-process the file by reducing its size by one using `truncat
   * We use the `izip!` macro in code
 * **deflate2** _(MIT Licensed)_
   * We use various abstractions to implement decompression and compression directly on top of the rather low-level `miniz_oxide` crate
+
+## Fun facts
+
+* Originally I was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)
+  and believe that with `gitoxide` it will be possible to provide the fastest implementation for that problem.
 

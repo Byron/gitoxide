@@ -260,9 +260,17 @@ name = "gitoxide"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "gitoxide-core",
+ "structopt",
+]
+
+[[package]]
+name = "gitoxide-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "git-odb",
  "git-repository",
- "structopt",
 ]
 
 [[package]]
