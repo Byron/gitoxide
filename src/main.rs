@@ -29,7 +29,7 @@ fn main() -> Result<()> {
     let args = options::Args::from_args();
     match args.cmd {
         options::Subcommands::Init => {
-            git_core::init::repository().with_context(|| "Repository initialization failed")
+            git_repository::init::repository().with_context(|| "Repository initialization failed")
         }
     }?;
     Ok(())

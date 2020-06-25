@@ -13,7 +13,7 @@ test = false
 doctest = false
 
 [dependencies]
-git-core = { version = "0.1.0", path = "git-core" }
+git-repository = { version = "0.1.0", path = "git-repository" }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 
@@ -28,7 +28,7 @@ incremental = false
 members = [
     "git-object",
     "git-odb",
-    "git-core",
+    "git-repository",
     "git-transport",
     "demos"
 ]

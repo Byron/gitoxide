@@ -1,5 +1,5 @@
 [package]
-name = "git-core"
+name = "git-repository"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 publish = false

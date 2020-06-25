@@ -204,13 +204,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-core"
-version = "0.1.0"
-dependencies = [
- "quick-error",
-]
-
-[[package]]
 name = "git-demos"
 version = "0.1.0"
 dependencies = [
@@ -252,6 +245,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-repository"
+version = "0.1.0"
+dependencies = [
+ "quick-error",
+]
+
+[[package]]
 name = "git-transport"
 version = "0.0.0"
 
@@ -260,7 +260,7 @@ name = "gitoxide"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "git-core",
+ "git-repository",
  "structopt",
 ]
 
