@@ -124,6 +124,24 @@ Provide a CLI to for the most basic user journey:
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push
+
+## Cargo features guide
+
+Cargo uses feature toggles to control which dependencies are pulled in, allowing users to specialize crates to fit their usage.
+Ideally, these should be additive.
+This guide documents which features are available for each of the crates provided here and how they function.
+
+### git-odb
+
+* **minimal-sha1** (default)
+  * a single-crate implementation of sha1, which aims to be small without being slow
+* **fast-sha1** (mutually exclusive to `minimal-sha1`)
+  * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
+    CPUs that support it, like AMD Ryzen.
+* **`--all-features`**
+  * Chooses `minimal-sha1`
+* **`--no-default-features`** (fails)
+  * Cannot work as this prevents any of the sha1 crates from being pulled in, even though a sha1 implementation is strictly required.
  
 ## Development Practices
 

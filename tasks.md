@@ -7,7 +7,7 @@
 * [x] refactor ID into NewType
 * **sha1**
    * [x] minimal dependencies
-   * [ ] maximum performance
+   * [x] maximum performance
 * **pack**
    * [ ] validate checksum
    * [x] decode full pack entries

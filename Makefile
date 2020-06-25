@@ -33,6 +33,7 @@ tests: check unit-tests journey-tests ## run all tests, including journey tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all
+	cd gitoxide-odb && cargo check --no-default-features --features fast-sha1 && cargo check --all-features
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
