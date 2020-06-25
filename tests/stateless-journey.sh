@@ -43,13 +43,15 @@ title "CLI"
       )
     )
   )
-  (with "TODO: a packfile that we built ourselves"
-    it "verifies the pack correctly" && {
-      expect_run $SUCCESSFULLY true
-    }
-    it "verifies the index correctly" && {
-      expect_run $SUCCESSFULLY true
-    }
+
+  (when "running 'plumbing verify pack"
+    (with "a valid pack file"
+      PACK_FILE="$fixtures/packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack"
+      it "verifies the pack successfully and with desired output" && {
+        WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-success" \
+        expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_FILE"
+      }
+    )
   )
 )
 
