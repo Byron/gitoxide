@@ -1,3 +1,4 @@
+use crate::sha1::Sha1;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{Id, SHA1_SIZE};
@@ -23,6 +24,15 @@ quick_error! {
         ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
             display("{}", msg)
             cause(err)
+        }
+    }
+}
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum ChecksumError {
+        Mismatch { expected: Id, actual: Id } {
+            display("checksum mismatch: expected {}, got {}", expected, actual)
         }
     }
 }
@@ -60,6 +70,18 @@ impl File {
     }
     pub fn checksum(&self) -> Id {
         Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    }
+    pub fn verify_checksum(&self) -> Result<Id, ChecksumError> {
+        let mut hasher = Sha1::default();
+        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+        let actual = hasher.digest();
+        let expected = self.checksum();
+
+        if actual == expected {
+            Ok(actual)
+        } else {
+            Err(ChecksumError::Mismatch { actual, expected })
+        }
     }
 
     fn assure_v2(&self) {

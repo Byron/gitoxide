@@ -5,6 +5,9 @@
 * [x] represent blob
 * [x] stream blob
 * [x] refactor ID into NewType
+* **sha1**
+   * [x] minimal dependencies
+   * [ ] maximum performance
 * **pack**
    * [ ] validate checksum
    * [x] decode full pack entries

@@ -18,6 +18,12 @@ mod method {
             "0f3ea84cd1bba10c2a03d736a460635082833e59"
         );
     }
+
+    #[test]
+    fn verify_checksum() {
+        let p = pack_at(SMALL_PACK);
+        assert_eq!(p.verify_checksum().unwrap(), p.checksum());
+    }
 }
 
 /// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`

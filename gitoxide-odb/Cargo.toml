@@ -8,6 +8,10 @@ edition = "2018"
 [lib]
 doctest = false
 
+[features]
+default = ["minimal-sha1"]
+minimal-sha1 = ["sha1"]
+
 [dependencies]
 quick-error = "1.2.3"
 walkdir = "2.1.4"
@@ -17,6 +21,7 @@ filebuffer = "0.4.0"
 byteorder = "1.2.3"
 git-object = { version = "0.1.0", path = "../gitoxide-object" }
 btoi = "0.4.2"
+sha1 = { version = "0.6.0", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"

@@ -211,6 +211,7 @@ dependencies = [
  "miniz_oxide",
  "pretty_assertions",
  "quick-error",
+ "sha1",
  "smallvec",
  "walkdir",
 ]
@@ -429,6 +430,12 @@ name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
+
+[[package]]
+name = "sha1"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
 
 [[package]]
 name = "smallvec"
