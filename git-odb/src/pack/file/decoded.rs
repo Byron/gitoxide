@@ -37,6 +37,16 @@ pub enum Header {
 }
 
 impl Header {
+    pub fn to_kind(&self) -> Option<object::Kind> {
+        use object::Kind::*;
+        Some(match self {
+            Header::Tree => Tag,
+            Header::Blob => Blob,
+            Header::Commit => Commit,
+            Header::Tag => Tag,
+            Header::RefDelta { .. } | Header::OfsDelta { .. } => return None,
+        })
+    }
     pub fn is_delta(&self) -> bool {
         match self {
             Header::OfsDelta { .. } | Header::RefDelta { .. } => true,

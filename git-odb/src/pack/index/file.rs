@@ -67,6 +67,9 @@ quick_error! {
         PackMismatch { expected: object::Id, actual: object::Id } {
             display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
         }
+        PackObjectMismatch { expected: object::Id, actual: object::Id, offset: u64, kind: object::Kind} {
+            display("The SHA1 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
+        }
     }
 }
 
@@ -125,14 +128,36 @@ impl File {
                 let id = verify_self()?;
 
                 let mut buf = Vec::with_capacity(2048);
-                for entry in self.iter() {
-                    pack.decode_entry(pack.entry(entry.offset), &mut buf, |id, _| {
-                        unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
-                    })
-                    .map_err(|e| ChecksumError::PackDecode(e, entry.oid, entry.offset))?;
-                    // let mut hasher = crate::sha1::Sha1::default();
-                    // hasher.update(buf.as_slice());
-                    // TODO: check SHA1 and CRC32
+                for index_entry in self.iter() {
+                    let pack_entry = pack.entry(index_entry.offset);
+                    let object_kind = pack
+                        .decode_entry(pack_entry, &mut buf, |id, _| {
+                            unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
+                        })
+                        .map_err(|e| {
+                            ChecksumError::PackDecode(e, index_entry.oid, index_entry.offset)
+                        })?;
+                    let mut header_buf = [0u8; 64];
+                    let header_size = crate::loose::db::serde::write_header(
+                        object_kind,
+                        buf.len(),
+                        &mut header_buf[..],
+                    )
+                    .expect("header buffer to be big enough");
+                    let mut hasher = crate::sha1::Sha1::default();
+                    hasher.update(&header_buf[..header_size]);
+                    hasher.update(buf.as_slice());
+                    let actual_oid = hasher.digest();
+                    if actual_oid != index_entry.oid {
+                        return Err(ChecksumError::PackObjectMismatch {
+                            actual: actual_oid,
+                            expected: index_entry.oid.clone(),
+                            offset: index_entry.offset,
+                            kind: object_kind,
+                        });
+                    }
+                    dbg!(object_kind, index_entry.offset);
+                    // TODO: CRC32 (in-pack data)
                 }
                 Ok(id)
             }

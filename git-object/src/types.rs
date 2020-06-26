@@ -55,10 +55,10 @@ impl std::fmt::Display for Id {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Kind {
-    Tag,
-    Commit,
     Tree,
     Blob,
+    Commit,
+    Tag,
 }
 quick_error! {
     #[derive(Debug)]
@@ -73,8 +73,8 @@ impl Kind {
     pub fn from_bytes(s: &[u8]) -> Result<Kind, Error> {
         Ok(match s {
             b"tree" => Kind::Tree,
-            b"commit" => Kind::Commit,
             b"blob" => Kind::Blob,
+            b"commit" => Kind::Commit,
             b"tag" => Kind::Tag,
             _ => return Err(Error::InvalidObjectKind(s.into())),
         })
@@ -87,5 +87,11 @@ impl Kind {
             Kind::Blob => b"blob",
             Kind::Tag => b"tag",
         }
+    }
+}
+
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(std::str::from_utf8(self.to_bytes()).expect("valid utf8 in kind name"))
     }
 }

@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use std::{fs, io::Cursor, io::Read, path::PathBuf};
 use walkdir::WalkDir;
 
-mod serde;
+pub(crate) mod serde;
 
 pub struct Db {
     pub path: PathBuf,

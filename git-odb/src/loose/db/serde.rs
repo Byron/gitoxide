@@ -29,8 +29,8 @@ fn kind_to_bytes_with_space(object: object::Kind) -> &'static [u8] {
     use object::Kind::*;
     match object {
         Tree => b"tree ",
-        Commit => b"commit ",
         Blob => b"blob ",
+        Commit => b"commit ",
         Tag => b"tag ",
     }
 }

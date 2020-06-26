@@ -2,7 +2,7 @@ use crate::{
     pack::{Entry, Error, File},
     zlib::Inflate,
 };
-use git_object::Id;
+use git_object as object;
 use smallvec::SmallVec;
 use std::{convert::TryInto, ops::Range};
 
@@ -19,7 +19,7 @@ struct Delta {
 #[derive(Debug)]
 pub enum ResolvedBase {
     InPack(Entry),
-    OutOfPack { end: usize },
+    OutOfPack { kind: object::Kind, end: usize },
 }
 
 /// Reading of objects
@@ -63,8 +63,8 @@ impl File {
         &self,
         entry: Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(&Id, &mut Vec<u8>) -> ResolvedBase,
-    ) -> Result<(), Error> {
+        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> ResolvedBase,
+    ) -> Result<object::Kind, Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
@@ -76,6 +76,7 @@ impl File {
                     0,
                 );
                 self.decompress_entry(&entry, out.as_mut_slice())
+                    .map(|()| entry.header.to_kind().expect("a non-delta entry"))
             }
             OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out),
         }
@@ -84,14 +85,15 @@ impl File {
     fn resolve_deltas(
         &self,
         last: Entry,
-        resolve: impl Fn(&Id, &mut Vec<u8>) -> ResolvedBase,
+        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> ResolvedBase,
         out: &mut Vec<u8>,
-    ) -> Result<(), Error> {
+    ) -> Result<object::Kind, Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();
         let mut cursor = last.clone();
         let mut base_buffer_size: Option<usize> = None;
+        let mut object_kind: Option<object::Kind> = None;
 
         // Find the first full base, either an undeltified object in the pack or a reference to another object.
         let mut total_delta_data_size: u64 = 0;
@@ -115,8 +117,9 @@ impl File {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
                 Header::RefDelta { oid } => match resolve(&oid, out) {
                     ResolvedBase::InPack(entry) => entry,
-                    ResolvedBase::OutOfPack { end } => {
+                    ResolvedBase::OutOfPack { end, kind } => {
                         base_buffer_size = Some(end);
+                        object_kind = Some(kind);
                         break;
                     }
                 },
@@ -203,6 +206,7 @@ impl File {
             if let None = base_buffer_size {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
+                object_kind = base_entry.header.to_kind();
                 self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
             }
 
@@ -247,7 +251,8 @@ impl File {
             source_buf[..last_result_size].copy_from_slice(&target_buf[..last_result_size]);
         }
         out.resize(last_result_size, 0);
-        Ok(())
+        Ok(object_kind
+            .expect("a base object as root of any delta chain that we are here to resolve"))
     }
 }
 
