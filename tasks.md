@@ -16,7 +16,7 @@
 * **index**
    * [x] validate index checksum
    * [x] validate pack checksum
-   * [ ] validate each object sha1
+   * [x] validate each object sha1
    * [ ] validate each object crc32
    * [ ] lookup by full oid to resolve [this](https://github.com/Byron/git-oxide/blob/053045bb23e2a85e2a1d16eeb65c399dfabba5b4/git-odb/tests/pack/index.rs#L27)
    * [ ] support for LRU or in-memory cache

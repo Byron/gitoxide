@@ -45,7 +45,8 @@ impl Default for Kind {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Entry {
     pub oid: object::Id,
-    pub offset: u64,
+    /// The offset of the object's header in the pack
+    pub pack_offset: u64,
     pub crc32: Option<u32>,
 }
 
@@ -129,13 +130,13 @@ impl File {
 
                 let mut buf = Vec::with_capacity(2048);
                 for index_entry in self.iter() {
-                    let pack_entry = pack.entry(index_entry.offset);
+                    let pack_entry = pack.entry(index_entry.pack_offset);
                     let object_kind = pack
                         .decode_entry(pack_entry, &mut buf, |id, _| {
                             unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
                         })
                         .map_err(|e| {
-                            ChecksumError::PackDecode(e, index_entry.oid, index_entry.offset)
+                            ChecksumError::PackDecode(e, index_entry.oid, index_entry.pack_offset)
                         })?;
                     let mut header_buf = [0u8; 64];
                     let header_size = crate::loose::db::serde::write_header(
@@ -152,7 +153,7 @@ impl File {
                         return Err(ChecksumError::PackObjectMismatch {
                             actual: actual_oid,
                             expected: index_entry.oid.clone(),
-                            offset: index_entry.offset,
+                            offset: index_entry.pack_offset,
                             kind: object_kind,
                         });
                     }
@@ -189,7 +190,7 @@ impl File {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
                         oid: object::Id::from_20_bytes(oid),
-                        offset: BigEndian::read_u32(ofs) as u64,
+                        pack_offset: BigEndian::read_u32(ofs) as u64,
                         crc32: None,
                     }
                 }),
@@ -208,7 +209,7 @@ impl File {
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
                 oid: object::Id::from_20_bytes(oid),
-                offset: {
+                pack_offset: {
                     let ofs32 = BigEndian::read_u32(ofs32);
                     if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
                         let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;

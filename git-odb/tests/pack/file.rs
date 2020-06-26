@@ -126,13 +126,13 @@ mod decompress_entry {
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
 
-        let size = entry.size as usize;
+        let size = entry.decompressed_size as usize;
         let mut buf = Vec::with_capacity(size);
         buf.resize(size, 0);
 
         p.decompress_entry(&entry, &mut buf).unwrap();
 
-        buf.resize(entry.size as usize, 0);
+        buf.resize(entry.decompressed_size as usize, 0);
         buf
     }
 }

@@ -31,8 +31,8 @@ fn pack_lookup() {
             );
         }
         for idx_entry in idx.iter() {
-            let pack_entry = pack.entry(idx_entry.offset);
-            assert_ne!(pack_entry.data_offset, idx_entry.offset);
+            let pack_entry = pack.entry(idx_entry.pack_offset);
+            assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
         }
     }
 }

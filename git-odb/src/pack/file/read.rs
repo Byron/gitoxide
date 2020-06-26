@@ -28,9 +28,9 @@ impl File {
     // `out` is expected to be large enough to hold `entry.size` bytes.
     pub fn decompress_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<(), Error> {
         assert!(
-            out.len() as u64 >= entry.size,
+            out.len() as u64 >= entry.decompressed_size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
-            entry.size,
+            entry.decompressed_size,
             out.len()
         );
 
@@ -70,7 +70,7 @@ impl File {
             Tree | Blob | Commit | Tag => {
                 out.resize(
                     entry
-                        .size
+                        .decompressed_size
                         .try_into()
                         .expect("size representable by machine"),
                     0,
@@ -98,9 +98,9 @@ impl File {
         // Find the first full base, either an undeltified object in the pack or a reference to another object.
         let mut total_delta_data_size: u64 = 0;
         while cursor.header.is_delta() {
-            total_delta_data_size += cursor.size;
+            total_delta_data_size += cursor.decompressed_size;
             let decompressed_size = cursor
-                .size
+                .decompressed_size
                 .try_into()
                 .expect("a single delta size small enough to fit a usize");
             chain.push(Delta {

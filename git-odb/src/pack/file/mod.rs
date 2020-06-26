@@ -126,7 +126,7 @@ impl File {
             decoded::Header::from_bytes(object_data, offset);
         decoded::Entry {
             header: object,
-            size: decompressed_size,
+            decompressed_size,
             data_offset: offset + consumed_bytes,
         }
     }

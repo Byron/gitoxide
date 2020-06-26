@@ -14,7 +14,7 @@ const REF_DELTA: u8 = 7;
 pub struct Entry {
     pub header: Header,
     /// The decompressed size of the object in bytes
-    pub size: u64,
+    pub decompressed_size: u64,
     /// absolute offset to compressed object data in the pack
     pub data_offset: u64,
 }
