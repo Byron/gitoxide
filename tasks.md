@@ -14,9 +14,11 @@
    * [x] decode full objects
    * [x] decode delta objects
 * **index**
-   * [ ] validate index checksum
-   * [ ] validate pack checksum
+   * [x] validate index checksum
+   * [x] validate pack checksum
    * [ ] validate each object sha1/crc2
+   * [ ] support for LRU or in-memory cache
+   * [ ] figure out multi-threading and how to gate it (and let others control it)
 * **gio**
    * [x] validate pack file
    * [ ] validate index and pack

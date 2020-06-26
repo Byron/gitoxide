@@ -130,6 +130,8 @@ impl File {
                         unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
                     })
                     .map_err(|e| ChecksumError::PackDecode(e, entry.oid, entry.offset))?;
+                    // let mut hasher = crate::sha1::Sha1::default();
+                    // hasher.update(buf.as_slice());
                     // TODO: check SHA1 and CRC32
                 }
                 Ok(id)

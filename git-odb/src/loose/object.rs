@@ -1,5 +1,5 @@
 use crate::{
-    loose::io::ObjectReader,
+    loose::read::ObjectReader,
     loose::{HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };

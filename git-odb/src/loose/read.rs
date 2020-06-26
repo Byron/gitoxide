@@ -23,7 +23,7 @@ impl<'data> std::io::Read for ObjectReader<'data> {
                 if *header_size_left == 0 {
                     r.read(buf)
                 } else {
-                    // We must assure we return at least one byte - otherwise it's considered EOF, thus '>='
+                    // We must assure we return at least one byte - otherwise it's considered EOF
                     while *header_size_left != 0 {
                         let bytes_to_read = buf.len().min(*header_size_left);
                         r.read_exact(&mut buf[..bytes_to_read])?;
