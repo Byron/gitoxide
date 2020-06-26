@@ -26,7 +26,7 @@ pub enum ResolvedBase {
 impl File {
     // Note that this method does not resolve deltified objects, but merely decompresses their content
     // `out` is expected to be large enough to hold `entry.size` bytes.
-    pub fn decompress_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<(), Error> {
+    pub fn decompress_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<usize, Error> {
         assert!(
             out.len() as u64 >= entry.decompressed_size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
@@ -45,7 +45,7 @@ impl File {
         &self,
         data_offset: u64,
         out: &mut [u8],
-    ) -> Result<(), Error> {
+    ) -> Result<usize, Error> {
         let offset: usize = data_offset
             .try_into()
             .expect("offset representable by machine");
@@ -54,7 +54,7 @@ impl File {
         Inflate::default()
             .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
             .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
-            .map(|_| ())
+            .map(|(_, consumed_in, _)| consumed_in)
     }
 
     // Decode an entry, resolving delta's as needed, while growing the output vector if there is not enough
@@ -76,7 +76,7 @@ impl File {
                     0,
                 );
                 self.decompress_entry(&entry, out.as_mut_slice())
-                    .map(|()| entry.header.to_kind().expect("a non-delta entry"))
+                    .map(|_| entry.header.to_kind().expect("a non-delta entry"))
             }
             OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out),
         }

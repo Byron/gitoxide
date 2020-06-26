@@ -52,7 +52,7 @@ fn run() -> Result<()> {
                 u32,
             ),
              entry| {
-                match pack.entry(entry.offset).header {
+                match pack.entry(entry.pack_offset).header {
                     Commit => commits += 1,
                     Tag => tags += 1,
                     Tree => trees += 1,

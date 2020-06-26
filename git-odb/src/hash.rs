@@ -30,3 +30,5 @@ mod _impl {
 }
 
 pub use _impl::Sha1;
+
+pub use crc::Hasher32 as Crc32;

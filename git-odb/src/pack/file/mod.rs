@@ -73,7 +73,7 @@ impl File {
     }
     #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum(&self) -> Result<object::Id, ChecksumError> {
-        let mut hasher = crate::sha1::Sha1::default();
+        let mut hasher = crate::hash::Sha1::default();
 
         let actual = match std::fs::File::open(&self.path) {
             Ok(mut pack) => {

@@ -202,6 +202,8 @@ Thus one has to post-process the file by reducing its size by one using `truncat
 * **Packfiles cannot load files bigger than 2^31 or 2^32 on 32 bit systems**
   * As these systems cannot address more memory than that.
   * _potential remedy_: implement a sliding window to map and unmap portions of the file as needed.
+* **CRC32** implementation doesn't use SIMD
+  * Probably at no cost one could upgrade to the **crc32fast** crate, but it looks unmaintained and has more code.
 
 ## Credits
 
