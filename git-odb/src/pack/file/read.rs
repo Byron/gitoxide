@@ -89,7 +89,7 @@ impl File {
     ) -> Result<(), Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
-        let mut chain = SmallVec::<[Delta; 5]>::default();
+        let mut chain = SmallVec::<[Delta; 10]>::default();
         let mut cursor = last.clone();
         let mut base_buffer_size: Option<usize> = None;
 
@@ -183,8 +183,18 @@ impl File {
             // of memory with the base object (in the majority of cases)
             let second_buffer_end = {
                 let end = first_buffer_size + second_buffer_size;
-                let (buffers, instructions) = out.split_at_mut(end);
-                instructions.copy_from_slice(&buffers[delta_range]);
+                if delta_range.start < end {
+                    // …this means that the delta size is even larger than two uncompressed worst-case
+                    // intermediate results combined. It would already be undesireable to have it bigger
+                    // then the target size (as you could just store the object in whole).
+                    // However, this just means that it reuses existing deltas smartly, which as we rightfully
+                    // remember stand for an object each. However, this means a lot of data is read to restore
+                    // a single object sometimes. Fair enough - package size is minimized that way.
+                    out.copy_within(delta_range, end);
+                } else {
+                    let (buffers, instructions) = out.split_at_mut(end);
+                    instructions.copy_from_slice(&buffers[delta_range]);
+                }
                 end
             };
 
