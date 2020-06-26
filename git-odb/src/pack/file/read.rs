@@ -256,7 +256,7 @@ impl File {
     }
 }
 
-fn apply_delta(base: &[u8], mut target: &mut [u8], mut data: &[u8]) {
+fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
     let mut i = 0;
     while let Some(cmd) = data.get(i) {
         i += 1;
@@ -300,10 +300,9 @@ fn apply_delta(base: &[u8], mut target: &mut [u8], mut data: &[u8]) {
             }
             0 => panic!("encounted unsupported command code: 0"),
             size => {
-                let (dest, rest) = data.split_at(*size as usize);
-                std::io::Write::write(&mut target, dest)
+                std::io::Write::write(&mut target, &data[i..i + *size as usize])
                     .expect("delta copy data: slice sizes to match up");
-                data = rest;
+                i += *size as usize;
             }
         }
     }

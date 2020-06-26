@@ -150,7 +150,9 @@ impl File {
                     let actual_oid = hasher.digest();
                     if actual_oid != index_entry.oid {
                         dbg!(
-                            std::str::from_utf8(&buf[..16]),
+                            buf.len(),
+                            std::str::from_utf8(&buf[..]),
+                            header_size,
                             ChecksumError::PackObjectMismatch {
                                 actual: actual_oid,
                                 expected: index_entry.oid.clone(),
