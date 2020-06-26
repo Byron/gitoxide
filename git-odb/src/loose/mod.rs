@@ -4,7 +4,7 @@ const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 mod db;
 mod object;
 
-pub mod read;
+pub mod stream;
 
 pub use db::{Db, Error as DbError};
 pub use object::*;

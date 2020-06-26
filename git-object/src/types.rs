@@ -72,11 +72,20 @@ quick_error! {
 impl Kind {
     pub fn from_bytes(s: &[u8]) -> Result<Kind, Error> {
         Ok(match s {
-            b"tag" => Kind::Tag,
-            b"commit" => Kind::Commit,
             b"tree" => Kind::Tree,
+            b"commit" => Kind::Commit,
             b"blob" => Kind::Blob,
+            b"tag" => Kind::Tag,
             _ => return Err(Error::InvalidObjectKind(s.into())),
         })
+    }
+
+    pub fn to_bytes(&self) -> &[u8] {
+        match self {
+            Kind::Tree => b"tree",
+            Kind::Commit => b"commit",
+            Kind::Blob => b"blob",
+            Kind::Tag => b"tag",
+        }
     }
 }

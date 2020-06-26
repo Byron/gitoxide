@@ -36,7 +36,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
 * **git-object**
-    * *decode*
+    * represent borrowed commits, trees and tags
+    * *decode (zero-copy)*
       * [x] commit
       * [x] tree
       * [x] tag

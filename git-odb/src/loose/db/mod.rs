@@ -2,12 +2,15 @@ use git_object as object;
 use quick_error::quick_error;
 
 use crate::{
+    loose::db::serde::parse_header,
     loose::{Object, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };
 use smallvec::SmallVec;
 use std::{fs, io::Cursor, io::Read, path::PathBuf};
 use walkdir::WalkDir;
+
+mod serde;
 
 pub struct Db {
     pub path: PathBuf,
@@ -39,29 +42,6 @@ quick_error! {
             display("Could not {} file at '{}'", action, path.display())
             cause(err)
         }
-    }
-}
-
-pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
-    let header_end = input
-        .iter()
-        .position(|&b| b == 0)
-        .ok_or_else(|| Error::InvalidHeader("Did not find 0 byte in header"))?;
-    let header = &input[..header_end];
-    let mut split = header.split(|&b| b == b' ');
-    match (split.next(), split.next()) {
-        (Some(kind), Some(size)) => Ok((
-            object::Kind::from_bytes(kind)?,
-            btoi::btoi(size).map_err(|e| {
-                Error::ParseIntegerError(
-                    "Object size in header could not be parsed",
-                    size.to_owned(),
-                    e,
-                )
-            })?,
-            header_end + 1, // account for 0 byte
-        )),
-        _ => Err(Error::InvalidHeader("Expected '<type> <size>'")),
     }
 }
 
