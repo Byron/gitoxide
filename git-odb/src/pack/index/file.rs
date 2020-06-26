@@ -149,6 +149,16 @@ impl File {
                     hasher.update(buf.as_slice());
                     let actual_oid = hasher.digest();
                     if actual_oid != index_entry.oid {
+                        dbg!(
+                            std::str::from_utf8(&buf[..16]),
+                            ChecksumError::PackObjectMismatch {
+                                actual: actual_oid,
+                                expected: index_entry.oid.clone(),
+                                offset: index_entry.offset,
+                                kind: object_kind,
+                            }
+                            .to_string()
+                        );
                         return Err(ChecksumError::PackObjectMismatch {
                             actual: actual_oid,
                             expected: index_entry.oid.clone(),
@@ -156,7 +166,6 @@ impl File {
                             kind: object_kind,
                         });
                     }
-                    dbg!(object_kind, index_entry.offset);
                     // TODO: CRC32 (in-pack data)
                 }
                 Ok(id)

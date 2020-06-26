@@ -40,7 +40,7 @@ impl Header {
     pub fn to_kind(&self) -> Option<object::Kind> {
         use object::Kind::*;
         Some(match self {
-            Header::Tree => Tag,
+            Header::Tree => Tree,
             Header::Blob => Blob,
             Header::Commit => Commit,
             Header::Tag => Tag,
