@@ -28,9 +28,13 @@ mod method {
 
 /// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
-    use crate::{pack::file::pack_at, pack::SMALL_PACK};
+    use crate::{fixture_path, pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
     use git_odb::pack::ResolvedBase;
+
+    fn content_of(path: &str) -> Vec<u8> {
+        std::fs::read(fixture_path(path)).unwrap()
+    }
 
     #[test]
     fn commit() {
@@ -48,7 +52,10 @@ mod decode_entry {
         let buf = decode_entry_at_offset(3033);
         assert_eq!(buf.len(), 173, "buffer length is the acutal object size");
         assert_eq!(buf.capacity(), 2381, "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes");
-        assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nGitPython is a port of the grit library in Ruby created by \nTom Preston-Werner and Chris Wanstrath.\n\n\n".as_bstr());
+        assert_eq!(
+            buf.as_bstr(),
+            content_of("objects/b8aa61be84b78d7fcff788e8d844406cc97132bf.txt").as_bstr()
+        );
     }
 
     #[test]
@@ -56,7 +63,10 @@ mod decode_entry {
         let buf = decode_entry_at_offset(3569);
         assert_eq!(buf.len(), 1163, "buffer length is the acutal object size");
         assert_eq!(buf.capacity(),2398, "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes");
-        assert_eq!(buf[..102].as_bstr(), b"==========\nGitPython\n==========\n\nGitPython is a python library used to interact with Git repositories.".as_bstr());
+        assert_eq!(
+            buf.as_bstr(),
+            content_of("objects/f139391424a8c623adadf2388caec73e5e90865b.txt").as_bstr()
+        );
     }
 
     fn decode_entry_at_offset(offset: u64) -> Vec<u8> {

@@ -248,7 +248,8 @@ impl File {
         let last_result_size = last_result_size.expect("at least one delta chain item");
         // uneven chains leave the target buffer after the source buffer
         if chain.len() % 2 == 1 {
-            source_buf[..last_result_size].copy_from_slice(&target_buf[..last_result_size]);
+            // this seems inverted, but remember: we swapped the buffers on the last iteration
+            target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);
         }
         out.resize(last_result_size, 0);
         Ok(object_kind
@@ -298,7 +299,7 @@ fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
                 std::io::Write::write(&mut target, &base[ofs..ofs + size as usize])
                     .expect("delta copy from base: byte slices must match");
             }
-            0 => panic!("encounted unsupported command code: 0"),
+            0 => panic!("encountered unsupported command code: 0"),
             size => {
                 std::io::Write::write(&mut target, &data[i..i + *size as usize])
                     .expect("delta copy data: slice sizes to match up");
@@ -306,6 +307,8 @@ fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
             }
         }
     }
+    assert_eq!(i, data.len());
+    assert_eq!(target.len(), 0);
 }
 
 fn delta_header_size_ofs(d: &[u8]) -> (u64, usize) {

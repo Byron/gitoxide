@@ -14,8 +14,8 @@ const PACK_FOR_INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f20
 #[test]
 fn pack_lookup() {
     for (index_path, pack_path) in &[
-        // (INDEX_V2, PACK_FOR_INDEX_V2),
-        // (INDEX_V1, PACK_FOR_INDEX_V1),
+        (INDEX_V2, PACK_FOR_INDEX_V2),
+        (INDEX_V1, PACK_FOR_INDEX_V1),
         (SMALL_PACK_INDEX, SMALL_PACK),
     ] {
         let idx = index::File::at(&fixture_path(index_path)).unwrap();
@@ -23,8 +23,8 @@ fn pack_lookup() {
 
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
+        // TODO: implement in-pack lookup, and lets hope the SHA1 is actually present in this pack
         if fixture_path(index_path) != fixture_path(INDEX_V1) {
-            // TODO: implement in-pack lookup, and lets hope the SHA1 is actually present in this pack
             assert_eq!(
                 idx.verify_checksum_of_index(Some(&pack)).unwrap(),
                 idx.checksum_of_index()
