@@ -70,7 +70,7 @@ mod decode_entry {
     }
 
     fn decode_entry_at_offset(offset: u64) -> Vec<u8> {
-        fn resolve_with_panic(_oid: &git_object::Id, _out: &mut Vec<u8>) -> ResolvedBase {
+        fn resolve_with_panic(_oid: &git_object::Id, _out: &mut Vec<u8>) -> Option<ResolvedBase> {
             panic!("should not want to resolve an id here")
         }
 

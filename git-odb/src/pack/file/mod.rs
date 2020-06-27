@@ -27,6 +27,9 @@ quick_error! {
             display("{}", msg)
             cause(err)
         }
+        DeltaBaseUnresolved(id: object::Id) {
+            display("A delta chain could not be applied as the ref base with id {} could not be found", id)
+        }
     }
 }
 

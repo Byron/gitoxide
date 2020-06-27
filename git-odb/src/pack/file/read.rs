@@ -63,7 +63,7 @@ impl File {
         &self,
         entry: Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> ResolvedBase,
+        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
@@ -90,7 +90,7 @@ impl File {
     fn resolve_deltas(
         &self,
         last: Entry,
-        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> ResolvedBase,
+        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header;
@@ -122,12 +122,13 @@ impl File {
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
                 Header::RefDelta { oid } => match resolve(&oid, out) {
-                    ResolvedBase::InPack(entry) => entry,
-                    ResolvedBase::OutOfPack { end, kind } => {
+                    Some(ResolvedBase::InPack(entry)) => entry,
+                    Some(ResolvedBase::OutOfPack { end, kind }) => {
                         base_buffer_size = Some(end);
                         object_kind = Some(kind);
                         break;
                     }
+                    None => return Err(Error::DeltaBaseUnresolved(oid)),
                 },
                 _ => unreachable!("cursor.is_delta() only allows deltas here"),
             };
