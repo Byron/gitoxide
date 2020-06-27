@@ -113,13 +113,10 @@ fn pack_lookup() {
 
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
-        // TODO: implement in-pack lookup, and lets hope the SHA1 is actually present in this pack
-        if fixture_path(index_path) != fixture_path(INDEX_V1) {
-            assert_eq!(
-                idx.verify_checksum_of_index(Some(&pack)).unwrap(),
-                idx.checksum_of_index()
-            );
-        }
+        assert_eq!(
+            idx.verify_checksum_of_index(Some(&pack)).unwrap(),
+            idx.checksum_of_index()
+        );
         for idx_entry in idx.iter() {
             let pack_entry = pack.entry(idx_entry.pack_offset);
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);

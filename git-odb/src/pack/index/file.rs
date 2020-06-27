@@ -1,4 +1,5 @@
 use crate::pack;
+use crate::pack::ResolvedBase;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
@@ -138,7 +139,8 @@ impl File {
                     let pack_entry_data_offset = pack_entry.data_offset;
                     let (object_kind, consumed_input) = pack
                         .decode_entry(pack_entry, &mut buf, |id, _| {
-                            unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
+                            let index = self.lookup_index(&id).expect("here we can only do in-pack lookups: TODO: allow to not find an object...");
+                            ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                         })
                         .map_err(|e| {
                             ChecksumError::PackDecode(e, index_entry.oid, index_entry.pack_offset)
