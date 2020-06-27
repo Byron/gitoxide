@@ -1,5 +1,6 @@
 use bstr::ByteSlice;
 use nom::lib::std::fmt::Formatter;
+use nom::lib::std::ops::Deref;
 use quick_error::quick_error;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -42,6 +43,14 @@ impl Id {
 
     pub fn null() -> Id {
         Id([0u8; 20])
+    }
+}
+
+impl Deref for Id {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0[..]
     }
 }
 

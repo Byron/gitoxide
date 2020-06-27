@@ -3,6 +3,7 @@ use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
 use quick_error::quick_error;
+use std::convert::TryInto;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";
@@ -82,7 +83,7 @@ pub struct File {
     kind: Kind,
     version: u32,
     num_objects: u32,
-    _fan: [u32; FAN_LEN],
+    fan: [u32; FAN_LEN],
 }
 
 impl File {
@@ -243,6 +244,47 @@ impl File {
         }
     }
 
+    /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
+    fn sha_at_index(&self, index: u32) -> &[u8] {
+        let index: usize = index
+            .try_into()
+            .expect("an architecture able to hold 32 bits of integer");
+        let start = match self.kind {
+            Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
+            Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
+        };
+        &self.data[start..start + SHA1_SIZE]
+    }
+
+    /// Returns the offset of the given object for use with the `(oid|pack_offset|crc32)_at_offset()`
+    pub fn lookup(&self, id: &[u8]) -> Option<u32> {
+        let first_byte = id[0] as usize;
+        let mut upper_bound = self.fan[first_byte];
+        let mut lower_bound = if first_byte != 0 {
+            self.fan[first_byte - 1]
+        } else {
+            0
+        };
+
+        // Bisect using indices
+        // TODO: Performance of V2 could possibly be better if we would be able to do a binary search
+        // on 20 byte chunks directly, but doing so requires transmuting and that is unsafe, even though
+        // it should not be if the bytes match up and the type has no destructor.
+        while lower_bound < upper_bound {
+            let mid = (lower_bound + upper_bound) / 2;
+            let mid_sha = self.sha_at_index(mid);
+
+            if id < mid_sha {
+                upper_bound = mid;
+            } else if id == mid_sha {
+                return Some(mid);
+            } else {
+                lower_bound = mid + 1;
+            }
+        }
+        None
+    }
+
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
         match self.kind {
             Kind::V1 => Box::new(self.iter_v1()),
@@ -299,7 +341,7 @@ impl TryFrom<&Path> for File {
             kind,
             num_objects,
             version,
-            _fan: fan,
+            fan: fan,
         })
     }
 }

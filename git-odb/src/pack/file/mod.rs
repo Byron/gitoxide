@@ -109,8 +109,7 @@ impl File {
     #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
         let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
-        let actual = crate::hash::crc32(&self.data[pack_offset..pack_offset + size]);
-        actual
+        crate::hash::crc32(&self.data[pack_offset..pack_offset + size])
     }
 
     fn assure_v2(&self) {

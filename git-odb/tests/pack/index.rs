@@ -5,11 +5,49 @@ use crate::{
 use git_odb::pack::{self, index};
 use pretty_assertions::assert_eq;
 
+const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
+const PACK_FOR_INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack";
+
 const INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
 const PACK_FOR_INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";
 
-const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
-const PACK_FOR_INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack";
+mod method {
+    mod v1 {
+        use crate::fixture_path;
+        use crate::pack::index::INDEX_V1;
+        use git_odb::pack::index;
+
+        #[test]
+        fn lookup() {
+            // pack has 64 objects
+            let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
+            for (id, desired_index, assertion) in &[
+                (
+                    &b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..],
+                    Some(0),
+                    "first",
+                ),
+                (
+                    b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6",
+                    Some(65),
+                    "last",
+                ),
+                (
+                    b"ffffffffffffffffffffffffffffffffffffffff",
+                    None,
+                    "not in pack",
+                ),
+            ] {
+                assert_eq!(
+                    idx.lookup(&git_object::Id::from_hex(*id).unwrap()),
+                    *desired_index,
+                    "{}",
+                    assertion
+                );
+            }
+        }
+    }
+}
 
 #[test]
 fn pack_lookup() {
