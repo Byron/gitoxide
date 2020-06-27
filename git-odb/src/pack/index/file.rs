@@ -214,7 +214,7 @@ impl File {
                         crc32: None,
                     }
                 }),
-            _ => unreachable!("Cannot use iter_v1() on index of type {:?}", self.kind),
+            _ => panic!("Cannot use iter_v1() on index of type {:?}", self.kind),
         }
     }
 
@@ -243,7 +243,7 @@ impl File {
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
-            _ => unreachable!("Cannot use iter_v2() on index of type {:?}", self.kind),
+            _ => panic!("Cannot use iter_v2() on index of type {:?}", self.kind),
         }
     }
 
@@ -254,8 +254,8 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         let start = match self.kind {
-            Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
             Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
+            Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
         &self.data[start..start + SHA1_SIZE]
     }
@@ -265,10 +265,6 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         match self.kind {
-            Kind::V1 => {
-                let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
-                BigEndian::read_u32(&self.data[start..start + N32_SIZE]) as u64
-            }
             Kind::V2 => {
                 let start = self.offset_pack_offset_v2() + index * N32_SIZE;
                 self.pack_offset_from_offset_v2(
@@ -276,6 +272,23 @@ impl File {
                     self.offset_pack_offset64_v2(),
                 )
             }
+            Kind::V1 => {
+                let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
+                BigEndian::read_u32(&self.data[start..start + N32_SIZE]) as u64
+            }
+        }
+    }
+
+    pub fn crc32_at_index(&self, index: u32) -> Option<u32> {
+        let index: usize = index
+            .try_into()
+            .expect("an architecture able to hold 32 bits of integer");
+        match self.kind {
+            Kind::V2 => {
+                let start = self.offset_crc32_v2() + index * N32_SIZE;
+                Some(BigEndian::read_u32(&self.data[start..start + N32_SIZE]))
+            }
+            Kind::V1 => None,
         }
     }
 
@@ -310,8 +323,8 @@ impl File {
 
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
         match self.kind {
-            Kind::V1 => Box::new(self.iter_v1()),
             Kind::V2 => Box::new(self.iter_v2()),
+            Kind::V1 => Box::new(self.iter_v1()),
         }
     }
 
