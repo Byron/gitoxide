@@ -218,6 +218,17 @@ impl File {
         }
     }
 
+    fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> u64 {
+        debug_assert_eq!(self.kind, Kind::V2);
+        let ofs32 = BigEndian::read_u32(offset);
+        if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
+            let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;
+            BigEndian::read_u64(&self.data[from..from + N64_SIZE])
+        } else {
+            ofs32 as u64
+        }
+    }
+
     pub fn iter_v2<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         let pack64_offset = self.offset_pack_offset64_v2();
         match self.kind {
@@ -229,15 +240,7 @@ impl File {
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
                 oid: object::Id::from_20_bytes(oid),
-                pack_offset: {
-                    let ofs32 = BigEndian::read_u32(ofs32);
-                    if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
-                        let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;
-                        BigEndian::read_u64(&self.data[from..from + N64_SIZE])
-                    } else {
-                        ofs32 as u64
-                    }
-                },
+                pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
             _ => unreachable!("Cannot use iter_v2() on index of type {:?}", self.kind),
@@ -245,7 +248,8 @@ impl File {
     }
 
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
-    fn sha_at_index(&self, index: u32) -> &[u8] {
+    /// The index ranges from 0 to self.num_objects()
+    pub fn oid_at_index(&self, index: u32) -> &[u8] {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
@@ -256,8 +260,27 @@ impl File {
         &self.data[start..start + SHA1_SIZE]
     }
 
-    /// Returns the offset of the given object for use with the `(oid|pack_offset|crc32)_at_offset()`
-    pub fn lookup(&self, id: &[u8]) -> Option<u32> {
+    pub fn pack_offset_at_index(&self, index: u32) -> u64 {
+        let index: usize = index
+            .try_into()
+            .expect("an architecture able to hold 32 bits of integer");
+        match self.kind {
+            Kind::V1 => {
+                let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
+                BigEndian::read_u32(&self.data[start..start + N32_SIZE]) as u64
+            }
+            Kind::V2 => {
+                let start = self.offset_pack_offset_v2() + index * N32_SIZE;
+                self.pack_offset_from_offset_v2(
+                    &self.data[start..start + N32_SIZE],
+                    self.offset_pack_offset64_v2(),
+                )
+            }
+        }
+    }
+
+    /// Returns the offset of the given object for use with the `(oid|pack_offset|crc32)_at_index()`
+    pub fn lookup_index(&self, id: &[u8]) -> Option<u32> {
         let first_byte = id[0] as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 {
@@ -272,7 +295,7 @@ impl File {
         // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
-            let mid_sha = self.sha_at_index(mid);
+            let mid_sha = self.oid_at_index(mid);
 
             if id < mid_sha {
                 upper_bound = mid;
@@ -341,7 +364,7 @@ impl TryFrom<&Path> for File {
             kind,
             num_objects,
             version,
-            fan: fan,
+            fan,
         })
     }
 }

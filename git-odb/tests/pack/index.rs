@@ -19,7 +19,6 @@ mod method {
 
         #[test]
         fn lookup() {
-            // pack has 64 objects
             let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
             for (id, desired_index, assertion) in &[
                 (
@@ -39,14 +38,16 @@ mod method {
                 ),
             ] {
                 assert_eq!(
-                    idx.lookup(&git_object::Id::from_hex(*id).unwrap()),
+                    idx.lookup_index(&git_object::Id::from_hex(*id).unwrap()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                assert!(idx.lookup(&entry.oid).is_some());
+                let index = idx.lookup_index(&entry.oid).unwrap();
+                assert_eq!(entry.oid.as_slice(), idx.oid_at_index(index));
+                assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
             }
         }
     }
@@ -58,7 +59,6 @@ mod method {
 
         #[test]
         fn lookup() {
-            // pack has 64 objects
             let idx = index::File::at(&fixture_path(INDEX_V2)).unwrap();
             for (id, desired_index, assertion) in &[
                 (
@@ -78,14 +78,16 @@ mod method {
                 ),
             ] {
                 assert_eq!(
-                    idx.lookup(&git_object::Id::from_hex(*id).unwrap()),
+                    idx.lookup_index(&git_object::Id::from_hex(*id).unwrap()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                assert!(idx.lookup(&entry.oid).is_some());
+                let index = idx.lookup_index(&entry.oid).unwrap();
+                assert_eq!(entry.oid.as_slice(), idx.oid_at_index(index));
+                assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
             }
         }
     }

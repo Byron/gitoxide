@@ -44,6 +44,10 @@ impl Id {
     pub fn null() -> Id {
         Id([0u8; 20])
     }
+
+    pub fn as_slice(&self) -> &[u8] {
+        self.0.as_ref()
+    }
 }
 
 impl Deref for Id {
