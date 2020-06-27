@@ -31,4 +31,4 @@ mod _impl {
 
 pub use _impl::Sha1;
 
-pub use crc::Hasher32 as Crc32;
+pub use crc::crc32::checksum_ieee as crc32;

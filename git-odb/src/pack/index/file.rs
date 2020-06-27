@@ -71,6 +71,9 @@ quick_error! {
         PackObjectMismatch { expected: object::Id, actual: object::Id, offset: u64, kind: object::Kind} {
             display("The SHA1 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
+        Crc32Mismatch { expected: u32, actual: u32, offset: u64, kind: object::Kind} {
+            display("The CRC32 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
+        }
     }
 }
 
@@ -131,7 +134,8 @@ impl File {
                 let mut buf = Vec::with_capacity(2048);
                 for index_entry in self.iter() {
                     let pack_entry = pack.entry(index_entry.pack_offset);
-                    let object_kind = pack
+                    let pack_entry_data_offset = pack_entry.data_offset;
+                    let (object_kind, consumed_input) = pack
                         .decode_entry(pack_entry, &mut buf, |id, _| {
                             unimplemented!("TODO: in-pack lookup of objects by SHA1: {}", id)
                         })
@@ -158,7 +162,21 @@ impl File {
                             kind: object_kind,
                         });
                     }
-                    // TODO: CRC32 (in-pack data)
+                    if let Some(desired_crc32) = index_entry.crc32 {
+                        let actual_crc32 = pack.entry_crc32(
+                            index_entry.pack_offset,
+                            (pack_entry_data_offset - index_entry.pack_offset) as usize
+                                + consumed_input,
+                        );
+                        if actual_crc32 != desired_crc32 {
+                            return Err(ChecksumError::Crc32Mismatch {
+                                actual: actual_crc32,
+                                expected: desired_crc32,
+                                offset: index_entry.pack_offset,
+                                kind: object_kind,
+                            });
+                        }
+                    }
                 }
                 Ok(id)
             }

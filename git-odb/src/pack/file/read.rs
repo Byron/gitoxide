@@ -64,7 +64,7 @@ impl File {
         entry: Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> ResolvedBase,
-    ) -> Result<object::Kind, Error> {
+    ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
@@ -76,7 +76,12 @@ impl File {
                     0,
                 );
                 self.decompress_entry(&entry, out.as_mut_slice())
-                    .map(|_| entry.header.to_kind().expect("a non-delta entry"))
+                    .map(|consumed_input| {
+                        (
+                            entry.header.to_kind().expect("a non-delta entry"),
+                            consumed_input,
+                        )
+                    })
             }
             OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out),
         }
@@ -87,13 +92,14 @@ impl File {
         last: Entry,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> ResolvedBase,
         out: &mut Vec<u8>,
-    ) -> Result<object::Kind, Error> {
+    ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();
-        let mut cursor = last.clone();
+        let mut cursor = last;
         let mut base_buffer_size: Option<usize> = None;
         let mut object_kind: Option<object::Kind> = None;
+        let mut consumed_input: Option<usize> = None;
 
         // Find the first full base, either an undeltified object in the pack or a reference to another object.
         let mut total_delta_data_size: u64 = 0;
@@ -134,6 +140,7 @@ impl File {
             .try_into()
             .expect("delta data to fit in memory");
 
+        let chain_len = chain.len();
         let (first_buffer_end, second_buffer_end) = {
             let delta_start = base_buffer_size.unwrap_or(0);
             out.resize(delta_start + total_delta_data_size, 0);
@@ -145,11 +152,14 @@ impl File {
             let mut instructions = &mut out[delta_range.clone()];
             let mut relative_delta_start = 0;
             let mut biggest_result_size = 0;
-            for delta in chain.iter_mut().rev() {
-                self.decompress_entry_from_data_offset(
+            for (delta_idx, delta) in chain.iter_mut().rev().enumerate() {
+                let consumed_from_data_offset = self.decompress_entry_from_data_offset(
                     delta.data_offset,
                     &mut instructions[..delta.decompressed_size],
                 )?;
+                if delta_idx + 1 == chain_len {
+                    consumed_input = Some(consumed_from_data_offset);
+                }
 
                 let (base_size, offset) = delta_header_size_ofs(instructions);
                 let mut bytes_consumed_by_header = offset;
@@ -233,7 +243,7 @@ impl File {
         ) in chain.iter().rev().enumerate()
         {
             let data = &mut instructions[data.clone()];
-            if delta_idx + 1 == chain.len() {
+            if delta_idx + 1 == chain_len {
                 last_result_size = Some(*result_size);
             }
             apply_delta(
@@ -252,8 +262,11 @@ impl File {
             target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);
         }
         out.resize(last_result_size, 0);
-        Ok(object_kind
-            .expect("a base object as root of any delta chain that we are here to resolve"))
+        Ok((
+            object_kind
+                .expect("a base object as root of any delta chain that we are here to resolve"),
+            consumed_input.expect("at least one decompressed delta object"),
+        ))
     }
 }
 

@@ -91,7 +91,6 @@ impl File {
             }
             Err(_) => {
                 let right_before_trailer = self.data.len() - SHA1_SIZE;
-                self.data.prefetch(0, right_before_trailer);
                 hasher.update(&self.data[..right_before_trailer]);
                 hasher.digest()
             }
@@ -103,6 +102,15 @@ impl File {
         } else {
             Err(ChecksumError::Mismatch { actual, expected })
         }
+    }
+
+    /// Currently only done during pack verification - finding the right size is only possible by decompressing
+    /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index file.
+    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
+    pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
+        let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
+        let actual = crate::hash::crc32(&self.data[pack_offset..pack_offset + size]);
+        actual
     }
 
     fn assure_v2(&self) {
