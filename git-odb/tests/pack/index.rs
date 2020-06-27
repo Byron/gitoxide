@@ -30,6 +30,45 @@ mod method {
                 (
                     b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6",
                     Some(65),
+                    "close to last",
+                ),
+                (
+                    b"ffffffffffffffffffffffffffffffffffffffff",
+                    None,
+                    "not in pack",
+                ),
+            ] {
+                assert_eq!(
+                    idx.lookup(&git_object::Id::from_hex(*id).unwrap()),
+                    *desired_index,
+                    "{}",
+                    assertion
+                );
+            }
+            for entry in idx.iter() {
+                assert!(idx.lookup(&entry.oid).is_some());
+            }
+        }
+    }
+
+    mod v2 {
+        use crate::fixture_path;
+        use crate::pack::index::INDEX_V2;
+        use git_odb::pack::index;
+
+        #[test]
+        fn lookup() {
+            // pack has 64 objects
+            let idx = index::File::at(&fixture_path(INDEX_V2)).unwrap();
+            for (id, desired_index, assertion) in &[
+                (
+                    &b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..],
+                    Some(0),
+                    "first",
+                ),
+                (
+                    b"e800b9c207e17f9b11e321cc1fba5dfe08af4222",
+                    Some(29),
                     "last",
                 ),
                 (
@@ -44,6 +83,9 @@ mod method {
                     "{}",
                     assertion
                 );
+            }
+            for entry in idx.iter() {
+                assert!(idx.lookup(&entry.oid).is_some());
             }
         }
     }
