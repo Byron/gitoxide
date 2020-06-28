@@ -8,7 +8,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
 
 ## Development Status
 
-* **gitoxide**
+* **gitoxide** _(CLI)_
   * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
     and itself relies on all `git-*` crates.
   * repository
