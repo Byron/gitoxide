@@ -63,14 +63,12 @@ mod in_parallel {
         I: Send,
         O: Send,
     {
-        let logical_without_overcommit = num_cpus::get_physical()
-            + (num_cpus::get().saturating_sub(num_cpus::get_physical()) / 2);
+        let logical_cores = num_cpus::get();
         thread::scope(move |s| {
             let receive_result = {
-                let (send_input, receive_input) =
-                    crossbeam_channel::bounded::<I>(logical_without_overcommit);
-                let (send_result, receive_result) = flume::bounded::<O>(logical_without_overcommit);
-                for _ in 0..logical_without_overcommit {
+                let (send_input, receive_input) = crossbeam_channel::bounded::<I>(logical_cores);
+                let (send_result, receive_result) = flume::bounded::<O>(logical_cores);
+                for _ in 0..logical_cores {
                     s.spawn({
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
