@@ -126,6 +126,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam-channel"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cced8691919c02aac3cb0a1bc2e9b73d89e832bf9a06fc579d4e71b68a2da061"
+dependencies = [
+ "crossbeam-utils",
+ "maybe-uninit",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -215,6 +225,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "flume"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "855e285c3835897065a6ba6f9463b44553eb9f29c7988d692f3d41283b47388b"
+dependencies = [
+ "spin",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -254,11 +273,15 @@ dependencies = [
  "btoi",
  "byteorder",
  "crc",
+ "crossbeam-channel",
+ "crossbeam-utils",
  "filebuffer",
+ "flume",
  "git-object",
  "hex",
  "itoa",
  "miniz_oxide",
+ "num_cpus",
  "pretty_assertions",
  "quick-error",
  "sha-1",
@@ -539,6 +562,12 @@ name = "smallvec"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7cb5678e1615754284ec264d9bb5b4c27d2018577fd90ac0ceb578591ed5ee4"
+
+[[package]]
+name = "spin"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "strsim"

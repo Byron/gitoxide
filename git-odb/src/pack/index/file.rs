@@ -1,5 +1,4 @@
 use crate::pack;
-use crate::parallel::in_parallel;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
@@ -109,6 +108,8 @@ impl File {
         pack: Option<&pack::File>,
     ) -> Result<object::Id, ChecksumError> {
         use crate::pack::{cache, ResolvedBase};
+        use crate::parallel::in_parallel;
+
         let verify_self = || {
             let mut hasher = crate::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
