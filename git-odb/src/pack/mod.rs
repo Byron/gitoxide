@@ -22,7 +22,7 @@ mod cache {
         }
     }
 
-    struct LRUCacheEntry {
+    struct LRUEntry {
         offset: u64,
         data: Vec<u8>,
         kind: git_object::Kind,
@@ -30,7 +30,7 @@ mod cache {
     }
 
     #[derive(Default)]
-    pub struct LRUEntryCache(uluru::LRUCache<[uluru::Entry<LRUCacheEntry>; 32]>);
+    pub struct LRUEntryCache(uluru::LRUCache<[uluru::Entry<LRUEntry>; 64]>);
 
     impl EntryCache for LRUEntryCache {
         fn put(
@@ -40,7 +40,7 @@ mod cache {
             kind: git_object::Kind,
             compressed_size: usize,
         ) {
-            self.0.insert(LRUCacheEntry {
+            self.0.insert(LRUEntry {
                 offset,
                 data: Vec::from(data),
                 kind,
@@ -49,7 +49,7 @@ mod cache {
         }
 
         fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
-            self.0.lookup(|e: &mut LRUCacheEntry| {
+            self.0.lookup(|e: &mut LRUEntry| {
                 if e.offset == offset {
                     out.resize(e.data.len(), 0);
                     out.copy_from_slice(&e.data);
