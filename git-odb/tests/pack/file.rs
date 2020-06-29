@@ -30,7 +30,7 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
-    use git_odb::pack::ResolvedBase;
+    use git_odb::pack::{NoopEntryCache, ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
         std::fs::read(fixture_path(path)).unwrap()
@@ -77,7 +77,8 @@ mod decode_entry {
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
         let mut buf = Vec::new();
-        p.decode_entry(entry, &mut buf, resolve_with_panic).unwrap();
+        p.decode_entry(entry, &mut buf, resolve_with_panic, NoopEntryCache)
+            .unwrap();
         buf
     }
 }

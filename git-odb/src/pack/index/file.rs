@@ -1,11 +1,10 @@
 use crate::pack;
-use crate::pack::ResolvedBase;
+use crate::pack::{NoopEntryCache, ResolvedBase};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
 use quick_error::quick_error;
-use std::convert::TryInto;
-use std::{convert::TryFrom, mem::size_of, path::Path};
+use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";
 const FOOTER_SIZE: usize = SHA1_SIZE * 2;
@@ -134,15 +133,28 @@ impl File {
                 let id = verify_self()?;
 
                 let mut buf = Vec::with_capacity(2048);
-                for index_entry in self.iter() {
+                let index_entries = {
+                    let mut v: Vec<_> = self.iter().collect();
+                    v.sort_by_key(|e| e.pack_offset);
+                    v
+                };
+
+                for index_entry in index_entries.into_iter() {
                     let pack_entry = pack.entry(index_entry.pack_offset);
                     let pack_entry_data_offset = pack_entry.data_offset;
                     let (object_kind, consumed_input) = pack
-                        .decode_entry(pack_entry, &mut buf, |id, _| {
-                            self.lookup_index(&id).map(|index| {
-                                ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
-                            })
-                        })
+                        .decode_entry(
+                            pack_entry,
+                            &mut buf,
+                            |id, _| {
+                                self.lookup_index(&id).map(|index| {
+                                    ResolvedBase::InPack(
+                                        pack.entry(self.pack_offset_at_index(index)),
+                                    )
+                                })
+                            },
+                            NoopEntryCache,
+                        )
                         .map_err(|e| {
                             ChecksumError::PackDecode(e, index_entry.oid, index_entry.pack_offset)
                         })?;

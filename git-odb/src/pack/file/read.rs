@@ -1,4 +1,5 @@
 use crate::{
+    pack::EntryCache,
     pack::{Entry, Error, File},
     zlib::Inflate,
 };
@@ -57,13 +58,16 @@ impl File {
             .map(|(_, consumed_in, _)| consumed_in)
     }
 
-    // Decode an entry, resolving delta's as needed, while growing the output vector if there is not enough
-    // space to hold the result object.
+    /// Decode an entry, resolving delta's as needed, while growing the output vector if there is not enough
+    /// space to hold the result object.
+    /// Returns (object_kind, compressed_size), referring to the `entry` in-pack size for use with CRC32 checks
+    /// such as in `crc32(pack_data[entry.data_offset..entry.data_offset + compressed_size])`
     pub fn decode_entry(
         &self,
         entry: Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        cache: impl EntryCache,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
@@ -83,7 +87,7 @@ impl File {
                         )
                     })
             }
-            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out),
+            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out, cache),
         }
     }
 
@@ -92,6 +96,7 @@ impl File {
         last: Entry,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
+        cache: impl EntryCache,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
@@ -104,6 +109,15 @@ impl File {
         // Find the first full base, either an undeltified object in the pack or a reference to another object.
         let mut total_delta_data_size: u64 = 0;
         while cursor.header.is_delta() {
+            if let Some((kind, packed_size)) = cache.get(cursor.data_offset, out) {
+                object_kind = Some(kind);
+                // If the input entry is a cache hit, keep the packed size as it must be returned.
+                // Otherwise, the packed size will be determined later when decompressing the input delta
+                if total_delta_data_size == 0 {
+                    consumed_input = Some(packed_size);
+                }
+                break;
+            }
             total_delta_data_size += cursor.decompressed_size;
             let decompressed_size = cursor
                 .decompressed_size
@@ -133,6 +147,13 @@ impl File {
                 _ => unreachable!("cursor.is_delta() only allows deltas here"),
             };
         }
+
+        if chain.is_empty() {
+            return Ok((
+                object_kind.expect("object kind as set by cache"),
+                consumed_input.expect("consumed bytes as set by cache"),
+            ));
+        };
 
         // First pass will decompress all delta data and keep it in our output buffer
         // [<possibly resolved base object>]<delta-1..delta-n>...
@@ -214,7 +235,7 @@ impl File {
 
             // If we don't have a out-of-pack object already, fill the base-buffer by decompressing the full object
             // at which the cursor is left after the iteration
-            if let None = base_buffer_size {
+            if base_buffer_size.is_none() {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
                 object_kind = base_entry.header.to_kind();
