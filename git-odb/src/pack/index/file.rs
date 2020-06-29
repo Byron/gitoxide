@@ -107,8 +107,10 @@ impl File {
         &self,
         pack: Option<&pack::File>,
     ) -> Result<object::Id, ChecksumError> {
-        use crate::pack::{cache, ResolvedBase};
-        use crate::parallel::in_parallel_if;
+        use crate::{
+            pack::{cache, ResolvedBase},
+            parallel::{self, in_parallel_if},
+        };
 
         let verify_self = || {
             let mut hasher = crate::hash::Sha1::default();
@@ -131,8 +133,9 @@ impl File {
                         expected: self.checksum_of_pack(),
                     });
                 }
-                pack.verify_checksum()?;
-                let id = verify_self()?;
+                let (pack_res, id) = parallel::join(|| pack.verify_checksum(), verify_self);
+                pack_res?;
+                let id = id?;
 
                 let index_entries = {
                     let mut v: Vec<_> = self.iter().collect();
@@ -142,7 +145,7 @@ impl File {
 
                 struct Reducer;
 
-                impl crate::parallel::Reducer for Reducer {
+                impl parallel::Reducer for Reducer {
                     type Input = Result<(), ChecksumError>;
                     type Output = ();
                     type Error = ChecksumError;

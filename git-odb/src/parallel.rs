@@ -9,6 +9,13 @@ pub trait Reducer {
 mod serial {
     use crate::parallel::Reducer;
 
+    pub fn join<O1: Send, O2: Send>(
+        left: impl FnOnce() -> O1 + Send,
+        right: impl FnOnce() -> O2 + Send,
+    ) -> (O1, O2) {
+        (left(), right())
+    }
+
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
         new_thread_state: impl Fn() -> S + Send + Sync + Copy,
@@ -33,6 +40,18 @@ mod in_parallel {
     use crate::parallel::Reducer;
     use crossbeam_utils::thread;
 
+    pub fn join<O1: Send, O2: Send>(
+        left: impl FnOnce() -> O1 + Send,
+        right: impl FnOnce() -> O2 + Send,
+    ) -> (O1, O2) {
+        thread::scope(|s| {
+            let left = s.spawn(|_| left());
+            let right = s.spawn(|_| right());
+            (left.join().unwrap(), right.join().unwrap())
+        })
+        .unwrap()
+    }
+
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
         new_thread_state: impl Fn() -> S + Send + Sync + Copy,
@@ -44,13 +63,15 @@ mod in_parallel {
         I: Send,
         O: Send,
     {
-        let logical_cpus = num_cpus::get();
-        thread::scope(move |scope| {
+        let logical_without_overcommit = num_cpus::get_physical()
+            + (num_cpus::get().saturating_sub(num_cpus::get_physical()) / 2);
+        thread::scope(move |s| {
             let receive_result = {
-                let (send_input, receive_input) = crossbeam_channel::bounded::<I>(logical_cpus);
-                let (send_result, receive_result) = flume::bounded::<O>(logical_cpus);
-                for _ in 0..logical_cpus {
-                    scope.spawn({
+                let (send_input, receive_input) =
+                    crossbeam_channel::bounded::<I>(logical_without_overcommit);
+                let (send_result, receive_result) = flume::bounded::<O>(logical_without_overcommit);
+                for _ in 0..logical_without_overcommit {
+                    s.spawn({
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
                         move |_| {
@@ -61,7 +82,7 @@ mod in_parallel {
                         }
                     });
                 }
-                scope.spawn(move |_| {
+                s.spawn(move |_| {
                     for item in input {
                         send_input.send(item).unwrap();
                     }
