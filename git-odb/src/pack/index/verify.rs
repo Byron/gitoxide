@@ -102,12 +102,16 @@ impl index::File {
                 }
 
                 const CHUNK_SIZE: usize = 1000;
+                let there_are_enough_entries_to_process = || index_entries.len() > CHUNK_SIZE * 2;
+                let input_chunks = index_entries
+                    .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
+                    .into_iter();
+                let state_per_thread =
+                    || (cache::DecodeEntryLRU::default(), Vec::with_capacity(2048));
                 in_parallel_if(
-                    || index_entries.len() > CHUNK_SIZE * 2,
-                    index_entries
-                        .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
-                        .into_iter(),
-                    || (cache::DecodeEntryLRU::default(), Vec::with_capacity(2048)),
+                    there_are_enough_entries_to_process,
+                    input_chunks,
+                    state_per_thread,
                     |entries: &[index::Entry], (cache, buf)| -> Result<(), ChecksumError> {
                         for index_entry in entries {
                             let pack_entry = pack.entry(index_entry.pack_offset);
