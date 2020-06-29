@@ -72,5 +72,6 @@ macro_rules! izip {
 }
 
 mod file;
+mod verify;
 
 pub use file::*;
