@@ -23,28 +23,34 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] remotes with push and pull
   * [ ] configuration
   * [ ] merging
+  * [ ] API documentation with examples
 * **git-config**
   * read and write git configuration files
+  * [ ] API documentation with examples
 * **git-refs**
   * Handle symbolic references and packed references
   * discover them in typical folder structures
+  * [ ] API documentation with examples
 * **git-index**
   * read and write a git-index file
   * add and remove entries
+  * [ ] API documentation with examples
 * **git-diff**
   * diffing of git-object::Tree structures
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
+  * [ ] API documentation with examples
 * **git-object**
-    * represent borrowed commits, trees and tags
-    * *decode (zero-copy)*
-      * [x] commit
-      * [x] tree
-      * [x] tag
-    * [ ] encode
-      * [ ] commit
-      * [ ] tree
-      * [ ] tag
+  * represent borrowed commits, trees and tags
+  * *decode (zero-copy)*
+    * [x] commit
+    * [x] tree
+    * [x] tag
+  * encode
+    * [ ] commit
+    * [ ] tree
+    * [ ] tag
+  * [ ] API documentation with examples
 * **git-odb**
   * **loose objects**
     * [x] traverse
@@ -62,6 +68,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [ ] encode
       * [ ] create new packs
     * [ ] verify pack
+  * [ ] API documentation with examples
 * **git-transport**
   * [ ] via ssh
     * [ ] push
@@ -69,6 +76,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] via https
     * [ ] push
     * [ ] pull
+  * [ ] API documentation with examples
 * **Stress Testing**
   * [ ] Verify huge packs
   * [ ] Explode huge packs to disk and validate loose objects
