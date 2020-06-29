@@ -157,65 +157,70 @@ impl File {
                     }
                 }
 
+                const CHUNK_SIZE: usize = 1000;
                 in_parallel(
-                    index_entries.into_iter(),
+                    index_entries
+                        .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
+                        .into_iter(),
                     || (cache::DecodeEntryLRU::default(), Vec::with_capacity(2048)),
-                    |index_entry: Entry, (cache, buf)| -> Result<(), ChecksumError> {
-                        let pack_entry = pack.entry(index_entry.pack_offset);
-                        let pack_entry_data_offset = pack_entry.data_offset;
-                        let (object_kind, consumed_input) = pack
-                            .decode_entry(
-                                pack_entry,
-                                buf,
-                                |id, _| {
-                                    self.lookup_index(&id).map(|index| {
-                                        ResolvedBase::InPack(
-                                            pack.entry(self.pack_offset_at_index(index)),
-                                        )
-                                    })
-                                },
-                                cache,
-                            )
-                            .map_err(|e| {
-                                ChecksumError::PackDecode(
-                                    e,
-                                    index_entry.oid,
-                                    index_entry.pack_offset,
+                    |entries: &[Entry], (cache, buf)| -> Result<(), ChecksumError> {
+                        for index_entry in entries {
+                            let pack_entry = pack.entry(index_entry.pack_offset);
+                            let pack_entry_data_offset = pack_entry.data_offset;
+                            let (object_kind, consumed_input) = pack
+                                .decode_entry(
+                                    pack_entry,
+                                    buf,
+                                    |id, _| {
+                                        self.lookup_index(&id).map(|index| {
+                                            ResolvedBase::InPack(
+                                                pack.entry(self.pack_offset_at_index(index)),
+                                            )
+                                        })
+                                    },
+                                    cache,
                                 )
-                            })?;
+                                .map_err(|e| {
+                                    ChecksumError::PackDecode(
+                                        e,
+                                        index_entry.oid,
+                                        index_entry.pack_offset,
+                                    )
+                                })?;
 
-                        let mut header_buf = [0u8; 64];
-                        let header_size = crate::loose::db::serde::write_header(
-                            object_kind,
-                            buf.len(),
-                            &mut header_buf[..],
-                        )
-                        .expect("header buffer to be big enough");
-                        let mut hasher = crate::hash::Sha1::default();
-                        hasher.update(&header_buf[..header_size]);
-                        hasher.update(buf.as_slice());
-                        let actual_oid = hasher.digest();
-                        if actual_oid != index_entry.oid {
-                            return Err(ChecksumError::PackObjectMismatch {
-                                actual: actual_oid,
-                                expected: index_entry.oid.clone(),
-                                offset: index_entry.pack_offset,
-                                kind: object_kind,
-                            });
-                        }
-                        if let Some(desired_crc32) = index_entry.crc32 {
-                            let actual_crc32 = pack.entry_crc32(
-                                index_entry.pack_offset,
-                                (pack_entry_data_offset - index_entry.pack_offset) as usize
-                                    + consumed_input,
-                            );
-                            if actual_crc32 != desired_crc32 {
-                                return Err(ChecksumError::Crc32Mismatch {
-                                    actual: actual_crc32,
-                                    expected: desired_crc32,
+                            let mut header_buf = [0u8; 64];
+                            let header_size = crate::loose::db::serde::write_header(
+                                object_kind,
+                                buf.len(),
+                                &mut header_buf[..],
+                            )
+                            .expect("header buffer to be big enough");
+                            let mut hasher = crate::hash::Sha1::default();
+                            hasher.update(&header_buf[..header_size]);
+                            hasher.update(buf.as_slice());
+                            let actual_oid = hasher.digest();
+                            if actual_oid != index_entry.oid {
+                                return Err(ChecksumError::PackObjectMismatch {
+                                    actual: actual_oid,
+                                    expected: index_entry.oid.clone(),
                                     offset: index_entry.pack_offset,
                                     kind: object_kind,
                                 });
+                            }
+                            if let Some(desired_crc32) = index_entry.crc32 {
+                                let actual_crc32 = pack.entry_crc32(
+                                    index_entry.pack_offset,
+                                    (pack_entry_data_offset - index_entry.pack_offset) as usize
+                                        + consumed_input,
+                                );
+                                if actual_crc32 != desired_crc32 {
+                                    return Err(ChecksumError::Crc32Mismatch {
+                                        actual: actual_crc32,
+                                        expected: desired_crc32,
+                                        offset: index_entry.pack_offset,
+                                        kind: object_kind,
+                                    });
+                                }
                             }
                         }
                         Ok(())
