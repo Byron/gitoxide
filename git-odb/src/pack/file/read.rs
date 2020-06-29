@@ -68,7 +68,7 @@ impl File {
         entry: Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
-        cache: impl EntryCache,
+        cache: &mut impl EntryCache,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
@@ -97,7 +97,7 @@ impl File {
         last: Entry,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
-        cache: impl EntryCache,
+        cache: &mut impl EntryCache,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
@@ -111,6 +111,7 @@ impl File {
         let mut total_delta_data_size: u64 = 0;
         while cursor.header.is_delta() {
             if let Some((kind, packed_size)) = cache.get(cursor.data_offset, out) {
+                base_buffer_size = Some(out.len());
                 object_kind = Some(kind);
                 // If the input entry is a cache hit, keep the packed size as it must be returned.
                 // Otherwise, the packed size will be determined later when decompressing the input delta

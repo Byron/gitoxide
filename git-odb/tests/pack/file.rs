@@ -77,7 +77,7 @@ mod decode_entry {
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
         let mut buf = Vec::new();
-        p.decode_entry(entry, &mut buf, resolve_with_panic, NoopEntryCache)
+        p.decode_entry(entry, &mut buf, resolve_with_panic, &mut NoopEntryCache)
             .unwrap();
         buf
     }
