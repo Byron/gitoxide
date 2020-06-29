@@ -146,6 +146,10 @@ This guide documents which features are available for each of the crates provide
 * **fast-sha1** (mutually exclusive to `minimal-sha1`)
   * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
     CPUs that support it, like AMD Ryzen.
+* **parallel** (optional)
+  * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
+    where it makes sense.
+  * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
 * **`--all-features`**
   * Chooses `minimal-sha1`
 * **`--no-default-features`**
