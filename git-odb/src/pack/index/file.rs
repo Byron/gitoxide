@@ -1,4 +1,5 @@
 use crate::pack;
+use crate::parallel::in_parallel;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
@@ -132,69 +133,95 @@ impl File {
                 pack.verify_checksum()?;
                 let id = verify_self()?;
 
-                let mut buf = Vec::with_capacity(2048);
                 let index_entries = {
                     let mut v: Vec<_> = self.iter().collect();
                     v.sort_by_key(|e| e.pack_offset);
                     v
                 };
 
-                let mut cache = cache::DecodeEntryLRU::default();
-                for index_entry in index_entries.into_iter() {
-                    let pack_entry = pack.entry(index_entry.pack_offset);
-                    let pack_entry_data_offset = pack_entry.data_offset;
-                    let (object_kind, consumed_input) = pack
-                        .decode_entry(
-                            pack_entry,
-                            &mut buf,
-                            |id, _| {
-                                self.lookup_index(&id).map(|index| {
-                                    ResolvedBase::InPack(
-                                        pack.entry(self.pack_offset_at_index(index)),
-                                    )
-                                })
-                            },
-                            &mut cache,
-                        )
-                        .map_err(|e| {
-                            ChecksumError::PackDecode(e, index_entry.oid, index_entry.pack_offset)
-                        })?;
+                struct Reducer;
 
-                    let mut header_buf = [0u8; 64];
-                    let header_size = crate::loose::db::serde::write_header(
-                        object_kind,
-                        buf.len(),
-                        &mut header_buf[..],
-                    )
-                    .expect("header buffer to be big enough");
-                    let mut hasher = crate::hash::Sha1::default();
-                    hasher.update(&header_buf[..header_size]);
-                    hasher.update(buf.as_slice());
-                    let actual_oid = hasher.digest();
-                    if actual_oid != index_entry.oid {
-                        return Err(ChecksumError::PackObjectMismatch {
-                            actual: actual_oid,
-                            expected: index_entry.oid.clone(),
-                            offset: index_entry.pack_offset,
-                            kind: object_kind,
-                        });
+                impl crate::parallel::Reducer for Reducer {
+                    type Input = Result<(), ChecksumError>;
+                    type Output = ();
+                    type Error = ChecksumError;
+
+                    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
+                        input?;
+                        Ok(())
                     }
-                    if let Some(desired_crc32) = index_entry.crc32 {
-                        let actual_crc32 = pack.entry_crc32(
-                            index_entry.pack_offset,
-                            (pack_entry_data_offset - index_entry.pack_offset) as usize
-                                + consumed_input,
-                        );
-                        if actual_crc32 != desired_crc32 {
-                            return Err(ChecksumError::Crc32Mismatch {
-                                actual: actual_crc32,
-                                expected: desired_crc32,
+
+                    fn finalize(&mut self) -> Result<Self::Output, Self::Error> {
+                        Ok(())
+                    }
+                }
+
+                in_parallel(
+                    index_entries.into_iter(),
+                    || (cache::DecodeEntryLRU::default(), Vec::with_capacity(2048)),
+                    |index_entry: Entry, (cache, buf)| -> Result<(), ChecksumError> {
+                        let pack_entry = pack.entry(index_entry.pack_offset);
+                        let pack_entry_data_offset = pack_entry.data_offset;
+                        let (object_kind, consumed_input) = pack
+                            .decode_entry(
+                                pack_entry,
+                                buf,
+                                |id, _| {
+                                    self.lookup_index(&id).map(|index| {
+                                        ResolvedBase::InPack(
+                                            pack.entry(self.pack_offset_at_index(index)),
+                                        )
+                                    })
+                                },
+                                cache,
+                            )
+                            .map_err(|e| {
+                                ChecksumError::PackDecode(
+                                    e,
+                                    index_entry.oid,
+                                    index_entry.pack_offset,
+                                )
+                            })?;
+
+                        let mut header_buf = [0u8; 64];
+                        let header_size = crate::loose::db::serde::write_header(
+                            object_kind,
+                            buf.len(),
+                            &mut header_buf[..],
+                        )
+                        .expect("header buffer to be big enough");
+                        let mut hasher = crate::hash::Sha1::default();
+                        hasher.update(&header_buf[..header_size]);
+                        hasher.update(buf.as_slice());
+                        let actual_oid = hasher.digest();
+                        if actual_oid != index_entry.oid {
+                            return Err(ChecksumError::PackObjectMismatch {
+                                actual: actual_oid,
+                                expected: index_entry.oid.clone(),
                                 offset: index_entry.pack_offset,
                                 kind: object_kind,
                             });
                         }
-                    }
-                }
+                        if let Some(desired_crc32) = index_entry.crc32 {
+                            let actual_crc32 = pack.entry_crc32(
+                                index_entry.pack_offset,
+                                (pack_entry_data_offset - index_entry.pack_offset) as usize
+                                    + consumed_input,
+                            );
+                            if actual_crc32 != desired_crc32 {
+                                return Err(ChecksumError::Crc32Mismatch {
+                                    actual: actual_crc32,
+                                    expected: desired_crc32,
+                                    offset: index_entry.pack_offset,
+                                    kind: object_kind,
+                                });
+                            }
+                        }
+                        Ok(())
+                    },
+                    Reducer,
+                )?;
+
                 Ok(id)
             }
         }
