@@ -1,5 +1,5 @@
 use crate::{
-    pack::EntryCache,
+    pack::cache,
     pack::{Entry, Error, File},
     zlib::Inflate,
 };
@@ -68,7 +68,7 @@ impl File {
         entry: Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
-        cache: &mut impl EntryCache,
+        cache: &mut impl cache::DecodeEntry,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
@@ -97,7 +97,7 @@ impl File {
         last: Entry,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
-        cache: &mut impl EntryCache,
+        cache: &mut impl cache::DecodeEntry,
     ) -> Result<(object::Kind, usize), Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain

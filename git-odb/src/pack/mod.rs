@@ -1,7 +1,6 @@
 pub mod index;
 
-mod cache;
-pub use cache::*;
+pub mod cache;
 
 mod file;
 pub use self::file::*;

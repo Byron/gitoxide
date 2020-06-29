@@ -1,5 +1,4 @@
 use crate::pack;
-use crate::pack::{LRUEntryCache, ResolvedBase};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::{self as object, SHA1_SIZE};
@@ -108,6 +107,7 @@ impl File {
         &self,
         pack: Option<&pack::File>,
     ) -> Result<object::Id, ChecksumError> {
+        use crate::pack::{cache, ResolvedBase};
         let verify_self = || {
             let mut hasher = crate::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
@@ -139,7 +139,7 @@ impl File {
                     v
                 };
 
-                let mut cache = LRUEntryCache::default();
+                let mut cache = cache::DecodeEntryLRU::default();
                 for index_entry in index_entries.into_iter() {
                     let pack_entry = pack.entry(index_entry.pack_offset);
                     let pack_entry_data_offset = pack_entry.data_offset;

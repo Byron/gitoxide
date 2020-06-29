@@ -1,11 +1,11 @@
-pub trait EntryCache {
+pub trait DecodeEntry {
     fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize);
     fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)>;
 }
 
-pub struct NoopEntryCache;
+pub struct DecodeEntryNoop;
 
-impl EntryCache for NoopEntryCache {
+impl DecodeEntry for DecodeEntryNoop {
     fn put(
         &mut self,
         _offset: u64,
@@ -27,9 +27,9 @@ struct LRUEntry {
 }
 
 #[derive(Default)]
-pub struct LRUEntryCache(uluru::LRUCache<[uluru::Entry<LRUEntry>; 64]>);
+pub struct DecodeEntryLRU(uluru::LRUCache<[uluru::Entry<LRUEntry>; 64]>);
 
-impl EntryCache for LRUEntryCache {
+impl DecodeEntry for DecodeEntryLRU {
     fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
         self.0.insert(LRUEntry {
             offset,
