@@ -38,10 +38,11 @@ impl File {
         self.decompress_entry_from_data_offset(entry.data_offset, out)
     }
 
-    // Decompress the object expected at the given data offset, sans pack header. This information is only
-    // known after the pack header was parsed.
-    // Note that this method does not resolve deltified objects, but merely decompresses their content
-    // `out` is expected to be large enough to hold `entry.size` bytes.
+    /// Decompress the object expected at the given data offset, sans pack header. This information is only
+    /// known after the pack header was parsed.
+    /// Note that this method does not resolve deltified objects, but merely decompresses their content
+    /// `out` is expected to be large enough to hold `entry.size` bytes.
+    /// Returns the amount of packed bytes there were decompressed into `out`
     fn decompress_entry_from_data_offset(
         &self,
         data_offset: u64,
@@ -239,7 +240,17 @@ impl File {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
                 object_kind = base_entry.header.to_kind();
-                self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
+                let packed_size =
+                    self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
+                cache.put(
+                    base_entry.data_offset,
+                    &out[..base_entry
+                        .decompressed_size
+                        .try_into()
+                        .expect("successful decompression should make this successful too")],
+                    object_kind.expect("non-delta object"),
+                    packed_size,
+                );
             }
 
             (first_buffer_size, second_buffer_end)
@@ -284,11 +295,17 @@ impl File {
             target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);
         }
         out.resize(last_result_size, 0);
-        Ok((
-            object_kind
-                .expect("a base object as root of any delta chain that we are here to resolve"),
-            consumed_input.expect("at least one decompressed delta object"),
-        ))
+
+        let object_kind = object_kind
+            .expect("a base object as root of any delta chain that we are here to resolve");
+        let consumed_input = consumed_input.expect("at least one decompressed delta object");
+        cache.put(
+            chain.first().expect("at least one delta").data_offset,
+            out.as_slice(),
+            object_kind,
+            consumed_input,
+        );
+        Ok((object_kind, consumed_input))
     }
 }
 
