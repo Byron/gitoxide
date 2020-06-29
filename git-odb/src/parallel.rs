@@ -6,8 +6,7 @@ pub trait Reducer {
     fn finalize(&mut self) -> Result<Self::Output, Self::Error>;
 }
 
-#[cfg(not(feature = "parallel"))]
-mod _impl {
+mod serial {
     use crate::parallel::Reducer;
 
     pub fn in_parallel<I, S, O, R>(
@@ -30,7 +29,7 @@ mod _impl {
 }
 
 #[cfg(feature = "parallel")]
-mod _impl {
+mod in_parallel {
     use crate::parallel::Reducer;
     use crossbeam_utils::thread;
 
@@ -79,4 +78,27 @@ mod _impl {
     }
 }
 
-pub use _impl::*;
+#[cfg(not(feature = "parallel"))]
+pub use serial::*;
+
+#[cfg(feature = "parallel")]
+pub use in_parallel::*;
+
+pub fn in_parallel_if<I, S, O, R>(
+    condition: impl FnOnce() -> bool,
+    input: impl Iterator<Item = I> + Send,
+    new_thread_state: impl Fn() -> S + Send + Sync + Copy,
+    consume: impl Fn(I, &mut S) -> O + Send + Copy,
+    reducer: R,
+) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
+where
+    R: Reducer<Input = O>,
+    I: Send,
+    O: Send,
+{
+    if condition() {
+        in_parallel(input, new_thread_state, consume, reducer)
+    } else {
+        serial::in_parallel(input, new_thread_state, consume, reducer)
+    }
+}

@@ -108,7 +108,7 @@ impl File {
         pack: Option<&pack::File>,
     ) -> Result<object::Id, ChecksumError> {
         use crate::pack::{cache, ResolvedBase};
-        use crate::parallel::in_parallel;
+        use crate::parallel::in_parallel_if;
 
         let verify_self = || {
             let mut hasher = crate::hash::Sha1::default();
@@ -158,7 +158,8 @@ impl File {
                 }
 
                 const CHUNK_SIZE: usize = 1000;
-                in_parallel(
+                in_parallel_if(
+                    || index_entries.len() > CHUNK_SIZE * 2,
                     index_entries
                         .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
                         .into_iter(),
