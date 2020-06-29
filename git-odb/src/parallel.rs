@@ -18,8 +18,8 @@ mod serial {
 
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
-        new_thread_state: impl Fn() -> S + Send + Sync + Copy,
-        consume: impl Fn(I, &mut S) -> O + Send + Copy,
+        new_thread_state: impl Fn() -> S + Send + Sync + Clone,
+        consume: impl Fn(I, &mut S) -> O + Send + Clone,
         mut reducer: R,
     ) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
     where
@@ -54,8 +54,8 @@ mod in_parallel {
 
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
-        new_thread_state: impl Fn() -> S + Send + Sync + Copy,
-        consume: impl Fn(I, &mut S) -> O + Send + Copy,
+        new_thread_state: impl Fn() -> S + Send + Sync + Clone,
+        consume: impl Fn(I, &mut S) -> O + Send + Clone,
         mut reducer: R,
     ) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
     where
@@ -72,6 +72,8 @@ mod in_parallel {
                     s.spawn({
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
+                        let new_thread_state = new_thread_state.clone();
+                        let consume = consume.clone();
                         move |_| {
                             let mut state = new_thread_state();
                             for item in receive_input {
@@ -106,8 +108,8 @@ pub use in_parallel::*;
 pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I> + Send,
-    new_thread_state: impl Fn() -> S + Send + Sync + Copy,
-    consume: impl Fn(I, &mut S) -> O + Send + Copy,
+    new_thread_state: impl Fn() -> S + Send + Sync + Clone,
+    consume: impl Fn(I, &mut S) -> O + Send + Clone,
     reducer: R,
 ) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
 where

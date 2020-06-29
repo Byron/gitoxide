@@ -24,6 +24,8 @@
 * **gio**
    * [x] validate pack file
    * [x] validate index and pack
+   * [ ] progress
+   * [ ] statistics
    * [ ] a verbose mode to list each object in a pack, similar to existing git-verify-pack
 * **stress**
   * [ ] first stress test for validation of a big repository, linux maybe, or something smaller but big enough
