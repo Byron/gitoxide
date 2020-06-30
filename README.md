@@ -77,6 +77,12 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [ ] push
     * [ ] pull
   * [ ] API documentation with examples
+* **git-features**
+  * **parallel** feature toggle
+    * _When on…_
+      * `in_parallel`
+      * `join`
+    * _When off all functions execute serially_
 * **Stress Testing**
   * [ ] Verify huge packs
   * [ ] Explode huge packs to disk and validate loose objects
@@ -154,14 +160,20 @@ This guide documents which features are available for each of the crates provide
 * **fast-sha1** (mutually exclusive to `minimal-sha1`)
   * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
     CPUs that support it, like AMD Ryzen.
-* **parallel** (optional)
-  * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
-    where it makes sense.
-  * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
 * **`--all-features`**
   * Chooses `minimal-sha1`
 * **`--no-default-features`**
   * Makes any operation relying on generating Sha1 hashes unavailable.
+    
+### git-features
+
+A crate to help controlling which capabilities are available from the top-level crate that uses `gitoxide`.
+All feature toggles are additive.
+
+* **parallel** (optional)
+  * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
+    where it makes sense.
+  * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
  
 ## Development Practices
 

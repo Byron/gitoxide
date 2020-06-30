@@ -253,6 +253,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-features"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "crossbeam-utils",
+ "flume",
+ "num_cpus",
+]
+
+[[package]]
 name = "git-object"
 version = "0.1.0"
 dependencies = [

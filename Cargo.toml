@@ -28,6 +28,7 @@ incremental = false
 [workspace]
 members = [
     "gitoxide-core",
+    "git-features",
     "git-object",
     "git-odb",
     "git-repository",
