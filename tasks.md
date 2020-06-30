@@ -29,4 +29,7 @@
    * [ ] a verbose mode to list each object in a pack, similar to existing git-verify-pack
 * **stress**
   * [ ] first stress test for validation of a big repository, linux maybe, or something smaller but big enough
+* **unrelated**
+  * [ ] Use `argh` in cargo-diet to reduce build times
+  * [ ] Use `argh` in prodash dashboard example to reduce build times
 

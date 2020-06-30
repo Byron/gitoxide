@@ -23,7 +23,7 @@ doctest = false
 default = ["fast", "pretty-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt"]
-lean-cli = ["argh"]
+lean-cli = ["argh", "git-features/progress-log"]
 
 [dependencies]
 anyhow = "1.0.31"
