@@ -164,7 +164,7 @@ The top-level command-line interface.
 * **pretty-cli** _(default)_
   * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
 * **lean-cli** _(mutually exclusive to pretty-cli)_
-  * Use `argh` to produce a usable binary with decent documentation that is smallest in size.
+  * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
   * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
     
 ### git-features

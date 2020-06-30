@@ -11,6 +11,17 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 	docker build -t $(docker_image) - < etc/developer.Dockerfile
 	docker run -v $$PWD:/volume -w /volume -it $(docker_image)
 
+##@ Release Builds
+
+release-default: always ## the default build, big bug pretty
+	cargo build --release
+
+release-lean: always ## lean and fast
+	cargo build --release --no-default-features --features lean-cli,fast
+
+release-small: always ## minimal dependencies, at cost of performance
+	cargo build --release --no-default-features --features lean-cli
+
 ##@ Development
 
 target/release/gio: always
@@ -25,6 +36,8 @@ profile: target/release/gio ## run callgrind and annotate its output - linux onl
 
 benchmark: target/release/gio ## see how fast things are, powered by hyperfine
 	hyperfine '$<'
+
+##@ Testing
 
 tests: check unit-tests journey-tests journey-tests-lean-cli ## run all tests, including journey tests
 
