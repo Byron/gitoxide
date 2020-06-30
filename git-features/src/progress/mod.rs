@@ -123,6 +123,47 @@ where
     }
 }
 
+pub enum Either<L, R> {
+    Left(L),
+    Right(R),
+}
+
+impl<L, R> Progress for Either<L, R>
+where
+    L: Progress,
+    R: Progress,
+{
+    type SubProgress = Either<L::SubProgress, R::SubProgress>;
+
+    fn add_child(&mut self, name: impl Into<String>) -> Self::SubProgress {
+        match self {
+            Either::Left(l) => Either::Left(l.add_child(name)),
+            Either::Right(r) => Either::Right(r.add_child(name)),
+        }
+    }
+
+    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
+        match self {
+            Either::Left(l) => l.init(max, unit),
+            Either::Right(r) => r.init(max, unit),
+        }
+    }
+
+    fn set(&mut self, step: u32) {
+        match self {
+            Either::Left(l) => l.set(step),
+            Either::Right(r) => r.set(step),
+        }
+    }
+
+    fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
+        match self {
+            Either::Left(l) => l.message(level, message),
+            Either::Right(r) => r.message(level, message),
+        }
+    }
+}
+
 #[cfg(feature = "progress-log")]
 mod log;
 
