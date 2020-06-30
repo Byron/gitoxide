@@ -179,6 +179,14 @@ All feature toggles are additive.
 * **fast-sha1** 
   * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
     CPUs that support it, like AMD Ryzen.
+* **progress-log**
+  * Implement the `Progress` trait using the `log` crate. Throttle progress output to one every 0.5 seconds unless messsages
+    are sent manually.
+* **progress-prodash**
+  * Implement the `Progress` trait for the tree data structures provided by `prodash`, which enables using a terminal user
+    interface for progress.
+  * This is by far the most expensive progress option, as it pulls in an `async` TUI along with supporting infrastructure,
+    which is kept minimal but has quite a footprint nonetheless.
  
 ## Development Practices
 

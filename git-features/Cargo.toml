@@ -15,6 +15,7 @@ test = false
 parallel = ["flume", "crossbeam-utils", "crossbeam-channel", "num_cpus"]
 fast-sha1 = ["fastsha1"]
 progress-log = ["log"]
+progress-prodash = ["prodash"]
 
 [dependencies]
 # 'parallel' feature
@@ -31,3 +32,4 @@ fastsha1 = { package = "sha-1", version = "0.9.1", optional = true }
 
 # progress
 log = { version = "0.4.8", optional = true }
+prodash = { version = "4.0.4", optional = true, default-features = false }
