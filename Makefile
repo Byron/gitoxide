@@ -14,7 +14,7 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 ##@ Development
 
 target/debug/gio: always
-	cargo build
+	cargo build --no-default-features --features pretty-cli
 
 target/release/gio: always
 	cargo build --release
@@ -29,7 +29,7 @@ profile: target/release/gio ## run callgrind and annotate its output - linux onl
 benchmark: target/release/gio ## see how fast things are, powered by hyperfine
 	hyperfine '$<'
 
-tests: check unit-tests journey-tests ## run all tests, including journey tests
+tests: check unit-tests journey-tests journey-tests-lean-cli ## run all tests, including journey tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -43,8 +43,12 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
-journey-tests: target/debug/gio ## run stateless journey tests
+journey-tests: target/debug/gio ## run stateless journey tests (pretty-cli)
 	./tests/stateless-journey.sh $<
+
+journey-tests-lean-cli: always ## run stateless journey tests (lean-cli)
+	cargo build --no-default-features --features lean-cli
+	./tests/stateless-journey.sh target/debug/gio
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests

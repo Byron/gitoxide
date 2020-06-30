@@ -17,12 +17,16 @@ doctest = false
 default = ["fast", "pretty-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt"]
+lean-cli = ["argh"]
 
 [dependencies]
+anyhow = "1.0.31"
+
 gitoxide-core = { version = "0.1.0", path = "gitoxide-core" }
 git-features = { version = "0.1.0", path = "git-features" }
+
 structopt = { version = "0.3.14", optional = true }
-anyhow = "1.0.31"
+argh = { version = "0.1.3", optional = true }
 
 [profile.release]
 overflow-checks = false

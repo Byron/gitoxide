@@ -163,7 +163,7 @@ The top-level command-line interface.
   * If disabled, the binary will be visibly smaller.
 * **pretty-cli** _(default)_
   * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
-* **small-cli** _(mutually exclusive to pretty-cli)_
+* **lean-cli** _(mutually exclusive to pretty-cli)_
   * Use `argh` to produce a usable binary with decent documentation that is smallest in size.
   * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
     
