@@ -14,14 +14,15 @@ test = false
 doctest = false
 
 [features]
-default = ["fast"]
+default = ["fast", "pretty-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
+pretty-cli = ["structopt"]
 
 [dependencies]
 gitoxide-core = { version = "0.1.0", path = "gitoxide-core" }
 git-features = { version = "0.1.0", path = "git-features" }
+structopt = { version = "0.3.14", optional = true }
 anyhow = "1.0.31"
-structopt = "0.3.14"
 
 [profile.release]
 overflow-checks = false

@@ -157,17 +157,22 @@ This guide documents which features are available for each of the crates provide
 
 The top-level command-line interface.
 
-* **fast** (default)
+* **fast** _(default)_
   * Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
     as well as fast, hardware accelerated hashing.
   * If disabled, the binary will be visibly smaller.
+* **pretty-cli** _(default)_
+  * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
+* **small-cli** _(mutually exclusive to pretty-cli)_
+  * Use `argh` to produce a usable binary with decent documentation that is smallest in size.
+  * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
     
 ### git-features
 
 A crate to help controlling which capabilities are available from the top-level crate that uses `gitoxide`.
 All feature toggles are additive.
 
-* **parallel** (optional)
+* **parallel** _(optional)_
   * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
     where it makes sense.
   * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
