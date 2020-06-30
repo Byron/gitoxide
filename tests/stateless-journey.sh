@@ -2,6 +2,7 @@
 set -eu
 
 exe=${1:?First argument must be the executable to test}
+exe_plumbing=${2:?Second argument must be the plumbing executable to test}
 
 root="$(cd "${0%/*}" && pwd)"
 exe="${root}/../$exe"
@@ -49,14 +50,14 @@ title "CLI"
       PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
       it "verifies the pack successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-success" \
-        expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_FILE"
       }
     )
     (with "a valid pack file"
       PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
       it "verifies the pack index successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
-        expect_run $SUCCESSFULLY "$exe" plumbing verify-pack "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_INDEX_FILE"
       }
     )
   )

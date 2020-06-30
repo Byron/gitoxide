@@ -13,11 +13,8 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 
 ##@ Development
 
-target/debug/gio: always
-	cargo build --no-default-features --features pretty-cli
-
 target/release/gio: always
-	cargo build --release
+	cargo build --release --no-default-features --features lean-cli
 
 lint: ## Run lints with clippy
 	cargo clippy
@@ -33,6 +30,10 @@ tests: check unit-tests journey-tests journey-tests-lean-cli ## run all tests, i
 
 check: ## Build all code in suitable configurations
 	cargo check --all
+	cargo check --all --all-features
+	cargo check --no-default-features --features lean-cli
+	cargo check --no-default-features --features pretty-cli
+	cargo check --no-default-features --features lean-cli,fast
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fast-sha1
@@ -43,12 +44,13 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
-journey-tests: target/debug/gio ## run stateless journey tests (pretty-cli)
-	./tests/stateless-journey.sh $<
+journey-tests: always  ## run stateless journey tests (pretty-cli)
+	cargo build
+	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing
 
 journey-tests-lean-cli: always ## run stateless journey tests (lean-cli)
 	cargo build --no-default-features --features lean-cli
-	./tests/stateless-journey.sh target/debug/gio
+	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests

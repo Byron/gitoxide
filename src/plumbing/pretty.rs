@@ -1,8 +1,10 @@
 use anyhow::Result;
 use gitoxide_core as core;
+use std::io::{stderr, stdout};
 use structopt::StructOpt;
 
 mod options {
+    use std::path::PathBuf;
     use structopt::{clap::AppSettings, StructOpt};
 
     #[derive(Debug, StructOpt)]
@@ -16,10 +18,13 @@ mod options {
 
     #[derive(Debug, StructOpt)]
     pub enum Subcommands {
-        /// Initialize the repository in the current directory.
-        #[structopt(alias = "initialize")]
+        /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
-        Init,
+        VerifyPack {
+            /// The '.pack' or '.idx' file whose checksum to validate.
+            #[structopt(parse(from_os_str))]
+            path: PathBuf,
+        },
     }
 }
 
@@ -27,7 +32,9 @@ pub fn main() -> Result<()> {
     use options::*;
     let args = Args::from_args();
     match args.cmd {
-        Subcommands::Init => core::init(),
+        Subcommands::VerifyPack { path } => {
+            core::verify_pack_or_pack_index(path, stdout(), stderr())
+        }
     }?;
     Ok(())
 }

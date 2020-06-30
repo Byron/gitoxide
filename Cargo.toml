@@ -13,6 +13,12 @@ path="src/porcelain-cli.rs"
 test = false
 doctest = false
 
+[[bin]]
+name="gio-plumbing"
+path="src/plumbing-cli.rs"
+test = false
+doctest = false
+
 [features]
 default = ["fast", "pretty-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
