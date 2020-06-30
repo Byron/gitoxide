@@ -87,6 +87,10 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] Verify huge packs
   * [ ] Explode huge packs to disk and validate loose objects
   * [ ] Generate huge back from a lot of loose objects
+* **Ideas for Demos**
+  * [ ] A simple [`git-hours`][git-hours-algo] clone
+
+[git-hours-algo]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
 
 ## Installation
 
