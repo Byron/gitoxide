@@ -9,7 +9,7 @@ edition = "2018"
 
 [[bin]]
 name="gio"
-path="src/main.rs"
+path="src/porcelain-cli.rs"
 test = false
 doctest = false
 
