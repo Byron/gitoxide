@@ -147,7 +147,22 @@ Provide a CLI to for the most basic user journey:
 * [ ] add a remote
 * [ ] push
 
-### `git-features` guide
+## Cargo features guide
+
+Cargo uses feature toggles to control which dependencies are pulled in, allowing users to specialize crates to fit their usage.
+Ideally, these should be additive.
+This guide documents which features are available for each of the crates provided here and how they function.
+
+### gitoxide
+
+The top-level command-line interface.
+
+* **fast** (default)
+  * Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
+    as well as fast, hardware accelerated hashing.
+  * If disabled, the binary will be visibly smaller.
+    
+### git-features
 
 A crate to help controlling which capabilities are available from the top-level crate that uses `gitoxide`.
 All feature toggles are additive.

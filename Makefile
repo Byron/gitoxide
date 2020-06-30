@@ -33,10 +33,7 @@ tests: check unit-tests journey-tests ## run all tests, including journey tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all
-	cd git-odb && cargo check --no-default-features --features fast-sha1 \
-			   && cargo check --no-default-features \
-			   && cargo check --all-features
-	cd git-features && && cargo check --all-features \
+	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fast-sha1
 
