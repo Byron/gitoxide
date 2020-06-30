@@ -74,55 +74,6 @@ impl Progress for Discard {
     fn message(&mut self, _level: MessageLevel, _message: impl Into<String>) {}
 }
 
-pub enum DoOrDiscard<T> {
-    Do(T),
-    Discard,
-}
-
-impl<T> From<Option<T>> for DoOrDiscard<T>
-where
-    T: Progress,
-{
-    fn from(p: Option<T>) -> Self {
-        match p {
-            Some(p) => DoOrDiscard::Do(p),
-            None => DoOrDiscard::Discard,
-        }
-    }
-}
-
-impl<T> Progress for DoOrDiscard<T>
-where
-    T: Progress,
-{
-    type SubProgress = DoOrDiscard<T::SubProgress>;
-
-    fn add_child(&mut self, name: impl Into<String>) -> Self::SubProgress {
-        match self {
-            DoOrDiscard::Discard => DoOrDiscard::Discard,
-            DoOrDiscard::Do(p) => DoOrDiscard::Do(p.add_child(name)),
-        }
-    }
-
-    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
-        if let DoOrDiscard::Do(p) = self {
-            p.init(max, unit)
-        }
-    }
-
-    fn set(&mut self, step: u32) {
-        if let DoOrDiscard::Do(p) = self {
-            p.set(step)
-        }
-    }
-
-    fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
-        if let DoOrDiscard::Do(p) = self {
-            p.message(level, message)
-        }
-    }
-}
-
 pub enum Either<L, R> {
     Left(L),
     Right(R),
@@ -161,6 +112,43 @@ where
             Either::Left(l) => l.message(level, message),
             Either::Right(r) => r.message(level, message),
         }
+    }
+}
+
+pub struct DoOrDiscard<T>(Either<T, Discard>);
+
+impl<T> From<Option<T>> for DoOrDiscard<T>
+where
+    T: Progress,
+{
+    fn from(p: Option<T>) -> Self {
+        match p {
+            Some(p) => DoOrDiscard(Either::Left(p)),
+            None => DoOrDiscard(Either::Right(Discard)),
+        }
+    }
+}
+
+impl<T> Progress for DoOrDiscard<T>
+where
+    T: Progress,
+{
+    type SubProgress = DoOrDiscard<T::SubProgress>;
+
+    fn add_child(&mut self, name: impl Into<String>) -> Self::SubProgress {
+        DoOrDiscard(self.0.add_child(name))
+    }
+
+    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
+        self.0.init(max, unit)
+    }
+
+    fn set(&mut self, step: u32) {
+        self.0.set(step)
+    }
+
+    fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
+        self.0.message(level, message)
     }
 }
 
