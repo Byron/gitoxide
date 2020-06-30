@@ -70,6 +70,9 @@ impl File {
     pub fn num_objects(&self) -> u32 {
         self.num_objects
     }
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
     pub fn checksum(&self) -> object::Id {
         object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }

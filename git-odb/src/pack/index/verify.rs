@@ -1,4 +1,5 @@
 use crate::{pack, pack::index};
+use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
 
@@ -43,18 +44,27 @@ impl index::File {
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    pub fn verify_checksum_of_index(
+    pub fn verify_checksum_of_index<P>(
         &self,
         pack: Option<&pack::File>,
-        _progress: Option<impl git_features::progress::Progress>,
-    ) -> Result<git_object::Id, ChecksumError> {
+        progress: Option<P>,
+    ) -> Result<git_object::Id, ChecksumError>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send,
+    {
         use crate::pack::{cache, ResolvedBase};
         use git_features::parallel::{self, in_parallel_if};
 
-        let verify_self = || {
+        let mut root = progress::DoOrDiscard::from(progress);
+        let mut progress = root.add_child("Sha1 of index");
+
+        let mut verify_self = || {
+            progress.info("begin");
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
             let actual = hasher.digest();
+            progress.done("finished");
 
             let expected = self.checksum_of_index();
             if actual == expected {
@@ -72,7 +82,17 @@ impl index::File {
                         expected: self.checksum_of_pack(),
                     });
                 }
-                let (pack_res, id) = parallel::join(|| pack.verify_checksum(), verify_self);
+                let mut progress =
+                    root.add_child(format!("Sha1 of pack at '{}'", pack.path().display()));
+                let (pack_res, id) = parallel::join(
+                    || {
+                        progress.info("begin");
+                        let res = pack.verify_checksum();
+                        progress.done("finished");
+                        res
+                    },
+                    verify_self,
+                );
                 pack_res?;
                 let id = id?;
 
@@ -82,19 +102,28 @@ impl index::File {
                     v
                 };
 
-                struct Reducer;
+                struct Reducer<P> {
+                    progress: P,
+                    seen: u32,
+                }
 
-                impl parallel::Reducer for Reducer {
+                impl<P> parallel::Reducer for Reducer<P>
+                where
+                    P: Progress,
+                {
                     type Input = Result<(), ChecksumError>;
                     type Output = ();
                     type Error = ChecksumError;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
+                        self.seen += 1;
+                        self.progress.set(self.seen);
                         input?;
                         Ok(())
                     }
 
                     fn finalize(&mut self) -> Result<Self::Output, Self::Error> {
+                        self.progress.done("finished");
                         Ok(())
                     }
                 }
@@ -106,6 +135,9 @@ impl index::File {
                     .into_iter();
                 let state_per_thread =
                     || (cache::DecodeEntryLRU::default(), Vec::with_capacity(2048));
+                let mut reduce_progress = root.add_child("reduce");
+                reduce_progress.init(Some(self.num_objects()), Some("objects"));
+
                 in_parallel_if(
                     there_are_enough_entries_to_process,
                     input_chunks,
@@ -172,7 +204,10 @@ impl index::File {
                         }
                         Ok(())
                     },
-                    Reducer,
+                    Reducer {
+                        progress: reduce_progress,
+                        seen: 0,
+                    },
                 )?;
 
                 Ok(id)

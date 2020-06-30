@@ -26,15 +26,20 @@ mod options {
 }
 
 use anyhow::Result;
+use git_features::progress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout};
 
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = argh::from_env();
+    env_logger::init();
     match cli.subcommand {
-        SubCommands::VerifyPack(VerifyPack { path }) => {
-            core::verify_pack_or_pack_index(path, stdout(), stderr())
-        }
+        SubCommands::VerifyPack(VerifyPack { path }) => core::verify_pack_or_pack_index(
+            path,
+            progress::Log::new("verify").into(),
+            stdout(),
+            stderr(),
+        ),
     }
 }

@@ -62,18 +62,18 @@ pub trait Progress {
 mod log;
 
 #[cfg(feature = "progress-log")]
-pub use self::log::LogProgress;
+pub use self::log::Log;
 
 #[cfg(feature = "progress-prodash")]
 mod prodash;
 
-pub struct DiscardProgress;
+pub struct Discard;
 
-impl Progress for DiscardProgress {
-    type SubProgress = DiscardProgress;
+impl Progress for Discard {
+    type SubProgress = Discard;
 
     fn add_child(&mut self, _name: impl Into<String>) -> Self::SubProgress {
-        DiscardProgress
+        Discard
     }
 
     fn init(&mut self, _max: Option<u32>, _unit: Option<&'static str>) {}
@@ -81,4 +81,53 @@ impl Progress for DiscardProgress {
     fn set(&mut self, _step: u32) {}
 
     fn message(&mut self, _level: MessageLevel, _message: impl Into<String>) {}
+}
+
+pub enum DoOrDiscard<T> {
+    Do(T),
+    Discard,
+}
+
+impl<T> From<Option<T>> for DoOrDiscard<T>
+where
+    T: Progress,
+{
+    fn from(p: Option<T>) -> Self {
+        match p {
+            Some(p) => DoOrDiscard::Do(p),
+            None => DoOrDiscard::Discard,
+        }
+    }
+}
+
+impl<T> Progress for DoOrDiscard<T>
+where
+    T: Progress,
+{
+    type SubProgress = DoOrDiscard<T::SubProgress>;
+
+    fn add_child(&mut self, name: impl Into<String>) -> Self::SubProgress {
+        match self {
+            DoOrDiscard::Discard => DoOrDiscard::Discard,
+            DoOrDiscard::Do(p) => DoOrDiscard::Do(p.add_child(name)),
+        }
+    }
+
+    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
+        if let DoOrDiscard::Do(p) = self {
+            p.init(max, unit)
+        }
+    }
+
+    fn set(&mut self, step: u32) {
+        if let DoOrDiscard::Do(p) = self {
+            p.set(step)
+        }
+    }
+
+    fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
+        if let DoOrDiscard::Do(p) = self {
+            p.message(level, message)
+        }
+    }
 }

@@ -1,7 +1,7 @@
 use crate::progress::{MessageLevel, Progress};
 use std::time::Duration;
 
-pub struct LogProgress {
+pub struct Log {
     name: String,
     max: Option<u32>,
     unit: Option<&'static str>,
@@ -10,9 +10,9 @@ pub struct LogProgress {
 
 const EMIT_LOG_EVERY_S: f32 = 0.5;
 
-impl LogProgress {
+impl Log {
     pub fn new(name: impl Into<String>) -> Self {
-        LogProgress {
+        Log {
             name: name.into(),
             max: None,
             unit: None,
@@ -21,11 +21,11 @@ impl LogProgress {
     }
 }
 
-impl Progress for LogProgress {
-    type SubProgress = LogProgress;
+impl Progress for Log {
+    type SubProgress = Log;
 
     fn add_child(&mut self, name: impl Into<String>) -> Self::SubProgress {
-        LogProgress::new(format!("{}::{}", self.name, Into::<String>::into(name)))
+        Log::new(format!("{}::{}", self.name, Into::<String>::into(name)))
     }
 
     fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {

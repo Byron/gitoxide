@@ -1,16 +1,21 @@
 use anyhow::{anyhow, Context, Result};
+use git_features::progress::Progress;
 use std::{io, path::Path};
 
 pub fn init() -> Result<()> {
     git_repository::init::repository().with_context(|| "Repository initialization failed")
 }
 
-pub fn verify_pack_or_pack_index(
+pub fn verify_pack_or_pack_index<P>(
     path: impl AsRef<Path>,
-    progress: Option<impl git_features::progress::Progress>,
+    progress: Option<P>,
     mut out: impl io::Write,
     mut err: impl io::Write,
-) -> Result<()> {
+) -> Result<()>
+where
+    P: Progress,
+    <P as Progress>::SubProgress: Send,
+{
     let path = path.as_ref();
     let ext = path.extension()
         .and_then(|ext| ext.to_str())
