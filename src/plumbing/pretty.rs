@@ -1,4 +1,5 @@
 use anyhow::Result;
+use git_features::progress::DiscardProgress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout};
 use structopt::StructOpt;
@@ -33,7 +34,7 @@ pub fn main() -> Result<()> {
     let args = Args::from_args();
     match args.cmd {
         Subcommands::VerifyPack { path } => {
-            core::verify_pack_or_pack_index(path, stdout(), stderr())
+            core::verify_pack_or_pack_index(path, DiscardProgress.into(), stdout(), stderr())
         }
     }?;
     Ok(())

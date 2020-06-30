@@ -66,3 +66,19 @@ pub use self::log::LogProgress;
 
 #[cfg(feature = "progress-prodash")]
 mod prodash;
+
+pub struct DiscardProgress;
+
+impl Progress for DiscardProgress {
+    type SubProgress = DiscardProgress;
+
+    fn add_child(&mut self, _name: impl Into<String>) -> Self::SubProgress {
+        DiscardProgress
+    }
+
+    fn init(&mut self, _max: Option<u32>, _unit: Option<&'static str>) {}
+
+    fn set(&mut self, _step: u32) {}
+
+    fn message(&mut self, _level: MessageLevel, _message: impl Into<String>) {}
+}

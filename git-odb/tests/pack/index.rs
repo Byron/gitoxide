@@ -101,6 +101,7 @@ mod method {
     }
 }
 
+use git_features::progress::DiscardProgress;
 #[test]
 fn pack_lookup() {
     for (index_path, pack_path) in &[
@@ -114,7 +115,8 @@ fn pack_lookup() {
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
-            idx.verify_checksum_of_index(Some(&pack)).unwrap(),
+            idx.verify_checksum_of_index(Some(&pack), DiscardProgress.into())
+                .unwrap(),
             idx.checksum_of_index()
         );
         for idx_entry in idx.iter() {
@@ -157,7 +159,8 @@ fn iter() {
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_checksum_of_index(None).unwrap(),
+            idx.verify_checksum_of_index(None, DiscardProgress.into())
+                .unwrap(),
             idx.checksum_of_index()
         );
         assert_eq!(idx.checksum_of_index(), hex_to_id(index_checksum));

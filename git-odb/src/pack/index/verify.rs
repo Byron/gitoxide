@@ -46,6 +46,7 @@ impl index::File {
     pub fn verify_checksum_of_index(
         &self,
         pack: Option<&pack::File>,
+        _progress: Option<impl git_features::progress::Progress>,
     ) -> Result<git_object::Id, ChecksumError> {
         use crate::pack::{cache, ResolvedBase};
         use git_features::parallel::{self, in_parallel_if};

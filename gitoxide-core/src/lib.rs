@@ -7,6 +7,7 @@ pub fn init() -> Result<()> {
 
 pub fn verify_pack_or_pack_index(
     path: impl AsRef<Path>,
+    progress: Option<impl git_features::progress::Progress>,
     mut out: impl io::Write,
     mut err: impl io::Write,
 ) -> Result<()> {
@@ -29,7 +30,7 @@ pub fn verify_pack_or_pack_index(
                     Err(e)
                 })
                 .ok();
-            idx.verify_checksum_of_index(pack.as_ref())?;
+            idx.verify_checksum_of_index(pack.as_ref(), progress)?;
         }
         ext => {
             return Err(anyhow!(
