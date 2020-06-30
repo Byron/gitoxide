@@ -111,14 +111,14 @@ impl index::File {
                 where
                     P: Progress,
                 {
-                    type Input = Result<(), ChecksumError>;
+                    type Input = Result<usize, ChecksumError>;
                     type Output = ();
                     type Error = ChecksumError;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-                        self.seen += 1;
+                        let chunk = input?;
+                        self.seen += chunk as u32;
                         self.progress.set(self.seen);
-                        input?;
                         Ok(())
                     }
 
@@ -142,7 +142,7 @@ impl index::File {
                     there_are_enough_entries_to_process,
                     input_chunks,
                     state_per_thread,
-                    |entries: &[index::Entry], (cache, buf)| -> Result<(), ChecksumError> {
+                    |entries: &[index::Entry], (cache, buf)| -> Result<usize, ChecksumError> {
                         for index_entry in entries {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
@@ -202,7 +202,7 @@ impl index::File {
                                 }
                             }
                         }
-                        Ok(())
+                        Ok(entries.len())
                     },
                     Reducer {
                         progress: reduce_progress,
