@@ -283,15 +283,12 @@ dependencies = [
  "btoi",
  "byteorder",
  "crc",
- "crossbeam-channel",
- "crossbeam-utils",
  "filebuffer",
- "flume",
+ "git-features",
  "git-object",
  "hex",
  "itoa",
  "miniz_oxide",
- "num_cpus",
  "pretty_assertions",
  "quick-error",
  "sha-1",
@@ -317,6 +314,7 @@ name = "gitoxide"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "git-features",
  "gitoxide-core",
  "structopt",
 ]

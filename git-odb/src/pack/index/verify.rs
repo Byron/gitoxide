@@ -48,10 +48,8 @@ impl index::File {
         &self,
         pack: Option<&pack::File>,
     ) -> Result<git_object::Id, ChecksumError> {
-        use crate::{
-            pack::{cache, ResolvedBase},
-            parallel::{self, in_parallel_if},
-        };
+        use crate::pack::{cache, ResolvedBase};
+        use git_features::parallel::{self, in_parallel_if};
 
         let verify_self = || {
             let mut hasher = crate::hash::Sha1::default();

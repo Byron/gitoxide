@@ -4,9 +4,5 @@
 mod hash;
 mod zlib;
 
-// possibly put these into a shared crate
-mod parallel;
-mod progress;
-
 pub mod loose;
 pub mod pack;

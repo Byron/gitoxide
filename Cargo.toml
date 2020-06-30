@@ -15,6 +15,7 @@ doctest = false
 
 [dependencies]
 gitoxide-core = { version = "0.1.0", path = "gitoxide-core" }
+git-features = { version = "0.1.0", path = "git-features", features = ["parallel"] }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 
