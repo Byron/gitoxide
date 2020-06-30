@@ -19,7 +19,7 @@ mod serial {
 
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
-        new_thread_state: impl Fn() -> S + Send + Sync,
+        new_thread_state: impl Fn(usize) -> S + Send + Sync,
         consume: impl Fn(I, &mut S) -> O + Send + Clone,
         mut reducer: R,
     ) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
@@ -28,7 +28,7 @@ mod serial {
         I: Send,
         O: Send,
     {
-        let mut state = new_thread_state();
+        let mut state = new_thread_state(0);
         for item in input {
             reducer.feed(consume(item, &mut state))?;
         }
@@ -55,7 +55,7 @@ mod in_parallel {
 
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
-        new_thread_state: impl Fn() -> S + Send + Sync,
+        new_thread_state: impl Fn(usize) -> S + Send + Sync,
         consume: impl Fn(I, &mut S) -> O + Send + Clone,
         mut reducer: R,
     ) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
@@ -65,17 +65,18 @@ mod in_parallel {
         O: Send,
     {
         let logical_cores = num_cpus::get();
+        let new_thread_state = &new_thread_state;
         thread::scope(move |s| {
             let receive_result = {
                 let (send_input, receive_input) = crossbeam_channel::bounded::<I>(logical_cores);
                 let (send_result, receive_result) = flume::bounded::<O>(logical_cores);
-                for _ in 0..logical_cores {
+                for thread_id in 0..logical_cores {
                     s.spawn({
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
                         let consume = consume.clone();
                         move |_| {
-                            let mut state = new_thread_state();
+                            let mut state = new_thread_state(thread_id);
                             for item in receive_input {
                                 send_result.send(consume(item, &mut state)).ok();
                             }
@@ -108,7 +109,7 @@ pub use in_parallel::*;
 pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I> + Send,
-    new_thread_state: impl Fn() -> S + Send + Sync,
+    new_thread_state: impl Fn(usize) -> S + Send + Sync,
     consume: impl Fn(I, &mut S) -> O + Send + Clone,
     reducer: R,
 ) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>

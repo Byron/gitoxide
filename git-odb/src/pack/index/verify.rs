@@ -138,11 +138,14 @@ impl index::File {
                     .lock()
                     .unwrap()
                     .init(Some(self.num_objects()), Some("objects"));
-                let state_per_thread = || {
+                let state_per_thread = |index| {
                     (
                         cache::DecodeEntryLRU::default(),
                         Vec::with_capacity(2048),
-                        reduce_progress.lock().unwrap().add_child("thread"),
+                        reduce_progress
+                            .lock()
+                            .unwrap()
+                            .add_child(format!("thread {}", index)),
                     )
                 };
 
@@ -150,8 +153,11 @@ impl index::File {
                     there_are_enough_entries_to_process,
                     input_chunks,
                     state_per_thread,
-                    |entries: &[index::Entry], (cache, buf, _)| -> Result<usize, ChecksumError> {
-                        for index_entry in entries {
+                    |entries: &[index::Entry],
+                     (cache, buf, progress)|
+                     -> Result<usize, ChecksumError> {
+                        progress.init(Some(entries.len() as u32), Some("entries"));
+                        for (idx, index_entry) in entries.iter().enumerate() {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
                             let (object_kind, consumed_input) = pack
@@ -209,6 +215,7 @@ impl index::File {
                                     });
                                 }
                             }
+                            progress.set(idx as u32);
                         }
                         Ok(entries.len())
                     },

@@ -58,15 +58,6 @@ pub trait Progress {
     }
 }
 
-#[cfg(feature = "progress-log")]
-mod log;
-
-#[cfg(feature = "progress-log")]
-pub use self::log::Log;
-
-#[cfg(feature = "progress-prodash")]
-mod prodash;
-
 pub struct Discard;
 
 impl Progress for Discard {
@@ -131,3 +122,12 @@ where
         }
     }
 }
+
+#[cfg(feature = "progress-log")]
+mod log;
+
+#[cfg(feature = "progress-log")]
+pub use self::log::Log;
+
+#[cfg(feature = "progress-prodash")]
+mod prodash;

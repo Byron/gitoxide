@@ -35,13 +35,17 @@ impl Progress for Log {
 
     fn set(&mut self, step: u32) {
         let now = std::time::SystemTime::now();
-        let last = self.last_set.unwrap_or(now);
-        if now
-            .duration_since(last)
-            .unwrap_or_else(|_| Duration::default())
-            .as_secs_f32()
+        if self
+            .last_set
+            .map(|last| {
+                now.duration_since(last)
+                    .unwrap_or_else(|_| Duration::default())
+                    .as_secs_f32()
+            })
+            .unwrap_or_else(|| EMIT_LOG_EVERY_S * 2.0)
             > EMIT_LOG_EVERY_S
         {
+            self.last_set = Some(now);
             match (self.max, self.unit) {
                 (Some(max), Some(unit)) => {
                     log::info!("{} → {} / {} {}", self.name, step, max, unit)
@@ -51,7 +55,6 @@ impl Progress for Log {
                 (None, None) => log::info!("{} → {}", self.name, step),
             }
         }
-        self.last_set = Some(now);
     }
 
     fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
