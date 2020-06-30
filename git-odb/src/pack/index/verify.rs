@@ -43,7 +43,6 @@ impl index::File {
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum_of_index(
         &self,
         pack: Option<&pack::File>,
@@ -52,7 +51,7 @@ impl index::File {
         use git_features::parallel::{self, in_parallel_if};
 
         let verify_self = || {
-            let mut hasher = crate::hash::Sha1::default();
+            let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
             let actual = hasher.digest();
 
@@ -142,7 +141,7 @@ impl index::File {
                                 &mut header_buf[..],
                             )
                             .expect("header buffer to be big enough");
-                            let mut hasher = crate::hash::Sha1::default();
+                            let mut hasher = git_features::hash::Sha1::default();
                             hasher.update(&header_buf[..header_size]);
                             hasher.update(buf.as_slice());
                             let actual_oid = hasher.digest();

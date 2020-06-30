@@ -13,5 +13,5 @@ test = false
 
 [dependencies]
 git-repository = { version = "0.1.0", path = "../git-repository" }
-git-odb = { version = "0.1.0", path = "../git-odb", default-features = false, features = ["fast-sha1" ] }
+git-odb = { version = "0.1.0", path = "../git-odb" }
 anyhow = "1.0.31"

@@ -57,7 +57,6 @@ pub enum Kind {
 
 pub struct File {
     data: FileBuffer,
-    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     path: std::path::PathBuf,
     kind: Kind,
     num_objects: u32,
@@ -74,9 +73,8 @@ impl File {
     pub fn checksum(&self) -> object::Id {
         object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
-    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn verify_checksum(&self) -> Result<object::Id, ChecksumError> {
-        let mut hasher = crate::hash::Sha1::default();
+        let mut hasher = git_features::hash::Sha1::default();
 
         let actual = match std::fs::File::open(&self.path) {
             Ok(mut pack) => {
@@ -109,10 +107,9 @@ impl File {
 
     /// Currently only done during pack verification - finding the right size is only possible by decompressing
     /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index file.
-    #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
     pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
         let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
-        crate::hash::crc32(&self.data[pack_offset..pack_offset + size])
+        git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
     }
 
     fn assure_v2(&self) {
@@ -173,7 +170,6 @@ impl TryFrom<&Path> for File {
 
         Ok(File {
             data,
-            #[cfg(any(feature = "fast-sha1", feature = "minimal-sha1"))]
             path: path.to_owned(),
             kind,
             num_objects,
