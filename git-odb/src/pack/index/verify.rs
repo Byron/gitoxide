@@ -102,12 +102,12 @@ impl index::File {
                     v
                 };
 
-                struct Reducer<P> {
-                    progress: P,
+                struct Reducer<'a, P> {
+                    progress: &'a std::sync::Mutex<P>,
                     seen: u32,
                 }
 
-                impl<P> parallel::Reducer for Reducer<P>
+                impl<'a, P> parallel::Reducer for Reducer<'a, P>
                 where
                     P: Progress,
                 {
@@ -118,12 +118,12 @@ impl index::File {
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
                         let chunk = input?;
                         self.seen += chunk as u32;
-                        self.progress.set(self.seen);
+                        self.progress.lock().unwrap().set(self.seen);
                         Ok(())
                     }
 
                     fn finalize(&mut self) -> Result<Self::Output, Self::Error> {
-                        self.progress.done("finished");
+                        self.progress.lock().unwrap().done("finished");
                         Ok(())
                     }
                 }
@@ -133,16 +133,24 @@ impl index::File {
                 let input_chunks = index_entries
                     .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
                     .into_iter();
-                let state_per_thread =
-                    || (cache::DecodeEntryLRU::default(), Vec::with_capacity(2048));
-                let mut reduce_progress = root.add_child("reduce");
-                reduce_progress.init(Some(self.num_objects()), Some("objects"));
+                let reduce_progress = std::sync::Mutex::new(root.add_child("reduce"));
+                reduce_progress
+                    .lock()
+                    .unwrap()
+                    .init(Some(self.num_objects()), Some("objects"));
+                let state_per_thread = || {
+                    (
+                        cache::DecodeEntryLRU::default(),
+                        Vec::with_capacity(2048),
+                        reduce_progress.lock().unwrap().add_child("thread"),
+                    )
+                };
 
                 in_parallel_if(
                     there_are_enough_entries_to_process,
                     input_chunks,
                     state_per_thread,
-                    |entries: &[index::Entry], (cache, buf)| -> Result<usize, ChecksumError> {
+                    |entries: &[index::Entry], (cache, buf, _)| -> Result<usize, ChecksumError> {
                         for index_entry in entries {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
@@ -205,7 +213,7 @@ impl index::File {
                         Ok(entries.len())
                     },
                     Reducer {
-                        progress: reduce_progress,
+                        progress: &reduce_progress,
                         seen: 0,
                     },
                 )?;
