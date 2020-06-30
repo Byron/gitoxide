@@ -152,18 +152,6 @@ Provide a CLI to for the most basic user journey:
 Cargo uses feature toggles to control which dependencies are pulled in, allowing users to specialize crates to fit their usage.
 Ideally, these should be additive.
 This guide documents which features are available for each of the crates provided here and how they function.
-
-### git-odb
-
-* **minimal-sha1** (default)
-  * a single-crate implementation of sha1, which aims to be small without being slow
-* **fast-sha1** (mutually exclusive to `minimal-sha1`)
-  * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
-    CPUs that support it, like AMD Ryzen.
-* **`--all-features`**
-  * Chooses `minimal-sha1`
-* **`--no-default-features`**
-  * Makes any operation relying on generating Sha1 hashes unavailable.
     
 ### git-features
 
@@ -174,6 +162,9 @@ All feature toggles are additive.
   * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
     where it makes sense.
   * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
+* **fast-sha1** 
+  * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
+    CPUs that support it, like AMD Ryzen.
  
 ## Development Practices
 

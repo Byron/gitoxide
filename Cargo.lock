@@ -256,10 +256,14 @@ dependencies = [
 name = "git-features"
 version = "0.1.0"
 dependencies = [
+ "crc",
  "crossbeam-channel",
  "crossbeam-utils",
  "flume",
+ "git-object",
  "num_cpus",
+ "sha-1",
+ "sha1",
 ]
 
 [[package]]

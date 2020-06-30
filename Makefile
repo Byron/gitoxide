@@ -36,8 +36,9 @@ check: ## Build all code in suitable configurations
 	cd git-odb && cargo check --no-default-features --features fast-sha1 \
 			   && cargo check --no-default-features \
 			   && cargo check --all-features
-	cd git-features && cargo check --features parallel \
-			   && cargo check --all-features
+	cd git-features && && cargo check --all-features \
+			   && cargo check --features parallel \
+			   && cargo check --features fast-sha1
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
