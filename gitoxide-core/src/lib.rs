@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use git_features::progress::Progress;
-use git_odb::pack::index::PackFileChecksumResult;
-use git_odb::pack::{index, DecodeEntryResult};
+use git_odb::pack::{self, index};
 use std::{io, path::Path};
 
 pub fn init() -> Result<()> {
@@ -56,10 +55,13 @@ where
     Ok(res)
 }
 
-fn print_statistics(out: &mut impl io::Write, stats: &PackFileChecksumResult) -> io::Result<()> {
+fn print_statistics(
+    out: &mut impl io::Write,
+    stats: &index::PackFileChecksumResult,
+) -> io::Result<()> {
     writeln!(out, "averages")?;
 
-    let DecodeEntryResult {
+    let pack::DecodeEntryResult {
         kind: _,
         num_deltas,
         decompressed_size,

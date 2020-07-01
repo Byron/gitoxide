@@ -176,6 +176,11 @@ impl index::File {
                         let mut chunk_average = chunk_stats.into_iter().fold(
                             DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
                             |mut average, stats| {
+                                *self
+                                    .stats
+                                    .objects_per_chain_length
+                                    .entry(stats.num_deltas)
+                                    .or_insert(0) += 1;
                                 add_decode_result(&mut average, stats);
                                 average
                             },

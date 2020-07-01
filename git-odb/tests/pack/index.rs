@@ -101,7 +101,9 @@ mod method {
     }
 }
 
+use common_macros::b_tree_map;
 use git_features::progress::Discard;
+
 #[test]
 fn pack_lookup() {
     for (index_path, pack_path, stats) in &[
@@ -116,7 +118,10 @@ fn pack_lookup() {
                     compressed_size: 1725,
                     object_size: 9621,
                 },
-                objects_per_chain_length: Default::default(),
+                objects_per_chain_length: b_tree_map! {
+                    0 => 18,
+                    1 => 12
+                },
             },
         ),
         (
@@ -130,7 +135,10 @@ fn pack_lookup() {
                     compressed_size: 729,
                     object_size: 2093,
                 },
-                objects_per_chain_length: Default::default(),
+                objects_per_chain_length: b_tree_map! {
+                    0 => 64,
+                    1 => 3
+                },
             },
         ),
         (
@@ -144,7 +152,10 @@ fn pack_lookup() {
                     compressed_size: 85,
                     object_size: 293,
                 },
-                objects_per_chain_length: Default::default(),
+                objects_per_chain_length: b_tree_map! {
+                    0 => 30,
+                    1 => 12
+                },
             },
         ),
     ] {
