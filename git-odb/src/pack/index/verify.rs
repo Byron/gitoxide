@@ -1,4 +1,4 @@
-use crate::pack::DecodeEntryResult;
+use crate::pack::{cache, DecodeEntryResult};
 use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
@@ -88,16 +88,18 @@ impl index::File {
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    pub fn verify_checksum_of_index<P>(
+    pub fn verify_checksum_of_index<P, C>(
         &self,
         pack: Option<&pack::File>,
         progress: Option<P>,
+        make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(git_object::Id, Option<PackFileChecksumResult>), ChecksumError>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
+        C: cache::DecodeEntry,
     {
-        use crate::pack::{cache, ResolvedBase};
+        use crate::pack::ResolvedBase;
         use git_features::parallel::{self, in_parallel_if};
 
         let mut root = progress::DoOrDiscard::from(progress);
@@ -224,7 +226,7 @@ impl index::File {
                     .init(Some(self.num_objects()), Some("objects"));
                 let state_per_thread = |index| {
                     (
-                        cache::DecodeEntryLRU::default(),
+                        make_cache(),
                         Vec::with_capacity(2048),
                         reduce_progress
                             .lock()

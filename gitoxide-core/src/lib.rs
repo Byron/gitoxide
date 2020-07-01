@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use bytesize::ByteSize;
 use git_features::progress::Progress;
+use git_object::Kind;
 use git_odb::pack::{self, index};
 use std::{io, path::Path};
 
@@ -38,7 +39,33 @@ where
                     Err(e)
                 })
                 .ok();
-            idx.verify_checksum_of_index(pack.as_ref(), progress)?
+            enum EitherCache {
+                Left(pack::cache::DecodeEntryNoop),
+                Right(pack::cache::DecodeEntryLRU),
+            };
+            impl pack::cache::DecodeEntry for EitherCache {
+                fn put(&mut self, offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
+                    match self {
+                        EitherCache::Left(v) => v.put(offset, data, kind, compressed_size),
+                        EitherCache::Right(v) => v.put(offset, data, kind, compressed_size),
+                    }
+                }
+
+                fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
+                    match self {
+                        EitherCache::Left(v) => v.get(offset, out),
+                        EitherCache::Right(v) => v.get(offset, out),
+                    }
+                }
+            }
+            idx.verify_checksum_of_index(pack.as_ref(), progress, || -> EitherCache {
+                if output_statistics {
+                    // turn off acceleration as we need to see entire chains all the time
+                    EitherCache::Left(pack::cache::DecodeEntryNoop)
+                } else {
+                    EitherCache::Right(pack::cache::DecodeEntryLRU::default())
+                }
+            })?
         }
         ext => {
             return Err(anyhow!(

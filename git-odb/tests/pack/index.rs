@@ -103,6 +103,7 @@ mod method {
 
 use common_macros::b_tree_map;
 use git_features::progress::Discard;
+use git_odb::pack::cache::DecodeEntryNoop;
 
 #[test]
 fn pack_lookup() {
@@ -113,14 +114,19 @@ fn pack_lookup() {
             index::PackFileChecksumResult {
                 average: DecodeEntryResult {
                     kind: git_object::Kind::Tree,
-                    num_deltas: 0,
+                    num_deltas: 1,
                     decompressed_size: 3456,
                     compressed_size: 1725,
                     object_size: 9621,
                 },
                 objects_per_chain_length: b_tree_map! {
                     0 => 18,
-                    1 => 12
+                    1 => 4,
+                    2 => 3,
+                    3 => 1,
+                    4 => 2,
+                    5 => 1,
+                    6 => 1,
                 },
                 total_compressed_entries_size: 51753,
                 total_decompressed_entries_size: 103701,
@@ -162,7 +168,8 @@ fn pack_lookup() {
                 },
                 objects_per_chain_length: b_tree_map! {
                     0 => 30,
-                    1 => 12
+                    1 => 6,
+                    2 => 6,
                 },
                 total_compressed_entries_size: 3604,
                 total_decompressed_entries_size: 4997,
@@ -177,7 +184,7 @@ fn pack_lookup() {
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
-            idx.verify_checksum_of_index(Some(&pack), Discard.into())
+            idx.verify_checksum_of_index(Some(&pack), Discard.into(), || DecodeEntryNoop)
                 .unwrap(),
             (idx.checksum_of_index(), Some(stats.to_owned()))
         );
@@ -221,7 +228,8 @@ fn iter() {
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_checksum_of_index(None, Discard.into()).unwrap(),
+            idx.verify_checksum_of_index(None, Discard.into(), || DecodeEntryNoop)
+                .unwrap(),
             (idx.checksum_of_index(), None)
         );
         assert_eq!(idx.checksum_of_index(), hex_to_id(index_checksum));

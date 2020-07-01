@@ -68,6 +68,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [ ] encode
       * [ ] create new packs
     * [x] verify pack with statistics
+    * [ ] pack streaming (i.e. indexing + resolution)
+      * [ ] use pack streaming for verification for performance and correctness
   * [ ] API documentation with examples
 * **git-transport**
   * [ ] via ssh
