@@ -27,7 +27,7 @@
    * **progress**
      * [x] for `lean` binary behind --verbose flag
      * [ ] for `pretty` binary with support for
-       * [ ] logging
+       * [x] logging
        * [ ] TUI
    * [ ] statistics
    * [ ] a verbose mode to list each object in a pack, similar to existing git-verify-pack

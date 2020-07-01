@@ -33,11 +33,7 @@ mod options {
 }
 
 fn init_progress(name: &str, verbose: bool) -> progress::DoOrDiscard<progress::Log> {
-    if verbose {
-        env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
-    } else {
-        env_logger::init();
-    }
+    super::init_env_logger(verbose);
     progress::DoOrDiscard::from(if verbose {
         Some(progress::Log::new(name))
     } else {

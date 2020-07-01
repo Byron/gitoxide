@@ -33,20 +33,12 @@ use git_features::progress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout};
 
-fn init_log(verbose: bool) {
-    if verbose {
-        env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
-    } else {
-        env_logger::init();
-    }
-}
-
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = argh::from_env();
     match cli.subcommand {
         SubCommands::VerifyPack(VerifyPack { path, verbose }) => {
-            init_log(verbose);
+            super::init_env_logger(verbose);
             core::verify_pack_or_pack_index(
                 path,
                 progress::Log::new("verify-pack").into(),
