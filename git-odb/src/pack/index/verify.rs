@@ -60,11 +60,18 @@ impl index::File {
         let mut progress = root.add_child("Sha1 of index");
 
         let mut verify_self = move || {
+            let then = std::time::Instant::now();
             progress.info("begin");
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
             let actual = hasher.digest();
-            progress.done("finished");
+            let time_taken = std::time::Instant::now().duration_since(then).as_secs_f32();
+
+            progress.done(format!(
+                "finished in {:.2}s at {}/s",
+                time_taken,
+                bytesize::ByteSize((self.data.len() as f32 / time_taken) as u64)
+            ));
 
             let expected = self.checksum_of_index();
             if actual == expected {
