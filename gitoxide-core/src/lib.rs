@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use anyhow::{anyhow, Context, Result};
 use bytesize::ByteSize;
 use git_features::progress::Progress;
