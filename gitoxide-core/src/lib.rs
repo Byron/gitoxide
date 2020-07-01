@@ -10,7 +10,7 @@ pub fn init() -> Result<()> {
 pub fn verify_pack_or_pack_index<P>(
     path: impl AsRef<Path>,
     progress: Option<P>,
-    statistics: bool,
+    _statistics: bool,
     mut out: impl io::Write,
     mut err: impl io::Write,
 ) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>

@@ -22,6 +22,10 @@ mod options {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         VerifyPack {
+            /// if set, output statistical information about the pack
+            #[structopt(long, short = "s")]
+            statistics: bool,
+
             /// if set, verbose progress messages are printed line by line
             #[structopt(long, short = "v")]
             verbose: bool,
@@ -87,9 +91,11 @@ pub fn main() -> Result<()> {
             path,
             verbose,
             progress,
+            statistics,
         } => {
             let (_keep, progress) = init_progress("verify-pack", verbose, progress);
-            core::verify_pack_or_pack_index(path, progress, stdout(), stderr())
+            core::verify_pack_or_pack_index(path, progress, statistics, stdout(), stderr())
+                .map(|_| ())
         }
     }?;
     Ok(())
