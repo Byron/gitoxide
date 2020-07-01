@@ -57,6 +57,7 @@ fn init_progress(
                 prodash::tui::TuiOptions {
                     title: "gitoxide".into(),
                     frames_per_second: 6.0,
+                    stop_if_empty_progress: true,
                     ..Default::default()
                 },
             )
