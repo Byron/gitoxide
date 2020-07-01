@@ -41,11 +41,14 @@ fn init_progress(
     name: &str,
     verbose: bool,
     progress: bool,
-) -> Option<progress::Either<progress::Log, prodash::tree::Item>> {
+) -> (
+    Option<std::thread::JoinHandle<()>>,
+    Option<progress::Either<progress::Log, prodash::tree::Item>>,
+) {
     super::init_env_logger(verbose);
     match (verbose, progress) {
-        (false, false) => None,
-        (true, false) => Some(progress::Either::Left(progress::Log::new(name))),
+        (false, false) => (None, None),
+        (true, false) => (None, Some(progress::Either::Left(progress::Log::new(name)))),
         (true, true) | (false, true) => {
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
@@ -58,11 +61,15 @@ fn init_progress(
                 },
             )
             .expect("tui to come up without io error");
-            std::thread::spawn(move || smol::run(render_tui));
+            let handle = std::thread::spawn(move || smol::run(render_tui));
 
-            Some(progress::Either::Right(sub_progress))
+            (Some(handle), Some(progress::Either::Right(sub_progress)))
         }
     }
+}
+
+fn join<T>(handle: Option<std::thread::JoinHandle<T>>) -> Option<T> {
+    handle.and_then(|h| h.join().ok())
 }
 
 pub fn main() -> Result<()> {
@@ -74,8 +81,10 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
         } => {
-            let progress = init_progress("verify-pack", verbose, progress);
-            core::verify_pack_or_pack_index(path, progress, stdout(), stderr())
+            let (handle, progress) = init_progress("verify-pack", verbose, progress);
+            let res = core::verify_pack_or_pack_index(path, progress, stdout(), stderr());
+            join(handle);
+            res
         }
     }?;
     Ok(())
