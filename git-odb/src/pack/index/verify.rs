@@ -64,6 +64,14 @@ impl Into<String> for TimeThroughput {
 pub struct PackFileChecksumResult {
     pub average: DecodeEntryResult,
     pub objects_per_chain_length: BTreeMap<u32, u32>,
+    /// The amount of bytes in all compressed streams, one per entry
+    pub total_compressed_entries_size: u64,
+    /// The amount of bytes in all decompressed streams, one per entry
+    pub total_decompressed_entries_size: u64,
+    /// The amount of bytes occupied by all undeltified, decompressed objects
+    pub total_object_size: u64,
+    /// The amount of bytes occupied by the pack itself, in bytes
+    pub pack_size: u64,
 }
 
 /// Methods to verify and validate the content of the index file
@@ -181,6 +189,11 @@ impl index::File {
                                     .objects_per_chain_length
                                     .entry(stats.num_deltas)
                                     .or_insert(0) += 1;
+                                self.stats.total_decompressed_entries_size +=
+                                    stats.decompressed_size;
+                                self.stats.total_compressed_entries_size +=
+                                    stats.compressed_size as u64;
+                                self.stats.total_object_size += stats.object_size as u64;
                                 add_decode_result(&mut average, stats);
                                 average
                             },
@@ -302,6 +315,10 @@ impl index::File {
                         stats: PackFileChecksumResult {
                             average: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
                             objects_per_chain_length: Default::default(),
+                            total_compressed_entries_size: 0,
+                            total_decompressed_entries_size: 0,
+                            total_object_size: 0,
+                            pack_size: pack.data_len() as u64,
                         },
                     },
                 )?;

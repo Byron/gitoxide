@@ -122,6 +122,10 @@ fn pack_lookup() {
                     0 => 18,
                     1 => 12
                 },
+                total_compressed_entries_size: 51753,
+                total_decompressed_entries_size: 103701,
+                total_object_size: 288658,
+                pack_size: 51875,
             },
         ),
         (
@@ -139,6 +143,10 @@ fn pack_lookup() {
                     0 => 64,
                     1 => 3
                 },
+                total_compressed_entries_size: 48867,
+                total_decompressed_entries_size: 132823,
+                total_object_size: 140243,
+                pack_size: 49113,
             },
         ),
         (
@@ -156,6 +164,10 @@ fn pack_lookup() {
                     0 => 30,
                     1 => 12
                 },
+                total_compressed_entries_size: 3604,
+                total_decompressed_entries_size: 4997,
+                total_object_size: 12307,
+                pack_size: 3732,
             },
         ),
     ] {
