@@ -59,7 +59,7 @@ impl index::File {
         let mut root = progress::DoOrDiscard::from(progress);
         let mut progress = root.add_child("Sha1 of index");
 
-        let mut verify_self = || {
+        let mut verify_self = move || {
             progress.info("begin");
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
@@ -85,7 +85,7 @@ impl index::File {
                 let mut progress =
                     root.add_child(format!("Sha1 of pack at '{}'", pack.path().display()));
                 let (pack_res, id) = parallel::join(
-                    || {
+                    move || {
                         progress.info("begin");
                         let res = pack.verify_checksum();
                         progress.done("finished");
