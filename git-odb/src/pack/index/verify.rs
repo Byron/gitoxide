@@ -186,16 +186,18 @@ impl index::File {
                     type Error = ChecksumError;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-                        let chunk_stats = input?;
+                        let chunk_stats: Vec<_> = input?;
                         let num_entries_in_chunk = chunk_stats.len();
                         self.entries_seen += num_entries_in_chunk as u32;
                         self.chunks_seen += 1;
 
-                        let mut chunk_average =
-                            DecodeEntryResult::default_from_kind(git_object::Kind::Tree);
-                        for stat in chunk_stats.into_iter() {
-                            add_decode_result(&mut chunk_average, stat);
-                        }
+                        let mut chunk_average = chunk_stats.into_iter().fold(
+                            DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
+                            |mut average, stats| {
+                                add_decode_result(&mut average, stats);
+                                average
+                            },
+                        );
                         div_decode_result(&mut chunk_average, num_entries_in_chunk);
                         add_decode_result(&mut self.average, chunk_average);
 
