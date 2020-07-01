@@ -9,7 +9,9 @@ pub mod lean;
 #[cfg(feature = "env_logger")]
 fn init_env_logger(verbose: bool) {
     if verbose {
-        env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .format_module_path(false)
+            .init();
     } else {
         env_logger::init();
     }
