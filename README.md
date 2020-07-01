@@ -15,7 +15,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] init
   * plumbing
     * [x] pack verify
-    * [x] pack index verify including each object sha1
+    * [x] pack index verify including each object sha1 and statistics
 * **git-repository**
   * [x] initialize
   * [ ] read and write all data types
@@ -67,7 +67,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
       * [ ] 'bitmap' file
     * [ ] encode
       * [ ] create new packs
-    * [ ] verify pack
+    * [x] verify pack with statistics
   * [ ] API documentation with examples
 * **git-transport**
   * [ ] via ssh
