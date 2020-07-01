@@ -62,8 +62,8 @@ impl Into<String> for TimeThroughput {
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 pub struct PackFileChecksumResult {
-    average: DecodeEntryResult,
-    objects_per_chain_length: BTreeMap<u32, u32>,
+    pub average: DecodeEntryResult,
+    pub objects_per_chain_length: BTreeMap<u32, u32>,
 }
 
 /// Methods to verify and validate the content of the index file
@@ -138,43 +138,25 @@ impl index::File {
                     v
                 };
 
-                fn add_decode_result(
-                    DecodeEntryResult {
-                        kind: _,
-                        mut num_deltas,
-                        mut decompressed_size,
-                        mut compressed_size,
-                        mut object_size,
-                    }: &mut DecodeEntryResult,
-                    rhs: DecodeEntryResult,
-                ) {
-                    num_deltas += rhs.num_deltas;
-                    decompressed_size += rhs.decompressed_size;
-                    compressed_size += rhs.compressed_size;
-                    object_size += rhs.object_size;
+                fn add_decode_result(lhs: &mut DecodeEntryResult, rhs: DecodeEntryResult) {
+                    lhs.num_deltas += rhs.num_deltas;
+                    lhs.decompressed_size += rhs.decompressed_size;
+                    lhs.compressed_size += rhs.compressed_size;
+                    lhs.object_size += rhs.object_size;
                 }
 
-                fn div_decode_result(
-                    DecodeEntryResult {
-                        kind: _,
-                        mut num_deltas,
-                        mut decompressed_size,
-                        mut compressed_size,
-                        mut object_size,
-                    }: &mut DecodeEntryResult,
-                    div: usize,
-                ) {
-                    num_deltas /= div as u32;
-                    decompressed_size /= div as u64;
-                    compressed_size /= div;
-                    object_size /= div as u64;
+                fn div_decode_result(lhs: &mut DecodeEntryResult, div: usize) {
+                    lhs.num_deltas = (lhs.num_deltas as f32 / div as f32) as u32;
+                    lhs.decompressed_size /= div as u64;
+                    lhs.compressed_size /= div;
+                    lhs.object_size /= div as u64;
                 }
 
                 struct Reducer<'a, P> {
                     progress: &'a std::sync::Mutex<P>,
                     entries_seen: u32,
                     chunks_seen: usize,
-                    average: DecodeEntryResult,
+                    stats: PackFileChecksumResult,
                 }
 
                 impl<'a, P> parallel::Reducer for Reducer<'a, P>
@@ -182,7 +164,7 @@ impl index::File {
                     P: Progress,
                 {
                     type Input = Result<Vec<DecodeEntryResult>, ChecksumError>;
-                    type Output = DecodeEntryResult;
+                    type Output = PackFileChecksumResult;
                     type Error = ChecksumError;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
@@ -199,7 +181,7 @@ impl index::File {
                             },
                         );
                         div_decode_result(&mut chunk_average, num_entries_in_chunk);
-                        add_decode_result(&mut self.average, chunk_average);
+                        add_decode_result(&mut self.stats.average, chunk_average);
 
                         self.progress.lock().unwrap().set(self.entries_seen);
                         Ok(())
@@ -207,8 +189,8 @@ impl index::File {
 
                     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
                         self.progress.lock().unwrap().done("finished");
-                        div_decode_result(&mut self.average, self.chunks_seen);
-                        Ok(self.average)
+                        div_decode_result(&mut self.stats.average, self.chunks_seen);
+                        Ok(self.stats)
                     }
                 }
 
@@ -233,7 +215,7 @@ impl index::File {
                     )
                 };
 
-                in_parallel_if(
+                let stats = in_parallel_if(
                     there_are_enough_entries_to_process,
                     input_chunks,
                     state_per_thread,
@@ -312,11 +294,14 @@ impl index::File {
                         progress: &reduce_progress,
                         entries_seen: 0,
                         chunks_seen: 0,
-                        average: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
+                        stats: PackFileChecksumResult {
+                            average: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
+                            objects_per_chain_length: Default::default(),
+                        },
                     },
                 )?;
 
-                Ok((id, None))
+                Ok((id, Some(stats)))
             }
         }
     }

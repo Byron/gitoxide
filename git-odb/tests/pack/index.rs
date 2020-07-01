@@ -2,7 +2,7 @@ use crate::{
     fixture_path, hex_to_id,
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
-use git_odb::pack::{self, index};
+use git_odb::pack::{self, index, DecodeEntryResult};
 use pretty_assertions::assert_eq;
 
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
@@ -104,10 +104,49 @@ mod method {
 use git_features::progress::Discard;
 #[test]
 fn pack_lookup() {
-    for (index_path, pack_path) in &[
-        (INDEX_V2, PACK_FOR_INDEX_V2),
-        (INDEX_V1, PACK_FOR_INDEX_V1),
-        (SMALL_PACK_INDEX, SMALL_PACK),
+    for (index_path, pack_path, stats) in &[
+        (
+            INDEX_V2,
+            PACK_FOR_INDEX_V2,
+            index::PackFileChecksumResult {
+                average: DecodeEntryResult {
+                    kind: git_object::Kind::Tree,
+                    num_deltas: 0,
+                    decompressed_size: 3456,
+                    compressed_size: 1725,
+                    object_size: 9621,
+                },
+                objects_per_chain_length: Default::default(),
+            },
+        ),
+        (
+            INDEX_V1,
+            PACK_FOR_INDEX_V1,
+            index::PackFileChecksumResult {
+                average: DecodeEntryResult {
+                    kind: git_object::Kind::Tree,
+                    num_deltas: 0,
+                    decompressed_size: 1982,
+                    compressed_size: 729,
+                    object_size: 2093,
+                },
+                objects_per_chain_length: Default::default(),
+            },
+        ),
+        (
+            SMALL_PACK_INDEX,
+            SMALL_PACK,
+            index::PackFileChecksumResult {
+                average: DecodeEntryResult {
+                    kind: git_object::Kind::Tree,
+                    num_deltas: 0,
+                    decompressed_size: 118,
+                    compressed_size: 85,
+                    object_size: 293,
+                },
+                objects_per_chain_length: Default::default(),
+            },
+        ),
     ] {
         let idx = index::File::at(&fixture_path(index_path)).unwrap();
         let pack = pack::File::at(&fixture_path(pack_path)).unwrap();
@@ -117,7 +156,7 @@ fn pack_lookup() {
         assert_eq!(
             idx.verify_checksum_of_index(Some(&pack), Discard.into())
                 .unwrap(),
-            (idx.checksum_of_index(), None)
+            (idx.checksum_of_index(), Some(stats.to_owned()))
         );
         for idx_entry in idx.iter() {
             let pack_entry = pack.entry(idx_entry.pack_offset);

@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use git_features::progress::Progress;
+use git_odb::pack::index;
 use std::{io, path::Path};
 
 pub fn init() -> Result<()> {
@@ -9,9 +10,10 @@ pub fn init() -> Result<()> {
 pub fn verify_pack_or_pack_index<P>(
     path: impl AsRef<Path>,
     progress: Option<P>,
+    statistics: bool,
     mut out: impl io::Write,
     mut err: impl io::Write,
-) -> Result<()>
+) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>
 where
     P: Progress,
     <P as Progress>::SubProgress: Send,
@@ -20,10 +22,10 @@ where
     let ext = path.extension()
         .and_then(|ext| ext.to_str())
         .ok_or_else(|| anyhow!("Cannot determine file type on path without extension '{}', expecting default extensions 'idx' and 'pack'", path.display()))?;
-    match ext {
+    let res = match ext {
         "pack" => {
             let pack = git_odb::pack::File::at(path).with_context(|| "Could not open pack file")?;
-            pack.verify_checksum()?;
+            pack.verify_checksum().map(|id| (id, None))?
         }
         "idx" => {
             let idx = git_odb::pack::index::File::at(path)
@@ -35,7 +37,7 @@ where
                     Err(e)
                 })
                 .ok();
-            idx.verify_checksum_of_index(pack.as_ref(), progress)?;
+            idx.verify_checksum_of_index(pack.as_ref(), progress)?
         }
         ext => {
             return Err(anyhow!(
@@ -43,7 +45,7 @@ where
                 ext
             ))
         }
-    }
+    };
     writeln!(out, "OK")?;
-    Ok(())
+    Ok(res)
 }

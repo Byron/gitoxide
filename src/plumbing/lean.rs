@@ -49,9 +49,11 @@ pub fn main() -> Result<()> {
             core::verify_pack_or_pack_index(
                 path,
                 progress::Log::new("verify-pack").into(),
+                statistics,
                 stdout(),
                 stderr(),
             )
+            .map(|_| ())
         }
     }
 }

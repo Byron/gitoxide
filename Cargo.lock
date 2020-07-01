@@ -563,6 +563,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "git-features",
+ "git-object",
  "git-odb",
  "git-repository",
 ]
