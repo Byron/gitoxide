@@ -70,6 +70,9 @@ impl File {
     pub fn num_objects(&self) -> u32 {
         self.num_objects
     }
+    pub fn data_len(&self) -> usize {
+        self.data.len()
+    }
     pub fn path(&self) -> &Path {
         &self.path
     }

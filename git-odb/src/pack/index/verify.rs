@@ -2,6 +2,7 @@ use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
+use std::time::Instant;
 
 quick_error! {
     #[derive(Debug)]
@@ -27,6 +28,33 @@ quick_error! {
         Crc32Mismatch { expected: u32, actual: u32, offset: u64, kind: git_object::Kind} {
             display("The CRC32 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
+    }
+}
+
+struct TimeThroughput {
+    then: Instant,
+    byte_size: usize,
+}
+
+impl TimeThroughput {
+    pub fn new(byte_size: usize) -> TimeThroughput {
+        TimeThroughput {
+            then: Instant::now(),
+            byte_size,
+        }
+    }
+}
+
+impl Into<String> for TimeThroughput {
+    fn into(self) -> String {
+        let time_taken = std::time::Instant::now()
+            .duration_since(self.then)
+            .as_secs_f32();
+        format!(
+            "finished in {:.2}s at {}/s",
+            time_taken,
+            bytesize::ByteSize((self.byte_size as f32 / time_taken) as u64)
+        )
     }
 }
 
@@ -60,18 +88,12 @@ impl index::File {
         let mut progress = root.add_child("Sha1 of index");
 
         let mut verify_self = move || {
-            let then = std::time::Instant::now();
+            let throughput = TimeThroughput::new(self.data.len());
             progress.info("begin");
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
             let actual = hasher.digest();
-            let time_taken = std::time::Instant::now().duration_since(then).as_secs_f32();
-
-            progress.done(format!(
-                "finished in {:.2}s at {}/s",
-                time_taken,
-                bytesize::ByteSize((self.data.len() as f32 / time_taken) as u64)
-            ));
+            progress.done(throughput);
 
             let expected = self.checksum_of_index();
             if actual == expected {
@@ -93,9 +115,10 @@ impl index::File {
                     root.add_child(format!("Sha1 of pack at '{}'", pack.path().display()));
                 let (pack_res, id) = parallel::join(
                     move || {
+                        let throughput = TimeThroughput::new(pack.data_len());
                         progress.info("begin");
                         let res = pack.verify_checksum();
-                        progress.done("finished");
+                        progress.done(throughput);
                         res
                     },
                     verify_self,
