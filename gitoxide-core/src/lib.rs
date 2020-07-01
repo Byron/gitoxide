@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use git_features::progress::Progress;
-use git_odb::pack::index;
+use git_odb::pack::index::PackFileChecksumResult;
+use git_odb::pack::{index, DecodeEntryResult};
 use std::{io, path::Path};
 
 pub fn init() -> Result<()> {
@@ -10,7 +11,7 @@ pub fn init() -> Result<()> {
 pub fn verify_pack_or_pack_index<P>(
     path: impl AsRef<Path>,
     progress: Option<P>,
-    _statistics: bool,
+    output_statistics: bool,
     mut out: impl io::Write,
     mut err: impl io::Write,
 ) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>
@@ -46,6 +47,37 @@ where
             ))
         }
     };
+    if let Some(stats) = res.1.as_ref() {
+        if output_statistics {
+            print_statistics(&mut out, stats).ok();
+        }
+    }
     writeln!(out, "OK")?;
     Ok(res)
+}
+
+fn print_statistics(out: &mut impl io::Write, stats: &PackFileChecksumResult) -> io::Result<()> {
+    writeln!(out, "averages")?;
+
+    let DecodeEntryResult {
+        kind: _,
+        num_deltas,
+        decompressed_size,
+        compressed_size,
+        object_size,
+    } = stats.average;
+    writeln!(
+        out,
+        "\t{:<width$} {};\n\t{:<width$} {};\n\t{:<width$} {};\n\t{:<width$} {};",
+        "delta chain length:",
+        num_deltas,
+        "decompressed entry [B]:",
+        decompressed_size,
+        "compressed entry [B]:",
+        compressed_size,
+        "decompressed object size [B]:",
+        object_size,
+        width = 30
+    )?;
+    Ok(())
 }

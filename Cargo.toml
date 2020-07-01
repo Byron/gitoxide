@@ -6,12 +6,14 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 publish = false
 license = "MIT"
 edition = "2018"
+default-run = "gio"
 
 [[bin]]
 name="gio"
 path="src/porcelain-cli.rs"
 test = false
 doctest = false
+
 
 [[bin]]
 name="gio-plumbing"
