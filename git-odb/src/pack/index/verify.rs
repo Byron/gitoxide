@@ -89,7 +89,6 @@ impl index::File {
 
         let mut verify_self = move || {
             let throughput = TimeThroughput::new(self.data.len());
-            progress.info("begin");
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
             let actual = hasher.digest();
@@ -116,7 +115,6 @@ impl index::File {
                 let (pack_res, id) = parallel::join(
                     move || {
                         let throughput = TimeThroughput::new(pack.data_len());
-                        progress.info("begin");
                         let res = pack.verify_checksum();
                         progress.done(throughput);
                         res
