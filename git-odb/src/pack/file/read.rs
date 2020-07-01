@@ -23,7 +23,7 @@ pub enum ResolvedBase {
     OutOfPack { kind: object::Kind, end: usize },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct DecodeEntryResult {
     pub kind: object::Kind,
     pub num_deltas: u32,
@@ -33,6 +33,15 @@ pub struct DecodeEntryResult {
 }
 
 impl DecodeEntryResult {
+    pub fn default_from_kind(kind: object::Kind) -> Self {
+        Self {
+            kind,
+            num_deltas: 0,
+            decompressed_size: 0,
+            compressed_size: 0,
+            object_size: 0,
+        }
+    }
     fn from_object_entry(kind: object::Kind, entry: &Entry, compressed_size: usize) -> Self {
         Self {
             kind,

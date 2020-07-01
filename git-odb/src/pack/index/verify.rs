@@ -131,29 +131,72 @@ impl index::File {
                     v
                 };
 
+                fn add_decode_result(
+                    DecodeEntryResult {
+                        kind,
+                        num_deltas,
+                        decompressed_size,
+                        compressed_size,
+                        object_size,
+                    }: DecodeEntryResult,
+                    rhs: DecodeEntryResult,
+                ) -> DecodeEntryResult {
+                    DecodeEntryResult {
+                        kind,
+                        num_deltas: num_deltas + rhs.num_deltas,
+                        decompressed_size: decompressed_size + rhs.decompressed_size,
+                        compressed_size: compressed_size + rhs.compressed_size,
+                        object_size: object_size + rhs.object_size,
+                    }
+                }
+
+                fn div_decode_result(
+                    DecodeEntryResult {
+                        kind,
+                        num_deltas,
+                        decompressed_size,
+                        compressed_size,
+                        object_size,
+                    }: DecodeEntryResult,
+                    div: usize,
+                ) -> DecodeEntryResult {
+                    DecodeEntryResult {
+                        kind,
+                        num_deltas: num_deltas / div as u32,
+                        decompressed_size: decompressed_size / div as u64,
+                        compressed_size: compressed_size / div,
+                        object_size: object_size / div as u64,
+                    }
+                }
+
                 struct Reducer<'a, P> {
                     progress: &'a std::sync::Mutex<P>,
-                    seen: u32,
+                    entries_seen: u32,
+                    chunks_seen: usize,
+                    stats: DecodeEntryResult,
                 }
 
                 impl<'a, P> parallel::Reducer for Reducer<'a, P>
                 where
                     P: Progress,
                 {
-                    type Input = Result<usize, ChecksumError>;
-                    type Output = ();
+                    type Input = Result<(usize, DecodeEntryResult), ChecksumError>;
+                    type Output = DecodeEntryResult;
                     type Error = ChecksumError;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-                        let chunk = input?;
-                        self.seen += chunk as u32;
-                        self.progress.lock().unwrap().set(self.seen);
+                        let (num_entries, chunk_stats) = input?;
+                        self.entries_seen += num_entries as u32;
+                        self.chunks_seen += 1;
+
+                        self.stats = add_decode_result(self.stats, chunk_stats);
+                        self.progress.lock().unwrap().set(self.entries_seen);
                         Ok(())
                     }
 
                     fn finalize(&mut self) -> Result<Self::Output, Self::Error> {
                         self.progress.lock().unwrap().done("finished");
-                        Ok(())
+                        Ok(div_decode_result(self.stats, self.chunks_seen))
                     }
                 }
 
@@ -184,16 +227,14 @@ impl index::File {
                     state_per_thread,
                     |entries: &[index::Entry],
                      (cache, buf, progress)|
-                     -> Result<usize, ChecksumError> {
+                     -> Result<(usize, DecodeEntryResult), ChecksumError> {
                         progress.init(Some(entries.len() as u32), Some("entries"));
+                        let mut stats =
+                            DecodeEntryResult::default_from_kind(git_object::Kind::Tree);
                         for (idx, index_entry) in entries.iter().enumerate() {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
-                            let DecodeEntryResult {
-                                kind: object_kind,
-                                compressed_size: consumed_input,
-                                ..
-                            } = pack
+                            let entry_stats = pack
                                 .decode_entry(
                                     pack_entry,
                                     buf,
@@ -213,6 +254,9 @@ impl index::File {
                                         index_entry.pack_offset,
                                     )
                                 })?;
+                            let object_kind = entry_stats.kind;
+                            let consumed_input = entry_stats.compressed_size;
+                            stats = add_decode_result(stats, entry_stats);
 
                             let mut header_buf = [0u8; 64];
                             let header_size = crate::loose::db::serde::write_header(
@@ -250,11 +294,14 @@ impl index::File {
                             }
                             progress.set(idx as u32);
                         }
-                        Ok(entries.len())
+                        stats = div_decode_result(stats, entries.len());
+                        Ok((entries.len(), stats))
                     },
                     Reducer {
                         progress: &reduce_progress,
-                        seen: 0,
+                        entries_seen: 0,
+                        chunks_seen: 0,
+                        stats: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
                     },
                 )?;
 
