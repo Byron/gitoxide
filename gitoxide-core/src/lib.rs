@@ -59,7 +59,16 @@ fn print_statistics(
     out: &mut impl io::Write,
     stats: &index::PackFileChecksumResult,
 ) -> io::Result<()> {
-    writeln!(out, "averages")?;
+    writeln!(out, "objects per delta chain length")?;
+    let mut chain_length_to_object: Vec<_> = stats
+        .objects_per_chain_length
+        .iter()
+        .map(|(a, b)| (*a, *b))
+        .collect();
+    chain_length_to_object.sort_by_key(|e| e.0);
+    for (chain_length, object_count) in chain_length_to_object.into_iter() {
+        writeln!(out, "\t{:>2}: {}", chain_length, object_count)?;
+    }
 
     let pack::DecodeEntryResult {
         kind: _,
@@ -68,17 +77,16 @@ fn print_statistics(
         compressed_size,
         object_size,
     } = stats.average;
+
+    writeln!(out, "\naverages")?;
+    #[rustfmt::skip]
     writeln!(
         out,
         "\t{:<width$} {};\n\t{:<width$} {};\n\t{:<width$} {};\n\t{:<width$} {};",
-        "delta chain length:",
-        num_deltas,
-        "decompressed entry [B]:",
-        decompressed_size,
-        "compressed entry [B]:",
-        compressed_size,
-        "decompressed object size [B]:",
-        object_size,
+        "delta chain length:", num_deltas,
+        "decompressed entry [B]:", decompressed_size,
+        "compressed entry [B]:", compressed_size,
+        "decompressed object size [B]:", object_size,
         width = 30
     )?;
     Ok(())
