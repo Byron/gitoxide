@@ -5,7 +5,7 @@ use quick_error::quick_error;
 use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 
 mod read;
-pub use read::ResolvedBase;
+pub use read::{DecodeEntryResult, ResolvedBase};
 
 pub mod decoded;
 pub use decoded::Entry;

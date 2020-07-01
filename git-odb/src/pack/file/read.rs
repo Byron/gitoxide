@@ -5,7 +5,7 @@ use crate::{
 };
 use git_object as object;
 use smallvec::SmallVec;
-use std::{convert::TryInto, ops::Range};
+use std::{convert::TryInto, io, ops::Range};
 
 #[derive(Debug)]
 struct Delta {
@@ -21,6 +21,27 @@ struct Delta {
 pub enum ResolvedBase {
     InPack(Entry),
     OutOfPack { kind: object::Kind, end: usize },
+}
+
+#[derive(Debug)]
+pub struct DecodeEntryResult {
+    pub kind: object::Kind,
+    pub num_deltas: u32,
+    pub decompressed_size: u64,
+    pub compressed_size: usize,
+    pub object_size: u64,
+}
+
+impl DecodeEntryResult {
+    fn from_object_entry(kind: object::Kind, entry: &Entry, compressed_size: usize) -> Self {
+        Self {
+            kind,
+            num_deltas: 0,
+            decompressed_size: entry.decompressed_size,
+            compressed_size,
+            object_size: entry.decompressed_size,
+        }
+    }
 }
 
 /// Reading of objects
@@ -69,7 +90,7 @@ impl File {
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         cache: &mut impl cache::DecodeEntry,
-    ) -> Result<(object::Kind, usize), Error> {
+    ) -> Result<DecodeEntryResult, Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
@@ -82,8 +103,9 @@ impl File {
                 );
                 self.decompress_entry(&entry, out.as_mut_slice())
                     .map(|consumed_input| {
-                        (
+                        DecodeEntryResult::from_object_entry(
                             entry.header.to_kind().expect("a non-delta entry"),
+                            &entry,
                             consumed_input,
                         )
                     })
@@ -98,10 +120,11 @@ impl File {
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
-    ) -> Result<(object::Kind, usize), Error> {
+    ) -> Result<DecodeEntryResult, Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();
+        let first_entry = last.clone();
         let mut cursor = last;
         let mut base_buffer_size: Option<usize> = None;
         let mut object_kind: Option<object::Kind> = None;
@@ -150,9 +173,12 @@ impl File {
             };
         }
 
+        // This can happen if the cache held the first entry itself
+        // We will just treat it as an object then, even though it's technically incorrect.
         if chain.is_empty() {
-            return Ok((
+            return Ok(DecodeEntryResult::from_object_entry(
                 object_kind.expect("object kind as set by cache"),
+                &first_entry,
                 consumed_input.expect("consumed bytes as set by cache"),
             ));
         };
@@ -301,12 +327,21 @@ impl File {
             .expect("a base object as root of any delta chain that we are here to resolve");
         let consumed_input = consumed_input.expect("at least one decompressed delta object");
         cache.put(
-            chain.first().expect("at least one delta").data_offset,
+            first_entry.data_offset,
             out.as_slice(),
             object_kind,
             consumed_input,
         );
-        Ok((object_kind, consumed_input))
+        Ok(DecodeEntryResult {
+            kind: object_kind,
+            // technically depending on the cache, the chain size is not correct as it might
+            // have been cut short by a cache hit. The caller must deactivate the cache to get
+            // actual results
+            num_deltas: chain.len() as u32,
+            decompressed_size: first_entry.decompressed_size as u64,
+            compressed_size: consumed_input,
+            object_size: last_result_size as u64,
+        })
     }
 }
 
@@ -349,12 +384,12 @@ fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
                     size = 0x10000; // 65536
                 }
                 let ofs = ofs as usize;
-                std::io::Write::write(&mut target, &base[ofs..ofs + size as usize])
+                io::Write::write(&mut target, &base[ofs..ofs + size as usize])
                     .expect("delta copy from base: byte slices must match");
             }
             0 => panic!("encountered unsupported command code: 0"),
             size => {
-                std::io::Write::write(&mut target, &data[i..i + *size as usize])
+                io::Write::write(&mut target, &data[i..i + *size as usize])
                     .expect("delta copy data: slice sizes to match up");
                 i += *size as usize;
             }

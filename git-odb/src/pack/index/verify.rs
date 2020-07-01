@@ -1,3 +1,4 @@
+use crate::pack::DecodeEntryResult;
 use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
@@ -188,7 +189,11 @@ impl index::File {
                         for (idx, index_entry) in entries.iter().enumerate() {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
-                            let (object_kind, consumed_input) = pack
+                            let DecodeEntryResult {
+                                kind: object_kind,
+                                compressed_size: consumed_input,
+                                ..
+                            } = pack
                                 .decode_entry(
                                     pack_entry,
                                     buf,
