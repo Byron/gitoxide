@@ -29,7 +29,7 @@
      * [x] for `pretty` binary with support for logging and TUI
    * [x] statistics
    * [ ] ~~a verbose mode to list each object in a pack, similar to existing git-verify-pack~~
-   * [ ] journey tests
+   * [x] journey tests
    * [ ] support for serde/miniserde for all returned data types (features per crate)
 * **stress**
   * [ ] first stress test for validation of a big repository, linux maybe, or something smaller but big enough

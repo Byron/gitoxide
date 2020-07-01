@@ -53,12 +53,20 @@ title "CLI"
         expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_FILE"
       }
     )
-    (with "a valid pack file"
+    (with "a valid pack INDEX file"
       PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
-      it "verifies the pack index successfully and with desired output" && {
-        WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_INDEX_FILE"
-      }
+      (with "no statistics"
+        it "verifies the pack index successfully and with desired output" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_INDEX_FILE"
+        }
+      )
+      (with "statistics"
+        it "verifies the pack index successfully and with desired output" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-with-statistics-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --statistics "$PACK_INDEX_FILE"
+        }
+      )
     )
   )
 )
