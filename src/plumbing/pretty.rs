@@ -42,7 +42,7 @@ fn init_progress(
     verbose: bool,
     progress: bool,
 ) -> (
-    Option<std::thread::JoinHandle<()>>,
+    Option<JoinThreadOnDrop>,
     Option<progress::Either<progress::Log, prodash::tree::Item>>,
 ) {
     super::init_env_logger(verbose);
@@ -63,13 +63,19 @@ fn init_progress(
             .expect("tui to come up without io error");
             let handle = std::thread::spawn(move || smol::run(render_tui));
 
-            (Some(handle), Some(progress::Either::Right(sub_progress)))
+            (
+                Some(JoinThreadOnDrop(Some(handle))),
+                Some(progress::Either::Right(sub_progress)),
+            )
         }
     }
 }
 
-fn join<T>(handle: Option<std::thread::JoinHandle<T>>) -> Option<T> {
-    handle.and_then(|h| h.join().ok())
+struct JoinThreadOnDrop(Option<std::thread::JoinHandle<()>>);
+impl Drop for JoinThreadOnDrop {
+    fn drop(&mut self) {
+        self.0.take().and_then(|handle| handle.join().ok());
+    }
 }
 
 pub fn main() -> Result<()> {
@@ -81,10 +87,8 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
         } => {
-            let (handle, progress) = init_progress("verify-pack", verbose, progress);
-            let res = core::verify_pack_or_pack_index(path, progress, stdout(), stderr());
-            join(handle);
-            res
+            let (_keep, progress) = init_progress("verify-pack", verbose, progress);
+            core::verify_pack_or_pack_index(path, progress, stdout(), stderr())
         }
     }?;
     Ok(())
