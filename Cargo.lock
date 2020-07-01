@@ -546,6 +546,7 @@ dependencies = [
  "git-features",
  "gitoxide-core",
  "prodash",
+ "smol",
  "structopt",
 ]
 
@@ -848,9 +849,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "4.0.4"
+version = "4.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34cdc02202ba329a65f1f5d98acd7a4f653c48378713526e7a20345479ae6dfa"
+checksum = "2db0f9242151525bdf735374355312312d0cf334328fd2b8f290c8eb8842ccd2"
 dependencies = [
  "dashmap",
  "futures-channel",

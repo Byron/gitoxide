@@ -26,9 +26,7 @@
    * [x] validate index and pack
    * **progress**
      * [x] for `lean` binary behind --verbose flag
-     * [ ] for `pretty` binary with support for
-       * [x] logging
-       * [ ] TUI
+     * [x] for `pretty` binary with support for logging and TUI
    * [ ] statistics
    * [ ] a verbose mode to list each object in a pack, similar to existing git-verify-pack
 * **stress**

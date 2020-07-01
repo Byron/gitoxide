@@ -25,6 +25,11 @@ mod options {
             /// if set, verbose progress messages are printed line by line
             #[structopt(long, short = "v")]
             verbose: bool,
+
+            /// if set, bring up a terminal user interface displaying progress visually
+            #[structopt(long, conflicts_with("verbose"))]
+            progress: bool,
+
             /// The '.pack' or '.idx' file whose checksum to validate.
             #[structopt(parse(from_os_str))]
             path: PathBuf,
@@ -32,25 +37,46 @@ mod options {
     }
 }
 
-fn init_progress(name: &str, verbose: bool) -> progress::DoOrDiscard<progress::Log> {
+fn init_progress(
+    name: &str,
+    verbose: bool,
+    progress: bool,
+) -> Option<progress::Either<progress::Log, prodash::tree::Item>> {
     super::init_env_logger(verbose);
-    progress::DoOrDiscard::from(if verbose {
-        Some(progress::Log::new(name))
-    } else {
-        None
-    })
+    match (verbose, progress) {
+        (false, false) => None,
+        (true, false) => Some(progress::Either::Left(progress::Log::new(name))),
+        (true, true) | (false, true) => {
+            let progress = prodash::Tree::new();
+            let sub_progress = progress.add_child(name);
+            let render_tui = prodash::tui::render(
+                progress,
+                prodash::tui::TuiOptions {
+                    title: "gitoxide".into(),
+                    frames_per_second: 6.0,
+                    ..Default::default()
+                },
+            )
+            .expect("tui to come up without io error");
+            std::thread::spawn(move || smol::run(render_tui));
+
+            Some(progress::Either::Right(sub_progress))
+        }
+    }
 }
 
 pub fn main() -> Result<()> {
     use options::*;
     let args = Args::from_args();
     match args.cmd {
-        Subcommands::VerifyPack { path, verbose } => core::verify_pack_or_pack_index(
+        Subcommands::VerifyPack {
             path,
-            init_progress("verify-pack", verbose).into(),
-            stdout(),
-            stderr(),
-        ),
+            verbose,
+            progress,
+        } => {
+            let progress = init_progress("verify-pack", verbose, progress);
+            core::verify_pack_or_pack_index(path, progress, stdout(), stderr())
+        }
     }?;
     Ok(())
 }
