@@ -1,5 +1,5 @@
 use anyhow::Result;
-use git_features::progress::Discard;
+use git_features::progress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout};
 use structopt::StructOpt;
@@ -22,6 +22,9 @@ mod options {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         VerifyPack {
+            /// if set, verbose progress messages are printed line by line
+            #[structopt(long, short = "v")]
+            verbose: bool,
             /// The '.pack' or '.idx' file whose checksum to validate.
             #[structopt(parse(from_os_str))]
             path: PathBuf,
@@ -29,13 +32,29 @@ mod options {
     }
 }
 
+fn init_progress(name: &str, verbose: bool) -> progress::DoOrDiscard<progress::Log> {
+    if verbose {
+        env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
+    } else {
+        env_logger::init();
+    }
+    progress::DoOrDiscard::from(if verbose {
+        Some(progress::Log::new(name))
+    } else {
+        None
+    })
+}
+
 pub fn main() -> Result<()> {
     use options::*;
     let args = Args::from_args();
     match args.cmd {
-        Subcommands::VerifyPack { path } => {
-            core::verify_pack_or_pack_index(path, Discard.into(), stdout(), stderr())
-        }
+        Subcommands::VerifyPack { path, verbose } => core::verify_pack_or_pack_index(
+            path,
+            init_progress("verify-pack", verbose).into(),
+            stdout(),
+            stderr(),
+        ),
     }?;
     Ok(())
 }

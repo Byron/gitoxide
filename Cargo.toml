@@ -24,9 +24,11 @@ default = ["fast", "pretty-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt",
               "git-features/progress-prodash",
+              "git-features/progress-log",
               "prodash/log-renderer",
               "prodash/tui-renderer",
-              "prodash/localtime"]
+              "prodash/localtime",
+              "env_logger"]
 lean-cli = ["argh", "git-features/progress-log", "env_logger"]
 
 [dependencies]

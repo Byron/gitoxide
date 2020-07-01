@@ -49,7 +49,7 @@ pub fn main() -> Result<()> {
             init_log(verbose);
             core::verify_pack_or_pack_index(
                 path,
-                progress::Log::new("verify").into(),
+                progress::Log::new("verify-pack").into(),
                 stdout(),
                 stderr(),
             )
