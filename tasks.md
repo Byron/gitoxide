@@ -30,6 +30,7 @@
    * [x] statistics
    * [ ] ~~a verbose mode to list each object in a pack, similar to existing git-verify-pack~~
    * [x] journey tests
+   * [x] display object throughput per second
    * [ ] support for serde/miniserde for all returned data types (features per crate)
 * **stress**
   * [ ] first stress test for validation of a big repository, linux maybe, or something smaller but big enough

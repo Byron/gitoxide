@@ -164,6 +164,7 @@ impl index::File {
 
                 struct Reducer<'a, P> {
                     progress: &'a std::sync::Mutex<P>,
+                    then: Instant,
                     entries_seen: u32,
                     chunks_seen: usize,
                     stats: PackFileChecksumResult,
@@ -210,6 +211,13 @@ impl index::File {
                     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
                         self.progress.lock().unwrap().done("finished");
                         div_decode_result(&mut self.stats.average, self.chunks_seen);
+                        let elapsed_s = Instant::now().duration_since(self.then).as_secs_f32();
+                        self.progress.lock().unwrap().info(format!(
+                            "Reduced {} objects in {:.2}s ({:.0} objects/s)",
+                            self.entries_seen,
+                            elapsed_s,
+                            self.entries_seen as f32 / elapsed_s
+                        ));
                         Ok(self.stats)
                     }
                 }
@@ -312,6 +320,7 @@ impl index::File {
                     },
                     Reducer {
                         progress: &reduce_progress,
+                        then: Instant::now(),
                         entries_seen: 0,
                         chunks_seen: 0,
                         stats: PackFileChecksumResult {
