@@ -1,7 +1,7 @@
 use anyhow::Result;
 use git_features::progress;
 use gitoxide_core as core;
-use std::io::{stderr, stdout};
+use std::io::{stderr, stdout, Write};
 use structopt::StructOpt;
 
 mod options {
@@ -93,9 +93,16 @@ pub fn main() -> Result<()> {
             progress,
             statistics,
         } => {
-            let (_keep, progress) = init_progress("verify-pack", verbose, progress);
-            core::verify_pack_or_pack_index(path, progress, statistics, stdout(), stderr())
-                .map(|_| ())
+            let (handle, progress) = init_progress("verify-pack", verbose, progress);
+            let mut buf = Vec::new();
+            let res =
+                core::verify_pack_or_pack_index(path, progress, statistics, &mut buf, stderr())
+                    .map(|_| ());
+            // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
+            // We know that the printing happens at the end, so this is fine.
+            drop(handle);
+            stdout().write_all(&buf)?;
+            res
         }
     }?;
     Ok(())
