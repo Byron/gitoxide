@@ -3,7 +3,7 @@ pub trait Reducer {
     type Output;
     type Error;
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error>;
-    fn finalize(&mut self) -> Result<Self::Output, Self::Error>;
+    fn finalize(self) -> Result<Self::Output, Self::Error>;
 }
 
 mod serial {

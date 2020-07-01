@@ -19,6 +19,9 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "verify-pack")]
     pub struct VerifyPack {
+        /// if set, output statistical information about the pack
+        #[argh(switch, short = 's')]
+        pub statistics: bool,
         /// if set, verbose progress messages are printed line by line
         #[argh(switch, short = 'v')]
         pub verbose: bool,
@@ -37,7 +40,11 @@ pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = argh::from_env();
     match cli.subcommand {
-        SubCommands::VerifyPack(VerifyPack { path, verbose }) => {
+        SubCommands::VerifyPack(VerifyPack {
+            path,
+            verbose,
+            statistics,
+        }) => {
             super::init_env_logger(verbose);
             core::verify_pack_or_pack_index(
                 path,

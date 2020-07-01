@@ -3,6 +3,7 @@ use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
+use smallvec::alloc::collections::BTreeMap;
 use std::time::Instant;
 
 quick_error! {
@@ -57,6 +58,14 @@ impl Into<String> for TimeThroughput {
             bytesize::ByteSize((self.byte_size as f32 / time_taken) as u64)
         )
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+pub struct FileChecksumResult {
+    /// The sha1 over the whole index file
+    id: git_object::Id,
+    average: DecodeEntryResult,
+    objects_per_chain_length: BTreeMap<u32, u32>,
 }
 
 /// Methods to verify and validate the content of the index file
@@ -133,40 +142,34 @@ impl index::File {
 
                 fn add_decode_result(
                     DecodeEntryResult {
-                        kind,
-                        num_deltas,
-                        decompressed_size,
-                        compressed_size,
-                        object_size,
-                    }: DecodeEntryResult,
+                        kind: _,
+                        mut num_deltas,
+                        mut decompressed_size,
+                        mut compressed_size,
+                        mut object_size,
+                    }: &mut DecodeEntryResult,
                     rhs: DecodeEntryResult,
-                ) -> DecodeEntryResult {
-                    DecodeEntryResult {
-                        kind,
-                        num_deltas: num_deltas + rhs.num_deltas,
-                        decompressed_size: decompressed_size + rhs.decompressed_size,
-                        compressed_size: compressed_size + rhs.compressed_size,
-                        object_size: object_size + rhs.object_size,
-                    }
+                ) {
+                    num_deltas += rhs.num_deltas;
+                    decompressed_size += rhs.decompressed_size;
+                    compressed_size += rhs.compressed_size;
+                    object_size += rhs.object_size;
                 }
 
                 fn div_decode_result(
                     DecodeEntryResult {
-                        kind,
-                        num_deltas,
-                        decompressed_size,
-                        compressed_size,
-                        object_size,
-                    }: DecodeEntryResult,
+                        kind: _,
+                        mut num_deltas,
+                        mut decompressed_size,
+                        mut compressed_size,
+                        mut object_size,
+                    }: &mut DecodeEntryResult,
                     div: usize,
-                ) -> DecodeEntryResult {
-                    DecodeEntryResult {
-                        kind,
-                        num_deltas: num_deltas / div as u32,
-                        decompressed_size: decompressed_size / div as u64,
-                        compressed_size: compressed_size / div,
-                        object_size: object_size / div as u64,
-                    }
+                ) {
+                    num_deltas /= div as u32;
+                    decompressed_size /= div as u64;
+                    compressed_size /= div;
+                    object_size /= div as u64;
                 }
 
                 struct Reducer<'a, P> {
@@ -189,14 +192,15 @@ impl index::File {
                         self.entries_seen += num_entries as u32;
                         self.chunks_seen += 1;
 
-                        self.stats = add_decode_result(self.stats, chunk_stats);
+                        add_decode_result(&mut self.stats, chunk_stats);
                         self.progress.lock().unwrap().set(self.entries_seen);
                         Ok(())
                     }
 
-                    fn finalize(&mut self) -> Result<Self::Output, Self::Error> {
+                    fn finalize(mut self) -> Result<Self::Output, Self::Error> {
                         self.progress.lock().unwrap().done("finished");
-                        Ok(div_decode_result(self.stats, self.chunks_seen))
+                        div_decode_result(&mut self.stats, self.chunks_seen);
+                        Ok(self.stats)
                     }
                 }
 
@@ -256,7 +260,7 @@ impl index::File {
                                 })?;
                             let object_kind = entry_stats.kind;
                             let consumed_input = entry_stats.compressed_size;
-                            stats = add_decode_result(stats, entry_stats);
+                            add_decode_result(&mut stats, entry_stats);
 
                             let mut header_buf = [0u8; 64];
                             let header_size = crate::loose::db::serde::write_header(
@@ -294,7 +298,7 @@ impl index::File {
                             }
                             progress.set(idx as u32);
                         }
-                        stats = div_decode_result(stats, entries.len());
+                        div_decode_result(&mut stats, entries.len());
                         Ok((entries.len(), stats))
                     },
                     Reducer {

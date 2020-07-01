@@ -17,13 +17,13 @@ struct Delta {
     data_offset: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 pub enum ResolvedBase {
     InPack(Entry),
     OutOfPack { kind: object::Kind, end: usize },
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 pub struct DecodeEntryResult {
     pub kind: object::Kind,
     pub num_deltas: u32,
