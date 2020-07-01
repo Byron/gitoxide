@@ -61,9 +61,7 @@ impl Into<String> for TimeThroughput {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-pub struct FileChecksumResult {
-    /// The sha1 over the whole index file
-    id: git_object::Id,
+pub struct PackFileChecksumResult {
     average: DecodeEntryResult,
     objects_per_chain_length: BTreeMap<u32, u32>,
 }
@@ -86,7 +84,7 @@ impl index::File {
         &self,
         pack: Option<&pack::File>,
         progress: Option<P>,
-    ) -> Result<git_object::Id, ChecksumError>
+    ) -> Result<(git_object::Id, Option<PackFileChecksumResult>), ChecksumError>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -112,7 +110,7 @@ impl index::File {
             }
         };
         match pack {
-            None => verify_self(),
+            None => verify_self().map(|id| (id, None)),
             Some(pack) => {
                 if self.checksum_of_pack() != pack.checksum() {
                     return Err(ChecksumError::PackMismatch {
@@ -176,31 +174,39 @@ impl index::File {
                     progress: &'a std::sync::Mutex<P>,
                     entries_seen: u32,
                     chunks_seen: usize,
-                    stats: DecodeEntryResult,
+                    average: DecodeEntryResult,
                 }
 
                 impl<'a, P> parallel::Reducer for Reducer<'a, P>
                 where
                     P: Progress,
                 {
-                    type Input = Result<(usize, DecodeEntryResult), ChecksumError>;
+                    type Input = Result<Vec<DecodeEntryResult>, ChecksumError>;
                     type Output = DecodeEntryResult;
                     type Error = ChecksumError;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-                        let (num_entries, chunk_stats) = input?;
-                        self.entries_seen += num_entries as u32;
+                        let chunk_stats = input?;
+                        let num_entries_in_chunk = chunk_stats.len();
+                        self.entries_seen += num_entries_in_chunk as u32;
                         self.chunks_seen += 1;
 
-                        add_decode_result(&mut self.stats, chunk_stats);
+                        let mut chunk_average =
+                            DecodeEntryResult::default_from_kind(git_object::Kind::Tree);
+                        for stat in chunk_stats.into_iter() {
+                            add_decode_result(&mut chunk_average, stat);
+                        }
+                        div_decode_result(&mut chunk_average, num_entries_in_chunk);
+                        add_decode_result(&mut self.average, chunk_average);
+
                         self.progress.lock().unwrap().set(self.entries_seen);
                         Ok(())
                     }
 
                     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
                         self.progress.lock().unwrap().done("finished");
-                        div_decode_result(&mut self.stats, self.chunks_seen);
-                        Ok(self.stats)
+                        div_decode_result(&mut self.average, self.chunks_seen);
+                        Ok(self.average)
                     }
                 }
 
@@ -231,10 +237,9 @@ impl index::File {
                     state_per_thread,
                     |entries: &[index::Entry],
                      (cache, buf, progress)|
-                     -> Result<(usize, DecodeEntryResult), ChecksumError> {
+                     -> Result<Vec<DecodeEntryResult>, ChecksumError> {
                         progress.init(Some(entries.len() as u32), Some("entries"));
-                        let mut stats =
-                            DecodeEntryResult::default_from_kind(git_object::Kind::Tree);
+                        let mut stats = Vec::with_capacity(entries.len());
                         for (idx, index_entry) in entries.iter().enumerate() {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
@@ -260,7 +265,7 @@ impl index::File {
                                 })?;
                             let object_kind = entry_stats.kind;
                             let consumed_input = entry_stats.compressed_size;
-                            add_decode_result(&mut stats, entry_stats);
+                            stats.push(entry_stats);
 
                             let mut header_buf = [0u8; 64];
                             let header_size = crate::loose::db::serde::write_header(
@@ -272,6 +277,7 @@ impl index::File {
                             let mut hasher = git_features::hash::Sha1::default();
                             hasher.update(&header_buf[..header_size]);
                             hasher.update(buf.as_slice());
+
                             let actual_oid = hasher.digest();
                             if actual_oid != index_entry.oid {
                                 return Err(ChecksumError::PackObjectMismatch {
@@ -298,18 +304,17 @@ impl index::File {
                             }
                             progress.set(idx as u32);
                         }
-                        div_decode_result(&mut stats, entries.len());
-                        Ok((entries.len(), stats))
+                        Ok(stats)
                     },
                     Reducer {
                         progress: &reduce_progress,
                         entries_seen: 0,
                         chunks_seen: 0,
-                        stats: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
+                        average: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
                     },
                 )?;
 
-                Ok(id)
+                Ok((id, None))
             }
         }
     }
