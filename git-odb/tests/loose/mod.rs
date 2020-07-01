@@ -137,10 +137,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         fn blob_big_stream() {
             let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
             let size = o.size;
-            assert_eq!(
-                o.stream().unwrap().bytes().filter_map(Result::ok).count(),
-                size
-            );
+            assert_eq!(o.stream().unwrap().bytes().filter_map(Result::ok).count(), size);
         }
 
         #[test]
@@ -170,16 +167,14 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                         mode: TreeMode::Tree,
                         filename: b"dir".as_bstr(),
                         oid: &[
-                            150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208,
-                            34, 88, 27, 17, 176,
+                            150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                         ],
                     },
                     TreeEntry {
                         mode: TreeMode::Blob,
                         filename: b"file.txt".as_bstr(),
                         oid: &[
-                            55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244,
-                            17, 64, 202, 185, 128,
+                            55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244, 17, 64, 202, 185, 128,
                         ],
                     },
                 ],

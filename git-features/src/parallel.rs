@@ -10,10 +10,7 @@ mod serial {
     use crate::parallel::Reducer;
 
     #[cfg(not(feature = "parallel"))]
-    pub fn join<O1: Send, O2: Send>(
-        left: impl FnOnce() -> O1 + Send,
-        right: impl FnOnce() -> O2 + Send,
-    ) -> (O1, O2) {
+    pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
         (left(), right())
     }
 
@@ -41,10 +38,7 @@ mod in_parallel {
     use crate::parallel::Reducer;
     use crossbeam_utils::thread;
 
-    pub fn join<O1: Send, O2: Send>(
-        left: impl FnOnce() -> O1 + Send,
-        right: impl FnOnce() -> O2 + Send,
-    ) -> (O1, O2) {
+    pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
         thread::scope(|s| {
             let left = s.spawn(|_| left());
             let right = s.spawn(|_| right());

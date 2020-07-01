@@ -120,11 +120,7 @@ impl File {
 
     fn assure_v2(&self) {
         assert!(
-            if let Kind::V2 = self.kind.clone() {
-                true
-            } else {
-                false
-            },
+            if let Kind::V2 = self.kind.clone() { true } else { false },
             "Only V2 is implemented"
         );
     }
@@ -135,8 +131,7 @@ impl File {
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
         let object_data = &self.data[pack_offset..];
-        let (object, decompressed_size, consumed_bytes) =
-            decoded::Header::from_bytes(object_data, offset);
+        let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(object_data, offset);
         decoded::Entry {
             header: object,
             decompressed_size,

@@ -13,11 +13,7 @@ pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error>
         (Some(kind), Some(size)) => Ok((
             object::Kind::from_bytes(kind)?,
             btoi::btoi(size).map_err(|e| {
-                Error::ParseIntegerError(
-                    "Object size in header could not be parsed",
-                    size.to_owned(),
-                    e,
-                )
+                Error::ParseIntegerError("Object size in header could not be parsed", size.to_owned(), e)
             })?,
             header_end + 1, // account for 0 byte
         )),
@@ -35,11 +31,7 @@ fn kind_to_bytes_with_space(object: object::Kind) -> &'static [u8] {
     }
 }
 
-pub fn write_header(
-    object: object::Kind,
-    size: usize,
-    mut out: impl std::io::Write,
-) -> Result<usize, std::io::Error> {
+pub fn write_header(object: object::Kind, size: usize, mut out: impl std::io::Write) -> Result<usize, std::io::Error> {
     let mut written = out.write(kind_to_bytes_with_space(object))?;
     written += itoa::write(&mut out, size)?;
     out.write_u8(0)?;
@@ -63,8 +55,7 @@ mod tests {
             ] {
                 let written = write_header(*kind, *size, &mut buf[..]).unwrap();
                 assert_eq!(buf[..written].as_bstr(), expected.as_bstr());
-                let (actual_kind, actual_size, actual_read) =
-                    parse_header(&buf[..written]).unwrap();
+                let (actual_kind, actual_size, actual_read) = parse_header(&buf[..written]).unwrap();
                 assert_eq!(actual_kind, *kind);
                 assert_eq!(actual_size, *size);
                 assert_eq!(actual_read, written);

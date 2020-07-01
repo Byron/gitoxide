@@ -21,21 +21,9 @@ mod method {
         fn lookup() {
             let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
             for (id, desired_index, assertion) in &[
-                (
-                    &b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..],
-                    Some(0),
-                    "first",
-                ),
-                (
-                    b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6",
-                    Some(65),
-                    "close to last",
-                ),
-                (
-                    b"ffffffffffffffffffffffffffffffffffffffff",
-                    None,
-                    "not in pack",
-                ),
+                (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
+                (b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6", Some(65), "close to last"),
+                (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
                     idx.lookup_index(&git_object::Id::from_hex(*id).unwrap()),
@@ -62,21 +50,9 @@ mod method {
         fn lookup() {
             let idx = index::File::at(&fixture_path(INDEX_V2)).unwrap();
             for (id, desired_index, assertion) in &[
-                (
-                    &b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..],
-                    Some(0),
-                    "first",
-                ),
-                (
-                    b"e800b9c207e17f9b11e321cc1fba5dfe08af4222",
-                    Some(29),
-                    "last",
-                ),
-                (
-                    b"ffffffffffffffffffffffffffffffffffffffff",
-                    None,
-                    "not in pack",
-                ),
+                (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first"),
+                (b"e800b9c207e17f9b11e321cc1fba5dfe08af4222", Some(29), "last"),
+                (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
                     idx.lookup_index(&git_object::Id::from_hex(*id).unwrap()),
@@ -89,13 +65,7 @@ mod method {
                 let index = idx.lookup_index(&entry.oid).unwrap();
                 assert_eq!(entry.oid.as_slice(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
-                assert_eq!(
-                    entry.crc32,
-                    idx.crc32_at_index(index),
-                    "{} {:?}",
-                    index,
-                    entry
-                );
+                assert_eq!(entry.crc32, idx.crc32_at_index(index), "{} {:?}", index, entry);
             }
         }
     }

@@ -15,10 +15,7 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn parse_header_field_multiline<'a>(
-    i: &'a [u8],
-    name: &'static [u8],
-) -> IResult<&'a [u8], &'a [u8], Error> {
+pub(crate) fn parse_header_field_multiline<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], &'a [u8], Error> {
     let (i, o) = peek(preceded(
         terminated(tag(name), tag(SPACE)),
         recognize(tuple((
@@ -38,10 +35,7 @@ pub(crate) fn parse_header_field<'a, T>(
     name: &'static [u8],
     parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
 ) -> IResult<&'a [u8], T, Error> {
-    terminated(
-        preceded(terminated(tag(name), tag(SPACE)), parse_value),
-        tag(NL),
-    )(i)
+    terminated(preceded(terminated(tag(name), tag(SPACE)), parse_value), tag(NL))(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {
@@ -69,25 +63,11 @@ pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
         "tagger <name> <<email>> <time seconds since epoch> <+|-><HHMM>",
     ))?;
 
-    let sign = if tzsign[0] == b'-' {
-        Sign::Minus
-    } else {
-        Sign::Plus
-    };
-    let hours = btoi::<i32>(&tzhour).map_err(|e| {
-        nom::Err::Error(Error::ParseIntegerError(
-            "invalid 'hours' string",
-            tzhour.into(),
-            e,
-        ))
-    })?;
-    let minutes = btoi::<i32>(&tzminute).map_err(|e| {
-        nom::Err::Error(Error::ParseIntegerError(
-            "invalid 'minutes' string",
-            tzminute.into(),
-            e,
-        ))
-    })?;
+    let sign = if tzsign[0] == b'-' { Sign::Minus } else { Sign::Plus };
+    let hours = btoi::<i32>(&tzhour)
+        .map_err(|e| nom::Err::Error(Error::ParseIntegerError("invalid 'hours' string", tzhour.into(), e)))?;
+    let minutes = btoi::<i32>(&tzminute)
+        .map_err(|e| nom::Err::Error(Error::ParseIntegerError("invalid 'minutes' string", tzminute.into(), e)))?;
     let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
 
     Ok((

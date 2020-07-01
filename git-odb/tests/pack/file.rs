@@ -13,10 +13,7 @@ mod method {
     #[test]
     fn checksum() {
         let p = pack_at(SMALL_PACK);
-        assert_eq!(
-            hex::encode(p.checksum().0),
-            "0f3ea84cd1bba10c2a03d736a460635082833e59"
-        );
+        assert_eq!(hex::encode(p.checksum().0), "0f3ea84cd1bba10c2a03d736a460635082833e59");
     }
 
     #[test]
@@ -77,13 +74,8 @@ mod decode_entry {
         let p = pack_at(SMALL_PACK);
         let entry = p.entry(offset);
         let mut buf = Vec::new();
-        p.decode_entry(
-            entry,
-            &mut buf,
-            resolve_with_panic,
-            &mut cache::DecodeEntryNoop,
-        )
-        .unwrap();
+        p.decode_entry(entry, &mut buf, resolve_with_panic, &mut cache::DecodeEntryNoop)
+            .unwrap();
         buf
     }
 }
@@ -102,18 +94,18 @@ mod decompress_entry {
     #[test]
     fn blob() {
         let buf = decompress_entry_at_offset(2142);
-        assert_eq!(buf.as_bstr(), b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n".as_bstr());
+        assert_eq!(
+            buf.as_bstr(),
+            b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n\nHello Other\n"
+                .as_bstr()
+        );
         assert_eq!(buf.len(), 93)
     }
 
     #[test]
     fn blob_with_two_chain_links() {
         let buf = decompress_entry_at_offset(3033);
-        assert_eq!(
-            buf.len(),
-            6,
-            "it decompresses delta objects, but won't resolve them"
-        )
+        assert_eq!(buf.len(), 6, "it decompresses delta objects, but won't resolve them")
     }
 
     #[test]

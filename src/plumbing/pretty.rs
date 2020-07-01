@@ -95,9 +95,7 @@ pub fn main() -> Result<()> {
         } => {
             let (handle, progress) = init_progress("verify-pack", verbose, progress);
             let mut buf = Vec::new();
-            let res =
-                core::verify_pack_or_pack_index(path, progress, statistics, &mut buf, stderr())
-                    .map(|_| ());
+            let res = core::verify_pack_or_pack_index(path, progress, statistics, &mut buf, stderr()).map(|_| ());
             // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
             // We know that the printing happens at the end, so this is fine.
             drop(handle);

@@ -21,21 +21,29 @@ where
     <P as Progress>::SubProgress: Send,
 {
     let path = path.as_ref();
-    let ext = path.extension()
-        .and_then(|ext| ext.to_str())
-        .ok_or_else(|| anyhow!("Cannot determine file type on path without extension '{}', expecting default extensions 'idx' and 'pack'", path.display()))?;
+    let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {
+        anyhow!(
+            "Cannot determine file type on path without extension '{}', expecting default extensions 'idx' and 'pack'",
+            path.display()
+        )
+    })?;
     let res = match ext {
         "pack" => {
             let pack = git_odb::pack::File::at(path).with_context(|| "Could not open pack file")?;
             pack.verify_checksum().map(|id| (id, None))?
         }
         "idx" => {
-            let idx = git_odb::pack::index::File::at(path)
-                .with_context(|| "Could not open pack index file")?;
+            let idx = git_odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
             let packfile_path = path.with_extension("pack");
             let pack = git_odb::pack::File::at(&packfile_path)
                 .or_else(|e| {
-                    writeln!(err, "Could not find matching pack file at '{}' - only index file will be verified, error was: {}", packfile_path.display(), e).ok();
+                    writeln!(
+                        err,
+                        "Could not find matching pack file at '{}' - only index file will be verified, error was: {}",
+                        packfile_path.display(),
+                        e
+                    )
+                    .ok();
                     Err(e)
                 })
                 .ok();
@@ -67,12 +75,7 @@ where
                 }
             })?
         }
-        ext => {
-            return Err(anyhow!(
-                "Unknown extension {:?}, expecting 'idx' or 'pack'",
-                ext
-            ))
-        }
+        ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
     if let Some(stats) = res.1.as_ref() {
         if output_statistics {
@@ -83,16 +86,9 @@ where
     Ok(res)
 }
 
-fn print_statistics(
-    out: &mut impl io::Write,
-    stats: &index::PackFileChecksumResult,
-) -> io::Result<()> {
+fn print_statistics(out: &mut impl io::Write, stats: &index::PackFileChecksumResult) -> io::Result<()> {
     writeln!(out, "objects per delta chain length")?;
-    let mut chain_length_to_object: Vec<_> = stats
-        .objects_per_chain_length
-        .iter()
-        .map(|(a, b)| (*a, *b))
-        .collect();
+    let mut chain_length_to_object: Vec<_> = stats.objects_per_chain_length.iter().map(|(a, b)| (*a, *b)).collect();
     chain_length_to_object.sort_by_key(|e| e.0);
     let mut total_object_count = 0;
     for (chain_length, object_count) in chain_length_to_object.into_iter() {
@@ -132,10 +128,8 @@ fn print_statistics(
         "pack size", ByteSize(stats.pack_size),
         width = width
     )?;
-    let compression_ratio =
-        stats.total_decompressed_entries_size as f64 / stats.total_compressed_entries_size as f64;
-    let delta_compression_ratio =
-        stats.total_object_size as f64 / stats.total_compressed_entries_size as f64;
+    let compression_ratio = stats.total_decompressed_entries_size as f64 / stats.total_compressed_entries_size as f64;
+    let delta_compression_ratio = stats.total_object_size as f64 / stats.total_compressed_entries_size as f64;
     #[rustfmt::skip]
     writeln!(
         out,

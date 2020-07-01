@@ -80,19 +80,16 @@ impl Object {
         if let Some(path) = self.path.take() {
             // NOTE: For now we just re-read everything from the beginning without seeking, as our buffer
             // is small so the seek might be more expensive than just reading everything.
-            let mut file =
-                std::fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.clone()))?;
+            let mut file = std::fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.clone()))?;
             let file_size = file
                 .metadata()
                 .map_err(|e| Error::Io(e, "read metadata", path.clone()))?
                 .len() as usize;
             let mut buf = Vec::with_capacity(file_size);
-            file.read_to_end(&mut buf)
-                .map_err(|e| Error::Io(e, "read", path))?;
+            file.read_to_end(&mut buf).map_err(|e| Error::Io(e, "read", path))?;
             self.compressed_data = SmallVec::from(buf);
         }
-        self.decompressed_data =
-            SmallVec::from(decompress_to_vec_zlib(&self.compressed_data[..]).unwrap());
+        self.decompressed_data = SmallVec::from(decompress_to_vec_zlib(&self.compressed_data[..]).unwrap());
         self.decompressed_data.shrink_to_fit();
         assert!(self.decompressed_data.len() == total_size);
         self.decompression_complete = true;

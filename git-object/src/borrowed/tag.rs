@@ -28,19 +28,18 @@ pub struct Tag<'data> {
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
-    let (i, target) = parse_header_field(i, b"object", parse_hex_sha1)
-        .map_err(Error::context("object <40 lowercase hex char>"))?;
+    let (i, target) =
+        parse_header_field(i, b"object", parse_hex_sha1).map_err(Error::context("object <40 lowercase hex char>"))?;
 
-    let (i, kind) = parse_header_field(i, b"type", take_while1(is_alphabetic))
-        .map_err(Error::context("type <object kind>"))?;
-    let kind =
-        crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(Error::ParseKindError(e)))?;
+    let (i, kind) =
+        parse_header_field(i, b"type", take_while1(is_alphabetic)).map_err(Error::context("type <object kind>"))?;
+    let kind = crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(Error::ParseKindError(e)))?;
 
-    let (i, tag_version) = parse_header_field(i, b"tag", take_while1(|b| b != NL[0]))
-        .map_err(Error::context("tag <version>"))?;
+    let (i, tag_version) =
+        parse_header_field(i, b"tag", take_while1(|b| b != NL[0])).map_err(Error::context("tag <version>"))?;
 
-    let (i, signature) = parse_header_field(i, b"tagger", parse_signature)
-        .map_err(Error::context("tagger <signature>"))?;
+    let (i, signature) =
+        parse_header_field(i, b"tagger", parse_signature).map_err(Error::context("tagger <signature>"))?;
     let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
         i,
@@ -65,10 +64,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
     let (i, _) = tag(NL)(i)?;
     fn all_to_end(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), Error> {
         if i.is_empty() {
-            return Err(nom::Err::Error(Error::NomDetail(
-                i.into(),
-                "tag message is missing",
-            )));
+            return Err(nom::Err::Error(Error::NomDetail(i.into(), "tag message is missing")));
         }
         // an empty signature message signals that there is none - the function signature is needed
         // to work with 'alt(…)'. PGP signatures are never empty

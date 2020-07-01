@@ -122,10 +122,7 @@ impl File {
         match self.kind {
             Kind::V2 => {
                 let start = self.offset_pack_offset_v2() + index * N32_SIZE;
-                self.pack_offset_from_offset_v2(
-                    &self.data[start..start + N32_SIZE],
-                    self.offset_pack_offset64_v2(),
-                )
+                self.pack_offset_from_offset_v2(&self.data[start..start + N32_SIZE], self.offset_pack_offset64_v2())
             }
             Kind::V1 => {
                 let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
@@ -151,11 +148,7 @@ impl File {
     pub fn lookup_index(&self, id: &[u8]) -> Option<u32> {
         let first_byte = id[0] as usize;
         let mut upper_bound = self.fan[first_byte];
-        let mut lower_bound = if first_byte != 0 {
-            self.fan[first_byte - 1]
-        } else {
-            0
-        };
+        let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
 
         // Bisect using indices
         // TODO: Performance of V2 could possibly be better if we would be able to do a binary search

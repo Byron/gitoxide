@@ -4,8 +4,7 @@ use miniz_oxide::{
         core::{
             decompress,
             inflate_flags::{
-                TINFL_FLAG_HAS_MORE_INPUT, TINFL_FLAG_PARSE_ZLIB_HEADER,
-                TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
+                TINFL_FLAG_HAS_MORE_INPUT, TINFL_FLAG_PARSE_ZLIB_HEADER, TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
             },
         },
         TINFLStatus,
@@ -55,19 +54,14 @@ impl Inflate {
             &mut self.state,
             input,
             out,
-            if parse_header {
-                TINFL_FLAG_PARSE_ZLIB_HEADER
-            } else {
-                0
-            } | TINFL_FLAG_HAS_MORE_INPUT
+            if parse_header { TINFL_FLAG_PARSE_ZLIB_HEADER } else { 0 }
+                | TINFL_FLAG_HAS_MORE_INPUT
                 | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
         );
 
         use miniz_oxide::inflate::TINFLStatus::*;
         match status {
-            Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch => {
-                return Err(Error::Inflate(status))
-            }
+            Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch => return Err(Error::Inflate(status)),
             HasMoreOutput | NeedsMoreInput => {}
             Done => {
                 self.is_done = true;
@@ -78,9 +72,7 @@ impl Inflate {
 }
 
 pub mod stream {
-    use miniz_oxide::{
-        inflate, inflate::stream::InflateState, DataFormat, MZError, MZFlush, MZStatus,
-    };
+    use miniz_oxide::{inflate, inflate::stream::InflateState, DataFormat, MZError, MZFlush, MZStatus};
     use quick_error::quick_error;
     use std::io;
     use std::io::BufRead;
@@ -173,12 +165,7 @@ pub mod stream {
     }
 
     impl Inflate {
-        fn decompress(
-            &mut self,
-            input: &[u8],
-            output: &mut [u8],
-            flush: MZFlush,
-        ) -> Result<Status, Error> {
+        fn decompress(&mut self, input: &[u8], output: &mut [u8], flush: MZFlush) -> Result<Status, Error> {
             let res = inflate::stream::inflate(&mut self.state, input, output, flush);
             self.total_in += res.bytes_consumed as u64;
             self.total_out += res.bytes_written as u64;
@@ -187,9 +174,7 @@ pub mod stream {
                 Ok(status) => match status {
                     MZStatus::Ok => Ok(Status::Ok),
                     MZStatus::StreamEnd => Ok(Status::StreamEnd),
-                    MZStatus::NeedDict => Err(Error::ZLibNeedDict(
-                        self.state.decompressor().adler32().unwrap_or(0),
-                    )),
+                    MZStatus::NeedDict => Err(Error::ZLibNeedDict(self.state.decompressor().adler32().unwrap_or(0))),
                 },
                 Err(status) => match status {
                     MZError::Buf => Ok(Status::BufError),
@@ -223,17 +208,10 @@ pub mod stream {
                 // then we need to keep asking for more data because if we
                 // return that 0 bytes of data have been read then it will
                 // be interpreted as EOF.
-                Ok(Status::Ok) | Ok(Status::BufError) if read == 0 && !eof && dst.len() > 0 => {
-                    continue
-                }
+                Ok(Status::Ok) | Ok(Status::BufError) if read == 0 && !eof && dst.len() > 0 => continue,
                 Ok(Status::Ok) | Ok(Status::BufError) | Ok(Status::StreamEnd) => return Ok(read),
 
-                Err(..) => {
-                    return Err(io::Error::new(
-                        io::ErrorKind::InvalidInput,
-                        "corrupt deflate stream",
-                    ))
-                }
+                Err(..) => return Err(io::Error::new(io::ErrorKind::InvalidInput, "corrupt deflate stream")),
             }
         }
     }
@@ -252,21 +230,11 @@ pub mod stream {
         #[test]
         fn small_file_decompress() {
             let r = InflateReader::new(
-                std::fs::File::open(fixture_path(
-                    "objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980",
-                ))
-                .unwrap(),
+                std::fs::File::open(fixture_path("objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980")).unwrap(),
             );
             let mut bytes = r.bytes();
-            let content = bytes
-                .by_ref()
-                .take(16)
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap();
-            assert_eq!(
-                content.as_slice().as_bstr(),
-                b"blob 9\0hi there\n".as_bstr()
-            );
+            let content = bytes.by_ref().take(16).collect::<Result<Vec<_>, _>>().unwrap();
+            assert_eq!(content.as_slice().as_bstr(), b"blob 9\0hi there\n".as_bstr());
             assert!(bytes.next().is_none());
         }
     }

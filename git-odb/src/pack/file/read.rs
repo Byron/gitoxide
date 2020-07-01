@@ -73,14 +73,8 @@ impl File {
     /// Note that this method does not resolve deltified objects, but merely decompresses their content
     /// `out` is expected to be large enough to hold `entry.size` bytes.
     /// Returns the amount of packed bytes there were decompressed into `out`
-    fn decompress_entry_from_data_offset(
-        &self,
-        data_offset: u64,
-        out: &mut [u8],
-    ) -> Result<usize, Error> {
-        let offset: usize = data_offset
-            .try_into()
-            .expect("offset representable by machine");
+    fn decompress_entry_from_data_offset(&self, data_offset: u64, out: &mut [u8]) -> Result<usize, Error> {
+        let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
         Inflate::default()
@@ -110,14 +104,13 @@ impl File {
                         .expect("size representable by machine"),
                     0,
                 );
-                self.decompress_entry(&entry, out.as_mut_slice())
-                    .map(|consumed_input| {
-                        DecodeEntryResult::from_object_entry(
-                            entry.header.to_kind().expect("a non-delta entry"),
-                            &entry,
-                            consumed_input,
-                        )
-                    })
+                self.decompress_entry(&entry, out.as_mut_slice()).map(|consumed_input| {
+                    DecodeEntryResult::from_object_entry(
+                        entry.header.to_kind().expect("a non-delta entry"),
+                        &entry,
+                        consumed_input,
+                    )
+                })
             }
             OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out, cache),
         }
@@ -195,9 +188,7 @@ impl File {
         // First pass will decompress all delta data and keep it in our output buffer
         // [<possibly resolved base object>]<delta-1..delta-n>...
         // so that we can find the biggest result size.
-        let total_delta_data_size: usize = total_delta_data_size
-            .try_into()
-            .expect("delta data to fit in memory");
+        let total_delta_data_size: usize = total_delta_data_size.try_into().expect("delta data to fit in memory");
 
         let chain_len = chain.len();
         let (first_buffer_end, second_buffer_end) = {
@@ -246,10 +237,7 @@ impl File {
                 .expect("biggest result size small enough to fit into usize");
             let first_buffer_size = biggest_result_size;
             let second_buffer_size = first_buffer_size;
-            out.resize(
-                first_buffer_size + second_buffer_size + total_delta_data_size,
-                0,
-            );
+            out.resize(first_buffer_size + second_buffer_size + total_delta_data_size, 0);
 
             // Now 'rescue' the deltas, because in the next step we possibly overwrite that portion
             // of memory with the base object (in the majority of cases)
@@ -276,8 +264,7 @@ impl File {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
                 object_kind = base_entry.header.to_kind();
-                let packed_size =
-                    self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
+                let packed_size = self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
                 cache.put(
                     base_entry.data_offset,
                     &out[..base_entry
@@ -315,11 +302,7 @@ impl File {
             if delta_idx + 1 == chain_len {
                 last_result_size = Some(*result_size);
             }
-            apply_delta(
-                &source_buf[..*base_size],
-                &mut target_buf[..*result_size],
-                data,
-            );
+            apply_delta(&source_buf[..*base_size], &mut target_buf[..*result_size], data);
             // use the target as source for the next delta
             std::mem::swap(&mut source_buf, &mut target_buf);
         }
@@ -332,15 +315,9 @@ impl File {
         }
         out.resize(last_result_size, 0);
 
-        let object_kind = object_kind
-            .expect("a base object as root of any delta chain that we are here to resolve");
+        let object_kind = object_kind.expect("a base object as root of any delta chain that we are here to resolve");
         let consumed_input = consumed_input.expect("at least one decompressed delta object");
-        cache.put(
-            first_entry.data_offset,
-            out.as_slice(),
-            object_kind,
-            consumed_input,
-        );
+        cache.put(first_entry.data_offset, out.as_slice(), object_kind, consumed_input);
         Ok(DecodeEntryResult {
             kind: object_kind,
             // technically depending on the cache, the chain size is not correct as it might

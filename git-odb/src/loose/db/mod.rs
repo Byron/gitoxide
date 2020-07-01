@@ -70,9 +70,7 @@ impl Db {
                 let mut is_valid_path = false;
                 let e = res.map_err(Error::WalkDir).map(|e| {
                     let p = e.path();
-                    let (c1, c2) = p
-                        .components()
-                        .fold((None, None), |(_c1, c2), cn| (c2, Some(cn)));
+                    let (c1, c2) = p.components().fold((None, None), |(_c1, c2), cn| (c2, Some(cn)));
                     if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
                         if c1.len() == 2 && c2.len() == 38 {
                             if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
@@ -106,8 +104,7 @@ impl Db {
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
         let ((_status, _consumed_in, consumed_out), bytes_read, mut input_stream) = {
-            let mut istream =
-                fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.to_owned()))?;
+            let mut istream = fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.to_owned()))?;
             let bytes_read = istream
                 .read(&mut compressed[..])
                 .map_err(|e| Error::Io(e, "read", path.to_owned()))?;

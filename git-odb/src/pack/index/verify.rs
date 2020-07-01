@@ -49,9 +49,7 @@ impl TimeThroughput {
 
 impl Into<String> for TimeThroughput {
     fn into(self) -> String {
-        let time_taken = std::time::Instant::now()
-            .duration_since(self.then)
-            .as_secs_f32();
+        let time_taken = std::time::Instant::now().duration_since(self.then).as_secs_f32();
         format!(
             "finished in {:.2}s at {}/s",
             time_taken,
@@ -128,8 +126,7 @@ impl index::File {
                         expected: self.checksum_of_pack(),
                     });
                 }
-                let mut progress =
-                    root.add_child(format!("Sha1 of pack at '{}'", pack.path().display()));
+                let mut progress = root.add_child(format!("Sha1 of pack at '{}'", pack.path().display()));
                 let (pack_res, id) = parallel::join(
                     move || {
                         let throughput = TimeThroughput::new(pack.data_len());
@@ -187,15 +184,9 @@ impl index::File {
                         let mut chunk_average = chunk_stats.into_iter().fold(
                             DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
                             |mut average, stats| {
-                                *self
-                                    .stats
-                                    .objects_per_chain_length
-                                    .entry(stats.num_deltas)
-                                    .or_insert(0) += 1;
-                                self.stats.total_decompressed_entries_size +=
-                                    stats.decompressed_size;
-                                self.stats.total_compressed_entries_size +=
-                                    stats.compressed_size as u64;
+                                *self.stats.objects_per_chain_length.entry(stats.num_deltas).or_insert(0) += 1;
+                                self.stats.total_decompressed_entries_size += stats.decompressed_size;
+                                self.stats.total_compressed_entries_size += stats.compressed_size as u64;
                                 self.stats.total_object_size += stats.object_size as u64;
                                 add_decode_result(&mut average, stats);
                                 average
@@ -236,10 +227,7 @@ impl index::File {
                     (
                         make_cache(),
                         Vec::with_capacity(2048),
-                        reduce_progress
-                            .lock()
-                            .unwrap()
-                            .add_child(format!("thread {}", index)),
+                        reduce_progress.lock().unwrap().add_child(format!("thread {}", index)),
                     )
                 };
 
@@ -261,31 +249,20 @@ impl index::File {
                                     buf,
                                     |id, _| {
                                         self.lookup_index(&id).map(|index| {
-                                            ResolvedBase::InPack(
-                                                pack.entry(self.pack_offset_at_index(index)),
-                                            )
+                                            ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                                         })
                                     },
                                     cache,
                                 )
-                                .map_err(|e| {
-                                    ChecksumError::PackDecode(
-                                        e,
-                                        index_entry.oid,
-                                        index_entry.pack_offset,
-                                    )
-                                })?;
+                                .map_err(|e| ChecksumError::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
                             let object_kind = entry_stats.kind;
                             let consumed_input = entry_stats.compressed_size;
                             stats.push(entry_stats);
 
                             let mut header_buf = [0u8; 64];
-                            let header_size = crate::loose::db::serde::write_header(
-                                object_kind,
-                                buf.len(),
-                                &mut header_buf[..],
-                            )
-                            .expect("header buffer to be big enough");
+                            let header_size =
+                                crate::loose::db::serde::write_header(object_kind, buf.len(), &mut header_buf[..])
+                                    .expect("header buffer to be big enough");
                             let mut hasher = git_features::hash::Sha1::default();
                             hasher.update(&header_buf[..header_size]);
                             hasher.update(buf.as_slice());
@@ -302,8 +279,7 @@ impl index::File {
                             if let Some(desired_crc32) = index_entry.crc32 {
                                 let actual_crc32 = pack.entry_crc32(
                                     index_entry.pack_offset,
-                                    (pack_entry_data_offset - index_entry.pack_offset) as usize
-                                        + consumed_input,
+                                    (pack_entry_data_offset - index_entry.pack_offset) as usize + consumed_input,
                                 );
                                 if actual_crc32 != desired_crc32 {
                                     return Err(ChecksumError::Crc32Mismatch {

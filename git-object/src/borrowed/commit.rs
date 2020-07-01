@@ -31,30 +31,24 @@ pub struct Commit<'data> {
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     if i.is_empty() {
         // newline + [message]
-        return Err(nom::Err::Error(Error::NomDetail(
-            i.into(),
-            "commit message is missing",
-        )));
+        return Err(nom::Err::Error(Error::NomDetail(i.into(), "commit message is missing")));
     }
-    let (i, _) = tag(NL)(i).map_err(Error::context(
-        "a newline separates headers from the message",
-    ))?;
+    let (i, _) = tag(NL)(i).map_err(Error::context("a newline separates headers from the message"))?;
     debug_assert!(!i.is_empty());
     Ok((&[], &i.as_bstr()))
 }
 
 pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
-    let (i, tree) = parse_header_field(i, b"tree", parse_hex_sha1)
-        .map_err(Error::context("tree <40 lowercase hex char>"))?;
-    let (i, parents) = many0(|i| parse_header_field(i, b"parent", parse_hex_sha1))(i).map_err(
-        Error::context("zero or more 'parent <40 lowercase hex char>'"),
-    )?;
-    let (i, author) = parse_header_field(i, b"author", parse_signature)
-        .map_err(Error::context("author <signature>"))?;
-    let (i, committer) = parse_header_field(i, b"committer", parse_signature)
-        .map_err(Error::context("author <signature>"))?;
-    let (i, encoding) = opt(|i| parse_header_field(i, b"encoding", is_not(NL)))(i)
-        .map_err(Error::context("author <signature>"))?;
+    let (i, tree) =
+        parse_header_field(i, b"tree", parse_hex_sha1).map_err(Error::context("tree <40 lowercase hex char>"))?;
+    let (i, parents) = many0(|i| parse_header_field(i, b"parent", parse_hex_sha1))(i)
+        .map_err(Error::context("zero or more 'parent <40 lowercase hex char>'"))?;
+    let (i, author) =
+        parse_header_field(i, b"author", parse_signature).map_err(Error::context("author <signature>"))?;
+    let (i, committer) =
+        parse_header_field(i, b"committer", parse_signature).map_err(Error::context("author <signature>"))?;
+    let (i, encoding) =
+        opt(|i| parse_header_field(i, b"encoding", is_not(NL)))(i).map_err(Error::context("author <signature>"))?;
     let (i, pgp_signature) = opt(alt((
         |i| parse_header_field_multiline(i, b"gpgsig"),
         |i| parse_header_field(i, b"gpgsig", is_not(NL)),

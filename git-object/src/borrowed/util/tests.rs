@@ -4,13 +4,7 @@ mod parse_signature {
     use crate::{Sign, Time};
     use bstr::ByteSlice;
 
-    fn signature(
-        name: &'static str,
-        email: &'static str,
-        time: u32,
-        sign: Sign,
-        offset: i32,
-    ) -> Signature<'static> {
+    fn signature(name: &'static str, email: &'static str, time: u32, sign: Sign, offset: i32) -> Signature<'static> {
         Signature {
             name: name.as_bytes().as_bstr(),
             email: email.as_bytes().as_bstr(),
@@ -24,13 +18,7 @@ mod parse_signature {
             parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
                 .unwrap()
                 .1,
-            signature(
-                "Sebastian Thiel",
-                "byronimo@gmail.com",
-                1528473343,
-                Sign::Minus,
-                -9000
-            )
+            signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, -9000)
         );
     }
 
@@ -40,13 +28,7 @@ mod parse_signature {
             parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
                 .unwrap()
                 .1,
-            signature(
-                "Sebastian Thiel",
-                "byronimo@gmail.com",
-                1528473343,
-                Sign::Plus,
-                9000
-            )
+            signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Plus, 9000)
         );
     }
 
@@ -56,13 +38,7 @@ mod parse_signature {
             parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
                 .unwrap()
                 .1,
-            signature(
-                "Sebastian Thiel",
-                "byronimo@gmail.com",
-                1528473343,
-                Sign::Minus,
-                0
-            )
+            signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, 0)
         );
     }
 

@@ -44,14 +44,7 @@ fn run() -> Result<()> {
         .par_iter()
         .fold(
             || (0, 0, 0, 0, 0),
-            |(mut deltas, mut commits, mut trees, mut blobs, mut tags): (
-                u32,
-                u32,
-                u32,
-                u32,
-                u32,
-            ),
-             entry| {
+            |(mut deltas, mut commits, mut trees, mut blobs, mut tags): (u32, u32, u32, u32, u32), entry| {
                 match pack.entry(entry.pack_offset).header {
                     Commit => commits += 1,
                     Tag => tags += 1,

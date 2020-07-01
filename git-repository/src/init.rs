@@ -30,27 +30,17 @@ quick_error! {
 const GIT_DIR_NAME: &str = ".git";
 
 const TPL_INFO_EXCLUDE: &[u8] = include_bytes!("./assets/baseline-init/info/exclude");
-const TPL_HOOKS_APPLYPATCH_MSG: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/applypatch-msg.sample");
-const TPL_HOOKS_COMMIT_MSG: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/commit-msg.sample");
-const TPL_HOOKS_FSMONITOR_WATCHMAN: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/fsmonitor-watchman.sample");
-const TPL_HOOKS_POST_UPDATE: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/post-update.sample");
-const TPL_HOOKS_PRE_APPLYPATCH: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/pre-applypatch.sample");
-const TPL_HOOKS_PRE_COMMIT: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/pre-commit.sample");
-const TPL_HOOKS_PRE_MERGE_COMMIT: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/pre-merge-commit.sample");
+const TPL_HOOKS_APPLYPATCH_MSG: &[u8] = include_bytes!("./assets/baseline-init/hooks/applypatch-msg.sample");
+const TPL_HOOKS_COMMIT_MSG: &[u8] = include_bytes!("./assets/baseline-init/hooks/commit-msg.sample");
+const TPL_HOOKS_FSMONITOR_WATCHMAN: &[u8] = include_bytes!("./assets/baseline-init/hooks/fsmonitor-watchman.sample");
+const TPL_HOOKS_POST_UPDATE: &[u8] = include_bytes!("./assets/baseline-init/hooks/post-update.sample");
+const TPL_HOOKS_PRE_APPLYPATCH: &[u8] = include_bytes!("./assets/baseline-init/hooks/pre-applypatch.sample");
+const TPL_HOOKS_PRE_COMMIT: &[u8] = include_bytes!("./assets/baseline-init/hooks/pre-commit.sample");
+const TPL_HOOKS_PRE_MERGE_COMMIT: &[u8] = include_bytes!("./assets/baseline-init/hooks/pre-merge-commit.sample");
 const TPL_HOOKS_PRE_PUSH: &[u8] = include_bytes!("./assets/baseline-init/hooks/pre-push.sample");
-const TPL_HOOKS_PRE_REBASE: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/pre-rebase.sample");
-const TPL_HOOKS_PRE_RECEIVE: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/pre-receive.sample");
-const TPL_HOOKS_PREPARE_COMMIT_MSG: &[u8] =
-    include_bytes!("./assets/baseline-init/hooks/prepare-commit-msg.sample");
+const TPL_HOOKS_PRE_REBASE: &[u8] = include_bytes!("./assets/baseline-init/hooks/pre-rebase.sample");
+const TPL_HOOKS_PRE_RECEIVE: &[u8] = include_bytes!("./assets/baseline-init/hooks/pre-receive.sample");
+const TPL_HOOKS_PREPARE_COMMIT_MSG: &[u8] = include_bytes!("./assets/baseline-init/hooks/prepare-commit-msg.sample");
 const TPL_HOOKS_UPDATE: &[u8] = include_bytes!("./assets/baseline-init/hooks/update.sample");
 const TPL_CONFIG: &[u8] = include_bytes!("./assets/baseline-init/config");
 const TPL_DESCRIPTION: &[u8] = include_bytes!("./assets/baseline-init/description");
@@ -97,8 +87,7 @@ fn write_file(data: &[u8], path: &Path) -> Result<(), Error> {
         .append(false)
         .open(path)
         .map_err(|e| Error::IoOpen(e, path.to_owned()))?;
-    file.write_all(data)
-        .map_err(|e| Error::IoWrite(e, path.to_owned()))
+    file.write_all(data).map_err(|e| Error::IoWrite(e, path.to_owned()))
 }
 
 fn create_dir(p: &Path) -> Result<(), Error> {

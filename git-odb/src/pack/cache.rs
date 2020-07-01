@@ -6,14 +6,7 @@ pub trait DecodeEntry {
 pub struct DecodeEntryNoop;
 
 impl DecodeEntry for DecodeEntryNoop {
-    fn put(
-        &mut self,
-        _offset: u64,
-        _data: &[u8],
-        _kind: git_object::Kind,
-        _compressed_size: usize,
-    ) {
-    }
+    fn put(&mut self, _offset: u64, _data: &[u8], _kind: git_object::Kind, _compressed_size: usize) {}
     fn get(&mut self, _offset: u64, _out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
         None
     }
