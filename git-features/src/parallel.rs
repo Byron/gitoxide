@@ -38,6 +38,37 @@ mod in_parallel {
     use crate::parallel::Reducer;
     use crossbeam_utils::thread;
 
+    pub fn try_join<O1: Send, O2: Send, E, E1, E2>(
+        left: impl FnOnce() -> Result<O1, E1> + Send,
+        right: impl FnOnce() -> Result<O2, E2> + Send,
+    ) -> Result<(O1, O2), E>
+    where
+        E1: Into<E> + Send,
+        E2: Into<E> + Send,
+    {
+        thread::scope(|s| {
+            enum Either {
+                Left(Result<O1, E1>),
+                Right(Result<O2, E2>),
+            }
+            let (send, recv) = crossbeam_channel::bounded::<Either>(1);
+            s.spawn({
+                let send = send.clone();
+                move |_| send.send(Either::Left(left())).unwrap()
+            });
+            s.spawn({
+                let send = send.clone();
+                move |_| send.send(Either::Right(right()))
+            });
+            let first = recv.recv().unwrap();
+            Ok((
+                left.join().unwrap().map_err(Into::into)?,
+                right.join().unwrap().map_err(Into::into)?,
+            ))
+        })
+        .unwrap()
+    }
+
     pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
         thread::scope(|s| {
             let left = s.spawn(|_| left());
