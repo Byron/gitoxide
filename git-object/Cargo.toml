@@ -9,7 +9,7 @@ edition = "2018"
 doctest = false
 
 [features]
-with-serde = ["serde"]
+serde1 = ["serde"]
 
 [dependencies]
 quick-error = "1.2.3"

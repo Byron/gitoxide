@@ -199,7 +199,7 @@ All feature toggles are additive.
  
  What follows is feature toggles to control serialization of all public facing simple data types.
  
- * **with-serde**
+ * **serde1**
    * Data structures implement `serde::Serialize` and `serde::Deserialize`
    
  The feature above is provided by the crates:
