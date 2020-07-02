@@ -14,17 +14,17 @@ name: release
 on:
   push:
     # Enable when testing release infrastructure on a branch.
-#    branches:
-#      - release
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - release
+#    tags:
+#      - 'v[0-9]+.[0-9]+.[0-9]+'
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-#    env:
-#      # Set to force version number, e.g., when no tag exists.
-#      ARTIFACT_VERSION: TEST-0.0.1
+    env:
+      # Set to force version number, e.g., when no tag exists.
+      ARTIFACT_VERSION: TEST-0.0.1
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -170,7 +170,7 @@ jobs:
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}"
+        run: strip "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}{,p}"
 
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-arm'
@@ -187,14 +187,14 @@ jobs:
           staging="${{ env.BIN_NAME }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
-          cp {README.md,LICENSE,CHANGELOG.md} "$staging/"
+          cp {README.md,LICENSE.md,CHANGELOG.md} "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
-            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$staging/"
+            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}{,p}.exe" "$staging/"
             7z a "$staging.zip" "$staging"
             echo "::set-env name=ASSET::$staging.zip"
           else
-            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}" "$staging/"
+            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}{,p}" "$staging/"
             tar czf "$staging.tar.gz" "$staging"
             echo "::set-env name=ASSET::$staging.tar.gz"
           fi
