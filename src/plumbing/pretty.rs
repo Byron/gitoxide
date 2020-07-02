@@ -4,6 +4,8 @@ use gitoxide_core as core;
 use std::io::{stderr, stdout, Write};
 use structopt::StructOpt;
 
+use options::*;
+
 mod options {
     use std::path::PathBuf;
     use structopt::{clap::AppSettings, StructOpt};
@@ -15,6 +17,30 @@ mod options {
     pub struct Args {
         #[structopt(subcommand)]
         pub cmd: Subcommands,
+    }
+
+    #[derive(Debug)]
+    pub enum ProgressMode {
+        Stop,
+        KeepRunning,
+    }
+
+    impl ProgressMode {
+        fn variants() -> &'static [&'static str] {
+            &["stop", "keep-running"]
+        }
+    }
+    impl std::str::FromStr for ProgressMode {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let s_lc = s.to_ascii_lowercase();
+            Ok(match s_lc.as_str() {
+                "stop" => ProgressMode::Stop,
+                "keep-running" => ProgressMode::KeepRunning,
+                _ => return Err(format!("Invalid progress mode: {}", s)),
+            })
+        }
     }
 
     #[derive(Debug, StructOpt)]
@@ -31,8 +57,8 @@ mod options {
             verbose: bool,
 
             /// if set, bring up a terminal user interface displaying progress visually
-            #[structopt(long, conflicts_with("verbose"))]
-            progress: bool,
+            #[structopt(long, conflicts_with("verbose"), possible_values(ProgressMode::variants()))]
+            progress: Option<ProgressMode>,
 
             /// The '.pack' or '.idx' file whose checksum to validate.
             #[structopt(parse(from_os_str))]
@@ -44,16 +70,16 @@ mod options {
 fn init_progress(
     name: &str,
     verbose: bool,
-    progress: bool,
+    progress: Option<ProgressMode>,
 ) -> (
     Option<JoinThreadOnDrop>,
     Option<progress::Either<progress::Log, prodash::tree::Item>>,
 ) {
     super::init_env_logger(verbose);
     match (verbose, progress) {
-        (false, false) => (None, None),
-        (true, false) => (None, Some(progress::Either::Left(progress::Log::new(name)))),
-        (true, true) | (false, true) => {
+        (false, None) => (None, None),
+        (true, None) => (None, Some(progress::Either::Left(progress::Log::new(name)))),
+        (true, Some(mode)) | (false, Some(mode)) => {
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
             let render_tui = prodash::tui::render(
@@ -61,7 +87,10 @@ fn init_progress(
                 prodash::tui::TuiOptions {
                     title: "gitoxide".into(),
                     frames_per_second: 6.0,
-                    stop_if_empty_progress: true,
+                    stop_if_empty_progress: match mode {
+                        ProgressMode::KeepRunning => false,
+                        ProgressMode::Stop => true,
+                    },
                     ..Default::default()
                 },
             )
@@ -84,7 +113,6 @@ impl Drop for JoinThreadOnDrop {
 }
 
 pub fn main() -> Result<()> {
-    use options::*;
     let args = Args::from_args();
     match args.cmd {
         Subcommands::VerifyPack {
