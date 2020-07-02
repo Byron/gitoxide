@@ -1,0 +1,22 @@
+{
+  "average": {
+    "kind": "Tree",
+    "num_deltas": 1,
+    "decompressed_size": 3456,
+    "compressed_size": 1725,
+    "object_size": 9621
+  },
+  "objects_per_chain_length": {
+    "0": 18,
+    "1": 4,
+    "2": 3,
+    "3": 1,
+    "4": 2,
+    "5": 1,
+    "6": 1
+  },
+  "total_compressed_entries_size": 51753,
+  "total_decompressed_entries_size": 103701,
+  "total_object_size": 288658,
+  "pack_size": 51875
+}

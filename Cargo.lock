@@ -576,6 +576,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-repository",
+ "serde_json",
 ]
 
 [[package]]

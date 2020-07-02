@@ -5,7 +5,39 @@ use bytesize::ByteSize;
 use git_features::progress::Progress;
 use git_object::Kind;
 use git_odb::pack::{self, index};
+use std::str::FromStr;
 use std::{io, path::Path};
+
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum OutputFormat {
+    Human,
+    #[cfg(feature = "serde1")]
+    Json,
+}
+
+impl OutputFormat {
+    pub fn variants() -> &'static [&'static str] {
+        &[
+            "human",
+            #[cfg(feature = "serde1")]
+            "json",
+        ]
+    }
+}
+
+impl FromStr for OutputFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s_lc = s.to_ascii_lowercase();
+        Ok(match s_lc.as_str() {
+            "human" => OutputFormat::Human,
+            #[cfg(feature = "serde1")]
+            "json" => OutputFormat::Json,
+            _ => return Err(format!("Invalid output format: '{}'", s)),
+        })
+    }
+}
 
 pub fn init() -> Result<()> {
     git_repository::init::repository().with_context(|| "Repository initialization failed")
@@ -14,7 +46,7 @@ pub fn init() -> Result<()> {
 pub fn verify_pack_or_pack_index<P>(
     path: impl AsRef<Path>,
     progress: Option<P>,
-    output_statistics: bool,
+    output_statistics: Option<OutputFormat>,
     mut out: impl io::Write,
     mut err: impl io::Write,
 ) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>
@@ -69,7 +101,7 @@ where
                 }
             }
             idx.verify_checksum_of_index(pack.as_ref(), progress, || -> EitherCache {
-                if output_statistics {
+                if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::DecodeEntryNoop)
                 } else {
@@ -80,9 +112,12 @@ where
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
     if let Some(stats) = res.1.as_ref() {
-        if output_statistics {
-            print_statistics(&mut out, stats).ok();
-        }
+        match output_statistics {
+            Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
+            #[cfg(feature = "serde1")]
+            Some(OutputFormat::Json) => drop(serde_json::to_writer_pretty(out, stats)),
+            _ => {}
+        };
     }
     Ok(res)
 }

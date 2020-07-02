@@ -7,6 +7,7 @@ use structopt::StructOpt;
 use options::*;
 
 mod options {
+    use gitoxide_core as core;
     use std::path::PathBuf;
     use structopt::{clap::AppSettings, StructOpt};
 
@@ -27,6 +28,14 @@ mod options {
             /// if set, output statistical information about the pack
             #[structopt(long, short = "s")]
             statistics: bool,
+            /// Determine the format to use when outputting statistics.
+            #[structopt(
+                long,
+                short = "f",
+                default_value = "human",
+                possible_values(core::OutputFormat::variants())
+            )]
+            format: core::OutputFormat,
 
             /// if set, verbose progress messages are printed line by line
             #[structopt(long, short = "v")]
@@ -99,12 +108,20 @@ pub fn main() -> Result<()> {
             path,
             verbose,
             progress,
+            format,
             progress_keep_open,
             statistics,
         } => {
             let (handle, progress) = init_progress("verify-pack", verbose, progress, progress_keep_open);
             let mut buf = Vec::new();
-            let res = core::verify_pack_or_pack_index(path, progress, statistics, &mut buf, stderr()).map(|_| ());
+            let res = core::verify_pack_or_pack_index(
+                path,
+                progress,
+                if statistics { Some(format) } else { None },
+                &mut buf,
+                stderr(),
+            )
+            .map(|_| ());
             // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
             // We know that the printing happens at the end, so this is fine.
             drop(handle);
