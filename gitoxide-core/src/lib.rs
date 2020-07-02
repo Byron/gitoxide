@@ -84,7 +84,6 @@ where
             print_statistics(&mut out, stats).ok();
         }
     }
-    writeln!(out, "OK")?;
     Ok(res)
 }
 

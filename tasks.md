@@ -32,7 +32,7 @@
    * [x] journey tests
    * [x] display object throughput per second
    * [x] change exit code depending on verification success or failure
-   * [ ] progress that allows TUI to remain open for people to see more log messages
+   * [x] progress that allows TUI to remain open for people to see more log messages
    * [ ] support for serde/miniserde for all returned data types (features per crate)
 * **stress**
   * [ ] first stress test for validation of a big repository, linux maybe, or something smaller but big enough
