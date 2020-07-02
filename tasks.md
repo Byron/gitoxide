@@ -21,5 +21,8 @@
   * [ ] multi-threaded
   * [ ] progress
   * [ ] statistics
-* **multi-db** (incorporate object lookup into)
+* **multi-db** (incorporate object lookup for loose objects and packs)
+  * [ ] single threaded
+  * [ ] optional object cache
+  * [ ] fs-check - verify all object content of a git repository
 
