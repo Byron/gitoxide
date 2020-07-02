@@ -175,7 +175,8 @@ The top-level command-line interface.
     
 ### git-features
 
-A crate to help controlling which capabilities are available from the top-level crate that uses `gitoxide`.
+A crate to help controlling which capabilities are available from the top-level crate that uses `gitoxide-core` or any other
+`gitoxide` crate that uses `git-features`.
 All feature toggles are additive.
 
 * **parallel** _(optional)_
@@ -193,6 +194,18 @@ All feature toggles are additive.
     interface for progress.
   * This is by far the most expensive progress option, as it pulls in an `async` TUI along with supporting infrastructure,
     which is kept minimal but has quite a footprint nonetheless.
+    
+ ### Serialization Support
+ 
+ What follows is feature toggles to control serialization of all public facing simple data types.
+ 
+ * **with-serde**
+   * Data structures implement `serde::Serialize` and `serde::Deserialize`
+ 
+ The features above are provided by the crates
+ 
+ * **git-object**
+
  
 ## Development Practices
 
