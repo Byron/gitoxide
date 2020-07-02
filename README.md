@@ -201,10 +201,8 @@ All feature toggles are additive.
  
  * **with-serde**
    * Data structures implement `serde::Serialize` and `serde::Deserialize`
- * **with-miniserde**
-   * Data structures implement `miniserde::Serialize` and `miniserde::Deserialize`
- 
- The features above are provided by the crates
+   
+ The feature above is provided by the crates:
  
  * **git-object**
 

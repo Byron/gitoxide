@@ -10,7 +10,7 @@ fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
 }
 
 fn signature(time: u32) -> Signature<'static> {
-    use git_object::ByteSlice;
+    use git_object::bstr::ByteSlice;
     Signature {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),

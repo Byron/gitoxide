@@ -3,7 +3,7 @@ use crate::borrowed::{
     util::{parse_header_field, parse_hex_sha1, parse_signature, NL},
     Signature,
 };
-use crate::{ByteSlice, Bytes};
+use crate::{BStr, ByteSlice};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while1},
@@ -18,13 +18,13 @@ use nom::{
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Tag<'data> {
     // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
-    pub target: &'data Bytes,
+    pub target: &'data BStr,
     // The name of the tag, e.g. "v1.0"
-    pub name: &'data Bytes,
+    pub name: &'data BStr,
     pub target_kind: crate::Kind,
-    pub message: &'data Bytes,
+    pub message: &'data BStr,
     pub signature: Signature<'data>,
-    pub pgp_signature: Option<&'data Bytes>,
+    pub pgp_signature: Option<&'data BStr>,
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
@@ -54,7 +54,7 @@ fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     ))
 }
 
-fn parse_message(i: &[u8]) -> IResult<&[u8], (&Bytes, Option<&Bytes>), Error> {
+fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
     const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
     const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
 

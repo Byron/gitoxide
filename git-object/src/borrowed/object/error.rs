@@ -3,14 +3,14 @@ use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        ParseIntegerError(msg: &'static str, number: crate::BytesOwned, err: btoi::ParseIntegerError) {
+        ParseIntegerError(msg: &'static str, number: crate::BString, err: btoi::ParseIntegerError) {
             display("{}: {:?}", msg, number)
             cause(err)
         }
         Nom(err_msg: String) {
             display("{}", err_msg)
         }
-        NomDetail(input: crate::BytesOwned, msg: &'static str) {
+        NomDetail(input: crate::BString, msg: &'static str) {
             display("{}: '{}' could not be parsed", msg, input)
         }
         ParseKindError(err: crate::types::Error) {

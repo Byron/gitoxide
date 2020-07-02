@@ -1,4 +1,4 @@
-use git_object::{borrowed, ByteSlice, Sign, Time};
+use git_object::{borrowed, bstr::ByteSlice, Sign, Time};
 
 mod object {
     use git_odb::loose::Object;
@@ -45,7 +45,8 @@ mod db {
         use git_object::{
             borrowed,
             borrowed::{TreeEntry, TreeMode},
-            ByteSlice, Kind,
+            bstr::ByteSlice,
+            Kind,
         };
         use git_odb::loose;
         use std::io::Read;

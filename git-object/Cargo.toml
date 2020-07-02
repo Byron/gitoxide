@@ -10,7 +10,6 @@ doctest = false
 
 [features]
 with-serde = ["serde"]
-with-miniserde = ["miniserde"]
 
 [dependencies]
 quick-error = "1.2.3"
@@ -20,7 +19,6 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "6.0.0-alpha1", default-features = false, features = ["alloc"]}
 smallvec = "1.4.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
-miniserde = { version = "0.1.13", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"

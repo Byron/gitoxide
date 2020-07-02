@@ -219,7 +219,7 @@ pub mod stream {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use git_object::ByteSlice;
+        use git_object::bstr::ByteSlice;
         use std::io::Read;
         use std::path::PathBuf;
 

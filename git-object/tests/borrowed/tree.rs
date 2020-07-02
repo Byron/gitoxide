@@ -2,7 +2,7 @@ mod from_bytes {
     use crate::borrowed::fixture_bytes;
     use git_object::{
         borrowed::{Tree, TreeEntry as Entry, TreeMode as Mode},
-        ByteSlice,
+        bstr::ByteSlice,
     };
     use hex::FromHex;
 

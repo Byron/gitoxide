@@ -1,7 +1,7 @@
 mod error;
 pub use error::Error;
 
-use crate::Bytes;
+use crate::BStr;
 use crate::{
     borrowed,
     borrowed::{Blob, Commit, Tag, Tree},
@@ -10,8 +10,8 @@ use crate::{
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Signature<'data> {
-    pub name: &'data Bytes,
-    pub email: &'data Bytes,
+    pub name: &'data BStr,
+    pub email: &'data BStr,
     pub time: Time,
 }
 

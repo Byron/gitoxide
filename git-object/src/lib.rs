@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 
-pub type BytesOwned = bstr::BString;
-pub type Bytes = bstr::BStr;
-pub use bstr::ByteSlice;
+use bstr::{BStr, BString, ByteSlice};
+
+pub use bstr;
 
 pub mod borrowed;
 mod types;

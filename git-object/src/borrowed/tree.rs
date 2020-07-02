@@ -1,5 +1,5 @@
 use crate::{borrowed::util::SPACE, borrowed::Error};
-use crate::{ByteSlice, Bytes};
+use crate::{BStr, ByteSlice};
 use nom::{
     bytes::complete::{tag, take, take_while1, take_while_m_n},
     character::is_digit,
@@ -18,7 +18,7 @@ pub struct Tree<'data> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Entry<'data> {
     pub mode: Mode,
-    pub filename: &'data Bytes,
+    pub filename: &'data BStr,
     // 20 bytes SHA1
     pub oid: &'data [u8],
 }

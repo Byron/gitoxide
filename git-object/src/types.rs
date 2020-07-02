@@ -2,14 +2,11 @@ use crate::ByteSlice;
 use nom::{lib::std::fmt::Formatter, lib::std::ops::Deref};
 use quick_error::quick_error;
 
-#[cfg(feature = "with-miniserde")]
-use miniserde::{Deserialize as MiniDeserialize, Serialize as MiniSerialize};
 #[cfg(feature = "with-serde")]
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "with-miniserde", derive(MiniSerialize, MiniDeserialize))]
 pub enum Sign {
     Plus,
     Minus,
@@ -17,7 +14,6 @@ pub enum Sign {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "with-miniserde", derive(MiniSerialize, MiniDeserialize))]
 pub struct Time {
     /// time in seconds from epoch
     pub time: u32,
@@ -32,10 +28,6 @@ pub const SHA1_SIZE: usize = 20;
 /// A SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
-#[cfg_attr(
-    feature = "with-miniserde",
-    doc = "Miniserde didn't support tuple structs as of v0.1.13"
-)]
 pub struct Id(pub [u8; SHA1_SIZE]);
 
 impl Id {
@@ -81,7 +73,6 @@ impl std::fmt::Display for Id {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "with-miniserde", derive(MiniSerialize, MiniDeserialize))]
 pub enum Kind {
     Tree,
     Blob,
@@ -91,7 +82,7 @@ pub enum Kind {
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        InvalidObjectKind(kind: crate::BytesOwned) {
+        InvalidObjectKind(kind: crate::BString) {
             display("Unknown object kind: {:?}", std::str::from_utf8(&kind))
         }
     }

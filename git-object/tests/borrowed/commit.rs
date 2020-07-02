@@ -14,7 +14,7 @@ mod method {
 
 mod from_bytes {
     use crate::{borrowed::fixture_bytes, borrowed::signature};
-    use git_object::{borrowed::Commit, ByteSlice};
+    use git_object::{borrowed::Commit, bstr::ByteSlice};
     use smallvec::SmallVec;
 
     #[test]

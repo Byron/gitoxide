@@ -4,7 +4,7 @@ use crate::borrowed::{
     util::{parse_header_field, parse_hex_sha1, parse_signature, NL},
     Signature,
 };
-use crate::{ByteSlice, Bytes};
+use crate::{BStr, ByteSlice};
 use nom::{
     branch::alt,
     bytes::{complete::is_not, complete::tag},
@@ -17,18 +17,18 @@ use smallvec::SmallVec;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Commit<'data> {
     // SHA1 of tree object we point to
-    pub tree: &'data Bytes,
+    pub tree: &'data BStr,
     // SHA1 of each parent commit. Empty for first commit in repository.
-    pub parents: SmallVec<[&'data Bytes; 1]>,
+    pub parents: SmallVec<[&'data BStr; 1]>,
     pub author: Signature<'data>,
     pub committer: Signature<'data>,
     // The name of the message encoding, otherwise UTF-8 should be assumed.
-    pub encoding: Option<&'data Bytes>,
-    pub message: &'data Bytes,
-    pub pgp_signature: Option<&'data Bytes>,
+    pub encoding: Option<&'data BStr>,
+    pub message: &'data BStr,
+    pub pgp_signature: Option<&'data BStr>,
 }
 
-pub fn parse_message(i: &[u8]) -> IResult<&[u8], &Bytes, Error> {
+pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     if i.is_empty() {
         // newline + [message]
         return Err(nom::Err::Error(Error::NomDetail(i.into(), "commit message is missing")));

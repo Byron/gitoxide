@@ -1,6 +1,7 @@
 use git_object::{
     borrowed::{Signature, Tag},
-    ByteSlice, Kind, Sign, Time,
+    bstr::ByteSlice,
+    Kind, Sign, Time,
 };
 
 mod method {
@@ -19,7 +20,7 @@ mod method {
 
 mod from_bytes {
     use crate::{borrowed::fixture_bytes, borrowed::signature, borrowed::tag::tag_fixture};
-    use git_object::{borrowed::Tag, ByteSlice, Kind};
+    use git_object::{borrowed::Tag, bstr::ByteSlice, Kind};
 
     #[test]
     fn signed() {
