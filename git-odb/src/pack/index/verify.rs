@@ -204,11 +204,13 @@ impl index::File {
                         self.progress.lock().unwrap().done("finished");
                         div_decode_result(&mut self.stats.average, self.chunks_seen);
                         let elapsed_s = Instant::now().duration_since(self.then).as_secs_f32();
+                        let objects_per_second = (self.entries_seen as f32 / elapsed_s) as u32;
                         self.progress.lock().unwrap().info(format!(
-                            "Reduced {} objects in {:.2}s ({} objects/s)",
+                            "Reduced {} objects in {:.2}s ({} objects/s, ~{}/s)",
                             self.entries_seen,
                             elapsed_s,
-                            (self.entries_seen as f32 / elapsed_s) as u32
+                            objects_per_second,
+                            bytesize::ByteSize(self.stats.average.object_size * objects_per_second as u64)
                         ));
                         Ok(self.stats)
                     }

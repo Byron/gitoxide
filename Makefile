@@ -78,8 +78,8 @@ $(rust_repo):
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) $(rust_repo) release-lean
-	./target/release/gio-plumbing verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
-	./target/release/gio-plumbing verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/gio-plumbing verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/gio-plumbing verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
 
 ##@ Maintenance
 
