@@ -69,13 +69,14 @@ title "CLI ${kind}"
           expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --statistics "$PACK_INDEX_FILE"
         }
       )
-      test "$kind" = pretty_and_fast &&
+      if test "$kind" = pretty_and_fast; then
       (with "statistics (JSON)"
         it "verifies the pack index successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-with-statistics-json-success" \
           expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --statistics --format json "$PACK_INDEX_FILE"
         }
       )
+      fi
     )
     (sandbox
       (with "an INvalid pack INDEX file"
