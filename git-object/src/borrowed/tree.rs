@@ -21,10 +21,8 @@ pub struct Tree<'data> {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'data> {
     pub mode: Mode,
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub filename: &'data BStr,
     /// a 20 bytes SHA1
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: &'data [u8],
 }
 

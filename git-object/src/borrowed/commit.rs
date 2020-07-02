@@ -21,18 +21,12 @@ pub struct Commit<'data> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'data BStr,
     // SHA1 of each parent commit. Empty for first commit in repository.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub parents: SmallVec<[&'data BStr; 1]>,
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub author: Signature<'data>,
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub committer: Signature<'data>,
     // The name of the message encoding, otherwise UTF-8 should be assumed.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub encoding: Option<&'data BStr>,
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub message: &'data BStr,
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub pgp_signature: Option<&'data BStr>,
 }
 
