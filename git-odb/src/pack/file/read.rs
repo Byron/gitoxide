@@ -18,12 +18,14 @@ struct Delta {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
     InPack(Entry),
     OutOfPack { kind: object::Kind, end: usize },
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DecodeEntryResult {
     pub kind: object::Kind,
     pub num_deltas: u32,

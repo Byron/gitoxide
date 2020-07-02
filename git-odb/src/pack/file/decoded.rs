@@ -11,6 +11,7 @@ const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     pub header: Header,
     /// The decompressed size of the object in bytes
@@ -20,6 +21,7 @@ pub struct Entry {
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Header {
     Commit,
     Tree,

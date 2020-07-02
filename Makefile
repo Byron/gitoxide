@@ -49,6 +49,7 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean-cli,fast
 	cd gitoxide-core && cargo check --all-features
 	cd git-object && cargo check --all-features
+	cd git-odb && cargo check --all-features
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fast-sha1

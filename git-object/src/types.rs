@@ -2,18 +2,15 @@ use crate::ByteSlice;
 use nom::{lib::std::fmt::Formatter, lib::std::ops::Deref};
 use quick_error::quick_error;
 
-#[cfg(feature = "serde1")]
-use serde::{Deserialize, Serialize};
-
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Sign {
     Plus,
     Minus,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
     /// time in seconds from epoch
     pub time: u32,
@@ -27,7 +24,7 @@ pub const SHA1_SIZE: usize = 20;
 
 /// A SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Id(pub [u8; SHA1_SIZE]);
 
 impl Id {
@@ -72,7 +69,7 @@ impl std::fmt::Display for Id {
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     Tree,
     Blob,

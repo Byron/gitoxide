@@ -59,6 +59,7 @@ impl Into<String> for TimeThroughput {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct PackFileChecksumResult {
     pub average: DecodeEntryResult,
     pub objects_per_chain_length: BTreeMap<u32, u32>,

@@ -8,6 +8,8 @@ edition = "2018"
 [lib]
 doctest = false
 
+[features]
+serde1 = ["serde", "git-object/serde1"]
 
 [dependencies]
 quick-error = "1.2.3"
@@ -18,6 +20,7 @@ filebuffer = "0.4.0"
 byteorder = "1.2.3"
 git-object = { version = "0.1.0", path = "../git-object" }
 git-features = { version = "0.1.0", path = "../git-features" }
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 btoi = "0.4.2"
 uluru = "0.4.0"
 itoa = "0.4.6"

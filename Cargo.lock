@@ -535,6 +535,7 @@ dependencies = [
  "miniz_oxide",
  "pretty_assertions",
  "quick-error",
+ "serde",
  "smallvec",
  "uluru",
  "walkdir",
