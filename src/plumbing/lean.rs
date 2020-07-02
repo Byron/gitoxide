@@ -3,7 +3,8 @@ mod options {
     use std::path::PathBuf;
 
     #[derive(FromArgs)]
-    /// A simple calculation tool
+    #[argh(name = "gio-plumbing")]
+    /// The lean git underworld
     pub struct Args {
         #[argh(subcommand)]
         pub subcommand: SubCommands,

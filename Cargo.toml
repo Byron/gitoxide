@@ -16,7 +16,7 @@ doctest = false
 
 
 [[bin]]
-name="gio-plumbing"
+name="giop"
 path="src/plumbing-cli.rs"
 test = false
 doctest = false

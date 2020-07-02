@@ -2,7 +2,7 @@ mod options {
     use argh::FromArgs;
 
     #[derive(FromArgs)]
-    /// A simple calculation tool
+    /// The lean git
     pub struct Args {
         #[argh(subcommand)]
         pub subcommand: SubCommands,

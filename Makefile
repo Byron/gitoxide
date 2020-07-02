@@ -62,11 +62,11 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 
 journey-tests: always  ## run stateless journey tests (pretty-cli)
 	cargo build
-	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing pretty_and_fast
+	./tests/stateless-journey.sh target/debug/gio target/debug/giop pretty_and_fast
 
 journey-tests-lean-cli: always ## run stateless journey tests (lean-cli)
 	cargo build --no-default-features --features lean-cli
-	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing lean_and_small
+	./tests/stateless-journey.sh target/debug/gio target/debug/giop lean_and_small
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
@@ -78,8 +78,8 @@ $(rust_repo):
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j2 $(rust_repo) release-lean
-	time ./target/release/gio-plumbing verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
-	time ./target/release/gio-plumbing verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/giop verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/giop verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
 
 ##@ Maintenance
 
