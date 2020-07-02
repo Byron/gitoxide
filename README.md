@@ -201,6 +201,8 @@ All feature toggles are additive.
  
  * **with-serde**
    * Data structures implement `serde::Serialize` and `serde::Deserialize`
+ * **with-miniserde**
+   * Data structures implement `miniserde::Serialize` and `miniserde::Deserialize`
  
  The features above are provided by the crates
  

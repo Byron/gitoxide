@@ -1,7 +1,9 @@
 mod from_bytes {
     use crate::borrowed::fixture_bytes;
-    use bstr::ByteSlice;
-    use git_object::borrowed::{Tree, TreeEntry as Entry, TreeMode as Mode};
+    use git_object::{
+        borrowed::{Tree, TreeEntry as Entry, TreeMode as Mode},
+        ByteSlice,
+    };
     use hex::FromHex;
 
     pub fn hex_to_oid(hex: &str) -> [u8; 20] {

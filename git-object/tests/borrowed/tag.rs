@@ -1,7 +1,6 @@
-use bstr::ByteSlice;
 use git_object::{
     borrowed::{Signature, Tag},
-    Kind, Sign, Time,
+    ByteSlice, Kind, Sign, Time,
 };
 
 mod method {
@@ -14,14 +13,13 @@ mod method {
         let fixture = fixture_bytes("tag", "signed.txt");
         let tag = Tag::from_bytes(&fixture).unwrap();
         assert_eq!(tag.target(), hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"));
-        assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec")
+        assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bytes())
     }
 }
 
 mod from_bytes {
     use crate::{borrowed::fixture_bytes, borrowed::signature, borrowed::tag::tag_fixture};
-    use bstr::ByteSlice;
-    use git_object::{borrowed::Tag, Kind};
+    use git_object::{borrowed::Tag, ByteSlice, Kind};
 
     #[test]
     fn signed() {

@@ -1,13 +1,11 @@
-use bstr::ByteSlice;
-use nom::lib::std::fmt::Formatter;
-use nom::lib::std::ops::Deref;
+use crate::ByteSlice;
+use nom::{lib::std::fmt::Formatter, lib::std::ops::Deref};
 use quick_error::quick_error;
-
-#[cfg(feature = "with-serde")]
-use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "with-miniserde")]
 use miniserde::{Deserialize as MiniDeserialize, Serialize as MiniSerialize};
+#[cfg(feature = "with-serde")]
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
@@ -93,7 +91,7 @@ pub enum Kind {
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        InvalidObjectKind(kind: bstr::BString) {
+        InvalidObjectKind(kind: crate::BytesOwned) {
             display("Unknown object kind: {:?}", std::str::from_utf8(&kind))
         }
     }

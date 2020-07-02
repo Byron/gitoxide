@@ -26,7 +26,7 @@ mod method {
 /// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
     use crate::{fixture_path, pack::file::pack_at, pack::SMALL_PACK};
-    use bstr::ByteSlice;
+    use git_object::ByteSlice;
     use git_odb::pack::{cache, ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
@@ -82,7 +82,7 @@ mod decode_entry {
 
 mod decompress_entry {
     use crate::{pack::file::pack_at, pack::SMALL_PACK};
-    use bstr::ByteSlice;
+    use git_object::ByteSlice;
 
     #[test]
     fn commit() {

@@ -1,6 +1,7 @@
-use crate::borrowed::{Error, Signature};
-use crate::{Sign, Time};
-use bstr::{BStr, ByteSlice};
+use crate::{
+    borrowed::{Error, Signature},
+    ByteSlice, Bytes, Sign, Time,
+};
 use btoi::btoi;
 use nom::{
     branch::alt,
@@ -46,7 +47,7 @@ fn is_hex_digit_lc(b: u8) -> bool {
     }
 }
 
-pub(crate) fn parse_hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+pub(crate) fn parse_hex_sha1(i: &[u8]) -> IResult<&[u8], &Bytes, Error> {
     take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
 }
 

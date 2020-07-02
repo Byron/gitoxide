@@ -42,7 +42,7 @@ pub fn write_header(object: object::Kind, size: usize, mut out: impl std::io::Wr
 mod tests {
     mod write_header_round_trip {
         use crate::loose::db::serde::{parse_header, write_header};
-        use bstr::ByteSlice;
+        use git_object::ByteSlice;
 
         #[test]
         fn all() {

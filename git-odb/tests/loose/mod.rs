@@ -1,5 +1,4 @@
-use bstr::ByteSlice;
-use git_object::{borrowed, Sign, Time};
+use git_object::{borrowed, ByteSlice, Sign, Time};
 
 mod object {
     use git_odb::loose::Object;
@@ -43,11 +42,10 @@ mod db {
 
     mod locate {
         use crate::{hex_to_id, loose::db::ldb, loose::signature};
-        use bstr::ByteSlice;
         use git_object::{
             borrowed,
             borrowed::{TreeEntry, TreeMode},
-            Kind,
+            ByteSlice, Kind,
         };
         use git_odb::loose;
         use std::io::Read;

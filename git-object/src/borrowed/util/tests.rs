@@ -1,8 +1,8 @@
 mod parse_signature {
     use crate::borrowed::util::parse_signature;
     use crate::borrowed::Signature;
+    use crate::ByteSlice;
     use crate::{Sign, Time};
-    use bstr::ByteSlice;
 
     fn signature(name: &'static str, email: &'static str, time: u32, sign: Sign, offset: i32) -> Signature<'static> {
         Signature {
