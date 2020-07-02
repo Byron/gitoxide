@@ -511,6 +511,7 @@ dependencies = [
  "bstr",
  "btoi",
  "hex",
+ "miniserde",
  "nom",
  "pretty_assertions",
  "quick-error",
@@ -686,6 +687,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4fc2c02a7e374099d4ee95a193111f72d2110197fe200272371758f6c3643d8"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "mini-internal"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b3fb39c72c84ffbed14f8ee8b1a0e52ecd323df2ee69499fd3400a95d7269aa"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "miniserde"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e021d8031f6e224438f402d4c59d26c997e6e13498bd34da1aa1f858bd3b2f43"
+dependencies = [
+ "itoa",
+ "mini-internal",
+ "ryu",
 ]
 
 [[package]]
