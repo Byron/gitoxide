@@ -59,11 +59,11 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 
 journey-tests: always  ## run stateless journey tests (pretty-cli)
 	cargo build
-	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing
+	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing pretty_and_fast
 
 journey-tests-lean-cli: always ## run stateless journey tests (lean-cli)
 	cargo build --no-default-features --features lean-cli
-	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing
+	./tests/stateless-journey.sh target/debug/gio target/debug/gio-plumbing lean_and_small
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests

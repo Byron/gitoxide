@@ -3,6 +3,7 @@ set -eu
 
 exe=${1:?First argument must be the executable to test}
 exe_plumbing=${2:?Second argument must be the plumbing executable to test}
+kind=${3:?third argument must an indicator of the kind of binary under test}
 
 root="$(cd "${0%/*}" && pwd)"
 exe="${root}/../$exe"
@@ -15,7 +16,7 @@ fixtures="$root/fixtures"
 SUCCESSFULLY=0
 WITH_FAILURE=1
 
-title "CLI"
+title "CLI ${kind}"
 (when "initializing a repository"
   (with "an empty directory"
     (sandbox
