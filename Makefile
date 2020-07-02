@@ -77,7 +77,7 @@ $(rust_repo):
 	cd $@ && git init && git remote add origin https://github.com/rust-lang/rust && git fetch
 
 stress: ## Run various algorithms on big repositories
-	$(MAKE) $(rust_repo) release-lean
+	$(MAKE) -j2 $(rust_repo) release-lean
 	time ./target/release/gio-plumbing verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
 	time ./target/release/gio-plumbing verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
 
