@@ -205,6 +205,7 @@ All feature toggles are additive.
  The feature above is provided by the crates:
  
  * **git-object**
+ * **gitoxide-core**
 
  
 ## Development Practices
