@@ -19,30 +19,6 @@ mod options {
         pub cmd: Subcommands,
     }
 
-    #[derive(Debug)]
-    pub enum ProgressMode {
-        Stop,
-        KeepRunning,
-    }
-
-    impl ProgressMode {
-        fn variants() -> &'static [&'static str] {
-            &["stop", "keep-running"]
-        }
-    }
-    impl std::str::FromStr for ProgressMode {
-        type Err = String;
-
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let s_lc = s.to_ascii_lowercase();
-            Ok(match s_lc.as_str() {
-                "stop" => ProgressMode::Stop,
-                "keep-running" => ProgressMode::KeepRunning,
-                _ => return Err(format!("Invalid progress mode: {}", s)),
-            })
-        }
-    }
-
     #[derive(Debug, StructOpt)]
     pub enum Subcommands {
         /// Verify the integrity of a pack or index file
@@ -57,8 +33,14 @@ mod options {
             verbose: bool,
 
             /// if set, bring up a terminal user interface displaying progress visually
-            #[structopt(long, conflicts_with("verbose"), possible_values(ProgressMode::variants()))]
-            progress: Option<ProgressMode>,
+            #[structopt(long, conflicts_with("verbose"))]
+            progress: bool,
+
+            /// if set, the progress TUI will stay up even though the work is already completed.
+            ///
+            /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
+            #[structopt(long, conflicts_with("verbose"), requires("progress"))]
+            progress_keep_open: bool,
 
             /// The '.pack' or '.idx' file whose checksum to validate.
             #[structopt(parse(from_os_str))]
@@ -70,16 +52,17 @@ mod options {
 fn init_progress(
     name: &str,
     verbose: bool,
-    progress: Option<ProgressMode>,
+    progress: bool,
+    progress_keep_open: bool,
 ) -> (
     Option<JoinThreadOnDrop>,
     Option<progress::Either<progress::Log, prodash::tree::Item>>,
 ) {
     super::init_env_logger(verbose);
     match (verbose, progress) {
-        (false, None) => (None, None),
-        (true, None) => (None, Some(progress::Either::Left(progress::Log::new(name)))),
-        (true, Some(mode)) | (false, Some(mode)) => {
+        (false, false) => (None, None),
+        (true, false) => (None, Some(progress::Either::Left(progress::Log::new(name)))),
+        (true, true) | (false, true) => {
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
             let render_tui = prodash::tui::render(
@@ -87,10 +70,7 @@ fn init_progress(
                 prodash::tui::TuiOptions {
                     title: "gitoxide".into(),
                     frames_per_second: 6.0,
-                    stop_if_empty_progress: match mode {
-                        ProgressMode::KeepRunning => false,
-                        ProgressMode::Stop => true,
-                    },
+                    stop_if_empty_progress: !progress_keep_open,
                     ..Default::default()
                 },
             )
@@ -119,9 +99,10 @@ pub fn main() -> Result<()> {
             path,
             verbose,
             progress,
+            progress_keep_open,
             statistics,
         } => {
-            let (handle, progress) = init_progress("verify-pack", verbose, progress);
+            let (handle, progress) = init_progress("verify-pack", verbose, progress, progress_keep_open);
             let mut buf = Vec::new();
             let res = core::verify_pack_or_pack_index(path, progress, statistics, &mut buf, stderr()).map(|_| ());
             // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
