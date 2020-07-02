@@ -48,7 +48,7 @@ pub fn main() -> Result<()> {
             super::init_env_logger(verbose);
             core::verify_pack_or_pack_index(
                 path,
-                progress::Log::new("verify-pack").into(),
+                progress::Log::new("verify-pack", Some(1)).into(),
                 if statistics {
                     Some(core::OutputFormat::Human)
                 } else {

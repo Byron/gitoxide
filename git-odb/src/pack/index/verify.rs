@@ -243,7 +243,6 @@ impl index::File {
                      -> Result<Vec<DecodeEntryResult>, ChecksumError> {
                         progress.init(Some(entries.len() as u32), Some("entries"));
                         let mut stats = Vec::with_capacity(entries.len());
-                        let progress_every = (entries.len() / 10).max(1);
                         for (idx, index_entry) in entries.iter().enumerate() {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
@@ -294,9 +293,7 @@ impl index::File {
                                     });
                                 }
                             }
-                            if idx % progress_every == 0 {
-                                progress.set(idx as u32);
-                            }
+                            progress.set(idx as u32);
                         }
                         Ok(stats)
                     },

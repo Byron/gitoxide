@@ -6,14 +6,18 @@ pub struct Log {
     max: Option<u32>,
     unit: Option<&'static str>,
     last_set: Option<std::time::SystemTime>,
+    current_level: usize,
+    max_level: usize,
 }
 
 const EMIT_LOG_EVERY_S: f32 = 0.5;
 
 impl Log {
-    pub fn new(name: impl Into<String>) -> Self {
+    pub fn new(name: impl Into<String>, max_level: Option<usize>) -> Self {
         Log {
             name: name.into(),
+            current_level: 0,
+            max_level: max_level.unwrap_or(usize::MAX),
             max: None,
             unit: None,
             last_set: None,
@@ -25,7 +29,14 @@ impl Progress for Log {
     type SubProgress = Log;
 
     fn add_child(&mut self, name: impl Into<String>) -> Self::SubProgress {
-        Log::new(format!("{}::{}", self.name, Into::<String>::into(name)))
+        Log {
+            name: format!("{}::{}", self.name, Into::<String>::into(name)),
+            current_level: self.current_level + 1,
+            max_level: self.max_level,
+            max: None,
+            unit: None,
+            last_set: None,
+        }
     }
 
     fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
@@ -34,6 +45,9 @@ impl Progress for Log {
     }
 
     fn set(&mut self, step: u32) {
+        if self.current_level > self.max_level {
+            return;
+        }
         let now = std::time::SystemTime::now();
         if self
             .last_set

@@ -70,7 +70,7 @@ fn init_progress(
     super::init_env_logger(verbose);
     match (verbose, progress) {
         (false, false) => (None, None),
-        (true, false) => (None, Some(progress::Either::Left(progress::Log::new(name)))),
+        (true, false) => (None, Some(progress::Either::Left(progress::Log::new(name, Some(1))))),
         (true, true) | (false, true) => {
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
