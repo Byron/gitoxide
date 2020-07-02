@@ -1,5 +1,7 @@
 #[cfg(not(feature = "fast-sha1"))]
 mod _impl {
+    use super::Sha1Digest;
+
     #[derive(Default)]
     pub struct Sha1(sha1::Sha1);
 
@@ -7,15 +9,19 @@ mod _impl {
         pub fn update(&mut self, d: &[u8]) {
             self.0.update(d)
         }
-        pub fn digest(self) -> git_object::Id {
-            git_object::Id(self.0.digest().bytes())
+        pub fn digest(self) -> Sha1Digest {
+            self.0.digest().bytes()
         }
     }
 }
 
+pub type Sha1Digest = [u8; 20];
+
 #[cfg(feature = "fast-sha1")]
 mod _impl {
+    use super::Sha1Digest;
     use fastsha1::Digest;
+
     #[derive(Default)]
     pub struct Sha1(fastsha1::Sha1);
 
@@ -23,8 +29,8 @@ mod _impl {
         pub fn update(&mut self, d: &[u8]) {
             self.0.update(d)
         }
-        pub fn digest(self) -> git_object::Id {
-            git_object::Id(self.0.finalize().into())
+        pub fn digest(self) -> Sha1Digest {
+            self.0.finalize().into()
         }
     }
 }

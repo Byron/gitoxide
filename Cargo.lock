@@ -497,7 +497,6 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "flume",
- "git-object",
  "log",
  "num_cpus",
  "prodash",
