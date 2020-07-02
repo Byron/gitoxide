@@ -9,17 +9,25 @@ use crate::{
 };
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature<'data> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub name: &'data BStr,
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub email: &'data BStr,
     pub time: Time,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Object<'data> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     Tag(Tag<'data>),
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     Commit(Commit<'data>),
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     Tree(Tree<'data>),
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     Blob(Blob<'data>),
 }
 

@@ -16,14 +16,20 @@ use nom::{
 };
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag<'data> {
     // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'data BStr,
     // The name of the tag, e.g. "v1.0"
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub name: &'data BStr,
     pub target_kind: crate::Kind,
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub message: &'data BStr,
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub signature: Signature<'data>,
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub pgp_signature: Option<&'data BStr>,
 }
 

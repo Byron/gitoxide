@@ -9,7 +9,9 @@ mod tree;
 pub use tree::{Entry as TreeEntry, Mode as TreeMode, Tree};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Blob<'data> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub data: &'data [u8],
 }
 

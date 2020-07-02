@@ -11,20 +11,26 @@ use nom::{
 use std::convert::TryFrom;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree<'data> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub entries: Vec<Entry<'data>>,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'data> {
     pub mode: Mode,
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub filename: &'data BStr,
-    // 20 bytes SHA1
+    /// a 20 bytes SHA1
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: &'data [u8],
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[repr(u16)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Mode {
     Tree = 0o040000u16,
     Blob = 0o100644,
