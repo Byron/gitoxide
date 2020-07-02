@@ -86,7 +86,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
       * `join`
     * _When off all functions execute serially_
 * **Stress Testing**
-  * [ ] Verify huge packs
+  * [x] Verify huge packs
   * [ ] Explode huge packs to disk and validate loose objects
   * [ ] Generate huge back from a lot of loose objects
 * **Ideas for Demos**
