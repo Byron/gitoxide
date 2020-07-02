@@ -36,8 +36,8 @@
    * [x] support for serde/~~miniserde~~ for all returned data types (features per crate)
    * [x] a way to output things as json (as `--format` flag maybe)
 * **stress**
-  * [ ] first stress test for validation of a big repository, linux maybe, or something smaller but big enough
+  * [x] first stress test for validation of a big repository, linux maybe, or something smaller but big enough
 * **unrelated**
-  * [ ] Use `argh` in cargo-diet to reduce build times
+  * [x] Use `argh` in cargo-diet to reduce build times
   * [x] Use `argh` in prodash dashboard example to reduce build times
 

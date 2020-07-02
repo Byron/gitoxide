@@ -9,4 +9,6 @@ target/
 
 .idea/
 
+/tests/fixtures/repos
+
 /callgrind.profile

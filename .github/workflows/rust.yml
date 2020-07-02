@@ -22,3 +22,5 @@ jobs:
       run: make tests
     - name: doc
       run: cargo doc
+    - name: stress
+      run: make stress

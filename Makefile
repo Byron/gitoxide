@@ -71,6 +71,16 @@ journey-tests-lean-cli: always ## run stateless journey tests (lean-cli)
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
 
+rust_repo = tests/fixtures/repos/rust
+$(rust_repo):
+	mkdir -p $@
+	cd $@ && git init && git remote add origin https://github.com/rust-lang/rust && git fetch
+
+stress: ## Run various algorithms on big repositories
+	$(MAKE) $(rust_repo) release-lean
+	./target/release/gio-plumbing verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
+	./target/release/gio-plumbing verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
+
 ##@ Maintenance
 
 update-assets: ## refresh assets compiles into the binaries from their source
