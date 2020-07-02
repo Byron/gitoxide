@@ -119,12 +119,6 @@ jobs:
         run: |
           ci/macos-install-packages
 
-      - name: Patch Cargo.toml (Windows)
-        if: matrix.os == 'windows-2019'
-        shell: bash
-        run: |
-          cat Cargo.toml.windows-suffix >> Cargo.toml
-
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
