@@ -13,19 +13,19 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 
 ##@ Release Builds
 
-release-default: always ## the default build, big bug pretty (builds in ~2min 35s)
+release-default: always ## the default build, big but pretty (builds in ~2min 35s)
 	cargo build --release
 
 release-lean: always ## lean and fast (builds in ~1min 10s)
-	cargo build --release --no-default-features --features lean-cli,fast
+	cargo build --release --no-default-features --features lean
 
 release-small: always ## minimal dependencies, at cost of performance (builds in ~46s)
-	cargo build --release --no-default-features --features lean-cli
+	cargo build --release --no-default-features --features small
 
 ##@ Development
 
 target/release/gio: always
-	cargo build --release --no-default-features --features lean-cli
+	cargo build --release --no-default-features --features small
 
 lint: ## Run lints with clippy
 	cargo clippy
@@ -39,14 +39,14 @@ benchmark: target/release/gio ## see how fast things are, powered by hyperfine
 
 ##@ Testing
 
-tests: check unit-tests journey-tests journey-tests-lean-cli ## run all tests, including journey tests
+tests: check unit-tests journey-tests journey-tests-small ## run all tests, including journey tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all
 	cargo check --all --all-features
-	cargo check --no-default-features --features lean-cli
-	cargo check --no-default-features --features pretty-cli
-	cargo check --no-default-features --features lean-cli,fast
+	cargo check --no-default-features --features small
+	cargo check --no-default-features --features lean
+	cargo check --no-default-features --features max
 	cd gitoxide-core && cargo check --all-features
 	cd git-object && cargo check --all-features
 	cd git-odb && cargo check --all-features
@@ -60,13 +60,13 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
-journey-tests: always  ## run stateless journey tests (pretty-cli)
+journey-tests: always  ## run stateless journey tests (max)
 	cargo build
-	./tests/stateless-journey.sh target/debug/gio target/debug/giop pretty_and_fast
+	./tests/stateless-journey.sh target/debug/gio target/debug/giop max
 
-journey-tests-lean-cli: always ## run stateless journey tests (lean-cli)
-	cargo build --no-default-features --features lean-cli
-	./tests/stateless-journey.sh target/debug/gio target/debug/giop lean_and_small
+journey-tests-small: always ## run stateless journey tests (lean-cli)
+	cargo build --no-default-features --features small
+	./tests/stateless-journey.sh target/debug/gio target/debug/giop small
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests

@@ -22,7 +22,11 @@ test = false
 doctest = false
 
 [features]
-default = ["fast", "pretty-cli"]
+default = ["max"]
+max = ["fast", "pretty-cli"]
+lean = ["fast", "lean-cli"]
+small = ["lean-cli"]
+
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt",
               "git-features/progress-prodash",
