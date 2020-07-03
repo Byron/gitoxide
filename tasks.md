@@ -1,9 +1,10 @@
 ### TODO pack decoding + pack exploding
 * **deployment**
+  * port prodash to using crossterm as well
   * produce binaries on tag for all OSs for
     * [ ] pretty + fast
-    * [ ] lean + fast
-    * [ ] lean + small
+    * [x] lean + fast
+    * [x] lean + small
 * **progress**
   * [ ] one-line progress indicator, maybe implemented in prodash (similar to what `git` does when receiving)
 * **initial release**
