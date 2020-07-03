@@ -1,6 +1,8 @@
 #![forbid(unsafe_code)]
 
 mod plumbing;
+#[cfg(feature = "lean-cli")]
+mod shared;
 
 use anyhow::Result;
 

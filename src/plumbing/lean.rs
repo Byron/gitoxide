@@ -6,6 +6,10 @@ mod options {
     #[argh(name = "gio-plumbing")]
     /// The lean git underworld
     pub struct Args {
+        #[argh(switch)]
+        /// print the program version.
+        pub version: bool,
+
         #[argh(subcommand)]
         pub subcommand: SubCommands,
     }
@@ -20,10 +24,10 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "verify-pack")]
     pub struct VerifyPack {
-        /// if set, output statistical information about the pack
+        /// output statistical information about the pack
         #[argh(switch, short = 's')]
         pub statistics: bool,
-        /// if set, verbose progress messages are printed line by line
+        /// verbose progress messages are printed line by line
         #[argh(switch, short = 'v')]
         pub verbose: bool,
         /// the '.pack' or '.idx' file whose checksum to validate.
@@ -39,7 +43,7 @@ use std::io::{stderr, stdout};
 
 pub fn main() -> Result<()> {
     pub use options::*;
-    let cli: Args = argh::from_env();
+    let cli: Args = crate::shared::from_env();
     match cli.subcommand {
         SubCommands::VerifyPack(VerifyPack {
             path,

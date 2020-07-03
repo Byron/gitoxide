@@ -2,6 +2,9 @@
 
 mod porcelain;
 
+#[cfg(feature = "lean-cli")]
+mod shared;
+
 use anyhow::Result;
 
 #[cfg(feature = "pretty-cli")]

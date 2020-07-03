@@ -25,7 +25,7 @@ mod options {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         VerifyPack {
-            /// if set, output statistical information about the pack
+            /// output statistical information about the pack
             #[structopt(long, short = "s")]
             statistics: bool,
             /// Determine the format to use when outputting statistics.
@@ -37,15 +37,15 @@ mod options {
             )]
             format: core::OutputFormat,
 
-            /// if set, verbose progress messages are printed line by line
+            /// verbose progress messages are printed line by line
             #[structopt(long, short = "v")]
             verbose: bool,
 
-            /// if set, bring up a terminal user interface displaying progress visually
+            /// bring up a terminal user interface displaying progress visually
             #[structopt(long, conflicts_with("verbose"))]
             progress: bool,
 
-            /// if set, the progress TUI will stay up even though the work is already completed.
+            /// the progress TUI will stay up even though the work is already completed.
             ///
             /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
             #[structopt(long, conflicts_with("verbose"), requires("progress"))]

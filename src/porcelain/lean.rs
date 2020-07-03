@@ -4,6 +4,10 @@ mod options {
     #[derive(FromArgs)]
     /// The lean git
     pub struct Args {
+        #[argh(switch)]
+        /// print the program version.
+        pub version: bool,
+
         #[argh(subcommand)]
         pub subcommand: SubCommands,
     }
@@ -25,7 +29,8 @@ use gitoxide_core as core;
 
 pub fn main() -> Result<()> {
     pub use options::*;
-    let cli: Args = argh::from_env();
+    let cli: Args = crate::shared::from_env();
+
     match cli.subcommand {
         SubCommands::Init(_) => core::init(),
     }
