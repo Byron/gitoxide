@@ -165,6 +165,7 @@ jobs:
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
+        shell: bash
         run: strip "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}{,p}"
 
       - name: Strip release binary (arm)
