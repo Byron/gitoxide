@@ -14,17 +14,17 @@ name: release
 on:
   push:
     # Enable when testing release infrastructure on a branch.
-    branches:
-      - release
-#    tags:
-#      - 'v[0-9]+.[0-9]+.[0-9]+'
+#    branches:
+#      - release
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-    env:
-      # Set to force version number, e.g., when no tag exists.
-      ARTIFACT_VERSION: TEST-0.0.1
+#    env:
+#      # Set to force version number, e.g., when no tag exists.
+#      ARTIFACT_VERSION: TEST-0.0.1
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
