@@ -172,6 +172,12 @@ The top-level command-line interface.
 * **lean-cli** _(mutually exclusive to pretty-cli)_
   * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
   * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
+  
+There are convenience features, which combine common choices of the above into one name
+
+* **lean** = *lean-cli* + *fast*
+* **pretty** = *pretty-cli* + *fast*
+* **small** = *lean-cli*
     
 ### git-features
 
