@@ -2,7 +2,7 @@
 * **deployment**
   * port prodash to using crossterm as well
   * produce binaries on tag for all OSs for
-    * [ ] pretty + fast
+    * [x] pretty + fast
     * [x] lean + fast
     * [x] lean + small
 * **progress**
