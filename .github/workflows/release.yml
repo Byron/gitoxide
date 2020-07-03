@@ -76,8 +76,7 @@ jobs:
       BIN_NAME: gio
     strategy:
       matrix:
-        # linux-arm prodash->dashmap->ahash fails
-#        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        # linux-arm prodash->dashmap->ahash fails, so don't do max
         build: [linux, macos, win-msvc, win-gnu, win32-msvc]
         feature: ["lean", "small", "max"]
         include:
@@ -89,6 +88,12 @@ jobs:
             os: ubuntu-18.04
             rust: nightly
             target: arm-unknown-linux-gnueabihf
+            feature: "lean"
+          - build: linux-arm
+            os: ubuntu-18.04
+            rust: nightly
+            target: arm-unknown-linux-gnueabihf
+            feature: "small"
           - build: macos
             os: macos-latest
             rust: nightly
