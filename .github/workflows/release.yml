@@ -76,7 +76,9 @@ jobs:
       BIN_NAME: gio
     strategy:
       matrix:
-        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        # linux-arm prodash->dashmap->ahash fails
+#        build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        build: [linux, macos, win-msvc, win-gnu, win32-msvc]
         feature: ["lean", "small", "max"]
         include:
           - build: linux
