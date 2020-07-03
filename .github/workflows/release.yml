@@ -77,6 +77,7 @@ jobs:
     strategy:
       matrix:
         build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
+        feature: ["lean", "small"]
         include:
           - build: linux
             os: ubuntu-18.04
@@ -160,7 +161,7 @@ jobs:
           echo "release version: $RELEASE_VERSION"
 
       - name: Build release binary
-        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }} --features ${{ matrix.feature }}
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
@@ -178,7 +179,7 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          staging="${{ env.BIN_NAME }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+          staging="${{ env.BIN_NAME }}-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
           cp {README.md,LICENSE.md,CHANGELOG.md} "$staging/"
