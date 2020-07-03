@@ -22,6 +22,17 @@ release-lean: always ## lean and fast (builds in ~1min 10s)
 release-small: always ## minimal dependencies, at cost of performance (builds in ~46s)
 	cargo build --release --no-default-features --features small
 
+##@ Debug Builds
+
+debug-default: always ## the default build, big but pretty
+	cargo build
+
+debug-lean: always ## lean and fast
+	cargo build --release --no-default-features --features lean
+
+debug-small: always ## minimal dependencies, at cost of performance
+	cargo build --release --no-default-features --features small
+
 ##@ Development
 
 target/release/gio: always
