@@ -175,8 +175,8 @@ The top-level command-line interface.
   
 There are convenience features, which combine common choices of the above into one name
 
+* **max** = *pretty-cli* + *fast*
 * **lean** = *lean-cli* + *fast*
-* **pretty** = *pretty-cli* + *fast*
 * **small** = *lean-cli*
     
 ### git-features
