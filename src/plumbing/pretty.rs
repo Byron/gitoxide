@@ -12,7 +12,7 @@ mod options {
     use structopt::{clap::AppSettings, StructOpt};
 
     #[derive(Debug, StructOpt)]
-    #[structopt(name = "gio-plumbing", about = "The pretty git underworld")]
+    #[structopt(name = "gio-plumbing", about = "The git underworld")]
     #[structopt(settings = &[AppSettings::SubcommandRequired,
                         AppSettings::ColoredHelp])]
     pub struct Args {

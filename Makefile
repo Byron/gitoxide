@@ -13,7 +13,7 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 
 ##@ Release Builds
 
-release-default: always ## the default build, big bug pretty (builds in ~2min 35s)
+release-default: always ## the default build, big but pretty (builds in ~2min 35s)
 	cargo build --release
 
 release-lean: always ## lean and fast (builds in ~1min 10s)
@@ -45,8 +45,8 @@ check: ## Build all code in suitable configurations
 	cargo check --all
 	cargo check --all --all-features
 	cargo check --no-default-features --features small
-	cargo check --no-default-features --features pretty
 	cargo check --no-default-features --features lean
+	cargo check --no-default-features --features max
 	cd gitoxide-core && cargo check --all-features
 	cd git-object && cargo check --all-features
 	cd git-odb && cargo check --all-features
@@ -60,9 +60,9 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
-journey-tests: always  ## run stateless journey tests (pretty-cli)
+journey-tests: always  ## run stateless journey tests (max)
 	cargo build
-	./tests/stateless-journey.sh target/debug/gio target/debug/giop pretty
+	./tests/stateless-journey.sh target/debug/gio target/debug/giop max
 
 journey-tests-small: always ## run stateless journey tests (lean-cli)
 	cargo build --no-default-features --features small

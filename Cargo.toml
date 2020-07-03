@@ -22,8 +22,8 @@ test = false
 doctest = false
 
 [features]
-default = ["pretty"]
-pretty = ["fast", "pretty-cli"]
+default = ["max"]
+max = ["fast", "pretty-cli"]
 lean = ["fast", "lean-cli"]
 small = ["lean-cli"]
 
