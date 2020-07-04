@@ -8,6 +8,15 @@ checksum = "567b077b825e468cc974f0020d4082ee6e03132512f207ef1a02fd5d00d1f32d"
 
 [[package]]
 name = "ahash"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8fd72866655d1904d6b0997d0b07ba561047d070fbe29de039031c641b61217"
+dependencies = [
+ "const-random",
+]
+
+[[package]]
+name = "ahash"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94e200a506d98f285fcd550bd2b0e5eacdfd53775e6d3aefaf2781571aabfe6f"
@@ -373,11 +382,12 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
-version = "3.11.5"
+version = "3.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "142c7c0bd53a40359d2f19a983e824650df36e38510e817519660a0f1676305b"
+checksum = "7daf68f8d2587be01687a29f5f7206f67448745d16b280686790a1a8632d9f07"
 dependencies = [
- "ahash",
+ "ahash 0.3.8",
+ "ahash 0.4.0",
  "cfg-if",
  "num_cpus",
 ]

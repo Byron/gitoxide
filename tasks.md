@@ -8,6 +8,8 @@
   * [x] `--version|-v` option
 * **progress**
   * [ ] one-line progress indicator, maybe implemented in prodash (similar to what `git` does when receiving)
+    * [ ] in Termion
+    * [ ] in crossterm
 * **initial release**
 * **pack**
   * [ ] extract borrowed objects from a pack
