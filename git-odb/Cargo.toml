@@ -11,6 +11,9 @@ doctest = false
 [features]
 serde1 = ["serde", "git-object/serde1"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 quick-error = "1.2.3"
 walkdir = "2.1.4"

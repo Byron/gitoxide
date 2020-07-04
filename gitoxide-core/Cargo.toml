@@ -14,6 +14,9 @@ test = false
 [features]
 serde1 = ["git-object/serde1", "git-odb/serde1", "serde_json"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 git-repository = { version = "0.1.0", path = "../git-repository" }
 git-object = { version = "0.1.0", path = "../git-object" }

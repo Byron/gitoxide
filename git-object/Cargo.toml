@@ -11,6 +11,9 @@ doctest = false
 [features]
 serde1 = ["serde", "bstr/serde1", "smallvec/serde"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 quick-error = "1.2.3"
 hex = "0.4.2"
