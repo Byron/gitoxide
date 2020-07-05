@@ -91,6 +91,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] Generate huge back from a lot of loose objects
 * **Ideas for Demos**
   * [ ] A simple [`git-hours`][git-hours-algo] clone
+  * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
+        as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
 
 [git-hours-algo]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
 
