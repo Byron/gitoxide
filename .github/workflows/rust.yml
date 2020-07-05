@@ -24,3 +24,24 @@ jobs:
       run: cargo doc
     - name: stress
       run: make stress
+
+  build-and-test-on-windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: stable
+          override: true
+      - name: "Check (crossterm)"
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --all-features --all --bins --tests --examples
+      - name: "Test (crossterm)"
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all
