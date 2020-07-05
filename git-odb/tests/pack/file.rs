@@ -25,12 +25,12 @@ mod method {
 
 /// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
-    use crate::{fixture_path, pack::file::pack_at, pack::SMALL_PACK};
+    use crate::{fixture_path, fixup, pack::file::pack_at, pack::SMALL_PACK};
     use git_object::bstr::ByteSlice;
     use git_odb::pack::{cache, ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
-        std::fs::read(fixture_path(path)).unwrap()
+        fixup(std::fs::read(fixture_path(path)).unwrap())
     }
 
     #[test]
