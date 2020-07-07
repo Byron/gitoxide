@@ -16,30 +16,6 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * plumbing
     * [x] pack verify
     * [x] pack index verify including each object sha1 and statistics
-* **git-repository**
-  * [x] initialize
-  * [ ] read and write all data types
-  * [ ] rev-parsing and ref history
-  * [ ] remotes with push and pull
-  * [ ] configuration
-  * [ ] merging
-  * [ ] API documentation with examples
-* **git-config**
-  * read and write git configuration files
-  * [ ] API documentation with examples
-* **git-refs**
-  * Handle symbolic references and packed references
-  * discover them in typical folder structures
-  * [ ] API documentation with examples
-* **git-index**
-  * read and write a git-index file
-  * add and remove entries
-  * [ ] API documentation with examples
-* **git-diff**
-  * diffing of git-object::Tree structures
-  * diffing, merging, working with hunks of data
-  * find differences between various states, i.e. index, working tree, commit-tree
-  * [ ] API documentation with examples
 * **git-object**
   * represent borrowed commits, trees and tags
   * *decode (zero-copy)*
@@ -70,6 +46,30 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] verify pack with statistics
     * [ ] pack streaming (i.e. indexing + resolution)
       * [ ] use pack streaming for verification for performance and correctness
+  * [ ] API documentation with examples
+* **git-repository**
+  * [x] initialize
+  * [ ] read and write all data types
+  * [ ] rev-parsing and ref history
+  * [ ] remotes with push and pull
+  * [ ] configuration
+  * [ ] merging
+  * [ ] API documentation with examples
+* **git-config**
+  * read and write git configuration files
+  * [ ] API documentation with examples
+* **git-refs**
+  * Handle symbolic references and packed references
+  * discover them in typical folder structures
+  * [ ] API documentation with examples
+* **git-index**
+  * read and write a git-index file
+  * add and remove entries
+  * [ ] API documentation with examples
+* **git-diff**
+  * diffing of git-object::Tree structures
+  * diffing, merging, working with hunks of data
+  * find differences between various states, i.e. index, working tree, commit-tree
   * [ ] API documentation with examples
 * **git-transport**
   * [ ] via ssh
