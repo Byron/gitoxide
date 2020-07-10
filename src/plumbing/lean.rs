@@ -50,6 +50,22 @@ fn prepare(verbose: bool, name: &str) -> ((), progress::Log) {
     ((), progress::Log::new(name, Some(1)))
 }
 
+#[cfg(any(
+    feature = "prodash-line-renderer-crossterm",
+    feature = "prodash-line-renderer-termion"
+))]
+fn prepare(verbose: bool, name: &str) -> (prodash::line::JoinHandle, progress::DoOrDiscard<prodash::tree::Item>) {
+    super::init_env_logger(false);
+
+    let progress = prodash::Tree::new();
+    let sub_progress = progress.add_child(name);
+    let handle = prodash::line::render(stderr(), progress, prodash::line::Options::default());
+    (
+        handle,
+        progress::DoOrDiscard::from(if verbose { Some(sub_progress) } else { None }),
+    )
+}
+
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();

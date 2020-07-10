@@ -24,7 +24,7 @@ doctest = false
 [features]
 default = ["max"]
 max = ["fast", "pretty-cli"]
-lean = ["fast", "lean-cli"]
+lean = ["fast", "lean-cli", "prodash-line-renderer-crossterm", "git-features/progress-prodash"]
 small = ["lean-cli"]
 
 fast = ["git-features/parallel", "git-features/fast-sha1"]
