@@ -7,9 +7,9 @@
     * [x] lean + small
   * [x] `--version|-v` option
 * **progress**
-  * [ ] one-line progress indicator, maybe implemented in prodash (similar to what `git` does when receiving)
-    * [ ] in Termion
-    * [ ] in crossterm
+  * [x] one-line progress indicator, maybe implemented in prodash (similar to what `git` does when receiving)
+    * [x] in Termion
+    * [x] in crossterm
 * **initial release**
     * [ ] use 'main' instead of 'master' by default during repo-init
 * **pack**

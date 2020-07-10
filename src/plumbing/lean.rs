@@ -59,7 +59,14 @@ fn prepare(verbose: bool, name: &str) -> (prodash::line::JoinHandle, progress::D
 
     let progress = prodash::Tree::new();
     let sub_progress = progress.add_child(name);
-    let handle = prodash::line::render(stderr(), progress, prodash::line::Options::default());
+    let handle = prodash::line::render(
+        stderr(),
+        progress,
+        prodash::line::Options {
+            level_filter: Some(std::ops::RangeInclusive::new(2, 2)),
+            ..prodash::line::Options::default()
+        },
+    );
     (
         handle,
         progress::DoOrDiscard::from(if verbose { Some(sub_progress) } else { None }),
