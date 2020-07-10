@@ -174,6 +174,9 @@ The top-level command-line interface.
 * **lean-cli** _(mutually exclusive to pretty-cli)_
   * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
   * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
+* **prodash-line-renderer-crossterm** or **prodash-line-renderer-termion** _(mutually exclusive)_
+  * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
+    that appears after a short duration.
   
 There are convenience features, which combine common choices of the above into one name
 

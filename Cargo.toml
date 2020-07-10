@@ -40,6 +40,9 @@ pretty-cli = ["structopt",
               "smol"]
 lean-cli = ["argh", "git-features/progress-log", "env_logger"]
 
+prodash-line-renderer-crossterm = ["prodash/line-renderer", "prodash/line-renderer-crossterm"]
+prodash-line-renderer-termion = ["prodash/line-renderer", "prodash/line-renderer-termion"]
+
 [dependencies]
 anyhow = "1.0.31"
 

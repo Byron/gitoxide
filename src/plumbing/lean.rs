@@ -41,6 +41,15 @@ use git_features::progress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout};
 
+#[cfg(not(any(
+    feature = "prodash-line-renderer-crossterm",
+    feature = "prodash-line-renderer-termion"
+)))]
+fn prepare(verbose: bool, name: &str) -> ((), progress::Log) {
+    super::init_env_logger(verbose);
+    ((), progress::Log::new(name, Some(1)))
+}
+
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
@@ -50,10 +59,10 @@ pub fn main() -> Result<()> {
             verbose,
             statistics,
         }) => {
-            super::init_env_logger(verbose);
+            let (_handle, progress) = prepare(verbose, "verify-pack");
             core::verify_pack_or_pack_index(
                 path,
-                progress::Log::new("verify-pack", Some(1)).into(),
+                progress.into(),
                 if statistics {
                     Some(core::OutputFormat::Human)
                 } else {
