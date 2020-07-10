@@ -1,4 +1,4 @@
-pub static VERSION: &str = concat!(env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION"));
+static VERSION: &str = concat!(env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION"));
 
 pub fn from_env<T: argh::TopLevelCommand>() -> T {
     let strings: Vec<String> = std::env::args().collect();

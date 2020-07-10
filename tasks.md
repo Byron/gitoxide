@@ -11,6 +11,7 @@
     * [ ] in Termion
     * [ ] in crossterm
 * **initial release**
+    * [ ] use 'main' instead of 'master' by default during repo-init
 * **pack**
   * [ ] extract borrowed objects from a pack
   * [ ] support streamed objects (similar to how it's done with loose objects)

@@ -31,7 +31,7 @@ fastsha1 = { package = "sha-1", version = "0.9.1", optional = true }
 
 # progress
 log = { version = "0.4.8", optional = true }
-prodash = { version = "6.0.0", optional = true, default-features = false }
+prodash = { version = "7.0.0", optional = true, default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true

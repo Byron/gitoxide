@@ -75,8 +75,9 @@ fn init_progress(
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
             let render_tui = prodash::tui::render(
+                stdout(),
                 progress,
-                prodash::tui::TuiOptions {
+                prodash::tui::Options {
                     title: "gitoxide".into(),
                     frames_per_second: 6.0,
                     stop_if_empty_progress: !progress_keep_open,
