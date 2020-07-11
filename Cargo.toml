@@ -36,14 +36,16 @@ pretty-cli = ["structopt",
               "git-features/progress-log",
               "gitoxide-core/serde1",
               "prodash/log-renderer",
-              "prodash/tui-renderer",
+              "prodash-tui-renderer",
               "prodash/localtime",
               "env_logger",
               "smol"]
 lean-cli = ["argh", "git-features/progress-log", "env_logger"]
 
-prodash-line-renderer-crossterm = ["prodash/line-renderer", "prodash/line-renderer-crossterm", "git-features/progress-prodash", "atty", "crosstermion"]
-prodash-line-renderer-termion = ["prodash/line-renderer", "prodash/line-renderer-termion", "git-features/progress-prodash", "atty", "crosstermion"]
+prodash-tui-renderer = ["prodash/tui-renderer"]
+prodash-line-renderer = ["prodash/line-renderer"]
+prodash-line-renderer-crossterm = ["prodash-line-renderer", "prodash/line-renderer-crossterm", "git-features/progress-prodash", "atty", "crosstermion"]
+prodash-line-renderer-termion = ["prodash-line-renderer", "prodash/line-renderer-termion", "git-features/progress-prodash", "atty", "crosstermion"]
 
 [dependencies]
 anyhow = "1.0.31"

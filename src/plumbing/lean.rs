@@ -65,7 +65,7 @@ fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Opt
             progress,
             prodash::line::Options {
                 level_filter: Some(std::ops::RangeInclusive::new(2, 2)),
-                frames_per_second: 6.0,
+                frames_per_second: crate::shared::DEFAULT_FRAME_RATE,
                 initial_delay: Some(std::time::Duration::from_millis(1000)),
                 output_is_terminal,
                 colored: output_is_terminal && crosstermion::color::allowed(),

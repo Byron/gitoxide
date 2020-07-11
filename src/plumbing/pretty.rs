@@ -79,7 +79,7 @@ fn init_progress(
                 progress,
                 prodash::tui::Options {
                     title: "gitoxide".into(),
-                    frames_per_second: 6.0,
+                    frames_per_second: crate::shared::DEFAULT_FRAME_RATE,
                     stop_if_empty_progress: !progress_keep_open,
                     ..Default::default()
                 },
