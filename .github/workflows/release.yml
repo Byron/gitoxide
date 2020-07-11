@@ -14,17 +14,17 @@ name: release
 on:
   push:
 #    # Enable when testing release infrastructure on a branch.
-    branches:
-      - master
-#    tags:
-#      - 'v[0-9]+.[0-9]+.[0-9]+'
+#    branches:
+#      - master
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-    env:
-      # Set to force version number, e.g., when no tag exists.
-      ARTIFACT_VERSION: TEST-0.0.1
+#    env:
+#      # Set to force version number, e.g., when no tag exists.
+#      ARTIFACT_VERSION: TEST-0.0.1
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -59,8 +59,8 @@ jobs:
           name: artifacts
           path: artifacts
 
-  build-release-unix:
-    name: build-release-unix
+  release-unix:
+    name: release
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
     env:
@@ -188,8 +188,8 @@ jobs:
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
 
-  build-release-windows:
-    name: build-release-windows
+  release-windows:
+    name: release
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
     env:
