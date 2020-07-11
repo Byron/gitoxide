@@ -185,11 +185,17 @@ The top-level command-line interface.
 There are **convenience features**, which combine common choices of the above into one name
 
 * **max** = *pretty-cli* + *fast* + *prodash/tui-renderer-crossterm*
+  * _default_, for unix and windows
 * **max-termion** = *pretty-cli* + *fast* + *prodash/tui-renderer-termion*
+  * for unix only, faster compile times, a little smaller
 * **lean** = *lean-cli* + *fast* + *prodash-line-renderer-crossterm*
+  * for unix and windows
 * **lean-termion** = *lean-cli* + *fast* + *prodash-line-renderer-termion*
+  * for unix only, faster compile times, a little smaller
 * **light** = *lean-cli* + *fast*
+  * crossplatform by nature as this comes with simplified log based progress
 * **small** = *lean-cli*
+  * As small as it can possibly be, no threading, no fast sha1, log based progress only
     
 ### git-features
 
