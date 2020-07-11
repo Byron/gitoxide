@@ -87,24 +87,17 @@ fn prepare_and_run<T>(
                 },
             )
             .expect("tui to come up without io error");
-            let _handle = JoinThreadOnDrop(Some(std::thread::spawn(move || smol::run(render_tui))), None);
+            let handle = std::thread::spawn(move || smol::run(render_tui));
             let mut out = Vec::new();
             let mut err = Vec::new();
             let res = run(Some(sub_progress), &mut out, &mut err);
             // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
             // We know that the printing happens at the end, so this is fine.
-            drop(_handle);
+            handle.join().ok();
             stdout().write_all(&out)?;
             stderr().write_all(&err)?;
             res
         }
-    }
-}
-
-struct JoinThreadOnDrop(Option<std::thread::JoinHandle<()>>, Option<prodash::line::JoinHandle>);
-impl Drop for JoinThreadOnDrop {
-    fn drop(&mut self) {
-        self.0.take().and_then(|handle| handle.join().ok());
     }
 }
 
