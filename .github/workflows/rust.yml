@@ -35,11 +35,11 @@ jobs:
           profile: default
           toolchain: stable
           override: true
-      - name: "Check (crossterm)"
+      - name: "Check default features build on windows"
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-features --all --bins --tests --examples
+          args: --all --bins --tests --examples
       - name: "Test (crossterm)"
         uses: actions-rs/cargo@v1
         with:
