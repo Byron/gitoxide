@@ -63,14 +63,16 @@ fn init_progress(
     verbose: bool,
     progress: bool,
     progress_keep_open: bool,
-) -> (
-    Option<JoinThreadOnDrop>,
-    Option<progress::Either<progress::Log, prodash::tree::Item>>,
-) {
-    super::init_env_logger(verbose);
+) -> (Option<JoinThreadOnDrop>, Option<prodash::tree::Item>) {
+    super::init_env_logger(false);
     match (verbose, progress) {
         (false, false) => (None, None),
-        (true, false) => (None, Some(progress::Either::Left(progress::Log::new(name, Some(1))))),
+        (true, false) => {
+            let progress = prodash::Tree::new();
+            let sub_progress = progress.add_child(name);
+            let handle = crate::shared::setup_line_renderer(progress, 2);
+            (Some(JoinThreadOnDrop(None, Some(handle))), Some(sub_progress))
+        }
         (true, true) | (false, true) => {
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
@@ -87,15 +89,12 @@ fn init_progress(
             .expect("tui to come up without io error");
             let handle = std::thread::spawn(move || smol::run(render_tui));
 
-            (
-                Some(JoinThreadOnDrop(Some(handle))),
-                Some(progress::Either::Right(sub_progress)),
-            )
+            (Some(JoinThreadOnDrop(Some(handle), None)), Some(sub_progress))
         }
     }
 }
 
-struct JoinThreadOnDrop(Option<std::thread::JoinHandle<()>>);
+struct JoinThreadOnDrop(Option<std::thread::JoinHandle<()>>, Option<prodash::line::JoinHandle>);
 impl Drop for JoinThreadOnDrop {
     fn drop(&mut self) {
         self.0.take().and_then(|handle| handle.join().ok());

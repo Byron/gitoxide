@@ -59,20 +59,7 @@ fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Opt
     if verbose {
         let progress = prodash::Tree::new();
         let sub_progress = progress.add_child(name);
-        let output_is_terminal = atty::is(atty::Stream::Stderr);
-        let handle = prodash::line::render(
-            stderr(),
-            progress,
-            prodash::line::Options {
-                level_filter: Some(std::ops::RangeInclusive::new(2, 2)),
-                frames_per_second: crate::shared::DEFAULT_FRAME_RATE,
-                initial_delay: Some(std::time::Duration::from_millis(1000)),
-                output_is_terminal,
-                colored: output_is_terminal && crosstermion::color::allowed(),
-                timestamp: true,
-                ..prodash::line::Options::default()
-            },
-        );
+        let handle = crate::shared::setup_line_renderer(progress, 2);
         (Some(handle), Some(sub_progress))
     } else {
         (None, None)

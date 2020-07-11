@@ -33,7 +33,6 @@ small = ["lean-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt",
               "git-features/progress-prodash",
-              "git-features/progress-log",
               "gitoxide-core/serde1",
               "prodash/log-renderer",
               "prodash-tui-renderer",
