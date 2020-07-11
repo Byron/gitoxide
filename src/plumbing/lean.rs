@@ -39,7 +39,10 @@ mod options {
 use anyhow::Result;
 use git_features::progress;
 use gitoxide_core as core;
-use std::io::{stderr, stdout};
+use std::{
+    io::{stderr, stdout},
+    time::Duration,
+};
 
 #[cfg(not(any(
     feature = "prodash-line-renderer-crossterm",
@@ -59,11 +62,17 @@ fn prepare(verbose: bool, name: &str) -> (prodash::line::JoinHandle, progress::D
 
     let progress = prodash::Tree::new();
     let sub_progress = progress.add_child(name);
+    let output_is_terminal = atty::is(atty::Stream::Stderr);
     let handle = prodash::line::render(
         stderr(),
         progress,
         prodash::line::Options {
             level_filter: Some(std::ops::RangeInclusive::new(2, 2)),
+            frames_per_second: 6.0,
+            initial_delay: Some(Duration::from_millis(1000)),
+            output_is_terminal,
+            colored: output_is_terminal && crosstermion::color::allowed(),
+            timestamp: true,
             ..prodash::line::Options::default()
         },
     );

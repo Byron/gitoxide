@@ -127,7 +127,7 @@ impl index::File {
                         expected: self.checksum_of_pack(),
                     });
                 }
-                let mut progress = root.add_child(format!("Sha1 of pack at '{}'", pack.path().display()));
+                let mut progress = root.add_child(format!("Sha1 of pack"));
                 let (pack_res, id) = parallel::join(
                     move || {
                         let throughput = TimeThroughput::new(pack.data_len());
@@ -206,7 +206,7 @@ impl index::File {
                         let elapsed_s = Instant::now().duration_since(self.then).as_secs_f32();
                         let objects_per_second = (self.entries_seen as f32 / elapsed_s) as u32;
                         self.progress.lock().unwrap().info(format!(
-                            "Reduced {} objects in {:.2}s ({} objects/s, ~{}/s)",
+                            "Verified {} objects in {:.2}s ({} objects/s, ~{}/s)",
                             self.entries_seen,
                             elapsed_s,
                             objects_per_second,
@@ -221,7 +221,7 @@ impl index::File {
                 let input_chunks = index_entries
                     .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
                     .into_iter();
-                let reduce_progress = std::sync::Mutex::new(root.add_child("reduce"));
+                let reduce_progress = std::sync::Mutex::new(root.add_child("Checking"));
                 reduce_progress
                     .lock()
                     .unwrap()

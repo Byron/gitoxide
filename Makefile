@@ -56,8 +56,11 @@ check: ## Build all code in suitable configurations
 	cargo check --all
 	cargo check --all --all-features
 	cargo check --no-default-features --features small
+	cargo check --no-default-features --features light
 	cargo check --no-default-features --features lean
+	cargo check --no-default-features --features lean-termion
 	cargo check --no-default-features --features max
+	cargo check --no-default-features --features max-termion
 	cd gitoxide-core && cargo check --all-features
 	cd git-object && cargo check --all-features
 	cd git-odb && cargo check --all-features

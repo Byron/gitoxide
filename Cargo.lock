@@ -210,13 +210,9 @@ version = "2.33.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bdfa80d47f954d53a35a64987ca1422f495b8d6483c0fe9f7117b36c2a792129"
 dependencies = [
- "ansi_term 0.11.0",
- "atty",
  "bitflags",
- "strsim",
  "textwrap",
  "unicode-width",
- "vec_map",
 ]
 
 [[package]]
@@ -635,6 +631,8 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "argh",
+ "atty",
+ "crosstermion",
  "env_logger",
  "git-features",
  "gitoxide-core",
@@ -1011,9 +1009,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "7.0.1"
+version = "7.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0691612390b0e098a9cef01583b4f86971836a4ab0ab6fa02fc949adc161285"
+checksum = "78c653fe57701a8c7f9a1d5afe00a7e920ba9af72f0909e57745007b3169a259"
 dependencies = [
  "crosstermion",
  "dashmap",
@@ -1321,12 +1319,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
-name = "strsim"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
-
-[[package]]
 name = "structopt"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1451,6 +1443,7 @@ dependencies = [
  "crossterm",
  "either",
  "itertools",
+ "termion",
  "unicode-segmentation",
  "unicode-width",
 ]
@@ -1499,12 +1492,6 @@ name = "unicode-xid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
-
-[[package]]
-name = "vec_map"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "version_check"

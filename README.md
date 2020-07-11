@@ -169,19 +169,26 @@ The top-level command-line interface.
   * Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
     as well as fast, hardware accelerated hashing.
   * If disabled, the binary will be visibly smaller.
-* **pretty-cli** _(default)_
-  * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
-* **lean-cli** _(mutually exclusive to pretty-cli)_
-  * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
-  * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
+* _(mutually exclusive)_
+  * **pretty-cli** _(default)_
+    * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
+    * provides a terminal user interface for detailed and exhaustive progress.
+    * provides a line renderer for log-like progress
+  * **lean-cli**
+    * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
+    * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
+    * provides a line renderer for log-like progress
 * **prodash-line-renderer-crossterm** or **prodash-line-renderer-termion** _(mutually exclusive)_
   * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
     that appears after a short duration.
   
-There are convenience features, which combine common choices of the above into one name
+There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast*
-* **lean** = *lean-cli* + *fast*
+* **max** = *pretty-cli* + *fast* + *prodash/tui-renderer-crossterm*
+* **max-termion** = *pretty-cli* + *fast* + *prodash/tui-renderer-termion*
+* **lean** = *lean-cli* + *fast* + *prodash-line-renderer-crossterm*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-line-renderer-termion*
+* **light** = *lean-cli* + *fast*
 * **small** = *lean-cli*
     
 ### git-features
@@ -237,6 +244,30 @@ All feature toggles are additive.
    * ...even if that includes only the most common usecases.
  * **Prefer to increment major version rapidly...**
    * ...instead of keeping major version zero for longer than needed.
+   
+## Plumbing vs Porcelain
+
+Both terms are coming from the `git` implementation itself, even though it won't necessarily point out which commands are plumbing and which
+are porcelain.
+The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or for special use
+cases.
+The term *porcelain* refers to those with a decent user experience, they are primarily intended for use by humans.
+
+In any case, both types of programs must self-document their capabilities using through the `--help` flag.
+
+From there, we can derive a few rules to try to adhere to:
+
+### Plumbing
+
+* does not show any progress or logging output by default
+* if supported and logging is enabled, it will show timestamps in UTC
+
+### Porcelain
+
+* Provides output to stderr by default to provide progress information. There is no need to allow disabling it, but it shouldn't show up unless
+  the operation takes some time.
+* If timestamps are shown, they are in localtime.
+* Non-progress information goes to stdout.
 
 ## Maintenance Guide
 
@@ -263,6 +294,9 @@ Thus one has to post-process the file by reducing its size by one using `truncat
 
 ## Shortcomings
 
+* **lean** and **light** and **small** builds don't support non-UTF-8 paths
+  * This is because they depend on `argh`, which [does not yet support parsing OsStrings](https://github.com/google/argh/issues/33). We however
+    believe it eventually will do so and thus don't move on to [`pico-args`](https://github.com/RazrFalcon/pico-args/blob/master/examples/app.rs).
 * **Packfiles use memory maps**
   * Even though they are comfortable to use and fast, they squelch IO errors.
   * _potential remedy_: We could generalize the Pack to make it possible to work on in-memory buffers directly. That way, one
@@ -284,5 +318,5 @@ Thus one has to post-process the file by reducing its size by one using `truncat
 ## Fun facts
 
 * Originally I was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)
-  and believe that with `gitoxide` it will be possible to provide the fastest implementation for that problem.
+  and believe that with `gitoxide` it will be possible to provide the fastest solution for it.
 
