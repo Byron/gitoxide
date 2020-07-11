@@ -60,7 +60,7 @@ jobs:
           path: artifacts
 
   build-release-unix:
-    name: build-release
+    name: build-release-unix
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
     env:
@@ -184,7 +184,7 @@ jobs:
           asset_content_type: application/octet-stream
 
   build-release-windows:
-    name: build-release
+    name: build-release-windows
     needs: ['create-release']
     runs-on: ${{ matrix.os }}
     env:
