@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use gitoxide_core as core;
 use std::io::{stderr, stdout, Write};
 use structopt::StructOpt;
@@ -57,12 +57,14 @@ mod options {
     }
 }
 
-fn prepare_and_run<T>(
+fn prepare_and_run<T: Send + 'static>(
     name: &str,
     verbose: bool,
     progress: bool,
     progress_keep_open: bool,
-    run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>,
+    run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>
+        + Send
+        + 'static,
 ) -> Result<T> {
     super::init_env_logger(false);
     match (verbose, progress) {
@@ -74,6 +76,10 @@ fn prepare_and_run<T>(
             run(Some(sub_progress), &mut stdout(), &mut stderr())
         }
         (true, true) | (false, true) => {
+            enum Event<T> {
+                UIDone,
+                ComputationDone(Result<T>, Vec<u8>, Vec<u8>),
+            };
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
             let render_tui = prodash::tui::render(
@@ -87,16 +93,32 @@ fn prepare_and_run<T>(
                 },
             )
             .expect("tui to come up without io error");
-            let handle = std::thread::spawn(move || smol::run(render_tui));
-            let mut out = Vec::new();
-            let mut err = Vec::new();
-            let res = run(Some(sub_progress), &mut out, &mut err);
-            // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
-            // We know that the printing happens at the end, so this is fine.
-            handle.join().ok();
-            stdout().write_all(&out)?;
-            stderr().write_all(&err)?;
-            res
+            let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
+            let ui_handle = std::thread::spawn({
+                let tx = tx.clone();
+                move || {
+                    smol::run(render_tui);
+                    tx.send(Event::UIDone).ok();
+                }
+            });
+            std::thread::spawn(move || {
+                // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
+                // We know that the printing happens at the end, so this is fine.
+                let mut out = Vec::new();
+                let mut err = Vec::new();
+                let res = run(Some(sub_progress), &mut out, &mut err);
+                tx.send(Event::ComputationDone(res, out, err)).ok();
+            });
+            match rx.recv() {
+                Ok(Event::UIDone) => Err(anyhow!("Operation cancelled by user")),
+                Ok(Event::ComputationDone(res, out, err)) => {
+                    ui_handle.join().ok();
+                    stdout().write_all(&out)?;
+                    stderr().write_all(&err)?;
+                    res
+                }
+                _ => Err(anyhow!("Error communicating with threads")),
+            }
         }
     }
 }
@@ -116,7 +138,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
-            |progress, out, err| {
+            move |progress, out, err| {
                 core::verify_pack_or_pack_index(path, progress, if statistics { Some(format) } else { None }, out, err)
             },
         )
