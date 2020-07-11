@@ -64,7 +64,7 @@ mod in_parallel {
         thread::scope(move |s| {
             let receive_result = {
                 let (send_input, receive_input) = crossbeam_channel::bounded::<I>(logical_cores);
-                let (send_result, receive_result) = flume::bounded::<O>(logical_cores);
+                let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(logical_cores);
                 for thread_id in 0..logical_cores {
                     s.spawn({
                         let send_result = send_result.clone();
