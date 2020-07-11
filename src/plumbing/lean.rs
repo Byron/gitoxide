@@ -59,7 +59,7 @@ fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Opt
     if verbose {
         let progress = prodash::Tree::new();
         let sub_progress = progress.add_child(name);
-        let handle = crate::shared::setup_line_renderer(progress, 2);
+        let handle = crate::shared::setup_line_renderer(progress, 2, false);
         (Some(handle), Some(sub_progress))
     } else {
         (None, None)

@@ -70,10 +70,34 @@ fn prepare_and_run<T: Send + 'static>(
     match (verbose, progress) {
         (false, false) => run(None, &mut stdout(), &mut stderr()),
         (true, false) => {
+            enum Event<T> {
+                UIDone,
+                ComputationDone(Result<T>),
+            };
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
-            let _handle = crate::shared::setup_line_renderer(progress, 2);
-            run(Some(sub_progress), &mut stdout(), &mut stderr())
+            let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
+            let ui_handle = crate::shared::setup_line_renderer(progress, 2, true);
+            ctrlc::set_handler({
+                let tx = tx.clone();
+                move || {
+                    tx.send(Event::UIDone).ok();
+                }
+            })?;
+            std::thread::spawn(move || {
+                let res = run(Some(sub_progress), &mut stdout(), &mut stderr());
+                tx.send(Event::ComputationDone(res)).ok();
+            });
+            match rx.recv()? {
+                Event::UIDone => {
+                    ui_handle.shutdown_and_wait();
+                    Err(anyhow!("Operation cancelled by user"))
+                }
+                Event::ComputationDone(res) => {
+                    ui_handle.shutdown_and_wait();
+                    res
+                }
+            }
         }
         (true, true) | (false, true) => {
             enum Event<T> {
@@ -109,15 +133,14 @@ fn prepare_and_run<T: Send + 'static>(
                 let res = run(Some(sub_progress), &mut out, &mut err);
                 tx.send(Event::ComputationDone(res, out, err)).ok();
             });
-            match rx.recv() {
-                Ok(Event::UIDone) => Err(anyhow!("Operation cancelled by user")),
-                Ok(Event::ComputationDone(res, out, err)) => {
+            match rx.recv()? {
+                Event::UIDone => Err(anyhow!("Operation cancelled by user")),
+                Event::ComputationDone(res, out, err) => {
                     ui_handle.join().ok();
                     stdout().write_all(&out)?;
                     stderr().write_all(&err)?;
                     res
                 }
-                _ => Err(anyhow!("Error communicating with threads")),
             }
         }
     }

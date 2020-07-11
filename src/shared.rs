@@ -2,7 +2,11 @@
 pub const DEFAULT_FRAME_RATE: f32 = 6.0;
 
 #[cfg(feature = "prodash-line-renderer")]
-pub fn setup_line_renderer(progress: prodash::Tree, level: prodash::tree::Level) -> prodash::line::JoinHandle {
+pub fn setup_line_renderer(
+    progress: prodash::Tree,
+    level: prodash::tree::Level,
+    hide_cursor: bool,
+) -> prodash::line::JoinHandle {
     let output_is_terminal = atty::is(atty::Stream::Stderr);
     prodash::line::render(
         std::io::stderr(),
@@ -14,6 +18,7 @@ pub fn setup_line_renderer(progress: prodash::Tree, level: prodash::tree::Level)
             output_is_terminal,
             colored: output_is_terminal && crosstermion::color::allowed(),
             timestamp: true,
+            hide_cursor,
             ..prodash::line::Options::default()
         },
     )

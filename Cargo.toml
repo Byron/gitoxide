@@ -23,6 +23,7 @@ doctest = false
 
 [features]
 default = ["max"]
+
 max = ["fast", "pretty-cli", "prodash/tui-renderer-crossterm", "prodash-line-renderer-crossterm"]
 max-termion = ["fast", "pretty-cli", "prodash/tui-renderer-termion", "prodash-line-renderer-termion"]
 lean = ["fast", "lean-cli", "prodash-line-renderer-crossterm"]
@@ -37,6 +38,7 @@ pretty-cli = ["structopt",
               "prodash/log-renderer",
               "prodash-tui-renderer",
               "prodash-line-renderer",
+              "ctrlc",
               "prodash/localtime",
               "env_logger",
               "smol"]
@@ -63,6 +65,7 @@ smol = { version = "0.1.18", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }
 env_logger = { version = "0.7.1", optional = true, default-features = false, features = ["humantime", "termcolor", "atty"] }
 crosstermion = { version = "0.1.5", optional = true, default-features = false }
+ctrlc = { version = "3.1.4", optional = true, default-features = false, features = ['termination'] }
 
 [profile.release]
 overflow-checks = false
