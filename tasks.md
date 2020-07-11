@@ -11,7 +11,7 @@
     * [x] in Termion
     * [x] in crossterm
  * [x] integrate with 'lean' plumbing
- * [ ] integrate with 'max' plumbing
+ * [x] integrate with 'max' plumbing
 * **initial release**
     * [ ] use 'main' instead of 'master' by default during repo-init
 * **pack**

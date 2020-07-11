@@ -372,6 +372,12 @@ name = "crosstermion"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6230d2d1d8306a9aad35b85225e6a713da16421b6bc258bf58b982336257a5f9"
+
+[[package]]
+name = "crosstermion"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "032534543c938ffc4106ee75411f4b7be2e0260e044d17dae36f9409ada87895"
 dependencies = [
  "ansi_term 0.12.1",
  "crossterm",
@@ -467,15 +473,6 @@ checksum = "1b41bfe1d74263ea9d084be951077614b3b98b4e59a9dafab1467645a9e52305"
 dependencies = [
  "libc",
  "winapi",
-]
-
-[[package]]
-name = "flume"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "855e285c3835897065a6ba6f9463b44553eb9f29c7988d692f3d41283b47388b"
-dependencies = [
- "spin",
 ]
 
 [[package]]
@@ -641,7 +638,7 @@ dependencies = [
  "anyhow",
  "argh",
  "atty",
- "crosstermion",
+ "crosstermion 0.1.5",
  "ctrlc",
  "env_logger",
  "git-features",
@@ -1032,13 +1029,12 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "7.0.2"
+version = "7.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78c653fe57701a8c7f9a1d5afe00a7e920ba9af72f0909e57745007b3169a259"
+checksum = "07b07566ec8357eb8ff124bceecfe456c5cc6ff9667ffeb13ded2d47f6697776"
 dependencies = [
- "crosstermion",
+ "crosstermion 0.2.0",
  "dashmap",
- "flume",
  "futures-core",
  "futures-util",
  "humantime 2.0.1",
@@ -1094,9 +1090,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.1.56"
+version = "0.1.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
+checksum = "41cc0f7e4d5d4544e8861606a285bb08d3e70712ccc7d2b84d7c0ccfaf4b05ce"
 
 [[package]]
 name = "redox_termios"
@@ -1276,12 +1272,6 @@ dependencies = [
  "redox_syscall",
  "winapi",
 ]
-
-[[package]]
-name = "spin"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "standback"
