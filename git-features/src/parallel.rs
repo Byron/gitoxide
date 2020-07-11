@@ -72,7 +72,7 @@ mod in_parallel {
                         move |_| {
                             let mut state = new_thread_state(thread_id);
                             for item in receive_input {
-                                send_result.send(consume(item, &mut state)).ok();
+                                send_result.send(consume(item, &mut state)).unwrap();
                             }
                         }
                     });
