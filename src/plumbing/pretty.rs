@@ -1,5 +1,4 @@
 use anyhow::Result;
-use git_features::progress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout, Write};
 use structopt::StructOpt;
@@ -58,20 +57,21 @@ mod options {
     }
 }
 
-fn init_progress(
+fn prepare_and_run<T>(
     name: &str,
     verbose: bool,
     progress: bool,
     progress_keep_open: bool,
-) -> (Option<JoinThreadOnDrop>, Option<prodash::tree::Item>) {
+    run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>,
+) -> Result<T> {
     super::init_env_logger(false);
     match (verbose, progress) {
-        (false, false) => (None, None),
+        (false, false) => run(None, &mut stdout(), &mut stderr()),
         (true, false) => {
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
-            let handle = crate::shared::setup_line_renderer(progress, 2);
-            (Some(JoinThreadOnDrop(None, Some(handle))), Some(sub_progress))
+            let _handle = crate::shared::setup_line_renderer(progress, 2);
+            run(Some(sub_progress), &mut stdout(), &mut stderr())
         }
         (true, true) | (false, true) => {
             let progress = prodash::Tree::new();
@@ -87,9 +87,16 @@ fn init_progress(
                 },
             )
             .expect("tui to come up without io error");
-            let handle = std::thread::spawn(move || smol::run(render_tui));
-
-            (Some(JoinThreadOnDrop(Some(handle), None)), Some(sub_progress))
+            let _handle = JoinThreadOnDrop(Some(std::thread::spawn(move || smol::run(render_tui))), None);
+            let mut out = Vec::new();
+            let mut err = Vec::new();
+            let res = run(Some(sub_progress), &mut out, &mut err);
+            // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
+            // We know that the printing happens at the end, so this is fine.
+            drop(_handle);
+            stdout().write_all(&out)?;
+            stderr().write_all(&err)?;
+            res
         }
     }
 }
@@ -111,23 +118,16 @@ pub fn main() -> Result<()> {
             format,
             progress_keep_open,
             statistics,
-        } => {
-            let (handle, progress) = init_progress("verify-pack", verbose, progress, progress_keep_open);
-            let mut buf = Vec::new();
-            let res = core::verify_pack_or_pack_index(
-                path,
-                progress,
-                if statistics { Some(format) } else { None },
-                &mut buf,
-                stderr(),
-            )
-            .map(|_| ());
-            // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
-            // We know that the printing happens at the end, so this is fine.
-            drop(handle);
-            stdout().write_all(&buf)?;
-            res
-        }
+        } => prepare_and_run(
+            "verify-pack",
+            verbose,
+            progress,
+            progress_keep_open,
+            |progress, out, err| {
+                core::verify_pack_or_pack_index(path, progress, if statistics { Some(format) } else { None }, out, err)
+            },
+        )
+        .map(|_| ()),
     }?;
     Ok(())
 }
