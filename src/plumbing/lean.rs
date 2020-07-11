@@ -37,49 +37,46 @@ mod options {
 }
 
 use anyhow::Result;
-use git_features::progress;
 use gitoxide_core as core;
-use std::{
-    io::{stderr, stdout},
-    time::Duration,
-};
+use std::io::{stderr, stdout};
 
 #[cfg(not(any(
     feature = "prodash-line-renderer-crossterm",
     feature = "prodash-line-renderer-termion"
 )))]
-fn prepare(verbose: bool, name: &str) -> ((), progress::Log) {
+fn prepare(verbose: bool, name: &str) -> ((), Option<git_features::progress::Log>) {
     super::init_env_logger(verbose);
-    ((), progress::Log::new(name, Some(1)))
+    ((), Some(git_features::progress::Log::new(name, Some(1))))
 }
 
 #[cfg(any(
     feature = "prodash-line-renderer-crossterm",
     feature = "prodash-line-renderer-termion"
 ))]
-fn prepare(verbose: bool, name: &str) -> (prodash::line::JoinHandle, progress::DoOrDiscard<prodash::tree::Item>) {
+fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Option<prodash::tree::Item>) {
     super::init_env_logger(false);
 
-    let progress = prodash::Tree::new();
-    let sub_progress = progress.add_child(name);
-    let output_is_terminal = atty::is(atty::Stream::Stderr);
-    let handle = prodash::line::render(
-        stderr(),
-        progress,
-        prodash::line::Options {
-            level_filter: Some(std::ops::RangeInclusive::new(2, 2)),
-            frames_per_second: 6.0,
-            initial_delay: Some(Duration::from_millis(1000)),
-            output_is_terminal,
-            colored: output_is_terminal && crosstermion::color::allowed(),
-            timestamp: true,
-            ..prodash::line::Options::default()
-        },
-    );
-    (
-        handle,
-        progress::DoOrDiscard::from(if verbose { Some(sub_progress) } else { None }),
-    )
+    if verbose {
+        let progress = prodash::Tree::new();
+        let sub_progress = progress.add_child(name);
+        let output_is_terminal = atty::is(atty::Stream::Stderr);
+        let handle = prodash::line::render(
+            stderr(),
+            progress,
+            prodash::line::Options {
+                level_filter: Some(std::ops::RangeInclusive::new(2, 2)),
+                frames_per_second: 6.0,
+                initial_delay: Some(std::time::Duration::from_millis(1000)),
+                output_is_terminal,
+                colored: output_is_terminal && crosstermion::color::allowed(),
+                timestamp: true,
+                ..prodash::line::Options::default()
+            },
+        );
+        (Some(handle), Some(sub_progress))
+    } else {
+        (None, None)
+    }
 }
 
 pub fn main() -> Result<()> {
@@ -94,7 +91,7 @@ pub fn main() -> Result<()> {
             let (_handle, progress) = prepare(verbose, "verify-pack");
             core::verify_pack_or_pack_index(
                 path,
-                progress.into(),
+                progress,
                 if statistics {
                     Some(core::OutputFormat::Human)
                 } else {
