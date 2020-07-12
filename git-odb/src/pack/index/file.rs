@@ -61,7 +61,7 @@ pub struct File {
 
 impl File {
     pub fn kind(&self) -> Kind {
-        self.kind.clone()
+        self.kind
     }
     pub fn num_objects(&self) -> u32 {
         self.num_objects
@@ -160,12 +160,11 @@ impl File {
             let mid = (lower_bound + upper_bound) / 2;
             let mid_sha = self.oid_at_index(mid);
 
-            if id < mid_sha {
-                upper_bound = mid;
-            } else if id == mid_sha {
-                return Some(mid);
-            } else {
-                lower_bound = mid + 1;
+            use std::cmp::Ordering::*;
+            match id.cmp(mid_sha) {
+                Less => upper_bound = mid,
+                Equal => return Some(mid),
+                Greater => lower_bound = mid + 1,
             }
         }
         None

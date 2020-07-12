@@ -127,7 +127,7 @@ impl index::File {
                         expected: self.checksum_of_pack(),
                     });
                 }
-                let mut progress = root.add_child(format!("Sha1 of pack"));
+                let mut progress = root.add_child("Sha1 of pack");
                 let (pack_res, id) = parallel::join(
                     move || {
                         let throughput = TimeThroughput::new(pack.data_len());
@@ -218,9 +218,7 @@ impl index::File {
 
                 const CHUNK_SIZE: usize = 1000;
                 let there_are_enough_entries_to_process = || index_entries.len() > CHUNK_SIZE * 2;
-                let input_chunks = index_entries
-                    .chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE))
-                    .into_iter();
+                let input_chunks = index_entries.chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE));
                 let reduce_progress = std::sync::Mutex::new(root.add_child("Checking"));
                 reduce_progress
                     .lock()
@@ -274,7 +272,7 @@ impl index::File {
                             if actual_oid != index_entry.oid {
                                 return Err(ChecksumError::PackObjectMismatch {
                                     actual: actual_oid,
-                                    expected: index_entry.oid.clone(),
+                                    expected: index_entry.oid,
                                     offset: index_entry.pack_offset,
                                     kind: object_kind,
                                 });

@@ -85,7 +85,7 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
         size += ((c & 0b0111_1111) as u64) << s;
         s += 7
     }
-    return (type_id, size, i);
+    (type_id, size, i)
 }
 
 impl Header {
