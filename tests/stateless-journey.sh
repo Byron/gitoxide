@@ -21,14 +21,6 @@ title "CLI ${kind}"
 (when "initializing a repository"
   (with "an empty directory"
     (sandbox
-      (on_ci
-        precondition "git init still matches our copy of it" && {
-          expect_run ${SUCCESSFULLY} git init &>/dev/null
-          expect_snapshot "$fixtures/baseline-init" .git
-        }
-      )
-    )
-    (sandbox
       it "succeeds" && {
         WITH_SNAPSHOT="$snapshot/init-success" \
         expect_run $SUCCESSFULLY "$exe" init
