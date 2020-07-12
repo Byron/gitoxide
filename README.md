@@ -99,7 +99,37 @@ The CLI uses various crates, please see _'Development Status'_ for details.
 
 ## Installation
 
-**TBD**
+### Binary Release
+
+```sh
+curl -LSfs https://raw.githubusercontent.com/byron/git-oxide/master/ci/install.sh | \
+    sh -s -- --git byron/git-oxide --crate gio-max-termion
+```
+
+See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
+on your needs, for _Linux_, _MacOS_ and _Windows_.
+
+[releases]: https://github.com/Byron/git-oxide/releases
+
+#### Cargo
+
+`cargo` is the Rust package manager which can easily be obtained through [rustup][rustup]. With it, you can build your own binary
+effortlessly and for your particular CPU for additional performance gains.
+
+```
+# The default installation, 'max'
+cargo install gitoxide
+
+# On linux, it's a little faster to compile the termion version, which also results in slightly smaller binaries
+cargo install gitoxide --no-default-features --features max-termion
+
+# For smaller binaries and even faster build times that are traded for a less fancy CLI implementation, use `lean`
+# or `lean-termion` respectively.
+cargo install gitoxide --no-default-features --features lean
+```
+
+[releases]: https://github.com/Byron/git-oxide/releases 
+[rustup]: https://rustup.rs
 
 ## Project Goals
 
