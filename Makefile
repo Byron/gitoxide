@@ -97,7 +97,21 @@ stress: ## Run various algorithms on big repositories
 
 ##@ Maintenance
 
-update-assets: ## refresh assets compiles into the binaries from their source
-	-rm -Rf git-core/assets/baseline-init
-	mkdir -p git-core/assets
-	cp -R tests/fixtures/baseline-init git-core/assets/baseline-init
+baseline_asset_dir = git-repository/src/assets/baseline-init
+baseline_asset_fixture = tests/fixtures/baseline-init
+
+$(baseline_asset_fixture):
+	mkdir -p $@
+	cd "$@" && git init --bare && \
+		sed -i '' -E '/bare = true|ignorecase = true|precomposeunicode = true|filemode = true/d' config && \
+		sed -i '' 's/master/main/' $$(find . -type f)
+
+
+update-assets: $(baseline_asset_fixture) ## refresh assets compiles into the binaries from their source
+	-rm -Rf $(baseline_asset_dir)
+	mkdir -p $(dir $(baseline_asset_dir))
+	cp -R $< $(baseline_asset_dir)
+
+force-update-assets: ## As update-assets, but will run git to update the baseline as well
+	-rm -Rf $(baseline_asset_fixture)
+	$(MAKE) update-assets

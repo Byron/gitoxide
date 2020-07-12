@@ -49,6 +49,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] API documentation with examples
 * **git-repository**
   * [x] initialize
+    * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] read and write all data types
   * [ ] rev-parsing and ref history
   * [ ] remotes with push and pull
