@@ -280,6 +280,10 @@ From there, we can derive a few rules to try to adhere to:
 
 Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`.
 
+### Creating a release
+
+Run `etc/release.sh` to release all crates in leaf-first order using `cargo release`.
+
 ### Which git-version to chase?
 
 Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
