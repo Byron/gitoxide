@@ -6,6 +6,7 @@ license = "MIT"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
+include = ["src/**/*", "src/assets/**"]
 
 [lib]
 doctest = false
