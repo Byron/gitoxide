@@ -3,6 +3,7 @@ name = "git-odb"
 version = "0.1.0"
 repository = "https://github.com/Byron/git-oxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+license = "MIT"
 description = "Implements a git object database for loose objects and packs"
 edition = "2018"
 
