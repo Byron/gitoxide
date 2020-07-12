@@ -1,4 +1,5 @@
 [![Rust](https://github.com/Byron/git-oxide/workflows/Rust/badge.svg)](https://github.com/Byron/git-oxide/actions)
+[![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 
 **gio** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
 user-experience, and perform as good or better than the native implementation, and make git tooling more
