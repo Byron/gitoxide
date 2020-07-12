@@ -1,9 +1,9 @@
 [package]
 name = "git-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
+repository = "https://github.com/Byron/git-oxide"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-publish = false
 license = "MIT"
 edition = "2018"
 

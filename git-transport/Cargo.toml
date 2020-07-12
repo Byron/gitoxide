@@ -1,10 +1,10 @@
 [package]
 name = "git-transport"
 version = "0.0.0"
+repository = "https://github.com/Byron/git-oxide"
+description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-description = "A WIP crate of the gitoxide project"
-publish = false
 
 [lib]
 doctest = false

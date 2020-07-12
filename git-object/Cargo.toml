@@ -1,8 +1,10 @@
 [package]
 name = "git-object"
 version = "0.1.0"
+description = "Borrowed and owned git objects with deserialization and serialization support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-publish = false
+repository = "https://github.com/Byron/git-oxide"
+license = "MIT"
 edition = "2018"
 
 [lib]

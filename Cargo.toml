@@ -1,11 +1,11 @@
 [package]
 name = "gitoxide"
 description = "A command-line application for interacting with git repositories"
-version = "0.1.0"
+repository = "https://github.com/Byron/git-oxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-publish = false
-license = "MIT"
 edition = "2018"
+license = "MIT"
+version = "0.1.0"
 default-run = "gio"
 
 [[bin]]

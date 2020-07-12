@@ -1,9 +1,9 @@
 [package]
 name = "gitoxide-core"
 description = "The library implementating all capabilities of the gitoxide CLI"
+repository = "https://github.com/Byron/git-oxide"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-publish = false
 license = "MIT"
 edition = "2018"
 

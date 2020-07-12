@@ -1,8 +1,10 @@
 [package]
 name = "git-repository"
+repository = "https://github.com/Byron/git-oxide"
+description = "Manipulation of git repositories"
+license = "MIT"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-publish = false
 edition = "2018"
 
 [lib]
