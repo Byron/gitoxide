@@ -6,6 +6,7 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT"
 description = "Implements a git object database for loose objects and packs"
 edition = "2018"
+include = ["src/**/*"]
 
 [lib]
 doctest = false
