@@ -6,6 +6,8 @@ hackable.
 
 The CLI uses various crates, please see _'Development Status'_ for details.
 
+[![asciicast](https://asciinema.org/a/346976.svg)](https://asciinema.org/a/346976)
+
 ## Development Status
 
 * **gitoxide** _(CLI)_
@@ -14,8 +16,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * repository
     * [x] init
   * plumbing
-    * [x] pack verify
-    * [x] pack index verify including each object sha1 and statistics
+    * [x] [pack verify](https://asciinema.org/a/346975)
+    * [x] [pack index verify](https://asciinema.org/a/346976) including each object sha1 and statistics
 * **git-object**
   * represent borrowed commits, trees and tags
   * *decode (zero-copy)*
