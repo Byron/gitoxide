@@ -7,8 +7,7 @@ mod options {
 
     #[derive(Debug, StructOpt)]
     #[structopt(about = "The git")]
-    #[structopt(settings = &[AppSettings::SubcommandRequired,
-                        AppSettings::ColoredHelp])]
+    #[structopt(settings = &[AppSettings::SubcommandRequired, AppSettings::ColoredHelp])]
     pub struct Args {
         #[structopt(subcommand)]
         pub cmd: Subcommands,

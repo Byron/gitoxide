@@ -12,8 +12,7 @@ mod options {
 
     #[derive(Debug, StructOpt)]
     #[structopt(name = "gio-plumbing", about = "The git underworld")]
-    #[structopt(settings = &[AppSettings::SubcommandRequired,
-                        AppSettings::ColoredHelp])]
+    #[structopt(settings = &[AppSettings::SubcommandRequired, AppSettings::ColoredHelp])]
     pub struct Args {
         #[structopt(subcommand)]
         pub cmd: Subcommands,
