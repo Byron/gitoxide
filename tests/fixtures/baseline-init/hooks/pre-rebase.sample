@@ -43,7 +43,7 @@ git show-ref -q "$topic" || {
 }
 
 # Is topic fully merged to main?
-not_in_main=`git rev-list --pretty=oneline ^master "$topic"`
+not_in_main=`git rev-list --pretty=oneline ^main "$topic"`
 if test -z "$not_in_main"
 then
 	echo >&2 "$topic is fully merged to main; better remove it."
@@ -95,7 +95,7 @@ published from being rewound.
 
 The workflow assumed here is:
 
- * Once a topic branch forks from "main", "master" is never
+ * Once a topic branch forks from "main", "main" is never
    merged into it again (either directly or indirectly).
 
  * Once a topic branch is fully cooked and merged into "main",

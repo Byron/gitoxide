@@ -104,7 +104,7 @@ $(baseline_asset_fixture):
 	mkdir -p $@
 	cd "$@" && git init --bare && \
 		sed -i '' -E '/bare = true|ignorecase = true|precomposeunicode = true|filemode = true/d' config && \
-		sed -i '' 's/master/main/' $$(find . -type f)
+		sed -i '' 's/master/main/g' $$(find . -type f)
 
 
 update-assets: $(baseline_asset_fixture) ## refresh assets compiles into the binaries from their source
