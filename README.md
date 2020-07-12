@@ -160,7 +160,7 @@ cargo install gitoxide --no-default-features --features lean
  * **async as opt-in**
    * Making certain capabilities available through `async` APIs allows for abortable operations, which
      may be interesting for interactive user interfaces. Thus it is something worth considering, but only
-     behind a feature flag and once the need transpire.
+     behind a feature flag and once the need transpires.
    * Ideally many operations powered by implementors of `std::io::{Read, Write}` and `std::iter::Iterator`,
      which makes unblocking them trivial using the fantastic `blocking` crate. Only when these are used internally,
      providing a separate async version of these operations can be beneficial to make them abortable.
@@ -177,8 +177,6 @@ cargo install gitoxide --no-default-features --features lean
      which doesn't lend itself well to async IO out of the box.
 
 ## Roadmap to Future
-
-As you can see from the version numbers, this project dispenses major version generously.
 
 ### Roadmap to 1.0
 
@@ -199,18 +197,18 @@ This guide documents which features are available for each of the crates provide
 
 The top-level command-line interface.
 
-* **fast** _(default)_
+* **fast**
   * Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
     as well as fast, hardware accelerated hashing.
   * If disabled, the binary will be visibly smaller.
 * _(mutually exclusive)_
-  * **pretty-cli** _(default)_
+  * **pretty-cli**
     * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
     * provides a terminal user interface for detailed and exhaustive progress.
     * provides a line renderer for log-like progress
   * **lean-cli**
     * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
-    * If `pretty-cli` is enabled as well, `small-cli` will take precedence, and you pay for building unnecessary dependencies.
+    * If `pretty-cli` is enabled as well, `lean-cli` will take precedence, and you pay for building unnecessary dependencies.
     * provides a line renderer for log-like progress
 * **prodash-line-renderer-crossterm** or **prodash-line-renderer-termion** _(mutually exclusive)_
   * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
@@ -218,12 +216,12 @@ The top-level command-line interface.
   
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash/tui-renderer-crossterm*
+* **max** = *pretty-cli* + *fast* + *prodash-tui-renderer-crossterm*
   * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash/tui-renderer-termion*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-tui-renderer-termion*
   * for unix only, faster compile times, a little smaller
 * **lean** = *lean-cli* + *fast* + *prodash-line-renderer-crossterm*
-  * for unix and windows
+  * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
 * **lean-termion** = *lean-cli* + *fast* + *prodash-line-renderer-termion*
   * for unix only, faster compile times, a little smaller
 * **light** = *lean-cli* + *fast*
@@ -237,21 +235,19 @@ A crate to help controlling which capabilities are available from the top-level 
 `gitoxide` crate that uses `git-features`.
 All feature toggles are additive.
 
-* **parallel** _(optional)_
+* **parallel**
   * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
     where it makes sense.
   * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
 * **fast-sha1** 
   * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
-    CPUs that support it, like AMD Ryzen.
+    CPUs that support it, like AMD Ryzen or Intel Core i3.
 * **progress-log**
-  * Implement the `Progress` trait using the `log` crate. Throttle progress output to one every 0.5 seconds unless messsages
+  * Implement the `Progress` trait using the `log` crate. Throttle progress output to one every 0.5 seconds unless messages
     are sent manually.
 * **progress-prodash**
   * Implement the `Progress` trait for the tree data structures provided by `prodash`, which enables using a terminal user
     interface for progress.
-  * This is by far the most expensive progress option, as it pulls in an `async` TUI along with supporting infrastructure,
-    which is kept minimal but has quite a footprint nonetheless.
     
  ### Serialization Support
  
@@ -289,13 +285,13 @@ All feature toggles are additive.
 
 Both terms are coming from the `git` implementation itself, even though it won't necessarily point out which commands are plumbing and which
 are porcelain.
-The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or for special use
+The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or for certain use
 cases.
 The term *porcelain* refers to those with a decent user experience, they are primarily intended for use by humans.
 
 In any case, both types of programs must self-document their capabilities using through the `--help` flag.
 
-From there, we can derive a few rules to try to adhere to:
+From there, we can derive a few rules to try adhere to:
 
 ### Plumbing
 
@@ -311,7 +307,8 @@ From there, we can derive a few rules to try to adhere to:
 
 ## Maintenance Guide
 
-Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`.
+Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
+get an overview.
 
 ### Creating a release
 
@@ -363,4 +360,6 @@ Thus one has to post-process the file by reducing its size by one using `truncat
 
 * Originally I was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)
   and believe that with `gitoxide` it will be possible to provide the fastest solution for it.
-
+* I have been absolutely blown away by `git` from the first time I experienced git more than 13 years ago, and 
+  tried to implement it in [various shapes](https://github.com/gitpython-developers/GitPython/pull/1028) and [forms](https://github.com/byron/gogit)
+  multiple [times](https://github.com/Byron/gitplusplus). Now with Rust I finally feel to have found the right tool for the job!
