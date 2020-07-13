@@ -5,4 +5,4 @@ mod file;
 
 mod index;
 
-mod indexed_pack;
+mod bundle;
