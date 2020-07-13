@@ -1,8 +1,10 @@
 use crate::pack;
-use git_object as object;
-use git_object::borrowed;
+use git_object::{self as object, borrowed};
 use quick_error::quick_error;
-use std::path::{Path, PathBuf};
+use std::{
+    convert::TryFrom,
+    path::{Path, PathBuf},
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -33,23 +35,9 @@ pub struct Bundle {
 }
 
 impl Bundle {
+    /// `path` is either a pack file or an index file
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
-        let path = path.as_ref();
-        let ext = path
-            .extension()
-            .and_then(|e| e.to_str())
-            .ok_or_else(|| Error::InvalidPath(path.to_owned()))?;
-        Ok(match ext {
-            "idx" => Self {
-                index: pack::index::File::at(path)?,
-                pack: pack::File::at(path.with_extension("pack"))?,
-            },
-            "pack" => Self {
-                pack: pack::File::at(path)?,
-                index: pack::index::File::at(path.with_extension("idx"))?,
-            },
-            _ => return Err(Error::InvalidPath(path.to_owned())),
-        })
+        Self::try_from(path.as_ref())
     }
 
     /// `id` is a 20 byte SHA1 of the object to locate in the pack
@@ -83,6 +71,28 @@ impl Bundle {
                 data: out.as_slice(),
             })
             .into()
+    }
+}
+
+impl TryFrom<&Path> for Bundle {
+    type Error = Error;
+
+    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+        let ext = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .ok_or_else(|| Error::InvalidPath(path.to_owned()))?;
+        Ok(match ext {
+            "idx" => Self {
+                index: pack::index::File::at(path)?,
+                pack: pack::File::at(path.with_extension("pack"))?,
+            },
+            "pack" => Self {
+                pack: pack::File::at(path)?,
+                index: pack::index::File::at(path.with_extension("idx"))?,
+            },
+            _ => return Err(Error::InvalidPath(path.to_owned())),
+        })
     }
 }
 
