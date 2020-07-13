@@ -1,4 +1,4 @@
-use crate::pack::{cache, DecodeEntryResult};
+use crate::pack::{cache, read::DecodeEntryResult};
 use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
@@ -99,7 +99,7 @@ impl index::File {
         <P as Progress>::SubProgress: Send,
         C: cache::DecodeEntry,
     {
-        use crate::pack::ResolvedBase;
+        use crate::pack::read::ResolvedBase;
         use git_features::parallel::{self, in_parallel_if};
 
         let mut root = progress::DoOrDiscard::from(progress);

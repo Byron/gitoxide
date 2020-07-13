@@ -2,7 +2,7 @@ use crate::{
     fixture_path, hex_to_id,
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
-use git_odb::pack::{self, index, DecodeEntryResult};
+use git_odb::pack::{self, index, read::DecodeEntryResult};
 use pretty_assertions::assert_eq;
 
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";

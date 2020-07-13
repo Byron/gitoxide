@@ -1,6 +1,6 @@
 use crate::{
     pack::cache,
-    pack::{Entry, Error, File},
+    pack::{decoded::Entry, Error, File},
     zlib::Inflate,
 };
 use git_object as object;

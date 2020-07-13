@@ -4,11 +4,9 @@ use git_object::{self as object, SHA1_SIZE};
 use quick_error::quick_error;
 use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
 
-mod read;
-pub use read::{DecodeEntryResult, ResolvedBase};
+pub mod read;
 
 pub mod decoded;
-pub use decoded::Entry;
 
 quick_error! {
     #[derive(Debug)]

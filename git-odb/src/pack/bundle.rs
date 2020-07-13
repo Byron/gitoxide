@@ -59,9 +59,9 @@ impl Bundle {
                 entry,
                 out,
                 |id, _out| {
-                    self.index
-                        .lookup_index(id)
-                        .map(|idx| pack::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx))))
+                    self.index.lookup_index(id).map(|idx| {
+                        pack::read::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
+                    })
                 },
                 cache,
             )

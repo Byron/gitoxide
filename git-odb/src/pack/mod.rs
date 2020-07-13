@@ -6,4 +6,4 @@ mod file;
 pub use self::file::*;
 
 mod bundle;
-pub use bundle::{Bundle, Error as BundleError, Object};
+pub use bundle::{Bundle, Object};
