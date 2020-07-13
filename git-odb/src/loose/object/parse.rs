@@ -59,7 +59,7 @@ pub fn write_header(object: object::Kind, size: usize, mut out: impl std::io::Wr
 #[cfg(test)]
 mod tests {
     mod write_header_round_trip {
-        use crate::loose::db::decode::{self, write_header};
+        use crate::loose::object::parse::{self, write_header};
         use git_object::bstr::ByteSlice;
 
         #[test]
@@ -73,7 +73,7 @@ mod tests {
             ] {
                 let written = write_header(*kind, *size, &mut buf[..]).unwrap();
                 assert_eq!(buf[..written].as_bstr(), expected.as_bstr());
-                let (actual_kind, actual_size, actual_read) = decode::header(&buf[..written]).unwrap();
+                let (actual_kind, actual_size, actual_read) = parse::header(&buf[..written]).unwrap();
                 assert_eq!(actual_kind, *kind);
                 assert_eq!(actual_size, *size);
                 assert_eq!(actual_read, written);

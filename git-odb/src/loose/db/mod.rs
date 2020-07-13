@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-pub mod decode;
-
 pub struct Db {
     pub path: PathBuf,
 }
@@ -72,7 +70,7 @@ pub mod iter {
 
 mod locate {
     use crate::{
-        loose::db::decode,
+        loose::object::parse,
         loose::Db,
         loose::{Object, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
         zlib,
@@ -89,7 +87,7 @@ mod locate {
                 display("decompression of loose object at '{}' failed", path.display())
                 cause(err)
             }
-            Decode(err: decode::Error) {
+            Decode(err: parse::Error) {
                 display("Could not decode header")
                 from()
                 cause(err)
@@ -143,7 +141,7 @@ mod locate {
                 )
             };
 
-            let (kind, size, header_size) = decode::header(&decompressed[..consumed_out])?;
+            let (kind, size, header_size) = parse::header(&decompressed[..consumed_out])?;
             let mut decompressed = SmallVec::from_buf(decompressed);
             decompressed.resize(consumed_out, 0);
 
