@@ -39,6 +39,7 @@ impl FromStr for OutputFormat {
     }
 }
 
+/// A general purpose context for many operations provided here
 pub struct Context<W1: io::Write, W2: io::Write> {
     /// If set, provide statistics to `out` in the given format
     pub output_statistics: Option<OutputFormat>,
@@ -46,10 +47,46 @@ pub struct Context<W1: io::Write, W2: io::Write> {
     pub out: W1,
     /// A stream to which to errors
     pub err: W2,
+    /// If set, don't use more than this amount of threads.
+    /// Otherwise, usually use as many threads as there are logical cores.
+    /// A value of 0 is interpreted as no-limit
+    pub thread_limit: Option<usize>,
+}
+
+impl Default for Context<Vec<u8>, Vec<u8>> {
+    fn default() -> Self {
+        Context {
+            output_statistics: None,
+            thread_limit: None,
+            out: Vec::new(),
+            err: Vec::new(),
+        }
+    }
 }
 
 pub fn init() -> Result<()> {
     git_repository::init::repository().with_context(|| "Repository initialization failed")
+}
+
+enum EitherCache {
+    Left(pack::cache::DecodeEntryNoop),
+    Right(pack::cache::DecodeEntryLRU),
+}
+
+impl pack::cache::DecodeEntry for EitherCache {
+    fn put(&mut self, offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
+        match self {
+            EitherCache::Left(v) => v.put(offset, data, kind, compressed_size),
+            EitherCache::Right(v) => v.put(offset, data, kind, compressed_size),
+        }
+    }
+
+    fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
+        match self {
+            EitherCache::Left(v) => v.get(offset, out),
+            EitherCache::Right(v) => v.get(offset, out),
+        }
+    }
 }
 
 pub fn verify_pack_or_pack_index<P, W1, W2>(
@@ -59,6 +96,7 @@ pub fn verify_pack_or_pack_index<P, W1, W2>(
         mut out,
         mut err,
         output_statistics,
+        thread_limit,
     }: Context<W1, W2>,
 ) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>
 where
@@ -94,25 +132,6 @@ where
                     Err(e)
                 })
                 .ok();
-            enum EitherCache {
-                Left(pack::cache::DecodeEntryNoop),
-                Right(pack::cache::DecodeEntryLRU),
-            };
-            impl pack::cache::DecodeEntry for EitherCache {
-                fn put(&mut self, offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
-                    match self {
-                        EitherCache::Left(v) => v.put(offset, data, kind, compressed_size),
-                        EitherCache::Right(v) => v.put(offset, data, kind, compressed_size),
-                    }
-                }
-
-                fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
-                    match self {
-                        EitherCache::Left(v) => v.get(offset, out),
-                        EitherCache::Right(v) => v.get(offset, out),
-                    }
-                }
-            }
             idx.verify_checksum_of_index(pack.as_ref(), progress, || -> EitherCache {
                 if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time

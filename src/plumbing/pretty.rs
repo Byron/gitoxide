@@ -14,6 +14,12 @@ mod options {
     #[structopt(name = "gio-plumbing", about = "The git underworld")]
     #[structopt(settings = &[AppSettings::SubcommandRequired, AppSettings::ColoredHelp])]
     pub struct Args {
+        #[structopt(long, short = "t")]
+        /// The amount of threads to use for some operations.
+        ///
+        /// If unset, or the value is 0, there is no limit and all logical cores can be used.
+        pub threads: Option<usize>,
+
         #[structopt(subcommand)]
         pub cmd: Subcommands,
     }
@@ -147,6 +153,7 @@ fn prepare_and_run<T: Send + 'static>(
 
 pub fn main() -> Result<()> {
     let args = Args::from_args();
+    let thread_limit = args.threads;
     match args.cmd {
         Subcommands::VerifyPack {
             path,
@@ -165,6 +172,7 @@ pub fn main() -> Result<()> {
                     path,
                     progress,
                     core::Context {
+                        thread_limit,
                         output_statistics: if statistics { Some(format) } else { None },
                         out,
                         err,

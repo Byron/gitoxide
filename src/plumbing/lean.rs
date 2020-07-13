@@ -10,6 +10,12 @@ mod options {
         /// print the program version.
         pub version: bool,
 
+        #[argh(option, short = 't')]
+        /// the amount of threads to use for some operations.
+        ///
+        /// If unset, or the value is 0, there is no limit and all logical cores can be used.
+        pub threads: Option<usize>,
+
         #[argh(subcommand)]
         pub subcommand: SubCommands,
     }
@@ -69,6 +75,7 @@ fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Opt
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
+    let thread_limit = cli.threads;
     match cli.subcommand {
         SubCommands::VerifyPack(VerifyPack {
             path,
@@ -85,6 +92,7 @@ pub fn main() -> Result<()> {
                     } else {
                         None
                     },
+                    thread_limit,
                     out: stdout(),
                     err: stderr(),
                 },
