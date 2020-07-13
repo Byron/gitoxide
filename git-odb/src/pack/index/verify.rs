@@ -1,7 +1,7 @@
 use crate::{
     pack,
     pack::index,
-    pack::{cache, decode::DecodeEntryOutcome},
+    pack::{cache, data::decode::DecodeEntryOutcome},
 };
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
@@ -15,23 +15,23 @@ quick_error! {
         Mismatch { expected: git_object::Id, actual: git_object::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
-        PackChecksum(err: pack::verify::Error) {
-            display("The pack of this index file failed to verify its checksums")
+        PackChecksum(err: pack::data::verify::Error) {
+            display("The pack of this index data failed to verify its checksums")
             from()
             cause(err)
         }
-        PackDecode(err: pack::decode::Error, id: git_object::Id, offset: u64) {
+        PackDecode(err: pack::data::decode::Error, id: git_object::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
             cause(err)
         }
         PackMismatch { expected: git_object::Id, actual: git_object::Id } {
-            display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
+            display("The packfiles checksum didn't match the index data checksum: expected {}, got {}", expected, actual)
         }
         PackObjectMismatch { expected: git_object::Id, actual: git_object::Id, offset: u64, kind: git_object::Kind} {
-            display("The SHA1 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
+            display("The SHA1 of {} object at offset {} didn't match the checksum in the index data: expected {}, got {}", kind, offset, expected, actual)
         }
         Crc32Mismatch { expected: u32, actual: u32, offset: u64, kind: git_object::Kind} {
-            display("The CRC32 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
+            display("The CRC32 of {} object at offset {} didn't match the checksum in the index data: expected {}, got {}", kind, offset, expected, actual)
         }
     }
 }
@@ -76,7 +76,7 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
-/// Verify and validate the content of the index file
+/// Verify and validate the content of the index data
 impl index::File {
     pub fn checksum_of_index(&self) -> git_object::Id {
         git_object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
@@ -92,7 +92,7 @@ impl index::File {
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     pub fn verify_checksum_of_index<P, C>(
         &self,
-        pack: Option<&pack::File>,
+        pack: Option<&pack::data::File>,
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
@@ -102,7 +102,7 @@ impl index::File {
         <P as Progress>::SubProgress: Send,
         C: cache::DecodeEntry,
     {
-        use crate::pack::decode::ResolvedBase;
+        use crate::pack::data::decode::ResolvedBase;
         use git_features::parallel::{self, in_parallel_if};
 
         let mut root = progress::DoOrDiscard::from(progress);

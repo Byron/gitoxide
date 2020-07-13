@@ -10,9 +10,9 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         InvalidPath(path: PathBuf) {
-            display("An 'idx' extension is expected of an index file: '{}'", path.display())
+            display("An 'idx' extension is expected of an index data: '{}'", path.display())
         }
-        Pack(err: pack::Error) {
+        Pack(err: pack::data::Error) {
             display("Could not instantiate pack")
             from()
             cause(err)
@@ -22,7 +22,7 @@ quick_error! {
             from()
             cause(err)
         }
-        Decode(err: pack::decode::Error) {
+        Decode(err: pack::data::decode::Error) {
             display("Could not decode object")
         }
     }
@@ -30,12 +30,12 @@ quick_error! {
 
 /// A packfile with an index
 pub struct Bundle {
-    pack: pack::File,
+    pack: pack::data::File,
     index: pack::index::File,
 }
 
 impl Bundle {
-    /// `path` is either a pack file or an index file
+    /// `path` is either a pack data or an index data
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())
     }
@@ -60,7 +60,7 @@ impl Bundle {
                 out,
                 |id, _out| {
                     self.index.lookup_index(id).map(|idx| {
-                        pack::decode::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
+                        pack::data::decode::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
                     })
                 },
                 cache,
@@ -85,10 +85,10 @@ impl TryFrom<&Path> for Bundle {
         Ok(match ext {
             "idx" => Self {
                 index: pack::index::File::at(path)?,
-                pack: pack::File::at(path.with_extension("pack"))?,
+                pack: pack::data::File::at(path.with_extension("pack"))?,
             },
             "pack" => Self {
-                pack: pack::File::at(path)?,
+                pack: pack::data::File::at(path)?,
                 index: pack::index::File::at(path.with_extension("idx"))?,
             },
             _ => return Err(Error::InvalidPath(path.to_owned())),

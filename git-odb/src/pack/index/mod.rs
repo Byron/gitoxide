@@ -78,7 +78,7 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open pack index file at '{}'", path.display())
+            display("Could not open pack index data at '{}'", path.display())
             cause(err)
         }
         Corrupt(msg: String) {

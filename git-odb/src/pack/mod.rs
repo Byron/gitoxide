@@ -2,8 +2,7 @@ pub mod index;
 
 pub mod cache;
 
-mod file;
-pub use self::file::*;
+pub mod data;
 
 mod bundle;
 pub use bundle::{Bundle, Object};

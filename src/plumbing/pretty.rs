@@ -26,7 +26,7 @@ mod options {
 
     #[derive(Debug, StructOpt)]
     pub enum Subcommands {
-        /// Verify the integrity of a pack or index file
+        /// Verify the integrity of a pack or index data
         #[structopt(setting = AppSettings::ColoredHelp)]
         VerifyPack {
             /// output statistical information about the pack
@@ -55,7 +55,7 @@ mod options {
             #[structopt(long, conflicts_with("verbose"), requires("progress"))]
             progress_keep_open: bool,
 
-            /// The '.pack' or '.idx' file whose checksum to validate.
+            /// The '.pack' or '.idx' data whose checksum to validate.
             #[structopt(parse(from_os_str))]
             path: PathBuf,
         },

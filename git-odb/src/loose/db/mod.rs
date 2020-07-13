@@ -39,7 +39,7 @@ quick_error! {
             display("{}", msg)
         }
         Io(err: std::io::Error, action: &'static str, path: PathBuf) {
-            display("Could not {} file at '{}'", action, path.display())
+            display("Could not {} data at '{}'", action, path.display())
             cause(err)
         }
     }
@@ -149,7 +149,7 @@ impl Db {
                 object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
                     let mut compressed = SmallVec::from_buf(compressed);
                     // Read small objects right away and store them in memory while we
-                    // have a file handle available and 'hot'. Note that we don't decompress yet!
+                    // have a data handle available and 'hot'. Note that we don't decompress yet!
                     let file_size = input_stream
                         .metadata()
                         .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
@@ -172,7 +172,7 @@ impl Db {
                         (compressed, None)
                     }
                 }
-                object::Kind::Blob => (SmallVec::default(), Some(path)), // we will open the file again when needed. Maybe we can load small sized objects anyway
+                object::Kind::Blob => (SmallVec::default(), Some(path)), // we will open the data again when needed. Maybe we can load small sized objects anyway
             }
         };
 

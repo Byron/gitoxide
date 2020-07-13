@@ -1,6 +1,6 @@
 use crate::{
     pack::cache,
-    pack::{decoded, File},
+    pack::data::{decoded, File},
     zlib::Inflate,
 };
 use git_object as object;
@@ -85,7 +85,7 @@ impl File {
     }
 
     /// Currently only done during pack verification - finding the right size is only possible by decompressing
-    /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index file.
+    /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index data.
     pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
         let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
         git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
@@ -93,7 +93,7 @@ impl File {
 
     fn assure_v2(&self) {
         assert!(
-            if let crate::pack::Kind::V2 = self.kind.clone() {
+            if let crate::pack::data::Kind::V2 = self.kind.clone() {
                 true
             } else {
                 false
@@ -142,7 +142,7 @@ impl File {
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<DecodeEntryOutcome, Error> {
-        use crate::pack::decoded::Header::*;
+        use crate::pack::data::decoded::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
                 out.resize(
@@ -174,7 +174,7 @@ impl File {
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<DecodeEntryOutcome, Error> {
-        use crate::pack::decoded::Header;
+        use crate::pack::data::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();
         let first_entry = last.clone();

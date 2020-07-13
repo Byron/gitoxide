@@ -36,7 +36,7 @@ mod options {
         /// verbose progress messages are printed line by line
         #[argh(switch, short = 'v')]
         pub verbose: bool,
-        /// the '.pack' or '.idx' file whose checksum to validate.
+        /// the '.pack' or '.idx' data whose checksum to validate.
         #[argh(positional)]
         pub path: PathBuf,
     }

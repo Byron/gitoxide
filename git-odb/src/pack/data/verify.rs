@@ -1,4 +1,4 @@
-use crate::pack::File;
+use crate::pack::data::File;
 use git_object::{self as object, SHA1_SIZE};
 use quick_error::quick_error;
 
@@ -9,7 +9,7 @@ quick_error! {
             display("pack checksum mismatch: expected {}, got {}", expected, actual)
         }
         Io(err: std::io::Error) {
-            display("could not read pack file")
+            display("could not read pack data")
             from()
             cause(err)
         }

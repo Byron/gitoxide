@@ -1,20 +1,15 @@
+use crate::pack::data;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
-pub mod decode;
-
-pub mod decoded;
-
-pub mod verify;
-
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
         Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open pack file at '{}'", path.display())
+            display("Could not open pack data at '{}'", path.display())
             cause(err)
         }
         Corrupt(msg: String) {
@@ -28,40 +23,14 @@ quick_error! {
 
 const N32_SIZE: usize = size_of::<u32>();
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub enum Kind {
-    V2,
-    V3,
-}
-
-pub struct File {
-    data: FileBuffer,
-    path: std::path::PathBuf,
-    kind: Kind,
-    num_objects: u32,
-}
-
-/// Instantiation and basic file information
-impl File {
-    pub fn kind(&self) -> Kind {
-        self.kind.clone()
-    }
-    pub fn num_objects(&self) -> u32 {
-        self.num_objects
-    }
-    pub fn data_len(&self) -> usize {
-        self.data.len()
-    }
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-
-    pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
-        File::try_from(path.as_ref())
+/// Instantiation
+impl data::File {
+    pub fn at(path: impl AsRef<Path>) -> Result<data::File, Error> {
+        data::File::try_from(path.as_ref())
     }
 }
 
-impl TryFrom<&Path> for File {
+impl TryFrom<&Path> for data::File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
@@ -69,24 +38,24 @@ impl TryFrom<&Path> for File {
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + SHA1_SIZE {
             return Err(Error::Corrupt(format!(
-                "Pack file of size {} is too small for even an empty pack",
+                "Pack data of size {} is too small for even an empty pack",
                 pack_len
             )));
         }
         let mut ofs = 0;
         if &data[ofs..ofs + b"PACK".len()] != b"PACK" {
-            return Err(Error::Corrupt("Pack file type not recognized".into()));
+            return Err(Error::Corrupt("Pack data type not recognized".into()));
         }
         ofs += N32_SIZE;
         let kind = match BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]) {
-            2 => Kind::V2,
-            3 => Kind::V3,
+            2 => data::Kind::V2,
+            3 => data::Kind::V3,
             v => return Err(Error::UnsupportedVersion(v)),
         };
         ofs += N32_SIZE;
         let num_objects = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);
 
-        Ok(File {
+        Ok(data::File {
             data,
             path: path.to_owned(),
             kind,

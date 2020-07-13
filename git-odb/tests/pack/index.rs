@@ -2,7 +2,7 @@ use crate::{
     fixture_path, hex_to_id,
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
-use git_odb::pack::{self, decode::DecodeEntryOutcome, index};
+use git_odb::pack::{self, data::decode::DecodeEntryOutcome, index};
 use pretty_assertions::assert_eq;
 
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
@@ -148,9 +148,9 @@ fn pack_lookup() {
         ),
     ] {
         let idx = index::File::at(&fixture_path(index_path)).unwrap();
-        let pack = pack::File::at(&fixture_path(pack_path)).unwrap();
+        let pack = pack::data::File::at(&fixture_path(pack_path)).unwrap();
 
-        assert_eq!(pack.kind(), pack::Kind::V2);
+        assert_eq!(pack.kind(), pack::data::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
             idx.verify_checksum_of_index(Some(&pack), None, Discard.into(), || DecodeEntryNoop)

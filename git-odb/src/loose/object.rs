@@ -24,7 +24,7 @@ quick_error! {
             cause(err)
         }
         Io(err: std::io::Error, action: &'static str, path: PathBuf) {
-            display("Could not {} file at '{}'", action, path.display())
+            display("Could not {} data at '{}'", action, path.display())
             cause(err)
         }
     }

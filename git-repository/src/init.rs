@@ -10,11 +10,11 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         IoOpen(err: std::io::Error, path: PathBuf) {
-            display("Could not open file at '{}'", path.display())
+            display("Could not open data at '{}'", path.display())
             cause(err)
         }
         IoWrite(err: std::io::Error, path: PathBuf) {
-            display("Could not write file at '{}'", path.display())
+            display("Could not write data at '{}'", path.display())
             cause(err)
         }
         DirectoryExists(path: PathBuf) {

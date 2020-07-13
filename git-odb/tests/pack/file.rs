@@ -2,8 +2,8 @@ use crate::fixture_path;
 use git_odb::pack;
 use std::convert::TryFrom;
 
-fn pack_at(at: &str) -> pack::File {
-    pack::File::try_from(fixture_path(at).as_path()).unwrap()
+fn pack_at(at: &str) -> pack::data::File {
+    pack::data::File::try_from(fixture_path(at).as_path()).unwrap()
 }
 
 mod method {
@@ -27,7 +27,7 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::file::pack_at, pack::SMALL_PACK};
     use git_object::bstr::ByteSlice;
-    use git_odb::pack::{cache, decode::ResolvedBase};
+    use git_odb::pack::{cache, data::decode::ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
         fixup(std::fs::read(fixture_path(path)).unwrap())
