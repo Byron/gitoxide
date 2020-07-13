@@ -60,7 +60,7 @@ impl Into<String> for TimeThroughput {
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct PackFileChecksumResult {
+pub struct Outcome {
     pub average: DecodeEntryResult,
     pub objects_per_chain_length: BTreeMap<u32, u32>,
     /// The amount of bytes in all compressed streams, one per entry
@@ -93,7 +93,7 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(git_object::Id, Option<PackFileChecksumResult>), Error>
+    ) -> Result<(git_object::Id, Option<Outcome>), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -166,7 +166,7 @@ impl index::File {
                     then: Instant,
                     entries_seen: u32,
                     chunks_seen: usize,
-                    stats: PackFileChecksumResult,
+                    stats: Outcome,
                 }
 
                 impl<'a, P> parallel::Reducer for Reducer<'a, P>
@@ -174,7 +174,7 @@ impl index::File {
                     P: Progress,
                 {
                     type Input = Result<Vec<DecodeEntryResult>, Error>;
-                    type Output = PackFileChecksumResult;
+                    type Output = Outcome;
                     type Error = Error;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
@@ -300,7 +300,7 @@ impl index::File {
                         then: Instant::now(),
                         entries_seen: 0,
                         chunks_seen: 0,
-                        stats: PackFileChecksumResult {
+                        stats: Outcome {
                             average: DecodeEntryResult::default_from_kind(git_object::Kind::Tree),
                             objects_per_chain_length: Default::default(),
                             total_compressed_entries_size: 0,

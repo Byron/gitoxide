@@ -74,5 +74,4 @@ macro_rules! izip {
 mod file;
 pub use file::*;
 
-mod verify;
-pub use verify::PackFileChecksumResult;
+pub mod verify;

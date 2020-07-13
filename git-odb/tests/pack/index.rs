@@ -80,7 +80,7 @@ fn pack_lookup() {
         (
             INDEX_V2,
             PACK_FOR_INDEX_V2,
-            index::PackFileChecksumResult {
+            index::verify::Outcome {
                 average: DecodeEntryResult {
                     kind: git_object::Kind::Tree,
                     num_deltas: 1,
@@ -106,7 +106,7 @@ fn pack_lookup() {
         (
             INDEX_V1,
             PACK_FOR_INDEX_V1,
-            index::PackFileChecksumResult {
+            index::verify::Outcome {
                 average: DecodeEntryResult {
                     kind: git_object::Kind::Tree,
                     num_deltas: 0,
@@ -127,7 +127,7 @@ fn pack_lookup() {
         (
             SMALL_PACK_INDEX,
             SMALL_PACK,
-            index::PackFileChecksumResult {
+            index::verify::Outcome {
                 average: DecodeEntryResult {
                     kind: git_object::Kind::Tree,
                     num_deltas: 0,

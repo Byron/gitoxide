@@ -98,7 +98,7 @@ pub fn verify_pack_or_pack_index<P, W1, W2>(
         output_statistics,
         thread_limit,
     }: Context<W1, W2>,
-) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>
+) -> Result<(git_object::Id, Option<index::verify::Outcome>)>
 where
     P: Progress,
     <P as Progress>::SubProgress: Send,
@@ -154,7 +154,7 @@ where
     Ok(res)
 }
 
-fn print_statistics(out: &mut impl io::Write, stats: &index::PackFileChecksumResult) -> io::Result<()> {
+fn print_statistics(out: &mut impl io::Write, stats: &index::verify::Outcome) -> io::Result<()> {
     writeln!(out, "objects per delta chain length")?;
     let mut chain_length_to_object: Vec<_> = stats.objects_per_chain_length.iter().map(|(a, b)| (*a, *b)).collect();
     chain_length_to_object.sort_by_key(|e| e.0);
