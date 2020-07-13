@@ -1,8 +1,26 @@
-use crate::loose::db::Error;
 use byteorder::WriteBytesExt;
 use git_object as object;
+use quick_error::quick_error;
 
-pub fn parse_header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        ParseIntegerError(msg: &'static str, number: Vec<u8>, err: btoi::ParseIntegerError) {
+            display("{}: {:?}", msg, std::str::from_utf8(number))
+            cause(err)
+        }
+        InvalidHeader(msg: &'static str) {
+            display("{}", msg)
+        }
+        ObjectHeader(err: object::Error) {
+            display("Could not parse object kind")
+            from()
+            cause(err)
+        }
+    }
+}
+
+pub fn header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
     let header_end = input
         .iter()
         .position(|&b| b == 0)
@@ -41,7 +59,7 @@ pub fn write_header(object: object::Kind, size: usize, mut out: impl std::io::Wr
 #[cfg(test)]
 mod tests {
     mod write_header_round_trip {
-        use crate::loose::db::serde::{parse_header, write_header};
+        use crate::loose::db::decode::{self, write_header};
         use git_object::bstr::ByteSlice;
 
         #[test]
@@ -55,7 +73,7 @@ mod tests {
             ] {
                 let written = write_header(*kind, *size, &mut buf[..]).unwrap();
                 assert_eq!(buf[..written].as_bstr(), expected.as_bstr());
-                let (actual_kind, actual_size, actual_read) = parse_header(&buf[..written]).unwrap();
+                let (actual_kind, actual_size, actual_read) = decode::header(&buf[..written]).unwrap();
                 assert_eq!(actual_kind, *kind);
                 assert_eq!(actual_size, *size);
                 assert_eq!(actual_read, written);
