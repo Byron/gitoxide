@@ -118,6 +118,9 @@ impl File {
         }
     }
 
+    /// resolve: technically, this shoudln't ever be required as stored local packs don't refer to objects by id
+    /// that are outside of the pack. Unless, of course, the ref refers to an object within this pack, which means
+    /// it's very, very large as 20bytes are smaller than the corresponding MSB encoded number
     fn resolve_deltas(
         &self,
         last: Entry,

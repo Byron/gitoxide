@@ -133,6 +133,11 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         }
 
         #[test]
+        fn blob_not_existing() {
+            assert_eq!(try_locate("37d4e6c5c48ba0d245164c4e10d5f41140cab989"), None);
+        }
+
+        #[test]
         fn blob_big_stream() {
             let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
             let size = o.size;
@@ -151,7 +156,11 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         }
 
         fn locate(hex: &str) -> loose::Object {
-            ldb().locate(&hex_to_id(hex)).unwrap()
+            ldb().locate(&hex_to_id(hex)).unwrap().unwrap()
+        }
+
+        fn try_locate(hex: &str) -> Option<loose::Object> {
+            ldb().locate(&hex_to_id(hex)).and_then(Result::ok)
         }
 
         #[test]

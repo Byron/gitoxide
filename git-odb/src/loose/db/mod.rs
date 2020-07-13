@@ -98,14 +98,32 @@ impl Db {
             })
     }
 
-    pub fn locate(&self, id: &object::Id) -> Result<Object, Error> {
+    const OPEN_ACTION: &'static str = "open";
+
+    pub fn locate(&self, id: &object::Id) -> Option<Result<Object, Error>> {
+        match self.locate_inner(id) {
+            Ok(obj) => Some(Ok(obj)),
+            Err(err) => match err {
+                Error::Io(err, action, path) => {
+                    if action == Self::OPEN_ACTION {
+                        None
+                    } else {
+                        Some(Err(Error::Io(err, action, path)))
+                    }
+                }
+                err => Some(Err(err)),
+            },
+        }
+    }
+
+    fn locate_inner(&self, id: &object::Id) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
         let ((_status, _consumed_in, consumed_out), bytes_read, mut input_stream) = {
-            let mut istream = fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.to_owned()))?;
+            let mut istream = fs::File::open(&path).map_err(|e| Error::Io(e, Self::OPEN_ACTION, path.to_owned()))?;
             let bytes_read = istream
                 .read(&mut compressed[..])
                 .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
