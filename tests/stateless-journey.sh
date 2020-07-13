@@ -65,7 +65,7 @@ title "CLI ${kind}"
       (with "statistics (JSON)"
         it "verifies the pack index successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-with-statistics-json-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --statistics --format json "$PACK_INDEX_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" --threads 1 verify-pack --statistics --format json "$PACK_INDEX_FILE"
         }
       )
       fi

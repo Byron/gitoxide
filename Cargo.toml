@@ -76,9 +76,7 @@ lto = "fat"
 panic = 'abort'
 codegen-units = 1
 incremental = false
-
-[profile.release.build-override]
-opt-level = 0
+build-override = { opt-level = 0 }
 
 [workspace]
 members = [

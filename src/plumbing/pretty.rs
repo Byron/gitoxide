@@ -161,7 +161,15 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             move |progress, out, err| {
-                core::verify_pack_or_pack_index(path, progress, if statistics { Some(format) } else { None }, out, err)
+                core::verify_pack_or_pack_index(
+                    path,
+                    progress,
+                    core::Context {
+                        output_statistics: if statistics { Some(format) } else { None },
+                        out,
+                        err,
+                    },
+                )
             },
         )
         .map(|_| ()),

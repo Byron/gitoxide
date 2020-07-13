@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
 use git_features::progress::Progress;
 use git_object::Kind;
@@ -39,20 +39,33 @@ impl FromStr for OutputFormat {
     }
 }
 
+pub struct Context<W1: io::Write, W2: io::Write> {
+    /// If set, provide statistics to `out` in the given format
+    pub output_statistics: Option<OutputFormat>,
+    /// A stream to which to output operation results
+    pub out: W1,
+    /// A stream to which to errors
+    pub err: W2,
+}
+
 pub fn init() -> Result<()> {
     git_repository::init::repository().with_context(|| "Repository initialization failed")
 }
 
-pub fn verify_pack_or_pack_index<P>(
+pub fn verify_pack_or_pack_index<P, W1, W2>(
     path: impl AsRef<Path>,
     progress: Option<P>,
-    output_statistics: Option<OutputFormat>,
-    mut out: impl io::Write,
-    mut err: impl io::Write,
+    Context {
+        mut out,
+        mut err,
+        output_statistics,
+    }: Context<W1, W2>,
 ) -> Result<(git_object::Id, Option<index::PackFileChecksumResult>)>
 where
     P: Progress,
     <P as Progress>::SubProgress: Send,
+    W1: io::Write,
+    W2: io::Write,
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {

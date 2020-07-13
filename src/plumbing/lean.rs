@@ -79,13 +79,15 @@ pub fn main() -> Result<()> {
             core::verify_pack_or_pack_index(
                 path,
                 progress,
-                if statistics {
-                    Some(core::OutputFormat::Human)
-                } else {
-                    None
+                core::Context {
+                    output_statistics: if statistics {
+                        Some(core::OutputFormat::Human)
+                    } else {
+                        None
+                    },
+                    out: stdout(),
+                    err: stderr(),
                 },
-                stdout(),
-                stderr(),
             )
             .map(|_| ())
         }
