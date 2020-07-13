@@ -1,4 +1,5 @@
 use crate::pack;
+use git_features::progress::Progress;
 use git_object::{self as object, borrowed};
 use quick_error::quick_error;
 use std::{
@@ -30,8 +31,8 @@ quick_error! {
 
 /// A packfile with an index
 pub struct Bundle {
-    pack: pack::data::File,
-    index: pack::index::File,
+    pub pack: pack::data::File,
+    pub index: pack::index::File,
 }
 
 impl Bundle {
@@ -71,6 +72,21 @@ impl Bundle {
                 data: out.as_slice(),
             })
             .into()
+    }
+
+    pub fn verify_checksums<P, C>(
+        &self,
+        thread_limit: Option<usize>,
+        progress: Option<P>,
+        make_cache: impl Fn() -> C + Send + Sync,
+    ) -> Result<(git_object::Id, Option<pack::index::verify::Outcome>), pack::index::verify::Error>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send,
+        C: pack::cache::DecodeEntry,
+    {
+        self.index
+            .verify_checksum_of_index(Some(&self.pack), thread_limit, progress, make_cache)
     }
 }
 
