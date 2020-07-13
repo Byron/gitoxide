@@ -18,6 +18,9 @@ quick_error! {
             from()
             cause(err)
         }
+        Decode(err: pack::Error) {
+            display("Could not decode object")
+        }
     }
 }
 
@@ -48,16 +51,24 @@ impl Bundle {
     }
 
     /// `id` is a 20 byte SHA1 of the object to locate in the pack
-    pub fn locate<'data>(
+    pub fn locate<'a>(
         &self,
         id: &[u8],
-        out: &'data mut Vec<u8>,
-        cache: impl pack::cache::DecodeEntry,
-    ) -> Option<Result<Object<'data>, Error>> {
-        unimplemented!("locate object")
+        out: &'a mut Vec<u8>,
+        cache: &mut impl pack::cache::DecodeEntry,
+    ) -> Option<Result<Object<'a>, Error>> {
+        let idx = self.index.lookup_index(id)?;
+        let ofs = self.index.pack_offset_at_index(idx);
+        let entry = self.pack.entry(ofs);
+        Some(
+            self.pack
+                .decode_entry(entry, out, |_id, _out| None, cache)
+                .map_err(Error::Decode)
+                .map(move |_| Object { dummy: out.as_slice() }),
+        )
     }
 }
 
 pub struct Object<'data> {
-    dummy: &'data [u8],
+    pub dummy: &'data [u8],
 }
