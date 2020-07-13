@@ -165,7 +165,7 @@ fn print_statistics(out: &mut impl io::Write, stats: &index::PackFileChecksumRes
     }
     writeln!(out, "\t->: {}", total_object_count)?;
 
-    let pack::read::DecodeEntryResult {
+    let pack::decode::DecodeEntryResult {
         kind: _,
         num_deltas,
         decompressed_size,

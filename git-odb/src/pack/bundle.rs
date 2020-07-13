@@ -22,7 +22,7 @@ quick_error! {
             from()
             cause(err)
         }
-        Decode(err: pack::read::Error) {
+        Decode(err: pack::decode::Error) {
             display("Could not decode object")
         }
     }
@@ -60,7 +60,7 @@ impl Bundle {
                 out,
                 |id, _out| {
                     self.index.lookup_index(id).map(|idx| {
-                        pack::read::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
+                        pack::decode::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
                     })
                 },
                 cache,

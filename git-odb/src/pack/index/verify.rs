@@ -1,4 +1,4 @@
-use crate::pack::{cache, read::DecodeEntryResult};
+use crate::pack::{cache, decode::DecodeEntryResult};
 use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
@@ -17,7 +17,7 @@ quick_error! {
             from()
             cause(err)
         }
-        PackDecode(err: pack::read::Error, id: git_object::Id, offset: u64) {
+        PackDecode(err: pack::decode::Error, id: git_object::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
             cause(err)
         }
@@ -99,7 +99,7 @@ impl index::File {
         <P as Progress>::SubProgress: Send,
         C: cache::DecodeEntry,
     {
-        use crate::pack::read::ResolvedBase;
+        use crate::pack::decode::ResolvedBase;
         use git_features::parallel::{self, in_parallel_if};
 
         let mut root = progress::DoOrDiscard::from(progress);

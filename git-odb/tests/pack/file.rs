@@ -27,7 +27,7 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::file::pack_at, pack::SMALL_PACK};
     use git_object::bstr::ByteSlice;
-    use git_odb::pack::{cache, read::ResolvedBase};
+    use git_odb::pack::{cache, decode::ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
         fixup(std::fs::read(fixture_path(path)).unwrap())

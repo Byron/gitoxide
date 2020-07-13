@@ -4,7 +4,7 @@ use git_object::SHA1_SIZE;
 use quick_error::quick_error;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
-pub mod read;
+pub mod decode;
 
 pub mod decoded;
 
