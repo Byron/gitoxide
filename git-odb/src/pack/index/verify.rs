@@ -12,7 +12,7 @@ quick_error! {
         Mismatch { expected: git_object::Id, actual: git_object::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
-        PackChecksum(err: pack::ChecksumError) {
+        PackChecksum(err: pack::verify::Error) {
             display("The pack of this index file failed to verify its checksums")
             from()
             cause(err)
