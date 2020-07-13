@@ -50,6 +50,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [ ] pack streaming (i.e. indexing + resolution)
       * [ ] use pack streaming for verification for performance and correctness
   * [ ] API documentation with examples
+  * **promisor**
+    * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 * **git-repository**
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
@@ -59,6 +61,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] configuration
   * [ ] merging
   * [ ] API documentation with examples
+  * [ ] _Commit Graph_ - split and unsplit
 * **git-config**
   * read and write git configuration files
   * [ ] API documentation with examples
@@ -133,6 +136,15 @@ cargo install gitoxide --no-default-features --features lean
 
 [releases]: https://github.com/Byron/git-oxide/releases 
 [rustup]: https://rustup.rs
+
+## Usage
+
+Once installed, there are two binaries:
+
+* **gio**
+  * high level commands, _porcelain_, for every-day use, optimized for a pleasant user experience
+* **giop**
+  * low level commands, _plumbing_, for use in more specialized cases
 
 ## Project Goals
 
