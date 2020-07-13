@@ -8,7 +8,7 @@ use std::time::Instant;
 
 quick_error! {
     #[derive(Debug)]
-    pub enum ChecksumError {
+    pub enum Error {
         Mismatch { expected: git_object::Id, actual: git_object::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
@@ -93,7 +93,7 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(git_object::Id, Option<PackFileChecksumResult>), ChecksumError>
+    ) -> Result<(git_object::Id, Option<PackFileChecksumResult>), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -116,14 +116,14 @@ impl index::File {
             if actual == expected {
                 Ok(actual)
             } else {
-                Err(ChecksumError::Mismatch { actual, expected })
+                Err(Error::Mismatch { actual, expected })
             }
         };
         match pack {
             None => verify_self().map(|id| (id, None)),
             Some(pack) => {
                 if self.checksum_of_pack() != pack.checksum() {
-                    return Err(ChecksumError::PackMismatch {
+                    return Err(Error::PackMismatch {
                         actual: pack.checksum(),
                         expected: self.checksum_of_pack(),
                     });
@@ -173,9 +173,9 @@ impl index::File {
                 where
                     P: Progress,
                 {
-                    type Input = Result<Vec<DecodeEntryResult>, ChecksumError>;
+                    type Input = Result<Vec<DecodeEntryResult>, Error>;
                     type Output = PackFileChecksumResult;
-                    type Error = ChecksumError;
+                    type Error = Error;
 
                     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
                         let chunk_stats: Vec<_> = input?;
@@ -238,9 +238,7 @@ impl index::File {
                     input_chunks,
                     thread_limit,
                     state_per_thread,
-                    |entries: &[index::Entry],
-                     (cache, buf, progress)|
-                     -> Result<Vec<DecodeEntryResult>, ChecksumError> {
+                    |entries: &[index::Entry], (cache, buf, progress)| -> Result<Vec<DecodeEntryResult>, Error> {
                         progress.init(Some(entries.len() as u32), Some("entries"));
                         let mut stats = Vec::with_capacity(entries.len());
                         for (idx, index_entry) in entries.iter().enumerate() {
@@ -257,7 +255,7 @@ impl index::File {
                                     },
                                     cache,
                                 )
-                                .map_err(|e| ChecksumError::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
+                                .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
                             let object_kind = entry_stats.kind;
                             let consumed_input = entry_stats.compressed_size;
                             stats.push(entry_stats);
@@ -272,7 +270,7 @@ impl index::File {
 
                             let actual_oid = git_object::Id(hasher.digest());
                             if actual_oid != index_entry.oid {
-                                return Err(ChecksumError::PackObjectMismatch {
+                                return Err(Error::PackObjectMismatch {
                                     actual: actual_oid,
                                     expected: index_entry.oid,
                                     offset: index_entry.pack_offset,
@@ -285,7 +283,7 @@ impl index::File {
                                     (pack_entry_data_offset - index_entry.pack_offset) as usize + consumed_input,
                                 );
                                 if actual_crc32 != desired_crc32 {
-                                    return Err(ChecksumError::Crc32Mismatch {
+                                    return Err(Error::Crc32Mismatch {
                                         actual: actual_crc32,
                                         expected: desired_crc32,
                                         offset: index_entry.pack_offset,

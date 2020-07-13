@@ -75,4 +75,4 @@ mod file;
 pub use file::*;
 
 mod verify;
-pub use verify::*;
+pub use verify::PackFileChecksumResult;
