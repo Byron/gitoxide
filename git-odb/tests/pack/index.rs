@@ -154,7 +154,7 @@ fn pack_lookup() {
         assert_eq!(pack.kind(), pack::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
-            idx.verify_checksum_of_index(Some(&pack), Discard.into(), || DecodeEntryNoop)
+            idx.verify_checksum_of_index(Some(&pack), None, Discard.into(), || DecodeEntryNoop)
                 .unwrap(),
             (idx.checksum_of_index(), Some(stats.to_owned()))
         );
@@ -198,7 +198,7 @@ fn iter() {
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_checksum_of_index(None, Discard.into(), || DecodeEntryNoop)
+            idx.verify_checksum_of_index(None, None, Discard.into(), || DecodeEntryNoop)
                 .unwrap(),
             (idx.checksum_of_index(), None)
         );

@@ -90,6 +90,7 @@ impl index::File {
     pub fn verify_checksum_of_index<P, C>(
         &self,
         pack: Option<&pack::File>,
+        thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(git_object::Id, Option<PackFileChecksumResult>), ChecksumError>
@@ -235,6 +236,7 @@ impl index::File {
                 let stats = in_parallel_if(
                     there_are_enough_entries_to_process,
                     input_chunks,
+                    thread_limit,
                     state_per_thread,
                     |entries: &[index::Entry],
                      (cache, buf, progress)|

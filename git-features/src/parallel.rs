@@ -16,6 +16,7 @@ mod serial {
 
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
+        _thread_limit: Option<usize>,
         new_thread_state: impl Fn(usize) -> S + Send + Sync,
         consume: impl Fn(I, &mut S) -> O + Send + Sync,
         mut reducer: R,
@@ -47,8 +48,16 @@ mod in_parallel {
         .unwrap()
     }
 
+    fn num_threads(thread_limit: Option<usize>) -> usize {
+        let logical_cores = num_cpus::get();
+        thread_limit
+            .map(|l| if l == 0 { logical_cores } else { l })
+            .unwrap_or(logical_cores)
+    }
+
     pub fn in_parallel<I, S, O, R>(
         input: impl Iterator<Item = I> + Send,
+        thread_limit: Option<usize>,
         new_thread_state: impl Fn(usize) -> S + Send + Sync,
         consume: impl Fn(I, &mut S) -> O + Send + Sync,
         mut reducer: R,
@@ -58,14 +67,14 @@ mod in_parallel {
         I: Send,
         O: Send,
     {
-        let logical_cores = num_cpus::get();
+        let num_threads = num_threads(thread_limit);
         let new_thread_state = &new_thread_state;
         let consume = &consume;
         thread::scope(move |s| {
             let receive_result = {
-                let (send_input, receive_input) = crossbeam_channel::bounded::<I>(logical_cores);
-                let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(logical_cores);
-                for thread_id in 0..logical_cores {
+                let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
+                let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(num_threads);
+                for thread_id in 0..num_threads {
                     s.spawn({
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
@@ -103,6 +112,7 @@ pub use in_parallel::*;
 pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I> + Send,
+    thread_limit: Option<usize>,
     new_thread_state: impl Fn(usize) -> S + Send + Sync,
     consume: impl Fn(I, &mut S) -> O + Send + Sync,
     reducer: R,
@@ -113,8 +123,8 @@ where
     O: Send,
 {
     if condition() {
-        in_parallel(input, new_thread_state, consume, reducer)
+        in_parallel(input, thread_limit, new_thread_state, consume, reducer)
     } else {
-        serial::in_parallel(input, new_thread_state, consume, reducer)
+        serial::in_parallel(input, thread_limit, new_thread_state, consume, reducer)
     }
 }

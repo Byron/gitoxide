@@ -132,7 +132,7 @@ where
                     Err(e)
                 })
                 .ok();
-            idx.verify_checksum_of_index(pack.as_ref(), progress, || -> EitherCache {
+            idx.verify_checksum_of_index(pack.as_ref(), thread_limit, progress, || -> EitherCache {
                 if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::DecodeEntryNoop)

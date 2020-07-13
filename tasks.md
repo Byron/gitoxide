@@ -1,6 +1,6 @@
 ### TODO pack decoding + pack exploding
 * **parallel**
-  * [ ] limit parallelism by allowing to set the amount of threads
+  * [x] limit parallelism by allowing to set the amount of threads
 * **pack**
   * [ ] extract borrowed objects from a pack
   * [ ] support streamed objects (similar to how it's done with loose objects)
