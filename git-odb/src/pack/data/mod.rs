@@ -4,10 +4,9 @@ use std::path::Path;
 pub mod decode;
 mod decoded;
 pub use decoded::*;
-pub mod verify;
 
-mod file;
-pub use file::*;
+pub mod init;
+pub mod verify;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Kind {

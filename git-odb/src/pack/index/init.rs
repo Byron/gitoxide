@@ -1,8 +1,25 @@
-use crate::pack::index::{self, Error, Kind, FAN_LEN};
+use crate::pack::index::{self, Kind, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
+use quick_error::quick_error;
 use std::{convert::TryFrom, mem::size_of, path::Path};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Io(err: std::io::Error, path: std::path::PathBuf) {
+            display("Could not open pack index data at '{}'", path.display())
+            cause(err)
+        }
+        Corrupt(msg: String) {
+            display("{}", msg)
+        }
+        UnsupportedVersion(version: u32) {
+            display("Unsupported index version: {}", version)
+        }
+    }
+}
 
 const N32_SIZE: usize = size_of::<u32>();
 const V2_SIGNATURE: &[u8] = b"\xfftOc";

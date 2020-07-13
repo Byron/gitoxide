@@ -72,23 +72,6 @@ macro_rules! izip {
 }
 
 use filebuffer::FileBuffer;
-use quick_error::quick_error;
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open pack index data at '{}'", path.display())
-            cause(err)
-        }
-        Corrupt(msg: String) {
-            display("{}", msg)
-        }
-        UnsupportedVersion(version: u32) {
-            display("Unsupported index version: {}", version)
-        }
-    }
-}
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -125,8 +108,7 @@ impl File {
     }
 }
 
-mod file;
-pub use file::*;
+pub mod init;
 
 mod accesss;
 pub use accesss::Entry;

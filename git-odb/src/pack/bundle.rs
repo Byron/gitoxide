@@ -12,12 +12,12 @@ quick_error! {
         InvalidPath(path: PathBuf) {
             display("An 'idx' extension is expected of an index data: '{}'", path.display())
         }
-        Pack(err: pack::data::Error) {
+        Pack(err: pack::data::init::Error) {
             display("Could not instantiate pack")
             from()
             cause(err)
         }
-        Index(err: pack::index::Error) {
+        Index(err: pack::index::init::Error) {
             display("Could not instantiate pack index")
             from()
             cause(err)
