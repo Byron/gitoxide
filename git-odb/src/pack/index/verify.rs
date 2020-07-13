@@ -265,7 +265,7 @@ impl index::File {
 
                             let mut header_buf = [0u8; 64];
                             let header_size =
-                                crate::loose::object::parse::write_header(object_kind, buf.len(), &mut header_buf[..])
+                                crate::loose::object::header::encode(object_kind, buf.len(), &mut header_buf[..])
                                     .expect("header buffer to be big enough");
                             let mut hasher = git_features::hash::Sha1::default();
                             hasher.update(&header_buf[..header_size]);

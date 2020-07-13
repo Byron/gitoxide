@@ -70,7 +70,7 @@ pub mod iter {
 
 mod locate {
     use crate::{
-        loose::object::parse,
+        loose::object::header,
         loose::Db,
         loose::{Object, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
         zlib,
@@ -87,7 +87,7 @@ mod locate {
                 display("decompression of loose object at '{}' failed", path.display())
                 cause(err)
             }
-            Decode(err: parse::Error) {
+            Decode(err: header::Error) {
                 display("Could not decode header")
                 from()
                 cause(err)
@@ -141,7 +141,7 @@ mod locate {
                 )
             };
 
-            let (kind, size, header_size) = parse::header(&decompressed[..consumed_out])?;
+            let (kind, size, header_size) = header::decode(&decompressed[..consumed_out])?;
             let mut decompressed = SmallVec::from_buf(decompressed);
             decompressed.resize(consumed_out, 0);
 

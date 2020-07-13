@@ -15,5 +15,5 @@ pub struct Object {
 }
 
 pub mod decode;
-pub mod parse;
+pub mod header;
 pub mod stream;

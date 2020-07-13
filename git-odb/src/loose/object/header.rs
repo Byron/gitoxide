@@ -20,7 +20,7 @@ quick_error! {
     }
 }
 
-pub fn header(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
+pub fn decode(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
     let header_end = input
         .iter()
         .position(|&b| b == 0)
@@ -49,7 +49,7 @@ fn kind_to_bytes_with_space(object: object::Kind) -> &'static [u8] {
     }
 }
 
-pub fn write_header(object: object::Kind, size: usize, mut out: impl std::io::Write) -> Result<usize, std::io::Error> {
+pub fn encode(object: object::Kind, size: usize, mut out: impl std::io::Write) -> Result<usize, std::io::Error> {
     let mut written = out.write(kind_to_bytes_with_space(object))?;
     written += itoa::write(&mut out, size)?;
     out.write_u8(0)?;
@@ -59,7 +59,7 @@ pub fn write_header(object: object::Kind, size: usize, mut out: impl std::io::Wr
 #[cfg(test)]
 mod tests {
     mod write_header_round_trip {
-        use crate::loose::object::parse::{self, write_header};
+        use crate::loose::object::header;
         use git_object::bstr::ByteSlice;
 
         #[test]
@@ -71,9 +71,9 @@ mod tests {
                 (git_object::Kind::Commit, 24241, b"commit 24241\0"),
                 (git_object::Kind::Tag, 9999999999, b"tag 9999999999\0"),
             ] {
-                let written = write_header(*kind, *size, &mut buf[..]).unwrap();
+                let written = header::encode(*kind, *size, &mut buf[..]).unwrap();
                 assert_eq!(buf[..written].as_bstr(), expected.as_bstr());
-                let (actual_kind, actual_size, actual_read) = parse::header(&buf[..written]).unwrap();
+                let (actual_kind, actual_size, actual_read) = header::decode(&buf[..written]).unwrap();
                 assert_eq!(actual_kind, *kind);
                 assert_eq!(actual_size, *size);
                 assert_eq!(actual_read, written);
