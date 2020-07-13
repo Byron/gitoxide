@@ -2,7 +2,8 @@ use filebuffer::FileBuffer;
 use std::path::Path;
 
 pub mod decode;
-pub mod decoded;
+mod decoded;
+pub use decoded::*;
 pub mod verify;
 
 mod file;

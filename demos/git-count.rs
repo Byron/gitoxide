@@ -20,7 +20,7 @@ fn run() -> Result<()> {
     };
     let index = odb::pack::index::File::at(index)?;
     let pack = odb::pack::data::File::at(pack)?;
-    use odb::pack::data::decoded::Header::*;
+    use odb::pack::data::Header::*;
 
     writeln!(
         stdout(),
