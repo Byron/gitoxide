@@ -18,7 +18,7 @@ fn locate() {
         .unwrap()
         .unwrap();
     assert_eq!(
-        obj.dummy.as_bstr(),
+        obj.data.as_bstr(),
         b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n".as_bstr()
     );
     // obj.decode()

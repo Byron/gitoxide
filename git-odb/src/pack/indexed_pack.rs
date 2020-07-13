@@ -51,6 +51,10 @@ impl Bundle {
     }
 
     /// `id` is a 20 byte SHA1 of the object to locate in the pack
+    ///
+    /// Note that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
+    /// for thin packs.
+    /// For the latter, pack streams are required.
     pub fn locate<'a>(
         &self,
         id: &[u8],
@@ -60,15 +64,27 @@ impl Bundle {
         let idx = self.index.lookup_index(id)?;
         let ofs = self.index.pack_offset_at_index(idx);
         let entry = self.pack.entry(ofs);
-        Some(
-            self.pack
-                .decode_entry(entry, out, |_id, _out| None, cache)
-                .map_err(Error::Decode)
-                .map(move |_| Object { dummy: out.as_slice() }),
-        )
+        self.pack
+            .decode_entry(
+                entry,
+                out,
+                |id, _out| {
+                    self.index
+                        .lookup_index(id)
+                        .map(|idx| pack::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx))))
+                },
+                cache,
+            )
+            .map_err(Error::Decode)
+            .map(move |r| Object {
+                kind: r.kind,
+                data: out.as_slice(),
+            })
+            .into()
     }
 }
 
 pub struct Object<'data> {
-    pub dummy: &'data [u8],
+    pub kind: git_object::Kind,
+    pub data: &'data [u8],
 }
