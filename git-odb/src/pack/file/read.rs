@@ -1,11 +1,25 @@
 use crate::{
     pack::cache,
-    pack::{decoded::Entry, Error, File},
+    pack::{decoded, File},
     zlib::Inflate,
 };
 use git_object as object;
+use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{convert::TryInto, io, ops::Range};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
+            display("{}", msg)
+            cause(err)
+        }
+        DeltaBaseUnresolved(id: object::Id) {
+            display("A delta chain could not be applied as the ref base with id {} could not be found", id)
+        }
+    }
+}
 
 #[derive(Debug)]
 struct Delta {
@@ -20,7 +34,7 @@ struct Delta {
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
-    InPack(Entry),
+    InPack(decoded::Entry),
     OutOfPack { kind: object::Kind, end: usize },
 }
 
@@ -44,7 +58,7 @@ impl DecodeEntryResult {
             object_size: 0,
         }
     }
-    fn from_object_entry(kind: object::Kind, entry: &Entry, compressed_size: usize) -> Self {
+    fn from_object_entry(kind: object::Kind, entry: &decoded::Entry, compressed_size: usize) -> Self {
         Self {
             kind,
             num_deltas: 0,
@@ -59,7 +73,7 @@ impl DecodeEntryResult {
 impl File {
     // Note that this method does not resolve deltified objects, but merely decompresses their content
     // `out` is expected to be large enough to hold `entry.size` bytes.
-    pub fn decompress_entry(&self, entry: &Entry, out: &mut [u8]) -> Result<usize, Error> {
+    pub fn decompress_entry(&self, entry: &decoded::Entry, out: &mut [u8]) -> Result<usize, Error> {
         assert!(
             out.len() as u64 >= entry.decompressed_size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
@@ -68,6 +82,38 @@ impl File {
         );
 
         self.decompress_entry_from_data_offset(entry.data_offset, out)
+    }
+
+    /// Currently only done during pack verification - finding the right size is only possible by decompressing
+    /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index file.
+    pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
+        let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
+        git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
+    }
+
+    fn assure_v2(&self) {
+        assert!(
+            if let crate::pack::Kind::V2 = self.kind.clone() {
+                true
+            } else {
+                false
+            },
+            "Only V2 is implemented"
+        );
+    }
+
+    pub fn entry(&self, offset: u64) -> decoded::Entry {
+        self.assure_v2();
+        let pack_offset: usize = offset.try_into().expect("offset representable by machine");
+        assert!(pack_offset <= self.data.len(), "offset out of bounds");
+
+        let object_data = &self.data[pack_offset..];
+        let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(object_data, offset);
+        decoded::Entry {
+            header: object,
+            decompressed_size,
+            data_offset: offset + consumed_bytes,
+        }
     }
 
     /// Decompress the object expected at the given data offset, sans pack header. This information is only
@@ -91,7 +137,7 @@ impl File {
     /// such as in `crc32(pack_data[entry.data_offset..entry.data_offset + compressed_size])`
     pub fn decode_entry(
         &self,
-        entry: Entry,
+        entry: decoded::Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         cache: &mut impl cache::DecodeEntry,
@@ -123,7 +169,7 @@ impl File {
     /// it's very, very large as 20bytes are smaller than the corresponding MSB encoded number
     fn resolve_deltas(
         &self,
-        last: Entry,
+        last: decoded::Entry,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,

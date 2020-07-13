@@ -22,7 +22,7 @@ quick_error! {
             from()
             cause(err)
         }
-        Decode(err: pack::Error) {
+        Decode(err: pack::read::Error) {
             display("Could not decode object")
         }
     }

@@ -17,7 +17,7 @@ quick_error! {
             from()
             cause(err)
         }
-        PackDecode(err: pack::Error, id: git_object::Id, offset: u64) {
+        PackDecode(err: pack::read::Error, id: git_object::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
             cause(err)
         }

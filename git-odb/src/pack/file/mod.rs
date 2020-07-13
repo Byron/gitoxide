@@ -1,8 +1,8 @@
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_object::{self as object, SHA1_SIZE};
+use git_object::SHA1_SIZE;
 use quick_error::quick_error;
-use std::{convert::TryFrom, convert::TryInto, mem::size_of, path::Path};
+use std::{convert::TryFrom, mem::size_of, path::Path};
 
 pub mod read;
 
@@ -22,13 +22,6 @@ quick_error! {
         }
         UnsupportedVersion(version: u32) {
             display("Unsupported pack version: {}", version)
-        }
-        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
-            display("{}", msg)
-            cause(err)
-        }
-        DeltaBaseUnresolved(id: object::Id) {
-            display("A delta chain could not be applied as the ref base with id {} could not be found", id)
         }
     }
 }
@@ -61,34 +54,6 @@ impl File {
     }
     pub fn path(&self) -> &Path {
         &self.path
-    }
-
-    /// Currently only done during pack verification - finding the right size is only possible by decompressing
-    /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index file.
-    pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
-        let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
-        git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
-    }
-
-    fn assure_v2(&self) {
-        assert!(
-            if let Kind::V2 = self.kind.clone() { true } else { false },
-            "Only V2 is implemented"
-        );
-    }
-
-    pub fn entry(&self, offset: u64) -> decoded::Entry {
-        self.assure_v2();
-        let pack_offset: usize = offset.try_into().expect("offset representable by machine");
-        assert!(pack_offset <= self.data.len(), "offset out of bounds");
-
-        let object_data = &self.data[pack_offset..];
-        let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(object_data, offset);
-        decoded::Entry {
-            header: object,
-            decompressed_size,
-            data_offset: offset + consumed_bytes,
-        }
     }
 
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
