@@ -1,5 +1,8 @@
-use crate::pack::{cache, decode::DecodeEntryOutcome};
-use crate::{pack, pack::index};
+use crate::{
+    pack,
+    pack::index,
+    pack::{cache, decode::DecodeEntryOutcome},
+};
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
@@ -73,7 +76,7 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
-/// Methods to verify and validate the content of the index file
+/// Verify and validate the content of the index file
 impl index::File {
     pub fn checksum_of_index(&self) -> git_object::Id {
         git_object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])

@@ -1,4 +1,4 @@
-use crate::pack::index::{File, Kind, FAN_LEN};
+use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
 use git_object::{self as object, SHA1_SIZE};
 use std::{convert::TryInto, mem::size_of};
@@ -18,10 +18,11 @@ pub struct Entry {
     pub crc32: Option<u32>,
 }
 
-impl File {
+/// Iteration and access
+impl index::File {
     pub fn iter_v1<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         match self.kind {
-            Kind::V1 => self.data[V1_HEADER_SIZE..]
+            index::Kind::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
                 .take(self.num_objects as usize)
                 .map(|c| {
@@ -39,7 +40,7 @@ impl File {
     pub fn iter_v2<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         let pack64_offset = self.offset_pack_offset64_v2();
         match self.kind {
-            Kind::V2 => izip!(
+            index::Kind::V2 => izip!(
                 self.data[V2_HEADER_SIZE..].chunks(SHA1_SIZE),
                 self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
                 self.data[self.offset_pack_offset_v2()..].chunks(N32_SIZE)
@@ -61,8 +62,8 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         let start = match self.kind {
-            Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
-            Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
+            index::Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
+            index::Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
         &self.data[start..start + SHA1_SIZE]
     }
@@ -72,11 +73,11 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         match self.kind {
-            Kind::V2 => {
+            index::Kind::V2 => {
                 let start = self.offset_pack_offset_v2() + index * N32_SIZE;
                 self.pack_offset_from_offset_v2(&self.data[start..start + N32_SIZE], self.offset_pack_offset64_v2())
             }
-            Kind::V1 => {
+            index::Kind::V1 => {
                 let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
                 BigEndian::read_u32(&self.data[start..start + N32_SIZE]) as u64
             }
@@ -88,11 +89,11 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         match self.kind {
-            Kind::V2 => {
+            index::Kind::V2 => {
                 let start = self.offset_crc32_v2() + index * N32_SIZE;
                 Some(BigEndian::read_u32(&self.data[start..start + N32_SIZE]))
             }
-            Kind::V1 => None,
+            index::Kind::V1 => None,
         }
     }
 
@@ -122,8 +123,8 @@ impl File {
 
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
         match self.kind {
-            Kind::V2 => Box::new(self.iter_v2()),
-            Kind::V1 => Box::new(self.iter_v1()),
+            index::Kind::V2 => Box::new(self.iter_v2()),
+            index::Kind::V1 => Box::new(self.iter_v1()),
         }
     }
 
@@ -140,7 +141,7 @@ impl File {
     }
 
     fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> u64 {
-        debug_assert_eq!(self.kind, Kind::V2);
+        debug_assert_eq!(self.kind, index::Kind::V2);
         let ofs32 = BigEndian::read_u32(offset);
         if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
             let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;

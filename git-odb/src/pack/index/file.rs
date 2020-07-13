@@ -1,4 +1,4 @@
-use crate::pack::index::{Error, File, Kind, FAN_LEN};
+use crate::pack::index::{self, Error, Kind, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
@@ -9,13 +9,13 @@ const V2_SIGNATURE: &[u8] = b"\xfftOc";
 const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 
 /// Instantiation
-impl File {
-    pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
+impl index::File {
+    pub fn at(path: impl AsRef<Path>) -> Result<index::File, Error> {
         Self::try_from(path.as_ref())
     }
 }
 
-impl TryFrom<&Path> for File {
+impl TryFrom<&Path> for index::File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
@@ -54,7 +54,7 @@ impl TryFrom<&Path> for File {
 
             (kind, version, fan, num_objects)
         };
-        Ok(File {
+        Ok(index::File {
             data,
             kind,
             num_objects,
