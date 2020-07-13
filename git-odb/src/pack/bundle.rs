@@ -11,7 +11,7 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         InvalidPath(path: PathBuf) {
-            display("An 'idx' extension is expected of an index data: '{}'", path.display())
+            display("An 'idx' extension is expected of an index file: '{}'", path.display())
         }
         Pack(err: pack::data::init::Error) {
             display("Could not instantiate pack")
@@ -36,7 +36,7 @@ pub struct Bundle {
 }
 
 impl Bundle {
-    /// `path` is either a pack data or an index data
+    /// `path` is either a pack file or an index file
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())
     }

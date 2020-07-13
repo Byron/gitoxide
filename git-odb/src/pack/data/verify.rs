@@ -9,7 +9,7 @@ quick_error! {
             display("pack checksum mismatch: expected {}, got {}", expected, actual)
         }
         Io(err: std::io::Error) {
-            display("could not read pack data")
+            display("could not read pack file")
             from()
             cause(err)
         }

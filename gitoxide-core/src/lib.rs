@@ -114,17 +114,17 @@ where
     })?;
     let res = match ext {
         "pack" => {
-            let pack = git_odb::pack::data::File::at(path).with_context(|| "Could not open pack data")?;
+            let pack = git_odb::pack::data::File::at(path).with_context(|| "Could not open pack file")?;
             pack.verify_checksum().map(|id| (id, None))?
         }
         "idx" => {
-            let idx = git_odb::pack::index::File::at(path).with_context(|| "Could not open pack index data")?;
+            let idx = git_odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
             let packfile_path = path.with_extension("pack");
             let pack = git_odb::pack::data::File::at(&packfile_path)
                 .or_else(|e| {
                     writeln!(
                         err,
-                        "Could not find matching pack data at '{}' - only index data will be verified, error was: {}",
+                        "Could not find matching pack file at '{}' - only index file will be verified, error was: {}",
                         packfile_path.display(),
                         e
                     )

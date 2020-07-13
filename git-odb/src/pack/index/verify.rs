@@ -16,7 +16,7 @@ quick_error! {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
         PackChecksum(err: pack::data::verify::Error) {
-            display("The pack of this index data failed to verify its checksums")
+            display("The pack of this index file failed to verify its checksums")
             from()
             cause(err)
         }
@@ -25,13 +25,13 @@ quick_error! {
             cause(err)
         }
         PackMismatch { expected: git_object::Id, actual: git_object::Id } {
-            display("The packfiles checksum didn't match the index data checksum: expected {}, got {}", expected, actual)
+            display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
         }
         PackObjectMismatch { expected: git_object::Id, actual: git_object::Id, offset: u64, kind: git_object::Kind} {
-            display("The SHA1 of {} object at offset {} didn't match the checksum in the index data: expected {}, got {}", kind, offset, expected, actual)
+            display("The SHA1 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
         Crc32Mismatch { expected: u32, actual: u32, offset: u64, kind: git_object::Kind} {
-            display("The CRC32 of {} object at offset {} didn't match the checksum in the index data: expected {}, got {}", kind, offset, expected, actual)
+            display("The CRC32 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
     }
 }
@@ -76,7 +76,7 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
-/// Verify and validate the content of the index data
+/// Verify and validate the content of the index file
 impl index::File {
     pub fn checksum_of_index(&self) -> git_object::Id {
         git_object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])

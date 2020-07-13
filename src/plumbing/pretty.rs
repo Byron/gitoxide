@@ -26,7 +26,7 @@ mod options {
 
     #[derive(Debug, StructOpt)]
     pub enum Subcommands {
-        /// Verify the integrity of a pack or index data
+        /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         VerifyPack {
             /// output statistical information about the pack
