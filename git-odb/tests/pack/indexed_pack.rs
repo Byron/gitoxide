@@ -7,7 +7,6 @@ use git_odb::pack;
 fn locate() {
     let idx = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
     let mut out = Vec::new();
-    // cache: &mut impl cache::DecodeEntry,
 
     let obj = idx
         .locate(
@@ -21,5 +20,6 @@ fn locate() {
         obj.data.as_bstr(),
         b"GitPython is a python library used to interact with Git repositories.\n\nHi there\n".as_bstr()
     );
-    // obj.decode()
+    assert_eq!(obj.kind, git_object::Kind::Blob);
+    assert_eq!(obj.decode().unwrap().as_blob().unwrap().data, obj.data);
 }

@@ -1,4 +1,6 @@
 use crate::pack;
+use git_object as object;
+use git_object::borrowed;
 use quick_error::quick_error;
 use std::path::{Path, PathBuf};
 
@@ -87,4 +89,15 @@ impl Bundle {
 pub struct Object<'data> {
     pub kind: git_object::Kind,
     pub data: &'data [u8],
+}
+
+impl<'data> Object<'data> {
+    pub fn decode(&self) -> Result<borrowed::Object, borrowed::Error> {
+        Ok(match self.kind {
+            object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(self.data)?),
+            object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(self.data)?),
+            object::Kind::Commit => borrowed::Object::Commit(borrowed::Commit::from_bytes(self.data)?),
+            object::Kind::Blob => borrowed::Object::Blob(borrowed::Blob { data: self.data }),
+        })
+    }
 }
