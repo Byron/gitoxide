@@ -13,12 +13,11 @@ const PACK_FOR_INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d
 
 mod method {
     mod v1 {
-        use crate::fixture_path;
-        use crate::pack::index::INDEX_V1;
+        use crate::{fixture_path, pack::index::INDEX_V1};
         use git_odb::pack::index;
 
         #[test]
-        fn lookup() {
+        fn lookup_index() {
             let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
             for (id, desired_index, assertion) in &[
                 (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
@@ -47,7 +46,7 @@ mod method {
         use git_odb::pack::index;
 
         #[test]
-        fn lookup() {
+        fn lookup_index() {
             let idx = index::File::at(&fixture_path(INDEX_V2)).unwrap();
             for (id, desired_index, assertion) in &[
                 (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first"),
