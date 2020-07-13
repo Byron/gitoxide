@@ -2,7 +2,7 @@ use crate::{
     fixture_path, hex_to_id,
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
-use git_odb::pack::{self, data::decode::DecodeEntryOutcome, index};
+use git_odb::pack::{self, data::decode::Outcome, index};
 use pretty_assertions::assert_eq;
 
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
@@ -81,7 +81,7 @@ fn pack_lookup() {
             INDEX_V2,
             PACK_FOR_INDEX_V2,
             index::verify::Outcome {
-                average: DecodeEntryOutcome {
+                average: Outcome {
                     kind: git_object::Kind::Tree,
                     num_deltas: 1,
                     decompressed_size: 3456,
@@ -107,7 +107,7 @@ fn pack_lookup() {
             INDEX_V1,
             PACK_FOR_INDEX_V1,
             index::verify::Outcome {
-                average: DecodeEntryOutcome {
+                average: Outcome {
                     kind: git_object::Kind::Tree,
                     num_deltas: 0,
                     decompressed_size: 1982,
@@ -128,7 +128,7 @@ fn pack_lookup() {
             SMALL_PACK_INDEX,
             SMALL_PACK,
             index::verify::Outcome {
-                average: DecodeEntryOutcome {
+                average: Outcome {
                     kind: git_object::Kind::Tree,
                     num_deltas: 0,
                     decompressed_size: 118,

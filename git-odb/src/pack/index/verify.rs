@@ -1,7 +1,7 @@
 use crate::{
     pack,
     pack::index,
-    pack::{cache, data::decode::DecodeEntryOutcome},
+    pack::{cache, data::decode},
 };
 use git_features::progress::{self, Progress};
 use git_object::SHA1_SIZE;
@@ -64,7 +64,7 @@ impl Into<String> for TimeThroughput {
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
-    pub average: DecodeEntryOutcome,
+    pub average: decode::Outcome,
     pub objects_per_chain_length: BTreeMap<u32, u32>,
     /// The amount of bytes in all compressed streams, one per entry
     pub total_compressed_entries_size: u64,
@@ -150,14 +150,14 @@ impl index::File {
                     v
                 };
 
-                fn add_decode_result(lhs: &mut DecodeEntryOutcome, rhs: DecodeEntryOutcome) {
+                fn add_decode_result(lhs: &mut decode::Outcome, rhs: decode::Outcome) {
                     lhs.num_deltas += rhs.num_deltas;
                     lhs.decompressed_size += rhs.decompressed_size;
                     lhs.compressed_size += rhs.compressed_size;
                     lhs.object_size += rhs.object_size;
                 }
 
-                fn div_decode_result(lhs: &mut DecodeEntryOutcome, div: usize) {
+                fn div_decode_result(lhs: &mut decode::Outcome, div: usize) {
                     lhs.num_deltas = (lhs.num_deltas as f32 / div as f32) as u32;
                     lhs.decompressed_size /= div as u64;
                     lhs.compressed_size /= div;
@@ -176,7 +176,7 @@ impl index::File {
                 where
                     P: Progress,
                 {
-                    type Input = Result<Vec<DecodeEntryOutcome>, Error>;
+                    type Input = Result<Vec<decode::Outcome>, Error>;
                     type Output = Outcome;
                     type Error = Error;
 
@@ -187,7 +187,7 @@ impl index::File {
                         self.chunks_seen += 1;
 
                         let mut chunk_average = chunk_stats.into_iter().fold(
-                            DecodeEntryOutcome::default_from_kind(git_object::Kind::Tree),
+                            decode::Outcome::default_from_kind(git_object::Kind::Tree),
                             |mut average, stats| {
                                 *self.stats.objects_per_chain_length.entry(stats.num_deltas).or_insert(0) += 1;
                                 self.stats.total_decompressed_entries_size += stats.decompressed_size;
@@ -241,7 +241,7 @@ impl index::File {
                     input_chunks,
                     thread_limit,
                     state_per_thread,
-                    |entries: &[index::Entry], (cache, buf, progress)| -> Result<Vec<DecodeEntryOutcome>, Error> {
+                    |entries: &[index::Entry], (cache, buf, progress)| -> Result<Vec<decode::Outcome>, Error> {
                         progress.init(Some(entries.len() as u32), Some("entries"));
                         let mut stats = Vec::with_capacity(entries.len());
                         for (idx, index_entry) in entries.iter().enumerate() {
@@ -304,7 +304,7 @@ impl index::File {
                         entries_seen: 0,
                         chunks_seen: 0,
                         stats: Outcome {
-                            average: DecodeEntryOutcome::default_from_kind(git_object::Kind::Tree),
+                            average: decode::Outcome::default_from_kind(git_object::Kind::Tree),
                             objects_per_chain_length: Default::default(),
                             total_compressed_entries_size: 0,
                             total_decompressed_entries_size: 0,
