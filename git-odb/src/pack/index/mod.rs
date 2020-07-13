@@ -71,7 +71,64 @@ macro_rules! izip {
     };
 }
 
+use filebuffer::FileBuffer;
+use quick_error::quick_error;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Io(err: std::io::Error, path: std::path::PathBuf) {
+            display("Could not open pack index file at '{}'", path.display())
+            cause(err)
+        }
+        Corrupt(msg: String) {
+            display("{}", msg)
+        }
+        UnsupportedVersion(version: u32) {
+            display("Unsupported index version: {}", version)
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum Kind {
+    V1,
+    V2,
+}
+
+impl Default for Kind {
+    fn default() -> Self {
+        Kind::V2
+    }
+}
+
+const FAN_LEN: usize = 256;
+
+pub struct File {
+    pub(crate) data: FileBuffer,
+    kind: Kind,
+    version: u32,
+    num_objects: u32,
+    fan: [u32; FAN_LEN],
+}
+
+impl File {
+    pub fn kind(&self) -> Kind {
+        self.kind
+    }
+    pub fn num_objects(&self) -> u32 {
+        self.num_objects
+    }
+    pub fn version(&self) -> u32 {
+        self.version
+    }
+}
+
 mod file;
 pub use file::*;
+
+mod accesss;
+pub use accesss::Entry;
 
 pub mod verify;

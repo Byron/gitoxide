@@ -40,7 +40,7 @@ pub enum ResolvedBase {
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct DecodeEntryResult {
+pub struct DecodeEntryOutcome {
     pub kind: object::Kind,
     pub num_deltas: u32,
     pub decompressed_size: u64,
@@ -48,7 +48,7 @@ pub struct DecodeEntryResult {
     pub object_size: u64,
 }
 
-impl DecodeEntryResult {
+impl DecodeEntryOutcome {
     pub fn default_from_kind(kind: object::Kind) -> Self {
         Self {
             kind,
@@ -141,7 +141,7 @@ impl File {
         out: &mut Vec<u8>,
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         cache: &mut impl cache::DecodeEntry,
-    ) -> Result<DecodeEntryResult, Error> {
+    ) -> Result<DecodeEntryOutcome, Error> {
         use crate::pack::decoded::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
@@ -153,7 +153,7 @@ impl File {
                     0,
                 );
                 self.decompress_entry(&entry, out.as_mut_slice()).map(|consumed_input| {
-                    DecodeEntryResult::from_object_entry(
+                    DecodeEntryOutcome::from_object_entry(
                         entry.header.to_kind().expect("a non-delta entry"),
                         &entry,
                         consumed_input,
@@ -173,7 +173,7 @@ impl File {
         resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
-    ) -> Result<DecodeEntryResult, Error> {
+    ) -> Result<DecodeEntryOutcome, Error> {
         use crate::pack::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();
@@ -229,7 +229,7 @@ impl File {
         // This can happen if the cache held the first entry itself
         // We will just treat it as an object then, even though it's technically incorrect.
         if chain.is_empty() {
-            return Ok(DecodeEntryResult::from_object_entry(
+            return Ok(DecodeEntryOutcome::from_object_entry(
                 object_kind.expect("object kind as set by cache"),
                 &first_entry,
                 consumed_input.expect("consumed bytes as set by cache"),
@@ -369,7 +369,7 @@ impl File {
         let object_kind = object_kind.expect("a base object as root of any delta chain that we are here to resolve");
         let consumed_input = consumed_input.expect("at least one decompressed delta object");
         cache.put(first_entry.data_offset, out.as_slice(), object_kind, consumed_input);
-        Ok(DecodeEntryResult {
+        Ok(DecodeEntryOutcome {
             kind: object_kind,
             // technically depending on the cache, the chain size is not correct as it might
             // have been cut short by a cache hit. The caller must deactivate the cache to get
