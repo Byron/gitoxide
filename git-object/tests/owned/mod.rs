@@ -4,6 +4,8 @@ mod tag {
 
     #[test]
     fn round_trip() {
-        let tag: owned::Tag = (&borrowed::Tag::from_bytes(&fixture_bytes("tag/empty.txt")).unwrap()).into();
+        let tag: owned::Tag = borrowed::Tag::from_bytes(&fixture_bytes("tag/empty.txt"))
+            .unwrap()
+            .into();
     }
 }
