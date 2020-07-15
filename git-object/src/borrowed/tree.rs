@@ -12,18 +12,18 @@ use std::convert::TryFrom;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Tree<'data> {
+pub struct Tree<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub entries: Vec<Entry<'data>>,
+    pub entries: Vec<Entry<'a>>,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry<'data> {
+pub struct Entry<'a> {
     pub mode: Mode,
-    pub filename: &'data BStr,
+    pub filename: &'a BStr,
     /// a 20 bytes SHA1
-    pub oid: &'data [u8],
+    pub oid: &'a [u8],
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
@@ -75,8 +75,8 @@ fn parse(i: &[u8]) -> IResult<&[u8], Tree, Error> {
     Ok((i, Tree { entries }))
 }
 
-impl<'data> Tree<'data> {
-    pub fn from_bytes(d: &'data [u8]) -> Result<Tree<'data>, Error> {
+impl<'a> Tree<'a> {
+    pub fn from_bytes(d: &'a [u8]) -> Result<Tree<'a>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)
     }
 }

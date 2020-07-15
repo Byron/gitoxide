@@ -17,16 +17,16 @@ use nom::{
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Tag<'data> {
+pub struct Tag<'a> {
     // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub target: &'data BStr,
+    pub target: &'a BStr,
     // The name of the tag, e.g. "v1.0"
-    pub name: &'data BStr,
+    pub name: &'a BStr,
     pub target_kind: crate::Kind,
-    pub message: &'data BStr,
-    pub signature: Signature<'data>,
-    pub pgp_signature: Option<&'data BStr>,
+    pub message: &'a BStr,
+    pub signature: Signature<'a>,
+    pub pgp_signature: Option<&'a BStr>,
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
@@ -100,11 +100,11 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
     ))
 }
 
-impl<'data> Tag<'data> {
+impl<'a> Tag<'a> {
     pub fn target(&self) -> crate::Id {
         crate::Id::from_hex(self.target).expect("prior validation")
     }
-    pub fn from_bytes(d: &'data [u8]) -> Result<Tag<'data>, Error> {
+    pub fn from_bytes(d: &'a [u8]) -> Result<Tag<'a>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)
     }
 }

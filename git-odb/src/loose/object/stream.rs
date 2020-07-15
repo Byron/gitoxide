@@ -1,21 +1,21 @@
 use crate::zlib::stream::InflateReader;
 use std::io::BufReader;
 
-pub enum Reader<'data> {
+pub enum Reader<'a> {
     File(usize, InflateReader<BufReader<std::fs::File>>),
-    Buffer(&'data [u8]),
+    Buffer(&'a [u8]),
 }
 
-impl<'data> Reader<'data> {
-    pub fn from_read(header_size: usize, file: std::fs::File) -> Reader<'data> {
+impl<'a> Reader<'a> {
+    pub fn from_read(header_size: usize, file: std::fs::File) -> Reader<'a> {
         Reader::File(header_size, InflateReader::new(file))
     }
-    pub fn from_data(header_size: usize, data: &'data [u8]) -> Reader<'data> {
+    pub fn from_data(header_size: usize, data: &'a [u8]) -> Reader<'a> {
         Reader::Buffer(&data[header_size..])
     }
 }
 
-impl<'data> std::io::Read for Reader<'data> {
+impl<'a> std::io::Read for Reader<'a> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         match self {
             Reader::Buffer(data) => data.read(buf),

@@ -9,8 +9,8 @@ pub use tree::Tree;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Blob<'data> {
-    pub data: &'data [u8],
+pub struct Blob<'a> {
+    pub data: &'a [u8],
 }
 
 mod object;

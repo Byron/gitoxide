@@ -10,31 +10,31 @@ use crate::{
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Signature<'data> {
+pub struct Signature<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub name: &'data BStr,
-    pub email: &'data BStr,
+    pub name: &'a BStr,
+    pub email: &'a BStr,
     pub time: Time,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Object<'data> {
+pub enum Object<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    Tag(Tag<'data>),
-    Commit(Commit<'data>),
-    Tree(Tree<'data>),
-    Blob(Blob<'data>),
+    Tag(Tag<'a>),
+    Commit(Commit<'a>),
+    Tree(Tree<'a>),
+    Blob(Blob<'a>),
 }
 
-impl<'data> Object<'data> {
+impl<'a> Object<'a> {
     pub fn as_blob(&self) -> Option<&borrowed::Blob> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
         }
     }
-    pub fn as_commit(&self) -> Option<&borrowed::Commit<'data>> {
+    pub fn as_commit(&self) -> Option<&borrowed::Commit<'a>> {
         match self {
             Object::Commit(v) => Some(v),
             _ => None,
@@ -66,34 +66,34 @@ mod convert {
     use crate::borrowed::{Blob, Commit, Object, Tag, Tree};
     use std::convert::TryFrom;
 
-    impl<'data> From<Tag<'data>> for Object<'data> {
-        fn from(v: Tag<'data>) -> Self {
+    impl<'a> From<Tag<'a>> for Object<'a> {
+        fn from(v: Tag<'a>) -> Self {
             Object::Tag(v)
         }
     }
 
-    impl<'data> From<Commit<'data>> for Object<'data> {
-        fn from(v: Commit<'data>) -> Self {
+    impl<'a> From<Commit<'a>> for Object<'a> {
+        fn from(v: Commit<'a>) -> Self {
             Object::Commit(v)
         }
     }
 
-    impl<'data> From<Tree<'data>> for Object<'data> {
-        fn from(v: Tree<'data>) -> Self {
+    impl<'a> From<Tree<'a>> for Object<'a> {
+        fn from(v: Tree<'a>) -> Self {
             Object::Tree(v)
         }
     }
 
-    impl<'data> From<Blob<'data>> for Object<'data> {
-        fn from(v: Blob<'data>) -> Self {
+    impl<'a> From<Blob<'a>> for Object<'a> {
+        fn from(v: Blob<'a>) -> Self {
             Object::Blob(v)
         }
     }
 
-    impl<'data> TryFrom<Object<'data>> for Tag<'data> {
-        type Error = Object<'data>;
+    impl<'a> TryFrom<Object<'a>> for Tag<'a> {
+        type Error = Object<'a>;
 
-        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
                 Object::Tag(v) => v,
                 _ => return Err(value),
@@ -101,10 +101,10 @@ mod convert {
         }
     }
 
-    impl<'data> TryFrom<Object<'data>> for Commit<'data> {
-        type Error = Object<'data>;
+    impl<'a> TryFrom<Object<'a>> for Commit<'a> {
+        type Error = Object<'a>;
 
-        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
                 Object::Commit(v) => v,
                 _ => return Err(value),
@@ -112,10 +112,10 @@ mod convert {
         }
     }
 
-    impl<'data> TryFrom<Object<'data>> for Tree<'data> {
-        type Error = Object<'data>;
+    impl<'a> TryFrom<Object<'a>> for Tree<'a> {
+        type Error = Object<'a>;
 
-        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
                 Object::Tree(v) => v,
                 _ => return Err(value),
@@ -123,10 +123,10 @@ mod convert {
         }
     }
 
-    impl<'data> TryFrom<Object<'data>> for Blob<'data> {
-        type Error = Object<'data>;
+    impl<'a> TryFrom<Object<'a>> for Blob<'a> {
+        type Error = Object<'a>;
 
-        fn try_from(value: Object<'data>) -> Result<Self, Self::Error> {
+        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
                 Object::Blob(v) => v,
                 _ => return Err(value),

@@ -46,12 +46,12 @@ impl Bundle {
     /// Note that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
     /// for thin packs.
     /// For the latter, pack streams are required.
-    pub fn locate<'data>(
+    pub fn locate<'a>(
         &self,
         id: &[u8],
-        out: &'data mut Vec<u8>,
+        out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Option<Result<Object<'data>, Error>> {
+    ) -> Option<Result<Object<'a>, Error>> {
         let idx = self.index.lookup_index(id)?;
         let ofs = self.index.pack_offset_at_index(idx);
         let entry = self.pack.entry(ofs);
@@ -113,12 +113,12 @@ impl TryFrom<&Path> for Bundle {
 }
 
 /// Created by `Bundle::locate(…)`
-pub struct Object<'data> {
+pub struct Object<'a> {
     pub kind: git_object::Kind,
-    pub data: &'data [u8],
+    pub data: &'a [u8],
 }
 
-impl<'data> Object<'data> {
+impl<'a> Object<'a> {
     pub fn decode(&self) -> Result<borrowed::Object, borrowed::Error> {
         Ok(match self.kind {
             object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(self.data)?),

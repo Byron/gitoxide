@@ -16,18 +16,18 @@ use smallvec::SmallVec;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Commit<'data> {
+pub struct Commit<'a> {
     // SHA1 of tree object we point to
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub tree: &'data BStr,
+    pub tree: &'a BStr,
     // SHA1 of each parent commit. Empty for first commit in repository.
-    pub parents: SmallVec<[&'data BStr; 1]>,
-    pub author: Signature<'data>,
-    pub committer: Signature<'data>,
+    pub parents: SmallVec<[&'a BStr; 1]>,
+    pub author: Signature<'a>,
+    pub committer: Signature<'a>,
     // The name of the message encoding, otherwise UTF-8 should be assumed.
-    pub encoding: Option<&'data BStr>,
-    pub message: &'data BStr,
-    pub pgp_signature: Option<&'data BStr>,
+    pub encoding: Option<&'a BStr>,
+    pub message: &'a BStr,
+    pub pgp_signature: Option<&'a BStr>,
 }
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
@@ -72,11 +72,11 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
     ))
 }
 
-impl<'data> Commit<'data> {
+impl<'a> Commit<'a> {
     pub fn tree(&self) -> crate::Id {
         crate::Id::from_hex(self.tree).expect("prior validation")
     }
-    pub fn from_bytes(d: &'data [u8]) -> Result<Commit<'data>, Error> {
+    pub fn from_bytes(d: &'a [u8]) -> Result<Commit<'a>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)
     }
 }
