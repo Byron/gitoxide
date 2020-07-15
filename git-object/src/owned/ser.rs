@@ -39,6 +39,13 @@ pub fn trusted_header_field_signature(
     out.write_all(&NL[..])
 }
 
+pub fn trusted_header_field_id(name: &[u8], value: &crate::Id, mut out: impl io::Write) -> io::Result<()> {
+    out.write_all(name)?;
+    out.write_all(&SPACE[..])?;
+    value.write_to(&mut out)?;
+    out.write_all(&NL[..])
+}
+
 pub fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io::Result<()> {
     if value.is_empty() {
         return Err(Error::EmptyValue.into());

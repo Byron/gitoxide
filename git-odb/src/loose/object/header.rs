@@ -58,7 +58,7 @@ pub fn encode(object: object::Kind, size: usize, mut out: impl std::io::Write) -
 
 #[cfg(test)]
 mod tests {
-    mod write_header_round_trip {
+    mod encode_decode_round_trip {
         use crate::loose::object::header;
         use git_object::bstr::ByteSlice;
 

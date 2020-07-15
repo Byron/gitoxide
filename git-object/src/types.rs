@@ -80,6 +80,13 @@ impl Id {
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_ref()
     }
+
+    pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        let mut hex_buf: [u8; 40] = [0; 40];
+        self.encode_to_40_bytes_slice(&mut hex_buf[..])
+            .expect("20 to 40 bytes hex encoding to always work");
+        out.write_all(&hex_buf)
+    }
 }
 
 impl Deref for Id {

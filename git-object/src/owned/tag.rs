@@ -41,12 +41,7 @@ pub struct Tag {
 
 impl Tag {
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        let mut hex_buf: [u8; 40] = [0; 40];
-        self.target
-            .encode_to_40_bytes_slice(&mut hex_buf[..])
-            .expect("20 to 40 bytes hex encoding to always work");
-
-        ser::trusted_header_field(b"object", &hex_buf, &mut out)?;
+        ser::trusted_header_field_id(b"object", &self.target, &mut out)?;
         ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
         ser::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
         ser::trusted_header_field_signature(b"tagger", &self.signature, &mut out)?;
