@@ -15,7 +15,7 @@ pub enum Sign {
 pub struct Time {
     /// time in seconds from epoch
     pub time: u32,
-    /// time offset in seconds
+    /// time offset in seconds, may be negative to match the sign
     pub offset: i32,
     /// the sign seen in front of -0000
     pub sign: Sign,
@@ -33,9 +33,10 @@ impl Time {
         const ZERO: &[u8; 1] = b"0";
 
         const SECONDS_PER_HOUR: i32 = 60 * 60;
-        let hours = self.offset / SECONDS_PER_HOUR;
+        let offset = self.offset.abs();
+        let hours = offset / SECONDS_PER_HOUR;
         assert!(hours < 25, "offset is more than a day: {}", hours);
-        let minutes = (self.offset - (hours * SECONDS_PER_HOUR)) / 60;
+        let minutes = (offset - (hours * SECONDS_PER_HOUR)) / 60;
 
         if hours < 10 {
             out.write_all(ZERO)?;
