@@ -39,13 +39,12 @@ pub fn name(name: &BStr) -> Result<&BStr, NameError> {
     let mut last = 0;
     for byte in name.iter() {
         match byte {
-            0 | b'\\' | b'\r' | b'^' | b':' | b'\n' | b'[' | b'?' | b' ' | b'\t' | b'~' => {
+            b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
                 return Err(NameError::InvalidByte(name.into()))
             }
             b'*' => return Err(NameError::Asterisk),
             b'.' if last == b'.' => return Err(NameError::DoubleDot),
             b'{' if last == b'@' => return Err(NameError::ReflogPortion),
-            128..=u8::MAX => {}
             _ => {}
         }
         last = *byte;

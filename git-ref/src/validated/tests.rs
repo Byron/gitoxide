@@ -59,6 +59,13 @@ mod name {
         mktest!(starts_with_asterisk, b"*suffix", Asterisk);
         mktest!(ends_with_asterisk, b"prefix*", Asterisk);
         mktest!(contains_asterisk, b"prefix*suffix", Asterisk);
+        mktestb!(contains_null, b"prefix\0suffix");
+        mktestb!(contains_bell, b"prefix\x07suffix");
+        mktestb!(contains_backspace, b"prefix\x08suffix");
+        mktestb!(contains_vertical_tab, b"prefix\x0bsuffix");
+        mktestb!(contains_form_feed, b"prefix\x0csuffix");
+        mktestb!(contains_ctrl_z, b"prefix\x1asuffix");
+        mktestb!(contains_esc, b"prefix\x1bsuffix");
         mktestb!(contains_colon, b"prefix:suffix");
         mktestb!(contains_questionmark, b"prefix?suffix");
         mktestb!(contains_open_bracket, b"prefix[suffix");
