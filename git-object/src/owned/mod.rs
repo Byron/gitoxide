@@ -1,4 +1,48 @@
 //! Owned objects for use with serialization.
+
+mod ser {
+    use bstr::{BString, ByteSlice};
+    use quick_error::quick_error;
+    use std::io;
+
+    quick_error! {
+        #[derive(Debug)]
+        enum Error {
+            NewlineInHeaderValue(value: BString) {
+                display("Newlines are not allowed in header values: {:?}", value)
+            }
+            EmptyValue {
+                display("Header values must not be empty")
+            }
+        }
+    }
+
+    impl Into<io::Error> for Error {
+        fn into(self) -> io::Error {
+            io::Error::new(io::ErrorKind::Other, self)
+        }
+    }
+
+    const NL: &[u8; 1] = b"\n";
+    const SPACE: &[u8; 1] = b" ";
+
+    pub fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
+        out.write_all(name)?;
+        out.write_all(&SPACE[..])?;
+        out.write_all(value)?;
+        out.write_all(&NL[..])
+    }
+    pub fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io::Result<()> {
+        if value.is_empty() {
+            return Err(Error::EmptyValue.into());
+        }
+        if value.find(NL).is_some() {
+            return Err(Error::NewlineInHeaderValue(value.into()).into());
+        }
+        trusted_header_field(name, value, out)
+    }
+}
+
 mod object {
     use crate::Time;
     use bstr::BString;
@@ -13,9 +57,25 @@ mod object {
 }
 
 mod tag {
-    use crate::owned::object::Signature;
-    use crate::Id;
-    use bstr::BString;
+    use crate::{owned, owned::ser, Id};
+    use bstr::{BStr, BString};
+    use quick_error::quick_error;
+    use std::io;
+
+    quick_error! {
+        #[derive(Debug)]
+        enum Error {
+            InvalidTagName(name: BString) {
+                display("A tag named '{}' is invalid", name)
+            }
+        }
+    }
+
+    impl From<Error> for io::Error {
+        fn from(err: Error) -> Self {
+            io::Error::new(io::ErrorKind::Other, err)
+        }
+    }
 
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -26,8 +86,57 @@ mod tag {
         pub name: BString,
         pub target_kind: crate::Kind,
         pub message: BString,
-        pub signature: Signature,
+        pub signature: owned::object::Signature,
         pub pgp_signature: Option<BString>,
+    }
+
+    impl Tag {
+        pub fn to_write(&self, mut out: impl io::Write) -> io::Result<()> {
+            let mut hex_buf: [u8; 40] = [0; 40];
+            self.target
+                .encode_to_40_bytes_slice(&mut hex_buf[..])
+                .expect("20 to 40 bytes hex encoding to always work");
+
+            ser::trusted_header_field(b"object", &hex_buf, &mut out)?;
+            ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
+            ser::header_field(b"type", validated_name(self.name.as_ref())?, &mut out)?;
+            unimplemented!("tag to_write")
+        }
+    }
+
+    fn validated_name(name: &BStr) -> Result<&BStr, Error> {
+        if name.is_empty() {
+            return Err(Error::InvalidTagName(name.into()));
+        }
+        if name[0] == b'-' {
+            return Err(Error::InvalidTagName(name.into()));
+        }
+        Ok(name)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        mod validated_name {
+            mod invalid {
+                use super::super::super::*;
+                use bstr::ByteSlice;
+
+                #[test]
+                fn leading_dash() {
+                    assert!(validated_name(b"-".as_bstr()).is_err())
+                }
+            }
+
+            mod valid {
+                use super::super::super::*;
+                use bstr::ByteSlice;
+
+                #[test]
+                fn version() {
+                    assert!(validated_name(b"v1.0.0".as_bstr()).is_ok())
+                }
+            }
+        }
     }
 }
 
