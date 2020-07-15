@@ -60,6 +60,3 @@ pub fn name(name: &BStr) -> Result<&BStr, NameError> {
     }
     Ok(name)
 }
-
-#[cfg(test)]
-mod tests;
