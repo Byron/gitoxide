@@ -118,10 +118,12 @@ mod tag {
 
     #[test]
     fn round_trip() {
-        let input = fixture_bytes("tag/empty.txt");
-        let tag: owned::Tag = borrowed::Tag::from_bytes(&input).unwrap().into();
-        let mut output = Vec::new();
-        tag.write_to(&mut output).unwrap();
-        assert_eq!(input.as_bstr(), output.as_bstr());
+        for input in &["tag/empty.txt", "tag/whitespace.txt"] {
+            let input = fixture_bytes(input);
+            let tag: owned::Tag = borrowed::Tag::from_bytes(&input).unwrap().into();
+            let mut output = Vec::new();
+            tag.write_to(&mut output).unwrap();
+            assert_eq!(input.as_bstr(), output.as_bstr());
+        }
     }
 }
