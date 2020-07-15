@@ -38,7 +38,7 @@ impl Id {
         Id(id)
     }
 
-    pub fn from_hex(buf: &[u8]) -> Result<Id, hex::FromHexError> {
+    pub fn from_40_bytes_in_hex(buf: &[u8]) -> Result<Id, hex::FromHexError> {
         use hex::FromHex;
         Ok(Id(<[u8; 20]>::from_hex(buf)?))
     }

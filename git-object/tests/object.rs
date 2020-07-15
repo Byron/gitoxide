@@ -3,7 +3,7 @@ use std::path::PathBuf;
 mod borrowed;
 
 pub fn hex_to_id(hex: &str) -> git_object::Id {
-    git_object::Id::from_hex(hex.as_bytes()).unwrap()
+    git_object::Id::from_40_bytes_in_hex(hex.as_bytes()).unwrap()
 }
 
 pub fn fixture(path: &str) -> PathBuf {

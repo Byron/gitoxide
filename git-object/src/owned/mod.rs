@@ -57,7 +57,7 @@ mod convert {
                 pgp_signature,
             } = self;
             owned::Tag {
-                target: crate::Id::from_20_bytes(&target),
+                target: crate::Id::from_40_bytes_in_hex(&target).expect("40 bytes hex sha1"),
                 name: name.to_owned(),
                 target_kind,
                 message: message.to_owned(),

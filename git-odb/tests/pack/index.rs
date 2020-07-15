@@ -25,7 +25,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(&git_object::Id::from_hex(*id).unwrap()),
+                    idx.lookup_index(&git_object::Id::from_40_bytes_in_hex(*id).unwrap()),
                     *desired_index,
                     "{}",
                     assertion
@@ -54,7 +54,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(&git_object::Id::from_hex(*id).unwrap()),
+                    idx.lookup_index(&git_object::Id::from_40_bytes_in_hex(*id).unwrap()),
                     *desired_index,
                     "{}",
                     assertion

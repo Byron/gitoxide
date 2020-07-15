@@ -98,7 +98,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
 
 impl<'a> Tag<'a> {
     pub fn target(&self) -> crate::Id {
-        crate::Id::from_hex(self.target).expect("prior validation")
+        crate::Id::from_40_bytes_in_hex(self.target).expect("prior validation")
     }
     pub fn from_bytes(d: &'a [u8]) -> Result<Tag<'a>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)
