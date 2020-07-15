@@ -593,6 +593,7 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "btoi",
+ "git-ref",
  "hex",
  "nom",
  "pretty_assertions",
@@ -622,6 +623,14 @@ dependencies = [
  "smallvec",
  "uluru",
  "walkdir",
+]
+
+[[package]]
+name = "git-ref"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "quick-error",
 ]
 
 [[package]]

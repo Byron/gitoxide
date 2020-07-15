@@ -83,6 +83,7 @@ members = [
     "gitoxide-core",
     "git-features",
     "git-object",
+    "git-ref",
     "git-odb",
     "git-repository",
     "git-transport",

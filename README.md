@@ -66,9 +66,10 @@ The CLI uses various crates, please see _'Development Status'_ for details.
 * **git-config**
   * read and write git configuration files
   * [ ] API documentation with examples
-* **git-refs**
+* **git-ref**
   * Handle symbolic references and packed references
   * discover them in typical folder structures
+  * [ ] name validation
   * [ ] API documentation with examples
 * **git-index**
   * read and write a git-index file

@@ -9,7 +9,7 @@ quick_error! {
         StartsWithDash {
             description("Tags must not start with a dash: '-'")
         }
-        InvalidRefName(err: reference::Error) {
+        InvalidRefName(err: git_ref::validated::NameError) {
             display("The tag name was no valid reference name")
             from()
             cause(err)
@@ -50,77 +50,8 @@ impl Tag {
     }
 }
 
-pub mod reference {
-    use bstr::BStr;
-
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            StartsWithDot {
-                description("A ref must not start with a '.'")
-            }
-            Empty {
-                description("A ref must not be empty")
-            }
-        }
-    }
-
-    pub fn validated_name(name: &BStr) -> Result<&BStr, Error> {
-        if name.is_empty() {
-            return Err(Error::Empty);
-        }
-        if name[0] == b'.' {
-            return Err(Error::StartsWithDot);
-        }
-        Ok(name)
-    }
-
-    #[cfg(test)]
-    mod tests {
-        mod validated_name {
-            mod valid {
-                use super::super::super::*;
-                use bstr::ByteSlice;
-
-                macro_rules! mktest {
-                    ($name:ident, $input:literal) => {
-                        #[test]
-                        fn $name() {
-                            assert!(validated_name($input.as_bstr()).is_ok())
-                        }
-                    };
-                }
-
-                mktest!(dot_in_the_middle, b"token.other");
-                mktest!(dot_at_the_end, b"hello.");
-            }
-            mod invalid {
-                use super::super::super::*;
-                use bstr::ByteSlice;
-
-                macro_rules! mktest {
-                    ($name:ident, $input:literal, $expected:ident) => {
-                        #[test]
-                        fn $name() {
-                            match validated_name($input.as_bstr()) {
-                                Err(Error::$expected) => {}
-                                got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
-                            }
-                        }
-                    };
-                }
-
-                mktest!(starts_with_dot, b".with-dot", StartsWithDot);
-                mktest!(empty, b"", Empty);
-            }
-        }
-    }
-}
-
 fn validated_name(name: &BStr) -> Result<&BStr, Error> {
-    reference::validated_name(name)?;
+    git_ref::validated::name(name)?;
     if name[0] == b'-' {
         return Err(Error::StartsWithDash);
     }
@@ -128,32 +59,4 @@ fn validated_name(name: &BStr) -> Result<&BStr, Error> {
 }
 
 #[cfg(test)]
-mod tests {
-    mod validated_name {
-        mod invalid {
-            use super::super::super::*;
-            use bstr::ByteSlice;
-
-            #[test]
-            fn only_dash() {
-                assert!(validated_name(b"-".as_bstr()).is_err())
-            }
-            #[test]
-            fn leading_dash() {
-                assert!(validated_name(b"-hello".as_bstr()).is_err())
-            }
-        }
-
-        mod valid {
-            use super::super::super::*;
-            use bstr::ByteSlice;
-
-            #[test]
-            fn version() {
-                for version in &["v1.0.0", "0.2.1", "0-alpha1"] {
-                    assert!(validated_name(version.as_bytes().as_bstr()).is_ok())
-                }
-            }
-        }
-    }
-}
+mod tests;

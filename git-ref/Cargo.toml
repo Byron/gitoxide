@@ -1,0 +1,18 @@
+[package]
+name = "git-ref"
+version = "0.1.0"
+repository = "https://github.com/Byron/git-oxide"
+license = "MIT"
+description = "A crate to handle git references"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+
+[lib]
+doctest = false
+test = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-error = "1.2.3"
+bstr = { version = "0.2.13", default-features = false, features = ["std"] }
