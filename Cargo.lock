@@ -595,6 +595,7 @@ dependencies = [
  "btoi",
  "git-ref",
  "hex",
+ "itoa",
  "nom",
  "pretty_assertions",
  "quick-error",

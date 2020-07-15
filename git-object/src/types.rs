@@ -1,7 +1,7 @@
-use crate::ByteSlice;
+use crate::owned::SPACE;
+use bstr::ByteSlice;
 use quick_error::quick_error;
-use std::ops::Deref;
-use std::{fmt, io};
+use std::{fmt, io, ops::Deref};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -22,8 +22,30 @@ pub struct Time {
 }
 
 impl Time {
-    pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
-        unimplemented!("time write to")
+    pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        itoa::write(&mut out, self.time)?;
+        out.write_all(SPACE)?;
+        out.write_all(&[match self.sign {
+            Sign::Plus => b'+',
+            Sign::Minus => b'-',
+        }])?;
+
+        const ZERO: &[u8; 1] = b"0";
+
+        const SECONDS_PER_HOUR: i32 = 60 * 60;
+        let hours = self.offset / SECONDS_PER_HOUR;
+        assert!(hours < 25, "offset is more than a day: {}", hours);
+        let minutes = (self.offset - (hours * SECONDS_PER_HOUR)) / 60;
+
+        if hours < 10 {
+            out.write_all(ZERO)?;
+        }
+        itoa::write(&mut out, hours)?;
+
+        if minutes < 10 {
+            out.write_all(ZERO)?;
+        }
+        itoa::write(&mut out, minutes).map(|_| ())
     }
 }
 

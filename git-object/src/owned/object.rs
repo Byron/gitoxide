@@ -29,7 +29,7 @@ pub mod signature {
             out.write_all(SPACE)?;
             out.write_all(&b"<"[..])?;
             out.write_all(validated_token(self.email.as_bstr())?)?;
-            out.write_all(&b">"[..])?;
+            out.write_all(&b"> "[..])?;
             self.time.write_to(out)?;
             Ok(())
         }
