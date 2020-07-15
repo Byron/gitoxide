@@ -50,9 +50,14 @@ impl Tag {
         ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
         ser::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
         ser::trusted_header_field_signature(b"tagger", &self.signature, &mut out)?;
+
         if !self.message.is_empty() {
             out.write_all(NL)?;
             out.write_all(&self.message)?;
+        }
+        if let Some(ref message) = self.pgp_signature {
+            out.write_all(NL)?;
+            out.write_all(&message)?;
         }
         Ok(())
     }

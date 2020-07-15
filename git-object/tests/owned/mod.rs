@@ -118,7 +118,12 @@ mod tag {
 
     #[test]
     fn round_trip() {
-        for input in &["tag/empty.txt", "tag/whitespace.txt"] {
+        for input in &[
+            "tag/empty.txt",
+            "tag/whitespace.txt",
+            "tag/with-newlines.txt",
+            "tag/signed.txt",
+        ] {
             let input = fixture_bytes(input);
             let tag: owned::Tag = borrowed::Tag::from_bytes(&input).unwrap().into();
             let mut output = Vec::new();
