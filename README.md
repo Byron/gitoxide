@@ -199,6 +199,13 @@ Provide a CLI to for the most basic user journey:
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push
+  * [ ] create (thin) pack
+  
+### Roadmap to 1.1
+
+ * [ ] clone a repository via
+   * [ ] http(s)
+   * [ ] ssh
 
 ## Cargo features guide
 
