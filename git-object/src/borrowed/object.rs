@@ -4,7 +4,7 @@ pub use error::Error;
 use crate::BStr;
 use crate::{
     borrowed,
-    borrowed::{Blob, Commit, Tag, Tree},
+    borrowed::{parse, Blob, Commit, Tag, Tree},
     Time,
 };
 
@@ -15,6 +15,12 @@ pub struct Signature<'a> {
     pub name: &'a BStr,
     pub email: &'a BStr,
     pub time: Time,
+}
+
+impl<'a> Signature<'a> {
+    pub fn from_bytes(d: &'a [u8]) -> Result<Signature<'a>, Error> {
+        parse::signature(d).map(|(_, t)| t).map_err(Error::from)
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

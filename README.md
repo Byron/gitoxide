@@ -69,7 +69,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
 * **git-ref**
   * Handle symbolic references and packed references
   * discover them in typical folder structures
-  * [ ] name validation
+  * [x] name validation
   * [ ] API documentation with examples
 * **git-index**
   * read and write a git-index file

@@ -1,6 +1,7 @@
 use crate::ByteSlice;
-use nom::{lib::std::fmt::Formatter, lib::std::ops::Deref};
 use quick_error::quick_error;
+use std::ops::Deref;
+use std::{fmt, io};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -18,6 +19,12 @@ pub struct Time {
     pub offset: i32,
     /// the sign seen in front of -0000
     pub sign: Sign,
+}
+
+impl Time {
+    pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        unimplemented!("time write to")
+    }
 }
 
 pub const SHA1_SIZE: usize = 20;
@@ -60,8 +67,8 @@ impl Deref for Id {
     }
 }
 
-impl std::fmt::Display for Id {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Id {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = [0u8; 40];
         self.encode_to_40_bytes_slice(&mut buf).unwrap();
         write!(f, "{}", &buf.as_bstr())
@@ -106,8 +113,8 @@ impl Kind {
     }
 }
 
-impl std::fmt::Display for Kind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(std::str::from_utf8(self.to_bytes()).expect("valid utf8 in kind name"))
     }
 }

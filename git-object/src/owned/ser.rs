@@ -1,3 +1,4 @@
+use crate::owned::{NL, SPACE};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;
@@ -19,9 +20,6 @@ impl Into<io::Error> for Error {
         io::Error::new(io::ErrorKind::Other, self)
     }
 }
-
-const NL: &[u8; 1] = b"\n";
-const SPACE: &[u8; 1] = b" ";
 
 pub fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
