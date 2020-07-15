@@ -99,7 +99,7 @@ impl index::File {
         }
     }
 
-    /// Returns the offset of the given object ID (20 bytes) for use with the `(oid|pack_offset|crc32)_at_index()`
+    /// Returns the offset of the given SHA1 for use with the `(oid|pack_offset|crc32)_at_index()`
     pub fn lookup_index(&self, id: &[u8; 20]) -> Option<u32> {
         let first_byte = id[0] as usize;
         let mut upper_bound = self.fan[first_byte];
