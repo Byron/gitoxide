@@ -1,3 +1,6 @@
+//! Borrowed objects are expected to be deserialized from bytes that acts as backing store, and they
+//! can not be serialized directly. Instead, one will convert them into their `owned` counterparts,
+//! which support serialization.
 mod commit;
 pub use commit::Commit;
 
