@@ -57,7 +57,7 @@ impl index::File {
 
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The index ranges from 0 to self.num_objects()
-    pub fn oid_at_index(&self, index: u32) -> &[u8] {
+    pub fn oid_at_index(&self, index: u32) -> &[u8; 20] {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
@@ -65,7 +65,9 @@ impl index::File {
             index::Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
             index::Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
-        &self.data[start..start + SHA1_SIZE]
+        (&self.data[start..start + SHA1_SIZE])
+            .try_into()
+            .expect("20 bytes exactly")
     }
 
     pub fn pack_offset_at_index(&self, index: u32) -> u64 {
@@ -98,7 +100,7 @@ impl index::File {
     }
 
     /// Returns the offset of the given object ID (20 bytes) for use with the `(oid|pack_offset|crc32)_at_index()`
-    pub fn lookup_index(&self, id: &[u8]) -> Option<u32> {
+    pub fn lookup_index(&self, id: &[u8; 20]) -> Option<u32> {
         let first_byte = id[0] as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };

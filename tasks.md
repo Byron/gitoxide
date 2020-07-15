@@ -5,12 +5,13 @@
   * [x] extract borrowed objects from a pack
   * [ ] ~~support streamed objects (similar to how it's done with loose objects)~~ - no need, all slices support io::Read, and we don't
         actually support streaming, so let's net unify 'interfaces' on a low level like this.
-* **borrowed objects**
-  * [ ] write loose
+* **owned objects**
+  * [ ] encode 
     * [ ] blob
-    * [ ] tag
+    * [x] tag
     * [ ] tree
     * [ ] commit
+  * [ ] write loose
 * **plumbing - explode pack**
   * [ ] single threaded
   * [ ] multi-threaded

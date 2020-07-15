@@ -90,10 +90,10 @@ impl Id {
 }
 
 impl Deref for Id {
-    type Target = [u8];
+    type Target = [u8; 20];
 
     fn deref(&self) -> &Self::Target {
-        &self.0[..]
+        &self.0
     }
 }
 
