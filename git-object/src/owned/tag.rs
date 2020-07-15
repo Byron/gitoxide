@@ -46,7 +46,8 @@ impl Tag {
         ser::trusted_header_field(b"object", &hex_buf, &mut out)?;
         ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
         ser::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
-        unimplemented!("tag to_write")
+        ser::trusted_header_field_signature(b"tagger", &self.signature, &mut out)?;
+        Ok(())
     }
 }
 
