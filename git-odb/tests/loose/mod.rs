@@ -42,12 +42,7 @@ mod db {
 
     mod locate {
         use crate::{hex_to_id, loose::db::ldb, loose::signature};
-        use git_object::{
-            borrowed,
-            borrowed::{TreeEntry, TreeMode},
-            bstr::ByteSlice,
-            Kind,
-        };
+        use git_object::{borrowed, borrowed::tree, bstr::ByteSlice, Kind};
         use git_odb::loose;
         use std::io::Read;
 
@@ -171,15 +166,15 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
             let expected = borrowed::Tree {
                 entries: vec![
-                    TreeEntry {
-                        mode: TreeMode::Tree,
+                    tree::Entry {
+                        mode: tree::Mode::Tree,
                         filename: b"dir".as_bstr(),
                         oid: &[
                             150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                         ],
                     },
-                    TreeEntry {
-                        mode: TreeMode::Blob,
+                    tree::Entry {
+                        mode: tree::Mode::Blob,
                         filename: b"file.txt".as_bstr(),
                         oid: &[
                             55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244, 17, 64, 202, 185, 128,
