@@ -1,4 +1,4 @@
-use crate::{borrowed::util::SPACE, borrowed::Error};
+use crate::{borrowed::parse::SPACE, borrowed::Error};
 use crate::{BStr, ByteSlice};
 use nom::{
     bytes::complete::{tag, take, take_while1, take_while_m_n},

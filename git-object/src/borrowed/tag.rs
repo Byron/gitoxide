@@ -1,17 +1,13 @@
-use super::Error;
-use crate::borrowed::{
-    util::{parse_header_field, parse_hex_sha1, parse_signature, NL},
-    Signature,
+use crate::{
+    borrowed::{parse, parse::NL, Error, Signature},
+    BStr, ByteSlice,
 };
-use crate::{BStr, ByteSlice};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while1},
     character::is_alphabetic,
-    combinator::opt,
-    combinator::{all_consuming, recognize},
-    sequence::preceded,
-    sequence::{delimited, tuple},
+    combinator::{all_consuming, opt, recognize},
+    sequence::{delimited, preceded, tuple},
     IResult,
 };
 
@@ -31,17 +27,17 @@ pub struct Tag<'a> {
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     let (i, target) =
-        parse_header_field(i, b"object", parse_hex_sha1).map_err(Error::context("object <40 lowercase hex char>"))?;
+        parse::header_field(i, b"object", parse::hex_sha1).map_err(Error::context("object <40 lowercase hex char>"))?;
 
     let (i, kind) =
-        parse_header_field(i, b"type", take_while1(is_alphabetic)).map_err(Error::context("type <object kind>"))?;
+        parse::header_field(i, b"type", take_while1(is_alphabetic)).map_err(Error::context("type <object kind>"))?;
     let kind = crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(Error::ParseKindError(e)))?;
 
     let (i, tag_version) =
-        parse_header_field(i, b"tag", take_while1(|b| b != NL[0])).map_err(Error::context("tag <version>"))?;
+        parse::header_field(i, b"tag", take_while1(|b| b != NL[0])).map_err(Error::context("tag <version>"))?;
 
     let (i, signature) =
-        parse_header_field(i, b"tagger", parse_signature).map_err(Error::context("tagger <signature>"))?;
+        parse::header_field(i, b"tagger", parse::signature).map_err(Error::context("tagger <signature>"))?;
     let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
         i,

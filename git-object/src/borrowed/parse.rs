@@ -16,7 +16,7 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn parse_header_field_multiline<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], &'a [u8], Error> {
+pub(crate) fn header_field_multiline<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], &'a [u8], Error> {
     let (i, o) = peek(preceded(
         terminated(tag(name), tag(SPACE)),
         recognize(tuple((
@@ -31,7 +31,7 @@ pub(crate) fn parse_header_field_multiline<'a>(i: &'a [u8], name: &'static [u8])
     Ok((&i[end - start_input + 1..], &o[..o.len() - 1]))
 }
 
-pub(crate) fn parse_header_field<'a, T>(
+pub(crate) fn header_field<'a, T>(
     i: &'a [u8],
     name: &'static [u8],
     parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
@@ -47,11 +47,11 @@ fn is_hex_digit_lc(b: u8) -> bool {
     }
 }
 
-pub(crate) fn parse_hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+pub(crate) fn hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
 }
 
-pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
+pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
     let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
         terminated(take_until(&b" <"[..]), take(2usize)),
         terminated(take_until(&b"> "[..]), take(2usize)),
@@ -94,10 +94,10 @@ pub(crate) fn parse_signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
 #[cfg(test)]
 mod tests {
     mod parse_signature {
-        use crate::borrowed::util::parse_signature;
-        use crate::borrowed::Signature;
-        use crate::ByteSlice;
-        use crate::{Sign, Time};
+        use crate::{
+            borrowed::{parse, Signature},
+            ByteSlice, Sign, Time,
+        };
 
         fn signature(
             name: &'static str,
@@ -116,7 +116,7 @@ mod tests {
         #[test]
         fn tz_minus() {
             assert_eq!(
-                parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
+                parse::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
                     .unwrap()
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, -9000)
@@ -126,7 +126,7 @@ mod tests {
         #[test]
         fn tz_plus() {
             assert_eq!(
-                parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
+                parse::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
                     .unwrap()
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Plus, 9000)
@@ -136,7 +136,7 @@ mod tests {
         #[test]
         fn negative_offset_0000() {
             assert_eq!(
-                parse_signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
+                parse::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
                     .unwrap()
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, 0)
@@ -146,7 +146,7 @@ mod tests {
         #[test]
         fn empty_name_and_email() {
             assert_eq!(
-                parse_signature(b" <> 12345 -1215").unwrap().1,
+                parse::signature(b" <> 12345 -1215").unwrap().1,
                 signature("", "", 12345, Sign::Minus, -44100)
             );
         }
