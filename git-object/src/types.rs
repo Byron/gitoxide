@@ -1,4 +1,4 @@
-use crate::owned::SPACE;
+use crate::{borrowed, owned::SPACE};
 use bstr::ByteSlice;
 use quick_error::quick_error;
 use std::{fmt, io, ops::Deref};
@@ -57,23 +57,6 @@ pub const SHA1_SIZE: usize = 20;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Id([u8; SHA1_SIZE]);
 
-/// A references to a SHA1 identifying objects
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize))]
-pub struct IdRef<'a>(&'a [u8; SHA1_SIZE]);
-
-impl<'a> IdRef<'a> {
-    pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
-        hex::encode_to_slice(self.0, out)
-    }
-}
-
-impl<'a> From<&'a [u8; SHA1_SIZE]> for IdRef<'a> {
-    fn from(v: &'a [u8; SHA1_SIZE]) -> Self {
-        IdRef(v)
-    }
-}
-
 impl Id {
     pub fn new_sha1(id: [u8; SHA1_SIZE]) -> Self {
         Id(id)
@@ -82,6 +65,9 @@ impl Id {
         let mut id = [0; SHA1_SIZE];
         id.copy_from_slice(b);
         Id(id)
+    }
+    pub fn borrowed(&self) -> borrowed::Id {
+        borrowed::Id::from(&self.0)
     }
 
     pub fn from_40_bytes_in_hex(buf: &[u8]) -> Result<Id, hex::FromHexError> {

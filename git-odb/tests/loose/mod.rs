@@ -151,11 +151,11 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         }
 
         fn locate(hex: &str) -> loose::Object {
-            ldb().locate(&hex_to_id(hex)).unwrap().unwrap()
+            ldb().locate(hex_to_id(hex).borrowed()).unwrap().unwrap()
         }
 
         fn try_locate(hex: &str) -> Option<loose::Object> {
-            ldb().locate(&hex_to_id(hex)).and_then(Result::ok)
+            ldb().locate(hex_to_id(hex).borrowed()).and_then(Result::ok)
         }
 
         #[test]

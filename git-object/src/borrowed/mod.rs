@@ -4,6 +4,9 @@
 mod commit;
 pub use commit::Commit;
 
+mod id;
+pub use id::*;
+
 mod tag;
 pub use tag::Tag;
 

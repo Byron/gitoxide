@@ -5,6 +5,7 @@ use crate::{
     zlib,
 };
 use git_object as object;
+use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{fs, io::Cursor, io::Read, path::PathBuf};
@@ -32,7 +33,7 @@ quick_error! {
 impl Db {
     const OPEN_ACTION: &'static str = "open";
 
-    pub fn locate(&self, id: &[u8; 20]) -> Option<Result<Object, Error>> {
+    pub fn locate(&self, id: borrowed::Id) -> Option<Result<Object, Error>> {
         match self.locate_inner(id) {
             Ok(obj) => Some(Ok(obj)),
             Err(err) => match err {
@@ -48,7 +49,7 @@ impl Db {
         }
     }
 
-    fn locate_inner(&self, id: &[u8; 20]) -> Result<Object, Error> {
+    fn locate_inner(&self, id: borrowed::Id) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
@@ -120,9 +121,8 @@ impl Db {
     }
 }
 
-fn sha1_path(id: &[u8; 20], mut root: PathBuf) -> PathBuf {
+fn sha1_path(id: borrowed::Id, mut root: PathBuf) -> PathBuf {
     let mut buf = [0u8; 40];
-    let id: object::IdRef = id.into();
     id.encode_to_40_bytes_slice(&mut buf)
         .expect("no failure as everything is preset by now");
     let buf = std::str::from_utf8(&buf).expect("ascii only in hex");
