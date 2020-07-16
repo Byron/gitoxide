@@ -37,5 +37,13 @@ mod tag {
 mod commit {
     use git_object::{borrowed, owned};
 
-    round_trip!(owned::Commit, borrowed::Commit, "commit/unsigned.txt");
+    round_trip!(
+        owned::Commit,
+        borrowed::Commit,
+        "commit/merge.txt",
+        "commit/signed-singleline.txt",
+        "commit/unsigned.txt",
+        "commit/whitespace.txt",
+        "commit/with-encoding.txt"
+    );
 }

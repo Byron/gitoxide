@@ -42,6 +42,14 @@ mod commit {
             if let Some(encoding) = self.encoding.as_ref() {
                 ser::header_field(b"encoding", encoding, &mut out)?;
             }
+            if let Some(signature) = self.pgp_signature.as_ref() {
+                let has_newline = signature.iter().any(|b| *b == b'\n');
+                if has_newline {
+                    unimplemented!("multi-line header")
+                } else {
+                    ser::trusted_header_field(b"gpgsig", signature, &mut out)?;
+                }
+            }
             out.write_all(NL)?;
             out.write_all(&self.message)
         }
