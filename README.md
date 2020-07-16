@@ -29,7 +29,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * encode
     * [ ] commit
     * [ ] tree
-    * [ ] tag
+    * [x] tag
   * [ ] API documentation with examples
 * **git-odb**
   * **loose objects**
@@ -284,7 +284,9 @@ All feature toggles are additive.
  * **gitoxide-core**
 
  
-## Development Practices
+## Development Guide
+
+### Practices 
 
  * **test-first development**
    * protect against regression and make implementing features easy
@@ -301,6 +303,14 @@ All feature toggles are additive.
    * ...even if that includes only the most common usecases.
  * **Prefer to increment major version rapidly...**
    * ...instead of keeping major version zero for longer than needed.
+  
+### Guidelines
+
+* **prepare for SHA256 support by using `owned::Id` and `borrowed::Id`**
+  * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead 
+    of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
+  * Right now it's unclear how Sha256 is going to work in git, so we only support Sha1 for now. It might be an avenue to proactively
+    implement it ahead of time once there is a specification to follow.
    
 ## Plumbing vs Porcelain
 
