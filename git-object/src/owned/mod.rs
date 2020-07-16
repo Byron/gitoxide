@@ -11,6 +11,33 @@ pub use id::*;
 mod tag;
 pub use tag::Tag;
 
+pub mod tree {
+    use crate::{owned, TreeMode};
+    use bstr::BString;
+    use std::io;
+
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Tree {
+        pub entries: Vec<Entry>,
+    }
+
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Entry {
+        pub mode: TreeMode,
+        pub filename: BString,
+        pub oid: owned::Id,
+    }
+
+    impl Tree {
+        pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+            unimplemented!("tree write to")
+        }
+    }
+}
+pub use tree::Tree;
+
 mod commit {
     use crate::owned::{self, ser, NL};
     use bstr::BString;

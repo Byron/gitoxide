@@ -16,6 +16,11 @@ impl Id {
         id.copy_from_slice(b);
         Id(id)
     }
+    pub fn from_borrowed_sha1(b: &[u8; SHA1_SIZE]) -> Id {
+        let mut id = [0; SHA1_SIZE];
+        id.copy_from_slice(&b[..]);
+        Id(id)
+    }
     pub fn null_sha1() -> Id {
         Id([0u8; 20])
     }

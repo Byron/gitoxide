@@ -60,3 +60,29 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
         }
     }
 }
+
+impl Into<owned::Tree> for borrowed::Tree<'_> {
+    fn into(self) -> owned::Tree {
+        let borrowed::Tree { entries } = self;
+        owned::Tree {
+            entries: entries.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl<'a> From<borrowed::Id<'a>> for owned::Id {
+    fn from(v: borrowed::Id<'a>) -> Self {
+        owned::Id::from_borrowed_sha1(v.sha1())
+    }
+}
+
+impl Into<owned::tree::Entry> for borrowed::tree::Entry<'_> {
+    fn into(self) -> owned::tree::Entry {
+        let borrowed::tree::Entry { mode, filename, oid } = self;
+        owned::tree::Entry {
+            mode,
+            filename: filename.to_owned(),
+            oid: oid.into(),
+        }
+    }
+}

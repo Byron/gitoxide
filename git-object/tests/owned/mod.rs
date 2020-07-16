@@ -49,3 +49,9 @@ mod commit {
         "commit/with-encoding.txt"
     );
 }
+
+mod tree {
+    use git_object::{borrowed, owned};
+
+    round_trip!(owned::Tree, borrowed::Tree, "tree/everything.tree");
+}

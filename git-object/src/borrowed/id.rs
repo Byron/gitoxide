@@ -13,6 +13,9 @@ impl<'a> Id<'a> {
     pub fn first_byte(&self) -> u8 {
         self.0[0]
     }
+    pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
+        self.0
+    }
 }
 
 impl<'a> From<&'a [u8; SHA1_SIZE]> for Id<'a> {

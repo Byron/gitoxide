@@ -1,5 +1,5 @@
-use crate::{borrowed, borrowed::parse::SPACE, borrowed::Error};
-use crate::{BStr, ByteSlice};
+use crate::{borrowed, borrowed::parse::SPACE, borrowed::Error, TreeMode};
+use bstr::{BStr, ByteSlice};
 use nom::{
     bytes::complete::{tag, take, take_while1, take_while_m_n},
     character::is_digit,
@@ -20,33 +20,22 @@ pub struct Tree<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
-    pub mode: Mode,
+    pub mode: TreeMode,
     pub filename: &'a BStr,
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: borrowed::Id<'a>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
-#[repr(u16)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Mode {
-    Tree = 0o040000u16,
-    Blob = 0o100644,
-    BlobExecutable = 0o100755,
-    Link = 0o120000,
-    Commit = 0o160000,
-}
-
-impl TryFrom<&[u8]> for Mode {
+impl TryFrom<&[u8]> for TreeMode {
     type Error = Error;
 
     fn try_from(mode: &[u8]) -> Result<Self, Self::Error> {
         Ok(match mode {
-            b"40000" => Mode::Tree,
-            b"100644" => Mode::Blob,
-            b"100755" => Mode::BlobExecutable,
-            b"120000" => Mode::Link,
-            b"160000" => Mode::Commit,
+            b"40000" => TreeMode::Tree,
+            b"100644" => TreeMode::Blob,
+            b"100755" => TreeMode::BlobExecutable,
+            b"120000" => TreeMode::Link,
+            b"160000" => TreeMode::Commit,
             _ => return Err(Error::NomDetail(mode.into(), "unknown tree mode")),
         })
     }
@@ -55,7 +44,7 @@ impl TryFrom<&[u8]> for Mode {
 const NULL: &[u8] = b"\0";
 fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
     let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
-    let mode = Mode::try_from(mode).map_err(nom::Err::Error)?;
+    let mode = TreeMode::try_from(mode).map_err(nom::Err::Error)?;
     let (i, filename) = terminated(take_while1(|b| b != NULL[0]), tag(NULL))(i)?;
     let (i, oid) = take(20u8)(i)?;
 

@@ -2,11 +2,11 @@
 
 use bstr::{BStr, BString, ByteSlice};
 
+/// For convenience
 pub use bstr;
 
 pub mod borrowed;
-mod types;
-
-pub use types::*;
-
 pub mod owned;
+
+mod types;
+pub use types::*;
