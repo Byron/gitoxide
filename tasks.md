@@ -10,7 +10,7 @@
     * [ ] blob
     * [x] tag
     * [ ] tree
-    * [ ] commit
+    * [x] commit
   * [ ] write loose
 * **pack verify**
   * add '--some-flag' to run every non-blob through a decode/encode cycle to see if all objects can be parsed

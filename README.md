@@ -27,7 +27,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] tree
     * [x] tag
   * encode
-    * [ ] commit
+    * [x] commit
     * [ ] tree
     * [x] tag
   * [ ] API documentation with examples
