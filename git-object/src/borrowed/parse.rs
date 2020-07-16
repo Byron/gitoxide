@@ -1,7 +1,8 @@
 use crate::{
     borrowed::{Error, Signature},
-    BStr, ByteSlice, Sign, Time,
+    ByteSlice, Sign, Time,
 };
+use bstr::{BStr, BString, ByteVec};
 use btoi::btoi;
 use nom::{
     branch::alt,
@@ -16,7 +17,7 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], &'a [u8], Error> {
+pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], BString, Error> {
     let (i, o) = peek(preceded(
         terminated(tag(name), tag(SPACE)),
         recognize(tuple((
@@ -28,7 +29,17 @@ pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> I
     assert!(!o.is_empty());
     let end = &o[o.len() - 1] as *const u8 as usize;
     let start_input = &i[0] as *const u8 as usize;
-    Ok((&i[end - start_input + 1..], &o[..o.len() - 1]))
+
+    let bytes = o[..o.len() - 1].as_bstr();
+    let mut out = BString::from(Vec::with_capacity(bytes.len()));
+    let mut lines = bytes.lines();
+    out.push_str(lines.next().expect("first line"));
+    drop(lines.next()); // empty newline marker
+    for line in lines {
+        out.push(b'\n');
+        out.push_str(&line[1..]); // cut leading space
+    }
+    Ok((&i[end - start_input + 1..], out))
 }
 
 pub(crate) fn header_field<'a, T>(

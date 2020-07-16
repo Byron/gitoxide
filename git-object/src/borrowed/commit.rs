@@ -51,7 +51,7 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
     let (i, encoding) =
         opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i).map_err(Error::context("encoding <encoding>"))?;
     let (i, pgp_signature) = opt(alt((
-        |i| parse::header_field_multi_line(i, b"gpgsig").map(|(i, o)| (i, Cow::Borrowed(o.as_bstr()))),
+        |i| parse::header_field_multi_line(i, b"gpgsig").map(|(i, o)| (i, Cow::Owned(o))),
         |i| parse::header_field(i, b"gpgsig", is_not(NL)).map(|(i, o)| (i, Cow::Borrowed(o.as_bstr()))),
     )))(i)
     .map_err(Error::context("gpg <signature>"))?;

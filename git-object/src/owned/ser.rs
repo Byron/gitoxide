@@ -24,6 +24,7 @@ impl Into<io::Error> for Error {
 pub fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
     let mut lines = value.as_bstr().lines();
     trusted_header_field(name, lines.next().expect("non-empty value"), &mut out)?;
+    out.write_all(NL)?;
     for line in lines {
         out.write_all(SPACE)?;
         out.write_all(line)?;
