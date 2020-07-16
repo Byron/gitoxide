@@ -115,3 +115,6 @@ update-assets: $(baseline_asset_fixture) ## refresh assets compiles into the bin
 force-update-assets: ## As update-assets, but will run git to update the baseline as well
 	-rm -Rf $(baseline_asset_fixture)
 	$(MAKE) update-assets
+
+check-size: ## Run cargo-diet on all crates to see that they are still in bound
+	./etc/check-package-size.sh

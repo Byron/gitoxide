@@ -24,6 +24,12 @@ jobs:
       run: cargo doc
     - name: stress
       run: make stress
+    - name: Check crate package size (feat. 'cargo diet')
+      run: |
+        curl -LSfs https://raw.githubusercontent.com/the-lean-crate/cargo-diet/master/ci/install.sh | \
+         sh -s -- --git the-lean-crate/cargo-diet --target x86_64-unknown-linux-musl
+
+        make check-size
 
   build-and-test-on-windows:
     name: Windows
