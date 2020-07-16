@@ -43,6 +43,7 @@ mod commit {
         "commit/merge.txt",
         "commit/signed.txt",
         "commit/signed-singleline.txt",
+        "commit/signed-with-encoding.txt",
         "commit/unsigned.txt",
         "commit/whitespace.txt",
         "commit/with-encoding.txt"

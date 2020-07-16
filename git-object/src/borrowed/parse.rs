@@ -34,7 +34,6 @@ pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> I
     let mut out = BString::from(Vec::with_capacity(bytes.len()));
     let mut lines = bytes.lines();
     out.push_str(lines.next().expect("first line"));
-    drop(lines.next()); // empty newline marker
     for line in lines {
         out.push(b'\n');
         out.push_str(&line[1..]); // cut leading space
