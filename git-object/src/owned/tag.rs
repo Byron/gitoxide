@@ -38,10 +38,10 @@ pub struct Tag {
 
 impl Tag {
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        ser::trusted_header_field_id(b"object", &self.target, &mut out)?;
+        ser::trusted_header_id(b"object", &self.target, &mut out)?;
         ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
         ser::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
-        ser::trusted_header_field_signature(b"tagger", &self.signature, &mut out)?;
+        ser::trusted_header_signature(b"tagger", &self.signature, &mut out)?;
 
         if !self.message.is_empty() {
             out.write_all(NL)?;

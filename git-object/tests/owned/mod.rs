@@ -33,3 +33,9 @@ mod tag {
         "tag/signed.txt"
     );
 }
+
+mod commit {
+    use git_object::{borrowed, owned};
+
+    round_trip!(owned::Commit, borrowed::Commit, "commit/unsigned.txt");
+}

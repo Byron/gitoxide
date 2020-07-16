@@ -15,10 +15,10 @@ use smallvec::SmallVec;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Commit<'a> {
-    // SHA1 of tree object we point to
+    // HEX SHA1 of tree object we point to
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
-    // SHA1 of each parent commit. Empty for first commit in repository.
+    // HEX SHA1 of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 1]>,
     pub author: Signature<'a>,
     pub committer: Signature<'a>,
@@ -46,14 +46,14 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
     let (i, author) =
         parse::header_field(i, b"author", parse::signature).map_err(Error::context("author <signature>"))?;
     let (i, committer) =
-        parse::header_field(i, b"committer", parse::signature).map_err(Error::context("author <signature>"))?;
+        parse::header_field(i, b"committer", parse::signature).map_err(Error::context("committer <signature>"))?;
     let (i, encoding) =
-        opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i).map_err(Error::context("author <signature>"))?;
+        opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i).map_err(Error::context("encoding <encoding>"))?;
     let (i, pgp_signature) = opt(alt((
         |i| parse::header_field_multiline(i, b"gpgsig"),
         |i| parse::header_field(i, b"gpgsig", is_not(NL)),
     )))(i)
-    .map_err(Error::context("author <signature>"))?;
+    .map_err(Error::context("gpg <signature>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((
