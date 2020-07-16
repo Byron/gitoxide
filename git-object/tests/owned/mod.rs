@@ -116,6 +116,9 @@ mod tag {
     use bstr::ByteSlice;
     use git_object::{borrowed, owned};
 
+    // Git checks out text files with different line feeds, which causes parsing failure.
+    // No way to configure this in the checkout action :/
+    #[cfg_attr(windows, ignore)]
     #[test]
     fn round_trip() {
         for input in &[
