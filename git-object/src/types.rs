@@ -52,15 +52,15 @@ impl Time {
 
 pub const SHA1_SIZE: usize = 20;
 
-/// A SHA1 identifying objects
+/// An owned SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Id(pub [u8; SHA1_SIZE]);
+pub struct Id([u8; SHA1_SIZE]);
 
 /// A references to a SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
-pub struct IdRef<'a>(pub &'a [u8; SHA1_SIZE]);
+pub struct IdRef<'a>(&'a [u8; SHA1_SIZE]);
 
 impl<'a> IdRef<'a> {
     pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
@@ -75,10 +75,9 @@ impl<'a> From<&'a [u8; SHA1_SIZE]> for IdRef<'a> {
 }
 
 impl Id {
-    pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
-        hex::encode_to_slice(self.0, out)
+    pub fn new_sha1(id: [u8; SHA1_SIZE]) -> Self {
+        Id(id)
     }
-
     pub fn from_20_bytes(b: &[u8]) -> Id {
         let mut id = [0; SHA1_SIZE];
         id.copy_from_slice(b);
@@ -90,7 +89,14 @@ impl Id {
         Ok(Id(<[u8; 20]>::from_hex(buf)?))
     }
 
-    pub fn null() -> Id {
+    pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
+        &self.0
+    }
+    pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
+        hex::encode_to_slice(self.0, out)
+    }
+
+    pub fn null_sha1() -> Id {
         Id([0u8; 20])
     }
 
@@ -107,7 +113,7 @@ impl Id {
 }
 
 impl Deref for Id {
-    type Target = [u8; 20];
+    type Target = [u8; SHA1_SIZE];
 
     fn deref(&self) -> &Self::Target {
         &self.0

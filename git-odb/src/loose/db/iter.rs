@@ -43,7 +43,7 @@ impl Db {
                             }
                         }
                     }
-                    object::Id::null()
+                    object::Id::null_sha1()
                 });
                 if is_valid_path {
                     Some(e)

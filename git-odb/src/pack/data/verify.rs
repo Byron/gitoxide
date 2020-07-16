@@ -36,12 +36,12 @@ impl File {
                     bytes_left -= out.len();
                     hasher.update(out);
                 }
-                git_object::Id(hasher.digest())
+                git_object::Id::new_sha1(hasher.digest())
             }
             Err(_) => {
                 let right_before_trailer = self.data.len() - SHA1_SIZE;
                 hasher.update(&self.data[..right_before_trailer]);
-                git_object::Id(hasher.digest())
+                git_object::Id::new_sha1(hasher.digest())
             }
         };
 

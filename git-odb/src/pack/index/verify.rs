@@ -112,7 +112,7 @@ impl index::File {
             let throughput = TimeThroughput::new(self.data.len());
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-            let actual = git_object::Id(hasher.digest());
+            let actual = git_object::Id::new_sha1(hasher.digest());
             progress.done(throughput);
 
             let expected = self.checksum_of_index();
@@ -271,7 +271,7 @@ impl index::File {
                             hasher.update(&header_buf[..header_size]);
                             hasher.update(buf.as_slice());
 
-                            let actual_oid = git_object::Id(hasher.digest());
+                            let actual_oid = git_object::Id::new_sha1(hasher.digest());
                             if actual_oid != index_entry.oid {
                                 return Err(Error::PackObjectMismatch {
                                     actual: actual_oid,
