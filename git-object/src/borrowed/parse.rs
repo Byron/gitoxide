@@ -16,7 +16,7 @@ use nom::{
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 
-pub(crate) fn header_field_multiline<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], &'a [u8], Error> {
+pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], &'a [u8], Error> {
     let (i, o) = peek(preceded(
         terminated(tag(name), tag(SPACE)),
         recognize(tuple((

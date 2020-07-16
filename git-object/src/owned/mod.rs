@@ -45,7 +45,7 @@ mod commit {
             if let Some(signature) = self.pgp_signature.as_ref() {
                 let has_newline = signature.iter().any(|b| *b == b'\n');
                 if has_newline {
-                    unimplemented!("multi-line header")
+                    ser::header_field_multi_line(b"gpgsig", signature, &mut out)?;
                 } else {
                     ser::trusted_header_field(b"gpgsig", signature, &mut out)?;
                 }

@@ -14,7 +14,7 @@ macro_rules! round_trip {
                 let item: $owned = <$borrowed>::from_bytes(&input).unwrap().into();
                 let mut output = Vec::new();
                 item.write_to(&mut output).unwrap();
-                assert_eq!(input.as_bstr(), output.as_bstr());
+                assert_eq!(output.as_bstr(), input.as_bstr());
             }
         }
     };
@@ -41,6 +41,7 @@ mod commit {
         owned::Commit,
         borrowed::Commit,
         "commit/merge.txt",
+        "commit/signed.txt",
         "commit/signed-singleline.txt",
         "commit/unsigned.txt",
         "commit/whitespace.txt",

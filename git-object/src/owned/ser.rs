@@ -21,18 +21,29 @@ impl Into<io::Error> for Error {
     }
 }
 
+pub fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
+    let mut lines = value.as_bstr().lines();
+    trusted_header_field(name, lines.next().expect("non-empty value"), &mut out)?;
+    for line in lines {
+        out.write_all(SPACE)?;
+        out.write_all(line)?;
+        out.write_all(NL)?;
+    }
+    Ok(())
+}
+
 pub fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
-    out.write_all(&SPACE[..])?;
+    out.write_all(SPACE)?;
     out.write_all(value)?;
-    out.write_all(&NL[..])
+    out.write_all(NL)
 }
 
 pub fn trusted_header_signature(name: &[u8], value: &owned::Signature, mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
-    out.write_all(&SPACE[..])?;
+    out.write_all(SPACE)?;
     value.write_to(&mut out)?;
-    out.write_all(&NL[..])
+    out.write_all(NL)
 }
 
 pub fn trusted_header_id(name: &[u8], value: &owned::Id, mut out: impl io::Write) -> io::Result<()> {
