@@ -36,7 +36,7 @@ impl Id {
     pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
         &self.0
     }
-    pub fn encode_to_40_bytes_slice(&self) -> [u8; SHA1_SIZE * 2] {
+    pub fn to_hex(&self) -> [u8; SHA1_SIZE * 2] {
         let mut hex_buf = [0u8; 40];
         hex::encode_to_slice(self.0, &mut hex_buf).expect("we can count");
         hex_buf
@@ -45,7 +45,7 @@ impl Id {
         self.0.as_ref()
     }
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        out.write_all(&self.encode_to_40_bytes_slice())
+        out.write_all(&self.to_hex())
     }
 }
 
@@ -59,6 +59,6 @@ impl Deref for Id {
 
 impl fmt::Display for Id {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.encode_to_40_bytes_slice().as_bstr())
+        write!(f, "{}", &self.to_hex().as_bstr())
     }
 }

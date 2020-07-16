@@ -1,5 +1,7 @@
 use crate::SHA1_SIZE;
+use bstr::ByteSlice;
 use std::convert::{TryFrom, TryInto};
+use std::fmt;
 
 /// A reference to a SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -7,8 +9,10 @@ use std::convert::{TryFrom, TryInto};
 pub struct Id<'a>(&'a [u8; SHA1_SIZE]);
 
 impl<'a> Id<'a> {
-    pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
-        hex::encode_to_slice(self.0, out)
+    pub fn to_hex(&self) -> [u8; SHA1_SIZE * 2] {
+        let mut buf = [0u8; SHA1_SIZE * 2];
+        hex::encode_to_slice(self.0, &mut buf).expect("to count correctly");
+        buf
     }
     pub fn first_byte(&self) -> u8 {
         self.0[0]
@@ -29,6 +33,12 @@ impl<'a> TryFrom<&'a [u8]> for Id<'a> {
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         Ok(Id(value.try_into()?))
+    }
+}
+
+impl fmt::Display for Id<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", &self.to_hex().as_bstr())
     }
 }
 

@@ -122,10 +122,7 @@ impl Db {
 }
 
 fn sha1_path(id: borrowed::Id, mut root: PathBuf) -> PathBuf {
-    let mut buf = [0u8; 40];
-    id.encode_to_40_bytes_slice(&mut buf)
-        .expect("no failure as everything is preset by now");
-    let buf = std::str::from_utf8(&buf).expect("ascii only in hex");
+    let buf = std::str::from_utf8(&id.to_hex()).expect("ascii only in hex");
     root.push(&buf[..2]);
     root.push(&buf[2..]);
     root
