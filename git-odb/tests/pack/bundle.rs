@@ -6,7 +6,7 @@ mod locate {
 
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> pack::Object<'a> {
         let idx = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
-        idx.locate(hex_to_id(hex_id).borrowed(), out, &mut pack::cache::DecodeEntryNoop)
+        idx.locate(hex_to_id(hex_id).to_borrowed(), out, &mut pack::cache::DecodeEntryNoop)
             .unwrap()
             .unwrap()
     }

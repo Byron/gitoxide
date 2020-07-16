@@ -213,7 +213,7 @@ impl File {
             });
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
-                Header::RefDelta { oid } => match resolve(oid.borrowed(), out) {
+                Header::RefDelta { oid } => match resolve(oid.to_borrowed(), out) {
                     Some(ResolvedBase::InPack(entry)) => entry,
                     Some(ResolvedBase::OutOfPack { end, kind }) => {
                         base_buffer_size = Some(end);
