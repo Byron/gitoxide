@@ -55,3 +55,10 @@ mod tree {
 
     round_trip!(owned::Tree, borrowed::Tree, "tree/everything.tree");
 }
+
+mod blob {
+    use git_object::{borrowed, owned};
+
+    // It doesn't matter which data we use - it's not interpreted.
+    round_trip!(owned::Blob, borrowed::Blob, "tree/everything.tree");
+}

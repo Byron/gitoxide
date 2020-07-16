@@ -61,6 +61,14 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
     }
 }
 
+impl<'a> From<borrowed::Blob<'a>> for owned::Blob {
+    fn from(v: borrowed::Blob<'a>) -> Self {
+        owned::Blob {
+            data: v.data.to_owned(),
+        }
+    }
+}
+
 impl Into<owned::Tree> for borrowed::Tree<'_> {
     fn into(self) -> owned::Tree {
         let borrowed::Tree { entries } = self;

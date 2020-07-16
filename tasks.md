@@ -6,8 +6,8 @@
   * [ ] ~~support streamed objects (similar to how it's done with loose objects)~~ - no need, all slices support io::Read, and we don't
         actually support streaming, so let's net unify 'interfaces' on a low level like this.
 * **owned objects**
-  * [ ] encode 
-    * [ ] blob
+  * [ ] encode object
+    * [x] blob
     * [x] tag
     * [x] tree
     * [x] commit

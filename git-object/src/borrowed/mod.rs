@@ -13,11 +13,23 @@ pub use tag::Tag;
 pub mod tree;
 pub use tree::Tree;
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Blob<'a> {
-    pub data: &'a [u8],
+mod blob {
+    use std::convert::Infallible;
+
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Blob<'a> {
+        pub data: &'a [u8],
+    }
+
+    impl<'a> Blob<'a> {
+        pub fn from_bytes(input: &[u8]) -> Result<Blob, Infallible> {
+            Ok(Blob { data: input })
+        }
+    }
 }
+
+pub use blob::Blob;
 
 mod object;
 pub use object::*;
