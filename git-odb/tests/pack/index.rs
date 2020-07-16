@@ -27,15 +27,15 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(&owned::Id::from_40_bytes_in_hex(*id).unwrap()),
+                    idx.lookup_index(owned::Id::from_40_bytes_in_hex(*id).unwrap().borrowed()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup_index(&entry.oid).unwrap();
-                assert_eq!(entry.oid.as_slice(), idx.oid_at_index(index));
+                let index = idx.lookup_index(entry.oid.borrowed()).unwrap();
+                assert_eq!(entry.oid.borrowed(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index));
             }
@@ -56,15 +56,15 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(&owned::Id::from_40_bytes_in_hex(*id).unwrap()),
+                    idx.lookup_index(owned::Id::from_40_bytes_in_hex(*id).unwrap().borrowed()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup_index(&entry.oid).unwrap();
-                assert_eq!(entry.oid.as_slice(), idx.oid_at_index(index));
+                let index = idx.lookup_index(entry.oid.borrowed()).unwrap();
+                assert_eq!(entry.oid.borrowed(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index), "{} {:?}", index, entry);
             }

@@ -48,7 +48,7 @@ impl Bundle {
     /// For the latter, pack streams are required.
     pub fn locate<'a>(
         &self,
-        id: &[u8; 20],
+        id: borrowed::Id,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
     ) -> Option<Result<Object<'a>, Error>> {

@@ -3,7 +3,7 @@ use crate::{
     pack::data::{decoded, File},
     zlib::Inflate,
 };
-use git_object::{self as object, owned};
+use git_object::{self as object, borrowed, owned};
 use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{convert::TryInto, io, ops::Range};
@@ -139,7 +139,7 @@ impl File {
         &self,
         entry: decoded::Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(&owned::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::pack::data::decoded::Header::*;
@@ -170,7 +170,7 @@ impl File {
     fn resolve_deltas(
         &self,
         last: decoded::Entry,
-        resolve: impl Fn(&owned::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
@@ -213,7 +213,7 @@ impl File {
             });
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
-                Header::RefDelta { oid } => match resolve(&oid, out) {
+                Header::RefDelta { oid } => match resolve(oid.borrowed(), out) {
                     Some(ResolvedBase::InPack(entry)) => entry,
                     Some(ResolvedBase::OutOfPack { end, kind }) => {
                         base_buffer_size = Some(end);

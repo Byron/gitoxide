@@ -30,7 +30,7 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
-    use git_object::owned;
+    use git_object::borrowed;
     use git_odb::pack::{cache, data::decode::ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
@@ -71,7 +71,7 @@ mod decode_entry {
     }
 
     fn decode_entry_at_offset(offset: u64) -> Vec<u8> {
-        fn resolve_with_panic(_oid: &owned::Id, _out: &mut Vec<u8>) -> Option<ResolvedBase> {
+        fn resolve_with_panic(_oid: borrowed::Id, _out: &mut Vec<u8>) -> Option<ResolvedBase> {
             panic!("should not want to resolve an id here")
         }
 

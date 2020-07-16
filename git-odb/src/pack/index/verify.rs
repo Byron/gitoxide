@@ -252,7 +252,7 @@ impl index::File {
                                     pack_entry,
                                     buf,
                                     |id, _| {
-                                        self.lookup_index(&id).map(|index| {
+                                        self.lookup_index(id).map(|index| {
                                             ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                                         })
                                     },

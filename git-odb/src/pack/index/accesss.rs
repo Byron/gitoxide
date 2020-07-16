@@ -1,6 +1,7 @@
 use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
-use git_object::{owned, SHA1_SIZE};
+use git_object::{borrowed, owned, SHA1_SIZE};
+use std::convert::TryFrom;
 use std::{convert::TryInto, mem::size_of};
 
 const N32_SIZE: usize = size_of::<u32>();
@@ -57,7 +58,7 @@ impl index::File {
 
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The index ranges from 0 to self.num_objects()
-    pub fn oid_at_index(&self, index: u32) -> &[u8; 20] {
+    pub fn oid_at_index(&self, index: u32) -> borrowed::Id {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
@@ -65,9 +66,7 @@ impl index::File {
             index::Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
             index::Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
-        (&self.data[start..start + SHA1_SIZE])
-            .try_into()
-            .expect("20 bytes exactly")
+        borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
     pub fn pack_offset_at_index(&self, index: u32) -> u64 {
@@ -100,8 +99,8 @@ impl index::File {
     }
 
     /// Returns the offset of the given SHA1 for use with the `(oid|pack_offset|crc32)_at_index()`
-    pub fn lookup_index(&self, id: &[u8; 20]) -> Option<u32> {
-        let first_byte = id[0] as usize;
+    pub fn lookup_index(&self, id: borrowed::Id) -> Option<u32> {
+        let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
 
@@ -114,7 +113,7 @@ impl index::File {
             let mid_sha = self.oid_at_index(mid);
 
             use std::cmp::Ordering::*;
-            match id.cmp(mid_sha) {
+            match id.cmp(&mid_sha) {
                 Less => upper_bound = mid,
                 Equal => return Some(mid),
                 Greater => lower_bound = mid + 1,
