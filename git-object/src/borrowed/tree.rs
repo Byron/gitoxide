@@ -1,4 +1,4 @@
-use crate::{borrowed::parse::SPACE, borrowed::Error};
+use crate::{borrowed, borrowed::parse::SPACE, borrowed::Error};
 use crate::{BStr, ByteSlice};
 use nom::{
     bytes::complete::{tag, take, take_while1, take_while_m_n},
@@ -22,8 +22,8 @@ pub struct Tree<'a> {
 pub struct Entry<'a> {
     pub mode: Mode,
     pub filename: &'a BStr,
-    /// a 20 bytes SHA1
-    pub oid: &'a [u8],
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    pub oid: borrowed::Id<'a>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
@@ -64,7 +64,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
         Entry {
             mode,
             filename: filename.as_bstr(),
-            oid,
+            oid: borrowed::Id::try_from(oid).expect("we counted exactly 20 bytes"),
         },
     ))
 }

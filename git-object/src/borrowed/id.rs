@@ -6,6 +6,16 @@ use std::convert::{TryFrom, TryInto};
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub struct Id<'a>(&'a [u8; SHA1_SIZE]);
 
+#[cfg(feature = "serde1")]
+impl<'de: 'a, 'a> serde::Deserialize<'de> for Id<'a> {
+    fn deserialize<D>(_deserializer: D) -> Result<Self, <D as serde::Deserializer<'de>>::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        unimplemented!("deserialize")
+    }
+}
+
 impl<'a> Id<'a> {
     pub fn encode_to_40_bytes_slice(&self, out: &mut [u8]) -> Result<(), hex::FromHexError> {
         hex::encode_to_slice(self.0, out)

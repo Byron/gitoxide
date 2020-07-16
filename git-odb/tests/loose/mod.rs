@@ -158,6 +158,10 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             ldb().locate(hex_to_id(hex).to_borrowed()).and_then(Result::ok)
         }
 
+        pub fn as_id(id: &[u8; 20]) -> borrowed::Id {
+            id.into()
+        }
+
         #[test]
         fn tree() {
             let mut o = locate("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f");
@@ -169,16 +173,16 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                     tree::Entry {
                         mode: tree::Mode::Tree,
                         filename: b"dir".as_bstr(),
-                        oid: &[
+                        oid: as_id(&[
                             150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
-                        ],
+                        ]),
                     },
                     tree::Entry {
                         mode: tree::Mode::Blob,
                         filename: b"file.txt".as_bstr(),
-                        oid: &[
+                        oid: as_id(&[
                             55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244, 17, 64, 202, 185, 128,
-                        ],
+                        ]),
                     },
                 ],
             };
