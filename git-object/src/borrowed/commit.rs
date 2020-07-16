@@ -11,6 +11,7 @@ use nom::{
     IResult,
 };
 use smallvec::SmallVec;
+use std::borrow::Cow;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -25,7 +26,7 @@ pub struct Commit<'a> {
     // The name of the message encoding, otherwise UTF-8 should be assumed.
     pub encoding: Option<&'a BStr>,
     pub message: &'a BStr,
-    pub pgp_signature: Option<&'a BStr>,
+    pub pgp_signature: Option<Cow<'a, BStr>>,
 }
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
@@ -50,8 +51,8 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
     let (i, encoding) =
         opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i).map_err(Error::context("encoding <encoding>"))?;
     let (i, pgp_signature) = opt(alt((
-        |i| parse::header_field_multi_line(i, b"gpgsig"),
-        |i| parse::header_field(i, b"gpgsig", is_not(NL)),
+        |i| parse::header_field_multi_line(i, b"gpgsig").map(|(i, o)| (i, Cow::Borrowed(o.as_bstr()))),
+        |i| parse::header_field(i, b"gpgsig", is_not(NL)).map(|(i, o)| (i, Cow::Borrowed(o.as_bstr()))),
     )))(i)
     .map_err(Error::context("gpg <signature>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
@@ -65,7 +66,7 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
             committer,
             encoding: encoding.map(ByteSlice::as_bstr),
             message,
-            pgp_signature: pgp_signature.map(ByteSlice::as_bstr),
+            pgp_signature: pgp_signature,
         },
     ))
 }
