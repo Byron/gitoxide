@@ -1,11 +1,11 @@
 use crate::pack::data::File;
-use git_object::{self as object, SHA1_SIZE};
+use git_object::{owned, SHA1_SIZE};
 use quick_error::quick_error;
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Mismatch { expected: object::Id, actual: object::Id } {
+        Mismatch { expected: owned::Id, actual: owned::Id } {
             display("pack checksum mismatch: expected {}, got {}", expected, actual)
         }
         Io(err: std::io::Error) {
@@ -18,10 +18,10 @@ quick_error! {
 
 /// Checksums and verify checksums
 impl File {
-    pub fn checksum(&self) -> object::Id {
-        object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    pub fn checksum(&self) -> owned::Id {
+        owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
-    pub fn verify_checksum(&self) -> Result<object::Id, Error> {
+    pub fn verify_checksum(&self) -> Result<owned::Id, Error> {
         let mut hasher = git_features::hash::Sha1::default();
 
         let actual = match std::fs::File::open(&self.path) {
@@ -36,12 +36,12 @@ impl File {
                     bytes_left -= out.len();
                     hasher.update(out);
                 }
-                git_object::Id::new_sha1(hasher.digest())
+                owned::Id::new_sha1(hasher.digest())
             }
             Err(_) => {
                 let right_before_trailer = self.data.len() - SHA1_SIZE;
                 hasher.update(&self.data[..right_before_trailer]);
-                git_object::Id::new_sha1(hasher.digest())
+                owned::Id::new_sha1(hasher.digest())
             }
         };
 

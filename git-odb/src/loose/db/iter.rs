@@ -1,5 +1,5 @@
 use crate::loose::Db;
-use git_object as object;
+use git_object::owned;
 use quick_error::quick_error;
 use walkdir::WalkDir;
 
@@ -14,7 +14,7 @@ quick_error! {
 
 /// Iteration and traversal
 impl Db {
-    pub fn iter(&self) -> impl Iterator<Item = Result<object::Id, Error>> {
+    pub fn iter(&self) -> impl Iterator<Item = Result<owned::Id, Error>> {
         use std::path::Component::Normal;
         // TODO: Put this behind a feature flag in git-features and allow iterting with jwalk
         WalkDir::new(&self.path)
@@ -36,14 +36,14 @@ impl Db {
                                     first_byte.copy_from_slice(c1.as_bytes());
                                     rest.copy_from_slice(c2.as_bytes());
                                 }
-                                if let Ok(b) = object::Id::from_40_bytes_in_hex(&buf[..]) {
+                                if let Ok(b) = owned::Id::from_40_bytes_in_hex(&buf[..]) {
                                     is_valid_path = true;
                                     return b;
                                 }
                             }
                         }
                     }
-                    object::Id::null_sha1()
+                    owned::Id::null_sha1()
                 });
                 if is_valid_path {
                     Some(e)

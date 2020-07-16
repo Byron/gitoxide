@@ -1,7 +1,4 @@
-use crate::{
-    owned::{self, ser, NL},
-    Id,
-};
+use crate::owned::{self, ser, NL};
 use bstr::{BStr, BString};
 use quick_error::quick_error;
 use std::io;
@@ -30,7 +27,7 @@ impl From<Error> for io::Error {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
     // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
-    pub target: Id,
+    pub target: owned::Id,
     // The name of the tag, e.g. "v1.0"
     pub name: BString,
     pub target_kind: crate::Kind,

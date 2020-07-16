@@ -3,7 +3,7 @@
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
 use git_features::progress::Progress;
-use git_object::Kind;
+use git_object::{owned, Kind};
 use git_odb::pack::{self, index};
 use std::str::FromStr;
 use std::{io, path::Path};
@@ -98,7 +98,7 @@ pub fn verify_pack_or_pack_index<P, W1, W2>(
         output_statistics,
         thread_limit,
     }: Context<W1, W2>,
-) -> Result<(git_object::Id, Option<index::verify::Outcome>)>
+) -> Result<(owned::Id, Option<index::verify::Outcome>)>
 where
     P: Progress,
     <P as Progress>::SubProgress: Send,

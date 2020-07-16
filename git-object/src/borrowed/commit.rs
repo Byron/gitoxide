@@ -1,6 +1,8 @@
 use super::Error;
-use crate::borrowed::{parse, parse::NL, Signature};
-use crate::{BStr, ByteSlice};
+use crate::{
+    borrowed::{parse, parse::NL, Signature},
+    owned, BStr, ByteSlice,
+};
 use nom::{
     branch::alt,
     bytes::{complete::is_not, complete::tag},
@@ -69,8 +71,8 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
 }
 
 impl<'a> Commit<'a> {
-    pub fn tree(&self) -> crate::Id {
-        crate::Id::from_40_bytes_in_hex(self.tree).expect("prior validation")
+    pub fn tree(&self) -> owned::Id {
+        owned::Id::from_40_bytes_in_hex(self.tree).expect("prior validation")
     }
     pub fn from_bytes(d: &'a [u8]) -> Result<Commit<'a>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)

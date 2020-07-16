@@ -1,6 +1,6 @@
 use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
-use git_object::{self as object, SHA1_SIZE};
+use git_object::{owned, SHA1_SIZE};
 use std::{convert::TryInto, mem::size_of};
 
 const N32_SIZE: usize = size_of::<u32>();
@@ -12,7 +12,7 @@ const N32_HIGH_BIT: u32 = 1 << 31;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
-    pub oid: object::Id,
+    pub oid: owned::Id,
     /// The offset of the object's header in the pack
     pub pack_offset: u64,
     pub crc32: Option<u32>,
@@ -28,7 +28,7 @@ impl index::File {
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
-                        oid: object::Id::from_20_bytes(oid),
+                        oid: owned::Id::from_20_bytes(oid),
                         pack_offset: BigEndian::read_u32(ofs) as u64,
                         crc32: None,
                     }
@@ -47,7 +47,7 @@ impl index::File {
             )
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
-                oid: object::Id::from_20_bytes(oid),
+                oid: owned::Id::from_20_bytes(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),

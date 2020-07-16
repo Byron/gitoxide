@@ -1,3 +1,4 @@
+use git_object::owned;
 use std::path::PathBuf;
 
 #[cfg(not(windows))]
@@ -13,8 +14,8 @@ fn fixup(v: Vec<u8>) -> Vec<u8> {
     v.replace(b"\r\n", "\n")
 }
 
-pub fn hex_to_id(hex: &str) -> git_object::Id {
-    git_object::Id::from_40_bytes_in_hex(hex.as_bytes()).unwrap()
+pub fn hex_to_id(hex: &str) -> owned::Id {
+    owned::Id::from_40_bytes_in_hex(hex.as_bytes()).unwrap()
 }
 
 pub fn fixture_path(path: &str) -> PathBuf {

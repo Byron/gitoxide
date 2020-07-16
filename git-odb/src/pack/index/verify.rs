@@ -4,7 +4,7 @@ use crate::{
     pack::{cache, data::decode},
 };
 use git_features::progress::{self, Progress};
-use git_object::SHA1_SIZE;
+use git_object::{owned, SHA1_SIZE};
 use quick_error::quick_error;
 use smallvec::alloc::collections::BTreeMap;
 use std::time::Instant;
@@ -12,7 +12,7 @@ use std::time::Instant;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Mismatch { expected: git_object::Id, actual: git_object::Id } {
+        Mismatch { expected: owned::Id, actual: owned::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
         PackChecksum(err: pack::data::verify::Error) {
@@ -20,14 +20,14 @@ quick_error! {
             from()
             cause(err)
         }
-        PackDecode(err: pack::data::decode::Error, id: git_object::Id, offset: u64) {
+        PackDecode(err: pack::data::decode::Error, id: owned::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
             cause(err)
         }
-        PackMismatch { expected: git_object::Id, actual: git_object::Id } {
+        PackMismatch { expected: owned::Id, actual: owned::Id } {
             display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
         }
-        PackObjectMismatch { expected: git_object::Id, actual: git_object::Id, offset: u64, kind: git_object::Kind} {
+        PackObjectMismatch { expected: owned::Id, actual: owned::Id, offset: u64, kind: git_object::Kind} {
             display("The SHA1 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
         Crc32Mismatch { expected: u32, actual: u32, offset: u64, kind: git_object::Kind} {
@@ -78,13 +78,13 @@ pub struct Outcome {
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub fn checksum_of_index(&self) -> git_object::Id {
-        git_object::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    pub fn checksum_of_index(&self) -> owned::Id {
+        owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
 
-    pub fn checksum_of_pack(&self) -> git_object::Id {
+    pub fn checksum_of_pack(&self) -> owned::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
-        git_object::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
+        owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
     }
 
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
@@ -96,7 +96,7 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(git_object::Id, Option<Outcome>), Error>
+    ) -> Result<(owned::Id, Option<Outcome>), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -112,7 +112,7 @@ impl index::File {
             let throughput = TimeThroughput::new(self.data.len());
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-            let actual = git_object::Id::new_sha1(hasher.digest());
+            let actual = owned::Id::new_sha1(hasher.digest());
             progress.done(throughput);
 
             let expected = self.checksum_of_index();
@@ -271,7 +271,7 @@ impl index::File {
                             hasher.update(&header_buf[..header_size]);
                             hasher.update(buf.as_slice());
 
-                            let actual_oid = git_object::Id::new_sha1(hasher.digest());
+                            let actual_oid = owned::Id::new_sha1(hasher.digest());
                             if actual_oid != index_entry.oid {
                                 return Err(Error::PackObjectMismatch {
                                     actual: actual_oid,

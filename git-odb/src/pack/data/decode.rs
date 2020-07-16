@@ -3,7 +3,7 @@ use crate::{
     pack::data::{decoded, File},
     zlib::Inflate,
 };
-use git_object as object;
+use git_object::{self as object, owned};
 use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{convert::TryInto, io, ops::Range};
@@ -15,7 +15,7 @@ quick_error! {
             display("{}", msg)
             cause(err)
         }
-        DeltaBaseUnresolved(id: object::Id) {
+        DeltaBaseUnresolved(id: owned::Id) {
             display("A delta chain could not be applied as the ref base with id {} could not be found", id)
         }
     }
@@ -139,7 +139,7 @@ impl File {
         &self,
         entry: decoded::Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(&owned::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::pack::data::decoded::Header::*;
@@ -170,7 +170,7 @@ impl File {
     fn resolve_deltas(
         &self,
         last: decoded::Entry,
-        resolve: impl Fn(&object::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(&owned::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {

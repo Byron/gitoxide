@@ -1,6 +1,6 @@
 use crate::pack;
 use git_features::progress::Progress;
-use git_object::{self as object, borrowed};
+use git_object::{self as object, borrowed, owned};
 use quick_error::quick_error;
 use std::{
     convert::TryFrom,
@@ -79,7 +79,7 @@ impl Bundle {
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(git_object::Id, Option<pack::index::verify::Outcome>), pack::index::verify::Error>
+    ) -> Result<(owned::Id, Option<pack::index::verify::Outcome>), pack::index::verify::Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -114,7 +114,7 @@ impl TryFrom<&Path> for Bundle {
 
 /// Created by `Bundle::locate(…)`
 pub struct Object<'a> {
-    pub kind: git_object::Kind,
+    pub kind: object::Kind,
     pub data: &'a [u8],
 }
 

@@ -1,5 +1,4 @@
-use git_object as object;
-use object::SHA1_SIZE;
+use git_object::{owned, SHA1_SIZE};
 
 const _TYPE_EXT1: u8 = 0;
 const COMMIT: u8 = 1;
@@ -30,7 +29,7 @@ pub enum Header {
     /// An object within this pack if the LSB encoded offset would be larger than 20 bytes
     /// Alternatively an object stored in the repository, if this is a thin pack
     RefDelta {
-        oid: object::Id,
+        oid: owned::Id,
     },
     /// The offset into the pack at which to find the base object header
     OfsDelta {
@@ -39,8 +38,8 @@ pub enum Header {
 }
 
 impl Header {
-    pub fn to_kind(&self) -> Option<object::Kind> {
-        use object::Kind::*;
+    pub fn to_kind(&self) -> Option<git_object::Kind> {
+        use git_object::Kind::*;
         Some(match self {
             Header::Tree => Tree,
             Header::Blob => Blob,
@@ -104,7 +103,7 @@ impl Header {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    oid: object::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
+                    oid: owned::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
                 };
                 consumed += SHA1_SIZE;
                 delta

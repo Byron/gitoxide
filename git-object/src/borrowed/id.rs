@@ -1,6 +1,6 @@
 use crate::SHA1_SIZE;
 
-/// A references to a SHA1 identifying objects
+/// A reference to a SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub struct Id<'a>(&'a [u8; SHA1_SIZE]);

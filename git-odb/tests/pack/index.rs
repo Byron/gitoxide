@@ -2,6 +2,7 @@ use crate::{
     fixture_path, hex_to_id,
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
+use git_object::{self as object};
 use git_odb::pack::{self, data::decode::Outcome, index};
 use pretty_assertions::assert_eq;
 
@@ -14,6 +15,7 @@ const PACK_FOR_INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d
 mod method {
     mod v1 {
         use crate::{fixture_path, pack::index::INDEX_V1};
+        use git_object::owned;
         use git_odb::pack::index;
 
         #[test]
@@ -25,7 +27,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(&git_object::Id::from_40_bytes_in_hex(*id).unwrap()),
+                    idx.lookup_index(&owned::Id::from_40_bytes_in_hex(*id).unwrap()),
                     *desired_index,
                     "{}",
                     assertion
@@ -41,8 +43,8 @@ mod method {
     }
 
     mod v2 {
-        use crate::fixture_path;
-        use crate::pack::index::INDEX_V2;
+        use crate::{fixture_path, pack::index::INDEX_V2};
+        use git_object::owned;
         use git_odb::pack::index;
 
         #[test]
@@ -54,7 +56,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(&git_object::Id::from_40_bytes_in_hex(*id).unwrap()),
+                    idx.lookup_index(&owned::Id::from_40_bytes_in_hex(*id).unwrap()),
                     *desired_index,
                     "{}",
                     assertion
@@ -82,7 +84,7 @@ fn pack_lookup() {
             PACK_FOR_INDEX_V2,
             index::verify::Outcome {
                 average: Outcome {
-                    kind: git_object::Kind::Tree,
+                    kind: object::Kind::Tree,
                     num_deltas: 1,
                     decompressed_size: 3456,
                     compressed_size: 1725,
@@ -108,7 +110,7 @@ fn pack_lookup() {
             PACK_FOR_INDEX_V1,
             index::verify::Outcome {
                 average: Outcome {
-                    kind: git_object::Kind::Tree,
+                    kind: object::Kind::Tree,
                     num_deltas: 0,
                     decompressed_size: 1982,
                     compressed_size: 729,
@@ -129,7 +131,7 @@ fn pack_lookup() {
             SMALL_PACK,
             index::verify::Outcome {
                 average: Outcome {
-                    kind: git_object::Kind::Tree,
+                    kind: object::Kind::Tree,
                     num_deltas: 0,
                     decompressed_size: 118,
                     compressed_size: 85,
