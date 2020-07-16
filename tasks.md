@@ -12,14 +12,14 @@
     * [ ] tree
     * [ ] commit
   * [ ] write loose
+* **pack verify**
+  * add '--some-flag' to run every non-blob through a decode/encode cycle to see if all objects can be parsed
+  * add that to the stress test
 * **plumbing - explode pack**
   * [ ] single threaded
   * [ ] multi-threaded
   * [ ] progress
   * [ ] statistics
-* **pack verify**
-  * add '--some-flag' to run every non-blob through a decode/encode cycle to see if all objects can be parsed
-  * add that to the stress test
 * **multi-db** (incorporate object lookup for loose objects and packs)
   * [ ] single threaded
   * [ ] optional object cache
