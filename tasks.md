@@ -9,7 +9,7 @@
   * [ ] encode 
     * [ ] blob
     * [x] tag
-    * [ ] tree
+    * [x] tree
     * [x] commit
   * [ ] write loose
 * **pack verify**

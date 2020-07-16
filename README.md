@@ -28,7 +28,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] tag
   * encode
     * [x] commit
-    * [ ] tree
+    * [x] tree
     * [x] tag
   * [ ] API documentation with examples
 * **git-odb**
