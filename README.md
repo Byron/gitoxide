@@ -37,7 +37,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] read
       * [x] into memory
       * [x] streaming
-    * [x] streaming write
+    * [ ] streaming write
   * **packs**
     * [x] traverse pack index
     * [ ] decode
