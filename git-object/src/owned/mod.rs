@@ -35,5 +35,8 @@ mod blob {
 }
 pub use blob::*;
 
+pub mod signature;
+pub use signature::Signature;
+
 mod object;
 pub use object::*;

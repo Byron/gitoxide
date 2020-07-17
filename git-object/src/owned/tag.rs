@@ -32,7 +32,7 @@ pub struct Tag {
     pub name: BString,
     pub target_kind: crate::Kind,
     pub message: BString,
-    pub signature: owned::object::Signature,
+    pub signature: owned::Signature,
     pub pgp_signature: Option<BString>,
 }
 

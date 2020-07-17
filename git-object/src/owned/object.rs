@@ -1,52 +1,133 @@
-use crate::Time;
-use bstr::BString;
-
-pub mod signature {
-    use super::Signature;
-    use crate::owned::SPACE;
-    use bstr::{BStr, ByteSlice};
-    use quick_error::quick_error;
-    use std::io;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            IllegalCharacter {
-                description("Signature name or email must not contain '<', '>' or \\n")
-            }
-        }
-    }
-
-    impl From<Error> for io::Error {
-        fn from(err: Error) -> Self {
-            io::Error::new(io::ErrorKind::Other, err)
-        }
-    }
-
-    impl Signature {
-        pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-            out.write_all(validated_token(self.name.as_bstr())?)?;
-            out.write_all(SPACE)?;
-            out.write_all(&b"<"[..])?;
-            out.write_all(validated_token(self.email.as_bstr())?)?;
-            out.write_all(&b"> "[..])?;
-            self.time.write_to(out)?;
-            Ok(())
-        }
-    }
-
-    fn validated_token(name: &BStr) -> Result<&BStr, Error> {
-        if name.find_byteset(b"<>\n").is_some() {
-            return Err(Error::IllegalCharacter);
-        }
-        Ok(name)
-    }
-}
+use crate::owned;
+use std::io;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Signature {
-    pub name: BString,
-    pub email: BString,
-    pub time: Time,
+pub enum Object {
+    Tag(owned::Tag),
+    Commit(owned::Commit),
+    Tree(owned::Tree),
+    Blob(owned::Blob),
+}
+
+/// Convenient extraction of typed object
+impl Object {
+    pub fn as_blob(&self) -> Option<&owned::Blob> {
+        match self {
+            Object::Blob(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_commit(&self) -> Option<&owned::Commit> {
+        match self {
+            Object::Commit(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_tree(&self) -> Option<&owned::Tree> {
+        match self {
+            Object::Tree(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn as_tag(&self) -> Option<&owned::Tag> {
+        match self {
+            Object::Tag(v) => Some(v),
+            _ => None,
+        }
+    }
+    pub fn kind(&self) -> crate::Kind {
+        match self {
+            Object::Tag(_) => crate::Kind::Tag,
+            Object::Commit(_) => crate::Kind::Commit,
+            Object::Tree(_) => crate::Kind::Tree,
+            Object::Blob(_) => crate::Kind::Blob,
+        }
+    }
+}
+
+/// Serialization
+impl Object {
+    pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        use Object::*;
+        match self {
+            Tree(v) => v.write_to(out),
+            Commit(v) => v.write_to(out),
+            Blob(v) => v.write_to(out),
+            Tag(v) => v.write_to(out),
+        }
+    }
+}
+
+mod convert {
+    use crate::owned::{Blob, Commit, Object, Tag, Tree};
+    use std::convert::TryFrom;
+
+    impl From<Tag> for Object {
+        fn from(v: Tag) -> Self {
+            Object::Tag(v)
+        }
+    }
+
+    impl From<Commit> for Object {
+        fn from(v: Commit) -> Self {
+            Object::Commit(v)
+        }
+    }
+
+    impl From<Tree> for Object {
+        fn from(v: Tree) -> Self {
+            Object::Tree(v)
+        }
+    }
+
+    impl From<Blob> for Object {
+        fn from(v: Blob) -> Self {
+            Object::Blob(v)
+        }
+    }
+
+    impl TryFrom<Object> for Tag {
+        type Error = Object;
+
+        fn try_from(value: Object) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Tag(v) => v,
+                _ => return Err(value),
+            })
+        }
+    }
+
+    impl TryFrom<Object> for Commit {
+        type Error = Object;
+
+        fn try_from(value: Object) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Commit(v) => v,
+                _ => return Err(value),
+            })
+        }
+    }
+
+    impl TryFrom<Object> for Tree {
+        type Error = Object;
+
+        fn try_from(value: Object) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Tree(v) => v,
+                _ => return Err(value),
+            })
+        }
+    }
+
+    impl TryFrom<Object> for Blob {
+        type Error = Object;
+
+        fn try_from(value: Object) -> Result<Self, Self::Error> {
+            Ok(match value {
+                Object::Blob(v) => v,
+                _ => return Err(value),
+            })
+        }
+    }
 }

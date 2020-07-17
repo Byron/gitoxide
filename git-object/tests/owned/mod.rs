@@ -6,13 +6,21 @@ macro_rules! round_trip {
         #[test]
         fn round_trip() {
             use crate::fixture_bytes;
+            use git_object::{owned, borrowed};
             use bstr::ByteSlice;
             for input in &[
                 $( $files ),*
             ] {
                 let input = fixture_bytes(input);
+                // Test the parse->borrowed->owned->write chain for an object kind
                 let item: $owned = <$borrowed>::from_bytes(&input).unwrap().into();
                 let mut output = Vec::new();
+                item.write_to(&mut output).unwrap();
+                assert_eq!(output.as_bstr(), input.as_bstr());
+
+                // Test the parse->borrowed->owned->write chain for the top-level objects
+                let item: owned::Object = borrowed::Object::from(<$borrowed>::from_bytes(&input).unwrap()).into();
+                output.clear();
                 item.write_to(&mut output).unwrap();
                 assert_eq!(output.as_bstr(), input.as_bstr());
             }
@@ -22,8 +30,6 @@ macro_rules! round_trip {
 
 mod object;
 mod tag {
-    use git_object::{borrowed, owned};
-
     round_trip!(
         owned::Tag,
         borrowed::Tag,
@@ -35,8 +41,6 @@ mod tag {
 }
 
 mod commit {
-    use git_object::{borrowed, owned};
-
     round_trip!(
         owned::Commit,
         borrowed::Commit,
@@ -51,14 +55,10 @@ mod commit {
 }
 
 mod tree {
-    use git_object::{borrowed, owned};
-
     round_trip!(owned::Tree, borrowed::Tree, "tree/everything.tree");
 }
 
 mod blob {
-    use git_object::{borrowed, owned};
-
     // It doesn't matter which data we use - it's not interpreted.
     round_trip!(owned::Blob, borrowed::Blob, "tree/everything.tree");
 }
