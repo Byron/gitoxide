@@ -1,12 +1,13 @@
-mod error;
-pub use error::Error;
+use bstr::BStr;
 
-use crate::BStr;
 use crate::{
     borrowed,
     borrowed::{parse, Blob, Commit, Tag, Tree},
-    Time,
+    Kind, Time,
 };
+
+mod error;
+pub use error::Error;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -34,6 +35,18 @@ pub enum Object<'a> {
 }
 
 impl<'a> Object<'a> {
+    pub fn from_bytes(kind: Kind, bytes: &'a [u8]) -> Result<Object<'a>, Error> {
+        Ok(match kind {
+            Kind::Tag => Object::Tag(Tag::from_bytes(bytes)?),
+            Kind::Tree => Object::Tree(Tree::from_bytes(bytes)?),
+            Kind::Commit => Object::Commit(Commit::from_bytes(bytes)?),
+            Kind::Blob => Object::Blob(Blob { data: bytes }),
+        })
+    }
+}
+
+/// Convenient access to contained objects
+impl<'a> Object<'a> {
     pub fn as_blob(&self) -> Option<&borrowed::Blob> {
         match self {
             Object::Blob(v) => Some(v),
@@ -58,12 +71,12 @@ impl<'a> Object<'a> {
             _ => None,
         }
     }
-    pub fn kind(&self) -> crate::Kind {
+    pub fn kind(&self) -> Kind {
         match self {
-            Object::Tag(_) => crate::Kind::Tag,
-            Object::Commit(_) => crate::Kind::Commit,
-            Object::Tree(_) => crate::Kind::Tree,
-            Object::Blob(_) => crate::Kind::Blob,
+            Object::Tag(_) => Kind::Tag,
+            Object::Commit(_) => Kind::Commit,
+            Object::Tree(_) => Kind::Tree,
+            Object::Blob(_) => Kind::Blob,
         }
     }
 }

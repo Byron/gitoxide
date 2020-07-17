@@ -15,8 +15,8 @@ quick_error! {
             from()
             cause(err)
         }
-        ParseTag(err: borrowed::Error) {
-            display("Could not parse tag object")
+        Parse(err: borrowed::Error) {
+            display("Could not parse object object")
             from()
             cause(err)
         }
@@ -33,12 +33,7 @@ impl loose::Object {
     pub fn decode(&mut self) -> Result<borrowed::Object, Error> {
         self.decompress_all()?;
         let bytes = &self.decompressed_data[self.header_size..];
-        Ok(match self.kind {
-            object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(bytes)?),
-            object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(bytes)?),
-            object::Kind::Commit => borrowed::Object::Commit(borrowed::Commit::from_bytes(bytes)?),
-            object::Kind::Blob => borrowed::Object::Blob(borrowed::Blob { data: bytes }),
-        })
+        Ok(borrowed::Object::from_bytes(self.kind, bytes)?)
     }
 
     pub fn stream(&self) -> Result<stream::Reader, Error> {
