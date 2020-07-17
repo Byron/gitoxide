@@ -50,7 +50,7 @@ benchmark: target/release/gio ## see how fast things are, powered by hyperfine
 
 ##@ Testing
 
-tests: check unit-tests journey-tests journey-tests-small ## run all tests, including journey tests
+tests: check unit-tests journey-tests-small journey-tests ## run all tests, including journey tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all
