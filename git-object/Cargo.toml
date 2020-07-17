@@ -18,7 +18,7 @@ serde1 = ["serde", "bstr/serde1", "smallvec/serde"]
 all-features = true
 
 [dependencies]
-quick-error = "1.2.3"
+quick-error = { version = "1.2.3", git = "https://github.com/tailhook/quick-error", rev = "aad5701556438218339fba452451ae63a47c31c2" }
 hex = "0.4.2"
 btoi = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }

@@ -15,5 +15,5 @@ test = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-quick-error = "1.2.3"
+quick-error = { version = "1.2.3", git = "https://github.com/tailhook/quick-error", rev = "aad5701556438218339fba452451ae63a47c31c2" }
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }

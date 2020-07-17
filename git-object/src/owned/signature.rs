@@ -15,7 +15,7 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         IllegalCharacter {
-            description("Signature name or email must not contain '<', '>' or \\n")
+            display("Signature name or email must not contain '<', '>' or \\n")
         }
     }
 }

@@ -144,7 +144,8 @@ where
                 } else {
                     EitherCache::Right(pack::cache::DecodeEntryLRU::default())
                 }
-            })?
+            })
+            .with_context(|| "Verification failure")?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };

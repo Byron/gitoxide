@@ -598,7 +598,7 @@ dependencies = [
  "itoa",
  "nom",
  "pretty_assertions",
- "quick-error",
+ "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
  "serde",
  "smallvec",
 ]
@@ -619,7 +619,7 @@ dependencies = [
  "itoa",
  "miniz_oxide",
  "pretty_assertions",
- "quick-error",
+ "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
  "serde",
  "smallvec",
  "uluru",
@@ -631,14 +631,14 @@ name = "git-ref"
 version = "0.1.0"
 dependencies = [
  "bstr",
- "quick-error",
+ "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
 ]
 
 [[package]]
 name = "git-repository"
 version = "0.1.0"
 dependencies = [
- "quick-error",
+ "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
 ]
 
 [[package]]
@@ -705,7 +705,7 @@ version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
 dependencies = [
- "quick-error",
+ "quick-error 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1061,6 +1061,11 @@ dependencies = [
  "unicode-segmentation",
  "unicode-width",
 ]
+
+[[package]]
+name = "quick-error"
+version = "1.2.3"
+source = "git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2#aad5701556438218339fba452451ae63a47c31c2"
 
 [[package]]
 name = "quick-error"

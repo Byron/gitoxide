@@ -7,7 +7,7 @@ quick_error! {
     pub enum Error {
         ParseIntegerError(msg: &'static str, number: Vec<u8>, err: btoi::ParseIntegerError) {
             display("{}: {:?}", msg, std::str::from_utf8(number))
-            cause(err)
+            source(err)
         }
         InvalidHeader(msg: &'static str) {
             display("{}", msg)
@@ -15,7 +15,7 @@ quick_error! {
         ObjectHeader(err: object::Error) {
             display("Could not parse object kind")
             from()
-            cause(err)
+            source(err)
         }
     }
 }

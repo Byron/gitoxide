@@ -13,7 +13,7 @@ quick_error! {
     pub enum Error {
         ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
             display("{}", msg)
-            cause(err)
+            source(err)
         }
         DeltaBaseUnresolved(id: owned::Id) {
             display("A delta chain could not be applied as the ref base with id {} could not be found", id)

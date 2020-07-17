@@ -5,7 +5,7 @@ quick_error! {
     pub enum Error {
         ParseIntegerError(msg: &'static str, number: crate::BString, err: btoi::ParseIntegerError) {
             display("{}: {:?}", msg, number)
-            cause(err)
+            source(err)
         }
         Nom(err_msg: String) {
             display("{}", err_msg)
@@ -15,11 +15,11 @@ quick_error! {
         }
         ParseKindError(err: crate::types::Error) {
             display("{}", err)
-            cause(err)
+            source(err)
         }
         ObjectKind(err: crate::Error) {
             from()
-            cause(err)
+            source(err)
         }
     }
 }

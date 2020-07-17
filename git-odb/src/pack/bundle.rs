@@ -16,12 +16,12 @@ quick_error! {
         Pack(err: pack::data::init::Error) {
             display("Could not instantiate pack")
             from()
-            cause(err)
+            source(err)
         }
         Index(err: pack::index::init::Error) {
             display("Could not instantiate pack index")
             from()
-            cause(err)
+            source(err)
         }
         Decode(err: pack::data::decode::Error) {
             display("Could not decode object")

@@ -15,16 +15,16 @@ quick_error! {
     pub enum Error {
         DecompressFile(err: zlib::Error, path: PathBuf) {
             display("decompression of loose object at '{}' failed", path.display())
-            cause(err)
+            source(err)
         }
         Decode(err: header::Error) {
             display("Could not decode header")
             from()
-            cause(err)
+            source(err)
         }
         Io(err: std::io::Error, action: &'static str, path: PathBuf) {
             display("Could not {} data at '{}'", action, path.display())
-            cause(err)
+            source(err)
         }
     }
 }

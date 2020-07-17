@@ -7,12 +7,12 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         StartsWithDash {
-            description("Tags must not start with a dash: '-'")
+            display("Tags must not start with a dash: '-'")
         }
         InvalidRefName(err: git_ref::validated::NameError) {
             display("The tag name was no valid reference name")
             from()
-            cause(err)
+            source(err)
         }
     }
 }

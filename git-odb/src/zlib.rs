@@ -19,7 +19,7 @@ quick_error! {
         WriteInflated(err: std::io::Error) {
             display("Could not write all bytes when decompressing content")
             from()
-            cause(err)
+            source(err)
         }
         Inflate(status: miniz_oxide::inflate::TINFLStatus) {
             display("Could not decode zip stream, status was '{:?}'", status)

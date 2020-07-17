@@ -10,7 +10,7 @@ quick_error! {
     pub enum Error {
         Io(err: std::io::Error, path: std::path::PathBuf) {
             display("Could not open pack file at '{}'", path.display())
-            cause(err)
+            source(err)
         }
         Corrupt(msg: String) {
             display("{}", msg)

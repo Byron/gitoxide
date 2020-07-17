@@ -18,15 +18,15 @@ quick_error! {
         PackChecksum(err: pack::data::verify::Error) {
             display("The pack of this index file failed to verify its checksums")
             from()
-            cause(err)
+            source(err)
         }
         PackDecode(err: pack::data::decode::Error, id: owned::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
-            cause(err)
+            source(err)
         }
         ObjectDecode(err: borrowed::Error, kind: git_object::Kind, oid: owned::Id) {
             display("{} object {} could not be decoded", kind, oid)
-            cause(err)
+            source(err)
         }
         ObjectEncodeMismatch(kind: git_object::Kind, oid: owned::Id, expected: BString, actual: BString) {
             display("{} object {} could not be decoded, wanted\n{}\ngot\n{}", kind, oid, expected, actual)

@@ -8,25 +8,25 @@ quick_error! {
             display("A ref must not contain invalid bytes or ascii control characters: '{}'", name)
         }
         DoubleDot {
-            description("A ref must not contain '..' as it may be mistaken for a range")
+            display("A ref must not contain '..' as it may be mistaken for a range")
         }
         LockFileSuffix {
-            description("A ref must not end with '.lock'")
+            display("A ref must not end with '.lock'")
         }
         ReflogPortion {
-            description("A ref must not contain '@{' which is a part of a ref-log")
+            display("A ref must not contain '@{{' which is a part of a ref-log")
         }
         Asterisk {
-            description("A ref must not contain '*' character")
+            display("A ref must not contain '*' character")
         }
         StartsWithDot {
-            description("A ref must not start with a '.'")
+            display("A ref must not start with a '.'")
         }
         EndsWithSlash {
-            description("A ref must not end with a '/'")
+            display("A ref must not end with a '/'")
         }
         Empty {
-            description("A ref must not be empty")
+            display("A ref must not be empty")
         }
     }
 }

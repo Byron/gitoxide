@@ -11,18 +11,18 @@ quick_error! {
     pub enum Error {
         IoOpen(err: std::io::Error, path: PathBuf) {
             display("Could not open data at '{}'", path.display())
-            cause(err)
+            source(err)
         }
         IoWrite(err: std::io::Error, path: PathBuf) {
             display("Could not write data at '{}'", path.display())
-            cause(err)
+            source(err)
         }
         DirectoryExists(path: PathBuf) {
             display("Refusing to initialize the existing '{}' directory", path.display())
         }
         CreateDirectory(err: std::io::Error, path: PathBuf) {
             display("Cold not create directory at '{}'", path.display())
-            cause(err)
+            source(err)
         }
     }
 }

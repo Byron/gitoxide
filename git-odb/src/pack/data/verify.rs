@@ -11,7 +11,7 @@ quick_error! {
         Io(err: std::io::Error) {
             display("could not read pack file")
             from()
-            cause(err)
+            source(err)
         }
     }
 }

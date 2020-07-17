@@ -13,16 +13,16 @@ quick_error! {
         Decompress(err: zlib::Error) {
             display("decompression of object data failed")
             from()
-            cause(err)
+            source(err)
         }
         Parse(err: borrowed::Error) {
             display("Could not parse object object")
             from()
-            cause(err)
+            source(err)
         }
         Io(err: std::io::Error, action: &'static str, path: PathBuf) {
             display("Could not {} data at '{}'", action, path.display())
-            cause(err)
+            source(err)
         }
     }
 }
