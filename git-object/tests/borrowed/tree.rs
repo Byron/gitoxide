@@ -51,4 +51,15 @@ mod from_bytes {
             }
         );
     }
+
+    #[test]
+    fn maybe_special() {
+        assert_eq!(
+            Tree::from_bytes(&fixture_bytes("tree", "maybe-special.tree"))
+                .unwrap()
+                .entries
+                .len(),
+            160
+        );
+    }
 }
