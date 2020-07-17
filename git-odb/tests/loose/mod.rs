@@ -77,7 +77,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                         .as_bstr(),
                 ),
-                signature: signature(1528473343),
+                signature: Some(signature(1528473343)),
             };
             assert_eq!(tag.as_tag().unwrap(), &expected)
         }

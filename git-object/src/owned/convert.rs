@@ -28,7 +28,7 @@ impl Into<owned::Tag> for borrowed::Tag<'_> {
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
-            signature: signature.into(),
+            signature: signature.map(Into::into),
             pgp_signature: pgp_signature.map(ToOwned::to_owned),
         }
     }

@@ -32,7 +32,7 @@ pub struct Tag {
     pub name: BString,
     pub target_kind: crate::Kind,
     pub message: BString,
-    pub signature: owned::Signature,
+    pub signature: Option<owned::Signature>,
     pub pgp_signature: Option<BString>,
 }
 
@@ -41,7 +41,9 @@ impl Tag {
         ser::trusted_header_id(b"object", &self.target, &mut out)?;
         ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
         ser::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
-        ser::trusted_header_signature(b"tagger", &self.signature, &mut out)?;
+        if let Some(tagger) = &self.signature {
+            ser::trusted_header_signature(b"tagger", tagger, &mut out)?;
+        }
 
         if !self.message.is_empty() {
             out.write_all(NL)?;

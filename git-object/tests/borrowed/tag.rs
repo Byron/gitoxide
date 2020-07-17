@@ -39,7 +39,7 @@ mod from_bytes {
                 name: b"empty".as_bstr(),
                 target_kind: Kind::Commit,
                 message: b"".as_bstr(),
-                signature: signature(1592381636),
+                signature: Some(signature(1592381636)),
                 pgp_signature: None
             }
         );
@@ -54,8 +54,38 @@ mod from_bytes {
                 name: b"baz".as_bstr(),
                 target_kind: Kind::Commit,
                 message: b"hello\n\nworld".as_bstr(),
-                signature: signature(1592311808),
+                signature: Some(signature(1592311808)),
                 pgp_signature: None
+            }
+        );
+    }
+
+    #[test]
+    fn no_tagger() {
+        assert_eq!(
+            Tag::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).unwrap(),
+            Tag {
+                target: b"c39ae07f393806ccf406ef966e9a15afc43cc36a".as_bstr(),
+                name: b"v2.6.11-tree".as_bstr(),
+                target_kind: Kind::Tree,
+                message: b"This is the 2.6.11 tree object.
+
+NOTE! There's no commit for this, since it happened before I started with git.
+Eventually we'll import some sort of history, and that should tie this tree
+object up to a real commit. In the meantime, this acts as an anchor point for
+doing diffs etc under git."
+                    .as_bstr(),
+                signature: None,
+                pgp_signature: Some(
+                    b"-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (GNU/Linux)
+
+iD8DBQBCeV/eF3YsRnbiHLsRAl+SAKCVp8lVXwpUhMEvy8N5jVBd16UCmACeOtP6
+KLMHist5yj0sw1E4hDTyQa0=
+=/bIK
+-----END PGP SIGNATURE-----"
+                        .as_bstr()
+                )
             }
         );
     }
@@ -69,7 +99,7 @@ mod from_bytes {
                 name: b"whitespace".as_bstr(),
                 target_kind: Kind::Commit,
                 message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(), // odd, was created with \n\n actually
-                signature: signature(1592382888),
+                signature: Some(signature(1592382888)),
                 pgp_signature: None
             }
         );
@@ -102,7 +132,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                 .as_bstr(),
         ),
-        signature: Signature {
+        signature: Some(Signature {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
             time: Time {
@@ -110,6 +140,6 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                 offset,
                 sign: Sign::Plus,
             },
-        },
+        }),
     }
 }

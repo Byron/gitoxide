@@ -21,7 +21,7 @@ pub struct Tag<'a> {
     pub name: &'a BStr,
     pub target_kind: crate::Kind,
     pub message: &'a BStr,
-    pub signature: Signature<'a>,
+    pub signature: Option<Signature<'a>>,
     pub pgp_signature: Option<&'a BStr>,
 }
 
@@ -36,8 +36,8 @@ fn parse(i: &[u8]) -> IResult<&[u8], Tag, Error> {
     let (i, tag_version) =
         parse::header_field(i, b"tag", take_while1(|b| b != NL[0])).map_err(Error::context("tag <version>"))?;
 
-    let (i, signature) =
-        parse::header_field(i, b"tagger", parse::signature).map_err(Error::context("tagger <signature>"))?;
+    let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))(i)
+        .map_err(Error::context("tagger <signature>"))?;
     let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
         i,

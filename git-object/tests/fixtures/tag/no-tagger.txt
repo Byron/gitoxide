@@ -1,0 +1,17 @@
+object c39ae07f393806ccf406ef966e9a15afc43cc36a
+type tree
+tag v2.6.11-tree
+
+This is the 2.6.11 tree object.
+
+NOTE! There's no commit for this, since it happened before I started with git.
+Eventually we'll import some sort of history, and that should tie this tree
+object up to a real commit. In the meantime, this acts as an anchor point for
+doing diffs etc under git.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (GNU/Linux)
+
+iD8DBQBCeV/eF3YsRnbiHLsRAl+SAKCVp8lVXwpUhMEvy8N5jVBd16UCmACeOtP6
+KLMHist5yj0sw1E4hDTyQa0=
+=/bIK
+-----END PGP SIGNATURE-----
