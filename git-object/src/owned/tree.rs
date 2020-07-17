@@ -6,9 +6,6 @@ use std::io;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        NoEntries {
-            description("Trees must have at least one entry")
-        }
         NewlineInFilename(name: BString){
             display("Newlines are invalid in file paths: {:?}", name)
         }
@@ -50,9 +47,6 @@ impl TreeMode {
 
 impl Tree {
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        if self.entries.is_empty() {
-            return Err(Error::NoEntries.into());
-        }
         for Entry { mode, filename, oid } in &self.entries {
             out.write_all(mode.as_bytes())?;
             out.write_all(SPACE)?;
