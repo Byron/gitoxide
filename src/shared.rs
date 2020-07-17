@@ -1,6 +1,7 @@
 #[cfg(any(feature = "prodash-line-renderer", feature = "prodash-tui-renderer"))]
 pub const DEFAULT_FRAME_RATE: f32 = 6.0;
 
+#[allow(unused)]
 #[cfg(feature = "prodash-line-renderer")]
 pub fn setup_line_renderer(
     progress: prodash::Tree,
