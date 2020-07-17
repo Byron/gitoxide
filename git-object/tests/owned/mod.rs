@@ -1,8 +1,5 @@
 macro_rules! round_trip {
     ($owned:ty, $borrowed:ty, $( $files:literal ), +) => {
-        // Git checks out text files with different line feeds, which causes parsing failure.
-        // No way to configure this in the checkout action :/
-        #[cfg_attr(windows, ignore)]
         #[test]
         fn round_trip() {
             use crate::fixture_bytes;
@@ -44,6 +41,7 @@ mod commit {
     round_trip!(
         owned::Commit,
         borrowed::Commit,
+        // "commit/mergetag.txt",
         "commit/merge.txt",
         "commit/signed.txt",
         "commit/signed-singleline.txt",

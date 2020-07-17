@@ -44,6 +44,7 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
             encoding,
             message,
             pgp_signature,
+            extra_headers,
         } = self;
         owned::Commit {
             tree: owned::Id::from_40_bytes_in_hex(&tree).expect("40 bytes hex sha1"),
@@ -57,6 +58,10 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
             encoding: encoding.map(ToOwned::to_owned),
             message: message.to_owned(),
             pgp_signature: pgp_signature.map(|c| c.into_owned()),
+            extra_headers: extra_headers
+                .into_iter()
+                .map(|(k, v)| (k.into(), v.into_owned()))
+                .collect(),
         }
     }
 }

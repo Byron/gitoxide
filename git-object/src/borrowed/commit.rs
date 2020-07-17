@@ -19,14 +19,16 @@ pub struct Commit<'a> {
     // HEX SHA1 of tree object we point to
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
-    // HEX SHA1 of each parent commit. Empty for first commit in repository.
+    /// HEX SHA1 of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 1]>,
     pub author: Signature<'a>,
     pub committer: Signature<'a>,
-    // The name of the message encoding, otherwise UTF-8 should be assumed.
+    /// The name of the message encoding, otherwise UTF-8 should be assumed.
     pub encoding: Option<&'a BStr>,
     pub message: &'a BStr,
     pub pgp_signature: Option<Cow<'a, BStr>>,
+    /// Extra header fields, either single line or multi-line.
+    pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
@@ -55,6 +57,13 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
         |i| parse::header_field(i, b"gpgsig", is_not(NL)).map(|(i, o)| (i, Cow::Borrowed(o.as_bstr()))),
     )))(i)
     .map_err(Error::context("gpg <signature>"))?;
+    let (i, extra_headers) = many0(alt((
+        |i| parse::header_field_multi_line(i, b"mergetag").map(|(i, o)| (i, (b"mergetag".as_bstr(), Cow::Owned(o)))),
+        |i| {
+            parse::header_field(i, b"mergetag", is_not(NL))
+                .map(|(i, o)| (i, (b"mergetag".as_bstr(), Cow::Borrowed(o.as_bstr()))))
+        },
+    )))(i)?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((
@@ -66,7 +75,8 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
             committer,
             encoding: encoding.map(ByteSlice::as_bstr),
             message,
-            pgp_signature: pgp_signature,
+            pgp_signature,
+            extra_headers,
         },
     ))
 }

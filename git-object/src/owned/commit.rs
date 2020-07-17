@@ -7,14 +7,16 @@ use std::io;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Commit {
     pub tree: owned::Id,
-    // SHA1 of each parent commit. Empty for first commit in repository.
+    /// SHA1 of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[owned::Id; 1]>,
     pub author: owned::Signature,
     pub committer: owned::Signature,
-    // The name of the message encoding, otherwise UTF-8 should be assumed.
+    /// The name of the message encoding, otherwise UTF-8 should be assumed.
     pub encoding: Option<BString>,
     pub message: BString,
     pub pgp_signature: Option<BString>,
+    /// Parsed single or multi-line headers, ready for use.
+    pub extra_headers: Vec<(BString, BString)>,
 }
 
 impl Commit {

@@ -35,6 +35,19 @@ fn signature(time: u32) -> Signature<'static> {
     }
 }
 
+fn linus_signature(time: u32) -> Signature<'static> {
+    use git_object::bstr::ByteSlice;
+    Signature {
+        name: b"Linus Torvalds".as_bstr(),
+        email: b"torvalds@linux-foundation.org".as_bstr(),
+        time: Time {
+            time,
+            offset: -25200,
+            sign: Sign::Minus,
+        },
+    }
+}
+
 mod object {
     use git_object::borrowed::Object;
 
@@ -42,7 +55,7 @@ mod object {
     fn size_in_memory() {
         assert_eq!(
             std::mem::size_of::<Object>(),
-            216,
+            240,
             "Prevent unexpected growth of what should be lightweight objects"
         )
     }

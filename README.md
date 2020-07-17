@@ -311,6 +311,17 @@ All feature toggles are additive.
     of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
   * Right now it's unclear how Sha256 is going to work in git, so we only support Sha1 for now. It might be an avenue to proactively
     implement it ahead of time once there is a specification to follow.
+  * It looks like Git prepares to support it by using compile time, we can support it at runtime though with minimal cost. If needed,
+    we can later remove support using a cargo feature toggle.
+    
+### Sha256
+
+A bunch of notes collected to keep track of what's needed to eventually support it
+
+* read `hash-function-transition.txt`
+* [ ] support `gpgsig-sha256` field
+* [ ] support index V3
+* [ ] Pack file PSRC field
    
 ## Plumbing vs Porcelain
 

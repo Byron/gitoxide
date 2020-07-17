@@ -14,6 +14,8 @@
 * **pack verify**
   * [x] add '--some-flag' to run every non-blob through a decode/encode cycle to see if all objects can be parsed
   * [ ] The linux kernel verifies `--decode` and `--re-encode`
+    * [ ] parse pgp_signature and mergetag into 'extra-headers' without further parsing
+    * [ ] support easy access to merge-tags and the signature
   * add that to the stress test
 * **plumbing - explode pack**
   * [ ] write loose object
