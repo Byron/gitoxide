@@ -16,16 +16,17 @@ use nom::{
 
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
+pub(crate) const SPACE_OR_NL: &[u8] = b" \n";
 
-pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> IResult<&'a [u8], BString, Error> {
-    let (i, o) = peek(preceded(
-        terminated(tag(name), tag(SPACE)),
+pub(crate) fn any_header_field_multi_line<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], BString), Error> {
+    let (i, (k, o)) = peek(tuple((
+        terminated(is_not(SPACE_OR_NL), tag(SPACE)),
         recognize(tuple((
             is_not(NL),
             tag(NL),
             many1_count(terminated(tuple((tag(SPACE), take_until(NL))), tag(NL))),
         ))),
-    ))(i)?;
+    )))(i)?;
     assert!(!o.is_empty());
     let end = &o[o.len() - 1] as *const u8 as usize;
     let start_input = &i[0] as *const u8 as usize;
@@ -38,7 +39,7 @@ pub(crate) fn header_field_multi_line<'a>(i: &'a [u8], name: &'static [u8]) -> I
         out.push(b'\n');
         out.push_str(&line[1..]); // cut leading space
     }
-    Ok((&i[end - start_input + 1..], out))
+    Ok((&i[end - start_input + 1..], (k, out)))
 }
 
 pub(crate) fn header_field<'a, T>(
@@ -47,6 +48,16 @@ pub(crate) fn header_field<'a, T>(
     parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
 ) -> IResult<&'a [u8], T, Error> {
     terminated(preceded(terminated(tag(name), tag(SPACE)), parse_value), tag(NL))(i)
+}
+
+pub(crate) fn any_header_field<'a, T>(
+    i: &'a [u8],
+    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
+) -> IResult<&'a [u8], (&'a [u8], T), Error> {
+    terminated(
+        tuple((terminated(is_not(SPACE_OR_NL), tag(SPACE)), parse_value)),
+        tag(NL),
+    )(i)
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {

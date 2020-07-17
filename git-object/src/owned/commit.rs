@@ -30,12 +30,12 @@ impl Commit {
         if let Some(encoding) = self.encoding.as_ref() {
             ser::header_field(b"encoding", encoding, &mut out)?;
         }
-        if let Some(signature) = self.pgp_signature.as_ref() {
-            let has_newline = signature.find_byte(b'\n').is_some();
+        for (name, value) in &self.extra_headers {
+            let has_newline = value.find_byte(b'\n').is_some();
             if has_newline {
-                ser::header_field_multi_line(b"gpgsig", signature, &mut out)?;
+                ser::header_field_multi_line(name, value, &mut out)?;
             } else {
-                ser::trusted_header_field(b"gpgsig", signature, &mut out)?;
+                ser::trusted_header_field(name, value, &mut out)?;
             }
         }
         out.write_all(NL)?;

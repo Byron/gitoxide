@@ -1,0 +1,36 @@
+tree a76e23b60ecceed68b5fa4904f677fe20e304b6e
+parent 83a196773b8bc6702f49df1eddc848180e350340
+parent 8f3d9f354286745c751374f5f1fcafee6b3f3136
+author Maxime Ripard <maxime@cerno.tech> 1586848790 +0200
+committer Maxime Ripard <maxime@cerno.tech> 1586848790 +0200
+mergetag object 8f3d9f354286745c751374f5f1fcafee6b3f3136
+ type commit
+ tag v5.7-rc1
+ tagger Linus Torvalds <torvalds@linux-foundation.org> 1586720165 -0700
+ 
+ Linux 5.7-rc1
+ -----BEGIN PGP SIGNATURE-----
+ 
+ iQFSBAABCAA8FiEEq68RxlopcLEwq+PEeb4+QwBBGIYFAl6TbaUeHHRvcnZhbGRz
+ QGxpbnV4LWZvdW5kYXRpb24ub3JnAAoJEHm+PkMAQRiGhgkH/iWpiKvosA20HJjC
+ rBqYeJPxQsgZTuBieWJ+MeVxbpcF7RlM4c+glyvg3QJhHwIEG58dl6LBrQbAyBAR
+ aFHNojr1iAYOruVCGnU3pA008YZiwUIDv/ZQ4DF8fmIU2vI2mJ6qHBv3XDl4G2uR
+ Nwz8Eu9AgIwZM5coomVOSmoWyFy7Vxmb7W+3t5VmKsvOWx4ib9kyQtOIkvQDEl7j
+ XCbWfI0xDQr6LFOm4jnCi5R/LhJ2LIqqIvHHrunbpszM8IwK797jCXz4im+dmd5Y
+ +km46N7a8pDqri36xXz1gdBAU3eG7Pt1NyvfjwRVTdX4GquQ2MT0GoojxbLxUP3y
+ 3pEsQuE=
+ =whbL
+ -----END PGP SIGNATURE-----
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ iHUEABYIAB0WIQRcEzekXsqa64kGDp7j7w1vZxhRxQUCXpVkIwAKCRDj7w1vZxhR
+ xR+MAQDRKtTCM649g2QANnUo5O8XRKPQNuY+ARF7z0uwzZCqigD/ZjwYxRTBv9qE
+ mJ+4jgVi2U1wPlvwbzkWGvzxxzyJOAo=
+ =QkyO
+ -----END PGP SIGNATURE-----
+
+Merge v5.7-rc1 into drm-misc-fixes
+
+Start the new drm-misc-fixes cycle.
+
+Signed-off-by: Maxime Ripard <maxime@cerno.tech>

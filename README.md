@@ -319,7 +319,7 @@ All feature toggles are additive.
 A bunch of notes collected to keep track of what's needed to eventually support it
 
 * read `hash-function-transition.txt`
-* [ ] support `gpgsig-sha256` field
+* [x] support `gpgsig-sha256` field - we won't break, but also don't do anything with it (e.g. `extra_headers`)
 * [ ] support index V3
 * [ ] Pack file PSRC field
    
