@@ -90,10 +90,16 @@ $(rust_repo):
 	mkdir -p $@
 	cd $@ && git init && git remote add origin https://github.com/rust-lang/rust && git fetch
 
+linux_repo = tests/fixtures/repos/linux.git
+$(linux_repo):
+	mkdir -p $@
+	cd $@ && git init --bare && git remote add origin https://github.com/torvalds/linux && git fetch
+
 stress: ## Run various algorithms on big repositories
-	$(MAKE) -j2 $(rust_repo) release-lean
+	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
 	time ./target/release/giop verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
 	time ./target/release/giop verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/giop verify-pack --verbose --re-encode $(linux_repo)/.git/objects/pack/*.idx
 
 ##@ Maintenance
 

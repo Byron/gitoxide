@@ -16,7 +16,7 @@
   * [ ] The linux kernel verifies `--decode` and `--re-encode`
     * [x] parse pgp_signature and mergetag into 'extra-headers' without further parsing
     * [ ] support easy access to merge-tags and the signature
-  * add that to the stress test
+  * [x] add that to the stress test
 * **plumbing - explode pack**
   * [ ] write loose object
   * [ ] single threaded
