@@ -42,6 +42,7 @@ mod commit {
     round_trip!(
         owned::Commit,
         borrowed::Commit,
+        "commit/signed-whitespace.txt",
         "commit/two-multiline-headers.txt",
         "commit/mergetag.txt",
         "commit/merge.txt",

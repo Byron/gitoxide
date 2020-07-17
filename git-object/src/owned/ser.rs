@@ -29,6 +29,13 @@ pub fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Writ
         out.write_all(line)?;
         out.write_all(NL)?;
     }
+    // If the last line ended on a newline, we have to re-add it by force
+    if let Some(b) = value.last() {
+        if *b == b'\n' {
+            out.write_all(SPACE)?;
+            out.write_all(NL)?;
+        }
+    }
     Ok(())
 }
 

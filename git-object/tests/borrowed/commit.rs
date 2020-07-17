@@ -287,4 +287,26 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
             }
         );
     }
+
+    #[test]
+    fn newline_right_after_signature_multiline_header() {
+        let fixture = fixture_bytes("commit", "signed-whitespace.txt");
+        let commit = Commit::from_bytes(&fixture).unwrap();
+        assert_eq!(
+            commit.extra_headers[0].1.as_ref(),
+            b"-----BEGIN PGP SIGNATURE-----
+
+wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
+5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
++mHPFcParQf5FBDDZ3GNNpJdlaI9eqzEnFk8AmHmyKHfuGLoclXUObXQ3oe3fmT7
+QdTC7JTyk/bPnZ9HQKw7depa3+7Kw4wv4DG8QcW3BG6B9bcE15qaWmOiq0ryRXsv
+k7D0LqGSXjU5wrQrKnemC7nWhmQsqaXDe89XXmliClCAx4/bepPiXK0eT/DNIKUr
+iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
+=HLmy
+-----END PGP SIGNATURE-----
+"
+            .as_bstr()
+        );
+        assert!(commit.message.starts_with(b"Rollup"))
+    }
 }

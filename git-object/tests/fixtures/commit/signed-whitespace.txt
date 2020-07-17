@@ -1,0 +1,54 @@
+tree aa32bbb2b635217db09218da0d9d4db872ddfa0b
+parent eece58a8e35c444afba6fa34873bc0244e32cd29
+parent cb9458d3ff7f64c309bc80776d71e4f73705f4ce
+author Dylan DPC <dylan.dpc@gmail.com> 1588270520 +0200
+committer GitHub <noreply@github.com> 1588270520 +0200
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
+ 5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
+ +mHPFcParQf5FBDDZ3GNNpJdlaI9eqzEnFk8AmHmyKHfuGLoclXUObXQ3oe3fmT7
+ QdTC7JTyk/bPnZ9HQKw7depa3+7Kw4wv4DG8QcW3BG6B9bcE15qaWmOiq0ryRXsv
+ k7D0LqGSXjU5wrQrKnemC7nWhmQsqaXDe89XXmliClCAx4/bepPiXK0eT/DNIKUr
+ iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
+ =HLmy
+ -----END PGP SIGNATURE-----
+ 
+
+Rollup merge of #70950 - nikomatsakis:leak-check-nll-2, r=matthewjasper
+
+extend NLL checker to understand `'empty` combined with universes
+
+This PR extends the NLL region checker to understand `'empty` combined with universes. In particular, it means that the NLL region checker no longer considers `exists<R2> { forall<R1> { R1: R2 } }` to be provable. This is work towards https://github.com/rust-lang/rust/issues/59490, but we're not all the way there. One thing in particular it does not address is error messages.
+
+The modifications to the NLL region inference code turned out to be simpler than expected. The main change is to require that if `R1: R2` then `universe(R1) <= universe(R2)`.
+
+This constraint follows from the region lattice (shown below), because we assume then that `R2` is "at least" `empty(Universe(R2))`, and hence if `R1: R2` (i.e., `R1 >= R2` on the lattice) then `R1` must be in some universe that can name `'empty(Universe(R2))`, which requires that `Universe(R1) <= Universe(R2)`.
+
+```
+static ----------+-----...------+       (greatest)
+|                |              |
+early-bound and  |              |
+free regions     |              |
+|                |              |
+scope regions    |              |
+|                |              |
+empty(root)   placeholder(U1)   |
+|            /                  |
+|           /         placeholder(Un)
+empty(U1) --         /
+|                   /
+...                /
+|                 /
+empty(Un) --------                      (smallest)
+```
+
+I also made what turned out to be a somewhat unrelated change to add a special region to represent `'empty(U0)`, which we use (somewhat hackily) to indicate well-formedness checks in some parts of the compiler. This fixes #68550.
+
+I did some investigation into fixing the error message situation. That's a bit trickier: the existing "nice region error" code around placeholders relies on having better error tracing than NLL currently provides, so that it knows (e.g.) that the constraint arose from applying a trait impl and things like that. I feel like I was hoping *not* to do such fine-grained tracing in NLL, and it seems like we...largely...got away with that. I'm not sure yet if we'll have to add more tracing information or if there is some sort of alternative.
+
+It's worth pointing out though that I've not kind of shifted my opinion on whose job it should be to enforce lifetimes: I tend to think we ought to be moving back towards *something like* the leak-check (just not the one we *had*). If we took that approach, it would actually resolve this aspect of the error message problem, because we would be resolving 'higher-ranked errors' in the trait solver itself, and hence we wouldn't have to thread as much causal information back to the region checker. I think it would also help us with removing the leak check while not breaking some of the existing crates out there.
+
+Regardless, I think it's worth landing this change, because it was relatively simple and it aligns the set of programs that NLL accepts with those that are accepted by the main region checker, and hence should at least *help* us in migration (though I guess we still also have to resolve the existing crates that rely on leak check for coherence).
+
+r? @matthewjasper
