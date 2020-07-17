@@ -81,14 +81,18 @@ mod in_parallel {
                         move |_| {
                             let mut state = new_thread_state(thread_id);
                             for item in receive_input {
-                                send_result.send(consume(item, &mut state)).unwrap();
+                                if send_result.send(consume(item, &mut state)).is_err() {
+                                    break;
+                                }
                             }
                         }
                     });
                 }
                 s.spawn(move |_| {
                     for item in input {
-                        send_input.send(item).unwrap();
+                        if send_input.send(item).is_err() {
+                            break;
+                        }
                     }
                 });
                 receive_result
