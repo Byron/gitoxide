@@ -4,7 +4,7 @@ use crate::{
     pack::{cache, data::decode},
 };
 use git_features::progress::{self, Progress};
-use git_object::{owned, SHA1_SIZE};
+use git_object::{borrowed, bstr::BString, owned, SHA1_SIZE};
 use quick_error::quick_error;
 use smallvec::alloc::collections::BTreeMap;
 use std::time::Instant;
@@ -23,6 +23,16 @@ quick_error! {
         PackDecode(err: pack::data::decode::Error, id: owned::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
             cause(err)
+        }
+        ObjectDecode(err: borrowed::Error, kind: git_object::Kind, oid: owned::Id) {
+            display("{} object {} could not be decoded", kind, oid)
+            cause(err)
+        }
+        ObjectEncodeMismatch(kind: git_object::Kind, oid: owned::Id, expected: BString, actual: BString) {
+            display("{} object {} could not be decoded, wanted\n{}\ngot\n{}", kind, oid, expected, actual)
+        }
+        ObjectEncode(err: std::io::Error) {
+            from()
         }
         PackMismatch { expected: owned::Id, actual: owned::Id } {
             display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
@@ -244,6 +254,7 @@ impl index::File {
                     (
                         make_cache(),
                         Vec::with_capacity(2048),
+                        Vec::with_capacity(2048),
                         reduce_progress.lock().unwrap().add_child(format!("thread {}", index)),
                     )
                 };
@@ -253,9 +264,12 @@ impl index::File {
                     input_chunks,
                     thread_limit,
                     state_per_thread,
-                    |entries: &[index::Entry], (cache, buf, progress)| -> Result<Vec<decode::Outcome>, Error> {
+                    |entries: &[index::Entry],
+                     (cache, buf, ref mut encode_buf, progress)|
+                     -> Result<Vec<decode::Outcome>, Error> {
                         progress.init(Some(entries.len() as u32), Some("entries"));
                         let mut stats = Vec::with_capacity(entries.len());
+                        let mut header_buf = [0u8; 64];
                         for (idx, index_entry) in entries.iter().enumerate() {
                             let pack_entry = pack.entry(index_entry.pack_offset);
                             let pack_entry_data_offset = pack_entry.data_offset;
@@ -275,7 +289,6 @@ impl index::File {
                             let consumed_input = entry_stats.compressed_size;
                             stats.push(entry_stats);
 
-                            let mut header_buf = [0u8; 64];
                             let header_size =
                                 crate::loose::object::header::encode(object_kind, buf.len(), &mut header_buf[..])
                                     .expect("header buffer to be big enough");
@@ -304,6 +317,29 @@ impl index::File {
                                         kind: object_kind,
                                     });
                                 }
+                            }
+                            if let Mode::Sha1CRC32Decode | Mode::Sha1CRC32DecodeEncode = mode {
+                                use git_object::Kind::*;
+                                match object_kind {
+                                    Tree | Commit | Tag => {
+                                        let obj = borrowed::Object::from_bytes(object_kind, buf.as_slice())
+                                            .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
+                                        if let Mode::Sha1CRC32DecodeEncode = mode {
+                                            let object = owned::Object::from(obj);
+                                            encode_buf.clear();
+                                            object.write_to(&mut *encode_buf)?;
+                                            if encode_buf != buf {
+                                                return Err(Error::ObjectEncodeMismatch(
+                                                    object_kind,
+                                                    index_entry.oid,
+                                                    buf.clone().into(),
+                                                    encode_buf.clone().into(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                    Blob => {}
+                                };
                             }
                             progress.set(idx as u32);
                         }

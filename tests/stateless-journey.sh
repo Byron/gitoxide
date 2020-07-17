@@ -67,6 +67,12 @@ title "CLI ${kind}"
           expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --decode "$PACK_INDEX_FILE"
         }
       )
+      (with "decode"
+        it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --re-encode "$PACK_INDEX_FILE"
+        }
+      )
       if test "$kind" = "max"; then
       (with "statistics (JSON)"
         it "verifies the pack index successfully and with desired output" && {

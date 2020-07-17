@@ -49,6 +49,22 @@ mod options {
             #[structopt(long, conflicts_with("verbose"))]
             progress: bool,
 
+            #[structopt(long, conflicts_with("re-encode"))]
+            /// decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
+            ///
+            /// Malformed objects should not usually occur, but could be injected on purpose or accident.
+            /// This will reduce overall performance.
+            decode: bool,
+
+            #[structopt(long)]
+            /// decode and parse tags, commits and trees to validate their correctness, and re-encode them.
+            ///
+            /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
+            /// Encoding an object after decoding it should yield exactly the same bytes.
+            /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
+            /// owned objects, causing plenty of allocation to occour.
+            re_encode: bool,
+
             /// the progress TUI will stay up even though the work is already completed.
             ///
             /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
@@ -160,6 +176,8 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             format,
+            decode,
+            re_encode,
             progress_keep_open,
             statistics,
         } => prepare_and_run(
@@ -168,12 +186,19 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             move |progress, out, err| {
+                let mode = match (decode, re_encode) {
+                    (true, false) => core::VerifyMode::Sha1CRC32Decode,
+                    (true, true) | (false, true) => core::VerifyMode::Sha1CRC32DecodeEncode,
+                    (false, false) => core::VerifyMode::Sha1CRC32,
+                };
+                let output_statistics = if statistics { Some(format) } else { None };
                 core::verify_pack_or_pack_index(
                     path,
                     progress,
                     core::Context {
+                        output_statistics,
                         thread_limit,
-                        output_statistics: if statistics { Some(format) } else { None },
+                        mode,
                         out,
                         err,
                     },

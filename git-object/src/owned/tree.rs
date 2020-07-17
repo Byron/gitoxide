@@ -6,7 +6,7 @@ use std::io;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        NewlineInFilename(name: BString){
+        NewlineInFilename(name: BString) {
             display("Newlines are invalid in file paths: {:?}", name)
         }
     }

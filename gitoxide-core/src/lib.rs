@@ -8,6 +8,8 @@ use git_odb::pack::{self, index};
 use std::str::FromStr;
 use std::{io, path::Path};
 
+pub use index::verify::Mode as VerifyMode;
+
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum OutputFormat {
     Human,
@@ -59,7 +61,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
         Context {
             output_statistics: None,
             thread_limit: None,
-            mode: VerifyMode::Sha1CRC32,
+            mode: index::verify::Mode::Sha1CRC32,
             out: Vec::new(),
             err: Vec::new(),
         }
