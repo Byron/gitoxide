@@ -26,7 +26,6 @@ pub struct Commit<'a> {
     /// The name of the message encoding, otherwise UTF-8 should be assumed.
     pub encoding: Option<&'a BStr>,
     pub message: &'a BStr,
-    pub pgp_signature: Option<Cow<'a, BStr>>,
     /// Extra header fields, either single line or multi-line.
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
@@ -68,7 +67,6 @@ pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
             committer,
             encoding: encoding.map(ByteSlice::as_bstr),
             message,
-            pgp_signature: None,
             extra_headers,
         },
     ))

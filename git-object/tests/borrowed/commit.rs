@@ -29,7 +29,6 @@ mod from_bytes {
                 committer: signature(1592437401),
                 encoding: None,
                 message: b"without sig".as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![]
             }
         );
@@ -46,7 +45,6 @@ mod from_bytes {
                 committer: signature(1592448450),
                 encoding: None,
                 message: b" nl".as_bstr(), // this one had a \n trailing it, but git seems to trim that
-                pgp_signature: None,
                 extra_headers: vec![]
             }
         );
@@ -63,7 +61,6 @@ mod from_bytes {
                 committer: signature(1592391367),
                 encoding: None,
                 message: b"update tasks\n".as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![(b"gpgsig".as_bstr(), b"magic:signature".as_bstr().into())]
             }
         );
@@ -156,7 +153,6 @@ Pull thermal updates from Daniel Lezcano:
 "
                 .as_bytes()
                 .as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![(
                     b"mergetag".as_bstr(),
                     std::borrow::Cow::Owned(
@@ -236,7 +232,6 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
                 committer: signature(1592391367),
                 encoding: None,
                 message: b"update tasks\n".as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![(b"gpgsig".as_bstr(), b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7p9tgACgkQ7gKdHl60\nAwBpegf+KQciv9AOIN7+yPmowecGxBnSfpKWTDzFxnyGR8dq63SpWT8WEKG5mf3a\nG6iUqpsDWaMHlzihaMKRvgRpZxFRbjnNPFBj6F4RRqfE+5R7k6DRSLUV5PqnsdSH\nuccfIDWi1imhsm7AaP5trwl1t+83U2JhHqPcPVFLMODYwWeO6NLR/JCzGSTQRa8t\nRgaVMKI19O/fge5OT5Ua8D47VKEhsJX0LfmkP5RfZQ8JJvNd40TupqKRdlv0sAzP\nya7NXkSHXCavHNR6kA+KpWxn900UoGK8/IDlwU6MeOkpPVawb3NFMqnc7KJDaC2p\nSMzpuEG8LTrCx2YSpHNLqHyzvQ1CZA==\n=5ITV\n-----END PGP SIGNATURE-----".as_bstr().into())]
             }
         );
@@ -253,7 +248,6 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
                 committer: signature(1592449083),
                 encoding: Some(b"ISO-8859-1".as_bstr()),
                 message: b"encoding & sig".as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![(b"gpgsig".as_bstr(), b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7q2DsACgkQ7gKdHl60\nAwDvewgAkL5UjEztzeVXlzceom0uCrAkCw9wSGLTmYcMKW3JwEaTRgQ4FX+sDuFT\nLZ8DoPu3UHUP0QnKrUwHulTTlKcOAvsczHbVPIKtXCxo6QpUfhsJQwz/J29kiE4L\nsOd+lqKGnn4oati/de2xwqNGi081fO5KILX75z6KfsAe7Qz7R3jxRF4uzHI033O+\nJc2Y827XeaELxW40SmzoLanWgEcdreXf3PstXEWW77CAu0ozXmvYj56vTviVybxx\nG7bc8lwc+SSKVe2VVB+CCfVbs0i541gmghUpZfMhUgaqttcCH8ysrUJDhne1BLG8\nCrOJIWTwAeEDtomV1p76qrMeqr1GFg==\n=qlSN\n-----END PGP SIGNATURE-----".as_bstr().into())]
             }
         );
@@ -270,7 +264,6 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
                 committer: signature(1592438199),
                 encoding: Some("ISO-8859-1".into()),
                 message: b"commit with encoding".as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![]
             }
         );
@@ -290,7 +283,6 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
                 committer: signature(1592454738),
                 encoding: Some("ISO-8859-1".into()),
                 message: b"Merge branch 'branch'".as_bstr(),
-                pgp_signature: None,
                 extra_headers: vec![]
             }
         );

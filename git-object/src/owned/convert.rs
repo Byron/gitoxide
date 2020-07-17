@@ -43,7 +43,6 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
             committer,
             encoding,
             message,
-            pgp_signature,
             extra_headers,
         } = self;
         owned::Commit {
@@ -57,7 +56,6 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
             committer: committer.into(),
             encoding: encoding.map(ToOwned::to_owned),
             message: message.to_owned(),
-            pgp_signature: pgp_signature.map(|c| c.into_owned()),
             extra_headers: extra_headers
                 .into_iter()
                 .map(|(k, v)| (k.into(), v.into_owned()))

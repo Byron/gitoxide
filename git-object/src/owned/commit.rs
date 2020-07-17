@@ -14,7 +14,6 @@ pub struct Commit {
     /// The name of the message encoding, otherwise UTF-8 should be assumed.
     pub encoding: Option<BString>,
     pub message: BString,
-    pub pgp_signature: Option<BString>,
     /// Parsed single or multi-line headers, ready for use.
     pub extra_headers: Vec<(BString, BString)>,
 }
