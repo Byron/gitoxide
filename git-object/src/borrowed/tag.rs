@@ -2,12 +2,13 @@ use crate::{
     borrowed::{parse, parse::NL, Error, Signature},
     owned, BStr, ByteSlice,
 };
+use nom::bytes::complete::take_while;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while1},
     character::is_alphabetic,
     combinator::{all_consuming, opt, recognize},
-    sequence::{delimited, preceded, tuple},
+    sequence::{preceded, tuple},
     IResult,
 };
 
@@ -73,11 +74,12 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
             take_until(PGP_SIGNATURE_BEGIN),
             preceded(
                 tag(NL),
-                recognize(delimited(
+                recognize(tuple((
                     tag(&PGP_SIGNATURE_BEGIN[1..]),
                     take_until(PGP_SIGNATURE_END),
                     tag(PGP_SIGNATURE_END),
-                )),
+                    take_while(|_| true),
+                ))),
             ),
         )),
         all_to_end,

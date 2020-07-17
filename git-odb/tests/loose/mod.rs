@@ -74,8 +74,9 @@ Z5fFXEUCO8d5WT56jzKDjmVoY01lA87O1YsP/J+zQAlc9v1k6jqeQ53LZNgTN+ue
 cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 2n8f2douw6624Tn/6Lm4a7AoxmU+CMiYagDxDL3RuZ8CAfh3bn0=
 =aIns
------END PGP SIGNATURE-----"
-                        .as_bstr(),
+-----END PGP SIGNATURE-----
+"
+                    .as_bstr(),
                 ),
                 signature: Some(signature(1528473343)),
             };

@@ -83,8 +83,9 @@ Version: GnuPG v1.2.4 (GNU/Linux)
 iD8DBQBCeV/eF3YsRnbiHLsRAl+SAKCVp8lVXwpUhMEvy8N5jVBd16UCmACeOtP6
 KLMHist5yj0sw1E4hDTyQa0=
 =/bIK
------END PGP SIGNATURE-----"
-                        .as_bstr()
+-----END PGP SIGNATURE-----
+"
+                    .as_bstr()
                 )
             }
         );

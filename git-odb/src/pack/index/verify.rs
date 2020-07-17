@@ -29,7 +29,7 @@ quick_error! {
             source(err)
         }
         ObjectEncodeMismatch(kind: git_object::Kind, oid: owned::Id, expected: BString, actual: BString) {
-            display("{} object {} could not be decoded, wanted\n{}\ngot\n{}", kind, oid, expected, actual)
+            display("{} object {} wasn't re-encoded without change, wanted\n{}\n\nGOT\n\n{}", kind, oid, expected, actual)
         }
         ObjectEncode(err: std::io::Error) {
             from()

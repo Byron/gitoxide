@@ -31,6 +31,7 @@ mod tag {
         owned::Tag,
         borrowed::Tag,
         "tag/empty.txt",
+        "tag/no-tagger.txt",
         "tag/whitespace.txt",
         "tag/with-newlines.txt",
         "tag/signed.txt"
