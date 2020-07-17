@@ -76,6 +76,17 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
+/// Various ways in which a pack and index can be verified
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum Mode {
+    /// Validate SHA1 and CRC32
+    Sha1CRC32,
+    /// Validate SHA1 and CRC32, and decode each non-Blob object
+    Sha1CRC32Decode,
+    /// Validate SHA1 and CRC32, and decode and encode each non-Blob object
+    Sha1CRC32DecodeEncode,
+}
+
 /// Verify and validate the content of the index file
 impl index::File {
     pub fn checksum_of_index(&self) -> owned::Id {
@@ -94,6 +105,7 @@ impl index::File {
         &self,
         pack: Option<&pack::data::File>,
         thread_limit: Option<usize>,
+        mode: Mode,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Option<Outcome>), Error>
@@ -281,10 +293,9 @@ impl index::File {
                                 });
                             }
                             if let Some(desired_crc32) = index_entry.crc32 {
-                                let actual_crc32 = pack.entry_crc32(
-                                    index_entry.pack_offset,
-                                    (pack_entry_data_offset - index_entry.pack_offset) as usize + consumed_input,
-                                );
+                                let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
+                                let actual_crc32 =
+                                    pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
                                 if actual_crc32 != desired_crc32 {
                                     return Err(Error::Crc32Mismatch {
                                         actual: actual_crc32,

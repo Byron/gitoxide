@@ -10,6 +10,22 @@ mod options {
         /// print the program version.
         pub version: bool,
 
+        #[argh(switch)]
+        /// Decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
+        ///
+        /// Malformed objects should not usually occur, but could be injected on purpose or accident.
+        /// This will reduce overall performance.
+        pub decode: bool,
+
+        #[argh(switch)]
+        /// Decode and parse tags, commits and trees to validate their correctness, and re-encode them.
+        ///
+        /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
+        /// Encoding an object after decoding it should yield exactly the same bytes.
+        /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
+        /// owned objects, causing plenty of allocation to occour.
+        pub re_encode: bool,
+
         #[argh(option, short = 't')]
         /// the amount of threads to use for some operations.
         ///

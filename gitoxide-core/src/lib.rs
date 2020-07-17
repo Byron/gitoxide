@@ -51,6 +51,7 @@ pub struct Context<W1: io::Write, W2: io::Write> {
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit
     pub thread_limit: Option<usize>,
+    pub mode: index::verify::Mode,
 }
 
 impl Default for Context<Vec<u8>, Vec<u8>> {
@@ -58,6 +59,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
         Context {
             output_statistics: None,
             thread_limit: None,
+            mode: VerifyMode::Sha1CRC32,
             out: Vec::new(),
             err: Vec::new(),
         }
@@ -95,6 +97,7 @@ pub fn verify_pack_or_pack_index<P, W1, W2>(
     Context {
         mut out,
         mut err,
+        mode,
         output_statistics,
         thread_limit,
     }: Context<W1, W2>,
@@ -132,7 +135,7 @@ where
                     Err(e)
                 })
                 .ok();
-            idx.verify_checksum_of_index(pack.as_ref(), thread_limit, progress, || -> EitherCache {
+            idx.verify_checksum_of_index(pack.as_ref(), thread_limit, mode, progress, || -> EitherCache {
                 if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::DecodeEntryNoop)

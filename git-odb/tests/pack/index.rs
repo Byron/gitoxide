@@ -155,8 +155,14 @@ fn pack_lookup() {
         assert_eq!(pack.kind(), pack::data::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
-            idx.verify_checksum_of_index(Some(&pack), None, Discard.into(), || DecodeEntryNoop)
-                .unwrap(),
+            idx.verify_checksum_of_index(
+                Some(&pack),
+                None,
+                index::verify::Mode::Sha1CRC32DecodeEncode,
+                Discard.into(),
+                || DecodeEntryNoop
+            )
+            .unwrap(),
             (idx.checksum_of_index(), Some(stats.to_owned()))
         );
         for idx_entry in idx.iter() {
@@ -199,8 +205,10 @@ fn iter() {
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_checksum_of_index(None, None, Discard.into(), || DecodeEntryNoop)
-                .unwrap(),
+            idx.verify_checksum_of_index(None, None, index::verify::Mode::Sha1CRC32Decode, Discard.into(), || {
+                DecodeEntryNoop
+            })
+            .unwrap(),
             (idx.checksum_of_index(), None)
         );
         assert_eq!(idx.checksum_of_index(), hex_to_id(index_checksum));

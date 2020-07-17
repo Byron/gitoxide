@@ -77,6 +77,7 @@ impl Bundle {
     pub fn verify_checksums<P, C>(
         &self,
         thread_limit: Option<usize>,
+        mode: pack::index::verify::Mode,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Option<pack::index::verify::Outcome>), pack::index::verify::Error>
@@ -86,7 +87,7 @@ impl Bundle {
         C: pack::cache::DecodeEntry,
     {
         self.index
-            .verify_checksum_of_index(Some(&self.pack), thread_limit, progress, make_cache)
+            .verify_checksum_of_index(Some(&self.pack), thread_limit, mode, progress, make_cache)
     }
 }
 

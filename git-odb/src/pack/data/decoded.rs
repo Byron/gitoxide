@@ -15,7 +15,7 @@ pub struct Entry {
     pub header: Header,
     /// The decompressed size of the object in bytes
     pub decompressed_size: u64,
-    /// absolute offset to compressed object data in the pack
+    /// absolute offset to compressed object data in the pack, just behind the header
     pub data_offset: u64,
 }
 
