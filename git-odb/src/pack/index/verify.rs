@@ -4,7 +4,7 @@ use crate::{
     pack::{cache, data::decode},
 };
 use git_features::progress::{self, Progress};
-use git_object::{borrowed, bstr::BString, owned, SHA1_SIZE};
+use git_object::{borrowed, bstr::BString, bstr::ByteSlice, owned, SHA1_SIZE};
 use quick_error::quick_error;
 use smallvec::alloc::collections::BTreeMap;
 use std::time::Instant;
@@ -329,12 +329,21 @@ impl index::File {
                                             encode_buf.clear();
                                             object.write_to(&mut *encode_buf)?;
                                             if encode_buf != buf {
-                                                return Err(Error::ObjectEncodeMismatch(
-                                                    object_kind,
-                                                    index_entry.oid,
-                                                    buf.clone().into(),
-                                                    encode_buf.clone().into(),
-                                                ));
+                                                let mut should_return_error = true;
+                                                if let git_object::Kind::Tree = object_kind {
+                                                    if buf.as_slice().as_bstr().find(b"100664").is_some() {
+                                                        progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664' with '100644'", index_entry.oid));
+                                                        should_return_error = false
+                                                    }
+                                                }
+                                                if should_return_error {
+                                                    return Err(Error::ObjectEncodeMismatch(
+                                                        object_kind,
+                                                        index_entry.oid,
+                                                        buf.clone().into(),
+                                                        encode_buf.clone().into(),
+                                                    ));
+                                                }
                                             }
                                         }
                                     }
