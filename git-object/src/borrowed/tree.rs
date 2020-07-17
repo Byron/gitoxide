@@ -33,7 +33,8 @@ impl TryFrom<&[u8]> for TreeMode {
         Ok(match mode {
             b"40000" => TreeMode::Tree,
             b"100644" => TreeMode::Blob,
-            b"100664" => TreeMode::Blob, // rare and fonud in the linux kernel
+            b"100664" => TreeMode::Blob, // rare and found in the linux kernel
+            b"100640" => TreeMode::Blob, // rare and found in the Rust repo
             b"100755" => TreeMode::BlobExecutable,
             b"120000" => TreeMode::Link,
             b"160000" => TreeMode::Commit,

@@ -62,4 +62,15 @@ mod from_bytes {
             160
         );
     }
+
+    #[test]
+    fn definitely_special() {
+        assert_eq!(
+            Tree::from_bytes(&fixture_bytes("tree", "definitely-special.tree"))
+                .unwrap()
+                .entries
+                .len(),
+            19
+        );
+    }
 }

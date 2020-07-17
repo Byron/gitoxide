@@ -99,6 +99,7 @@ stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
 	time ./target/release/giop verify-pack --verbose $(rust_repo)/.git/objects/pack/*.idx
 	time ./target/release/giop verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/giop verify-pack --verbose --re-encode $(rust_repo)/.git/objects/pack/*.idx
 	time ./target/release/giop verify-pack --verbose --re-encode $(linux_repo)/objects/pack/*.idx
 
 ##@ Maintenance

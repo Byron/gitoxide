@@ -331,8 +331,10 @@ impl index::File {
                                             if encode_buf != buf {
                                                 let mut should_return_error = true;
                                                 if let git_object::Kind::Tree = object_kind {
-                                                    if buf.as_slice().as_bstr().find(b"100664").is_some() {
-                                                        progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664' with '100644'", index_entry.oid));
+                                                    if buf.as_slice().as_bstr().find(b"100664").is_some()
+                                                        || buf.as_slice().as_bstr().find(b"100640").is_some()
+                                                    {
+                                                        progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
                                                         should_return_error = false
                                                     }
                                                 }
