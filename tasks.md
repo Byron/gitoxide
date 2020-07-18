@@ -17,7 +17,7 @@
     * [x] parse pgp_signature and mergetag into 'extra-headers' without further parsing
   * [x] The Rust repo verifies `--decode` and `--re-encode`
   * [x] add re-encode to all stress tests
-  * [ ] support easy access to merge-tags and the signature
+  * [x] support easy access to merge-tags and the signature
 * **plumbing - explode pack**
   * [ ] write loose object
   * [ ] single threaded

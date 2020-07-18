@@ -68,18 +68,75 @@ mod from_bytes {
 
     #[test]
     fn mergetag() {
-        assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "mergetag.txt")).unwrap(),
-            Commit {
-                tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
-                parents: SmallVec::from(vec![
-                    b"44ebe016df3aad96e3be8f95ec52397728dd7701".as_bstr(),
-                    b"8d485da0ddee79d0e6713405694253d401e41b93".as_bstr()
-                ]),
-                author: linus_signature(1591996221),
-                committer: linus_signature(1591996221),
-                encoding: None,
-                message: "Merge tag 'thermal-v5.8-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/thermal/linux
+        let fixture = fixture_bytes("commit", "mergetag.txt");
+        let merge_tag = "object 8d485da0ddee79d0e6713405694253d401e41b93
+type commit
+tag thermal-v5.8-rc1
+tagger Daniel Lezcano <daniel.lezcano@linaro.org> 1591979433 +0200
+
+- Add the hwmon support on the i.MX SC (Anson Huang)
+
+- Thermal framework cleanups (self-encapsulation, pointless stubs,
+  private structures) (Daniel Lezcano)
+
+- Use the PM QoS frequency changes for the devfreq cooling device (Matthias
+  Kaehlcke)
+
+- Remove duplicate error messages from platform_get_irq() error handling
+  (Markus Elfring)
+
+- Add support for the bandgap sensors (Keerthy)
+
+- Statically initialize .get_mode/.set_mode ops (Andrzej Pietrasiewicz)
+
+- Add Renesas R-Car maintainer entry (Niklas Söderlund)
+
+- Fix error checking after calling ti_bandgap_get_sensor_data() for the TI SoC
+  thermal (Sudip Mukherjee)
+
+- Add latency constraint for the idle injection, the DT binding and the change
+  the registering function (Daniel Lezcano)
+
+- Convert the thermal framework binding to the Yaml schema (Amit Kucheria)
+
+- Replace zero-length array with flexible-array on i.MX 8MM (Gustavo A. R. Silva)
+
+- Thermal framework cleanups (alphabetic order for heads, replace module.h by
+  export.h, make file naming consistent) (Amit Kucheria)
+
+- Merge tsens-common into the tsens driver (Amit Kucheria)
+
+- Fix platform dependency for the Qoriq driver (Geert Uytterhoeven)
+
+- Clean up the rcar_thermal_update_temp() function in the rcar thermal driver
+  (Niklas Söderlund)
+
+- Fix the TMSAR register for the TMUv2 on the Qoriq platform (Yuantian Tang)
+
+- Export GDDV, OEM vendor variables, and don't require IDSP for the int340x
+  thermal driver - trivial conflicts fixed (Matthew Garrett)
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEGn3N4YVz0WNVyHskqDIjiipP6E8FAl7jra8ACgkQqDIjiipP
+6E+ugAgApBF6FsHoonWIvoSrzBrrbU2oqhEJA42Mx+iY/UnXi01I79vZ/8WpZt7M
+D1J01Kf0PUhRbywoKaoCX3Oh9ZO9PKq4N9ZC8yqdoD6GLl+rC9Wmr7Ui+c80klcv
+M9rYhpPYfNXTFj0saSbbFWNNhP4TvhzGsNj8foYVQDKyhjbSmNE5ipZlbmP23jlr
+O53SmJAwS5zxLOd8QA5nfSWP9FYYMuCR2AHj8BUCmxiAjXZLPNB/Hz2RRBr7q0MF
+zRo/4HJ04mSQYp0kluP/EBhz9g2wM/htIPyWRveB/ByKEYt3UNKjB++PJmPbu5UG
+dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
+=T+RI
+-----END PGP SIGNATURE-----"
+            .as_bytes();
+        let commit = Commit {
+            tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
+            parents: SmallVec::from(vec![
+                b"44ebe016df3aad96e3be8f95ec52397728dd7701".as_bstr(),
+                b"8d485da0ddee79d0e6713405694253d401e41b93".as_bstr(),
+            ]),
+            author: linus_signature(1591996221),
+            committer: linus_signature(1591996221),
+            encoding: None,
+            message: "Merge tag 'thermal-v5.8-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/thermal/linux
 
 Pull thermal updates from Daniel Lezcano:
 
@@ -151,74 +208,13 @@ Pull thermal updates from Daniel Lezcano:
   thermal/core: Replace module.h with export.h
   ...
 "
-                .as_bytes()
-                .as_bstr(),
-                extra_headers: vec![(
-                    b"mergetag".as_bstr(),
-                    std::borrow::Cow::Owned(
-                        "object 8d485da0ddee79d0e6713405694253d401e41b93
-type commit
-tag thermal-v5.8-rc1
-tagger Daniel Lezcano <daniel.lezcano@linaro.org> 1591979433 +0200
-
-- Add the hwmon support on the i.MX SC (Anson Huang)
-
-- Thermal framework cleanups (self-encapsulation, pointless stubs,
-  private structures) (Daniel Lezcano)
-
-- Use the PM QoS frequency changes for the devfreq cooling device (Matthias
-  Kaehlcke)
-
-- Remove duplicate error messages from platform_get_irq() error handling
-  (Markus Elfring)
-
-- Add support for the bandgap sensors (Keerthy)
-
-- Statically initialize .get_mode/.set_mode ops (Andrzej Pietrasiewicz)
-
-- Add Renesas R-Car maintainer entry (Niklas Söderlund)
-
-- Fix error checking after calling ti_bandgap_get_sensor_data() for the TI SoC
-  thermal (Sudip Mukherjee)
-
-- Add latency constraint for the idle injection, the DT binding and the change
-  the registering function (Daniel Lezcano)
-
-- Convert the thermal framework binding to the Yaml schema (Amit Kucheria)
-
-- Replace zero-length array with flexible-array on i.MX 8MM (Gustavo A. R. Silva)
-
-- Thermal framework cleanups (alphabetic order for heads, replace module.h by
-  export.h, make file naming consistent) (Amit Kucheria)
-
-- Merge tsens-common into the tsens driver (Amit Kucheria)
-
-- Fix platform dependency for the Qoriq driver (Geert Uytterhoeven)
-
-- Clean up the rcar_thermal_update_temp() function in the rcar thermal driver
-  (Niklas Söderlund)
-
-- Fix the TMSAR register for the TMUv2 on the Qoriq platform (Yuantian Tang)
-
-- Export GDDV, OEM vendor variables, and don't require IDSP for the int340x
-  thermal driver - trivial conflicts fixed (Matthew Garrett)
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEGn3N4YVz0WNVyHskqDIjiipP6E8FAl7jra8ACgkQqDIjiipP
-6E+ugAgApBF6FsHoonWIvoSrzBrrbU2oqhEJA42Mx+iY/UnXi01I79vZ/8WpZt7M
-D1J01Kf0PUhRbywoKaoCX3Oh9ZO9PKq4N9ZC8yqdoD6GLl+rC9Wmr7Ui+c80klcv
-M9rYhpPYfNXTFj0saSbbFWNNhP4TvhzGsNj8foYVQDKyhjbSmNE5ipZlbmP23jlr
-O53SmJAwS5zxLOd8QA5nfSWP9FYYMuCR2AHj8BUCmxiAjXZLPNB/Hz2RRBr7q0MF
-zRo/4HJ04mSQYp0kluP/EBhz9g2wM/htIPyWRveB/ByKEYt3UNKjB++PJmPbu5UG
-dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
-=T+RI
------END PGP SIGNATURE-----"
-                            .as_bytes()
-                            .into()
-                    )
-                )]
-            }
-        );
+            .as_bytes()
+            .as_bstr(),
+            extra_headers: vec![(b"mergetag".as_bstr(), std::borrow::Cow::Owned(merge_tag.into()))],
+        };
+        assert_eq!(Commit::from_bytes(&fixture).unwrap(), commit);
+        assert_eq!(commit.extra_headers().find_all("mergetag").count(), 1);
+        assert_eq!(commit.extra_headers().mergetags().count(), 1);
     }
 
     #[test]
@@ -292,9 +288,7 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
     fn newline_right_after_signature_multiline_header() {
         let fixture = fixture_bytes("commit", "signed-whitespace.txt");
         let commit = Commit::from_bytes(&fixture).unwrap();
-        assert_eq!(
-            commit.extra_headers[0].1.as_ref(),
-            b"-----BEGIN PGP SIGNATURE-----
+        let pgp_sig = b"-----BEGIN PGP SIGNATURE-----
 
 wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
 5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
@@ -305,8 +299,10 @@ iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
 =HLmy
 -----END PGP SIGNATURE-----
 "
-            .as_bstr()
-        );
+        .as_bstr();
+        assert_eq!(commit.extra_headers[0].1.as_ref(), pgp_sig);
+        assert_eq!(commit.extra_headers().pgp_signature(), Some(pgp_sig));
+        assert_eq!(commit.extra_headers().find("gpgsig"), Some(pgp_sig));
         assert!(commit.message.starts_with(b"Rollup"))
     }
 }

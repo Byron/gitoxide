@@ -1,7 +1,7 @@
 use super::Error;
 use crate::{
     borrowed::{parse, parse::NL, Signature},
-    owned, BStr, ByteSlice,
+    commit, owned, BStr, ByteSlice,
 };
 use nom::{
     branch::alt,
@@ -78,5 +78,8 @@ impl<'a> Commit<'a> {
     }
     pub fn from_bytes(d: &'a [u8]) -> Result<Commit<'a>, Error> {
         parse(d).map(|(_, t)| t).map_err(Error::from)
+    }
+    pub fn extra_headers(&self) -> commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
+        commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
     }
 }

@@ -1,5 +1,8 @@
-use crate::owned::{self, ser, NL};
-use bstr::{BString, ByteSlice};
+use crate::{
+    commit,
+    owned::{self, ser, NL},
+};
+use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
 use std::io;
 
@@ -19,6 +22,9 @@ pub struct Commit {
 }
 
 impl Commit {
+    pub fn extra_headers(&self) -> commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
+        commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (k.as_bstr(), v.as_bstr())))
+    }
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         ser::trusted_header_id(b"tree", &self.tree, &mut out)?;
         for parent in &self.parents {
