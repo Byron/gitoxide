@@ -118,7 +118,7 @@ pub fn main() -> Result<()> {
                     } else {
                         None
                     },
-                    algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::Lookup).into(),
+                    algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::Lookup),
                     thread_limit,
                     mode: match (decode, re_encode) {
                         (true, false) => core::VerifyMode::Sha1CRC32Decode,

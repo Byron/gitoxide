@@ -163,7 +163,7 @@ where
             let idx = git_odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
             let packfile_path = path.with_extension("pack");
             let pack = git_odb::pack::data::File::at(&packfile_path)
-                .or_else(|e| {
+                .map_err(|e| {
                     writeln!(
                         err,
                         "Could not find matching pack file at '{}' - only index file will be verified, error was: {}",
@@ -171,7 +171,7 @@ where
                         e
                     )
                     .ok();
-                    Err(e)
+                    e
                 })
                 .ok();
             let cache = || -> EitherCache {

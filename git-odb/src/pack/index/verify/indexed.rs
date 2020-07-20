@@ -21,6 +21,7 @@ impl index::File {
         let r =
             io::BufReader::new(fs::File::open(pack.path()).map_err(|err| Error::Io(err, pack.path().into(), "open"))?);
         pack::graph::DeltaTree::from_sorted_offsets(self.sorted_offsets().into_iter(), r, indexing_progress)?;
+
         unimplemented!()
     }
 }

@@ -208,7 +208,7 @@ pub fn main() -> Result<()> {
                     core::Context {
                         output_statistics,
                         thread_limit,
-                        algorithm: algorithm.into(),
+                        algorithm,
                         mode,
                         out,
                         err,
