@@ -112,6 +112,7 @@ impl Default for Algorithm {
     }
 }
 
+mod indexed;
 mod lookup;
 
 /// Verify and validate the content of the index file
@@ -182,8 +183,13 @@ impl index::File {
                 pack_res?;
                 let id = id?;
 
-                self.inner_verify_with_lookup(thread_limit, mode, make_cache, root, pack)
-                    .map(|stats| (id, Some(stats)))
+                match algorithm {
+                    Algorithm::Lookup => self.inner_verify_with_lookup(thread_limit, mode, make_cache, root, pack),
+                    Algorithm::DeltaTreeLookup => {
+                        self.inner_verify_with_indexed_lookup(thread_limit, mode, make_cache, root, pack)
+                    }
+                }
+                .map(|stats| (id, Some(stats)))
             }
         }
     }

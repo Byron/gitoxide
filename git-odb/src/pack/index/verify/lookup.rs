@@ -1,9 +1,5 @@
 use super::{Error, Mode, Outcome};
-use crate::{
-    pack,
-    pack::index,
-    pack::{cache, data::decode},
-};
+use crate::{pack, pack::data::decode, pack::index};
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, Progress},
@@ -24,7 +20,7 @@ impl index::File {
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
-        C: cache::DecodeEntry,
+        C: pack::cache::DecodeEntry,
     {
         use crate::pack::data::decode::ResolvedBase;
 
