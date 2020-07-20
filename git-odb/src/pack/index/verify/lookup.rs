@@ -1,4 +1,4 @@
-use super::{Error, Mode, Outcome, TimeThroughput};
+use super::{Error, Mode, Outcome};
 use crate::{
     pack,
     pack::index,
@@ -8,77 +8,12 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, Progress},
 };
-use git_object::{borrowed, bstr::ByteSlice, owned, SHA1_SIZE};
+use git_object::{borrowed, bstr::ByteSlice, owned};
 use std::time::Instant;
 
 /// Verify and validate the content of the index file
 impl index::File {
-    /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
-    /// It will be used to validate internal integrity of the pack before checking each objects integrity
-    /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    ///
-    /// We lookup each object similarly to what would happen during normal repository use.
-    /// Uses more compute resources as it will resolve delta chains from back to front, potentially
-    /// redoing a lot of work across multiple objects.
-    pub fn verify_checksum_of_index_with_lookup<P, C>(
-        &self,
-        pack: Option<&pack::data::File>,
-        thread_limit: Option<usize>,
-        mode: Mode,
-        progress: Option<P>,
-        make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<Outcome>), Error>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send,
-        C: cache::DecodeEntry,
-    {
-        let mut root = progress::DoOrDiscard::from(progress);
-        let mut progress = root.add_child("Sha1 of index");
-
-        let mut verify_self = move || {
-            let throughput = TimeThroughput::new(self.data.len());
-            let mut hasher = git_features::hash::Sha1::default();
-            hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-            let actual = owned::Id::new_sha1(hasher.digest());
-            progress.done(throughput);
-
-            let expected = self.checksum_of_index();
-            if actual == expected {
-                Ok(actual)
-            } else {
-                Err(Error::Mismatch { actual, expected })
-            }
-        };
-        match pack {
-            None => verify_self().map(|id| (id, None)),
-            Some(pack) => {
-                if self.checksum_of_pack() != pack.checksum() {
-                    return Err(Error::PackMismatch {
-                        actual: pack.checksum(),
-                        expected: self.checksum_of_pack(),
-                    });
-                }
-                let mut progress = root.add_child("Sha1 of pack");
-                let (pack_res, id) = parallel::join(
-                    move || {
-                        let throughput = TimeThroughput::new(pack.data_len());
-                        let res = pack.verify_checksum();
-                        progress.done(throughput);
-                        res
-                    },
-                    verify_self,
-                );
-                pack_res?;
-                let id = id?;
-
-                self.inner_verify_with_lookup(thread_limit, mode, make_cache, root, pack)
-                    .map(|stats| (id, Some(stats)))
-            }
-        }
-    }
-
-    fn inner_verify_with_lookup<P, C>(
+    pub(crate) fn inner_verify_with_lookup<P, C>(
         &self,
         thread_limit: Option<usize>,
         mode: Mode,
