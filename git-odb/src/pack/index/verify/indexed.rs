@@ -1,14 +1,15 @@
 use super::{Error, Mode, Outcome};
 use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
+use std::{fs, io};
 
 impl index::File {
     pub(crate) fn inner_verify_with_indexed_lookup<P, C>(
         &self,
-        thread_limit: Option<usize>,
-        mode: Mode,
-        make_cache: impl Fn() -> C + Send + Sync,
-        mut root: progress::DoOrDiscard<P>,
+        _thread_limit: Option<usize>,
+        _mode: Mode,
+        _make_cache: impl Fn() -> C + Send + Sync,
+        mut progress: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
     ) -> Result<Outcome, Error>
     where
@@ -16,6 +17,10 @@ impl index::File {
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
     {
+        let indexing_progress = progress.add_child("indexing");
+        let r =
+            io::BufReader::new(fs::File::open(pack.path()).map_err(|err| Error::Io(err, pack.path().into(), "open"))?);
+        pack::graph::DeltaTree::from_sorted_offsets(self.sorted_offsets().into_iter(), r, indexing_progress)?;
         unimplemented!()
     }
 }

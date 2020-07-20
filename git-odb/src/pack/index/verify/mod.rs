@@ -10,6 +10,14 @@ use std::{collections::BTreeMap, time::Instant};
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        Io(err: std::io::Error, path: std::path::PathBuf, msg: &'static str) {
+            display("Failed to {} at path '{}'", msg, path.display())
+            source(err)
+        }
+        Graph(err: pack::graph::Error) {
+            from()
+            source(err)
+        }
         Mismatch { expected: owned::Id, actual: owned::Id } {
             display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
