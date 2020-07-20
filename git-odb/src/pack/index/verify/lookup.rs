@@ -17,7 +17,7 @@ impl index::File {
     /// We lookup each object similarly to what would happen during normal repository use.
     /// Uses more compute resources as it will resolve delta chains from back to front, potentially
     /// redoing a lot of work across multiple objects.
-    pub fn verify_checksum_of_index_lookup<P, C>(
+    pub fn verify_checksum_of_index_with_lookup<P, C>(
         &self,
         pack: Option<&pack::data::File>,
         thread_limit: Option<usize>,

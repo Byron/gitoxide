@@ -176,7 +176,7 @@ where
 
             match algorithm {
                 VerifyAlgorithm::Lookup => idx
-                    .verify_checksum_of_index_lookup(pack.as_ref(), thread_limit, mode, progress, cache)
+                    .verify_checksum_of_index_with_lookup(pack.as_ref(), thread_limit, mode, progress, cache)
                     .with_context(|| "Verification failure"),
                 VerifyAlgorithm::Stream => unimplemented!("streaming of packs"),
             }?

@@ -10,12 +10,14 @@ const V1_HEADER_SIZE: usize = FAN_LEN * N32_SIZE;
 const V2_HEADER_SIZE: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
 const N32_HIGH_BIT: u32 = 1 << 31;
 
+pub type PackOffset = u64;
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     pub oid: owned::Id,
-    /// The offset of the object's header in the pack
-    pub pack_offset: u64,
+    /// The offset to the object's header in the pack
+    pub pack_offset: PackOffset,
     pub crc32: Option<u32>,
 }
 
@@ -69,7 +71,7 @@ impl index::File {
         borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
-    pub fn pack_offset_at_index(&self, index: u32) -> u64 {
+    pub fn pack_offset_at_index(&self, index: u32) -> PackOffset {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
@@ -129,6 +131,19 @@ impl index::File {
         }
     }
 
+    /// ### Performance opportunity
+    ///
+    /// This can be implemented to be much faster in indexV2 by leveraging
+    /// the sequential layout of offsets on disk, as opposed to using a memory mapped
+    /// file with slow sequential reads. The only care is to be taken when supporting
+    /// 64 bit offsets, which require more or less random access from another memory region,
+    /// see `fn pack_offset_from_offset_v2(…)`.
+    pub fn sorted_offsets(&self) -> Vec<PackOffset> {
+        let mut ofs: Vec<_> = self.iter().map(|e| e.pack_offset).collect();
+        ofs.sort();
+        ofs
+    }
+
     fn offset_crc32_v2(&self) -> usize {
         V2_HEADER_SIZE + self.num_objects as usize * SHA1_SIZE
     }
@@ -141,7 +156,7 @@ impl index::File {
         self.offset_pack_offset_v2() + self.num_objects as usize * N32_SIZE
     }
 
-    fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> u64 {
+    fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> PackOffset {
         debug_assert_eq!(self.kind, index::Kind::V2);
         let ofs32 = BigEndian::read_u32(offset);
         if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {

@@ -110,7 +110,7 @@ impl File {
 
 pub mod init;
 
-mod accesss;
-pub use accesss::Entry;
+mod access;
+pub use access::Entry;
 
 pub mod verify;

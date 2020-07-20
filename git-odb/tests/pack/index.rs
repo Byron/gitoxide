@@ -155,7 +155,7 @@ fn pack_lookup() {
         assert_eq!(pack.kind(), pack::data::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         assert_eq!(
-            idx.verify_checksum_of_index_lookup(
+            idx.verify_checksum_of_index_with_lookup(
                 Some(&pack),
                 None,
                 index::verify::Mode::Sha1CRC32DecodeEncode,
@@ -165,9 +165,17 @@ fn pack_lookup() {
             .unwrap(),
             (idx.checksum_of_index(), Some(stats.to_owned()))
         );
+        let num_objects = stats
+            .objects_per_chain_length
+            .values()
+            .map(|v| *v as usize)
+            .sum::<usize>();
+        let sorted_offsets = idx.sorted_offsets();
+        assert_eq!(num_objects, sorted_offsets.len());
         for idx_entry in idx.iter() {
             let pack_entry = pack.entry(idx_entry.pack_offset);
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
+            assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
     }
 }
@@ -205,7 +213,7 @@ fn iter() {
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_checksum_of_index_lookup(
+            idx.verify_checksum_of_index_with_lookup(
                 None,
                 None,
                 index::verify::Mode::Sha1CRC32Decode,
