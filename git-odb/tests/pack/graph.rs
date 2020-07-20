@@ -1,8 +1,8 @@
-use git_odb::pack::graph;
-
 mod from_sorted_offsets {
-    use crate::pack::SMALL_PACK_INDEX;
-    use crate::{fixture_path, pack::SMALL_PACK};
+    use crate::{
+        fixture_path,
+        pack::{SMALL_PACK, SMALL_PACK_INDEX},
+    };
     use git_odb::pack;
     use std::{
         convert::TryInto,
@@ -27,8 +27,8 @@ mod from_sorted_offsets {
 #[test]
 fn size() {
     assert_eq!(
-        std::mem::size_of::<graph::PackEntryKind>(),
+        std::mem::size_of::<petgraph::graph::Node<u64, u32>>(),
         16,
-        "PackEntryKinds must remain small as these trees are up to 10mio objects"
+        "Graph Nodes must remain small as these trees are up to 10mio objects"
     )
 }

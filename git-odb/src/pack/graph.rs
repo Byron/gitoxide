@@ -17,18 +17,16 @@ quick_error! {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub enum PackEntryKind {
-    RefBase(PackOffset),
-    Base(PackOffset),
-    Delta(PackOffset),
-}
-
 pub struct DeltaTree {
-    inner: DiGraph<PackEntryKind, (), u32>, // u32 = max amount of objects in pack
+    inner: DiGraph<PackOffset, (), u32>, // u32 = max amount of objects in pack
 }
 
-pub struct Node(NodeIndex<u32>);
+pub struct Node {
+    pub pack_offset: PackOffset,
+    index: NodeIndex<u32>,
+}
+
+impl Node {}
 
 /// Access
 impl DeltaTree {
@@ -37,7 +35,10 @@ impl DeltaTree {
             self.inner
                 .neighbors_directed(idx, Direction::Incoming)
                 .next()
-                .map(|_| Node(idx))
+                .map(|_| Node {
+                    index: idx,
+                    pack_offset: self.inner.node_weight(idx).copied().unwrap(),
+                })
         })
     }
 
@@ -47,7 +48,14 @@ impl DeltaTree {
 
     pub fn children(&self, n: Node, out: &mut Vec<Node>) {
         out.clear();
-        out.extend(self.inner.neighbors_directed(n.0, Direction::Outgoing).map(Node))
+        out.extend(
+            self.inner
+                .neighbors_directed(n.index, Direction::Outgoing)
+                .map(|idx| Node {
+                    index: idx,
+                    pack_offset: self.inner.node_weight(idx).copied().unwrap(),
+                }),
+        )
     }
 }
 
@@ -76,17 +84,17 @@ impl DeltaTree {
             use pack::data::Header::*;
             match header {
                 Tree | Blob | Commit | Tag => {
-                    let base = tree.add_node(PackEntryKind::Base(pack_offset));
+                    let base = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base);
                 }
                 RefDelta { oid: _ } => {
-                    let base = tree.add_node(PackEntryKind::RefBase(pack_offset));
+                    let base = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base);
                 }
                 OfsDelta {
                     pack_offset: base_pack_offset,
                 } => {
-                    let child = tree.add_node(PackEntryKind::Delta(pack_offset));
+                    let child = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, child);
                     let base = offsets_to_node
                         .get(&base_pack_offset)
