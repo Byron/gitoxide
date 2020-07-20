@@ -6,6 +6,7 @@ mod decoded;
 pub use decoded::*;
 
 pub mod init;
+pub mod parse;
 pub mod verify;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

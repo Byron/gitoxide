@@ -1,4 +1,5 @@
 use git_object::{owned, SHA1_SIZE};
+use std::io;
 
 const _TYPE_EXT1: u8 = 0;
 const COMMIT: u8 = 1;
@@ -71,6 +72,22 @@ fn leb64decode(d: &[u8]) -> (u64, usize) {
     (value, i)
 }
 
+#[inline]
+fn streaming_leb64decode(mut r: impl io::Read) -> Result<(u64, usize), io::Error> {
+    let mut b = [0u8; 1];
+    let mut i = 0;
+    let mut c = r.read(&mut b)?;
+    i += 1;
+    let mut value = c as u64 & 0x7f;
+    while c & 0x80 != 0 {
+        c = r.read(&mut b)?;
+        i += 1;
+        value += 1;
+        value = (value << 7) + (c as u64 & 0x7f)
+    }
+    Ok((value, i))
+}
+
 /// Parses the header of a pack-entry, yielding object type id, decompressed object size, and consumed bytes
 fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     let mut c = data[0];
@@ -115,5 +132,41 @@ impl Header {
             _ => panic!("We currently don't support any V3 features or extensions"),
         };
         (object, size, consumed as u64)
+    }
+
+    pub fn from_read(mut r: impl io::BufRead + io::Read, pack_offset: u64) -> Result<(Header, u64), io::Error> {
+        let (type_id, size, mut consumed) = {
+            let buf = r.fill_buf()?;
+            parse_header_info(&buf)
+        };
+        r.consume(consumed);
+
+        use self::Header::*;
+        let object = match type_id {
+            OFS_DELTA => {
+                let (offset, leb_bytes) = streaming_leb64decode(&mut r)?;
+                let delta = OfsDelta {
+                    pack_offset: pack_offset - offset,
+                };
+                consumed += leb_bytes;
+                delta
+            }
+            REF_DELTA => {
+                let buf = r.fill_buf()?;
+                let buf = buf.get(..SHA1_SIZE).expect("At least 20 bytes of hash");
+                let delta = RefDelta {
+                    oid: owned::Id::from_20_bytes(buf),
+                };
+                consumed += SHA1_SIZE;
+                delta
+            }
+            BLOB => Blob,
+            TREE => Tree,
+            COMMIT => Commit,
+            TAG => Tag,
+            _ => panic!("We currently don't support any V3 features or extensions"),
+        };
+        r.consume(consumed);
+        Ok((object, size))
     }
 }

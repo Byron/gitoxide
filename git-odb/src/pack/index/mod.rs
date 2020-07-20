@@ -110,7 +110,7 @@ impl File {
 
 pub mod init;
 
-mod access;
+pub(crate) mod access;
 pub use access::Entry;
 
 pub mod verify;

@@ -31,6 +31,7 @@ btoi = "0.4.2"
 uluru = "0.4.0"
 itoa = "0.4.6"
 bytesize = "1.0.1"
+petgraph = { version = "0.5.1", default-features = false }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"

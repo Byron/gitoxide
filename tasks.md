@@ -24,6 +24,9 @@
   * [x] choice of algorithm in pack-verify
   * [ ] use pack streaming in pack-verify by default
   * [ ] set some unit tests cases to use the streaming algorithm
+* **progress - convenience**
+  * [ ] `inc()` method
+  * [ ] `inc_by(step)` method
 * **plumbing - explode pack**
   * [ ] write loose object
   * [ ] single threaded

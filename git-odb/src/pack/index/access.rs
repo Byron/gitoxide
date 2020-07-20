@@ -10,7 +10,7 @@ const V1_HEADER_SIZE: usize = FAN_LEN * N32_SIZE;
 const V2_HEADER_SIZE: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
 const N32_HIGH_BIT: u32 = 1 << 31;
 
-pub type PackOffset = u64;
+pub(crate) type PackOffset = u64;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

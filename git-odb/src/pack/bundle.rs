@@ -13,7 +13,7 @@ quick_error! {
         InvalidPath(path: PathBuf) {
             display("An 'idx' extension is expected of an index file: '{}'", path.display())
         }
-        Pack(err: pack::data::init::Error) {
+        Pack(err: pack::data::parse::Error) {
             display("Could not instantiate pack")
             from()
             source(err)
