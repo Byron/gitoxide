@@ -20,7 +20,7 @@ mod from_sorted_offsets {
         }
         let idx = pack::index::File::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
         let ofs = idx.sorted_offsets();
-        pack::graph::DeltaTree::from_sorted_offsets(ofs.into_iter(), r, git_features::progress::Discard);
+        pack::graph::DeltaTree::from_sorted_offsets(ofs.into_iter(), r, git_features::progress::Discard).unwrap();
     }
 }
 
