@@ -21,7 +21,8 @@
 * **stream pack for verify-pack**
   * [ ] stream packs and feed information into a delegate to allow doing anything™️
   * [ ] support for multi-threading
-  * [ ] use pack streaming in pack-verify
+  * [x] choice of algorithm in pack-verify
+  * [ ] use pack streaming in pack-verify by default
 * **plumbing - explode pack**
   * [ ] write loose object
   * [ ] single threaded
