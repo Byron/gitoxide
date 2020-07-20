@@ -1,8 +1,15 @@
-use crate::pack::index::{self, FAN_LEN};
+use crate::pack::{
+    self,
+    index::{self, FAN_LEN},
+};
 use byteorder::{BigEndian, ByteOrder};
+use git_features::progress::Progress;
 use git_object::{borrowed, owned, SHA1_SIZE};
-use std::convert::TryFrom;
-use std::{convert::TryInto, mem::size_of};
+use std::{
+    convert::{TryFrom, TryInto},
+    fs, io,
+    mem::size_of,
+};
 
 const N32_SIZE: usize = size_of::<u32>();
 const N64_SIZE: usize = size_of::<u64>();
@@ -131,17 +138,18 @@ impl index::File {
         }
     }
 
-    /// ### Performance opportunity
-    ///
-    /// This can be implemented to be much faster in indexV2 by leveraging
-    /// the sequential layout of offsets on disk, as opposed to using a memory mapped
-    /// file with slow sequential reads. The only care is to be taken when supporting
-    /// 64 bit offsets, which require more or less random access from another memory region,
-    /// see `fn pack_offset_from_offset_v2(…)`.
     pub fn sorted_offsets(&self) -> Vec<PackOffset> {
-        let mut ofs: Vec<_> = self.iter().map(|e| e.pack_offset).collect();
+        let mut ofs: Vec<_> = match self.kind {
+            index::Kind::V1 => self.iter().map(|e| e.pack_offset).collect(),
+            index::Kind::V2 => unimplemented!("index v2 offsets"),
+        };
         ofs.sort();
         ofs
+    }
+
+    pub fn delta_tree(&self, progress: impl Progress) -> Result<pack::graph::DeltaTree, pack::graph::Error> {
+        let read = io::BufReader::new(fs::File::open(&self.path).unwrap());
+        pack::graph::DeltaTree::from_sorted_offsets(self.sorted_offsets().into_iter(), read, progress)
     }
 
     fn offset_crc32_v2(&self) -> usize {

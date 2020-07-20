@@ -27,6 +27,7 @@
 * **progress - convenience**
   * [ ] `inc()` method
   * [ ] `inc_by(step)` method
+  * [ ] a way to measure throughput on drop
 * **plumbing - explode pack**
   * [ ] write loose object
   * [ ] single threaded

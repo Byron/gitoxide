@@ -19,6 +19,12 @@ mod method {
         use git_odb::pack::index;
 
         #[test]
+        fn delta_tree() {
+            let idx = index::File::at(fixture_path(INDEX_V1)).unwrap();
+            idx.delta_tree(git_features::progress::Discard).unwrap();
+        }
+
+        #[test]
         fn lookup_index() {
             let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
             for (id, desired_index, assertion) in &[
@@ -43,9 +49,18 @@ mod method {
     }
 
     mod v2 {
-        use crate::{fixture_path, pack::index::INDEX_V2};
+        use crate::{
+            fixture_path,
+            pack::{index::INDEX_V2, SMALL_PACK_INDEX},
+        };
         use git_object::owned;
         use git_odb::pack::index;
+
+        #[test]
+        fn delta_tree() {
+            let idx = index::File::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
+            idx.delta_tree(git_features::progress::Discard).unwrap();
+        }
 
         #[test]
         fn lookup_index() {

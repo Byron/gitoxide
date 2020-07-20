@@ -5,7 +5,7 @@ use petgraph::{
     Direction,
 };
 use quick_error::quick_error;
-use std::{collections::BTreeMap, convert::TryInto, io, time::SystemTime};
+use std::{collections::BTreeMap, io, time::SystemTime};
 
 quick_error! {
     #[derive(Debug)]
@@ -67,8 +67,8 @@ const PACK_HEADER_LEN: usize = 12;
 
 /// Initialization
 impl DeltaTree {
-    /// The sort order is ascending.
-    pub fn from_sorted_offsets(
+    /// The sort order is ascending. read must start at the beginning of the pack file.
+    pub(crate) fn from_sorted_offsets(
         offsets: impl Iterator<Item = PackOffset>,
         mut r: impl io::BufRead + io::Read,
         mut progress: impl Progress,
@@ -80,13 +80,14 @@ impl DeltaTree {
 
         {
             // safety check - assure ourselves it's a pack we can handle
-            let buf = r.fill_buf().map_err(|err| Error::Io(err, "read header"))?;
-            pack::data::parse::header(
-                &buf[..PACK_HEADER_LEN]
-                    .try_into()
-                    .expect("buffer with at least 12 bytes - pack file truncated?"),
-            )?;
-            r.consume(PACK_HEADER_LEN);
+            let mut buf = [0u8; PACK_HEADER_LEN];
+            r.read_exact(&mut buf).map_err(|err| {
+                Error::Io(
+                    err,
+                    "reading header buffer with at least 12 bytes failed - pack file truncated?",
+                )
+            })?;
+            pack::data::parse::header(&buf)?;
         }
 
         let mut offsets_to_node = BTreeMap::new();
