@@ -101,6 +101,15 @@ pub enum Algorithm {
     /// We lookup each object similarly to what would happen during normal repository use.
     /// Uses more compute resources as it will resolve delta chains from back to front, potentially
     Lookup,
+    /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
+    /// resource at the expense of resident memory, as we will use an additional DeltaTree to make that happen.
+    DeltaTreeLookup,
+}
+
+impl Default for Algorithm {
+    fn default() -> Self {
+        Algorithm::Lookup
+    }
 }
 
 mod lookup;
@@ -120,11 +129,12 @@ impl index::File {
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     /// redoing a lot of work across multiple objects.
-    pub fn verify_checksum_of_index_with_lookup<P, C>(
+    pub fn verify_checksum_of_index<P, C>(
         &self,
         pack: Option<&pack::data::File>,
         thread_limit: Option<usize>,
         mode: Mode,
+        algorithm: Algorithm,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Option<Outcome>), Error>

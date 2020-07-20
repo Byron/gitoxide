@@ -66,6 +66,15 @@ impl FromStr for VerifyAlgorithm {
     }
 }
 
+impl From<VerifyAlgorithm> for index::verify::Algorithm {
+    fn from(v: VerifyAlgorithm) -> Self {
+        match v {
+            VerifyAlgorithm::Lookup => index::verify::Algorithm::Lookup,
+            VerifyAlgorithm::Stream => index::verify::Algorithm::DeltaTreeLookup,
+        }
+    }
+}
+
 /// A general purpose context for many operations provided here
 pub struct Context<W1: io::Write, W2: io::Write> {
     /// If set, provide statistics to `out` in the given format
@@ -174,12 +183,8 @@ where
                 }
             };
 
-            match algorithm {
-                VerifyAlgorithm::Lookup => idx
-                    .verify_checksum_of_index_with_lookup(pack.as_ref(), thread_limit, mode, progress, cache)
-                    .with_context(|| "Verification failure"),
-                VerifyAlgorithm::Stream => unimplemented!("streaming of packs"),
-            }?
+            idx.verify_checksum_of_index(pack.as_ref(), thread_limit, mode, algorithm.into(), progress, cache)
+                .with_context(|| "Verification failure")?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
