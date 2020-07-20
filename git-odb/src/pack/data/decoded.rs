@@ -134,7 +134,7 @@ impl Header {
         (object, size, consumed as u64)
     }
 
-    pub fn from_read(mut r: impl io::BufRead + io::Read, pack_offset: u64) -> Result<(Header, u64), io::Error> {
+    pub fn from_read(mut r: impl io::BufRead + io::Read, pack_offset: u64) -> Result<(Header, u64, usize), io::Error> {
         let (type_id, size, mut consumed) = {
             let buf = r.fill_buf()?;
             parse_header_info(&buf)
@@ -158,6 +158,7 @@ impl Header {
                     oid: owned::Id::from_20_bytes(buf),
                 };
                 consumed += SHA1_SIZE;
+                r.consume(SHA1_SIZE);
                 delta
             }
             BLOB => Blob,
@@ -166,7 +167,6 @@ impl Header {
             TAG => Tag,
             _ => panic!("We currently don't support any V3 features or extensions"),
         };
-        r.consume(consumed);
-        Ok((object, size))
+        Ok((object, size, consumed))
     }
 }

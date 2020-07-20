@@ -5,7 +5,7 @@ use petgraph::{
     Direction,
 };
 use quick_error::quick_error;
-use std::{collections::BTreeMap, io, time::SystemTime};
+use std::{collections::BTreeMap, convert::TryInto, io, time::SystemTime};
 
 quick_error! {
     #[derive(Debug)]
@@ -13,6 +13,10 @@ quick_error! {
         Io(err: io::Error, msg: &'static str) {
             display("{}", msg)
             source(err)
+        }
+        Header(err: pack::data::parse::Error) {
+            source(err)
+            from()
         }
     }
 }
@@ -59,12 +63,14 @@ impl DeltaTree {
     }
 }
 
+const PACK_HEADER_LEN: usize = 12;
+
 /// Initialization
 impl DeltaTree {
     /// The sort order is ascending.
     pub fn from_sorted_offsets(
         offsets: impl Iterator<Item = PackOffset>,
-        mut r: impl io::BufRead + io::Read + io::Seek,
+        mut r: impl io::BufRead + io::Read,
         mut progress: impl Progress,
     ) -> Result<Self, Error> {
         let mut tree = DiGraph::new();
@@ -72,16 +78,39 @@ impl DeltaTree {
             progress.init(Some(num_objects as u32), Some("objects"));
         }
 
+        {
+            // safety check - assure ourselves it's a pack we can handle
+            let buf = r.fill_buf().map_err(|err| Error::Io(err, "read header"))?;
+            pack::data::parse::header(
+                &buf[..PACK_HEADER_LEN]
+                    .try_into()
+                    .expect("buffer with at least 12 bytes - pack file truncated?"),
+            )?;
+        }
+
         let mut offsets_to_node = BTreeMap::new();
         let then = SystemTime::now();
 
         let mut count = 0;
+        let mut previous_offset = None::<u64>;
+
         for pack_offset in offsets {
             count += 1;
-            r.seek(io::SeekFrom::Start(pack_offset))
-                .map_err(|err| Error::Io(err, "Seek to next offset failed"))?;
-            let (header, _decompressed_size) = pack::data::Header::from_read(&mut r, pack_offset)
+            r.consume(match previous_offset {
+                Some(previous) => pack_offset
+                    .checked_sub(previous)
+                    .expect("continuously ascending pack offets"),
+                None => {
+                    assert_eq!(
+                        pack_offset as usize, PACK_HEADER_LEN,
+                        "Offsets must start right after the pack header"
+                    );
+                    pack_offset
+                }
+            } as usize);
+            let (header, _decompressed_size, consumed) = pack::data::Header::from_read(&mut r, pack_offset)
                 .map_err(|err| Error::Io(err, "EOF while parsing header"))?;
+            previous_offset = Some(pack_offset + consumed as u64);
             use pack::data::Header::*;
             match header {
                 Tree | Blob | Commit | Tag => {

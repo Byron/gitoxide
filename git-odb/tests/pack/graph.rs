@@ -4,23 +4,14 @@ mod from_sorted_offsets {
         pack::{SMALL_PACK, SMALL_PACK_INDEX},
     };
     use git_odb::pack;
-    use std::{
-        convert::TryInto,
-        fs,
-        io::{BufRead, BufReader},
-    };
+    use std::{fs, io::BufReader};
 
     #[test]
     fn pack_v2() {
-        let mut r = BufReader::new(fs::File::open(fixture_path(SMALL_PACK)).unwrap());
-        {
-            let buf = r.fill_buf().unwrap();
-            pack::data::parse::header(&buf[..12].try_into().unwrap()).unwrap();
-            r.consume(12);
-        }
+        let read = BufReader::new(fs::File::open(fixture_path(SMALL_PACK)).unwrap());
         let idx = pack::index::File::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
         let ofs = idx.sorted_offsets();
-        pack::graph::DeltaTree::from_sorted_offsets(ofs.into_iter(), r, git_features::progress::Discard).unwrap();
+        pack::graph::DeltaTree::from_sorted_offsets(ofs.into_iter(), read, git_features::progress::Discard).unwrap();
     }
 }
 
