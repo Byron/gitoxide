@@ -1,9 +1,4 @@
-use crate::{
-    pack,
-    pack::index,
-    pack::{cache, data::decode},
-};
-use git_features::progress::Progress;
+use crate::{pack, pack::data::decode, pack::index};
 use git_object::{borrowed, bstr::BString, owned, SHA1_SIZE};
 use quick_error::quick_error;
 use std::{collections::BTreeMap, time::Instant};
@@ -96,19 +91,6 @@ pub enum Mode {
     Sha1CRC32DecodeEncode,
 }
 
-/// The way of performing the pack verification
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-pub enum Algorithm {
-    /// Lookup each object similarly to what would happen during normal repository use.
-    ///
-    /// Uses more compute resources as it will resolve delta chains from back to front, potentially
-    /// redoing a lot of work across multiple objects.
-    Lookup,
-    /// Read the pack sequentially (without the need for an index) and resolve pack objects from the base towards their deltas,
-    /// doing the necessary work only once.
-    Stream,
-}
-
 mod lookup;
 
 /// Verify and validate the content of the index file
@@ -120,24 +102,5 @@ impl index::File {
     pub fn checksum_of_pack(&self) -> owned::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
         owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
-    }
-
-    /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
-    /// It will be used to validate internal integrity of the pack before checking each objects integrity
-    /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    pub fn verify_checksum_of_index<P, C>(
-        &self,
-        pack: Option<&pack::data::File>,
-        thread_limit: Option<usize>,
-        mode: Mode,
-        progress: Option<P>,
-        make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<Outcome>), Error>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send,
-        C: cache::DecodeEntry,
-    {
-        self.verify_checksum_of_index_lookup(pack, thread_limit, mode, progress, make_cache)
     }
 }

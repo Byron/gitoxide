@@ -87,7 +87,7 @@ impl Bundle {
         C: pack::cache::DecodeEntry,
     {
         self.index
-            .verify_checksum_of_index(Some(&self.pack), thread_limit, mode, progress, make_cache)
+            .verify_checksum_of_index_lookup(Some(&self.pack), thread_limit, mode, progress, make_cache)
     }
 }
 

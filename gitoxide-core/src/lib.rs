@@ -66,15 +66,6 @@ impl FromStr for VerifyAlgorithm {
     }
 }
 
-impl From<VerifyAlgorithm> for index::verify::Algorithm {
-    fn from(v: VerifyAlgorithm) -> Self {
-        match v {
-            VerifyAlgorithm::Lookup => index::verify::Algorithm::Lookup,
-            VerifyAlgorithm::Stream => index::verify::Algorithm::Stream,
-        }
-    }
-}
-
 /// A general purpose context for many operations provided here
 pub struct Context<W1: io::Write, W2: io::Write> {
     /// If set, provide statistics to `out` in the given format
@@ -88,7 +79,7 @@ pub struct Context<W1: io::Write, W2: io::Write> {
     /// A value of 0 is interpreted as no-limit
     pub thread_limit: Option<usize>,
     pub mode: index::verify::Mode,
-    pub algorithm: index::verify::Algorithm,
+    pub algorithm: VerifyAlgorithm,
 }
 
 impl Default for Context<Vec<u8>, Vec<u8>> {
@@ -97,7 +88,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
             output_statistics: None,
             thread_limit: None,
             mode: index::verify::Mode::Sha1CRC32,
-            algorithm: index::verify::Algorithm::Lookup,
+            algorithm: VerifyAlgorithm::Lookup,
             out: Vec::new(),
             err: Vec::new(),
         }
@@ -138,7 +129,7 @@ pub fn verify_pack_or_pack_index<P, W1, W2>(
         mode,
         output_statistics,
         thread_limit,
-        algorithm: _,
+        algorithm,
     }: Context<W1, W2>,
 ) -> Result<(owned::Id, Option<index::verify::Outcome>)>
 where
@@ -174,15 +165,21 @@ where
                     Err(e)
                 })
                 .ok();
-            idx.verify_checksum_of_index(pack.as_ref(), thread_limit, mode, progress, || -> EitherCache {
+            let cache = || -> EitherCache {
                 if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::DecodeEntryNoop)
                 } else {
                     EitherCache::Right(pack::cache::DecodeEntryLRU::default())
                 }
-            })
-            .with_context(|| "Verification failure")?
+            };
+
+            match algorithm {
+                VerifyAlgorithm::Lookup => idx
+                    .verify_checksum_of_index_lookup(pack.as_ref(), thread_limit, mode, progress, cache)
+                    .with_context(|| "Verification failure"),
+                VerifyAlgorithm::Stream => unimplemented!("streaming of packs"),
+            }?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };

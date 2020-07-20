@@ -13,7 +13,11 @@ impl index::File {
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    pub(crate) fn verify_checksum_of_index_lookup<P, C>(
+    ///
+    /// We lookup each object similarly to what would happen during normal repository use.
+    /// Uses more compute resources as it will resolve delta chains from back to front, potentially
+    /// redoing a lot of work across multiple objects.
+    pub fn verify_checksum_of_index_lookup<P, C>(
         &self,
         pack: Option<&pack::data::File>,
         thread_limit: Option<usize>,
