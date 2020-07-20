@@ -1,6 +1,9 @@
 use crate::{pack, pack::index::access::PackOffset};
 use git_features::progress::Progress;
-use petgraph::graph::DiGraph;
+use petgraph::{
+    graph::{DiGraph, NodeIndex},
+    Direction,
+};
 use quick_error::quick_error;
 use std::{collections::BTreeMap, io};
 
@@ -25,6 +28,30 @@ pub struct DeltaTree {
     inner: DiGraph<PackEntryKind, (), u32>, // u32 = max amount of objects in pack
 }
 
+pub struct Node(NodeIndex<u32>);
+
+/// Access
+impl DeltaTree {
+    pub fn bases(&self) -> impl Iterator<Item = Node> + '_ {
+        self.inner.node_indices().filter_map(move |idx| {
+            self.inner
+                .neighbors_directed(idx, Direction::Incoming)
+                .next()
+                .map(|_| Node(idx))
+        })
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.inner.node_count()
+    }
+
+    pub fn children(&self, n: Node, out: &mut Vec<Node>) {
+        out.clear();
+        out.extend(self.inner.neighbors_directed(n.0, Direction::Outgoing).map(Node))
+    }
+}
+
+/// Initialization
 impl DeltaTree {
     /// The sort order is ascending.
     pub fn from_sorted_offsets(
