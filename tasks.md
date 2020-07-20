@@ -18,6 +18,10 @@
   * [x] The Rust repo verifies `--decode` and `--re-encode`
   * [x] add re-encode to all stress tests
   * [x] support easy access to merge-tags and the signature
+* **stream pack for verify-pack**
+  * [ ] stream packs and feed information into a delegate to allow doing anything™️
+  * [ ] support for multi-threading
+  * [ ] use pack streaming in pack-verify
 * **plumbing - explode pack**
   * [ ] write loose object
   * [ ] single threaded

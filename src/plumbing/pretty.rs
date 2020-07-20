@@ -41,6 +41,15 @@ mod options {
             )]
             format: core::OutputFormat,
 
+            /// The algorithm used to verify the pack. They differ in costs.
+            #[structopt(
+                long,
+                short = "a",
+                default_value = "lookup",
+                possible_values(core::VerifyAlgorithm::variants())
+            )]
+            algorithm: core::VerifyAlgorithm,
+
             /// verbose progress messages are printed line by line
             #[structopt(long, short = "v")]
             verbose: bool,
@@ -173,6 +182,7 @@ pub fn main() -> Result<()> {
     match args.cmd {
         Subcommands::VerifyPack {
             path,
+            algorithm,
             verbose,
             progress,
             format,
@@ -198,6 +208,7 @@ pub fn main() -> Result<()> {
                     core::Context {
                         output_statistics,
                         thread_limit,
+                        algorithm: algorithm.into(),
                         mode,
                         out,
                         err,

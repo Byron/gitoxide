@@ -1,5 +1,6 @@
 mod options {
     use argh::FromArgs;
+    use gitoxide_core as core;
     use std::path::PathBuf;
 
     #[derive(FromArgs)]
@@ -45,6 +46,12 @@ mod options {
         /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
         /// owned objects, causing plenty of allocation to occour.
         pub re_encode: bool,
+
+        #[argh(option)]
+        /// the algorithm used to verify the pack. They differ in costs.
+        ///
+        /// Possible values are "lookup" and "stream". Default is "stream".
+        pub algorithm: Option<core::VerifyAlgorithm>,
 
         /// output statistical information about the pack
         #[argh(switch, short = 's')]
@@ -97,6 +104,7 @@ pub fn main() -> Result<()> {
             path,
             verbose,
             statistics,
+            algorithm,
             decode,
             re_encode,
         }) => {
@@ -110,6 +118,7 @@ pub fn main() -> Result<()> {
                     } else {
                         None
                     },
+                    algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::Lookup).into(),
                     thread_limit,
                     mode: match (decode, re_encode) {
                         (true, false) => core::VerifyMode::Sha1CRC32Decode,

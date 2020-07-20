@@ -41,6 +41,40 @@ impl FromStr for OutputFormat {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum VerifyAlgorithm {
+    Lookup,
+    Stream,
+}
+
+impl VerifyAlgorithm {
+    pub fn variants() -> &'static [&'static str] {
+        &["lookup", "stream"]
+    }
+}
+
+impl FromStr for VerifyAlgorithm {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s_lc = s.to_ascii_lowercase();
+        Ok(match s_lc.as_str() {
+            "lookup" => VerifyAlgorithm::Lookup,
+            "stream" => VerifyAlgorithm::Stream,
+            _ => return Err(format!("Invalid verification algorithm: '{}'", s)),
+        })
+    }
+}
+
+impl From<VerifyAlgorithm> for index::verify::Algorithm {
+    fn from(v: VerifyAlgorithm) -> Self {
+        match v {
+            VerifyAlgorithm::Lookup => index::verify::Algorithm::Lookup,
+            VerifyAlgorithm::Stream => index::verify::Algorithm::Stream,
+        }
+    }
+}
+
 /// A general purpose context for many operations provided here
 pub struct Context<W1: io::Write, W2: io::Write> {
     /// If set, provide statistics to `out` in the given format
@@ -54,6 +88,7 @@ pub struct Context<W1: io::Write, W2: io::Write> {
     /// A value of 0 is interpreted as no-limit
     pub thread_limit: Option<usize>,
     pub mode: index::verify::Mode,
+    pub algorithm: index::verify::Algorithm,
 }
 
 impl Default for Context<Vec<u8>, Vec<u8>> {
@@ -62,6 +97,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
             output_statistics: None,
             thread_limit: None,
             mode: index::verify::Mode::Sha1CRC32,
+            algorithm: index::verify::Algorithm::Lookup,
             out: Vec::new(),
             err: Vec::new(),
         }
@@ -102,6 +138,7 @@ pub fn verify_pack_or_pack_index<P, W1, W2>(
         mode,
         output_statistics,
         thread_limit,
+        algorithm: _,
     }: Context<W1, W2>,
 ) -> Result<(owned::Id, Option<index::verify::Outcome>)>
 where

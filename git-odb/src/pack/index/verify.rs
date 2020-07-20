@@ -97,6 +97,19 @@ pub enum Mode {
     Sha1CRC32DecodeEncode,
 }
 
+/// The way of performing the pack verification
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+pub enum Algorithm {
+    /// Lookup each object similarly to what would happen during normal repository use.
+    ///
+    /// Uses more compute resources as it will resolve delta chains from back to front, potentially
+    /// redoing a lot of work across multiple objects.
+    Lookup,
+    /// Read the pack sequentially (without the need for an index) and resolve pack objects from the base towards their deltas,
+    /// doing the necessary work only once.
+    Stream,
+}
+
 /// Verify and validate the content of the index file
 impl index::File {
     pub fn checksum_of_index(&self) -> owned::Id {
