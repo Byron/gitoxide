@@ -18,8 +18,10 @@ impl index::File {
         C: pack::cache::DecodeEntry,
     {
         let indexing_progress = progress.add_child("indexing");
-        let r =
-            io::BufReader::new(fs::File::open(pack.path()).map_err(|err| Error::Io(err, pack.path().into(), "open"))?);
+        let r = io::BufReader::with_capacity(
+            8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k
+            fs::File::open(pack.path()).map_err(|err| Error::Io(err, pack.path().into(), "open"))?,
+        );
         pack::graph::DeltaTree::from_sorted_offsets(self.sorted_offsets().into_iter(), r, indexing_progress)?;
 
         unimplemented!()

@@ -104,6 +104,24 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     (type_id, size, i)
 }
 
+fn streaming_parse_header_info(mut r: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
+    let mut b = [0u8; 1];
+    r.read_exact(&mut b)?;
+    let mut c = b[0];
+    let mut i = 1;
+    let type_id = (c >> 4) & 0b0000_0111;
+    let mut size = c as u64 & 0b0000_1111;
+    let mut s = 4;
+    while c & 0b1000_0000 != 0 {
+        r.read_exact(&mut b)?;
+        c = b[0];
+        i += 1;
+        size += ((c & 0b0111_1111) as u64) << s;
+        s += 7
+    }
+    Ok((type_id, size, i))
+}
+
 impl Header {
     pub fn from_bytes(d: &[u8], pack_offset: u64) -> (Header, u64, u64) {
         let (type_id, size, mut consumed) = parse_header_info(d);
@@ -134,12 +152,8 @@ impl Header {
         (object, size, consumed as u64)
     }
 
-    pub fn from_read(mut r: impl io::BufRead + io::Read, pack_offset: u64) -> Result<(Header, u64, usize), io::Error> {
-        let (type_id, size, mut consumed) = {
-            let buf = r.fill_buf()?;
-            parse_header_info(&buf)
-        };
-        r.consume(consumed);
+    pub fn from_read(mut r: impl io::Read, pack_offset: u64) -> Result<(Header, u64, usize), io::Error> {
+        let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
 
         use self::Header::*;
         let object = match type_id {
@@ -152,13 +166,12 @@ impl Header {
                 delta
             }
             REF_DELTA => {
-                let buf = r.fill_buf()?;
-                let buf = buf.get(..SHA1_SIZE).expect("At least 20 bytes of hash");
+                let mut buf = [0u8; SHA1_SIZE];
+                r.read_exact(&mut buf)?;
                 let delta = RefDelta {
-                    oid: owned::Id::from_20_bytes(buf),
+                    oid: owned::Id::new_sha1(buf),
                 };
                 consumed += SHA1_SIZE;
-                r.consume(SHA1_SIZE);
                 delta
             }
             BLOB => Blob,

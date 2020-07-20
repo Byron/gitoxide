@@ -86,6 +86,7 @@ impl DeltaTree {
                     .try_into()
                     .expect("buffer with at least 12 bytes - pack file truncated?"),
             )?;
+            r.consume(PACK_HEADER_LEN);
         }
 
         let mut offsets_to_node = BTreeMap::new();
@@ -96,18 +97,17 @@ impl DeltaTree {
 
         for pack_offset in offsets {
             count += 1;
-            r.consume(match previous_offset {
-                Some(previous) => pack_offset
-                    .checked_sub(previous)
-                    .expect("continuously ascending pack offets"),
-                None => {
-                    assert_eq!(
-                        pack_offset as usize, PACK_HEADER_LEN,
-                        "Offsets must start right after the pack header"
-                    );
-                    pack_offset
+            if let Some(previous_offset) = previous_offset {
+                let mut bytes_to_skip = pack_offset
+                    .checked_sub(previous_offset)
+                    .expect("continuously ascending pack offets") as usize;
+                while bytes_to_skip != 0 {
+                    let buf = r.fill_buf().map_err(|err| Error::Io(err, "skip bytes"))?;
+                    let bytes = buf.len().min(bytes_to_skip);
+                    r.consume(bytes);
+                    bytes_to_skip -= bytes;
                 }
-            } as usize);
+            };
             let (header, _decompressed_size, consumed) = pack::data::Header::from_read(&mut r, pack_offset)
                 .map_err(|err| Error::Io(err, "EOF while parsing header"))?;
             previous_offset = Some(pack_offset + consumed as u64);
