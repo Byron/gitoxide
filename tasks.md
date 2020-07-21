@@ -23,7 +23,6 @@
   * [x] choice of algorithm in pack-verify
   * [x] use pack streaming in pack-verify by default
   * [x] set some unit tests cases to use the streaming algorithm
-  * [ ] invert '--statistics' to become '--no-statistics' (it's free now)
 * **progress - convenience**
   * [x] `inc()` method and`inc_by(step)` method
   * [ ] a way to measure throughput on drop
