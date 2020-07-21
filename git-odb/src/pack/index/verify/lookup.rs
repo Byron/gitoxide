@@ -1,5 +1,5 @@
 use super::{Error, Mode, Outcome, Reducer};
-use crate::{pack, pack::data::decode, pack::index};
+use crate::pack::{self, data::decode, index, index::verify::util};
 use git_features::{
     parallel::in_parallel_if,
     progress::{self, Progress},
@@ -23,11 +23,7 @@ impl index::File {
     {
         use crate::pack::data::decode::ResolvedBase;
 
-        let index_entries = {
-            let mut v: Vec<_> = self.iter().collect();
-            v.sort_by_key(|e| e.pack_offset);
-            v
-        };
+        let index_entries = util::index_entries_sorted_by_offset_ascending(self);
 
         const CHUNK_SIZE: usize = 1000;
         let there_are_enough_entries_to_process = || index_entries.len() > CHUNK_SIZE * 2;

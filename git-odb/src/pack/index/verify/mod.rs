@@ -128,6 +128,7 @@ mod indexed;
 mod lookup;
 mod reduce;
 pub(crate) use reduce::Reducer;
+mod util;
 
 /// Verify and validate the content of the index file
 impl index::File {
