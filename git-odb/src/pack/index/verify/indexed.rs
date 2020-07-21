@@ -31,6 +31,7 @@ impl index::File {
             sorted_entries.iter().map(|e| e.pack_offset),
             pack.path(),
             root.add_child("indexing"),
+            |id| self.lookup_index(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let if_there_are_enough_objects = || self.num_objects > 10_000;
 
@@ -44,7 +45,7 @@ impl index::File {
             (
                 Vec::<u8>::with_capacity(2048), // decode buffer
                 Vec::<u8>::with_capacity(2048), // re-encode buffer
-                Vec::<pack::graph::Node>::new(),
+                Vec::<(pack::graph::Node, u32)>::new(),
                 reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
             )
         };
@@ -54,13 +55,15 @@ impl index::File {
             thread_limit,
             state_per_thread,
             |node: pack::graph::Node,
-             (buf, encode_buf, nodes, progress): &mut (Vec<u8>, Vec<u8>, Vec<pack::graph::Node>, _)|
+             (buf, encode_buf, nodes, progress)|
              -> Result<Vec<pack::data::decode::Outcome>, Error> {
                 let mut stats = Vec::new();
                 let mut header_buf = [0u8; 64];
                 nodes.clear();
-                nodes.push(node);
+                nodes.push((node, 0));
+                progress.init(None, Some("entries"));
                 let mut children = Vec::new();
+
                 struct CacheEntry {
                     kind: Kind,
                     data: Vec<u8>,
@@ -94,7 +97,7 @@ impl index::File {
                 let mut cache = BTreeMap::new();
 
                 let mut count = 0;
-                while let Some(node) = nodes.pop() {
+                while let Some((node, level)) = nodes.pop() {
                     let pack_offset = node.pack_offset;
                     let index_entry = sorted_entries
                         .binary_search_by(|e| e.pack_offset.cmp(&pack_offset))
@@ -104,7 +107,7 @@ impl index::File {
                     tree.children(node, &mut children);
 
                     let shared_cache = &mut SharedCache(&mut cache);
-                    stats.push(self.process_entry(
+                    let mut stat = self.process_entry(
                         mode,
                         pack,
                         shared_cache,
@@ -113,11 +116,13 @@ impl index::File {
                         progress,
                         &mut header_buf,
                         index_entry_of_node,
-                    )?);
+                    )?;
+                    stat.num_deltas = level;
+                    stats.push(stat);
 
                     count += 1;
                     progress.set(count);
-                    nodes.extend(children.iter().cloned());
+                    nodes.extend(children.iter().cloned().map(|cn| (cn, level + 1)));
                 }
 
                 Ok(stats)

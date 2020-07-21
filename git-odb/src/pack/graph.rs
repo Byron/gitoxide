@@ -76,6 +76,7 @@ impl DeltaTree {
         offsets: impl Iterator<Item = PackOffset>,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
+        resolve_in_pack_oid: impl Fn(git_object::borrowed::Id) -> Option<PackOffset>,
     ) -> Result<Self, Error> {
         use io::{BufRead, Read};
 
@@ -129,9 +130,15 @@ impl DeltaTree {
                     let base = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base);
                 }
-                RefDelta { oid: _ } => {
-                    let base = tree.add_node(pack_offset);
-                    offsets_to_node.insert(pack_offset, base);
+                RefDelta { oid } => {
+                    let base_or_child = tree.add_node(pack_offset);
+                    offsets_to_node.insert(pack_offset, base_or_child);
+                    if let Some(base_pack_offset) = resolve_in_pack_oid(oid.to_borrowed()) {
+                        let base = offsets_to_node
+                            .entry(base_pack_offset)
+                            .or_insert_with(|| tree.add_node(base_pack_offset));
+                        tree.add_edge(*base, base_or_child, ());
+                    }
                 }
                 OfsDelta {
                     pack_offset: base_pack_offset,
@@ -155,6 +162,7 @@ impl DeltaTree {
             tree.node_count() as f32 / elapsed
         ));
 
+        tree.shrink_to_fit();
         Ok(DeltaTree { inner: tree })
     }
 }

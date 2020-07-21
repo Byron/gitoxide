@@ -21,6 +21,7 @@ mod method {
                 idx.sorted_offsets().into_iter(),
                 fixture_path(pack_path),
                 git_features::progress::Discard,
+                |_| None,
             )
             .unwrap();
         }

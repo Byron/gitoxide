@@ -20,10 +20,10 @@
   * [x] support easy access to merge-tags and the signature
 * **stream pack for verify-pack**
   * [ ] stream packs and feed information into a delegate to allow doing anything™️
-  * [ ] support for multi-threading
+  * [x] support for multi-threading
   * [x] choice of algorithm in pack-verify
   * [ ] use pack streaming in pack-verify by default
-  * [ ] set some unit tests cases to use the streaming algorithm
+  * [x] set some unit tests cases to use the streaming algorithm
 * **progress - convenience**
   * [ ] `inc()` method
   * [ ] `inc_by(step)` method
