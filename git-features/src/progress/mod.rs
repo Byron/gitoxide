@@ -38,6 +38,20 @@ pub trait Progress {
     /// **Note**: that this call has no effect unless `init(…)` was called before.
     fn set(&mut self, step: u32);
 
+    /// Increment the current progress to the given `step`. The cost of this call is negligible,
+    /// making manual throttling *not* necessary.
+    ///
+    /// **Note**: that this call has no effect unless `init(…)` was called before.
+    fn inc_by(&mut self, step: u32);
+
+    /// Increment the current progress to the given 1. The cost of this call is negligible,
+    /// making manual throttling *not* necessary.
+    ///
+    /// **Note**: that this call has no effect unless `init(…)` was called before.
+    fn inc(&mut self) {
+        self.inc_by(1)
+    }
+
     /// Create a `message` of the given `level` and store it with the progress tree.
     ///
     /// Use this to provide additional,human-readable information about the progress
@@ -70,6 +84,8 @@ impl Progress for Discard {
     fn init(&mut self, _max: Option<u32>, _unit: Option<&'static str>) {}
 
     fn set(&mut self, _step: u32) {}
+
+    fn inc_by(&mut self, _step: u32) {}
 
     fn message(&mut self, _level: MessageLevel, _message: impl Into<String>) {}
 }
@@ -104,6 +120,13 @@ where
         match self {
             Either::Left(l) => l.set(step),
             Either::Right(r) => r.set(step),
+        }
+    }
+
+    fn inc_by(&mut self, step: u32) {
+        match self {
+            Either::Left(l) => l.inc_by(step),
+            Either::Right(r) => r.inc_by(step),
         }
     }
 
@@ -145,6 +168,10 @@ where
 
     fn set(&mut self, step: u32) {
         self.0.set(step)
+    }
+
+    fn inc_by(&mut self, step: u32) {
+        self.0.inc_by(step)
     }
 
     fn message(&mut self, level: MessageLevel, message: impl Into<String>) {

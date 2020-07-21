@@ -6,6 +6,7 @@ pub struct Log {
     max: Option<u32>,
     unit: Option<&'static str>,
     last_set: Option<std::time::SystemTime>,
+    step: u32,
     current_level: usize,
     max_level: usize,
 }
@@ -19,6 +20,7 @@ impl Log {
             current_level: 0,
             max_level: max_level.unwrap_or(usize::MAX),
             max: None,
+            step: 0,
             unit: None,
             last_set: None,
         }
@@ -33,6 +35,7 @@ impl Progress for Log {
             name: format!("{}::{}", self.name, Into::<String>::into(name)),
             current_level: self.current_level + 1,
             max_level: self.max_level,
+            step: 0,
             max: None,
             unit: None,
             last_set: None,
@@ -45,6 +48,7 @@ impl Progress for Log {
     }
 
     fn set(&mut self, step: u32) {
+        self.step = step;
         if self.current_level > self.max_level {
             return;
         }
@@ -67,6 +71,10 @@ impl Progress for Log {
                 (None, None) => log::info!("{} → {}", self.name, step),
             }
         }
+    }
+
+    fn inc_by(&mut self, step: u32) {
+        self.set(self.step + step)
     }
 
     fn message(&mut self, level: MessageLevel, message: impl Into<String>) {

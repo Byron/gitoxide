@@ -132,10 +132,10 @@ impl index::File {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let obj = borrowed::Object::from_bytes(object_kind, buf.as_slice())
+                    let borrowed_object = borrowed::Object::from_bytes(object_kind, buf.as_slice())
                         .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
                     if let Mode::Sha1CRC32DecodeEncode = mode {
-                        let object = owned::Object::from(obj);
+                        let object = owned::Object::from(borrowed_object);
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;
                         if encode_buf != buf {

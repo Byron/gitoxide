@@ -17,6 +17,10 @@ impl Progress for Item {
         Item::set(self, step)
     }
 
+    fn inc_by(&mut self, step: u32) {
+        self.inc_by(step)
+    }
+
     fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
         Item::message(
             self,

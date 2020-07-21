@@ -25,8 +25,7 @@
   * [x] set some unit tests cases to use the streaming algorithm
   * [x] invert '--statistics' to become '--no-statistics' (it's free now)
 * **progress - convenience**
-  * [ ] `inc()` method
-  * [ ] `inc_by(step)` method
+  * [x] `inc()` method and`inc_by(step)` method
   * [ ] a way to measure throughput on drop
   * [ ] percentages somewhere near the progress bar
 * **plumbing - explode pack**
