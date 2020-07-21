@@ -21,8 +21,6 @@ impl index::File {
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
     {
-        use crate::pack::data::decode::ResolvedBase;
-
         let index_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
 
@@ -55,89 +53,116 @@ impl index::File {
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for (idx, index_entry) in entries.iter().enumerate() {
-                    let pack_entry = pack.entry(index_entry.pack_offset);
-                    let pack_entry_data_offset = pack_entry.data_offset;
-                    let entry_stats = pack
-                        .decode_entry(
-                            pack_entry,
-                            buf,
-                            |id, _| {
-                                self.lookup_index(id)
-                                    .map(|index| ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index))))
-                            },
-                            cache,
-                        )
-                        .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
-                    let object_kind = entry_stats.kind;
-                    let consumed_input = entry_stats.compressed_size;
-                    stats.push(entry_stats);
-
-                    let header_size = crate::loose::object::header::encode(object_kind, buf.len(), &mut header_buf[..])
-                        .expect("header buffer to be big enough");
-                    let mut hasher = git_features::hash::Sha1::default();
-                    hasher.update(&header_buf[..header_size]);
-                    hasher.update(buf.as_slice());
-
-                    let actual_oid = owned::Id::new_sha1(hasher.digest());
-                    if actual_oid != index_entry.oid {
-                        return Err(Error::PackObjectMismatch {
-                            actual: actual_oid,
-                            expected: index_entry.oid,
-                            offset: index_entry.pack_offset,
-                            kind: object_kind,
-                        });
-                    }
-                    if let Some(desired_crc32) = index_entry.crc32 {
-                        let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
-                        let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
-                        if actual_crc32 != desired_crc32 {
-                            return Err(Error::Crc32Mismatch {
-                                actual: actual_crc32,
-                                expected: desired_crc32,
-                                offset: index_entry.pack_offset,
-                                kind: object_kind,
-                            });
-                        }
-                    }
-                    if let Mode::Sha1CRC32Decode | Mode::Sha1CRC32DecodeEncode = mode {
-                        use git_object::Kind::*;
-                        match object_kind {
-                            Tree | Commit | Tag => {
-                                let obj = borrowed::Object::from_bytes(object_kind, buf.as_slice())
-                                    .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
-                                if let Mode::Sha1CRC32DecodeEncode = mode {
-                                    let object = owned::Object::from(obj);
-                                    encode_buf.clear();
-                                    object.write_to(&mut *encode_buf)?;
-                                    if encode_buf != buf {
-                                        let mut should_return_error = true;
-                                        if let git_object::Kind::Tree = object_kind {
-                                            if buf.as_slice().as_bstr().find(b"100664").is_some()
-                                                || buf.as_slice().as_bstr().find(b"100640").is_some()
-                                            {
-                                                progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
-                                                should_return_error = false
-                                            }
-                                        }
-                                        if should_return_error {
-                                            return Err(Error::ObjectEncodeMismatch(
-                                                object_kind,
-                                                index_entry.oid,
-                                                buf.clone().into(),
-                                                encode_buf.clone().into(),
-                                            ));
-                                        }
-                                    }
-                                }
-                            }
-                            Blob => {}
-                        };
-                    }
+                    stats.push(self.process_entry(
+                        mode,
+                        pack,
+                        cache,
+                        buf,
+                        encode_buf,
+                        progress,
+                        &mut header_buf,
+                        index_entry,
+                    )?);
                     progress.set(idx as u32);
                 }
                 Ok(stats)
             },
             Reducer::from_progress(&reduce_progress, pack.data_len()),
         )
+    }
+
+    fn process_entry<C>(
+        &self,
+        mode: Mode,
+        pack: &pack::data::File,
+        cache: &mut C,
+        buf: &mut Vec<u8>,
+        encode_buf: &mut Vec<u8>,
+        progress: &mut impl Progress,
+        header_buf: &mut [u8; 64],
+        index_entry: &pack::index::Entry,
+    ) -> Result<decode::Outcome, Error>
+    where
+        C: pack::cache::DecodeEntry,
+    {
+        let pack_entry = pack.entry(index_entry.pack_offset);
+        let pack_entry_data_offset = pack_entry.data_offset;
+        let entry_stats = pack
+            .decode_entry(
+                pack_entry,
+                buf,
+                |id, _| {
+                    self.lookup_index(id).map(|index| {
+                        pack::data::decode::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
+                    })
+                },
+                cache,
+            )
+            .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
+        let object_kind = entry_stats.kind;
+        let consumed_input = entry_stats.compressed_size;
+
+        let header_size = crate::loose::object::header::encode(object_kind, buf.len(), &mut header_buf[..])
+            .expect("header buffer to be big enough");
+        let mut hasher = git_features::hash::Sha1::default();
+        hasher.update(&header_buf[..header_size]);
+        hasher.update(buf.as_slice());
+
+        let actual_oid = owned::Id::new_sha1(hasher.digest());
+        if actual_oid != index_entry.oid {
+            return Err(Error::PackObjectMismatch {
+                actual: actual_oid,
+                expected: index_entry.oid,
+                offset: index_entry.pack_offset,
+                kind: object_kind,
+            });
+        }
+        if let Some(desired_crc32) = index_entry.crc32 {
+            let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
+            let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
+            if actual_crc32 != desired_crc32 {
+                return Err(Error::Crc32Mismatch {
+                    actual: actual_crc32,
+                    expected: desired_crc32,
+                    offset: index_entry.pack_offset,
+                    kind: object_kind,
+                });
+            }
+        }
+        if let Mode::Sha1CRC32Decode | Mode::Sha1CRC32DecodeEncode = mode {
+            use git_object::Kind::*;
+            match object_kind {
+                Tree | Commit | Tag => {
+                    let obj = borrowed::Object::from_bytes(object_kind, buf.as_slice())
+                        .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
+                    if let Mode::Sha1CRC32DecodeEncode = mode {
+                        let object = owned::Object::from(obj);
+                        encode_buf.clear();
+                        object.write_to(&mut *encode_buf)?;
+                        if encode_buf != buf {
+                            let mut should_return_error = true;
+                            if let git_object::Kind::Tree = object_kind {
+                                if buf.as_slice().as_bstr().find(b"100664").is_some()
+                                    || buf.as_slice().as_bstr().find(b"100640").is_some()
+                                {
+                                    progress.info(format!("Tree object {} would be cleaned up during re-serialization, replacing mode '100664|100640' with '100644'", index_entry.oid));
+                                    should_return_error = false
+                                }
+                            }
+                            if should_return_error {
+                                return Err(Error::ObjectEncodeMismatch(
+                                    object_kind,
+                                    index_entry.oid,
+                                    buf.clone().into(),
+                                    encode_buf.clone().into(),
+                                ));
+                            }
+                        }
+                    }
+                }
+                Blob => {}
+            };
+        }
+        Ok(entry_stats)
     }
 }

@@ -168,7 +168,10 @@ fn pack_lookup() {
                 assert_eq!(
                     idx.verify_checksum_of_index(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
                         .unwrap(),
-                    (idx.checksum_of_index(), Some(stats.to_owned()))
+                    (idx.checksum_of_index(), Some(stats.to_owned())),
+                    "{:?} -> {:?}",
+                    algo,
+                    mode
                 );
             }
         }

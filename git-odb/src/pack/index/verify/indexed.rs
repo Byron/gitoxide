@@ -43,8 +43,6 @@ impl index::File {
             |_index| (),
             |_node: pack::graph::Node, _state: &mut ()| Ok::<_, Error>(Vec::new()),
             index::verify::Reducer::from_progress(&reduce_progress, pack.data_len()),
-        )?;
-
-        unimplemented!()
+        )
     }
 }

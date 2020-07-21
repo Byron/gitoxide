@@ -10,10 +10,12 @@ fn add_decode_result(lhs: &mut decode::Outcome, rhs: decode::Outcome) {
 }
 
 fn div_decode_result(lhs: &mut decode::Outcome, div: usize) {
-    lhs.num_deltas = (lhs.num_deltas as f32 / div as f32) as u32;
-    lhs.decompressed_size /= div as u64;
-    lhs.compressed_size /= div;
-    lhs.object_size /= div as u64;
+    if div != 0 {
+        lhs.num_deltas = (lhs.num_deltas as f32 / div as f32) as u32;
+        lhs.decompressed_size /= div as u64;
+        lhs.compressed_size /= div;
+        lhs.object_size /= div as u64;
+    }
 }
 
 pub struct Reducer<'a, P> {
