@@ -53,9 +53,9 @@ mod options {
         /// Possible values are "less-time" and "less-memory". Default is "less-memory".
         pub algorithm: Option<core::VerifyAlgorithm>,
 
-        /// do not automatically output statistical information about the pack
-        #[argh(switch)]
-        pub no_statistics: bool,
+        /// output statistical information about the pack
+        #[argh(switch, short = 's')]
+        pub statistics: bool,
         /// verbose progress messages are printed line by line
         #[argh(switch, short = 'v')]
         pub verbose: bool,
@@ -103,7 +103,7 @@ pub fn main() -> Result<()> {
         SubCommands::VerifyPack(VerifyPack {
             path,
             verbose,
-            no_statistics,
+            statistics,
             algorithm,
             decode,
             re_encode,
@@ -113,10 +113,10 @@ pub fn main() -> Result<()> {
                 path,
                 progress,
                 core::Context {
-                    output_statistics: if no_statistics {
-                        None
-                    } else {
+                    output_statistics: if statistics {
                         Some(core::OutputFormat::Human)
+                    } else {
+                        None
                     },
                     algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::LessTime),
                     thread_limit,

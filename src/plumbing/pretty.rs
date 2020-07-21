@@ -29,9 +29,9 @@ mod options {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         VerifyPack {
-            /// Do not output statistical information about the pack
-            #[structopt(long)]
-            no_statistics: bool,
+            /// output statistical information about the pack
+            #[structopt(long, short = "s")]
+            statistics: bool,
             /// Determine the format to use when outputting statistics.
             #[structopt(
                 long,
@@ -189,7 +189,7 @@ pub fn main() -> Result<()> {
             decode,
             re_encode,
             progress_keep_open,
-            no_statistics,
+            statistics,
         } => prepare_and_run(
             "verify-pack",
             verbose,
@@ -201,7 +201,7 @@ pub fn main() -> Result<()> {
                     (true, true) | (false, true) => core::VerifyMode::Sha1CRC32DecodeEncode,
                     (false, false) => core::VerifyMode::Sha1CRC32,
                 };
-                let output_statistics = if no_statistics { None } else { Some(format) };
+                let output_statistics = if statistics { Some(format) } else { None };
                 core::verify_pack_or_pack_index(
                     path,
                     progress,

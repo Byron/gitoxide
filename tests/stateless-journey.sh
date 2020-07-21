@@ -53,38 +53,32 @@ title "CLI ${kind}"
     (with "no statistics"
       it "verifies the pack index successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --no-statistics "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_INDEX_FILE"
       }
     )
     (with "statistics"
       it "verifies the pack index successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-with-statistics-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack "$PACK_INDEX_FILE"
-      }
-    )
-    (with "statistics and less-memory algorithm"
-      it "verifies the pack index successfully and with desired output" && {
-        WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-with-statistics-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --algorithm less-memory "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --statistics "$PACK_INDEX_FILE"
       }
     )
     (with "decode"
       it "verifies the pack index successfully and with desired output, and decodes all objects" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --no-statistics --algorithm less-memory --decode "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --algorithm less-memory --decode "$PACK_INDEX_FILE"
       }
     )
     (with "re-encode"
       it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --algorithm less-time --no-statistics --re-encode "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" verify-pack --algorithm less-time --re-encode "$PACK_INDEX_FILE"
       }
     )
     if test "$kind" = "max"; then
     (with "statistics (JSON)"
       it "verifies the pack index successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-verify-pack-index-with-statistics-json-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" --threads 1 verify-pack --format json "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" --threads 1 verify-pack --statistics --format json "$PACK_INDEX_FILE"
       }
     )
     fi
