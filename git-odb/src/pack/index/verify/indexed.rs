@@ -94,7 +94,6 @@ impl index::File {
                 }
                 let mut cache = BTreeMap::new();
 
-                let mut count = 0;
                 while let Some((node, level)) = nodes.pop() {
                     let pack_offset = node.pack_offset;
                     let index_entry = sorted_entries
@@ -118,8 +117,7 @@ impl index::File {
                     stat.num_deltas = level;
                     stats.push(stat);
 
-                    count += 1;
-                    progress.set(count);
+                    progress.inc();
                     nodes.extend(children.iter().cloned().map(|cn| (cn, level + 1)));
                 }
 

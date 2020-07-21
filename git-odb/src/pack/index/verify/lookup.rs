@@ -50,7 +50,7 @@ impl index::File {
                 progress.init(Some(entries.len() as u32), Some("entries"));
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
-                for (idx, index_entry) in entries.iter().enumerate() {
+                for index_entry in entries.iter() {
                     stats.push(self.process_entry(
                         mode,
                         pack,
@@ -61,7 +61,7 @@ impl index::File {
                         &mut header_buf,
                         index_entry,
                     )?);
-                    progress.set(idx as u32);
+                    progress.inc();
                 }
                 Ok(stats)
             },

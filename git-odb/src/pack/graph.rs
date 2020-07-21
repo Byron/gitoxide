@@ -105,11 +105,9 @@ impl DeltaTree {
         let mut offsets_to_node = BTreeMap::new();
         let then = SystemTime::now();
 
-        let mut count = 0;
         let mut previous_offset = None::<u64>;
 
         for pack_offset in offsets {
-            count += 1;
             if let Some(previous_offset) = previous_offset {
                 let mut bytes_to_skip = pack_offset
                     .checked_sub(previous_offset)
@@ -151,7 +149,7 @@ impl DeltaTree {
                     tree.add_edge(*base, child, ());
                 }
             };
-            progress.set(count);
+            progress.inc();
         }
 
         let elapsed = then.elapsed().expect("system time to work").as_secs_f32();
