@@ -108,6 +108,7 @@ pub fn init() -> Result<()> {
     git_repository::init::repository().with_context(|| "Repository initialization failed")
 }
 
+#[allow(clippy::large_enum_variant)]
 enum EitherCache {
     Left(pack::cache::DecodeEntryNoop),
     Right(pack::cache::DecodeEntryLRU),

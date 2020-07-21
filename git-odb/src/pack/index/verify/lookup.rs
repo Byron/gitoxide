@@ -69,6 +69,7 @@ impl index::File {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn process_entry<C>(
         &self,
         mode: Mode,

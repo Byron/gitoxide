@@ -9,12 +9,10 @@ pub fn index_entries_sorted_by_offset_ascending(
     progress.init(Some(idx.num_objects), Some("entries"));
     let then = SystemTime::now();
 
-    let mut count = 0;
     let mut v = Vec::with_capacity(idx.num_objects as usize);
-    for entry in idx.iter() {
+    for (count, entry) in idx.iter().enumerate() {
         v.push(entry);
-        count += 1;
-        progress.set(count);
+        progress.set(count as u32 + 1);
     }
     v.sort_by_key(|e| e.pack_offset);
 

@@ -52,7 +52,7 @@ benchmark: target/release/gio ## see how fast things are, powered by hyperfine
 
 ##@ Testing
 
-tests: check clippy unit-tests journey-tests-small journey-tests ## run all tests, including journey tests
+tests: clippy check unit-tests journey-tests-small journey-tests ## run all tests, including journey tests
 
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all

@@ -116,7 +116,7 @@ pub mod stream {
     where
         R: io::Read,
     {
-        pub fn new(read: R) -> InflateReader<io::BufReader<R>> {
+        pub fn from_read(read: R) -> InflateReader<io::BufReader<R>> {
             // TODO: Performance opportunity - a buf reader that doesn't allocate
             InflateReader {
                 decompressor: Inflate::default(),
@@ -229,7 +229,7 @@ pub mod stream {
 
         #[test]
         fn small_file_decompress() {
-            let r = InflateReader::new(
+            let r = InflateReader::from_read(
                 std::fs::File::open(fixture_path("objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980")).unwrap(),
             );
             let mut bytes = r.bytes();

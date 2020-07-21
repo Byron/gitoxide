@@ -104,17 +104,17 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     (type_id, size, i)
 }
 
-fn streaming_parse_header_info(mut r: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
-    let mut b = [0u8; 1];
-    r.read_exact(&mut b)?;
-    let mut c = b[0];
+fn streaming_parse_header_info(mut read: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
+    let mut byte = [0u8; 1];
+    read.read_exact(&mut byte)?;
+    let mut c = byte[0];
     let mut i = 1;
     let type_id = (c >> 4) & 0b0000_0111;
     let mut size = c as u64 & 0b0000_1111;
     let mut s = 4;
     while c & 0b1000_0000 != 0 {
-        r.read_exact(&mut b)?;
-        c = b[0];
+        read.read_exact(&mut byte)?;
+        c = byte[0];
         i += 1;
         size += ((c & 0b0111_1111) as u64) << s;
         s += 7
