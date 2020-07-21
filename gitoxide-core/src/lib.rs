@@ -183,8 +183,13 @@ where
                 }
             };
 
-            idx.verify_checksum_of_index(pack.as_ref(), thread_limit, mode, algorithm.into(), progress, cache)
-                .with_context(|| "Verification failure")?
+            idx.verify_checksum_of_index(
+                pack.as_ref().map(|p| (p, mode, algorithm.into())),
+                thread_limit,
+                progress,
+                cache,
+            )
+            .with_context(|| "Verification failure")?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };

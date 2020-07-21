@@ -29,6 +29,8 @@
   * [ ] `inc_by(step)` method
   * [ ] a way to measure throughput on drop
 * **plumbing - explode pack**
+  * _useful for receiving packs that are small enough to warrant living as loose objects for a while
+    preventing pack buildup_
   * [ ] write loose object
   * [ ] single threaded
   * [ ] multi-threaded

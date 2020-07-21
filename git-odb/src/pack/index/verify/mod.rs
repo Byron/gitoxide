@@ -140,10 +140,8 @@ impl index::File {
     /// redoing a lot of work across multiple objects.
     pub fn verify_checksum_of_index<P, C>(
         &self,
-        pack: Option<&pack::data::File>,
+        pack: Option<(&pack::data::File, Mode, Algorithm)>,
         thread_limit: Option<usize>,
-        mode: Mode,
-        algorithm: Algorithm,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Option<Outcome>), Error>
@@ -171,7 +169,7 @@ impl index::File {
         };
         match pack {
             None => verify_self().map(|id| (id, None)),
-            Some(pack) => {
+            Some((pack, mode, algorithm)) => {
                 if self.checksum_of_pack() != pack.checksum() {
                     return Err(Error::PackMismatch {
                         actual: pack.checksum(),
