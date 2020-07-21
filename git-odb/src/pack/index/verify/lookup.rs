@@ -23,7 +23,8 @@ impl index::File {
     {
         use crate::pack::data::decode::ResolvedBase;
 
-        let index_entries = util::index_entries_sorted_by_offset_ascending(self);
+        let index_entries =
+            util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
 
         const CHUNK_SIZE: usize = 1000;
         let there_are_enough_entries_to_process = || index_entries.len() > CHUNK_SIZE * 2;
