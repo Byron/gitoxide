@@ -65,7 +65,6 @@ impl index::File {
                     kind: Kind,
                     data: Vec<u8>,
                     compressed_size: usize,
-                    hits_to_live: usize,
                 }
                 struct SharedCache<'a>(&'a mut BTreeMap<PackOffset, CacheEntry>);
 
@@ -75,36 +74,21 @@ impl index::File {
                             kind,
                             data: data.to_owned(),
                             compressed_size,
-                            hits_to_live: 0,
                         });
                     }
 
                     fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
-                        let (res, should_delete) = if let Some(CacheEntry {
-                            kind,
-                            data,
-                            compressed_size,
-                            hits_to_live,
-                        }) = self.0.get_mut(&offset)
-                        {
-                            out.resize(data.len(), 0);
-                            out.copy_from_slice(&data);
-                            *hits_to_live = hits_to_live.saturating_sub(1);
-                            (Some((*kind, *compressed_size)), *hits_to_live == 0)
-                        } else {
-                            (None, false)
-                        };
-                        if should_delete {
-                            self.0.remove(&offset);
-                        }
-                        res
-                    }
-                }
-                impl<'a> SharedCache<'a> {
-                    fn hits_to_live(&mut self, pack_offset: u64, hits: usize) {
-                        if let Some(v) = self.0.get_mut(&pack_offset) {
-                            v.hits_to_live += hits;
-                        }
+                        self.0.get_mut(&offset).map(
+                            |CacheEntry {
+                                 kind,
+                                 data,
+                                 compressed_size,
+                             }| {
+                                out.resize(data.len(), 0);
+                                out.copy_from_slice(&data);
+                                (*kind, *compressed_size)
+                            },
+                        )
                     }
                 }
                 let mut cache = BTreeMap::new();
@@ -130,7 +114,6 @@ impl index::File {
                         &mut header_buf,
                         index_entry_of_node,
                     )?);
-                    shared_cache.hits_to_live(pack_offset, children.len());
 
                     count += 1;
                     progress.set(count);
