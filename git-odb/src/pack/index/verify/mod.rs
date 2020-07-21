@@ -122,6 +122,7 @@ impl Default for Algorithm {
 
 mod indexed;
 mod lookup;
+mod reduce;
 
 /// Verify and validate the content of the index file
 impl index::File {
