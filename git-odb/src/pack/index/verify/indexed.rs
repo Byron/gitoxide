@@ -12,18 +12,16 @@ use git_object::Kind;
 use std::collections::BTreeMap;
 
 impl index::File {
-    pub(crate) fn inner_verify_with_indexed_lookup<P, C>(
+    pub(crate) fn inner_verify_with_indexed_lookup<P>(
         &self,
         thread_limit: Option<usize>,
         mode: Mode,
-        _make_cache: impl Fn() -> C + Send + Sync,
         mut root: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
     ) -> Result<Outcome, Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
-        C: pack::cache::DecodeEntry,
     {
         let sorted_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));

@@ -43,13 +43,13 @@ impl FromStr for OutputFormat {
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum VerifyAlgorithm {
-    Lookup,
-    Stream,
+    LessTime,
+    LessMemory,
 }
 
 impl VerifyAlgorithm {
     pub fn variants() -> &'static [&'static str] {
-        &["lookup", "stream"]
+        &["less-time", "less-memory"]
     }
 }
 
@@ -59,8 +59,8 @@ impl FromStr for VerifyAlgorithm {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s_lc = s.to_ascii_lowercase();
         Ok(match s_lc.as_str() {
-            "lookup" => VerifyAlgorithm::Lookup,
-            "stream" => VerifyAlgorithm::Stream,
+            "less-memory" => VerifyAlgorithm::LessMemory,
+            "less-time" => VerifyAlgorithm::LessTime,
             _ => return Err(format!("Invalid verification algorithm: '{}'", s)),
         })
     }
@@ -69,8 +69,8 @@ impl FromStr for VerifyAlgorithm {
 impl From<VerifyAlgorithm> for index::verify::Algorithm {
     fn from(v: VerifyAlgorithm) -> Self {
         match v {
-            VerifyAlgorithm::Lookup => index::verify::Algorithm::Lookup,
-            VerifyAlgorithm::Stream => index::verify::Algorithm::DeltaTreeLookup,
+            VerifyAlgorithm::LessMemory => index::verify::Algorithm::Lookup,
+            VerifyAlgorithm::LessTime => index::verify::Algorithm::DeltaTreeLookup,
         }
     }
 }
@@ -97,7 +97,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
             output_statistics: None,
             thread_limit: None,
             mode: index::verify::Mode::Sha1CRC32,
-            algorithm: VerifyAlgorithm::Lookup,
+            algorithm: VerifyAlgorithm::LessMemory,
             out: Vec::new(),
             err: Vec::new(),
         }

@@ -45,7 +45,7 @@ mod options {
             #[structopt(
                 long,
                 short = "a",
-                default_value = "lookup",
+                default_value = "less-time",
                 possible_values(core::VerifyAlgorithm::variants())
             )]
             algorithm: core::VerifyAlgorithm,

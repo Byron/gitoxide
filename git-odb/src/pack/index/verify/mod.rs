@@ -106,21 +106,21 @@ pub enum Mode {
 /// The way we verify the pack
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Algorithm {
+    /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
+    /// resource at the expense of resident memory, as we will use an additional `DeltaTree` to accelerate
+    /// delta chain resolution.
+    DeltaTreeLookup,
     /// We lookup each object similarly to what would happen during normal repository use.
     /// Uses more compute resources as it will resolve delta chains from back to front, but start right away
     /// without indexing or investing any memory in indices.
     ///
     /// This option may be well suited for big packs in memory-starved system that support memory mapping.
     Lookup,
-    /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
-    /// resource at the expense of resident memory, as we will use an additional `DeltaTree` to accelerate
-    /// delta chain resolution.
-    DeltaTreeLookup,
 }
 
 impl Default for Algorithm {
     fn default() -> Self {
-        Algorithm::Lookup
+        Algorithm::DeltaTreeLookup
     }
 }
 
@@ -198,9 +198,7 @@ impl index::File {
 
                 match algorithm {
                     Algorithm::Lookup => self.inner_verify_with_lookup(thread_limit, mode, make_cache, root, pack),
-                    Algorithm::DeltaTreeLookup => {
-                        self.inner_verify_with_indexed_lookup(thread_limit, mode, make_cache, root, pack)
-                    }
+                    Algorithm::DeltaTreeLookup => self.inner_verify_with_indexed_lookup(thread_limit, mode, root, pack),
                 }
                 .map(|stats| (id, Some(stats)))
             }

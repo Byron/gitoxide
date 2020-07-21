@@ -19,11 +19,11 @@
   * [x] add re-encode to all stress tests
   * [x] support easy access to merge-tags and the signature
 * **stream pack for verify-pack**
-  * [ ] stream packs and feed information into a delegate to allow doing anything™️
   * [x] support for multi-threading
   * [x] choice of algorithm in pack-verify
-  * [ ] use pack streaming in pack-verify by default
+  * [x] use pack streaming in pack-verify by default
   * [x] set some unit tests cases to use the streaming algorithm
+  * [ ] invert '--statistics' to become '--no-statistics' (it's free now)
 * **progress - convenience**
   * [ ] `inc()` method
   * [ ] `inc_by(step)` method

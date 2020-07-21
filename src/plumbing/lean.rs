@@ -50,7 +50,7 @@ mod options {
         #[argh(option)]
         /// the algorithm used to verify the pack. They differ in costs.
         ///
-        /// Possible values are "lookup" and "stream". Default is "stream".
+        /// Possible values are "less-time" and "less-memory". Default is "less-memory".
         pub algorithm: Option<core::VerifyAlgorithm>,
 
         /// output statistical information about the pack
@@ -118,7 +118,7 @@ pub fn main() -> Result<()> {
                     } else {
                         None
                     },
-                    algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::Lookup),
+                    algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::LessTime),
                     thread_limit,
                     mode: match (decode, re_encode) {
                         (true, false) => core::VerifyMode::Sha1CRC32Decode,
