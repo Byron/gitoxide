@@ -117,7 +117,7 @@ impl index::File {
             )
         };
 
-        Ok(in_parallel_if(
+        in_parallel_if(
             there_are_enough_entries_to_process,
             input_chunks,
             thread_limit,
@@ -225,6 +225,6 @@ impl index::File {
                     pack_size: pack.data_len() as u64,
                 },
             },
-        )?)
+        )
     }
 }
