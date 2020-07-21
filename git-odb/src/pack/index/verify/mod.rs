@@ -107,10 +107,14 @@ pub enum Mode {
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Algorithm {
     /// We lookup each object similarly to what would happen during normal repository use.
-    /// Uses more compute resources as it will resolve delta chains from back to front, potentially
+    /// Uses more compute resources as it will resolve delta chains from back to front, but start right away
+    /// without indexing or investing any memory in indices.
+    ///
+    /// This option may be well suited for big packs in memory-starved system that support memory mapping.
     Lookup,
     /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
-    /// resource at the expense of resident memory, as we will use an additional DeltaTree to make that happen.
+    /// resource at the expense of resident memory, as we will use an additional `DeltaTree` to accelerate
+    /// delta chain resolution.
     DeltaTreeLookup,
 }
 
@@ -123,6 +127,7 @@ impl Default for Algorithm {
 mod indexed;
 mod lookup;
 mod reduce;
+pub(crate) use reduce::Reducer;
 
 /// Verify and validate the content of the index file
 impl index::File {

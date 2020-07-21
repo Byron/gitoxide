@@ -1,11 +1,10 @@
-use super::{reduce::Reducer, Error, Mode, Outcome};
+use super::{Error, Mode, Outcome, Reducer};
 use crate::{pack, pack::data::decode, pack::index};
 use git_features::{
     parallel::in_parallel_if,
     progress::{self, Progress},
 };
 use git_object::{borrowed, bstr::ByteSlice, owned};
-use std::time::Instant;
 
 /// Verify and validate the content of the index file
 impl index::File {
@@ -33,11 +32,11 @@ impl index::File {
         const CHUNK_SIZE: usize = 1000;
         let there_are_enough_entries_to_process = || index_entries.len() > CHUNK_SIZE * 2;
         let input_chunks = index_entries.chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE));
-        let reduce_progress = std::sync::Mutex::new(root.add_child("Checking"));
-        reduce_progress
-            .lock()
-            .unwrap()
-            .init(Some(self.num_objects()), Some("objects"));
+        let reduce_progress = std::sync::Mutex::new({
+            let mut p = root.add_child("Checking");
+            p.init(Some(self.num_objects()), Some("objects"));
+            p
+        });
         let state_per_thread = |index| {
             (
                 make_cache(),
@@ -141,20 +140,7 @@ impl index::File {
                 }
                 Ok(stats)
             },
-            Reducer {
-                progress: &reduce_progress,
-                then: Instant::now(),
-                entries_seen: 0,
-                chunks_seen: 0,
-                stats: Outcome {
-                    average: decode::Outcome::default_from_kind(git_object::Kind::Tree),
-                    objects_per_chain_length: Default::default(),
-                    total_compressed_entries_size: 0,
-                    total_decompressed_entries_size: 0,
-                    total_object_size: 0,
-                    pack_size: pack.data_len() as u64,
-                },
-            },
+            Reducer::from_progress(&reduce_progress, pack.data_len()),
         )
     }
 }

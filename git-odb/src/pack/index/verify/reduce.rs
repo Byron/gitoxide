@@ -24,6 +24,28 @@ pub struct Reducer<'a, P> {
     pub stats: verify::Outcome,
 }
 
+impl<'a, P> Reducer<'a, P>
+where
+    P: Progress,
+{
+    pub fn from_progress(progress: &'a std::sync::Mutex<P>, pack_data_len_in_bytes: usize) -> Self {
+        Reducer {
+            progress: &progress,
+            then: Instant::now(),
+            entries_seen: 0,
+            chunks_seen: 0,
+            stats: verify::Outcome {
+                average: decode::Outcome::default_from_kind(git_object::Kind::Tree),
+                objects_per_chain_length: Default::default(),
+                total_compressed_entries_size: 0,
+                total_decompressed_entries_size: 0,
+                total_object_size: 0,
+                pack_size: pack_data_len_in_bytes as u64,
+            },
+        }
+    }
+}
+
 impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,

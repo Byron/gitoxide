@@ -1,7 +1,7 @@
 use super::{Error, Mode, Outcome};
 use crate::{pack, pack::index};
 use git_features::{
-    parallel::{self, in_parallel_if},
+    parallel::in_parallel_if,
     progress::{self, Progress},
 };
 use std::time::SystemTime;
@@ -12,7 +12,7 @@ impl index::File {
         thread_limit: Option<usize>,
         _mode: Mode,
         _make_cache: impl Fn() -> C + Send + Sync,
-        mut progress: progress::DoOrDiscard<P>,
+        mut root: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
     ) -> Result<Outcome, Error>
     where
@@ -21,7 +21,7 @@ impl index::File {
         C: pack::cache::DecodeEntry,
     {
         let offsets = {
-            let mut indexing_progress = progress.add_child("preparing pack offsets");
+            let mut indexing_progress = root.add_child("preparing pack offsets");
             indexing_progress.init(Some(self.num_objects), Some("objects"));
             let then = SystemTime::now();
             let iter = self.sorted_offsets().into_iter();
@@ -33,31 +33,21 @@ impl index::File {
             ));
             iter
         };
-        let tree = pack::graph::DeltaTree::from_sorted_offsets(offsets, pack.path(), progress.add_child("indexing"))?;
+        let tree = pack::graph::DeltaTree::from_sorted_offsets(offsets, pack.path(), root.add_child("indexing"))?;
         let if_there_are_enough_objects = || self.num_objects > 10_000;
-        struct Reducer;
 
-        impl parallel::Reducer for Reducer {
-            type Input = ();
-            type Output = Outcome;
-            type Error = Error;
-
-            fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-                unimplemented!()
-            }
-
-            fn finalize(self) -> Result<Self::Output, Self::Error> {
-                unimplemented!()
-            }
-        }
-        let reduce = Reducer;
+        let reduce_progress = std::sync::Mutex::new({
+            let mut p = root.add_child("Checking");
+            p.init(Some(self.num_objects()), Some("objects"));
+            p
+        });
         in_parallel_if(
             if_there_are_enough_objects,
             tree.bases(),
             thread_limit,
             |_index| (),
-            |node: pack::graph::Node, state: &mut ()| (),
-            reduce,
+            |node: pack::graph::Node, state: &mut ()| Ok::<_, Error>(Vec::new()),
+            index::verify::Reducer::from_progress(&reduce_progress, pack.data_len()),
         )?;
 
         unimplemented!()
