@@ -1,12 +1,15 @@
 use super::{Error, Mode, Outcome};
 use crate::{
     pack,
+    pack::index::access::PackOffset,
     pack::index::{self, verify::util},
 };
 use git_features::{
     parallel::in_parallel_if,
     progress::{self, Progress},
 };
+use git_object::Kind;
+use std::collections::BTreeMap;
 
 impl index::File {
     pub(crate) fn inner_verify_with_indexed_lookup<P, C>(
@@ -58,6 +61,24 @@ impl index::File {
                 nodes.clear();
                 nodes.push(node);
                 let mut children = Vec::new();
+                struct SharedCache<'a>(&'a mut BTreeMap<PackOffset, (Kind, Vec<u8>, usize)>);
+
+                impl<'a> pack::cache::DecodeEntry for SharedCache<'a> {
+                    fn put(&mut self, pack_offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
+                        self.0
+                            .entry(pack_offset)
+                            .or_insert_with(|| (kind, data.to_owned(), compressed_size));
+                    }
+
+                    fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
+                        self.0.get(&offset).map(|(kind, data, compressed_size)| {
+                            out.resize(data.len(), 0);
+                            out.copy_from_slice(&data);
+                            (*kind, *compressed_size)
+                        })
+                    }
+                }
+                let mut cache = BTreeMap::new();
 
                 let mut count = 0;
                 while let Some(node) = nodes.pop() {
@@ -71,7 +92,7 @@ impl index::File {
                     stats.push(self.process_entry(
                         mode,
                         pack,
-                        &mut pack::cache::DecodeEntryNoop,
+                        &mut SharedCache(&mut cache),
                         buf,
                         encode_buf,
                         progress,

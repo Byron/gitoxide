@@ -140,7 +140,7 @@ impl File {
         entry: decoded::Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
-        cache: &mut impl cache::DecodeEntry,
+        delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::pack::data::decoded::Header::*;
         match entry.header {
@@ -160,7 +160,7 @@ impl File {
                     )
                 })
             }
-            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out, cache),
+            OfsDelta { .. } | RefDelta { .. } => self.resolve_deltas(entry, resolve, out, delta_cache),
         }
     }
 
