@@ -23,7 +23,7 @@
   * [x] choice of algorithm in pack-verify
   * [x] use pack streaming in pack-verify by default
   * [x] set some unit tests cases to use the streaming algorithm
-  * [ ] invert '--statistics' to become '--no-statistics' (it's free now)
+  * [x] invert '--statistics' to become '--no-statistics' (it's free now)
 * **progress - convenience**
   * [ ] `inc()` method
   * [ ] `inc_by(step)` method
