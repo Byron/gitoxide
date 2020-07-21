@@ -36,12 +36,20 @@ impl index::File {
             p.init(Some(self.num_objects()), Some("objects"));
             p
         });
+
+        let state_per_thread = |index| {
+            (
+                Vec::<u8>::with_capacity(2048),                                         // decode buffer
+                Vec::<u8>::with_capacity(2048),                                         // re-encode buffer
+                reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
+            )
+        };
         in_parallel_if(
             if_there_are_enough_objects,
             tree.bases(),
             thread_limit,
-            |_index| (),
-            |_node: pack::graph::Node, _state: &mut ()| Ok::<_, Error>(Vec::new()),
+            state_per_thread,
+            |_node: pack::graph::Node, (_buf, _encode_buf, _progress)| Ok::<_, Error>(Vec::new()),
             index::verify::Reducer::from_progress(&reduce_progress, pack.data_len()),
         )
     }

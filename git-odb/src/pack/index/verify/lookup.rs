@@ -35,9 +35,9 @@ impl index::File {
         let state_per_thread = |index| {
             (
                 make_cache(),
-                Vec::with_capacity(2048),
-                Vec::with_capacity(2048),
-                reduce_progress.lock().unwrap().add_child(format!("thread {}", index)),
+                Vec::with_capacity(2048), // decode buffer
+                Vec::with_capacity(2048), // re-encode buffer
+                reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
             )
         };
 
@@ -46,9 +46,7 @@ impl index::File {
             input_chunks,
             thread_limit,
             state_per_thread,
-            |entries: &[index::Entry],
-             (cache, buf, ref mut encode_buf, progress)|
-             -> Result<Vec<decode::Outcome>, Error> {
+            |entries: &[index::Entry], (cache, buf, encode_buf, progress)| -> Result<Vec<decode::Outcome>, Error> {
                 progress.init(Some(entries.len() as u32), Some("entries"));
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
