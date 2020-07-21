@@ -136,7 +136,16 @@ impl index::File {
     pub fn sorted_offsets(&self) -> Vec<PackOffset> {
         let mut ofs: Vec<_> = match self.kind {
             index::Kind::V1 => self.iter().map(|e| e.pack_offset).collect(),
-            index::Kind::V2 => unimplemented!("index v2 offsets"),
+            index::Kind::V2 => {
+                let mut v = Vec::with_capacity(self.num_objects as usize);
+                let mut ofs32 = &self.data[self.offset_pack_offset_v2()..];
+                let pack_offset_64 = self.offset_pack_offset64_v2();
+                for _ in 0..self.num_objects {
+                    v.push(self.pack_offset_from_offset_v2(ofs32, pack_offset_64));
+                    ofs32 = &ofs32[4..];
+                }
+                v
+            }
         };
         ofs.sort();
         ofs
