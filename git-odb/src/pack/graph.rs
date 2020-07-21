@@ -151,6 +151,12 @@ impl DeltaTree {
             tree.node_count() as f32 / elapsed
         ));
 
+        const MAGIC_CUT_OFF_TO_DEALLOCATE_IN_SEPARATE_THREAD: usize = 100_000;
+        if tree.node_count() > MAGIC_CUT_OFF_TO_DEALLOCATE_IN_SEPARATE_THREAD {
+            // properly deallocating big maps takes time - move this work elsewhere to not block
+            std::thread::spawn(move || drop(offsets_to_node));
+        }
+
         Ok(DeltaTree { inner: tree })
     }
 }
