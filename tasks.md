@@ -28,6 +28,7 @@
   * [ ] `inc()` method
   * [ ] `inc_by(step)` method
   * [ ] a way to measure throughput on drop
+  * [ ] percentages somewhere near the progress bar
 * **plumbing - explode pack**
   * _useful for receiving packs that are small enough to warrant living as loose objects for a while
     preventing pack buildup_

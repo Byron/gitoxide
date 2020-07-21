@@ -61,44 +61,76 @@ impl index::File {
                 nodes.clear();
                 nodes.push(node);
                 let mut children = Vec::new();
-                struct SharedCache<'a>(&'a mut BTreeMap<PackOffset, (Kind, Vec<u8>, usize)>);
+                struct CacheEntry {
+                    kind: Kind,
+                    data: Vec<u8>,
+                    compressed_size: usize,
+                    hits_to_live: usize,
+                }
+                struct SharedCache<'a>(&'a mut BTreeMap<PackOffset, CacheEntry>);
 
                 impl<'a> pack::cache::DecodeEntry for SharedCache<'a> {
                     fn put(&mut self, pack_offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
-                        self.0
-                            .entry(pack_offset)
-                            .or_insert_with(|| (kind, data.to_owned(), compressed_size));
+                        self.0.entry(pack_offset).or_insert_with(|| CacheEntry {
+                            kind,
+                            data: data.to_owned(),
+                            compressed_size,
+                            hits_to_live: 0,
+                        });
                     }
 
                     fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
-                        self.0.get(&offset).map(|(kind, data, compressed_size)| {
+                        let (res, should_delete) = if let Some(CacheEntry {
+                            kind,
+                            data,
+                            compressed_size,
+                            hits_to_live,
+                        }) = self.0.get_mut(&offset)
+                        {
                             out.resize(data.len(), 0);
                             out.copy_from_slice(&data);
-                            (*kind, *compressed_size)
-                        })
+                            *hits_to_live = hits_to_live.saturating_sub(1);
+                            (Some((*kind, *compressed_size)), *hits_to_live == 0)
+                        } else {
+                            (None, false)
+                        };
+                        if should_delete {
+                            self.0.remove(&offset);
+                        }
+                        res
+                    }
+                }
+                impl<'a> SharedCache<'a> {
+                    fn hits_to_live(&mut self, pack_offset: u64, hits: usize) {
+                        if let Some(v) = self.0.get_mut(&pack_offset) {
+                            v.hits_to_live += hits;
+                        }
                     }
                 }
                 let mut cache = BTreeMap::new();
 
                 let mut count = 0;
                 while let Some(node) = nodes.pop() {
+                    let pack_offset = node.pack_offset;
                     let index_entry = sorted_entries
-                        .binary_search_by(|e| e.pack_offset.cmp(&node.pack_offset))
+                        .binary_search_by(|e| e.pack_offset.cmp(&pack_offset))
                         .expect("tree created by our sorted entries");
-                    let index_entry = &sorted_entries[index_entry];
+                    let index_entry_of_node = &sorted_entries[index_entry];
 
                     tree.children(node, &mut children);
 
+                    let shared_cache = &mut SharedCache(&mut cache);
                     stats.push(self.process_entry(
                         mode,
                         pack,
-                        &mut SharedCache(&mut cache),
+                        shared_cache,
                         buf,
                         encode_buf,
                         progress,
                         &mut header_buf,
-                        index_entry,
+                        index_entry_of_node,
                     )?);
+                    shared_cache.hits_to_live(pack_offset, children.len());
 
                     count += 1;
                     progress.set(count);
