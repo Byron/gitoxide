@@ -10,13 +10,12 @@ pub fn index_entries_sorted_by_offset_ascending(
     let then = SystemTime::now();
 
     let mut count = 0;
-    let mut v: Vec<_> = idx
-        .iter()
-        .inspect(|_| {
-            count += 1;
-            progress.set(count);
-        })
-        .collect();
+    let mut v = Vec::with_capacity(idx.num_objects as usize);
+    for entry in idx.iter() {
+        v.push(entry);
+        count += 1;
+        progress.set(count);
+    }
     v.sort_by_key(|e| e.pack_offset);
 
     let elapsed = then.elapsed().expect("system time").as_secs_f32();
