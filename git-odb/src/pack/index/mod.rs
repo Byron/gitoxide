@@ -90,7 +90,6 @@ const FAN_LEN: usize = 256;
 
 pub struct File {
     pub(crate) data: FileBuffer,
-    path: std::path::PathBuf,
     kind: Kind,
     version: u32,
     num_objects: u32,

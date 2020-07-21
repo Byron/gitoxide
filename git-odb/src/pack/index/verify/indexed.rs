@@ -1,7 +1,7 @@
 use super::{Error, Mode, Outcome};
 use crate::{pack, pack::index};
 use git_features::progress::{self, Progress};
-use std::{fs, io, time::SystemTime};
+use std::time::SystemTime;
 
 impl index::File {
     pub(crate) fn inner_verify_with_indexed_lookup<P, C>(
@@ -17,10 +17,6 @@ impl index::File {
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
     {
-        let r = io::BufReader::with_capacity(
-            8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k
-            fs::File::open(pack.path()).map_err(|err| Error::Io(err, pack.path().into(), "open"))?,
-        );
         let offsets = {
             let mut indexing_progress = progress.add_child("preparing pack offsets");
             indexing_progress.init(Some(self.num_objects), Some("objects"));
@@ -34,7 +30,7 @@ impl index::File {
             ));
             iter
         };
-        pack::graph::DeltaTree::from_sorted_offsets(offsets, r, progress.add_child("indexing"))?;
+        pack::graph::DeltaTree::from_sorted_offsets(offsets, pack.path(), progress.add_child("indexing"))?;
 
         unimplemented!()
     }

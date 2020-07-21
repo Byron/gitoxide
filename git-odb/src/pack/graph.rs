@@ -5,7 +5,7 @@ use petgraph::{
     Direction,
 };
 use quick_error::quick_error;
-use std::{collections::BTreeMap, io, time::SystemTime};
+use std::{collections::BTreeMap, fs, io, time::SystemTime};
 
 quick_error! {
     #[derive(Debug)]
@@ -67,12 +67,19 @@ const PACK_HEADER_LEN: usize = 12;
 
 /// Initialization
 impl DeltaTree {
-    /// The sort order is ascending. read must start at the beginning of the pack file.
-    pub(crate) fn from_sorted_offsets(
+    /// The sort order is ascending. The given packfile path must match the provided offsets.
+    pub fn from_sorted_offsets(
         offsets: impl Iterator<Item = PackOffset>,
-        mut r: impl io::BufRead + io::Read,
+        pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
     ) -> Result<Self, Error> {
+        use io::{BufRead, Read};
+
+        let mut r = io::BufReader::with_capacity(
+            8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k
+            fs::File::open(pack_path).map_err(|err| Error::Io(err, "open pack path"))?,
+        );
+
         let mut tree = DiGraph::new();
         if let Some(num_objects) = offsets.size_hint().1 {
             progress.init(Some(num_objects as u32), Some("objects"));

@@ -1,13 +1,8 @@
-use crate::pack::{
-    self,
-    index::{self, FAN_LEN},
-};
+use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
-use git_features::progress::Progress;
 use git_object::{borrowed, owned, SHA1_SIZE};
 use std::{
     convert::{TryFrom, TryInto},
-    fs, io,
     mem::size_of,
 };
 
@@ -145,11 +140,6 @@ impl index::File {
         };
         ofs.sort();
         ofs
-    }
-
-    pub fn delta_tree(&self, progress: impl Progress) -> Result<pack::graph::DeltaTree, pack::graph::Error> {
-        let read = io::BufReader::new(fs::File::open(&self.path).unwrap());
-        pack::graph::DeltaTree::from_sorted_offsets(self.sorted_offsets().into_iter(), read, progress)
     }
 
     fn offset_crc32_v2(&self) -> usize {

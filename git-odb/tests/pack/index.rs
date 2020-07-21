@@ -1,5 +1,6 @@
 use crate::{
     fixture_path, hex_to_id,
+    pack::{INDEX_V1, PACK_FOR_INDEX_V1},
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
 use git_object::{self as object};
@@ -9,20 +10,11 @@ use pretty_assertions::assert_eq;
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
 const PACK_FOR_INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack";
 
-const INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
-const PACK_FOR_INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";
-
 mod method {
     mod v1 {
-        use crate::{fixture_path, pack::index::INDEX_V1};
+        use crate::{fixture_path, pack::INDEX_V1};
         use git_object::owned;
         use git_odb::pack::index;
-
-        #[test]
-        fn delta_tree() {
-            let idx = index::File::at(fixture_path(INDEX_V1)).unwrap();
-            idx.delta_tree(git_features::progress::Discard).unwrap();
-        }
 
         #[test]
         fn lookup_index() {
@@ -49,18 +41,9 @@ mod method {
     }
 
     mod v2 {
-        use crate::{
-            fixture_path,
-            pack::{index::INDEX_V2, SMALL_PACK_INDEX},
-        };
+        use crate::{fixture_path, pack::index::INDEX_V2};
         use git_object::owned;
         use git_odb::pack::index;
-
-        #[test]
-        fn delta_tree() {
-            let idx = index::File::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
-            idx.delta_tree(git_features::progress::Discard).unwrap();
-        }
 
         #[test]
         fn lookup_index() {

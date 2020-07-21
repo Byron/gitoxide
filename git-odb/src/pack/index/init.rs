@@ -73,7 +73,6 @@ impl TryFrom<&Path> for index::File {
         };
         Ok(index::File {
             data,
-            path: path.to_owned(),
             kind,
             num_objects,
             version,
