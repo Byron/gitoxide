@@ -69,7 +69,7 @@ impl index::File {
         )
     }
 
-    fn process_entry<C>(
+    pub(crate) fn process_entry<C>(
         &self,
         mode: Mode,
         pack: &pack::data::File,

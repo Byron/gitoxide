@@ -25,6 +25,7 @@ pub struct DeltaTree {
     inner: DiGraph<PackOffset, (), u32>, // u32 = max amount of objects in pack
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Node {
     pub pack_offset: PackOffset,
     index: NodeIndex<u32>,
@@ -35,15 +36,18 @@ impl Node {}
 /// Access
 impl DeltaTree {
     pub fn bases(&self) -> impl Iterator<Item = Node> + '_ {
-        self.inner.node_indices().filter_map(move |idx| {
-            self.inner
-                .neighbors_directed(idx, Direction::Incoming)
-                .next()
-                .map(|_| Node {
-                    index: idx,
-                    pack_offset: self.inner.node_weight(idx).copied().unwrap(),
-                })
-        })
+        self.inner
+            .node_indices()
+            .filter(move |idx| {
+                self.inner
+                    .neighbors_directed(*idx, Direction::Incoming)
+                    .next()
+                    .is_none()
+            })
+            .map(move |idx| Node {
+                index: idx,
+                pack_offset: self.inner.node_weight(idx).copied().unwrap(),
+            })
     }
 
     pub fn node_count(&self) -> usize {

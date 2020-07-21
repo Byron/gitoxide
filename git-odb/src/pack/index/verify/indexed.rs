@@ -12,7 +12,7 @@ impl index::File {
     pub(crate) fn inner_verify_with_indexed_lookup<P, C>(
         &self,
         thread_limit: Option<usize>,
-        _mode: Mode,
+        mode: Mode,
         _make_cache: impl Fn() -> C + Send + Sync,
         mut root: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
@@ -39,8 +39,9 @@ impl index::File {
 
         let state_per_thread = |index| {
             (
-                Vec::<u8>::with_capacity(2048),                                         // decode buffer
-                Vec::<u8>::with_capacity(2048),                                         // re-encode buffer
+                Vec::<u8>::with_capacity(2048), // decode buffer
+                Vec::<u8>::with_capacity(2048), // re-encode buffer
+                Vec::<pack::graph::Node>::new(),
                 reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
             )
         };
@@ -49,7 +50,42 @@ impl index::File {
             tree.bases(),
             thread_limit,
             state_per_thread,
-            |_node: pack::graph::Node, (_buf, _encode_buf, _progress)| Ok::<_, Error>(Vec::new()),
+            |node: pack::graph::Node,
+             (buf, encode_buf, nodes, progress): &mut (Vec<u8>, Vec<u8>, Vec<pack::graph::Node>, _)|
+             -> Result<Vec<pack::data::decode::Outcome>, Error> {
+                let mut stats = Vec::new();
+                let mut header_buf = [0u8; 64];
+                nodes.clear();
+                nodes.push(node);
+                let mut children = Vec::new();
+
+                let mut count = 0;
+                while let Some(node) = nodes.pop() {
+                    let index_entry = sorted_entries
+                        .binary_search_by(|e| e.pack_offset.cmp(&node.pack_offset))
+                        .expect("tree created by our sorted entries");
+                    let index_entry = &sorted_entries[index_entry];
+
+                    tree.children(node, &mut children);
+
+                    stats.push(self.process_entry(
+                        mode,
+                        pack,
+                        &mut pack::cache::DecodeEntryNoop,
+                        buf,
+                        encode_buf,
+                        progress,
+                        &mut header_buf,
+                        index_entry,
+                    )?);
+
+                    count += 1;
+                    progress.set(count);
+                    nodes.extend(children.iter().cloned());
+                }
+
+                Ok(stats)
+            },
             index::verify::Reducer::from_progress(&reduce_progress, pack.data_len()),
         )
     }

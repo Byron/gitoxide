@@ -5,7 +5,6 @@ use crate::{
 };
 use git_object::{self as object};
 use git_odb::pack::{self, data::decode::Outcome, index};
-use pretty_assertions::assert_eq;
 
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
 const PACK_FOR_INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack";
