@@ -5,7 +5,7 @@ use crate::{
     pack::index::{self, verify::util},
 };
 use git_features::{
-    parallel::in_parallel_if,
+    parallel::{self, in_parallel_if},
     progress::{self, Progress},
 };
 use git_object::Kind;
@@ -74,10 +74,11 @@ impl index::File {
                 }
             }
         }
+        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         in_parallel_if(
             if_there_are_enough_objects,
             Chunks {
-                size: 50,
+                size: chunk_size,
                 iter: tree.bases(),
             },
             thread_limit,
