@@ -19,7 +19,7 @@ all-features = true
 
 [dependencies]
 git-repository = { version = "0.1.0", path = "../git-repository" }
-git-object = { version = "0.1.0", path = "../git-object" }
+git-object = { version = "^0.2.0", path = "../git-object" }
 git-odb = { version = "0.1.0", path = "../git-odb" }
 git-features = { version = "^0.2.0", path = "../git-features" }
 anyhow = "1.0.31"
