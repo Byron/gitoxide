@@ -9,13 +9,20 @@ use std::fmt;
 pub struct Id<'a>(&'a [u8; SHA1_SIZE]);
 
 impl<'a> Id<'a> {
-    pub fn to_hex(&self) -> [u8; SHA1_SIZE * 2] {
-        let mut buf = [0u8; SHA1_SIZE * 2];
-        hex::encode_to_slice(self.0, &mut buf).expect("to count correctly");
-        buf
+    pub fn kind(&self) -> crate::HashKind {
+        crate::HashKind::Sha1
     }
     pub fn first_byte(&self) -> u8 {
         self.0[0]
+    }
+}
+
+/// Sha1 specific methods
+impl<'a> Id<'a> {
+    pub fn to_sha1_hex(&self) -> [u8; SHA1_SIZE * 2] {
+        let mut buf = [0u8; SHA1_SIZE * 2];
+        hex::encode_to_slice(self.0, &mut buf).expect("to count correctly");
+        buf
     }
     pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
         self.0
@@ -38,7 +45,7 @@ impl<'a> TryFrom<&'a [u8]> for Id<'a> {
 
 impl fmt::Display for Id<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.to_hex().as_bstr())
+        write!(f, "{}", &self.to_sha1_hex().as_bstr())
     }
 }
 
