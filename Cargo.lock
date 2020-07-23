@@ -694,7 +694,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bstr",
  "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
