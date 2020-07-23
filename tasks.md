@@ -38,12 +38,29 @@
      * [ ] write objects from pack (multi-threaded comes for free)
      * [ ] progress
      * [ ] statistics
+     
+### Cloning
+
 * **index-from-pack**
   * _capability to receive packs from a stream_
+* **git-transport**
+  * [ ] transport layer
+  * [ ] receive a pack
+* **git-refs**
+  * Enough to handle a git fetch - maybe we can just hardcode things for now…
+* **git-repository**
+  * [ ] clone from https remote
+  
+### FSCK an entire repository
+
 * **multi-db** (incorporate object lookup for loose objects and packs)
   * [ ] single threaded
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
+* **cli**
+  * [ ] Clone into valid repository
+  
+### Other
 * **progress - convenience**
   * [ ] a way to measure throughput on drop
   * [ ] percentages somewhere near the progress bar
