@@ -36,7 +36,7 @@ mod serial {
 
 #[cfg(feature = "parallel")]
 mod in_parallel {
-    use crate::parallel::Reducer;
+    use crate::parallel::{num_threads, Reducer};
     use crossbeam_utils::thread;
 
     pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -46,13 +46,6 @@ mod in_parallel {
             (left.join().unwrap(), right.join().unwrap())
         })
         .unwrap()
-    }
-
-    fn num_threads(thread_limit: Option<usize>) -> usize {
-        let logical_cores = num_cpus::get();
-        thread_limit
-            .map(|l| if l == 0 { logical_cores } else { l })
-            .unwrap_or(logical_cores)
     }
 
     pub fn in_parallel<I, S, O, R>(
@@ -107,16 +100,6 @@ mod in_parallel {
     }
 }
 
-pub fn num_threads(thread_limit: Option<usize>) -> usize {
-    #[cfg(not(feature = "num_cpus"))]
-    return 1;
-
-    let logical_cores = num_cpus::get();
-    thread_limit
-        .map(|l| if l == 0 { logical_cores } else { l })
-        .unwrap_or(logical_cores)
-}
-
 pub fn optimize_chunk_size_and_thread_limit(
     desired_chunk_size: usize,
     num_chunks: Option<usize>,
@@ -144,7 +127,19 @@ pub fn optimize_chunk_size_and_thread_limit(
             };
             (chunk_size, thread_limit)
         })
-        .unwrap_or((desired_chunk_size, available_threads));
+        .unwrap_or((
+            if available_threads == 1 {
+                desired_chunk_size
+            } else {
+                let arbitrary_desirable_chunk_size = 5;
+                if desired_chunk_size < arbitrary_desirable_chunk_size {
+                    arbitrary_desirable_chunk_size
+                } else {
+                    desired_chunk_size
+                }
+            },
+            available_threads,
+        ));
     (chunk_size, Some(thread_limit))
 }
 
@@ -153,6 +148,16 @@ pub use serial::*;
 
 #[cfg(feature = "parallel")]
 pub use in_parallel::*;
+
+pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
+    #[cfg(not(feature = "num_cpus"))]
+    return 1;
+
+    let logical_cores = num_cpus::get();
+    thread_limit
+        .map(|l| if l == 0 { logical_cores } else { l })
+        .unwrap_or(logical_cores)
+}
 
 pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
@@ -167,7 +172,7 @@ where
     I: Send,
     O: Send,
 {
-    if condition() {
+    if num_threads(thread_limit) > 1 && condition() {
         in_parallel(input, thread_limit, new_thread_state, consume, reducer)
     } else {
         serial::in_parallel(input, thread_limit, new_thread_state, consume, reducer)

@@ -32,6 +32,11 @@ mod optimize_chunk_size_and_thread_limit {
             optimize_chunk_size_and_thread_limit(1, Some(100), None, Some(10)),
             (5, Some(10))
         );
+        assert_eq!(
+            optimize_chunk_size_and_thread_limit(1, Some(100), Some(5), Some(10)),
+            (10, Some(5)),
+            "the thread limit is always respected"
+        );
     }
 
     #[test]
@@ -40,5 +45,50 @@ mod optimize_chunk_size_and_thread_limit {
             optimize_chunk_size_and_thread_limit(50, Some(2), None, Some(10)),
             (5, Some(10))
         );
+        assert_eq!(
+            optimize_chunk_size_and_thread_limit(50, Some(2), Some(5), Some(10)),
+            (10, Some(5)),
+            "the thread limit is always respected"
+        );
+    }
+
+    mod unknown_chunk_count {
+        use git_features::parallel::optimize_chunk_size_and_thread_limit;
+
+        #[test]
+        fn medium_chunk_size_many_threads() {
+            assert_eq!(
+                optimize_chunk_size_and_thread_limit(50, None, None, Some(4)),
+                (50, Some(4)),
+                "really, what do we know"
+            );
+        }
+
+        #[test]
+        fn medium_chunk_size_single_thread() {
+            assert_eq!(
+                optimize_chunk_size_and_thread_limit(50, None, None, Some(1)),
+                (50, Some(1)),
+                "single threaded - we don't touch that"
+            );
+        }
+
+        #[test]
+        fn small_chunk_size_single_thread() {
+            assert_eq!(
+                optimize_chunk_size_and_thread_limit(1, None, None, Some(1)),
+                (1, Some(1)),
+                "single threaded - we don't touch that"
+            );
+        }
+
+        #[test]
+        fn small_chunk_size_many_threads() {
+            assert_eq!(
+                optimize_chunk_size_and_thread_limit(1, None, None, Some(4)),
+                (5, Some(4)),
+                "we prefer an arbitrary number, which should really be based on effort, but the caller has to adjust for that"
+            );
+        }
     }
 }
