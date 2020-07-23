@@ -13,6 +13,7 @@ mod tag;
 pub use tag::Tag;
 
 pub mod tree;
+#[doc(inline)]
 pub use tree::Tree;
 
 mod commit;
@@ -36,6 +37,7 @@ mod blob {
 pub use blob::*;
 
 pub mod signature;
+#[doc(inline)]
 pub use signature::Signature;
 
 mod object;
