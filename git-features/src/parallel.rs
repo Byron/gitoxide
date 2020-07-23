@@ -100,27 +100,36 @@ mod in_parallel {
     }
 }
 
+#[cfg(not(feature = "parallel"))]
 pub fn optimize_chunk_size_and_thread_limit(
     desired_chunk_size: usize,
-    num_chunks: Option<usize>,
+    _num_items: Option<usize>,
+    thread_limit: Option<usize>,
+    _available_threads: Option<usize>,
+) -> (usize, Option<usize>, usize) {
+    return (desired_chunk_size, thread_limit, num_threads(thread_limit));
+}
+
+#[cfg(feature = "parallel")]
+pub fn optimize_chunk_size_and_thread_limit(
+    desired_chunk_size: usize,
+    num_items: Option<usize>,
     thread_limit: Option<usize>,
     available_threads: Option<usize>,
-) -> (usize, Option<usize>) {
-    #[cfg(not(feature = "num_cpus"))]
-    return (desired_chunk_size, thread_limit);
-
-    let available_threads = available_threads.unwrap_or_else(|| num_cpus::get());
+) -> (usize, Option<usize>, usize) {
+    let available_threads = available_threads.unwrap_or_else(num_cpus::get);
     let available_threads = thread_limit
         .map(|l| if l == 0 { available_threads } else { l })
         .unwrap_or(available_threads);
 
-    let (chunk_size, thread_limit) = num_chunks
-        .map(|num_chunks| {
+    let (lower, upper) = (50, 500);
+    let (chunk_size, thread_limit) = num_items
+        .map(|num_items| {
             let desired_chunks_per_thread_at_least = 2;
-            let items = num_chunks * desired_chunk_size;
+            let items = num_items;
             let chunk_size = (items / (available_threads * desired_chunks_per_thread_at_least))
                 .max(1)
-                .min(1000);
+                .min(upper);
             let num_chunks = items / chunk_size;
             let thread_limit = if num_chunks <= available_threads {
                 (num_chunks / desired_chunks_per_thread_at_least).max(1)
@@ -132,17 +141,14 @@ pub fn optimize_chunk_size_and_thread_limit(
         .unwrap_or((
             if available_threads == 1 {
                 desired_chunk_size
+            } else if desired_chunk_size < lower {
+                lower
             } else {
-                let arbitrary_desirable_chunk_size = 50;
-                if desired_chunk_size < arbitrary_desirable_chunk_size {
-                    arbitrary_desirable_chunk_size
-                } else {
-                    desired_chunk_size
-                }
+                desired_chunk_size.min(upper)
             },
             available_threads,
         ));
-    (chunk_size, Some(thread_limit))
+    (chunk_size, Some(thread_limit), thread_limit)
 }
 
 #[cfg(not(feature = "parallel"))]
@@ -151,10 +157,13 @@ pub use serial::*;
 #[cfg(feature = "parallel")]
 pub use in_parallel::*;
 
-pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
-    #[cfg(not(feature = "num_cpus"))]
+#[cfg(not(feature = "parallel"))]
+pub(crate) fn num_threads(_thread_limit: Option<usize>) -> usize {
     return 1;
+}
 
+#[cfg(feature = "parallel")]
+pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
     let logical_cores = num_cpus::get();
     thread_limit
         .map(|l| if l == 0 { logical_cores } else { l })

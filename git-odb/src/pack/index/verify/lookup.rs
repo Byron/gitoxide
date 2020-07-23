@@ -1,7 +1,7 @@
 use super::{Error, Mode, Outcome, Reducer};
 use crate::pack::{self, data::decode, index, index::verify::util};
 use git_features::{
-    parallel::in_parallel_if,
+    parallel::{self, in_parallel_if},
     progress::{self, Progress},
 };
 use git_object::{borrowed, bstr::ByteSlice, owned};
@@ -24,9 +24,10 @@ impl index::File {
         let index_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
 
-        const CHUNK_SIZE: usize = 1000;
-        let there_are_enough_entries_to_process = || index_entries.len() > CHUNK_SIZE * 2;
-        let input_chunks = index_entries.chunks(CHUNK_SIZE.max(index_entries.len() / CHUNK_SIZE));
+        let (chunk_size, thread_limit, available_cores) =
+            parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
+        let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
+        let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
         let reduce_progress = std::sync::Mutex::new({
             let mut p = root.add_child("Checking");
             p.init(Some(self.num_objects()), Some("objects"));
