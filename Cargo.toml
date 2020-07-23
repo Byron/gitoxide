@@ -59,7 +59,7 @@ prodash-line-renderer = ["prodash/line-renderer"]
 anyhow = "1.0.31"
 
 gitoxide-core = { version = "0.1.0", path = "gitoxide-core" }
-git-features = { version = "0.1.0", path = "git-features" }
+git-features = { version = "^0.2.0", path = "git-features" }
 
 structopt = { version = "0.3.14", optional = true }
 argh = { version = "0.1.3", optional = true, default-features = false }
