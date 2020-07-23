@@ -17,6 +17,11 @@ fast-sha1 = ["fastsha1"]
 progress-log = ["log"]
 progress-prodash = ["prodash"]
 
+[[test]]
+name = "parallel"
+path = "tests/parallel.rs"
+required-features = ["parallel"]
+
 [dependencies]
 # 'parallel' feature
 crossbeam-utils = { version = "0.7.2", optional = true }
