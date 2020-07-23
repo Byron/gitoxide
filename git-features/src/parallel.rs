@@ -134,15 +134,13 @@ pub fn optimize_chunk_size_and_thread_limit(
     let desired_chunks_per_thread_at_least = 2;
     let (chunk_size, thread_limit) = num_chunks
         .map(|num_chunks| {
-            let thread_limit = if num_chunks <= available_threads * desired_chunks_per_thread_at_least {
+            let items = num_chunks * desired_chunk_size;
+            let chunk_size = (items / (available_threads * desired_chunks_per_thread_at_least)).max(1);
+            let num_chunks = items / chunk_size;
+            let thread_limit = if num_chunks <= available_threads {
                 (num_chunks / desired_chunks_per_thread_at_least).max(1)
             } else {
                 available_threads
-            };
-            let chunk_size = if num_chunks / thread_limit > desired_chunks_per_thread_at_least {
-                (desired_chunk_size * (num_chunks / thread_limit / desired_chunks_per_thread_at_least)).max(1)
-            } else {
-                desired_chunk_size
             };
             (chunk_size, thread_limit)
         })

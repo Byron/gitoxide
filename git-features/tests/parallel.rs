@@ -38,7 +38,7 @@ mod optimize_chunk_size_and_thread_limit {
     fn chunk_size_too_big() {
         assert_eq!(
             optimize_chunk_size_and_thread_limit(50, Some(2), None, Some(10)),
-            (2, Some(10))
+            (5, Some(10))
         );
     }
 }
