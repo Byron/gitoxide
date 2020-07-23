@@ -132,13 +132,22 @@ pub fn optimize_chunk_size_and_thread_limit(
         .unwrap_or(available_threads);
 
     let desired_chunks_per_thread_at_least = 2;
-    let mut thread_limit = Some(available_threads);
-    if let Some(num_chunks) = num_chunks {
-        if num_chunks <= available_threads * desired_chunks_per_thread_at_least {
-            thread_limit = Some((num_chunks / desired_chunks_per_thread_at_least).max(1));
-        }
-    };
-    (desired_chunk_size, thread_limit)
+    let (chunk_size, thread_limit) = num_chunks
+        .map(|num_chunks| {
+            let thread_limit = if num_chunks <= available_threads * desired_chunks_per_thread_at_least {
+                (num_chunks / desired_chunks_per_thread_at_least).max(1)
+            } else {
+                available_threads
+            };
+            let chunk_size = if num_chunks / thread_limit > desired_chunks_per_thread_at_least {
+                (desired_chunk_size * (num_chunks / thread_limit / desired_chunks_per_thread_at_least)).max(1)
+            } else {
+                desired_chunk_size
+            };
+            (chunk_size, thread_limit)
+        })
+        .unwrap_or((desired_chunk_size, available_threads));
+    (chunk_size, Some(thread_limit))
 }
 
 #[cfg(not(feature = "parallel"))]
