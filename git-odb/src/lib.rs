@@ -7,7 +7,7 @@ pub mod pack;
 
 mod sink {
     use crate::loose;
-    use git_object::{owned::Id, Kind};
+    use git_object::{owned::Id, HashKind};
     use std::{convert::TryInto, io};
 
     pub struct Sink {
@@ -21,23 +21,33 @@ mod sink {
     impl crate::Write for Sink {
         type Error = io::Error;
 
-        fn write_stream(&self, kind: Kind, size: u64, mut from: impl io::Read) -> Result<Id, Self::Error> {
+        fn write_stream(
+            &self,
+            kind: git_object::Kind,
+            size: u64,
+            mut from: impl io::Read,
+            hash: HashKind,
+        ) -> Result<Id, Self::Error> {
             use git_features::hash::Sha1;
-            let mut hasher = Sha1::default();
-
             let mut buf = [0u8; 8096];
-            let header_len = loose::object::header::encode(kind, size as usize, &mut buf[..])?;
-            hasher.update(&buf[..header_len]);
 
-            let mut size: usize = size.try_into().unwrap();
-            while size != 0 {
-                let bytes = size.min(buf.len());
-                from.read_exact(&mut buf[..bytes])?;
-                hasher.update(&buf[..bytes]);
-                size -= bytes;
+            match hash {
+                HashKind::Sha1 => {
+                    let mut hasher = Sha1::default();
+                    let header_len = loose::object::header::encode(kind, size as usize, &mut buf[..])?;
+                    hasher.update(&buf[..header_len]);
+
+                    let mut size: usize = size.try_into().unwrap();
+                    while size != 0 {
+                        let bytes = size.min(buf.len());
+                        from.read_exact(&mut buf[..bytes])?;
+                        hasher.update(&buf[..bytes]);
+                        size -= bytes;
+                    }
+
+                    Ok(hasher.digest().into())
+                }
             }
-
-            Ok(hasher.digest().into())
         }
     }
 }
@@ -45,21 +55,27 @@ mod sink {
 pub use sink::{sink, Sink};
 
 mod traits {
-    use git_object::{owned, Kind};
+    use git_object::{owned, HashKind};
     use std::io;
 
     pub trait Write {
         type Error: std::error::Error + From<io::Error>;
 
-        fn write(&self, object: &owned::Object) -> Result<owned::Id, Self::Error> {
+        fn write(&self, object: &owned::Object, hash: HashKind) -> Result<owned::Id, Self::Error> {
             let mut buf = Vec::with_capacity(2048);
             object.write_to(&mut buf)?;
-            self.write_stream(object.kind(), buf.len() as u64, buf.as_slice())
+            self.write_stream(object.kind(), buf.len() as u64, buf.as_slice(), hash)
         }
-        fn write_buf(&self, kind: Kind, from: &[u8]) -> Result<owned::Id, Self::Error> {
-            self.write_stream(kind, from.len() as u64, from)
+        fn write_buf(&self, object: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
+            self.write_stream(object, from.len() as u64, from, hash)
         }
-        fn write_stream(&self, kind: Kind, size: u64, from: impl io::Read) -> Result<owned::Id, Self::Error>;
+        fn write_stream(
+            &self,
+            kind: git_object::Kind,
+            size: u64,
+            from: impl io::Read,
+            hash: HashKind,
+        ) -> Result<owned::Id, Self::Error>;
     }
 }
 

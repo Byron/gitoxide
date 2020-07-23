@@ -1,5 +1,5 @@
 use crate::loose::db::{locate, object_ids};
-use git_object::owned;
+use git_object::{owned, HashKind};
 use git_odb::Write;
 
 fn id_to_hex(id: &owned::Id) -> String {
@@ -10,6 +10,9 @@ fn id_to_hex(id: &owned::Id) -> String {
 fn write() {
     for oid in object_ids() {
         let mut obj = locate(&id_to_hex(&oid));
-        assert_eq!(git_odb::sink().write(&obj.decode().unwrap().into()).unwrap(), oid);
+        let actual = git_odb::sink()
+            .write(&obj.decode().unwrap().into(), HashKind::Sha1)
+            .unwrap();
+        assert_eq!(actual, oid);
     }
 }
