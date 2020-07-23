@@ -6,18 +6,32 @@ pub mod loose;
 pub mod pack;
 
 mod sink {
+    use crate::loose;
     use git_object::{owned::Id, Kind};
-    use std::io;
+    use std::{convert::TryInto, io};
 
     pub struct Sink;
 
     impl crate::Write for Sink {
         type Error = io::Error;
 
-        fn write_stream(&self, kind: Kind, size: u64, from: impl io::Read) -> Result<Id, Self::Error> {
+        fn write_stream(&self, kind: Kind, size: u64, mut from: impl io::Read) -> Result<Id, Self::Error> {
             use git_features::hash::Sha1;
-            let hasher = Sha1::default();
-            unimplemented!()
+            let mut hasher = Sha1::default();
+
+            let mut buf = [0u8; 8096];
+            let header_len = loose::object::header::encode(kind, size as usize, &mut buf[..])?;
+            hasher.update(&buf[..header_len]);
+
+            let mut size: usize = size.try_into().unwrap();
+            while size != 0 {
+                let bytes = size.min(buf.len());
+                from.read_exact(&mut buf[..bytes])?;
+                hasher.update(&buf[..bytes]);
+                size -= bytes;
+            }
+
+            Ok(hasher.digest().into())
         }
     }
 }

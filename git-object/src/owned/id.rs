@@ -54,6 +54,12 @@ impl Id {
     }
 }
 
+impl From<[u8; SHA1_SIZE]> for Id {
+    fn from(v: [u8; 20]) -> Self {
+        Self::new_sha1(v)
+    }
+}
+
 impl Deref for Id {
     type Target = [u8; SHA1_SIZE];
 

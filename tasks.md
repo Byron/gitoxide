@@ -28,8 +28,8 @@
 * **plumbing - explode pack**
   * _useful for receiving packs that are small enough to warrant living as loose objects for a while
     preventing pack buildup_
-  * [ ] write loose object to…
-     * [ ] sink
+  * [x] write loose object to…
+     * [x] sink
      * [ ] memory
      * [ ] disk
   * [ ] generalize pack reading algorithm

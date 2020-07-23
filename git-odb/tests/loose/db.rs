@@ -1,4 +1,5 @@
 use crate::{fixture_path, hex_to_id};
+use git_object::owned;
 use git_odb::loose::{self, Db};
 use pretty_assertions::assert_eq;
 
@@ -6,22 +7,23 @@ fn ldb() -> Db {
     Db::at(fixture_path("objects"))
 }
 
+pub fn object_ids() -> Vec<owned::Id> {
+    vec![
+        hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), // blob
+        hex_to_id("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"), // blob
+        hex_to_id("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"), // tree
+        hex_to_id("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"), // tag
+        hex_to_id("96ae868b3539f551c88fd5f02394d022581b11b0"), // tree
+        hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"), // blob (big)
+        hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"), // commit
+    ]
+}
+
 #[test]
 fn iter() {
     let mut oids = ldb().iter().map(Result::unwrap).collect::<Vec<_>>();
     oids.sort();
-    assert_eq!(
-        oids,
-        vec![
-            hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), // blob
-            hex_to_id("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"), // blob
-            hex_to_id("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f"), // tree
-            hex_to_id("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9"), // tag
-            hex_to_id("96ae868b3539f551c88fd5f02394d022581b11b0"), // tree
-            hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193"), // blob (big)
-            hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"), // commit
-        ]
-    )
+    assert_eq!(oids, object_ids())
 }
 
 pub fn locate(hex: &str) -> loose::Object {
