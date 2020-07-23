@@ -1,7 +1,5 @@
 use crate::{
-    loose::object::header,
-    loose::Db,
-    loose::{Object, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
+    loose::{db::sha1_path, object::header, Db, Object, HEADER_READ_COMPRESSED_BYTES, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };
 use git_object as object;
@@ -119,12 +117,4 @@ impl Db {
             decompression_complete: inflate.is_done,
         })
     }
-}
-
-fn sha1_path(id: borrowed::Id, mut root: PathBuf) -> PathBuf {
-    let hex = id.to_sha1_hex();
-    let buf = std::str::from_utf8(&hex).expect("ascii only in hex");
-    root.push(&buf[..2]);
-    root.push(&buf[2..]);
-    root
 }

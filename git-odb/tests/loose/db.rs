@@ -25,20 +25,44 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids())
 }
+pub fn locate_oid(id: owned::Id) -> loose::Object {
+    ldb().locate(id.to_borrowed()).unwrap().unwrap()
+}
 
-pub fn locate(hex: &str) -> loose::Object {
-    ldb().locate(hex_to_id(hex).to_borrowed()).unwrap().unwrap()
+mod write {
+    use crate::loose::db::{locate_oid, object_ids};
+    use git_object::HashKind;
+    use git_odb::{loose, Write};
+
+    #[test]
+    fn read_and_write() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = loose::Db::at(dir.path());
+
+        for oid in object_ids() {
+            let mut obj = locate_oid(oid.clone());
+            let actual = db.write(&obj.decode().unwrap().into(), HashKind::Sha1).unwrap();
+            assert_eq!(actual, oid);
+            assert_eq!(db.locate(oid.to_borrowed()).unwrap().unwrap(), obj);
+        }
+    }
 }
 
 mod locate {
     use crate::{
         hex_to_id,
-        loose::db::{ldb, locate},
-        loose::signature,
+        loose::{
+            db::{ldb, locate_oid},
+            signature,
+        },
     };
     use git_object::{borrowed, borrowed::tree, bstr::ByteSlice, Kind, TreeMode};
     use git_odb::loose;
     use std::io::Read;
+
+    fn locate(hex: &str) -> loose::Object {
+        locate_oid(hex_to_id(hex))
+    }
 
     #[test]
     fn tag() {
