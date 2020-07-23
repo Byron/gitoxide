@@ -28,8 +28,12 @@
 * **plumbing - explode pack**
   * _useful for receiving packs that are small enough to warrant living as loose objects for a while
     preventing pack buildup_
-  * [ ] write loose object
-  * [ ] multi-threaded
+  * [ ] write loose object to…
+     * [ ] sink
+     * [ ] memory
+     * [ ] disk
+  * [ ] generalize pack reading algorithm
+  * [ ] write objects from pack (multi-threaded comes for free)
   * [ ] progress
   * [ ] statistics
 * **index-from-pack**
@@ -41,4 +45,6 @@
 * **progress - convenience**
   * [ ] a way to measure throughput on drop
   * [ ] percentages somewhere near the progress bar
+* **quick-error** update
+  * We need a new release soon with the latest updates to get rid of our git dependency. Until then we can't release.
 
