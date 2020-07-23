@@ -197,6 +197,7 @@ Once installed, there are two binaries:
 Provide a CLI to for the most basic user journey:
 
 * [x] initialize a repository
+* [ ] clone a repository
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push

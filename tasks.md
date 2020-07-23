@@ -25,18 +25,20 @@
   * [x] set some unit tests cases to use the streaming algorithm
 * **progress - convenience**
   * [x] `inc()` method and`inc_by(step)` method
-  * [ ] a way to measure throughput on drop
-  * [ ] percentages somewhere near the progress bar
 * **plumbing - explode pack**
   * _useful for receiving packs that are small enough to warrant living as loose objects for a while
     preventing pack buildup_
   * [ ] write loose object
-  * [ ] single threaded
   * [ ] multi-threaded
   * [ ] progress
   * [ ] statistics
+* **index-from-pack**
+  * _capability to receive packs from a stream_
 * **multi-db** (incorporate object lookup for loose objects and packs)
   * [ ] single threaded
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
+* **progress - convenience**
+  * [ ] a way to measure throughput on drop
+  * [ ] percentages somewhere near the progress bar
 
