@@ -10,7 +10,13 @@ mod sink {
     use git_object::{owned::Id, Kind};
     use std::{convert::TryInto, io};
 
-    pub struct Sink;
+    pub struct Sink {
+        _priv: (),
+    }
+
+    pub fn sink() -> Sink {
+        Sink { _priv: () }
+    }
 
     impl crate::Write for Sink {
         type Error = io::Error;
@@ -35,7 +41,8 @@ mod sink {
         }
     }
 }
-pub use sink::Sink;
+
+pub use sink::{sink, Sink};
 
 mod traits {
     use git_object::{owned, Kind};

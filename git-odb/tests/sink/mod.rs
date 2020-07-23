@@ -10,6 +10,6 @@ fn id_to_hex(id: &owned::Id) -> String {
 fn write() {
     for oid in object_ids() {
         let mut obj = locate(&id_to_hex(&oid));
-        assert_eq!(git_odb::Sink.write(&obj.decode().unwrap().into()).unwrap(), oid);
+        assert_eq!(git_odb::sink().write(&obj.decode().unwrap().into()).unwrap(), oid);
     }
 }
