@@ -28,14 +28,15 @@
 * **plumbing - explode pack**
   * _useful for receiving packs that are small enough to warrant living as loose objects for a while
     preventing pack buildup_
-  * [x] write loose object to…
+  * **write loose object to…**
      * [x] sink
-     * [ ] memory
      * [ ] disk
   * [ ] generalize pack reading algorithm
-  * [ ] write objects from pack (multi-threaded comes for free)
-  * [ ] progress
-  * [ ] statistics
+  * [ ] write loose object to memory
+  * **cli**
+     * [ ] write objects from pack (multi-threaded comes for free)
+     * [ ] progress
+     * [ ] statistics
 * **index-from-pack**
   * _capability to receive packs from a stream_
 * **multi-db** (incorporate object lookup for loose objects and packs)
