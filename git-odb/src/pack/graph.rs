@@ -25,7 +25,7 @@ pub struct DeltaTree {
     inner: DiGraph<PackOffset, (), u32>, // u32 = max amount of objects in pack
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Node {
     pub pack_offset: PackOffset,
     index: NodeIndex<u32>,

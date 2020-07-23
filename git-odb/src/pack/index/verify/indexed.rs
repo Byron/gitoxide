@@ -47,20 +47,48 @@ impl index::File {
                 reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
             )
         };
+        struct Chunks<I> {
+            size: usize,
+            iter: I,
+        }
+        impl<I> Iterator for Chunks<I>
+        where
+            I: Iterator<Item = pack::graph::Node>,
+        {
+            type Item = Vec<pack::graph::Node>;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let mut res = Vec::with_capacity(self.size);
+                let mut items_left = self.size;
+                while let Some(item) = self.iter.next() {
+                    res.push(item);
+                    items_left -= 1;
+                    if items_left == 0 {
+                        break;
+                    }
+                }
+                if res.is_empty() {
+                    None
+                } else {
+                    Some(res)
+                }
+            }
+        }
         in_parallel_if(
             if_there_are_enough_objects,
-            tree.bases(),
+            Chunks {
+                size: 50,
+                iter: tree.bases(),
+            },
             thread_limit,
             state_per_thread,
-            |node: pack::graph::Node,
+            |input: Vec<pack::graph::Node>,
              (buf, encode_buf, nodes, progress)|
              -> Result<Vec<pack::data::decode::Outcome>, Error> {
                 let mut stats = Vec::new();
                 let mut header_buf = [0u8; 64];
-                nodes.clear();
-                nodes.push((node, 0));
-                progress.init(None, Some("entries"));
                 let mut children = Vec::new();
+                progress.init(None, Some("entries"));
 
                 struct CacheEntry {
                     kind: Kind,
@@ -92,33 +120,38 @@ impl index::File {
                         )
                     }
                 }
-                let mut cache = BTreeMap::new();
 
-                while let Some((node, level)) = nodes.pop() {
-                    let pack_offset = node.pack_offset;
-                    let index_entry = sorted_entries
-                        .binary_search_by(|e| e.pack_offset.cmp(&pack_offset))
-                        .expect("tree created by our sorted entries");
-                    let index_entry_of_node = &sorted_entries[index_entry];
+                for node in input {
+                    nodes.clear();
+                    nodes.push((node, 0));
+                    let mut cache = BTreeMap::new();
 
-                    tree.children(node, &mut children);
+                    while let Some((node, level)) = nodes.pop() {
+                        let pack_offset = node.pack_offset;
+                        let index_entry = sorted_entries
+                            .binary_search_by(|e| e.pack_offset.cmp(&pack_offset))
+                            .expect("tree created by our sorted entries");
+                        let index_entry_of_node = &sorted_entries[index_entry];
 
-                    let shared_cache = &mut SharedCache(&mut cache);
-                    let mut stat = self.process_entry(
-                        mode,
-                        pack,
-                        shared_cache,
-                        buf,
-                        encode_buf,
-                        progress,
-                        &mut header_buf,
-                        index_entry_of_node,
-                    )?;
-                    stat.num_deltas = level;
-                    stats.push(stat);
+                        tree.children(node, &mut children);
 
-                    progress.inc();
-                    nodes.extend(children.iter().cloned().map(|cn| (cn, level + 1)));
+                        let shared_cache = &mut SharedCache(&mut cache);
+                        let mut stat = self.process_entry(
+                            mode,
+                            pack,
+                            shared_cache,
+                            buf,
+                            encode_buf,
+                            progress,
+                            &mut header_buf,
+                            index_entry_of_node,
+                        )?;
+                        stat.num_deltas = level;
+                        stats.push(stat);
+
+                        progress.inc();
+                        nodes.extend(children.iter().cloned().map(|cn| (cn, level + 1)));
+                    }
                 }
 
                 Ok(stats)

@@ -122,7 +122,7 @@ pub fn optimize_chunk_size_and_thread_limit(
         .map(|l| if l == 0 { available_threads } else { l })
         .unwrap_or(available_threads);
 
-    let (lower, upper) = (50, 500);
+    let (lower, upper) = (50, 1000);
     let (chunk_size, thread_limit) = num_items
         .map(|num_items| {
             let desired_chunks_per_thread_at_least = 2;

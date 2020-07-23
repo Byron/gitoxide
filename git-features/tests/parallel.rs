@@ -98,7 +98,7 @@ mod optimize_chunk_size_and_thread_limit {
         fn linux_kernel_pack_my_machine_lookup() {
             assert_eq!(
                 optimize_chunk_size_and_thread_limit(10000, Some(7_500_000), None, Some(4)),
-                (500, Some(4), 4),
+                (1000, Some(4), 4),
                 "the bucket size is capped actually, somewhat arbitrarily"
             );
         }
@@ -110,8 +110,8 @@ mod optimize_chunk_size_and_thread_limit {
                 "low values are raised to arbitrary value"
             );
             assert_eq!(
-                optimize_chunk_size_and_thread_limit(1000, None, None, Some(4)),
-                (500, Some(4), 4),
+                optimize_chunk_size_and_thread_limit(10000, None, None, Some(4)),
+                (1000, Some(4), 4),
                 "high values are capped"
             );
         }
