@@ -21,6 +21,7 @@ mod sink {
         }
     }
 }
+pub use sink::Sink;
 
 mod traits {
     use git_object::{owned, Kind};

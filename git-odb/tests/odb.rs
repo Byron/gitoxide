@@ -24,3 +24,4 @@ pub fn fixture_path(path: &str) -> PathBuf {
 
 mod loose;
 mod pack;
+mod sink;
