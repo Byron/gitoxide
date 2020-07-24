@@ -102,7 +102,7 @@ impl index::File {
         let object_kind = entry_stats.kind;
         let consumed_input = entry_stats.compressed_size;
 
-        let header_size = crate::loose::object::header::encode(object_kind, buf.len(), &mut header_buf[..])
+        let header_size = crate::loose::object::header::encode(object_kind, buf.len() as u64, &mut header_buf[..])
             .expect("header buffer to be big enough");
         let mut hasher = git_features::hash::Sha1::default();
         hasher.update(&header_buf[..header_size]);

@@ -26,7 +26,7 @@ impl crate::Write for Sink {
         match hash {
             HashKind::Sha1 => {
                 let mut hasher = Sha1::default();
-                let header_len = loose::object::header::encode(kind, size as usize, &mut buf[..])?;
+                let header_len = loose::object::header::encode(kind, size, &mut buf[..])?;
                 hasher.update(&buf[..header_len]);
 
                 let mut size: usize = size.try_into().unwrap();

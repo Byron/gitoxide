@@ -59,7 +59,7 @@ impl crate::Write for Db {
                     ),
                 };
 
-                loose::object::header::encode(kind, size as usize, &mut to)
+                loose::object::header::encode(kind, size, &mut to)
                     .map_err(|err| Error::Io(err, "write header to tempfile in", self.path.to_owned()))?;
                 io::copy(&mut from, &mut to)
                     .map_err(|err| Error::Io(err, "stream all data into tempfile in", self.path.to_owned()))?;

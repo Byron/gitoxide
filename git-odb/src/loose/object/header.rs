@@ -20,7 +20,7 @@ quick_error! {
     }
 }
 
-pub fn decode(input: &[u8]) -> Result<(object::Kind, usize, usize), Error> {
+pub fn decode(input: &[u8]) -> Result<(object::Kind, u64, usize), Error> {
     let header_end = input
         .iter()
         .position(|&b| b == 0)
@@ -49,7 +49,7 @@ fn kind_to_bytes_with_space(object: object::Kind) -> &'static [u8] {
     }
 }
 
-pub fn encode(object: object::Kind, size: usize, mut out: impl std::io::Write) -> Result<usize, std::io::Error> {
+pub fn encode(object: object::Kind, size: u64, mut out: impl std::io::Write) -> Result<usize, std::io::Error> {
     let mut written = out.write(kind_to_bytes_with_space(object))?;
     written += itoa::write(&mut out, size)?;
     out.write_u8(0)?;

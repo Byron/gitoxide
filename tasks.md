@@ -32,7 +32,7 @@
      * [x] sink
      * [x] Deflate stream
      * [x] disk - with decent errors
-     * [ ] size as u64 (properly)
+     * [x] size as u64 (properly)
   * [ ] generalize pack reading algorithm
   * [ ] write loose object to memory
   * **cli**

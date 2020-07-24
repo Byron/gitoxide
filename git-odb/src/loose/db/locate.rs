@@ -6,7 +6,12 @@ use git_object as object;
 use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
-use std::{fs, io::Cursor, io::Read, path::PathBuf};
+use std::{
+    convert::TryInto,
+    fs,
+    io::{Cursor, Read},
+    path::PathBuf,
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -109,7 +114,7 @@ impl Db {
 
         Ok(Object {
             kind,
-            size,
+            size: size.try_into().expect("actual size to potentially fit into memory"),
             decompressed_data: decompressed,
             compressed_data: compressed,
             header_size,
