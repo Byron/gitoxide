@@ -43,8 +43,10 @@ mod write {
             let mut obj = locate_oid(oid.clone());
             let actual = db.write(&obj.decode().unwrap().into(), HashKind::Sha1).unwrap();
             assert_eq!(actual, oid);
-            // TODO: make this work thanks to zipping the file…
-            // assert_eq!(db.locate(oid.to_borrowed()).unwrap().unwrap(), obj);
+            assert_eq!(
+                db.locate(oid.to_borrowed()).unwrap().unwrap().decode().unwrap(),
+                obj.decode().unwrap()
+            );
         }
     }
 }

@@ -1,5 +1,5 @@
 use super::Db;
-use crate::loose;
+use crate::{loose, zlib::stream::DeflateWriter};
 use git_features::hash::Sha1;
 use git_object::{owned, HashKind};
 use quick_error::quick_error;
@@ -20,6 +20,21 @@ quick_error! {
     }
 }
 
+struct HashWrite {
+    hash: Sha1,
+    inner: DeflateWriter<NamedTempFile>,
+}
+impl io::Write for HashWrite {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.hash.update(buf);
+        self.inner.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+
 impl crate::Write for Db {
     type Error = Error;
 
@@ -32,25 +47,11 @@ impl crate::Write for Db {
     ) -> Result<owned::Id, Self::Error> {
         match hash {
             HashKind::Sha1 => {
-                struct HashWrite {
-                    hash: Sha1,
-                    // TODO: inner must be a buferred zlib writer
-                    inner: NamedTempFile,
-                }
-                impl io::Write for HashWrite {
-                    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-                        self.hash.update(buf);
-                        self.inner.write(buf)
-                    }
-
-                    fn flush(&mut self) -> io::Result<()> {
-                        self.inner.flush()
-                    }
-                }
                 let mut to = HashWrite {
                     hash: Sha1::default(),
-                    inner: NamedTempFile::new_in(&self.path)?,
+                    inner: DeflateWriter::new(NamedTempFile::new_in(&self.path)?),
                 };
+
                 loose::object::header::encode(kind, size as usize, &mut to)?;
                 io::copy(&mut from, &mut to)?;
                 to.flush()?;
@@ -67,7 +68,7 @@ impl crate::Write for Db {
                         _ => return Err(err.into()),
                     }
                 }
-                file.persist(object_path)?;
+                file.into_inner().persist(object_path)?;
                 Ok(id)
             }
         }

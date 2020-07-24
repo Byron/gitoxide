@@ -73,6 +73,10 @@ where
         }
     }
 
+    pub fn into_inner(self) -> W {
+        self.inner
+    }
+
     fn write_inner(&mut self, mut buf: &[u8], flush: MZFlush) -> io::Result<usize> {
         let total_in_when_start = self.compressor.total_in;
         loop {
