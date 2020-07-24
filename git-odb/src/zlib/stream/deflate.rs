@@ -1,6 +1,7 @@
 use super::Status;
 use miniz_oxide::{deflate, deflate::core::CompressorOxide, MZError, MZFlush, MZStatus};
 use quick_error::quick_error;
+use std::io;
 
 quick_error! {
     #[derive(Debug)]
@@ -50,6 +51,36 @@ impl Deflate {
                 _ => Err(Error::Error(status)),
             },
         }
+    }
+}
+
+const BUF_SIZE: usize = 4096 * 8;
+pub struct DeflateStream<W> {
+    compressor: Deflate,
+    inner: W,
+    buf: [u8; BUF_SIZE],
+}
+
+impl<W> DeflateStream<W>
+where
+    W: io::Write,
+{
+    pub fn new(inner: W) -> DeflateStream<W> {
+        DeflateStream {
+            compressor: Default::default(),
+            inner,
+            buf: [0; BUF_SIZE],
+        }
+    }
+}
+
+impl<W> io::Write for DeflateStream<W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        unimplemented!()
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        unimplemented!()
     }
 }
 
