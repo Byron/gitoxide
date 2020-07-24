@@ -17,7 +17,9 @@ mod deflate_stream {
 
     fn assert_deflate_buffer(out: Vec<u8>, expected: &[u8]) {
         let mut actual = Vec::new();
-        InflateReader::new(out.as_slice()).read_to_end(&mut actual).unwrap();
+        InflateReader::from_read(out.as_slice())
+            .read_to_end(&mut actual)
+            .unwrap();
         assert_eq!(actual, expected);
     }
 
