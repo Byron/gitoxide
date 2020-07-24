@@ -71,10 +71,10 @@ impl loose::Object {
             self.compressed_data = SmallVec::from(buf);
         }
         self.decompressed_data = SmallVec::from(decompress_to_vec_zlib(&self.compressed_data[..]).unwrap());
+        self.compressed_data = Default::default();
         self.decompressed_data.shrink_to_fit();
         assert!(self.decompressed_data.len() == total_size);
         self.decompression_complete = true;
-        self.compressed_data = Default::default();
         Ok(())
     }
 }
