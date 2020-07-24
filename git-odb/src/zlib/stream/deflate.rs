@@ -74,9 +74,41 @@ where
     }
 }
 
-impl<W> io::Write for DeflateStream<W> {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        unimplemented!()
+impl<W: io::Write> io::Write for DeflateStream<W> {
+    fn write(&mut self, mut buf: &[u8]) -> io::Result<usize> {
+        let total_in_when_start = self.compressor.total_in;
+        loop {
+            let last_total_in = self.compressor.total_in;
+            let last_total_out = self.compressor.total_out;
+
+            let status = self
+                .compressor
+                .compress(buf, &mut self.buf, MZFlush::None)
+                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+
+            let written = self.compressor.total_out - last_total_out;
+            self.inner.write_all(&self.buf[..written as usize])?;
+
+            match status {
+                Status::Ok => return Ok((self.compressor.total_in - total_in_when_start) as usize),
+                Status::BufError => {
+                    let consumed = self.compressor.total_in - last_total_in;
+                    buf = &buf[consumed as usize..];
+
+                    // output buffer still makes progress
+                    if self.compressor.total_out > last_total_out {
+                        continue;
+                    }
+                    // input still makes progress
+                    if self.compressor.total_in > last_total_in {
+                        continue;
+                    }
+                    // input also makes no progress anymore, need more so leave with what we have
+                    return Ok((self.compressor.total_in - total_in_when_start) as usize);
+                }
+                Status::StreamEnd => unreachable!("can only happen if we try to finish the stream (done in flush)"),
+            }
+        }
     }
 
     fn flush(&mut self) -> io::Result<()> {

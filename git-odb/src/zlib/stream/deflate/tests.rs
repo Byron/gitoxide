@@ -1,10 +1,14 @@
 mod deflate_stream {
     use crate::zlib::stream::deflate::DeflateStream;
+    use std::io::Write;
 
     #[test]
     fn all_at_once() {
         let mut out = Vec::<u8>::new();
         let mut w = DeflateStream::new(out);
+        assert_eq!(w.write(b"hello").unwrap(), 5);
+        w.flush().unwrap();
+        assert!(w.inner.len() == 12 || w.inner.len() == 13);
     }
 }
 
