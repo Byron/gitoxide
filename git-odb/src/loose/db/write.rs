@@ -3,20 +3,24 @@ use crate::{loose, zlib::stream::DeflateWriter};
 use git_features::hash::Sha1;
 use git_object::{owned, HashKind};
 use quick_error::quick_error;
-use std::{fs, io, io::Write};
+use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Io(err: io::Error) {
+        Io(err: io::Error, msg: &'static str, path: PathBuf) {
+            display("Could not {} '{}'", msg, path.display())
+            source(err)
+        }
+        IoRaw(err: io::Error) {
             source(err)
             from()
         }
-        PersistError(err: tempfile::PersistError) {
+        Persist(err: tempfile::PersistError, target: PathBuf) {
+            display("Could not turn temporary file into persisted file at '{}'", target.display())
             source(err)
-            from()
-        }
+       }
     }
 }
 
@@ -49,11 +53,16 @@ impl crate::Write for Db {
             HashKind::Sha1 => {
                 let mut to = HashWrite {
                     hash: Sha1::default(),
-                    inner: DeflateWriter::new(NamedTempFile::new_in(&self.path)?),
+                    inner: DeflateWriter::new(
+                        NamedTempFile::new_in(&self.path)
+                            .map_err(|err| Error::Io(err, "create named temp file in", self.path.to_owned()))?,
+                    ),
                 };
 
-                loose::object::header::encode(kind, size as usize, &mut to)?;
-                io::copy(&mut from, &mut to)?;
+                loose::object::header::encode(kind, size as usize, &mut to)
+                    .map_err(|err| Error::Io(err, "write header to tempfile in", self.path.to_owned()))?;
+                io::copy(&mut from, &mut to)
+                    .map_err(|err| Error::Io(err, "stream all data into tempfile in", self.path.to_owned()))?;
                 to.flush()?;
 
                 let HashWrite { hash, inner: file } = to;
@@ -68,7 +77,9 @@ impl crate::Write for Db {
                         _ => return Err(err.into()),
                     }
                 }
-                file.into_inner().persist(object_path)?;
+                let file = file.into_inner();
+                file.persist(&object_path)
+                    .map_err(|err| Error::Persist(err, object_path))?;
                 Ok(id)
             }
         }
