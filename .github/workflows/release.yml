@@ -73,7 +73,7 @@ jobs:
       TARGET_DIR: ./target
       # Emit backtraces on panics.
       RUST_BACKTRACE: 1
-      BIN_NAME: gio
+      BIN_NAME: gix
     strategy:
       matrix:
         build: [linux, linux-arm, macos]
@@ -199,7 +199,7 @@ jobs:
       TARGET_DIR: ./target
       # Emit backtraces on panics.
       RUST_BACKTRACE: 1
-      BIN_NAME: gio
+      BIN_NAME: gix
     strategy:
       matrix:
         build: [win-msvc, win-gnu, win32-msvc]

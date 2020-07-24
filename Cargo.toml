@@ -6,18 +6,18 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 license = "MIT"
 version = "0.1.0"
-default-run = "gio"
+default-run = "gix"
 include = ["src/**/*", "LICENSE.md", "README.md", "CHANGELOG.md"]
 
 [[bin]]
-name="gio"
+name="gix"
 path="src/porcelain-cli.rs"
 test = false
 doctest = false
 
 
 [[bin]]
-name="giop"
+name="gixp"
 path="src/plumbing-cli.rs"
 test = false
 doctest = false

@@ -1,7 +1,7 @@
 [![Rust](https://github.com/Byron/git-oxide/workflows/Rust/badge.svg)](https://github.com/Byron/git-oxide/actions)
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 
-**gio** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
+**gix** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
 user-experience, and perform as good or better than the native implementation, and make git tooling more
 hackable.
 
@@ -40,17 +40,23 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [ ] streaming write
   * **packs**
     * [x] traverse pack index
-    * [ ] decode
+    * [x] decode
       * [x] full objects
       * [x] deltified objects
+    * **advanced**
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
     * [ ] encode
       * [ ] create new packs
+      * [ ] create 'thin' pack
     * [x] verify pack with statistics
     * [ ] pack streaming (i.e. indexing + resolution)
       * [ ] use pack streaming for verification for performance and correctness
   * [ ] API documentation with examples
+  * **sink**
+    * [x] write objects and obtain id
+  * **multi-odb**
+    * [ ] _an ODB for object lookup from multiple lower level ODB at once_
   * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 * **git-repository**
@@ -111,7 +117,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
 
 ```sh
 curl -LSfs https://raw.githubusercontent.com/byron/git-oxide/master/ci/install.sh | \
-    sh -s -- --git byron/git-oxide --crate gio-max-termion
+    sh -s -- --git byron/git-oxide --crate gix-max-termion
 ```
 
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
@@ -143,9 +149,9 @@ cargo install gitoxide --no-default-features --features lean
 
 Once installed, there are two binaries:
 
-* **gio**
+* **gix**
   * high level commands, _porcelain_, for every-day use, optimized for a pleasant user experience
-* **giop**
+* **gixp**
   * low level commands, _plumbing_, for use in more specialized cases
 
 ## Project Goals

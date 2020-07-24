@@ -4,7 +4,7 @@ mod options {
     use std::path::PathBuf;
 
     #[derive(FromArgs)]
-    #[argh(name = "gio-plumbing")]
+    #[argh(name = "gix-plumbing")]
     /// The lean git underworld
     pub struct Args {
         #[argh(switch)]

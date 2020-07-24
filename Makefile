@@ -37,17 +37,17 @@ debug-small: always ## minimal dependencies, at cost of performance
 
 ##@ Development
 
-target/release/gio: always
+target/release/gix: always
 	cargo build --release --no-default-features --features small
 
 lint: ## Run lints with clippy
 	cargo clippy
 
-profile: target/release/gio ## run callgrind and annotate its output - linux only
+profile: target/release/gix ## run callgrind and annotate its output - linux only
 	valgrind --callgrind-out-file=callgrind.profile --tool=callgrind  $< >/dev/null
 	callgrind_annotate --auto=yes callgrind.profile
 
-benchmark: target/release/gio ## see how fast things are, powered by hyperfine
+benchmark: target/release/gix ## see how fast things are, powered by hyperfine
 	hyperfine '$<'
 
 ##@ Testing
@@ -81,11 +81,11 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 
 journey-tests: always  ## run stateless journey tests (max)
 	cargo build
-	./tests/stateless-journey.sh target/debug/gio target/debug/giop max
+	./tests/stateless-journey.sh target/debug/gix target/debug/gixp max
 
 journey-tests-small: always ## run stateless journey tests (lean-cli)
 	cargo build --no-default-features --features small
-	./tests/stateless-journey.sh target/debug/gio target/debug/giop small
+	./tests/stateless-journey.sh target/debug/gix target/debug/gixp small
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
@@ -102,10 +102,10 @@ $(linux_repo):
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
-	time ./target/release/giop verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
-	time ./target/release/giop verify-pack --verbose --algorithm less-memory $(rust_repo)/.git/objects/pack/*.idx
-	time ./target/release/giop verify-pack --verbose --re-encode $(rust_repo)/.git/objects/pack/*.idx
-	time ./target/release/giop verify-pack --verbose --re-encode $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gixp verify-pack --verbose --statistics $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/gixp verify-pack --verbose --algorithm less-memory $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/gixp verify-pack --verbose --re-encode $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/gixp verify-pack --verbose --re-encode $(linux_repo)/objects/pack/*.idx
 
 ##@ Maintenance
 

@@ -30,6 +30,7 @@
     preventing pack buildup_
   * **write loose object to…**
      * [x] sink
+     * [ ] Deflate stream
      * [ ] disk - with decent errors
      * [ ] size as u64 (properly)
   * [ ] generalize pack reading algorithm
