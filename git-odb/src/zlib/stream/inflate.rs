@@ -116,8 +116,7 @@ where
 mod tests {
     use super::*;
     use git_object::bstr::ByteSlice;
-    use std::io::Read;
-    use std::path::PathBuf;
+    use std::{io::Read, path::PathBuf};
 
     fn fixture_path(path: &str) -> PathBuf {
         PathBuf::from("tests/fixtures").join(path)
