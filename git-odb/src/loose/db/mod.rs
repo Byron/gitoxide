@@ -1,3 +1,4 @@
+use git_object::{borrowed, HashKind};
 use std::path::PathBuf;
 
 pub struct Db {
@@ -11,12 +12,16 @@ impl Db {
     }
 }
 
-pub(crate) fn sha1_path(id: git_object::borrowed::Id, mut root: PathBuf) -> PathBuf {
-    let hex = id.to_sha1_hex();
-    let buf = std::str::from_utf8(&hex).expect("ascii only in hex");
-    root.push(&buf[..2]);
-    root.push(&buf[2..]);
-    root
+pub(crate) fn sha1_path(id: borrowed::Id, mut root: PathBuf) -> PathBuf {
+    match id.kind() {
+        HashKind::Sha1 => {
+            let hex = id.to_sha1_hex();
+            let buf = std::str::from_utf8(&hex).expect("ascii only in hex");
+            root.push(&buf[..2]);
+            root.push(&buf[2..]);
+            root
+        }
+    }
 }
 
 pub mod iter;
