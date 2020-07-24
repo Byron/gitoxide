@@ -1,14 +1,20 @@
 mod deflate_stream {
-    use crate::zlib::stream::deflate::DeflateStream;
-    use std::io::Write;
+    use crate::zlib::stream::DeflateWriter;
+    use crate::zlib::stream::InflateReader;
+    use std::io::{Read, Write};
 
     #[test]
     fn all_at_once() {
-        let mut out = Vec::<u8>::new();
-        let mut w = DeflateStream::new(out);
+        let mut w = DeflateWriter::new(Vec::new());
         assert_eq!(w.write(b"hello").unwrap(), 5);
         w.flush().unwrap();
-        assert!(w.inner.len() == 12 || w.inner.len() == 13);
+
+        let out = w.inner;
+        assert!(out.len() == 12 || out.len() == 13);
+
+        let mut actual = Vec::new();
+        InflateReader::new(out.as_slice()).read_to_end(&mut actual).unwrap();
+        assert_eq!(&actual, b"hello");
     }
 }
 
@@ -68,6 +74,14 @@ mod deflate {
             "the output buffer is too small to drop any information"
         );
         let mut buf = [0u8; 32];
+        assert_eq!(
+            deflate
+                .compress(&input[deflate.total_in as usize..], &mut buf, MZFlush::None)
+                .unwrap(),
+            Status::BufError,
+            "after the first buf error, unless providing more input, probably nothing can be done"
+        );
+        assert_eq!(deflate.total_out, 0);
         assert_eq!(
             deflate
                 .compress(&input[deflate.total_in as usize..], &mut buf, MZFlush::Finish)

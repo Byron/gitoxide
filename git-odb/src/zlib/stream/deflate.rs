@@ -55,27 +55,25 @@ impl Deflate {
 }
 
 const BUF_SIZE: usize = 4096 * 8;
-pub struct DeflateStream<W> {
+pub struct DeflateWriter<W> {
     compressor: Deflate,
     inner: W,
     buf: [u8; BUF_SIZE],
 }
 
-impl<W> DeflateStream<W>
+impl<W> DeflateWriter<W>
 where
     W: io::Write,
 {
-    pub fn new(inner: W) -> DeflateStream<W> {
-        DeflateStream {
+    pub fn new(inner: W) -> DeflateWriter<W> {
+        DeflateWriter {
             compressor: Default::default(),
             inner,
             buf: [0; BUF_SIZE],
         }
     }
-}
 
-impl<W: io::Write> io::Write for DeflateStream<W> {
-    fn write(&mut self, mut buf: &[u8]) -> io::Result<usize> {
+    fn write_inner(&mut self, mut buf: &[u8], flush: MZFlush) -> io::Result<usize> {
         let total_in_when_start = self.compressor.total_in;
         loop {
             let last_total_in = self.compressor.total_in;
@@ -83,15 +81,17 @@ impl<W: io::Write> io::Write for DeflateStream<W> {
 
             let status = self
                 .compressor
-                .compress(buf, &mut self.buf, MZFlush::None)
+                .compress(buf, &mut self.buf, flush)
                 .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
             let written = self.compressor.total_out - last_total_out;
-            self.inner.write_all(&self.buf[..written as usize])?;
+            if written > 0 {
+                self.inner.write_all(&self.buf[..written as usize])?;
+            }
 
             match status {
-                Status::Ok => return Ok((self.compressor.total_in - total_in_when_start) as usize),
-                Status::BufError => {
+                Status::StreamEnd => return Ok((self.compressor.total_in - total_in_when_start) as usize),
+                Status::Ok | Status::BufError => {
                     let consumed = self.compressor.total_in - last_total_in;
                     buf = &buf[consumed as usize..];
 
@@ -106,13 +106,18 @@ impl<W: io::Write> io::Write for DeflateStream<W> {
                     // input also makes no progress anymore, need more so leave with what we have
                     return Ok((self.compressor.total_in - total_in_when_start) as usize);
                 }
-                Status::StreamEnd => unreachable!("can only happen if we try to finish the stream (done in flush)"),
             }
         }
     }
+}
+
+impl<W: io::Write> io::Write for DeflateWriter<W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.write_inner(buf, MZFlush::None)
+    }
 
     fn flush(&mut self) -> io::Result<()> {
-        unimplemented!()
+        self.write_inner(&[], MZFlush::Finish).map(|_| ())
     }
 }
 

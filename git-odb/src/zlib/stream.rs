@@ -29,6 +29,9 @@ enum Status {
 }
 
 pub mod inflate;
+#[doc(inline)]
 pub use inflate::InflateReader;
 
-mod deflate;
+pub mod deflate;
+#[doc(inline)]
+pub use deflate::DeflateWriter;

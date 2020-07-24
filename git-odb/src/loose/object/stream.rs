@@ -8,7 +8,7 @@ pub enum Reader<'a> {
 
 impl<'a> Reader<'a> {
     pub fn from_read(header_size: usize, file: std::fs::File) -> Reader<'a> {
-        Reader::File(header_size, InflateReader::from_read(file))
+        Reader::File(header_size, InflateReader::new(file))
     }
     pub fn from_data(header_size: usize, data: &'a [u8]) -> Reader<'a> {
         Reader::Buffer(&data[header_size..])
