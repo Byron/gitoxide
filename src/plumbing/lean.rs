@@ -25,9 +25,29 @@ mod options {
     #[argh(subcommand)]
     pub enum SubCommands {
         PackVerify(PackVerify),
+        PackExplode(PackExplode),
+    }
+    /// Explode a pack into loose objects.
+    ///
+    /// This can be useful in case of partially invalidated packs to extract as much information as possible,
+    /// or because working with loose objects is easier with custom tooling.
+    #[derive(FromArgs, PartialEq, Debug)]
+    #[argh(subcommand, name = "pack-explode")]
+    pub struct PackExplode {
+        /// delete the pack and index file after the operation is successful
+        #[argh(switch)]
+        pub delete_pack: bool,
+
+        /// display verbose messages and progress information
+        #[argh(switch, short = 'v')]
+        pub verbose: bool,
+
+        /// the '.pack' or '.idx' file to explode into loose objects
+        #[argh(positional)]
+        pub path: PathBuf,
     }
 
-    /// Initialize the repository in the current directory.
+    /// Verify a pack
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "pack-verify")]
     pub struct PackVerify {
@@ -56,10 +76,10 @@ mod options {
         /// output statistical information about the pack
         #[argh(switch, short = 's')]
         pub statistics: bool,
-        /// verbose progress messages are printed line by line
+        /// display verbose messages and progress information
         #[argh(switch, short = 'v')]
         pub verbose: bool,
-        /// the '.pack' or '.idx' data whose checksum to validate.
+        /// the '.pack' or '.idx' file whose checksum to validate.
         #[argh(positional)]
         pub path: PathBuf,
     }
@@ -100,6 +120,14 @@ pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
     let thread_limit = cli.threads;
     match cli.subcommand {
+        SubCommands::PackExplode(PackExplode {
+            path,
+            verbose,
+            delete_pack,
+        }) => {
+            let (_handle, progress) = prepare(verbose, "pack-explode");
+            core::pack::explode::pack_or_pack_index(path, progress, delete_pack)
+        }
         SubCommands::PackVerify(PackVerify {
             path,
             verbose,

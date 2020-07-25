@@ -40,6 +40,42 @@ title "CLI ${kind}"
   )
 )
 
+(when "running 'plumbing pack-explode"
+  PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2"
+  (with "no directory specified"
+    it "explodes the pack successfully and with desired output" && {
+      WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-to-sink-success" \
+      expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode "${PACK_FILE}.idx"
+    }
+
+    (when "using the --delete-pack flag"
+      (sandbox
+        cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
+        PACK_FILE="${PACK_FILE##*/}"
+        (with "a valid pack"
+          it "explodes the pack successfully and deletes the original pack and index" && {
+            WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-to-sink-delete-pack-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --delete-pack "${PACK_FILE}.pack"
+          }
+          it "removes the original files" && {
+            expect_run $WITH_FAILURE ls ${PACK_FILE}.pack
+            expect_run $WITH_FAILURE ls ${PACK_FILE}.idx
+          }
+        )
+        (with "TODO(how to write into the middle of a file in bash): an invalid pack"
+
+        )
+      )
+    )
+  )
+  (with "a non-existing directory specified"
+
+  )
+  (with "an existing directory specified"
+
+  )
+)
+
 (when "running 'plumbing pack-verify"
   (with "a valid pack file"
     PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"

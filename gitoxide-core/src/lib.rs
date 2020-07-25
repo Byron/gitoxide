@@ -33,5 +33,6 @@ impl FromStr for OutputFormat {
     }
 }
 
+pub mod pack;
 pub mod repository;
 pub mod verify;

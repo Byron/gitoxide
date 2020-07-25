@@ -28,6 +28,31 @@ mod options {
     pub enum Subcommands {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
+        PackExplode {
+            /// Delete the pack and index file after the operation is successful
+            #[structopt(long)]
+            delete_pack: bool,
+
+            /// Display verbose messages and progress information
+            #[structopt(long, short = "v")]
+            verbose: bool,
+
+            /// Bring up a terminal user interface displaying progress visually
+            #[structopt(long, conflicts_with("verbose"))]
+            progress: bool,
+
+            /// The progress TUI will stay up even though the work is already completed.
+            ///
+            /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
+            #[structopt(long, conflicts_with("verbose"), requires("progress"))]
+            progress_keep_open: bool,
+
+            /// The '.pack' or '.idx' file to explode into loose objects
+            #[structopt(parse(from_os_str))]
+            path: PathBuf,
+        },
+        /// Verify the integrity of a pack or index file
+        #[structopt(setting = AppSettings::ColoredHelp)]
         PackVerify {
             /// output statistical information about the pack
             #[structopt(long, short = "s")]
@@ -50,23 +75,23 @@ mod options {
             )]
             algorithm: core::verify::Algorithm,
 
-            /// verbose progress messages are printed line by line
+            /// Display verbose messages and progress information
             #[structopt(long, short = "v")]
             verbose: bool,
 
-            /// bring up a terminal user interface displaying progress visually
+            /// Bring up a terminal user interface displaying progress visually
             #[structopt(long, conflicts_with("verbose"))]
             progress: bool,
 
             #[structopt(long, conflicts_with("re-encode"))]
-            /// decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
+            /// Decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
             ///
             /// Malformed objects should not usually occur, but could be injected on purpose or accident.
             /// This will reduce overall performance.
             decode: bool,
 
             #[structopt(long)]
-            /// decode and parse tags, commits and trees to validate their correctness, and re-encode them.
+            /// Decode and parse tags, commits and trees to validate their correctness, and re-encode them.
             ///
             /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
             /// Encoding an object after decoding it should yield exactly the same bytes.
@@ -74,13 +99,13 @@ mod options {
             /// owned objects, causing plenty of allocation to occour.
             re_encode: bool,
 
-            /// the progress TUI will stay up even though the work is already completed.
+            /// The progress TUI will stay up even though the work is already completed.
             ///
             /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
             #[structopt(long, conflicts_with("verbose"), requires("progress"))]
             progress_keep_open: bool,
 
-            /// The '.pack' or '.idx' data whose checksum to validate.
+            /// The '.pack' or '.idx' file whose checksum to validate.
             #[structopt(parse(from_os_str))]
             path: PathBuf,
         },
@@ -180,6 +205,19 @@ pub fn main() -> Result<()> {
     let args = Args::from_args();
     let thread_limit = args.threads;
     match args.cmd {
+        Subcommands::PackExplode {
+            verbose,
+            progress,
+            progress_keep_open,
+            delete_pack,
+            path,
+        } => prepare_and_run(
+            "pack-explode",
+            verbose,
+            progress,
+            progress_keep_open,
+            move |progress, _out, _err| core::pack::explode::pack_or_pack_index(path, progress, delete_pack),
+        ),
         Subcommands::PackVerify {
             path,
             algorithm,

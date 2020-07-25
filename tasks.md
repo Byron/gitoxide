@@ -33,10 +33,11 @@
      * [x] Deflate stream
      * [x] disk - with decent errors
      * [x] size as u64 (properly)
-  * [ ] generalize pack reading algorithm
-  * [ ] write loose object to memory
   * **cli**
+     * [ ] generalize pack reading algorithm
      * [ ] write objects from pack (multi-threaded comes for free)
+        * [ ] to sink
+        * [ ] to disk
      * [ ] progress
      * [ ] statistics
      
