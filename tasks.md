@@ -65,6 +65,9 @@
 * **progress - convenience**
   * [ ] a way to measure throughput on drop
   * [ ] percentages somewhere near the progress bar
+* **criner**
+  * [ ] switch to `isahc`
+    seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 * **quick-error** update
   * We need a new release soon with the latest updates to get rid of our git dependency. Until then we can't release.
 

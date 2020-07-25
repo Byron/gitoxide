@@ -713,6 +713,10 @@ name = "git-transport"
 version = "0.0.0"
 
 [[package]]
+name = "git-tui"
+version = "0.0.0"
+
+[[package]]
 name = "gitoxide"
 version = "0.1.0"
 dependencies = [

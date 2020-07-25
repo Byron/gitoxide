@@ -68,6 +68,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] remotes with push and pull
   * [ ] configuration
   * [ ] merging
+  * [ ] stashing
   * [ ] API documentation with examples
   * [ ] _Commit Graph_ - split and unsplit
 * **git-config**
@@ -101,6 +102,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
       * `in_parallel`
       * `join`
     * _When off all functions execute serially_
+* **git-tui**
+  * _a terminal user interface seeking to replace and improve on `tig`_
 * **Stress Testing**
   * [x] Verify huge packs
   * [ ] Explode huge packs to disk and validate loose objects
