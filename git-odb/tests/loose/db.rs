@@ -33,6 +33,7 @@ mod write {
     use crate::loose::db::{locate_oid, object_ids};
     use git_object::HashKind;
     use git_odb::{loose, Write};
+    use std::io::Read;
 
     #[test]
     fn read_and_write() {
@@ -42,6 +43,14 @@ mod write {
         for oid in object_ids() {
             let mut obj = locate_oid(oid.clone());
             let actual = db.write(&obj.decode().unwrap().into(), HashKind::Sha1).unwrap();
+            assert_eq!(actual, oid);
+            assert_eq!(
+                db.locate(oid.to_borrowed()).unwrap().unwrap().decode().unwrap(),
+                obj.decode().unwrap()
+            );
+            let mut buf = Vec::new();
+            obj.stream().unwrap().read_to_end(&mut buf).unwrap();
+            let actual = db.write_buf(obj.kind, &buf, HashKind::Sha1).unwrap();
             assert_eq!(actual, oid);
             assert_eq!(
                 db.locate(oid.to_borrowed()).unwrap().unwrap().decode().unwrap(),

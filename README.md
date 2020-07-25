@@ -21,15 +21,15 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] [pack verify](https://asciinema.org/a/346975)
     * [x] [pack index verify](https://asciinema.org/a/346976) including each object sha1 and statistics
 * **git-object**
-  * represent borrowed commits, trees and tags
-  * *decode (zero-copy)*
+  * *decode (zero-copy)* borrowed objects
     * [x] commit
     * [x] tree
     * [x] tag
-  * encode
+  * encode owned objects
     * [x] commit
     * [x] tree
     * [x] tag
+  * [x] transform borrowed to owned objects
   * [ ] API documentation with examples
 * **git-odb**
   * **loose objects**
@@ -37,6 +37,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] read
       * [x] into memory
       * [x] streaming
+    * [x] streaming write
     * [x] streaming write
   * **packs**
     * [x] traverse pack index

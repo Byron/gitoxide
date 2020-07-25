@@ -42,6 +42,43 @@ impl io::Write for HashWrite {
 impl crate::Write for Db {
     type Error = Error;
 
+    fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
+        match hash {
+            HashKind::Sha1 => {
+                let mut to = HashWrite {
+                    hash: Sha1::default(),
+                    inner: DeflateWriter::new(
+                        NamedTempFile::new_in(&self.path)
+                            .map_err(|err| Error::Io(err, "create named temp file in", self.path.to_owned()))?,
+                    ),
+                };
+
+                loose::object::header::encode(kind, from.len() as u64, &mut to)
+                    .map_err(|err| Error::Io(err, "write header to tempfile in", self.path.to_owned()))?;
+                to.write_all(from)
+                    .map_err(|err| Error::Io(err, "stream all data into tempfile in", self.path.to_owned()))?;
+                to.flush()?;
+
+                let HashWrite { hash, inner: file } = to;
+                let id = owned::Id::from(hash.digest());
+                let object_path = loose::db::sha1_path(id.to_borrowed(), self.path.clone());
+                let object_dir = object_path
+                    .parent()
+                    .expect("each object path has a 1 hex-bytes directory");
+                if let Err(err) = fs::create_dir(object_dir) {
+                    match err.kind() {
+                        io::ErrorKind::AlreadyExists => {}
+                        _ => return Err(err.into()),
+                    }
+                }
+                let file = file.into_inner();
+                file.persist(&object_path)
+                    .map_err(|err| Error::Persist(err, object_path))?;
+                Ok(id)
+            }
+        }
+    }
+
     fn write_stream(
         &self,
         kind: git_object::Kind,
