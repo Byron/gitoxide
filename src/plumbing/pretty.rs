@@ -3,6 +3,7 @@ use gitoxide_core as core;
 use std::io::{stderr, stdout, Write};
 use structopt::StructOpt;
 
+use gitoxide_core::pack::verify;
 use options::*;
 
 mod options {
@@ -71,9 +72,9 @@ mod options {
                 long,
                 short = "a",
                 default_value = "less-time",
-                possible_values(core::verify::Algorithm::variants())
+                possible_values(core::pack::verify::Algorithm::variants())
             )]
-            algorithm: core::verify::Algorithm,
+            algorithm: core::pack::verify::Algorithm,
 
             /// Display verbose messages and progress information
             #[structopt(long, short = "v")]
@@ -235,15 +236,15 @@ pub fn main() -> Result<()> {
             progress_keep_open,
             move |progress, out, err| {
                 let mode = match (decode, re_encode) {
-                    (true, false) => core::verify::Mode::Sha1CRC32Decode,
-                    (true, true) | (false, true) => core::verify::Mode::Sha1CRC32DecodeEncode,
-                    (false, false) => core::verify::Mode::Sha1CRC32,
+                    (true, false) => verify::Mode::Sha1CRC32Decode,
+                    (true, true) | (false, true) => verify::Mode::Sha1CRC32DecodeEncode,
+                    (false, false) => verify::Mode::Sha1CRC32,
                 };
                 let output_statistics = if statistics { Some(format) } else { None };
-                core::verify::pack_or_pack_index(
+                verify::pack_or_pack_index(
                     path,
                     progress,
-                    core::verify::Context {
+                    verify::Context {
                         output_statistics,
                         thread_limit,
                         algorithm,

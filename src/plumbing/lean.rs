@@ -71,7 +71,7 @@ mod options {
         /// the algorithm used to verify the pack. They differ in costs.
         ///
         /// Possible values are "less-time" and "less-memory". Default is "less-memory".
-        pub algorithm: Option<core::verify::Algorithm>,
+        pub algorithm: Option<core::pack::verify::Algorithm>,
 
         /// output statistical information about the pack
         #[argh(switch, short = 's')]
@@ -116,6 +116,7 @@ fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Opt
 }
 
 pub fn main() -> Result<()> {
+    use gitoxide_core::pack::verify;
     pub use options::*;
     let cli: Args = crate::shared::from_env();
     let thread_limit = cli.threads;
@@ -137,21 +138,21 @@ pub fn main() -> Result<()> {
             re_encode,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-verify");
-            core::verify::pack_or_pack_index(
+            verify::pack_or_pack_index(
                 path,
                 progress,
-                core::verify::Context {
+                verify::Context {
                     output_statistics: if statistics {
                         Some(core::OutputFormat::Human)
                     } else {
                         None
                     },
-                    algorithm: algorithm.unwrap_or(core::verify::Algorithm::LessTime),
+                    algorithm: algorithm.unwrap_or(verify::Algorithm::LessTime),
                     thread_limit,
                     mode: match (decode, re_encode) {
-                        (true, false) => core::verify::Mode::Sha1CRC32Decode,
-                        (true, true) | (false, true) => core::verify::Mode::Sha1CRC32DecodeEncode,
-                        (false, false) => core::verify::Mode::Sha1CRC32,
+                        (true, false) => verify::Mode::Sha1CRC32Decode,
+                        (true, true) | (false, true) => verify::Mode::Sha1CRC32DecodeEncode,
+                        (false, false) => verify::Mode::Sha1CRC32,
                     },
                     out: stdout(),
                     err: stderr(),
