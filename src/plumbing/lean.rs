@@ -51,7 +51,7 @@ mod options {
         /// the algorithm used to verify the pack. They differ in costs.
         ///
         /// Possible values are "less-time" and "less-memory". Default is "less-memory".
-        pub algorithm: Option<core::VerifyAlgorithm>,
+        pub algorithm: Option<core::verify::Algorithm>,
 
         /// output statistical information about the pack
         #[argh(switch, short = 's')]
@@ -109,21 +109,21 @@ pub fn main() -> Result<()> {
             re_encode,
         }) => {
             let (_handle, progress) = prepare(verbose, "verify-pack");
-            core::verify_pack_or_pack_index(
+            core::verify::pack_or_pack_index(
                 path,
                 progress,
-                core::Context {
+                core::verify::Context {
                     output_statistics: if statistics {
                         Some(core::OutputFormat::Human)
                     } else {
                         None
                     },
-                    algorithm: algorithm.unwrap_or(core::VerifyAlgorithm::LessTime),
+                    algorithm: algorithm.unwrap_or(core::verify::Algorithm::LessTime),
                     thread_limit,
                     mode: match (decode, re_encode) {
-                        (true, false) => core::VerifyMode::Sha1CRC32Decode,
-                        (true, true) | (false, true) => core::VerifyMode::Sha1CRC32DecodeEncode,
-                        (false, false) => core::VerifyMode::Sha1CRC32,
+                        (true, false) => core::verify::Mode::Sha1CRC32Decode,
+                        (true, true) | (false, true) => core::verify::Mode::Sha1CRC32DecodeEncode,
+                        (false, false) => core::verify::Mode::Sha1CRC32,
                     },
                     out: stdout(),
                     err: stderr(),

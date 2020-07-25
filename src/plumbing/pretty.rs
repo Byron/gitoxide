@@ -46,9 +46,9 @@ mod options {
                 long,
                 short = "a",
                 default_value = "less-time",
-                possible_values(core::VerifyAlgorithm::variants())
+                possible_values(core::verify::Algorithm::variants())
             )]
-            algorithm: core::VerifyAlgorithm,
+            algorithm: core::verify::Algorithm,
 
             /// verbose progress messages are printed line by line
             #[structopt(long, short = "v")]
@@ -197,15 +197,15 @@ pub fn main() -> Result<()> {
             progress_keep_open,
             move |progress, out, err| {
                 let mode = match (decode, re_encode) {
-                    (true, false) => core::VerifyMode::Sha1CRC32Decode,
-                    (true, true) | (false, true) => core::VerifyMode::Sha1CRC32DecodeEncode,
-                    (false, false) => core::VerifyMode::Sha1CRC32,
+                    (true, false) => core::verify::Mode::Sha1CRC32Decode,
+                    (true, true) | (false, true) => core::verify::Mode::Sha1CRC32DecodeEncode,
+                    (false, false) => core::verify::Mode::Sha1CRC32,
                 };
                 let output_statistics = if statistics { Some(format) } else { None };
-                core::verify_pack_or_pack_index(
+                core::verify::pack_or_pack_index(
                     path,
                     progress,
-                    core::Context {
+                    core::verify::Context {
                         output_statistics,
                         thread_limit,
                         algorithm,

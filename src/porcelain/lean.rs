@@ -32,6 +32,6 @@ pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
 
     match cli.subcommand {
-        SubCommands::Init(_) => core::init(),
+        SubCommands::Init(_) => core::repository::init(),
     }
 }

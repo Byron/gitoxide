@@ -26,7 +26,7 @@ pub fn main() -> Result<()> {
     use options::*;
     let args = Args::from_args();
     match args.cmd {
-        Subcommands::Init => core::init(),
+        Subcommands::Init => core::repository::init(),
     }?;
     Ok(())
 }
