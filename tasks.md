@@ -18,7 +18,7 @@
   * [x] The Rust repo verifies `--decode` and `--re-encode`
   * [x] add re-encode to all stress tests
   * [x] support easy access to merge-tags and the signature
-* **stream pack for verify-pack**
+* **stream pack for pack-verify**
   * [x] support for multi-threading
   * [x] choice of algorithm in pack-verify
   * [x] use pack streaming in pack-verify by default

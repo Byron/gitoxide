@@ -26,7 +26,7 @@ mod method {
     }
 }
 
-/// All hardcoded offsets are obtained via `git verify-pack --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
+/// All hardcoded offsets are obtained via `git pack-verify --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;

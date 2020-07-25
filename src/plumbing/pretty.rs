@@ -28,7 +28,7 @@ mod options {
     pub enum Subcommands {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
-        VerifyPack {
+        PackVerify {
             /// output statistical information about the pack
             #[structopt(long, short = "s")]
             statistics: bool,
@@ -180,7 +180,7 @@ pub fn main() -> Result<()> {
     let args = Args::from_args();
     let thread_limit = args.threads;
     match args.cmd {
-        Subcommands::VerifyPack {
+        Subcommands::PackVerify {
             path,
             algorithm,
             verbose,
@@ -191,7 +191,7 @@ pub fn main() -> Result<()> {
             progress_keep_open,
             statistics,
         } => prepare_and_run(
-            "verify-pack",
+            "pack-verify",
             verbose,
             progress,
             progress_keep_open,

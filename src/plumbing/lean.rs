@@ -24,13 +24,13 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand)]
     pub enum SubCommands {
-        VerifyPack(VerifyPack),
+        PackVerify(PackVerify),
     }
 
     /// Initialize the repository in the current directory.
     #[derive(FromArgs, PartialEq, Debug)]
-    #[argh(subcommand, name = "verify-pack")]
-    pub struct VerifyPack {
+    #[argh(subcommand, name = "pack-verify")]
+    pub struct PackVerify {
         #[argh(switch)]
         /// decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
         ///
@@ -100,7 +100,7 @@ pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
     let thread_limit = cli.threads;
     match cli.subcommand {
-        SubCommands::VerifyPack(VerifyPack {
+        SubCommands::PackVerify(PackVerify {
             path,
             verbose,
             statistics,
@@ -108,7 +108,7 @@ pub fn main() -> Result<()> {
             decode,
             re_encode,
         }) => {
-            let (_handle, progress) = prepare(verbose, "verify-pack");
+            let (_handle, progress) = prepare(verbose, "pack-verify");
             core::verify::pack_or_pack_index(
                 path,
                 progress,
