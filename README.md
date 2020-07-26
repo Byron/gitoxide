@@ -37,8 +37,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] read
       * [x] into memory
       * [x] streaming
-    * [x] streaming write
-    * [x] streaming write
+    * [x] streaming write for blobs
+    * [x] buffer write for small in-memory objects/non-blobs
   * **packs**
     * [x] traverse pack index
     * [x] decode
@@ -48,11 +48,12 @@ The CLI uses various crates, please see _'Development Status'_ for details.
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
     * [ ] encode
-      * [ ] create new packs
+      * [ ] create new pack
       * [ ] create 'thin' pack
     * [x] verify pack with statistics
+      * [ ] brute force - less memory
+      * [ ] indexed - more memory
     * [ ] pack streaming (i.e. indexing + resolution)
-      * [ ] use pack streaming for verification for performance and correctness
   * [ ] API documentation with examples
   * **sink**
     * [x] write objects and obtain id
@@ -199,6 +200,8 @@ Once installed, there are two binaries:
  * **use async IO everywhere**
    * for the most part, git operations are heavily relying on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
+   * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
+     though. It should be possible to put it behind a feature flag though.
 
 ## Roadmap to Future
 
@@ -208,6 +211,7 @@ Provide a CLI to for the most basic user journey:
 
 * [x] initialize a repository
 * [ ] clone a repository
+   * [ ] http(s) (or ssh, whatever is easier)
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push
@@ -216,7 +220,6 @@ Provide a CLI to for the most basic user journey:
 ### Roadmap to 1.1
 
  * [ ] clone a repository via
-   * [ ] http(s)
    * [ ] ssh
 
 ## Cargo features guide
