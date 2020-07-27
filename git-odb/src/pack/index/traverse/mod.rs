@@ -3,7 +3,7 @@ use git_features::{
     parallel,
     progress::{self, Progress},
 };
-use git_object::{borrowed, bstr::BString, owned};
+use git_object::owned;
 use quick_error::quick_error;
 use std::time::Instant;
 
@@ -18,16 +18,9 @@ quick_error! {
             source(err)
             from()
         }
-        Io(err: std::io::Error, path: std::path::PathBuf, msg: &'static str) {
-            display("Failed to {} at path '{}'", msg, path.display())
-            source(err)
-        }
         Graph(err: pack::graph::Error) {
             from()
             source(err)
-        }
-        Mismatch { expected: owned::Id, actual: owned::Id } {
-            display("index checksum mismatch: expected {}, got {}", expected, actual)
         }
         PackChecksum(err: pack::data::verify::Error) {
             display("The pack of this index file failed to verify its checksums")
@@ -37,16 +30,6 @@ quick_error! {
         PackDecode(err: pack::data::decode::Error, id: owned::Id, offset: u64) {
             display("Object {} at offset {} could not be decoded", id, offset)
             source(err)
-        }
-        ObjectDecode(err: borrowed::Error, kind: git_object::Kind, oid: owned::Id) {
-            display("{} object {} could not be decoded", kind, oid)
-            source(err)
-        }
-        ObjectEncodeMismatch(kind: git_object::Kind, oid: owned::Id, expected: BString, actual: BString) {
-            display("{} object {} wasn't re-encoded without change, wanted\n{}\n\nGOT\n\n{}", kind, oid, expected, actual)
-        }
-        ObjectEncode(err: std::io::Error) {
-            from()
         }
         PackMismatch { expected: owned::Id, actual: owned::Id } {
             display("The packfiles checksum didn't match the index file checksum: expected {}, got {}", expected, actual)
