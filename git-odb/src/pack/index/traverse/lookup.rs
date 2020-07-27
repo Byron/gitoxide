@@ -1,4 +1,4 @@
-use super::{Error, Reducer};
+use super::{Error, Reducer, SafetyCheck};
 use crate::pack::{self, data::decode, index, index::util};
 use git_features::{
     parallel::{self, in_parallel_if},
@@ -9,6 +9,7 @@ use git_features::{
 impl index::File {
     pub(crate) fn traverse_with_lookup<P, C, Processor>(
         &self,
+        check: SafetyCheck,
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,
@@ -61,6 +62,7 @@ impl index::File {
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {
                     stats.push(self.process_entry_dispatch(
+                        check,
                         pack,
                         cache,
                         buf,
@@ -73,7 +75,7 @@ impl index::File {
                 }
                 Ok(stats)
             },
-            Reducer::from_progress(&reduce_progress, pack.data_len()),
+            Reducer::from_progress(&reduce_progress, pack.data_len(), check),
         )
     }
 }

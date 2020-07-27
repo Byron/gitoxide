@@ -1,4 +1,4 @@
-use super::{Error, Reducer};
+use super::{Error, Reducer, SafetyCheck};
 use crate::{
     pack,
     pack::index::access::PackOffset,
@@ -14,6 +14,7 @@ use std::collections::BTreeMap;
 impl index::File {
     pub(crate) fn traverse_with_index_lookup<P, Processor>(
         &self,
+        check: SafetyCheck,
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         mut root: P,
@@ -145,6 +146,7 @@ impl index::File {
 
                         let shared_cache = &mut SharedCache(&mut cache);
                         let mut stat = self.process_entry_dispatch(
+                            check,
                             pack,
                             shared_cache,
                             buf,
@@ -163,7 +165,7 @@ impl index::File {
 
                 Ok(stats)
             },
-            Reducer::from_progress(&reduce_progress, pack.data_len()),
+            Reducer::from_progress(&reduce_progress, pack.data_len(), check),
         )
     }
 }

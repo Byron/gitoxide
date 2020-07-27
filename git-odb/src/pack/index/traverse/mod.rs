@@ -63,7 +63,7 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum SafetyCheck {
     /// Don't verify the validity of the checksums stored in the index and pack file
@@ -75,11 +75,34 @@ pub enum SafetyCheck {
     /// All of the above, and only log object decode errors.
     ///
     /// Useful if there is a damaged pack and you would like to traverse as many objects as possible.
-    SkipFileAndObjectChecksumVerificationNoAbortOnDecodeError,
+    SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError,
 
     /// Perform all available safety checks before operating on the pack and
     /// abort if any of them fails
     All,
+}
+
+impl SafetyCheck {
+    pub fn file_checksum(&self) -> bool {
+        match self {
+            SafetyCheck::All => true,
+            _ => false,
+        }
+    }
+    pub fn object_checksum(&self) -> bool {
+        match self {
+            SafetyCheck::All | SafetyCheck::SkipFileChecksumVerification => true,
+            _ => false,
+        }
+    }
+    pub fn fatal_decode_error(&self) -> bool {
+        match self {
+            SafetyCheck::All
+            | SafetyCheck::SkipFileChecksumVerification
+            | SafetyCheck::SkipFileAndObjectChecksumVerification => true,
+            SafetyCheck::SkipFileAndObjectChecksumVerificationAndNoAbortOnDecodeError => false,
+        }
+    }
 }
 
 impl Default for SafetyCheck {
@@ -136,7 +159,7 @@ impl index::File {
         Context {
             algorithm,
             thread_limit,
-            check: _,
+            check,
         }: Context,
         progress: Option<P>,
         new_processor: impl Fn() -> Processor + Send + Sync,
@@ -156,31 +179,37 @@ impl index::File {
     {
         let mut root = progress::DoOrDiscard::from(progress);
 
-        let progress = root.add_child("Sha1 of index");
-        let verify_self = move || self.verify_checksum(progress);
+        let id = if check.file_checksum() {
+            let progress = root.add_child("Sha1 of index");
+            let verify_self = move || self.verify_checksum(progress);
 
-        if self.pack_checksum() != pack.checksum() {
-            return Err(Error::PackMismatch {
-                actual: pack.checksum(),
-                expected: self.pack_checksum(),
-            });
-        }
-        let mut progress = root.add_child("Sha1 of pack");
-        let (pack_res, id) = parallel::join(
-            move || {
-                let throughput = TimeThroughput::new(pack.data_len());
-                let res = pack.verify_checksum();
-                progress.done(throughput);
-                res
-            },
-            verify_self,
-        );
-        pack_res?;
-        let id = id?;
+            if self.pack_checksum() != pack.checksum() {
+                return Err(Error::PackMismatch {
+                    actual: pack.checksum(),
+                    expected: self.pack_checksum(),
+                });
+            }
+            let mut progress = root.add_child("Sha1 of pack");
+            let (pack_res, id) = parallel::join(
+                move || {
+                    let throughput = TimeThroughput::new(pack.data_len());
+                    let res = pack.verify_checksum();
+                    progress.done(throughput);
+                    res
+                },
+                verify_self,
+            );
+            pack_res?;
+            id?
+        } else {
+            self.index_checksum()
+        };
 
         match algorithm {
-            Algorithm::Lookup => self.traverse_with_lookup(thread_limit, new_processor, make_cache, root, pack),
-            Algorithm::DeltaTreeLookup => self.traverse_with_index_lookup(thread_limit, new_processor, root, pack),
+            Algorithm::Lookup => self.traverse_with_lookup(check, thread_limit, new_processor, make_cache, root, pack),
+            Algorithm::DeltaTreeLookup => {
+                self.traverse_with_index_lookup(check, thread_limit, new_processor, root, pack)
+            }
         }
         .map(|stats| (id, stats))
     }
@@ -188,6 +217,7 @@ impl index::File {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn process_entry_dispatch<C, P>(
         &self,
+        check: SafetyCheck,
         pack: &pack::data::File,
         cache: &mut C,
         buf: &mut Vec<u8>,
@@ -223,31 +253,33 @@ impl index::File {
         let object_kind = entry_stats.kind;
         let consumed_input = entry_stats.compressed_size;
 
-        let header_size = crate::loose::object::header::encode(object_kind, buf.len() as u64, &mut header_buf[..])
-            .expect("header buffer to be big enough");
-        let mut hasher = git_features::hash::Sha1::default();
-        hasher.update(&header_buf[..header_size]);
-        hasher.update(buf.as_slice());
+        if check.object_checksum() {
+            let header_size = crate::loose::object::header::encode(object_kind, buf.len() as u64, &mut header_buf[..])
+                .expect("header buffer to be big enough");
+            let mut hasher = git_features::hash::Sha1::default();
+            hasher.update(&header_buf[..header_size]);
+            hasher.update(buf.as_slice());
 
-        let actual_oid = owned::Id::new_sha1(hasher.digest());
-        if actual_oid != index_entry.oid {
-            return Err(Error::PackObjectMismatch {
-                actual: actual_oid,
-                expected: index_entry.oid,
-                offset: index_entry.pack_offset,
-                kind: object_kind,
-            });
-        }
-        if let Some(desired_crc32) = index_entry.crc32 {
-            let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
-            let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
-            if actual_crc32 != desired_crc32 {
-                return Err(Error::Crc32Mismatch {
-                    actual: actual_crc32,
-                    expected: desired_crc32,
+            let actual_oid = owned::Id::new_sha1(hasher.digest());
+            if actual_oid != index_entry.oid {
+                return Err(Error::PackObjectMismatch {
+                    actual: actual_oid,
+                    expected: index_entry.oid,
                     offset: index_entry.pack_offset,
                     kind: object_kind,
                 });
+            }
+            if let Some(desired_crc32) = index_entry.crc32 {
+                let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
+                let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
+                if actual_crc32 != desired_crc32 {
+                    return Err(Error::Crc32Mismatch {
+                        actual: actual_crc32,
+                        expected: desired_crc32,
+                        offset: index_entry.pack_offset,
+                        kind: object_kind,
+                    });
+                }
             }
         }
         processor(object_kind, buf.as_slice(), &index_entry, &entry_stats, progress)?;

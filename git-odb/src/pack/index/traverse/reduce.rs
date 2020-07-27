@@ -19,19 +19,25 @@ fn div_decode_result(lhs: &mut decode::Outcome, div: usize) {
 }
 
 pub struct Reducer<'a, P> {
-    pub progress: &'a std::sync::Mutex<P>,
-    pub then: Instant,
-    pub entries_seen: u32,
-    pub stats: traverse::Outcome,
+    progress: &'a std::sync::Mutex<P>,
+    check: traverse::SafetyCheck,
+    then: Instant,
+    entries_seen: u32,
+    stats: traverse::Outcome,
 }
 
 impl<'a, P> Reducer<'a, P>
 where
     P: Progress,
 {
-    pub fn from_progress(progress: &'a std::sync::Mutex<P>, pack_data_len_in_bytes: usize) -> Self {
+    pub fn from_progress(
+        progress: &'a std::sync::Mutex<P>,
+        pack_data_len_in_bytes: usize,
+        check: traverse::SafetyCheck,
+    ) -> Self {
         Reducer {
             progress: &progress,
+            check,
             then: Instant::now(),
             entries_seen: 0,
             stats: traverse::Outcome {
@@ -55,7 +61,16 @@ where
     type Error = traverse::Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-        let chunk_stats: Vec<_> = input?;
+        let chunk_stats: Vec<_> = match input {
+            Err(err @ traverse::Error::PackDecode(_, _, _)) if !self.check.fatal_decode_error() => {
+                self.progress
+                    .lock()
+                    .unwrap()
+                    .fail(format!("Ignoring decode error: {}", err));
+                return Ok(());
+            }
+            res => res,
+        }?;
         self.entries_seen += chunk_stats.len() as u32;
 
         let chunk_total = chunk_stats.into_iter().fold(
