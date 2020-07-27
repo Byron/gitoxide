@@ -22,7 +22,12 @@ impl index::File {
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
-        Processor: FnMut() -> Result<(), Box<dyn std::error::Error + Send>>,
+        Processor: FnMut(
+            git_object::Kind,
+            &[u8],
+            &index::Entry,
+            &pack::data::decode::Outcome,
+        ) -> Result<(), Box<dyn std::error::Error + Send>>,
     {
         let sorted_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));

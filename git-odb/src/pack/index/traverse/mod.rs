@@ -126,7 +126,12 @@ impl index::File {
         P: Progress,
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
-        Processor: FnMut() -> Result<(), Box<dyn std::error::Error + Send>>,
+        Processor: FnMut(
+            git_object::Kind,
+            &[u8],
+            &index::Entry,
+            &pack::data::decode::Outcome,
+        ) -> Result<(), Box<dyn std::error::Error + Send>>,
     {
         let mut root = progress::DoOrDiscard::from(progress);
 
@@ -160,18 +165,24 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn process_entry_dispatch<C>(
+    pub(crate) fn process_entry_dispatch<C, P>(
         &self,
         pack: &pack::data::File,
         cache: &mut C,
         buf: &mut Vec<u8>,
-        _progress: &mut impl Progress,
+        _progress: &mut P,
         header_buf: &mut [u8; 64],
         index_entry: &pack::index::Entry,
-        processor: &mut impl FnMut() -> Result<(), Box<dyn std::error::Error + Send>>,
+        processor: &mut impl FnMut(
+            git_object::Kind,
+            &[u8],
+            &index::Entry,
+            &pack::data::decode::Outcome,
+        ) -> Result<(), Box<dyn std::error::Error + Send>>,
     ) -> Result<pack::data::decode::Outcome, Error>
     where
         C: pack::cache::DecodeEntry,
+        P: Progress,
     {
         let pack_entry = pack.entry(index_entry.pack_offset);
         let pack_entry_data_offset = pack_entry.data_offset;
@@ -217,7 +228,7 @@ impl index::File {
                 });
             }
         }
-        processor()?;
+        processor(object_kind, buf.as_slice(), &index_entry, &entry_stats)?;
         Ok(entry_stats)
     }
 }
