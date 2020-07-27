@@ -85,7 +85,7 @@ impl Bundle {
         P: Progress,
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: std::marker::Send,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
         self.index.verify_integrity(
             Some((&self.pack, mode, pack::index::traverse::Algorithm::default())),

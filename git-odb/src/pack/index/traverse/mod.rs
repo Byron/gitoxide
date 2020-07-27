@@ -15,7 +15,7 @@ pub(crate) use reduce::Reducer;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Processor(err: Box<dyn std::error::Error + Send>) {
+        Processor(err: Box<dyn std::error::Error + Send + Sync>) {
             source(&**err)
             from()
         }
@@ -105,7 +105,7 @@ impl index::File {
             &index::Entry,
             &pack::data::decode::Outcome,
             &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
-        ) -> Result<(), Box<dyn std::error::Error + Send>>,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
         let mut root = progress::DoOrDiscard::from(progress);
 
@@ -153,7 +153,7 @@ impl index::File {
             &index::Entry,
             &pack::data::decode::Outcome,
             &mut P,
-        ) -> Result<(), Box<dyn std::error::Error + Send>>,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     ) -> Result<pack::data::decode::Outcome, Error>
     where
         C: pack::cache::DecodeEntry,

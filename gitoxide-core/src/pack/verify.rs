@@ -110,8 +110,7 @@ where
     <P as Progress>::SubProgress: Send,
     W1: io::Write,
     W2: io::Write,
-    <<P as git_features::progress::Progress>::SubProgress as git_features::progress::Progress>::SubProgress:
-        std::marker::Send,
+    <<P as git_features::progress::Progress>::SubProgress as git_features::progress::Progress>::SubProgress: Send,
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {
@@ -155,7 +154,7 @@ where
                 progress,
                 cache,
             )
-            .unwrap() // FIXME
+            .with_context(|| "Verification failure")?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };

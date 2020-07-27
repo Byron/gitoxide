@@ -77,7 +77,7 @@ impl index::File {
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: std::marker::Send,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);
@@ -114,7 +114,7 @@ impl index::File {
         index_entry: &index::Entry,
         _stats: &pack::data::decode::Outcome,
         progress: &mut P,
-    ) -> Result<(), Box<dyn std::error::Error + Send>>
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         P: Progress,
     {
@@ -124,14 +124,14 @@ impl index::File {
                 Tree | Commit | Tag => {
                     let borrowed_object = borrowed::Object::from_bytes(object_kind, buf).map_err(|err| {
                         Box::new(Error::ObjectDecode(err, object_kind, index_entry.oid))
-                            as Box<dyn std::error::Error + Send>
+                            as Box<dyn std::error::Error + Send + Sync>
                     })?;
                     if let Mode::Sha1CRC32DecodeEncode = mode {
                         let object = owned::Object::from(borrowed_object);
                         encode_buf.clear();
                         object
                             .write_to(&mut *encode_buf)
-                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send>)?;
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
                             if let git_object::Kind::Tree = object_kind {

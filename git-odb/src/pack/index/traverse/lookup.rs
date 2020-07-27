@@ -25,7 +25,7 @@ impl index::File {
             &index::Entry,
             &pack::data::decode::Outcome,
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
-        ) -> Result<(), Box<dyn std::error::Error + Send>>,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
         let index_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
