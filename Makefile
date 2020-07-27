@@ -103,12 +103,16 @@ $(linux_repo):
 	mkdir -p $@
 	cd $@ && git init --bare && git remote add origin https://github.com/torvalds/linux && git fetch
 
+##@ on CI
+
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
 	time ./target/release/gixp pack-verify --verbose --statistics $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gixp pack-verify --verbose --algorithm less-memory $(rust_repo)/.git/objects/pack/*.idx
+	time ./target/release/gixp pack-verify --verbose --algorithm less-memory $(rust_repo)/objects/pack/*.idx
 	time ./target/release/gixp pack-verify --verbose --re-encode $(rust_repo)/objects/pack/*.idx
 	time ./target/release/gixp pack-verify --verbose --re-encode $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gixp pack-explode --verbose .git/objects/pack/*.idx
+	rm -Rf delme; mkdir delme && time ./target/release/gixp pack-explode --verbose .git/objects/pack/*.idx delme/
 
 ##@ Maintenance
 

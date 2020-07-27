@@ -20,6 +20,8 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * plumbing
     * [x] [pack verify](https://asciinema.org/a/346975)
     * [x] [pack index verify](https://asciinema.org/a/346976) including each object sha1 and statistics
+    * [x] pack explode, useful for transforming packs into loose objects for inspection or restoration
+      * [ ] verify written objects (by reading them back from disk)
 * **git-object**
   * *decode (zero-copy)* borrowed objects
     * [x] commit
@@ -107,7 +109,7 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * _a terminal user interface seeking to replace and improve on `tig`_
 * **Stress Testing**
   * [x] Verify huge packs
-  * [ ] Explode huge packs to disk and validate loose objects
+  * [x] Explode a pack to disk 
   * [ ] Generate huge back from a lot of loose objects
 * **Ideas for Demos**
   * [ ] A simple [`git-hours`][git-hours-algo] clone
