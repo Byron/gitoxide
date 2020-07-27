@@ -71,7 +71,7 @@ title "CLI ${kind}"
 
           (with "and all safety checks"
             it "does not explode the file at all" && {
-              WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-objects-dir-failure" \
+              WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-sink-failure" \
               expect_run $WITH_FAILURE "$exe_plumbing" pack-explode --check all --delete-pack "${PACK_FILE}.pack"
             }
 
@@ -79,6 +79,26 @@ title "CLI ${kind}"
               expect_exists ${PACK_FILE}.pack
               expect_exists ${PACK_FILE}.idx
             }
+          )
+
+          (with "and no safety checks at all (and an output directory)"
+            it "does explode the file" && {
+              WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-sink-skip-checks-success" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-and-object-checksum-and-no-abort-on-decode \
+                                        --delete-pack "${PACK_FILE}.pack" .
+            }
+
+            it "removes the original files" && {
+              expect_run $WITH_FAILURE test -e ${PACK_FILE}.pack
+              expect_run $WITH_FAILURE test -e ${PACK_FILE}.idx
+            }
+
+            (with_program tree
+              it "creates all pack objects, but the broken ones" && {
+                WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-with-objects-dir-skip-checks-success-tree" \
+                expect_run $SUCCESSFULLY tree
+              }
+            )
           )
         )
       )

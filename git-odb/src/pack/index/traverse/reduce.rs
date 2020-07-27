@@ -66,7 +66,7 @@ where
                 self.progress
                     .lock()
                     .unwrap()
-                    .fail(format!("Ignoring decode error: {}", err));
+                    .info(format!("Ignoring decode error: {}", err));
                 return Ok(());
             }
             res => res,
