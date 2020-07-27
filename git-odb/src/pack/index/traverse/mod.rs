@@ -131,6 +131,7 @@ impl index::File {
             &[u8],
             &index::Entry,
             &pack::data::decode::Outcome,
+            &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
         ) -> Result<(), Box<dyn std::error::Error + Send>>,
     {
         let mut root = progress::DoOrDiscard::from(progress);
@@ -170,7 +171,7 @@ impl index::File {
         pack: &pack::data::File,
         cache: &mut C,
         buf: &mut Vec<u8>,
-        _progress: &mut P,
+        progress: &mut P,
         header_buf: &mut [u8; 64],
         index_entry: &pack::index::Entry,
         processor: &mut impl FnMut(
@@ -178,6 +179,7 @@ impl index::File {
             &[u8],
             &index::Entry,
             &pack::data::decode::Outcome,
+            &mut P,
         ) -> Result<(), Box<dyn std::error::Error + Send>>,
     ) -> Result<pack::data::decode::Outcome, Error>
     where
@@ -228,7 +230,7 @@ impl index::File {
                 });
             }
         }
-        processor(object_kind, buf.as_slice(), &index_entry, &entry_stats)?;
+        processor(object_kind, buf.as_slice(), &index_entry, &entry_stats, progress)?;
         Ok(entry_stats)
     }
 }

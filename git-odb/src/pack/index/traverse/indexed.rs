@@ -27,6 +27,7 @@ impl index::File {
             &[u8],
             &index::Entry,
             &pack::data::decode::Outcome,
+            &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), Box<dyn std::error::Error + Send>>,
     {
         let sorted_entries =
