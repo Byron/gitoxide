@@ -33,11 +33,11 @@ impl FromStr for Algorithm {
     }
 }
 
-impl From<Algorithm> for index::verify::Algorithm {
+impl From<Algorithm> for index::traverse::Algorithm {
     fn from(v: Algorithm) -> Self {
         match v {
-            Algorithm::LessMemory => index::verify::Algorithm::Lookup,
-            Algorithm::LessTime => index::verify::Algorithm::DeltaTreeLookup,
+            Algorithm::LessMemory => index::traverse::Algorithm::Lookup,
+            Algorithm::LessTime => index::traverse::Algorithm::DeltaTreeLookup,
         }
     }
 }
@@ -104,12 +104,14 @@ pub fn pack_or_pack_index<P, W1, W2>(
         thread_limit,
         algorithm,
     }: Context<W1, W2>,
-) -> Result<(owned::Id, Option<index::verify::Outcome>)>
+) -> Result<(owned::Id, Option<index::traverse::Outcome>)>
 where
     P: Progress,
     <P as Progress>::SubProgress: Send,
     W1: io::Write,
     W2: io::Write,
+    <<P as git_features::progress::Progress>::SubProgress as git_features::progress::Progress>::SubProgress:
+        std::marker::Send,
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {
@@ -153,7 +155,7 @@ where
                 progress,
                 cache,
             )
-            .with_context(|| "Verification failure")?
+            .unwrap() // FIXME
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
@@ -168,7 +170,7 @@ where
     Ok(res)
 }
 
-fn print_statistics(out: &mut impl io::Write, stats: &index::verify::Outcome) -> io::Result<()> {
+fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Outcome) -> io::Result<()> {
     writeln!(out, "objects per delta chain length")?;
     let mut chain_length_to_object: Vec<_> = stats.objects_per_chain_length.iter().map(|(a, b)| (*a, *b)).collect();
     chain_length_to_object.sort_by_key(|e| e.0);

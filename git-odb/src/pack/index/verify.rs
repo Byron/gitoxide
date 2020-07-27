@@ -39,35 +39,35 @@ pub enum Mode {
 
 /// Verify and validate the content of the index file
 impl index::File {
-    // pub fn index_checksum(&self) -> owned::Id {
-    //     owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
-    // }
-    //
-    // pub fn pack_checksum(&self) -> owned::Id {
-    //     let from = self.data.len() - SHA1_SIZE * 2;
-    //     owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
-    // }
-    //
-    // pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
-    //     let throughput = index::util::TimeThroughput::new(self.data.len());
-    //     let mut hasher = git_features::hash::Sha1::default();
-    //     hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-    //     let actual = owned::Id::new_sha1(hasher.digest());
-    //     progress.done(throughput);
-    //
-    //     let expected = self.index_checksum();
-    //     if actual == expected {
-    //         Ok(actual)
-    //     } else {
-    //         Err(Error::Mismatch { actual, expected })
-    //     }
-    // }
+    pub fn index_checksum(&self) -> owned::Id {
+        owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    }
+
+    pub fn pack_checksum(&self) -> owned::Id {
+        let from = self.data.len() - SHA1_SIZE * 2;
+        owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
+    }
+
+    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
+        let throughput = index::util::TimeThroughput::new(self.data.len());
+        let mut hasher = git_features::hash::Sha1::default();
+        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+        let actual = owned::Id::new_sha1(hasher.digest());
+        progress.done(throughput);
+
+        let expected = self.index_checksum();
+        if actual == expected {
+            Ok(actual)
+        } else {
+            Err(Error::Mismatch { actual, expected })
+        }
+    }
 
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     /// redoing a lot of work across multiple objects.
-    pub fn verify_integrity_2<P, C>(
+    pub fn verify_integrity<P, C>(
         &self,
         pack: Option<(&pack::data::File, Mode, index::traverse::Algorithm)>,
         thread_limit: Option<usize>,

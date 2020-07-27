@@ -73,9 +73,9 @@ use common_macros::b_tree_map;
 use git_features::progress::Discard;
 use git_odb::pack::cache::DecodeEntryNoop;
 
-static ALGOS: &[index::verify::Algorithm] = &[
-    index::verify::Algorithm::Lookup,
-    index::verify::Algorithm::DeltaTreeLookup,
+static ALGOS: &[index::traverse::Algorithm] = &[
+    index::traverse::Algorithm::Lookup,
+    index::traverse::Algorithm::DeltaTreeLookup,
 ];
 
 static MODES: &[index::verify::Mode] = &[
@@ -90,7 +90,7 @@ fn pack_lookup() {
         (
             INDEX_V2,
             PACK_FOR_INDEX_V2,
-            index::verify::Outcome {
+            index::traverse::Outcome {
                 average: Outcome {
                     kind: object::Kind::Tree,
                     num_deltas: 1,
@@ -116,7 +116,7 @@ fn pack_lookup() {
         (
             INDEX_V1,
             PACK_FOR_INDEX_V1,
-            index::verify::Outcome {
+            index::traverse::Outcome {
                 average: Outcome {
                     kind: object::Kind::Tree,
                     num_deltas: 0,
@@ -137,7 +137,7 @@ fn pack_lookup() {
         (
             SMALL_PACK_INDEX,
             SMALL_PACK,
-            index::verify::Outcome {
+            index::traverse::Outcome {
                 average: Outcome {
                     kind: object::Kind::Tree,
                     num_deltas: 0,

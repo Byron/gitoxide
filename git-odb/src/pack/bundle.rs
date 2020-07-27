@@ -80,14 +80,15 @@ impl Bundle {
         mode: pack::index::verify::Mode,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<pack::index::verify::Outcome>), pack::index::verify::Error>
+    ) -> Result<(owned::Id, Option<pack::index::traverse::Outcome>), pack::index::traverse::Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: std::marker::Send,
     {
         self.index.verify_integrity(
-            Some((&self.pack, mode, pack::index::verify::Algorithm::default())),
+            Some((&self.pack, mode, pack::index::traverse::Algorithm::default())),
             thread_limit,
             progress,
             make_cache,
