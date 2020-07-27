@@ -12,15 +12,17 @@ use git_object::Kind;
 use std::collections::BTreeMap;
 
 impl index::File {
-    pub(crate) fn traverse_with_index_lookup<P>(
+    pub(crate) fn traverse_with_index_lookup<P, Processor>(
         &self,
         thread_limit: Option<usize>,
+        new_processor: impl Fn() -> Processor + Send + Sync,
         mut root: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
     ) -> Result<index::verify::Outcome, Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
+        Processor: FnMut() -> Result<(), Box<dyn std::error::Error + Send>>,
     {
         let sorted_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
@@ -40,6 +42,7 @@ impl index::File {
 
         let state_per_thread = |index| {
             (
+                new_processor(),
                 Vec::<u8>::with_capacity(2048), // decode buffer
                 Vec::<(pack::graph::Node, u32)>::new(),
                 reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
@@ -82,7 +85,7 @@ impl index::File {
             thread_limit,
             state_per_thread,
             |input: Vec<pack::graph::Node>,
-             (buf, nodes, progress)|
+             (ref mut processor, buf, nodes, progress)|
              -> Result<Vec<pack::data::decode::Outcome>, Error> {
                 let mut stats = Vec::new();
                 let mut header_buf = [0u8; 64];
@@ -142,6 +145,7 @@ impl index::File {
                             progress,
                             &mut header_buf,
                             index_entry_of_node,
+                            processor,
                         )?;
                         stat.num_deltas = level;
                         stats.push(stat);

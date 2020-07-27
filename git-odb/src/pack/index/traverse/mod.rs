@@ -10,7 +10,11 @@ use std::time::Instant;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        VerifyTODOGenericError(err: index::verify::Error) {
+        Processor(err: Box<dyn std::error::Error + Send>) {
+            source(&**err)
+            from()
+        }
+        Verify(err: index::verify::Error) {
             source(err)
             from()
         }
@@ -109,18 +113,20 @@ pub(crate) use reduce::Reducer;
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub fn traverse_index<P, C>(
+    pub fn traverse_index<P, C, Processor>(
         &self,
         pack: &pack::data::File,
         algorithm: Algorithm,
         thread_limit: Option<usize>,
         progress: Option<P>,
+        new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, index::verify::Outcome), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
+        Processor: FnMut() -> Result<(), Box<dyn std::error::Error + Send>>,
     {
         let mut root = progress::DoOrDiscard::from(progress);
 
@@ -147,8 +153,8 @@ impl index::File {
         let id = id?;
 
         match algorithm {
-            Algorithm::Lookup => self.traverse_with_lookup(thread_limit, make_cache, root, pack),
-            Algorithm::DeltaTreeLookup => self.traverse_with_index_lookup(thread_limit, root, pack),
+            Algorithm::Lookup => self.traverse_with_lookup(thread_limit, new_processor, make_cache, root, pack),
+            Algorithm::DeltaTreeLookup => self.traverse_with_index_lookup(thread_limit, new_processor, root, pack),
         }
         .map(|stats| (id, stats))
     }
@@ -162,6 +168,7 @@ impl index::File {
         _progress: &mut impl Progress,
         header_buf: &mut [u8; 64],
         index_entry: &pack::index::Entry,
+        processor: &mut impl FnMut() -> Result<(), Box<dyn std::error::Error + Send>>,
     ) -> Result<pack::data::decode::Outcome, Error>
     where
         C: pack::cache::DecodeEntry,
@@ -210,6 +217,7 @@ impl index::File {
                 });
             }
         }
+        processor()?;
         Ok(entry_stats)
     }
 }
