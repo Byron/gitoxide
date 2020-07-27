@@ -34,6 +34,15 @@ mod options {
             #[structopt(long)]
             delete_pack: bool,
 
+            /// The amount of checks to run. Defaults to 'all'.
+            #[structopt(
+                long,
+                short = "c",
+                default_value = "all",
+                possible_values(core::pack::explode::SafetyCheck::variants())
+            )]
+            check: core::pack::explode::SafetyCheck,
+
             /// Display verbose messages and progress information
             #[structopt(long, short = "v")]
             verbose: bool,
@@ -208,6 +217,7 @@ pub fn main() -> Result<()> {
     match args.cmd {
         Subcommands::PackExplode {
             verbose,
+            check,
             progress,
             progress_keep_open,
             delete_pack,
@@ -217,7 +227,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
-            move |progress, _out, _err| core::pack::explode::pack_or_pack_index(path, progress, delete_pack),
+            move |progress, _out, _err| core::pack::explode::pack_or_pack_index(path, check, progress, delete_pack),
         ),
         Subcommands::PackVerify {
             path,

@@ -42,6 +42,16 @@ mod options {
         #[argh(switch, short = 'v')]
         pub verbose: bool,
 
+        /// the amount of checks to run. Defaults to 'all'.
+        ///
+        /// Allowed values:
+        /// all
+        /// skip-file-checksum
+        /// skip-file-and-object-checksum
+        /// skip-file-and-object-checksum-and-no-abort-on-decode
+        #[argh(option, short = 'c')]
+        pub check: Option<core::pack::explode::SafetyCheck>,
+
         /// the '.pack' or '.idx' file to explode into loose objects
         #[argh(positional)]
         pub path: PathBuf,
@@ -116,7 +126,6 @@ fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Opt
 }
 
 pub fn main() -> Result<()> {
-    use gitoxide_core::pack::verify;
     pub use options::*;
     let cli: Args = crate::shared::from_env();
     let thread_limit = cli.threads;
@@ -124,10 +133,16 @@ pub fn main() -> Result<()> {
         SubCommands::PackExplode(PackExplode {
             path,
             verbose,
+            check,
             delete_pack,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-explode");
-            core::pack::explode::pack_or_pack_index(path, progress, delete_pack)
+            core::pack::explode::pack_or_pack_index(
+                path,
+                check.unwrap_or(core::pack::explode::SafetyCheck::All),
+                progress,
+                delete_pack,
+            )
         }
         SubCommands::PackVerify(PackVerify {
             path,
@@ -137,11 +152,12 @@ pub fn main() -> Result<()> {
             decode,
             re_encode,
         }) => {
+            use self::core::pack::verify;
             let (_handle, progress) = prepare(verbose, "pack-verify");
-            verify::pack_or_pack_index(
+            core::pack::verify::pack_or_pack_index(
                 path,
                 progress,
-                verify::Context {
+                core::pack::verify::Context {
                     output_statistics: if statistics {
                         Some(core::OutputFormat::Human)
                     } else {
