@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use git_features::progress::Progress;
+use git_features::progress::{self, Progress};
 use git_object::{owned, HashKind};
 use git_odb::{loose, pack, Write};
 use std::{
@@ -130,7 +130,7 @@ where
     })?;
 
     let out = OutputWriter(object_path.map(|path| loose::Db::at(path.as_ref())));
-    bundle.index.traverse(
+    let mut progress = bundle.index.traverse(
         &bundle.pack,
         pack::index::traverse::Context {
             algorithm: pack::index::traverse::Algorithm::Lookup,
@@ -155,7 +155,7 @@ where
             }
         },
         pack::cache::DecodeEntryLRU::default,
-    ).with_context(|| "Some loose objects could not be extracted")?;
+    ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Some loose objects could not be extracted")?;
 
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());
     drop(bundle);
@@ -163,7 +163,12 @@ where
     if delete_pack {
         fs::remove_file(&index_path)
             .and_then(|_| fs::remove_file(&data_path))
-            .map_err(|err| Error::RemoveFile(err, index_path, data_path))?;
+            .map_err(|err| Error::RemoveFile(err, index_path.clone(), data_path.clone()))?;
+        progress.info(format!(
+            "Removed '{}' and '{}'",
+            index_path.display(),
+            data_path.display()
+        ));
     }
     Ok(())
 }

@@ -73,7 +73,7 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<index::traverse::Outcome>), index::traverse::Error>
+    ) -> Result<(owned::Id, Option<index::traverse::Outcome>, Option<P>), index::traverse::Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -86,7 +86,9 @@ impl index::File {
         let verify_self = move || self.verify_checksum(progress);
 
         match pack {
-            None => verify_self().map_err(Into::into).map(|id| (id, None)),
+            None => verify_self()
+                .map_err(Into::into)
+                .map(|id| (id, None, root.into_inner())),
             Some((pack, mode, algorithm)) => self
                 .traverse(
                     pack,
@@ -104,7 +106,7 @@ impl index::File {
                     },
                     make_cache,
                 )
-                .map(|(id, outcome)| (id, Some(outcome))),
+                .map(|(id, outcome, root)| (id, Some(outcome), root)),
         }
     }
 

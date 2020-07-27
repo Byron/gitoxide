@@ -19,7 +19,7 @@ impl index::File {
         new_processor: impl Fn() -> Processor + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<index::traverse::Outcome, Error>
+    ) -> Result<(index::traverse::Outcome, P), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -167,5 +167,6 @@ impl index::File {
             },
             Reducer::from_progress(&reduce_progress, pack.data_len(), check),
         )
+        .map(|res| (res, root))
     }
 }

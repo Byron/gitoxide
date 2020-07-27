@@ -1,6 +1,5 @@
 use crate::pack;
-use git_features::progress::Progress;
-use git_object::{self as object, borrowed, owned};
+use git_object::{self as object, borrowed};
 use quick_error::quick_error;
 use std::{
     convert::TryFrom,
@@ -72,27 +71,6 @@ impl Bundle {
                 data: out.as_slice(),
             })
             .into()
-    }
-
-    pub fn verify_checksums<P, C>(
-        &self,
-        thread_limit: Option<usize>,
-        mode: pack::index::verify::Mode,
-        progress: Option<P>,
-        make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<pack::index::traverse::Outcome>), pack::index::traverse::Error>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send,
-        C: pack::cache::DecodeEntry,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-    {
-        self.index.verify_integrity(
-            Some((&self.pack, mode, pack::index::traverse::Algorithm::default())),
-            thread_limit,
-            progress,
-            make_cache,
-        )
     }
 }
 

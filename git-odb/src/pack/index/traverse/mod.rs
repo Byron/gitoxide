@@ -165,7 +165,7 @@ impl index::File {
         progress: Option<P>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Outcome), Error>
+    ) -> Result<(owned::Id, Outcome, Option<P>), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -212,7 +212,7 @@ impl index::File {
                 self.traverse_with_index_lookup(check, thread_limit, new_processor, root, pack)
             }
         }
-        .map(|stats| (id, stats))
+        .map(|(stats, root)| (id, stats, root.into_inner()))
     }
 
     #[allow(clippy::too_many_arguments)]

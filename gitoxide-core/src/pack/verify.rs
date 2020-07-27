@@ -154,6 +154,7 @@ where
                 progress,
                 cache,
             )
+            .map(|(a, b, _)| (a, b))
             .with_context(|| "Verification failure")?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),

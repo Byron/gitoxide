@@ -166,6 +166,7 @@ fn pack_lookup() {
             for mode in MODES {
                 assert_eq!(
                     idx.verify_integrity(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
+                        .map(|(a, b, _)| (a, b))
                         .unwrap(),
                     (idx.index_checksum(), Some(stats.to_owned())),
                     "{:?} -> {:?}",
@@ -223,6 +224,7 @@ fn iter() {
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
             idx.verify_integrity(None, None, Discard.into(), || { DecodeEntryNoop })
+                .map(|(a, b, _)| (a, b))
                 .unwrap(),
             (idx.index_checksum(), None)
         );
