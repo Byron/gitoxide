@@ -77,6 +77,7 @@ impl index::File {
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: std::marker::Send,
         C: pack::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);
@@ -86,7 +87,21 @@ impl index::File {
 
         match pack {
             None => verify_self().map_err(Into::into).map(|id| (id, None)),
-            Some((pack, mode, algorithm)) => unimplemented!("hello"),
+            Some((pack, mode, algorithm)) => self
+                .traverse_index(
+                    pack,
+                    algorithm,
+                    thread_limit,
+                    root.into_inner(),
+                    || {
+                        let mut encode_buf = Vec::with_capacity(2048);
+                        move |kind, data, index_entry, stats, progress| {
+                            Self::verify_entry(mode, &mut encode_buf, kind, data, index_entry, stats, progress)
+                        }
+                    },
+                    make_cache,
+                )
+                .map(|(id, outcome)| (id, Some(outcome))),
         }
     }
 
@@ -97,9 +112,9 @@ impl index::File {
         object_kind: git_object::Kind,
         buf: &[u8],
         index_entry: &index::Entry,
-        stats: &pack::data::decode::Outcome,
+        _stats: &pack::data::decode::Outcome,
         progress: &mut P,
-    ) -> Result<(), Box<dyn std::error::Error>>
+    ) -> Result<(), Box<dyn std::error::Error + Send>>
     where
         P: Progress,
     {
@@ -107,12 +122,16 @@ impl index::File {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let borrowed_object = borrowed::Object::from_bytes(object_kind, buf)
-                        .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
+                    let borrowed_object = borrowed::Object::from_bytes(object_kind, buf).map_err(|err| {
+                        Box::new(Error::ObjectDecode(err, object_kind, index_entry.oid))
+                            as Box<dyn std::error::Error + Send>
+                    })?;
                     if let Mode::Sha1CRC32DecodeEncode = mode {
                         let object = owned::Object::from(borrowed_object);
                         encode_buf.clear();
-                        object.write_to(&mut *encode_buf)?;
+                        object
+                            .write_to(&mut *encode_buf)
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send>)?;
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
                             if let git_object::Kind::Tree = object_kind {
@@ -122,13 +141,12 @@ impl index::File {
                                 }
                             }
                             if should_return_error {
-                                return Err(Error::ObjectEncodeMismatch(
+                                return Err(Box::new(Error::ObjectEncodeMismatch(
                                     object_kind,
                                     index_entry.oid,
                                     buf.clone().into(),
                                     encode_buf.clone().into(),
-                                )
-                                .into());
+                                )));
                             }
                         }
                     }
