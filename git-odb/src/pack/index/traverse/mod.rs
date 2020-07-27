@@ -63,8 +63,34 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum SafetyCheck {
+    /// Don't verify the validity of the checksums stored in the index and pack file
+    SkipFileChecksumVerification,
+
+    /// All of the above, and also don't perform any object checksum verification
+    SkipFileAndObjectChecksumVerification,
+
+    /// All of the above, and only log object decode errors.
+    ///
+    /// Useful if there is a damaged pack and you would like to traverse as many objects as possible.
+    SkipFileAndObjectChecksumVerificationNoAbortOnDecodeError,
+
+    /// Perform all available safety checks before operating on the pack and
+    /// abort if any of them fails
+    All,
+}
+
+impl Default for SafetyCheck {
+    fn default() -> Self {
+        SafetyCheck::All
+    }
+}
+
 /// The way we verify the pack
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Algorithm {
     /// Build an index to allow decoding each delta and base exactly once, saving a lot of computational
     /// resource at the expense of resident memory, as we will use an additional `DeltaTree` to accelerate
@@ -84,13 +110,34 @@ impl Default for Algorithm {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Context {
+    pub algorithm: Algorithm,
+    pub thread_limit: Option<usize>,
+    pub check: SafetyCheck,
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self {
+            algorithm: Algorithm::Lookup,
+            thread_limit: Default::default(),
+            check: Default::default(),
+        }
+    }
+}
+
 /// Verify and validate the content of the index file
 impl index::File {
     pub fn traverse_index<P, C, Processor>(
         &self,
         pack: &pack::data::File,
-        algorithm: Algorithm,
-        thread_limit: Option<usize>,
+        Context {
+            algorithm,
+            thread_limit,
+            check: _,
+        }: Context,
         progress: Option<P>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,

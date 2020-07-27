@@ -90,8 +90,11 @@ impl index::File {
             Some((pack, mode, algorithm)) => self
                 .traverse_index(
                     pack,
-                    algorithm,
-                    thread_limit,
+                    index::traverse::Context {
+                        algorithm,
+                        thread_limit,
+                        check: index::traverse::SafetyCheck::All,
+                    },
                     root.into_inner(),
                     || {
                         let mut encode_buf = Vec::with_capacity(2048);
