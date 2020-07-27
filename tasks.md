@@ -34,11 +34,12 @@
      * [x] disk - with decent errors
      * [x] size as u64 (properly)
   * **cli**
-     * [ ] generalize pack reading algorithm
-     * [ ] write objects from pack (multi-threaded comes for free)
-        * [ ] to sink
-        * [ ] to disk
-     * [ ] progress
+     * [x] generalize pack reading algorithm
+     * [x] write objects from pack (multi-threaded comes for free)
+        * [x] to sink
+        * [x] to disk
+     * [x] progress
+     * [ ] --verify
      * [ ] statistics
      
 ### Cloning

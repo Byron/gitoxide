@@ -59,6 +59,10 @@ The CLI uses various crates, please see _'Development Status'_ for details.
   * [ ] API documentation with examples
   * **sink**
     * [x] write objects and obtain id
+  * **alternates**
+    * [ ] _database that act as link to other known ODB types on disk_
+    * [ ] handles cycles
+    * [ ] handles recursive configurations
   * **multi-odb**
     * [ ] _an ODB for object lookup from multiple lower level ODB at once_
   * **promisor**
