@@ -1,6 +1,6 @@
 use crate::pack;
 use git_features::progress::Progress;
-use std::time::SystemTime;
+use std::time::{Instant, SystemTime};
 
 pub(crate) fn index_entries_sorted_by_offset_ascending(
     idx: &pack::index::File,
@@ -23,4 +23,29 @@ pub(crate) fn index_entries_sorted_by_offset_ascending(
         idx.num_objects as f32 / elapsed
     ));
     v
+}
+
+pub(crate) struct TimeThroughput {
+    then: Instant,
+    byte_size: usize,
+}
+
+impl TimeThroughput {
+    pub fn new(byte_size: usize) -> TimeThroughput {
+        TimeThroughput {
+            then: Instant::now(),
+            byte_size,
+        }
+    }
+}
+
+impl Into<String> for TimeThroughput {
+    fn into(self) -> String {
+        let time_taken = std::time::Instant::now().duration_since(self.then).as_secs_f32();
+        format!(
+            "finished in {:.2}s at {}/s",
+            time_taken,
+            bytesize::ByteSize((self.byte_size as f32 / time_taken) as u64)
+        )
+    }
 }

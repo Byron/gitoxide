@@ -1,11 +1,16 @@
-use crate::{pack, pack::index};
+use crate::pack::{self, index, index::util::TimeThroughput};
 use git_features::{
     parallel,
     progress::{self, Progress},
 };
 use git_object::owned;
 use quick_error::quick_error;
-use std::time::Instant;
+use std::collections::BTreeMap;
+
+mod indexed;
+mod lookup;
+mod reduce;
+pub(crate) use reduce::Reducer;
 
 quick_error! {
     #[derive(Debug)]
@@ -43,29 +48,19 @@ quick_error! {
     }
 }
 
-struct TimeThroughput {
-    then: Instant,
-    byte_size: usize,
-}
-
-impl TimeThroughput {
-    pub fn new(byte_size: usize) -> TimeThroughput {
-        TimeThroughput {
-            then: Instant::now(),
-            byte_size,
-        }
-    }
-}
-
-impl Into<String> for TimeThroughput {
-    fn into(self) -> String {
-        let time_taken = std::time::Instant::now().duration_since(self.then).as_secs_f32();
-        format!(
-            "finished in {:.2}s at {}/s",
-            time_taken,
-            bytesize::ByteSize((self.byte_size as f32 / time_taken) as u64)
-        )
-    }
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Outcome {
+    pub average: pack::data::decode::Outcome,
+    pub objects_per_chain_length: BTreeMap<u32, u32>,
+    /// The amount of bytes in all compressed streams, one per entry
+    pub total_compressed_entries_size: u64,
+    /// The amount of bytes in all decompressed streams, one per entry
+    pub total_decompressed_entries_size: u64,
+    /// The amount of bytes occupied by all undeltified, decompressed objects
+    pub total_object_size: u64,
+    /// The amount of bytes occupied by the pack itself, in bytes
+    pub pack_size: u64,
 }
 
 /// The way we verify the pack
@@ -89,11 +84,6 @@ impl Default for Algorithm {
     }
 }
 
-mod indexed;
-mod lookup;
-mod reduce;
-pub(crate) use reduce::Reducer;
-
 /// Verify and validate the content of the index file
 impl index::File {
     pub fn traverse_index<P, C, Processor>(
@@ -104,7 +94,7 @@ impl index::File {
         progress: Option<P>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, index::verify::Outcome), Error>
+    ) -> Result<(owned::Id, Outcome), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,

@@ -151,6 +151,14 @@ where
         }
     }
 }
+impl<T> DoOrDiscard<T> {
+    pub fn into_inner(self) -> Option<T> {
+        match self {
+            DoOrDiscard(Either::Left(p)) => Some(p),
+            DoOrDiscard(Either::Right(_)) => None,
+        }
+    }
+}
 
 impl<T> Progress for DoOrDiscard<T>
 where

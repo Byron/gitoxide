@@ -1,4 +1,4 @@
-use crate::pack::{data::decode, index::traverse, index::verify};
+use crate::pack::{data::decode, index::traverse};
 use git_features::{parallel, progress::Progress};
 use std::time::Instant;
 
@@ -22,7 +22,7 @@ pub struct Reducer<'a, P> {
     pub progress: &'a std::sync::Mutex<P>,
     pub then: Instant,
     pub entries_seen: u32,
-    pub stats: verify::Outcome,
+    pub stats: traverse::Outcome,
 }
 
 impl<'a, P> Reducer<'a, P>
@@ -34,7 +34,7 @@ where
             progress: &progress,
             then: Instant::now(),
             entries_seen: 0,
-            stats: verify::Outcome {
+            stats: traverse::Outcome {
                 average: decode::Outcome::default_from_kind(git_object::Kind::Tree),
                 objects_per_chain_length: Default::default(),
                 total_compressed_entries_size: 0,
@@ -51,7 +51,7 @@ where
     P: Progress,
 {
     type Input = Result<Vec<decode::Outcome>, traverse::Error>;
-    type Output = verify::Outcome;
+    type Output = traverse::Outcome;
     type Error = traverse::Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {

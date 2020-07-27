@@ -14,7 +14,7 @@ impl index::File {
         make_cache: impl Fn() -> C + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<index::verify::Outcome, Error>
+    ) -> Result<index::traverse::Outcome, Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
