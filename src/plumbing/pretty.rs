@@ -59,7 +59,11 @@ mod options {
 
             /// The '.pack' or '.idx' file to explode into loose objects
             #[structopt(parse(from_os_str))]
-            path: PathBuf,
+            pack_path: PathBuf,
+
+            /// The path into which all objects should be written. Commonly '.git/objects'
+            #[structopt(parse(from_os_str))]
+            object_path: Option<PathBuf>,
         },
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
@@ -221,13 +225,16 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             delete_pack,
-            path,
+            pack_path,
+            object_path,
         } => prepare_and_run(
             "pack-explode",
             verbose,
             progress,
             progress_keep_open,
-            move |progress, _out, _err| core::pack::explode::pack_or_pack_index(path, check, progress, delete_pack),
+            move |progress, _out, _err| {
+                core::pack::explode::pack_or_pack_index(pack_path, object_path, check, progress, delete_pack)
+            },
         ),
         Subcommands::PackVerify {
             path,

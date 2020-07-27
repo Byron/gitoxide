@@ -54,7 +54,11 @@ mod options {
 
         /// the '.pack' or '.idx' file to explode into loose objects
         #[argh(positional)]
-        pub path: PathBuf,
+        pub pack_path: PathBuf,
+
+        /// the path into which all objects should be written. Commonly '.git/objects'
+        #[argh(positional)]
+        pub object_path: Option<PathBuf>,
     }
 
     /// Verify a pack
@@ -131,14 +135,16 @@ pub fn main() -> Result<()> {
     let thread_limit = cli.threads;
     match cli.subcommand {
         SubCommands::PackExplode(PackExplode {
-            path,
+            pack_path,
+            object_path,
             verbose,
             check,
             delete_pack,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-explode");
             core::pack::explode::pack_or_pack_index(
-                path,
+                pack_path,
+                object_path,
                 check.unwrap_or(core::pack::explode::SafetyCheck::All),
                 progress,
                 delete_pack,

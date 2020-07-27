@@ -1,6 +1,8 @@
 use anyhow::{Context, Result};
 use git_features::progress::Progress;
-use git_odb::pack;
+use git_object::{owned, HashKind};
+use git_odb::{loose, pack};
+use std::io::Read;
 use std::path::Path;
 
 #[derive(PartialEq, Debug)]
@@ -52,8 +54,50 @@ impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
     }
 }
 
+use quick_error::quick_error;
+
+quick_error! {
+    #[derive(Debug)]
+    enum Error {
+        Io(err: std::io::Error) {
+            source(err)
+            from()
+        }
+        Odb(err: loose::db::write::Error) {
+            source(err)
+            from()
+        }
+    }
+}
+
+struct OutputWriter(Option<loose::Db>);
+
+impl git_odb::Write for OutputWriter {
+    type Error = Error;
+
+    fn write_stream(
+        &self,
+        kind: git_object::Kind,
+        size: u64,
+        from: impl Read,
+        hash: HashKind,
+    ) -> Result<owned::Id, Self::Error> {
+        match self.0.as_ref() {
+            Some(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
+            None => git_odb::sink().write_stream(kind, size, from, hash).map_err(Into::into),
+        }
+    }
+    fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
+        match self.0.as_ref() {
+            Some(db) => db.write_buf(kind, from, hash).map_err(Into::into),
+            None => git_odb::sink().write_buf(kind, from, hash).map_err(Into::into),
+        }
+    }
+}
+
 pub fn pack_or_pack_index<P>(
-    path: impl AsRef<Path>,
+    pack_path: impl AsRef<Path>,
+    object_path: Option<impl AsRef<Path>>,
     _check: SafetyCheck,
     _progress: Option<P>,
     _delete_pack: bool,
@@ -61,12 +105,14 @@ pub fn pack_or_pack_index<P>(
 where
     P: Progress,
 {
-    let path = path.as_ref();
+    let path = pack_path.as_ref();
     let _bundle = pack::Bundle::at(path).with_context(|| {
         format!(
             "Could not find .idx or .pack file from given file at '{}'",
             path.display()
         )
     })?;
+
+    let _out = OutputWriter(object_path.map(|path| loose::Db::at(path.as_ref())));
     Ok(())
 }
