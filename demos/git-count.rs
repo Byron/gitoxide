@@ -34,8 +34,8 @@ fn run() -> Result<()> {
         index.kind(),
         index.num_objects(),
         index.version(),
-        index.checksum_of_index(),
-        index.checksum_of_pack(),
+        index.index_checksum(),
+        index.pack_checksum(),
     )?;
 
     let (deltas, commits, trees, blobs, tags) = index

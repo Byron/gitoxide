@@ -165,9 +165,9 @@ fn pack_lookup() {
         for algo in ALGOS {
             for mode in MODES {
                 assert_eq!(
-                    idx.verify_checksum_of_index(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
+                    idx.verify_integrity(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
                         .unwrap(),
-                    (idx.checksum_of_index(), Some(stats.to_owned())),
+                    (idx.index_checksum(), Some(stats.to_owned())),
                     "{:?} -> {:?}",
                     algo,
                     mode
@@ -222,12 +222,12 @@ fn iter() {
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_checksum_of_index(None, None, Discard.into(), || { DecodeEntryNoop })
+            idx.verify_integrity(None, None, Discard.into(), || { DecodeEntryNoop })
                 .unwrap(),
-            (idx.checksum_of_index(), None)
+            (idx.index_checksum(), None)
         );
-        assert_eq!(idx.checksum_of_index(), hex_to_id(index_checksum));
-        assert_eq!(idx.checksum_of_pack(), hex_to_id(pack_checksum));
+        assert_eq!(idx.index_checksum(), hex_to_id(index_checksum));
+        assert_eq!(idx.pack_checksum(), hex_to_id(pack_checksum));
         assert_eq!(idx.iter().count(), *num_objects as usize);
     }
 }

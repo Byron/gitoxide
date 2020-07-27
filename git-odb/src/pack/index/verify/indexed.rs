@@ -2,7 +2,7 @@ use super::{Error, Mode, Outcome};
 use crate::{
     pack,
     pack::index::access::PackOffset,
-    pack::index::{self, verify::util},
+    pack::index::{self, util},
 };
 use git_features::{
     parallel::{self, in_parallel_if},

@@ -113,4 +113,6 @@ pub mod init;
 pub(crate) mod access;
 pub use access::Entry;
 
+// pub mod traverse;
+pub(crate) mod util;
 pub mod verify;

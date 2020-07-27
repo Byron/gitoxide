@@ -86,7 +86,7 @@ impl Bundle {
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
     {
-        self.index.verify_checksum_of_index(
+        self.index.verify_integrity(
             Some((&self.pack, mode, pack::index::verify::Algorithm::default())),
             thread_limit,
             progress,

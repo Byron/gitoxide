@@ -147,7 +147,7 @@ where
                 }
             };
 
-            idx.verify_checksum_of_index(
+            idx.verify_integrity(
                 pack.as_ref().map(|p| (p, mode, algorithm.into())),
                 thread_limit,
                 progress,

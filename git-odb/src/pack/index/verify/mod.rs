@@ -128,24 +128,38 @@ mod indexed;
 mod lookup;
 mod reduce;
 pub(crate) use reduce::Reducer;
-mod util;
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub fn checksum_of_index(&self) -> owned::Id {
+    pub fn index_checksum(&self) -> owned::Id {
         owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
 
-    pub fn checksum_of_pack(&self) -> owned::Id {
+    pub fn pack_checksum(&self) -> owned::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
         owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
+    }
+
+    pub fn verify_checksum_of_index_with_progress(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
+        let throughput = TimeThroughput::new(self.data.len());
+        let mut hasher = git_features::hash::Sha1::default();
+        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+        let actual = owned::Id::new_sha1(hasher.digest());
+        progress.done(throughput);
+
+        let expected = self.index_checksum();
+        if actual == expected {
+            Ok(actual)
+        } else {
+            Err(Error::Mismatch { actual, expected })
+        }
     }
 
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     /// redoing a lot of work across multiple objects.
-    pub fn verify_checksum_of_index<P, C>(
+    pub fn verify_integrity<P, C>(
         &self,
         pack: Option<(&pack::data::File, Mode, Algorithm)>,
         thread_limit: Option<usize>,
@@ -158,29 +172,16 @@ impl index::File {
         C: pack::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);
-        let mut progress = root.add_child("Sha1 of index");
+        let progress = root.add_child("Sha1 of index");
 
-        let mut verify_self = move || {
-            let throughput = TimeThroughput::new(self.data.len());
-            let mut hasher = git_features::hash::Sha1::default();
-            hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-            let actual = owned::Id::new_sha1(hasher.digest());
-            progress.done(throughput);
-
-            let expected = self.checksum_of_index();
-            if actual == expected {
-                Ok(actual)
-            } else {
-                Err(Error::Mismatch { actual, expected })
-            }
-        };
+        let verify_self = move || self.verify_checksum_of_index_with_progress(progress);
         match pack {
             None => verify_self().map(|id| (id, None)),
             Some((pack, mode, algorithm)) => {
-                if self.checksum_of_pack() != pack.checksum() {
+                if self.pack_checksum() != pack.checksum() {
                     return Err(Error::PackMismatch {
                         actual: pack.checksum(),
-                        expected: self.checksum_of_pack(),
+                        expected: self.pack_checksum(),
                     });
                 }
                 let mut progress = root.add_child("Sha1 of pack");

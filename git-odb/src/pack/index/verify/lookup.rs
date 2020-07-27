@@ -1,5 +1,5 @@
 use super::{Error, Mode, Outcome, Reducer};
-use crate::pack::{self, data::decode, index, index::verify::util};
+use crate::pack::{self, data::decode, index, index::util};
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, Progress},
