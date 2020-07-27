@@ -144,7 +144,7 @@ impl index::File {
                                 return Err(Box::new(Error::ObjectEncodeMismatch(
                                     object_kind,
                                     index_entry.oid,
-                                    buf.clone().into(),
+                                    buf.into(),
                                     encode_buf.clone().into(),
                                 )));
                             }
