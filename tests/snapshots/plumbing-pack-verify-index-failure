@@ -2,4 +2,5 @@ Could not find matching pack file at 'index.pack' - only index file will be veri
 Error: Verification failure
 
 Caused by:
-    index checksum mismatch: expected 0eba66e6b391eb83efc3ec9fc8a3087788911c0a, got fa9a8a630eacc2d3df00aff604bec2451ccbc8ff
+    0: Index file, pack file or object verification failed
+    1: index checksum mismatch: expected 0eba66e6b391eb83efc3ec9fc8a3087788911c0a, got fa9a8a630eacc2d3df00aff604bec2451ccbc8ff

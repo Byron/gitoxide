@@ -20,6 +20,7 @@ quick_error! {
             from()
         }
         Verify(err: index::verify::Error) {
+            display("Index file, pack file or object verification failed")
             source(err)
             from()
         }
