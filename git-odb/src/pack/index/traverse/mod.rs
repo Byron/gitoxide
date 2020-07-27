@@ -16,6 +16,7 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         Processor(err: Box<dyn std::error::Error + Send + Sync>) {
+            display("One of the traversal processors failed")
             source(&**err)
             from()
         }
@@ -25,6 +26,7 @@ quick_error! {
             from()
         }
         Graph(err: pack::graph::Error) {
+            display("The pack delta graph could not be built")
             from()
             source(err)
         }

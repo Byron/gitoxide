@@ -14,6 +14,7 @@ quick_error! {
             source(err)
         }
         IoRaw(err: io::Error) {
+            display("An IO error occurred while writing an object")
             source(err)
             from()
         }

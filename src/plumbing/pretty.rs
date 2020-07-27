@@ -34,7 +34,7 @@ mod options {
             #[structopt(long)]
             delete_pack: bool,
 
-            /// The amount of checks to run. Defaults to 'all'.
+            /// The amount of checks to run
             #[structopt(
                 long,
                 short = "c",

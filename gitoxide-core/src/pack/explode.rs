@@ -63,10 +63,12 @@ quick_error! {
     #[derive(Debug)]
     enum Error {
         Io(err: std::io::Error) {
+            display("An IO error occurred while writing an object")
             source(err)
             from()
         }
-        Odb(err: loose::db::write::Error) {
+        OdbWrite(err: loose::db::write::Error) {
+            display("An object could not be written to the database")
             source(err)
             from()
         }
@@ -155,7 +157,7 @@ where
             }
         },
         pack::cache::DecodeEntryLRU::default,
-    ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Some loose objects could not be extracted")?;
+    ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());
     drop(bundle);

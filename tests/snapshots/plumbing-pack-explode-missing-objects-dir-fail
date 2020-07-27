@@ -1,0 +1,8 @@
+Error: Failed to explode the entire pack - some loose objects may have been created nonetheless
+
+Caused by:
+    0: One of the traversal processors failed
+    1: Failed to write commit object 501b297447a8255d3533c6858bb692575cdefaa0
+    2: An object could not be written to the database
+    3: Could not create named temp file in 'does-not-exist'
+    4: No such file or directory (os error 2) at path "/Users/byron/dev/grit-rs/does-not-exist/.tmpAiSVb8"
