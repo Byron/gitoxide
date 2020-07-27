@@ -115,7 +115,7 @@ pub fn pack_or_pack_index<P>(
     check: SafetyCheck,
     thread_limit: Option<usize>,
     progress: Option<P>,
-    _delete_pack: bool,
+    delete_pack: bool,
 ) -> Result<()>
 where
     P: Progress,
@@ -160,8 +160,10 @@ where
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());
     drop(bundle);
 
-    fs::remove_file(&index_path)
-        .and_then(|_| fs::remove_file(&data_path))
-        .map_err(|err| Error::RemoveFile(err, index_path, data_path))
-        .map_err(Into::into)
+    if delete_pack {
+        fs::remove_file(&index_path)
+            .and_then(|_| fs::remove_file(&data_path))
+            .map_err(|err| Error::RemoveFile(err, index_path, data_path))?;
+    }
+    Ok(())
 }
