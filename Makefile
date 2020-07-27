@@ -90,10 +90,10 @@ journey-tests-small: always ## run stateless journey tests (lean-cli)
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
 
-rust_repo = tests/fixtures/repos/rust
+rust_repo = tests/fixtures/repos/rust.git
 $(rust_repo):
 	mkdir -p $@
-	cd $@ && git init && git remote add origin https://github.com/rust-lang/rust && git fetch
+	cd $@ && git init --bare && git remote add origin https://github.com/rust-lang/rust && git fetch
 
 linux_repo = tests/fixtures/repos/linux.git
 $(linux_repo):
