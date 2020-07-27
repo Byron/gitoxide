@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use git_features::progress::{self, Progress};
 use git_object::{owned, HashKind};
 use git_odb::{loose, pack, Write};
@@ -130,6 +130,13 @@ where
             path.display()
         )
     })?;
+
+    if !object_path.as_ref().map(|p| p.as_ref().is_dir()).unwrap_or(true) {
+        return Err(anyhow!(
+            "The object directory at '{}' is inaccessible",
+            object_path.unwrap().as_ref().display()
+        ));
+    }
 
     let out = OutputWriter(object_path.map(|path| loose::Db::at(path.as_ref())));
     let mut progress = bundle.index.traverse(

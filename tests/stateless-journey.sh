@@ -55,7 +55,7 @@ title "CLI ${kind}"
         (with "a valid pack"
           it "explodes the pack successfully and deletes the original pack and index" && {
             WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-to-sink-delete-pack-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --delete-pack "${PACK_FILE}.pack"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
           }
           it "removes the original files" && {
             expect_run $WITH_FAILURE ls ${PACK_FILE}.pack
@@ -68,11 +68,22 @@ title "CLI ${kind}"
   (with "a non-existing directory specified"
     it "fails with a helpful error message" && {
       WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-missing-objects-dir-fail" \
-      expect_run $WITH_FAILURE "$exe_plumbing" pack-explode "${PACK_FILE}.idx" does-not-exist
+      expect_run $WITH_FAILURE "$exe_plumbing" pack-explode -c skip-file-and-object-checksum "${PACK_FILE}.idx" does-not-exist
     }
   )
   (with "an existing directory specified"
+    (sandbox
+      it "succeeds" && {
+        WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-with-objects-dir-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode -c skip-file-and-object-checksum-and-no-abort-on-decode \
+                                                 "${PACK_FILE}.pack" .
+      }
 
+      it "creates all pack objects" && {
+        WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-with-objects-dir-success-tree" \
+        expect_run $SUCCESSFULLY tree
+      }
+    )
   )
 )
 
