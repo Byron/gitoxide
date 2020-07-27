@@ -36,7 +36,7 @@ impl TryFrom<&Path> for index::File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = FileBuffer::open(path).map_err(|e| Error::Io(e, path.to_owned()))?;
+        let data = FileBuffer::open(&path).map_err(|e| Error::Io(e, path.to_owned()))?;
         let idx_len = data.len();
         if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
             return Err(Error::Corrupt(format!(
@@ -73,6 +73,7 @@ impl TryFrom<&Path> for index::File {
         };
         Ok(index::File {
             data,
+            path: path.to_owned(),
             kind,
             num_objects,
             version,

@@ -16,7 +16,7 @@ mod method {
         use git_odb::pack::index;
 
         #[test]
-        fn lookup_index() {
+        fn lookup() {
             let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
             for (id, desired_index, assertion) in &[
                 (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
@@ -24,14 +24,14 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(owned::Id::from_40_bytes_in_hex(*id).unwrap().to_borrowed()),
+                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id).unwrap().to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup_index(entry.oid.to_borrowed()).unwrap();
+                let index = idx.lookup(entry.oid.to_borrowed()).unwrap();
                 assert_eq!(entry.oid.to_borrowed(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index));
@@ -45,7 +45,7 @@ mod method {
         use git_odb::pack::index;
 
         #[test]
-        fn lookup_index() {
+        fn lookup() {
             let idx = index::File::at(&fixture_path(INDEX_V2)).unwrap();
             for (id, desired_index, assertion) in &[
                 (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first"),
@@ -53,14 +53,14 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup_index(owned::Id::from_40_bytes_in_hex(*id).unwrap().to_borrowed()),
+                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id).unwrap().to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup_index(entry.oid.to_borrowed()).unwrap();
+                let index = idx.lookup(entry.oid.to_borrowed()).unwrap();
                 assert_eq!(entry.oid.to_borrowed(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index), "{} {:?}", index, entry);

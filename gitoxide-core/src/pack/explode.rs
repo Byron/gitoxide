@@ -1,9 +1,12 @@
 use anyhow::{Context, Result};
 use git_features::progress::Progress;
 use git_object::{owned, HashKind};
-use git_odb::{loose, pack};
-use std::io::Read;
-use std::path::Path;
+use git_odb::{loose, pack, Write};
+use std::{
+    fs,
+    io::{self, Read},
+    path::{Path, PathBuf},
+};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -67,6 +70,17 @@ quick_error! {
             source(err)
             from()
         }
+        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: git_object::Kind, id: owned::Id) {
+            display("Failed to write {} object {}", kind, id)
+            source(&**err)
+        }
+        ObjectEncodeMismatch(kind: git_object::Kind, actual: owned::Id, expected: owned::Id) {
+            display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
+        }
+        RemoveFile(err: io::Error, index: PathBuf, data: PathBuf) {
+            display("Failed to delete pack index file at '{} or data file at '{}'", index.display(), data.display())
+            source(err)
+        }
     }
 }
 
@@ -98,21 +112,56 @@ impl git_odb::Write for OutputWriter {
 pub fn pack_or_pack_index<P>(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
-    _check: SafetyCheck,
-    _progress: Option<P>,
+    check: SafetyCheck,
+    thread_limit: Option<usize>,
+    progress: Option<P>,
     _delete_pack: bool,
 ) -> Result<()>
 where
     P: Progress,
+    <P as Progress>::SubProgress: Send,
 {
     let path = pack_path.as_ref();
-    let _bundle = pack::Bundle::at(path).with_context(|| {
+    let bundle = pack::Bundle::at(path).with_context(|| {
         format!(
             "Could not find .idx or .pack file from given file at '{}'",
             path.display()
         )
     })?;
 
-    let _out = OutputWriter(object_path.map(|path| loose::Db::at(path.as_ref())));
-    Ok(())
+    let out = OutputWriter(object_path.map(|path| loose::Db::at(path.as_ref())));
+    bundle.index.traverse(
+        &bundle.pack,
+        pack::index::traverse::Context {
+            algorithm: pack::index::traverse::Algorithm::Lookup,
+            thread_limit,
+            check: check.into(),
+        },
+        progress,
+        || {
+            |object_kind, buf, index_entry, _entry_stats, progress| {
+                let written_id = out
+                    .write_buf(object_kind, buf, HashKind::Sha1)
+                    .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))
+                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+                if written_id != index_entry.oid {
+                   if let git_object::Kind::Tree = object_kind {
+                       progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
+                   } else {
+                       return Err(Box::new(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id)))
+                   }
+                }
+                Ok(())
+            }
+        },
+        pack::cache::DecodeEntryLRU::default,
+    ).with_context(|| "Some loose objects could not be extracted")?;
+
+    let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());
+    drop(bundle);
+
+    fs::remove_file(&index_path)
+        .and_then(|_| fs::remove_file(&data_path))
+        .map_err(|err| Error::RemoveFile(err, index_path, data_path))
+        .map_err(Into::into)
 }

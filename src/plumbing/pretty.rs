@@ -233,7 +233,14 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             move |progress, _out, _err| {
-                core::pack::explode::pack_or_pack_index(pack_path, object_path, check, progress, delete_pack)
+                core::pack::explode::pack_or_pack_index(
+                    pack_path,
+                    object_path,
+                    check,
+                    thread_limit,
+                    progress,
+                    delete_pack,
+                )
             },
         ),
         Subcommands::PackVerify {

@@ -146,6 +146,7 @@ pub fn main() -> Result<()> {
                 pack_path,
                 object_path,
                 check.unwrap_or(core::pack::explode::SafetyCheck::All),
+                thread_limit,
                 progress,
                 delete_pack,
             )

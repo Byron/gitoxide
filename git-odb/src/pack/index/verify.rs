@@ -88,7 +88,7 @@ impl index::File {
         match pack {
             None => verify_self().map_err(Into::into).map(|id| (id, None)),
             Some((pack, mode, algorithm)) => self
-                .traverse_index(
+                .traverse(
                     pack,
                     index::traverse::Context {
                         algorithm,

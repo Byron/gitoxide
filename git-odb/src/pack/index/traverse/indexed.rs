@@ -37,7 +37,7 @@ impl index::File {
             sorted_entries.iter().map(|e| e.pack_offset),
             pack.path(),
             root.add_child("indexing"),
-            |id| self.lookup_index(id).map(|idx| self.pack_offset_at_index(idx)),
+            |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let if_there_are_enough_objects = || self.num_objects > 10_000;
 

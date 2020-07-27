@@ -153,7 +153,7 @@ impl Default for Context {
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub fn traverse_index<P, C, Processor>(
+    pub fn traverse<P, C, Processor>(
         &self,
         pack: &pack::data::File,
         Context {
@@ -243,7 +243,7 @@ impl index::File {
                 pack_entry,
                 buf,
                 |id, _| {
-                    self.lookup_index(id).map(|index| {
+                    self.lookup(id).map(|index| {
                         pack::data::decode::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                     })
                 },

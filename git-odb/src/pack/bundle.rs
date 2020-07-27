@@ -52,7 +52,7 @@ impl Bundle {
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
     ) -> Option<Result<Object<'a>, Error>> {
-        let idx = self.index.lookup_index(id)?;
+        let idx = self.index.lookup(id)?;
         let ofs = self.index.pack_offset_at_index(idx);
         let entry = self.pack.entry(ofs);
         self.pack
@@ -60,7 +60,7 @@ impl Bundle {
                 entry,
                 out,
                 |id, _out| {
-                    self.index.lookup_index(id).map(|idx| {
+                    self.index.lookup(id).map(|idx| {
                         pack::data::decode::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
                     })
                 },
