@@ -107,6 +107,14 @@ mod lookup;
 mod reduce;
 pub(crate) use reduce::Reducer;
 
+pub trait Delegate {
+    type Reducer: parallel::Reducer;
+    type Processor: Fn() -> <Self::Reducer as parallel::Reducer>::Input;
+
+    fn new_processor() -> Self::Processor;
+    fn new_reducer() -> Self::Reducer;
+}
+
 /// Verify and validate the content of the index file
 impl index::File {
     pub fn traverse_index<P, C>(
