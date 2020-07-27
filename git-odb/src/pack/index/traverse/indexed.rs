@@ -145,7 +145,7 @@ impl index::File {
                         tree.children(node, &mut children);
 
                         let shared_cache = &mut SharedCache(&mut cache);
-                        let mut stat = self.process_entry_dispatch(
+                        let result = self.process_entry_dispatch(
                             check,
                             pack,
                             shared_cache,
@@ -154,12 +154,19 @@ impl index::File {
                             &mut header_buf,
                             index_entry_of_node,
                             processor,
-                        )?;
-                        stat.num_deltas = level;
-                        stats.push(stat);
-
+                        );
                         progress.inc();
                         nodes.extend(children.iter().cloned().map(|cn| (cn, level + 1)));
+
+                        let mut stat = match result {
+                            Err(err @ Error::PackDecode(_, _, _)) if !check.fatal_decode_error() => {
+                                progress.info(format!("Ignoring decode error: {}", err));
+                                continue;
+                            }
+                            res => res,
+                        }?;
+                        stat.num_deltas = level;
+                        stats.push(stat);
                     }
                 }
 

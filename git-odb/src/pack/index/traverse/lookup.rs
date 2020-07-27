@@ -61,7 +61,7 @@ impl index::File {
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {
-                    stats.push(self.process_entry_dispatch(
+                    let result = self.process_entry_dispatch(
                         check,
                         pack,
                         cache,
@@ -70,8 +70,16 @@ impl index::File {
                         &mut header_buf,
                         index_entry,
                         processor,
-                    )?);
+                    );
                     progress.inc();
+                    let stat = match result {
+                        Err(err @ Error::PackDecode(_, _, _)) if !check.fatal_decode_error() => {
+                            progress.info(format!("Ignoring decode error: {}", err));
+                            continue;
+                        }
+                        res => res,
+                    }?;
+                    stats.push(stat);
                 }
                 Ok(stats)
             },
