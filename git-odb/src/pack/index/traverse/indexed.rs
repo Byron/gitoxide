@@ -6,7 +6,7 @@ use crate::{
 };
 use git_features::{
     parallel::{self, in_parallel_if},
-    progress::{self, Progress},
+    progress::Progress,
 };
 use git_object::Kind;
 use std::collections::BTreeMap;
@@ -16,7 +16,7 @@ impl index::File {
         &self,
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
-        mut root: progress::DoOrDiscard<P>,
+        mut root: P,
         pack: &pack::data::File,
     ) -> Result<index::verify::Outcome, Error>
     where

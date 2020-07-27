@@ -2,7 +2,7 @@ use super::{Error, Reducer};
 use crate::pack::{self, data::decode, index, index::util};
 use git_features::{
     parallel::{self, in_parallel_if},
-    progress::{self, Progress},
+    progress::Progress,
 };
 
 /// Verify and validate the content of the index file
@@ -12,7 +12,7 @@ impl index::File {
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,
-        mut root: progress::DoOrDiscard<P>,
+        mut root: P,
         pack: &pack::data::File,
     ) -> Result<index::verify::Outcome, Error>
     where
