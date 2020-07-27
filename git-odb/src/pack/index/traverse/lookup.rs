@@ -10,7 +10,6 @@ impl index::File {
     pub(crate) fn traverse_with_lookup<P, C>(
         &self,
         thread_limit: Option<usize>,
-        mode: index::verify::Mode,
         make_cache: impl Fn() -> C + Send + Sync,
         mut root: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
@@ -36,7 +35,6 @@ impl index::File {
             (
                 make_cache(),
                 Vec::with_capacity(2048), // decode buffer
-                Vec::with_capacity(2048), // re-encode buffer
                 reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
             )
         };
@@ -46,19 +44,15 @@ impl index::File {
             input_chunks,
             thread_limit,
             state_per_thread,
-            |entries: &[index::Entry],
-             (cache, buf, encode_buf, progress)|
-             -> Result<Vec<decode::Outcome>, index::verify::Error> {
+            |entries: &[index::Entry], (cache, buf, progress)| -> Result<Vec<decode::Outcome>, Error> {
                 progress.init(Some(entries.len() as u32), Some("entries"));
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {
-                    stats.push(self.process_entry(
-                        mode,
+                    stats.push(self.process_entry_dispatch(
                         pack,
                         cache,
                         buf,
-                        encode_buf,
                         progress,
                         &mut header_buf,
                         index_entry,

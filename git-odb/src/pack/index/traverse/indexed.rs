@@ -15,7 +15,6 @@ impl index::File {
     pub(crate) fn traverse_with_index_lookup<P>(
         &self,
         thread_limit: Option<usize>,
-        mode: index::verify::Mode,
         mut root: progress::DoOrDiscard<P>,
         pack: &pack::data::File,
     ) -> Result<index::verify::Outcome, Error>
@@ -42,7 +41,6 @@ impl index::File {
         let state_per_thread = |index| {
             (
                 Vec::<u8>::with_capacity(2048), // decode buffer
-                Vec::<u8>::with_capacity(2048), // re-encode buffer
                 Vec::<(pack::graph::Node, u32)>::new(),
                 reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
             )
@@ -84,8 +82,8 @@ impl index::File {
             thread_limit,
             state_per_thread,
             |input: Vec<pack::graph::Node>,
-             (buf, encode_buf, nodes, progress)|
-             -> Result<Vec<pack::data::decode::Outcome>, index::verify::Error> {
+             (buf, nodes, progress)|
+             -> Result<Vec<pack::data::decode::Outcome>, Error> {
                 let mut stats = Vec::new();
                 let mut header_buf = [0u8; 64];
                 let mut children = Vec::new();
@@ -137,12 +135,10 @@ impl index::File {
                         tree.children(node, &mut children);
 
                         let shared_cache = &mut SharedCache(&mut cache);
-                        let mut stat = self.process_entry(
-                            mode,
+                        let mut stat = self.process_entry_dispatch(
                             pack,
                             shared_cache,
                             buf,
-                            encode_buf,
                             progress,
                             &mut header_buf,
                             index_entry_of_node,

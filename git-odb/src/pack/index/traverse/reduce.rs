@@ -50,7 +50,7 @@ impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,
 {
-    type Input = Result<Vec<decode::Outcome>, verify::Error>;
+    type Input = Result<Vec<decode::Outcome>, traverse::Error>;
     type Output = verify::Outcome;
     type Error = traverse::Error;
 

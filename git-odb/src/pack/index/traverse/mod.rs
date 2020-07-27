@@ -10,7 +10,7 @@ use std::time::Instant;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Verify(err: index::verify::Error) {
+        VerifyTODOGenericError(err: index::verify::Error) {
             source(err)
             from()
         }
@@ -107,14 +107,6 @@ mod lookup;
 mod reduce;
 pub(crate) use reduce::Reducer;
 
-pub trait Delegate {
-    type Reducer: parallel::Reducer;
-    type Processor: Fn() -> <Self::Reducer as parallel::Reducer>::Input;
-
-    fn new_processor() -> Self::Processor;
-    fn new_reducer() -> Self::Reducer;
-}
-
 /// Verify and validate the content of the index file
 impl index::File {
     pub fn traverse_index<P, C>(
@@ -155,13 +147,69 @@ impl index::File {
         let id = id?;
 
         match algorithm {
-            Algorithm::Lookup => {
-                self.traverse_with_lookup(thread_limit, index::verify::Mode::Sha1CRC32, make_cache, root, pack)
-            }
-            Algorithm::DeltaTreeLookup => {
-                self.traverse_with_index_lookup(thread_limit, index::verify::Mode::Sha1CRC32, root, pack)
-            }
+            Algorithm::Lookup => self.traverse_with_lookup(thread_limit, make_cache, root, pack),
+            Algorithm::DeltaTreeLookup => self.traverse_with_index_lookup(thread_limit, root, pack),
         }
         .map(|stats| (id, stats))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn process_entry_dispatch<C>(
+        &self,
+        pack: &pack::data::File,
+        cache: &mut C,
+        buf: &mut Vec<u8>,
+        _progress: &mut impl Progress,
+        header_buf: &mut [u8; 64],
+        index_entry: &pack::index::Entry,
+    ) -> Result<pack::data::decode::Outcome, Error>
+    where
+        C: pack::cache::DecodeEntry,
+    {
+        let pack_entry = pack.entry(index_entry.pack_offset);
+        let pack_entry_data_offset = pack_entry.data_offset;
+        let entry_stats = pack
+            .decode_entry(
+                pack_entry,
+                buf,
+                |id, _| {
+                    self.lookup_index(id).map(|index| {
+                        pack::data::decode::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
+                    })
+                },
+                cache,
+            )
+            .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
+        let object_kind = entry_stats.kind;
+        let consumed_input = entry_stats.compressed_size;
+
+        let header_size = crate::loose::object::header::encode(object_kind, buf.len() as u64, &mut header_buf[..])
+            .expect("header buffer to be big enough");
+        let mut hasher = git_features::hash::Sha1::default();
+        hasher.update(&header_buf[..header_size]);
+        hasher.update(buf.as_slice());
+
+        let actual_oid = owned::Id::new_sha1(hasher.digest());
+        if actual_oid != index_entry.oid {
+            return Err(Error::PackObjectMismatch {
+                actual: actual_oid,
+                expected: index_entry.oid,
+                offset: index_entry.pack_offset,
+                kind: object_kind,
+            });
+        }
+        if let Some(desired_crc32) = index_entry.crc32 {
+            let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
+            let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
+            if actual_crc32 != desired_crc32 {
+                return Err(Error::Crc32Mismatch {
+                    actual: actual_crc32,
+                    expected: desired_crc32,
+                    offset: index_entry.pack_offset,
+                    kind: object_kind,
+                });
+            }
+        }
+        Ok(entry_stats)
     }
 }
