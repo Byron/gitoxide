@@ -50,9 +50,9 @@ title "CLI ${kind}"
 
     (when "using the --delete-pack flag"
       (sandbox
-        cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
-        PACK_FILE="${PACK_FILE##*/}"
         (with "a valid pack"
+          cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
+          PACK_FILE="${PACK_FILE##*/}"
           it "explodes the pack successfully and deletes the original pack and index" && {
             WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-to-sink-delete-pack-success" \
             expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
