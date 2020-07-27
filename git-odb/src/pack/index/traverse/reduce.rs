@@ -99,7 +99,7 @@ where
         let objects_per_second = (self.entries_seen as f32 / elapsed_s) as u32;
 
         self.progress.lock().unwrap().info(format!(
-            "Verified {} objects in {:.2}s ({} objects/s, ~{}/s)",
+            "of {} objects done in {:.2}s ({} objects/s, ~{}/s)",
             self.entries_seen,
             elapsed_s,
             objects_per_second,

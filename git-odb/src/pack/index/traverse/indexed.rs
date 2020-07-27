@@ -42,7 +42,7 @@ impl index::File {
         let if_there_are_enough_objects = || self.num_objects > 10_000;
 
         let reduce_progress = std::sync::Mutex::new({
-            let mut p = root.add_child("Checking");
+            let mut p = root.add_child("Iterating");
             p.init(Some(self.num_objects()), Some("objects"));
             p
         });
