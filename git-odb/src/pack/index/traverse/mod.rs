@@ -1,15 +1,19 @@
-use crate::{pack, pack::data::decode, pack::index};
+use crate::{pack, pack::index};
 use git_features::{
     parallel,
     progress::{self, Progress},
 };
-use git_object::{borrowed, bstr::BString, owned, SHA1_SIZE};
+use git_object::{borrowed, bstr::BString, owned};
 use quick_error::quick_error;
-use std::{collections::BTreeMap, time::Instant};
+use std::time::Instant;
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        Verify(err: index::verify::Error) {
+            source(err)
+            from()
+        }
         Io(err: std::io::Error, path: std::path::PathBuf, msg: &'static str) {
             display("Failed to {} at path '{}'", msg, path.display())
             source(err)
@@ -77,32 +81,6 @@ impl Into<String> for TimeThroughput {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Outcome {
-    pub average: decode::Outcome,
-    pub objects_per_chain_length: BTreeMap<u32, u32>,
-    /// The amount of bytes in all compressed streams, one per entry
-    pub total_compressed_entries_size: u64,
-    /// The amount of bytes in all decompressed streams, one per entry
-    pub total_decompressed_entries_size: u64,
-    /// The amount of bytes occupied by all undeltified, decompressed objects
-    pub total_object_size: u64,
-    /// The amount of bytes occupied by the pack itself, in bytes
-    pub pack_size: u64,
-}
-
-/// Various ways in which a pack and index can be verified
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-pub enum Mode {
-    /// Validate SHA1 and CRC32
-    Sha1CRC32,
-    /// Validate SHA1 and CRC32, and decode each non-Blob object
-    Sha1CRC32Decode,
-    /// Validate SHA1 and CRC32, and decode and encode each non-Blob object
-    Sha1CRC32DecodeEncode,
-}
-
 /// The way we verify the pack
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Algorithm {
@@ -131,41 +109,14 @@ pub(crate) use reduce::Reducer;
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub fn index_checksum(&self) -> owned::Id {
-        owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
-    }
-
-    pub fn pack_checksum(&self) -> owned::Id {
-        let from = self.data.len() - SHA1_SIZE * 2;
-        owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
-    }
-
-    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
-        let throughput = TimeThroughput::new(self.data.len());
-        let mut hasher = git_features::hash::Sha1::default();
-        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
-        let actual = owned::Id::new_sha1(hasher.digest());
-        progress.done(throughput);
-
-        let expected = self.index_checksum();
-        if actual == expected {
-            Ok(actual)
-        } else {
-            Err(Error::Mismatch { actual, expected })
-        }
-    }
-
-    /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
-    /// It will be used to validate internal integrity of the pack before checking each objects integrity
-    /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    /// redoing a lot of work across multiple objects.
-    pub fn verify_integrity<P, C>(
+    pub fn traverse_index<P, C>(
         &self,
-        pack: Option<(&pack::data::File, Mode, Algorithm)>,
+        pack: &pack::data::File,
+        algorithm: Algorithm,
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<Outcome>), Error>
+    ) -> Result<(owned::Id, index::verify::Outcome), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -176,34 +127,33 @@ impl index::File {
         let progress = root.add_child("Sha1 of index");
         let verify_self = move || self.verify_checksum(progress);
 
-        match pack {
-            None => verify_self().map(|id| (id, None)),
-            Some((pack, mode, algorithm)) => {
-                if self.pack_checksum() != pack.checksum() {
-                    return Err(Error::PackMismatch {
-                        actual: pack.checksum(),
-                        expected: self.pack_checksum(),
-                    });
-                }
-                let mut progress = root.add_child("Sha1 of pack");
-                let (pack_res, id) = parallel::join(
-                    move || {
-                        let throughput = TimeThroughput::new(pack.data_len());
-                        let res = pack.verify_checksum();
-                        progress.done(throughput);
-                        res
-                    },
-                    verify_self,
-                );
-                pack_res?;
-                let id = id?;
+        if self.pack_checksum() != pack.checksum() {
+            return Err(Error::PackMismatch {
+                actual: pack.checksum(),
+                expected: self.pack_checksum(),
+            });
+        }
+        let mut progress = root.add_child("Sha1 of pack");
+        let (pack_res, id) = parallel::join(
+            move || {
+                let throughput = TimeThroughput::new(pack.data_len());
+                let res = pack.verify_checksum();
+                progress.done(throughput);
+                res
+            },
+            verify_self,
+        );
+        pack_res?;
+        let id = id?;
 
-                match algorithm {
-                    Algorithm::Lookup => self.inner_verify_with_lookup(thread_limit, mode, make_cache, root, pack),
-                    Algorithm::DeltaTreeLookup => self.inner_verify_with_indexed_lookup(thread_limit, mode, root, pack),
-                }
-                .map(|stats| (id, Some(stats)))
+        match algorithm {
+            Algorithm::Lookup => {
+                self.traverse_with_lookup(thread_limit, index::verify::Mode::Sha1CRC32, make_cache, root, pack)
+            }
+            Algorithm::DeltaTreeLookup => {
+                self.traverse_with_index_lookup(thread_limit, index::verify::Mode::Sha1CRC32, root, pack)
             }
         }
+        .map(|stats| (id, stats))
     }
 }
