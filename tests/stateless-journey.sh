@@ -58,8 +58,8 @@ title "CLI ${kind}"
             expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
           }
           it "removes the original files" && {
-            expect_run $WITH_FAILURE ls ${PACK_FILE}.pack
-            expect_run $WITH_FAILURE ls ${PACK_FILE}.idx
+            expect_run $WITH_FAILURE test -e ${PACK_FILE}.pack
+            expect_run $WITH_FAILURE test -e ${PACK_FILE}.idx
           }
         )
       )
