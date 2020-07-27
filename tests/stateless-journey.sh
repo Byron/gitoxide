@@ -3,11 +3,13 @@ set -eu
 
 exe=${1:?First argument must be the executable to test}
 exe_plumbing=${2:?Second argument must be the plumbing executable to test}
-kind=${3:?third argument must an indicator of the kind of binary under test}
+jtt=${3:?Third argument the journey test tool}
+kind=${4:?Fourth argument must an indicator of the kind of binary under test}
 
 root="$(cd "${0%/*}" && pwd)"
 exe="${root}/../$exe"
 exe_plumbing="${root}/../$exe_plumbing"
+jtt="${root}/../$jtt"
 
 # shellcheck disable=1090
 source "$root/utilities.sh"
@@ -62,6 +64,23 @@ title "CLI ${kind}"
             expect_run $WITH_FAILURE test -e ${PACK_FILE}.idx
           }
         )
+        (with "a pack file that is invalid somewhere"
+          cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
+          PACK_FILE="${PACK_FILE##*/}"
+          "$jtt" mess-in-the-middle ${PACK_FILE}.pack
+
+          (with "and all safety checks"
+            it "does not explode the file at all" && {
+              WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-objects-dir-failure" \
+              expect_run $WITH_FAILURE "$exe_plumbing" pack-explode --check all --delete-pack "${PACK_FILE}.pack"
+            }
+
+            it "did not touch index or pack file" && {
+              expect_exists ${PACK_FILE}.pack
+              expect_exists ${PACK_FILE}.idx
+            }
+          )
+        )
       )
     )
   )
@@ -79,10 +98,12 @@ title "CLI ${kind}"
                                                  "${PACK_FILE}.pack" .
       }
 
-      it "creates all pack objects" && {
-        WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-with-objects-dir-success-tree" \
-        expect_run $SUCCESSFULLY tree
-      }
+      (with_program tree
+        it "creates all pack objects" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-with-objects-dir-success-tree" \
+          expect_run $SUCCESSFULLY tree
+        }
+      )
     )
   )
 )

@@ -79,13 +79,16 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
+jtt = tests/tools/target/debug/jtt
 journey-tests: always  ## run stateless journey tests (max)
 	cargo build
-	./tests/stateless-journey.sh target/debug/gix target/debug/gixp max
+	cd tests/tools && cargo build
+	./tests/stateless-journey.sh target/debug/gix target/debug/gixp $(jtt) max
 
 journey-tests-small: always ## run stateless journey tests (lean-cli)
 	cargo build --no-default-features --features small
-	./tests/stateless-journey.sh target/debug/gix target/debug/gixp small
+	cd tests/tools && cargo build
+	./tests/stateless-journey.sh target/debug/gix target/debug/gixp $(jtt) small
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
