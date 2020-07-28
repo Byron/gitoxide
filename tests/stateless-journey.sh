@@ -85,7 +85,7 @@ title "CLI ${kind}"
             it "does explode the file" && {
               WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-sink-skip-checks-success" \
               expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-and-object-checksum-and-no-abort-on-decode \
-                                        --delete-pack "${PACK_FILE}.pack" .
+                                        --delete-pack --sink-compress "${PACK_FILE}.pack" .
             }
 
             it "removes the original files" && {

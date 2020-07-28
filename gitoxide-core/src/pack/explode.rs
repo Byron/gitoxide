@@ -116,10 +116,10 @@ impl git_odb::Write for OutputWriter {
 }
 
 impl OutputWriter {
-    fn new(path: Option<impl AsRef<Path>>) -> Self {
+    fn new(path: Option<impl AsRef<Path>>, compress: bool) -> Self {
         match path {
             Some(path) => OutputWriter::Loose(loose::Db::at(path.as_ref())),
-            None => OutputWriter::Sink(git_odb::sink().compress(true)),
+            None => OutputWriter::Sink(git_odb::sink().compress(compress)),
         }
     }
 }
@@ -131,6 +131,7 @@ pub fn pack_or_pack_index<P>(
     thread_limit: Option<usize>,
     progress: Option<P>,
     delete_pack: bool,
+    sink_compress: bool,
 ) -> Result<()>
 where
     P: Progress,
@@ -151,10 +152,20 @@ where
         ));
     }
 
+    let algorithm = object_path
+        .as_ref()
+        .map(|_| {
+            if sink_compress {
+                pack::index::traverse::Algorithm::Lookup
+            } else {
+                pack::index::traverse::Algorithm::DeltaTreeLookup
+            }
+        })
+        .unwrap_or(pack::index::traverse::Algorithm::Lookup);
     let mut progress = bundle.index.traverse(
         &bundle.pack,
         pack::index::traverse::Context {
-            algorithm: pack::index::traverse::Algorithm::Lookup,
+            algorithm,
             thread_limit,
             check: check.into(),
         },
@@ -162,7 +173,7 @@ where
         {
             let object_path = object_path.map(|p| p.as_ref().to_owned());
             move || {
-            let out = OutputWriter::new(object_path.clone());
+            let out = OutputWriter::new(object_path.clone(), sink_compress);
             move |object_kind, buf, index_entry, _entry_stats, progress| {
                 let written_id = out
                     .write_buf(object_kind, buf, HashKind::Sha1)

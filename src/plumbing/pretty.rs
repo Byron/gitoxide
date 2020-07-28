@@ -43,6 +43,14 @@ mod options {
             )]
             check: core::pack::explode::SafetyCheck,
 
+            /// Compress bytes even when using the sink, i.e. no object directory is specified
+            ///
+            /// This helps to determine overhead related to compression. If unset, the sink will
+            /// only create hashes from bytes, which is usually limited by the speed at which input
+            /// can be obtained.
+            #[structopt(long)]
+            sink_compress: bool,
+
             /// Display verbose messages and progress information
             #[structopt(long, short = "v")]
             verbose: bool,
@@ -224,6 +232,7 @@ pub fn main() -> Result<()> {
             check,
             progress,
             progress_keep_open,
+            sink_compress,
             delete_pack,
             pack_path,
             object_path,
@@ -240,6 +249,7 @@ pub fn main() -> Result<()> {
                     thread_limit,
                     progress,
                     delete_pack,
+                    sink_compress,
                 )
             },
         ),

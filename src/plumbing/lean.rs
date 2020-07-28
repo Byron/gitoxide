@@ -42,6 +42,14 @@ mod options {
         #[argh(switch, short = 'v')]
         pub verbose: bool,
 
+        /// compress bytes even when using the sink, i.e. no object directory is specified
+        ///
+        /// This helps to determine overhead related to compression. If unset, the sink will
+        /// only create hashes from bytes, which is usually limited by the speed at which input
+        /// can be obtained.
+        #[argh(switch)]
+        pub sink_compress: bool,
+
         /// the amount of checks to run. Defaults to 'all'.
         ///
         /// Allowed values:
@@ -136,6 +144,7 @@ pub fn main() -> Result<()> {
     match cli.subcommand {
         SubCommands::PackExplode(PackExplode {
             pack_path,
+            sink_compress,
             object_path,
             verbose,
             check,
@@ -149,6 +158,7 @@ pub fn main() -> Result<()> {
                 thread_limit,
                 progress,
                 delete_pack,
+                sink_compress,
             )
         }
         SubCommands::PackVerify(PackVerify {
