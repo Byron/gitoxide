@@ -92,7 +92,7 @@ impl index::File {
             Some((pack, mode, algorithm)) => self
                 .traverse(
                     pack,
-                    index::traverse::Context {
+                    index::traverse::Options {
                         algorithm,
                         thread_limit,
                         check: index::traverse::SafetyCheck::All,

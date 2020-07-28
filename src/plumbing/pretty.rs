@@ -246,10 +246,12 @@ pub fn main() -> Result<()> {
                     pack_path,
                     object_path,
                     check,
-                    thread_limit,
                     progress,
-                    delete_pack,
-                    sink_compress,
+                    core::pack::explode::Context {
+                        thread_limit,
+                        delete_pack,
+                        sink_compress,
+                    },
                 )
             },
         ),

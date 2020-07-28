@@ -360,6 +360,9 @@ impl File {
 
         let last_result_size = last_result_size.expect("at least one delta chain item");
         // uneven chains leave the target buffer after the source buffer
+        // FIXME(Performance) If delta-chains are uneven, we know we will have to copy bytes over here
+        // Instead we could use a different start buffer, to naturally end up with the result in the
+        // right one.
         if chain.len() % 2 == 1 {
             // this seems inverted, but remember: we swapped the buffers on the last iteration
             target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);

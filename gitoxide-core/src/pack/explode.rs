@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use git_features::progress::{self, Progress};
 use git_object::{owned, HashKind};
 use git_odb::{loose, pack, Write};
@@ -124,19 +124,29 @@ impl OutputWriter {
     }
 }
 
+pub struct Context {
+    pub thread_limit: Option<usize>,
+    pub delete_pack: bool,
+    pub sink_compress: bool,
+}
+
 pub fn pack_or_pack_index<P>(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    thread_limit: Option<usize>,
     progress: Option<P>,
-    delete_pack: bool,
-    sink_compress: bool,
+    Context {
+        thread_limit,
+        delete_pack,
+        sink_compress,
+    }: Context,
 ) -> Result<()>
 where
     P: Progress,
     <P as Progress>::SubProgress: Send,
 {
+    use anyhow::Context;
+
     let path = pack_path.as_ref();
     let bundle = pack::Bundle::at(path).with_context(|| {
         format!(
@@ -154,17 +164,17 @@ where
 
     let algorithm = object_path
         .as_ref()
-        .map(|_| {
+        .map(|_| pack::index::traverse::Algorithm::Lookup)
+        .unwrap_or_else(|| {
             if sink_compress {
                 pack::index::traverse::Algorithm::Lookup
             } else {
                 pack::index::traverse::Algorithm::DeltaTreeLookup
             }
-        })
-        .unwrap_or(pack::index::traverse::Algorithm::Lookup);
+        });
     let mut progress = bundle.index.traverse(
         &bundle.pack,
-        pack::index::traverse::Context {
+        pack::index::traverse::Options {
             algorithm,
             thread_limit,
             check: check.into(),

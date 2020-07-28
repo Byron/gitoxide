@@ -138,13 +138,13 @@ impl Default for Algorithm {
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Context {
+pub struct Options {
     pub algorithm: Algorithm,
     pub thread_limit: Option<usize>,
     pub check: SafetyCheck,
 }
 
-impl Default for Context {
+impl Default for Options {
     fn default() -> Self {
         Self {
             algorithm: Algorithm::Lookup,
@@ -159,11 +159,11 @@ impl index::File {
     pub fn traverse<P, C, Processor>(
         &self,
         pack: &pack::data::File,
-        Context {
+        Options {
             algorithm,
             thread_limit,
             check,
-        }: Context,
+        }: Options,
         progress: Option<P>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         make_cache: impl Fn() -> C + Send + Sync,
