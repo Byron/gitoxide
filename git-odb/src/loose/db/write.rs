@@ -30,7 +30,7 @@ impl crate::Write for Db {
     fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
         match hash {
             HashKind::Sha1 => {
-                let mut to = self.write_header(kind, from.len() as u64)?;
+                let mut to = self.write_header(kind, from.len() as u64, hash)?;
                 to.write_all(from)
                     .map_err(|err| Error::Io(err, "stream all data into tempfile in", self.path.to_owned()))?;
                 to.flush()?;
@@ -48,7 +48,7 @@ impl crate::Write for Db {
     ) -> Result<owned::Id, Self::Error> {
         match hash {
             HashKind::Sha1 => {
-                let mut to = self.write_header(kind, size)?;
+                let mut to = self.write_header(kind, size, hash)?;
                 io::copy(&mut from, &mut to)
                     .map_err(|err| Error::Io(err, "stream all data into tempfile in", self.path.to_owned()))?;
                 to.flush()?;
@@ -61,13 +61,18 @@ impl crate::Write for Db {
 type HashAndTempFile = DeflateWriter<NamedTempFile>;
 
 impl Db {
-    fn write_header(&self, kind: git_object::Kind, size: u64) -> Result<HashWrite<HashAndTempFile>, Error> {
+    fn write_header(
+        &self,
+        kind: git_object::Kind,
+        size: u64,
+        hash: HashKind,
+    ) -> Result<HashWrite<HashAndTempFile>, Error> {
         let mut to = HashWrite::new(
             DeflateWriter::new(
                 NamedTempFile::new_in(&self.path)
                     .map_err(|err| Error::Io(err, "create named temp file in", self.path.to_owned()))?,
             ),
-            HashKind::Sha1,
+            hash,
         );
 
         loose::object::header::encode(kind, size, &mut to)

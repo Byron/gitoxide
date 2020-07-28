@@ -28,8 +28,8 @@ quick_error! {
 }
 
 impl loose::Object {
-    // Note: Blobs are loaded or mapped into memory and are made available that way.
-    // Consider the streaming API if large Blobs are expected.
+    /// **Note**: Blobs are loaded into memory and are made available that way.
+    /// Consider using `stream()` if large Blobs are expected.
     pub fn decode(&mut self) -> Result<borrowed::Object, Error> {
         self.decompress_all()?;
         let bytes = &self.decompressed_data[self.header_size..];

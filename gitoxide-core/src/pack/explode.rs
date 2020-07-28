@@ -85,6 +85,7 @@ quick_error! {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum OutputWriter {
     Loose(loose::Db),
     Sink(git_odb::Sink),
@@ -187,7 +188,7 @@ where
             move || {
                 let out = OutputWriter::new(object_path.clone(), sink_compress);
                 let object_verifier = if verify {
-                    object_path.as_ref().map(|p| loose::Db::at(p))
+                    object_path.as_ref().map(loose::Db::at)
                 } else {
                     None
                 };
@@ -207,7 +208,7 @@ where
                         let obj = verifier.locate(written_id.to_borrowed())
                                             .ok_or_else(|| Error::WrittenFileMissing(written_id))?
                                             .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?;
-                        // obj.checksum_matches(written_id);
+                        obj.verify_checksum(written_id.to_borrowed())?;
                     }
                     Ok(())
                 }
