@@ -39,6 +39,7 @@
         * [x] to sink
         * [x] to disk
      * [x] progress
+     * [ ] option to compress sink input too
      * [ ] --verify
      * [ ] statistics
      

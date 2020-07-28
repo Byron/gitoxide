@@ -73,6 +73,10 @@ where
         }
     }
 
+    pub fn reset(&mut self) {
+        self.compressor.inner.reset();
+    }
+
     pub fn into_inner(self) -> W {
         self.inner
     }
