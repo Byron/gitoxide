@@ -5,10 +5,37 @@ mod locate {
     use git_odb::pack;
 
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> pack::Object<'a> {
-        let idx = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
-        idx.locate(hex_to_id(hex_id).to_borrowed(), out, &mut pack::cache::DecodeEntryNoop)
+        let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).unwrap();
+        bundle
+            .locate(hex_to_id(hex_id).to_borrowed(), out, &mut pack::cache::DecodeEntryNoop)
             .unwrap()
             .unwrap()
+    }
+
+    mod locate_and_verify {
+        use crate::{
+            fixture_path,
+            pack::{INDEX_V1, PACK_FOR_INDEX_V1, SMALL_PACK, SMALL_PACK_INDEX},
+        };
+        use git_odb::pack;
+
+        #[test]
+        fn all() {
+            for (index_path, data_path) in &[(SMALL_PACK_INDEX, SMALL_PACK), (INDEX_V1, PACK_FOR_INDEX_V1)] {
+                // both paths are equivalent
+                pack::Bundle::at(fixture_path(index_path)).unwrap();
+                let bundle = pack::Bundle::at(fixture_path(data_path)).unwrap();
+
+                let mut buf = Vec::new();
+                for entry in bundle.index.iter() {
+                    let obj = bundle
+                        .locate(entry.oid.to_borrowed(), &mut buf, &mut pack::cache::DecodeEntryNoop)
+                        .unwrap()
+                        .unwrap();
+                    obj.verify_checksum(entry.oid.to_borrowed()).unwrap();
+                }
+            }
+        }
     }
 
     #[test]
