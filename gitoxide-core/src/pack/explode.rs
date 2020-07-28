@@ -205,7 +205,7 @@ where
                        }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
-                        let obj = verifier.locate(written_id.to_borrowed())
+                        let mut obj = verifier.locate(written_id.to_borrowed())
                                             .ok_or_else(|| Error::WrittenFileMissing(written_id))?
                                             .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?;
                         obj.verify_checksum(written_id.to_borrowed())?;
