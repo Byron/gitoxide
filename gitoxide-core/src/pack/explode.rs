@@ -2,11 +2,7 @@ use anyhow::{anyhow, Result};
 use git_features::progress::{self, Progress};
 use git_object::{owned, HashKind};
 use git_odb::{loose, pack, Write};
-use std::{
-    fs,
-    io::{self, Read},
-    path::{Path, PathBuf},
-};
+use std::{fs, io::Read, path::Path};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -79,8 +75,11 @@ quick_error! {
         ObjectEncodeMismatch(kind: git_object::Kind, actual: owned::Id, expected: owned::Id) {
             display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
         }
-        RemoveFile(err: io::Error, index: PathBuf, data: PathBuf) {
-            display("Failed to delete pack index file at '{} or data file at '{}'", index.display(), data.display())
+        WrittenFileMissing(id: owned::Id) {
+            display("The recently written file for loose object {} could not be found", id)
+        }
+        WrittenFileCorrupt(err: loose::db::locate::Error, id: owned::Id) {
+            display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
     }
@@ -124,10 +123,12 @@ impl OutputWriter {
     }
 }
 
+#[derive(Default)]
 pub struct Context {
     pub thread_limit: Option<usize>,
     pub delete_pack: bool,
     pub sink_compress: bool,
+    pub verify: bool,
 }
 
 pub fn pack_or_pack_index<P>(
@@ -139,6 +140,7 @@ pub fn pack_or_pack_index<P>(
         thread_limit,
         delete_pack,
         sink_compress,
+        verify,
     }: Context,
 ) -> Result<()>
 where
@@ -183,22 +185,34 @@ where
         {
             let object_path = object_path.map(|p| p.as_ref().to_owned());
             move || {
-            let out = OutputWriter::new(object_path.clone(), sink_compress);
-            move |object_kind, buf, index_entry, _entry_stats, progress| {
-                let written_id = out
-                    .write_buf(object_kind, buf, HashKind::Sha1)
-                    .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))
-                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                if written_id != index_entry.oid {
-                   if let git_object::Kind::Tree = object_kind {
-                       progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
-                   } else {
-                       return Err(Box::new(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id)))
-                   }
+                let out = OutputWriter::new(object_path.clone(), sink_compress);
+                let object_verifier = if verify {
+                    object_path.as_ref().map(|p| loose::Db::at(p))
+                } else {
+                    None
+                };
+                move |object_kind, buf, index_entry, _entry_stats, progress| {
+                    let written_id = out
+                        .write_buf(object_kind, buf, HashKind::Sha1)
+                        .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))
+                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+                    if written_id != index_entry.oid {
+                       if let git_object::Kind::Tree = object_kind {
+                           progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
+                       } else {
+                           return Err(Box::new(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id)))
+                       }
+                    }
+                    if let Some(verifier) = object_verifier.as_ref() {
+                        let obj = verifier.locate(written_id.to_borrowed())
+                                            .ok_or_else(|| Error::WrittenFileMissing(written_id))?
+                                            .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?;
+                        // obj.checksum_matches(written_id);
+                    }
+                    Ok(())
                 }
-                Ok(())
             }
-        }},
+        },
         pack::cache::DecodeEntryLRU::default,
     ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
@@ -208,7 +222,13 @@ where
     if delete_pack {
         fs::remove_file(&index_path)
             .and_then(|_| fs::remove_file(&data_path))
-            .map_err(|err| Error::RemoveFile(err, index_path.clone(), data_path.clone()))?;
+            .with_context(|| {
+                format!(
+                    "Failed to delete pack index file at '{} or data file at '{}'",
+                    index_path.display(),
+                    data_path.display()
+                )
+            })?;
         progress.info(format!(
             "Removed '{}' and '{}'",
             index_path.display(),

@@ -72,7 +72,7 @@ title "CLI ${kind}"
           (with "and all safety checks"
             it "does not explode the file at all" && {
               WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-sink-failure" \
-              expect_run $WITH_FAILURE "$exe_plumbing" pack-explode --check all --delete-pack "${PACK_FILE}.pack"
+              expect_run $WITH_FAILURE "$exe_plumbing" pack-explode --sink-compress --check all --delete-pack "${PACK_FILE}.pack"
             }
 
             it "did not touch index or pack file" && {
@@ -84,8 +84,8 @@ title "CLI ${kind}"
           (with "and no safety checks at all (and an output directory)"
             it "does explode the file" && {
               WITH_SNAPSHOT="$snapshot/plumbing-broken-pack-explode-delete-pack-to-sink-skip-checks-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-and-object-checksum-and-no-abort-on-decode \
-                                        --delete-pack --sink-compress "${PACK_FILE}.pack" .
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --verify --check skip-file-and-object-checksum-and-no-abort-on-decode \
+                                        --delete-pack "${PACK_FILE}.pack" .
             }
 
             it "removes the original files" && {

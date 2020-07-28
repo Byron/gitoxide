@@ -363,6 +363,10 @@ impl File {
         // FIXME(Performance) If delta-chains are uneven, we know we will have to copy bytes over here
         // Instead we could use a different start buffer, to naturally end up with the result in the
         // right one.
+        // However, this is a bit more complicated than just that - you have to deal with the base
+        // object, which should also be placed in the second buffer right away. You don't have that
+        // control/knowledge for out-of-pack bases, so this is a special case to deal with, too.
+        // Maybe these invariants can be represented in the type system though.
         if chain.len() % 2 == 1 {
             // this seems inverted, but remember: we swapped the buffers on the last iteration
             target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);

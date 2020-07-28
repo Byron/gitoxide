@@ -40,7 +40,7 @@
         * [x] to disk
      * [x] progress
      * [x] option to compress sink input too
-     * [ ] unrelated: see if delta-decode buffer optimization can work easily
+     * [x] unrelated: see if delta-decode buffer optimization can work easily
      * [ ] --verify
      * [ ] statistics
      

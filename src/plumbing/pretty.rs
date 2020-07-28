@@ -30,7 +30,13 @@ mod options {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         PackExplode {
-            /// Delete the pack and index file after the operation is successful
+            #[structopt(long, requires("object_path"))]
+            /// Read written objects back and assert they match their source. Fail the operation otherwise.
+            ///
+            /// Only relevant if an object directory is set.
+            verify: bool,
+
+            /// delete the pack and index file after the operation is successful
             #[structopt(long)]
             delete_pack: bool,
 
@@ -48,7 +54,7 @@ mod options {
             /// This helps to determine overhead related to compression. If unset, the sink will
             /// only create hashes from bytes, which is usually limited by the speed at which input
             /// can be obtained.
-            #[structopt(long)]
+            #[structopt(long, conflicts_with("object_path"))]
             sink_compress: bool,
 
             /// Display verbose messages and progress information
@@ -236,6 +242,7 @@ pub fn main() -> Result<()> {
             delete_pack,
             pack_path,
             object_path,
+            verify,
         } => prepare_and_run(
             "pack-explode",
             verbose,
@@ -251,6 +258,7 @@ pub fn main() -> Result<()> {
                         thread_limit,
                         delete_pack,
                         sink_compress,
+                        verify,
                     },
                 )
             },

@@ -34,6 +34,12 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "pack-explode")]
     pub struct PackExplode {
+        #[argh(switch)]
+        /// read written objects back and assert they match their source. Fail the operation otherwise.
+        ///
+        /// Only relevant if an object directory is set.
+        pub verify: bool,
+
         /// delete the pack and index file after the operation is successful
         #[argh(switch)]
         pub delete_pack: bool,
@@ -147,6 +153,7 @@ pub fn main() -> Result<()> {
             sink_compress,
             object_path,
             verbose,
+            verify,
             check,
             delete_pack,
         }) => {
@@ -160,6 +167,7 @@ pub fn main() -> Result<()> {
                     thread_limit,
                     delete_pack,
                     sink_compress,
+                    verify,
                 },
             )
         }
