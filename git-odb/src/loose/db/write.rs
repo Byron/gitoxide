@@ -1,6 +1,5 @@
 use super::Db;
-use crate::{loose, zlib::stream::DeflateWriter};
-use git_features::hash::Sha1;
+use crate::{loose, loose::object::verify::HashWrite, zlib::stream::DeflateWriter};
 use git_object::{owned, HashKind};
 use quick_error::quick_error;
 use std::{fs, io, io::Write, path::PathBuf};
@@ -22,38 +21,6 @@ quick_error! {
             display("Could not turn temporary file into persisted file at '{}'", target.display())
             source(err)
        }
-    }
-}
-
-struct HashWrite<T> {
-    pub hash: Sha1,
-    pub inner: T,
-}
-impl<T> io::Write for HashWrite<T>
-where
-    T: io::Write,
-{
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.hash.update(buf);
-        self.inner.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.inner.flush()
-    }
-}
-
-impl<T> HashWrite<T>
-where
-    T: io::Write,
-{
-    pub fn new(inner: T, kind: HashKind) -> Self {
-        match kind {
-            HashKind::Sha1 => HashWrite {
-                inner,
-                hash: Sha1::default(),
-            },
-        }
     }
 }
 
