@@ -30,7 +30,7 @@ mod options {
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         PackExplode {
-            #[structopt(long, requires("object_path"))]
+            #[structopt(long)]
             /// Read written objects back and assert they match their source. Fail the operation otherwise.
             ///
             /// Only relevant if an object directory is set.
@@ -54,7 +54,7 @@ mod options {
             /// This helps to determine overhead related to compression. If unset, the sink will
             /// only create hashes from bytes, which is usually limited by the speed at which input
             /// can be obtained.
-            #[structopt(long, conflicts_with("object_path"))]
+            #[structopt(long)]
             sink_compress: bool,
 
             /// Display verbose messages and progress information
