@@ -1,54 +1,16 @@
-### TODO pack decoding + pack exploding
-* **parallel**
-  * [x] limit parallelism by allowing to set the amount of threads
-* **pack**
-  * [x] extract borrowed objects from a pack
-  * [ ] ~~support streamed objects (similar to how it's done with loose objects)~~ - no need, all slices support io::Read, and we don't
-        actually support streaming, so let's net unify 'interfaces' on a low level like this.
-* **owned objects**
-  * [x] encode object
-    * [x] blob
-    * [x] tag
-    * [x] tree
-    * [x] commit
-* **pack verify**
-  * [x] add '--some-flag' to run every non-blob through a decode/encode cycle to see if all objects can be parsed
-  * [x] The Linux Kernel verifies `--decode` and `--re-encode`
-    * [x] parse pgp_signature and mergetag into 'extra-headers' without further parsing
-  * [x] The Rust repo verifies `--decode` and `--re-encode`
-  * [x] add re-encode to all stress tests
-  * [x] support easy access to merge-tags and the signature
-* **stream pack for pack-verify**
-  * [x] support for multi-threading
-  * [x] choice of algorithm in pack-verify
-  * [x] use pack streaming in pack-verify by default
-  * [x] set some unit tests cases to use the streaming algorithm
-* **progress - convenience**
-  * [x] `inc()` method and`inc_by(step)` method
-* **plumbing - explode pack**
-  * _useful for receiving packs that are small enough to warrant living as loose objects for a while
-    preventing pack buildup_
-  * **write loose object to…**
-     * [x] sink
-     * [x] Deflate stream
-     * [x] disk - with decent errors
-     * [x] size as u64 (properly)
-  * **cli**
-     * [x] generalize pack reading algorithm
-     * [x] write objects from pack (multi-threaded comes for free)
-        * [x] to sink
-        * [x] to disk
-     * [x] progress
-     * [x] option to compress sink input too
-     * [x] unrelated: see if delta-decode buffer optimization can work easily
-     * [x] --verify
-     * [x] pack object verify
-     * [ ] statistics
-     
-### Cloning
+### Pack streaming and restoring
 
 * **index-from-pack**
   * _capability to receive packs from a stream_
+  * [ ] stream pack
+  * [ ] build index from pack
+  * [ ] repair pack - write trailer for all complete objects
+* **cli**
+  * [ ] build index from pack
+  * [ ] complete pack with trailer
+  
+### Cloning
+
 * **git-transport**
   * [ ] transport layer
   * [ ] receive a pack

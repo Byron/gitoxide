@@ -110,7 +110,7 @@ where
     <P as Progress>::SubProgress: Send,
     W1: io::Write,
     W2: io::Write,
-    <<P as git_features::progress::Progress>::SubProgress as git_features::progress::Progress>::SubProgress: Send,
+    <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {
