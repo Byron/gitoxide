@@ -25,11 +25,14 @@ quick_error! {
     }
 }
 
-struct HashWrite {
-    hash: Sha1,
-    inner: DeflateWriter<NamedTempFile>,
+struct HashWrite<T> {
+    pub hash: Sha1,
+    pub inner: T,
 }
-impl io::Write for HashWrite {
+impl<T> io::Write for HashWrite<T>
+where
+    T: io::Write,
+{
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.hash.update(buf);
         self.inner.write(buf)
@@ -37,6 +40,20 @@ impl io::Write for HashWrite {
 
     fn flush(&mut self) -> io::Result<()> {
         self.inner.flush()
+    }
+}
+
+impl<T> HashWrite<T>
+where
+    T: io::Write,
+{
+    pub fn new(inner: T, kind: HashKind) -> Self {
+        match kind {
+            HashKind::Sha1 => HashWrite {
+                inner,
+                hash: Sha1::default(),
+            },
+        }
     }
 }
 
@@ -74,22 +91,24 @@ impl crate::Write for Db {
     }
 }
 
+type HashAndTempFile = DeflateWriter<NamedTempFile>;
+
 impl Db {
-    fn write_header(&self, kind: git_object::Kind, size: u64) -> Result<HashWrite, Error> {
-        let mut to = HashWrite {
-            hash: Sha1::default(),
-            inner: DeflateWriter::new(
+    fn write_header(&self, kind: git_object::Kind, size: u64) -> Result<HashWrite<HashAndTempFile>, Error> {
+        let mut to = HashWrite::new(
+            DeflateWriter::new(
                 NamedTempFile::new_in(&self.path)
                     .map_err(|err| Error::Io(err, "create named temp file in", self.path.to_owned()))?,
             ),
-        };
+            HashKind::Sha1,
+        );
 
         loose::object::header::encode(kind, size, &mut to)
             .map_err(|err| Error::Io(err, "write header to tempfile in", self.path.to_owned()))?;
         Ok(to)
     }
 
-    fn finalize_object(&self, HashWrite { hash, inner: file }: HashWrite) -> Result<owned::Id, Error> {
+    fn finalize_object(&self, HashWrite { hash, inner: file }: HashWrite<HashAndTempFile>) -> Result<owned::Id, Error> {
         let id = owned::Id::from(hash.digest());
         let object_path = loose::db::sha1_path(id.to_borrowed(), self.path.clone());
         let object_dir = object_path
