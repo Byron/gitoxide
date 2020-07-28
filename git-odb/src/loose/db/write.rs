@@ -1,5 +1,5 @@
 use super::Db;
-use crate::{loose, loose::object::verify::HashWrite, zlib::stream::DeflateWriter};
+use crate::{hash, loose, zlib::stream::DeflateWriter};
 use git_object::{owned, HashKind};
 use quick_error::quick_error;
 use std::{fs, io, io::Write, path::PathBuf};
@@ -66,8 +66,8 @@ impl Db {
         kind: git_object::Kind,
         size: u64,
         hash: HashKind,
-    ) -> Result<HashWrite<HashAndTempFile>, Error> {
-        let mut to = HashWrite::new(
+    ) -> Result<hash::Write<HashAndTempFile>, Error> {
+        let mut to = hash::Write::new(
             DeflateWriter::new(
                 NamedTempFile::new_in(&self.path)
                     .map_err(|err| Error::Io(err, "create named temp file in", self.path.to_owned()))?,
@@ -80,7 +80,10 @@ impl Db {
         Ok(to)
     }
 
-    fn finalize_object(&self, HashWrite { hash, inner: file }: HashWrite<HashAndTempFile>) -> Result<owned::Id, Error> {
+    fn finalize_object(
+        &self,
+        hash::Write { hash, inner: file }: hash::Write<HashAndTempFile>,
+    ) -> Result<owned::Id, Error> {
         let id = owned::Id::from(hash.digest());
         let object_path = loose::db::sha1_path(id.to_borrowed(), self.path.clone());
         let object_dir = object_path

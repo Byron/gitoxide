@@ -42,8 +42,7 @@
      * [x] option to compress sink input too
      * [x] unrelated: see if delta-decode buffer optimization can work easily
      * [x] --verify
-     * [x] can the pack object also gain 'verify' capabilities, like the loose object? Reduce complexity in the pack-verify impl
-        * Yes, but it can't be used in 
+     * [ ] can the pack object also gain 'verify' capabilities, like the loose object? Reduce complexity in the pack-verify impl
      * [ ] statistics
      
 ### Cloning

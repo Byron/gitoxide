@@ -15,3 +15,34 @@ impl<'a> Object<'a> {
         })
     }
 }
+
+pub mod verify {
+    use crate::{hash, loose, pack};
+    use git_object::{borrowed, owned};
+    use quick_error::quick_error;
+    use std::io;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            ChecksumMismatch(desired: owned::Id, actual: owned::Id) {
+                display("Object expected to have id {}, but actual id was {}", desired, actual)
+            }
+        }
+    }
+
+    impl pack::Object<'_> {
+        pub fn verify_checksum(&self, desired: borrowed::Id) -> Result<(), Error> {
+            let mut sink = hash::Write::new(io::sink(), desired.kind());
+
+            loose::object::header::encode(self.kind, self.data.len() as u64, &mut sink).expect("hash to always work");
+            sink.hash.update(&self.data);
+
+            let actual_id = owned::Id::from(sink.hash.digest());
+            if desired != actual_id.to_borrowed() {
+                return Err(Error::ChecksumMismatch(desired.into(), actual_id));
+            }
+            Ok(())
+        }
+    }
+}

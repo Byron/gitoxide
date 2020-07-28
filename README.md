@@ -2,10 +2,10 @@
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 
 **gix** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
-user-experience, and perform as good or better than the native implementation, and make git tooling more
-hackable.
+_user-experience_, and perform as _good or better than the native implementation_.
 
-The CLI uses various crates, please see _'Development Status'_ for details.
+Furthermore it provides **an easy and safe to use API** in the form of various small crates for implementing your own tools in a breeze.
+Please see _'Development Status'_ for a listing of all crates and their capabilities.
 
 [![asciicast](https://asciinema.org/a/346976.svg)](https://asciinema.org/a/346976)
 
@@ -39,10 +39,14 @@ The CLI uses various crates, please see _'Development Status'_ for details.
     * [x] read
       * [x] into memory
       * [x] streaming
+      * [x] verify checksum
     * [x] streaming write for blobs
     * [x] buffer write for small in-memory objects/non-blobs
   * **packs**
     * [x] traverse pack index
+    * [x] object abstraction
+      * [x] decode (zero copy)
+      * [x] verify
     * [x] decode
       * [x] full objects
       * [x] deltified objects
