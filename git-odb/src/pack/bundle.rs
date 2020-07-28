@@ -1,5 +1,5 @@
 use crate::pack;
-use git_object::{self as object, borrowed};
+use git_object::borrowed;
 use quick_error::quick_error;
 use std::{
     convert::TryFrom,
@@ -50,13 +50,13 @@ impl Bundle {
         id: borrowed::Id,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Option<Result<Object<'a>, Error>> {
+    ) -> Option<Result<pack::Object<'a>, Error>> {
         let idx = self.index.lookup(id)?;
         let ofs = self.index.pack_offset_at_index(idx);
-        let entry = self.pack.entry(ofs);
+        let pack_entry = self.pack.entry(ofs);
         self.pack
             .decode_entry(
-                entry,
+                pack_entry,
                 out,
                 |id, _out| {
                     self.index.lookup(id).map(|idx| {
@@ -66,7 +66,7 @@ impl Bundle {
                 cache,
             )
             .map_err(Error::Decode)
-            .map(move |r| Object {
+            .map(move |r| pack::Object {
                 kind: r.kind,
                 data: out.as_slice(),
             })
@@ -92,23 +92,6 @@ impl TryFrom<&Path> for Bundle {
                 index: pack::index::File::at(path.with_extension("idx"))?,
             },
             _ => return Err(Error::InvalidPath(path.to_owned())),
-        })
-    }
-}
-
-/// Created by `Bundle::locate(…)`
-pub struct Object<'a> {
-    pub kind: object::Kind,
-    pub data: &'a [u8],
-}
-
-impl<'a> Object<'a> {
-    pub fn decode(&self) -> Result<borrowed::Object, borrowed::Error> {
-        Ok(match self.kind {
-            object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(self.data)?),
-            object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(self.data)?),
-            object::Kind::Commit => borrowed::Object::Commit(borrowed::Commit::from_bytes(self.data)?),
-            object::Kind::Blob => borrowed::Object::Blob(borrowed::Blob { data: self.data }),
         })
     }
 }
