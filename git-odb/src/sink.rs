@@ -11,7 +11,7 @@ pub struct Sink {
 }
 
 impl Sink {
-    pub fn compress(&mut self, enable: bool) -> &mut Self {
+    pub fn compress(mut self, enable: bool) -> Self {
         if enable {
             self.compressor = Some(RefCell::new(DeflateWriter::new(io::sink())));
         } else {

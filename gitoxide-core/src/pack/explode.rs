@@ -86,10 +86,20 @@ quick_error! {
     }
 }
 
-struct OutputWriter(Option<loose::Db>);
+enum OutputWriter {
+    Loose(loose::Db),
+    Sink(git_odb::Sink),
+}
 
 impl git_odb::Write for OutputWriter {
     type Error = Error;
+
+    fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
+        match self {
+            OutputWriter::Loose(db) => db.write_buf(kind, from, hash).map_err(Into::into),
+            OutputWriter::Sink(db) => db.write_buf(kind, from, hash).map_err(Into::into),
+        }
+    }
 
     fn write_stream(
         &self,
@@ -98,15 +108,18 @@ impl git_odb::Write for OutputWriter {
         from: impl Read,
         hash: HashKind,
     ) -> Result<owned::Id, Self::Error> {
-        match self.0.as_ref() {
-            Some(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
-            None => git_odb::sink().write_stream(kind, size, from, hash).map_err(Into::into),
+        match self {
+            OutputWriter::Loose(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
+            OutputWriter::Sink(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
         }
     }
-    fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
-        match self.0.as_ref() {
-            Some(db) => db.write_buf(kind, from, hash).map_err(Into::into),
-            None => git_odb::sink().write_buf(kind, from, hash).map_err(Into::into),
+}
+
+impl OutputWriter {
+    fn new(path: Option<impl AsRef<Path>>) -> Self {
+        match path {
+            Some(path) => OutputWriter::Loose(loose::Db::at(path.as_ref())),
+            None => OutputWriter::Sink(git_odb::sink().compress(true)),
         }
     }
 }
@@ -138,7 +151,6 @@ where
         ));
     }
 
-    let out = OutputWriter(object_path.map(|path| loose::Db::at(path.as_ref())));
     let mut progress = bundle.index.traverse(
         &bundle.pack,
         pack::index::traverse::Context {
@@ -147,8 +159,11 @@ where
             check: check.into(),
         },
         progress,
-        || {
-            |object_kind, buf, index_entry, _entry_stats, progress| {
+        {
+            let object_path = object_path.map(|p| p.as_ref().to_owned());
+            move || {
+            let out = OutputWriter::new(object_path.clone());
+            move |object_kind, buf, index_entry, _entry_stats, progress| {
                 let written_id = out
                     .write_buf(object_kind, buf, HashKind::Sha1)
                     .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))
@@ -162,7 +177,7 @@ where
                 }
                 Ok(())
             }
-        },
+        }},
         pack::cache::DecodeEntryLRU::default,
     ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
