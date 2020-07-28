@@ -133,7 +133,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
     #[test]
     fn blob_stream() {
-        let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+        let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
         assert_eq!(
             o.stream()
                 .unwrap()
@@ -165,7 +165,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
     #[test]
     fn blob_big_stream() {
-        let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
+        let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
         let size = o.size;
         assert_eq!(o.stream().unwrap().bytes().filter_map(Result::ok).count(), size);
     }

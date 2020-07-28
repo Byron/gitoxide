@@ -36,20 +36,23 @@ impl loose::Object {
         Ok(borrowed::Object::from_bytes(self.kind, bytes)?)
     }
 
-    pub fn stream(&self) -> Result<stream::Reader, Error> {
+    pub fn stream(&mut self) -> Result<stream::Reader, Error> {
         match &self.path {
             Some(path) => Ok(stream::Reader::from_read(
                 self.header_size,
                 std::fs::File::open(path).map_err(|e| Error::Io(e, "open", path.to_owned()))?,
             )),
-            None => Ok(stream::Reader::from_data(
-                self.header_size,
-                &self.decompressed_data.as_slice(),
-            )),
+            None => {
+                self.decompress_all()?;
+                Ok(stream::Reader::from_data(
+                    self.header_size,
+                    &self.decompressed_data.as_slice(),
+                ))
+            }
         }
     }
 
-    pub(crate) fn decompress_all(&mut self) -> Result<(), Error> {
+    pub fn decompress_all(&mut self) -> Result<(), Error> {
         if self.decompression_complete {
             debug_assert!(
                 self.size + self.header_size == self.decompressed_data.len(),

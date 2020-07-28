@@ -3,7 +3,6 @@ use git_features::hash;
 use git_object::{borrowed, owned, HashKind};
 use quick_error::quick_error;
 use std::io;
-use std::io::Write;
 
 pub(crate) struct HashWrite<T> {
     pub hash: hash::Sha1,
@@ -60,13 +59,11 @@ quick_error! {
 impl loose::Object {
     pub fn verify_checksum(&mut self, desired: borrowed::Id) -> Result<(), Error> {
         let mut sink = HashWrite::new(io::sink(), desired.kind());
-        // let mut reader = self.stream()?;
+        let (kind, size) = (self.kind, self.size);
+        let mut reader = self.stream()?;
 
-        loose::object::header::encode(self.kind, self.size as u64, &mut sink).expect("hash to always work");
-        self.decompress_all().unwrap();
-        // io::copy(&mut reader, &mut sink)?;
-        sink.write_all(&self.decompressed_data.as_slice()[self.header_size..])
-            .unwrap();
+        loose::object::header::encode(kind, size as u64, &mut sink).expect("hash to always work");
+        io::copy(&mut reader, &mut sink)?;
 
         let actual_id = owned::Id::from(sink.hash.digest());
         if desired != actual_id.to_borrowed() {
