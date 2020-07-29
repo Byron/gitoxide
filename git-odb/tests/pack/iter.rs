@@ -11,5 +11,5 @@ fn new_from_header() {
     .unwrap();
     assert_eq!(kind, pack::data::Kind::V2);
     assert_eq!(num_objects, 42);
-    assert_eq!(num_objects as usize, iter.count());
+    assert_eq!(num_objects as usize, iter.take(42).count());
 }
