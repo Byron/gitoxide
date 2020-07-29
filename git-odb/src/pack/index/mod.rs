@@ -75,11 +75,11 @@ macro_rules! izip {
 
 use filebuffer::FileBuffer;
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
-    V1,
-    V2,
+    V1 = 1,
+    V2 = 2,
 }
 
 impl Default for Kind {

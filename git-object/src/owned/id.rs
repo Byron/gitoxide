@@ -36,6 +36,10 @@ impl Id {
         hex::encode_to_slice(self.0, &mut hex_buf).expect("we can count");
         hex_buf
     }
+    pub fn to_sha1_hex_string(&self) -> String {
+        let buf = self.to_sha1_hex();
+        std::str::from_utf8(&buf).expect("hex is valid UTF-8").to_string()
+    }
     pub fn new_sha1(id: [u8; SHA1_SIZE]) -> Self {
         Id(id)
     }
