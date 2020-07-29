@@ -89,8 +89,10 @@ where
             header_size: header_size as u16,
             pack_offset,
             compressed: &[],
-            // decompressed: &self.decompressed_bytes[..decompressed_size as usize],
-            decompressed: &[],
+            // And here is why this cannot work
+            // https://github.com/rust-lang/rfcs/blob/master/text/1598-generic_associated_types.md
+            decompressed: &self.decompressed_bytes[..decompressed_size as usize],
+            // decompressed: &[],
         })
     }
 }
