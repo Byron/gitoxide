@@ -187,11 +187,7 @@ fn pack_lookup() {
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
-        for (entry, offset_from_index) in pack
-            .iter(pack::data::iter::Mode::DiscardDecompressedBytes)
-            .unwrap()
-            .zip(sorted_offsets.into_iter())
-        {
+        for (entry, offset_from_index) in pack.iter().unwrap().zip(sorted_offsets.into_iter()) {
             assert_eq!(
                 entry.unwrap().pack_offset,
                 offset_from_index,

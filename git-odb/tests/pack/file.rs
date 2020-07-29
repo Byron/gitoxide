@@ -8,7 +8,6 @@ fn pack_at(at: &str) -> pack::data::File {
 
 mod method {
     use crate::{pack::file::pack_at, pack::SMALL_PACK};
-    use git_odb::pack;
 
     #[test]
     fn checksum() {
@@ -28,7 +27,7 @@ mod method {
     #[test]
     fn iter() {
         let pack = pack_at(SMALL_PACK);
-        let it = pack.iter(pack::data::iter::Mode::KeepDecompressedBytes).unwrap();
+        let it = pack.iter().unwrap();
         assert_eq!(it.count(), pack.num_objects() as usize);
     }
 }

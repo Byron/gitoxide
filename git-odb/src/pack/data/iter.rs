@@ -10,7 +10,6 @@ pub struct Iter<R> {
     decompressor: Option<Inflate>,
     offset: u64,
     had_error: bool,
-    mode: Mode,
 }
 
 impl<R> Iter<R>
@@ -20,7 +19,6 @@ where
     /// Note that `read` is expected to start right past the header
     pub fn new_from_header(
         mut read: R,
-        mode: Mode,
     ) -> io::Result<Result<(pack::data::Kind, u32, impl Iterator<Item = Result<Entry, Error>>), pack::data::parse::Error>>
     {
         let mut header_data = [0u8; 12];
@@ -30,7 +28,7 @@ where
             (
                 kind,
                 num_objects,
-                Iter::new_from_first_entry(read, 12, mode).take(num_objects as usize),
+                Iter::new_from_first_entry(read, 12).take(num_objects as usize),
             )
         }))
     }
@@ -42,13 +40,12 @@ where
     ///
     /// `offset` is the amount of bytes consumed from `read`, usually the size of the header, for use as offset into the pack.
     /// when resolving ref deltas to their absolute pack offset.
-    pub fn new_from_first_entry(read: R, offset: u64, mode: Mode) -> Self {
+    pub fn new_from_first_entry(read: R, offset: u64) -> Self {
         Iter {
             read,
             decompressor: None,
             offset,
             had_error: false,
-            mode,
         }
     }
 
@@ -63,17 +60,8 @@ where
             decompressor,
         };
 
-        let (decompressed, bytes_copied) = match self.mode {
-            Mode::KeepDecompressedBytes => {
-                let mut buf = Vec::with_capacity(decompressed_size as usize);
-                let bytes_copied = io::copy(&mut reader, &mut buf)?;
-                (Some(buf), bytes_copied)
-            }
-            Mode::DiscardDecompressedBytes => {
-                let bytes_copied = io::copy(&mut reader, &mut io::sink())?;
-                (None, bytes_copied)
-            }
-        };
+        let mut decompressed = Vec::with_capacity(decompressed_size as usize);
+        let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
 
         assert_eq!(
             bytes_copied, decompressed_size,
@@ -118,7 +106,7 @@ pub struct Entry {
     /// amount of compressed bytes consumed, used to generate `decompressed`
     pub compressed_size: u64,
     /// The decompressed data. It is set if the `Mode::KeepDecompressedBytes` was used.
-    pub decompressed: Option<Vec<u8>>,
+    pub decompressed: Vec<u8>,
 }
 
 impl<R> Iterator for Iter<R>
@@ -149,9 +137,9 @@ impl pack::data::File {
     ///
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
-    pub fn iter(&self, mode: Mode) -> io::Result<impl Iterator<Item = Result<Entry, Error>>> {
+    pub fn iter(&self) -> io::Result<impl Iterator<Item = Result<Entry, Error>>> {
         let mut reader = io::BufReader::new(fs::File::open(&self.path)?);
         reader.seek(io::SeekFrom::Current(12))?;
-        Ok(Iter::new_from_first_entry(reader, 12, mode).take(self.num_objects as usize))
+        Ok(Iter::new_from_first_entry(reader, 12).take(self.num_objects as usize))
     }
 }

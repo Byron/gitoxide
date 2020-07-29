@@ -54,10 +54,7 @@ impl pack::Bundle {
     ) -> Result<pack::index::write::Outcome, Error> {
         let path = path.as_ref();
 
-        let (_kind, num_objects, iter) = pack::data::Iter::new_from_header(
-            io::BufReader::new(pack),
-            pack::data::iter::Mode::KeepDecompressedBytes,
-        )??;
+        let (_kind, num_objects, iter) = pack::data::Iter::new_from_header(io::BufReader::new(pack))??;
         if num_objects == 0 {
             return Err(Error::EmptyIndex);
         }
@@ -70,7 +67,7 @@ impl pack::Bundle {
                     header_size: e.header_size,
                     pack_offset: e.pack_offset,
                     bytes: vec![], // TODO
-                    decompressed: e.decompressed.expect("iteration while keeping decompression result"),
+                    decompressed: e.decompressed,
                 })
             }),
             &mut tempfile,
