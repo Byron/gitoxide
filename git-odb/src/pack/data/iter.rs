@@ -1,10 +1,13 @@
-use crate::{pack, zlib::stream::InflateReader};
+use crate::{
+    pack,
+    zlib::stream::{inflate::Inflate, InflateReader},
+};
 use quick_error::quick_error;
 use std::{fs, io, io::Seek};
 
 pub struct Iter<'a, R> {
     read: R,
-    decompressor: Option<InflateReader<R>>,
+    decompressor: Option<Inflate>,
     compressed_bytes: Vec<u8>,
     decompressed_bytes: Vec<u8>,
     offset: u64,
@@ -59,13 +62,36 @@ where
     }
 
     fn next_inner(&mut self) -> Result<Entry<'a>, Error> {
-        let (header, decompressed_size, consumed) =
+        let (header, decompressed_size, header_size) =
             pack::data::Header::from_read(&mut self.read, self.offset).map_err(Error::from)?;
-        // let decompressor = self
-        //     .decompressor
-        //     .get_or_insert_with(|| InflateReader::from_read(&mut self.read));
-        // crate::zlib::stream::InflateReader::from_read(&mut self.read);
-        unimplemented!("inner next");
+
+        let decompressor = self.decompressor.take().unwrap_or_default();
+        let mut reader = InflateReader {
+            inner: &mut self.read,
+            decompressor,
+        };
+
+        self.decompressed_bytes.clear();
+        self.decompressed_bytes.resize(decompressed_size as usize, 0);
+        let bytes_copied = io::copy(&mut reader, &mut self.decompressed_bytes)?;
+        assert_eq!(
+            bytes_copied, decompressed_size,
+            "We should have decompressed {} bytes, but got {} instead",
+            decompressed_size, bytes_copied
+        );
+
+        let pack_offset = self.offset;
+        self.offset += header_size as u64 + reader.decompressor.total_in;
+        self.decompressor = Some(reader.decompressor);
+
+        Ok(Entry {
+            header,
+            header_size: header_size as u16,
+            pack_offset,
+            compressed: &[],
+            // decompressed: &self.decompressed_bytes[..decompressed_size as usize],
+            decompressed: &[],
+        })
     }
 }
 
@@ -89,6 +115,8 @@ quick_error! {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
     pub header: pack::data::Header,
+    /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
+    pub header_size: u16,
     pub pack_offset: u64,
     /// The compressed data making up this entry
     #[cfg_attr(feature = "serde1", serde(borrow))]

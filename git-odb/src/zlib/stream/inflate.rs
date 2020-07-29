@@ -15,9 +15,9 @@ quick_error! {
     }
 }
 
-struct Inflate {
+pub(crate) struct Inflate {
     state: InflateState,
-    total_in: u64,
+    pub(crate) total_in: u64,
     total_out: u64,
 }
 
@@ -31,41 +31,13 @@ impl Default for Inflate {
     }
 }
 
-/// Provide streaming decompression using the `std::io::Read` trait.
-/// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
-pub struct InflateReader<R> {
-    inner: R,
-    decompressor: Inflate,
-}
-
-impl<R> InflateReader<R>
-where
-    R: io::BufRead,
-{
-    pub fn from_read(read: R) -> InflateReader<R> {
-        // TODO: Performance opportunity - a buf reader that doesn't allocate
-        InflateReader {
-            decompressor: Inflate::default(),
-            inner: read,
-        }
-    }
-
-    pub fn reset(&mut self, read: R) {
-        self.inner = read;
-        self.decompressor.state.reset(DataFormat::Zlib)
-    }
-}
-
-impl<R> io::Read for InflateReader<R>
-where
-    R: BufRead,
-{
-    fn read(&mut self, into: &mut [u8]) -> io::Result<usize> {
-        read(&mut self.inner, &mut self.decompressor, into)
-    }
-}
-
 impl Inflate {
+    pub fn reset(&mut self) {
+        self.state.reset(DataFormat::Zlib);
+        self.total_in = 0;
+        self.total_out = 0;
+    }
+
     fn decompress(&mut self, input: &[u8], output: &mut [u8], flush: MZFlush) -> Result<Status, Error> {
         let res = inflate::stream::inflate(&mut self.state, input, output, flush);
         self.total_in += res.bytes_consumed as u64;
@@ -82,6 +54,40 @@ impl Inflate {
                 _ => Err(Error::Decompression),
             },
         }
+    }
+}
+
+/// Provide streaming decompression using the `std::io::Read` trait.
+/// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
+pub struct InflateReader<R> {
+    pub(crate) inner: R,
+    pub(crate) decompressor: Inflate,
+}
+
+impl<R> InflateReader<R>
+where
+    R: io::BufRead,
+{
+    pub fn from_read(read: R) -> InflateReader<R> {
+        // TODO: Performance opportunity - a buf reader that doesn't allocate
+        InflateReader {
+            decompressor: Inflate::default(),
+            inner: read,
+        }
+    }
+
+    pub fn reset(&mut self, read: R) {
+        self.inner = read;
+        self.decompressor.reset();
+    }
+}
+
+impl<R> io::Read for InflateReader<R>
+where
+    R: BufRead,
+{
+    fn read(&mut self, into: &mut [u8]) -> io::Result<usize> {
+        read(&mut self.inner, &mut self.decompressor, into)
     }
 }
 
