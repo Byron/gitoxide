@@ -5,6 +5,19 @@ use crate::{
 use quick_error::quick_error;
 use std::{fs, io, io::Seek};
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Entry {
+    pub header: pack::data::Header,
+    /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
+    pub header_size: u16,
+    pub pack_offset: u64,
+    /// amount of compressed bytes consumed, used to generate `decompressed`
+    pub compressed_size: u64,
+    /// The decompressed data.
+    pub decompressed: Vec<u8>,
+}
+
 pub struct Iter<R> {
     read: R,
     decompressor: Option<Inflate>,
@@ -96,19 +109,6 @@ quick_error! {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry {
-    pub header: pack::data::Header,
-    /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
-    pub header_size: u16,
-    pub pack_offset: u64,
-    /// amount of compressed bytes consumed, used to generate `decompressed`
-    pub compressed_size: u64,
-    /// The decompressed data. It is set if the `Mode::KeepDecompressedBytes` was used.
-    pub decompressed: Vec<u8>,
-}
-
 impl<R> Iterator for Iter<R>
 where
     R: io::BufRead,
@@ -123,13 +123,6 @@ where
         self.had_error = result.is_err();
         Some(result)
     }
-}
-
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Mode {
-    DiscardDecompressedBytes,
-    KeepDecompressedBytes,
 }
 
 impl pack::data::File {
