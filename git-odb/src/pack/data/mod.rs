@@ -7,11 +7,13 @@ mod decoded;
 pub use decoded::*;
 
 pub mod init;
-pub mod iter;
 pub mod parse;
 pub mod verify;
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub mod iter;
+pub use iter::Iter;
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Kind {
     V2,
     V3,
