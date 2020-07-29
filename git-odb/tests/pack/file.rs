@@ -27,7 +27,7 @@ mod method {
     #[test]
     fn iter() {
         let pack = pack_at(SMALL_PACK);
-        let it = pack.iter().unwrap();
+        let it = pack.iter().unwrap().unwrap().2;
         assert_eq!(it.count(), pack.num_objects() as usize);
     }
 }
