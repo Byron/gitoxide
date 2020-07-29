@@ -30,6 +30,7 @@
   
 ### Other
 * **progress - convenience**
+  * [ ] Alternate unit - might help doing throughput and things like throughput per second (for downloads)
   * [ ] a way to measure throughput on drop
   * [ ] percentages somewhere near the progress bar
 * **criner**

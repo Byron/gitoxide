@@ -88,6 +88,7 @@ where
 
         Ok(Entry {
             header,
+            // TODO: remove this field once we can pack-encode the header above
             header_size: header_size as u16,
             compressed_size,
             pack_offset,
@@ -114,9 +115,9 @@ pub struct Entry {
     /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
     pub header_size: u16,
     pub pack_offset: u64,
-    // amount of compressed bytes consumed, used to generate `decompressed`
+    /// amount of compressed bytes consumed, used to generate `decompressed`
     pub compressed_size: u64,
-    /// The decompressed data
+    /// The decompressed data. It is set if the `Mode::KeepDecompressedBytes` was used.
     pub decompressed: Option<Vec<u8>>,
 }
 
@@ -144,6 +145,8 @@ pub enum Mode {
 }
 
 impl pack::data::File {
+    /// Returns an iterator over the pack file itself, without making use of the memory mapping.
+    ///
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
     pub fn iter(&self, mode: Mode) -> io::Result<impl Iterator<Item = Result<Entry, Error>>> {
