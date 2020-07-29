@@ -88,6 +88,12 @@ impl Default for Kind {
     }
 }
 
+impl Kind {
+    pub fn hash(&self) -> git_object::HashKind {
+        git_object::HashKind::Sha1
+    }
+}
+
 const FAN_LEN: usize = 256;
 
 pub struct File {

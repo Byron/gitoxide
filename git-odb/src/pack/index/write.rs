@@ -1,4 +1,4 @@
-use crate::pack;
+use crate::{hash, pack};
 use git_object::owned;
 use quick_error::quick_error;
 use std::io;
@@ -44,10 +44,12 @@ impl pack::index::File {
         _out: impl io::Write,
         kind: pack::index::Kind,
     ) -> Result<Outcome, Error> {
+        let _out = hash::Write::new(_out, kind.hash());
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
         }
         for _entry in entries {}
+        let _index_hash = _out.hash.digest();
         unimplemented!("todo stream");
     }
 }
