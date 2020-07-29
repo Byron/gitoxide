@@ -40,14 +40,19 @@ pub struct InflateReader<R> {
 
 impl<R> InflateReader<R>
 where
-    R: io::Read,
+    R: io::BufRead,
 {
-    pub fn from_read(read: R) -> InflateReader<io::BufReader<R>> {
+    pub fn from_read(read: R) -> InflateReader<R> {
         // TODO: Performance opportunity - a buf reader that doesn't allocate
         InflateReader {
             decompressor: Inflate::default(),
-            inner: io::BufReader::new(read),
+            inner: read,
         }
+    }
+
+    pub fn reset(&mut self, read: R) {
+        self.inner = read;
+        self.decompressor.state.reset(DataFormat::Zlib)
     }
 }
 
@@ -124,9 +129,9 @@ mod tests {
 
     #[test]
     fn small_file_decompress() {
-        let r = InflateReader::from_read(
+        let r = InflateReader::from_read(io::BufReader::new(
             std::fs::File::open(fixture_path("objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980")).unwrap(),
-        );
+        ));
         let mut bytes = r.bytes();
         let content = bytes.by_ref().take(16).collect::<Result<Vec<_>, _>>().unwrap();
         assert_eq!(content.as_slice().as_bstr(), b"blob 9\0hi there\n".as_bstr());

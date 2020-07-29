@@ -1,10 +1,10 @@
-use crate::pack;
+use crate::{pack, zlib::stream::InflateReader};
 use quick_error::quick_error;
 use std::{fs, io, io::Seek};
 
-#[derive(Debug)]
 pub struct Iter<'a, R> {
     read: R,
+    decompressor: Option<InflateReader<R>>,
     compressed_bytes: Vec<u8>,
     decompressed_bytes: Vec<u8>,
     offset: u64,
@@ -14,7 +14,7 @@ pub struct Iter<'a, R> {
 
 impl<'a, R> Iter<'a, R>
 where
-    R: io::Read,
+    R: io::BufRead,
 {
     fn buffers() -> (Vec<u8>, Vec<u8>) {
         let base = 4096;
@@ -49,6 +49,7 @@ where
         let (compressed_bytes, decompressed_bytes) = Self::buffers();
         Iter {
             read,
+            decompressor: None,
             compressed_bytes,
             decompressed_bytes,
             offset,
@@ -58,7 +59,12 @@ where
     }
 
     fn next_inner(&mut self) -> Result<Entry<'a>, Error> {
-        pack::data::Header::from_read(&mut self.read, self.offset).map_err(Error::from)?;
+        let (header, decompressed_size, consumed) =
+            pack::data::Header::from_read(&mut self.read, self.offset).map_err(Error::from)?;
+        // let decompressor = self
+        //     .decompressor
+        //     .get_or_insert_with(|| InflateReader::from_read(&mut self.read));
+        // crate::zlib::stream::InflateReader::from_read(&mut self.read);
         unimplemented!("inner next");
     }
 }
@@ -93,7 +99,7 @@ pub struct Entry<'a> {
 
 impl<'a, R> Iterator for Iter<'a, R>
 where
-    R: io::Read,
+    R: io::BufRead,
 {
     type Item = Result<Entry<'a>, Error>;
 
