@@ -160,7 +160,15 @@ impl Header {
             OFS_DELTA => {
                 let (offset, leb_bytes) = streaming_leb64decode(&mut r)?;
                 let delta = OfsDelta {
-                    pack_offset: pack_offset - offset,
+                    pack_offset: pack_offset.checked_sub(offset).ok_or_else(|| {
+                        io::Error::new(
+                            io::ErrorKind::Other,
+                            format!(
+                                "Computing the absolute pack offset would underflow: {} - {}",
+                                pack_offset, offset
+                            ),
+                        )
+                    })?,
                 };
                 consumed += leb_bytes;
                 delta

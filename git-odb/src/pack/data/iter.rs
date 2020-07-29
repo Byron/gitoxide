@@ -5,13 +5,20 @@ use std::{fs, io, io::Seek};
 #[derive(Debug)]
 pub struct Iter<'a, R> {
     read: R,
-    _lifetime: std::marker::PhantomData<&'a ()>,
+    compressed_bytes: Vec<u8>,
+    decompressed_bytes: Vec<u8>,
+    offset: u64,
+    _item_lifetime: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a, R> Iter<'a, R>
 where
     R: io::Read,
 {
+    fn buffers() -> (Vec<u8>, Vec<u8>) {
+        let base = 4096;
+        (Vec::with_capacity(base * 2), Vec::with_capacity(base * 4))
+    }
     // Note that `read` is expected to start right past the header
     pub fn new_from_header(
         mut read: R,
@@ -25,11 +32,7 @@ where
             (
                 kind,
                 num_objects,
-                Iter {
-                    read,
-                    _lifetime: std::marker::PhantomData,
-                }
-                .take(num_objects as usize),
+                Iter::new_from_first_entry(read, 12).take(num_objects as usize),
             )
         }))
     }
@@ -38,17 +41,34 @@ where
     /// it goes past the last object in the pack, i.e. will choke on the trailer if present.
     /// Hence you should only use it with `take(num_objects)`.
     /// Alternatively, use `new_from_header()`
-    pub fn new_from_first_entry(read: R) -> Self {
+    ///
+    /// `offset` is the amount of bytes consumed from `read`, usually the size of the header, for use as offset into the pack.
+    /// when resolving ref deltas to their absolute pack offset.
+    pub fn new_from_first_entry(read: R, offset: u64) -> Self {
+        let (compressed_bytes, decompressed_bytes) = Self::buffers();
         Iter {
             read,
-            _lifetime: std::marker::PhantomData,
+            compressed_bytes,
+            decompressed_bytes,
+            offset,
+            _item_lifetime: std::marker::PhantomData,
         }
+    }
+
+    fn next_inner(&mut self) -> Result<Entry<'a>, Error> {
+        pack::data::Header::from_read(&mut self.read, self.offset).map_err(Error::from)?;
+        unimplemented!("inner next");
     }
 }
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        Io(err: io::Error) {
+            display("An IO operation failed while streaming an entry")
+            from()
+            source(err)
+        }
         Zlib(err: crate::zlib::Error) {
             display("The stream could not be decompressed")
             source(err)
@@ -76,7 +96,7 @@ where
     type Item = Result<Entry<'a>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!("iter")
+        Some(self.next_inner())
     }
 }
 
@@ -86,6 +106,6 @@ impl pack::data::File {
     pub fn iter(&self) -> io::Result<(pack::data::Kind, u32, impl Iterator<Item = Result<Entry<'_>, Error>>)> {
         let mut reader = io::BufReader::new(fs::File::open(&self.path)?);
         reader.seek(io::SeekFrom::Current(12))?;
-        Ok((self.kind, self.num_objects, Iter::new_from_first_entry(reader)))
+        Ok((self.kind, self.num_objects, Iter::new_from_first_entry(reader, 12)))
     }
 }
