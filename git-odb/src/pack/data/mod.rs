@@ -14,6 +14,7 @@ pub mod iter;
 pub use iter::Iter;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     V2,
     V3,

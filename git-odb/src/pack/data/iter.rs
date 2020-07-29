@@ -17,7 +17,7 @@ impl<R> Iter<R>
 where
     R: io::BufRead,
 {
-    // Note that `read` is expected to start right past the header
+    /// Note that `read` is expected to start right past the header
     pub fn new_from_header(
         mut read: R,
         mode: Mode,
