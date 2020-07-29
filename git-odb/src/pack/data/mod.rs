@@ -29,7 +29,7 @@ pub struct File {
 impl File {
     pub const HEADER_LEN: usize = 12;
     pub fn kind(&self) -> Kind {
-        self.kind.clone()
+        self.kind
     }
     pub fn num_objects(&self) -> u32 {
         self.num_objects
