@@ -15,7 +15,9 @@ where
     // Note that `read` is expected to start right past the header
     pub fn new_from_header(
         mut read: R,
-    ) -> io::Result<Result<(pack::data::Kind, u32, impl Iterator<Item = ()>), pack::data::parse::Error>> {
+    ) -> io::Result<
+        Result<(pack::data::Kind, u32, impl Iterator<Item = Result<Entry<'a>, Error>>), pack::data::parse::Error>,
+    > {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
@@ -71,7 +73,7 @@ impl<'a, R> Iterator for Iter<'a, R>
 where
     R: io::Read,
 {
-    type Item = ();
+    type Item = Result<Entry<'a>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         unimplemented!("iter")
@@ -81,7 +83,7 @@ where
 impl pack::data::File {
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
-    pub fn iter(&self) -> io::Result<(pack::data::Kind, u32, impl Iterator<Item = ()>)> {
+    pub fn iter(&self) -> io::Result<(pack::data::Kind, u32, impl Iterator<Item = Result<Entry<'_>, Error>>)> {
         let mut reader = io::BufReader::new(fs::File::open(&self.path)?);
         reader.seek(io::SeekFrom::Current(12))?;
         Ok((self.kind, self.num_objects, Iter::new_from_first_entry(reader)))
