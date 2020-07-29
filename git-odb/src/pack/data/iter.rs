@@ -8,6 +8,7 @@ pub struct Iter<'a, R> {
     compressed_bytes: Vec<u8>,
     decompressed_bytes: Vec<u8>,
     offset: u64,
+    had_error: bool,
     _item_lifetime: std::marker::PhantomData<&'a ()>,
 }
 
@@ -51,6 +52,7 @@ where
             compressed_bytes,
             decompressed_bytes,
             offset,
+            had_error: false,
             _item_lifetime: std::marker::PhantomData,
         }
     }
@@ -96,7 +98,12 @@ where
     type Item = Result<Entry<'a>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        Some(self.next_inner())
+        if self.had_error {
+            return None;
+        }
+        let result = self.next_inner();
+        self.had_error = result.is_err();
+        Some(result)
     }
 }
 
