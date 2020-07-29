@@ -1,6 +1,6 @@
 use crate::pack;
-use std::io::Seek;
-use std::{fs, io};
+use quick_error::quick_error;
+use std::{fs, io, io::Seek};
 
 #[derive(Debug)]
 pub struct Iter<R> {
@@ -31,6 +31,29 @@ where
     }
 }
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Zlib(err: crate::zlib::Error) {
+            display("The stream could not be decompressed")
+            source(err)
+            from()
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Entry<'a> {
+    pub header: pack::data::Header,
+    pub pack_offset: u64,
+    /// The compressed data making up this entry
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    pub compressed: &'a [u8],
+    /// The decompressed data (stemming from `compressed`)
+    pub decompressed: &'a [u8],
+}
+
 impl<R> Iterator for Iter<R>
 where
     R: io::Read,
@@ -43,6 +66,8 @@ where
 }
 
 impl pack::data::File {
+    /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
+    /// If an index is available, use the `traverse(…)` method instead for maximum performance.
     pub fn iter(&self) -> io::Result<(pack::data::Kind, u32, impl Iterator<Item = ()>)> {
         let mut reader = io::BufReader::new(fs::File::open(&self.path)?);
         reader.seek(io::SeekFrom::Current(12))?;
