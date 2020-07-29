@@ -1,3 +1,4 @@
+//! data within a pack file
 use filebuffer::FileBuffer;
 use std::path::Path;
 
@@ -6,6 +7,7 @@ mod decoded;
 pub use decoded::*;
 
 pub mod init;
+pub mod iter;
 pub mod parse;
 pub mod verify;
 

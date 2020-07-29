@@ -1,3 +1,5 @@
+//! an index into the pack file
+//!
 /// From itertools
 /// Create an iterator running multiple iterators in lockstep.
 ///

@@ -187,6 +187,7 @@ fn pack_lookup() {
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
+        // TODO: test iteration by sorted offsets yields the correct result when using the pack iterator
     }
 }
 

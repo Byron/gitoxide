@@ -7,8 +7,7 @@ fn pack_at(at: &str) -> pack::data::File {
 }
 
 mod method {
-    use crate::pack::file::pack_at;
-    use crate::pack::SMALL_PACK;
+    use crate::{pack::file::pack_at, pack::SMALL_PACK};
 
     #[test]
     fn checksum() {
@@ -23,6 +22,13 @@ mod method {
     fn verify_checksum() {
         let p = pack_at(SMALL_PACK);
         assert_eq!(p.verify_checksum().unwrap(), p.checksum());
+    }
+
+    #[test]
+    fn iter() {
+        let pack = pack_at(SMALL_PACK);
+        let it = pack.iter().unwrap();
+        assert_eq!(it.count(), pack.num_objects() as usize);
     }
 }
 

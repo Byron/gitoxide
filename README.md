@@ -21,7 +21,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] [pack verify](https://asciinema.org/a/346975)
     * [x] [pack index verify](https://asciinema.org/a/346976) including each object sha1 and statistics
     * [x] pack explode, useful for transforming packs into loose objects for inspection or restoration
-      * [ ] verify written objects (by reading them back from disk)
+      * [x] verify written objects (by reading them back from disk)
 * **git-object**
   * *decode (zero-copy)* borrowed objects
     * [x] commit
@@ -46,7 +46,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] traverse pack index
     * [x] object abstraction
       * [x] decode (zero copy)
-      * [x] verify
+      * [x] verify checksum
+    * [x] easy and fast pack traversal
     * [x] decode
       * [x] full objects
       * [x] deltified objects
@@ -57,8 +58,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [ ] create new pack
       * [ ] create 'thin' pack
     * [x] verify pack with statistics
-      * [ ] brute force - less memory
-      * [ ] indexed - more memory
+      * [x] brute force - less memory
+      * [x] indexed - more memory
     * [ ] pack streaming (i.e. indexing + resolution)
   * [ ] API documentation with examples
   * **sink**
