@@ -204,7 +204,7 @@ fn prepare_and_run<T: Send + 'static>(
             let ui_handle = std::thread::spawn({
                 let tx = tx.clone();
                 move || {
-                    smol::run(render_tui);
+                    futures_lite::future::block_on(render_tui);
                     tx.send(Event::UIDone).ok();
                 }
             });

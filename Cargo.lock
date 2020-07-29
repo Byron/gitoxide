@@ -110,18 +110,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-task"
-version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c17772156ef2829aadc587461c7753af20b7e8db1529bc66855add962a3b35d3"
-
-[[package]]
-name = "atomic-waker"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "065374052e7df7ee4047b1160cca5e1467a12351a40b3da123c870ba0b8eda2a"
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -157,20 +145,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
 dependencies = [
  "generic-array",
-]
-
-[[package]]
-name = "blocking"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2468ff7bf85066b4a3678fede6fe66db31846d753ff0adfbfab2c6a6e81612b"
-dependencies = [
- "async-channel",
- "atomic-waker",
- "futures-lite",
- "once_cell",
- "parking",
- "waker-fn",
 ]
 
 [[package]]
@@ -409,12 +383,6 @@ dependencies = [
 
 [[package]]
 name = "crosstermion"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "032534543c938ffc4106ee75411f4b7be2e0260e044d17dae36f9409ada87895"
-
-[[package]]
-name = "crosstermion"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5da9c0d4d1875d2553f0388e43c48a7323da8c879a4586178609cb6daea823e6"
@@ -600,9 +568,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8764574ff08b701a084482c3c7031349104b07ac897393010494beaa18ce32c6"
 dependencies = [
  "futures-core",
- "futures-io",
  "futures-task",
- "memchr",
  "pin-project",
  "pin-utils",
  "slab",
@@ -723,13 +689,13 @@ dependencies = [
  "anyhow",
  "argh",
  "atty",
- "crosstermion 0.2.0",
+ "crosstermion",
  "ctrlc",
  "env_logger",
+ "futures-lite",
  "git-features",
  "gitoxide-core",
  "prodash",
- "smol",
  "structopt",
 ]
 
@@ -1152,7 +1118,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b161a23f30b7c034ecbf4a9c683e1ceff4d891dd9d215e909a48e333aa8b3758"
 dependencies = [
  "async-io",
- "crosstermion 0.3.0",
+ "crosstermion",
  "dashmap",
  "futures-core",
  "futures-lite",
@@ -1302,12 +1268,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scoped-tls"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea6a9290e3c9cf0f18145ef7ffa62d68ee0bf5fcd651017e586dc7fd5da448c2"
-
-[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1412,27 +1372,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3757cb9d89161a2f24e1cf78efa0c1fcff485d18e3f55e0aa3480824ddaa0f3f"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "smol"
-version = "0.1.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "620cbb3c6e34da57d3a248cda0cd01cd5848164dc062e764e65d06fe3ea7aed5"
-dependencies = [
- "async-task",
- "blocking",
- "concurrent-queue",
- "fastrand",
- "futures-io",
- "futures-util",
- "libc",
- "once_cell",
- "scoped-tls",
- "slab",
- "socket2",
- "wepoll-sys-stjepang",
- "winapi",
 ]
 
 [[package]]
