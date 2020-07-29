@@ -3,11 +3,12 @@ use quick_error::quick_error;
 use std::{fs, io, io::Seek};
 
 #[derive(Debug)]
-pub struct Iter<R> {
+pub struct Iter<'a, R> {
     read: R,
+    _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
-impl<R> Iter<R>
+impl<'a, R> Iter<'a, R>
 where
     R: io::Read,
 {
@@ -18,8 +19,17 @@ where
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
-        Ok(pack::data::parse::header(&header_data)
-            .map(|(kind, num_objects)| (kind, num_objects, Iter { read }.take(num_objects as usize))))
+        Ok(pack::data::parse::header(&header_data).map(|(kind, num_objects)| {
+            (
+                kind,
+                num_objects,
+                Iter {
+                    read,
+                    _lifetime: std::marker::PhantomData,
+                }
+                .take(num_objects as usize),
+            )
+        }))
     }
 
     /// `read` must be placed right past the header, and this iterator will fail ungracefully once
@@ -27,7 +37,10 @@ where
     /// Hence you should only use it with `take(num_objects)`.
     /// Alternatively, use `new_from_header()`
     pub fn new_from_first_entry(read: R) -> Self {
-        Iter { read }
+        Iter {
+            read,
+            _lifetime: std::marker::PhantomData,
+        }
     }
 }
 
@@ -54,7 +67,7 @@ pub struct Entry<'a> {
     pub decompressed: &'a [u8],
 }
 
-impl<R> Iterator for Iter<R>
+impl<'a, R> Iterator for Iter<'a, R>
 where
     R: io::Read,
 {
