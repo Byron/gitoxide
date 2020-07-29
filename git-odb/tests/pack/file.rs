@@ -28,7 +28,7 @@ mod method {
     #[test]
     fn iter() {
         let pack = pack_at(SMALL_PACK);
-        let it = pack.iter(pack::data::iter::Mode::KeepDecompressedBytes).unwrap().2;
+        let it = pack.iter(pack::data::iter::Mode::KeepDecompressedBytes).unwrap();
         assert_eq!(it.count(), pack.num_objects() as usize);
     }
 }

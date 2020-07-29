@@ -60,7 +60,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] verify pack with statistics
       * [x] brute force - less memory
       * [x] indexed - more memory
-    * [ ] pack streaming (i.e. indexing + resolution)
+    * [x] pack streaming with `Iterator` 
+       * [ ] index from pack
   * [ ] API documentation with examples
   * **sink**
     * [x] write objects and obtain id

@@ -2,7 +2,7 @@
 
 * **index-from-pack**
   * _capability to receive packs from a stream_
-  * [ ] stream pack
+  * [x] stream pack with iterator interface
   * [ ] build index from pack
   * [ ] repair pack - write trailer for all complete objects
 * **cli**

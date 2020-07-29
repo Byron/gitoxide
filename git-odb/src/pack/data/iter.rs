@@ -146,13 +146,9 @@ pub enum Mode {
 impl pack::data::File {
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
-    pub fn iter(&self, mode: Mode) -> io::Result<(pack::data::Kind, u32, impl Iterator<Item = Result<Entry, Error>>)> {
+    pub fn iter(&self, mode: Mode) -> io::Result<impl Iterator<Item = Result<Entry, Error>>> {
         let mut reader = io::BufReader::new(fs::File::open(&self.path)?);
         reader.seek(io::SeekFrom::Current(12))?;
-        Ok((
-            self.kind,
-            self.num_objects,
-            Iter::new_from_first_entry(reader, 12, mode).take(self.num_objects as usize),
-        ))
+        Ok(Iter::new_from_first_entry(reader, 12, mode).take(self.num_objects as usize))
     }
 }
