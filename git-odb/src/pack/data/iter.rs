@@ -33,6 +33,9 @@ pub struct Entry {
     pub compressed: Vec<u8>,
     /// The decompressed data.
     pub decompressed: Vec<u8>,
+    /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
+    /// for use as trailer in a pack
+    pub trailer: Option<owned::Id>,
 }
 
 pub struct Iter<R> {
@@ -42,7 +45,6 @@ pub struct Iter<R> {
     had_error: bool,
     kind: pack::data::Kind,
     objects_left: u32,
-    hash: Option<owned::Id>,
     verify: bool,
 }
 
@@ -70,7 +72,6 @@ where
             had_error: false,
             kind,
             objects_left: num_objects,
-            hash: None,
             verify,
         })
     }
@@ -79,12 +80,8 @@ where
         self.kind
     }
 
-    /// Can only be queried once the iterator has been exhausted and `len()` returns 0
-    pub fn checksum(&self) -> owned::Id {
-        self.hash.expect("iterator must be exhausted")
-    }
-
     fn next_inner(&mut self) -> Result<Entry, Error> {
+        self.objects_left -= 1; // even an error counts as objects
         let (header, decompressed_size, header_size) =
             pack::data::Header::from_read(&mut self.read, self.offset).map_err(Error::from)?;
 
@@ -119,6 +116,14 @@ where
             "we must track exactly the same amount of bytes as read by the decompressor"
         );
 
+        let trailer = if self.objects_left == 0 {
+            let mut id = owned::Id::from([0; 20]);
+            self.read.read_exact(id.as_mut_slice())?;
+            Some(id)
+        } else {
+            None
+        };
+
         Ok(Entry {
             header,
             // TODO: remove this field once we can pack-encode the header above
@@ -126,6 +131,7 @@ where
             compressed,
             pack_offset,
             decompressed,
+            trailer,
         })
     }
 }
@@ -144,7 +150,6 @@ where
         if self.had_error || self.objects_left == 0 {
             return None;
         }
-        self.objects_left -= 1; // even an error counts as objects
         let result = self.next_inner();
         self.had_error = result.is_err();
         Some(result)

@@ -17,6 +17,9 @@ impl Id {
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_ref()
     }
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.0.as_mut()
+    }
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         out.write_all(&self.to_sha1_hex())
     }
