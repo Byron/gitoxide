@@ -141,9 +141,10 @@ where
     }
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.had_error {
+        if self.had_error || self.objects_left == 0 {
             return None;
         }
+        self.objects_left -= 1; // even an error counts as objects
         let result = self.next_inner();
         self.had_error = result.is_err();
         Some(result)
