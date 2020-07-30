@@ -65,7 +65,7 @@ struct Entry {
 /// And it will be called after the iterator stopped returning elements.
 pub enum Mode<F>
 where
-    F: Fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64),
+    F: Fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>,
 {
     /// Base + deltas in memory compressed
     InMemory,
@@ -79,7 +79,7 @@ where
 
 impl<F> Mode<F>
 where
-    F: Fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64),
+    F: Fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>,
 {
     fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
@@ -97,7 +97,7 @@ where
     }
 }
 
-impl Mode<fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64)> {
+impl Mode<fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>> {
     pub fn in_memory() -> Self {
         Self::InMemory
     }
@@ -117,7 +117,7 @@ impl pack::index::File {
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
-        F: for<'r> Fn(u64, &'r mut Vec<u8>) -> (pack::data::Header, u64),
+        F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)>,
     {
         use io::Write;
 
