@@ -1,5 +1,6 @@
 use crate::{fixture_path, pack::SMALL_PACK};
 use git_odb::pack;
+use git_odb::pack::data::iter::TrailerMode;
 use std::fs;
 
 #[test]
@@ -13,10 +14,10 @@ fn size_of_entry() {
 
 #[test]
 fn new_from_header() -> Result<(), Box<dyn std::error::Error>> {
-    for should_verify in &[false, true] {
+    for trailer_mode in &[TrailerMode::AsIs, TrailerMode::Verify, TrailerMode::Restore] {
         let mut iter = pack::data::Iter::new_from_header(
             std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
-            *should_verify,
+            *trailer_mode,
         )?;
 
         let num_objects = iter.len();

@@ -81,7 +81,7 @@ mod method {
             for (index_path, data_path) in PACKS_AND_INDICES {
                 let pack_iter = pack::data::Iter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
-                    true,
+                    pack::data::iter::TrailerMode::Restore,
                 )?;
 
                 let mut actual = Vec::<u8>::new();

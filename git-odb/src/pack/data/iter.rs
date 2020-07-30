@@ -52,6 +52,20 @@ pub struct Iter<R> {
     hash: Option<Sha1>,
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum TrailerMode {
+    /// Provide the trailer as read from the pack
+    AsIs,
+    /// Generate an own hash and trigger an error on the last iterated object
+    /// if it does not match the hash provided with the pack
+    Verify,
+    /// Generate an own hash and if there was an error or the objects are depleted early
+    /// due to partial packs, return the last valid entry and with our own hash thus far.
+    /// Note that the existing pack hash, if present, will be ignored.
+    Restore,
+}
+
 impl<R> Iter<R>
 where
     R: io::BufRead,
@@ -59,7 +73,7 @@ where
     /// Note that `read` is expected at the beginning of a valid pack file with header and trailer
     /// If `verify` is true, we will assert the SHA1 is actually correct before returning the last entry.
     /// Otherwise bit there is a chance that some kinds of bitrot or inconsistencies will not be detected.
-    pub fn new_from_header(mut read: R, verify: bool) -> Result<Iter<R>, Error> {
+    pub fn new_from_header(mut read: R, trailer: TrailerMode) -> Result<Iter<R>, Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
@@ -76,7 +90,7 @@ where
             had_error: false,
             kind,
             objects_left: num_objects,
-            hash: if verify {
+            hash: if trailer != TrailerMode::AsIs {
                 let mut hash = Sha1::default();
                 hash.update(&header_data);
                 Some(hash)
@@ -243,6 +257,6 @@ impl pack::data::File {
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
     pub fn iter(&self) -> Result<Iter<io::BufReader<fs::File>>, Error> {
         let reader = io::BufReader::new(fs::File::open(&self.path)?);
-        Iter::new_from_header(reader, false)
+        Iter::new_from_header(reader, TrailerMode::AsIs)
     }
 }
