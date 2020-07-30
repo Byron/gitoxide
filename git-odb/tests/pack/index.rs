@@ -70,16 +70,35 @@ mod method {
         }
     }
 
-    mod any_version {
+    mod any {
         use crate::{fixture_path, pack::PACKS_AND_INDICES};
         use git_odb::pack;
         use std::{fs, io};
 
         #[test]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
-            for (_index_path, data_path) in PACKS_AND_INDICES {
-                let (_, _, _pack_iter) =
+            for (index_path, data_path) in PACKS_AND_INDICES {
+                let (_, num_objects, pack_iter) =
                     pack::data::Iter::new_from_header(io::BufReader::new(fs::File::open(fixture_path(data_path))?))??;
+
+                let mut actual = Vec::<u8>::new();
+                let desired_kind = pack::index::Kind::default();
+                let outcome = pack::index::File::write_to_stream(pack_iter, &mut actual, desired_kind)?;
+
+                let expected = fs::read(fixture_path(index_path))?;
+                assert_eq!(
+                    actual, expected,
+                    "we should be writing a bit-exact version of the original index"
+                );
+                assert_eq!(
+                    outcome.num_objects, num_objects,
+                    "it wrote the entire iterator worth of entries"
+                );
+                assert_eq!(outcome.index_kind, desired_kind);
+                assert_eq!(
+                    outcome.index_hash,
+                    pack::index::File::at(fixture_path(index_path))?.index_checksum()
+                );
             }
             Ok(())
         }

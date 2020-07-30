@@ -54,19 +54,23 @@ impl pack::Bundle {
     ) -> Result<pack::index::write::Outcome, Error> {
         let path = path.as_ref();
 
-        let (_pack_kind, num_objects, iter) = pack::data::Iter::new_from_header(io::BufReader::new(pack))??;
+        let (_pack_kind, num_objects, iter_with_thinpack_resolver_tbd) =
+            pack::data::Iter::new_from_header(io::BufReader::new(pack))??;
         if num_objects == 0 {
             return Err(Error::EmptyIndex);
         }
 
         let mut tempfile = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(path)?);
-        let outcome = pack::index::File::write_to_stream(iter, &mut tempfile, kind)?;
+        let outcome = pack::index::File::write_to_stream(iter_with_thinpack_resolver_tbd, &mut tempfile, kind)?;
 
         let index_path = path.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
         tempfile
             .into_inner()
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
             .persist(index_path)?;
-        unimplemented!("pack writing and resolution")
+        // Consider thin packs resolution in data pack itself as Iterator - input iter::Entry, output resolved Entries
+        // These can then be written to an output stream (Write) which can also be in the data pack.
+        // This method just coordinates the pieces
+        unimplemented!("pack writing and thin pack resolution")
     }
 }

@@ -4,7 +4,6 @@
   * _capability to receive packs from a stream_
   * [x] stream pack with iterator interface
     * [ ] provide seen compressed bytes
-  * [ ] encode pack header
   * [ ] build index from pack
   * [ ] repair pack - write trailer for all complete objects
 * **cli**
@@ -13,6 +12,9 @@
   
 ### Cloning
 
+* **receive pack**
+  * [ ] encode pack header
+  * [ ] resolve thin pack with Bundle
 * **git-transport**
   * [ ] transport layer
   * [ ] receive a pack
