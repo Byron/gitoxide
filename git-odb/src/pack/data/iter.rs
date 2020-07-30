@@ -101,12 +101,14 @@ where
         let compressed_size = reader.decompressor.total_in;
         self.offset += header_size as u64 + compressed_size;
         self.decompressor = Some(reader.decompressor);
+        let mut compressed = reader.inner.write;
+        compressed.shrink_to_fit();
 
         Ok(Entry {
             header,
             // TODO: remove this field once we can pack-encode the header above
             header_size: header_size as u16,
-            compressed: reader.inner.write,
+            compressed,
             compressed_size,
             pack_offset,
             decompressed,
@@ -139,14 +141,20 @@ impl<R, W> io::BufRead for PassThrough<R, W>
 where
     Self: io::Read,
     R: io::BufRead,
+    W: io::Write,
 {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        eprintln!("fill buf called");
         self.read.fill_buf()
     }
 
     fn consume(&mut self, amt: usize) {
-        dbg!(amt);
+        let buf = self
+            .read
+            .fill_buf()
+            .expect("never fail as we called fill-buf before and this does nothing");
+        self.write
+            .write_all(&buf[..amt])
+            .expect("a write to never fail - should be a memory buffer");
         self.read.consume(amt)
     }
 }
@@ -154,12 +162,9 @@ where
 impl<R, W> io::Read for PassThrough<R, W>
 where
     R: io::Read,
-    W: io::Write,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let bytes_read = self.read.read(buf)?;
-        self.write.write_all(&buf[..bytes_read])?;
-        Ok(bytes_read)
+        self.read.read(buf)
     }
 }
 
