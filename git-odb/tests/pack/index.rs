@@ -76,13 +76,17 @@ mod method {
         use std::{fs, io};
 
         #[test]
+        #[ignore]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for (index_path, data_path) in PACKS_AND_INDICES {
-                let (_, num_objects, pack_iter) =
-                    pack::data::Iter::new_from_header(io::BufReader::new(fs::File::open(fixture_path(data_path))?))??;
+                let pack_iter = pack::data::Iter::new_from_header(
+                    io::BufReader::new(fs::File::open(fixture_path(data_path))?),
+                    true,
+                )?;
 
                 let mut actual = Vec::<u8>::new();
                 let desired_kind = pack::index::Kind::default();
+                let num_objects = pack_iter.len() as u32;
                 let outcome = pack::index::File::write_to_stream(pack_iter, &mut actual, desired_kind)?;
 
                 let expected = fs::read(fixture_path(index_path))?;

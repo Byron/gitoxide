@@ -13,8 +13,8 @@ quick_error! {
             from()
             source(err)
         }
-        HeaderDecode(err: pack::data::parse::Error) {
-            display("The pack header could not be parsed when starting to write the index")
+        PackIter(err: pack::data::iter::Error) {
+            display("Pack iteration failed")
             from()
             source(err)
         }
@@ -54,9 +54,8 @@ impl pack::Bundle {
     ) -> Result<pack::index::write::Outcome, Error> {
         let path = path.as_ref();
 
-        let (_pack_kind, num_objects, iter_with_thinpack_resolver_tbd) =
-            pack::data::Iter::new_from_header(io::BufReader::new(pack))??;
-        if num_objects == 0 {
+        let iter_with_thinpack_resolver_tbd = pack::data::Iter::new_from_header(io::BufReader::new(pack), true)?;
+        if iter_with_thinpack_resolver_tbd.len() == 0 {
             return Err(Error::EmptyIndex);
         }
 

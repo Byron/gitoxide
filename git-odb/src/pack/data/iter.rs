@@ -2,14 +2,20 @@ use crate::{
     pack,
     zlib::stream::{inflate::Inflate, InflateReader},
 };
+use git_object::owned;
 use quick_error::quick_error;
-use std::{fs, io, io::Seek};
+use std::{fs, io};
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
         Io(err: io::Error) {
             display("An IO operation failed while streaming an entry")
+            from()
+            source(err)
+        }
+        PackParse(err: pack::data::parse::Error) {
+            display("The pack header could not be parsed")
             from()
             source(err)
         }
@@ -34,48 +40,48 @@ pub struct Iter<R> {
     decompressor: Option<Inflate>,
     offset: u64,
     had_error: bool,
+    kind: pack::data::Kind,
+    objects_left: u32,
+    hash: Option<owned::Id>,
+    verify: bool,
 }
 
 impl<R> Iter<R>
 where
     R: io::BufRead,
 {
-    /// Note that `read` is expected to start right past the header
-    pub fn new_from_header(
-        mut read: R,
-    ) -> io::Result<Result<(pack::data::Kind, u32, impl Iterator<Item = Result<Entry, Error>>), pack::data::parse::Error>>
-    {
+    /// Note that `read` is expected at the beginning of a valid pack file with header and trailer
+    /// If `verify` is true, we will assert the SHA1 is actually correct before returning the last entry.
+    /// Otherwise bit there is a chance that some kinds of bitrot or inconsistencies will not be detected.
+    pub fn new_from_header(mut read: R, verify: bool) -> Result<Iter<R>, Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
-        Ok(pack::data::parse::header(&header_data).map(|(kind, num_objects)| {
-            assert_eq!(
-                kind,
-                pack::data::Kind::V2,
-                "let's stop here if we see undocumented pack formats"
-            );
-            (
-                kind,
-                num_objects,
-                Iter::new_from_first_entry(read, 12).take(num_objects as usize),
-            )
-        }))
-    }
-
-    /// `read` must be placed right past the header, and this iterator will fail ungracefully once
-    /// it goes past the last object in the pack, i.e. will choke on the trailer if present.
-    /// Hence you should only use it with `take(num_objects)`.
-    /// Alternatively, use `new_from_header()`
-    ///
-    /// `offset` is the amount of bytes consumed from `read`, usually the size of the header, for use as offset into the pack.
-    /// when resolving ref deltas to their absolute pack offset.
-    pub fn new_from_first_entry(read: R, offset: u64) -> Self {
-        Iter {
+        let (kind, num_objects) = pack::data::parse::header(&header_data)?;
+        assert_eq!(
+            kind,
+            pack::data::Kind::V2,
+            "let's stop here if we see undocumented pack formats"
+        );
+        Ok(Iter {
             read,
             decompressor: None,
-            offset,
+            offset: 12,
             had_error: false,
-        }
+            kind,
+            objects_left: num_objects,
+            hash: None,
+            verify,
+        })
+    }
+
+    pub fn kind(&self) -> pack::data::Kind {
+        self.kind
+    }
+
+    /// Can only be queried once the iterator has been exhausted and `len()` returns 0
+    pub fn checksum(&self) -> owned::Id {
+        self.hash.expect("iterator must be exhausted")
     }
 
     fn next_inner(&mut self) -> Result<Entry, Error> {
@@ -130,6 +136,10 @@ where
 {
     type Item = Result<Entry, Error>;
 
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.objects_left as usize, Some(self.objects_left as usize))
+    }
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.had_error {
             return None;
@@ -139,6 +149,7 @@ where
         Some(result)
     }
 }
+impl<R> std::iter::ExactSizeIterator for Iter<R> where R: io::BufRead {}
 
 struct PassThrough<R, W> {
     read: R,
@@ -181,9 +192,8 @@ impl pack::data::File {
     ///
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
-    pub fn iter(&self) -> io::Result<impl Iterator<Item = Result<Entry, Error>>> {
-        let mut reader = io::BufReader::new(fs::File::open(&self.path)?);
-        reader.seek(io::SeekFrom::Current(12))?;
-        Ok(Iter::new_from_first_entry(reader, 12).take(self.num_objects as usize))
+    pub fn iter(&self) -> Result<Iter<io::BufReader<fs::File>>, Error> {
+        let reader = io::BufReader::new(fs::File::open(&self.path)?);
+        Iter::new_from_header(reader, false)
     }
 }
