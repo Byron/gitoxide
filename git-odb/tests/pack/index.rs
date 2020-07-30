@@ -73,7 +73,6 @@ mod method {
         use std::{fs, io};
 
         #[test]
-        #[ignore]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
@@ -88,7 +87,7 @@ mod method {
                     let outcome = pack::index::File::write_to_stream(pack_iter, &mut actual, desired_kind)?;
 
                     let expected = fs::read(fixture_path(index_path))?;
-                    let end_of_header = 4 * 2 + 256 * 4;
+                    let end_of_header = 4 * 2;
                     assert_eq!(actual, &expected[..end_of_header], "we should get the header right");
                     // let end_of_fanout_table = end_of_header + 256 * 4;
                     // assert_eq!(

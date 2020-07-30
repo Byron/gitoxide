@@ -123,6 +123,7 @@ impl File {
     }
 }
 
+const V2_SIGNATURE: &[u8] = b"\xfftOc";
 pub mod init;
 
 pub(crate) mod access;

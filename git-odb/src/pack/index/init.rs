@@ -1,4 +1,4 @@
-use crate::pack::index::{self, Kind, FAN_LEN};
+use crate::pack::index::{self, Kind, FAN_LEN, V2_SIGNATURE};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
@@ -22,7 +22,6 @@ quick_error! {
 }
 
 const N32_SIZE: usize = size_of::<u32>();
-const V2_SIGNATURE: &[u8] = b"\xfftOc";
 const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 
 /// Instantiation
@@ -59,7 +58,7 @@ impl TryFrom<&Path> for index::File {
                     let (vd, dr) = d.split_at(N32_SIZE);
                     d = dr;
                     v = BigEndian::read_u32(vd);
-                    if v != 2 {
+                    if v != Kind::V2 as u32 {
                         return Err(Error::UnsupportedVersion(v));
                     }
                 }
