@@ -23,6 +23,9 @@ quick_error! {
         RefDelta {
             display("Ref delta objects are not supported as there is no way to look them up. Resolve them beforehand.")
         }
+        IteratorInvariantTrailer {
+            display("The iterator failed to set a trailing hash over all prior pack entries in the last provided entry")
+        }
     }
 }
 
@@ -60,6 +63,7 @@ impl pack::index::File {
         let mut num_objects = 0;
         // This array starts our sorted by pack-offset
         let mut index_entries = Vec::with_capacity(entries.size_hint().0);
+        let mut last_seen_trailer = None;
         for entry in entries {
             let pack::data::iter::Entry {
                 header,
@@ -67,7 +71,7 @@ impl pack::index::File {
                 header_size: _,
                 compressed: _,
                 decompressed,
-                trailer: _,
+                trailer,
             } = entry?;
             use pack::data::Header::*;
             num_objects += 1;
@@ -93,20 +97,24 @@ impl pack::index::File {
                 _pack_offset: pack_offset,
                 _crc32: 0, // TBD
                 _base_bytes: decompressed,
-            })
+            });
+            last_seen_trailer = trailer;
         }
 
         out.write_all(V2_SIGNATURE)?;
 
+        // Write header
         let mut buf = [0u8; 4];
         BigEndian::write_u32(&mut buf, kind as u32);
         out.write_all(&buf)?;
+
+        // todo: write fanout
 
         let _index_hash = out.hash.digest();
         Ok(Outcome {
             index_kind: kind,
             index_hash: owned::Id::from([0u8; 20]),
-            pack_hash: owned::Id::from([0u8; 20]),
+            pack_hash: last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?,
             num_objects,
         })
     }
