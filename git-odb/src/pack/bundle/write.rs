@@ -61,7 +61,12 @@ impl pack::Bundle {
         }
 
         let mut tempfile = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(path)?);
-        let outcome = pack::index::File::write_to_stream(iter_with_thinpack_resolver_tbd, &mut tempfile, kind)?;
+        let outcome = pack::index::File::write_data_iter_to_stream(
+            kind,
+            pack::index::write::Mode::in_memory(),
+            iter_with_thinpack_resolver_tbd,
+            &mut tempfile,
+        )?;
 
         let index_path = path.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
         tempfile

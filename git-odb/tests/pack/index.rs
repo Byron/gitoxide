@@ -84,7 +84,12 @@ mod method {
                     let mut actual = Vec::<u8>::new();
                     let desired_kind = pack::index::Kind::default();
                     let num_objects = pack_iter.len() as u32;
-                    let outcome = pack::index::File::write_to_stream(pack_iter, &mut actual, desired_kind)?;
+                    let outcome = pack::index::File::write_data_iter_to_stream(
+                        desired_kind,
+                        pack::index::write::Mode::in_memory(),
+                        pack_iter,
+                        &mut actual,
+                    )?;
 
                     let expected = fs::read(fixture_path(index_path))?;
                     let end_of_header = 4 * 2;

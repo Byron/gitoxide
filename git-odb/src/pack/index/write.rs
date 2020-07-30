@@ -38,22 +38,73 @@ pub struct Outcome {
     pub num_objects: u32,
 }
 
+enum Cache {
+    UseResolve,
+    Decompressed(Vec<u8>),
+    Compressed(Vec<u8>),
+}
+
 struct Entry {
     _id: owned::Id,
     _pack_offset: u64,
     _crc32: u32,
-    /// Only set if we don't have a resolve function, so we keep all bases in memory
-    _base_bytes: Option<Vec<u8>>,
+    _cache: Cache,
+}
+
+/// The function resolves pack_offset: u64 into compressed bytes to &mut Vec<u8> and returns (object kind, decompressed size)
+/// And it will be called after the iterator stopped returning elements.
+pub enum Mode<F>
+where
+    F: Fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64),
+{
+    /// Base + deltas in memory compressed
+    InMemory,
+    InMemoryDecompressed,
+    /// Deltas in memory compressed
+    ResolveBases(F),
+    /// Bases in memory compressed
+    ResolveDeltas(F),
+    ResolveBasesAndDeltas(F),
+}
+
+impl<F> Mode<F>
+where
+    F: Fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64),
+{
+    fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
+        match self {
+            Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed),
+            Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
+            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::UseResolve,
+        }
+    }
+    fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
+        match self {
+            Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed),
+            Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
+            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::UseResolve,
+        }
+    }
+}
+
+impl Mode<fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64)> {
+    pub fn in_memory() -> Self {
+        Self::InMemory
+    }
 }
 
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
     /// Note that neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
-    pub fn write_to_stream(
+    pub fn write_data_iter_to_stream<F>(
+        kind: pack::index::Kind,
+        mode: Mode<F>,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         out: impl io::Write,
-        kind: pack::index::Kind,
-    ) -> Result<Outcome, Error> {
+    ) -> Result<Outcome, Error>
+    where
+        F: for<'r> Fn(u64, &'r mut Vec<u8>) -> (pack::data::Header, u64),
+    {
         use io::Write;
 
         let mut out = hash::Write::new(out, kind.hash());
@@ -69,14 +120,14 @@ impl pack::index::File {
                 header,
                 pack_offset,
                 header_size: _,
-                compressed: _,
+                compressed,
                 decompressed,
                 trailer,
             } = entry?;
             use pack::data::Header::*;
             num_objects += 1;
             let mut hash_write = hash::Write::new(io::sink(), kind.hash());
-            let decompressed = match header {
+            let cache = match header {
                 Blob | Tree | Commit | Tag => {
                     loose::object::header::encode(
                         header.to_kind().expect("non-delta kind"),
@@ -84,19 +135,21 @@ impl pack::index::File {
                         &mut hash_write,
                     )?;
                     hash_write.hash.update(&decompressed);
-                    Some(decompressed)
+                    mode.base_cache(compressed, decompressed)
                 }
                 RefDelta { .. } => return Err(Error::RefDelta),
                 OfsDelta { pack_offset: _ } => {
-                    unimplemented!("apply a single delta to an offset we must have seen already")
+                    mode.delta_cache(compressed, decompressed)
+                    // TODO find base and increment child count
+                    // unimplemented!("apply a single delta to an offset we must have seen already")
                 }
             };
 
             index_entries.push(Entry {
                 _id: owned::Id::from(hash_write.hash.digest()),
                 _pack_offset: pack_offset,
-                _crc32: 0, // TBD
-                _base_bytes: decompressed,
+                _crc32: 0, // TBD, but can be done right here, needs header encoding
+                _cache: cache,
             });
             last_seen_trailer = trailer;
         }
