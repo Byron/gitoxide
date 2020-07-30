@@ -6,6 +6,14 @@
     * [x] provide seen compressed bytes
   * [x] repair pack - write trailer for all complete objects
   * [ ] build index from pack
+      * [ ] header
+      * [ ] fan-out table
+      * [ ] oids
+      * [ ] crc32
+          * [ ] encode pack header (for needed for CRC32)
+      * [ ] 32bit offsets
+      * [ ] 64 bit offset extension
+  * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli**
   * [ ] build index from pack
   * [ ] complete pack with trailer
@@ -13,7 +21,6 @@
 ### Cloning
 
 * **receive pack**
-  * [ ] encode pack header
   * [ ] resolve thin pack with Bundle
 * **git-transport**
   * [ ] transport layer
