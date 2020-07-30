@@ -1,8 +1,9 @@
-use crate::{hash, loose, pack, pack::index::V2_SIGNATURE};
+use crate::{hash, pack, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, ByteOrder};
 use git_features::progress::Progress;
 use git_object::owned;
 use quick_error::quick_error;
+use smallvec::alloc::collections::BTreeMap;
 use std::io;
 
 quick_error! {
@@ -33,6 +34,9 @@ quick_error! {
         IteratorInvariantBasesPresent {
             display("Did not find a single base")
         }
+        IteratorInvariantBasesBeforeDeltasNeedThem(delta_pack_offset: u64, base_pack_offset: u64) {
+            display("The delta at pack offset {} could not find its base at {} - it should have been seen already", delta_pack_offset, base_pack_offset)
+        }
     }
 }
 
@@ -46,19 +50,30 @@ pub struct Outcome {
 }
 
 enum Cache {
-    UseResolve,
+    Unset,
     Decompressed(Vec<u8>),
     /// compressed bytes + decompressed size
     Compressed(Vec<u8>, usize),
 }
 
 struct Entry {
-    _id: owned::Id,
     _pack_offset: u64,
     _crc32: u32,
+}
+
+struct CacheEntry {
     _cache: Cache,
     /// When it reaches zero, the cache can be freed
-    _child_count: u32,
+    child_count: u32,
+}
+
+impl CacheEntry {
+    fn _decr(&mut self) {
+        self.child_count -= 1;
+        if self.child_count == 0 {
+            self._cache = Cache::Unset;
+        }
+    }
 }
 
 /// The function resolves pack_offset: u64 into compressed bytes to &mut Vec<u8> and returns (object kind, decompressed size)
@@ -85,14 +100,14 @@ where
         match self {
             Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::UseResolve,
+            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
         }
     }
     fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
             Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::UseResolve,
+            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
         }
     }
 }
@@ -133,6 +148,9 @@ impl pack::index::File {
         }
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
+        // TODO: This should soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
+        // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
+        let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         for (eid, entry) in entries.enumerate() {
             let pack::data::iter::Entry {
                 header,
@@ -144,32 +162,35 @@ impl pack::index::File {
             } = entry?;
             use pack::data::Header::*;
             num_objects += 1;
-            let mut hash_write = hash::Write::new(io::sink(), kind.hash());
             let cache = match header {
                 Blob | Tree | Commit | Tag => {
-                    loose::object::header::encode(
-                        header.to_kind().expect("non-delta kind"),
-                        decompressed.len() as u64,
-                        &mut hash_write,
-                    )?;
-                    hash_write.hash.update(&decompressed);
                     last_base_index = Some(eid);
                     mode.base_cache(compressed, decompressed)
                 }
                 RefDelta { .. } => return Err(Error::RefDelta),
-                OfsDelta { pack_offset: _ } => {
+                OfsDelta {
+                    pack_offset: base_pack_offset,
+                } => {
+                    cache_by_offset
+                        .get_mut(&base_pack_offset)
+                        .ok_or_else(|| {
+                            Error::IteratorInvariantBasesBeforeDeltasNeedThem(pack_offset, base_pack_offset)
+                        })?
+                        .child_count += 1;
                     mode.delta_cache(compressed, decompressed)
-                    // TODO find base and increment child count
-                    // unimplemented!("apply a single delta to an offset we must have seen already")
                 }
             };
 
+            cache_by_offset.insert(
+                pack_offset,
+                CacheEntry {
+                    child_count: 0,
+                    _cache: cache,
+                },
+            );
             index_entries.push(Entry {
-                _id: owned::Id::from(hash_write.hash.digest()),
                 _pack_offset: pack_offset,
                 _crc32: 0, // TBD, but can be done right here, needs header encoding
-                _cache: cache,
-                _child_count: 0,
             });
             last_seen_trailer = trailer;
         }
