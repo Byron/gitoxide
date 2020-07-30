@@ -50,12 +50,12 @@ pub struct Iter<R> {
     kind: pack::data::Kind,
     objects_left: u32,
     hash: Option<Sha1>,
-    mode: TrailerMode,
+    mode: Mode,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum TrailerMode {
+pub enum Mode {
     /// Provide the trailer as read from the pack
     AsIs,
     /// Generate an own hash and trigger an error on the last iterated object
@@ -74,10 +74,18 @@ impl<R> Iter<R>
 where
     R: io::BufRead,
 {
+    pub fn kind(&self) -> pack::data::Kind {
+        self.kind
+    }
+
+    pub fn mode(&self) -> Mode {
+        self.mode
+    }
+
     /// Note that `read` is expected at the beginning of a valid pack file with header and trailer
     /// If `verify` is true, we will assert the SHA1 is actually correct before returning the last entry.
     /// Otherwise bit there is a chance that some kinds of bitrot or inconsistencies will not be detected.
-    pub fn new_from_header(mut read: R, trailer: TrailerMode) -> Result<Iter<R>, Error> {
+    pub fn new_from_header(mut read: R, trailer: Mode) -> Result<Iter<R>, Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
@@ -94,7 +102,7 @@ where
             had_error: false,
             kind,
             objects_left: num_objects,
-            hash: if trailer != TrailerMode::AsIs {
+            hash: if trailer != Mode::AsIs {
                 let mut hash = Sha1::default();
                 hash.update(&header_data);
                 Some(hash)
@@ -103,10 +111,6 @@ where
             },
             mode: trailer,
         })
-    }
-
-    pub fn kind(&self) -> pack::data::Kind {
-        self.kind
     }
 
     fn next_inner(&mut self) -> Result<Entry, Error> {
@@ -168,14 +172,14 @@ where
         let trailer = if self.objects_left == 0 {
             let mut id = owned::Id::from([0; 20]);
             if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
-                if self.mode != TrailerMode::Restore {
+                if self.mode != Mode::Restore {
                     return Err(err.into());
                 }
             }
 
             if let Some(hash) = self.hash.take() {
                 let actual_id = owned::Id::from(hash.digest());
-                if self.mode == TrailerMode::Restore {
+                if self.mode == Mode::Restore {
                     id = actual_id;
                 }
                 if id != actual_id {
@@ -187,7 +191,7 @@ where
             }
             Some(id)
         } else {
-            if self.mode == TrailerMode::Restore {
+            if self.mode == Mode::Restore {
                 let hash = self.hash.clone().expect("in restore mode a hash is set");
                 Some(owned::Id::from(hash.digest()))
             } else {
@@ -226,7 +230,7 @@ where
         if self.had_error {
             self.objects_left = 0;
         }
-        if self.mode == TrailerMode::Restore && self.had_error {
+        if self.mode == Mode::Restore && self.had_error {
             None
         } else {
             Some(result)
@@ -279,8 +283,8 @@ impl pack::data::File {
     ///
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
-    pub fn iter(&self) -> Result<Iter<io::BufReader<fs::File>>, Error> {
+    pub fn iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
         let reader = io::BufReader::new(fs::File::open(&self.path)?);
-        Iter::new_from_header(reader, TrailerMode::AsIs)
+        Iter::new_from_header(reader, Mode::AsIs)
     }
 }

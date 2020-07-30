@@ -1,4 +1,4 @@
-use crate::{pack, pack::data::iter::TrailerMode};
+use crate::{pack, pack::data::iter::Mode};
 use git_features::progress::Progress;
 use git_object::owned;
 use quick_error::quick_error;
@@ -55,7 +55,7 @@ impl pack::Bundle {
         let path = path.as_ref();
 
         let iter_with_thinpack_resolver_tbd =
-            pack::data::Iter::new_from_header(io::BufReader::new(pack), TrailerMode::Verify)?;
+            pack::data::Iter::new_from_header(io::BufReader::new(pack), Mode::Verify)?;
         if iter_with_thinpack_resolver_tbd.len() == 0 {
             return Err(Error::EmptyIndex);
         }

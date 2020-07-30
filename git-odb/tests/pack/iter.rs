@@ -11,12 +11,12 @@ fn size_of_entry() {
 
 mod new_from_header {
     use crate::{fixture_path, pack::SMALL_PACK};
-    use git_odb::{pack, pack::data::iter::TrailerMode};
+    use git_odb::{pack, pack::data::iter::Mode};
     use std::fs;
 
     #[test]
     fn generic_iteration() -> Result<(), Box<dyn std::error::Error>> {
-        for trailer_mode in &[TrailerMode::AsIs, TrailerMode::Verify, TrailerMode::Restore] {
+        for trailer_mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
             let mut iter = pack::data::Iter::new_from_header(
                 std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
                 *trailer_mode,
@@ -41,7 +41,7 @@ mod new_from_header {
     fn restore_missing_trailer() -> Result<(), Box<dyn std::error::Error>> {
         let pack = fs::read(fixture_path(SMALL_PACK))?;
         let mut iter =
-            pack::data::Iter::new_from_header(std::io::BufReader::new(&pack[..pack.len() - 20]), TrailerMode::Restore)?;
+            pack::data::Iter::new_from_header(std::io::BufReader::new(&pack[..pack.len() - 20]), Mode::Restore)?;
         let num_objects = iter.len();
         assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
         assert_eq!(
@@ -56,7 +56,7 @@ mod new_from_header {
     fn restore_partial_pack() -> Result<(), Box<dyn std::error::Error>> {
         let pack = fs::read(fixture_path(SMALL_PACK))?;
         let mut iter =
-            pack::data::Iter::new_from_header(std::io::BufReader::new(&pack[..pack.len() / 2]), TrailerMode::Restore)?;
+            pack::data::Iter::new_from_header(std::io::BufReader::new(&pack[..pack.len() / 2]), Mode::Restore)?;
         let mut num_objects = 0;
         while let Some(entry) = iter.next() {
             let entry = entry?;
