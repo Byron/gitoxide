@@ -63,7 +63,7 @@ impl pack::Bundle {
         let mut tempfile = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(path)?);
         let outcome = pack::index::File::write_data_iter_to_stream(
             kind,
-            pack::index::write::Mode::in_memory(),
+            pack::index::write::Mode::in_memory_decompressed(),
             iter_with_thinpack_resolver_tbd,
             progress::Discard,
             &mut tempfile,

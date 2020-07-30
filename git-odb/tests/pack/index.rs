@@ -88,7 +88,7 @@ mod method {
                     let num_objects = pack_iter.len() as u32;
                     let outcome = pack::index::File::write_data_iter_to_stream(
                         desired_kind,
-                        pack::index::write::Mode::in_memory(),
+                        pack::index::write::Mode::in_memory_decompressed(),
                         pack_iter,
                         progress::Discard,
                         &mut actual,

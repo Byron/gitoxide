@@ -27,6 +27,12 @@ quick_error! {
         IteratorInvariantTrailer {
             display("The iterator failed to set a trailing hash over all prior pack entries in the last provided entry")
         }
+        IteratorInvariantNonEmpty {
+            display("Is there ever a need to create empty indices? If so, please post a PR.")
+        }
+        IteratorInvariantBasesPresent {
+            display("Did not find a single base")
+        }
     }
 }
 
@@ -95,6 +101,9 @@ impl Mode<fn(u64, &mut Vec<u8>) -> (pack::data::Header, u64)> {
     pub fn in_memory() -> Self {
         Self::InMemory
     }
+    pub fn in_memory_decompressed() -> Self {
+        Self::InMemoryDecompressed
+    }
 }
 
 /// Various ways of writing an index file from pack entries
@@ -119,8 +128,12 @@ impl pack::index::File {
         let mut num_objects = 0;
         // This array starts out sorted by pack-offset
         let mut index_entries = Vec::with_capacity(entries.size_hint().0);
+        if index_entries.capacity() == 0 {
+            return Err(Error::IteratorInvariantNonEmpty);
+        }
         let mut last_seen_trailer = None;
-        for entry in entries {
+        let mut last_base_index = None;
+        for (eid, entry) in entries.enumerate() {
             let pack::data::iter::Entry {
                 header,
                 pack_offset,
@@ -140,6 +153,7 @@ impl pack::index::File {
                         &mut hash_write,
                     )?;
                     hash_write.hash.update(&decompressed);
+                    last_base_index = Some(eid);
                     mode.base_cache(compressed, decompressed)
                 }
                 RefDelta { .. } => return Err(Error::RefDelta),
@@ -160,9 +174,11 @@ impl pack::index::File {
             last_seen_trailer = trailer;
         }
 
-        out.write_all(V2_SIGNATURE)?;
+        // Prevent us from trying to find bases for resolution past the point where they are
+        let _last_base_index = last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
 
         // Write header
+        out.write_all(V2_SIGNATURE)?;
         let mut buf = [0u8; 4];
         BigEndian::write_u32(&mut buf, kind as u32);
         out.write_all(&buf)?;
