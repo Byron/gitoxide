@@ -1,7 +1,8 @@
 use crate::{
-    pack,
+    hash, pack,
     zlib::stream::{inflate::Inflate, InflateReader},
 };
+use git_features::hash::Sha1;
 use git_object::owned;
 use quick_error::quick_error;
 use std::{fs, io};
@@ -18,6 +19,9 @@ quick_error! {
             display("The pack header could not be parsed")
             from()
             source(err)
+        }
+        ChecksumMismatch { expected: owned::Id, actual: owned::Id } {
+            display("pack checksum in trailer was {}, but actual checksum was {}", expected, actual)
         }
     }
 }
@@ -45,7 +49,7 @@ pub struct Iter<R> {
     had_error: bool,
     kind: pack::data::Kind,
     objects_left: u32,
-    verify: bool,
+    hash: Option<Sha1>,
 }
 
 impl<R> Iter<R>
@@ -72,7 +76,13 @@ where
             had_error: false,
             kind,
             objects_left: num_objects,
-            verify,
+            hash: if verify {
+                let mut hash = Sha1::default();
+                hash.update(&header_data);
+                Some(hash)
+            } else {
+                None
+            },
         })
     }
 
@@ -82,9 +92,26 @@ where
 
     fn next_inner(&mut self) -> Result<Entry, Error> {
         self.objects_left -= 1; // even an error counts as objects
-        let (header, decompressed_size, header_size) =
-            pack::data::Header::from_read(&mut self.read, self.offset).map_err(Error::from)?;
 
+        // Read header
+        let (header, decompressed_size, header_size) = match self.hash.take() {
+            Some(hash) => {
+                let mut read = PassThrough {
+                    read: &mut self.read,
+                    write: hash::Write {
+                        inner: io::sink(),
+                        hash,
+                    },
+                };
+                let res = pack::data::Header::from_read(&mut read, self.offset);
+                self.hash = Some(read.write.hash);
+                res
+            }
+            None => pack::data::Header::from_read(&mut self.read, self.offset),
+        }
+        .map_err(Error::from)?;
+
+        // Decompress object to learn it's compressed bytes
         let mut decompressor = self.decompressor.take().unwrap_or_default();
         decompressor.reset();
         let mut reader = InflateReader {
@@ -97,7 +124,6 @@ where
 
         let mut decompressed = Vec::with_capacity(decompressed_size as usize);
         let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
-
         assert_eq!(
             bytes_copied, decompressed_size,
             "We should have decompressed {} bytes, but got {} instead",
@@ -115,10 +141,24 @@ where
             compressed.len() as u64,
             "we must track exactly the same amount of bytes as read by the decompressor"
         );
+        if let Some(hash) = self.hash.as_mut() {
+            hash.update(&compressed);
+        }
 
+        // Last objects gets trailer (which is potentially verified)
         let trailer = if self.objects_left == 0 {
             let mut id = owned::Id::from([0; 20]);
             self.read.read_exact(id.as_mut_slice())?;
+
+            if let Some(hash) = self.hash.take() {
+                let actual_id = owned::Id::from(hash.digest());
+                if id != actual_id {
+                    return Err(Error::ChecksumMismatch {
+                        actual: actual_id,
+                        expected: id,
+                    });
+                }
+            }
             Some(id)
         } else {
             None
@@ -186,10 +226,13 @@ where
 
 impl<R, W> io::Read for PassThrough<R, W>
 where
+    W: io::Write,
     R: io::Read,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.read.read(buf)
+        let bytes_read = self.read.read(buf)?;
+        self.write.write_all(&buf[..bytes_read])?;
+        Ok(bytes_read)
     }
 }
 
