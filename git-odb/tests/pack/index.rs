@@ -69,10 +69,12 @@ mod method {
 
     mod any {
         use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
+        use git_features::progress;
         use git_odb::{pack, pack::data::iter::Mode};
         use std::{fs, io};
 
         #[test]
+        #[ignore]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
@@ -88,6 +90,7 @@ mod method {
                         desired_kind,
                         pack::index::write::Mode::in_memory(),
                         pack_iter,
+                        progress::Discard,
                         &mut actual,
                     )?;
 

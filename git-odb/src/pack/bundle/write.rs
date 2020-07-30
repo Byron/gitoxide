@@ -1,5 +1,5 @@
 use crate::{pack, pack::data::iter::Mode};
-use git_features::progress::Progress;
+use git_features::{progress, progress::Progress};
 use git_object::owned;
 use quick_error::quick_error;
 use std::{io, path::Path};
@@ -65,6 +65,7 @@ impl pack::Bundle {
             kind,
             pack::index::write::Mode::in_memory(),
             iter_with_thinpack_resolver_tbd,
+            progress::Discard,
             &mut tempfile,
         )?;
 

@@ -1,5 +1,6 @@
 use crate::{hash, loose, pack, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, ByteOrder};
+use git_features::progress::Progress;
 use git_object::owned;
 use quick_error::quick_error;
 use std::io;
@@ -41,7 +42,8 @@ pub struct Outcome {
 enum Cache {
     UseResolve,
     Decompressed(Vec<u8>),
-    Compressed(Vec<u8>),
+    /// compressed bytes + decompressed size
+    Compressed(Vec<u8>, usize),
 }
 
 struct Entry {
@@ -49,6 +51,8 @@ struct Entry {
     _pack_offset: u64,
     _crc32: u32,
     _cache: Cache,
+    /// When it reaches zero, the cache can be freed
+    _child_count: u32,
 }
 
 /// The function resolves pack_offset: u64 into compressed bytes to &mut Vec<u8> and returns (object kind, decompressed size)
@@ -73,14 +77,14 @@ where
 {
     fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed),
+            Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
             Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::UseResolve,
         }
     }
     fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed),
+            Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
             Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::UseResolve,
         }
@@ -100,6 +104,7 @@ impl pack::index::File {
         kind: pack::index::Kind,
         mode: Mode<F>,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
+        _progress: impl Progress,
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
@@ -112,7 +117,7 @@ impl pack::index::File {
             return Err(Error::Unsupported(kind));
         }
         let mut num_objects = 0;
-        // This array starts our sorted by pack-offset
+        // This array starts out sorted by pack-offset
         let mut index_entries = Vec::with_capacity(entries.size_hint().0);
         let mut last_seen_trailer = None;
         for entry in entries {
@@ -150,6 +155,7 @@ impl pack::index::File {
                 _pack_offset: pack_offset,
                 _crc32: 0, // TBD, but can be done right here, needs header encoding
                 _cache: cache,
+                _child_count: 0,
             });
             last_seen_trailer = trailer;
         }
