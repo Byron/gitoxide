@@ -23,8 +23,7 @@ pub struct Entry {
     /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
     pub header_size: u16,
     pub pack_offset: u64,
-    /// amount of compressed bytes consumed, used to generate `decompressed`
-    pub compressed_size: u64,
+    /// amount bytes consumed while producing `decompressed`
     pub compressed: Vec<u8>,
     /// The decompressed data.
     pub decompressed: Vec<u8>,
@@ -50,6 +49,11 @@ where
         read.read_exact(&mut header_data)?;
 
         Ok(pack::data::parse::header(&header_data).map(|(kind, num_objects)| {
+            assert_eq!(
+                kind,
+                pack::data::Kind::V2,
+                "let's stop here if we see undocumented pack formats"
+            );
             (
                 kind,
                 num_objects,
@@ -103,13 +107,17 @@ where
         self.decompressor = Some(reader.decompressor);
         let mut compressed = reader.inner.write;
         compressed.shrink_to_fit();
+        assert_eq!(
+            compressed_size,
+            compressed.len() as u64,
+            "we must track exactly the same amount of bytes as read by the decompressor"
+        );
 
         Ok(Entry {
             header,
             // TODO: remove this field once we can pack-encode the header above
             header_size: header_size as u16,
             compressed,
-            compressed_size,
             pack_offset,
             decompressed,
         })

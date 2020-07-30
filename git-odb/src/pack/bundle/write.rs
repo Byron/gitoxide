@@ -54,25 +54,13 @@ impl pack::Bundle {
     ) -> Result<pack::index::write::Outcome, Error> {
         let path = path.as_ref();
 
-        let (_kind, num_objects, iter) = pack::data::Iter::new_from_header(io::BufReader::new(pack))??;
+        let (_pack_kind, num_objects, iter) = pack::data::Iter::new_from_header(io::BufReader::new(pack))??;
         if num_objects == 0 {
             return Err(Error::EmptyIndex);
         }
 
         let mut tempfile = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(path)?);
-        let outcome = pack::index::File::write_to_stream(
-            iter.map(|e| {
-                e.map(|e| pack::index::write::Entry {
-                    header: e.header,
-                    header_size: e.header_size,
-                    pack_offset: e.pack_offset,
-                    bytes: vec![], // TODO
-                    decompressed: e.decompressed,
-                })
-            }),
-            &mut tempfile,
-            kind,
-        )?;
+        let outcome = pack::index::File::write_to_stream(iter, &mut tempfile, kind)?;
 
         let index_path = path.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
         tempfile

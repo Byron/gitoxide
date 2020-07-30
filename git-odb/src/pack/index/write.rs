@@ -25,22 +25,10 @@ pub struct Outcome {
     pub num_objects: u32,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry {
-    pub header: pack::data::Header,
-    /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
-    pub header_size: u16,
-    pub pack_offset: u64,
-    /// header + compressed bytes
-    pub bytes: Vec<u8>,
-    pub decompressed: Vec<u8>,
-}
-
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
     pub fn write_to_stream(
-        entries: impl Iterator<Item = Result<Entry, pack::data::iter::Error>>,
+        entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         _out: impl io::Write,
         kind: pack::index::Kind,
     ) -> Result<Outcome, Error> {

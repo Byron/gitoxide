@@ -193,11 +193,6 @@ fn pack_lookup() {
                 entry.pack_offset, offset_from_index,
                 "iteration should yield the same pack offsets as the index"
             );
-            assert_eq!(
-                entry.compressed.len(),
-                entry.compressed_size as usize,
-                "correct amount of compressed bytes"
-            );
         }
     }
 }

@@ -89,8 +89,11 @@ impl Default for Kind {
 }
 
 impl Kind {
+    /// The kind of hash to produce to be compatible to this kind of index
     pub fn hash(&self) -> git_object::HashKind {
-        git_object::HashKind::Sha1
+        match self {
+            Kind::V1 | Kind::V2 => git_object::HashKind::Sha1,
+        }
     }
 }
 
