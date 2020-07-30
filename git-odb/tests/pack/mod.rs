@@ -4,6 +4,9 @@ const SMALL_PACK: &str = "packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.pa
 const INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx";
 const PACK_FOR_INDEX_V1: &str = "packs/pack-c0438c19fb16422b6bbcce24387b3264416d485b.pack";
 
+const PACKS_AND_INDICES: &[(&'static str, &'static str)] =
+    &[(SMALL_PACK_INDEX, SMALL_PACK), (INDEX_V1, PACK_FOR_INDEX_V1)];
+
 mod bundle;
 mod file;
 mod graph;

@@ -51,7 +51,7 @@ impl crate::Write for Sink {
                 hasher.update(&buf[..header_len]);
                 possibly_compress(&buf[..header_len])?;
 
-                let mut size: usize = size.try_into().unwrap();
+                let mut size: usize = size.try_into().expect("object size to fit into usize");
                 while size != 0 {
                     let bytes = size.min(buf.len());
                     from.read_exact(&mut buf[..bytes])?;

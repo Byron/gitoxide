@@ -63,7 +63,7 @@ mod tests {
         use git_object::bstr::ByteSlice;
 
         #[test]
-        fn all() {
+        fn all() -> Result<(), Box<dyn std::error::Error>> {
             let mut buf = [0; 20];
             for (kind, size, expected) in &[
                 (git_object::Kind::Tree, 1234, &b"tree 1234\0"[..]),
@@ -71,13 +71,14 @@ mod tests {
                 (git_object::Kind::Commit, 24241, b"commit 24241\0"),
                 (git_object::Kind::Tag, 9999999999, b"tag 9999999999\0"),
             ] {
-                let written = header::encode(*kind, *size, &mut buf[..]).unwrap();
+                let written = header::encode(*kind, *size, &mut buf[..])?;
                 assert_eq!(buf[..written].as_bstr(), expected.as_bstr());
-                let (actual_kind, actual_size, actual_read) = header::decode(&buf[..written]).unwrap();
+                let (actual_kind, actual_size, actual_read) = header::decode(&buf[..written])?;
                 assert_eq!(actual_kind, *kind);
                 assert_eq!(actual_size, *size);
                 assert_eq!(actual_read, written);
             }
+            Ok(())
         }
     }
 }

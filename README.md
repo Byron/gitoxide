@@ -228,6 +228,7 @@ Provide a CLI to for the most basic user journey:
 * [ ] add a remote
 * [ ] push
   * [ ] create (thin) pack
+* [ ] transform _all_ `unwrap()` calls into `expect(…)` or `?` for quality. `parking_lot` will help for unwraps of poisoned locks.
   
 ### Roadmap to 1.1
 

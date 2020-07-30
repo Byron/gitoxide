@@ -3,7 +3,7 @@ use crate::{
     pack::{INDEX_V1, PACK_FOR_INDEX_V1},
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
-use git_object::{self as object};
+use git_object::{self as object, SHA1_SIZE};
 use git_odb::pack::{self, data::decode::Outcome, index};
 
 const INDEX_V2: &str = "packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx";
@@ -16,26 +16,27 @@ mod method {
         use git_odb::pack::index;
 
         #[test]
-        fn lookup() {
-            let idx = index::File::at(&fixture_path(INDEX_V1)).unwrap();
+        fn lookup() -> Result<(), Box<dyn std::error::Error>> {
+            let idx = index::File::at(&fixture_path(INDEX_V1))?;
             for (id, desired_index, assertion) in &[
                 (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
                 (b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6", Some(65), "close to last"),
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id).unwrap().to_borrowed()),
+                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup(entry.oid.to_borrowed()).unwrap();
+                let index = idx.lookup(entry.oid.to_borrowed()).expect("id present");
                 assert_eq!(entry.oid.to_borrowed(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index));
             }
+            Ok(())
         }
     }
 
@@ -45,26 +46,42 @@ mod method {
         use git_odb::pack::index;
 
         #[test]
-        fn lookup() {
-            let idx = index::File::at(&fixture_path(INDEX_V2)).unwrap();
+        fn lookup() -> Result<(), Box<dyn std::error::Error>> {
+            let idx = index::File::at(&fixture_path(INDEX_V2))?;
             for (id, desired_index, assertion) in &[
                 (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first"),
                 (b"e800b9c207e17f9b11e321cc1fba5dfe08af4222", Some(29), "last"),
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id).unwrap().to_borrowed()),
+                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup(entry.oid.to_borrowed()).unwrap();
+                let index = idx.lookup(entry.oid.to_borrowed()).expect("id present");
                 assert_eq!(entry.oid.to_borrowed(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index), "{} {:?}", index, entry);
             }
+            Ok(())
+        }
+    }
+
+    mod any_version {
+        use crate::{fixture_path, pack::PACKS_AND_INDICES};
+        use git_odb::pack;
+        use std::{fs, io};
+
+        #[test]
+        fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
+            for (_index_path, data_path) in PACKS_AND_INDICES {
+                let (_, _, _pack_iter) =
+                    pack::data::Iter::new_from_header(io::BufReader::new(fs::File::open(fixture_path(data_path))?))??;
+            }
+            Ok(())
         }
     }
 }
@@ -85,7 +102,7 @@ static MODES: &[index::verify::Mode] = &[
 ];
 
 #[test]
-fn pack_lookup() {
+fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
     for (index_path, pack_path, stats) in &[
         (
             INDEX_V2,
@@ -157,8 +174,8 @@ fn pack_lookup() {
             },
         ),
     ] {
-        let idx = index::File::at(&fixture_path(index_path)).unwrap();
-        let pack = pack::data::File::at(&fixture_path(pack_path)).unwrap();
+        let idx = index::File::at(&fixture_path(index_path))?;
+        let pack = pack::data::File::at(&fixture_path(pack_path))?;
 
         assert_eq!(pack.kind(), pack::data::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
@@ -166,8 +183,7 @@ fn pack_lookup() {
             for mode in MODES {
                 assert_eq!(
                     idx.verify_integrity(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
-                        .map(|(a, b, _)| (a, b))
-                        .unwrap(),
+                        .map(|(a, b, _)| (a, b))?,
                     (idx.index_checksum(), Some(stats.to_owned())),
                     "{:?} -> {:?}",
                     algo,
@@ -187,18 +203,44 @@ fn pack_lookup() {
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
-        for (entry, offset_from_index) in pack.iter().unwrap().zip(sorted_offsets.into_iter()) {
-            let entry = entry.unwrap();
+        for (entry, offset_from_index) in pack.iter()?.zip(sorted_offsets.iter().copied()) {
+            let entry = entry?;
             assert_eq!(
                 entry.pack_offset, offset_from_index,
                 "iteration should yield the same pack offsets as the index"
             );
+
+            let mut buf = Vec::new();
+            buf.resize(entry.decompressed.len(), 0);
+            let pack_entry = pack.entry(offset_from_index);
+            pack.decompress_entry(&pack_entry, &mut buf)?;
+
+            assert_eq!(
+                buf, entry.decompressed,
+                "the decompressed bytes are the same no matter what who decompressed them"
+            );
+
+            let next_offset_index = sorted_offsets
+                .binary_search(&entry.pack_offset)
+                .expect("correct offset")
+                + 1;
+            let next_offset = if next_offset_index == sorted_offsets.len() {
+                (pack.data_len() - SHA1_SIZE) as u64
+            } else {
+                sorted_offsets[next_offset_index]
+            };
+            assert_eq!(
+                entry.compressed.len() as u64,
+                next_offset - entry.pack_offset - entry.header_size as u64,
+                "we get the compressed bytes region after the head to the next entry"
+            );
         }
     }
+    Ok(())
 }
 
 #[test]
-fn iter() {
+fn iter() -> Result<(), Box<dyn std::error::Error>> {
     for (path, kind, num_objects, version, index_checksum, pack_checksum) in &[
         (
             INDEX_V1,
@@ -225,18 +267,18 @@ fn iter() {
             "0f3ea84cd1bba10c2a03d736a460635082833e59",
         ),
     ] {
-        let idx = index::File::at(&fixture_path(path)).unwrap();
+        let idx = index::File::at(&fixture_path(path))?;
         assert_eq!(idx.kind(), *kind);
         assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
             idx.verify_integrity(None, None, Discard.into(), || { DecodeEntryNoop })
-                .map(|(a, b, _)| (a, b))
-                .unwrap(),
+                .map(|(a, b, _)| (a, b))?,
             (idx.index_checksum(), None)
         );
         assert_eq!(idx.index_checksum(), hex_to_id(index_checksum));
         assert_eq!(idx.pack_checksum(), hex_to_id(pack_checksum));
         assert_eq!(idx.iter().count(), *num_objects as usize);
     }
+    Ok(())
 }

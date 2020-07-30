@@ -3,13 +3,11 @@ use git_odb::pack;
 use std::fs;
 
 #[test]
-fn new_from_header() {
-    let (kind, num_objects, iter) = pack::data::Iter::new_from_header(std::io::BufReader::new(
-        fs::File::open(fixture_path(SMALL_PACK)).unwrap(),
-    ))
-    .unwrap()
-    .unwrap();
+fn new_from_header() -> Result<(), Box<dyn std::error::Error>> {
+    let (kind, num_objects, iter) =
+        pack::data::Iter::new_from_header(std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?))??;
     assert_eq!(kind, pack::data::Kind::V2);
     assert_eq!(num_objects, 42);
     assert_eq!(num_objects as usize, iter.take(42).count());
+    Ok(())
 }

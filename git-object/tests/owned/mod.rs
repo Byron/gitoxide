@@ -1,7 +1,7 @@
 macro_rules! round_trip {
     ($owned:ty, $borrowed:ty, $( $files:literal ), +) => {
         #[test]
-        fn round_trip() {
+        fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
             use crate::fixture_bytes;
             use git_object::{owned, borrowed};
             use bstr::ByteSlice;
@@ -10,17 +10,18 @@ macro_rules! round_trip {
             ] {
                 let input = fixture_bytes(input);
                 // Test the parse->borrowed->owned->write chain for an object kind
-                let item: $owned = <$borrowed>::from_bytes(&input).unwrap().into();
+                let item: $owned = <$borrowed>::from_bytes(&input)?.into();
                 let mut output = Vec::new();
-                item.write_to(&mut output).unwrap();
+                item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());
 
                 // Test the parse->borrowed->owned->write chain for the top-level objects
-                let item: owned::Object = borrowed::Object::from(<$borrowed>::from_bytes(&input).unwrap()).into();
+                let item: owned::Object = borrowed::Object::from(<$borrowed>::from_bytes(&input)?).into();
                 output.clear();
-                item.write_to(&mut output).unwrap();
+                item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());
             }
+            Ok(())
         }
     };
 }

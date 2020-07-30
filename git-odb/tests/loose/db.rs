@@ -26,7 +26,10 @@ fn iter() {
     assert_eq!(oids, object_ids())
 }
 pub fn locate_oid(id: owned::Id) -> loose::Object {
-    ldb().locate(id.to_borrowed()).unwrap().unwrap()
+    ldb()
+        .locate(id.to_borrowed())
+        .expect("id present")
+        .expect("read success")
 }
 
 mod write {
@@ -36,27 +39,28 @@ mod write {
     use std::io::Read;
 
     #[test]
-    fn read_and_write() {
-        let dir = tempfile::tempdir().unwrap();
+    fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
+        let dir = tempfile::tempdir()?;
         let db = loose::Db::at(dir.path());
 
         for oid in object_ids() {
             let mut obj = locate_oid(oid.clone());
-            let actual = db.write(&obj.decode().unwrap().into(), HashKind::Sha1).unwrap();
+            let actual = db.write(&obj.decode()?.into(), HashKind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(
-                db.locate(oid.to_borrowed()).unwrap().unwrap().decode().unwrap(),
-                obj.decode().unwrap()
+                db.locate(oid.to_borrowed()).expect("id present")?.decode()?,
+                obj.decode()?
             );
             let mut buf = Vec::new();
-            obj.stream().unwrap().read_to_end(&mut buf).unwrap();
-            let actual = db.write_buf(obj.kind, &buf, HashKind::Sha1).unwrap();
+            obj.stream()?.read_to_end(&mut buf)?;
+            let actual = db.write_buf(obj.kind, &buf, HashKind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(
-                db.locate(oid.to_borrowed()).unwrap().unwrap().decode().unwrap(),
-                obj.decode().unwrap()
+                db.locate(oid.to_borrowed()).expect("id present")?.decode()?,
+                obj.decode()?
             );
         }
+        Ok(())
     }
 }
 
@@ -77,11 +81,11 @@ mod locate {
     }
 
     #[test]
-    fn tag() {
+    fn tag() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9");
         assert_eq!(o.kind, Kind::Tag);
         assert_eq!(o.size, 1024);
-        let tag = o.decode().unwrap();
+        let tag = o.decode()?;
         let expected = borrowed::Tag {
             target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
             name: b"1.0.0".as_bstr(),
@@ -110,11 +114,12 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             ),
             signature: Some(signature(1528473343)),
         };
-        assert_eq!(tag.as_tag().unwrap(), &expected)
+        assert_eq!(tag.as_tag().expect("tag"), &expected);
+        Ok(())
     }
 
     #[test]
-    fn commit() {
+    fn commit() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec");
         assert_eq!(o.kind, Kind::Commit);
         assert_eq!(o.size, 1084);
@@ -127,35 +132,32 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             message: b"initial commit\n".as_bstr(),
             extra_headers: vec![(b"gpgsig".as_bstr(), b"-----BEGIN PGP SIGNATURE-----\nComment: GPGTools - https://gpgtools.org\n\niQIzBAABCgAdFiEEw7xSvXbiwjusbsBqZl+Z+p2ZlmwFAlsaptwACgkQZl+Z+p2Z\nlmxXSQ//fj6t7aWoEKeMdFigfj6OXWPUyrRbS0N9kpJeOfA0BIOea/6Jbn8J5qh1\nYRfrySOzHPXR5Y+w4GwLiVas66qyhAbk4yeqZM0JxBjHDyPyRGhjUd3y7WjEa6bj\nP0ACAIkYZQ/Q/LDE3eubmhAwEobBH3nZbwE+/zDIG0i265bD5C0iDumVOiKkSelw\ncr6FZVw1HH+GcabFkeLRZLNGmPqGdbeBwYERqb0U1aRCzV1xLYteoKwyWcYaH8E3\n97z1rwhUO/L7o8WUEJtP3CLB0zuocslMxskf6bCeubBnRNJ0YrRmxGarxCP3vn4D\n3a/MwECnl6mnUU9t+OnfvrzLDN73rlq8iasUq6hGe7Sje7waX6b2UGpxHqwykmXg\nVimD6Ah7svJanHryfJn38DvJW/wOMqmAnSUAp+Y8W9EIe0xVntCmtMyoKuqBoY7T\nJlZ1kHJte6ELIM5JOY9Gx7D0ZCSKZJQqyjoqtl36dsomT0I78/+7QS1DP4S6XB7d\nc3BYH0JkW81p7AAFbE543ttN0Z4wKXErMFqUKnPZUIEuybtlNYV+krRdfDBWQysT\n3MBebjguVQ60oGs06PzeYBosKGQrHggAcwduLFuqXhLTJqN4UQ18RkE0vbtG3YA0\n+XtZQM13vURdfwFI5qitAGgw4EzPVrkWWzApzLCrRPEMbvP+b9A=\n=2qqN\n-----END PGP SIGNATURE-----".as_bstr().into())]
         };
-        let object = o.decode().unwrap();
-        assert_eq!(object.as_commit().unwrap(), &expected)
+        let object = o.decode()?;
+        assert_eq!(object.as_commit().expect("commit"), &expected);
+        Ok(())
     }
 
     #[test]
-    fn blob_stream() {
+    fn blob_stream() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
         assert_eq!(
-            o.stream()
-                .unwrap()
-                .bytes()
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap()
-                .as_slice()
-                .as_bstr(),
+            o.stream()?.bytes().collect::<Result<Vec<_>, _>>()?.as_slice().as_bstr(),
             b"hi there\n".as_bstr()
         );
+        Ok(())
     }
 
     #[test]
-    fn blob() {
+    fn blob() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
         assert_eq!(
-            o.decode().unwrap().as_blob().unwrap(),
+            o.decode()?.as_blob().expect("blob"),
             &borrowed::Blob {
                 data: &[104, 105, 32, 116, 104, 101, 114, 101, 10]
             },
             "small blobs are treated similarly to other object types and are read into memory at once when the header is read"
         );
+        Ok(())
     }
 
     #[test]
@@ -164,21 +166,23 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     #[test]
-    fn blob_big_stream() {
+    fn blob_big_stream() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
         let size = o.size;
-        assert_eq!(o.stream().unwrap().bytes().filter_map(Result::ok).count(), size);
+        assert_eq!(o.stream()?.bytes().filter_map(Result::ok).count(), size);
+        Ok(())
     }
 
     #[test]
-    fn blob_big() {
+    fn blob_big() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
         let size = o.size;
         assert_eq!(
-            o.decode().unwrap().as_blob().unwrap().data.len(),
+            o.decode()?.as_blob().expect("blob").data.len(),
             size,
             "bigger blobs are not read completely when the header is parsed and thus need an extra step"
         );
+        Ok(())
     }
 
     fn try_locate(hex: &str) -> Option<loose::Object> {
@@ -190,7 +194,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     #[test]
-    fn tree() {
+    fn tree() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f");
         assert_eq!(o.kind, Kind::Tree);
         assert_eq!(o.size, 66);
@@ -213,7 +217,8 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                 },
             ],
         };
-        let tree = o.decode().unwrap();
-        assert_eq!(tree.as_tree().unwrap(), &expected)
+        let tree = o.decode()?;
+        assert_eq!(tree.as_tree().expect("tree"), &expected);
+        Ok(())
     }
 }

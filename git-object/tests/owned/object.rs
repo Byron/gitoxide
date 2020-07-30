@@ -3,7 +3,7 @@ mod time {
     use git_object::{Sign, Time};
 
     #[test]
-    fn write_to() {
+    fn write_to() -> Result<(), Box<dyn std::error::Error>> {
         for (time, expected) in &[
             (
                 Time {
@@ -31,9 +31,10 @@ mod time {
             ),
         ] {
             let mut output = Vec::new();
-            time.write_to(&mut output).unwrap();
+            time.write_to(&mut output)?;
             assert_eq!(output.as_bstr(), expected);
         }
+        Ok(())
     }
 }
 
@@ -95,17 +96,18 @@ mod signature {
     use git_object::{borrowed, owned};
 
     #[test]
-    fn round_trip() {
+    fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
         for input in &[
             &b"Sebastian Thiel <byronimo@gmail.com> 1 -0030"[..],
             ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
             ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
         ] {
-            let signature: owned::Signature = borrowed::Signature::from_bytes(input).unwrap().into();
+            let signature: owned::Signature = borrowed::Signature::from_bytes(input)?.into();
             let mut output = Vec::new();
-            signature.write_to(&mut output).unwrap();
+            signature.write_to(&mut output)?;
             assert_eq!(output.as_bstr(), input.as_bstr());
         }
+        Ok(())
     }
 }
 

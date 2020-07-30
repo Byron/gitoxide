@@ -7,23 +7,23 @@ mod method {
         use git_odb::pack;
 
         #[test]
-        fn v1() {
-            delta_tree(INDEX_V1, PACK_FOR_INDEX_V1);
+        fn v1() -> Result<(), Box<dyn std::error::Error>> {
+            delta_tree(INDEX_V1, PACK_FOR_INDEX_V1)
         }
         #[test]
-        fn v2() {
-            delta_tree(SMALL_PACK_INDEX, SMALL_PACK);
+        fn v2() -> Result<(), Box<dyn std::error::Error>> {
+            delta_tree(SMALL_PACK_INDEX, SMALL_PACK)
         }
 
-        fn delta_tree(index_path: &str, pack_path: &str) {
-            let idx = pack::index::File::at(fixture_path(index_path)).unwrap();
+        fn delta_tree(index_path: &str, pack_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+            let idx = pack::index::File::at(fixture_path(index_path))?;
             pack::graph::DeltaTree::from_sorted_offsets(
                 idx.sorted_offsets().into_iter(),
                 fixture_path(pack_path),
                 git_features::progress::Discard,
                 |_| None,
-            )
-            .unwrap();
+            )?;
+            Ok(())
         }
     }
 }

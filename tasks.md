@@ -31,6 +31,8 @@
   * [ ] Clone into valid repository
   
 ### Other
+* **quality**
+  * use `parking_lot` to get rid of poisoned locks (and the unwraps() that go with it)
 * **progress - convenience**
   * [ ] Alternate unit - might help doing throughput and things like throughput per second (for downloads)
   * [ ] a way to measure throughput on drop

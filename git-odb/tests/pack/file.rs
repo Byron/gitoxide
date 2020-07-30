@@ -3,7 +3,7 @@ use git_odb::pack;
 use std::convert::TryFrom;
 
 fn pack_at(at: &str) -> pack::data::File {
-    pack::data::File::try_from(fixture_path(at).as_path()).unwrap()
+    pack::data::File::try_from(fixture_path(at).as_path()).expect("valid pack file")
 }
 
 mod method {
@@ -19,16 +19,18 @@ mod method {
     }
 
     #[test]
-    fn verify_checksum() {
+    fn verify_checksum() -> Result<(), Box<dyn std::error::Error>> {
         let p = pack_at(SMALL_PACK);
-        assert_eq!(p.verify_checksum().unwrap(), p.checksum());
+        assert_eq!(p.verify_checksum()?, p.checksum());
+        Ok(())
     }
 
     #[test]
-    fn iter() {
+    fn iter() -> Result<(), Box<dyn std::error::Error>> {
         let pack = pack_at(SMALL_PACK);
-        let it = pack.iter().unwrap();
+        let it = pack.iter()?;
         assert_eq!(it.count(), pack.num_objects() as usize);
+        Ok(())
     }
 }
 
@@ -40,7 +42,7 @@ mod decode_entry {
     use git_odb::pack::{cache, data::decode::ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
-        fixup(std::fs::read(fixture_path(path)).unwrap())
+        fixup(std::fs::read(fixture_path(path)).expect("valid fixture"))
     }
 
     #[test]
@@ -85,7 +87,7 @@ mod decode_entry {
         let entry = p.entry(offset);
         let mut buf = Vec::new();
         p.decode_entry(entry, &mut buf, resolve_with_panic, &mut cache::DecodeEntryNoop)
-            .unwrap();
+            .expect("valid offset provides valid entry");
         buf
     }
 }
@@ -138,7 +140,7 @@ mod decompress_entry {
         let mut buf = Vec::with_capacity(size);
         buf.resize(size, 0);
 
-        p.decompress_entry(&entry, &mut buf).unwrap();
+        p.decompress_entry(&entry, &mut buf).expect("valid offset");
 
         buf.resize(entry.decompressed_size as usize, 0);
         buf

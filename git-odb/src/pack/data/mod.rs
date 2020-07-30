@@ -35,6 +35,7 @@ impl File {
     pub fn num_objects(&self) -> u32 {
         self.num_objects
     }
+    /// The length of all mapped data, including the pack header and the pack trailer
     pub fn data_len(&self) -> usize {
         self.data.len()
     }

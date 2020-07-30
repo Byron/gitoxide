@@ -10,11 +10,12 @@ mod method {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn target() {
+    fn target() -> Result<(), Box<dyn std::error::Error>> {
         let fixture = fixture_bytes("tag", "signed.txt");
-        let tag = Tag::from_bytes(&fixture).unwrap();
+        let tag = Tag::from_bytes(&fixture)?;
         assert_eq!(tag.target(), hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"));
-        assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bytes())
+        assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bytes());
+        Ok(())
     }
 }
 
@@ -23,17 +24,15 @@ mod from_bytes {
     use git_object::{borrowed::Tag, bstr::ByteSlice, Kind};
 
     #[test]
-    fn signed() {
-        assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "signed.txt")).unwrap(),
-            tag_fixture(9000)
-        );
+    fn signed() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!(Tag::from_bytes(&fixture_bytes("tag", "signed.txt"))?, tag_fixture(9000));
+        Ok(())
     }
 
     #[test]
-    fn empty() {
+    fn empty() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "empty.txt")).unwrap(),
+            Tag::from_bytes(&fixture_bytes("tag", "empty.txt"))?,
             Tag {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"empty".as_bstr(),
@@ -43,12 +42,13 @@ mod from_bytes {
                 pgp_signature: None
             }
         );
+        Ok(())
     }
 
     #[test]
-    fn with_newlines() {
+    fn with_newlines() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "with-newlines.txt")).unwrap(),
+            Tag::from_bytes(&fixture_bytes("tag", "with-newlines.txt"))?,
             Tag {
                 target: b"ebdf205038b66108c0331aa590388431427493b7".as_bstr(),
                 name: b"baz".as_bstr(),
@@ -58,12 +58,13 @@ mod from_bytes {
                 pgp_signature: None
             }
         );
+        Ok(())
     }
 
     #[test]
-    fn no_tagger() {
+    fn no_tagger() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).unwrap(),
+            Tag::from_bytes(&fixture_bytes("tag", "no-tagger.txt"))?,
             Tag {
                 target: b"c39ae07f393806ccf406ef966e9a15afc43cc36a".as_bstr(),
                 name: b"v2.6.11-tree".as_bstr(),
@@ -89,12 +90,13 @@ KLMHist5yj0sw1E4hDTyQa0=
                 )
             }
         );
+        Ok(())
     }
 
     #[test]
-    fn whitespace() {
+    fn whitespace() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "whitespace.txt")).unwrap(),
+            Tag::from_bytes(&fixture_bytes("tag", "whitespace.txt"))?,
             Tag {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"whitespace".as_bstr(),
@@ -104,6 +106,7 @@ KLMHist5yj0sw1E4hDTyQa0=
                 pgp_signature: None
             }
         );
+        Ok(())
     }
 }
 

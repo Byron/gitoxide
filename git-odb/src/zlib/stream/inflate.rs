@@ -134,13 +134,14 @@ mod tests {
     }
 
     #[test]
-    fn small_file_decompress() {
-        let r = InflateReader::from_read(io::BufReader::new(
-            std::fs::File::open(fixture_path("objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980")).unwrap(),
-        ));
+    fn small_file_decompress() -> Result<(), Box<dyn std::error::Error>> {
+        let r = InflateReader::from_read(io::BufReader::new(std::fs::File::open(fixture_path(
+            "objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980",
+        ))?));
         let mut bytes = r.bytes();
-        let content = bytes.by_ref().take(16).collect::<Result<Vec<_>, _>>().unwrap();
+        let content = bytes.by_ref().take(16).collect::<Result<Vec<_>, _>>()?;
         assert_eq!(content.as_slice().as_bstr(), b"blob 9\0hi there\n".as_bstr());
         assert!(bytes.next().is_none());
+        Ok(())
     }
 }

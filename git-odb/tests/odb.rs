@@ -15,7 +15,7 @@ fn fixup(v: Vec<u8>) -> Vec<u8> {
 }
 
 pub fn hex_to_id(hex: &str) -> owned::Id {
-    owned::Id::from_40_bytes_in_hex(hex.as_bytes()).unwrap()
+    owned::Id::from_40_bytes_in_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
 pub fn fixture_path(path: &str) -> PathBuf {

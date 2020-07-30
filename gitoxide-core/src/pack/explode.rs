@@ -161,7 +161,10 @@ where
     if !object_path.as_ref().map(|p| p.as_ref().is_dir()).unwrap_or(true) {
         return Err(anyhow!(
             "The object directory at '{}' is inaccessible",
-            object_path.unwrap().as_ref().display()
+            object_path
+                .expect("path present if no directory on disk")
+                .as_ref()
+                .display()
         ));
     }
 
