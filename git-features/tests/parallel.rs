@@ -26,6 +26,7 @@ mod optimize_chunk_size_and_thread_limit {
             "the thread limit is always respected"
         );
     }
+
     #[test]
     fn chunk_size_too_small() {
         assert_eq!(
@@ -85,12 +86,13 @@ mod optimize_chunk_size_and_thread_limit {
         #[test]
         fn small_chunk_size_many_threads() {
             assert_eq!(
-                optimize_chunk_size_and_thread_limit(1, None, None, Some(4)),
-                (50, Some(4), 4),
-                "we prefer an arbitrary number, which should really be based on effort, but the caller has to adjust for that"
-            );
+                    optimize_chunk_size_and_thread_limit(1, None, None, Some(4)),
+                    (50, Some(4), 4),
+                    "we prefer an arbitrary number, which should really be based on effort, but the caller has to adjust for that"
+                );
         }
     }
+
     mod real_values {
         use git_features::parallel::optimize_chunk_size_and_thread_limit;
 
@@ -102,6 +104,7 @@ mod optimize_chunk_size_and_thread_limit {
                 "the bucket size is capped actually, somewhat arbitrarily"
             );
         }
+
         #[test]
         fn linux_kernel_pack_my_machine_indexed() {
             assert_eq!(
