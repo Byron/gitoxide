@@ -2,7 +2,7 @@
 mod _impl {
     use super::Sha1Digest;
 
-    #[derive(Default)]
+    #[derive(Default, Clone)]
     pub struct Sha1(sha1::Sha1);
 
     impl Sha1 {
@@ -22,7 +22,7 @@ mod _impl {
     use super::Sha1Digest;
     use fastsha1::Digest;
 
-    #[derive(Default)]
+    #[derive(Default, Clone)]
     pub struct Sha1(fastsha1::Sha1);
 
     impl Sha1 {

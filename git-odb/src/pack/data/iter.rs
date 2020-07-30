@@ -50,6 +50,7 @@ pub struct Iter<R> {
     kind: pack::data::Kind,
     objects_left: u32,
     hash: Option<Sha1>,
+    mode: TrailerMode,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -63,6 +64,9 @@ pub enum TrailerMode {
     /// Generate an own hash and if there was an error or the objects are depleted early
     /// due to partial packs, return the last valid entry and with our own hash thus far.
     /// Note that the existing pack hash, if present, will be ignored.
+    /// As we won't know which objects fails, every object will have the hash obtained thus far.
+    /// This also means that algorithms must know about this possibility, or else might wrongfully
+    /// assume the pack is finished.
     Restore,
 }
 
@@ -97,6 +101,7 @@ where
             } else {
                 None
             },
+            mode: trailer,
         })
     }
 
@@ -162,10 +167,17 @@ where
         // Last objects gets trailer (which is potentially verified)
         let trailer = if self.objects_left == 0 {
             let mut id = owned::Id::from([0; 20]);
-            self.read.read_exact(id.as_mut_slice())?;
+            if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
+                if self.mode != TrailerMode::Restore {
+                    return Err(err.into());
+                }
+            }
 
             if let Some(hash) = self.hash.take() {
                 let actual_id = owned::Id::from(hash.digest());
+                if self.mode == TrailerMode::Restore {
+                    id = actual_id;
+                }
                 if id != actual_id {
                     return Err(Error::ChecksumMismatch {
                         actual: actual_id,
@@ -175,7 +187,12 @@ where
             }
             Some(id)
         } else {
-            None
+            if self.mode == TrailerMode::Restore {
+                let hash = self.hash.clone().expect("in restore mode a hash is set");
+                Some(owned::Id::from(hash.digest()))
+            } else {
+                None
+            }
         };
 
         Ok(Entry {
@@ -206,7 +223,14 @@ where
         }
         let result = self.next_inner();
         self.had_error = result.is_err();
-        Some(result)
+        if self.had_error {
+            self.objects_left = 0;
+        }
+        if self.mode == TrailerMode::Restore && self.had_error {
+            None
+        } else {
+            Some(result)
+        }
     }
 }
 impl<R> std::iter::ExactSizeIterator for Iter<R> where R: io::BufRead {}

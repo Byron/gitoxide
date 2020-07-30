@@ -44,24 +44,27 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] buffer write for small in-memory objects/non-blobs
   * **packs**
     * [x] traverse pack index
-    * [x] object abstraction
+    * [x] 'object' abstraction
       * [x] decode (zero copy)
       * [x] verify checksum
-    * [x] easy and fast pack traversal
+    * [x] simple and fast pack traversal
     * [x] decode
       * [x] full objects
       * [x] deltified objects
-    * **advanced**
-      * [ ] Multi-Pack index file (MIDX)
-      * [ ] 'bitmap' file
+    * **streaming**
+      * _decode a pack from `Read` input_
+      * [x] `Read` to `Iterator`
+        * _read as is, verify hash, and restore partial packs_
     * [ ] encode
       * [ ] create new pack
       * [ ] create 'thin' pack
     * [x] verify pack with statistics
       * [x] brute force - less memory
       * [x] indexed - more memory
-    * [x] pack streaming with `Iterator` 
-       * [ ] index from pack
+    * [ ] create index from pack
+    * **advanced**
+      * [ ] Multi-Pack index file (MIDX)
+      * [ ] 'bitmap' file
   * [ ] API documentation with examples
   * **sink**
     * [x] write objects and obtain id

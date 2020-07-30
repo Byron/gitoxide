@@ -3,9 +3,9 @@
 * **index-from-pack**
   * _capability to receive packs from a stream_
   * [x] stream pack with iterator interface
-    * [ ] provide seen compressed bytes
+    * [x] provide seen compressed bytes
+  * [x] repair pack - write trailer for all complete objects
   * [ ] build index from pack
-  * [ ] repair pack - write trailer for all complete objects
 * **cli**
   * [ ] build index from pack
   * [ ] complete pack with trailer
