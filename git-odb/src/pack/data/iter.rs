@@ -190,13 +190,11 @@ where
                 }
             }
             Some(id)
+        } else if self.mode == Mode::Restore {
+            let hash = self.hash.clone().expect("in restore mode a hash is set");
+            Some(owned::Id::from(hash.digest()))
         } else {
-            if self.mode == Mode::Restore {
-                let hash = self.hash.clone().expect("in restore mode a hash is set");
-                Some(owned::Id::from(hash.digest()))
-            } else {
-                None
-            }
+            None
         };
 
         Ok(Entry {

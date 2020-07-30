@@ -22,6 +22,7 @@ quick_error! {
 pub struct Outcome {
     pub index_kind: pack::index::Kind,
     pub index_hash: owned::Id,
+    pub pack_hash: owned::Id,
     pub num_objects: u32,
 }
 

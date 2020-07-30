@@ -73,6 +73,7 @@ mod method {
         use std::{fs, io};
 
         #[test]
+        #[ignore]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
