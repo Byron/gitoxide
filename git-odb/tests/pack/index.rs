@@ -188,10 +188,15 @@ fn pack_lookup() {
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
         for (entry, offset_from_index) in pack.iter().unwrap().zip(sorted_offsets.into_iter()) {
+            let entry = entry.unwrap();
             assert_eq!(
-                entry.unwrap().pack_offset,
-                offset_from_index,
+                entry.pack_offset, offset_from_index,
                 "iteration should yield the same pack offsets as the index"
+            );
+            assert_eq!(
+                entry.compressed.len(),
+                entry.compressed_size as usize,
+                "correct amount of compressed bytes"
             );
         }
     }

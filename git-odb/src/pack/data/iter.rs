@@ -5,6 +5,17 @@ use crate::{
 use quick_error::quick_error;
 use std::{fs, io, io::Seek};
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Io(err: io::Error) {
+            display("An IO operation failed while streaming an entry")
+            from()
+            source(err)
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
@@ -14,6 +25,7 @@ pub struct Entry {
     pub pack_offset: u64,
     /// amount of compressed bytes consumed, used to generate `decompressed`
     pub compressed_size: u64,
+    pub compressed: Vec<u8>,
     /// The decompressed data.
     pub decompressed: Vec<u8>,
 }
@@ -69,7 +81,10 @@ where
         let mut decompressor = self.decompressor.take().unwrap_or_default();
         decompressor.reset();
         let mut reader = InflateReader {
-            inner: &mut self.read,
+            inner: PassThrough {
+                read: &mut self.read,
+                write: Vec::with_capacity((decompressed_size / 2) as usize),
+            },
             decompressor,
         };
 
@@ -91,21 +106,11 @@ where
             header,
             // TODO: remove this field once we can pack-encode the header above
             header_size: header_size as u16,
+            compressed: reader.inner.write,
             compressed_size,
             pack_offset,
             decompressed,
         })
-    }
-}
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: io::Error) {
-            display("An IO operation failed while streaming an entry")
-            from()
-            source(err)
-        }
     }
 }
 
@@ -122,6 +127,39 @@ where
         let result = self.next_inner();
         self.had_error = result.is_err();
         Some(result)
+    }
+}
+
+struct PassThrough<R, W> {
+    read: R,
+    write: W,
+}
+
+impl<R, W> io::BufRead for PassThrough<R, W>
+where
+    Self: io::Read,
+    R: io::BufRead,
+{
+    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        eprintln!("fill buf called");
+        self.read.fill_buf()
+    }
+
+    fn consume(&mut self, amt: usize) {
+        dbg!(amt);
+        self.read.consume(amt)
+    }
+}
+
+impl<R, W> io::Read for PassThrough<R, W>
+where
+    R: io::Read,
+    W: io::Write,
+{
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let bytes_read = self.read.read(buf)?;
+        self.write.write_all(&buf[..bytes_read])?;
+        Ok(bytes_read)
     }
 }
 
