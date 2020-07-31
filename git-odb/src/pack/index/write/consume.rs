@@ -1,9 +1,6 @@
 use crate::{
     hash, loose,
-    pack::{
-        self,
-        index::write::{Bytes, Cache, CacheEntry, Entry, Error, Mode},
-    },
+    pack::index::write::{Bytes, Cache, CacheEntry, Entry, Error, Mode, ResolveContext},
     zlib,
 };
 use git_object::{owned, HashKind};
@@ -12,16 +9,16 @@ use std::io;
 
 pub(crate) fn apply_deltas<F>(
     base_entries: Vec<&Entry>,
-    _state: &mut (),
+    resolve_buf: &mut Vec<u8>,
     _entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     _mode: &Mode<F>,
     hash_kind: HashKind,
 ) -> Result<Vec<(u64, owned::Id)>, Error>
 where
-    F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
+    F: for<'r> Fn(ResolveContext, &'r mut Vec<u8>) -> bool + Send + Sync,
 {
-    let decompressed_bytes_from_cache = |pack_offset: &u64| -> Result<(bool, Vec<u8>), Error> {
+    let mut decompressed_bytes_from_cache = |pack_offset: &u64, entry_size: &u64| -> Result<(bool, Vec<u8>), Error> {
         let cache = caches
             .lock()
             .get_mut(pack_offset)
@@ -40,7 +37,10 @@ where
                     .map_err(|err| Error::ConsumeZlibInflate(err, "Failed to decompress entry"))?;
                 out
             }
-            Cache::Unset => unimplemented!("use resolver"),
+            Cache::Unset => {
+                resolve_buf.resize(*entry_size as usize, 0);
+                unimplemented!("use resolver")
+            }
         };
         Ok((is_borrowed, bytes))
     };
@@ -62,8 +62,14 @@ where
     };
     let mut out = Vec::with_capacity(base_entries.len()); // perfectly conservative guess
 
-    for Entry { pack_offset, kind, .. } in base_entries {
-        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset)?;
+    for Entry {
+        pack_offset,
+        kind,
+        entry_len,
+        ..
+    } in base_entries
+    {
+        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset, entry_len)?;
         out.push((
             *pack_offset,
             compute_hash(kind.to_kind().expect("base object"), &base_bytes),

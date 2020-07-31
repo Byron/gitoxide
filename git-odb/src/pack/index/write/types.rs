@@ -40,6 +40,7 @@ impl ObjectKind {
 
 pub(crate) struct Entry {
     pub pack_offset: u64,
+    pub entry_len: u64,
     pub kind: ObjectKind,
     pub crc32: u32,
 }
@@ -85,11 +86,19 @@ impl CacheEntry {
     }
 }
 
-/// The function resolves pack_offset: u64 into compressed bytes to &mut Vec<u8> and returns (object kind, decompressed size)
-/// And it will be called after the iterator stopped returning elements.
+pub struct ResolveContext {
+    pack_offset: u64,
+    /// The size of the bytes of the entry directly from `pack_offset`, allowing `&pack[pack_offset..pack_offset+entry_size]`
+    entry_size: u64,
+}
+
+/// The function an entry into all of its bytes written to &mut Vec<u8> which is big enough and returns to true if bytes
+/// were written, false otherwise. The latter should never have to happen, but is an escape hatch if something goes very wrong
+/// when reading the pack entry.
+/// It will only be called after the iterator stopped returning elements.
 pub enum Mode<F>
 where
-    F: Fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>,
+    F: Fn(ResolveContext, &mut Vec<u8>) -> bool,
 {
     /// Base + deltas in memory compressed
     InMemory,
@@ -103,7 +112,7 @@ where
 
 impl<F> Mode<F>
 where
-    F: Fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>,
+    F: Fn(ResolveContext, &mut Vec<u8>) -> bool,
 {
     pub(crate) fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
@@ -121,7 +130,7 @@ where
     }
 }
 
-impl Mode<fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>> {
+impl Mode<fn(ResolveContext, &mut Vec<u8>) -> bool> {
     pub fn in_memory() -> Self {
         Self::InMemory
     }

@@ -25,7 +25,7 @@ impl pack::index::File {
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
-        F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
+        F: for<'r> Fn(ResolveContext, &'r mut Vec<u8>) -> bool + Send + Sync,
     {
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
@@ -44,14 +44,17 @@ impl pack::index::File {
         // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         for (eid, entry) in entries.enumerate() {
+            use pack::data::Header::*;
+
             let pack::data::iter::Entry {
                 header,
                 pack_offset,
-                header_size: _,
+                header_size,
                 compressed,
                 decompressed,
                 trailer,
             } = entry?;
+            let compressed_len = compressed.len();
             if !(pack_offset > last_pack_offset) {
                 return Err(Error::IteratorInvariantIncreasingPackOffset(
                     last_pack_offset,
@@ -59,7 +62,6 @@ impl pack::index::File {
                 ));
             }
             last_pack_offset = pack_offset;
-            use pack::data::Header::*;
             num_objects += 1;
             bytes_to_process += decompressed.len() as u64;
             let (cache, kind) = match header {
@@ -90,6 +92,7 @@ impl pack::index::File {
             cache_by_offset.insert(pack_offset, CacheEntry::new(cache));
             index_entries.push(Entry {
                 pack_offset,
+                entry_len: header_size as u64 + compressed_len as u64,
                 kind,
                 crc32: 0, // TBD, but can be done right here, needs header encoding
             });
@@ -111,7 +114,7 @@ impl pack::index::File {
                     size: chunk_size,
                 },
                 thread_limit,
-                |_| (),
+                |_thread_index| Vec::with_capacity(4096),
                 |base_pack_offsets, state| {
                     apply_deltas(
                         base_pack_offsets,
