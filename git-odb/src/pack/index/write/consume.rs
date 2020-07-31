@@ -9,7 +9,7 @@ use std::io;
 
 pub(crate) fn apply_deltas<F>(
     base_entries: Vec<Entry>,
-    resolve_buf: &mut Vec<u8>,
+    bytes_buf: &mut Vec<u8>,
     entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     mode: &Mode<F>,
@@ -42,14 +42,14 @@ where
                 Cache::Decompressed(b) => b,
                 Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)?,
                 Cache::Unset => {
-                    resolve_buf.resize(*entry_size, 0);
+                    bytes_buf.resize(*entry_size, 0);
                     match mode {
                         Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
-                            r(*pack_offset..*pack_offset + *entry_size as u64, resolve_buf)
+                            r(*pack_offset..*pack_offset + *entry_size as u64, bytes_buf)
                                 .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
                             let (_header, decompressed_size, consumed) =
-                                pack::data::Header::from_bytes(resolve_buf, *pack_offset);
-                            decompress_all_at_once(&resolve_buf[consumed as usize..], decompressed_size as usize)?
+                                pack::data::Header::from_bytes(bytes_buf, *pack_offset);
+                            decompress_all_at_once(&bytes_buf[consumed as usize..], decompressed_size as usize)?
                         }
                         Mode::InMemoryDecompressed | Mode::InMemory => {
                             unreachable!("BUG: If there is no cache, we always need a resolver")
@@ -117,6 +117,18 @@ where
             decompressed_bytes_from_cache(&base_entry.pack_offset, &base_entry.entry_len, FetchMode::AsBase)?;
         let (delta_is_borrowed, delta_bytes) =
             decompressed_bytes_from_cache(pack_offset, entry_len, FetchMode::AsSource)?;
+        let (base_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes);
+        let mut header_ofs = consumed;
+        assert_eq!(
+            base_bytes.len(),
+            base_size as usize,
+            "recorded base size in delta does not match"
+        );
+        let (result_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes[consumed..]);
+        header_ofs += consumed;
+
+        bytes_buf.resize(result_size as usize, 0);
+        pack::data::decode::apply_delta(&base_bytes, bytes_buf, &delta_bytes[header_ofs..]);
     }
     out.shrink_to_fit();
     Ok(out)

@@ -443,7 +443,7 @@ pub(crate) fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
     assert_eq!(target.len(), 0);
 }
 
-fn delta_header_size_ofs(d: &[u8]) -> (u64, usize) {
+pub(crate) fn delta_header_size_ofs(d: &[u8]) -> (u64, usize) {
     let mut i = 0;
     let mut size = 0u64;
     let mut consumed = 0;
