@@ -64,10 +64,13 @@ impl pack::index::File {
             use pack::data::Header::*;
             num_objects += 1;
             bytes_to_process += decompressed.len() as u64;
-            let (cache, _is_base) = match header {
+            let (cache, kind) = match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
-                    (mode.base_cache(compressed, decompressed), true)
+                    (
+                        mode.base_cache(compressed, decompressed),
+                        ObjectKind::Base(header.to_kind().expect("a base object")),
+                    )
                 }
                 RefDelta { .. } => return Err(Error::RefDelta),
                 OfsDelta {
@@ -79,7 +82,10 @@ impl pack::index::File {
                             Error::IteratorInvariantBasesBeforeDeltasNeedThem(pack_offset, base_pack_offset)
                         })?
                         .child_count += 1;
-                    (mode.delta_cache(compressed, decompressed), false)
+                    (
+                        mode.delta_cache(compressed, decompressed),
+                        ObjectKind::OfsDelta(base_pack_offset),
+                    )
                 }
             };
 
@@ -91,8 +97,8 @@ impl pack::index::File {
                 },
             );
             index_entries.push(Entry {
-                pack_offset: pack_offset,
-                is_base: _is_base,
+                pack_offset,
+                kind,
                 crc32: 0, // TBD, but can be done right here, needs header encoding
             });
             last_seen_trailer = trailer;
@@ -104,11 +110,12 @@ impl pack::index::File {
         let num_objects: u32 = num_objects
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
+        let _cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
         let mut sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
                 Chunks {
-                    iter: index_entries.iter().take(last_base_index).filter(|e| e.is_base),
+                    iter: index_entries.iter().take(last_base_index).filter(|e| e.kind.is_base()),
                     size: chunk_size,
                 },
                 thread_limit,

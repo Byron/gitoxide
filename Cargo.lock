@@ -2,9 +2,9 @@
 # It is not intended for manual editing.
 [[package]]
 name = "adler32"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567b077b825e468cc974f0020d4082ee6e03132512f207ef1a02fd5d00d1f32d"
+checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
 
 [[package]]
 name = "ahash"
@@ -649,6 +649,7 @@ dependencies = [
  "hex",
  "itoa",
  "miniz_oxide",
+ "parking_lot 0.11.0",
  "petgraph",
  "pretty_assertions",
  "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",

@@ -18,9 +18,23 @@ pub(crate) enum Cache {
     Compressed(Vec<u8>, usize),
 }
 
+pub(crate) enum ObjectKind {
+    Base(git_object::Kind),
+    OfsDelta(u64),
+}
+
+impl ObjectKind {
+    pub fn is_base(&self) -> bool {
+        match self {
+            ObjectKind::Base(_) => true,
+            ObjectKind::OfsDelta(_) => false,
+        }
+    }
+}
+
 pub(crate) struct Entry {
-    pub is_base: bool,
     pub pack_offset: u64,
+    pub kind: ObjectKind,
     pub crc32: u32,
 }
 
@@ -30,11 +44,19 @@ pub(crate) struct CacheEntry {
     pub child_count: u32,
 }
 
+pub(crate) enum _Bytes {
+    Owned(Cache),
+    Borrowed(Cache),
+}
+
 impl CacheEntry {
-    pub fn _decr(&mut self) {
+    pub fn _decr(&mut self) -> _Bytes {
         self.child_count -= 1;
+        let cache = std::mem::replace(&mut self._cache, Cache::Unset);
         if self.child_count == 0 {
-            self._cache = Cache::Unset;
+            _Bytes::Owned(cache)
+        } else {
+            _Bytes::Borrowed(cache)
         }
     }
 }
