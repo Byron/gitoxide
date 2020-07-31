@@ -15,7 +15,7 @@ pub(crate) fn apply_deltas<F>(
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     mode: &Mode<F>,
     hash_kind: HashKind,
-) -> Result<Vec<(u64, owned::Id)>, Error>
+) -> Result<Vec<(u64, owned::Id, u32)>, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
 {
@@ -85,13 +85,14 @@ where
         pack_offset,
         kind,
         entry_len,
-        ..
+        crc32,
     } in &base_entries
     {
         let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset, entry_len, FetchMode::AsSource)?;
         out.push((
             *pack_offset,
             compute_hash(kind.to_kind().expect("base object"), &base_bytes),
+            *crc32,
         ));
         possibly_return_to_cache(pack_offset, is_borrowed, base_bytes);
     }
@@ -103,7 +104,7 @@ where
         pack_offset,
         entry_len,
         kind,
-        ..
+        crc32,
     } in entries
     {
         let base_pack_offset = match kind {
@@ -141,6 +142,7 @@ where
                 base_entry.kind.to_kind().expect("base always has object kind"),
                 &fully_resolved_delta_bytes,
             ),
+            *crc32,
         ));
         let delta_data_to_return = if delta_is_borrowed {
             let delta_entry = Entry {
@@ -149,7 +151,6 @@ where
                 entry_len: 0,
                 crc32: 0,
             };
-            drop(base_entry);
             base_entries.insert(
                 base_entries
                     .binary_search_by_key(pack_offset, |e| e.pack_offset)

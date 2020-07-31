@@ -113,7 +113,7 @@ impl pack::index::File {
         // TODO: This COULD soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
         // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
         let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
-        let mut sorted_pack_offsets_by_oid = {
+        let sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
                 Chunks {
@@ -145,16 +145,10 @@ impl pack::index::File {
             items
         };
 
-        // Bring crc32 back into our perfectly sorted oid which is sorted by oid
-        for (pack_offset, _oid, crc32) in sorted_pack_offsets_by_oid.iter_mut() {
-            let index = index_entries
-                .binary_search_by_key(pack_offset, |e| e.pack_offset)
-                .expect("both arrays to have the same pack-offsets");
-            *crc32 = index_entries[index].crc32;
-        }
+        drop(index_entries);
         drop(cache_by_offset);
 
-        let index_hash = encode::to_write(out, index_entries, kind)?;
+        let index_hash = encode::to_write(out, sorted_pack_offsets_by_oid, kind)?;
 
         Ok(Outcome {
             index_kind: kind,

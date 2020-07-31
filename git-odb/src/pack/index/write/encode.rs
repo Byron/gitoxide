@@ -1,14 +1,11 @@
-use crate::{
-    hash, pack,
-    pack::{index::write::Entry, index::V2_SIGNATURE},
-};
+use crate::{hash, pack, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, WriteBytesExt};
 use git_object::owned;
 use std::io;
 
 pub(crate) fn to_write(
     out: impl io::Write,
-    _entries_sorted_by_oid: Vec<Entry>,
+    _entries_sorted_by_oid: Vec<(u64, owned::Id, u32)>,
     kind: pack::index::Kind,
 ) -> io::Result<owned::Id> {
     use io::Write;
