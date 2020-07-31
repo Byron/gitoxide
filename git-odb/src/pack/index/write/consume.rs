@@ -2,7 +2,7 @@ use crate::{
     hash, loose,
     pack::{
         self,
-        index::write::{Bytes, Cache, CacheEntry, Entry, Mode},
+        index::write::{Bytes, Cache, CacheEntry, Entry, Error, Mode},
     },
     zlib,
 };
@@ -17,11 +17,11 @@ pub(crate) fn apply_deltas<F>(
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     _mode: &Mode<F>,
     hash_kind: HashKind,
-) -> Vec<(u64, owned::Id)>
+) -> Result<Vec<(u64, owned::Id)>, Error>
 where
     F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
 {
-    let decompressed_bytes_from_cache = |pack_offset: &u64| -> (bool, Vec<u8>) {
+    let decompressed_bytes_from_cache = |pack_offset: &u64| -> Result<(bool, Vec<u8>), Error> {
         let cache = caches
             .lock()
             .get_mut(pack_offset)
@@ -37,12 +37,12 @@ where
                 let mut out = Vec::with_capacity(decompressed_len);
                 zlib::Inflate::default()
                     .once(&b, &mut io::Cursor::new(&mut out), true)
-                    .unwrap(); //TODO: allow this function to fail gracefully
+                    .map_err(|err| Error::ConsumeZlibInflate(err, "Failed to decompress entry"))?;
                 out
             }
             Cache::Unset => unimplemented!("use resolver"),
         };
-        (is_borrowed, bytes)
+        Ok((is_borrowed, bytes))
     };
     let possibly_return_to_cache = |pack_offset: &u64, is_borrowed: bool, bytes: Vec<u8>| {
         if is_borrowed {
@@ -63,7 +63,7 @@ where
     let mut out = Vec::with_capacity(base_entries.len()); // perfectly conservative guess
 
     for Entry { pack_offset, kind, .. } in base_entries {
-        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset);
+        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset)?;
         out.push((
             *pack_offset,
             compute_hash(kind.to_kind().expect("base object"), &base_bytes),
@@ -72,5 +72,5 @@ where
     }
 
     out.shrink_to_fit();
-    out
+    Ok(out)
 }

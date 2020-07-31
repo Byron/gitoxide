@@ -39,5 +39,9 @@ quick_error! {
         IteratorInvariantIncreasingPackOffset(last_pack_offset: u64, pack_offset: u64) {
             display("Pack offsets must only increment. The previous pack offset was {}, the current one is {}", last_pack_offset, pack_offset)
         }
+        ConsumeZlibInflate(err: crate::zlib::Error, msg: &'static str) {
+            display("{}", msg)
+            source(err)
+        }
     }
 }

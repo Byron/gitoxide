@@ -143,11 +143,12 @@ impl Reducer {
 }
 
 impl parallel::Reducer for Reducer {
-    type Input = Vec<(u64, owned::Id)>;
+    type Input = Result<Vec<(u64, owned::Id)>, pack::index::write::Error>;
     type Output = Vec<(u64, owned::Id, u32)>;
     type Error = pack::index::write::Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
+        let input = input?;
         self.items
             .extend(input.into_iter().map(|(pack_offset, id)| (pack_offset, id, 0)));
         Ok(())
