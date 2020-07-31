@@ -1,4 +1,4 @@
-use crate::{hash, pack, pack::index::V2_SIGNATURE};
+use crate::{hash, pack, pack::index::util::Chunks, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
 use git_object::owned;
@@ -219,10 +219,14 @@ impl pack::index::File {
         }
 
         // Prevent us from trying to find bases for resolution past the point where they are
+        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let last_base_index = last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
         in_parallel_if(
             || bytes_to_process > 5_000_000,
-            index_entries.iter().take(last_base_index).filter(|e| e.is_base), // TODO: chunking
+            Chunks {
+                iter: index_entries.iter().take(last_base_index).filter(|e| e.is_base),
+                size: chunk_size,
+            },
             thread_limit,
             |_| (),
             |_base_pack_offset, _state| Vec::new(),

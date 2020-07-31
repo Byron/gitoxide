@@ -2,7 +2,10 @@ use super::{Error, Reducer, SafetyCheck};
 use crate::{
     pack,
     pack::index::access::PackOffset,
-    pack::index::{self, util},
+    pack::index::{
+        self,
+        util::{index_entries_sorted_by_offset_ascending, Chunks},
+    },
 };
 use git_features::{
     parallel::{self, in_parallel_if},
@@ -31,8 +34,7 @@ impl index::File {
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
-        let sorted_entries =
-            util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
+        let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
         let tree = pack::graph::DeltaTree::from_sorted_offsets(
             sorted_entries.iter().map(|e| e.pack_offset),
             pack.path(),
@@ -58,7 +60,7 @@ impl index::File {
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         in_parallel_if(
             if_there_are_enough_objects,
-            util::Chunks {
+            Chunks {
                 size: chunk_size,
                 iter: tree.bases(),
             },
