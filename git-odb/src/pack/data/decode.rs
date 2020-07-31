@@ -347,13 +347,13 @@ impl File {
                 result_size,
                 ..
             },
-        ) in chain.iter().rev().enumerate()
+        ) in chain.into_iter().rev().enumerate()
         {
-            let data = &mut instructions[data.clone()];
+            let data = &mut instructions[data];
             if delta_idx + 1 == chain_len {
-                last_result_size = Some(*result_size);
+                last_result_size = Some(result_size);
             }
-            apply_delta(&source_buf[..*base_size], &mut target_buf[..*result_size], data);
+            apply_delta(&source_buf[..base_size], &mut target_buf[..result_size], data);
             // use the target as source for the next delta
             std::mem::swap(&mut source_buf, &mut target_buf);
         }
@@ -367,7 +367,7 @@ impl File {
         // object, which should also be placed in the second buffer right away. You don't have that
         // control/knowledge for out-of-pack bases, so this is a special case to deal with, too.
         // Maybe these invariants can be represented in the type system though.
-        if chain.len() % 2 == 1 {
+        if chain_len % 2 == 1 {
             // this seems inverted, but remember: we swapped the buffers on the last iteration
             target_buf[..last_result_size].copy_from_slice(&source_buf[..last_result_size]);
         }
@@ -381,7 +381,7 @@ impl File {
             // technically depending on the cache, the chain size is not correct as it might
             // have been cut short by a cache hit. The caller must deactivate the cache to get
             // actual results
-            num_deltas: chain.len() as u32,
+            num_deltas: chain_len as u32,
             decompressed_size: first_entry.decompressed_size as u64,
             compressed_size: consumed_input,
             object_size: last_result_size as u64,
@@ -389,7 +389,7 @@ impl File {
     }
 }
 
-fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
+pub(crate) fn apply_delta(base: &[u8], mut target: &mut [u8], data: &[u8]) {
     let mut i = 0;
     while let Some(cmd) = data.get(i) {
         i += 1;
