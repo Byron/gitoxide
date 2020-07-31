@@ -1,9 +1,9 @@
-use crate::{hash, pack, pack::index::util::Chunks, pack::index::V2_SIGNATURE};
-use byteorder::{BigEndian, WriteBytesExt};
+use crate::{pack, pack::index::util::Chunks};
 use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
 use smallvec::alloc::collections::BTreeMap;
 use std::{convert::TryInto, io};
 
+mod encode;
 mod error;
 pub use error::Error;
 
@@ -27,8 +27,6 @@ impl pack::index::File {
     where
         F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
     {
-        use io::Write;
-
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
         }
@@ -104,7 +102,7 @@ impl pack::index::File {
         let num_objects: u32 = num_objects
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
-        let _cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
+        let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
         let mut sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
@@ -119,7 +117,7 @@ impl pack::index::File {
                         base_pack_offsets,
                         state,
                         &index_entries,
-                        &_cache_by_offset,
+                        &cache_by_offset,
                         &mode,
                         kind.hash(),
                     )
@@ -137,16 +135,10 @@ impl pack::index::File {
                 .expect("both arrays to have the same pack-offsets");
             *crc32 = index_entries[index].crc32;
         }
-        drop(index_entries);
+        drop(cache_by_offset);
 
-        // Write header
-        let mut out = hash::Write::new(out, kind.hash());
-        out.write_all(V2_SIGNATURE)?;
-        out.write_u32::<BigEndian>(kind as u32)?;
+        let index_hash = encode::to_write(out, index_entries, kind)?;
 
-        // todo: write fanout
-
-        let index_hash = out.hash.digest().into();
         Ok(Outcome {
             index_kind: kind,
             index_hash,
