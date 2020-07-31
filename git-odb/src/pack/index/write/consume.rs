@@ -130,19 +130,19 @@ where
         let (result_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes[consumed..]);
         header_ofs += consumed;
 
-        let mut bytes_buf = bytes_buf.borrow_mut();
-        bytes_buf.resize(result_size as usize, 0);
-        pack::data::decode::apply_delta(&base_bytes, &mut bytes_buf, &delta_bytes[header_ofs..]);
+        let mut fully_resolved_delta_bytes = bytes_buf.borrow_mut();
+        fully_resolved_delta_bytes.resize(result_size as usize, 0);
+        pack::data::decode::apply_delta(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
         possibly_return_to_cache(&base_entry.pack_offset, base_is_borrowed, base_bytes);
 
         out.push((
             *pack_offset,
             compute_hash(
                 base_entry.kind.to_kind().expect("base always has object kind"),
-                &bytes_buf,
+                &fully_resolved_delta_bytes,
             ),
         ));
-        if delta_is_borrowed {
+        let delta_data_to_return = if delta_is_borrowed {
             let delta_entry = Entry {
                 pack_offset: *pack_offset,
                 kind: base_entry.kind.clone(),
@@ -156,8 +156,12 @@ where
                     .expect_err("Delta has not yet been added"),
                 delta_entry,
             );
-        }
-        possibly_return_to_cache(pack_offset, delta_is_borrowed, delta_bytes);
+            // we will be a base ourselves, so assure our cache contains the fully decompressed version of ourselves
+            fully_resolved_delta_bytes.to_owned()
+        } else {
+            delta_bytes
+        };
+        possibly_return_to_cache(pack_offset, delta_is_borrowed, delta_data_to_return);
     }
     out.shrink_to_fit();
     Ok(out)
