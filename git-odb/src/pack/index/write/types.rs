@@ -12,7 +12,7 @@ pub struct Outcome {
 }
 
 pub(crate) enum Cache {
-    Unset(usize),
+    Unset,
     Decompressed(Vec<u8>),
     /// compressed bytes + decompressed size
     Compressed(Vec<u8>, usize),
@@ -73,7 +73,7 @@ impl CacheEntry {
     }
 
     pub fn cache(&mut self) -> Bytes {
-        let cache = std::mem::replace(&mut self.cache, Cache::Unset(0));
+        let cache = std::mem::replace(&mut self.cache, Cache::Unset);
         if self.child_count == 0 {
             Bytes::Owned(cache)
         } else {
@@ -114,14 +114,14 @@ where
         match self {
             Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset(decompressed.len()),
+            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
         }
     }
     pub(crate) fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
             Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset(decompressed.len()),
+            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
         }
     }
 }

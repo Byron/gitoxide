@@ -81,7 +81,6 @@ mod method {
                     let resolve = pack::index::write::Mode::ResolveBasesAndDeltas({
                         let buf = FileBuffer::open(fixture_path(data_path))?;
                         move |entry, out| {
-                            dbg!(&entry);
                             buf.get(entry.start as usize..entry.end as usize)
                                 .map(|slice| out.copy_from_slice(slice))
                         }

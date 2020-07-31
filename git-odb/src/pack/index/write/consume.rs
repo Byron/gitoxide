@@ -1,5 +1,5 @@
 use crate::{
-    hash, loose,
+    hash, loose, pack,
     pack::index::write::{Bytes, Cache, CacheEntry, Entry, EntrySlice, Error, Mode},
     zlib,
 };
@@ -31,13 +31,15 @@ where
         let bytes = match cache {
             Cache::Decompressed(b) => b,
             Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)?,
-            Cache::Unset(decompressed_len) => {
+            Cache::Unset => {
                 resolve_buf.resize(*entry_size, 0);
                 match mode {
                     Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
                         r(*pack_offset..*pack_offset + *entry_size as u64, resolve_buf)
                             .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
-                        decompress_all_at_once(resolve_buf, decompressed_len)?
+                        let (_header, decompressed_size, consumed) =
+                            pack::data::Header::from_bytes(resolve_buf, *pack_offset);
+                        decompress_all_at_once(&resolve_buf[consumed as usize..], decompressed_size as usize)?
                     }
                     Mode::InMemoryDecompressed | Mode::InMemory => {
                         unreachable!("BUG: If there is no cache, we always need a resolver")
@@ -84,7 +86,7 @@ where
     Ok(out)
 }
 
-fn decompress_all_at_once(b: &Vec<u8>, decompressed_len: usize) -> Result<Vec<u8>, Error> {
+fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
     let mut out = Vec::with_capacity(decompressed_len);
     zlib::Inflate::default()
         .once(&b, &mut io::Cursor::new(&mut out), true)
