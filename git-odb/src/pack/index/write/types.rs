@@ -30,6 +30,12 @@ impl ObjectKind {
             ObjectKind::OfsDelta(_) => false,
         }
     }
+    pub fn to_kind(&self) -> Option<git_object::Kind> {
+        match self {
+            ObjectKind::Base(kind) => Some(*kind),
+            ObjectKind::OfsDelta(_) => None,
+        }
+    }
 }
 
 pub(crate) struct Entry {
@@ -39,25 +45,43 @@ pub(crate) struct Entry {
 }
 
 pub(crate) struct CacheEntry {
-    pub _cache: Cache,
+    cache: Cache,
     /// When it reaches zero, the cache can be freed
-    pub child_count: u32,
+    child_count: u32,
 }
 
-pub(crate) enum _Bytes {
+pub(crate) enum Bytes {
     Owned(Cache),
     Borrowed(Cache),
 }
 
+/// Note that every operation in the CacheEntry must be fast, as these happen behind a lock
 impl CacheEntry {
-    pub fn _decr(&mut self) -> _Bytes {
-        self.child_count -= 1;
-        let cache = std::mem::replace(&mut self._cache, Cache::Unset);
-        if self.child_count == 0 {
-            _Bytes::Owned(cache)
-        } else {
-            _Bytes::Borrowed(cache)
+    pub fn new(cache: Cache) -> Self {
+        CacheEntry {
+            child_count: 0,
+            cache: cache,
         }
+    }
+    pub fn increment_child_count(&mut self) {
+        self.child_count += 1;
+    }
+    pub fn _decr(&mut self) -> Bytes {
+        self.child_count -= 1;
+        self.cache()
+    }
+
+    pub fn cache(&mut self) -> Bytes {
+        let cache = std::mem::replace(&mut self.cache, Cache::Unset);
+        if self.child_count == 0 {
+            Bytes::Owned(cache)
+        } else {
+            Bytes::Borrowed(cache)
+        }
+    }
+    pub fn set_decompressed(&mut self, bytes: Vec<u8>) {
+        assert_ne!(self.child_count, 0, "Do not return decompressed bytes once nobody is interested in the data anymore, i.e. from `Bytes::Owned(…)`");
+        self.cache = Cache::Decompressed(bytes);
     }
 }
 

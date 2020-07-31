@@ -1,7 +1,7 @@
-use crate::{hash, pack, pack::index::util::Chunks, pack::index::V2_SIGNATURE};
+use crate::{hash, loose, pack, pack::index::util::Chunks, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
-use git_object::owned;
+use git_object::{owned, HashKind};
 use smallvec::alloc::collections::BTreeMap;
 use std::io;
 
@@ -28,7 +28,6 @@ impl pack::index::File {
     {
         use io::Write;
 
-        let mut out = hash::Write::new(out, kind.hash());
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
         }
@@ -81,7 +80,7 @@ impl pack::index::File {
                         .ok_or_else(|| {
                             Error::IteratorInvariantBasesBeforeDeltasNeedThem(pack_offset, base_pack_offset)
                         })?
-                        .child_count += 1;
+                        .increment_child_count();
                     (
                         mode.delta_cache(compressed, decompressed),
                         ObjectKind::OfsDelta(base_pack_offset),
@@ -89,13 +88,7 @@ impl pack::index::File {
                 }
             };
 
-            cache_by_offset.insert(
-                pack_offset,
-                CacheEntry {
-                    child_count: 0,
-                    _cache: cache,
-                },
-            );
+            cache_by_offset.insert(pack_offset, CacheEntry::new(cache));
             index_entries.push(Entry {
                 pack_offset,
                 kind,
@@ -121,7 +114,14 @@ impl pack::index::File {
                 thread_limit,
                 |_| (),
                 |base_pack_offsets, state| {
-                    apply_deltas(base_pack_offsets, state, &index_entries, &_cache_by_offset, &mode)
+                    apply_deltas(
+                        base_pack_offsets,
+                        state,
+                        &index_entries,
+                        &_cache_by_offset,
+                        &mode,
+                        kind.hash(),
+                    )
                 },
                 Reducer::new(num_objects),
             )?;
@@ -139,15 +139,16 @@ impl pack::index::File {
         drop(index_entries);
 
         // Write header
+        let mut out = hash::Write::new(out, kind.hash());
         out.write_all(V2_SIGNATURE)?;
         out.write_u32::<BigEndian>(kind as u32)?;
 
         // todo: write fanout
 
-        let _index_hash = out.hash.digest();
+        let index_hash = out.hash.digest().into();
         Ok(Outcome {
             index_kind: kind,
-            index_hash: owned::Id::from([0u8; 20]),
+            index_hash,
             pack_hash: last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?,
             num_objects,
         })
@@ -155,14 +156,60 @@ impl pack::index::File {
 }
 
 fn apply_deltas<F>(
-    _base_entries: Vec<&Entry>,
+    base_entries: Vec<&Entry>,
     _state: &mut (),
     _entries: &[Entry],
-    _caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
+    caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     _mode: &Mode<F>,
+    hash_kind: HashKind,
 ) -> Vec<(u64, owned::Id)>
 where
     F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
 {
-    Vec::new()
+    let decompressed_bytes_from_cache = |pack_offset: &u64| -> (bool, Vec<u8>) {
+        let cache = caches
+            .lock()
+            .get_mut(pack_offset)
+            .expect("an entry for every pack offset")
+            .cache();
+        let (is_borrowed, cache) = match cache {
+            Bytes::Borrowed(b) => (true, b),
+            Bytes::Owned(b) => (false, b),
+        };
+        let bytes = match cache {
+            Cache::Decompressed(b) => b,
+            Cache::Compressed(_, _) => unimplemented!("decompress once"),
+            Cache::Unset => unimplemented!("use resolver"),
+        };
+        (is_borrowed, bytes)
+    };
+    let possibly_return_to_cache = |pack_offset: &u64, is_borrowed: bool, bytes: Vec<u8>| {
+        if is_borrowed {
+            caches
+                .lock()
+                .get_mut(pack_offset)
+                .expect("an entry for every pack offset")
+                .set_decompressed(bytes);
+        }
+    };
+    let compute_hash = |kind: git_object::Kind, bytes: &[u8]| -> owned::Id {
+        let mut write = hash::Write::new(io::sink(), hash_kind);
+        loose::object::header::encode(kind, bytes.len() as u64, &mut write)
+            .expect("write to sink and hash cannot fail");
+        write.hash.update(bytes);
+        owned::Id::from(write.hash.digest())
+    };
+    let mut out = Vec::with_capacity(base_entries.len()); // perfectly conservative guess
+
+    for Entry { pack_offset, kind, .. } in base_entries {
+        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset);
+        out.push((
+            *pack_offset,
+            compute_hash(kind.to_kind().expect("base object"), &base_bytes),
+        ));
+        possibly_return_to_cache(pack_offset, is_borrowed, base_bytes);
+    }
+
+    out.shrink_to_fit();
+    out
 }
