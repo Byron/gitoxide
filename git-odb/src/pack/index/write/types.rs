@@ -66,7 +66,7 @@ impl CacheEntry {
     pub fn increment_child_count(&mut self) {
         self.child_count += 1;
     }
-    pub fn _decr(&mut self) -> Bytes {
+    pub fn cache_decr(&mut self) -> Bytes {
         self.child_count -= 1;
         self.cache()
     }

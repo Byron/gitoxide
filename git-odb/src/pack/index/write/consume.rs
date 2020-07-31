@@ -1,6 +1,6 @@
 use crate::{
     hash, loose, pack,
-    pack::index::write::{Bytes, Cache, CacheEntry, Entry, EntrySlice, Error, Mode},
+    pack::index::write::{Bytes, Cache, CacheEntry, Entry, EntrySlice, Error, Mode, ObjectKind},
     zlib,
 };
 use git_object::{owned, HashKind};
@@ -10,7 +10,7 @@ use std::io;
 pub(crate) fn apply_deltas<F>(
     base_entries: Vec<Entry>,
     resolve_buf: &mut Vec<u8>,
-    _entries: &[Entry],
+    entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     mode: &Mode<F>,
     hash_kind: HashKind,
@@ -18,37 +18,47 @@ pub(crate) fn apply_deltas<F>(
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
 {
-    let mut decompressed_bytes_from_cache = |pack_offset: &u64, entry_size: &usize| -> Result<(bool, Vec<u8>), Error> {
-        let cache = caches
-            .lock()
-            .get_mut(&pack_offset)
-            .expect("an entry for every pack offset")
-            .cache();
-        let (is_borrowed, cache) = match cache {
-            Bytes::Borrowed(b) => (true, b),
-            Bytes::Owned(b) => (false, b),
-        };
-        let bytes = match cache {
-            Cache::Decompressed(b) => b,
-            Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)?,
-            Cache::Unset => {
-                resolve_buf.resize(*entry_size, 0);
-                match mode {
-                    Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
-                        r(*pack_offset..*pack_offset + *entry_size as u64, resolve_buf)
-                            .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
-                        let (_header, decompressed_size, consumed) =
-                            pack::data::Header::from_bytes(resolve_buf, *pack_offset);
-                        decompress_all_at_once(&resolve_buf[consumed as usize..], decompressed_size as usize)?
-                    }
-                    Mode::InMemoryDecompressed | Mode::InMemory => {
-                        unreachable!("BUG: If there is no cache, we always need a resolver")
+    enum FetchMode {
+        /// Bases for deltas will decrement their refcount.
+        AsBase,
+        /// Sources will be fetch as - is, without reducing their count.
+        AsSource,
+    }
+    let mut decompressed_bytes_from_cache =
+        |pack_offset: &u64, entry_size: &usize, fetch: FetchMode| -> Result<(bool, Vec<u8>), Error> {
+            let cache = {
+                let mut guard = caches.lock();
+                let c = guard.get_mut(&pack_offset).expect("an entry for every pack offset");
+                match fetch {
+                    FetchMode::AsSource => c.cache(),
+                    FetchMode::AsBase => c.cache_decr(),
+                }
+            };
+            let (is_borrowed, cache) = match cache {
+                Bytes::Borrowed(b) => (true, b),
+                Bytes::Owned(b) => (false, b),
+            };
+            let bytes = match cache {
+                Cache::Decompressed(b) => b,
+                Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)?,
+                Cache::Unset => {
+                    resolve_buf.resize(*entry_size, 0);
+                    match mode {
+                        Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
+                            r(*pack_offset..*pack_offset + *entry_size as u64, resolve_buf)
+                                .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
+                            let (_header, decompressed_size, consumed) =
+                                pack::data::Header::from_bytes(resolve_buf, *pack_offset);
+                            decompress_all_at_once(&resolve_buf[consumed as usize..], decompressed_size as usize)?
+                        }
+                        Mode::InMemoryDecompressed | Mode::InMemory => {
+                            unreachable!("BUG: If there is no cache, we always need a resolver")
+                        }
                     }
                 }
-            }
+            };
+            Ok((is_borrowed, bytes))
         };
-        Ok((is_borrowed, bytes))
-    };
     let possibly_return_to_cache = |pack_offset: &u64, is_borrowed: bool, bytes: Vec<u8>| {
         if is_borrowed {
             caches
@@ -75,7 +85,7 @@ where
         ..
     } in &base_entries
     {
-        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset, entry_len)?;
+        let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset, entry_len, FetchMode::AsSource)?;
         out.push((
             *pack_offset,
             compute_hash(kind.to_kind().expect("base object"), &base_bytes),
@@ -86,6 +96,28 @@ where
     // find all deltas that match our bases, decompress them, apply them to the decompressed base, keep the hash
     // and finally store the fully decompressed delta as new base (if they have dependants of their own).
     // If there is nobody else using them, we could remove them, but that's expensive so let's just keep them around.
+    for Entry {
+        pack_offset,
+        entry_len,
+        kind,
+        ..
+    } in entries
+    {
+        let base_pack_offset = match kind {
+            ObjectKind::Base(_) => continue, // we only work on deltas, bases can be intermixed though
+            ObjectKind::OfsDelta(ofs) => ofs,
+        };
+        let base_index = match base_entries.binary_search_by_key(&base_pack_offset, |base| &base.pack_offset) {
+            Ok(idx) => idx,
+            Err(_) => continue, // not our delta
+        };
+
+        let base_entry = &base_entries[base_index];
+        let (base_is_borrowed, base_bytes) =
+            decompressed_bytes_from_cache(&base_entry.pack_offset, &base_entry.entry_len, FetchMode::AsBase)?;
+        let (delta_is_borrowed, delta_bytes) =
+            decompressed_bytes_from_cache(pack_offset, entry_len, FetchMode::AsSource)?;
+    }
     out.shrink_to_fit();
     Ok(out)
 }
