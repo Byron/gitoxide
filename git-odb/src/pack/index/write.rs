@@ -1,5 +1,5 @@
 use crate::{hash, pack, pack::index::V2_SIGNATURE};
-use byteorder::{BigEndian, ByteOrder};
+use byteorder::{BigEndian, WriteBytesExt};
 use git_features::progress::Progress;
 use git_object::owned;
 use quick_error::quick_error;
@@ -57,7 +57,9 @@ enum Cache {
 }
 
 struct Entry {
+    _is_base: bool,
     _pack_offset: u64,
+    _id: Option<owned::Id>,
     _crc32: u32,
 }
 
@@ -162,10 +164,10 @@ impl pack::index::File {
             } = entry?;
             use pack::data::Header::*;
             num_objects += 1;
-            let cache = match header {
+            let (cache, _is_base) = match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
-                    mode.base_cache(compressed, decompressed)
+                    (mode.base_cache(compressed, decompressed), true)
                 }
                 RefDelta { .. } => return Err(Error::RefDelta),
                 OfsDelta {
@@ -177,7 +179,7 @@ impl pack::index::File {
                             Error::IteratorInvariantBasesBeforeDeltasNeedThem(pack_offset, base_pack_offset)
                         })?
                         .child_count += 1;
-                    mode.delta_cache(compressed, decompressed)
+                    (mode.delta_cache(compressed, decompressed), false)
                 }
             };
 
@@ -189,7 +191,9 @@ impl pack::index::File {
                 },
             );
             index_entries.push(Entry {
+                _is_base,
                 _pack_offset: pack_offset,
+                _id: None,
                 _crc32: 0, // TBD, but can be done right here, needs header encoding
             });
             last_seen_trailer = trailer;
@@ -200,9 +204,7 @@ impl pack::index::File {
 
         // Write header
         out.write_all(V2_SIGNATURE)?;
-        let mut buf = [0u8; 4];
-        BigEndian::write_u32(&mut buf, kind as u32);
-        out.write_all(&buf)?;
+        out.write_u32::<BigEndian>(kind as u32)?;
 
         // todo: write fanout
 

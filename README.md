@@ -55,13 +55,14 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * _decode a pack from `Read` input_
       * [x] `Read` to `Iterator`
         * _read as is, verify hash, and restore partial packs_
+      * [ ] create index from pack alone
+      * [ ] resolve 'thin' packs
     * [ ] encode
       * [ ] create new pack
       * [ ] create 'thin' pack
     * [x] verify pack with statistics
       * [x] brute force - less memory
       * [x] indexed - more memory
-    * [ ] create index from pack
     * **advanced**
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
