@@ -53,7 +53,7 @@ impl pack::index::File {
                 trailer,
             } = entry?;
             let compressed_len = compressed.len();
-            if !(pack_offset > last_pack_offset) {
+            if pack_offset <= last_pack_offset {
                 return Err(Error::IteratorInvariantIncreasingPackOffset(
                     last_pack_offset,
                     pack_offset,

@@ -59,10 +59,7 @@ pub(crate) enum Bytes {
 /// Note that every operation in the CacheEntry must be fast, as these happen behind a lock
 impl CacheEntry {
     pub fn new(cache: Cache) -> Self {
-        CacheEntry {
-            child_count: 0,
-            cache: cache,
-        }
+        CacheEntry { child_count: 0, cache }
     }
     pub fn increment_child_count(&mut self) {
         self.child_count += 1;
