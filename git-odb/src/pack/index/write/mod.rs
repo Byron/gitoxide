@@ -24,7 +24,7 @@ impl pack::index::File {
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
-        F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)>,
+        F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
     {
         use io::Write;
 
@@ -120,7 +120,9 @@ impl pack::index::File {
                 },
                 thread_limit,
                 |_| (),
-                |_base_pack_offsets, _state| Vec::new(),
+                |base_pack_offsets, state| {
+                    apply_deltas(base_pack_offsets, state, &index_entries, &_cache_by_offset, &mode)
+                },
                 Reducer::new(num_objects),
             )?;
             items.sort_by_key(|e| e.1);
@@ -150,4 +152,17 @@ impl pack::index::File {
             num_objects,
         })
     }
+}
+
+fn apply_deltas<F>(
+    _base_entries: Vec<&Entry>,
+    _state: &mut (),
+    _entries: &[Entry],
+    _caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
+    _mode: &Mode<F>,
+) -> Vec<(u64, owned::Id)>
+where
+    F: for<'r> Fn(u64, &'r mut Vec<u8>) -> Option<(pack::data::Header, u64)> + Send + Sync,
+{
+    Vec::new()
 }
