@@ -71,72 +71,85 @@ mod method {
         use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
         use filebuffer::FileBuffer;
         use git_features::progress;
-        use git_odb::{pack, pack::data::iter::Mode};
+        use git_odb::{pack, pack::data::iter};
         use std::{fs, io};
 
         #[test]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
-            for mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
+            for mode in &[iter::Mode::AsIs, iter::Mode::Verify, iter::Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
-                    for memory_mode in vec![
-                        pack::index::write::Mode::ResolveBasesAndDeltas({
-                            let buf = FileBuffer::open(fixture_path(data_path))?;
-                            move |entry: pack::index::write::EntrySlice, out| -> bool {
-                                match buf.get(entry) {
-                                    Some(slice) => {
-                                        out.copy_from_slice(slice);
-                                        true
-                                    }
-                                    None => false,
+                    let resolve = pack::index::write::Mode::ResolveBasesAndDeltas({
+                        let buf = FileBuffer::open(fixture_path(data_path))?;
+                        move |entry: pack::index::write::EntrySlice, out| -> bool {
+                            match buf.get(entry) {
+                                Some(slice) => {
+                                    out.copy_from_slice(slice);
+                                    true
                                 }
+                                None => false,
                             }
-                        }),
-                        // pack::index::write::Mode::in_memory(),
-                        // pack::index::write::Mode::in_memory_decompressed(),
-                    ] {
-                        let pack_iter = pack::data::Iter::new_from_header(
-                            io::BufReader::new(fs::File::open(fixture_path(data_path))?),
-                            *mode,
-                        )?;
-
-                        let mut actual = Vec::<u8>::new();
-                        let desired_kind = pack::index::Kind::default();
-                        let num_objects = pack_iter.len() as u32;
-                        let outcome = pack::index::File::write_data_iter_to_stream(
-                            desired_kind,
-                            memory_mode,
-                            pack_iter,
-                            None,
-                            progress::Discard,
-                            &mut actual,
-                        )?;
-
-                        let expected = fs::read(fixture_path(index_path))?;
-                        let end_of_header = 4 * 2;
-                        assert_eq!(actual, &expected[..end_of_header], "we should get the header right");
-                        // let end_of_fanout_table = end_of_header + 256 * 4;
-                        // assert_eq!(
-                        //     actual,
-                        //     &expected[..end_of_fanout_table],
-                        //     "we should get the fanout table right"
-                        // );
-                        // TODO: comment this in for the final test - keep the above anyway though, useful if something breaks
-                        // assert_eq!(
-                        //     actual, expected,
-                        //     "we should be writing a bit-exact version of the original V2 index"
-                        // );
-                        assert_eq!(
-                            outcome.num_objects, num_objects,
-                            "it wrote the entire iterator worth of entries"
-                        );
-                        assert_eq!(outcome.index_kind, desired_kind);
-                        assert_eq!(
-                            outcome.index_hash,
-                            pack::index::File::at(fixture_path(index_path))?.index_checksum()
-                        );
-                    }
+                        }
+                    });
+                    assert_index_write(mode, index_path, data_path, resolve)?;
+                    assert_index_write(mode, index_path, data_path, pack::index::write::Mode::in_memory())?;
+                    assert_index_write(
+                        mode,
+                        index_path,
+                        data_path,
+                        pack::index::write::Mode::in_memory_decompressed(),
+                    )?;
                 }
             }
+            Ok(())
+        }
+
+        fn assert_index_write<F>(
+            mode: &iter::Mode,
+            index_path: &&str,
+            data_path: &&str,
+            memory_mode: pack::index::write::Mode<F>,
+        ) -> Result<(), Box<dyn std::error::Error>>
+        where
+            F: Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> bool + Send + Sync,
+        {
+            let pack_iter =
+                pack::data::Iter::new_from_header(io::BufReader::new(fs::File::open(fixture_path(data_path))?), *mode)?;
+
+            let mut actual = Vec::<u8>::new();
+            let desired_kind = pack::index::Kind::default();
+            let num_objects = pack_iter.len() as u32;
+            let outcome = pack::index::File::write_data_iter_to_stream(
+                desired_kind,
+                memory_mode,
+                pack_iter,
+                None,
+                progress::Discard,
+                &mut actual,
+            )?;
+
+            let expected = fs::read(fixture_path(index_path))?;
+            let end_of_header = 4 * 2;
+            assert_eq!(actual, &expected[..end_of_header], "we should get the header right");
+            // let end_of_fanout_table = end_of_header + 256 * 4;
+            // assert_eq!(
+            //     actual,
+            //     &expected[..end_of_fanout_table],
+            //     "we should get the fanout table right"
+            // );
+            // TODO: comment this in for the final test - keep the above anyway though, useful if something breaks
+            // assert_eq!(
+            //     actual, expected,
+            //     "we should be writing a bit-exact version of the original V2 index"
+            // );
+            assert_eq!(
+                outcome.num_objects, num_objects,
+                "it wrote the entire iterator worth of entries"
+            );
+            assert_eq!(outcome.index_kind, desired_kind);
+            assert_eq!(
+                outcome.index_hash,
+                pack::index::File::at(fixture_path(index_path))?.index_checksum()
+            );
             Ok(())
         }
     }
