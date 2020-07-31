@@ -5,10 +5,11 @@ use crate::{
 };
 use git_object::{owned, HashKind};
 use smallvec::alloc::collections::BTreeMap;
+use std::cell::RefCell;
 use std::io;
 
 pub(crate) fn apply_deltas<F>(
-    base_entries: Vec<Entry>,
+    mut base_entries: Vec<Entry>,
     bytes_buf: &mut Vec<u8>,
     entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
@@ -24,7 +25,8 @@ where
         /// Sources will be fetch as - is, without reducing their count.
         AsSource,
     }
-    let mut decompressed_bytes_from_cache =
+    let bytes_buf = RefCell::new(bytes_buf);
+    let decompressed_bytes_from_cache =
         |pack_offset: &u64, entry_size: &usize, fetch: FetchMode| -> Result<(bool, Vec<u8>), Error> {
             let cache = {
                 let mut guard = caches.lock();
@@ -42,13 +44,14 @@ where
                 Cache::Decompressed(b) => b,
                 Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)?,
                 Cache::Unset => {
+                    let mut bytes_buf = bytes_buf.borrow_mut();
                     bytes_buf.resize(*entry_size, 0);
                     match mode {
                         Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
-                            r(*pack_offset..*pack_offset + *entry_size as u64, bytes_buf)
+                            r(*pack_offset..*pack_offset + *entry_size as u64, &mut bytes_buf)
                                 .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
                             let (_header, decompressed_size, consumed) =
-                                pack::data::Header::from_bytes(bytes_buf, *pack_offset);
+                                pack::data::Header::from_bytes(&bytes_buf, *pack_offset);
                             decompress_all_at_once(&bytes_buf[consumed as usize..], decompressed_size as usize)?
                         }
                         Mode::InMemoryDecompressed | Mode::InMemory => {
@@ -127,8 +130,34 @@ where
         let (result_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes[consumed..]);
         header_ofs += consumed;
 
+        let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize(result_size as usize, 0);
-        pack::data::decode::apply_delta(&base_bytes, bytes_buf, &delta_bytes[header_ofs..]);
+        pack::data::decode::apply_delta(&base_bytes, &mut bytes_buf, &delta_bytes[header_ofs..]);
+        possibly_return_to_cache(&base_entry.pack_offset, base_is_borrowed, base_bytes);
+
+        out.push((
+            *pack_offset,
+            compute_hash(
+                base_entry.kind.to_kind().expect("base always has object kind"),
+                &bytes_buf,
+            ),
+        ));
+        if delta_is_borrowed {
+            let delta_entry = Entry {
+                pack_offset: *pack_offset,
+                kind: base_entry.kind.clone(),
+                entry_len: 0,
+                crc32: 0,
+            };
+            drop(base_entry);
+            base_entries.insert(
+                base_entries
+                    .binary_search_by_key(pack_offset, |e| e.pack_offset)
+                    .expect_err("Delta has not yet been added"),
+                delta_entry,
+            );
+        }
+        possibly_return_to_cache(pack_offset, delta_is_borrowed, delta_bytes);
     }
     out.shrink_to_fit();
     Ok(out)
