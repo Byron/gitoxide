@@ -94,7 +94,7 @@ pub type EntrySlice = std::ops::Range<usize>;
 /// It will only be called after the iterator stopped returning elements.
 pub enum Mode<F>
 where
-    F: Fn(EntrySlice, &mut Vec<u8>) -> bool,
+    F: Fn(EntrySlice, &mut Vec<u8>) -> Option<()>,
 {
     /// Base + deltas in memory compressed
     InMemory,
@@ -108,7 +108,7 @@ where
 
 impl<F> Mode<F>
 where
-    F: Fn(EntrySlice, &mut Vec<u8>) -> bool,
+    F: Fn(EntrySlice, &mut Vec<u8>) -> Option<()>,
 {
     pub(crate) fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
@@ -126,7 +126,7 @@ where
     }
 }
 
-impl Mode<fn(EntrySlice, &mut Vec<u8>) -> bool> {
+impl Mode<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
     pub fn in_memory() -> Self {
         Self::InMemory
     }

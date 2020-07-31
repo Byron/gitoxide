@@ -16,7 +16,7 @@ pub(crate) fn apply_deltas<F>(
     hash_kind: HashKind,
 ) -> Result<Vec<(u64, owned::Id)>, Error>
 where
-    F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> bool + Send + Sync,
+    F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
 {
     let mut decompressed_bytes_from_cache = |pack_offset: &u64, entry_size: &u64| -> Result<(bool, Vec<u8>), Error> {
         let cache = caches
