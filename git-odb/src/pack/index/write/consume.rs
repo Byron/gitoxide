@@ -8,7 +8,7 @@ use smallvec::alloc::collections::BTreeMap;
 use std::io;
 
 pub(crate) fn apply_deltas<F>(
-    base_entries: Vec<&Entry>,
+    base_entries: Vec<Entry>,
     resolve_buf: &mut Vec<u8>,
     _entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
@@ -21,7 +21,7 @@ where
     let mut decompressed_bytes_from_cache = |pack_offset: &u64, entry_size: &usize| -> Result<(bool, Vec<u8>), Error> {
         let cache = caches
             .lock()
-            .get_mut(pack_offset)
+            .get_mut(&pack_offset)
             .expect("an entry for every pack offset")
             .cache();
         let (is_borrowed, cache) = match cache {
@@ -67,12 +67,13 @@ where
     };
     let mut out = Vec::with_capacity(base_entries.len()); // perfectly conservative guess
 
+    // Compute hashes for all of our bases right away
     for Entry {
         pack_offset,
         kind,
         entry_len,
         ..
-    } in base_entries
+    } in &base_entries
     {
         let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset, entry_len)?;
         out.push((
@@ -82,6 +83,9 @@ where
         possibly_return_to_cache(pack_offset, is_borrowed, base_bytes);
     }
 
+    // find all deltas that match our bases, decompress them, apply them to the decompressed base, keep the hash
+    // and finally store the fully decompressed delta as new base (if they have dependants of their own).
+    // If there is nobody else using them, we could remove them, but that's expensive so let's just keep them around.
     out.shrink_to_fit();
     Ok(out)
 }

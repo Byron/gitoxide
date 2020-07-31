@@ -39,6 +39,7 @@ impl pack::index::File {
         }
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
+        let mut first_delta_index = None;
         let mut last_pack_offset = 0;
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         for (eid, entry) in entries.enumerate() {
@@ -80,6 +81,11 @@ impl pack::index::File {
                             Error::IteratorInvariantBasesBeforeDeltasNeedThem(pack_offset, base_pack_offset)
                         })?
                         .increment_child_count();
+
+                    if first_delta_index.is_none() {
+                        first_delta_index = Some(eid);
+                    }
+
                     (
                         mode.delta_cache(compressed, decompressed),
                         ObjectKind::OfsDelta(base_pack_offset),
@@ -111,7 +117,11 @@ impl pack::index::File {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
                 Chunks {
-                    iter: index_entries.iter().take(last_base_index).filter(|e| e.kind.is_base()),
+                    iter: index_entries
+                        .iter()
+                        .take(last_base_index + 1)
+                        .filter(|e| e.kind.is_base())
+                        .cloned(),
                     size: chunk_size,
                 },
                 thread_limit,
@@ -120,7 +130,10 @@ impl pack::index::File {
                     apply_deltas(
                         base_pack_offsets,
                         state,
-                        &index_entries,
+                        match first_delta_index {
+                            Some(idx) => &index_entries[idx..],
+                            None => &[],
+                        },
                         &cache_by_offset,
                         &mode,
                         kind.hash(),

@@ -18,6 +18,7 @@ pub(crate) enum Cache {
     Compressed(Vec<u8>, usize),
 }
 
+#[derive(Clone)]
 pub(crate) enum ObjectKind {
     Base(git_object::Kind),
     OfsDelta(u64),
@@ -38,6 +39,7 @@ impl ObjectKind {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct Entry {
     pub pack_offset: u64,
     pub entry_len: usize,
