@@ -30,16 +30,19 @@ where
         };
         let bytes = match cache {
             Cache::Decompressed(b) => b,
-            Cache::Compressed(b, decompressed_len) => {
-                let mut out = Vec::with_capacity(decompressed_len);
-                zlib::Inflate::default()
-                    .once(&b, &mut io::Cursor::new(&mut out), true)
-                    .map_err(|err| Error::ConsumeZlibInflate(err, "Failed to decompress entry"))?;
-                out
-            }
+            Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)
             Cache::Unset => {
                 resolve_buf.resize(*entry_size as usize, 0);
-                unimplemented!("use resolver")
+                match mode {
+                    Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
+                        r(*pack_offset..*pack_offset + *entry_size, resolve_buf)
+                            .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
+                        decompress_all_at_once(resolve_buf, decompressed_len)
+                    },
+                    Mode::InMemoryDecompressed | Mode::InMemory => {
+                        unreachable!("BUG: If there is no cache, we always need a resolver")
+                    }
+                }
             }
         };
         Ok((is_borrowed, bytes))
@@ -79,4 +82,12 @@ where
 
     out.shrink_to_fit();
     Ok(out)
+}
+
+fn decompress_all_at_once(b: &Vec<u8>, decompressed_len: usize) -> Vec<u8> {
+    let mut out = Vec::with_capacity(decompressed_len);
+    zlib::Inflate::default()
+        .once(&b, &mut io::Cursor::new(&mut out), true)
+        .map_err(|err| Error::ConsumeZlibInflate(err, "Failed to decompress entry"))?;
+    out
 }

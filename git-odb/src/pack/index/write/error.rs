@@ -43,5 +43,8 @@ quick_error! {
             display("{}", msg)
             source(err)
         }
+        ConsumeResolveFailed(pack_offset: u64) {
+            display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
+        }
     }
 }
