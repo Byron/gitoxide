@@ -353,6 +353,12 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * [x] support `gpgsig-sha256` field - we won't break, but also don't do anything with it (e.g. `extra_headers`)
 * [ ] support index V3
 * [ ] Pack file PSRC field
+
+### `.unwrap()` vs `.expect(…)`
+
+* don't use unwrap, not even in tests. Instead use `quick_error!()` or `Box<dyn std::error::Error>`.
+* Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
+  answer "This should work _because_…<expect(…)>"
    
 ## Plumbing vs Porcelain
 

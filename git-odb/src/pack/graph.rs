@@ -46,7 +46,11 @@ impl DeltaTree {
             })
             .map(move |idx| Node {
                 index: idx,
-                pack_offset: self.inner.node_weight(idx).copied().unwrap(),
+                pack_offset: self
+                    .inner
+                    .node_weight(idx)
+                    .copied()
+                    .expect("index we iterate to be present in graph"),
             })
     }
 
@@ -56,14 +60,16 @@ impl DeltaTree {
 
     pub fn children(&self, n: Node, out: &mut Vec<Node>) {
         out.clear();
-        out.extend(
-            self.inner
-                .neighbors_directed(n.index, Direction::Outgoing)
-                .map(|idx| Node {
-                    index: idx,
-                    pack_offset: self.inner.node_weight(idx).copied().unwrap(),
-                }),
-        )
+        out.extend(self.inner.neighbors_directed(n.index, Direction::Outgoing).map(|idx| {
+            Node {
+                index: idx,
+                pack_offset: self
+                    .inner
+                    .node_weight(idx)
+                    .copied()
+                    .expect("index we iterate to be present in graph"),
+            }
+        }))
     }
 }
 

@@ -35,7 +35,7 @@ impl index::File {
             parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
         let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
         let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
-        let reduce_progress = std::sync::Mutex::new({
+        let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Traversing");
             p.init(Some(self.num_objects()), Some("objects"));
             p
@@ -44,8 +44,8 @@ impl index::File {
             (
                 make_cache(),
                 new_processor(),
-                Vec::with_capacity(2048), // decode buffer
-                reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
+                Vec::with_capacity(2048),                                      // decode buffer
+                reduce_progress.lock().add_child(format!("thread {}", index)), // per thread progress
             )
         };
 

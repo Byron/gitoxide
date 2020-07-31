@@ -70,7 +70,7 @@ impl pack::index::File {
                         ObjectKind::Base(header.to_kind().expect("a base object")),
                     )
                 }
-                RefDelta { .. } => return Err(Error::RefDelta),
+                RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
                 OfsDelta {
                     pack_offset: base_pack_offset,
                 } => {

@@ -19,7 +19,7 @@ fn div_decode_result(lhs: &mut decode::Outcome, div: usize) {
 }
 
 pub struct Reducer<'a, P> {
-    progress: &'a std::sync::Mutex<P>,
+    progress: &'a parking_lot::Mutex<P>,
     check: traverse::SafetyCheck,
     then: Instant,
     entries_seen: u32,
@@ -31,7 +31,7 @@ where
     P: Progress,
 {
     pub fn from_progress(
-        progress: &'a std::sync::Mutex<P>,
+        progress: &'a parking_lot::Mutex<P>,
         pack_data_len_in_bytes: usize,
         check: traverse::SafetyCheck,
     ) -> Self {
@@ -63,10 +63,7 @@ where
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let chunk_stats: Vec<_> = match input {
             Err(err @ traverse::Error::PackDecode(_, _, _)) if !self.check.fatal_decode_error() => {
-                self.progress
-                    .lock()
-                    .unwrap()
-                    .info(format!("Ignoring decode error: {}", err));
+                self.progress.lock().info(format!("Ignoring decode error: {}", err));
                 return Ok(());
             }
             res => res,
@@ -86,19 +83,19 @@ where
         );
 
         add_decode_result(&mut self.stats.average, chunk_total);
-        self.progress.lock().unwrap().set(self.entries_seen);
+        self.progress.lock().set(self.entries_seen);
         Ok(())
     }
 
     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
-        self.progress.lock().unwrap().done("finished");
+        self.progress.lock().done("finished");
 
         div_decode_result(&mut self.stats.average, self.entries_seen as usize);
 
         let elapsed_s = self.then.elapsed().as_secs_f32();
         let objects_per_second = (self.entries_seen as f32 / elapsed_s) as u32;
 
-        self.progress.lock().unwrap().info(format!(
+        self.progress.lock().info(format!(
             "of {} objects done in {:.2}s ({} objects/s, ~{}/s)",
             self.entries_seen,
             elapsed_s,

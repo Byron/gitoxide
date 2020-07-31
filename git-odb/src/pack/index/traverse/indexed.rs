@@ -43,7 +43,7 @@ impl index::File {
         )?;
         let if_there_are_enough_objects = || self.num_objects > 10_000;
 
-        let reduce_progress = std::sync::Mutex::new({
+        let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Iterating");
             p.init(Some(self.num_objects()), Some("objects"));
             p
@@ -54,7 +54,7 @@ impl index::File {
                 new_processor(),
                 Vec::<u8>::with_capacity(2048), // decode buffer
                 Vec::<(pack::graph::Node, u32)>::new(),
-                reduce_progress.lock().unwrap().add_child(format!("thread {}", index)), // per thread progress
+                reduce_progress.lock().add_child(format!("thread {}", index)), // per thread progress
             )
         };
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
