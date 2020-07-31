@@ -1,7 +1,7 @@
 use crate::{
     pack::cache,
     pack::data::{decoded, File},
-    zlib::Inflate,
+    zlib,
 };
 use git_object::{self as object, borrowed, owned};
 use quick_error::quick_error;
@@ -125,7 +125,7 @@ impl File {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
-        Inflate::default()
+        zlib::Inflate::default()
             .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
             .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
             .map(|(_, consumed_in, _)| consumed_in)
