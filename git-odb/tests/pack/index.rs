@@ -69,6 +69,7 @@ mod method {
 
     mod any {
         use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
+        use filebuffer::FileBuffer;
         use git_features::progress;
         use git_odb::{pack, pack::data::iter::Mode};
         use std::{fs, io};
@@ -78,8 +79,20 @@ mod method {
             for mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
                     for memory_mode in vec![
-                        pack::index::write::Mode::in_memory(),
-                        pack::index::write::Mode::in_memory_decompressed(),
+                        pack::index::write::Mode::ResolveBasesAndDeltas({
+                            let buf = FileBuffer::open(fixture_path(data_path))?;
+                            move |entry: pack::index::write::EntrySlice, out| -> bool {
+                                match buf.get(entry) {
+                                    Some(slice) => {
+                                        out.copy_from_slice(slice);
+                                        true
+                                    }
+                                    None => false,
+                                }
+                            }
+                        }),
+                        // pack::index::write::Mode::in_memory(),
+                        // pack::index::write::Mode::in_memory_decompressed(),
                     ] {
                         let pack_iter = pack::data::Iter::new_from_header(
                             io::BufReader::new(fs::File::open(fixture_path(data_path))?),

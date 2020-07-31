@@ -25,7 +25,7 @@ impl pack::index::File {
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
-        F: for<'r> Fn(ResolveContext, &'r mut Vec<u8>) -> bool + Send + Sync,
+        F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> bool + Send + Sync,
     {
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
