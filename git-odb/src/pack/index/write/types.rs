@@ -12,7 +12,7 @@ pub struct Outcome {
 }
 
 pub(crate) enum Cache {
-    Unset,
+    Unset(usize),
     Decompressed(Vec<u8>),
     /// compressed bytes + decompressed size
     Compressed(Vec<u8>, usize),
@@ -40,7 +40,7 @@ impl ObjectKind {
 
 pub(crate) struct Entry {
     pub pack_offset: u64,
-    pub entry_len: u64,
+    pub entry_len: usize,
     pub kind: ObjectKind,
     pub crc32: u32,
 }
@@ -73,7 +73,7 @@ impl CacheEntry {
     }
 
     pub fn cache(&mut self) -> Bytes {
-        let cache = std::mem::replace(&mut self.cache, Cache::Unset);
+        let cache = std::mem::replace(&mut self.cache, Cache::Unset(0));
         if self.child_count == 0 {
             Bytes::Owned(cache)
         } else {
@@ -86,7 +86,7 @@ impl CacheEntry {
     }
 }
 
-pub type EntrySlice = std::ops::Range<usize>;
+pub type EntrySlice = std::ops::Range<u64>;
 
 /// The function an entry into all of its bytes written to &mut Vec<u8> which is big enough and returns to true if bytes
 /// were written, false otherwise. The latter should never have to happen, but is an escape hatch if something goes very wrong
@@ -114,14 +114,14 @@ where
         match self {
             Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
+            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset(decompressed.len()),
         }
     }
     pub(crate) fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
             Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
+            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset(decompressed.len()),
         }
     }
 }

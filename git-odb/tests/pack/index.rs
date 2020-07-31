@@ -80,7 +80,11 @@ mod method {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
                     let resolve = pack::index::write::Mode::ResolveBasesAndDeltas({
                         let buf = FileBuffer::open(fixture_path(data_path))?;
-                        move |entry, out| buf.get(entry).map(|slice| out.copy_from_slice(slice))
+                        move |entry, out| {
+                            dbg!(&entry);
+                            buf.get(entry.start as usize..entry.end as usize)
+                                .map(|slice| out.copy_from_slice(slice))
+                        }
                     });
                     assert_index_write(mode, index_path, data_path, resolve)?;
                     assert_index_write(mode, index_path, data_path, pack::index::write::Mode::in_memory())?;

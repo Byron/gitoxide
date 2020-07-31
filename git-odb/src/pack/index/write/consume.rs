@@ -12,13 +12,13 @@ pub(crate) fn apply_deltas<F>(
     resolve_buf: &mut Vec<u8>,
     _entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
-    _mode: &Mode<F>,
+    mode: &Mode<F>,
     hash_kind: HashKind,
 ) -> Result<Vec<(u64, owned::Id)>, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
 {
-    let mut decompressed_bytes_from_cache = |pack_offset: &u64, entry_size: &u64| -> Result<(bool, Vec<u8>), Error> {
+    let mut decompressed_bytes_from_cache = |pack_offset: &u64, entry_size: &usize| -> Result<(bool, Vec<u8>), Error> {
         let cache = caches
             .lock()
             .get_mut(pack_offset)
@@ -30,15 +30,15 @@ where
         };
         let bytes = match cache {
             Cache::Decompressed(b) => b,
-            Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)
-            Cache::Unset => {
-                resolve_buf.resize(*entry_size as usize, 0);
+            Cache::Compressed(b, decompressed_len) => decompress_all_at_once(&b, decompressed_len)?,
+            Cache::Unset(decompressed_len) => {
+                resolve_buf.resize(*entry_size, 0);
                 match mode {
                     Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
-                        r(*pack_offset..*pack_offset + *entry_size, resolve_buf)
+                        r(*pack_offset..*pack_offset + *entry_size as u64, resolve_buf)
                             .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
-                        decompress_all_at_once(resolve_buf, decompressed_len)
-                    },
+                        decompress_all_at_once(resolve_buf, decompressed_len)?
+                    }
                     Mode::InMemoryDecompressed | Mode::InMemory => {
                         unreachable!("BUG: If there is no cache, we always need a resolver")
                     }
@@ -84,10 +84,10 @@ where
     Ok(out)
 }
 
-fn decompress_all_at_once(b: &Vec<u8>, decompressed_len: usize) -> Vec<u8> {
+fn decompress_all_at_once(b: &Vec<u8>, decompressed_len: usize) -> Result<Vec<u8>, Error> {
     let mut out = Vec::with_capacity(decompressed_len);
     zlib::Inflate::default()
         .once(&b, &mut io::Cursor::new(&mut out), true)
         .map_err(|err| Error::ConsumeZlibInflate(err, "Failed to decompress entry"))?;
-    out
+    Ok(out)
 }

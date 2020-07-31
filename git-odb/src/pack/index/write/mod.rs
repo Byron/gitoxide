@@ -40,8 +40,6 @@ impl pack::index::File {
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
         let mut last_pack_offset = 0;
-        // TODO: This should soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
-        // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         for (eid, entry) in entries.enumerate() {
             use pack::data::Header::*;
@@ -92,7 +90,7 @@ impl pack::index::File {
             cache_by_offset.insert(pack_offset, CacheEntry::new(cache));
             index_entries.push(Entry {
                 pack_offset,
-                entry_len: header_size as u64 + compressed_len as u64,
+                entry_len: header_size as usize + compressed_len,
                 kind,
                 crc32: 0, // TBD, but can be done right here, needs header encoding
             });
@@ -105,6 +103,9 @@ impl pack::index::File {
         let num_objects: u32 = num_objects
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
+
+        // TODO: This COULD soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
+        // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
         let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
         let mut sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
