@@ -89,6 +89,7 @@ mod method {
                         desired_kind,
                         pack::index::write::Mode::in_memory_decompressed(),
                         pack_iter,
+                        None,
                         progress::Discard,
                         &mut actual,
                     )?;

@@ -65,6 +65,7 @@ impl pack::Bundle {
             kind,
             pack::index::write::Mode::in_memory_decompressed(),
             iter_with_thinpack_resolver_tbd,
+            None,
             progress::Discard,
             &mut tempfile,
         )?;

@@ -1,6 +1,6 @@
 use crate::{hash, pack, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, WriteBytesExt};
-use git_features::progress::Progress;
+use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
 use git_object::owned;
 use quick_error::quick_error;
 use smallvec::alloc::collections::BTreeMap;
@@ -57,7 +57,7 @@ enum Cache {
 }
 
 struct Entry {
-    _is_base: bool,
+    is_base: bool,
     _pack_offset: u64,
     _id: Option<owned::Id>,
     _crc32: u32,
@@ -123,6 +123,22 @@ impl Mode<fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>> {
     }
 }
 
+struct Reducer;
+
+impl parallel::Reducer for Reducer {
+    type Input = Vec<owned::Id>;
+    type Output = ();
+    type Error = Error;
+
+    fn feed(&mut self, _input: Self::Input) -> Result<(), Self::Error> {
+        unimplemented!()
+    }
+
+    fn finalize(self) -> Result<Self::Output, Self::Error> {
+        unimplemented!()
+    }
+}
+
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
     /// Note that neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
@@ -130,6 +146,7 @@ impl pack::index::File {
         kind: pack::index::Kind,
         mode: Mode<F>,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
+        thread_limit: Option<usize>,
         _progress: impl Progress,
         out: impl io::Write,
     ) -> Result<Outcome, Error>
@@ -143,6 +160,7 @@ impl pack::index::File {
             return Err(Error::Unsupported(kind));
         }
         let mut num_objects = 0;
+        let mut bytes_to_process = 0u64;
         // This array starts out sorted by pack-offset
         let mut index_entries = Vec::with_capacity(entries.size_hint().0);
         if index_entries.capacity() == 0 {
@@ -164,6 +182,7 @@ impl pack::index::File {
             } = entry?;
             use pack::data::Header::*;
             num_objects += 1;
+            bytes_to_process += decompressed.len() as u64;
             let (cache, _is_base) = match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
@@ -191,7 +210,7 @@ impl pack::index::File {
                 },
             );
             index_entries.push(Entry {
-                _is_base,
+                is_base: _is_base,
                 _pack_offset: pack_offset,
                 _id: None,
                 _crc32: 0, // TBD, but can be done right here, needs header encoding
@@ -200,7 +219,15 @@ impl pack::index::File {
         }
 
         // Prevent us from trying to find bases for resolution past the point where they are
-        let _last_base_index = last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
+        let last_base_index = last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
+        in_parallel_if(
+            || bytes_to_process > 5_000_000,
+            index_entries.iter().take(last_base_index).filter(|e| e.is_base), // TODO: chunking
+            thread_limit,
+            |_| (),
+            |_base_pack_offset, _state| Vec::new(),
+            Reducer,
+        )?;
 
         // Write header
         out.write_all(V2_SIGNATURE)?;
