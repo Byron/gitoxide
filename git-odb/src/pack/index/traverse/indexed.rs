@@ -11,34 +11,6 @@ use git_features::{
 use git_object::Kind;
 use std::collections::BTreeMap;
 
-struct Chunks<I> {
-    size: usize,
-    iter: I,
-}
-impl<I> Iterator for Chunks<I>
-where
-    I: Iterator<Item = pack::graph::Node>,
-{
-    type Item = Vec<pack::graph::Node>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut res = Vec::with_capacity(self.size);
-        let mut items_left = self.size;
-        while let Some(item) = self.iter.next() {
-            res.push(item);
-            items_left -= 1;
-            if items_left == 0 {
-                break;
-            }
-        }
-        if res.is_empty() {
-            None
-        } else {
-            Some(res)
-        }
-    }
-}
-
 impl index::File {
     pub(crate) fn traverse_with_index_lookup<P, Processor>(
         &self,
@@ -86,7 +58,7 @@ impl index::File {
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         in_parallel_if(
             if_there_are_enough_objects,
-            Chunks {
+            util::Chunks {
                 size: chunk_size,
                 iter: tree.bases(),
             },
