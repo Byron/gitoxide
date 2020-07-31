@@ -77,7 +77,10 @@ mod method {
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
-                    for memory_mode in vec![pack::index::write::Mode::in_memory_decompressed()] {
+                    for memory_mode in vec![
+                        pack::index::write::Mode::in_memory(),
+                        pack::index::write::Mode::in_memory_decompressed(),
+                    ] {
                         let pack_iter = pack::data::Iter::new_from_header(
                             io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                             *mode,

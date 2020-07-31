@@ -9,6 +9,7 @@ mod error;
 pub use error::Error;
 
 mod types;
+use crate::zlib::Inflate;
 use std::convert::TryInto;
 pub use types::*;
 
@@ -178,7 +179,13 @@ where
         };
         let bytes = match cache {
             Cache::Decompressed(b) => b,
-            Cache::Compressed(_, _) => unimplemented!("decompress once"),
+            Cache::Compressed(b, decompressed_len) => {
+                let mut out = Vec::with_capacity(decompressed_len);
+                Inflate::default()
+                    .once(&b, &mut io::Cursor::new(&mut out), true)
+                    .unwrap(); //TODO: allow this function to fail gracefully
+                out
+            }
             Cache::Unset => unimplemented!("use resolver"),
         };
         (is_borrowed, bytes)
