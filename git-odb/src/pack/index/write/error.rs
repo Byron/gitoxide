@@ -33,5 +33,11 @@ quick_error! {
         IteratorInvariantBasesBeforeDeltasNeedThem(delta_pack_offset: u64, base_pack_offset: u64) {
             display("The delta at pack offset {} could not find its base at {} - it should have been seen already", delta_pack_offset, base_pack_offset)
         }
+        IteratorInvariantTooManyObjects(num_objects: usize) {
+            display("Only u32::MAX objects can be stored in a pack, found {}", num_objects)
+        }
+        IteratorInvariantIncreasingPackOffset(last_pack_offset: u64, pack_offset: u64) {
+            display("Pack offsets must only increment. The previous pack offset was {}, the current one is {}", last_pack_offset, pack_offset)
+        }
     }
 }

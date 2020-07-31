@@ -20,9 +20,8 @@ pub(crate) enum Cache {
 
 pub(crate) struct Entry {
     pub is_base: bool,
-    pub _pack_offset: u64,
-    pub _id: Option<owned::Id>,
-    pub _crc32: u32,
+    pub pack_offset: u64,
+    pub crc32: u32,
 }
 
 pub(crate) struct CacheEntry {
@@ -85,18 +84,30 @@ impl Mode<fn(u64, &mut Vec<u8>) -> Option<(pack::data::Header, u64)>> {
     }
 }
 
-pub(crate) struct Reducer;
+pub(crate) struct Reducer {
+    pub(crate) items: Vec<(u64, owned::Id, u32)>,
+}
+
+impl Reducer {
+    pub fn new(num_objects: u32) -> Self {
+        Reducer {
+            items: Vec::with_capacity(num_objects as usize),
+        }
+    }
+}
 
 impl parallel::Reducer for Reducer {
-    type Input = Vec<owned::Id>;
-    type Output = ();
+    type Input = Vec<(u64, owned::Id)>;
+    type Output = Vec<(u64, owned::Id, u32)>;
     type Error = pack::index::write::Error;
 
-    fn feed(&mut self, _input: Self::Input) -> Result<(), Self::Error> {
-        unimplemented!()
+    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
+        self.items
+            .extend(input.into_iter().map(|(pack_offset, id)| (pack_offset, id, 0)));
+        Ok(())
     }
 
     fn finalize(self) -> Result<Self::Output, Self::Error> {
-        unimplemented!()
+        Ok(self.items)
     }
 }

@@ -9,6 +9,7 @@ mod error;
 pub use error::Error;
 
 mod types;
+use std::convert::TryInto;
 pub use types::*;
 
 /// Various ways of writing an index file from pack entries
@@ -40,6 +41,7 @@ impl pack::index::File {
         }
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
+        let mut last_pack_offset = 0;
         // TODO: This should soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
         // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
@@ -52,6 +54,13 @@ impl pack::index::File {
                 decompressed,
                 trailer,
             } = entry?;
+            if !(pack_offset > last_pack_offset) {
+                return Err(Error::IteratorInvariantIncreasingPackOffset(
+                    last_pack_offset,
+                    pack_offset,
+                ));
+            }
+            last_pack_offset = pack_offset;
             use pack::data::Header::*;
             num_objects += 1;
             bytes_to_process += decompressed.len() as u64;
@@ -82,10 +91,9 @@ impl pack::index::File {
                 },
             );
             index_entries.push(Entry {
+                pack_offset: pack_offset,
                 is_base: _is_base,
-                _pack_offset: pack_offset,
-                _id: None,
-                _crc32: 0, // TBD, but can be done right here, needs header encoding
+                crc32: 0, // TBD, but can be done right here, needs header encoding
             });
             last_seen_trailer = trailer;
         }
@@ -93,17 +101,33 @@ impl pack::index::File {
         // Prevent us from trying to find bases for resolution past the point where they are
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let last_base_index = last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
-        in_parallel_if(
-            || bytes_to_process > 5_000_000,
-            Chunks {
-                iter: index_entries.iter().take(last_base_index).filter(|e| e.is_base),
-                size: chunk_size,
-            },
-            thread_limit,
-            |_| (),
-            |_base_pack_offset, _state| Vec::new(),
-            Reducer,
-        )?;
+        let num_objects: u32 = num_objects
+            .try_into()
+            .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
+        let mut sorted_pack_offsets_by_oid = {
+            let mut items = in_parallel_if(
+                || bytes_to_process > 5_000_000,
+                Chunks {
+                    iter: index_entries.iter().take(last_base_index).filter(|e| e.is_base),
+                    size: chunk_size,
+                },
+                thread_limit,
+                |_| (),
+                |_base_pack_offsets, _state| Vec::new(),
+                Reducer::new(num_objects),
+            )?;
+            items.sort_by_key(|e| e.1);
+            items
+        };
+
+        // Bring crc32 back into our perfectly sorted oid which is sorted by oid
+        for (pack_offset, _oid, crc32) in sorted_pack_offsets_by_oid.iter_mut() {
+            let index = index_entries
+                .binary_search_by_key(pack_offset, |e| e.pack_offset)
+                .expect("both arrays to have the same pack-offsets");
+            *crc32 = index_entries[index].crc32;
+        }
+        drop(index_entries);
 
         // Write header
         out.write_all(V2_SIGNATURE)?;
