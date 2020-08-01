@@ -208,15 +208,15 @@ impl File {
             });
             use pack::data::Header;
             cursor = match cursor.header {
-                Header::OfsDelta { pack_offset } => self.entry(pack_offset),
-                Header::RefDelta { oid } => match resolve(oid.to_borrowed(), out) {
+                Header::OfsDelta { base_pack_offset } => self.entry(base_pack_offset),
+                Header::RefDelta { base_id } => match resolve(base_id.to_borrowed(), out) {
                     Some(ResolvedBase::InPack(entry)) => entry,
                     Some(ResolvedBase::OutOfPack { end, kind }) => {
                         base_buffer_size = Some(end);
                         object_kind = Some(kind);
                         break;
                     }
-                    None => return Err(Error::DeltaBaseUnresolved(oid)),
+                    None => return Err(Error::DeltaBaseUnresolved(base_id)),
                 },
                 _ => unreachable!("cursor.is_delta() only allows deltas here"),
             };

@@ -22,12 +22,6 @@ pub struct Entry {
     pub data_offset: u64,
 }
 
-impl Entry {
-    pub fn data_offset(&self, pack_offset: u64) -> u64 {
-        pack_offset + self.header_size as u64
-    }
-}
-
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Header {
@@ -38,11 +32,11 @@ pub enum Header {
     /// An object within this pack if the LSB encoded offset would be larger than 20 bytes
     /// Alternatively an object stored in the repository, if this is a thin pack
     RefDelta {
-        oid: owned::Id,
+        base_id: owned::Id,
     },
     /// The offset into the pack at which to find the base object header
     OfsDelta {
-        pack_offset: u64,
+        base_pack_offset: u64,
     },
 }
 impl Header {
@@ -84,14 +78,14 @@ impl Header {
             OFS_DELTA => {
                 let (distance, leb_bytes) = leb64decode(&d[consumed..]);
                 let delta = OfsDelta {
-                    pack_offset: pack_offset - distance,
+                    base_pack_offset: pack_offset - distance,
                 };
                 consumed += leb_bytes;
                 delta
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    oid: owned::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
+                    base_id: owned::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
                 };
                 consumed += SHA1_SIZE;
                 delta
@@ -118,7 +112,7 @@ impl Header {
             OFS_DELTA => {
                 let (distance, leb_bytes) = streaming_leb64decode(&mut r)?;
                 let delta = OfsDelta {
-                    pack_offset: pack_offset.checked_sub(distance).ok_or_else(|| {
+                    base_pack_offset: pack_offset.checked_sub(distance).ok_or_else(|| {
                         io::Error::new(
                             io::ErrorKind::Other,
                             format!(
@@ -135,7 +129,7 @@ impl Header {
                 let mut buf = [0u8; SHA1_SIZE];
                 r.read_exact(&mut buf)?;
                 let delta = RefDelta {
-                    oid: owned::Id::new_sha1(buf),
+                    base_id: owned::Id::new_sha1(buf),
                 };
                 consumed += SHA1_SIZE;
                 delta
@@ -174,13 +168,11 @@ impl Header {
 
         use Header::*;
         match self {
-            RefDelta { oid } => {
+            RefDelta { base_id: oid } => {
                 out.write_all(oid.as_slice())?;
                 written += oid.as_slice().len();
             }
-            OfsDelta {
-                pack_offset: base_pack_offset,
-            } => {
+            OfsDelta { base_pack_offset } => {
                 let mut distance = pack_offset
                     .checked_sub(*base_pack_offset)
                     .expect("base entry to be before this entry");

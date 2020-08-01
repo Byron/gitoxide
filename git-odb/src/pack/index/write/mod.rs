@@ -78,9 +78,7 @@ impl pack::index::File {
                     )
                 }
                 RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
-                OfsDelta {
-                    pack_offset: base_pack_offset,
-                } => {
+                OfsDelta { base_pack_offset } => {
                     cache_by_offset
                         .get_mut(&base_pack_offset)
                         .ok_or_else(|| {

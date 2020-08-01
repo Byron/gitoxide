@@ -15,8 +15,7 @@
       * [x] 64 bit offset extension
   * [ ] seriously refactor the header abstraction in the pack file - it's not right at all.
      * pack_offset -> offset_distance_to_base. That way it can be encoded/decoded without further knowledge.
-     * RefDelta { oid } -> id
-     * data_offset becomes method, the field becomes the header size
+     * header_size becomes a function
      * to_write should be on entry
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli _index-from-pack_ **

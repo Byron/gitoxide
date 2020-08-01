@@ -136,19 +136,17 @@ impl DeltaTree {
                     let base = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base);
                 }
-                RefDelta { oid } => {
+                RefDelta { base_id } => {
                     let base_or_child = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base_or_child);
-                    if let Some(base_pack_offset) = resolve_in_pack_oid(oid.to_borrowed()) {
+                    if let Some(base_pack_offset) = resolve_in_pack_oid(base_id.to_borrowed()) {
                         let base = offsets_to_node
                             .entry(base_pack_offset)
                             .or_insert_with(|| tree.add_node(base_pack_offset));
                         tree.add_edge(*base, base_or_child, ());
                     }
                 }
-                OfsDelta {
-                    pack_offset: base_pack_offset,
-                } => {
+                OfsDelta { base_pack_offset } => {
                     let child = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, child);
                     let base = offsets_to_node
