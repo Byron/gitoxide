@@ -1,5 +1,5 @@
 use crate::{pack, pack::index::util::Chunks};
-use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
+use git_features::{hash, parallel, parallel::in_parallel_if, progress::Progress};
 use smallvec::alloc::collections::BTreeMap;
 use std::{convert::TryInto, io};
 
@@ -42,6 +42,7 @@ impl pack::index::File {
         let mut first_delta_index = None;
         let mut last_pack_offset = 0;
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
+        let mut header_buf = [0u8; 16];
         for (eid, entry) in entries.enumerate() {
             use pack::data::Header::*;
 
@@ -63,6 +64,11 @@ impl pack::index::File {
             last_pack_offset = pack_offset;
             num_objects += 1;
             bytes_to_process += decompressed.len() as u64;
+            let crc32 = {
+                let header_len = header.to_write(decompressed.len() as u64, header_buf.as_mut())?;
+                let state = hash::crc32_update(0, &header_buf[..header_len]);
+                hash::crc32_update(state, &compressed)
+            };
             let (cache, kind) = match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
@@ -98,7 +104,7 @@ impl pack::index::File {
                 pack_offset,
                 entry_len: header_size as usize + compressed_len,
                 kind,
-                crc32: 0, // TBD, but can be done right here, needs header encoding
+                crc32,
             });
             last_seen_trailer = trailer;
         }

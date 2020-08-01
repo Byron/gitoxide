@@ -126,16 +126,18 @@ impl Header {
         Ok((object, size, consumed))
     }
 
-    pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<()> {
+    pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<usize> {
         let mut size = decompressed_size_in_bytes;
+        let mut written = 1;
         let mut c: u8 = (self.to_type_id() << 4) | (size as u8 & 0b0000_1111);
         size >>= 4;
         while size != 0 {
             out.write_all(&[c | 0b1000_0000])?;
+            written += 1;
             c = size as u8 & 0b0111_1111;
             size >>= 7;
         }
-        Ok(())
+        Ok(written)
     }
 }
 
