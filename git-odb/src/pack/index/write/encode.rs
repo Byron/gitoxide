@@ -30,7 +30,6 @@ pub(crate) fn to_write(
 
     let needs_64bit_offsets = entries_sorted_by_oid.last().expect("at least one pack entry").0 > LARGE_OFFSET_THRESHOLD;
     let mut fan_out_be = [0u32; 256];
-    let mut first_byte = 0u8;
 
     let mut iter = entries_sorted_by_oid.iter();
     for (offset, byte) in fan_out_be.iter_mut().zip(0u8..=255) {
@@ -38,12 +37,6 @@ pub(crate) fn to_write(
             .position(|(_, id, _)| id.as_slice()[0] != byte)
             .unwrap_or_else(|| entries_sorted_by_oid.len());
         *offset = pos as u32;
-    }
-    for (idx, (_, id, _)) in entries_sorted_by_oid.iter().enumerate() {
-        if first_byte != id.as_slice()[0] {
-            fan_out_be[first_byte as usize] = (idx as u32).to_be();
-            first_byte += 1;
-        }
     }
 
     // SAFETY: It's safe to interpret 4BE bytes * 256 into 1byte * 1024 for the purpose of writing
