@@ -254,7 +254,6 @@ impl index::File {
             )
             .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
         let object_kind = entry_stats.kind;
-        let consumed_input = entry_stats.compressed_size;
 
         if check.object_checksum() {
             let header_size = crate::loose::object::header::encode(object_kind, buf.len() as u64, &mut header_buf[..])
@@ -274,7 +273,7 @@ impl index::File {
             }
             if let Some(desired_crc32) = index_entry.crc32 {
                 let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
-                let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + consumed_input);
+                let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + entry_stats.compressed_size);
                 if actual_crc32 != desired_crc32 {
                     return Err(Error::Crc32Mismatch {
                         actual: actual_crc32,

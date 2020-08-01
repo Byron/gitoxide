@@ -10,9 +10,28 @@ fn size_of_entry() {
 }
 
 mod new_from_header {
-    use crate::{fixture_path, pack::SMALL_PACK};
+    use crate::{fixture_path, pack::SMALL_PACK, pack::V2_PACKS_AND_INDICES};
     use git_odb::{pack, pack::data::iter::Mode};
     use std::fs;
+
+    #[test]
+    fn header_encode() -> Result<(), Box<dyn std::error::Error>> {
+        for (_, data_file) in V2_PACKS_AND_INDICES {
+            let data = fs::read(fixture_path(data_file))?;
+            for entry in pack::data::Iter::new_from_header(std::io::BufReader::new(data.as_slice()), Mode::AsIs)? {
+                let entry = entry?;
+
+                let mut buf = Vec::<u8>::new();
+                entry
+                    .header
+                    .to_write(entry.decompressed.len() as u64, entry.pack_offset, &mut buf)?;
+                dbg!(&buf);
+                let new_header = pack::data::Header::from_bytes(&buf, entry.pack_offset).0;
+                assert_eq!(new_header, entry.header, "headers match after roundtrip");
+            }
+        }
+        Ok(())
+    }
 
     #[test]
     fn generic_iteration() -> Result<(), Box<dyn std::error::Error>> {
