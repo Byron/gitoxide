@@ -129,12 +129,12 @@ mod method {
                 &expected[..end_of_header],
                 "we should get the header right"
             );
-            // let end_of_fanout_table = end_of_header + 256 * 4;
-            // assert_eq!(
-            //     actual,
-            //     &expected[..end_of_fanout_table],
-            //     "we should get the fanout table right"
-            // );
+            let end_of_fanout_table = end_of_header + 256 * 4;
+            assert_eq!(
+                &actual[end_of_header..end_of_fanout_table],
+                &expected[end_of_header..end_of_fanout_table],
+                "we should get the fanout table right"
+            );
             // TODO: comment this in for the final test - keep the above anyway though, useful if something breaks
             // assert_eq!(
             //     actual, expected,
