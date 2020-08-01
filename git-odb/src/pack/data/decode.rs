@@ -107,7 +107,7 @@ impl File {
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
         let object_data = &self.data[pack_offset..];
-        pack::data::Header::from_bytes(object_data, offset)
+        pack::data::Entry::from_bytes(object_data, offset)
     }
 
     /// Decompress the object expected at the given data offset, sans pack header. This information is only

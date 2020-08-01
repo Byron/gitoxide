@@ -131,11 +131,11 @@ where
                         hash,
                     },
                 };
-                let res = pack::data::Header::from_read(&mut read, self.offset);
+                let res = pack::data::Entry::from_read(&mut read, self.offset);
                 self.hash = Some(read.write.hash);
                 res
             }
-            None => pack::data::Header::from_read(&mut self.read, self.offset),
+            None => pack::data::Entry::from_read(&mut self.read, self.offset),
         }
         .map_err(Error::from)?;
 

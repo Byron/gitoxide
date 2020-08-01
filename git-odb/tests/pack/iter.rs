@@ -28,7 +28,7 @@ mod new_from_header {
                     decompressed_size,
                     header_size,
                     ..
-                } = pack::data::Header::from_bytes(&buf, entry.pack_offset);
+                } = pack::data::Entry::from_bytes(&buf, entry.pack_offset);
 
                 assert_eq!(header_size, buf.len() as u8, "it should consume all provided bytes");
                 assert_eq!(

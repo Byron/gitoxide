@@ -14,10 +14,7 @@
       * [x] 32bit offsets
       * [x] 64 bit offset extension
   * [ ] seriously refactor the header abstraction in the pack file - it's not right at all.
-     * pack_offset -> offset_distance_to_base. That way it can be encoded/decoded without further knowledge.
      * header_size becomes a function
-     * Move Header::from_* returning entries to Entry
-     * to_write should be on entry
   * [ ] refactor pack:data::iter::Entry to duplicate less of pack::data::Entry
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli _index-from-pack_ **

@@ -22,6 +22,7 @@ pub struct Entry {
     pub data_offset: u64,
 }
 
+/// Access
 impl Entry {
     pub fn base_pack_offset(&self, distance: u64) -> u64 {
         self.data_offset - self.header_size as u64 - distance
@@ -31,55 +32,8 @@ impl Entry {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Header {
-    Commit,
-    Tree,
-    Blob,
-    Tag,
-    /// An object within this pack if the LSB encoded offset would be larger than 20 bytes
-    /// Alternatively an object stored in the repository, if this is a thin pack
-    RefDelta {
-        base_id: owned::Id,
-    },
-    /// The distance to the pack offset of the base object, measured from this objects pack offset, so that
-    /// base_pack_offset = pack_offset - distance
-    OfsDelta {
-        base_distance: u64,
-    },
-}
-impl Header {
-    pub fn to_kind(&self) -> Option<git_object::Kind> {
-        use git_object::Kind::*;
-        Some(match self {
-            Header::Tree => Tree,
-            Header::Blob => Blob,
-            Header::Commit => Commit,
-            Header::Tag => Tag,
-            Header::RefDelta { .. } | Header::OfsDelta { .. } => return None,
-        })
-    }
-    pub fn to_type_id(&self) -> u8 {
-        use Header::*;
-        match self {
-            Blob => BLOB,
-            Tree => TREE,
-            Commit => COMMIT,
-            Tag => TAG,
-            OfsDelta { .. } => OFS_DELTA,
-            RefDelta { .. } => REF_DELTA,
-        }
-    }
-    pub fn is_delta(&self) -> bool {
-        match self {
-            Header::OfsDelta { .. } | Header::RefDelta { .. } => true,
-            _ => false,
-        }
-    }
-}
-
-impl Header {
+/// Decoding
+impl Entry {
     pub fn from_bytes(d: &[u8], pack_offset: u64) -> Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
@@ -149,7 +103,57 @@ impl Header {
             data_offset: pack_offset + consumed as u64,
         })
     }
+}
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum Header {
+    Commit,
+    Tree,
+    Blob,
+    Tag,
+    /// An object within this pack if the LSB encoded offset would be larger than 20 bytes
+    /// Alternatively an object stored in the repository, if this is a thin pack
+    RefDelta {
+        base_id: owned::Id,
+    },
+    /// The distance to the pack offset of the base object, measured from this objects pack offset, so that
+    /// base_pack_offset = pack_offset - distance
+    OfsDelta {
+        base_distance: u64,
+    },
+}
+impl Header {
+    pub fn to_kind(&self) -> Option<git_object::Kind> {
+        use git_object::Kind::*;
+        Some(match self {
+            Header::Tree => Tree,
+            Header::Blob => Blob,
+            Header::Commit => Commit,
+            Header::Tag => Tag,
+            Header::RefDelta { .. } | Header::OfsDelta { .. } => return None,
+        })
+    }
+    pub fn to_type_id(&self) -> u8 {
+        use Header::*;
+        match self {
+            Blob => BLOB,
+            Tree => TREE,
+            Commit => COMMIT,
+            Tag => TAG,
+            OfsDelta { .. } => OFS_DELTA,
+            RefDelta { .. } => REF_DELTA,
+        }
+    }
+    pub fn is_delta(&self) -> bool {
+        match self {
+            Header::OfsDelta { .. } | Header::RefDelta { .. } => true,
+            _ => false,
+        }
+    }
+}
+
+impl Header {
     pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<usize> {
         let mut size = decompressed_size_in_bytes;
         let mut written = 1;

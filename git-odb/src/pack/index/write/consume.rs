@@ -63,7 +63,7 @@ where
                                 decompressed_size,
                                 header_size,
                                 ..
-                            } = pack::data::Header::from_bytes(&bytes_buf, *pack_offset);
+                            } = pack::data::Entry::from_bytes(&bytes_buf, *pack_offset);
                             decompress_all_at_once(&bytes_buf[header_size as usize..], decompressed_size as usize)?
                         }
                         Mode::InMemoryDecompressed | Mode::InMemory => {
