@@ -10,6 +10,10 @@ pub(crate) fn to_write(
     kind: pack::index::Kind,
 ) -> io::Result<owned::Id> {
     use io::Write;
+    assert!(
+        !entries_sorted_by_oid.is_empty(),
+        "Empty packs do not exists, or so I think"
+    );
     assert_eq!(kind, pack::index::Kind::V2, "Can only write V2 packs right now");
     assert!(
         entries_sorted_by_oid.len() <= u32::MAX as usize,
@@ -21,9 +25,17 @@ pub(crate) fn to_write(
     out.write_all(V2_SIGNATURE)?;
     out.write_u32::<BigEndian>(kind as u32)?;
 
-    // collect fan-out, offsets and CRCs
-    let mut offsets_be = Vec::<u32>::with_capacity(entries_sorted_by_oid.len());
+    const LARGE_OFFSET_THRESHOLD: u64 = 0x7fff_ffff;
+    const HIGH_BIT: u32 = 0x8000_0000;
+
+    let needs_64bit_offsets = entries_sorted_by_oid.last().expect("at least one pack entry").0 > LARGE_OFFSET_THRESHOLD;
+    let mut offsets_be = if needs_64bit_offsets {
+        Vec::<u32>::with_capacity(entries_sorted_by_oid.len())
+    } else {
+        Vec::new()
+    };
     let mut offsets64_be = Vec::<u64>::new();
+
     let mut fan_out_be = [0u32; 256];
     let mut first_byte = 0u8;
 
@@ -33,15 +45,13 @@ pub(crate) fn to_write(
             first_byte += 1;
         }
 
-        if *pack_offset > 0x7fff_ffff {
+        if needs_64bit_offsets && *pack_offset > 0x7fff_ffff {
             assert!(
                 offsets64_be.len() < 0x7fff_ffff,
                 "Encoding breakdown - way too many 64bit offsets"
             );
-            offsets_be.push((offsets64_be.len() as u32) & 0x8000_000);
+            offsets_be.push((offsets64_be.len() as u32) & HIGH_BIT);
             offsets64_be.push(pack_offset.to_be());
-        } else {
-            offsets_be.push(*pack_offset as u32);
         }
     }
 
@@ -56,13 +66,22 @@ pub(crate) fn to_write(
         out.write_u32::<BigEndian>(*crc32)?;
     }
 
-    // SAFETY: It's safe to interpret 4BE bytes * N as 1byte * N * 4 for the purpose of writing
-    #[allow(unsafe_code)]
-    out.write_all(unsafe { std::slice::from_raw_parts(offsets_be.as_ptr() as *const u8, offsets_be.len() * 4) })?;
+    if offsets64_be.len() > 0 {
+        assert_eq!(offsets_be.len(), entries_sorted_by_oid.len());
+        // SAFETY: It's safe to interpret 4BE bytes * N as 1byte * N * 4 for the purpose of writing
+        #[allow(unsafe_code)]
+        out.write_all(unsafe { std::slice::from_raw_parts(offsets_be.as_ptr() as *const u8, offsets_be.len() * 4) })?;
 
-    // SAFETY: It's safe to interpret 8BE bytes * N as 1byte * N * 8 for the purpose of writing
-    #[allow(unsafe_code)]
-    out.write_all(unsafe { std::slice::from_raw_parts(offsets64_be.as_ptr() as *const u8, offsets64_be.len() * 8) })?;
+        // SAFETY: It's safe to interpret 8BE bytes * N as 1byte * N * 8 for the purpose of writing
+        #[allow(unsafe_code)]
+        out.write_all(unsafe {
+            std::slice::from_raw_parts(offsets64_be.as_ptr() as *const u8, offsets64_be.len() * 8)
+        })?;
+    } else {
+        for (pack_offset, _, _) in &entries_sorted_by_oid {
+            out.write_u32::<BigEndian>(*pack_offset as u32)?;
+        }
+    }
 
     out.write_all(pack_hash.as_slice())?;
 
