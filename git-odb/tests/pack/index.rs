@@ -124,7 +124,11 @@ mod method {
 
             let expected = fs::read(fixture_path(index_path))?;
             let end_of_header = 4 * 2;
-            assert_eq!(actual, &expected[..end_of_header], "we should get the header right");
+            assert_eq!(
+                &actual[..end_of_header],
+                &expected[..end_of_header],
+                "we should get the header right"
+            );
             // let end_of_fanout_table = end_of_header + 256 * 4;
             // assert_eq!(
             //     actual,

@@ -148,12 +148,12 @@ impl pack::index::File {
         drop(index_entries);
         drop(cache_by_offset);
 
-        let index_hash = encode::to_write(out, sorted_pack_offsets_by_oid, kind)?;
-
+        let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
+        let index_hash = encode::to_write(out, sorted_pack_offsets_by_oid, &pack_hash, kind)?;
         Ok(Outcome {
             index_kind: kind,
             index_hash,
-            pack_hash: last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?,
+            pack_hash,
             num_objects,
         })
     }
