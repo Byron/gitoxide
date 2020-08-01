@@ -19,6 +19,7 @@ pub(crate) fn apply_deltas<F>(
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
 {
+    let local_caches = RefCell::new(BTreeMap::<u64, CacheEntry>::new());
     enum FetchMode {
         /// Bases for deltas will decrement their refcount.
         AsBase,
@@ -29,8 +30,16 @@ where
     let decompressed_bytes_from_cache =
         |pack_offset: &u64, entry_size: &usize, fetch: FetchMode| -> Result<(bool, Vec<u8>), Error> {
             let cache = {
-                let mut guard = caches.lock();
-                let c = guard.get_mut(&pack_offset).expect("an entry for every pack offset");
+                // get the entry from the local cache, and on miss, pull it out of the expensive,
+                // shared & locked cache.
+                let mut local_caches = local_caches.borrow_mut();
+                let c = local_caches.entry(*pack_offset).or_insert_with(|| {
+                    caches
+                        .lock()
+                        .remove_entry(&pack_offset)
+                        .expect("an entry for every pack offset")
+                        .1
+                });
                 match fetch {
                     FetchMode::AsSource => c.cache(),
                     FetchMode::AsBase => c.cache_decr(),
@@ -64,8 +73,8 @@ where
         };
     let possibly_return_to_cache = |pack_offset: &u64, is_borrowed: bool, bytes: Vec<u8>| {
         if is_borrowed {
-            caches
-                .lock()
+            local_caches
+                .borrow_mut()
                 .get_mut(pack_offset)
                 .expect("an entry for every pack offset")
                 .set_decompressed(bytes);
@@ -134,6 +143,7 @@ where
         let mut fully_resolved_delta_bytes = bytes_buf.borrow_mut();
         fully_resolved_delta_bytes.resize(result_size as usize, 0);
         pack::data::decode::apply_delta(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
+
         possibly_return_to_cache(&base_entry.pack_offset, base_is_borrowed, base_bytes);
 
         out.push((

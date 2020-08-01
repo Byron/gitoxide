@@ -71,12 +71,16 @@ impl CacheEntry {
         self.cache()
     }
 
+    pub fn is_borrowed(child_count: u32) -> bool {
+        child_count != 0
+    }
+
     pub fn cache(&mut self) -> Bytes {
         let cache = std::mem::replace(&mut self.cache, Cache::Unset);
-        if self.child_count == 0 {
-            Bytes::Owned(cache)
-        } else {
+        if Self::is_borrowed(self.child_count) {
             Bytes::Borrowed(cache)
+        } else {
+            Bytes::Owned(cache)
         }
     }
     pub fn set_decompressed(&mut self, bytes: Vec<u8>) {
