@@ -1,6 +1,5 @@
 use crate::{
-    pack::cache,
-    pack::data::{decoded, File},
+    pack::{self, cache, data::File},
     zlib,
 };
 use git_object::{self as object, borrowed, owned};
@@ -34,7 +33,7 @@ struct Delta {
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
-    InPack(decoded::Entry),
+    InPack(pack::data::Entry),
     OutOfPack { kind: object::Kind, end: usize },
 }
 
@@ -58,7 +57,7 @@ impl Outcome {
             object_size: 0,
         }
     }
-    fn from_object_entry(kind: object::Kind, entry: &decoded::Entry, compressed_size: usize) -> Self {
+    fn from_object_entry(kind: object::Kind, entry: &pack::data::Entry, compressed_size: usize) -> Self {
         Self {
             kind,
             num_deltas: 0,
@@ -73,7 +72,7 @@ impl Outcome {
 impl File {
     // Note that this method does not resolve deltified objects, but merely decompresses their content
     // `out` is expected to be large enough to hold `entry.size` bytes.
-    pub fn decompress_entry(&self, entry: &decoded::Entry, out: &mut [u8]) -> Result<usize, Error> {
+    pub fn decompress_entry(&self, entry: &pack::data::Entry, out: &mut [u8]) -> Result<usize, Error> {
         assert!(
             out.len() as u64 >= entry.decompressed_size,
             "output buffer isn't large enough to hold decompressed result, want {}, have {}",
@@ -102,14 +101,14 @@ impl File {
         );
     }
 
-    pub fn entry(&self, offset: u64) -> decoded::Entry {
+    pub fn entry(&self, offset: u64) -> pack::data::Entry {
         self.assure_v2();
         let pack_offset: usize = offset.try_into().expect("offset representable by machine");
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
         let object_data = &self.data[pack_offset..];
-        let (object, decompressed_size, consumed_bytes) = decoded::Header::from_bytes(object_data, offset);
-        decoded::Entry {
+        let (object, decompressed_size, consumed_bytes) = pack::data::Header::from_bytes(object_data, offset);
+        pack::data::Entry {
             header: object,
             decompressed_size,
             data_offset: offset + consumed_bytes,
@@ -137,12 +136,12 @@ impl File {
     /// such as in `crc32(pack_data[entry.data_offset..entry.data_offset + compressed_size])`
     pub fn decode_entry(
         &self,
-        entry: decoded::Entry,
+        entry: pack::data::Entry,
         out: &mut Vec<u8>,
         resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
-        use crate::pack::data::decoded::Header::*;
+        use crate::pack::data::header::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
                 out.resize(
@@ -169,12 +168,11 @@ impl File {
     /// it's very, very large as 20bytes are smaller than the corresponding MSB encoded number
     fn resolve_deltas(
         &self,
-        last: decoded::Entry,
+        last: pack::data::Entry,
         resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
-        use crate::pack::data::decoded::Header;
         // all deltas, from the one that produces the desired object (first) to the oldest at the end of the chain
         let mut chain = SmallVec::<[Delta; 10]>::default();
         let first_entry = last.clone();
@@ -211,6 +209,7 @@ impl File {
                 decompressed_size,
                 data_offset: cursor.data_offset,
             });
+            use pack::data::Header;
             cursor = match cursor.header {
                 Header::OfsDelta { pack_offset } => self.entry(pack_offset),
                 Header::RefDelta { oid } => match resolve(oid.to_borrowed(), out) {

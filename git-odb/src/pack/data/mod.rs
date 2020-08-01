@@ -3,8 +3,8 @@ use filebuffer::FileBuffer;
 use std::path::Path;
 
 pub mod decode;
-mod decoded;
-pub use decoded::*;
+mod header;
+pub use header::*;
 
 pub mod init;
 pub mod parse;
@@ -12,6 +12,16 @@ pub mod verify;
 
 pub mod iter;
 pub use iter::Iter;
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Entry {
+    pub header: Header,
+    /// The decompressed size of the object in bytes
+    pub decompressed_size: u64,
+    /// absolute offset to compressed object data in the pack, just behind the header
+    pub data_offset: u64,
+}
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

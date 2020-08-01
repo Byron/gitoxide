@@ -7,12 +7,12 @@
   * [x] repair pack - write trailer for all complete objects
   * [ ] build index from pack
       * [x] header
-      * [ ] fan-out table
-      * [ ] oids
+      * [x] fan-out table
+      * [x] oids
       * [ ] crc32
           * [ ] encode pack header (for needed for CRC32)
-      * [ ] 32bit offsets
-      * [ ] 64 bit offset extension
+      * [x] 32bit offsets
+      * [x] 64 bit offset extension
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli _index-from-pack_ **
   * [ ] build index from pack

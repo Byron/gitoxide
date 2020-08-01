@@ -10,16 +10,6 @@ const _TYPE_EXT2: u8 = 5;
 const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry {
-    pub header: Header,
-    /// The decompressed size of the object in bytes
-    pub decompressed_size: u64,
-    /// absolute offset to compressed object data in the pack, just behind the header
-    pub data_offset: u64,
-}
-
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Header {
@@ -37,7 +27,6 @@ pub enum Header {
         pack_offset: u64,
     },
 }
-
 impl Header {
     pub fn to_kind(&self) -> Option<git_object::Kind> {
         use git_object::Kind::*;
@@ -55,71 +44,6 @@ impl Header {
             _ => false,
         }
     }
-}
-
-#[inline]
-fn leb64decode(d: &[u8]) -> (u64, usize) {
-    let mut i = 0;
-    let mut c = d[i];
-    i += 1;
-    let mut value = c as u64 & 0x7f;
-    while c & 0x80 != 0 {
-        c = d[i];
-        i += 1;
-        value += 1;
-        value = (value << 7) + (c as u64 & 0x7f)
-    }
-    (value, i)
-}
-
-#[inline]
-fn streaming_leb64decode(mut r: impl io::Read) -> Result<(u64, usize), io::Error> {
-    let mut b = [0u8; 1];
-    let mut i = 0;
-    r.read_exact(&mut b)?;
-    i += 1;
-    let mut value = b[0] as u64 & 0x7f;
-    while b[0] & 0x80 != 0 {
-        r.read_exact(&mut b)?;
-        i += 1;
-        value += 1;
-        value = (value << 7) + (b[0] as u64 & 0x7f)
-    }
-    Ok((value, i))
-}
-
-/// Parses the header of a pack-entry, yielding object type id, decompressed object size, and consumed bytes
-fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
-    let mut c = data[0];
-    let mut i = 1;
-    let type_id = (c >> 4) & 0b0000_0111;
-    let mut size = c as u64 & 0b0000_1111;
-    let mut s = 4;
-    while c & 0b1000_0000 != 0 {
-        c = data[i];
-        i += 1;
-        size += ((c & 0b0111_1111) as u64) << s;
-        s += 7
-    }
-    (type_id, size, i)
-}
-
-fn streaming_parse_header_info(mut read: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
-    let mut byte = [0u8; 1];
-    read.read_exact(&mut byte)?;
-    let mut c = byte[0];
-    let mut i = 1;
-    let type_id = (c >> 4) & 0b0000_0111;
-    let mut size = c as u64 & 0b0000_1111;
-    let mut s = 4;
-    while c & 0b1000_0000 != 0 {
-        read.read_exact(&mut byte)?;
-        c = byte[0];
-        i += 1;
-        size += ((c & 0b0111_1111) as u64) << s;
-        s += 7
-    }
-    Ok((type_id, size, i))
 }
 
 impl Header {
@@ -190,4 +114,69 @@ impl Header {
         };
         Ok((object, size, consumed))
     }
+}
+
+#[inline]
+fn leb64decode(d: &[u8]) -> (u64, usize) {
+    let mut i = 0;
+    let mut c = d[i];
+    i += 1;
+    let mut value = c as u64 & 0x7f;
+    while c & 0x80 != 0 {
+        c = d[i];
+        i += 1;
+        value += 1;
+        value = (value << 7) + (c as u64 & 0x7f)
+    }
+    (value, i)
+}
+
+#[inline]
+fn streaming_leb64decode(mut r: impl io::Read) -> Result<(u64, usize), io::Error> {
+    let mut b = [0u8; 1];
+    let mut i = 0;
+    r.read_exact(&mut b)?;
+    i += 1;
+    let mut value = b[0] as u64 & 0x7f;
+    while b[0] & 0x80 != 0 {
+        r.read_exact(&mut b)?;
+        i += 1;
+        value += 1;
+        value = (value << 7) + (b[0] as u64 & 0x7f)
+    }
+    Ok((value, i))
+}
+
+/// Parses the header of a pack-entry, yielding object type id, decompressed object size, and consumed bytes
+fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
+    let mut c = data[0];
+    let mut i = 1;
+    let type_id = (c >> 4) & 0b0000_0111;
+    let mut size = c as u64 & 0b0000_1111;
+    let mut s = 4;
+    while c & 0b1000_0000 != 0 {
+        c = data[i];
+        i += 1;
+        size += ((c & 0b0111_1111) as u64) << s;
+        s += 7
+    }
+    (type_id, size, i)
+}
+
+fn streaming_parse_header_info(mut read: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
+    let mut byte = [0u8; 1];
+    read.read_exact(&mut byte)?;
+    let mut c = byte[0];
+    let mut i = 1;
+    let type_id = (c >> 4) & 0b0000_0111;
+    let mut size = c as u64 & 0b0000_1111;
+    let mut s = 4;
+    while c & 0b1000_0000 != 0 {
+        read.read_exact(&mut byte)?;
+        c = byte[0];
+        i += 1;
+        size += ((c & 0b0111_1111) as u64) << s;
+        s += 7
+    }
+    Ok((type_id, size, i))
 }
