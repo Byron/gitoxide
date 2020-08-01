@@ -124,16 +124,42 @@ mod method {
 
             let expected = fs::read(fixture_path(index_path))?;
             let end_of_header = 4 * 2;
-            assert_eq!(
-                &actual[..end_of_header],
-                &expected[..end_of_header],
-                "we should get the header right"
-            );
+            assert_eq!(&actual[..end_of_header], &expected[..end_of_header], "header");
             let end_of_fanout_table = end_of_header + 256 * 4;
             assert_eq!(
                 &actual[end_of_header..end_of_fanout_table],
                 &expected[end_of_header..end_of_fanout_table],
-                "we should get the fanout table right"
+                "fan out table"
+            );
+            let end_of_ids = end_of_fanout_table + 20 * num_objects as usize;
+            assert_eq!(
+                &actual[end_of_fanout_table..end_of_ids],
+                &expected[end_of_fanout_table..end_of_ids],
+                "hashes: sha1"
+            );
+            let end_of_crc32 = end_of_ids + 4 * num_objects as usize;
+            assert_eq!(
+                &actual[end_of_ids..end_of_crc32],
+                &expected[end_of_ids..end_of_crc32],
+                "crc32"
+            );
+            let end_of_offsets = end_of_crc32 + 4 * num_objects as usize;
+            assert_eq!(
+                &actual[end_of_crc32..end_of_offsets],
+                &expected[end_of_crc32..end_of_offsets],
+                "offsets"
+            );
+            let end_of_pack_hash = end_of_offsets + 20;
+            assert_eq!(
+                &actual[end_of_offsets..end_of_pack_hash],
+                &expected[end_of_offsets..end_of_pack_hash],
+                "offsets"
+            );
+            let end_of_index_hash = end_of_pack_hash + 20;
+            assert_eq!(
+                &actual[end_of_pack_hash..end_of_index_hash],
+                &expected[end_of_pack_hash..end_of_index_hash],
+                "index hash"
             );
             // TODO: comment this in for the final test - keep the above anyway though, useful if something breaks
             // assert_eq!(
@@ -147,7 +173,7 @@ mod method {
             assert_eq!(outcome.index_kind, desired_kind);
             assert_eq!(
                 outcome.index_hash,
-                pack::index::File::at(fixture_path(index_path))?.index_checksum()
+                git_object::owned::Id::from_20_bytes(&expected[end_of_pack_hash..end_of_index_hash])
             );
             Ok(())
         }
