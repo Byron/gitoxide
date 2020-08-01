@@ -22,6 +22,15 @@ pub struct Entry {
     pub data_offset: u64,
 }
 
+impl Entry {
+    pub fn base_pack_offset(&self, distance: u64) -> u64 {
+        self.data_offset - self.header_size as u64 - distance
+    }
+    pub fn pack_offset(&self) -> u64 {
+        self.data_offset - self.header_size as u64
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Header {
@@ -34,9 +43,10 @@ pub enum Header {
     RefDelta {
         base_id: owned::Id,
     },
-    /// The offset into the pack at which to find the base object header
+    /// The distance to the pack offset of the base object, measured from this objects pack offset, so that
+    /// base_pack_offset = pack_offset - distance
     OfsDelta {
-        base_pack_offset: u64,
+        base_distance: u64,
     },
 }
 impl Header {
@@ -78,7 +88,7 @@ impl Header {
             OFS_DELTA => {
                 let (distance, leb_bytes) = leb64decode(&d[consumed..]);
                 let delta = OfsDelta {
-                    base_pack_offset: pack_offset - distance,
+                    base_distance: distance,
                 };
                 consumed += leb_bytes;
                 delta
@@ -100,7 +110,7 @@ impl Header {
             header: object,
             header_size: consumed as u8,
             decompressed_size: size,
-            data_offset: 0,
+            data_offset: pack_offset + consumed as u64,
         }
     }
 
@@ -112,15 +122,7 @@ impl Header {
             OFS_DELTA => {
                 let (distance, leb_bytes) = streaming_leb64decode(&mut r)?;
                 let delta = OfsDelta {
-                    base_pack_offset: pack_offset.checked_sub(distance).ok_or_else(|| {
-                        io::Error::new(
-                            io::ErrorKind::Other,
-                            format!(
-                                "Computing the absolute pack offset would underflow: {} - {}",
-                                pack_offset, distance
-                            ),
-                        )
-                    })?,
+                    base_distance: distance,
                 };
                 consumed += leb_bytes;
                 delta
@@ -144,16 +146,11 @@ impl Header {
             header: object,
             header_size: consumed as u8,
             decompressed_size: size,
-            data_offset: 0,
+            data_offset: pack_offset + consumed as u64,
         })
     }
 
-    pub fn to_write(
-        &self,
-        decompressed_size_in_bytes: u64,
-        pack_offset: u64,
-        mut out: impl io::Write,
-    ) -> io::Result<usize> {
+    pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<usize> {
         let mut size = decompressed_size_in_bytes;
         let mut written = 1;
         let mut c: u8 = (self.to_type_id() << 4) | (size as u8 & 0b0000_1111);
@@ -172,20 +169,17 @@ impl Header {
                 out.write_all(oid.as_slice())?;
                 written += oid.as_slice().len();
             }
-            OfsDelta { base_pack_offset } => {
-                let mut distance = pack_offset
-                    .checked_sub(*base_pack_offset)
-                    .expect("base entry to be before this entry");
+            OfsDelta { mut base_distance } => {
                 let mut buf = [0u8; 10];
                 let mut bytes_written = 1;
-                buf[buf.len() - 1] = distance as u8 & 0b0111_1111;
+                buf[buf.len() - 1] = base_distance as u8 & 0b0111_1111;
                 for out in buf.iter_mut().rev().skip(1) {
-                    distance >>= 7;
-                    if distance == 0 {
+                    base_distance >>= 7;
+                    if base_distance == 0 {
                         break;
                     }
-                    distance -= 1;
-                    *out = 0b1000_0000 | (distance as u8 & 0b0111_1111);
+                    base_distance -= 1;
+                    *out = 0b1000_0000 | (base_distance as u8 & 0b0111_1111);
                     bytes_written += 1;
                 }
                 out.write_all(&buf[buf.len() - bytes_written..])?;

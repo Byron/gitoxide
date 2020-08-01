@@ -22,9 +22,7 @@ mod new_from_header {
                 let entry = entry?;
 
                 let mut buf = Vec::<u8>::new();
-                entry
-                    .header
-                    .to_write(entry.decompressed.len() as u64, entry.pack_offset, &mut buf)?;
+                entry.header.to_write(entry.decompressed.len() as u64, &mut buf)?;
                 let pack::data::Entry {
                     header: new_header,
                     decompressed_size,

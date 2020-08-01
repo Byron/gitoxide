@@ -107,9 +107,7 @@ impl File {
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
         let object_data = &self.data[pack_offset..];
-        let mut entry = pack::data::Header::from_bytes(object_data, offset);
-        entry.data_offset = offset + entry.header_size as u64;
-        entry
+        pack::data::Header::from_bytes(object_data, offset)
     }
 
     /// Decompress the object expected at the given data offset, sans pack header. This information is only
@@ -208,7 +206,7 @@ impl File {
             });
             use pack::data::Header;
             cursor = match cursor.header {
-                Header::OfsDelta { base_pack_offset } => self.entry(base_pack_offset),
+                Header::OfsDelta { base_distance } => self.entry(cursor.base_pack_offset(base_distance)),
                 Header::RefDelta { base_id } => match resolve(base_id.to_borrowed(), out) {
                     Some(ResolvedBase::InPack(entry)) => entry,
                     Some(ResolvedBase::OutOfPack { end, kind }) => {

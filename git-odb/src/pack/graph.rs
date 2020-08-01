@@ -146,11 +146,11 @@ impl DeltaTree {
                         tree.add_edge(*base, base_or_child, ());
                     }
                 }
-                OfsDelta { base_pack_offset } => {
+                OfsDelta { base_distance } => {
                     let child = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, child);
                     let base = offsets_to_node
-                        .get(&base_pack_offset)
+                        .get(&(pack_offset - base_distance))
                         .expect("valid pack that puts bases before deltas that depend on it");
                     tree.add_edge(*base, child, ());
                 }

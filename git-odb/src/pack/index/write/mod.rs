@@ -65,7 +65,7 @@ impl pack::index::File {
             num_objects += 1;
             bytes_to_process += decompressed.len() as u64;
             let crc32 = {
-                let header_len = header.to_write(decompressed.len() as u64, pack_offset, header_buf.as_mut())?;
+                let header_len = header.to_write(decompressed.len() as u64, header_buf.as_mut())?;
                 let state = hash::crc32_update(0, &header_buf[..header_len]);
                 hash::crc32_update(state, &compressed)
             };
@@ -78,7 +78,8 @@ impl pack::index::File {
                     )
                 }
                 RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
-                OfsDelta { base_pack_offset } => {
+                OfsDelta { base_distance } => {
+                    let base_pack_offset = pack_offset - base_distance;
                     cache_by_offset
                         .get_mut(&base_pack_offset)
                         .ok_or_else(|| {
