@@ -161,11 +161,10 @@ mod method {
                 &expected[end_of_pack_hash..end_of_index_hash],
                 "index hash"
             );
-            // TODO: comment this in for the final test - keep the above anyway though, useful if something breaks
-            // assert_eq!(
-            //     actual, expected,
-            //     "we should be writing a bit-exact version of the original V2 index"
-            // );
+            assert_eq!(
+                actual, expected,
+                "we should be writing a bit-exact version of the original V2 index"
+            );
             assert_eq!(
                 outcome.num_objects, num_objects,
                 "it wrote the entire iterator worth of entries"

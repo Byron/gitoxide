@@ -60,7 +60,6 @@ impl Header {
 impl Header {
     pub fn from_bytes(d: &[u8], pack_offset: u64) -> (Header, u64, u64) {
         let (type_id, size, mut consumed) = parse_header_info(d);
-        dbg!(type_id, size, consumed);
 
         use self::Header::*;
         let object = match type_id {
@@ -136,7 +135,6 @@ impl Header {
         let mut size = decompressed_size_in_bytes;
         let mut written = 1;
         let mut c: u8 = (self.to_type_id() << 4) | (size as u8 & 0b0000_1111);
-        out.write_all(&[c])?;
         size >>= 4;
         while size != 0 {
             out.write_all(&[c | 0b1000_0000])?;
@@ -144,7 +142,8 @@ impl Header {
             c = size as u8 & 0b0111_1111;
             size >>= 7;
         }
-        dbg!(written, decompressed_size_in_bytes);
+        out.write_all(&[c])?;
+
         use Header::*;
         match self {
             RefDelta { oid } => {
@@ -157,7 +156,6 @@ impl Header {
                 let mut distance = pack_offset
                     .checked_sub(*base_pack_offset)
                     .expect("base entry to be before this entry");
-                dbg!(distance, base_pack_offset);
                 let mut buf = [0u8; 10];
                 let mut bytes_written = 1;
                 buf[buf.len() - 1] = distance as u8 & 0b0111_1111;
@@ -170,12 +168,7 @@ impl Header {
                     *out = 0b1000_0000 | (distance as u8 & 0b0111_1111);
                     bytes_written += 1;
                 }
-                dbg!(&buf[buf.len() - bytes_written..]);
                 out.write_all(&buf[buf.len() - bytes_written..])?;
-                debug_assert_eq!(
-                    leb64decode(&buf[buf.len() - bytes_written..]),
-                    (pack_offset - base_pack_offset, bytes_written)
-                );
                 written += bytes_written;
             }
             Blob | Tree | Commit | Tag => {}

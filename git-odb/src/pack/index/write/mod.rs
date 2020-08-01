@@ -68,10 +68,6 @@ impl pack::index::File {
                 let header_len = header.to_write(decompressed.len() as u64, pack_offset, header_buf.as_mut())?;
                 let state = hash::crc32_update(0, &header_buf[..header_len]);
                 hash::crc32_update(state, &compressed)
-                // let mut tmp = Vec::new();
-                // header.to_write(decompressed.len() as u64, &mut tmp)?;
-                // tmp.extend(&compressed);
-                // hash::crc32(&tmp)
             };
             let (cache, kind) = match header {
                 Blob | Tree | Commit | Tag => {

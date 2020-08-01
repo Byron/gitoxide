@@ -25,8 +25,14 @@ mod new_from_header {
                 entry
                     .header
                     .to_write(entry.decompressed.len() as u64, entry.pack_offset, &mut buf)?;
-                dbg!(&buf);
-                let new_header = pack::data::Header::from_bytes(&buf, entry.pack_offset).0;
+                let (new_header, decompressed_size, consumed) = pack::data::Header::from_bytes(&buf, entry.pack_offset);
+
+                assert_eq!(consumed, buf.len() as u64, "it should consume all provided bytes");
+                assert_eq!(
+                    decompressed_size,
+                    entry.decompressed.len() as u64,
+                    "decoded size must match"
+                );
                 assert_eq!(new_header, entry.header, "headers match after roundtrip");
             }
         }
