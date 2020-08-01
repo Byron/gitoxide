@@ -179,7 +179,7 @@ where
 }
 
 fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
-    let mut out = Vec::with_capacity(decompressed_len);
+    let mut out = Vec::new();
     out.resize(decompressed_len, 0);
     zlib::Inflate::default()
         .once(&b, &mut io::Cursor::new(&mut out), true)

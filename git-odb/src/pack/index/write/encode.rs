@@ -37,10 +37,10 @@ pub(crate) fn to_write(
         let mut upper_bound = 0;
         let entries_len = entries_sorted_by_oid.len() as u32;
 
-        for (offset, byte) in fan_out_be.iter_mut().zip(0u8..=255) {
-            *offset = match idx_and_entry.as_ref() {
+        for (offset_be, byte) in fan_out_be.iter_mut().zip(0u8..=255) {
+            *offset_be = match idx_and_entry.as_ref() {
                 Some((_idx, entry)) => match entry.1.as_slice()[0].cmp(&byte) {
-                    Ordering::Less => unreachable!("ids should be ordered, and we make sure to keep up with them"),
+                    Ordering::Less => unreachable!("ids should be ordered, and we make sure to keep ahead with them"),
                     Ordering::Greater => upper_bound,
                     Ordering::Equal => {
                         idx_and_entry = iter.find(|(_, entry)| entry.1.as_slice()[0] != byte);
@@ -59,7 +59,7 @@ pub(crate) fn to_write(
 
     // SAFETY: It's safe to interpret 4BE bytes * 256 into 1byte * 1024 for the purpose of writing
     #[allow(unsafe_code)]
-    out.write_all(unsafe { std::mem::transmute::<&[u32; 256], &[u8; 256 * 4]>(&fan_out_be) })?;
+    out.write_all(unsafe { &*(&fan_out_be as *const [u32; 256] as *const [u8; 1024]) })?;
 
     for (_, id, _) in &entries_sorted_by_oid {
         out.write_all(id.as_slice())?;
