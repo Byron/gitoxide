@@ -13,9 +13,8 @@
           * [x] encode pack header (for needed for CRC32)
       * [x] 32bit offsets
       * [x] 64 bit offset extension
-  * [ ] seriously refactor the header abstraction in the pack file - it's not right at all.
-     * header_size becomes a function
-  * [ ] refactor pack:data::iter::Entry to duplicate less of pack::data::Entry
+  * [x] seriously refactor the header abstraction in the pack file - it's not right at all.
+  * [ ] ~~refactor pack:data::iter::Entry to duplicate less of pack::data::Entry~~
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli _index-from-pack_ **
   * [ ] build index from pack

@@ -59,12 +59,11 @@ where
                         Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
                             r(*pack_offset..*pack_offset + *entry_size as u64, &mut bytes_buf)
                                 .ok_or_else(|| Error::ConsumeResolveFailed(*pack_offset))?;
-                            let pack::data::Entry {
-                                decompressed_size,
-                                header_size,
-                                ..
-                            } = pack::data::Entry::from_bytes(&bytes_buf, *pack_offset);
-                            decompress_all_at_once(&bytes_buf[header_size as usize..], decompressed_size as usize)?
+                            let entry = pack::data::Entry::from_bytes(&bytes_buf, *pack_offset);
+                            decompress_all_at_once(
+                                &bytes_buf[entry.header_size() as usize..],
+                                entry.decompressed_size as usize,
+                            )?
                         }
                         Mode::InMemoryDecompressed | Mode::InMemory => {
                             unreachable!("BUG: If there is no cache, we always need a resolver")

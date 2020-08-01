@@ -23,20 +23,19 @@ mod new_from_header {
 
                 let mut buf = Vec::<u8>::new();
                 entry.header.to_write(entry.decompressed.len() as u64, &mut buf)?;
-                let pack::data::Entry {
-                    header: new_header,
-                    decompressed_size,
-                    header_size,
-                    ..
-                } = pack::data::Entry::from_bytes(&buf, entry.pack_offset);
+                let new_entry = pack::data::Entry::from_bytes(&buf, entry.pack_offset);
 
-                assert_eq!(header_size, buf.len() as u8, "it should consume all provided bytes");
                 assert_eq!(
-                    decompressed_size,
+                    new_entry.header_size(),
+                    buf.len(),
+                    "it should consume all provided bytes"
+                );
+                assert_eq!(
+                    new_entry.decompressed_size,
                     entry.decompressed.len() as u64,
                     "decoded size must match"
                 );
-                assert_eq!(new_header, entry.header, "headers match after roundtrip");
+                assert_eq!(new_entry.header, entry.header, "headers match after roundtrip");
             }
         }
         Ok(())

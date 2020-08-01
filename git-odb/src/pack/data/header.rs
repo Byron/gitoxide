@@ -16,8 +16,6 @@ pub struct Entry {
     pub header: Header,
     /// The decompressed size of the object in bytes
     pub decompressed_size: u64,
-    /// The amount of bytes used to encode the header
-    pub header_size: u8,
     /// absolute offset to compressed object data in the pack, just behind the header
     pub data_offset: u64,
 }
@@ -25,10 +23,15 @@ pub struct Entry {
 /// Access
 impl Entry {
     pub fn base_pack_offset(&self, distance: u64) -> u64 {
-        self.data_offset - self.header_size as u64 - distance
+        self.data_offset - self.header_size() as u64 - distance
     }
     pub fn pack_offset(&self) -> u64 {
-        self.data_offset - self.header_size as u64
+        self.data_offset - self.header_size() as u64
+    }
+    pub fn header_size(&self) -> usize {
+        self.header
+            .to_write(self.decompressed_size, io::sink())
+            .expect("io::sink() to never fail")
     }
 }
 
@@ -62,7 +65,6 @@ impl Entry {
         };
         Entry {
             header: object,
-            header_size: consumed as u8,
             decompressed_size: size,
             data_offset: pack_offset + consumed as u64,
         }
@@ -98,7 +100,6 @@ impl Entry {
         };
         Ok(Entry {
             header: object,
-            header_size: consumed as u8,
             decompressed_size: size,
             data_offset: pack_offset + consumed as u64,
         })

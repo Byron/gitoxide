@@ -117,12 +117,7 @@ where
         self.objects_left -= 1; // even an error counts as objects
 
         // Read header
-        let pack::data::Entry {
-            header,
-            decompressed_size,
-            header_size,
-            ..
-        } = match self.hash.take() {
+        let entry = match self.hash.take() {
             Some(hash) => {
                 let mut read = PassThrough {
                     read: &mut self.read,
@@ -145,22 +140,22 @@ where
         let mut reader = InflateReader {
             inner: PassThrough {
                 read: &mut self.read,
-                write: Vec::with_capacity((decompressed_size / 2) as usize),
+                write: Vec::with_capacity((entry.decompressed_size / 2) as usize),
             },
             decompressor,
         };
 
-        let mut decompressed = Vec::with_capacity(decompressed_size as usize);
+        let mut decompressed = Vec::with_capacity(entry.decompressed_size as usize);
         let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
         assert_eq!(
-            bytes_copied, decompressed_size,
+            bytes_copied, entry.decompressed_size,
             "We should have decompressed {} bytes, but got {} instead",
-            decompressed_size, bytes_copied
+            entry.decompressed_size, bytes_copied
         );
 
         let pack_offset = self.offset;
         let compressed_size = reader.decompressor.total_in;
-        self.offset += header_size as u64 + compressed_size;
+        self.offset += entry.header_size() as u64 + compressed_size;
         self.decompressor = Some(reader.decompressor);
         let mut compressed = reader.inner.write;
         compressed.shrink_to_fit();
@@ -203,9 +198,9 @@ where
         };
 
         Ok(Entry {
-            header,
+            header: entry.header,
             // TODO: remove this field once we can pack-encode the header above
-            header_size: header_size as u16,
+            header_size: entry.header_size() as u16,
             compressed,
             pack_offset,
             decompressed,

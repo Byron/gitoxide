@@ -125,13 +125,11 @@ impl DeltaTree {
                     bytes_to_skip -= bytes;
                 }
             };
-            let pack::data::Entry {
-                header, header_size, ..
-            } = pack::data::Entry::from_read(&mut r, pack_offset)
+            let entry = pack::data::Entry::from_read(&mut r, pack_offset)
                 .map_err(|err| Error::Io(err, "EOF while parsing header"))?;
-            previous_offset = Some(pack_offset + header_size as u64);
+            previous_offset = Some(pack_offset + entry.header_size() as u64);
             use pack::data::Header::*;
-            match header {
+            match entry.header {
                 Tree | Blob | Commit | Tag => {
                     let base = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base);
