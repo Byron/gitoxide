@@ -10,6 +10,24 @@ const _TYPE_EXT2: u8 = 5;
 const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Entry {
+    pub header: Header,
+    /// The decompressed size of the object in bytes
+    pub decompressed_size: u64,
+    /// The amount of bytes used to encode the header
+    pub header_size: u8,
+    /// absolute offset to compressed object data in the pack, just behind the header
+    pub data_offset: u64,
+}
+
+impl Entry {
+    pub fn data_offset(&self, pack_offset: u64) -> u64 {
+        pack_offset + self.header_size as u64
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Header {
@@ -58,7 +76,7 @@ impl Header {
 }
 
 impl Header {
-    pub fn from_bytes(d: &[u8], pack_offset: u64) -> (Header, u64, u64) {
+    pub fn from_bytes(d: &[u8], pack_offset: u64) -> Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
         use self::Header::*;
@@ -84,10 +102,15 @@ impl Header {
             TAG => Tag,
             _ => panic!("We currently don't support any V3 features or extensions"),
         };
-        (object, size, consumed as u64)
+        Entry {
+            header: object,
+            header_size: consumed as u8,
+            decompressed_size: size,
+            data_offset: 0,
+        }
     }
 
-    pub fn from_read(mut r: impl io::Read, pack_offset: u64) -> Result<(Header, u64, usize), io::Error> {
+    pub fn from_read(mut r: impl io::Read, pack_offset: u64) -> Result<Entry, io::Error> {
         let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
 
         use self::Header::*;
@@ -123,7 +146,12 @@ impl Header {
             TAG => Tag,
             _ => panic!("We currently don't support any V3 features or extensions"),
         };
-        Ok((object, size, consumed))
+        Ok(Entry {
+            header: object,
+            header_size: consumed as u8,
+            decompressed_size: size,
+            data_offset: 0,
+        })
     }
 
     pub fn to_write(

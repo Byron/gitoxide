@@ -107,12 +107,9 @@ impl File {
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
 
         let object_data = &self.data[pack_offset..];
-        let (object, decompressed_size, consumed_bytes) = pack::data::Header::from_bytes(object_data, offset);
-        pack::data::Entry {
-            header: object,
-            decompressed_size,
-            data_offset: offset + consumed_bytes,
-        }
+        let mut entry = pack::data::Header::from_bytes(object_data, offset);
+        entry.data_offset = offset + entry.header_size as u64;
+        entry
     }
 
     /// Decompress the object expected at the given data offset, sans pack header. This information is only

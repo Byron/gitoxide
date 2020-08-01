@@ -125,9 +125,11 @@ impl DeltaTree {
                     bytes_to_skip -= bytes;
                 }
             };
-            let (header, _decompressed_size, consumed) = pack::data::Header::from_read(&mut r, pack_offset)
+            let pack::data::Entry {
+                header, header_size, ..
+            } = pack::data::Header::from_read(&mut r, pack_offset)
                 .map_err(|err| Error::Io(err, "EOF while parsing header"))?;
-            previous_offset = Some(pack_offset + consumed as u64);
+            previous_offset = Some(pack_offset + header_size as u64);
             use pack::data::Header::*;
             match header {
                 Tree | Blob | Commit | Tag => {

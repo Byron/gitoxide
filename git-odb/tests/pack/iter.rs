@@ -25,9 +25,14 @@ mod new_from_header {
                 entry
                     .header
                     .to_write(entry.decompressed.len() as u64, entry.pack_offset, &mut buf)?;
-                let (new_header, decompressed_size, consumed) = pack::data::Header::from_bytes(&buf, entry.pack_offset);
+                let pack::data::Entry {
+                    header: new_header,
+                    decompressed_size,
+                    header_size,
+                    ..
+                } = pack::data::Header::from_bytes(&buf, entry.pack_offset);
 
-                assert_eq!(consumed, buf.len() as u64, "it should consume all provided bytes");
+                assert_eq!(header_size, buf.len() as u8, "it should consume all provided bytes");
                 assert_eq!(
                     decompressed_size,
                     entry.decompressed.len() as u64,

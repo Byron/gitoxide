@@ -117,7 +117,12 @@ where
         self.objects_left -= 1; // even an error counts as objects
 
         // Read header
-        let (header, decompressed_size, header_size) = match self.hash.take() {
+        let pack::data::Entry {
+            header,
+            decompressed_size,
+            header_size,
+            ..
+        } = match self.hash.take() {
             Some(hash) => {
                 let mut read = PassThrough {
                     read: &mut self.read,
