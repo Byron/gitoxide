@@ -1,7 +1,7 @@
 use crate::{hash, pack, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, WriteBytesExt};
 use git_object::owned;
-use std::io;
+use std::{cmp::Ordering, io};
 
 pub(crate) fn to_write(
     out: impl io::Write,
@@ -31,12 +31,30 @@ pub(crate) fn to_write(
     let needs_64bit_offsets = entries_sorted_by_oid.last().expect("at least one pack entry").0 > LARGE_OFFSET_THRESHOLD;
     let mut fan_out_be = [0u32; 256];
 
-    let mut iter = entries_sorted_by_oid.iter();
-    for (offset, byte) in fan_out_be.iter_mut().zip(0u8..=255) {
-        let pos = iter
-            .position(|(_, id, _)| id.as_slice()[0] != byte)
-            .unwrap_or_else(|| entries_sorted_by_oid.len());
-        *offset = pos as u32;
+    {
+        let mut iter = entries_sorted_by_oid.iter().enumerate();
+        let mut idx_and_entry = iter.next();
+        let mut upper_bound = 0;
+        let entries_len = entries_sorted_by_oid.len() as u32;
+
+        for (offset, byte) in fan_out_be.iter_mut().zip(0u8..=255) {
+            *offset = match idx_and_entry.as_ref() {
+                Some((_idx, entry)) => match entry.1.as_slice()[0].cmp(&byte) {
+                    Ordering::Less => unreachable!("ids should be ordered, and we make sure to keep up with them"),
+                    Ordering::Greater => upper_bound,
+                    Ordering::Equal => {
+                        idx_and_entry = iter.find(|(_, entry)| entry.1.as_slice()[0] != byte);
+                        upper_bound = match idx_and_entry.as_ref() {
+                            Some((idx, _)) => *idx as u32,
+                            None => entries_len,
+                        };
+                        upper_bound
+                    }
+                },
+                None => entries_len,
+            }
+            .to_be();
+        }
     }
 
     // SAFETY: It's safe to interpret 4BE bytes * 256 into 1byte * 1024 for the purpose of writing
