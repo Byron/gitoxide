@@ -37,4 +37,7 @@ mod _impl {
 
 pub use _impl::Sha1;
 
+pub fn crc32_update(previous_value: u32, bytes: &[u8]) -> u32 {
+    crc::crc32::update(previous_value, &crc::crc32::IEEE_TABLE, bytes)
+}
 pub use crc::crc32::checksum_ieee as crc32;

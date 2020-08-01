@@ -38,6 +38,17 @@ impl Header {
             Header::RefDelta { .. } | Header::OfsDelta { .. } => return None,
         })
     }
+    pub fn to_type_id(&self) -> u8 {
+        use Header::*;
+        match self {
+            Blob => BLOB,
+            Tree => TREE,
+            Commit => COMMIT,
+            Tag => TAG,
+            OfsDelta { .. } => OFS_DELTA,
+            RefDelta { .. } => REF_DELTA,
+        }
+    }
     pub fn is_delta(&self) -> bool {
         match self {
             Header::OfsDelta { .. } | Header::RefDelta { .. } => true,
@@ -114,6 +125,18 @@ impl Header {
         };
         Ok((object, size, consumed))
     }
+
+    pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<()> {
+        let mut size = decompressed_size_in_bytes;
+        let mut c: u8 = (self.to_type_id() << 4) | (size as u8 & 0b0000_1111);
+        size >>= 4;
+        while size != 0 {
+            out.write_all(&[c | 0b1000_0000])?;
+            c = size as u8 & 0b0111_1111;
+            size >>= 7;
+        }
+        Ok(())
+    }
 }
 
 #[inline]
@@ -148,6 +171,7 @@ fn streaming_leb64decode(mut r: impl io::Read) -> Result<(u64, usize), io::Error
 }
 
 /// Parses the header of a pack-entry, yielding object type id, decompressed object size, and consumed bytes
+#[inline]
 fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     let mut c = data[0];
     let mut i = 1;
@@ -163,6 +187,7 @@ fn parse_header_info(data: &[u8]) -> (u8, u64, usize) {
     (type_id, size, i)
 }
 
+#[inline]
 fn streaming_parse_header_info(mut read: impl io::Read) -> Result<(u8, u64, usize), io::Error> {
     let mut byte = [0u8; 1];
     read.read_exact(&mut byte)?;
