@@ -29,29 +29,13 @@ pub(crate) fn to_write(
     const HIGH_BIT: u32 = 0x8000_0000;
 
     let needs_64bit_offsets = entries_sorted_by_oid.last().expect("at least one pack entry").0 > LARGE_OFFSET_THRESHOLD;
-    let mut offsets_be = if needs_64bit_offsets {
-        Vec::<u32>::with_capacity(entries_sorted_by_oid.len())
-    } else {
-        Vec::new()
-    };
-    let mut offsets64_be = Vec::<u64>::new();
-
     let mut fan_out_be = [0u32; 256];
     let mut first_byte = 0u8;
 
-    for (idx, (pack_offset, id, _)) in entries_sorted_by_oid.iter().enumerate() {
+    for (idx, (_, id, _)) in entries_sorted_by_oid.iter().enumerate() {
         if first_byte != id.as_slice()[0] {
             fan_out_be[first_byte as usize] = (idx as u32).to_be();
             first_byte += 1;
-        }
-
-        if needs_64bit_offsets && *pack_offset > 0x7fff_ffff {
-            assert!(
-                offsets64_be.len() < 0x7fff_ffff,
-                "Encoding breakdown - way too many 64bit offsets"
-            );
-            offsets_be.push((offsets64_be.len() as u32) & HIGH_BIT);
-            offsets64_be.push(pack_offset.to_be());
         }
     }
 
@@ -66,20 +50,26 @@ pub(crate) fn to_write(
         out.write_u32::<BigEndian>(*crc32)?;
     }
 
-    if offsets64_be.len() > 0 {
-        assert_eq!(offsets_be.len(), entries_sorted_by_oid.len());
-        // SAFETY: It's safe to interpret 4BE bytes * N as 1byte * N * 4 for the purpose of writing
-        #[allow(unsafe_code)]
-        out.write_all(unsafe { std::slice::from_raw_parts(offsets_be.as_ptr() as *const u8, offsets_be.len() * 4) })?;
-
-        // SAFETY: It's safe to interpret 8BE bytes * N as 1byte * N * 8 for the purpose of writing
-        #[allow(unsafe_code)]
-        out.write_all(unsafe {
-            std::slice::from_raw_parts(offsets64_be.as_ptr() as *const u8, offsets64_be.len() * 8)
-        })?;
-    } else {
+    {
+        let mut offsets64_be = Vec::<u64>::new();
         for (pack_offset, _, _) in &entries_sorted_by_oid {
-            out.write_u32::<BigEndian>(*pack_offset as u32)?;
+            out.write_u32::<BigEndian>(if needs_64bit_offsets && *pack_offset > LARGE_OFFSET_THRESHOLD {
+                assert!(
+                    offsets64_be.len() < LARGE_OFFSET_THRESHOLD as usize,
+                    "Encoding breakdown - way too many 64bit offsets"
+                );
+                offsets64_be.push(pack_offset.to_be());
+                (offsets64_be.len() as u32) & HIGH_BIT
+            } else {
+                *pack_offset as u32
+            })?;
+        }
+        if needs_64bit_offsets {
+            // SAFETY: It's safe to interpret 8BE bytes * N as 1byte * N * 8 for the purpose of writing
+            #[allow(unsafe_code)]
+            out.write_all(unsafe {
+                std::slice::from_raw_parts(offsets64_be.as_ptr() as *const u8, offsets64_be.len() * 8)
+            })?;
         }
     }
 
