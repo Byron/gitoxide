@@ -9,5 +9,6 @@ pub mod graph;
 mod object;
 pub use object::Object;
 
-mod bundle;
+pub mod bundle;
+#[doc(inline)]
 pub use bundle::Bundle;

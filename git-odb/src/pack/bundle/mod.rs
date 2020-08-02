@@ -5,6 +5,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub mod locate;
+pub mod write;
+
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
@@ -29,9 +32,6 @@ pub struct Bundle {
     pub pack: pack::data::File,
     pub index: pack::index::File,
 }
-
-pub mod locate;
-pub mod write;
 
 impl Bundle {
     /// `path` is either a pack file or an index file
