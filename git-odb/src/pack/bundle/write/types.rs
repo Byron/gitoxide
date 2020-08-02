@@ -1,14 +1,12 @@
 use crate::pack;
-use git_object::owned;
 use std::io;
 use tempfile::NamedTempFile;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
-    index: pack::index::write::Outcome,
-    pack_kind: pack::data::Kind,
-    pack_hash: owned::Id,
+    pub index: pack::index::write::Outcome,
+    pub pack_kind: pack::data::Kind,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

@@ -25,7 +25,7 @@ impl pack::Bundle {
         index_kind: pack::index::Kind,
         directory: Option<impl AsRef<Path>>,
         mut progress: P,
-    ) -> Result<pack::index::write::Outcome, Error>
+    ) -> Result<Outcome, Error>
     where
         P: Progress,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
@@ -65,13 +65,14 @@ impl pack::Bundle {
             writer: possibly_data_file,
         };
 
-        match directory {
+        let (outcome, pack_kind) = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
 
                 let pack_entries_iter =
                     pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
+                let pack_kind = pack_entries_iter.kind();
 
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     index_kind,
@@ -98,15 +99,16 @@ impl pack::Bundle {
                         ));
                         err
                     })?;
+                (outcome, pack_kind)
             }
             None => {
                 unimplemented!("no output directory");
             }
-        }
+        };
 
-        // Consider thin packs resolution in data pack itself as Iterator - input iter::Entry, output resolved Entries
-        // These can then be written to an output stream (Write) which can also be in the data pack.
-        // This method just coordinates the pieces
-        unimplemented!("pack writing and thin pack resolution")
+        Ok(Outcome {
+            index: outcome,
+            pack_kind,
+        })
     }
 }
