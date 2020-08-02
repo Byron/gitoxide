@@ -1,6 +1,9 @@
 use crate::pack;
 use git_features::progress::Progress;
-use std::time::{Instant, SystemTime};
+use std::{
+    io,
+    time::{Instant, SystemTime},
+};
 
 pub(crate) fn index_entries_sorted_by_offset_ascending(
     idx: &pack::index::File,
@@ -25,6 +28,7 @@ pub(crate) fn index_entries_sorted_by_offset_ascending(
     v
 }
 
+/// Good if you know the amount of bytes in advance.
 pub(crate) struct TimeThroughput {
     then: Instant,
     byte_size: usize,
@@ -75,5 +79,31 @@ where
         } else {
             Some(res)
         }
+    }
+}
+
+pub(crate) struct Count<W> {
+    pub bytes: u64,
+    pub inner: W,
+}
+
+impl<W> Count<W> {
+    pub fn new(inner: W) -> Self {
+        Count { bytes: 0, inner }
+    }
+}
+
+impl<W> io::Write for Count<W>
+where
+    W: io::Write,
+{
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let written = self.inner.write(buf)?;
+        self.bytes += written as u64;
+        Ok(written)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
     }
 }

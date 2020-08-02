@@ -1,4 +1,7 @@
-use crate::{hash, pack, pack::index::V2_SIGNATURE};
+use crate::{
+    hash, pack,
+    pack::index::{util::Count, V2_SIGNATURE},
+};
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::progress::Progress;
 use git_object::owned;
@@ -9,7 +12,7 @@ pub(crate) fn to_write(
     entries_sorted_by_oid: Vec<(u64, owned::Id, u32)>,
     pack_hash: &owned::Id,
     kind: pack::index::Kind,
-    _progress: impl Progress,
+    mut progress: impl Progress,
 ) -> io::Result<owned::Id> {
     use io::Write;
     assert!(
@@ -23,7 +26,7 @@ pub(crate) fn to_write(
     );
 
     // Write header
-    let mut out = hash::Write::new(out, kind.hash());
+    let mut out = Count::new(hash::Write::new(out, kind.hash()));
     out.write_all(V2_SIGNATURE)?;
     out.write_u32::<BigEndian>(kind as u32)?;
 
@@ -32,6 +35,9 @@ pub(crate) fn to_write(
 
     let needs_64bit_offsets = entries_sorted_by_oid.last().expect("at least one pack entry").0 > LARGE_OFFSET_THRESHOLD;
     let mut fan_out_be = [0u32; 256];
+    progress.init(Some(4), Some("steps"));
+    let start = std::time::Instant::now();
+    let _sub_progress = progress.add_child("generating fan-out table");
 
     {
         let mut iter = entries_sorted_by_oid.iter().enumerate();
@@ -63,13 +69,20 @@ pub(crate) fn to_write(
     #[allow(unsafe_code)]
     out.write_all(unsafe { &*(&fan_out_be as *const [u32; 256] as *const [u8; 1024]) })?;
 
+    progress.inc();
+    let _sub_progress = progress.add_child("writing ids");
     for (_, id, _) in &entries_sorted_by_oid {
         out.write_all(id.as_slice())?;
     }
+
+    progress.inc();
+    let _sub_progress = progress.add_child("writing crc32");
     for (_, _, crc32) in &entries_sorted_by_oid {
         out.write_u32::<BigEndian>(*crc32)?;
     }
 
+    progress.inc();
+    let _sub_progress = progress.add_child("writing offsets");
     {
         let mut offsets64_be = Vec::<u64>::new();
         for (pack_offset, _, _) in &entries_sorted_by_oid {
@@ -95,8 +108,10 @@ pub(crate) fn to_write(
 
     out.write_all(pack_hash.as_slice())?;
 
-    let index_hash: owned::Id = out.hash.digest().into();
-    out.inner.write_all(index_hash.as_slice())?;
+    let index_hash: owned::Id = out.inner.hash.digest().into();
+    out.inner.inner.write_all(index_hash.as_slice())?;
+    progress.inc();
+    progress.show_throughput(start, out.bytes as u32, "bytes");
 
     Ok(index_hash)
 }

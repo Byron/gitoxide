@@ -183,6 +183,12 @@ impl pack::index::File {
             kind,
             root_progress.add_child("writing index file"),
         )?;
+        root_progress.inc();
+        root_progress.done(format!(
+            "index file with {} objects written in {:.02}s",
+            num_objects,
+            indexing_start.elapsed().as_secs_f32()
+        ));
         Ok(Outcome {
             index_kind: kind,
             index_hash,
