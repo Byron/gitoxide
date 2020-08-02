@@ -1,6 +1,9 @@
 use crate::pack;
 use git_features::{progress, progress::Progress};
-use std::{io, path::Path};
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
 use tempfile::NamedTempFile;
 
 mod error;
@@ -28,19 +31,25 @@ impl pack::Bundle {
     {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as u32), Some("bytes"));
-        let mut pack = PassThrough {
-            inner_read: progress::Read {
-                read: pack,
-                progress: read_progress,
-            },
-            inner_write: io::sink(),
+        let pack = progress::Read {
+            read: pack,
+            progress: read_progress,
         };
-        let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
 
         match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
+                let data_file = NamedTempFile::new_in(directory)?;
+                let _data_path: PathBuf = data_file.as_ref().into();
+
+                let mut pack = PassThrough {
+                    inner_read: pack,
+                    inner_write: data_file,
+                };
+                let pack_entries_iter =
+                    pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
+
                 let memory_mode = pack::index::write::Mode::in_memory_decompressed();
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     index_kind,
@@ -51,11 +60,22 @@ impl pack::Bundle {
                     &mut index_file,
                 )?;
 
+                let data_file = pack.inner_write;
                 let index_path = directory.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
+                let data_path = directory.join(format!("{}.pack", outcome.pack_hash.to_sha1_hex_string()));
+
+                data_file.persist(&data_path)?;
                 index_file
                     .into_inner()
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
-                    .persist(index_path)?;
+                    .persist(index_path)
+                    .map_err(|err| {
+                        progress.info(format!(
+                            "pack file at {} is retained despite failing to move the index file into place. You can use plumbing to make it usable.",
+                            data_path.display()
+                        ));
+                        err
+                    })?;
             }
             None => {
                 unimplemented!("no output directory");
