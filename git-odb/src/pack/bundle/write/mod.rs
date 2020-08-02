@@ -36,35 +36,39 @@ impl pack::Bundle {
             read: pack,
             progress: read_progress,
         };
+        let data_file = match directory.as_ref() {
+            Some(directory) => NamedTempFile::new_in(directory.as_ref()),
+            None => NamedTempFile::new(),
+        }?;
+        let memory_mode = {
+            let data_path: PathBuf = data_file.as_ref().into();
+            let data_map = parking_lot::Mutex::new(None);
+            let on_demand_pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
+                let mut guard = data_map.lock();
+                let possibly_map = guard.get_or_insert_with(|| FileBuffer::open(&data_path));
+                possibly_map
+                    .as_ref()
+                    .ok()
+                    .map(|mapped_file| out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize]))
+            };
+            memory_mode.into_write_mode(on_demand_pack_data_lookup)
+        };
+        let mut pack = PassThrough {
+            reader: pack,
+            writer: data_file,
+        };
 
         match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
-                let data_file = NamedTempFile::new_in(directory)?;
-                let data_path: PathBuf = data_file.as_ref().into();
 
-                let mut pack = PassThrough {
-                    reader: pack,
-                    writer: data_file,
-                };
                 let pack_entries_iter =
                     pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
 
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     index_kind,
-                    {
-                        let data_map = parking_lot::Mutex::new(None);
-                        let on_demand_pack_data_lookup =
-                            move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
-                                let mut guard = data_map.lock();
-                                let possibly_map = guard.get_or_insert_with(|| FileBuffer::open(&data_path));
-                                possibly_map.as_ref().ok().map(|mapped_file| {
-                                    out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize])
-                                })
-                            };
-                        memory_mode.into_write_mode(on_demand_pack_data_lookup)
-                    },
+                    memory_mode,
                     pack_entries_iter,
                     thread_limit,
                     progress.add_child("create index file"),
