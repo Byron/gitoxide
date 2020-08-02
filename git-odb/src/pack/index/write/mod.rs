@@ -163,7 +163,10 @@ impl pack::index::File {
                         kind.hash(),
                     )
                 },
-                Reducer::new(num_objects, root_progress.lock().add_child("Resolving")),
+                {
+                    let progress = root_progress.lock().add_child("Resolving");
+                    Reducer::new(num_objects, progress)
+                },
             )?;
             items.sort_by_key(|e| e.1);
             items
