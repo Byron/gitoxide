@@ -1,5 +1,6 @@
 use crate::{hash, pack, pack::index::V2_SIGNATURE};
 use byteorder::{BigEndian, WriteBytesExt};
+use git_features::progress::Progress;
 use git_object::owned;
 use std::{cmp::Ordering, io};
 
@@ -8,6 +9,7 @@ pub(crate) fn to_write(
     entries_sorted_by_oid: Vec<(u64, owned::Id, u32)>,
     pack_hash: &owned::Id,
     kind: pack::index::Kind,
+    _progress: impl Progress,
 ) -> io::Result<owned::Id> {
     use io::Write;
     assert!(

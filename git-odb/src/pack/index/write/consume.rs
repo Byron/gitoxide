@@ -3,14 +3,14 @@ use crate::{
     pack::index::write::{Bytes, Cache, CacheEntry, Entry, EntrySlice, Error, Mode, ObjectKind},
     zlib,
 };
+use git_features::progress::Progress;
 use git_object::{owned, HashKind};
 use smallvec::alloc::collections::BTreeMap;
-use std::cell::RefCell;
-use std::io;
+use std::{cell::RefCell, io};
 
-pub(crate) fn apply_deltas<F>(
+pub(crate) fn apply_deltas<F, P>(
     mut base_entries: Vec<Entry>,
-    bytes_buf: &mut Vec<u8>,
+    (bytes_buf, progress): &mut (Vec<u8>, P),
     entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,
     mode: &Mode<F>,
@@ -18,6 +18,7 @@ pub(crate) fn apply_deltas<F>(
 ) -> Result<Vec<(u64, owned::Id, u32)>, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+    P: Progress,
 {
     let local_caches = RefCell::new(BTreeMap::<u64, CacheEntry>::new());
     enum FetchMode {
@@ -92,6 +93,7 @@ where
     let mut out = Vec::with_capacity(base_entries.len()); // perfectly conservative guess
 
     // Compute hashes for all of our bases right away
+    progress.init(None, Some("objects"));
     for Entry {
         pack_offset,
         kind,
@@ -106,11 +108,13 @@ where
             *crc32,
         ));
         possibly_return_to_cache(pack_offset, is_borrowed, base_bytes);
+        progress.inc();
     }
 
     // find all deltas that match our bases, decompress them, apply them to the decompressed base, keep the hash
     // and finally store the fully decompressed delta as new base (if they have dependants of their own).
     // If there is nobody else using them, we could remove them, but that's expensive so let's just keep them around.
+    progress.init(None, Some("objects"));
     for Entry {
         pack_offset,
         entry_len,
@@ -175,6 +179,7 @@ where
             delta_bytes
         };
         possibly_return_to_cache(pack_offset, delta_is_borrowed, delta_data_to_return);
+        progress.inc();
     }
     out.shrink_to_fit();
     Ok(out)

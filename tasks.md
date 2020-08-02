@@ -52,7 +52,8 @@
 * **quality**
   * use `parking_lot` to get rid of poisoned locks (and the unwraps() that go with it)
 * **progress - convenience**
-  * [ ] Alternate unit - might help doing throughput and things like throughput per second (for downloads)
+  * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
+    * [ ] Find a  way to measure live throughput
   * [ ] a way to measure throughput on drop
   * [ ] percentages somewhere near the progress bar
 * **criner**

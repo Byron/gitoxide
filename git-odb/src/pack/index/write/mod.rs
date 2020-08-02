@@ -21,7 +21,7 @@ impl pack::index::File {
         mode: Mode<F>,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         thread_limit: Option<usize>,
-        _progress: impl Progress,
+        mut root_progress: impl Progress + Send,
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
@@ -30,19 +30,27 @@ impl pack::index::File {
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
         }
-        let mut num_objects = 0;
+        let mut num_objects: usize = 0;
         let mut bytes_to_process = 0u64;
         // This array starts out sorted by pack-offset
         let mut index_entries = Vec::with_capacity(entries.size_hint().0);
         if index_entries.capacity() == 0 {
             return Err(Error::IteratorInvariantNonEmpty);
         }
+
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
         let mut first_delta_index = None;
         let mut last_pack_offset = 0;
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         let mut header_buf = [0u8; 16];
+        let indexing_start = std::time::Instant::now();
+
+        root_progress.init(Some(3), Some("steps"));
+        root_progress.inc();
+        let mut progress = root_progress.add_child("indexing");
+        progress.init(entries.size_hint().1.map(|l| l as u32), Some("Objects"));
+
         for (eid, entry) in entries.enumerate() {
             use pack::data::Header::*;
 
@@ -54,6 +62,7 @@ impl pack::index::File {
                 decompressed,
                 trailer,
             } = entry?;
+
             let compressed_len = compressed.len();
             if pack_offset <= last_pack_offset {
                 return Err(Error::IteratorInvariantIncreasingPackOffset(
@@ -62,7 +71,6 @@ impl pack::index::File {
                 ));
             }
             last_pack_offset = pack_offset;
-            num_objects += 1;
             bytes_to_process += decompressed.len() as u64;
             let crc32 = {
                 let header_len = header.to_write(decompressed.len() as u64, header_buf.as_mut())?;
@@ -106,7 +114,12 @@ impl pack::index::File {
                 crc32,
             });
             last_seen_trailer = trailer;
+
+            num_objects += 1;
+            progress.inc();
         }
+        progress.show_throughput(indexing_start, num_objects as u32, "objects");
+        root_progress.inc();
 
         // Prevent us from trying to find bases for resolution past the point where they are
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
@@ -118,6 +131,7 @@ impl pack::index::File {
         // TODO: This COULD soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
         // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
         let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
+        let root_progress = parking_lot::Mutex::new(root_progress);
         let sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
@@ -130,7 +144,12 @@ impl pack::index::File {
                     size: chunk_size,
                 },
                 thread_limit,
-                |_thread_index| Vec::with_capacity(4096),
+                |thread_index| {
+                    (
+                        Vec::with_capacity(4096),
+                        root_progress.lock().add_child(format!("thread {}", thread_index)),
+                    )
+                },
                 |base_pack_offsets, state| {
                     apply_deltas(
                         base_pack_offsets,
@@ -144,7 +163,7 @@ impl pack::index::File {
                         kind.hash(),
                     )
                 },
-                Reducer::new(num_objects),
+                Reducer::new(num_objects, root_progress.lock().add_child("Resolving")),
             )?;
             items.sort_by_key(|e| e.1);
             items
@@ -153,8 +172,17 @@ impl pack::index::File {
         drop(index_entries);
         drop(cache_by_offset);
 
+        let mut root_progress = root_progress.into_inner();
+        root_progress.inc();
+
         let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
-        let index_hash = encode::to_write(out, sorted_pack_offsets_by_oid, &pack_hash, kind)?;
+        let index_hash = encode::to_write(
+            out,
+            sorted_pack_offsets_by_oid,
+            &pack_hash,
+            kind,
+            root_progress.add_child("writing index file"),
+        )?;
         Ok(Outcome {
             index_kind: kind,
             index_hash,

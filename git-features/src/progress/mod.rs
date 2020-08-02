@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 /// The severity of a message
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum MessageLevel {
@@ -69,6 +71,18 @@ pub trait Progress {
     /// Create a message indicating the task failed
     fn fail(&mut self, message: impl Into<String>) {
         self.message(MessageLevel::Failure, message)
+    }
+    /// A shorthand to print throughput information
+    fn show_throughput(&mut self, start: Instant, total_items: u32, item_name: &str) {
+        let elapsed = start.elapsed().as_secs_f32();
+        self.info(format!(
+            "done {} {} in {:.02}s ({} {}/s)",
+            total_items,
+            item_name,
+            elapsed,
+            total_items as f32 / elapsed,
+            item_name
+        ));
     }
 }
 

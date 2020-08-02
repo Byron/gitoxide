@@ -1,5 +1,5 @@
 use crate::pack;
-use git_features::parallel;
+use git_features::{parallel, progress::Progress};
 use git_object::owned;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -138,30 +138,44 @@ impl Mode<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
     }
 }
 
-pub(crate) struct Reducer {
+pub(crate) struct Reducer<P> {
     pub(crate) items: Vec<(u64, owned::Id, u32)>,
+    progress: P,
+    start: std::time::Instant,
 }
 
-impl Reducer {
-    pub fn new(num_objects: u32) -> Self {
+impl<P> Reducer<P>
+where
+    P: Progress,
+{
+    pub fn new(num_objects: u32, mut progress: P) -> Self {
+        progress.init(Some(num_objects), Some("objects"));
         Reducer {
             items: Vec::with_capacity(num_objects as usize),
+            progress,
+            start: std::time::Instant::now(),
         }
     }
 }
 
-impl parallel::Reducer for Reducer {
+impl<P> parallel::Reducer for Reducer<P>
+where
+    P: Progress,
+{
     type Input = Result<Vec<(u64, owned::Id, u32)>, pack::index::write::Error>;
     type Output = Vec<(u64, owned::Id, u32)>;
     type Error = pack::index::write::Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let input = input?;
+        self.progress.inc_by(input.len() as u32);
         self.items.extend(input.into_iter());
         Ok(())
     }
 
-    fn finalize(self) -> Result<Self::Output, Self::Error> {
+    fn finalize(mut self) -> Result<Self::Output, Self::Error> {
+        self.progress
+            .show_throughput(self.start, self.items.len() as u32, "objects");
         Ok(self.items)
     }
 }
