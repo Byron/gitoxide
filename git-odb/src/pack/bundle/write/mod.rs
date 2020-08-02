@@ -3,64 +3,10 @@ use git_features::progress::Progress;
 use std::{io, path::Path};
 use tempfile::NamedTempFile;
 
-mod error {
-    use crate::pack;
-    use quick_error::quick_error;
-    use std::io;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Io(err: io::Error) {
-                display("An IO error occurred when reading the pack or creating a temporary file")
-                from()
-                source(err)
-            }
-            PackIter(err: pack::data::iter::Error) {
-                display("Pack iteration failed")
-                from()
-                source(err)
-            }
-            PeristError(err: tempfile::PersistError) {
-                display("Could not move a temporary file into its desired place")
-                from()
-                source(err)
-            }
-            IndexWrite(err: pack::index::write::Error) {
-                display("The index file could not be written")
-                from()
-                source(err)
-            }
-        }
-    }
-}
+mod error;
 use error::Error;
 
-mod types {
-    use crate::pack;
-    use git_object::owned;
-
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    pub struct Outcome {
-        index: pack::index::write::Outcome,
-        pack_kind: pack::data::Kind,
-        pack_hash: owned::Id,
-    }
-
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    pub enum MemoryMode {
-        /// Base + deltas in memory compressed
-        InMemory,
-        InMemoryDecompressed,
-        /// Deltas in memory compressed
-        ResolveBases,
-        /// Bases in memory compressed
-        ResolveDeltas,
-        ResolveBasesAndDeltas,
-    }
-}
+mod types;
 pub use types::*;
 
 impl pack::Bundle {
