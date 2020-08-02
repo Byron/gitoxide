@@ -41,20 +41,7 @@ impl pack::Bundle {
                 Box::new(|_, _| None);
             (fun, None)
         } else {
-            let data_file = match directory.as_ref() {
-                Some(directory) => NamedTempFile::new_in(directory.as_ref()),
-                None => NamedTempFile::new(),
-            }?;
-            let data_path: PathBuf = data_file.as_ref().into();
-            let data_map = parking_lot::Mutex::new(None);
-            let on_demand_pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
-                let mut guard = data_map.lock();
-                let possibly_map = guard.get_or_insert_with(|| FileBuffer::open(&data_path));
-                possibly_map
-                    .as_ref()
-                    .ok()
-                    .map(|mapped_file| out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize]))
-            };
+            let (data_file, on_demand_pack_data_lookup) = foo(directory.as_ref())?;
             let fun: Box<dyn Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> =
                 Box::new(on_demand_pack_data_lookup);
             (fun, Some(data_file))
@@ -115,4 +102,27 @@ impl pack::Bundle {
             pack_kind,
         })
     }
+}
+
+fn foo(
+    directory: Option<&impl AsRef<Path>>,
+) -> io::Result<(
+    NamedTempFile,
+    impl Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
+)> {
+    let data_file = match directory.as_ref() {
+        Some(directory) => NamedTempFile::new_in(directory.as_ref()),
+        None => NamedTempFile::new(),
+    }?;
+    let data_path: PathBuf = data_file.as_ref().into();
+    let data_map = parking_lot::Mutex::new(None);
+    let on_demand_pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
+        let mut guard = data_map.lock();
+        let possibly_map = guard.get_or_insert_with(|| FileBuffer::open(&data_path));
+        possibly_map
+            .as_ref()
+            .ok()
+            .map(|mapped_file| out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize]))
+    };
+    Ok((data_file, on_demand_pack_data_lookup))
 }
