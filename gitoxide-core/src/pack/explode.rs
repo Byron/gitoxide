@@ -12,6 +12,12 @@ pub enum SafetyCheck {
     All,
 }
 
+impl Default for SafetyCheck {
+    fn default() -> Self {
+        SafetyCheck::All
+    }
+}
+
 impl SafetyCheck {
     pub fn variants() -> &'static [&'static str] {
         &[

@@ -1,11 +1,33 @@
 use git_features::progress::Progress;
 use git_odb::pack;
-use std::{io, path::PathBuf};
+use std::{fs, io, path::PathBuf, str::FromStr};
 
+#[derive(PartialEq, Debug)]
 pub enum IterationMode {
     AsIs,
     Verify,
     Restore,
+}
+
+impl Default for IterationMode {
+    fn default() -> Self {
+        IterationMode::Verify
+    }
+}
+
+impl FromStr for IterationMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use IterationMode::*;
+        let slc = s.to_ascii_lowercase();
+        Ok(match slc.as_str() {
+            "as-is" => AsIs,
+            "verify" => Verify,
+            "restore" => Restore,
+            _ => return Err("invalid value".into()),
+        })
+    }
 }
 
 impl From<IterationMode> for pack::data::iter::Mode {
@@ -19,12 +41,36 @@ impl From<IterationMode> for pack::data::iter::Mode {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub enum MemoryMode {
     InMemory,
     InMemoryDecompressed,
     ResolveBases,
     ResolveDeltas,
     ResolveBasesAndDeltas,
+}
+
+impl Default for MemoryMode {
+    fn default() -> Self {
+        MemoryMode::ResolveDeltas
+    }
+}
+
+impl FromStr for MemoryMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use MemoryMode::*;
+        let slc = s.to_ascii_lowercase();
+        Ok(match slc.as_str() {
+            "in-memory" => InMemory,
+            "in-memory-decompressed" => InMemoryDecompressed,
+            "resolve-bases" => ResolveBases,
+            "resolve-deltas" => ResolveDeltas,
+            "resolve-deltas-and-bases" => ResolveBasesAndDeltas,
+            _ => return Err("invalid value".into()),
+        })
+    }
 }
 
 impl From<MemoryMode> for pack::bundle::write::MemoryMode {
@@ -41,10 +87,9 @@ impl From<MemoryMode> for pack::bundle::write::MemoryMode {
 }
 
 pub struct Context {
-    thread_limit: Option<usize>,
-    iteration_mode: IterationMode,
-    memory_mode: MemoryMode,
-    index_kind: pack::index::Kind,
+    pub thread_limit: Option<usize>,
+    pub iteration_mode: IterationMode,
+    pub memory_mode: MemoryMode,
 }
 
 impl From<Context> for pack::bundle::write::Options {
@@ -53,77 +98,49 @@ impl From<Context> for pack::bundle::write::Options {
             thread_limit,
             iteration_mode,
             memory_mode,
-            index_kind,
         }: Context,
     ) -> Self {
         pack::bundle::write::Options {
             thread_limit,
             iteration_mode: iteration_mode.into(),
             memory_mode: memory_mode.into(),
-            index_kind,
+            index_kind: pack::index::Kind::default(),
         }
     }
 }
 
-pub enum ReadOrSeek<R, S>
-where
-    R: io::Read,
-    S: io::Seek + io::Read,
-{
-    Read(R),
-    Seek(S),
+pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
+    use io::SeekFrom;
+    let old_pos = s.seek(SeekFrom::Current(0))?;
+    let len = s.seek(SeekFrom::End(0))?;
+    if old_pos != len {
+        s.seek(SeekFrom::Start(old_pos))?;
+    }
+    Ok(len)
 }
 
-impl<R, S> ReadOrSeek<R, S>
-where
-    R: io::Read,
-    S: io::Seek + io::Read,
-{
-    pub fn inner_stream_len(s: &mut S) -> io::Result<u64> {
-        use io::SeekFrom;
-        let old_pos = s.seek(SeekFrom::Current(0))?;
-        let len = s.seek(SeekFrom::End(0))?;
-        if old_pos != len {
-            s.seek(SeekFrom::Start(old_pos))?;
-        }
-        Ok(len)
-    }
-
-    pub fn stream_len(&mut self) -> Option<io::Result<u64>> {
-        match self {
-            ReadOrSeek::Read(_) => None,
-            ReadOrSeek::Seek(s) => Some(Self::inner_stream_len(s)),
-        }
-    }
-}
-impl<R, S> io::Read for ReadOrSeek<R, S>
-where
-    R: io::Read,
-    S: io::Seek + io::Read,
-{
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        match self {
-            ReadOrSeek::Read(v) => v.read(buf),
-            ReadOrSeek::Seek(v) => v.read(buf),
-        }
-    }
-}
-
-pub fn from_pack<P, R, S>(
-    mut pack: ReadOrSeek<R, S>,
+pub fn from_pack<P>(
+    pack: Option<PathBuf>,
     directory: Option<PathBuf>,
     progress: P,
     context: Context,
 ) -> anyhow::Result<()>
 where
-    R: io::Read,
-    S: io::Seek + io::Read,
     P: Progress,
     <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     use anyhow::Context;
-    let pack_len = pack.stream_len().transpose()?;
-    pack::Bundle::write_to_directory(pack, pack_len, directory, progress, context.into())
-        .with_context(|| "Failed to write pack and index")
-        .map(|_| ())
+    match pack {
+        Some(pack) => {
+            let pack_len = pack.metadata()?.len();
+            let pack_file = fs::File::open(pack)?;
+            pack::Bundle::write_to_directory(pack_file, Some(pack_len), directory, progress, context.into())
+        }
+        None => {
+            let stdin = io::stdin();
+            pack::Bundle::write_to_directory(stdin.lock(), None, directory, progress, context.into())
+        }
+    }
+    .with_context(|| "Failed to write pack and index")
+    .map(|_| ())
 }

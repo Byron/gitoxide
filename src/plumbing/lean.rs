@@ -26,6 +26,58 @@ mod options {
     pub enum SubCommands {
         PackVerify(PackVerify),
         PackExplode(PackExplode),
+        IndexFromPack(IndexFromPack),
+    }
+    /// Create an index from a packfile.
+    ///
+    /// This command can also be used to stream packs to standard input or to repair partial packs.
+    #[derive(FromArgs, PartialEq, Debug)]
+    #[argh(subcommand, name = "index-from-pack")]
+    pub struct IndexFromPack {
+        /// display verbose messages and progress information
+        #[argh(switch, short = 'v')]
+        pub verbose: bool,
+
+        /// specify how to iterate the pack, defaults to 'verify'
+        ///
+        /// Valid values are
+        ///  - as-is
+        ///     * do not do anything and expect the pack file to be valid as per the trailing hash
+        ///  - verifyhash
+        ///     * the input ourselves and validate that it matches with the hash provided in the pack
+        ///  - restore
+        ///     * hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
+        #[argh(option, short = 'i')]
+        pub iteration_mode: Option<core::pack::index::IterationMode>,
+
+        /// trade memory consumption for higher speed or lower memory consumption for reduced performance. Defaults to 'resolve-deltas'
+        ///
+        /// Valid values are
+        /// - in-memory
+        ///   *  keep all objects in memory, compressed
+        /// - in-memory-decompressed
+        ///   * as above, but decompressed, uses about twice as much memory, but does no unnecessary work
+        /// - resolve-bases
+        ///   * keep compressed deltas in memory, store the pack on disk and resolve bases from there
+        /// - resolve-deltas
+        ///   * as above, but keep compressed bases
+        /// - resolve-bases-and-deltas
+        ///   * as above, but resolve all objects, store none in memory
+        ///   * this option duplicates most work, but uses the least memory
+        #[argh(option, short = 'm')]
+        pub memory_mode: Option<core::pack::index::MemoryMode>,
+
+        /// path to the pack file to read (with .pack extension).
+        ///
+        /// If unset, the pack file is expected on stdin.
+        #[argh(option, short = 'p')]
+        pub pack_path: Option<PathBuf>,
+
+        /// the folder into which to place the pack and the generated index file
+        ///
+        /// If unset, only informational output will be provided to standard output.
+        #[argh(positional)]
+        pub directory: Option<PathBuf>,
     }
     /// Explode a pack into loose objects.
     ///
@@ -114,6 +166,7 @@ mod options {
 }
 
 use anyhow::Result;
+use git_features::progress;
 use gitoxide_core as core;
 use std::io::{stderr, stdout};
 
@@ -121,9 +174,9 @@ use std::io::{stderr, stdout};
     feature = "prodash-line-renderer-crossterm",
     feature = "prodash-line-renderer-termion"
 )))]
-fn prepare(verbose: bool, name: &str) -> ((), Option<git_features::progress::Log>) {
+fn prepare(verbose: bool, name: &str) -> ((), Option<progress::Log>) {
     super::init_env_logger(verbose);
-    ((), Some(git_features::progress::Log::new(name, Some(1))))
+    ((), Some(progress::Log::new(name, Some(1))))
 }
 
 #[cfg(any(
@@ -148,6 +201,25 @@ pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
     let thread_limit = cli.threads;
     match cli.subcommand {
+        SubCommands::IndexFromPack(IndexFromPack {
+            verbose,
+            iteration_mode,
+            memory_mode,
+            pack_path,
+            directory,
+        }) => {
+            let (_handle, progress) = prepare(verbose, "pack-explode");
+            core::pack::index::from_pack(
+                pack_path,
+                directory,
+                progress::DoOrDiscard::from(progress),
+                core::pack::index::Context {
+                    thread_limit,
+                    iteration_mode: iteration_mode.unwrap_or_default(),
+                    memory_mode: memory_mode.unwrap_or_default(),
+                },
+            )
+        }
         SubCommands::PackExplode(PackExplode {
             pack_path,
             sink_compress,
@@ -161,7 +233,7 @@ pub fn main() -> Result<()> {
             core::pack::explode::pack_or_pack_index(
                 pack_path,
                 object_path,
-                check.unwrap_or(core::pack::explode::SafetyCheck::All),
+                check.unwrap_or_default(),
                 progress,
                 core::pack::explode::Context {
                     thread_limit,
