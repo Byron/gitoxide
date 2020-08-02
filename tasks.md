@@ -15,10 +15,14 @@
       * [x] 64 bit offset extension
   * [x] seriously refactor the header abstraction in the pack file - it's not right at all.
   * [ ] ~~refactor pack:data::iter::Entry to duplicate less of pack::data::Entry~~
-  * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
-* **cli _index-from-pack_ **
+  * [ ] use progress (one for reading bytes, one for objects, solving the long-standing problem on how to visualize this)
+* **cli index-from-pack**
   * [ ] build index from pack
+     * [ ] from stdin()
   * [ ] complete pack with trailer
+  * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
+* **cli - verify**
+   * break progress up into bytes decompressed and compressed bytes read
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack
