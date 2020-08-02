@@ -7,7 +7,8 @@ mod error;
 use error::Error;
 
 mod types;
-pub use types::*;
+use types::PassThrough;
+pub use types::{MemoryMode, Outcome};
 
 impl pack::Bundle {
     /// If `directory` is `None`, the output will be written to a sink
@@ -25,7 +26,11 @@ impl pack::Bundle {
         P: Progress,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
-        let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(pack), iteration_mode)?;
+        let mut pack = PassThrough {
+            inner_read: pack,
+            inner_write: io::sink(),
+        };
+        let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
 
         match directory {
             Some(directory) => {
