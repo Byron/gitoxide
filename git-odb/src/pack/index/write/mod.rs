@@ -16,16 +16,18 @@ use consume::apply_deltas;
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
     /// Note that neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
-    pub fn write_data_iter_to_stream<F>(
+    pub fn write_data_iter_to_stream<F, P>(
         kind: pack::index::Kind,
         mode: Mode<F>,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         thread_limit: Option<usize>,
-        mut root_progress: impl Progress + Send,
+        mut root_progress: P,
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+        P: Progress,
+        <P as Progress>::SubProgress: Send,
     {
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));
@@ -131,7 +133,7 @@ impl pack::index::File {
         // TODO: This COULD soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
         // by threads to remove now unused caches.
         let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
-        let root_progress = parking_lot::Mutex::new(root_progress);
+        let reduce_progress = parking_lot::Mutex::new(root_progress.add_child("Resolving"));
         let sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
@@ -147,7 +149,7 @@ impl pack::index::File {
                 |thread_index| {
                     (
                         Vec::with_capacity(4096),
-                        root_progress.lock().add_child(format!("thread {}", thread_index)),
+                        reduce_progress.lock().add_child(format!("thread {}", thread_index)),
                     )
                 },
                 |base_pack_offsets, state| {
@@ -163,10 +165,7 @@ impl pack::index::File {
                         kind.hash(),
                     )
                 },
-                {
-                    let progress = root_progress.lock().add_child("Resolving");
-                    Reducer::new(num_objects, progress)
-                },
+                Reducer::new(num_objects, &reduce_progress),
             )?;
             items.sort_by_key(|e| e.1);
             items
@@ -174,8 +173,6 @@ impl pack::index::File {
 
         drop(index_entries);
         drop(cache_by_offset);
-
-        let mut root_progress = root_progress.into_inner();
         root_progress.inc();
 
         let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;

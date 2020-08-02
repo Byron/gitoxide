@@ -138,18 +138,18 @@ impl Mode<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
     }
 }
 
-pub(crate) struct Reducer<P> {
+pub(crate) struct Reducer<'a, P> {
     pub(crate) items: Vec<(u64, owned::Id, u32)>,
-    progress: P,
+    progress: &'a parking_lot::Mutex<P>,
     start: std::time::Instant,
 }
 
-impl<P> Reducer<P>
+impl<'a, P> Reducer<'a, P>
 where
     P: Progress,
 {
-    pub fn new(num_objects: u32, mut progress: P) -> Self {
-        progress.init(Some(num_objects), Some("objects"));
+    pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>) -> Self {
+        progress.lock().init(Some(num_objects), Some("objects"));
         Reducer {
             items: Vec::with_capacity(num_objects as usize),
             progress,
@@ -158,7 +158,7 @@ where
     }
 }
 
-impl<P> parallel::Reducer for Reducer<P>
+impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,
 {
@@ -168,13 +168,14 @@ where
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let input = input?;
-        self.progress.inc_by(input.len() as u32);
+        self.progress.lock().inc_by(input.len() as u32);
         self.items.extend(input.into_iter());
         Ok(())
     }
 
-    fn finalize(mut self) -> Result<Self::Output, Self::Error> {
+    fn finalize(self) -> Result<Self::Output, Self::Error> {
         self.progress
+            .lock()
             .show_throughput(self.start, self.items.len() as u32, "objects");
         Ok(self.items)
     }
