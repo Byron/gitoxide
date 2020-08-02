@@ -174,7 +174,7 @@ use std::io::{stderr, stdout};
     feature = "prodash-line-renderer-crossterm",
     feature = "prodash-line-renderer-termion"
 )))]
-fn prepare(verbose: bool, name: &str) -> ((), Option<progress::Log>) {
+fn prepare(verbose: bool, name: &str, _: u8, _: u8) -> ((), Option<progress::Log>) {
     super::init_env_logger(verbose);
     ((), Some(progress::Log::new(name, Some(1))))
 }

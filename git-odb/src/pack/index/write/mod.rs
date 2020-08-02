@@ -51,7 +51,7 @@ impl pack::index::File {
         root_progress.init(Some(3), Some("steps"));
         root_progress.inc();
         let mut progress = root_progress.add_child("indexing");
-        progress.init(entries.size_hint().1.map(|l| l as u32), Some("Objects"));
+        progress.init(entries.size_hint().1.map(|l| l as u32), Some("objects"));
 
         for (eid, entry) in entries.enumerate() {
             use pack::data::Header::*;
@@ -121,6 +121,7 @@ impl pack::index::File {
             progress.inc();
         }
         progress.show_throughput(indexing_start, num_objects as u32, "objects");
+        drop(progress);
         root_progress.inc();
 
         // Prevent us from trying to find bases for resolution past the point where they are
