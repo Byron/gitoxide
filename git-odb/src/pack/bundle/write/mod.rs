@@ -39,47 +39,43 @@ impl pack::Bundle {
         let is_memory_mode = memory_mode.is_in_memory();
         let indexing_progress = progress.add_child("create index file");
 
-        let (outcome, pack_kind) = match directory {
+        let data_file = match directory.as_ref() {
+            Some(directory) => Some(NamedTempFile::new_in(directory.as_ref())?),
+            None if is_memory_mode => None,
+            None => Some(NamedTempFile::new()?),
+        };
+        let data_path: Option<PathBuf> = data_file.as_ref().map(|f| f.as_ref().into());
+        let mut pack = PassThrough {
+            reader: pack,
+            writer: data_file,
+        };
+        let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
+        let pack_kind = pack_entries_iter.kind();
+
+        let outcome = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
 
-                let (outcome, pack, pack_kind) = if is_memory_mode {
-                    let mut pack = PassThrough {
-                        reader: pack,
-                        writer: Some(NamedTempFile::new_in(directory)?),
-                    };
-                    let pack_entries_iter =
-                        pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
-                    let pack_kind = pack_entries_iter.kind();
-                    let res = pack::index::File::write_data_iter_to_stream(
+                let outcome = if is_memory_mode {
+                    pack::index::File::write_data_iter_to_stream(
                         index_kind,
                         memory_mode.into_write_mode(|_, _| None),
                         pack_entries_iter,
                         thread_limit,
                         indexing_progress,
                         &mut index_file,
-                    )?;
-                    (res, pack, pack_kind)
+                    )
                 } else {
-                    let (data_file, on_demand_pack_data_lookup) = foo(Some(directory))?;
-                    let mut pack = PassThrough {
-                        reader: pack,
-                        writer: Some(data_file),
-                    };
-                    let pack_entries_iter =
-                        pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
-                    let pack_kind = pack_entries_iter.kind();
-                    let res = pack::index::File::write_data_iter_to_stream(
+                    pack::index::File::write_data_iter_to_stream(
                         index_kind,
-                        memory_mode.into_write_mode(on_demand_pack_data_lookup),
+                        memory_mode.into_write_mode(new_pack_file_resolver(data_path)?),
                         pack_entries_iter,
                         thread_limit,
                         indexing_progress,
                         &mut index_file,
-                    )?;
-                    (res, pack, pack_kind)
-                };
+                    )
+                }?;
 
                 let data_file = pack.writer.expect("data file to always be set in write mode");
                 let index_path = directory.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
@@ -97,22 +93,16 @@ impl pack::Bundle {
                         ));
                         err
                     })?;
-                (outcome, pack_kind)
+                outcome
             }
-            None => {
-                let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(pack), iteration_mode)?;
-                let pack_kind = pack_entries_iter.kind();
-
-                let res = pack::index::File::write_data_iter_to_stream(
-                    index_kind,
-                    memory_mode.into_write_mode(|_, _| None),
-                    pack_entries_iter,
-                    thread_limit,
-                    indexing_progress,
-                    io::sink(),
-                )?;
-                (res, pack_kind)
-            }
+            None => pack::index::File::write_data_iter_to_stream(
+                index_kind,
+                memory_mode.into_write_mode(|_, _| None),
+                pack_entries_iter,
+                thread_limit,
+                indexing_progress,
+                io::sink(),
+            )?,
         };
 
         Ok(Outcome {
@@ -122,17 +112,10 @@ impl pack::Bundle {
     }
 }
 
-fn foo(
-    directory: Option<&Path>,
-) -> io::Result<(
-    NamedTempFile,
-    impl Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
-)> {
-    let data_file = match directory {
-        Some(directory) => NamedTempFile::new_in(directory),
-        None => NamedTempFile::new(),
-    }?;
-    let data_path: PathBuf = data_file.as_ref().into();
+fn new_pack_file_resolver(
+    data_path: Option<PathBuf>,
+) -> io::Result<impl Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> {
+    let data_path = data_path.expect("data path to be present if not in memory");
     let data_map = parking_lot::Mutex::new(None);
     let on_demand_pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         let mut guard = data_map.lock();
@@ -142,5 +125,5 @@ fn foo(
             .ok()
             .map(|mapped_file| out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize]))
     };
-    Ok((data_file, on_demand_pack_data_lookup))
+    Ok(on_demand_pack_data_lookup)
 }
