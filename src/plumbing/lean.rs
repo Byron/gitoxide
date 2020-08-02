@@ -183,13 +183,18 @@ fn prepare(verbose: bool, name: &str) -> ((), Option<progress::Log>) {
     feature = "prodash-line-renderer-crossterm",
     feature = "prodash-line-renderer-termion"
 ))]
-fn prepare(verbose: bool, name: &str) -> (Option<prodash::line::JoinHandle>, Option<prodash::tree::Item>) {
+fn prepare(
+    verbose: bool,
+    name: &str,
+    level_start: u8,
+    level_end: u8,
+) -> (Option<prodash::line::JoinHandle>, Option<prodash::tree::Item>) {
     super::init_env_logger(false);
 
     if verbose {
         let progress = prodash::Tree::new();
         let sub_progress = progress.add_child(name);
-        let handle = crate::shared::setup_line_renderer(progress, 2, false);
+        let handle = crate::shared::setup_line_renderer_range(progress, level_start..=level_end, false);
         (Some(handle), Some(sub_progress))
     } else {
         (None, None)
@@ -208,7 +213,7 @@ pub fn main() -> Result<()> {
             pack_path,
             directory,
         }) => {
-            let (_handle, progress) = prepare(verbose, "pack-explode");
+            let (_handle, progress) = prepare(verbose, "pack-explode", 2, 3);
             core::pack::index::from_pack(
                 pack_path,
                 directory,
@@ -229,7 +234,7 @@ pub fn main() -> Result<()> {
             check,
             delete_pack,
         }) => {
-            let (_handle, progress) = prepare(verbose, "pack-explode");
+            let (_handle, progress) = prepare(verbose, "pack-explode", 2, 2);
             core::pack::explode::pack_or_pack_index(
                 pack_path,
                 object_path,
@@ -252,7 +257,7 @@ pub fn main() -> Result<()> {
             re_encode,
         }) => {
             use self::core::pack::verify;
-            let (_handle, progress) = prepare(verbose, "pack-verify");
+            let (_handle, progress) = prepare(verbose, "pack-verify", 2, 2);
             core::pack::verify::pack_or_pack_index(
                 path,
                 progress,

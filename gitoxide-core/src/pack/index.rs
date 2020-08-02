@@ -67,7 +67,7 @@ impl FromStr for MemoryMode {
             "in-memory-decompressed" => InMemoryDecompressed,
             "resolve-bases" => ResolveBases,
             "resolve-deltas" => ResolveDeltas,
-            "resolve-deltas-and-bases" => ResolveBasesAndDeltas,
+            "resolve-bases-and-deltas" => ResolveBasesAndDeltas,
             _ => return Err("invalid value".into()),
         })
     }

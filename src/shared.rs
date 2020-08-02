@@ -25,6 +25,30 @@ pub fn setup_line_renderer(
     )
 }
 
+#[allow(unused)]
+#[cfg(feature = "prodash-line-renderer")]
+pub fn setup_line_renderer_range(
+    progress: prodash::Tree,
+    levels: std::ops::RangeInclusive<prodash::tree::Level>,
+    hide_cursor: bool,
+) -> prodash::line::JoinHandle {
+    let output_is_terminal = atty::is(atty::Stream::Stderr);
+    prodash::line::render(
+        std::io::stderr(),
+        progress,
+        prodash::line::Options {
+            level_filter: Some(levels),
+            frames_per_second: DEFAULT_FRAME_RATE,
+            initial_delay: Some(std::time::Duration::from_millis(1000)),
+            output_is_terminal,
+            colored: output_is_terminal && crosstermion::color::allowed(),
+            timestamp: true,
+            hide_cursor,
+            ..prodash::line::Options::default()
+        },
+    )
+}
+
 #[cfg(all(feature = "lean-cli", not(feature = "pretty-cli")))]
 pub fn from_env<T: argh::TopLevelCommand>() -> T {
     static VERSION: &str = concat!(env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION"));

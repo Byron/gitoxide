@@ -18,9 +18,11 @@
   * [x] use progress (one for reading bytes, one for objects, solving the long-standing problem on how to visualize this)
      * [x] use new show_throughput method everywhere
 * **cli index-from-pack**
-  * [ ] build index from pack
-     * [ ] from stdin()
-  * [ ] complete pack with trailer
+  * [x] build index from pack
+     * [x] from stdin()
+  * [x] complete pack with trailer
+  * [ ] unit tests for bundle index write
+  * [ ] journey test for command-line capabilities
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli - verify**
    * break progress up into bytes decompressed and compressed bytes read
