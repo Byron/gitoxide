@@ -14,17 +14,28 @@ use filebuffer::FileBuffer;
 use types::PassThrough;
 pub use types::{MemoryMode, Outcome};
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Options {
+    pub thread_limit: Option<usize>,
+    pub iteration_mode: pack::data::iter::Mode,
+    pub memory_mode: MemoryMode,
+    pub index_kind: pack::index::Kind,
+}
+
 impl pack::Bundle {
     /// If `directory` is `None`, the output will be written to a sink
     pub fn write_to_directory<P>(
         pack: impl io::Read,
         pack_size: Option<u64>,
-        iteration_mode: pack::data::iter::Mode,
-        thread_limit: Option<usize>,
-        memory_mode: MemoryMode,
-        index_kind: pack::index::Kind,
         directory: Option<impl AsRef<Path>>,
         mut progress: P,
+        Options {
+            thread_limit,
+            iteration_mode,
+            memory_mode,
+            index_kind,
+        }: Options,
     ) -> Result<Outcome, Error>
     where
         P: Progress,

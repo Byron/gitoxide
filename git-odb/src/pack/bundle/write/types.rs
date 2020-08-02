@@ -59,7 +59,7 @@ where
         let bytes_read = self.reader.read(buf)?;
         if let Some(writer) = self.writer.as_mut() {
             use io::Write;
-            writer.write(&buf[..bytes_read])?;
+            writer.write_all(&buf[..bytes_read])?;
         }
         Ok(bytes_read)
     }
