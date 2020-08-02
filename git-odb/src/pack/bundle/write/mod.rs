@@ -33,7 +33,7 @@ impl pack::Bundle {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as u32), Some("bytes"));
         let pack = progress::Read {
-            read: pack,
+            reader: pack,
             progress: read_progress,
         };
         let data_file = match directory.as_ref() {

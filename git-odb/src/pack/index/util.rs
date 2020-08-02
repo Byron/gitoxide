@@ -37,7 +37,7 @@ impl TimeThroughput {
 
 impl Into<String> for TimeThroughput {
     fn into(self) -> String {
-        let time_taken = std::time::Instant::now().duration_since(self.then).as_secs_f32();
+        let time_taken = self.then.elapsed().as_secs_f32();
         format!(
             "finished in {:.2}s at {}/s",
             time_taken,

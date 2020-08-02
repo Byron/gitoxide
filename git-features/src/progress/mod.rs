@@ -203,7 +203,7 @@ where
 
 /// A structure passing every 'read' call through to the contained Progress instance using `inc_by(bytes_read)`.
 pub struct Read<R, P> {
-    pub read: R,
+    pub reader: R,
     pub progress: P,
 }
 
@@ -213,7 +213,7 @@ where
     P: Progress,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let bytes_read = self.read.read(buf)?;
+        let bytes_read = self.reader.read(buf)?;
         self.progress.inc_by(bytes_read as u32);
         Ok(bytes_read)
     }
