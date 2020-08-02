@@ -68,7 +68,7 @@ impl pack::Bundle {
         let pack_kind = pack_entries_iter.kind();
         let indexing_progress = progress.add_child("create index file");
 
-        let (outcome, pack_kind) = match directory {
+        let outcome = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
@@ -98,11 +98,16 @@ impl pack::Bundle {
                         ));
                         err
                     })?;
-                (outcome, pack_kind)
+                outcome
             }
-            None => {
-                unimplemented!("no output directory");
-            }
+            None => pack::index::File::write_data_iter_to_stream(
+                index_kind,
+                memory_mode,
+                pack_entries_iter,
+                thread_limit,
+                indexing_progress,
+                io::sink(),
+            )?,
         };
 
         Ok(Outcome {
