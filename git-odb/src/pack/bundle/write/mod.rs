@@ -64,22 +64,21 @@ impl pack::Bundle {
             reader: pack,
             writer: possibly_data_file,
         };
+        let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
+        let pack_kind = pack_entries_iter.kind();
+        let indexing_progress = progress.add_child("create index file");
 
         let (outcome, pack_kind) = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
 
-                let pack_entries_iter =
-                    pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
-                let pack_kind = pack_entries_iter.kind();
-
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     index_kind,
                     memory_mode,
                     pack_entries_iter,
                     thread_limit,
-                    progress.add_child("create index file"),
+                    indexing_progress,
                     &mut index_file,
                 )?;
 
