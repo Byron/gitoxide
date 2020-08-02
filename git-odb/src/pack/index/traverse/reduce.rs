@@ -88,8 +88,6 @@ where
     }
 
     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
-        self.progress.lock().done("finished");
-
         div_decode_result(&mut self.stats.average, self.entries_seen as usize);
 
         let elapsed_s = self.then.elapsed().as_secs_f32();

@@ -5,7 +5,7 @@ use petgraph::{
     Direction,
 };
 use quick_error::quick_error;
-use std::{collections::BTreeMap, fs, io, time::SystemTime};
+use std::{collections::BTreeMap, fs, io, time::Instant};
 
 quick_error! {
     #[derive(Debug)]
@@ -109,7 +109,7 @@ impl DeltaTree {
         }
 
         let mut offsets_to_node = BTreeMap::new();
-        let then = SystemTime::now();
+        let then = Instant::now();
 
         let mut previous_offset = None::<u64>;
 
@@ -156,13 +156,7 @@ impl DeltaTree {
             progress.inc();
         }
 
-        let elapsed = then.elapsed().expect("system time to work").as_secs_f32();
-        progress.info(format!(
-            "tree from {} entries in {:.02}s ({} entries /s)",
-            tree.node_count(),
-            elapsed,
-            tree.node_count() as f32 / elapsed
-        ));
+        progress.show_throughput(then, tree.node_count() as u32, "entries");
 
         tree.shrink_to_fit();
         Ok(DeltaTree { inner: tree })

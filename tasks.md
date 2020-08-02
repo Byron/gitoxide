@@ -16,7 +16,7 @@
   * [x] seriously refactor the header abstraction in the pack file - it's not right at all.
   * [ ] ~~refactor pack:data::iter::Entry to duplicate less of pack::data::Entry~~
   * [x] use progress (one for reading bytes, one for objects, solving the long-standing problem on how to visualize this)
-     * [ ] use new show_throughput method everywhere
+     * [x] use new show_throughput method everywhere
 * **cli index-from-pack**
   * [ ] build index from pack
      * [ ] from stdin()

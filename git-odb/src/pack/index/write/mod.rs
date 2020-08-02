@@ -129,7 +129,7 @@ impl pack::index::File {
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
 
         // TODO: This COULD soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
-        // by threads to remove now unused caches. Probably also a good moment to switch to parking lot mutexes everywhere.
+        // by threads to remove now unused caches.
         let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
         let root_progress = parking_lot::Mutex::new(root_progress);
         let sorted_pack_offsets_by_oid = {
@@ -184,11 +184,7 @@ impl pack::index::File {
             root_progress.add_child("writing index file"),
         )?;
         root_progress.inc();
-        root_progress.done(format!(
-            "index file with {} objects written in {:.02}s",
-            num_objects,
-            indexing_start.elapsed().as_secs_f32()
-        ));
+        root_progress.show_throughput(indexing_start, num_objects, "objects");
         Ok(Outcome {
             index_kind: kind,
             index_hash,
