@@ -1,5 +1,5 @@
 use crate::pack;
-use git_features::progress::Progress;
+use git_features::{progress, progress::Progress};
 use std::{io, path::Path};
 use tempfile::NamedTempFile;
 
@@ -14,7 +14,7 @@ impl pack::Bundle {
     /// If `directory` is `None`, the output will be written to a sink
     pub fn write_to_directory<P>(
         pack: impl io::Read,
-        _pack_size: Option<u64>,
+        pack_size: Option<u64>,
         iteration_mode: pack::data::iter::Mode,
         thread_limit: Option<usize>,
         _memory_mode: MemoryMode,
@@ -26,8 +26,13 @@ impl pack::Bundle {
         P: Progress,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
+        let mut read_progress = progress.add_child("read pack");
+        read_progress.init(pack_size.map(|s| s as u32), Some("bytes"));
         let mut pack = PassThrough {
-            inner_read: pack,
+            inner_read: progress::Read {
+                read: pack,
+                progress: read_progress,
+            },
             inner_write: io::sink(),
         };
         let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;

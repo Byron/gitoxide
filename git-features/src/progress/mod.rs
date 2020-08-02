@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{io, time::Instant};
 
 /// The severity of a message
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -198,6 +198,24 @@ where
 
     fn message(&mut self, level: MessageLevel, message: impl Into<String>) {
         self.0.message(level, message)
+    }
+}
+
+/// A structure passing every 'read' call through to the contained Progress instance using `inc_by(bytes_read)`.
+pub struct Read<R, P> {
+    pub read: R,
+    pub progress: P,
+}
+
+impl<R, P> io::Read for Read<R, P>
+where
+    R: io::Read,
+    P: Progress,
+{
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let bytes_read = self.read.read(buf)?;
+        self.progress.inc_by(bytes_read as u32);
+        Ok(bytes_read)
     }
 }
 
