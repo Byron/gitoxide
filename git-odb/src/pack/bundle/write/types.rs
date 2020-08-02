@@ -1,6 +1,7 @@
 use crate::pack;
 use git_object::owned;
 use std::io;
+use tempfile::NamedTempFile;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -37,21 +38,31 @@ impl MemoryMode {
             ResolveBasesAndDeltas => pack::index::write::Mode::ResolveBasesAndDeltas(f),
         }
     }
+
+    pub(crate) fn is_in_memory(&self) -> bool {
+        use MemoryMode::*;
+        match self {
+            InMemory | InMemoryDecompressed => true,
+            ResolveBases | ResolveDeltas | ResolveBasesAndDeltas => false,
+        }
+    }
 }
 
-pub(crate) struct PassThrough<R, W> {
+pub(crate) struct PassThrough<R> {
     pub reader: R,
-    pub writer: W,
+    pub writer: Option<NamedTempFile>,
 }
 
-impl<R, W> io::Read for PassThrough<R, W>
+impl<R> io::Read for PassThrough<R>
 where
     R: io::Read,
-    W: io::Write,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let bytes_read = self.reader.read(buf)?;
-        self.writer.write(&buf[..bytes_read])?;
+        if let Some(writer) = self.writer.as_mut() {
+            use io::Write;
+            writer.write(&buf[..bytes_read])?;
+        }
         Ok(bytes_read)
     }
 }

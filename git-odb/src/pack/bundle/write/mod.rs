@@ -55,7 +55,7 @@ impl pack::Bundle {
         };
         let mut pack = PassThrough {
             reader: pack,
-            writer: data_file,
+            writer: Some(data_file),
         };
 
         match directory {
@@ -75,7 +75,7 @@ impl pack::Bundle {
                     &mut index_file,
                 )?;
 
-                let data_file = pack.writer;
+                let data_file = pack.writer.expect("data file to always be set in write mode");
                 let index_path = directory.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
                 let data_path = directory.join(format!("{}.pack", outcome.pack_hash.to_sha1_hex_string()));
 
