@@ -37,7 +37,7 @@ pub(crate) fn to_write(
     let mut fan_out_be = [0u32; 256];
     progress.init(Some(4), Some("steps"));
     let start = std::time::Instant::now();
-    let _sub_progress = progress.add_child("generating fan-out table");
+    let _info = progress.add_child("generating fan-out table");
 
     {
         let mut iter = entries_sorted_by_oid.iter().enumerate();
@@ -70,19 +70,19 @@ pub(crate) fn to_write(
     out.write_all(unsafe { &*(&fan_out_be as *const [u32; 256] as *const [u8; 1024]) })?;
 
     progress.inc();
-    let _sub_progress = progress.add_child("writing ids");
+    let _info = progress.add_child("writing ids");
     for (_, id, _) in &entries_sorted_by_oid {
         out.write_all(id.as_slice())?;
     }
 
     progress.inc();
-    let _sub_progress = progress.add_child("writing crc32");
+    let _info = progress.add_child("writing crc32");
     for (_, _, crc32) in &entries_sorted_by_oid {
         out.write_u32::<BigEndian>(*crc32)?;
     }
 
     progress.inc();
-    let _sub_progress = progress.add_child("writing offsets");
+    let _info = progress.add_child("writing offsets");
     {
         let mut offsets64_be = Vec::<u64>::new();
         for (pack_offset, _, _) in &entries_sorted_by_oid {
@@ -110,6 +110,8 @@ pub(crate) fn to_write(
 
     let index_hash: owned::Id = out.inner.hash.digest().into();
     out.inner.inner.write_all(index_hash.as_slice())?;
+    out.inner.inner.flush()?;
+
     progress.inc();
     progress.show_throughput(start, out.bytes as u32, "bytes");
 
