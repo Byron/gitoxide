@@ -36,11 +36,15 @@ impl pack::Bundle {
             reader: pack,
             progress: read_progress,
         };
-        let data_file = match directory.as_ref() {
-            Some(directory) => NamedTempFile::new_in(directory.as_ref()),
-            None => NamedTempFile::new(),
-        }?;
-        let memory_mode = {
+        let (resolve_fn, possibly_data_file) = if memory_mode.is_in_memory() {
+            let fun: Box<dyn Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> =
+                Box::new(|_, _| None);
+            (fun, None)
+        } else {
+            let data_file = match directory.as_ref() {
+                Some(directory) => NamedTempFile::new_in(directory.as_ref()),
+                None => NamedTempFile::new(),
+            }?;
             let data_path: PathBuf = data_file.as_ref().into();
             let data_map = parking_lot::Mutex::new(None);
             let on_demand_pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
@@ -51,11 +55,14 @@ impl pack::Bundle {
                     .ok()
                     .map(|mapped_file| out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize]))
             };
-            memory_mode.into_write_mode(on_demand_pack_data_lookup)
+            let fun: Box<dyn Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> =
+                Box::new(on_demand_pack_data_lookup);
+            (fun, Some(data_file))
         };
+        let memory_mode = memory_mode.into_write_mode(resolve_fn);
         let mut pack = PassThrough {
             reader: pack,
-            writer: Some(data_file),
+            writer: possibly_data_file,
         };
 
         match directory {
