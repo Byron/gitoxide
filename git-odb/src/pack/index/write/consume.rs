@@ -10,7 +10,7 @@ use smallvec::alloc::collections::BTreeMap;
 use std::{cell::RefCell, io};
 
 pub(crate) fn apply_deltas<F, P>(
-    (mut base_entries, _): (Vec<Entry>, ()),
+    (mut base_entries, _): (Vec<Entry>, Vec<pack::tree::Node<pack::index::write::types::TreeEntry>>),
     (bytes_buf, progress): &mut (Vec<u8>, P),
     entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,

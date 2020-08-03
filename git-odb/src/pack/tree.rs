@@ -22,6 +22,9 @@ struct Item<D> {
     children: Vec<usize>,
 }
 
+/// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
+/// while being shareable among threads without a lock.
+/// It does this by making the run-time guarantee that iteration only happens once.
 pub(crate) struct Tree<D> {
     items: Vec<Item<D>>,
     last_added_offset: u64,
@@ -93,6 +96,22 @@ impl<D> Tree<D> {
         self.iterator_created = true;
         Chunks { inner: self, size }
     }
+
+    #[allow(unsafe_code)]
+    /// SAFETY: A tree is a data structure without cycles, and we assure of that by verifying all input.
+    /// Thus a node as identified by index can only be traversed once using the Chunks iterator.
+    /// When the iterator is created, this instance cannot be mutated anymore nor can it be read.
+    /// That iterator is only handed out once.
+    /// `Node` instances produced by it consume themselves when iterating their children, allowing them to be
+    /// used only once, recursively.
+    /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping.
+    /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
+    unsafe fn take_entry(&self, index: usize) -> (D, Vec<usize>) {
+        let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
+        let item = &mut items_mut[index];
+        let children = std::mem::replace(&mut item.children, Vec::new());
+        (item._data.take().expect("each Node is only be iterated once"), children)
+    }
 }
 
 pub struct Node<'a, D> {
@@ -102,13 +121,29 @@ pub struct Node<'a, D> {
     children: Vec<usize>,
 }
 
+impl<'a, D> Node<'a, D> {
+    pub fn into_child_iter(self, out: &mut Vec<Node<'a, D>>) {
+        let Self { _owner, children, .. } = self;
+        for index in children.into_iter() {
+            // SAFETY: See `take_entry()`
+            #[allow(unsafe_code)]
+            let (data, children) = unsafe { _owner.take_entry(index) };
+            out.push(Node {
+                _owner: _owner,
+                _data: data,
+                children,
+            })
+        }
+    }
+}
+
 pub struct Chunks<'a, D> {
     inner: &'a Tree<D>,
     size: usize,
 }
 
 impl<'a, D> Iterator for Chunks<'a, D> {
-    type Item = ();
+    type Item = Vec<Node<'a, D>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         unimplemented!()
