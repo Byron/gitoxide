@@ -30,6 +30,7 @@ pub(crate) struct Tree<D> {
     last_added_offset: u64,
     // assure we truly create only one iterator, ever, to avoid violating access rules
     iterator_created: bool,
+    one_past_last_seen_root: usize,
 }
 
 impl<D> Tree<D> {
@@ -41,6 +42,7 @@ impl<D> Tree<D> {
             items: Vec::with_capacity(num_objects),
             last_added_offset: 0,
             iterator_created: false,
+            one_past_last_seen_root: 0,
         })
     }
 
@@ -64,6 +66,7 @@ impl<D> Tree<D> {
             _data: Some(data),
             children: Default::default(),
         });
+        self.one_past_last_seen_root = self.items.len();
         Ok(())
     }
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
@@ -148,23 +151,27 @@ impl<'a, D> Iterator for Chunks<'a, D> {
     type Item = Vec<Node<'a, D>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let safe_range = self.cursor..(self.cursor + self.size).min(self.tree.items.len());
-        if safe_range.start == safe_range.end {
+        if self.cursor == self.tree.one_past_last_seen_root {
             return None;
         }
+        let mut items_remaining = self.size;
         let mut res = Vec::with_capacity(self.size);
-        self.cursor = safe_range.end;
 
-        for index in safe_range {
-            // SAFETY: The index is valid as we verified it to be in bound beforehand. Then see `take_entry(…)`
+        while items_remaining > 0 && self.cursor < self.tree.one_past_last_seen_root {
+            // SAFETY: The index is valid as the cursor cannot surpass the amount of items. `one_past_last_seen_root`
+            // is guaranteed to be self.tree.items.len() at most, or smaller.
+            // Then see `take_entry(…)`
             #[allow(unsafe_code)]
-            let (data, children) = unsafe { self.tree.take_entry(index) };
+            let (data, children) = unsafe { self.tree.take_entry(self.cursor) };
             res.push(Node {
                 tree: self.tree,
-                data: data,
+                data,
                 children,
             });
+            self.cursor += 1;
+            items_remaining -= 1;
         }
+
         if res.is_empty() {
             None
         } else {
