@@ -49,5 +49,10 @@ quick_error! {
         ConsumeResolveFailed(pack_offset: u64) {
             display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
         }
+        Tree(err: pack::tree::Error) {
+            display("An invariant regarding the delta tree did not hold")
+            source(err)
+            from()
+        }
     }
 }

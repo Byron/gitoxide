@@ -78,11 +78,11 @@ const PACK_HEADER_LEN: usize = 12;
 /// Initialization
 impl DeltaTree {
     /// The sort order is ascending. The given packfile path must match the provided offsets.
-    pub fn from_sorted_offsets(
+    pub fn from_offsets_in_pack(
         offsets: impl Iterator<Item = PackOffset>,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
-        resolve_in_pack_oid: impl Fn(git_object::borrowed::Id) -> Option<PackOffset>,
+        resolve_in_pack_id: impl Fn(git_object::borrowed::Id) -> Option<PackOffset>,
     ) -> Result<Self, Error> {
         use io::{BufRead, Read};
 
@@ -137,7 +137,7 @@ impl DeltaTree {
                 RefDelta { base_id } => {
                     let base_or_child = tree.add_node(pack_offset);
                     offsets_to_node.insert(pack_offset, base_or_child);
-                    if let Some(base_pack_offset) = resolve_in_pack_oid(base_id.to_borrowed()) {
+                    if let Some(base_pack_offset) = resolve_in_pack_id(base_id.to_borrowed()) {
                         let base = offsets_to_node
                             .entry(base_pack_offset)
                             .or_insert_with(|| tree.add_node(base_pack_offset));

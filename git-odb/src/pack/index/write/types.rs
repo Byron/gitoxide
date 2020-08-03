@@ -53,6 +53,14 @@ pub(crate) struct CacheEntry {
     child_count: u32,
 }
 
+pub(crate) struct TreeEntry {
+    pub pack_offset: u64,
+    pub entry_len: usize,
+    pub kind: ObjectKind,
+    pub crc32: u32,
+    pub cache: Cache,
+}
+
 pub(crate) enum Bytes {
     Owned(Cache),
     Borrowed(Cache),

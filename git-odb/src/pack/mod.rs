@@ -1,14 +1,12 @@
-pub mod index;
-
+pub mod bundle;
 pub mod cache;
-
 pub mod data;
-
 pub mod graph;
+pub mod index;
+pub mod tree;
 
 mod object;
 pub use object::Object;
 
-pub mod bundle;
 #[doc(inline)]
 pub use bundle::Bundle;

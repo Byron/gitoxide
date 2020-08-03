@@ -1,4 +1,4 @@
-use crate::{pack, pack::index::util::Chunks};
+use crate::{pack, pack::index::util::Chunks, pack::tree::Tree};
 use git_features::{hash, parallel, parallel::in_parallel_if, progress::Progress};
 use smallvec::alloc::collections::BTreeMap;
 use std::{convert::TryInto, io};
@@ -8,7 +8,8 @@ mod error;
 pub use error::Error;
 
 mod types;
-pub use types::*;
+use types::{Bytes, Cache, CacheEntry, Entry, ObjectKind, Reducer, TreeEntry};
+pub use types::{EntrySlice, Mode, Outcome};
 
 mod consume;
 use consume::apply_deltas;
@@ -45,6 +46,7 @@ impl pack::index::File {
         let mut first_delta_index = None;
         let mut last_pack_offset = 0;
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
+        let mut tree = Tree::new(entries.size_hint().0)?;
         let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
 
@@ -72,6 +74,7 @@ impl pack::index::File {
             }
             last_pack_offset = pack_offset;
             bytes_to_process += decompressed.len() as u64;
+            let entry_len = header_size as usize + compressed_len;
             let crc32 = {
                 let header_len = header.to_write(decompressed.len() as u64, header_buf.as_mut())?;
                 let state = hash::crc32_update(0, &header_buf[..header_len]);
@@ -82,6 +85,16 @@ impl pack::index::File {
             let (cache, kind) = match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
+                    tree.add_root(
+                        pack_offset,
+                        TreeEntry {
+                            pack_offset,
+                            entry_len,
+                            kind: ObjectKind::Base(header.to_kind().expect("a base object")),
+                            crc32,
+                            cache: mode.base_cache(compressed.clone(), decompressed.clone()), // TODO: remove clones once owned
+                        },
+                    )?;
                     (
                         mode.base_cache(compressed, decompressed),
                         ObjectKind::Base(header.to_kind().expect("a base object")),
@@ -91,6 +104,17 @@ impl pack::index::File {
                 OfsDelta { base_distance } => {
                     let base_pack_offset = pack::data::Header::verified_base_pack_offset(pack_offset, base_distance)
                         .ok_or_else(|| Error::IteratorInvariantBaseOffset(pack_offset, base_distance))?;
+                    tree.add_child(
+                        base_pack_offset,
+                        pack_offset,
+                        TreeEntry {
+                            pack_offset,
+                            entry_len,
+                            kind: ObjectKind::OfsDelta(base_pack_offset),
+                            crc32,
+                            cache: mode.delta_cache(compressed.clone(), decompressed.clone()), // TODO: remove clones
+                        },
+                    )?;
                     cache_by_offset
                         .get_mut(&base_pack_offset)
                         .ok_or_else(|| {

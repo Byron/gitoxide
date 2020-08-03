@@ -35,7 +35,7 @@ impl index::File {
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
         let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
-        let tree = pack::graph::DeltaTree::from_sorted_offsets(
+        let tree = pack::graph::DeltaTree::from_offsets_in_pack(
             sorted_entries.iter().map(|e| e.pack_offset),
             pack.path(),
             root.add_child("indexing"),
