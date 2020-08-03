@@ -21,37 +21,22 @@ pub(crate) enum Cache {
 #[derive(Clone)]
 pub(crate) enum ObjectKind {
     Base(git_object::Kind),
-    // TODO: remove tue pack offset when new version is ready
-    OfsDelta(u64),
+    OfsDelta,
 }
 
 impl ObjectKind {
     pub fn is_base(&self) -> bool {
         match self {
             ObjectKind::Base(_) => true,
-            ObjectKind::OfsDelta(_) => false,
+            ObjectKind::OfsDelta => false,
         }
     }
     pub fn to_kind(&self) -> Option<git_object::Kind> {
         match self {
             ObjectKind::Base(kind) => Some(*kind),
-            ObjectKind::OfsDelta(_) => None,
+            ObjectKind::OfsDelta => None,
         }
     }
-}
-
-#[derive(Clone)]
-pub(crate) struct Entry {
-    pub pack_offset: u64,
-    pub entry_len: usize,
-    pub kind: ObjectKind,
-    pub crc32: u32,
-}
-
-pub(crate) struct CacheEntry {
-    cache: Cache,
-    /// When it reaches zero, the cache can be freed
-    child_count: u32,
 }
 
 pub(crate) struct TreeEntry {
@@ -65,42 +50,6 @@ pub(crate) struct TreeEntry {
 impl pack::tree::IsRoot for TreeEntry {
     fn is_root(&self) -> bool {
         self.kind.is_base()
-    }
-}
-
-pub(crate) enum Bytes {
-    Owned(Cache),
-    Borrowed(Cache),
-}
-
-/// Note that every operation in the CacheEntry must be fast, as these happen behind a lock
-impl CacheEntry {
-    pub fn new(cache: Cache) -> Self {
-        CacheEntry { child_count: 0, cache }
-    }
-    pub fn increment_child_count(&mut self) {
-        self.child_count += 1;
-    }
-    pub fn cache_decr(&mut self) -> Bytes {
-        self.child_count -= 1;
-        self.cache()
-    }
-
-    pub fn is_borrowed(child_count: u32) -> bool {
-        child_count != 0
-    }
-
-    pub fn cache(&mut self) -> Bytes {
-        let cache = std::mem::replace(&mut self.cache, Cache::Unset);
-        if Self::is_borrowed(self.child_count) {
-            Bytes::Borrowed(cache)
-        } else {
-            Bytes::Owned(cache)
-        }
-    }
-    pub fn set_decompressed(&mut self, bytes: Vec<u8>) {
-        assert_ne!(self.child_count, 0, "Do not return decompressed bytes once nobody is interested in the data anymore, i.e. from `Bytes::Owned(…)`");
-        self.cache = Cache::Decompressed(bytes);
     }
 }
 

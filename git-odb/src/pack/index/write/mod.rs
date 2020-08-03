@@ -1,6 +1,5 @@
-use crate::{pack, pack::index::util::Chunks, pack::tree::Tree};
+use crate::{pack, pack::tree::Tree};
 use git_features::{hash, parallel, parallel::in_parallel_if, progress::Progress};
-use smallvec::alloc::collections::BTreeMap;
 use std::{convert::TryInto, io};
 
 mod encode;
@@ -8,8 +7,8 @@ mod error;
 pub use error::Error;
 
 mod types;
-use types::{CacheEntry, Entry, ObjectKind, Reducer, TreeEntry};
 pub use types::{EntrySlice, Mode, Outcome};
+use types::{ObjectKind, Reducer, TreeEntry};
 
 mod consume;
 use consume::apply_deltas;
@@ -35,12 +34,8 @@ impl pack::index::File {
         }
         let mut num_objects: usize = 0;
         let mut bytes_to_process = 0u64;
-        // This array starts out sorted by pack-offset
-        let mut index_entries = Vec::with_capacity(entries.size_hint().0);
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
-        let mut first_delta_index = None;
-        let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         let mut tree = Tree::new(entries.size_hint().0)?;
         let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
@@ -70,7 +65,7 @@ impl pack::index::File {
             };
 
             use pack::data::Header::*;
-            let (cache, kind) = match header {
+            match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
                     tree.add_root(
@@ -80,13 +75,9 @@ impl pack::index::File {
                             entry_len,
                             kind: ObjectKind::Base(header.to_kind().expect("a base object")),
                             crc32,
-                            cache: mode.base_cache(compressed.clone(), decompressed.clone()), // TODO: remove clones once owned
+                            cache: mode.base_cache(compressed, decompressed),
                         },
                     )?;
-                    (
-                        mode.base_cache(compressed, decompressed),
-                        ObjectKind::Base(header.to_kind().expect("a base object")),
-                    )
                 }
                 RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
                 OfsDelta { base_distance } => {
@@ -98,36 +89,14 @@ impl pack::index::File {
                         TreeEntry {
                             pack_offset,
                             entry_len,
-                            kind: ObjectKind::OfsDelta(base_pack_offset),
+                            kind: ObjectKind::OfsDelta,
                             crc32,
-                            cache: mode.delta_cache(compressed.clone(), decompressed.clone()), // TODO: remove clones
+                            cache: mode.delta_cache(compressed, decompressed),
                         },
                     )?;
-                    cache_by_offset
-                        .get_mut(&base_pack_offset)
-                        .expect("this to work nice check is done in tree delete me")
-                        .increment_child_count();
-
-                    if first_delta_index.is_none() {
-                        first_delta_index = Some(eid);
-                    }
-
-                    (
-                        mode.delta_cache(compressed, decompressed),
-                        ObjectKind::OfsDelta(base_pack_offset),
-                    )
                 }
             };
-
-            cache_by_offset.insert(pack_offset, CacheEntry::new(cache));
-            index_entries.push(Entry {
-                pack_offset,
-                entry_len: header_size as usize + compressed_len,
-                kind,
-                crc32,
-            });
             last_seen_trailer = trailer;
-
             num_objects += 1;
             progress.inc();
         }
@@ -137,27 +106,16 @@ impl pack::index::File {
 
         // Prevent us from trying to find bases for resolution past the point where they are
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
-        let last_base_index = last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
+        last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
         let num_objects: u32 = num_objects
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
 
-        // TODO: This COULD soon become a dashmap (in fast mode, or a Mutex protected shared map) as this will be edited
-        // by threads to remove now unused caches.
-        let cache_by_offset = parking_lot::Mutex::new(cache_by_offset);
         let reduce_progress = parking_lot::Mutex::new(root_progress.add_child("Resolving"));
         let sorted_pack_offsets_by_oid = {
             let mut items = in_parallel_if(
                 || bytes_to_process > 5_000_000,
-                Chunks {
-                    iter: index_entries
-                        .iter()
-                        .take(last_base_index + 1)
-                        .filter(|e| e.kind.is_base())
-                        .cloned(),
-                    size: chunk_size,
-                }
-                .zip(tree.iter_root_chunks(chunk_size)),
+                tree.iter_root_chunks(chunk_size),
                 thread_limit,
                 |thread_index| {
                     (
@@ -165,27 +123,13 @@ impl pack::index::File {
                         reduce_progress.lock().add_child(format!("thread {}", thread_index)),
                     )
                 },
-                |base_pack_offsets, state| {
-                    apply_deltas(
-                        base_pack_offsets,
-                        state,
-                        match first_delta_index {
-                            Some(idx) => &index_entries[idx..],
-                            None => &[],
-                        },
-                        &cache_by_offset,
-                        &mode,
-                        kind.hash(),
-                    )
-                },
+                |root_nodes, state| apply_deltas(root_nodes, state, &mode, kind.hash()),
                 Reducer::new(num_objects, &reduce_progress),
             )?;
             items.sort_by_key(|e| e.1);
             items
         };
         drop(tree);
-        drop(index_entries);
-        drop(cache_by_offset);
         root_progress.inc();
 
         let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
