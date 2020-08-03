@@ -86,13 +86,6 @@ where
                     .set_decompressed(bytes);
             }
         };
-        let compute_hash = |kind: git_object::Kind, bytes: &[u8]| -> owned::Id {
-            let mut write = hash::Write::new(io::sink(), hash_kind);
-            loose::object::header::encode(kind, bytes.len() as u64, &mut write)
-                .expect("write to sink and hash cannot fail");
-            write.hash.update(bytes);
-            owned::Id::from(write.hash.digest())
-        };
         let mut out = Vec::with_capacity(base_entries.len()); // perfectly conservative guess
 
         // Compute hashes for all of our bases right away
@@ -107,7 +100,7 @@ where
             let (is_borrowed, base_bytes) = decompressed_bytes_from_cache(pack_offset, entry_len, FetchMode::AsSource)?;
             out.push((
                 *pack_offset,
-                compute_hash(kind.to_kind().expect("base object"), &base_bytes),
+                compute_hash(kind.to_kind().expect("base object"), &base_bytes, hash_kind),
                 *crc32,
             ));
             possibly_return_to_cache(pack_offset, is_borrowed, base_bytes);
@@ -160,6 +153,7 @@ where
                 compute_hash(
                     base_entry.kind.to_kind().expect("base always has object kind"),
                     &fully_resolved_delta_bytes,
+                    hash_kind,
                 ),
                 *crc32,
             ));
@@ -190,35 +184,97 @@ where
     let mut new_out = apply_deltas_2(tree_entries, state, mode, hash_kind)?;
     new_out.sort_by_key(|e| e.0);
     out.sort_by_key(|e| e.0);
-    // assert_eq!(out, new_out, "new algorithm must work exactly the same");
+    assert_eq!(out, new_out, "new algorithm must work exactly the same");
     Ok(out)
 }
 
 fn apply_deltas_2<F, P>(
-    entries: Vec<pack::tree::Node<pack::index::write::types::TreeEntry>>,
+    mut nodes: Vec<pack::tree::Node<pack::index::write::types::TreeEntry>>,
     (bytes_buf, progress): &mut (Vec<u8>, P),
-    _mode: &Mode<F>,
+    mode: &Mode<F>,
     hash_kind: HashKind,
 ) -> Result<Vec<(u64, owned::Id, u32)>, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
 {
-    let _bytes_buf = RefCell::new(bytes_buf);
-    let _compute_hash = |kind: git_object::Kind, bytes: &[u8]| -> owned::Id {
-        let mut write = hash::Write::new(io::sink(), hash_kind);
-        loose::object::header::encode(kind, bytes.len() as u64, &mut write)
-            .expect("write to sink and hash cannot fail");
-        write.hash.update(bytes);
-        owned::Id::from(write.hash.digest())
+    let bytes_buf = RefCell::new(bytes_buf);
+    let mut out = Vec::with_capacity(nodes.len()); // perfectly conservative guess for roots without children
+    let decompress_from_cache = |cache: Cache, pack_offset: u64, entry_size: usize| -> Result<Vec<u8>, Error> {
+        Ok(match cache {
+            Cache::Unset => {
+                let mut bytes_buf = bytes_buf.borrow_mut();
+                bytes_buf.resize(entry_size, 0);
+                match mode {
+                    Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
+                        r(pack_offset..pack_offset + entry_size as u64, &mut bytes_buf)
+                            .ok_or_else(|| Error::ConsumeResolveFailed(pack_offset))?;
+                        let entry = pack::data::Entry::from_bytes(&bytes_buf, pack_offset);
+                        decompress_all_at_once(
+                            &bytes_buf[entry.header_size() as usize..],
+                            entry.decompressed_size as usize,
+                        )?
+                    }
+                    Mode::InMemoryDecompressed | Mode::InMemory => {
+                        unreachable!("BUG: If there is no cache, we always need a resolver")
+                    }
+                }
+            }
+            Cache::Compressed(bytes, decompressed_len) => decompress_all_at_once(&bytes, decompressed_len)?,
+            Cache::Decompressed(bytes) => bytes,
+        })
     };
-    let mut out = Vec::with_capacity(entries.len()); // perfectly conservative guess for roots without children
 
     // Traverse the tree breadth first and loose the data produced for the base as it won't be needed anymore.
     progress.init(None, Some("objects"));
 
+    // each node is a base, and its children always start out as deltas which become a base after applying them.
+    // These will be pushed onto our stack until all are processed
+    while let Some(mut base) = nodes.pop() {
+        let base_bytes = decompress_from_cache(extract_cache(&mut base), base.data.pack_offset, base.data.entry_len)?;
+        let base_kind = base.data.kind.to_kind().expect("base object as source of iteration");
+        out.push((
+            base.data.pack_offset,
+            compute_hash(base_kind, &base_bytes, hash_kind),
+            base.data.crc32,
+        ));
+
+        for mut child in base.into_child_iter() {
+            let delta_bytes =
+                decompress_from_cache(extract_cache(&mut child), child.data.pack_offset, child.data.entry_len)?;
+            let (base_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes);
+            let mut header_ofs = consumed;
+            assert_eq!(
+                base_bytes.len(),
+                base_size as usize,
+                "recorded base size in delta does not match"
+            );
+            let (result_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes[consumed..]);
+            header_ofs += consumed;
+
+            let mut fully_resolved_delta_bytes = bytes_buf.borrow_mut();
+            fully_resolved_delta_bytes.resize(result_size as usize, 0);
+            pack::data::decode::apply_delta(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
+
+            child.data.cache = Cache::Decompressed(fully_resolved_delta_bytes.to_owned());
+            child.data.kind = ObjectKind::Base(base_kind);
+            nodes.push(child);
+        }
+    }
+
     out.shrink_to_fit();
     Ok(out)
+}
+
+fn extract_cache(node: &mut pack::tree::Node<pack::index::write::types::TreeEntry>) -> Cache {
+    std::mem::replace(&mut node.data.cache, Cache::Unset)
+}
+
+fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: HashKind) -> owned::Id {
+    let mut write = hash::Write::new(io::sink(), hash_kind);
+    loose::object::header::encode(kind, bytes.len() as u64, &mut write).expect("write to sink and hash cannot fail");
+    write.hash.update(bytes);
+    owned::Id::from(write.hash.digest())
 }
 
 fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {

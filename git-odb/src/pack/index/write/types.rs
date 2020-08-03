@@ -21,6 +21,7 @@ pub(crate) enum Cache {
 #[derive(Clone)]
 pub(crate) enum ObjectKind {
     Base(git_object::Kind),
+    // TODO: remove tue pack offset when new version is ready
     OfsDelta(u64),
 }
 

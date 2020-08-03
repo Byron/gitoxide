@@ -3,12 +3,12 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
     enum Cache {
         _Unset,
         _Decompressed(Vec<u8>),
-        /// compressed bytes + decompressed size
+        // compressed bytes + decompressed size
         _Compressed(Vec<u8>, usize),
     }
     enum ObjectKind {
         _Base(git_object::Kind),
-        _OfsDelta(u64),
+        _OfsDelta,
     }
     struct Entry {
         pub _pack_offset: u64,
@@ -32,5 +32,10 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
         std::mem::size_of::<TreeItem<Entry>>(),
         std::mem::size_of::<TreeItemOption<Entry>>(),
         "we hope niche filling optimizations kick in for our data structures to not pay for the Option at all"
+    );
+    assert_eq!(
+        std::mem::size_of::<[TreeItemOption<Entry>; 7_500_000]>(),
+        720000000,
+        "it should be as small as possible"
     );
 }

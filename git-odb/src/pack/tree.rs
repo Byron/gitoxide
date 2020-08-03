@@ -169,14 +169,14 @@ impl<'a, D> Node<'a, D>
 where
     D: IsRoot,
 {
-    pub fn into_child_iter(self, out: &mut Vec<Node<'a, D>>) {
+    pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
         let Self { tree, children, .. } = self;
-        for index in children.into_iter() {
+        children.into_iter().map(move |index| {
             // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
             #[allow(unsafe_code)]
             let (data, children) = unsafe { tree.from_node_take_entry(index) };
-            out.push(Node { tree, data, children })
-        }
+            Node { tree, data, children }
+        })
     }
 }
 
