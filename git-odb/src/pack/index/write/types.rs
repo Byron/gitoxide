@@ -40,6 +40,7 @@ impl ObjectKind {
 }
 
 pub(crate) struct TreeEntry {
+    pub id: Option<owned::Id>,
     pub pack_offset: u64,
     pub entry_len: usize,
     pub kind: ObjectKind,

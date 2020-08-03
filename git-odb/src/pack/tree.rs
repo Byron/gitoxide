@@ -137,6 +137,18 @@ impl<D> Tree<D> {
     }
 
     #[allow(unsafe_code)]
+    /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node
+    /// For all details see `from_node_take_entry()`.
+    unsafe fn from_node_put_data(&self, index: usize, data: D) {
+        debug_assert!(
+            self.iterator_active.load(Ordering::SeqCst),
+            "Must only be called after an iterator was created"
+        );
+        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
+        items_mut.get_unchecked_mut(index).data = Some(data);
+    }
+
+    #[allow(unsafe_code)]
     /// SAFETY: A tree is a data structure without cycles, and we assure of that by verifying all input.
     /// A node as identified by index can only be traversed once using the Chunks iterator.
     /// When the iterator is created, this instance cannot be mutated anymore nor can it be read.
@@ -154,7 +166,12 @@ impl<D> Tree<D> {
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::replace(&mut item.children, Vec::new());
-        (item.data.take().expect("each Node is only be iterated once"), children)
+        (
+            item.data
+                .take()
+                .expect("each Node is only be iterated once and thus still has data"),
+            children,
+        )
     }
 
     #[allow(unsafe_code)]
@@ -187,6 +204,7 @@ impl<D> Tree<D> {
 
 pub struct Node<'a, D> {
     tree: &'a Tree<D>,
+    index: usize,
     pub data: D,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
@@ -194,12 +212,22 @@ pub struct Node<'a, D> {
 
 impl<'a, D> Node<'a, D> {
     pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
+        #[allow(unsafe_code)]
+        // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
+        unsafe {
+            self.tree.from_node_put_data(self.index, self.data)
+        };
         let Self { tree, children, .. } = self;
         children.into_iter().map(move |index| {
             // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
             #[allow(unsafe_code)]
             let (data, children) = unsafe { tree.from_node_take_entry(index) };
-            Node { tree, data, children }
+            Node {
+                tree,
+                data,
+                children,
+                index,
+            }
         })
     }
 }
@@ -233,6 +261,7 @@ where
                     tree: self.tree,
                     data,
                     children,
+                    index: self.cursor,
                 });
                 items_remaining -= 1;
             }

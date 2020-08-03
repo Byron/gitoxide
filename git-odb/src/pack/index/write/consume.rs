@@ -53,12 +53,10 @@ where
     while let Some(mut base) = nodes.pop() {
         let base_bytes = decompress_from_cache(extract_cache(&mut base), base.data.pack_offset, base.data.entry_len)?;
         let base_kind = base.data.kind.to_kind().expect("base object as source of iteration");
-        out.push((
-            base.data.pack_offset,
-            compute_hash(base_kind, &base_bytes, hash_kind),
-            base.data.crc32,
-        ));
+        let id = compute_hash(base_kind, &base_bytes, hash_kind);
+        out.push((base.data.pack_offset, id.clone(), base.data.crc32));
 
+        base.data.id = Some(id);
         for mut child in base.into_child_iter() {
             let delta_bytes =
                 decompress_from_cache(extract_cache(&mut child), child.data.pack_offset, child.data.entry_len)?;

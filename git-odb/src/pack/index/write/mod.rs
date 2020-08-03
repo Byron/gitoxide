@@ -71,6 +71,7 @@ impl pack::index::File {
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
+                            id: None,
                             pack_offset,
                             entry_len,
                             kind: ObjectKind::Base(header.to_kind().expect("a base object")),
@@ -87,6 +88,7 @@ impl pack::index::File {
                         base_pack_offset,
                         pack_offset,
                         TreeEntry {
+                            id: None,
                             pack_offset,
                             entry_len,
                             kind: ObjectKind::OfsDelta,

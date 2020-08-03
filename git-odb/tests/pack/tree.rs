@@ -11,6 +11,7 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
         _OfsDelta,
     }
     struct Entry {
+        pub _id: Option<git_object::owned::Id>,
         pub _pack_offset: u64,
         pub _entry_len: usize,
         pub _kind: ObjectKind,
@@ -35,7 +36,7 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
     );
     assert_eq!(
         std::mem::size_of::<[TreeItemOption<Entry>; 7_500_000]>(),
-        720000000,
+        900000000,
         "it should be as small as possible"
     );
 }
