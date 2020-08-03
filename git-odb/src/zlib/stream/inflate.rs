@@ -91,6 +91,21 @@ where
     }
 }
 
+/// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
+pub struct InflateReaderBoxed<R> {
+    pub(crate) inner: R,
+    pub(crate) decompressor: Box<Inflate>,
+}
+
+impl<R> io::Read for InflateReaderBoxed<R>
+where
+    R: BufRead,
+{
+    fn read(&mut self, into: &mut [u8]) -> io::Result<usize> {
+        read(&mut self.inner, &mut self.decompressor, into)
+    }
+}
+
 /// Adapted from [flate2](https://github.com/alexcrichton/flate2-rs/blob/57972d77dab09acad4aa2fa3beedb1f69fa64b27/src/zio.rs#L118)
 fn read<R>(obj: &mut R, data: &mut Inflate, dst: &mut [u8]) -> io::Result<usize>
 where

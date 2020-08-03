@@ -1,7 +1,5 @@
-use crate::{
-    hash, pack,
-    zlib::stream::{inflate::Inflate, InflateReader},
-};
+use crate::zlib::stream::inflate::InflateReaderBoxed;
+use crate::{hash, pack, zlib::stream::inflate::Inflate};
 use git_features::hash::Sha1;
 use git_object::owned;
 use quick_error::quick_error;
@@ -44,7 +42,7 @@ pub struct Entry {
 
 pub struct Iter<R> {
     read: R,
-    decompressor: Option<Inflate>,
+    decompressor: Option<Box<Inflate>>,
     offset: u64,
     had_error: bool,
     kind: pack::data::Kind,
@@ -137,7 +135,7 @@ where
         // Decompress object to learn it's compressed bytes
         let mut decompressor = self.decompressor.take().unwrap_or_default();
         decompressor.reset();
-        let mut reader = InflateReader {
+        let mut reader = InflateReaderBoxed {
             inner: PassThrough {
                 read: &mut self.read,
                 write: Vec::with_capacity((entry.decompressed_size / 2) as usize),
