@@ -21,6 +21,10 @@
   * [x] build index from pack
      * [x] from stdin()
   * [x] complete pack with trailer
+  * **fixes**
+    * [ ] figure out why resolving the linux pack is so slow and fix it
+    * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
+      system temp files)
   * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)

@@ -54,8 +54,6 @@ impl pack::index::File {
         progress.init(entries.size_hint().1.map(|l| l as u32), Some("objects"));
 
         for (eid, entry) in entries.enumerate() {
-            use pack::data::Header::*;
-
             let pack::data::iter::Entry {
                 header,
                 pack_offset,
@@ -79,6 +77,8 @@ impl pack::index::File {
                 let state = hash::crc32_update(0, &header_buf[..header_len]);
                 hash::crc32_update(state, &compressed)
             };
+
+            use pack::data::Header::*;
             let (cache, kind) = match header {
                 Blob | Tree | Commit | Tag => {
                     last_base_index = Some(eid);
@@ -89,7 +89,8 @@ impl pack::index::File {
                 }
                 RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
                 OfsDelta { base_distance } => {
-                    let base_pack_offset = pack_offset - base_distance;
+                    let base_pack_offset = pack::data::Header::verified_base_pack_offset(pack_offset, base_distance)
+                        .ok_or_else(|| Error::IteratorInvariantBaseOffset(pack_offset, base_distance))?;
                     cache_by_offset
                         .get_mut(&base_pack_offset)
                         .ok_or_else(|| {

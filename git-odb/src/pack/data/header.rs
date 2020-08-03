@@ -125,6 +125,12 @@ pub enum Header {
     },
 }
 impl Header {
+    pub fn verified_base_pack_offset(pack_offset: u64, distance: u64) -> Option<u64> {
+        if distance == 0 {
+            return None;
+        }
+        pack_offset.checked_sub(distance)
+    }
     pub fn to_kind(&self) -> Option<git_object::Kind> {
         use git_object::Kind::*;
         Some(match self {

@@ -55,7 +55,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * _decode a pack from `Read` input_
       * [x] `Read` to `Iterator`
         * _read as is, verify hash, and restore partial packs_
-      * [ ] create index from pack alone
+      * [x] create index from pack alone
+        * _various memory options allow trading off speed for lower memory consumption_
       * [ ] resolve 'thin' packs
     * [ ] encode
       * [ ] create new pack
