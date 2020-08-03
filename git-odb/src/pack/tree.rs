@@ -1,4 +1,5 @@
 use quick_error::quick_error;
+use std::cell::UnsafeCell;
 
 quick_error! {
     #[derive(Debug)]
@@ -26,12 +27,17 @@ struct Item<D> {
 /// while being shareable among threads without a lock.
 /// It does this by making the run-time guarantee that iteration only happens once.
 pub(crate) struct Tree<D> {
-    items: Vec<Item<D>>,
+    items: UnsafeCell<Vec<Item<D>>>,
     last_added_offset: u64,
     // assure we truly create only one iterator, ever, to avoid violating access rules
     iterator_created: bool,
     one_past_last_seen_root: usize,
 }
+
+/// SAFETY: We solemnly swear…that this is sync because without the unsafe cell, it is also sync.
+/// But that's really the only reason why I would dare to know.
+#[allow(unsafe_code)]
+unsafe impl<T> Sync for Tree<T> {}
 
 pub trait IsRoot {
     fn is_root(&self) -> bool;
@@ -46,7 +52,7 @@ where
             return Err(Error::InvariantNonEmpty);
         }
         Ok(Tree {
-            items: Vec::with_capacity(num_objects),
+            items: UnsafeCell::new(Vec::with_capacity(num_objects)),
             last_added_offset: 0,
             iterator_created: false,
             one_past_last_seen_root: 0,
@@ -68,13 +74,17 @@ where
             !self.iterator_created,
             "Cannot mutate after the iterator was created as it assumes exclusive access"
         );
+        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
+        // standard borrow check rules.
+        #[allow(unsafe_code)]
+        let items = unsafe { &mut *(self.items.get()) };
         let offset = self.assert_is_incrementing(offset)?;
-        self.items.push(Item {
+        items.push(Item {
             offset,
             data: Some(data),
             children: Default::default(),
         });
-        self.one_past_last_seen_root = self.items.len();
+        self.one_past_last_seen_root = items.len();
         Ok(())
     }
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
@@ -83,14 +93,17 @@ where
             !self.iterator_created,
             "Cannot mutate after the iterator was created as it assumes exclusive access"
         );
+        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
+        // standard borrow check rules.
+        #[allow(unsafe_code)]
+        let items = unsafe { &mut *(self.items.get()) };
         let offset = self.assert_is_incrementing(offset)?;
-        let base_index = self
-            .items
+        let base_index = items
             .binary_search_by_key(&base_offset, |e| e.offset)
             .map_err(|_| Error::InvariantBasesBeforeDeltasNeedThem(offset, base_offset))?;
-        let child_index = self.items.len();
-        self.items[base_index].children.push(child_index);
-        self.items.push(Item {
+        let child_index = items.len();
+        items[base_index].children.push(child_index);
+        items.push(Item {
             offset,
             data: Some(data),
             children: Default::default(),
@@ -116,15 +129,16 @@ where
 
     #[allow(unsafe_code)]
     /// SAFETY: A tree is a data structure without cycles, and we assure of that by verifying all input.
-    /// Thus a node as identified by index can only be traversed once using the Chunks iterator.
+    /// A node as identified by index can only be traversed once using the Chunks iterator.
     /// When the iterator is created, this instance cannot be mutated anymore nor can it be read.
     /// That iterator is only handed out once.
     /// `Node` instances produced by it consume themselves when iterating their children, allowing them to be
-    /// used only once, recursively.
-    /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping.
+    /// used only once, recursively. Again, traversal is always forward and consuming, making it impossible to
+    /// alias multiple nodes in the tree.
+    /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping and unique.
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
     unsafe fn from_node_take_entry(&self, index: usize) -> (D, Vec<usize>) {
-        let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
+        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::replace(&mut item.children, Vec::new());
         (item.data.take().expect("each Node is only be iterated once"), children)
@@ -133,7 +147,7 @@ where
     #[allow(unsafe_code)]
     /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
     unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)> {
-        let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
+        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         if item.data.as_ref().map_or(false, |d| d.is_root()) {
             let children = std::mem::replace(&mut item.children, Vec::new());

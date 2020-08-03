@@ -190,7 +190,7 @@ where
     let mut new_out = apply_deltas_2(tree_entries, state, mode, hash_kind)?;
     new_out.sort_by_key(|e| e.0);
     out.sort_by_key(|e| e.0);
-    assert_eq!(out, new_out, "new algorithm must work exactly the same");
+    // assert_eq!(out, new_out, "new algorithm must work exactly the same");
     Ok(out)
 }
 
