@@ -17,7 +17,7 @@ quick_error! {
 
 struct Item<D> {
     offset: u64,
-    _data: Option<D>,
+    data: Option<D>,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
@@ -33,7 +33,14 @@ pub(crate) struct Tree<D> {
     one_past_last_seen_root: usize,
 }
 
-impl<D> Tree<D> {
+pub trait IsRoot {
+    fn is_root(&self) -> bool;
+}
+
+impl<D> Tree<D>
+where
+    D: IsRoot,
+{
     pub fn new(num_objects: usize) -> Result<Self, Error> {
         if num_objects == 0 {
             return Err(Error::InvariantNonEmpty);
@@ -56,6 +63,7 @@ impl<D> Tree<D> {
     }
 
     pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
+        assert!(data.is_root(), "Cannot add children as roots");
         assert!(
             !self.iterator_created,
             "Cannot mutate after the iterator was created as it assumes exclusive access"
@@ -63,13 +71,14 @@ impl<D> Tree<D> {
         let offset = self.assert_is_incrementing(offset)?;
         self.items.push(Item {
             offset,
-            _data: Some(data),
+            data: Some(data),
             children: Default::default(),
         });
         self.one_past_last_seen_root = self.items.len();
         Ok(())
     }
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
+        assert!(!data.is_root(), "Cannot add roots as children");
         assert!(
             !self.iterator_created,
             "Cannot mutate after the iterator was created as it assumes exclusive access"
@@ -83,7 +92,7 @@ impl<D> Tree<D> {
         self.items[base_index].children.push(child_index);
         self.items.push(Item {
             offset,
-            _data: Some(data),
+            data: Some(data),
             children: Default::default(),
         });
         Ok(())
@@ -118,7 +127,20 @@ impl<D> Tree<D> {
         let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::replace(&mut item.children, Vec::new());
-        (item._data.take().expect("each Node is only be iterated once"), children)
+        (item.data.take().expect("each Node is only be iterated once"), children)
+    }
+
+    #[allow(unsafe_code)]
+    /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
+    unsafe fn take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)> {
+        let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
+        let item = items_mut.get_unchecked_mut(index);
+        if item.data.as_ref().map_or(false, |d| d.is_root()) {
+            let children = std::mem::replace(&mut item.children, Vec::new());
+            Some((item.data.take().expect("each Node is only be iterated once"), children))
+        } else {
+            None
+        }
     }
 }
 
@@ -129,7 +151,10 @@ pub struct Node<'a, D> {
     children: Vec<usize>,
 }
 
-impl<'a, D> Node<'a, D> {
+impl<'a, D> Node<'a, D>
+where
+    D: IsRoot,
+{
     pub fn into_child_iter(self, out: &mut Vec<Node<'a, D>>) {
         let Self { tree, children, .. } = self;
         for index in children.into_iter() {
@@ -147,7 +172,10 @@ pub struct Chunks<'a, D> {
     cursor: usize,
 }
 
-impl<'a, D> Iterator for Chunks<'a, D> {
+impl<'a, D> Iterator for Chunks<'a, D>
+where
+    D: IsRoot,
+{
     type Item = Vec<Node<'a, D>>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -160,16 +188,17 @@ impl<'a, D> Iterator for Chunks<'a, D> {
         while items_remaining > 0 && self.cursor < self.tree.one_past_last_seen_root {
             // SAFETY: The index is valid as the cursor cannot surpass the amount of items. `one_past_last_seen_root`
             // is guaranteed to be self.tree.items.len() at most, or smaller.
-            // Then see `take_entry(…)`
+            // Then see `take_entry_if_root(…)`
             #[allow(unsafe_code)]
-            let (data, children) = unsafe { self.tree.take_entry(self.cursor) };
-            res.push(Node {
-                tree: self.tree,
-                data,
-                children,
-            });
+            if let Some((data, children)) = unsafe { self.tree.take_entry_if_root(self.cursor) } {
+                res.push(Node {
+                    tree: self.tree,
+                    data,
+                    children,
+                });
+                items_remaining -= 1;
+            }
             self.cursor += 1;
-            items_remaining -= 1;
         }
 
         if res.is_empty() {

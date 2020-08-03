@@ -61,6 +61,12 @@ pub(crate) struct TreeEntry {
     pub cache: Cache,
 }
 
+impl pack::tree::IsRoot for TreeEntry {
+    fn is_root(&self) -> bool {
+        self.kind.is_base()
+    }
+}
+
 pub(crate) enum Bytes {
     Owned(Cache),
     Borrowed(Cache),
