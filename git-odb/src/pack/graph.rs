@@ -21,6 +21,7 @@ quick_error! {
     }
 }
 
+// TODO: replace with Tree (non-public), keep tests
 pub struct DeltaTree {
     inner: DiGraph<PackOffset, (), u32>, // u32 = max amount of objects in pack
 }

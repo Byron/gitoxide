@@ -1,5 +1,8 @@
 use quick_error::quick_error;
-use std::cell::UnsafeCell;
+use std::{
+    cell::UnsafeCell,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -30,7 +33,7 @@ pub(crate) struct Tree<D> {
     items: UnsafeCell<Vec<Item<D>>>,
     last_added_offset: u64,
     // assure we truly create only one iterator, ever, to avoid violating access rules
-    iterator_created: bool,
+    iterator_active: AtomicBool,
     one_past_last_seen_root: usize,
 }
 
@@ -43,10 +46,7 @@ pub trait IsRoot {
     fn is_root(&self) -> bool;
 }
 
-impl<D> Tree<D>
-where
-    D: IsRoot,
-{
+impl<D> Tree<D> {
     pub fn new(num_objects: usize) -> Result<Self, Error> {
         if num_objects == 0 {
             return Err(Error::InvariantNonEmpty);
@@ -54,7 +54,7 @@ where
         Ok(Tree {
             items: UnsafeCell::new(Vec::with_capacity(num_objects)),
             last_added_offset: 0,
-            iterator_created: false,
+            iterator_active: AtomicBool::new(false),
             one_past_last_seen_root: 0,
         })
     }
@@ -68,10 +68,13 @@ where
         }
     }
 
-    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
+    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error>
+    where
+        D: IsRoot,
+    {
         assert!(data.is_root(), "Cannot add children as roots");
         assert!(
-            !self.iterator_created,
+            !self.iterator_active.load(Ordering::SeqCst),
             "Cannot mutate after the iterator was created as it assumes exclusive access"
         );
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
@@ -87,10 +90,13 @@ where
         self.one_past_last_seen_root = items.len();
         Ok(())
     }
-    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
+    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error>
+    where
+        D: IsRoot,
+    {
         assert!(!data.is_root(), "Cannot add roots as children");
         assert!(
-            !self.iterator_created,
+            !self.iterator_active.load(Ordering::SeqCst),
             "Cannot mutate after the iterator was created as it assumes exclusive access"
         );
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
@@ -112,14 +118,17 @@ where
     }
 
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
+    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D>
+    where
+        D: IsRoot,
+    {
         // We would love to consume the tree, of course, but if we can't hand out items that borrow from ourselves,
         // it's nothing we can use effectively. Thus it's better to check at runtime…
         assert!(
-            !self.iterator_created,
+            !self.iterator_active.load(Ordering::SeqCst),
             "Can only create a single iterator to avoid aliasing mutable tree nodes"
         );
-        self.iterator_created = true;
+        self.iterator_active.store(true, Ordering::SeqCst);
         Chunks {
             tree: self,
             size,
@@ -138,6 +147,10 @@ where
     /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping and unique.
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
     unsafe fn from_node_take_entry(&self, index: usize) -> (D, Vec<usize>) {
+        debug_assert!(
+            self.iterator_active.load(Ordering::SeqCst),
+            "Must only be called after an iterator was created"
+        );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::replace(&mut item.children, Vec::new());
@@ -146,7 +159,14 @@ where
 
     #[allow(unsafe_code)]
     /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
-    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)> {
+    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)>
+    where
+        D: IsRoot,
+    {
+        debug_assert!(
+            self.iterator_active.load(Ordering::SeqCst),
+            "Must only be called after an iterator was created"
+        );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         if item.data.as_ref().map_or(false, |d| d.is_root()) {
@@ -155,6 +175,13 @@ where
         } else {
             None
         }
+    }
+
+    #[allow(unsafe_code)]
+    /// SAFETY: It's called when dropping the iterator, and it's impossible to have multiple of these
+    /// at the same time. The flag indicating this is thread-safe, so there can't be a race either.
+    fn from_iter_dropped(&self) {
+        self.iterator_active.store(false, Ordering::SeqCst);
     }
 }
 
@@ -165,10 +192,7 @@ pub struct Node<'a, D> {
     children: Vec<usize>,
 }
 
-impl<'a, D> Node<'a, D>
-where
-    D: IsRoot,
-{
+impl<'a, D> Node<'a, D> {
     pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
         let Self { tree, children, .. } = self;
         children.into_iter().map(move |index| {
@@ -220,5 +244,11 @@ where
         } else {
             Some(res)
         }
+    }
+}
+
+impl<'a, D> Drop for Chunks<'a, D> {
+    fn drop(&mut self) {
+        self.tree.from_iter_dropped()
     }
 }
