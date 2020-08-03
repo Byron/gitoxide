@@ -86,7 +86,8 @@ impl<D> Tree<D> {
         Ok(())
     }
 
-    pub fn iter_chunks(&mut self, size: usize) -> Chunks<D> {
+    /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
+    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
         // We would love to consume the tree, of course, but if we can't hand out items that borrow from ourselves,
         // it's nothing we can use effectively. Thus it's better to check at runtime…
         assert!(
@@ -94,7 +95,11 @@ impl<D> Tree<D> {
             "Can only create a single iterator to avoid aliasing mutable tree nodes"
         );
         self.iterator_created = true;
-        Chunks { inner: self, size }
+        Chunks {
+            tree: self,
+            size,
+            cursor: 0,
+        }
     }
 
     #[allow(unsafe_code)]
@@ -108,44 +113,62 @@ impl<D> Tree<D> {
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
     unsafe fn take_entry(&self, index: usize) -> (D, Vec<usize>) {
         let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
-        let item = &mut items_mut[index];
+        let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::replace(&mut item.children, Vec::new());
         (item._data.take().expect("each Node is only be iterated once"), children)
     }
 }
 
 pub struct Node<'a, D> {
-    _owner: &'a Tree<D>,
-    pub _data: D,
+    tree: &'a Tree<D>,
+    pub data: D,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
 
 impl<'a, D> Node<'a, D> {
     pub fn into_child_iter(self, out: &mut Vec<Node<'a, D>>) {
-        let Self { _owner, children, .. } = self;
+        let Self { tree, children, .. } = self;
         for index in children.into_iter() {
-            // SAFETY: See `take_entry()`
+            // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
             #[allow(unsafe_code)]
-            let (data, children) = unsafe { _owner.take_entry(index) };
-            out.push(Node {
-                _owner: _owner,
-                _data: data,
-                children,
-            })
+            let (data, children) = unsafe { tree.take_entry(index) };
+            out.push(Node { tree, data, children })
         }
     }
 }
 
 pub struct Chunks<'a, D> {
-    inner: &'a Tree<D>,
+    tree: &'a Tree<D>,
     size: usize,
+    cursor: usize,
 }
 
 impl<'a, D> Iterator for Chunks<'a, D> {
     type Item = Vec<Node<'a, D>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
+        let safe_range = self.cursor..(self.cursor + self.size).min(self.tree.items.len());
+        if safe_range.start == safe_range.end {
+            return None;
+        }
+        let mut res = Vec::with_capacity(self.size);
+        self.cursor = safe_range.end;
+
+        for index in safe_range {
+            // SAFETY: The index is valid as we verified it to be in bound beforehand. Then see `take_entry(…)`
+            #[allow(unsafe_code)]
+            let (data, children) = unsafe { self.tree.take_entry(index) };
+            res.push(Node {
+                tree: self.tree,
+                data: data,
+                children,
+            });
+        }
+        if res.is_empty() {
+            None
+        } else {
+            Some(res)
+        }
     }
 }

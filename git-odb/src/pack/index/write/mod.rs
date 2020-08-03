@@ -157,7 +157,7 @@ impl pack::index::File {
                         .cloned(),
                     size: chunk_size,
                 }
-                .zip(tree.iter_chunks(chunk_size)),
+                .zip(tree.iter_root_chunks(chunk_size)),
                 thread_limit,
                 |thread_index| {
                     (
