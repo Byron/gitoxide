@@ -1,6 +1,7 @@
 use crate::{
     hash, loose, pack,
-    pack::index::write::{Bytes, Cache, CacheEntry, Entry, EntrySlice, Error, Mode, ObjectKind},
+    pack::index::write::types::{Bytes, Cache, CacheEntry, Entry, EntrySlice, Mode, ObjectKind},
+    pack::index::write::Error,
     zlib,
 };
 use git_features::progress::Progress;
@@ -9,7 +10,7 @@ use smallvec::alloc::collections::BTreeMap;
 use std::{cell::RefCell, io};
 
 pub(crate) fn apply_deltas<F, P>(
-    mut base_entries: Vec<Entry>,
+    (mut base_entries, _): (Vec<Entry>, ()),
     (bytes_buf, progress): &mut (Vec<u8>, P),
     entries: &[Entry],
     caches: &parking_lot::Mutex<BTreeMap<u64, CacheEntry>>,

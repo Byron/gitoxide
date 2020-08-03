@@ -17,7 +17,7 @@ quick_error! {
 
 struct TreeItem<D> {
     offset: u64,
-    data: D,
+    _data: Option<D>,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
@@ -51,7 +51,7 @@ impl<D> Tree<D> {
         let offset = self.assert_is_incrementing(offset)?;
         self.items.push(TreeItem {
             offset,
-            data,
+            _data: Some(data),
             children: Default::default(),
         });
         Ok(())
@@ -66,9 +66,26 @@ impl<D> Tree<D> {
         self.items[base_index].children.push(child_index);
         self.items.push(TreeItem {
             offset,
-            data,
+            _data: Some(data),
             children: Default::default(),
         });
         Ok(())
+    }
+
+    pub fn into_chunks(self, size: usize) -> TreeChunks<D> {
+        TreeChunks { inner: self, size }
+    }
+}
+
+pub struct TreeChunks<D> {
+    inner: Tree<D>,
+    size: usize,
+}
+
+impl<D> Iterator for TreeChunks<D> {
+    type Item = ();
+
+    fn next(&mut self) -> Option<Self::Item> {
+        unimplemented!()
     }
 }

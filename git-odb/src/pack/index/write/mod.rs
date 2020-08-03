@@ -8,7 +8,7 @@ mod error;
 pub use error::Error;
 
 mod types;
-use types::{Bytes, Cache, CacheEntry, Entry, ObjectKind, Reducer, TreeEntry};
+use types::{CacheEntry, Entry, ObjectKind, Reducer, TreeEntry};
 pub use types::{EntrySlice, Mode, Outcome};
 
 mod consume;
@@ -170,7 +170,8 @@ impl pack::index::File {
                         .filter(|e| e.kind.is_base())
                         .cloned(),
                     size: chunk_size,
-                },
+                }
+                .zip(tree.into_chunks(chunk_size)),
                 thread_limit,
                 |thread_index| {
                     (

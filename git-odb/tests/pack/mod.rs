@@ -18,3 +18,4 @@ mod file;
 mod graph;
 mod index;
 mod iter;
+mod tree;
