@@ -100,8 +100,10 @@ impl Mode {
     }
 }
 
+pub type ResolverFn = fn(EntrySlice, &mut Vec<u8>) -> Option<()>;
+
 impl Mode {
-    pub fn noop_resolver() -> io::Result<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
+    pub fn noop_resolver() -> io::Result<ResolverFn> {
         fn noop(_: EntrySlice, _: &mut Vec<u8>) -> Option<()> {
             None
         };
