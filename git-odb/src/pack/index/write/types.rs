@@ -104,7 +104,7 @@ impl Mode<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
 }
 
 pub(crate) struct Reducer<'a, P> {
-    pub(crate) items: Vec<(u64, owned::Id, u32)>,
+    item_count: usize,
     progress: &'a parking_lot::Mutex<P>,
     start: std::time::Instant,
 }
@@ -116,7 +116,7 @@ where
     pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>) -> Self {
         progress.lock().init(Some(num_objects), Some("objects"));
         Reducer {
-            items: Vec::with_capacity(num_objects as usize),
+            item_count: 0,
             progress,
             start: std::time::Instant::now(),
         }
@@ -127,21 +127,21 @@ impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,
 {
-    type Input = Result<Vec<(u64, owned::Id, u32)>, pack::index::write::Error>;
-    type Output = Vec<(u64, owned::Id, u32)>;
+    type Input = Result<usize, pack::index::write::Error>;
+    type Output = ();
     type Error = pack::index::write::Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let input = input?;
-        self.progress.lock().inc_by(input.len() as u32);
-        self.items.extend(input.into_iter());
+        self.item_count += input.len();
+        self.progress.lock().set(self.item_count as u32);
         Ok(())
     }
 
     fn finalize(self) -> Result<Self::Output, Self::Error> {
         self.progress
             .lock()
-            .show_throughput(self.start, self.items.len() as u32, "objects");
-        Ok(self.items)
+            .show_throughput(self.start, self.item_count as u32, "objects");
+        Ok(())
     }
 }

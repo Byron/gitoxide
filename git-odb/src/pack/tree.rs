@@ -19,9 +19,9 @@ quick_error! {
     }
 }
 
-struct Item<D> {
+pub(crate) struct Item<D> {
     offset: u64,
-    data: Option<D>,
+    pub data: Option<D>,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
@@ -90,6 +90,7 @@ impl<D> Tree<D> {
         self.one_past_last_seen_root = items.len();
         Ok(())
     }
+
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error>
     where
         D: IsRoot,
@@ -117,6 +118,10 @@ impl<D> Tree<D> {
         Ok(())
     }
 
+    pub fn into_items(self) -> Vec<Item<D>> {
+        self.items.into_inner()
+    }
+
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
     pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D>
     where
@@ -137,7 +142,10 @@ impl<D> Tree<D> {
     }
 
     #[allow(unsafe_code)]
-    /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node
+    /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node.
+    /// Even though data affects whether or not something is considered a root, iteration
+    /// could be done again, despite faulty if as children have been consumed as per our own choice.
+    /// However, this won't affect safety, just correctness.
     /// For all details see `from_node_take_entry()`.
     unsafe fn from_node_put_data(&self, index: usize, data: D) {
         debug_assert!(

@@ -13,13 +13,13 @@ pub(crate) fn apply_deltas<F, P>(
     (bytes_buf, progress): &mut (Vec<u8>, P),
     mode: &Mode<F>,
     hash_kind: HashKind,
-) -> Result<Vec<(u64, owned::Id, u32)>, Error>
+) -> Result<usize, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
 {
     let bytes_buf = RefCell::new(bytes_buf);
-    let mut out = Vec::with_capacity(nodes.len()); // perfectly conservative guess for roots without children
+    let mut num_objects = 0;
     let decompress_from_cache = |cache: Cache, pack_offset: u64, entry_size: usize| -> Result<Vec<u8>, Error> {
         Ok(match cache {
             Cache::Unset => {
@@ -54,7 +54,7 @@ where
         let base_bytes = decompress_from_cache(extract_cache(&mut base), base.data.pack_offset, base.data.entry_len)?;
         let base_kind = base.data.kind.to_kind().expect("base object as source of iteration");
         let id = compute_hash(base_kind, &base_bytes, hash_kind);
-        out.push((base.data.pack_offset, id.clone(), base.data.crc32));
+        num_objects += 1;
 
         base.data.id = Some(id);
         for mut child in base.into_child_iter() {
@@ -80,8 +80,7 @@ where
         }
     }
 
-    out.shrink_to_fit();
-    Ok(out)
+    Ok(num_objects)
 }
 
 fn extract_cache(node: &mut pack::tree::Node<pack::index::write::types::TreeEntry>) -> Cache {

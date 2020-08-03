@@ -128,10 +128,10 @@ impl pack::index::File {
                 |root_nodes, state| apply_deltas(root_nodes, state, &mode, kind.hash()),
                 Reducer::new(num_objects, &reduce_progress),
             )?;
-            items.sort_by_key(|e| e.1);
+            let mut items = tree.into_items();
+            items.sort_by_key(|e| e.data.as_ref().map(|e| e.id));
             items
         };
-        drop(tree);
         root_progress.inc();
 
         let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
