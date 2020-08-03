@@ -40,12 +40,25 @@ impl ObjectKind {
 }
 
 pub(crate) struct TreeEntry {
-    pub id: Option<owned::Id>,
+    pub id: owned::Id,
     pub pack_offset: u64,
     pub entry_len: usize,
     pub kind: ObjectKind,
     pub crc32: u32,
     pub cache: Cache,
+}
+
+impl Default for TreeEntry {
+    fn default() -> Self {
+        TreeEntry {
+            id: owned::Id::null(),
+            pack_offset: 0,
+            entry_len: 0,
+            kind: ObjectKind::OfsDelta,
+            crc32: 0,
+            cache: Cache::Unset,
+        }
+    }
 }
 
 impl pack::tree::IsRoot for TreeEntry {
@@ -133,7 +146,7 @@ where
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let input = input?;
-        self.item_count += input.len();
+        self.item_count += input;
         self.progress.lock().set(self.item_count as u32);
         Ok(())
     }

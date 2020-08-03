@@ -1,5 +1,6 @@
 use crate::{pack, pack::tree::Tree};
 use git_features::{hash, parallel, parallel::in_parallel_if, progress::Progress};
+use git_object::owned;
 use std::{convert::TryInto, io};
 
 mod encode;
@@ -71,7 +72,7 @@ impl pack::index::File {
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
-                            id: None,
+                            id: owned::Id::null(),
                             pack_offset,
                             entry_len,
                             kind: ObjectKind::Base(header.to_kind().expect("a base object")),
@@ -88,7 +89,7 @@ impl pack::index::File {
                         base_pack_offset,
                         pack_offset,
                         TreeEntry {
-                            id: None,
+                            id: owned::Id::null(),
                             pack_offset,
                             entry_len,
                             kind: ObjectKind::OfsDelta,
@@ -115,7 +116,7 @@ impl pack::index::File {
 
         let reduce_progress = parking_lot::Mutex::new(root_progress.add_child("Resolving"));
         let sorted_pack_offsets_by_oid = {
-            let mut items = in_parallel_if(
+            in_parallel_if(
                 || bytes_to_process > 5_000_000,
                 tree.iter_root_chunks(chunk_size),
                 thread_limit,
@@ -129,7 +130,7 @@ impl pack::index::File {
                 Reducer::new(num_objects, &reduce_progress),
             )?;
             let mut items = tree.into_items();
-            items.sort_by_key(|e| e.data.as_ref().map(|e| e.id));
+            items.sort_by_key(|e| e.data.id);
             items
         };
         root_progress.inc();

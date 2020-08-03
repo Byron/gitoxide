@@ -56,7 +56,7 @@ where
         let id = compute_hash(base_kind, &base_bytes, hash_kind);
         num_objects += 1;
 
-        base.data.id = Some(id);
+        base.data.id = id;
         for mut child in base.into_child_iter() {
             let delta_bytes =
                 decompress_from_cache(extract_cache(&mut child), child.data.pack_offset, child.data.entry_len)?;

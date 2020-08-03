@@ -21,7 +21,7 @@ quick_error! {
 
 pub(crate) struct Item<D> {
     offset: u64,
-    pub data: Option<D>,
+    pub data: D,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
@@ -84,7 +84,7 @@ impl<D> Tree<D> {
         let offset = self.assert_is_incrementing(offset)?;
         items.push(Item {
             offset,
-            data: Some(data),
+            data,
             children: Default::default(),
         });
         self.one_past_last_seen_root = items.len();
@@ -112,7 +112,7 @@ impl<D> Tree<D> {
         items[base_index].children.push(child_index);
         items.push(Item {
             offset,
-            data: Some(data),
+            data,
             children: Default::default(),
         });
         Ok(())
@@ -153,7 +153,7 @@ impl<D> Tree<D> {
             "Must only be called after an iterator was created"
         );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
-        items_mut.get_unchecked_mut(index).data = Some(data);
+        items_mut.get_unchecked_mut(index).data = data;
     }
 
     #[allow(unsafe_code)]
@@ -166,27 +166,9 @@ impl<D> Tree<D> {
     /// alias multiple nodes in the tree.
     /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping and unique.
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
-    unsafe fn from_node_take_entry(&self, index: usize) -> (D, Vec<usize>) {
-        debug_assert!(
-            self.iterator_active.load(Ordering::SeqCst),
-            "Must only be called after an iterator was created"
-        );
-        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
-        let item = items_mut.get_unchecked_mut(index);
-        let children = std::mem::replace(&mut item.children, Vec::new());
-        (
-            item.data
-                .take()
-                .expect("each Node is only be iterated once and thus still has data"),
-            children,
-        )
-    }
-
-    #[allow(unsafe_code)]
-    /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
-    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)>
+    unsafe fn from_node_take_entry(&self, index: usize) -> (D, Vec<usize>)
     where
-        D: IsRoot,
+        D: Default,
     {
         debug_assert!(
             self.iterator_active.load(Ordering::SeqCst),
@@ -194,9 +176,27 @@ impl<D> Tree<D> {
         );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
-        if item.data.as_ref().map_or(false, |d| d.is_root()) {
+        let children = std::mem::replace(&mut item.children, Vec::new());
+        let data = std::mem::replace(&mut item.data, D::default());
+        (data, children)
+    }
+
+    #[allow(unsafe_code)]
+    /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
+    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)>
+    where
+        D: IsRoot + Default,
+    {
+        debug_assert!(
+            self.iterator_active.load(Ordering::SeqCst),
+            "Must only be called after an iterator was created"
+        );
+        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
+        let item = items_mut.get_unchecked_mut(index);
+        if item.data.is_root() {
             let children = std::mem::replace(&mut item.children, Vec::new());
-            Some((item.data.take().expect("each Node is only be iterated once"), children))
+            let data = std::mem::replace(&mut item.data, D::default());
+            Some((data, children))
         } else {
             None
         }
@@ -218,7 +218,10 @@ pub struct Node<'a, D> {
     children: Vec<usize>,
 }
 
-impl<'a, D> Node<'a, D> {
+impl<'a, D> Node<'a, D>
+where
+    D: Default,
+{
     pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
@@ -248,7 +251,7 @@ pub struct Chunks<'a, D> {
 
 impl<'a, D> Iterator for Chunks<'a, D>
 where
-    D: IsRoot,
+    D: IsRoot + Default,
 {
     type Item = Vec<Node<'a, D>>;
 

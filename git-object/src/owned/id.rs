@@ -23,6 +23,9 @@ impl Id {
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         out.write_all(&self.to_sha1_hex())
     }
+    pub fn null() -> Self {
+        Id([0u8; SHA1_SIZE])
+    }
 }
 
 /// Sha1 hash specific methods
