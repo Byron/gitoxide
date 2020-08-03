@@ -51,15 +51,22 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     while let Some(mut base) = nodes.pop() {
-        let base_bytes = decompress_from_cache(extract_cache(&mut base), base.data.pack_offset, base.data.entry_len)?;
+        let base_bytes = decompress_from_cache(
+            std::mem::take(&mut base.data.cache),
+            base.data.pack_offset,
+            base.data.entry_len,
+        )?;
         let base_kind = base.data.kind.to_kind().expect("base object as source of iteration");
         let id = compute_hash(base_kind, &base_bytes, hash_kind);
         num_objects += 1;
 
         base.data.id = id;
-        for mut child in base.into_child_iter() {
-            let delta_bytes =
-                decompress_from_cache(extract_cache(&mut child), child.data.pack_offset, child.data.entry_len)?;
+        for mut child in base.store_changes_then_into_child_iter() {
+            let delta_bytes = decompress_from_cache(
+                std::mem::take(&mut child.data.cache),
+                child.data.pack_offset,
+                child.data.entry_len,
+            )?;
             let (base_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes);
             let mut header_ofs = consumed;
             assert_eq!(
@@ -81,10 +88,6 @@ where
     }
 
     Ok(num_objects)
-}
-
-fn extract_cache(node: &mut pack::tree::Node<pack::index::write::types::TreeEntry>) -> Cache {
-    std::mem::replace(&mut node.data.cache, Cache::Unset)
 }
 
 fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: HashKind) -> owned::Id {

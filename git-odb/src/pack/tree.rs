@@ -21,6 +21,7 @@ quick_error! {
 
 pub(crate) struct Item<D> {
     offset: u64,
+    is_root: bool,
     pub data: D,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
@@ -41,10 +42,6 @@ pub(crate) struct Tree<D> {
 /// But that's really the only reason why I would dare to know.
 #[allow(unsafe_code)]
 unsafe impl<T> Sync for Tree<T> {}
-
-pub trait IsRoot {
-    fn is_root(&self) -> bool;
-}
 
 impl<D> Tree<D> {
     pub fn new(num_objects: usize) -> Result<Self, Error> {
@@ -68,11 +65,7 @@ impl<D> Tree<D> {
         }
     }
 
-    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error>
-    where
-        D: IsRoot,
-    {
-        assert!(data.is_root(), "Cannot add children as roots");
+    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
         assert!(
             !self.iterator_active.load(Ordering::SeqCst),
             "Cannot mutate after the iterator was created as it assumes exclusive access"
@@ -85,17 +78,14 @@ impl<D> Tree<D> {
         items.push(Item {
             offset,
             data,
+            is_root: true,
             children: Default::default(),
         });
         self.one_past_last_seen_root = items.len();
         Ok(())
     }
 
-    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error>
-    where
-        D: IsRoot,
-    {
-        assert!(!data.is_root(), "Cannot add roots as children");
+    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
         assert!(
             !self.iterator_active.load(Ordering::SeqCst),
             "Cannot mutate after the iterator was created as it assumes exclusive access"
@@ -111,6 +101,7 @@ impl<D> Tree<D> {
         let child_index = items.len();
         items[base_index].children.push(child_index);
         items.push(Item {
+            is_root: false,
             offset,
             data,
             children: Default::default(),
@@ -123,10 +114,7 @@ impl<D> Tree<D> {
     }
 
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D>
-    where
-        D: IsRoot,
-    {
+    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
         // We would love to consume the tree, of course, but if we can't hand out items that borrow from ourselves,
         // it's nothing we can use effectively. Thus it's better to check at runtime…
         assert!(
@@ -143,9 +131,8 @@ impl<D> Tree<D> {
 
     #[allow(unsafe_code)]
     /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node.
-    /// Even though data affects whether or not something is considered a root, iteration
-    /// could be done again, despite faulty if as children have been consumed as per our own choice.
-    /// However, this won't affect safety, just correctness.
+    /// Note that we are iterating nodes that we are affecting here, but that only affects the
+    /// 'is_root' field fo the item, not the data field that we are writing here.
     /// For all details see `from_node_take_entry()`.
     unsafe fn from_node_put_data(&self, index: usize, data: D) {
         debug_assert!(
@@ -185,7 +172,7 @@ impl<D> Tree<D> {
     /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
     unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)>
     where
-        D: IsRoot + Default,
+        D: Default,
     {
         debug_assert!(
             self.iterator_active.load(Ordering::SeqCst),
@@ -193,7 +180,7 @@ impl<D> Tree<D> {
         );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
-        if item.data.is_root() {
+        if item.is_root {
             let children = std::mem::take(&mut item.children);
             let data = std::mem::take(&mut item.data);
             Some((data, children))
@@ -213,16 +200,16 @@ impl<D> Tree<D> {
 pub struct Node<'a, D> {
     tree: &'a Tree<D>,
     index: usize,
-    pub data: D,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
+    pub data: D,
 }
 
 impl<'a, D> Node<'a, D>
 where
     D: Default,
 {
-    pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
+    pub fn store_changes_then_into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {
@@ -251,7 +238,7 @@ pub struct Chunks<'a, D> {
 
 impl<'a, D> Iterator for Chunks<'a, D>
 where
-    D: IsRoot + Default,
+    D: Default,
 {
     type Item = Vec<Node<'a, D>>;
 
@@ -270,9 +257,9 @@ where
             if let Some((data, children)) = unsafe { self.tree.from_iter_take_entry_if_root(self.cursor) } {
                 res.push(Node {
                     tree: self.tree,
-                    data,
-                    children,
                     index: self.cursor,
+                    children,
+                    data,
                 });
                 items_remaining -= 1;
             }

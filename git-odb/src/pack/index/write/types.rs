@@ -18,6 +18,12 @@ pub(crate) enum Cache {
     Compressed(Vec<u8>, usize),
 }
 
+impl Default for Cache {
+    fn default() -> Self {
+        Cache::Unset
+    }
+}
+
 #[derive(Clone)]
 pub(crate) enum ObjectKind {
     Base(git_object::Kind),
@@ -25,12 +31,6 @@ pub(crate) enum ObjectKind {
 }
 
 impl ObjectKind {
-    pub fn is_base(&self) -> bool {
-        match self {
-            ObjectKind::Base(_) => true,
-            ObjectKind::OfsDelta => false,
-        }
-    }
     pub fn to_kind(&self) -> Option<git_object::Kind> {
         match self {
             ObjectKind::Base(kind) => Some(*kind),
@@ -58,12 +58,6 @@ impl Default for TreeEntry {
             crc32: 0,
             cache: Cache::Unset,
         }
-    }
-}
-
-impl pack::tree::IsRoot for TreeEntry {
-    fn is_root(&self) -> bool {
-        self.kind.is_base()
     }
 }
 

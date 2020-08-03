@@ -30,10 +30,10 @@ debug-default: always ## the default build, big but pretty
 	cargo build
 
 debug-lean: always ## lean and fast
-	cargo build --release --no-default-features --features lean
+	cargo build --no-default-features --features lean
 
 debug-small: always ## minimal dependencies, at cost of performance
-	cargo build --release --no-default-features --features small
+	cargo build --no-default-features --features small
 
 ##@ Development
 
