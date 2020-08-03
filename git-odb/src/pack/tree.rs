@@ -176,8 +176,8 @@ impl<D> Tree<D> {
         );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
-        let children = std::mem::replace(&mut item.children, Vec::new());
-        let data = std::mem::replace(&mut item.data, D::default());
+        let children = std::mem::take(&mut item.children);
+        let data = std::mem::take(&mut item.data);
         (data, children)
     }
 
@@ -194,8 +194,8 @@ impl<D> Tree<D> {
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         if item.data.is_root() {
-            let children = std::mem::replace(&mut item.children, Vec::new());
-            let data = std::mem::replace(&mut item.data, D::default());
+            let children = std::mem::take(&mut item.children);
+            let data = std::mem::take(&mut item.data);
             Some((data, children))
         } else {
             None
