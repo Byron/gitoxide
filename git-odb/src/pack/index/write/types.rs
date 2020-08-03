@@ -1,6 +1,7 @@
 use crate::pack;
 use git_features::{parallel, progress::Progress};
 use git_object::owned;
+use std::io;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -63,50 +64,48 @@ impl Default for TreeEntry {
 
 pub type EntrySlice = std::ops::Range<u64>;
 
-/// The function an entry into all of its bytes written to &mut Vec<u8> which is big enough and returns to true if bytes
-/// were written, false otherwise. The latter should never have to happen, but is an escape hatch if something goes very wrong
-/// when reading the pack entry.
-/// It will only be called after the iterator stopped returning elements.
-pub enum Mode<F>
-where
-    F: Fn(EntrySlice, &mut Vec<u8>) -> Option<()>,
-{
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum Mode {
     /// Base + deltas in memory compressed
     InMemory,
     InMemoryDecompressed,
     /// Deltas in memory compressed
-    ResolveBases(F),
+    ResolveBases,
     /// Bases in memory compressed
-    ResolveDeltas(F),
-    ResolveBasesAndDeltas(F),
+    ResolveDeltas,
+    ResolveBasesAndDeltas,
 }
 
-impl<F> Mode<F>
-where
-    F: Fn(EntrySlice, &mut Vec<u8>) -> Option<()>,
-{
+impl Mode {
     pub(crate) fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveDeltas(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
+            Mode::ResolveDeltas | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveBases(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
+            Mode::ResolveBases | Mode::ResolveBasesAndDeltas => Cache::Unset,
         }
     }
     pub(crate) fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveBases(_) | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
+            Mode::ResolveBases | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
             Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
-            Mode::ResolveDeltas(_) | Mode::ResolveBasesAndDeltas(_) => Cache::Unset,
+            Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => Cache::Unset,
+        }
+    }
+    pub(crate) fn is_in_memory(&self) -> bool {
+        match self {
+            Mode::InMemory | Mode::InMemoryDecompressed => true,
+            Mode::ResolveBases | Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => false,
         }
     }
 }
 
-impl Mode<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
-    pub fn in_memory() -> Self {
-        Self::InMemory
-    }
-    pub fn in_memory_decompressed() -> Self {
-        Self::InMemoryDecompressed
+impl Mode {
+    pub fn noop_resolver() -> io::Result<fn(EntrySlice, &mut Vec<u8>) -> Option<()>> {
+        fn noop(_: EntrySlice, _: &mut Vec<u8>) -> Option<()> {
+            None
+        };
+        Ok(noop)
     }
 }
 

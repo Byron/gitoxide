@@ -11,7 +11,8 @@ use std::{cell::RefCell, io};
 pub(crate) fn apply_deltas<F, P>(
     mut nodes: Vec<pack::tree::Node<pack::index::write::types::TreeEntry>>,
     (bytes_buf, progress): &mut (Vec<u8>, P),
-    mode: &Mode<F>,
+    mode: Mode,
+    resolve: F,
     hash_kind: HashKind,
 ) -> Result<usize, Error>
 where
@@ -26,8 +27,8 @@ where
                 let mut bytes_buf = bytes_buf.borrow_mut();
                 bytes_buf.resize(entry_size, 0);
                 match mode {
-                    Mode::ResolveDeltas(r) | Mode::ResolveBases(r) | Mode::ResolveBasesAndDeltas(r) => {
-                        r(pack_offset..pack_offset + entry_size as u64, &mut bytes_buf)
+                    Mode::ResolveDeltas | Mode::ResolveBases | Mode::ResolveBasesAndDeltas => {
+                        resolve(pack_offset..pack_offset + entry_size as u64, &mut bytes_buf)
                             .ok_or_else(|| Error::ConsumeResolveFailed(pack_offset))?;
                         let entry = pack::data::Entry::from_bytes(&bytes_buf, pack_offset);
                         decompress_all_at_once(

@@ -9,42 +9,7 @@ pub struct Outcome {
     pub pack_kind: pack::data::Kind,
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum MemoryMode {
-    /// Base + deltas in memory compressed
-    InMemory,
-    InMemoryDecompressed,
-    /// Deltas in memory compressed
-    ResolveBases,
-    /// Bases in memory compressed
-    ResolveDeltas,
-    ResolveBasesAndDeltas,
-}
-
-impl MemoryMode {
-    pub(crate) fn into_write_mode<F>(self, f: F) -> pack::index::write::Mode<F>
-    where
-        F: Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()>,
-    {
-        use MemoryMode::*;
-        match self {
-            InMemory => pack::index::write::Mode::InMemory,
-            InMemoryDecompressed => pack::index::write::Mode::InMemoryDecompressed,
-            ResolveBases => pack::index::write::Mode::ResolveBases(f),
-            ResolveDeltas => pack::index::write::Mode::ResolveDeltas(f),
-            ResolveBasesAndDeltas => pack::index::write::Mode::ResolveBasesAndDeltas(f),
-        }
-    }
-
-    pub(crate) fn is_in_memory(&self) -> bool {
-        use MemoryMode::*;
-        match self {
-            InMemory | InMemoryDecompressed => true,
-            ResolveBases | ResolveDeltas | ResolveBasesAndDeltas => false,
-        }
-    }
-}
+pub type MemoryMode = pack::index::write::Mode;
 
 pub(crate) struct PassThrough<R> {
     pub reader: R,

@@ -71,27 +71,40 @@ mod method {
         use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
         use filebuffer::FileBuffer;
         use git_features::progress;
-        use git_odb::{pack, pack::data::iter};
+        use git_odb::{pack, pack::data::iter, pack::index::write::EntrySlice};
         use std::{fs, io};
 
         #[test]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[iter::Mode::AsIs, iter::Mode::Verify, iter::Mode::Restore] {
                 for (index_path, data_path) in V2_PACKS_AND_INDICES {
-                    let resolve = pack::index::write::Mode::ResolveBasesAndDeltas({
+                    let resolve = {
                         let buf = FileBuffer::open(fixture_path(data_path))?;
-                        move |entry, out| {
+                        move |entry: EntrySlice, out: &mut Vec<u8>| {
                             buf.get(entry.start as usize..entry.end as usize)
                                 .map(|slice| out.copy_from_slice(slice))
                         }
-                    });
-                    assert_index_write(mode, index_path, data_path, resolve)?;
-                    assert_index_write(mode, index_path, data_path, pack::index::write::Mode::in_memory())?;
+                    };
                     assert_index_write(
                         mode,
                         index_path,
                         data_path,
-                        pack::index::write::Mode::in_memory_decompressed(),
+                        resolve,
+                        pack::index::write::Mode::ResolveBasesAndDeltas,
+                    )?;
+                    assert_index_write(
+                        mode,
+                        index_path,
+                        data_path,
+                        pack::index::write::Mode::noop_resolver()?,
+                        pack::index::write::Mode::InMemory,
+                    )?;
+                    assert_index_write(
+                        mode,
+                        index_path,
+                        data_path,
+                        pack::index::write::Mode::noop_resolver()?,
+                        pack::index::write::Mode::InMemoryDecompressed,
                     )?;
                 }
             }
@@ -102,7 +115,8 @@ mod method {
             mode: &iter::Mode,
             index_path: &&str,
             data_path: &&str,
-            memory_mode: pack::index::write::Mode<F>,
+            resolve: F,
+            memory_mode: pack::index::write::Mode,
         ) -> Result<(), Box<dyn std::error::Error>>
         where
             F: Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
@@ -115,6 +129,7 @@ mod method {
             let num_objects = pack_iter.len() as u32;
             let outcome = pack::index::File::write_data_iter_to_stream(
                 desired_kind,
+                || Ok(resolve),
                 memory_mode,
                 pack_iter,
                 None,

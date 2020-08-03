@@ -17,16 +17,20 @@ use consume::apply_deltas;
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
     /// Note that neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
-    pub fn write_data_iter_to_stream<F, P>(
+    /// `make_resolver()`:  It will only be called after the iterator stopped returning elements and produces a function that
+    /// provides all bytes belonging to an entry.
+    pub fn write_data_iter_to_stream<F, F2, P>(
         kind: pack::index::Kind,
-        mode: Mode<F>,
+        make_resolver: F,
+        mode: Mode,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         thread_limit: Option<usize>,
         mut root_progress: P,
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
-        F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+        F: FnOnce() -> io::Result<F2>,
+        F2: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress,
         <P as Progress>::SubProgress: Send,
     {
@@ -115,6 +119,7 @@ impl pack::index::File {
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
 
         let reduce_progress = parking_lot::Mutex::new(root_progress.add_child("Resolving"));
+        let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
             in_parallel_if(
                 || bytes_to_process > 5_000_000,
@@ -126,7 +131,7 @@ impl pack::index::File {
                         reduce_progress.lock().add_child(format!("thread {}", thread_index)),
                     )
                 },
-                |root_nodes, state| apply_deltas(root_nodes, state, &mode, kind.hash()),
+                |root_nodes, state| apply_deltas(root_nodes, state, mode, &resolver, kind.hash()),
                 Reducer::new(num_objects, &reduce_progress),
             )?;
             let mut items = tree.into_items();

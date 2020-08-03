@@ -73,9 +73,9 @@ impl FromStr for MemoryMode {
     }
 }
 
-impl From<MemoryMode> for pack::bundle::write::MemoryMode {
+impl From<MemoryMode> for pack::index::write::Mode {
     fn from(v: MemoryMode) -> Self {
-        use pack::bundle::write::MemoryMode::*;
+        use pack::index::write::Mode::*;
         match v {
             MemoryMode::InMemory => InMemory,
             MemoryMode::InMemoryDecompressed => InMemoryDecompressed,

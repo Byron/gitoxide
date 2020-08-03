@@ -71,7 +71,8 @@ impl pack::Bundle {
                 let outcome = if is_in_memory_completely {
                     pack::index::File::write_data_iter_to_stream(
                         index_kind,
-                        memory_mode.into_write_mode(|_, _| None),
+                        pack::index::write::Mode::noop_resolver,
+                        memory_mode,
                         pack_entries_iter,
                         thread_limit,
                         indexing_progress,
@@ -80,7 +81,8 @@ impl pack::Bundle {
                 } else {
                     pack::index::File::write_data_iter_to_stream(
                         index_kind,
-                        memory_mode.into_write_mode(new_pack_file_resolver(data_path)?),
+                        move || new_pack_file_resolver(data_path),
+                        memory_mode,
                         pack_entries_iter,
                         thread_limit,
                         indexing_progress,
@@ -110,7 +112,8 @@ impl pack::Bundle {
                 if is_in_memory_completely {
                     pack::index::File::write_data_iter_to_stream(
                         index_kind,
-                        memory_mode.into_write_mode(|_, _| None),
+                        pack::index::write::Mode::noop_resolver,
+                        memory_mode,
                         pack_entries_iter,
                         thread_limit,
                         indexing_progress,
@@ -119,7 +122,8 @@ impl pack::Bundle {
                 } else {
                     pack::index::File::write_data_iter_to_stream(
                         index_kind,
-                        memory_mode.into_write_mode(new_pack_file_resolver(data_path)?),
+                        move || new_pack_file_resolver(data_path),
+                        memory_mode,
                         pack_entries_iter,
                         thread_limit,
                         indexing_progress,
@@ -140,14 +144,11 @@ fn new_pack_file_resolver(
     data_path: Option<PathBuf>,
 ) -> io::Result<impl Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> {
     let data_path = data_path.expect("data path to be present if not in memory and there is no directory");
-    let data_map = parking_lot::Mutex::new(None);
-    let on_demand_pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
-        let mut guard = data_map.lock();
-        let possibly_map = guard.get_or_insert_with(|| FileBuffer::open(&data_path));
-        possibly_map
-            .as_ref()
-            .ok()
-            .map(|mapped_file| out.copy_from_slice(&mapped_file[range.start as usize..range.end as usize]))
+    let mapped_file = FileBuffer::open(&data_path)?;
+    let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
+        mapped_file
+            .get(range.start as usize..range.end as usize)
+            .map(|pack_entry| out.copy_from_slice(pack_entry))
     };
-    Ok(on_demand_pack_data_lookup)
+    Ok(pack_data_lookup)
 }
