@@ -183,7 +183,7 @@ impl pack::index::File {
             items.sort_by_key(|e| e.1);
             items
         };
-
+        drop(tree);
         drop(index_entries);
         drop(cache_by_offset);
         root_progress.inc();

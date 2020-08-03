@@ -123,7 +123,7 @@ where
     /// used only once, recursively.
     /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping.
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
-    unsafe fn take_entry(&self, index: usize) -> (D, Vec<usize>) {
+    unsafe fn from_node_take_entry(&self, index: usize) -> (D, Vec<usize>) {
         let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::replace(&mut item.children, Vec::new());
@@ -132,7 +132,7 @@ where
 
     #[allow(unsafe_code)]
     /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
-    unsafe fn take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)> {
+    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)> {
         let items_mut: &mut Vec<Item<D>> = &mut *(&self.items as *const _ as *mut _);
         let item = items_mut.get_unchecked_mut(index);
         if item.data.as_ref().map_or(false, |d| d.is_root()) {
@@ -160,7 +160,7 @@ where
         for index in children.into_iter() {
             // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
             #[allow(unsafe_code)]
-            let (data, children) = unsafe { tree.take_entry(index) };
+            let (data, children) = unsafe { tree.from_node_take_entry(index) };
             out.push(Node { tree, data, children })
         }
     }
@@ -190,7 +190,7 @@ where
             // is guaranteed to be self.tree.items.len() at most, or smaller.
             // Then see `take_entry_if_root(…)`
             #[allow(unsafe_code)]
-            if let Some((data, children)) = unsafe { self.tree.take_entry_if_root(self.cursor) } {
+            if let Some((data, children)) = unsafe { self.tree.from_iter_take_entry_if_root(self.cursor) } {
                 res.push(Node {
                     tree: self.tree,
                     data,
