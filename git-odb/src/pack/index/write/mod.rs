@@ -37,14 +37,9 @@ impl pack::index::File {
         let mut bytes_to_process = 0u64;
         // This array starts out sorted by pack-offset
         let mut index_entries = Vec::with_capacity(entries.size_hint().0);
-        if index_entries.capacity() == 0 {
-            return Err(Error::IteratorInvariantNonEmpty);
-        }
-
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
         let mut first_delta_index = None;
-        let mut last_pack_offset = 0;
         let mut cache_by_offset = BTreeMap::<_, CacheEntry>::new();
         let mut tree = Tree::new(entries.size_hint().0)?;
         let mut header_buf = [0u8; 16];
@@ -66,13 +61,6 @@ impl pack::index::File {
             } = entry?;
 
             let compressed_len = compressed.len();
-            if pack_offset <= last_pack_offset {
-                return Err(Error::IteratorInvariantIncreasingPackOffset(
-                    last_pack_offset,
-                    pack_offset,
-                ));
-            }
-            last_pack_offset = pack_offset;
             bytes_to_process += decompressed.len() as u64;
             let entry_len = header_size as usize + compressed_len;
             let crc32 = {
@@ -117,9 +105,7 @@ impl pack::index::File {
                     )?;
                     cache_by_offset
                         .get_mut(&base_pack_offset)
-                        .ok_or_else(|| {
-                            Error::IteratorInvariantBasesBeforeDeltasNeedThem(pack_offset, base_pack_offset)
-                        })?
+                        .expect("this to work nice check is done in tree delete me")
                         .increment_child_count();
 
                     if first_delta_index.is_none() {

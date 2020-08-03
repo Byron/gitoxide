@@ -1,14 +1,14 @@
 #[test]
 fn using_option_as_data_does_not_increase_size_in_memory() {
     enum Cache {
-        Unset,
-        Decompressed(Vec<u8>),
+        _Unset,
+        _Decompressed(Vec<u8>),
         /// compressed bytes + decompressed size
-        Compressed(Vec<u8>, usize),
+        _Compressed(Vec<u8>, usize),
     }
     enum ObjectKind {
-        Base(git_object::Kind),
-        OfsDelta(u64),
+        _Base(git_object::Kind),
+        _OfsDelta(u64),
     }
     struct Entry {
         pub _pack_offset: u64,

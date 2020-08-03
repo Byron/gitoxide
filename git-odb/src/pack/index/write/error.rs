@@ -24,20 +24,11 @@ quick_error! {
         IteratorInvariantTrailer {
             display("The iterator failed to set a trailing hash over all prior pack entries in the last provided entry")
         }
-        IteratorInvariantNonEmpty {
-            display("Is there ever a need to create empty indices? If so, please post a PR.")
-        }
         IteratorInvariantBasesPresent {
             display("Did not encounter a single base")
         }
-        IteratorInvariantBasesBeforeDeltasNeedThem(delta_pack_offset: u64, base_pack_offset: u64) {
-            display("The delta at pack offset {} could not find its base at {} - it should have been seen already", delta_pack_offset, base_pack_offset)
-        }
         IteratorInvariantTooManyObjects(num_objects: usize) {
             display("Only u32::MAX objects can be stored in a pack, found {}", num_objects)
-        }
-        IteratorInvariantIncreasingPackOffset(last_pack_offset: u64, pack_offset: u64) {
-            display("Pack offsets must only increment. The previous pack offset was {}, the current one is {}", last_pack_offset, pack_offset)
         }
         IteratorInvariantBaseOffset(pack_offset: u64, distance: u64) {
             display("{} is not a valid offset for pack offset {}", distance, pack_offset)
