@@ -31,7 +31,9 @@ pub struct Entry {
     /// amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of the compressed data in the pack.
     pub header_size: u16,
     pub pack_offset: u64,
-    /// amount bytes consumed while producing `decompressed`
+    /// The bytes consumed while producing `decompressed`
+    /// These do not contain the header, which makes it possible to easily replace a RefDelta with offset deltas
+    /// when resolving thin packs.
     pub compressed: Vec<u8>,
     /// The decompressed data.
     pub decompressed: Vec<u8>,
@@ -136,10 +138,7 @@ where
         let mut decompressor = self.decompressor.take().unwrap_or_default();
         decompressor.reset();
         let mut reader = InflateReaderBoxed {
-            inner: read_and_pass_to(
-                &mut self.read,
-                Vec::with_capacity((entry.decompressed_size / 2) as usize),
-            ),
+            inner: read_and_pass_to(&mut self.read, Vec::with_capacity((entry.decompressed_size) as usize)),
             decompressor,
         };
 
@@ -156,8 +155,7 @@ where
         self.offset += entry.header_size() as u64 + compressed_size;
         self.decompressor = Some(reader.decompressor);
 
-        let mut compressed = reader.inner.write;
-        compressed.shrink_to_fit();
+        let compressed = reader.inner.write;
         debug_assert_eq!(
             compressed_size,
             compressed.len() as u64,
@@ -209,7 +207,7 @@ where
 }
 
 fn read_and_pass_to<R: io::Read, W: io::Write>(read: &mut R, to: W) -> PassThrough<&mut R, W> {
-    PassThrough { read: read, write: to }
+    PassThrough { read, write: to }
 }
 
 impl<R> Iterator for Iter<R>

@@ -61,8 +61,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tree, Error> {
-    let (i, mut entries) = all_consuming(many1(parse_entry))(i)?;
-    entries.shrink_to_fit();
+    let (i, entries) = all_consuming(many1(parse_entry))(i)?;
     Ok((i, Tree { entries }))
 }
 
