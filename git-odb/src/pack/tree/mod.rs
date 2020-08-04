@@ -1,0 +1,117 @@
+use quick_error::quick_error;
+use std::{
+    cell::UnsafeCell,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        InvariantIncreasingPackOffset(last_pack_offset: u64, pack_offset: u64) {
+            display("Pack offsets must only increment. The previous pack offset was {}, the current one is {}", last_pack_offset, pack_offset)
+        }
+        InvariantNonEmpty {
+            display("Is there ever a need to create empty indices? If so, please post a PR.")
+        }
+        InvariantBasesBeforeDeltasNeedThem(delta_pack_offset: u64, base_pack_offset: u64) {
+            display("The delta at pack offset {} could not find its base at {} - it should have been seen already", delta_pack_offset, base_pack_offset)
+        }
+    }
+}
+
+pub(crate) struct Item<D> {
+    pub offset: u64,
+    is_root: bool,
+    pub data: D,
+    // TODO: figure out average amount of children per node and use smallvec instead
+    children: Vec<usize>,
+}
+/// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
+/// while being shareable among threads without a lock.
+/// It does this by making the run-time guarantee that iteration only happens once.
+pub(crate) struct Tree<D> {
+    items: UnsafeCell<Vec<Item<D>>>,
+    last_added_offset: u64,
+    // assure we truly create only one iterator, ever, to avoid violating access rules
+    iterator_active: AtomicBool,
+    one_past_last_seen_root: usize,
+}
+
+/// SAFETY: We solemnly swear…that this is sync because without the unsafe cell, it is also sync.
+/// But that's really the only reason why I would dare to know.
+#[allow(unsafe_code)]
+unsafe impl<T> Sync for Tree<T> {}
+
+impl<D> Tree<D> {
+    pub fn new(num_objects: usize) -> Result<Self, Error> {
+        if num_objects == 0 {
+            return Err(Error::InvariantNonEmpty);
+        }
+        Ok(Tree {
+            items: UnsafeCell::new(Vec::with_capacity(num_objects)),
+            last_added_offset: 0,
+            iterator_active: AtomicBool::new(false),
+            one_past_last_seen_root: 0,
+        })
+    }
+
+    fn assert_is_incrementing(&mut self, offset: u64) -> Result<u64, Error> {
+        if offset > self.last_added_offset {
+            self.last_added_offset = offset;
+            Ok(offset)
+        } else {
+            Err(Error::InvariantIncreasingPackOffset(self.last_added_offset, offset))
+        }
+    }
+
+    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
+        assert!(
+            !self.iterator_active.load(Ordering::SeqCst),
+            "Cannot mutate after the iterator was created as it assumes exclusive access"
+        );
+        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
+        // standard borrow check rules.
+        #[allow(unsafe_code)]
+        let items = unsafe { &mut *(self.items.get()) };
+        let offset = self.assert_is_incrementing(offset)?;
+        items.push(Item {
+            offset,
+            data,
+            is_root: true,
+            children: Default::default(),
+        });
+        self.one_past_last_seen_root = items.len();
+        Ok(())
+    }
+
+    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
+        assert!(
+            !self.iterator_active.load(Ordering::SeqCst),
+            "Cannot mutate after the iterator was created as it assumes exclusive access"
+        );
+        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
+        // standard borrow check rules.
+        #[allow(unsafe_code)]
+        let items = unsafe { &mut *(self.items.get()) };
+        let offset = self.assert_is_incrementing(offset)?;
+        let base_index = items
+            .binary_search_by_key(&base_offset, |e| e.offset)
+            .map_err(|_| Error::InvariantBasesBeforeDeltasNeedThem(offset, base_offset))?;
+        let child_index = items.len();
+        items[base_index].children.push(child_index);
+        items.push(Item {
+            is_root: false,
+            offset,
+            data,
+            children: Default::default(),
+        });
+        Ok(())
+    }
+
+    pub fn into_items(self) -> Vec<Item<D>> {
+        self.items.into_inner()
+    }
+}
+
+mod iter;
+pub use iter::{Chunks, Node};

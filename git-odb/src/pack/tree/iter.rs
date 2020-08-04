@@ -1,133 +1,8 @@
-use quick_error::quick_error;
-use std::{
-    cell::UnsafeCell,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use crate::pack::tree::{Item, Tree};
+use std::sync::atomic::Ordering;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        InvariantIncreasingPackOffset(last_pack_offset: u64, pack_offset: u64) {
-            display("Pack offsets must only increment. The previous pack offset was {}, the current one is {}", last_pack_offset, pack_offset)
-        }
-        InvariantNonEmpty {
-            display("Is there ever a need to create empty indices? If so, please post a PR.")
-        }
-        InvariantBasesBeforeDeltasNeedThem(delta_pack_offset: u64, base_pack_offset: u64) {
-            display("The delta at pack offset {} could not find its base at {} - it should have been seen already", delta_pack_offset, base_pack_offset)
-        }
-    }
-}
-
-pub(crate) struct Item<D> {
-    pub offset: u64,
-    is_root: bool,
-    pub data: D,
-    // TODO: figure out average amount of children per node and use smallvec instead
-    children: Vec<usize>,
-}
-/// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
-/// while being shareable among threads without a lock.
-/// It does this by making the run-time guarantee that iteration only happens once.
-pub(crate) struct Tree<D> {
-    items: UnsafeCell<Vec<Item<D>>>,
-    last_added_offset: u64,
-    // assure we truly create only one iterator, ever, to avoid violating access rules
-    iterator_active: AtomicBool,
-    one_past_last_seen_root: usize,
-}
-
-/// SAFETY: We solemnly swear…that this is sync because without the unsafe cell, it is also sync.
-/// But that's really the only reason why I would dare to know.
-#[allow(unsafe_code)]
-unsafe impl<T> Sync for Tree<T> {}
-
+/// All the unsafe bits to support parallel iteration with write access
 impl<D> Tree<D> {
-    pub fn new(num_objects: usize) -> Result<Self, Error> {
-        if num_objects == 0 {
-            return Err(Error::InvariantNonEmpty);
-        }
-        Ok(Tree {
-            items: UnsafeCell::new(Vec::with_capacity(num_objects)),
-            last_added_offset: 0,
-            iterator_active: AtomicBool::new(false),
-            one_past_last_seen_root: 0,
-        })
-    }
-
-    fn assert_is_incrementing(&mut self, offset: u64) -> Result<u64, Error> {
-        if offset > self.last_added_offset {
-            self.last_added_offset = offset;
-            Ok(offset)
-        } else {
-            Err(Error::InvariantIncreasingPackOffset(self.last_added_offset, offset))
-        }
-    }
-
-    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
-        assert!(
-            !self.iterator_active.load(Ordering::SeqCst),
-            "Cannot mutate after the iterator was created as it assumes exclusive access"
-        );
-        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
-        // standard borrow check rules.
-        #[allow(unsafe_code)]
-        let items = unsafe { &mut *(self.items.get()) };
-        let offset = self.assert_is_incrementing(offset)?;
-        items.push(Item {
-            offset,
-            data,
-            is_root: true,
-            children: Default::default(),
-        });
-        self.one_past_last_seen_root = items.len();
-        Ok(())
-    }
-
-    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
-        assert!(
-            !self.iterator_active.load(Ordering::SeqCst),
-            "Cannot mutate after the iterator was created as it assumes exclusive access"
-        );
-        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
-        // standard borrow check rules.
-        #[allow(unsafe_code)]
-        let items = unsafe { &mut *(self.items.get()) };
-        let offset = self.assert_is_incrementing(offset)?;
-        let base_index = items
-            .binary_search_by_key(&base_offset, |e| e.offset)
-            .map_err(|_| Error::InvariantBasesBeforeDeltasNeedThem(offset, base_offset))?;
-        let child_index = items.len();
-        items[base_index].children.push(child_index);
-        items.push(Item {
-            is_root: false,
-            offset,
-            data,
-            children: Default::default(),
-        });
-        Ok(())
-    }
-
-    pub fn into_items(self) -> Vec<Item<D>> {
-        self.items.into_inner()
-    }
-
-    /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
-        // We would love to consume the tree, of course, but if we can't hand out items that borrow from ourselves,
-        // it's nothing we can use effectively. Thus it's better to check at runtime…
-        assert!(
-            !self.iterator_active.load(Ordering::SeqCst),
-            "Can only create a single iterator to avoid aliasing mutable tree nodes"
-        );
-        self.iterator_active.store(true, Ordering::SeqCst);
-        Chunks {
-            tree: self,
-            size,
-            cursor: 0,
-        }
-    }
-
     #[allow(unsafe_code)]
     /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node.
     /// Note that we are iterating nodes that we are affecting here, but that only affects the
@@ -196,10 +71,28 @@ impl<D> Tree<D> {
     }
 }
 
+/// Iteration
+impl<D> Tree<D> {
+    /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
+    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
+        // We would love to consume the tree, of course, but if we can't hand out items that borrow from ourselves,
+        // it's nothing we can use effectively. Thus it's better to check at runtime…
+        assert!(
+            !self.iterator_active.load(Ordering::SeqCst),
+            "Can only create a single iterator to avoid aliasing mutable tree nodes"
+        );
+        self.iterator_active.store(true, Ordering::SeqCst);
+        Chunks {
+            tree: self,
+            size,
+            cursor: 0,
+        }
+    }
+}
+
 pub struct Node<'a, D> {
     tree: &'a Tree<D>,
     index: usize,
-    // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
     pub data: D,
 }
