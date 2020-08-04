@@ -15,8 +15,6 @@ pub struct Outcome {
 pub(crate) enum Cache {
     Unset,
     Decompressed(Vec<u8>),
-    /// compressed bytes + decompressed size
-    Compressed(Vec<u8>, usize),
 }
 
 impl Default for Cache {
@@ -67,34 +65,31 @@ pub type EntrySlice = std::ops::Range<u64>;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Mode {
-    /// Base + deltas in memory compressed
+    /// Base + deltas in memory, decompressed
     InMemory,
-    InMemoryDecompressed,
-    /// Deltas in memory compressed
+    /// Deltas in memory, decompressed
     ResolveBases,
-    /// Bases in memory compressed
+    /// Bases in memory, decompressed
     ResolveDeltas,
     ResolveBasesAndDeltas,
 }
 
 impl Mode {
-    pub(crate) fn base_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
+    pub(crate) fn base_cache(&self, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveDeltas | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
-            Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
+            Mode::InMemory | Mode::ResolveDeltas => Cache::Decompressed(decompressed),
             Mode::ResolveBases | Mode::ResolveBasesAndDeltas => Cache::Unset,
         }
     }
-    pub(crate) fn delta_cache(&self, compressed: Vec<u8>, decompressed: Vec<u8>) -> Cache {
+    pub(crate) fn delta_cache(&self, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveBases | Mode::InMemory => Cache::Compressed(compressed, decompressed.len()),
-            Mode::InMemoryDecompressed => Cache::Decompressed(decompressed),
+            Mode::ResolveBases | Mode::InMemory => Cache::Decompressed(decompressed),
             Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => Cache::Unset,
         }
     }
     pub(crate) fn is_in_memory(&self) -> bool {
         match self {
-            Mode::InMemory | Mode::InMemoryDecompressed => true,
+            Mode::InMemory => true,
             Mode::ResolveBases | Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => false,
         }
     }

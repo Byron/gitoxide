@@ -44,7 +44,6 @@ impl From<IterationMode> for pack::data::iter::Mode {
 #[derive(PartialEq, Debug)]
 pub enum MemoryMode {
     InMemory,
-    InMemoryDecompressed,
     ResolveBases,
     ResolveDeltas,
     ResolveBasesAndDeltas,
@@ -64,7 +63,6 @@ impl FromStr for MemoryMode {
         let slc = s.to_ascii_lowercase();
         Ok(match slc.as_str() {
             "in-memory" => InMemory,
-            "in-memory-decompressed" => InMemoryDecompressed,
             "resolve-bases" => ResolveBases,
             "resolve-deltas" => ResolveDeltas,
             "resolve-bases-and-deltas" => ResolveBasesAndDeltas,
@@ -78,7 +76,6 @@ impl From<MemoryMode> for pack::index::write::Mode {
         use pack::index::write::Mode::*;
         match v {
             MemoryMode::InMemory => InMemory,
-            MemoryMode::InMemoryDecompressed => InMemoryDecompressed,
             MemoryMode::ResolveBases => ResolveBases,
             MemoryMode::ResolveDeltas => ResolveDeltas,
             MemoryMode::ResolveBasesAndDeltas => ResolveBasesAndDeltas,

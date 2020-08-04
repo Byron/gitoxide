@@ -81,7 +81,7 @@ impl pack::index::File {
                             entry_len,
                             kind: ObjectKind::Base(header.to_kind().expect("a base object")),
                             crc32,
-                            cache: mode.base_cache(compressed, decompressed),
+                            cache: mode.base_cache(decompressed),
                         },
                     )?;
                 }
@@ -98,7 +98,7 @@ impl pack::index::File {
                             entry_len,
                             kind: ObjectKind::OfsDelta,
                             crc32,
-                            cache: mode.delta_cache(compressed, decompressed),
+                            cache: mode.delta_cache(decompressed),
                         },
                     )?;
                 }

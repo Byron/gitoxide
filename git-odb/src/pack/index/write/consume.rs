@@ -36,12 +36,9 @@ where
                             entry.decompressed_size as usize,
                         )?
                     }
-                    Mode::InMemoryDecompressed | Mode::InMemory => {
-                        unreachable!("BUG: If there is no cache, we always need a resolver")
-                    }
+                    Mode::InMemory => unreachable!("BUG: If there is no cache, we always need a resolver"),
                 }
             }
-            Cache::Compressed(bytes, decompressed_len) => decompress_all_at_once(&bytes, decompressed_len)?,
             Cache::Decompressed(bytes) => bytes,
         })
     };

@@ -99,13 +99,6 @@ mod method {
                         pack::index::write::Mode::noop_resolver()?,
                         pack::index::write::Mode::InMemory,
                     )?;
-                    assert_index_write(
-                        mode,
-                        index_path,
-                        data_path,
-                        pack::index::write::Mode::noop_resolver()?,
-                        pack::index::write::Mode::InMemoryDecompressed,
-                    )?;
                 }
             }
             Ok(())
