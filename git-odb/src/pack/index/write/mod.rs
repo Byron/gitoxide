@@ -44,7 +44,7 @@ impl pack::index::File {
         let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
 
-        root_progress.init(Some(3), Some("steps"));
+        root_progress.init(Some(4), Some("steps"));
         let mut progress = root_progress.add_child("indexing");
         progress.init(entries.size_hint().1.map(|l| l as u32), Some("objects"));
 
@@ -131,11 +131,17 @@ impl pack::index::File {
                 |root_nodes, state| apply_deltas(root_nodes, state, &resolver, kind.hash()),
                 Reducer::new(num_objects, &reduce_progress),
             )?;
-            let mut items = tree.into_items();
-            items.sort_by_key(|e| e.data.id);
+            root_progress.inc();
+
+            let items = {
+                let _progress = root_progress.add_child("sorting by id");
+                let mut items = tree.into_items();
+                items.sort_by_key(|e| e.data.id);
+                items
+            };
+            root_progress.inc();
             items
         };
-        root_progress.inc();
 
         let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
         let index_hash = encode::to_write(

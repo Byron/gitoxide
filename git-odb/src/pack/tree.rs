@@ -20,13 +20,12 @@ quick_error! {
 }
 
 pub(crate) struct Item<D> {
-    offset: u64,
+    pub offset: u64,
     is_root: bool,
     pub data: D,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
-
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
 /// while being shareable among threads without a lock.
 /// It does this by making the run-time guarantee that iteration only happens once.
