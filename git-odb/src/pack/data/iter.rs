@@ -117,13 +117,13 @@ where
         // Read header
         let entry = match self.hash.take() {
             Some(hash) => {
-                let mut read = PassThrough {
-                    read: &mut self.read,
-                    write: hash::Write {
+                let mut read = read_and_pass_to(
+                    &mut self.read,
+                    hash::Write {
                         inner: io::sink(),
                         hash,
                     },
-                };
+                );
                 let res = pack::data::Entry::from_read(&mut read, self.offset);
                 self.hash = Some(read.write.hash);
                 res
@@ -136,16 +136,16 @@ where
         let mut decompressor = self.decompressor.take().unwrap_or_default();
         decompressor.reset();
         let mut reader = InflateReaderBoxed {
-            inner: PassThrough {
-                read: &mut self.read,
-                write: Vec::with_capacity((entry.decompressed_size / 2) as usize),
-            },
+            inner: read_and_pass_to(
+                &mut self.read,
+                Vec::with_capacity((entry.decompressed_size / 2) as usize),
+            ),
             decompressor,
         };
 
         let mut decompressed = Vec::with_capacity(entry.decompressed_size as usize);
         let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
-        assert_eq!(
+        debug_assert_eq!(
             bytes_copied, entry.decompressed_size,
             "We should have decompressed {} bytes, but got {} instead",
             entry.decompressed_size, bytes_copied
@@ -155,9 +155,10 @@ where
         let compressed_size = reader.decompressor.total_in;
         self.offset += entry.header_size() as u64 + compressed_size;
         self.decompressor = Some(reader.decompressor);
+
         let mut compressed = reader.inner.write;
         compressed.shrink_to_fit();
-        assert_eq!(
+        debug_assert_eq!(
             compressed_size,
             compressed.len() as u64,
             "we must track exactly the same amount of bytes as read by the decompressor"
@@ -205,6 +206,10 @@ where
             trailer,
         })
     }
+}
+
+fn read_and_pass_to<R: io::Read, W: io::Write>(read: &mut R, to: W) -> PassThrough<&mut R, W> {
+    PassThrough { read: read, write: to }
 }
 
 impl<R> Iterator for Iter<R>
