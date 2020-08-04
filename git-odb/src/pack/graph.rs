@@ -5,7 +5,12 @@ use petgraph::{
     Direction,
 };
 use quick_error::quick_error;
-use std::{collections::BTreeMap, fs, io, time::Instant};
+use std::{
+    collections::BTreeMap,
+    fs,
+    io::{self, BufRead, Read},
+    time::Instant,
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -85,8 +90,6 @@ impl DeltaTree {
         mut progress: impl Progress,
         resolve_in_pack_id: impl Fn(git_object::borrowed::Id) -> Option<PackOffset>,
     ) -> Result<Self, Error> {
-        use io::{BufRead, Read};
-
         let mut r = io::BufReader::with_capacity(
             8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k
             fs::File::open(pack_path).map_err(|err| Error::Io(err, "open pack path"))?,
@@ -112,23 +115,15 @@ impl DeltaTree {
         let mut offsets_to_node = BTreeMap::new();
         let then = Instant::now();
 
-        let mut previous_offset = None::<u64>;
+        let mut previous_cursor_position = None::<u64>;
 
         for pack_offset in offsets {
-            if let Some(previous_offset) = previous_offset {
-                let mut bytes_to_skip = pack_offset
-                    .checked_sub(previous_offset)
-                    .expect("continuously ascending pack offets") as usize;
-                while bytes_to_skip != 0 {
-                    let buf = r.fill_buf().map_err(|err| Error::Io(err, "skip bytes"))?;
-                    let bytes = buf.len().min(bytes_to_skip);
-                    r.consume(bytes);
-                    bytes_to_skip -= bytes;
-                }
+            if let Some(previous_offset) = previous_cursor_position {
+                DeltaTree::advance_cursor_to_pack_offset(&mut r, pack_offset, previous_offset)?;
             };
             let entry = pack::data::Entry::from_read(&mut r, pack_offset)
                 .map_err(|err| Error::Io(err, "EOF while parsing header"))?;
-            previous_offset = Some(pack_offset + entry.header_size() as u64);
+            previous_cursor_position = Some(pack_offset + entry.header_size() as u64);
             use pack::data::Header::*;
             match entry.header {
                 Tree | Blob | Commit | Tag => {
@@ -161,5 +156,22 @@ impl DeltaTree {
 
         tree.shrink_to_fit();
         Ok(DeltaTree { inner: tree })
+    }
+
+    fn advance_cursor_to_pack_offset(
+        r: &mut io::BufReader<fs::File>,
+        pack_offset: u64,
+        previous_offset: u64,
+    ) -> Result<(), Error> {
+        let mut bytes_to_skip = pack_offset
+            .checked_sub(previous_offset)
+            .expect("continuously ascending pack offets") as usize;
+        while bytes_to_skip != 0 {
+            let buf = r.fill_buf().map_err(|err| Error::Io(err, "skip bytes"))?;
+            let bytes = buf.len().min(bytes_to_skip);
+            r.consume(bytes);
+            bytes_to_skip -= bytes;
+        }
+        Ok(())
     }
 }

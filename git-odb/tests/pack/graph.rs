@@ -1,5 +1,5 @@
-mod method {
-    mod delta_tree {
+mod delta_tree {
+    mod from_offsets_in_pack {
         use crate::{
             fixture_path,
             pack::{INDEX_V1, PACK_FOR_INDEX_V1, SMALL_PACK, SMALL_PACK_INDEX},
@@ -10,6 +10,7 @@ mod method {
         fn v1() -> Result<(), Box<dyn std::error::Error>> {
             delta_tree(INDEX_V1, PACK_FOR_INDEX_V1)
         }
+
         #[test]
         fn v2() -> Result<(), Box<dyn std::error::Error>> {
             delta_tree(SMALL_PACK_INDEX, SMALL_PACK)
@@ -27,6 +28,7 @@ mod method {
         }
     }
 }
+
 #[test]
 fn size() {
     assert_eq!(
