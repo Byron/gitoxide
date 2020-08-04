@@ -435,6 +435,14 @@ Thus one has to post-process the file by reducing its size by one using `truncat
   * We use the `izip!` macro in code
 * **deflate2** _(MIT Licensed)_
   * We use various abstractions to implement decompression and compression directly on top of the rather low-level `miniz_oxide` crate
+  
+## Unused Performance Optimizations
+* **miniz-oxide**
+  * **unnecessary buffer reset**
+    * In the [`InflateState` struct][miniz-inflatestate], there is a big 32kb buffer which gets zeroed for every decompression attempt.
+    * This costs ~4s for 7.5 million objects.
+    
+[miniz-inflatestate]: https://github.com/Frommi/miniz_oxide/blob/7f5aedd7cc553b624902210a7d136440c138dc80/miniz_oxide/src/inflate/stream.rs#L102
 
 ## Fun facts
 

@@ -90,6 +90,3 @@ members = [
     "git-tui",
     "demos"
 ]
-
-[patch.crates-io]
-miniz_oxide = { path = "../miniz_oxide/miniz_oxide" }
