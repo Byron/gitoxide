@@ -1,9 +1,5 @@
 #[test]
 fn using_option_as_data_does_not_increase_size_in_memory() {
-    enum Cache {
-        _Unset,
-        _Decompressed(Vec<u8>),
-    }
     enum ObjectKind {
         _Base(git_object::Kind),
         _OfsDelta,
@@ -14,7 +10,6 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
         pub _entry_len: usize,
         pub _kind: ObjectKind,
         pub _crc32: u32,
-        pub _cache: Cache,
     }
 
     struct TreeItem<D> {
@@ -34,7 +29,7 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
     );
     assert_eq!(
         std::mem::size_of::<[TreeItemOption<Entry>; 7_500_000]>(),
-        780000000,
+        600_000_000,
         "it should be as small as possible"
     );
 }

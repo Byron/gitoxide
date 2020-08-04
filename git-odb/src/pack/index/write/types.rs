@@ -67,8 +67,6 @@ pub type EntrySlice = std::ops::Range<u64>;
 pub enum Mode {
     /// Base + deltas in memory, decompressed
     InMemory,
-    /// Deltas in memory, decompressed
-    ResolveBases,
     /// Bases in memory, decompressed
     ResolveDeltas,
     ResolveBasesAndDeltas,
@@ -78,19 +76,19 @@ impl Mode {
     pub(crate) fn base_cache(&self, decompressed: Vec<u8>) -> Cache {
         match self {
             Mode::InMemory | Mode::ResolveDeltas => Cache::Decompressed(decompressed),
-            Mode::ResolveBases | Mode::ResolveBasesAndDeltas => Cache::Unset,
+            Mode::ResolveBasesAndDeltas => Cache::Unset,
         }
     }
     pub(crate) fn delta_cache(&self, decompressed: Vec<u8>) -> Cache {
         match self {
-            Mode::ResolveBases | Mode::InMemory => Cache::Decompressed(decompressed),
+            Mode::InMemory => Cache::Decompressed(decompressed),
             Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => Cache::Unset,
         }
     }
     pub(crate) fn is_in_memory(&self) -> bool {
         match self {
             Mode::InMemory => true,
-            Mode::ResolveBases | Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => false,
+            Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => false,
         }
     }
 }

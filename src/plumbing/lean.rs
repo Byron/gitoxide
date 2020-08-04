@@ -55,10 +55,8 @@ mod options {
         /// Valid values are
         /// - in-memory
         ///   *  keep all objects in memory, decompressed, avoiding decompression entirely.
-        /// - resolve-bases
-        ///   * keep compressed deltas in memory, store the pack on disk and resolve bases from there
         /// - resolve-deltas
-        ///   * as above, but keep compressed bases
+        ///   * keep compressed bases in memory, store the pack on disk and resolve deltas from there
         /// - resolve-bases-and-deltas
         ///   * as above, but resolve all objects, store none in memory
         ///   * this option duplicates most work, but uses the least memory

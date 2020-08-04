@@ -27,7 +27,7 @@ where
                 let mut bytes_buf = bytes_buf.borrow_mut();
                 bytes_buf.resize(entry_size, 0);
                 match mode {
-                    Mode::ResolveDeltas | Mode::ResolveBases | Mode::ResolveBasesAndDeltas => {
+                    Mode::ResolveDeltas | Mode::ResolveBasesAndDeltas => {
                         resolve(pack_offset..pack_offset + entry_size as u64, &mut bytes_buf)
                             .ok_or_else(|| Error::ConsumeResolveFailed(pack_offset))?;
                         let entry = pack::data::Entry::from_bytes(&bytes_buf, pack_offset);
