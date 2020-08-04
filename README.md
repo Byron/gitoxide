@@ -435,6 +435,8 @@ Thus one has to post-process the file by reducing its size by one using `truncat
   * We use the `izip!` macro in code
 * **deflate2** _(MIT Licensed)_
   * We use various abstractions to implement decompression and compression directly on top of the rather low-level `miniz_oxide` crate
+* **miniz-oxied** _(MIT Licensed)_
+  * We use a modified version of the `InflateState`.
 
 ## Fun facts
 
