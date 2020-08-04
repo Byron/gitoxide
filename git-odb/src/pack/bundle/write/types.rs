@@ -9,8 +9,6 @@ pub struct Outcome {
     pub pack_kind: pack::data::Kind,
 }
 
-pub type MemoryMode = pack::index::write::Mode;
-
 pub(crate) struct PassThrough<R> {
     pub reader: R,
     pub writer: Option<NamedTempFile>,

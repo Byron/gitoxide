@@ -11,15 +11,14 @@ use error::Error;
 
 mod types;
 use filebuffer::FileBuffer;
+pub use types::Outcome;
 use types::PassThrough;
-pub use types::{MemoryMode, Outcome};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {
     pub thread_limit: Option<usize>,
     pub iteration_mode: pack::data::iter::Mode,
-    pub memory_mode: MemoryMode,
     pub index_kind: pack::index::Kind,
 }
 
@@ -33,7 +32,6 @@ impl pack::Bundle {
         Options {
             thread_limit,
             iteration_mode,
-            memory_mode,
             index_kind,
         }: Options,
     ) -> Result<Outcome, Error>
@@ -47,12 +45,10 @@ impl pack::Bundle {
             reader: pack,
             progress: read_progress,
         };
-        let is_in_memory_completely = memory_mode.is_in_memory();
         let indexing_progress = progress.add_child("create index file");
 
         let data_file = match directory.as_ref() {
             Some(directory) => Some(NamedTempFile::new_in(directory.as_ref())?),
-            None if is_in_memory_completely => None,
             None => Some(NamedTempFile::new()?),
         };
         let data_path: Option<PathBuf> = data_file.as_ref().map(|f| f.as_ref().into());
@@ -68,27 +64,14 @@ impl pack::Bundle {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
 
-                let outcome = if is_in_memory_completely {
-                    pack::index::File::write_data_iter_to_stream(
-                        index_kind,
-                        pack::index::write::Mode::noop_resolver,
-                        memory_mode,
-                        pack_entries_iter,
-                        thread_limit,
-                        indexing_progress,
-                        &mut index_file,
-                    )
-                } else {
-                    pack::index::File::write_data_iter_to_stream(
-                        index_kind,
-                        move || new_pack_file_resolver(data_path),
-                        memory_mode,
-                        pack_entries_iter,
-                        thread_limit,
-                        indexing_progress,
-                        &mut index_file,
-                    )
-                }?;
+                let outcome = pack::index::File::write_data_iter_to_stream(
+                    index_kind,
+                    move || new_pack_file_resolver(data_path),
+                    pack_entries_iter,
+                    thread_limit,
+                    indexing_progress,
+                    &mut index_file,
+                )?;
 
                 let data_file = pack.writer.expect("data file to always be set in write mode");
                 let index_path = directory.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
@@ -108,29 +91,14 @@ impl pack::Bundle {
                     })?;
                 outcome
             }
-            None => {
-                if is_in_memory_completely {
-                    pack::index::File::write_data_iter_to_stream(
-                        index_kind,
-                        pack::index::write::Mode::noop_resolver,
-                        memory_mode,
-                        pack_entries_iter,
-                        thread_limit,
-                        indexing_progress,
-                        io::sink(),
-                    )
-                } else {
-                    pack::index::File::write_data_iter_to_stream(
-                        index_kind,
-                        move || new_pack_file_resolver(data_path),
-                        memory_mode,
-                        pack_entries_iter,
-                        thread_limit,
-                        indexing_progress,
-                        io::sink(),
-                    )
-                }?
-            }
+            None => pack::index::File::write_data_iter_to_stream(
+                index_kind,
+                move || new_pack_file_resolver(data_path),
+                pack_entries_iter,
+                thread_limit,
+                indexing_progress,
+                io::sink(),
+            )?,
         };
 
         Ok(Outcome {

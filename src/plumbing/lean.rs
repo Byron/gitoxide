@@ -50,19 +50,6 @@ mod options {
         #[argh(option, short = 'i')]
         pub iteration_mode: Option<core::pack::index::IterationMode>,
 
-        /// trade memory consumption for higher speed or lower memory consumption for reduced performance. Defaults to 'resolve-deltas'
-        ///
-        /// Valid values are
-        /// - in-memory
-        ///   *  keep all objects in memory, decompressed, avoiding decompression entirely.
-        /// - resolve-deltas
-        ///   * keep compressed bases in memory, store the pack on disk and resolve deltas from there
-        /// - resolve-bases-and-deltas
-        ///   * as above, but resolve all objects, store none in memory
-        ///   * this option duplicates most work, but uses the least memory
-        #[argh(option, short = 'm')]
-        pub memory_mode: Option<core::pack::index::MemoryMode>,
-
         /// path to the pack file to read (with .pack extension).
         ///
         /// If unset, the pack file is expected on stdin.
@@ -205,7 +192,6 @@ pub fn main() -> Result<()> {
         SubCommands::IndexFromPack(IndexFromPack {
             verbose,
             iteration_mode,
-            memory_mode,
             pack_path,
             directory,
         }) => {
@@ -217,7 +203,6 @@ pub fn main() -> Result<()> {
                 core::pack::index::Context {
                     thread_limit,
                     iteration_mode: iteration_mode.unwrap_or_default(),
-                    memory_mode: memory_mode.unwrap_or_default(),
                 },
             )
         }

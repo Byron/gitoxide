@@ -85,20 +85,7 @@ mod method {
                                 .map(|slice| out.copy_from_slice(slice))
                         }
                     };
-                    assert_index_write(
-                        mode,
-                        index_path,
-                        data_path,
-                        resolve,
-                        pack::index::write::Mode::ResolveBasesAndDeltas,
-                    )?;
-                    assert_index_write(
-                        mode,
-                        index_path,
-                        data_path,
-                        pack::index::write::Mode::noop_resolver()?,
-                        pack::index::write::Mode::InMemory,
-                    )?;
+                    assert_index_write(mode, index_path, data_path, resolve)?;
                 }
             }
             Ok(())
@@ -109,7 +96,6 @@ mod method {
             index_path: &&str,
             data_path: &&str,
             resolve: F,
-            memory_mode: pack::index::write::Mode,
         ) -> Result<(), Box<dyn std::error::Error>>
         where
             F: Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
@@ -123,7 +109,6 @@ mod method {
             let outcome = pack::index::File::write_data_iter_to_stream(
                 desired_kind,
                 || Ok(resolve),
-                memory_mode,
                 pack_iter,
                 None,
                 progress::Discard,

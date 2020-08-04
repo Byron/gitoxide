@@ -8,7 +8,7 @@ mod error;
 pub use error::Error;
 
 mod types;
-pub use types::{EntrySlice, Mode, Outcome};
+pub use types::{EntrySlice, Outcome};
 use types::{ObjectKind, Reducer, TreeEntry};
 
 mod consume;
@@ -22,7 +22,6 @@ impl pack::index::File {
     pub fn write_data_iter_to_stream<F, F2, P>(
         kind: pack::index::Kind,
         make_resolver: F,
-        mode: Mode,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         thread_limit: Option<usize>,
         mut root_progress: P,
@@ -81,7 +80,6 @@ impl pack::index::File {
                             entry_len,
                             kind: ObjectKind::Base(header.to_kind().expect("a base object")),
                             crc32,
-                            cache: mode.base_cache(decompressed),
                         },
                     )?;
                 }
@@ -98,7 +96,6 @@ impl pack::index::File {
                             entry_len,
                             kind: ObjectKind::OfsDelta,
                             crc32,
-                            cache: mode.delta_cache(decompressed),
                         },
                     )?;
                 }
@@ -131,7 +128,7 @@ impl pack::index::File {
                         reduce_progress.lock().add_child(format!("thread {}", thread_index)),
                     )
                 },
-                |root_nodes, state| apply_deltas(root_nodes, state, mode, &resolver, kind.hash()),
+                |root_nodes, state| apply_deltas(root_nodes, state, &resolver, kind.hash()),
                 Reducer::new(num_objects, &reduce_progress),
             )?;
             let mut items = tree.into_items();
