@@ -290,8 +290,8 @@ impl pack::data::File {
     ///
     /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
-    pub fn iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
-        let reader = io::BufReader::new(fs::File::open(&self.path)?);
+    pub fn streaming_iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
+        let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
         Iter::new_from_header(reader, Mode::AsIs)
     }
 }

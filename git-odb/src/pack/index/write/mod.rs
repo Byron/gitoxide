@@ -45,7 +45,6 @@ impl pack::index::File {
         let indexing_start = std::time::Instant::now();
 
         root_progress.init(Some(3), Some("steps"));
-        root_progress.inc();
         let mut progress = root_progress.add_child("indexing");
         progress.init(entries.size_hint().1.map(|l| l as u32), Some("objects"));
 
@@ -146,7 +145,6 @@ impl pack::index::File {
             kind,
             root_progress.add_child("writing index file"),
         )?;
-        root_progress.inc();
         root_progress.show_throughput(indexing_start, num_objects, "objects");
         Ok(Outcome {
             index_kind: kind,

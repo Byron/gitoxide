@@ -28,7 +28,7 @@ mod method {
     #[test]
     fn iter() -> Result<(), Box<dyn std::error::Error>> {
         let pack = pack_at(SMALL_PACK);
-        let it = pack.iter()?;
+        let it = pack.streaming_iter()?;
         assert_eq!(it.count(), pack.num_objects() as usize);
         Ok(())
     }

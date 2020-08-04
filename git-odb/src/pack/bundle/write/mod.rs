@@ -56,13 +56,15 @@ impl pack::Bundle {
             reader: pack,
             writer: data_file,
         };
-        let pack_entries_iter = pack::data::Iter::new_from_header(io::BufReader::new(&mut pack), iteration_mode)?;
+        let eight_pages = 4096 * 8;
+        let buffered_pack = io::BufReader::with_capacity(eight_pages, &mut pack);
+        let pack_entries_iter = pack::data::Iter::new_from_header(buffered_pack, iteration_mode)?;
         let pack_kind = pack_entries_iter.kind();
 
         let outcome = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
-                let mut index_file = io::BufWriter::with_capacity(4096 * 8, NamedTempFile::new_in(directory)?);
+                let mut index_file = io::BufWriter::with_capacity(eight_pages, NamedTempFile::new_in(directory)?);
 
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     index_kind,

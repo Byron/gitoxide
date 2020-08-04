@@ -290,7 +290,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             assert_ne!(pack_entry.data_offset, idx_entry.pack_offset);
             assert!(sorted_offsets.binary_search(&idx_entry.pack_offset).is_ok());
         }
-        for (entry, offset_from_index) in pack.iter()?.zip(sorted_offsets.iter().copied()) {
+        for (entry, offset_from_index) in pack.streaming_iter()?.zip(sorted_offsets.iter().copied()) {
             let entry = entry?;
             assert_eq!(
                 entry.pack_offset, offset_from_index,
