@@ -6,12 +6,7 @@ use git_object as object;
 use object::borrowed;
 use quick_error::quick_error;
 use smallvec::SmallVec;
-use std::{
-    convert::TryInto,
-    fs,
-    io::{Cursor, Read},
-    path::PathBuf,
-};
+use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
 quick_error! {
     #[derive(Debug)]
@@ -63,11 +58,9 @@ impl Db {
             let bytes_read = istream
                 .read(&mut compressed[..])
                 .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
-            let mut out = Cursor::new(&mut decompressed[..]);
-
             (
                 inflate
-                    .once(&compressed[..bytes_read], &mut out, true)
+                    .once(&compressed[..bytes_read], &mut decompressed[..], true)
                     .map_err(|e| Error::DecompressFile(e, path.to_owned()))?,
                 bytes_read,
                 istream,

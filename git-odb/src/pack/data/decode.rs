@@ -120,7 +120,7 @@ impl File {
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
         zlib::Inflate::default()
-            .once(&self.data[offset..], &mut std::io::Cursor::new(out), true)
+            .once(&self.data[offset..], out, true)
             .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
             .map(|(_, consumed_in, _)| consumed_in)
     }

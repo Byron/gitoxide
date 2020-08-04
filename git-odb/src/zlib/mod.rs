@@ -8,7 +8,6 @@ use miniz_oxide::{
     },
 };
 use quick_error::quick_error;
-use std::io::Cursor;
 
 quick_error! {
     #[derive(Debug)]
@@ -44,13 +43,14 @@ impl Inflate {
     pub fn once(
         &mut self,
         input: &[u8],
-        out: &mut Cursor<&mut [u8]>,
+        out: &mut [u8],
         parse_header: bool,
     ) -> Result<(TINFLStatus, usize, usize), Error> {
         let (status, in_consumed, out_consumed) = miniz_oxide::inflate::core::decompress(
             &mut self.state,
             input,
             out,
+            0,
             if parse_header { TINFL_FLAG_PARSE_ZLIB_HEADER } else { 0 }
                 | TINFL_FLAG_HAS_MORE_INPUT
                 | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,

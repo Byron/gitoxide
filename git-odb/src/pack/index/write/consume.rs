@@ -102,7 +102,7 @@ fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, 
     let mut out = Vec::new();
     out.resize(decompressed_len, 0);
     zlib::Inflate::default()
-        .once(&b, &mut io::Cursor::new(&mut out), true)
+        .once(&b, &mut out, true)
         .map_err(|err| Error::ConsumeZlibInflate(err, "Failed to decompress entry"))?;
     Ok(out)
 }
