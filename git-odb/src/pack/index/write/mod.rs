@@ -55,15 +55,16 @@ impl pack::index::File {
                 pack_offset,
                 header_size,
                 compressed,
-                decompressed,
+                decompressed: _,
+                decompressed_size,
                 trailer,
             } = entry?;
 
             let compressed_len = compressed.len();
-            bytes_to_process += decompressed.len() as u64;
+            bytes_to_process += decompressed_size;
             let entry_len = header_size as usize + compressed_len;
             let crc32 = {
-                let header_len = header.to_write(decompressed.len() as u64, header_buf.as_mut())?;
+                let header_len = header.to_write(decompressed_size, header_buf.as_mut())?;
                 let state = hash::crc32_update(0, &header_buf[..header_len]);
                 hash::crc32_update(state, &compressed)
             };

@@ -298,14 +298,21 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             );
 
             let mut buf = Vec::new();
-            buf.resize(entry.decompressed.len(), 0);
+            buf.resize(entry.decompressed_size as usize, 0);
             let pack_entry = pack.entry(offset_from_index);
             pack.decompress_entry(&pack_entry, &mut buf)?;
 
             assert_eq!(
-                buf, entry.decompressed,
-                "the decompressed bytes are the same no matter what who decompressed them"
+                buf.len() as u64,
+                entry.decompressed_size,
+                "the decompressed length are the same no matter what decompressed them"
             );
+            if let Some(decompressed) = entry.decompressed {
+                assert_eq!(
+                    buf, decompressed,
+                    "the decompressed bytes are the same no matter what decompressed them"
+                );
+            }
 
             let next_offset_index = sorted_offsets
                 .binary_search(&entry.pack_offset)

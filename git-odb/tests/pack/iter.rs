@@ -4,7 +4,7 @@ use git_odb::pack;
 fn size_of_entry() {
     assert_eq!(
         std::mem::size_of::<pack::data::iter::Entry>(),
-        104,
+        112,
         "let's keep the size in check as we have many of them"
     );
 }
@@ -22,7 +22,7 @@ mod new_from_header {
                 let entry = entry?;
 
                 let mut buf = Vec::<u8>::new();
-                entry.header.to_write(entry.decompressed.len() as u64, &mut buf)?;
+                entry.header.to_write(entry.decompressed_size, &mut buf)?;
                 let new_entry = pack::data::Entry::from_bytes(&buf, entry.pack_offset);
 
                 assert_eq!(
@@ -31,8 +31,7 @@ mod new_from_header {
                     "it should consume all provided bytes"
                 );
                 assert_eq!(
-                    new_entry.decompressed_size,
-                    entry.decompressed.len() as u64,
+                    new_entry.decompressed_size, entry.decompressed_size as u64,
                     "decoded size must match"
                 );
                 assert_eq!(new_entry.header, entry.header, "headers match after roundtrip");

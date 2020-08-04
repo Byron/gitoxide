@@ -35,8 +35,10 @@ pub struct Entry {
     /// These do not contain the header, which makes it possible to easily replace a RefDelta with offset deltas
     /// when resolving thin packs.
     pub compressed: Vec<u8>,
-    /// The decompressed data.
-    pub decompressed: Vec<u8>,
+    /// The decompressed data of a base object, which are the only ones who are fully resolved.
+    pub decompressed: Option<Vec<u8>>,
+    /// The amount of decompressed bytes
+    pub decompressed_size: u64,
     /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
     /// for use as trailer in a pack
     pub trailer: Option<owned::Id>,
@@ -142,8 +144,13 @@ where
             decompressor,
         };
 
-        let mut decompressed = Vec::with_capacity(entry.decompressed_size as usize);
-        let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
+        let (bytes_copied, decompressed) = if entry.header.is_delta() {
+            let mut decompressed = Vec::with_capacity(entry.decompressed_size as usize);
+            let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
+            (bytes_copied, Some(decompressed))
+        } else {
+            (io::copy(&mut reader, &mut io::sink())?, None)
+        };
         debug_assert_eq!(
             bytes_copied, entry.decompressed_size,
             "We should have decompressed {} bytes, but got {} instead",
@@ -201,6 +208,7 @@ where
             compressed,
             pack_offset,
             decompressed,
+            decompressed_size: bytes_copied,
             trailer,
         })
     }
