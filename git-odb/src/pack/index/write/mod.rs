@@ -1,7 +1,7 @@
 use crate::{loose, pack, pack::tree::Tree};
 use git_features::{hash, progress::Progress};
 use git_object::{owned, HashKind};
-use std::{convert::TryInto, io};
+use std::{convert::Infallible, convert::TryInto, io};
 
 mod encode;
 mod error;
@@ -162,7 +162,7 @@ pub fn modify_base(
     pack_entry: &pack::data::Entry,
     decompressed: &[u8],
     hash: HashKind,
-) {
+) -> Result<(), Infallible> {
     fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: HashKind) -> owned::Id {
         let mut write = crate::hash::Write::new(io::sink(), hash_kind);
         loose::object::header::encode(kind, bytes.len() as u64, &mut write)
@@ -174,4 +174,5 @@ pub fn modify_base(
     let object_kind = pack_entry.header.to_kind().expect("base object as source of iteration");
     let id = compute_hash(object_kind, &decompressed, hash);
     entry.id = id;
+    Ok(())
 }

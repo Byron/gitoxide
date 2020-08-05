@@ -31,7 +31,7 @@ where
     T: Default + Send,
 {
     #[allow(clippy::too_many_arguments)]
-    pub fn traverse<F, P, MBFN, S>(
+    pub fn traverse<F, P, MBFN, S, E>(
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
@@ -44,9 +44,17 @@ where
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
-        MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S, &mut <P as Progress>::SubProgress)
+        MBFN: for<'r> Fn(
+                &'r mut T,
+                &pack::data::Entry,
+                u64,
+                &'r [u8],
+                &mut S,
+                &mut <P as Progress>::SubProgress,
+            ) -> Result<(), E>
             + Send
             + Sync,
+        E: std::error::Error + Send + Sync + 'static,
     {
         self.pack_entries_end = Some(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);

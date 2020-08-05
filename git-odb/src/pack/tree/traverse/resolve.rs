@@ -5,7 +5,7 @@ use crate::{
 use git_features::progress::Progress;
 use std::{cell::RefCell, collections::BTreeMap};
 
-pub(crate) fn deltas<T, F, P, MBFN, S>(
+pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     nodes: Vec<pack::tree::Node<T>>,
     (bytes_buf, ref mut progress, state): &mut (Vec<u8>, P, S),
     resolve: F,
@@ -14,8 +14,9 @@ pub(crate) fn deltas<T, F, P, MBFN, S>(
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
-    MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S, &mut P),
+    MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S, &mut P) -> Result<(), E>,
     T: Default,
+    E: std::error::Error + Send + Sync + 'static,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
     let bytes_buf = RefCell::new(bytes_buf);
@@ -46,7 +47,8 @@ where
                 .expect("we store the resolved delta buffer when done")
         };
 
-        modify_base(&mut base.data, &base_entry, entry_end, &base_bytes, state, progress);
+        modify_base(&mut base.data, &base_entry, entry_end, &base_bytes, state, progress)
+            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
         num_objects += 1;
         progress.inc();
         for child in base.store_changes_then_into_child_iter() {
