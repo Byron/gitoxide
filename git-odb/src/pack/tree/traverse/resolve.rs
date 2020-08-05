@@ -5,16 +5,16 @@ use crate::{
 use git_features::progress::Progress;
 use std::{cell::RefCell, collections::BTreeMap};
 
-pub(crate) fn deltas<T, F, P, MBFN>(
+pub(crate) fn deltas<T, F, P, MBFN, S>(
     nodes: Vec<pack::tree::Node<T>>,
-    (bytes_buf, progress): &mut (Vec<u8>, P),
+    (bytes_buf, progress, state): &mut (Vec<u8>, P, S),
     resolve: F,
     modify_base: MBFN,
 ) -> Result<usize, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
-    MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8]),
+    MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S),
     T: Default,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
@@ -46,7 +46,7 @@ where
                 .expect("we store the resolved delta buffer when done")
         };
 
-        modify_base(&mut base.data, &base_entry, entry_end, &base_bytes);
+        modify_base(&mut base.data, &base_entry, entry_end, &base_bytes, state);
         num_objects += 1;
         for child in base.store_changes_then_into_child_iter() {
             let (mut child_entry, entry_end, delta_bytes) = decompress_from_resolver(child.entry_slice())?;

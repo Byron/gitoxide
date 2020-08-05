@@ -26,19 +26,20 @@ where
     T: Default + Send,
 {
     #[allow(clippy::too_many_arguments)]
-    pub fn traverse<F, P, MBFN>(
+    pub fn traverse<F, P, MBFN, S>(
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
         progress: P,
         thread_limit: Option<usize>,
         pack_entries_end: u64,
+        new_thread_state: impl Fn() -> S + Send + Sync,
         modify_base: MBFN,
     ) -> Result<Vec<Item<T>>, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
-        MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8]) + Send + Sync,
+        MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S) + Send + Sync,
     {
         self.pack_entries_end = Some(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
@@ -55,6 +56,7 @@ where
                 (
                     Vec::<u8>::with_capacity(4096),
                     progress.lock().add_child(format!("thread {}", thread_index)),
+                    new_thread_state(),
                 )
             },
             |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &modify_base),

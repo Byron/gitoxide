@@ -9,7 +9,6 @@ use crate::{
 };
 use git_features::{
     parallel::{self, in_parallel_if},
-    progress,
     progress::Progress,
 };
 use git_object::Kind;
@@ -56,7 +55,8 @@ impl index::File {
             root.add_child("Resolving"),
             thread_limit,
             pack.pack_end() as u64,
-            |data, pack_entry, entry_end, bytes| {
+            &new_processor,
+            |data, pack_entry, entry_end, bytes, processor| {
                 // pack::index::traverse::process_entry(
                 //     check,
                 //     pack_entry.header.to_kind().expect("non-delta object"),
@@ -65,7 +65,7 @@ impl index::File {
                 //     &mut header_buf,
                 //     &data.index_entry,
                 //     || hash::crc32(pack.entry_slice(pack_entry.pack_offset()..entry_end)),
-                //     &mut new_processor(), // TODO: TLS
+                //     new_processor,
                 // )
                 // .unwrap(); // TODO: possible error
             },
