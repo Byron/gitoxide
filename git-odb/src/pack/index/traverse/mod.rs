@@ -35,6 +35,11 @@ quick_error! {
             from()
             source(err)
         }
+        TreeTraversal(err: pack::tree::traverse::Error) {
+            display("The tree traversal failed")
+            from()
+            source(err)
+        }
         PackChecksum(err: pack::data::verify::Error) {
             display("The pack of this index file failed to verify its checksums")
             from()

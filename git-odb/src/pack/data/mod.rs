@@ -11,6 +11,7 @@ pub mod parse;
 pub mod verify;
 
 pub mod iter;
+use git_object::SHA1_SIZE;
 pub use iter::Iter;
 
 pub type EntrySlice = std::ops::Range<u64>;
@@ -41,14 +42,20 @@ impl File {
     pub fn data_len(&self) -> usize {
         self.data.len()
     }
+
+    /// The position of the byte one past the last entry, or in other terms, the first byte of the trailing hash.
+    pub fn pack_end(&self) -> usize {
+        self.data.len() - SHA1_SIZE
+    }
+
     pub fn path(&self) -> &Path {
         &self.path
     }
 
-    pub fn entry_slice(&self, slice: EntrySlice) -> &[u8] {
+    pub fn entry_slice(&self, slice: EntrySlice) -> Option<&[u8]> {
         let entry_end: usize = slice.end.try_into().expect("end of pack fits into usize");
         let entry_start = slice.start as usize;
-        &self.data[entry_start..entry_end]
+        self.data.get(entry_start..entry_end)
     }
 
     /// Currently only done during pack verification - finding the right size is only possible by decompressing

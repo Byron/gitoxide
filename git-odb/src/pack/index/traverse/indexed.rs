@@ -11,7 +11,7 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::Progress,
 };
-use git_object::Kind;
+use git_object::{HashKind, Kind};
 use std::collections::BTreeMap;
 
 impl index::File {
@@ -34,20 +34,30 @@ impl index::File {
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
         let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
-        let tree = pack::graph::DeltaTree::from_offsets_in_pack(
+        let graph = pack::graph::DeltaTree::from_offsets_in_pack(
             sorted_entries.iter().map(|e| e.pack_offset),
             pack.path(),
             root.add_child("indexing"),
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
-        let _ = pack::tree::Tree::from_offsets_in_pack(
-            sorted_entries.clone().into_iter(),
-            |e| e.pack_offset,
+        let tree = pack::tree::Tree::from_offsets_in_pack(
+            sorted_entries.clone().into_iter().map(|e| Entry::from(e)),
+            |e| e.index_entry.pack_offset,
             pack.path(),
             root.add_child("indexing"),
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
-        let if_there_are_enough_objects = || self.num_objects > 10_000;
+        let there_are_enough_objects = || self.num_objects > 10_000;
+        let _items = tree.traverse(
+            there_are_enough_objects,
+            |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
+            root.add_child("Resolving"),
+            thread_limit,
+            pack.pack_end() as u64,
+            HashKind::default(),
+            modify_base,
+            modify_child,
+        )?;
 
         let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Iterating");
@@ -65,10 +75,10 @@ impl index::File {
         };
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         in_parallel_if(
-            if_there_are_enough_objects,
+            there_are_enough_objects,
             Chunks {
                 size: chunk_size,
-                iter: tree.bases(),
+                iter: graph.bases(),
             },
             thread_limit,
             state_per_thread,
@@ -123,7 +133,7 @@ impl index::File {
                             .expect("tree created by our sorted entries");
                         let index_entry_of_node = &sorted_entries[index_entry];
 
-                        tree.children(node, &mut children);
+                        graph.children(node, &mut children);
 
                         let shared_cache = &mut SharedCache(&mut cache);
                         let result = self.process_entry_dispatch(
@@ -158,3 +168,31 @@ impl index::File {
         .map(|res| (res, root))
     }
 }
+
+pub struct Entry {
+    index_entry: pack::index::Entry,
+}
+
+impl Default for Entry {
+    fn default() -> Self {
+        Entry {
+            index_entry: pack::index::Entry {
+                pack_offset: 0,
+                crc32: None,
+                oid: git_object::owned::Id::null(),
+            },
+        }
+    }
+}
+
+impl From<pack::index::Entry> for Entry {
+    fn from(index_entry: pack::index::Entry) -> Self {
+        Entry { index_entry }
+    }
+}
+
+pub fn modify_base(entry: &mut Entry, decompressed: &[u8], hash: HashKind) -> () {
+    ()
+}
+
+pub fn modify_child(entry: &mut Entry, _modify_base_result: ()) {}
