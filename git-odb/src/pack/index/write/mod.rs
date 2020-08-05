@@ -62,7 +62,7 @@ impl pack::index::File {
             let compressed_len = compressed.len();
             bytes_to_process += decompressed_size;
             let entry_len = header_size as usize + compressed_len;
-            pack_entries_end += entry_len as u64;
+            pack_entries_end = pack_offset + entry_len as u64;
 
             let crc32 = {
                 let header_len = header.to_write(decompressed_size, header_buf.as_mut())?;
