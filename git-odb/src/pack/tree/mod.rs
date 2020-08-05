@@ -36,6 +36,7 @@ pub struct Tree<T> {
     items: UnsafeCell<Vec<Item<T>>>,
     last_added_offset: u64,
     one_past_last_seen_root: usize,
+    pack_entries_end: Option<u64>,
 }
 
 /// SAFETY: We solemnly swear…that this is sync because without the unsafe cell, it is also sync.
@@ -52,6 +53,7 @@ impl<T> Tree<T> {
             items: UnsafeCell::new(Vec::with_capacity(num_objects)),
             last_added_offset: 0,
             one_past_last_seen_root: 0,
+            pack_entries_end: None,
         })
     }
 

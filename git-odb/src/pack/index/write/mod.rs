@@ -47,6 +47,7 @@ impl pack::index::File {
         root_progress.init(Some(4), Some("steps"));
         let mut progress = root_progress.add_child("indexing");
         progress.init(entries.size_hint().1.map(|l| l as u32), Some("objects"));
+        let mut pack_entries_end: u64 = 0;
 
         for (eid, entry) in entries.enumerate() {
             let pack::data::iter::Entry {
@@ -62,6 +63,8 @@ impl pack::index::File {
             let compressed_len = compressed.len();
             bytes_to_process += decompressed_size;
             let entry_len = header_size as usize + compressed_len;
+            pack_entries_end += entry_len as u64;
+
             let crc32 = {
                 let header_len = header.to_write(decompressed_size, header_buf.as_mut())?;
                 let state = hash::crc32_update(0, &header_buf[..header_len]);

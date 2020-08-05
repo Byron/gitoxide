@@ -1,4 +1,7 @@
-use crate::pack::tree::{Item, Tree};
+use crate::{
+    pack::index::write::EntrySlice,
+    pack::tree::{Item, Tree},
+};
 
 /// All the unsafe bits to support parallel iteration with write access
 impl<T> Tree<T> {
@@ -10,6 +13,26 @@ impl<T> Tree<T> {
     unsafe fn from_node_put_data(&self, index: usize, data: T) {
         let items_mut: &mut Vec<Item<T>> = &mut *(self.items.get());
         items_mut.get_unchecked_mut(index).data = data;
+    }
+
+    #[allow(unsafe_code)]
+    /// SAFETY: Similar to `from_node_put_data(…)`
+    unsafe fn from_node_get_offset(&self, index: usize) -> u64 {
+        let items: &Vec<Item<T>> = &*(self.items.get());
+        items.get_unchecked(index).offset
+    }
+
+    #[allow(unsafe_code)]
+    /// SAFETY: Similar to `from_node_put_data(…)`
+    unsafe fn from_node_get_entry_slice(&self, index: usize) -> std::ops::Range<u64> {
+        let items: &Vec<Item<T>> = &*(self.items.get());
+        let start = items.get_unchecked(index).offset;
+        let end = items
+            .get(index + 1)
+            .map(|e| e.offset)
+            .or(self.pack_entries_end)
+            .expect("traversal(…) to have set this value (BUG)");
+        start..end
     }
 
     #[allow(unsafe_code)]
@@ -74,6 +97,22 @@ impl<'a, T> Node<'a, T>
 where
     T: Default,
 {
+    pub fn offset(&self) -> u64 {
+        #[allow(unsafe_code)]
+        // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
+        unsafe {
+            self.tree.from_node_get_offset(self.index)
+        }
+    }
+
+    pub fn entry_slice(&self) -> EntrySlice {
+        #[allow(unsafe_code)]
+        // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
+        unsafe {
+            self.tree.from_node_get_entry_slice(self.index)
+        }
+    }
+
     pub fn store_changes_then_into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`

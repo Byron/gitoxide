@@ -50,9 +50,9 @@ where
         };
         let base_kind = base.data.kind.to_kind().expect("base object as source of iteration");
         let id = compute_hash(base_kind, &base_bytes, hash_kind);
-        num_objects += 1;
-
         base.data.id = id;
+
+        num_objects += 1;
         for mut child in base.store_changes_then_into_child_iter() {
             let delta_bytes = decompress_from_resolver(child.data.pack_offset, child.data.entry_len)?;
             let (base_size, consumed) = pack::data::decode::delta_header_size_ofs(&delta_bytes);
