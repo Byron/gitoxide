@@ -4,8 +4,22 @@ use crate::{
 };
 use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
 use git_object::HashKind;
+use quick_error::quick_error;
 
 mod resolve;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
+            display("{}", msg)
+            source(err)
+        }
+        ResolveFailed(pack_offset: u64) {
+            display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
+        }
+    }
+}
 
 impl<T> Tree<T>
 where
@@ -15,24 +29,23 @@ where
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
-        mut progress: P,
+        progress: P,
         thread_limit: Option<usize>,
         pack_entries_end: u64,
         hash_kind: HashKind,
         modify_base: MBFN,
         modify_child: MCFN,
-    ) -> Result<Vec<Item<T>>, Box<dyn std::error::Error + Send + Sync>>
+    ) -> Result<Vec<Item<T>>, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
-        P: Progress,
-        <P as Progress>::SubProgress: Send,
+        P: Progress + Send,
         MBFN: for<'r> Fn(&'r mut T, &'r [u8], HashKind) -> BR + Send + Sync,
         BR: Clone,
         MCFN: for<'r> Fn(&'r mut T, BR) + Send + Sync,
     {
         self.pack_entries_end = Some(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
-        let reduce_progress = parking_lot::Mutex::new(progress.add_child("Resolving"));
+        let progress = parking_lot::Mutex::new(progress);
 
         // SAFETY: We are owning 'self', and it's the UnsafeCell which we are supposed to use requiring unsafe on every access now.
         #[allow(unsafe_code)]
@@ -44,13 +57,11 @@ where
             |thread_index| {
                 (
                     Vec::<u8>::with_capacity(4096),
-                    reduce_progress.lock().add_child(format!("thread {}", thread_index)),
+                    progress.lock().add_child(format!("thread {}", thread_index)),
                 )
             },
-            |root_nodes, state| {
-                resolve::deltas(root_nodes, state, &resolve, hash_kind, &modify_base, &modify_child).map_err(Into::into)
-            },
-            Reducer::new(num_objects, &reduce_progress),
+            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, hash_kind, &modify_base, &modify_child),
+            Reducer::new(num_objects, &progress),
         )?;
         Ok(self.into_items())
     }
@@ -80,9 +91,9 @@ impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,
 {
-    type Input = Result<usize, Box<dyn std::error::Error + Send + Sync>>;
+    type Input = Result<usize, Error>;
     type Output = ();
-    type Error = Box<dyn std::error::Error + Send + Sync>;
+    type Error = Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let input = input?;
