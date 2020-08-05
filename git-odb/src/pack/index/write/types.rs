@@ -1,5 +1,4 @@
 use crate::pack;
-use git_features::{parallel, progress::Progress};
 use git_object::owned;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -12,7 +11,7 @@ pub struct Outcome {
 }
 
 #[derive(Clone)]
-pub(crate) enum ObjectKind {
+pub enum ObjectKind {
     Base(git_object::Kind),
     OfsDelta,
 }
@@ -26,7 +25,7 @@ impl ObjectKind {
     }
 }
 
-pub(crate) struct TreeEntry {
+pub struct TreeEntry {
     pub id: owned::Id,
     pub pack_offset: u64,
     pub entry_len: usize,
@@ -47,46 +46,3 @@ impl Default for TreeEntry {
 }
 
 pub type EntrySlice = std::ops::Range<u64>;
-
-pub(crate) struct Reducer<'a, P> {
-    item_count: usize,
-    progress: &'a parking_lot::Mutex<P>,
-    start: std::time::Instant,
-}
-
-impl<'a, P> Reducer<'a, P>
-where
-    P: Progress,
-{
-    pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>) -> Self {
-        progress.lock().init(Some(num_objects), Some("objects"));
-        Reducer {
-            item_count: 0,
-            progress,
-            start: std::time::Instant::now(),
-        }
-    }
-}
-
-impl<'a, P> parallel::Reducer for Reducer<'a, P>
-where
-    P: Progress,
-{
-    type Input = Result<usize, pack::index::write::Error>;
-    type Output = ();
-    type Error = pack::index::write::Error;
-
-    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-        let input = input?;
-        self.item_count += input;
-        self.progress.lock().set(self.item_count as u32);
-        Ok(())
-    }
-
-    fn finalize(self) -> Result<Self::Output, Self::Error> {
-        self.progress
-            .lock()
-            .show_throughput(self.start, self.item_count as u32, "objects");
-        Ok(())
-    }
-}

@@ -1,5 +1,5 @@
 use crate::{pack, pack::tree::Tree};
-use git_features::{hash, parallel, parallel::in_parallel_if, progress::Progress};
+use git_features::{hash, progress::Progress};
 use git_object::owned;
 use std::{convert::TryInto, io};
 
@@ -9,10 +9,9 @@ pub use error::Error;
 
 mod types;
 pub use types::{EntrySlice, Outcome};
-use types::{ObjectKind, Reducer, TreeEntry};
+use types::{ObjectKind, TreeEntry};
 
-mod consume;
-use consume::apply_deltas;
+mod modify;
 
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
@@ -116,31 +115,25 @@ impl pack::index::File {
 
         root_progress.inc();
 
-        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
-        let reduce_progress = parking_lot::Mutex::new(root_progress.add_child("Resolving"));
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
-            in_parallel_if(
+            let mut items = tree.traverse(
                 || bytes_to_process > 5_000_000,
-                tree.iter_root_chunks(chunk_size),
+                resolver,
+                root_progress.add_child("Resolving"),
                 thread_limit,
-                |thread_index| {
-                    (
-                        Vec::with_capacity(4096),
-                        reduce_progress.lock().add_child(format!("thread {}", thread_index)),
-                    )
-                },
-                |root_nodes, state| apply_deltas(root_nodes, state, &resolver, kind.hash()),
-                Reducer::new(num_objects, &reduce_progress),
+                pack_entries_end,
+                kind.hash(),
+                modify::base,
+                modify::child,
             )?;
             root_progress.inc();
 
-            let items = {
+            {
                 let _progress = root_progress.add_child("sorting by id");
-                let mut items = tree.into_items();
                 items.sort_by_key(|e| e.data.id);
-                items
-            };
+            }
+
             root_progress.inc();
             items
         };
