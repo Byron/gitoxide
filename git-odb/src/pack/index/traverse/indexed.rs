@@ -56,15 +56,15 @@ impl index::File {
             root.add_child("Resolving"),
             thread_limit,
             pack.pack_end() as u64,
-            |data, pack_entry, bytes| {
+            |data, pack_entry, entry_end, bytes| {
                 // pack::index::traverse::process_entry(
                 //     check,
                 //     pack_entry.header.to_kind().expect("non-delta object"),
                 //     bytes,
-                //     &mut progress::Discard, // Progress
+                //     &mut progress::Discard, // TODO: Progress
                 //     &mut header_buf,
                 //     &data.index_entry,
-                //     || 0,                 // TODO entry slice
+                //     || hash::crc32(pack.entry_slice(pack_entry.pack_offset()..entry_end)),
                 //     &mut new_processor(), // TODO: TLS
                 // )
                 // .unwrap(); // TODO: possible error
