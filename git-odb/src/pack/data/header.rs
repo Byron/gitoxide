@@ -23,7 +23,8 @@ pub struct Entry {
 /// Access
 impl Entry {
     pub fn base_pack_offset(&self, distance: u64) -> u64 {
-        self.data_offset - self.header_size() as u64 - distance
+        let pack_offset = self.data_offset - self.header_size() as u64;
+        pack_offset.checked_sub(distance).expect("in-bound distance of deltas")
     }
     pub fn pack_offset(&self) -> u64 {
         self.data_offset - self.header_size() as u64

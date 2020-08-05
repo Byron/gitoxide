@@ -25,6 +25,7 @@
     * [x] figure out why resolving the linux pack is so slow and fix it
     * [x] Allow to provide a pre-resolve phase to initialize the resolver
     * [ ] Use Tree in verify impl
+    * [ ] nicer errors with descriptive messages
     * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
       system temp files)
   * [ ] unit tests for bundle index write
@@ -58,8 +59,10 @@
   * [ ] Clone into valid repository
   
 ### Other
+* **prodash**
+  * [ ] use usize for progress counting
 * **quality**
-  * use `parking_lot` to get rid of poisoned locks (and the unwraps() that go with it)
+  * [x] use `parking_lot` to get rid of poisoned locks (and the unwraps() that go with it)
 * **progress - convenience**
   * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
     * [ ] Find a  way to measure live throughput

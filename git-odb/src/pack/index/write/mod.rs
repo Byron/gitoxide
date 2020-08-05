@@ -40,7 +40,7 @@ impl pack::index::File {
         let mut bytes_to_process = 0u64;
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
-        let mut tree = Tree::new(entries.size_hint().0)?;
+        let mut tree = Tree::with_capacity(entries.size_hint().0)?;
         let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
 

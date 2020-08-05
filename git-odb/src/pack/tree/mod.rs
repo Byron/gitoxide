@@ -19,7 +19,7 @@ quick_error! {
     }
 }
 
-pub(crate) struct Item<D> {
+pub struct Item<D> {
     pub offset: u64,
     is_root: bool,
     pub data: D,
@@ -29,7 +29,7 @@ pub(crate) struct Item<D> {
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
 /// while being shareable among threads without a lock.
 /// It does this by making the run-time guarantee that iteration only happens once.
-pub(crate) struct Tree<D> {
+pub struct Tree<D> {
     items: UnsafeCell<Vec<Item<D>>>,
     last_added_offset: u64,
     // assure we truly create only one iterator, ever, to avoid violating access rules
@@ -43,7 +43,7 @@ pub(crate) struct Tree<D> {
 unsafe impl<T> Sync for Tree<T> {}
 
 impl<D> Tree<D> {
-    pub fn new(num_objects: usize) -> Result<Self, Error> {
+    pub fn with_capacity(num_objects: usize) -> Result<Self, Error> {
         if num_objects == 0 {
             return Err(Error::InvariantNonEmpty);
         }
@@ -115,3 +115,5 @@ impl<D> Tree<D> {
 
 mod iter;
 pub use iter::{Chunks, Node};
+
+mod from_offsets;
