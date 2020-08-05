@@ -55,7 +55,6 @@ impl index::File {
             thread_limit,
             pack.pack_end() as u64,
             modify_base,
-            modify_child,
         )?;
 
         let reduce_progress = parking_lot::Mutex::new({
@@ -190,8 +189,16 @@ impl From<pack::index::Entry> for Entry {
     }
 }
 
-pub fn modify_base(entry: &mut Entry, decompressed: &[u8]) -> () {
+pub fn modify_base(entry: &mut Entry, pack_entry: &pack::data::Entry, decompressed: &[u8]) {
+    // process_entry(
+    //     check,
+    //     object_kind,
+    //     &buf,
+    //     progress,
+    //     header_buf,
+    //     index_entry,
+    //     || pack.entry_crc32(index_entry.pack_offset, entry_len),
+    //     processor,
+    // )?;
     ()
 }
-
-pub fn modify_child(entry: &mut Entry, _modify_base_result: ()) {}

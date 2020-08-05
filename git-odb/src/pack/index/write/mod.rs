@@ -1,6 +1,6 @@
-use crate::{pack, pack::tree::Tree};
+use crate::{loose, pack, pack::tree::Tree};
 use git_features::{hash, progress::Progress};
-use git_object::owned;
+use git_object::{owned, HashKind};
 use std::{convert::TryInto, io};
 
 mod encode;
@@ -9,8 +9,6 @@ pub use error::Error;
 
 mod types;
 use types::{ObjectKind, TreeEntry};
-
-mod modify;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -127,8 +125,7 @@ impl pack::index::File {
                 root_progress.add_child("Resolving"),
                 thread_limit,
                 pack_entries_end,
-                |entry, bytes| modify::base(entry, bytes, kind.hash()),
-                |entry, result| modify::child(entry, result),
+                |data, entry, bytes| modify_base(data, entry, bytes, kind.hash()),
             )?;
             root_progress.inc();
 
@@ -157,4 +154,23 @@ impl pack::index::File {
             num_objects,
         })
     }
+}
+
+pub fn modify_base(
+    entry: &mut pack::index::write::types::TreeEntry,
+    pack_entry: &pack::data::Entry,
+    decompressed: &[u8],
+    hash: HashKind,
+) {
+    fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: HashKind) -> owned::Id {
+        let mut write = crate::hash::Write::new(io::sink(), hash_kind);
+        loose::object::header::encode(kind, bytes.len() as u64, &mut write)
+            .expect("write to sink and hash cannot fail");
+        write.hash.update(bytes);
+        owned::Id::from(write.hash.digest())
+    }
+
+    let object_kind = pack_entry.header.to_kind().expect("base object as source of iteration");
+    let id = compute_hash(object_kind, &decompressed, hash);
+    entry.id = id;
 }

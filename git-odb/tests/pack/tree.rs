@@ -32,13 +32,8 @@ mod method {
 
 #[test]
 fn using_option_as_data_does_not_increase_size_in_memory() {
-    enum ObjectKind {
-        _Base(git_object::Kind),
-        _OfsDelta,
-    }
     struct Entry {
         pub _id: Option<git_object::owned::Id>,
-        pub _kind: ObjectKind,
         pub _crc32: u32,
     }
 

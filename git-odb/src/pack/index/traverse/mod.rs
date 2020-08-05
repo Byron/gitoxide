@@ -265,7 +265,7 @@ impl index::File {
         let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
         let entry_len = header_size + entry_stats.compressed_size;
 
-        self.process_entry(
+        process_entry(
             check,
             object_kind,
             &buf,
@@ -277,56 +277,55 @@ impl index::File {
         )?;
         Ok(entry_stats)
     }
+}
 
-    #[allow(clippy::too_many_arguments)]
-    fn process_entry<P>(
-        &self,
-        check: SafetyCheck,
-        object_kind: git_object::Kind,
-        decompressed: &[u8],
-        progress: &mut P,
-        header_buf: &mut [u8; 64],
-        index_entry: &pack::index::Entry,
-        pack_entry_crc32: impl FnOnce() -> u32,
-        processor: &mut impl FnMut(
-            git_object::Kind,
-            &[u8],
-            &index::Entry,
-            &mut P,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
-    ) -> Result<(), Error>
-    where
-        P: Progress,
-    {
-        if check.object_checksum() {
-            let header_size =
-                crate::loose::object::header::encode(object_kind, decompressed.len() as u64, &mut header_buf[..])
-                    .expect("header buffer to be big enough");
-            let mut hasher = git_features::hash::Sha1::default();
-            hasher.update(&header_buf[..header_size]);
-            hasher.update(decompressed);
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn process_entry<P>(
+    check: SafetyCheck,
+    object_kind: git_object::Kind,
+    decompressed: &[u8],
+    progress: &mut P,
+    header_buf: &mut [u8; 64],
+    index_entry: &pack::index::Entry,
+    pack_entry_crc32: impl FnOnce() -> u32,
+    processor: &mut impl FnMut(
+        git_object::Kind,
+        &[u8],
+        &index::Entry,
+        &mut P,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+) -> Result<(), Error>
+where
+    P: Progress,
+{
+    if check.object_checksum() {
+        let header_size =
+            crate::loose::object::header::encode(object_kind, decompressed.len() as u64, &mut header_buf[..])
+                .expect("header buffer to be big enough");
+        let mut hasher = git_features::hash::Sha1::default();
+        hasher.update(&header_buf[..header_size]);
+        hasher.update(decompressed);
 
-            let actual_oid = owned::Id::new_sha1(hasher.digest());
-            if actual_oid != index_entry.oid {
-                return Err(Error::PackObjectMismatch {
-                    actual: actual_oid,
-                    expected: index_entry.oid,
+        let actual_oid = owned::Id::new_sha1(hasher.digest());
+        if actual_oid != index_entry.oid {
+            return Err(Error::PackObjectMismatch {
+                actual: actual_oid,
+                expected: index_entry.oid,
+                offset: index_entry.pack_offset,
+                kind: object_kind,
+            });
+        }
+        if let Some(desired_crc32) = index_entry.crc32 {
+            let actual_crc32 = pack_entry_crc32();
+            if actual_crc32 != desired_crc32 {
+                return Err(Error::Crc32Mismatch {
+                    actual: actual_crc32,
+                    expected: desired_crc32,
                     offset: index_entry.pack_offset,
                     kind: object_kind,
                 });
             }
-            if let Some(desired_crc32) = index_entry.crc32 {
-                let actual_crc32 = pack_entry_crc32();
-                if actual_crc32 != desired_crc32 {
-                    return Err(Error::Crc32Mismatch {
-                        actual: actual_crc32,
-                        expected: desired_crc32,
-                        offset: index_entry.pack_offset,
-                        kind: object_kind,
-                    });
-                }
-            }
         }
-        processor(object_kind, decompressed, &index_entry, progress).map_err(Into::into)
     }
+    processor(object_kind, decompressed, &index_entry, progress).map_err(Into::into)
 }

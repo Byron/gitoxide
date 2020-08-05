@@ -1,4 +1,5 @@
 use crate::{
+    pack,
     pack::data::EntrySlice,
     pack::tree::{Item, Tree},
 };
@@ -25,7 +26,7 @@ where
     T: Default + Send,
 {
     #[allow(clippy::too_many_arguments)]
-    pub fn traverse<F, P, MBFN, BR, MCFN>(
+    pub fn traverse<F, P, MBFN>(
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
@@ -33,14 +34,11 @@ where
         thread_limit: Option<usize>,
         pack_entries_end: u64,
         modify_base: MBFN,
-        modify_child: MCFN,
     ) -> Result<Vec<Item<T>>, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
-        MBFN: for<'r> Fn(&'r mut T, &'r [u8]) -> BR + Send + Sync,
-        BR: Clone,
-        MCFN: for<'r> Fn(&'r mut T, BR) + Send + Sync,
+        MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, &'r [u8]) + Send + Sync,
     {
         self.pack_entries_end = Some(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
@@ -59,7 +57,7 @@ where
                     progress.lock().add_child(format!("thread {}", thread_index)),
                 )
             },
-            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &modify_base, &modify_child),
+            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &modify_base),
             Reducer::new(num_objects, &progress),
         )?;
         Ok(self.into_items())
