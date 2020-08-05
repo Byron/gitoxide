@@ -1,5 +1,5 @@
 use crate::{
-    pack::index::write::EntrySlice,
+    pack::data::EntrySlice,
     pack::tree::{Item, Tree},
 };
 use git_features::{parallel, parallel::in_parallel_if, progress::Progress};

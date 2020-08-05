@@ -8,10 +8,18 @@ mod error;
 pub use error::Error;
 
 mod types;
-pub use types::{EntrySlice, Outcome};
 use types::{ObjectKind, TreeEntry};
 
 mod modify;
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Outcome {
+    pub index_kind: pack::index::Kind,
+    pub index_hash: owned::Id,
+    pub pack_hash: owned::Id,
+    pub num_objects: u32,
+}
 
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
@@ -28,7 +36,7 @@ impl pack::index::File {
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
-        F2: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+        F2: for<'r> Fn(pack::data::EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress,
         <P as Progress>::SubProgress: Send,
     {

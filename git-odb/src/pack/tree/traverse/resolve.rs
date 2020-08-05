@@ -1,5 +1,5 @@
 use crate::{
-    pack::{self, index::write::EntrySlice, tree::traverse::Error},
+    pack::{self, data::EntrySlice, tree::traverse::Error},
     zlib,
 };
 use git_features::progress::Progress;

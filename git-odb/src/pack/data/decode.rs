@@ -83,13 +83,6 @@ impl File {
         self.decompress_entry_from_data_offset(entry.data_offset, out)
     }
 
-    /// Currently only done during pack verification - finding the right size is only possible by decompressing
-    /// the pack entry beforehand, or by using the (to be sorted) offsets stored in an index file.
-    pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
-        let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
-        git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
-    }
-
     fn assure_v2(&self) {
         assert!(
             if let crate::pack::data::Kind::V2 = self.kind {

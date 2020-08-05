@@ -1,5 +1,5 @@
 use crate::{
-    pack::index::write::EntrySlice,
+    pack::data::EntrySlice,
     pack::tree::{Item, Tree},
 };
 

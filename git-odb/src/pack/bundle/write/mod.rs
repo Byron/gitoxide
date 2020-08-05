@@ -112,7 +112,7 @@ impl pack::Bundle {
 
 fn new_pack_file_resolver(
     data_path: Option<PathBuf>,
-) -> io::Result<impl Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> {
+) -> io::Result<impl Fn(pack::data::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> {
     let data_path = data_path.expect("data path to be present if not in memory and there is no directory");
     let mapped_file = FileBuffer::open(&data_path)?;
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {

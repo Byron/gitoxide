@@ -1,14 +1,4 @@
-use crate::pack;
 use git_object::owned;
-
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Outcome {
-    pub index_kind: pack::index::Kind,
-    pub index_hash: owned::Id,
-    pub pack_hash: owned::Id,
-    pub num_objects: u32,
-}
 
 #[derive(Clone)]
 pub enum ObjectKind {
@@ -40,5 +30,3 @@ impl Default for TreeEntry {
         }
     }
 }
-
-pub type EntrySlice = std::ops::Range<u64>;

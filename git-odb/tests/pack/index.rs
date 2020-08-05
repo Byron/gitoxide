@@ -71,7 +71,7 @@ mod method {
         use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
         use filebuffer::FileBuffer;
         use git_features::progress;
-        use git_odb::{pack, pack::data::iter, pack::index::write::EntrySlice};
+        use git_odb::{pack, pack::data::iter, pack::data::EntrySlice};
         use std::{fs, io};
 
         #[test]
@@ -98,7 +98,7 @@ mod method {
             resolve: F,
         ) -> Result<(), Box<dyn std::error::Error>>
         where
-            F: Fn(pack::index::write::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
+            F: Fn(pack::data::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
         {
             let pack_iter =
                 pack::data::Iter::new_from_header(io::BufReader::new(fs::File::open(fixture_path(data_path))?), *mode)?;
