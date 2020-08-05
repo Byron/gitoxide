@@ -16,6 +16,11 @@ quick_error! {
     }
 }
 
+mod iter;
+pub use iter::{Chunks, Node};
+
+pub mod from_offsets;
+
 pub struct Item<D> {
     pub offset: u64,
     is_root: bool,
@@ -98,8 +103,3 @@ impl<D> Tree<D> {
         self.items.into_inner()
     }
 }
-
-mod iter;
-pub use iter::{Chunks, Node};
-
-mod from_offsets;

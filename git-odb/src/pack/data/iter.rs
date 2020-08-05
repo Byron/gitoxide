@@ -292,6 +292,6 @@ impl pack::data::File {
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
     pub fn streaming_iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
-        Iter::new_from_header(reader, Mode::AsIs)
+        Iter::new_from_header(reader, Mode::Verify)
     }
 }

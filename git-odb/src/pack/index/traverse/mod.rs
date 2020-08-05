@@ -30,6 +30,11 @@ quick_error! {
             from()
             source(err)
         }
+        Tree(err: pack::tree::from_offsets::Error) {
+            display("The pack delta tree index could not be built")
+            from()
+            source(err)
+        }
         PackChecksum(err: pack::data::verify::Error) {
             display("The pack of this index file failed to verify its checksums")
             from()

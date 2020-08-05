@@ -41,6 +41,12 @@ impl index::File {
             root.add_child("indexing"),
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
+        let _ = pack::tree::Tree::from_offsets_in_pack(
+            sorted_entries.iter().map(|e| e.pack_offset),
+            pack.path(),
+            root.add_child("indexing"),
+            |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
+        )?;
         let if_there_are_enough_objects = || self.num_objects > 10_000;
 
         let reduce_progress = parking_lot::Mutex::new({
