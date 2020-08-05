@@ -1,14 +1,14 @@
 use crate::pack::tree::{Item, Tree};
 
 /// All the unsafe bits to support parallel iteration with write access
-impl<D> Tree<D> {
+impl<T> Tree<T> {
     #[allow(unsafe_code)]
     /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node.
     /// Note that we are iterating nodes that we are affecting here, but that only affects the
     /// 'is_root' field fo the item, not the data field that we are writing here.
     /// For all details see `from_node_take_entry()`.
-    unsafe fn from_node_put_data(&self, index: usize, data: D) {
-        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
+    unsafe fn from_node_put_data(&self, index: usize, data: T) {
+        let items_mut: &mut Vec<Item<T>> = &mut *(self.items.get());
         items_mut.get_unchecked_mut(index).data = data;
     }
 
@@ -22,11 +22,11 @@ impl<D> Tree<D> {
     /// alias multiple nodes in the tree.
     /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping and unique.
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
-    unsafe fn from_node_take_entry(&self, index: usize) -> (D, Vec<usize>)
+    unsafe fn from_node_take_entry(&self, index: usize) -> (T, Vec<usize>)
     where
-        D: Default,
+        T: Default,
     {
-        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
+        let items_mut: &mut Vec<Item<T>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::take(&mut item.children);
         let data = std::mem::take(&mut item.data);
@@ -35,11 +35,11 @@ impl<D> Tree<D> {
 
     #[allow(unsafe_code)]
     /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
-    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(D, Vec<usize>)>
+    unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(T, Vec<usize>)>
     where
-        D: Default,
+        T: Default,
     {
-        let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
+        let items_mut: &mut Vec<Item<T>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         if item.is_root {
             let children = std::mem::take(&mut item.children);
@@ -52,9 +52,9 @@ impl<D> Tree<D> {
 }
 
 /// Iteration
-impl<D> Tree<D> {
+impl<T> Tree<T> {
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
+    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<T> {
         Chunks {
             tree: self,
             size,
@@ -63,18 +63,18 @@ impl<D> Tree<D> {
     }
 }
 
-pub struct Node<'a, D> {
-    tree: &'a Tree<D>,
+pub struct Node<'a, T> {
+    tree: &'a Tree<T>,
     index: usize,
     children: Vec<usize>,
-    pub data: D,
+    pub data: T,
 }
 
-impl<'a, D> Node<'a, D>
+impl<'a, T> Node<'a, T>
 where
-    D: Default,
+    T: Default,
 {
-    pub fn store_changes_then_into_child_iter(self) -> impl Iterator<Item = Node<'a, D>> {
+    pub fn store_changes_then_into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {
@@ -95,17 +95,17 @@ where
     }
 }
 
-pub struct Chunks<'a, D> {
-    tree: &'a Tree<D>,
+pub struct Chunks<'a, T> {
+    tree: &'a Tree<T>,
     size: usize,
     cursor: usize,
 }
 
-impl<'a, D> Iterator for Chunks<'a, D>
+impl<'a, T> Iterator for Chunks<'a, T>
 where
-    D: Default,
+    T: Default,
 {
-    type Item = Vec<Node<'a, D>>;
+    type Item = Vec<Node<'a, T>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.cursor == self.tree.one_past_last_seen_root {

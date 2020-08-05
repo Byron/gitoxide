@@ -21,18 +21,18 @@ pub use iter::{Chunks, Node};
 
 pub mod from_offsets;
 
-pub struct Item<D> {
+pub struct Item<T> {
     pub offset: u64,
     is_root: bool,
-    pub data: D,
+    pub data: T,
     // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
 /// while being shareable among threads without a lock.
 /// It does this by making the run-time guarantee that iteration only happens once.
-pub struct Tree<D> {
-    items: UnsafeCell<Vec<Item<D>>>,
+pub struct Tree<T> {
+    items: UnsafeCell<Vec<Item<T>>>,
     last_added_offset: u64,
     one_past_last_seen_root: usize,
 }
@@ -42,7 +42,7 @@ pub struct Tree<D> {
 #[allow(unsafe_code)]
 unsafe impl<T> Sync for Tree<T> {}
 
-impl<D> Tree<D> {
+impl<T> Tree<T> {
     pub fn with_capacity(num_objects: usize) -> Result<Self, Error> {
         if num_objects == 0 {
             return Err(Error::InvariantNonEmpty);
@@ -63,7 +63,7 @@ impl<D> Tree<D> {
         }
     }
 
-    pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
+    pub fn add_root(&mut self, offset: u64, data: T) -> Result<(), Error> {
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
         // standard borrow check rules.
         #[allow(unsafe_code)]
@@ -79,7 +79,7 @@ impl<D> Tree<D> {
         Ok(())
     }
 
-    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
+    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: T) -> Result<(), Error> {
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
         // standard borrow check rules.
         #[allow(unsafe_code)]
@@ -99,7 +99,7 @@ impl<D> Tree<D> {
         Ok(())
     }
 
-    pub fn into_items(self) -> Vec<Item<D>> {
+    pub fn into_items(self) -> Vec<Item<T>> {
         self.items.into_inner()
     }
 }
