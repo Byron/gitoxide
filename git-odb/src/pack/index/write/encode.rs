@@ -33,12 +33,8 @@ pub(crate) fn to_write(
     const LARGE_OFFSET_THRESHOLD: u64 = 0x7fff_ffff;
     const HIGH_BIT: u32 = 0x8000_0000;
 
-    let needs_64bit_offsets = entries_sorted_by_oid
-        .last()
-        .expect("at least one pack entry")
-        .data
-        .pack_offset
-        > LARGE_OFFSET_THRESHOLD;
+    let needs_64bit_offsets =
+        entries_sorted_by_oid.last().expect("at least one pack entry").offset > LARGE_OFFSET_THRESHOLD;
     let mut fan_out_be = [0u32; 256];
     progress.init(Some(4), Some("steps"));
     let start = std::time::Instant::now();
@@ -91,18 +87,16 @@ pub(crate) fn to_write(
     {
         let mut offsets64_be = Vec::<u64>::new();
         for entry in &entries_sorted_by_oid {
-            out.write_u32::<BigEndian>(
-                if needs_64bit_offsets && entry.data.pack_offset > LARGE_OFFSET_THRESHOLD {
-                    assert!(
-                        offsets64_be.len() < LARGE_OFFSET_THRESHOLD as usize,
-                        "Encoding breakdown - way too many 64bit offsets"
-                    );
-                    offsets64_be.push(entry.data.pack_offset.to_be());
-                    (offsets64_be.len() as u32) & HIGH_BIT
-                } else {
-                    entry.data.pack_offset as u32
-                },
-            )?;
+            out.write_u32::<BigEndian>(if needs_64bit_offsets && entry.offset > LARGE_OFFSET_THRESHOLD {
+                assert!(
+                    offsets64_be.len() < LARGE_OFFSET_THRESHOLD as usize,
+                    "Encoding breakdown - way too many 64bit offsets"
+                );
+                offsets64_be.push(entry.offset.to_be());
+                (offsets64_be.len() as u32) & HIGH_BIT
+            } else {
+                entry.offset as u32
+            })?;
         }
         if needs_64bit_offsets {
             // SAFETY: It's safe to interpret 8BE bytes * N as 1byte * N * 8 for the purpose of writing

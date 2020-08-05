@@ -78,8 +78,6 @@ impl pack::index::File {
                         pack_offset,
                         TreeEntry {
                             id: owned::Id::null(),
-                            pack_offset,
-                            entry_len,
                             kind: ObjectKind::Base(header.to_kind().expect("a base object")),
                             crc32,
                         },
@@ -94,8 +92,6 @@ impl pack::index::File {
                         pack_offset,
                         TreeEntry {
                             id: owned::Id::null(),
-                            pack_offset,
-                            entry_len,
                             kind: ObjectKind::OfsDelta,
                             crc32,
                         },

@@ -27,8 +27,6 @@ impl ObjectKind {
 
 pub struct TreeEntry {
     pub id: owned::Id,
-    pub pack_offset: u64,
-    pub entry_len: usize,
     pub kind: ObjectKind,
     pub crc32: u32,
 }
@@ -37,8 +35,6 @@ impl Default for TreeEntry {
     fn default() -> Self {
         TreeEntry {
             id: owned::Id::null(),
-            pack_offset: 0,
-            entry_len: 0,
             kind: ObjectKind::OfsDelta,
             crc32: 0,
         }
