@@ -25,6 +25,7 @@ impl<T> Tree<T>
 where
     T: Default + Send,
 {
+    #[allow(clippy::too_many_arguments)]
     pub fn traverse<F, P, MBFN, BR, MCFN>(
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
