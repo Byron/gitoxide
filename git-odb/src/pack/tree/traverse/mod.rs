@@ -3,7 +3,6 @@ use crate::{
     pack::tree::{Item, Tree},
 };
 use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
-use git_object::HashKind;
 use quick_error::quick_error;
 
 mod resolve;
@@ -33,14 +32,13 @@ where
         progress: P,
         thread_limit: Option<usize>,
         pack_entries_end: u64,
-        hash_kind: HashKind,
         modify_base: MBFN,
         modify_child: MCFN,
     ) -> Result<Vec<Item<T>>, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
-        MBFN: for<'r> Fn(&'r mut T, &'r [u8], HashKind) -> BR + Send + Sync,
+        MBFN: for<'r> Fn(&'r mut T, &'r [u8]) -> BR + Send + Sync,
         BR: Clone,
         MCFN: for<'r> Fn(&'r mut T, BR) + Send + Sync,
     {
@@ -61,7 +59,7 @@ where
                     progress.lock().add_child(format!("thread {}", thread_index)),
                 )
             },
-            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, hash_kind, &modify_base, &modify_child),
+            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &modify_base, &modify_child),
             Reducer::new(num_objects, &progress),
         )?;
         Ok(self.into_items())

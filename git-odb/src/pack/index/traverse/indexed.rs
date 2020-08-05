@@ -11,7 +11,7 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::Progress,
 };
-use git_object::{HashKind, Kind};
+use git_object::Kind;
 use std::collections::BTreeMap;
 
 impl index::File {
@@ -54,7 +54,6 @@ impl index::File {
             root.add_child("Resolving"),
             thread_limit,
             pack.pack_end() as u64,
-            HashKind::default(),
             modify_base,
             modify_child,
         )?;
@@ -191,7 +190,7 @@ impl From<pack::index::Entry> for Entry {
     }
 }
 
-pub fn modify_base(entry: &mut Entry, decompressed: &[u8], hash: HashKind) -> () {
+pub fn modify_base(entry: &mut Entry, decompressed: &[u8]) -> () {
     ()
 }
 

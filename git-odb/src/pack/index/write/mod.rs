@@ -127,9 +127,8 @@ impl pack::index::File {
                 root_progress.add_child("Resolving"),
                 thread_limit,
                 pack_entries_end,
-                kind.hash(),
-                modify::base,
-                modify::child,
+                |entry, bytes| modify::base(entry, bytes, kind.hash()),
+                |entry, result| modify::child(entry, result),
             )?;
             root_progress.inc();
 

@@ -3,21 +3,19 @@ use crate::{
     zlib,
 };
 use git_features::progress::Progress;
-use git_object::HashKind;
 use std::{cell::RefCell, collections::BTreeMap};
 
 pub(crate) fn deltas<T, F, P, MBFN, BR, MCFN>(
     nodes: Vec<pack::tree::Node<T>>,
     (bytes_buf, progress): &mut (Vec<u8>, P),
     resolve: F,
-    hash_kind: HashKind,
     modify_base: MBFN,
     modify_child: MCFN,
 ) -> Result<usize, Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
-    MBFN: for<'r> Fn(&'r mut T, &'r [u8], HashKind) -> BR,
+    MBFN: for<'r> Fn(&'r mut T, &'r [u8]) -> BR,
     BR: Clone,
     MCFN: for<'r> Fn(&'r mut T, BR),
     T: Default,
@@ -52,7 +50,7 @@ where
                 .expect("we store the resolved delta buffer when done")
         };
 
-        let base_result = modify_base(&mut base.data, &base_bytes, hash_kind);
+        let base_result = modify_base(&mut base.data, &base_bytes);
         num_objects += 1;
         for mut child in base.store_changes_then_into_child_iter() {
             let delta_bytes = decompress_from_resolver(child.entry_slice())?;
