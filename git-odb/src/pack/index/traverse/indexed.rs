@@ -48,26 +48,31 @@ impl index::File {
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let there_are_enough_objects = || self.num_objects > 10_000;
-        let mut header_buf = [0u8; 64];
         let _items = tree.traverse(
             there_are_enough_objects,
             |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
             root.add_child("Resolving"),
             thread_limit,
             pack.pack_end() as u64,
-            &new_processor,
-            |data, pack_entry, entry_end, bytes, processor, progress| {
-                // pack::index::traverse::process_entry(
-                //     check,
-                //     pack_entry.header.to_kind().expect("non-delta object"),
-                //     bytes,
-                //     progress,
-                //     &mut header_buf,
-                //     &data.index_entry,
-                //     || hash::crc32(pack.entry_slice(pack_entry.pack_offset()..entry_end)),
-                //     new_processor,
-                // )
-                // .unwrap(); // TODO: possible error
+            || (new_processor(), [0u8; 64]),
+            |data, pack_entry, entry_end, bytes, (ref mut processor, ref mut header_buf), progress| {
+                pack::index::traverse::process_entry(
+                    check,
+                    pack_entry.header.to_kind().expect("non-delta object"),
+                    bytes,
+                    progress,
+                    header_buf,
+                    &data.index_entry,
+                    || {
+                        debug_assert_eq!(&data.index_entry.pack_offset, &pack_entry.pack_offset());
+                        git_features::hash::crc32(
+                            pack.entry_slice(data.index_entry.pack_offset..entry_end)
+                                .expect("slice pointing into the pack (by now data is verified)"),
+                        )
+                    },
+                    processor,
+                )
+                .unwrap(); // TODO: possible error
             },
         )?;
 

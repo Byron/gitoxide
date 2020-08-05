@@ -65,6 +65,8 @@ where
             fully_resolved_delta_bytes.resize(result_size as usize, 0);
             pack::data::decode::apply_delta(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
 
+            // FIXME: actually invalidates the "pack_offset()" computation, which is not obvious to consumers
+            // at all
             child_entry.header = base_entry.header;
             decompressed_bytes_by_pack_offset.insert(
                 child.offset(),

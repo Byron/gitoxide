@@ -300,6 +300,11 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
             let mut buf = Vec::new();
             buf.resize(entry.decompressed_size as usize, 0);
             let pack_entry = pack.entry(offset_from_index);
+            assert_eq!(
+                pack_entry.pack_offset(),
+                entry.pack_offset,
+                "index entry offset and computed pack offset must match"
+            );
             pack.decompress_entry(&pack_entry, &mut buf)?;
 
             assert_eq!(

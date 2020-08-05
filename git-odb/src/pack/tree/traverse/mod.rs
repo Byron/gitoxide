@@ -18,6 +18,11 @@ quick_error! {
         ResolveFailed(pack_offset: u64) {
             display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
         }
+        Inspect(err: Box<dyn std::error::Error + Send + Sync>) {
+            display("One of the object inspectors failed")
+            source(&**err)
+            from()
+        }
     }
 }
 
@@ -34,7 +39,7 @@ where
         thread_limit: Option<usize>,
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Sync,
-        modify_base: MBFN,
+        inspect_object: MBFN,
     ) -> Result<Vec<Item<T>>, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
@@ -61,7 +66,7 @@ where
                     new_thread_state(),
                 )
             },
-            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &modify_base),
+            |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &inspect_object),
             Reducer::new(num_objects, &progress),
         )?;
         Ok(self.into_items())
