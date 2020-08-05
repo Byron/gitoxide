@@ -257,13 +257,49 @@ impl index::File {
             )
             .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
         let object_kind = entry_stats.kind;
+        let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
+        let entry_len = header_size + entry_stats.compressed_size;
 
+        self.process_entry(
+            check,
+            object_kind,
+            &buf,
+            progress,
+            header_buf,
+            index_entry,
+            || pack.entry_crc32(index_entry.pack_offset, entry_len),
+            processor,
+        )?;
+        Ok(entry_stats)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn process_entry<P>(
+        &self,
+        check: SafetyCheck,
+        object_kind: git_object::Kind,
+        decompressed: &[u8],
+        progress: &mut P,
+        header_buf: &mut [u8; 64],
+        index_entry: &pack::index::Entry,
+        pack_entry_crc32: impl FnOnce() -> u32,
+        processor: &mut impl FnMut(
+            git_object::Kind,
+            &[u8],
+            &index::Entry,
+            &mut P,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+    ) -> Result<(), Error>
+    where
+        P: Progress,
+    {
         if check.object_checksum() {
-            let header_size = crate::loose::object::header::encode(object_kind, buf.len() as u64, &mut header_buf[..])
-                .expect("header buffer to be big enough");
+            let header_size =
+                crate::loose::object::header::encode(object_kind, decompressed.len() as u64, &mut header_buf[..])
+                    .expect("header buffer to be big enough");
             let mut hasher = git_features::hash::Sha1::default();
             hasher.update(&header_buf[..header_size]);
-            hasher.update(buf.as_slice());
+            hasher.update(decompressed);
 
             let actual_oid = owned::Id::new_sha1(hasher.digest());
             if actual_oid != index_entry.oid {
@@ -275,8 +311,7 @@ impl index::File {
                 });
             }
             if let Some(desired_crc32) = index_entry.crc32 {
-                let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
-                let actual_crc32 = pack.entry_crc32(index_entry.pack_offset, header_size + entry_stats.compressed_size);
+                let actual_crc32 = pack_entry_crc32();
                 if actual_crc32 != desired_crc32 {
                     return Err(Error::Crc32Mismatch {
                         actual: actual_crc32,
@@ -287,7 +322,6 @@ impl index::File {
                 }
             }
         }
-        processor(object_kind, buf.as_slice(), &index_entry, progress)?;
-        Ok(entry_stats)
+        processor(object_kind, decompressed, &index_entry, progress).map_err(Into::into)
     }
 }
