@@ -56,12 +56,12 @@ impl index::File {
             thread_limit,
             pack.pack_end() as u64,
             &new_processor,
-            |data, pack_entry, entry_end, bytes, processor| {
+            |data, pack_entry, entry_end, bytes, processor, progress| {
                 // pack::index::traverse::process_entry(
                 //     check,
                 //     pack_entry.header.to_kind().expect("non-delta object"),
                 //     bytes,
-                //     &mut progress::Discard, // TODO: Progress
+                //     progress,
                 //     &mut header_buf,
                 //     &data.index_entry,
                 //     || hash::crc32(pack.entry_slice(pack_entry.pack_offset()..entry_end)),

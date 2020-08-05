@@ -39,7 +39,9 @@ where
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
-        MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S) + Send + Sync,
+        MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S, &mut <P as Progress>::SubProgress)
+            + Send
+            + Sync,
     {
         self.pack_entries_end = Some(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
