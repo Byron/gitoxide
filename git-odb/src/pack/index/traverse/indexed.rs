@@ -9,6 +9,7 @@ use crate::{
 };
 use git_features::{
     parallel::{self, in_parallel_if},
+    progress,
     progress::Progress,
 };
 use git_object::Kind;
@@ -41,20 +42,33 @@ impl index::File {
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let tree = pack::tree::Tree::from_offsets_in_pack(
-            sorted_entries.clone().into_iter().map(|e| Entry::from(e)),
+            sorted_entries.clone().into_iter().map(|e| EntryWithDefault::from(e)),
             |e| e.index_entry.pack_offset,
             pack.path(),
             root.add_child("indexing"),
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let there_are_enough_objects = || self.num_objects > 10_000;
+        let mut header_buf = [0u8; 64];
         let _items = tree.traverse(
             there_are_enough_objects,
             |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
             root.add_child("Resolving"),
             thread_limit,
             pack.pack_end() as u64,
-            modify_base,
+            |data, pack_entry, bytes| {
+                // pack::index::traverse::process_entry(
+                //     check,
+                //     pack_entry.header.to_kind().expect("non-delta object"),
+                //     bytes,
+                //     &mut progress::Discard, // Progress
+                //     &mut header_buf,
+                //     &data.index_entry,
+                //     || 0,                 // TODO entry slice
+                //     &mut new_processor(), // TODO: TLS
+                // )
+                // .unwrap(); // TODO: possible error
+            },
         )?;
 
         let reduce_progress = parking_lot::Mutex::new({
@@ -167,13 +181,13 @@ impl index::File {
     }
 }
 
-pub struct Entry {
+pub struct EntryWithDefault {
     index_entry: pack::index::Entry,
 }
 
-impl Default for Entry {
+impl Default for EntryWithDefault {
     fn default() -> Self {
-        Entry {
+        EntryWithDefault {
             index_entry: pack::index::Entry {
                 pack_offset: 0,
                 crc32: None,
@@ -183,22 +197,8 @@ impl Default for Entry {
     }
 }
 
-impl From<pack::index::Entry> for Entry {
+impl From<pack::index::Entry> for EntryWithDefault {
     fn from(index_entry: pack::index::Entry) -> Self {
-        Entry { index_entry }
+        EntryWithDefault { index_entry }
     }
-}
-
-pub fn modify_base(entry: &mut Entry, pack_entry: &pack::data::Entry, decompressed: &[u8]) {
-    // process_entry(
-    //     check,
-    //     object_kind,
-    //     &buf,
-    //     progress,
-    //     header_buf,
-    //     index_entry,
-    //     || pack.entry_crc32(index_entry.pack_offset, entry_len),
-    //     processor,
-    // )?;
-    ()
 }
