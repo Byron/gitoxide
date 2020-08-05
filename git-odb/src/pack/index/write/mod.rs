@@ -104,17 +104,16 @@ impl pack::index::File {
             num_objects += 1;
             progress.inc();
         }
-        progress.show_throughput(indexing_start, num_objects as u32, "objects");
-        drop(progress);
-        root_progress.inc();
-
-        // Prevent us from trying to find bases for resolution past the point where they are
-        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
-        last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
         let num_objects: u32 = num_objects
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
+        last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
+        progress.show_throughput(indexing_start, num_objects, "objects");
+        drop(progress);
 
+        root_progress.inc();
+
+        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let reduce_progress = parking_lot::Mutex::new(root_progress.add_child("Resolving"));
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {

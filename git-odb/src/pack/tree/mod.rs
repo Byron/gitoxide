@@ -18,6 +18,7 @@ quick_error! {
 
 mod iter;
 pub use iter::{Chunks, Node};
+pub mod traverse;
 
 pub mod from_offsets;
 
