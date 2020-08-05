@@ -32,10 +32,11 @@ quick_error! {
 const PACK_HEADER_LEN: usize = 12;
 
 /// Generate tree from certain input
-impl Tree<()> {
+impl<T> Tree<T> {
     /// The sort order is ascending. The given packfile path must match the provided offsets.
     pub fn from_offsets_in_pack(
-        offsets: impl Iterator<Item = PackOffset>,
+        data_sorted_by_offsets: impl Iterator<Item = T>,
+        get_pack_offset: impl Fn(&T) -> PackOffset,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
         resolve_in_pack_id: impl Fn(git_object::borrowed::Id) -> Option<PackOffset>,
@@ -45,7 +46,7 @@ impl Tree<()> {
             fs::File::open(pack_path).map_err(|err| Error::Io(err, "open pack path"))?,
         );
 
-        let anticpiated_num_objects = if let Some(num_objects) = offsets.size_hint().1 {
+        let anticpiated_num_objects = if let Some(num_objects) = data_sorted_by_offsets.size_hint().1 {
             progress.init(Some(num_objects as u32), Some("objects"));
             num_objects
         } else {
@@ -70,7 +71,8 @@ impl Tree<()> {
         let mut previous_cursor_position = None::<u64>;
 
         let mut num_objects = 0;
-        for pack_offset in offsets {
+        for data in data_sorted_by_offsets {
+            let pack_offset = get_pack_offset(&data);
             num_objects += 1;
             if let Some(previous_offset) = previous_cursor_position {
                 Self::advance_cursor_to_pack_offset(&mut r, pack_offset, previous_offset)?;
@@ -82,20 +84,20 @@ impl Tree<()> {
             use pack::data::Header::*;
             match entry.header {
                 Tree | Blob | Commit | Tag => {
-                    tree.add_root(pack_offset, ())?;
+                    tree.add_root(pack_offset, data)?;
                 }
                 RefDelta { base_id } => {
                     resolve_in_pack_id(base_id.to_borrowed())
                         .ok_or_else(|| Error::UnresolvedRefDelta(base_id))
                         .and_then(|base_pack_offset| {
-                            tree.add_child(base_pack_offset, pack_offset, ()).map_err(Into::into)
+                            tree.add_child(base_pack_offset, pack_offset, data).map_err(Into::into)
                         })?;
                 }
                 OfsDelta { base_distance } => {
                     let base_pack_offset = pack_offset
                         .checked_sub(base_distance)
                         .expect("in bound distance for deltas");
-                    tree.add_child(base_pack_offset, pack_offset, ())?;
+                    tree.add_child(base_pack_offset, pack_offset, data)?;
                 }
             };
             progress.inc();

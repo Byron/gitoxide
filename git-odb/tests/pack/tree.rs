@@ -20,6 +20,7 @@ mod method {
             let idx = pack::index::File::at(fixture_path(index_path))?;
             pack::tree::Tree::from_offsets_in_pack(
                 idx.sorted_offsets().into_iter(),
+                |ofs| *ofs,
                 fixture_path(pack_path),
                 git_features::progress::Discard,
                 |id| idx.lookup(id).map(|index| idx.pack_offset_at_index(index)),

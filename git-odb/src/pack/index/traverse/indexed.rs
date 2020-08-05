@@ -42,7 +42,8 @@ impl index::File {
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let _ = pack::tree::Tree::from_offsets_in_pack(
-            sorted_entries.iter().map(|e| e.pack_offset),
+            sorted_entries.clone().into_iter(),
+            |e| e.pack_offset,
             pack.path(),
             root.add_child("indexing"),
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
@@ -119,7 +120,7 @@ impl index::File {
                     while let Some((node, level)) = nodes.pop() {
                         let pack_offset = node.pack_offset;
                         let index_entry = sorted_entries
-                            .binary_search_by(|e| e.pack_offset.cmp(&pack_offset))
+                            .binary_search_by_key(&pack_offset, |e| e.pack_offset)
                             .expect("tree created by our sorted entries");
                         let index_entry_of_node = &sorted_entries[index_entry];
 
