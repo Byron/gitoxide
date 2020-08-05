@@ -1,5 +1,4 @@
 use crate::pack::tree::{Item, Tree};
-use std::sync::atomic::Ordering;
 
 /// All the unsafe bits to support parallel iteration with write access
 impl<D> Tree<D> {
@@ -9,10 +8,6 @@ impl<D> Tree<D> {
     /// 'is_root' field fo the item, not the data field that we are writing here.
     /// For all details see `from_node_take_entry()`.
     unsafe fn from_node_put_data(&self, index: usize, data: D) {
-        debug_assert!(
-            self.iterator_active.load(Ordering::SeqCst),
-            "Must only be called after an iterator was created"
-        );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         items_mut.get_unchecked_mut(index).data = data;
     }
@@ -31,10 +26,6 @@ impl<D> Tree<D> {
     where
         D: Default,
     {
-        debug_assert!(
-            self.iterator_active.load(Ordering::SeqCst),
-            "Must only be called after an iterator was created"
-        );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         let children = std::mem::take(&mut item.children);
@@ -48,10 +39,6 @@ impl<D> Tree<D> {
     where
         D: Default,
     {
-        debug_assert!(
-            self.iterator_active.load(Ordering::SeqCst),
-            "Must only be called after an iterator was created"
-        );
         let items_mut: &mut Vec<Item<D>> = &mut *(self.items.get());
         let item = items_mut.get_unchecked_mut(index);
         if item.is_root {
@@ -62,26 +49,12 @@ impl<D> Tree<D> {
             None
         }
     }
-
-    #[allow(unsafe_code)]
-    /// SAFETY: It's called when dropping the iterator, and it's impossible to have multiple of these
-    /// at the same time. The flag indicating this is thread-safe, so there can't be a race either.
-    fn from_iter_dropped(&self) {
-        self.iterator_active.store(false, Ordering::SeqCst);
-    }
 }
 
 /// Iteration
 impl<D> Tree<D> {
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
     pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<D> {
-        // We would love to consume the tree, of course, but if we can't hand out items that borrow from ourselves,
-        // it's nothing we can use effectively. Thus it's better to check at runtime…
-        assert!(
-            !self.iterator_active.load(Ordering::SeqCst),
-            "Can only create a single iterator to avoid aliasing mutable tree nodes"
-        );
-        self.iterator_active.store(true, Ordering::SeqCst);
         Chunks {
             tree: self,
             size,
@@ -163,11 +136,5 @@ where
         } else {
             Some(res)
         }
-    }
-}
-
-impl<'a, D> Drop for Chunks<'a, D> {
-    fn drop(&mut self) {
-        self.tree.from_iter_dropped()
     }
 }

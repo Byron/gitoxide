@@ -1,8 +1,5 @@
 use quick_error::quick_error;
-use std::{
-    cell::UnsafeCell,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::cell::UnsafeCell;
 
 quick_error! {
     #[derive(Debug)]
@@ -32,8 +29,6 @@ pub struct Item<D> {
 pub struct Tree<D> {
     items: UnsafeCell<Vec<Item<D>>>,
     last_added_offset: u64,
-    // assure we truly create only one iterator, ever, to avoid violating access rules
-    iterator_active: AtomicBool,
     one_past_last_seen_root: usize,
 }
 
@@ -50,7 +45,6 @@ impl<D> Tree<D> {
         Ok(Tree {
             items: UnsafeCell::new(Vec::with_capacity(num_objects)),
             last_added_offset: 0,
-            iterator_active: AtomicBool::new(false),
             one_past_last_seen_root: 0,
         })
     }
@@ -65,10 +59,6 @@ impl<D> Tree<D> {
     }
 
     pub fn add_root(&mut self, offset: u64, data: D) -> Result<(), Error> {
-        assert!(
-            !self.iterator_active.load(Ordering::SeqCst),
-            "Cannot mutate after the iterator was created as it assumes exclusive access"
-        );
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
         // standard borrow check rules.
         #[allow(unsafe_code)]
@@ -85,10 +75,6 @@ impl<D> Tree<D> {
     }
 
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: D) -> Result<(), Error> {
-        assert!(
-            !self.iterator_active.load(Ordering::SeqCst),
-            "Cannot mutate after the iterator was created as it assumes exclusive access"
-        );
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
         // standard borrow check rules.
         #[allow(unsafe_code)]
