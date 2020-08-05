@@ -33,13 +33,6 @@ quick_error! {
         IteratorInvariantBaseOffset(pack_offset: u64, distance: u64) {
             display("{} is not a valid offset for pack offset {}", distance, pack_offset)
         }
-        ConsumeZlibInflate(err: crate::zlib::Error, msg: &'static str) {
-            display("{}", msg)
-            source(err)
-        }
-        ConsumeResolveFailed(pack_offset: u64) {
-            display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
-        }
         Tree(err: pack::tree::Error) {
             display("An invariant regarding the delta tree did not hold")
             source(err)
