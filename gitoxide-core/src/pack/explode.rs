@@ -201,7 +201,7 @@ where
                 } else {
                     None
                 };
-                move |object_kind, buf, index_entry, _entry_stats, progress| {
+                move |object_kind, buf, index_entry, progress| {
                     let written_id = out
                         .write_buf(object_kind, buf, HashKind::Sha1)
                         .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))

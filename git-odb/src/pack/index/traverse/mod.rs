@@ -181,7 +181,6 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &pack::data::decode::Outcome,
             &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
@@ -236,7 +235,6 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &pack::data::decode::Outcome,
             &mut P,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     ) -> Result<pack::data::decode::Outcome, Error>
@@ -289,7 +287,7 @@ impl index::File {
                 }
             }
         }
-        processor(object_kind, buf.as_slice(), &index_entry, &entry_stats, progress)?;
+        processor(object_kind, buf.as_slice(), &index_entry, progress)?;
         Ok(entry_stats)
     }
 }

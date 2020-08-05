@@ -24,16 +24,17 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &pack::data::decode::Outcome,
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
+        // TODO: Doesn't need to be sorted, and doesn't need to be in memory
         let index_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
 
         let (chunk_size, thread_limit, available_cores) =
             parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
         let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
+        // TODO: Use Chunks iterator here for dynamically generated chunks from iterators
         let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
         let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Traversing");

@@ -30,7 +30,6 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &pack::data::decode::Outcome,
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {

@@ -100,8 +100,8 @@ impl index::File {
                     root.into_inner(),
                     || {
                         let mut encode_buf = Vec::with_capacity(2048);
-                        move |kind, data, index_entry, stats, progress| {
-                            Self::verify_entry(mode, &mut encode_buf, kind, data, index_entry, stats, progress)
+                        move |kind, data, index_entry, progress| {
+                            Self::verify_entry(mode, &mut encode_buf, kind, data, index_entry, progress)
                         }
                     },
                     make_cache,
@@ -117,7 +117,6 @@ impl index::File {
         object_kind: git_object::Kind,
         buf: &[u8],
         index_entry: &index::Entry,
-        _stats: &pack::data::decode::Outcome,
         progress: &mut P,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
