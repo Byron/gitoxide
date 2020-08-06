@@ -1,6 +1,5 @@
 #[cfg(feature = "interruptible")]
 mod _impl {
-    use ctrlc;
     use once_cell::sync::Lazy;
     use std::{
         io,
