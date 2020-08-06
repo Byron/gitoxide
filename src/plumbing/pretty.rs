@@ -198,7 +198,7 @@ fn prepare_and_run<T: Send + 'static>(
         + 'static,
 ) -> Result<T> {
     super::init_env_logger(false);
-    use git_features::interuptible::{interupt, is_interupted};
+    use git_features::interruptible::{interrupt, is_interrupted};
     match (verbose, progress) {
         (false, false) => run(None, &mut stdout(), &mut stderr()),
         (true, false) => {
@@ -214,7 +214,7 @@ fn prepare_and_run<T: Send + 'static>(
                 let tx = tx.clone();
                 move || loop {
                     std::thread::sleep(std::time::Duration::from_millis(500));
-                    if is_interupted() {
+                    if is_interrupted() {
                         tx.send(Event::UIDone).ok();
                         break;
                     }
@@ -274,7 +274,7 @@ fn prepare_and_run<T: Send + 'static>(
                     Event::UIDone => {
                         // We don't know why the UI is done, usually it's the user aborting.
                         // We need the computation to stop as well so let's wait for that to happen
-                        interupt();
+                        interrupt();
                         continue;
                     }
                     Event::ComputationDone(res, out, err) => {

@@ -3,7 +3,7 @@ use crate::{
     pack::data::EntrySlice,
     pack::tree::{Item, Tree},
 };
-use git_features::{parallel, parallel::in_parallel_if, progress::Progress};
+use git_features::{interruptible::is_interrupted, parallel, parallel::in_parallel_if, progress::Progress};
 use quick_error::quick_error;
 
 mod resolve;
@@ -22,6 +22,9 @@ quick_error! {
             display("One of the object inspectors failed")
             source(&**err)
             from()
+        }
+        Interrupted {
+            display("Interrupted by user")
         }
     }
 }
@@ -112,6 +115,9 @@ where
         let input = input?;
         self.item_count += input;
         self.progress.lock().set(self.item_count as u32);
+        if is_interrupted() {
+            return Err(Error::Interrupted);
+        }
         Ok(())
     }
 

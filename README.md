@@ -235,11 +235,6 @@ Provide a CLI to for the most basic user journey:
   * [ ] create (thin) pack
 * [ ] transform _all_ `unwrap()` calls into `expect(…)` or `?` for quality. `parking_lot` will help for unwraps of poisoned locks.
   
-### Roadmap to 1.1
-
- * [ ] clone a repository via
-   * [ ] ssh
-
 ## Cargo features guide
 
 Cargo uses feature toggles to control which dependencies are pulled in, allowing users to specialize crates to fit their usage.
@@ -280,7 +275,7 @@ There are **convenience features**, which combine common choices of the above in
 * **light** = *lean-cli* + *fast*
   * crossplatform by nature as this comes with simplified log based progress
 * **small** = *lean-cli*
-  * As small as it can possibly be, no threading, no fast sha1, log based progress only
+  * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt
     
 ### git-features
 
@@ -301,7 +296,7 @@ All feature toggles are additive.
 * **progress-prodash**
   * Implement the `Progress` trait for the tree data structures provided by `prodash`, which enables using a terminal user
     interface for progress.
-* **interuptible**
+* **interruptible**
   * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
   * If unset, these utilities will be a no-op which may lead to leaking temporary files when interrupted.
   * If the application already sets a handler, this handler will have no effect.
@@ -342,6 +337,32 @@ All feature toggles are additive.
   
 ### Guidelines
 
+* **async**
+  * **library client-side**
+    * Don't use it client side, as operations there are usually bound by the CPU and ultra-fast access to memory mapped files.
+      It's no problem to saturate either CPU or the IO system.
+  * **User Interfaces**
+    * User interfaces can greatly benefit from using async as it's much easier to maintain a responsive UI thread that way thanks
+      to the wonderful future combinators.
+    * `blocking` can be used to make `Read` and `Iterator` async, or move any operation onto a thread which blends it into the 
+      async world. 
+       * Most operations are fast and 'interrupting' them is as easy as ignoring their result by cancelling their task.
+       * Long-running operations can be roughly interacted with using `git_features::interruptible::interrupt()` function, and after a moment
+         of waiting the flag can be unset with the `…::uninterrupt()` function to allow new long-running operations to work. 
+         Every long running operation supports this.
+  * **server-side**
+    * Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
+      needs a lot of resources and threads will do just fine.
+      
+* **interruption of long-running operations**
+  * Use `git-features::interruptible::*` for building support for interruptions of long-running operations only.
+    * It's up to the author to decide how to best integrate it, generally we use a poll-based mechanism to check whether
+      an interrupt flag is set.
+    * **this is a must if…**
+      * …temporary resources like files might otherwise be leaked
+    * **this is optional but desirable if…**
+      * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
+      
 * **prepare for SHA256 support by using `owned::Id` and `borrowed::Id`**
   * eventually there will be the need to support both Sha1 and Sha256. We anticipate it by using the `Id` type instead 
     of slices or arrays of 20 bytes. This way, eventually we can support multiple hash digest sizes.
@@ -381,6 +402,7 @@ From there, we can derive a few rules to try adhere to:
 
 * does not show any progress or logging output by default
 * if supported and logging is enabled, it will show timestamps in UTC
+* it does not need a git repository, but instead takes all variables via the command-line 
 
 ### Porcelain
 

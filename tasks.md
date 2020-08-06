@@ -31,8 +31,8 @@
       system temp files)
          * [x] for lean mode
          * [x] for pretty mode
-         * [ ] allow interrupting the resolution phase too
-         * [ ] fix typo :D - thanks IJ for confusing me
+         * [x] allow interrupting the resolution phase too
+         * [x] fix typo :D - thanks IJ for confusing me
   * [ ] move --verbose, --progress and --progress-keep-open to the top-level 
   * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities

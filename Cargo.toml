@@ -37,7 +37,7 @@ small = ["lean-cli"]
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt",
     "git-features/progress-prodash",
-    "git-features/interuptible",
+    "git-features/interruptible",
     "gitoxide-core/serde1",
     "prodash/log-renderer",
     "prodash-tui-renderer",
@@ -45,7 +45,7 @@ pretty-cli = ["structopt",
     "prodash/localtime",
     "env_logger",
     "futures-lite"]
-lean-cli = ["argh", "git-features/progress-log", "env_logger", "git-features/interuptible"]
+lean-cli = ["argh", "git-features/progress-log", "env_logger", "git-features/interruptible"]
 
 prodash-line-renderer-crossterm = ["prodash-line-renderer", "prodash/line-renderer-crossterm", "git-features/progress-prodash", "atty", "crosstermion"]
 prodash-line-renderer-termion = ["prodash-line-renderer", "prodash/line-renderer-termion", "git-features/progress-prodash", "atty", "crosstermion"]

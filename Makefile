@@ -74,7 +74,7 @@ check: ## Build all code in suitable configurations
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fast-sha1 \
-			   && cargo check --features interuptible
+			   && cargo check --features interruptible
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast

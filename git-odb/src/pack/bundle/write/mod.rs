@@ -1,5 +1,5 @@
 use crate::pack;
-use git_features::{interuptible, progress, progress::Progress};
+use git_features::{interruptible, progress, progress::Progress};
 use std::{
     io,
     path::{Path, PathBuf},
@@ -53,7 +53,7 @@ impl pack::Bundle {
         };
         let data_path: Option<PathBuf> = data_file.as_ref().map(|f| f.as_ref().into());
         let mut pack = PassThrough {
-            reader: interuptible::Read { inner: pack },
+            reader: interruptible::Read { inner: pack },
             writer: data_file,
         };
         let eight_pages = 4096 * 8;

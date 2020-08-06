@@ -1,4 +1,4 @@
-#[cfg(feature = "interuptible")]
+#[cfg(feature = "interruptible")]
 mod _impl {
     use ctrlc;
     use once_cell::sync::Lazy;
@@ -24,23 +24,26 @@ mod _impl {
         R: io::Read,
     {
         fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-            if is_interupted() {
+            if is_interrupted() {
                 return Err(io::Error::new(io::ErrorKind::Other, "interrupted by user"));
             }
             self.inner.read(buf)
         }
     }
 
-    pub fn is_interupted() -> bool {
+    pub fn is_interrupted() -> bool {
         IS_INTERRUPTED.load(Ordering::Relaxed)
     }
 
-    pub fn interupt() {
+    pub fn interrupt() {
         IS_INTERRUPTED.store(true, Ordering::Relaxed);
+    }
+    pub fn uninterrupt() {
+        IS_INTERRUPTED.store(false, Ordering::Relaxed);
     }
 }
 
-#[cfg(not(feature = "interuptible"))]
+#[cfg(not(feature = "interruptible"))]
 mod _impl {
     use std::io;
 
@@ -60,6 +63,10 @@ mod _impl {
     pub fn is_interrupted() -> bool {
         false
     }
+
+    pub fn interrupt() {}
+
+    pub fn uninterrupt() {}
 }
 
 pub use _impl::*;
