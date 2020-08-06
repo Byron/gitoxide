@@ -63,11 +63,18 @@ impl index::File {
                  entry_end,
                  decompressed: bytes,
                  state: (ref mut processor, ref mut header_buf),
-                 level: _,
+                 level,
              }| {
+                let object_kind = pack_entry.header.to_kind().expect("non-delta object");
+                data.level = level;
+                data.decompressed_size = pack_entry.decompressed_size;
+                data.header_size = pack_entry.header_size() as u16;
+                data.object_kind = object_kind;
+                data.compressed_size = entry_end - pack_entry.data_offset;
+                data.object_size = bytes.len() as u64;
                 let result = pack::index::traverse::process_entry(
                     check,
-                    pack_entry.header.to_kind().expect("non-delta object"),
+                    object_kind,
                     bytes,
                     progress,
                     header_buf,
@@ -203,6 +210,12 @@ impl index::File {
 
 pub struct EntryWithDefault {
     index_entry: pack::index::Entry,
+    object_kind: git_object::Kind,
+    object_size: u64,
+    decompressed_size: u64,
+    compressed_size: u64,
+    header_size: u16,
+    level: u16,
 }
 
 impl Default for EntryWithDefault {
@@ -213,12 +226,26 @@ impl Default for EntryWithDefault {
                 crc32: None,
                 oid: git_object::owned::Id::null(),
             },
+            level: 0,
+            object_kind: git_object::Kind::Tree,
+            object_size: 0,
+            decompressed_size: 0,
+            compressed_size: 0,
+            header_size: 0,
         }
     }
 }
 
 impl From<pack::index::Entry> for EntryWithDefault {
     fn from(index_entry: pack::index::Entry) -> Self {
-        EntryWithDefault { index_entry }
+        EntryWithDefault {
+            index_entry,
+            level: 0,
+            object_kind: git_object::Kind::Tree,
+            object_size: 0,
+            decompressed_size: 0,
+            compressed_size: 0,
+            header_size: 0,
+        }
     }
 }

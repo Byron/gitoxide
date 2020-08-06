@@ -30,6 +30,12 @@ mod method {
     }
 }
 
+struct TreeItem<D> {
+    _offset: u64,
+    _data: D,
+    _children: Vec<usize>,
+}
+
 #[test]
 fn using_option_as_data_does_not_increase_size_in_memory() {
     struct Entry {
@@ -37,11 +43,6 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
         pub _crc32: u32,
     }
 
-    struct TreeItem<D> {
-        _offset: u64,
-        _data: D,
-        _children: Vec<usize>,
-    }
     struct TreeItemOption<D> {
         _offset: u64,
         _data: Option<D>,
@@ -56,5 +57,24 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
         std::mem::size_of::<[TreeItemOption<Entry>; 7_500_000]>(),
         480_000_000,
         "it should be as small as possible"
+    );
+}
+
+#[test]
+fn size_of_pack_verify_data_structure() {
+    use git_odb::pack;
+    pub struct EntryWithDefault {
+        index_entry: pack::index::Entry,
+        kind: git_object::Kind,
+        object_size: u64,
+        decompressed_size: u64,
+        compressed_size: u64,
+        header_size: u16,
+        level: u16,
+    }
+
+    assert_eq!(
+        std::mem::size_of::<[TreeItem<EntryWithDefault>; 7_500_000]>(),
+        780_000_000
     );
 }
