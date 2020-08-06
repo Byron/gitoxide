@@ -34,7 +34,7 @@ impl index::File {
             |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
         )?;
         let there_are_enough_objects = || self.num_objects > 10_000;
-        let outcome = digest_statistics(tree.traverse(
+        let mut outcome = digest_statistics(tree.traverse(
             there_are_enough_objects,
             |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
             root.add_child("Resolving"),
@@ -54,7 +54,7 @@ impl index::File {
                 data.level = level;
                 data.decompressed_size = pack_entry.decompressed_size;
                 data.header_size = pack_entry.header_size() as u16;
-                data.object_kind = object_kind;
+                data._object_kind = object_kind;
                 data.compressed_size = entry_end - pack_entry.data_offset;
                 data.object_size = bytes.len() as u64;
                 let result = pack::index::traverse::process_entry(
@@ -82,13 +82,15 @@ impl index::File {
                 }
             },
         )?);
+        outcome.pack_size = pack.data_len() as u64;
         Ok((outcome, root))
     }
 }
 
 pub struct EntryWithDefault {
     index_entry: pack::index::Entry,
-    object_kind: git_object::Kind,
+    // TODO: count how many objects of a kind there are
+    _object_kind: git_object::Kind,
     object_size: u64,
     decompressed_size: u64,
     compressed_size: u64,
@@ -105,7 +107,7 @@ impl Default for EntryWithDefault {
                 oid: git_object::owned::Id::null(),
             },
             level: 0,
-            object_kind: git_object::Kind::Tree,
+            _object_kind: git_object::Kind::Tree,
             object_size: 0,
             decompressed_size: 0,
             compressed_size: 0,
@@ -119,7 +121,7 @@ impl From<pack::index::Entry> for EntryWithDefault {
         EntryWithDefault {
             index_entry,
             level: 0,
-            object_kind: git_object::Kind::Tree,
+            _object_kind: git_object::Kind::Tree,
             object_size: 0,
             decompressed_size: 0,
             compressed_size: 0,
@@ -129,5 +131,24 @@ impl From<pack::index::Entry> for EntryWithDefault {
 }
 
 fn digest_statistics(items: Vec<pack::tree::Item<EntryWithDefault>>) -> index::traverse::Outcome {
-    unimplemented!();
+    let mut res = index::traverse::Outcome::default();
+    let average = &mut res.average;
+    for item in &items {
+        res.total_compressed_entries_size += item.data.compressed_size;
+        res.total_decompressed_entries_size += item.data.decompressed_size;
+        res.total_object_size += item.data.object_size;
+        *res.objects_per_chain_length.entry(item.data.level as u32).or_insert(0) += 1;
+
+        average.decompressed_size += item.data.decompressed_size;
+        average.compressed_size += item.data.compressed_size as usize;
+        average.object_size += item.data.object_size;
+        average.num_deltas += item.data.level as u32;
+    }
+
+    average.decompressed_size /= items.len() as u64;
+    average.compressed_size /= items.len();
+    average.object_size /= items.len() as u64;
+    average.num_deltas /= items.len() as u32;
+
+    res
 }

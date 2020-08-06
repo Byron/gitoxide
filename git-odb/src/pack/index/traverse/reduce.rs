@@ -35,19 +35,14 @@ where
         pack_data_len_in_bytes: usize,
         check: traverse::SafetyCheck,
     ) -> Self {
+        let mut stats = traverse::Outcome::default();
+        stats.pack_size = pack_data_len_in_bytes as u64;
         Reducer {
             progress: &progress,
             check,
             then: Instant::now(),
             entries_seen: 0,
-            stats: traverse::Outcome {
-                average: decode::Outcome::default_from_kind(git_object::Kind::Tree),
-                objects_per_chain_length: Default::default(),
-                total_compressed_entries_size: 0,
-                total_decompressed_entries_size: 0,
-                total_object_size: 0,
-                pack_size: pack_data_len_in_bytes as u64,
-            },
+            stats,
         }
     }
 }

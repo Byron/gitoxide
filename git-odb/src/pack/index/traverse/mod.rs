@@ -76,6 +76,19 @@ pub struct Outcome {
     pub pack_size: u64,
 }
 
+impl Default for Outcome {
+    fn default() -> Self {
+        Outcome {
+            average: pack::data::decode::Outcome::default_from_kind(git_object::Kind::Tree),
+            objects_per_chain_length: Default::default(),
+            total_compressed_entries_size: 0,
+            total_decompressed_entries_size: 0,
+            total_object_size: 0,
+            pack_size: 0,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum SafetyCheck {

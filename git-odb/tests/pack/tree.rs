@@ -64,13 +64,13 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
 fn size_of_pack_verify_data_structure() {
     use git_odb::pack;
     pub struct EntryWithDefault {
-        index_entry: pack::index::Entry,
-        kind: git_object::Kind,
-        object_size: u64,
-        decompressed_size: u64,
-        compressed_size: u64,
-        header_size: u16,
-        level: u16,
+        _index_entry: pack::index::Entry,
+        _kind: git_object::Kind,
+        _object_size: u64,
+        _decompressed_size: u64,
+        _compressed_size: u64,
+        _header_size: u16,
+        _level: u16,
     }
 
     assert_eq!(
