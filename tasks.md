@@ -34,8 +34,8 @@
          * [x] allow interrupting the resolution phase too
          * [x] fix typo :D - thanks IJ for confusing me
   * [x] move --verbose, --progress and --progress-keep-open to the top-level 
-  * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities
+  * [ ] unit tests for bundle index write
   * [ ] nicer errors with descriptive messages
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli - verify**
@@ -66,15 +66,12 @@
   * [ ] Clone into valid repository
   
 ### Other
-* **prodash**
-  * [ ] use usize for progress counting
-  * [ ] support custom formatters using boxed 'display' types for units
-* **quality**
-  * [x] use `parking_lot` to get rid of poisoned locks (and the unwraps() that go with it)
 * **progress - convenience**
+  * [ ] use usize for progress counting
   * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
+    * [ ] probably using 'display' types for units
     * [ ] Find a  way to measure live throughput
-  * [ ] a way to measure throughput on drop
+  * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
   * [ ] percentages somewhere near the progress bar
 * **criner**
   * [ ] switch to `isahc`
