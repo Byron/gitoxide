@@ -76,8 +76,8 @@ impl pack::Bundle {
                 )?;
 
                 let data_file = pack.writer.expect("data file to always be set in write mode");
-                let index_path = directory.join(format!("{}.idx", outcome.index_hash.to_sha1_hex_string()));
                 let data_path = directory.join(format!("{}.pack", outcome.pack_hash.to_sha1_hex_string()));
+                let index_path = data_path.with_extension("idx");
 
                 data_file.persist(&data_path)?;
                 index_file
