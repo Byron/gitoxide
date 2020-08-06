@@ -301,8 +301,12 @@ All feature toggles are additive.
 * **progress-prodash**
   * Implement the `Progress` trait for the tree data structures provided by `prodash`, which enables using a terminal user
     interface for progress.
+* **interuptible**
+  * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
+  * If unset, these utilities will be a no-op which may lead to leaking temporary files when interrupted.
+  * If the application already sets a handler, this handler will have no effect.
     
- ### Serialization Support
+### Serialization Support
  
  What follows is feature toggles to control serialization of all public facing simple data types.
  

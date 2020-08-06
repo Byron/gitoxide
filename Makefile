@@ -66,12 +66,15 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean-termion
 	cargo check --no-default-features --features max
 	cargo check --no-default-features --features max-termion
-	cd gitoxide-core && cargo check --all-features
+	cd gitoxide-core && cargo check --all-features \
+                     && cargo check
 	cd git-object && cargo check --all-features
-	cd git-odb && cargo check --all-features
+	cd git-odb && cargo check --all-features \
+			   && cargo check
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
-			   && cargo check --features fast-sha1
+			   && cargo check --features fast-sha1 \
+			   && cargo check --features interuptible
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast

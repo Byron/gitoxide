@@ -29,9 +29,11 @@
     * [x] per-object counts for statistics (and use that to optimize order when matching on object types)
     * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
       system temp files)
-  * [ ] nicer errors with descriptive messages
+         * [x] for lean mode
+         * [ ] for pretty mode
   * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities
+  * [ ] nicer errors with descriptive messages
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli - verify**
    * break progress up into bytes decompressed and compressed bytes read

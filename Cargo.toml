@@ -10,15 +10,15 @@ default-run = "gix"
 include = ["src/**/*", "LICENSE.md", "README.md", "CHANGELOG.md"]
 
 [[bin]]
-name="gix"
-path="src/porcelain-cli.rs"
+name = "gix"
+path = "src/porcelain-cli.rs"
 test = false
 doctest = false
 
 
 [[bin]]
-name="gixp"
-path="src/plumbing-cli.rs"
+name = "gixp"
+path = "src/plumbing-cli.rs"
 test = false
 doctest = false
 
@@ -36,16 +36,16 @@ small = ["lean-cli"]
 
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["structopt",
-              "git-features/progress-prodash",
-              "gitoxide-core/serde1",
-              "prodash/log-renderer",
-              "prodash-tui-renderer",
-              "prodash-line-renderer",
-              "ctrlc",
-              "prodash/localtime",
-              "env_logger",
-              "futures-lite"]
-lean-cli = ["argh", "git-features/progress-log", "env_logger"]
+    "git-features/progress-prodash",
+    "gitoxide-core/serde1",
+    "prodash/log-renderer",
+    "prodash-tui-renderer",
+    "prodash-line-renderer",
+    "ctrlc",
+    "prodash/localtime",
+    "env_logger",
+    "futures-lite"]
+lean-cli = ["argh", "git-features/progress-log", "env_logger", "git-features/interuptible"]
 
 prodash-line-renderer-crossterm = ["prodash-line-renderer", "prodash/line-renderer-crossterm", "git-features/progress-prodash", "atty", "crosstermion"]
 prodash-line-renderer-termion = ["prodash-line-renderer", "prodash/line-renderer-termion", "git-features/progress-prodash", "atty", "crosstermion"]
