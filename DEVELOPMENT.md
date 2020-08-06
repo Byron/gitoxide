@@ -1,3 +1,5 @@
+## Development Guide
+
 ### Practices 
 
  * **test-first development**
@@ -67,3 +69,32 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
   answer "This should work _because_…<expect(…)>"
    
+   
+## Maintenance Guide
+
+Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
+get an overview.
+
+### Creating a release
+
+Run `etc/release.sh` to release all crates in leaf-first order using `cargo release`.
+
+### Which git-version to chase?
+
+Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
+compatibility_). Certain tests only run on CI, designed to validate certain assumptions still hold against possibly changed
+git program versions.
+
+This also means that CI may fail despite everything being alright locally, and the fix depends on the problem at hand.
+
+### How to update fixtures
+
+Fixtures are created by using a line like this which produces a line we ignore via `tail +1` followed by the un-prettified object payload
+trailed by a newline.
+```sh
+echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 > fixture
+```
+
+Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, **removing the newline byte**.
+
+

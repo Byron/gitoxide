@@ -199,13 +199,6 @@ Once installed, there are two binaries:
    * libraries use light-weight custom errors implemented using `quick-error`.
    * internationalization is nothing we are concerned with right now.
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
- * **async as opt-in**
-   * Making certain capabilities available through `async` APIs allows for abortable operations, which
-     may be interesting for interactive user interfaces. Thus it is something worth considering, but only
-     behind a feature flag and once the need transpires.
-   * Ideally many operations powered by implementors of `std::io::{Read, Write}` and `std::iter::Iterator`,
-     which makes unblocking them trivial using the fantastic `blocking` crate. Only when these are used internally,
-     providing a separate async version of these operations can be beneficial to make them abortable.
 
 ## Non-Goals
 
@@ -217,6 +210,8 @@ Once installed, there are two binaries:
  * **use async IO everywhere**
    * for the most part, git operations are heavily relying on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
+   * Use `blocking` as well as `git-features::interruptible` to bring operations into the async world and to control 
+     long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though. It should be possible to put it behind a feature flag though.
 
@@ -338,34 +333,6 @@ From there, we can derive a few rules to try adhere to:
   the operation takes some time.
 * If timestamps are shown, they are in localtime.
 * Non-progress information goes to stdout.
-
-## Maintenance Guide
-
-Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
-get an overview.
-
-### Creating a release
-
-Run `etc/release.sh` to release all crates in leaf-first order using `cargo release`.
-
-### Which git-version to chase?
-
-Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
-compatibility_). Certain tests only run on CI, designed to validate certain assumptions still hold against possibly changed
-git program versions.
-
-This also means that CI may fail despite everything being alright locally, and the fix depends on the problem at hand.
-
-### How to update fixtures
-
-Fixtures are created by using a line like this which produces a line we ignore via `tail +1` followed by the un-prettified object payload
-trailed by a newline.
-```sh
-echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 > fixture
-```
-
-Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, **removing the newline byte**.
-
 
 ## Shortcomings
 
