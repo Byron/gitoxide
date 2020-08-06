@@ -27,6 +27,54 @@ mod options {
 
     #[derive(Debug, StructOpt)]
     pub enum Subcommands {
+        /// Create an index from a packfile.
+        ///
+        /// This command can also be used to stream packs to standard input or to repair partial packs.
+        #[structopt(setting = AppSettings::ColoredHelp)]
+        IndexFromPack {
+            /// Display verbose messages and progress information
+            #[structopt(long, short = "v")]
+            verbose: bool,
+
+            /// Bring up a terminal user interface displaying progress visually
+            #[structopt(long, conflicts_with("verbose"))]
+            progress: bool,
+
+            /// The progress TUI will stay up even though the work is already completed.
+            ///
+            /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
+            #[structopt(long, conflicts_with("verbose"), requires("progress"))]
+            progress_keep_open: bool,
+
+            /// Specify how to iterate the pack, defaults to 'verify'
+            ///
+            /// Valid values are
+            ///  - as-is
+            ///     * do not do anything and expect the pack file to be valid as per the trailing hash
+            ///  - verify
+            ///     * the input ourselves and validate that it matches with the hash provided in the pack
+            ///  - restore
+            ///     * hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
+            #[structopt(
+                long,
+                short = "i",
+                default_value = "verify",
+                possible_values(core::pack::index::IterationMode::variants())
+            )]
+            iteration_mode: core::pack::index::IterationMode,
+
+            /// Path to the pack file to read (with .pack extension).
+            ///
+            /// If unset, the pack file is expected on stdin.
+            #[structopt(long, short = "p")]
+            pack_path: Option<PathBuf>,
+
+            /// The folder into which to place the pack and the generated index file
+            ///
+            /// If unset, only informational output will be provided to standard output.
+            #[structopt(parse(from_os_str))]
+            directory: Option<PathBuf>,
+        },
         /// Verify the integrity of a pack or index file
         #[structopt(setting = AppSettings::ColoredHelp)]
         PackExplode {
@@ -150,6 +198,7 @@ fn prepare_and_run<T: Send + 'static>(
         + 'static,
 ) -> Result<T> {
     super::init_env_logger(false);
+    use git_features::interuptible::{interupt, is_interupted};
     match (verbose, progress) {
         (false, false) => run(None, &mut stdout(), &mut stderr()),
         (true, false) => {
@@ -161,12 +210,16 @@ fn prepare_and_run<T: Send + 'static>(
             let sub_progress = progress.add_child(name);
             let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
             let ui_handle = crate::shared::setup_line_renderer(progress, 2, true);
-            ctrlc::set_handler({
+            std::thread::spawn({
                 let tx = tx.clone();
-                move || {
-                    tx.send(Event::UIDone).ok();
+                move || loop {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    if is_interupted() {
+                        tx.send(Event::UIDone).ok();
+                        break;
+                    }
                 }
-            })?;
+            });
             std::thread::spawn(move || {
                 let res = run(Some(sub_progress), &mut stdout(), &mut stderr());
                 tx.send(Event::ComputationDone(res)).ok();
@@ -216,13 +269,20 @@ fn prepare_and_run<T: Send + 'static>(
                 let res = run(Some(sub_progress), &mut out, &mut err);
                 tx.send(Event::ComputationDone(res, out, err)).ok();
             });
-            match rx.recv()? {
-                Event::UIDone => Err(anyhow!("Operation cancelled by user")),
-                Event::ComputationDone(res, out, err) => {
-                    ui_handle.join().ok();
-                    stdout().write_all(&out)?;
-                    stderr().write_all(&err)?;
-                    res
+            loop {
+                match rx.recv()? {
+                    Event::UIDone => {
+                        // We don't know why the UI is done, usually it's the user aborting.
+                        // We need the computation to stop as well so let's wait for that to happen
+                        interupt();
+                        continue;
+                    }
+                    Event::ComputationDone(res, out, err) => {
+                        ui_handle.join().ok();
+                        stdout().write_all(&out)?;
+                        stderr().write_all(&err)?;
+                        break res;
+                    }
                 }
             }
         }
@@ -233,6 +293,30 @@ pub fn main() -> Result<()> {
     let args = Args::from_args();
     let thread_limit = args.threads;
     match args.cmd {
+        Subcommands::IndexFromPack {
+            verbose,
+            iteration_mode,
+            pack_path,
+            directory,
+            progress,
+            progress_keep_open,
+        } => prepare_and_run(
+            "index-from-pack",
+            verbose,
+            progress,
+            progress_keep_open,
+            move |progress, _out, _err| {
+                core::pack::index::from_pack(
+                    pack_path,
+                    directory,
+                    git_features::progress::DoOrDiscard::from(progress),
+                    core::pack::index::Context {
+                        thread_limit,
+                        iteration_mode: iteration_mode,
+                    },
+                )
+            },
+        ),
         Subcommands::PackExplode {
             verbose,
             check,

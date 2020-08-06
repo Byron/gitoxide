@@ -24,15 +24,19 @@ mod _impl {
         R: io::Read,
     {
         fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-            if is_interrupted() {
+            if is_interupted() {
                 return Err(io::Error::new(io::ErrorKind::Other, "interrupted by user"));
             }
             self.inner.read(buf)
         }
     }
 
-    pub fn is_interrupted() -> bool {
+    pub fn is_interupted() -> bool {
         IS_INTERRUPTED.load(Ordering::Relaxed)
+    }
+
+    pub fn interupt() {
+        IS_INTERRUPTED.store(true, Ordering::Relaxed);
     }
 }
 

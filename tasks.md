@@ -30,7 +30,10 @@
     * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
       system temp files)
          * [x] for lean mode
-         * [ ] for pretty mode
+         * [x] for pretty mode
+         * [ ] allow interrupting the resolution phase too
+         * [ ] fix typo :D - thanks IJ for confusing me
+  * [ ] move --verbose, --progress and --progress-keep-open to the top-level 
   * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities
   * [ ] nicer errors with descriptive messages

@@ -685,7 +685,6 @@ dependencies = [
  "argh",
  "atty",
  "crosstermion",
- "ctrlc",
  "env_logger",
  "futures-lite",
  "git-features",

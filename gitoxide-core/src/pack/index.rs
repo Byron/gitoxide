@@ -9,6 +9,12 @@ pub enum IterationMode {
     Restore,
 }
 
+impl IterationMode {
+    pub fn variants() -> &'static [&'static str] {
+        &["as-is", "verify", "restore"]
+    }
+}
+
 impl Default for IterationMode {
     fn default() -> Self {
         IterationMode::Verify

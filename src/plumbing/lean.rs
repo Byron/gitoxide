@@ -43,7 +43,7 @@ mod options {
         /// Valid values are
         ///  - as-is
         ///     * do not do anything and expect the pack file to be valid as per the trailing hash
-        ///  - verifyhash
+        ///  - verify
         ///     * the input ourselves and validate that it matches with the hash provided in the pack
         ///  - restore
         ///     * hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
