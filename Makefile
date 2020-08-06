@@ -122,12 +122,12 @@ $(linux_repo):
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
-	time ./target/release/gixp pack-verify --verbose --statistics $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gixp pack-verify --verbose --algorithm less-memory $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gixp pack-verify --verbose --re-encode $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gixp pack-verify --verbose --re-encode $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gixp pack-explode --verbose .git/objects/pack/*.idx
-	rm -Rf delme; mkdir delme && time ./target/release/gixp pack-explode --verbose .git/objects/pack/*.idx delme/
+	time ./target/release/gixp --verbose pack-verify --statistics $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gixp --verbose pack-verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gixp --verbose pack-verify --re-encode $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gixp --verbose pack-verify --re-encode $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gixp --verbose pack-explode .git/objects/pack/*.idx
+	rm -Rf delme; mkdir delme && time ./target/release/gixp --verbose pack-explode .git/objects/pack/*.idx delme/
 
 ##@ Maintenance
 
