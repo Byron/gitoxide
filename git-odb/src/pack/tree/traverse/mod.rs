@@ -31,6 +31,7 @@ pub struct Context<'a, S> {
     pub entry_end: u64,
     pub decompressed: &'a [u8],
     pub state: &'a mut S,
+    pub level: u16,
 }
 
 impl<T> Tree<T>

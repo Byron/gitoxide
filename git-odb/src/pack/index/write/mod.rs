@@ -133,9 +133,8 @@ impl pack::index::File {
                  _progress,
                  Context {
                      entry,
-                     entry_end: _,
                      decompressed: bytes,
-                     state: _,
+                     ..
                  }| modify_base(data, entry, bytes, kind.hash()),
             )?;
             root_progress.inc();

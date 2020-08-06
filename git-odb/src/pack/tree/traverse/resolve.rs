@@ -55,6 +55,7 @@ where
                 entry_end,
                 decompressed: &base_bytes,
                 state,
+                level,
             },
         )
         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;

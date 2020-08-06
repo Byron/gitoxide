@@ -63,6 +63,7 @@ impl index::File {
                  entry_end,
                  decompressed: bytes,
                  state: (ref mut processor, ref mut header_buf),
+                 level: _,
              }| {
                 let result = pack::index::traverse::process_entry(
                     check,
