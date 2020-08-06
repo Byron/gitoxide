@@ -25,11 +25,6 @@ quick_error! {
             source(err)
             from()
         }
-        Graph(err: pack::graph::Error) {
-            display("The pack delta graph could not be built")
-            from()
-            source(err)
-        }
         Tree(err: pack::tree::from_offsets::Error) {
             display("The pack delta tree index could not be built")
             from()

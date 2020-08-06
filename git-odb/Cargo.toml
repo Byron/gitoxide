@@ -31,7 +31,6 @@ btoi = "0.4.2"
 uluru = "1.0.0"
 itoa = "0.4.6"
 bytesize = "1.0.1"
-petgraph = { version = "0.5.1", default-features = false }
 tempfile = "3.1.0"
 parking_lot = { version = "0.11.0", default-features = false }
 

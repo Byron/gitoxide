@@ -15,7 +15,6 @@ const V2_PACKS_AND_INDICES: &[(&'static str, &'static str)] =
 
 mod bundle;
 mod file;
-mod graph;
 mod index;
 mod iter;
 mod tree;
