@@ -1,4 +1,7 @@
-use crate::{loose, pack, pack::tree::Tree};
+use crate::{
+    loose, pack,
+    pack::tree::{traverse::Context, Tree},
+};
 use git_features::{hash, progress::Progress};
 use git_object::{owned, HashKind};
 use std::{convert::Infallible, convert::TryInto, io};
@@ -126,7 +129,14 @@ impl pack::index::File {
                 thread_limit,
                 pack_entries_end,
                 || (),
-                |data, entry, _entry_end, bytes, _state, _progress| modify_base(data, entry, bytes, kind.hash()),
+                |data,
+                 _progress,
+                 Context {
+                     entry,
+                     entry_end: _,
+                     decompressed: bytes,
+                     state: _,
+                 }| modify_base(data, entry, bytes, kind.hash()),
             )?;
             root_progress.inc();
 

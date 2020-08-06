@@ -1,5 +1,5 @@
 use crate::{
-    pack::{self, data::EntrySlice, tree::traverse::Error},
+    pack::{self, data::EntrySlice, tree::traverse::Context, tree::traverse::Error},
     zlib,
 };
 use git_features::progress::Progress;
@@ -14,7 +14,7 @@ pub(crate) fn deltas<T, F, P, MBFN, S, E>(
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
-    MBFN: for<'r> Fn(&'r mut T, &pack::data::Entry, u64, &'r [u8], &mut S, &mut P) -> Result<(), E>,
+    MBFN: Fn(&mut T, &mut P, Context<'_, S>) -> Result<(), E>,
     T: Default,
     E: std::error::Error + Send + Sync + 'static,
 {
@@ -47,8 +47,17 @@ where
                 .expect("we store the resolved delta buffer when done")
         };
 
-        modify_base(&mut base.data, &base_entry, entry_end, &base_bytes, state, progress)
-            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+        modify_base(
+            &mut base.data,
+            progress,
+            Context {
+                entry: &base_entry,
+                entry_end,
+                decompressed: &base_bytes,
+                state,
+            },
+        )
+        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
         num_objects += 1;
         progress.inc();
         for child in base.store_changes_then_into_child_iter() {

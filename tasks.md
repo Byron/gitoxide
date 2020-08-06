@@ -62,6 +62,7 @@
 ### Other
 * **prodash**
   * [ ] use usize for progress counting
+  * [ ] support custom formatters using boxed 'display' types for units
 * **quality**
   * [x] use `parking_lot` to get rid of poisoned locks (and the unwraps() that go with it)
 * **progress - convenience**

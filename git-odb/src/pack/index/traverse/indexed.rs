@@ -6,6 +6,7 @@ use crate::{
         self,
         util::{index_entries_sorted_by_offset_ascending, Chunks},
     },
+    pack::tree::traverse::Context,
 };
 use git_features::{
     parallel::{self, in_parallel_if},
@@ -55,7 +56,14 @@ impl index::File {
             thread_limit,
             pack.pack_end() as u64,
             || (new_processor(), [0u8; 64]),
-            |data, pack_entry, entry_end, bytes, (ref mut processor, ref mut header_buf), progress| {
+            |data,
+             progress,
+             Context {
+                 entry: pack_entry,
+                 entry_end,
+                 decompressed: bytes,
+                 state: (ref mut processor, ref mut header_buf),
+             }| {
                 let result = pack::index::traverse::process_entry(
                     check,
                     pack_entry.header.to_kind().expect("non-delta object"),

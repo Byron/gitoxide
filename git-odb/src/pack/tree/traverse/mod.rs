@@ -26,6 +26,13 @@ quick_error! {
     }
 }
 
+pub struct Context<'a, S> {
+    pub entry: &'a pack::data::Entry,
+    pub entry_end: u64,
+    pub decompressed: &'a [u8],
+    pub state: &'a mut S,
+}
+
 impl<T> Tree<T>
 where
     T: Default + Send,
@@ -44,16 +51,7 @@ where
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
-        MBFN: for<'r> Fn(
-                &'r mut T,
-                &pack::data::Entry,
-                u64,
-                &'r [u8],
-                &mut S,
-                &mut <P as Progress>::SubProgress,
-            ) -> Result<(), E>
-            + Send
-            + Sync,
+        MBFN: Fn(&mut T, &mut <P as Progress>::SubProgress, Context<'_, S>) -> Result<(), E> + Send + Sync,
         E: std::error::Error + Send + Sync + 'static,
     {
         self.pack_entries_end = Some(pack_entries_end);
