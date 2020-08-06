@@ -27,15 +27,9 @@ impl index::File {
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
-        // TODO: Doesn't need to be sorted, and doesn't need to be in memory
-        let index_entries =
-            util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
-
-        let (chunk_size, thread_limit, available_cores) =
-            parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
-        let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
-        // TODO: Use Chunks iterator here for dynamically generated chunks from iterators
-        let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
+        let (chunk_size, thread_limit, _) =
+            parallel::optimize_chunk_size_and_thread_limit(1000, Some(self.num_objects as usize), thread_limit, None);
+        let there_are_enough_entries_to_process = || self.num_objects > 10_000;
         let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Traversing");
             p.init(Some(self.num_objects()), Some("objects"));
@@ -52,10 +46,13 @@ impl index::File {
 
         in_parallel_if(
             there_are_enough_entries_to_process,
-            input_chunks,
+            util::Chunks {
+                iter: self.iter(),
+                size: chunk_size,
+            },
             thread_limit,
             state_per_thread,
-            |entries: &[index::Entry],
+            |entries: Vec<index::Entry>,
              (cache, ref mut processor, buf, progress)|
              -> Result<Vec<decode::Outcome>, Error> {
                 progress.init(Some(entries.len() as u32), Some("entries"));

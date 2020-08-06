@@ -126,7 +126,7 @@ impl index::File {
         None
     }
 
-    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a + Send> {
         match self.kind {
             index::Kind::V2 => Box::new(self.iter_v2()),
             index::Kind::V1 => Box::new(self.iter_v1()),
