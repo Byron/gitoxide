@@ -26,6 +26,7 @@
     * [x] Allow to provide a pre-resolve phase to initialize the resolver
     * [x] Use Tree in verify impl
     * [x] fix lookup todos
+    * [ ] per-object counts for statistics (and use that to optimize order when matching on object types)
     * [ ] nicer errors with descriptive messages
     * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
       system temp files)
