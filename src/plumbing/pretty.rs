@@ -1,50 +1,51 @@
 use anyhow::{anyhow, Result};
+use clap::Clap;
 use gitoxide_core as core;
 use std::io::{stderr, stdout, Write};
-use structopt::StructOpt;
 
 use gitoxide_core::pack::verify;
 use options::*;
 
 mod options {
+    use clap::{AppSettings, Clap};
     use gitoxide_core as core;
     use std::path::PathBuf;
-    use structopt::{clap::AppSettings, StructOpt};
 
-    #[derive(Debug, StructOpt)]
-    #[structopt(name = "gix-plumbing", about = "The git underworld")]
-    #[structopt(settings = &[AppSettings::SubcommandRequired, AppSettings::ColoredHelp])]
+    #[derive(Debug, Clap)]
+    #[clap(name = "gix-plumbing", about = "The git underworld")]
+    #[clap(setting = AppSettings::SubcommandRequired)]
+    #[clap(setting = AppSettings::ColoredHelp)]
     pub struct Args {
-        #[structopt(long, short = "t")]
+        #[clap(long, short = "t")]
         /// The amount of threads to use for some operations.
         ///
         /// If unset, or the value is 0, there is no limit and all logical cores can be used.
         pub threads: Option<usize>,
 
         /// Display verbose messages and progress information
-        #[structopt(long, short = "v")]
+        #[clap(long, short = "v")]
         pub verbose: bool,
 
         /// Bring up a terminal user interface displaying progress visually
-        #[structopt(long, conflicts_with("verbose"))]
+        #[clap(long, conflicts_with("verbose"))]
         pub progress: bool,
 
         /// The progress TUI will stay up even though the work is already completed.
         ///
         /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
-        #[structopt(long, conflicts_with("verbose"), requires("progress"))]
+        #[clap(long, conflicts_with("verbose"), requires("progress"))]
         pub progress_keep_open: bool,
 
-        #[structopt(subcommand)]
+        #[clap(subcommand)]
         pub cmd: Subcommands,
     }
 
-    #[derive(Debug, StructOpt)]
+    #[derive(Debug, Clap)]
     pub enum Subcommands {
         /// Create an index from a packfile.
         ///
         /// This command can also be used to stream packs to standard input or to repair partial packs.
-        #[structopt(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::ColoredHelp)]
         IndexFromPack {
             /// Specify how to iterate the pack, defaults to 'verify'
             ///
@@ -55,7 +56,7 @@ mod options {
             ///     * the input ourselves and validate that it matches with the hash provided in the pack
             ///  - restore
             ///     * hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
-            #[structopt(
+            #[clap(
                 long,
                 short = "i",
                 default_value = "verify",
@@ -66,30 +67,30 @@ mod options {
             /// Path to the pack file to read (with .pack extension).
             ///
             /// If unset, the pack file is expected on stdin.
-            #[structopt(long, short = "p")]
+            #[clap(long, short = "p")]
             pack_path: Option<PathBuf>,
 
             /// The folder into which to place the pack and the generated index file
             ///
             /// If unset, only informational output will be provided to standard output.
-            #[structopt(parse(from_os_str))]
+            #[clap(parse(from_os_str))]
             directory: Option<PathBuf>,
         },
         /// Verify the integrity of a pack or index file
-        #[structopt(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::ColoredHelp)]
         PackExplode {
-            #[structopt(long)]
+            #[clap(long)]
             /// Read written objects back and assert they match their source. Fail the operation otherwise.
             ///
             /// Only relevant if an object directory is set.
             verify: bool,
 
             /// delete the pack and index file after the operation is successful
-            #[structopt(long)]
+            #[clap(long)]
             delete_pack: bool,
 
             /// The amount of checks to run
-            #[structopt(
+            #[clap(
                 long,
                 short = "c",
                 default_value = "all",
@@ -102,25 +103,25 @@ mod options {
             /// This helps to determine overhead related to compression. If unset, the sink will
             /// only create hashes from bytes, which is usually limited by the speed at which input
             /// can be obtained.
-            #[structopt(long)]
+            #[clap(long)]
             sink_compress: bool,
 
             /// The '.pack' or '.idx' file to explode into loose objects
-            #[structopt(parse(from_os_str))]
+            #[clap(parse(from_os_str))]
             pack_path: PathBuf,
 
             /// The path into which all objects should be written. Commonly '.git/objects'
-            #[structopt(parse(from_os_str))]
+            #[clap(parse(from_os_str))]
             object_path: Option<PathBuf>,
         },
         /// Verify the integrity of a pack or index file
-        #[structopt(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::ColoredHelp)]
         PackVerify {
             /// output statistical information about the pack
-            #[structopt(long, short = "s")]
+            #[clap(long, short = "s")]
             statistics: bool,
             /// Determine the format to use when outputting statistics.
-            #[structopt(
+            #[clap(
                 long,
                 short = "f",
                 default_value = "human",
@@ -129,7 +130,7 @@ mod options {
             format: core::OutputFormat,
 
             /// The algorithm used to verify the pack. They differ in costs.
-            #[structopt(
+            #[clap(
                 long,
                 short = "a",
                 default_value = "less-time",
@@ -137,14 +138,14 @@ mod options {
             )]
             algorithm: core::pack::verify::Algorithm,
 
-            #[structopt(long, conflicts_with("re-encode"))]
+            #[clap(long, conflicts_with("re-encode"))]
             /// Decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
             ///
             /// Malformed objects should not usually occur, but could be injected on purpose or accident.
             /// This will reduce overall performance.
             decode: bool,
 
-            #[structopt(long)]
+            #[clap(long)]
             /// Decode and parse tags, commits and trees to validate their correctness, and re-encode them.
             ///
             /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
@@ -154,7 +155,7 @@ mod options {
             re_encode: bool,
 
             /// The '.pack' or '.idx' file whose checksum to validate.
-            #[structopt(parse(from_os_str))]
+            #[clap(parse(from_os_str))]
             path: PathBuf,
         },
     }
@@ -262,7 +263,7 @@ fn prepare_and_run<T: Send + 'static>(
 }
 
 pub fn main() -> Result<()> {
-    let args = Args::from_args();
+    let args = Args::parse();
     let thread_limit = args.threads;
     let verbose = args.verbose;
     let progress = args.progress;
@@ -285,7 +286,7 @@ pub fn main() -> Result<()> {
                     git_features::progress::DoOrDiscard::from(progress),
                     core::pack::index::Context {
                         thread_limit,
-                        iteration_mode: iteration_mode,
+                        iteration_mode,
                     },
                 )
             },

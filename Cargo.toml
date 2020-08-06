@@ -35,7 +35,7 @@ light = ["fast", "lean-cli", "git-features/interruptible"]
 small = ["lean-cli"]
 
 fast = ["git-features/parallel", "git-features/fast-sha1"]
-pretty-cli = ["structopt",
+pretty-cli = ["clap",
     "git-features/progress-prodash",
     "git-features/interruptible",
     "gitoxide-core/serde1",
@@ -61,7 +61,7 @@ anyhow = "1.0.31"
 gitoxide-core = { version = "0.1.0", path = "gitoxide-core" }
 git-features = { version = "^0.2.0", path = "git-features" }
 
-structopt = { version = "0.3.14", optional = true }
+clap = { version = "3.0.0-beta.1", optional = true }
 argh = { version = "0.1.3", optional = true, default-features = false }
 prodash = { version = "7.0.2", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }

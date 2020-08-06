@@ -245,7 +245,7 @@ The top-level command-line interface.
   * If disabled, the binary will be visibly smaller.
 * _(mutually exclusive)_
   * **pretty-cli**
-    * Use `clap` + `structopt` to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
+    * Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
     * provides a terminal user interface for detailed and exhaustive progress.
     * provides a line renderer for log-like progress
   * **lean-cli**

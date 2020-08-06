@@ -1,30 +1,31 @@
 use anyhow::Result;
+use clap::Clap;
 use gitoxide_core as core;
-use structopt::StructOpt;
 
 mod options {
-    use structopt::{clap::AppSettings, StructOpt};
+    use clap::{AppSettings, Clap};
 
-    #[derive(Debug, StructOpt)]
-    #[structopt(about = "The git")]
-    #[structopt(settings = &[AppSettings::SubcommandRequired, AppSettings::ColoredHelp])]
+    #[derive(Debug, Clap)]
+    #[clap(about = "The git")]
+    #[clap(setting = AppSettings::SubcommandRequired)]
+    #[clap(setting = AppSettings::ColoredHelp)]
     pub struct Args {
-        #[structopt(subcommand)]
+        #[clap(subcommand)]
         pub cmd: Subcommands,
     }
 
-    #[derive(Debug, StructOpt)]
+    #[derive(Debug, Clap)]
     pub enum Subcommands {
         /// Initialize the repository in the current directory.
-        #[structopt(alias = "initialize")]
-        #[structopt(setting = AppSettings::ColoredHelp)]
+        #[clap(alias = "initialize")]
+        #[clap(setting = AppSettings::ColoredHelp)]
         Init,
     }
 }
 
 pub fn main() -> Result<()> {
     use options::*;
-    let args = Args::from_args();
+    let args = Args::parse();
     match args.cmd {
         Subcommands::Init => core::repository::init(),
     }?;
