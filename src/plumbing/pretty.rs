@@ -12,7 +12,7 @@ mod options {
     use std::path::PathBuf;
 
     #[derive(Debug, Clap)]
-    #[clap(name = "gix-plumbing", about = "The git underworld")]
+    #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
     #[clap(setting = AppSettings::SubcommandRequired)]
     #[clap(setting = AppSettings::ColoredHelp)]
     pub struct Args {
@@ -46,6 +46,7 @@ mod options {
         ///
         /// This command can also be used to stream packs to standard input or to repair partial packs.
         #[clap(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::DisableVersion)]
         IndexFromPack {
             /// Specify how to iterate the pack, defaults to 'verify'
             ///
@@ -78,6 +79,7 @@ mod options {
         },
         /// Verify the integrity of a pack or index file
         #[clap(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::DisableVersion)]
         PackExplode {
             #[clap(long)]
             /// Read written objects back and assert they match their source. Fail the operation otherwise.
@@ -116,6 +118,7 @@ mod options {
         },
         /// Verify the integrity of a pack or index file
         #[clap(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::DisableVersion)]
         PackVerify {
             /// output statistical information about the pack
             #[clap(long, short = "s")]

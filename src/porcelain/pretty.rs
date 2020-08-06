@@ -6,7 +6,7 @@ mod options {
     use clap::{AppSettings, Clap};
 
     #[derive(Debug, Clap)]
-    #[clap(about = "The git")]
+    #[clap(about = "The rusty git", version = clap::crate_version!())]
     #[clap(setting = AppSettings::SubcommandRequired)]
     #[clap(setting = AppSettings::ColoredHelp)]
     pub struct Args {
@@ -19,6 +19,7 @@ mod options {
         /// Initialize the repository in the current directory.
         #[clap(alias = "initialize")]
         #[clap(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::DisableVersion)]
         Init,
     }
 }
