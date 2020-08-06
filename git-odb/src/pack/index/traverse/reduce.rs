@@ -1,5 +1,5 @@
 use crate::pack::{data::decode, index::traverse};
-use git_features::{parallel, progress::Progress};
+use git_features::{interruptible::is_interrupted, parallel, progress::Progress};
 use std::time::Instant;
 
 fn add_decode_result(lhs: &mut decode::Outcome, rhs: decode::Outcome) {
@@ -86,6 +86,10 @@ where
 
         add_decode_result(&mut self.stats.average, chunk_total);
         self.progress.lock().set(self.entries_seen);
+
+        if is_interrupted() {
+            return Err(Self::Error::Interrupted);
+        }
         Ok(())
     }
 

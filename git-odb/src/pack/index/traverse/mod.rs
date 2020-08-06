@@ -53,6 +53,9 @@ quick_error! {
         Crc32Mismatch { expected: u32, actual: u32, offset: u64, kind: git_object::Kind} {
             display("The CRC32 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
+        Interrupted {
+            display("Interrupted by user")
+        }
     }
 }
 

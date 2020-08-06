@@ -27,7 +27,7 @@
     * [x] Use Tree in verify impl
     * [x] ~~fix lookup todos~~ - it's nearly twice as slow
     * [x] per-object counts for statistics (and use that to optimize order when matching on object types)
-    * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
+    * [x] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
       system temp files)
          * [x] for lean mode
          * [x] for pretty mode
