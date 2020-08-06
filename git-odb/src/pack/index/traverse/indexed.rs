@@ -143,6 +143,13 @@ fn digest_statistics(items: Vec<pack::tree::Item<EntryWithDefault>>) -> index::t
         average.compressed_size += item.data.compressed_size as usize;
         average.object_size += item.data.object_size;
         average.num_deltas += item.data.level as u32;
+        use git_object::Kind::*;
+        match item.data._object_kind {
+            Blob => res.num_blobs += 1,
+            Tree => res.num_trees += 1,
+            Tag => res.num_tags += 1,
+            Commit => res.num_commits += 1,
+        };
     }
 
     average.decompressed_size /= items.len() as u64;

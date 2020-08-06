@@ -212,6 +212,16 @@ fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Outcome) 
         "pack size", ByteSize(stats.pack_size),
         width = width
     )?;
+    #[rustfmt::skip]
+    writeln!(
+        out,
+        "\n\t{:<width$}: {}\n\t{:<width$}: {}\n\t{:<width$}: {}\n\t{:<width$}: {}",
+        "num trees", stats.num_trees,
+        "num blobs", stats.num_blobs,
+        "num commits", stats.num_commits,
+        "num tags", stats.num_tags,
+        width = width
+    )?;
     let compression_ratio = stats.total_decompressed_entries_size as f64 / stats.total_compressed_entries_size as f64;
     let delta_compression_ratio = stats.total_object_size as f64 / stats.total_compressed_entries_size as f64;
     #[rustfmt::skip]

@@ -69,6 +69,10 @@ pub struct Outcome {
     pub total_object_size: u64,
     /// The amount of bytes occupied by the pack itself, in bytes
     pub pack_size: u64,
+    pub num_commits: u32,
+    pub num_trees: u32,
+    pub num_tags: u32,
+    pub num_blobs: u32,
 }
 
 impl Default for Outcome {
@@ -80,6 +84,10 @@ impl Default for Outcome {
             total_decompressed_entries_size: 0,
             total_object_size: 0,
             pack_size: 0,
+            num_blobs: 0,
+            num_commits: 0,
+            num_trees: 0,
+            num_tags: 0,
         }
     }
 }
