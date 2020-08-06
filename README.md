@@ -233,7 +233,6 @@ Provide a CLI to for the most basic user journey:
 * [ ] add a remote
 * [ ] push
   * [ ] create (thin) pack
-* [ ] transform _all_ `unwrap()` calls into `expect(…)` or `?` for quality. `parking_lot` will help for unwraps of poisoned locks.
   
 ## Cargo features guide
 
@@ -315,7 +314,6 @@ All feature toggles are additive.
  * **gitoxide-core**
 
  
-## Development Guide
 ## Plumbing vs Porcelain
 
 Both terms are coming from the `git` implementation itself, even though it won't necessarily point out which commands are plumbing and which

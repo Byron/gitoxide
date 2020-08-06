@@ -15,11 +15,14 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 
 release: release-default release-lean release-small ## all release builds
 
-release-default: always ## the default build, big but pretty (builds in ~2min 35s)
+release-default: always ## the default build, big but pretty and cross-platform (builds in ~2min 35s)
 	cargo build --release
 
-release-lean: always ## lean and fast (builds in ~1min 10s)
+release-lean: always ## lean and fast and cross-platform (builds in ~1min 30s)
 	cargo build --release --no-default-features --features lean
+
+release-light: always ## lean and fast and unix-only (builds in ~1min 14s)
+	cargo build --release --no-default-features --features light
 
 release-small: always ## minimal dependencies, at cost of performance (builds in ~46s)
 	cargo build --release --no-default-features --features small
@@ -31,6 +34,9 @@ debug-default: always ## the default build, big but pretty
 
 debug-lean: always ## lean and fast
 	cargo build --no-default-features --features lean
+
+debug-light: always ## lean and fast, unix only
+	cargo build --no-default-features --features light
 
 debug-small: always ## minimal dependencies, at cost of performance
 	cargo build --no-default-features --features small
