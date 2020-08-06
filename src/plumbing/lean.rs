@@ -130,7 +130,7 @@ mod options {
         /// owned objects, causing plenty of allocation to occour.
         pub re_encode: bool,
 
-        #[argh(option, short = 'a')]
+        #[argh(option)]
         /// the algorithm used to verify the pack. They differ in costs.
         ///
         /// Possible values are "less-time" and "less-memory". Default is "less-memory".
