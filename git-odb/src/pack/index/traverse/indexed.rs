@@ -27,7 +27,7 @@ impl index::File {
     {
         let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
         let tree = pack::tree::Tree::from_offsets_in_pack(
-            sorted_entries.into_iter().map(|e| EntryWithDefault::from(e)),
+            sorted_entries.into_iter().map(EntryWithDefault::from),
             |e| e.index_entry.pack_offset,
             pack.path(),
             root.add_child("indexing"),

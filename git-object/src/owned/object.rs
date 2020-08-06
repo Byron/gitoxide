@@ -3,6 +3,7 @@ use std::io;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(clippy::large_enum_variant)]
 pub enum Object {
     Tree(owned::Tree),
     Blob(owned::Blob),

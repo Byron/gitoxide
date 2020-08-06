@@ -27,9 +27,9 @@
     * [x] Use Tree in verify impl
     * [x] ~~fix lookup todos~~ - it's nearly twice as slow
     * [x] per-object counts for statistics (and use that to optimize order when matching on object types)
-    * [ ] nicer errors with descriptive messages
     * [ ] handle ctrl+c similarly to the pretty version to prevent leakage (or find a way to use
       system temp files)
+  * [ ] nicer errors with descriptive messages
   * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)

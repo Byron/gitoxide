@@ -18,5 +18,9 @@
   "total_compressed_entries_size": 51753,
   "total_decompressed_entries_size": 103701,
   "total_object_size": 288658,
-  "pack_size": 51875
+  "pack_size": 51875,
+  "num_commits": 10,
+  "num_trees": 15,
+  "num_tags": 0,
+  "num_blobs": 5
 }
