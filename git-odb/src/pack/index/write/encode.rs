@@ -9,7 +9,7 @@ use std::{cmp::Ordering, io};
 
 pub(crate) fn to_write(
     out: impl io::Write,
-    entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::types::TreeEntry>>,
+    entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::TreeEntry>>,
     pack_hash: &owned::Id,
     kind: pack::index::Kind,
     mut progress: impl Progress,

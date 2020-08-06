@@ -10,8 +10,19 @@ mod encode;
 mod error;
 pub use error::Error;
 
-mod types;
-use types::{ObjectKind, TreeEntry};
+pub struct TreeEntry {
+    pub id: owned::Id,
+    pub crc32: u32,
+}
+
+impl Default for TreeEntry {
+    fn default() -> Self {
+        TreeEntry {
+            id: owned::Id::null(),
+            crc32: 0,
+        }
+    }
+}
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -87,7 +98,6 @@ impl pack::index::File {
                         pack_offset,
                         TreeEntry {
                             id: owned::Id::null(),
-                            kind: ObjectKind::Base(header.to_kind().expect("a base object")),
                             crc32,
                         },
                     )?;
@@ -101,7 +111,6 @@ impl pack::index::File {
                         pack_offset,
                         TreeEntry {
                             id: owned::Id::null(),
-                            kind: ObjectKind::OfsDelta,
                             crc32,
                         },
                     )?;
@@ -167,7 +176,7 @@ impl pack::index::File {
 }
 
 pub fn modify_base(
-    entry: &mut pack::index::write::types::TreeEntry,
+    entry: &mut pack::index::write::TreeEntry,
     pack_entry: &pack::data::Entry,
     decompressed: &[u8],
     hash: HashKind,
