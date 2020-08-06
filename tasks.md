@@ -33,7 +33,7 @@
          * [x] for pretty mode
          * [x] allow interrupting the resolution phase too
          * [x] fix typo :D - thanks IJ for confusing me
-  * [ ] move --verbose, --progress and --progress-keep-open to the top-level 
+  * [x] move --verbose, --progress and --progress-keep-open to the top-level 
   * [ ] unit tests for bundle index write
   * [ ] journey test for command-line capabilities
   * [ ] nicer errors with descriptive messages

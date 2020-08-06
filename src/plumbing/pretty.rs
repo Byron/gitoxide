@@ -21,6 +21,20 @@ mod options {
         /// If unset, or the value is 0, there is no limit and all logical cores can be used.
         pub threads: Option<usize>,
 
+        /// Display verbose messages and progress information
+        #[structopt(long, short = "v")]
+        pub verbose: bool,
+
+        /// Bring up a terminal user interface displaying progress visually
+        #[structopt(long, conflicts_with("verbose"))]
+        pub progress: bool,
+
+        /// The progress TUI will stay up even though the work is already completed.
+        ///
+        /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
+        #[structopt(long, conflicts_with("verbose"), requires("progress"))]
+        pub progress_keep_open: bool,
+
         #[structopt(subcommand)]
         pub cmd: Subcommands,
     }
@@ -32,20 +46,6 @@ mod options {
         /// This command can also be used to stream packs to standard input or to repair partial packs.
         #[structopt(setting = AppSettings::ColoredHelp)]
         IndexFromPack {
-            /// Display verbose messages and progress information
-            #[structopt(long, short = "v")]
-            verbose: bool,
-
-            /// Bring up a terminal user interface displaying progress visually
-            #[structopt(long, conflicts_with("verbose"))]
-            progress: bool,
-
-            /// The progress TUI will stay up even though the work is already completed.
-            ///
-            /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
-            #[structopt(long, conflicts_with("verbose"), requires("progress"))]
-            progress_keep_open: bool,
-
             /// Specify how to iterate the pack, defaults to 'verify'
             ///
             /// Valid values are
@@ -105,20 +105,6 @@ mod options {
             #[structopt(long)]
             sink_compress: bool,
 
-            /// Display verbose messages and progress information
-            #[structopt(long, short = "v")]
-            verbose: bool,
-
-            /// Bring up a terminal user interface displaying progress visually
-            #[structopt(long, conflicts_with("verbose"))]
-            progress: bool,
-
-            /// The progress TUI will stay up even though the work is already completed.
-            ///
-            /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
-            #[structopt(long, conflicts_with("verbose"), requires("progress"))]
-            progress_keep_open: bool,
-
             /// The '.pack' or '.idx' file to explode into loose objects
             #[structopt(parse(from_os_str))]
             pack_path: PathBuf,
@@ -151,14 +137,6 @@ mod options {
             )]
             algorithm: core::pack::verify::Algorithm,
 
-            /// Display verbose messages and progress information
-            #[structopt(long, short = "v")]
-            verbose: bool,
-
-            /// Bring up a terminal user interface displaying progress visually
-            #[structopt(long, conflicts_with("verbose"))]
-            progress: bool,
-
             #[structopt(long, conflicts_with("re-encode"))]
             /// Decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
             ///
@@ -174,12 +152,6 @@ mod options {
             /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
             /// owned objects, causing plenty of allocation to occour.
             re_encode: bool,
-
-            /// The progress TUI will stay up even though the work is already completed.
-            ///
-            /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
-            #[structopt(long, conflicts_with("verbose"), requires("progress"))]
-            progress_keep_open: bool,
 
             /// The '.pack' or '.idx' file whose checksum to validate.
             #[structopt(parse(from_os_str))]
@@ -292,14 +264,15 @@ fn prepare_and_run<T: Send + 'static>(
 pub fn main() -> Result<()> {
     let args = Args::from_args();
     let thread_limit = args.threads;
+    let verbose = args.verbose;
+    let progress = args.progress;
+    let progress_keep_open = args.progress_keep_open;
+
     match args.cmd {
         Subcommands::IndexFromPack {
-            verbose,
             iteration_mode,
             pack_path,
             directory,
-            progress,
-            progress_keep_open,
         } => prepare_and_run(
             "index-from-pack",
             verbose,
@@ -318,10 +291,7 @@ pub fn main() -> Result<()> {
             },
         ),
         Subcommands::PackExplode {
-            verbose,
             check,
-            progress,
-            progress_keep_open,
             sink_compress,
             delete_pack,
             pack_path,
@@ -350,12 +320,9 @@ pub fn main() -> Result<()> {
         Subcommands::PackVerify {
             path,
             algorithm,
-            verbose,
-            progress,
             format,
             decode,
             re_encode,
-            progress_keep_open,
             statistics,
         } => prepare_and_run(
             "pack-verify",

@@ -11,6 +11,10 @@ mod options {
         /// print the program version.
         pub version: bool,
 
+        /// display verbose messages and progress information
+        #[argh(switch, short = 'v')]
+        pub verbose: bool,
+
         #[argh(option, short = 't')]
         /// the amount of threads to use for some operations.
         ///
@@ -34,10 +38,6 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "index-from-pack")]
     pub struct IndexFromPack {
-        /// display verbose messages and progress information
-        #[argh(switch, short = 'v')]
-        pub verbose: bool,
-
         /// specify how to iterate the pack, defaults to 'verify'
         ///
         /// Valid values are
@@ -78,10 +78,6 @@ mod options {
         /// delete the pack and index file after the operation is successful
         #[argh(switch)]
         pub delete_pack: bool,
-
-        /// display verbose messages and progress information
-        #[argh(switch, short = 'v')]
-        pub verbose: bool,
 
         /// compress bytes even when using the sink, i.e. no object directory is specified
         ///
@@ -139,9 +135,6 @@ mod options {
         /// output statistical information about the pack
         #[argh(switch, short = 's')]
         pub statistics: bool,
-        /// display verbose messages and progress information
-        #[argh(switch, short = 'v')]
-        pub verbose: bool,
         /// the '.pack' or '.idx' file whose checksum to validate.
         #[argh(positional)]
         pub path: PathBuf,
@@ -188,9 +181,9 @@ pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
     let thread_limit = cli.threads;
+    let verbose = cli.verbose;
     match cli.subcommand {
         SubCommands::IndexFromPack(IndexFromPack {
-            verbose,
             iteration_mode,
             pack_path,
             directory,
@@ -210,7 +203,6 @@ pub fn main() -> Result<()> {
             pack_path,
             sink_compress,
             object_path,
-            verbose,
             verify,
             check,
             delete_pack,
@@ -231,7 +223,6 @@ pub fn main() -> Result<()> {
         }
         SubCommands::PackVerify(PackVerify {
             path,
-            verbose,
             statistics,
             algorithm,
             decode,
