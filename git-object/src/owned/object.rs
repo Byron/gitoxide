@@ -4,10 +4,10 @@ use std::io;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Object {
-    Tag(owned::Tag),
-    Commit(owned::Commit),
     Tree(owned::Tree),
     Blob(owned::Blob),
+    Commit(owned::Commit),
+    Tag(owned::Tag),
 }
 
 /// Convenient extraction of typed object
@@ -38,10 +38,10 @@ impl Object {
     }
     pub fn kind(&self) -> crate::Kind {
         match self {
-            Object::Tag(_) => crate::Kind::Tag,
-            Object::Commit(_) => crate::Kind::Commit,
             Object::Tree(_) => crate::Kind::Tree,
             Object::Blob(_) => crate::Kind::Blob,
+            Object::Commit(_) => crate::Kind::Commit,
+            Object::Tag(_) => crate::Kind::Tag,
         }
     }
 }
@@ -52,8 +52,8 @@ impl Object {
         use Object::*;
         match self {
             Tree(v) => v.write_to(out),
-            Commit(v) => v.write_to(out),
             Blob(v) => v.write_to(out),
+            Commit(v) => v.write_to(out),
             Tag(v) => v.write_to(out),
         }
     }

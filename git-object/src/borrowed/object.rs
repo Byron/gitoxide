@@ -28,19 +28,19 @@ impl<'a> Signature<'a> {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Object<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    Tag(Tag<'a>),
-    Commit(Commit<'a>),
     Tree(Tree<'a>),
     Blob(Blob<'a>),
+    Commit(Commit<'a>),
+    Tag(Tag<'a>),
 }
 
 impl<'a> Object<'a> {
     pub fn from_bytes(kind: Kind, bytes: &'a [u8]) -> Result<Object<'a>, Error> {
         Ok(match kind {
-            Kind::Tag => Object::Tag(Tag::from_bytes(bytes)?),
             Kind::Tree => Object::Tree(Tree::from_bytes(bytes)?),
-            Kind::Commit => Object::Commit(Commit::from_bytes(bytes)?),
             Kind::Blob => Object::Blob(Blob { data: bytes }),
+            Kind::Commit => Object::Commit(Commit::from_bytes(bytes)?),
+            Kind::Tag => Object::Tag(Tag::from_bytes(bytes)?),
         })
     }
 }
@@ -73,10 +73,10 @@ impl<'a> Object<'a> {
     }
     pub fn kind(&self) -> Kind {
         match self {
-            Object::Tag(_) => Kind::Tag,
-            Object::Commit(_) => Kind::Commit,
             Object::Tree(_) => Kind::Tree,
             Object::Blob(_) => Kind::Blob,
+            Object::Commit(_) => Kind::Commit,
+            Object::Tag(_) => Kind::Tag,
         }
     }
 }

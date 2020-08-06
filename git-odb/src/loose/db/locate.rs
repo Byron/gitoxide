@@ -75,7 +75,7 @@ impl Db {
             (SmallVec::default(), None)
         } else {
             match kind {
-                object::Kind::Tag | object::Kind::Commit | object::Kind::Tree => {
+                object::Kind::Tree | object::Kind::Commit | object::Kind::Tag => {
                     let mut compressed = SmallVec::from_buf(compressed);
                     // Read small objects right away and store them in memory while we
                     // have a data handle available and 'hot'. Note that we don't decompress yet!

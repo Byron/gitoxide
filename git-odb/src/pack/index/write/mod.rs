@@ -92,7 +92,7 @@ impl pack::index::File {
 
             use pack::data::Header::*;
             match header {
-                Blob | Tree | Commit | Tag => {
+                Tree | Blob | Commit | Tag => {
                     last_base_index = Some(eid);
                     tree.add_root(
                         pack_offset,

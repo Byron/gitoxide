@@ -20,6 +20,11 @@ compression
 	total object size             : 288.7 KB
 	pack size                     : 51.9 KB
 
+	num trees                     : 15
+	num blobs                     : 5
+	num commits                   : 10
+	num tags                      : 0
+
 	compression ratio             : 2.00
 	delta compression ratio       : 5.58
 	delta gain                    : 2.78
