@@ -71,3 +71,47 @@ mod locate {
         Ok(())
     }
 }
+
+mod write_to_directory {
+    use crate::{fixture_path, pack::SMALL_PACK};
+    use git_features::progress;
+    use git_object::owned;
+    use git_odb::pack::{self, bundle};
+    use std::fs;
+    use std::path::Path;
+
+    fn expected_outcome() -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
+        Ok(pack::bundle::write::Outcome {
+            index: pack::index::write::Outcome {
+                index_kind: pack::index::Kind::V2,
+                index_hash: owned::Id::from_40_bytes_in_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
+                pack_hash: owned::Id::from_40_bytes_in_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
+                num_objects: 42,
+            },
+            pack_kind: pack::data::Kind::V2,
+        })
+    }
+
+    #[test]
+    fn without_providing_one() -> Result<(), Box<dyn std::error::Error>> {
+        let res = write_pack(None::<&Path>)?;
+        assert_eq!(res, expected_outcome()?);
+        Ok(())
+    }
+
+    fn write_pack(directory: Option<impl AsRef<Path>>) -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
+        let pack_file = fs::File::open(fixture_path(SMALL_PACK))?;
+        pack::Bundle::write_to_directory(
+            pack_file,
+            None,
+            directory,
+            progress::Discard,
+            bundle::write::Options {
+                thread_limit: None,
+                iteration_mode: pack::data::iter::Mode::Verify,
+                index_kind: pack::index::Kind::V2,
+            },
+        )
+        .map_err(Into::into)
+    }
+}
