@@ -45,24 +45,26 @@ impl index::File {
         let mut root = progress::DoOrDiscard::from(progress);
 
         let id = if check.file_checksum() {
-            let progress = root.add_child("Sha1 of index");
-            let verify_self = move || self.verify_checksum(progress);
-
             if self.pack_checksum() != pack.checksum() {
                 return Err(Error::PackMismatch {
                     actual: pack.checksum(),
                     expected: self.pack_checksum(),
                 });
             }
-            let mut progress = root.add_child("Sha1 of pack");
             let (pack_res, id) = parallel::join(
-                move || {
-                    let throughput = TimeThroughput::new(pack.data_len());
-                    let res = pack.verify_checksum();
-                    progress.done(throughput);
-                    res
+                {
+                    let mut progress = root.add_child("Sha1 of pack");
+                    move || {
+                        let throughput = TimeThroughput::new(pack.data_len());
+                        let res = pack.verify_checksum();
+                        progress.done(throughput);
+                        res
+                    }
                 },
-                verify_self,
+                {
+                    let progress = root.add_child("Sha1 of index");
+                    move || self.verify_checksum(progress)
+                },
             );
             pack_res?;
             id?
