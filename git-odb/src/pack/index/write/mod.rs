@@ -59,7 +59,8 @@ impl pack::index::File {
         let mut bytes_to_process = 0u64;
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
-        let mut tree = Tree::with_capacity(entries.size_hint().0)?;
+        let anticipated_num_objects = entries.size_hint().0;
+        let mut tree = Tree::with_capacity(anticipated_num_objects)?;
         let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
 
@@ -119,6 +120,12 @@ impl pack::index::File {
             last_seen_trailer = trailer;
             num_objects += 1;
             progress.inc();
+        }
+        if num_objects != anticipated_num_objects {
+            progress.info(format!(
+                "Recovered from pack streaming error, anticipated {} objects, got {}",
+                anticipated_num_objects, num_objects
+            ));
         }
         let num_objects: u32 = num_objects
             .try_into()

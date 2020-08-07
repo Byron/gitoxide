@@ -81,8 +81,26 @@ title plumbing
       )
     )
   )
-  (with "'recover' iteration mode"
+  (with "'restore' iteration mode"
+    (sandbox
+      cp "${PACK_FILE}" .
+      PACK_FILE="${PACK_FILE##*/}"
+      "$jtt" mess-in-the-middle "${PACK_FILE}"
 
+      it "generates an index and outputs information (instead of failing)" && {
+        WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-output-dir-restore-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -i restore -p "$PACK_FILE" "$PWD"
+      }
+
+      if test "$kind" = "max"; then
+      (with "--format json and the very same output directory"
+        it "generates the index, overwriting existing files, and outputs information as JSON" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-output-dir-restore-as-json-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json index-from-pack -i restore $PWD < "$PACK_FILE"
+        }
+      )
+      fi
+    )
   )
 )
 (when "running 'pack-explode"
@@ -96,7 +114,7 @@ title plumbing
     (when "using the --delete-pack flag"
       (sandbox
         (with "a valid pack"
-          cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
+          cp "${PACK_FILE}".idx "${PACK_FILE}".pack .
           PACK_FILE="${PACK_FILE##*/}"
           it "explodes the pack successfully and deletes the original pack and index" && {
             WITH_SNAPSHOT="$snapshot/plumbing-pack-explode-to-sink-delete-pack-success" \
