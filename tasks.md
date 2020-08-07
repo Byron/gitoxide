@@ -44,9 +44,9 @@
   * [ ] use usize for progress counting
   * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
     * [ ] probably using 'display' types for units
-    * [ ] Find a  way to measure live throughput
+  * [ ] Find a  way to measure live throughput (in line renderer and tui renderer)
+  * [ ] ~~percentages somewhere near the progress bar~~ For that we have a progress bar I suppose
   * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
-  * [ ] percentages somewhere near the progress bar
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack

@@ -109,7 +109,8 @@ mod write_to_directory {
         let mut res = write_pack(Some(&dir))?;
         let (index_path, data_path) = (res.index_path.take(), res.data_path.take());
         assert_eq!(res, expected_outcome()?);
-        let sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
+        let mut sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
+        sorted_entries.sort_by_key(|e| e.file_name());
         assert_eq!(sorted_entries.len(), 2, "we want a pack and the corresponding index");
 
         let pack_hash = res.index.data_hash.to_sha1_hex_string();
