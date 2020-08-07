@@ -163,7 +163,7 @@ where
         match output_statistics {
             Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
             #[cfg(feature = "serde1")]
-            Some(OutputFormat::Json) => drop(serde_json::to_writer_pretty(out, stats)),
+            Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, stats)?,
             _ => {}
         };
     }

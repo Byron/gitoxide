@@ -41,12 +41,10 @@ mod options {
         /// specify how to iterate the pack, defaults to 'verify'
         ///
         /// Valid values are
-        ///  - as-is
-        ///     * do not do anything and expect the pack file to be valid as per the trailing hash
-        ///  - verify
-        ///     * the input ourselves and validate that it matches with the hash provided in the pack
-        ///  - restore
-        ///     * hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
+        ///
+        ///  **as-is** do not do anything and expect the pack file to be valid as per the trailing hash,
+        ///  **verify** the input ourselves and validate that it matches with the hash provided in the pack,
+        ///  **restore** hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
         #[argh(option, short = 'i')]
         pub iteration_mode: Option<core::pack::index::IterationMode>,
 
@@ -144,6 +142,8 @@ mod options {
 use anyhow::Result;
 use git_features::progress;
 use gitoxide_core as core;
+use gitoxide_core::OutputFormat;
+use std::io;
 use std::io::{stderr, stdout};
 
 #[cfg(not(any(
@@ -196,6 +196,8 @@ pub fn main() -> Result<()> {
                 core::pack::index::Context {
                     thread_limit,
                     iteration_mode: iteration_mode.unwrap_or_default(),
+                    format: OutputFormat::Human,
+                    out: io::stdout(),
                 },
             )
         }

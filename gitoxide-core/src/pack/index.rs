@@ -1,3 +1,4 @@
+use crate::OutputFormat;
 use git_features::progress::Progress;
 use git_odb::pack;
 use std::{fs, io, path::PathBuf, str::FromStr};
@@ -47,24 +48,11 @@ impl From<IterationMode> for pack::data::iter::Mode {
     }
 }
 
-pub struct Context {
+pub struct Context<W: io::Write> {
     pub thread_limit: Option<usize>,
     pub iteration_mode: IterationMode,
-}
-
-impl From<Context> for pack::bundle::write::Options {
-    fn from(
-        Context {
-            thread_limit,
-            iteration_mode,
-        }: Context,
-    ) -> Self {
-        pack::bundle::write::Options {
-            thread_limit,
-            iteration_mode: iteration_mode.into(),
-            index_kind: pack::index::Kind::default(),
-        }
-    }
+    pub format: OutputFormat,
+    pub out: W,
 }
 
 pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
@@ -77,28 +65,47 @@ pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
     Ok(len)
 }
 
-pub fn from_pack<P>(
+pub fn from_pack<P, W: io::Write>(
     pack: Option<PathBuf>,
     directory: Option<PathBuf>,
     progress: P,
-    context: Context,
+    ctx: Context<W>,
 ) -> anyhow::Result<()>
 where
     P: Progress,
     <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     use anyhow::Context;
+    let options = pack::bundle::write::Options {
+        thread_limit: ctx.thread_limit,
+        iteration_mode: ctx.iteration_mode.into(),
+        index_kind: pack::index::Kind::default(),
+    };
+    let out = ctx.out;
+    let format = ctx.format;
     match pack {
         Some(pack) => {
             let pack_len = pack.metadata()?.len();
             let pack_file = fs::File::open(pack)?;
-            pack::Bundle::write_to_directory(pack_file, Some(pack_len), directory, progress, context.into())
+            pack::Bundle::write_to_directory(pack_file, Some(pack_len), directory, progress, options)
         }
         None => {
             let stdin = io::stdin();
-            pack::Bundle::write_to_directory(stdin.lock(), None, directory, progress, context.into())
+            pack::Bundle::write_to_directory(stdin.lock(), None, directory, progress, options)
         }
     }
     .with_context(|| "Failed to write pack and index")
-    .map(|_| ())
+    .map(|res| {
+        match format {
+            OutputFormat::Human => drop(human_output(out, res)),
+            #[cfg(feature = "serde1")]
+            OutputFormat::Json => serde_json::to_writer_pretty(out, &res)?,
+        };
+        ()
+    })
+}
+
+fn human_output(mut out: impl io::Write, res: pack::bundle::write::Outcome) -> io::Result<()> {
+    writeln!(&mut out, "index: {}", res.index.index_hash)?;
+    writeln!(&mut out, "pack: {}", res.index.pack_hash)
 }

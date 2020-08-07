@@ -43,6 +43,33 @@ title "CLI ${kind}"
 )
 
 title plumbing
+(when "running 'index-from-pack"
+  PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
+  (with "a valid and complete pack file"
+    (with "NO output directory specified"
+      (with "pack file passed as file"
+        it "generates an index and outputs pack and index information" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "${PACK_FILE}"
+        }
+      )
+      (with "pack file passed from stdin"
+        it "generates an index and outputs pack and index information" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack < "${PACK_FILE}"
+        }
+      )
+    )
+    (sandbox
+      (with "with an output directory specified"
+
+      )
+    )
+  )
+  (with "'recover' iteration mode"
+
+  )
+)
 (when "running 'pack-explode"
   PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2"
   (with "no objects directory specified"
