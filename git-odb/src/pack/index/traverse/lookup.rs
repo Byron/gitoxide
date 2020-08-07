@@ -61,7 +61,7 @@ impl index::File {
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {
-                    let result = self.process_entry_dispatch(
+                    let result = self.decode_and_process_entry(
                         check,
                         pack,
                         cache,

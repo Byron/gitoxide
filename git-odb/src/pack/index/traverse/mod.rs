@@ -43,8 +43,27 @@ impl index::File {
         ) -> Result<(), E>,
     {
         let mut root = progress::DoOrDiscard::from(progress);
+        let id = self.possibly_verify(pack, check, &mut root)?;
+        match algorithm {
+            Algorithm::Lookup => self.traverse_with_lookup(check, thread_limit, new_processor, new_cache, root, pack),
+            Algorithm::DeltaTreeLookup => {
+                self.traverse_with_index_lookup(check, thread_limit, new_processor, root, pack)
+            }
+        }
+        .map(|(stats, root)| (id, stats, root.into_inner()))
+    }
 
-        let id = if check.file_checksum() {
+    fn possibly_verify<P>(
+        &self,
+        pack: &pack::data::File,
+        check: SafetyCheck,
+        root: &mut progress::DoOrDiscard<P>,
+    ) -> Result<owned::Id, Error>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send,
+    {
+        Ok(if check.file_checksum() {
             if self.pack_checksum() != pack.checksum() {
                 return Err(Error::PackMismatch {
                     actual: pack.checksum(),
@@ -70,19 +89,11 @@ impl index::File {
             id?
         } else {
             self.index_checksum()
-        };
-
-        match algorithm {
-            Algorithm::Lookup => self.traverse_with_lookup(check, thread_limit, new_processor, new_cache, root, pack),
-            Algorithm::DeltaTreeLookup => {
-                self.traverse_with_index_lookup(check, thread_limit, new_processor, root, pack)
-            }
-        }
-        .map(|(stats, root)| (id, stats, root.into_inner()))
+        })
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn process_entry_dispatch<C, P, E>(
+    pub(crate) fn decode_and_process_entry<C, P, E>(
         &self,
         check: SafetyCheck,
         pack: &pack::data::File,
