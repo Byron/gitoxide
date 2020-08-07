@@ -50,14 +50,22 @@ title plumbing
       (with "pack file passed as file"
         it "generates an index and outputs pack and index information" && {
           WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "${PACK_FILE}"
+          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "$PACK_FILE"
         }
       )
       (with "pack file passed from stdin"
         it "generates an index and outputs pack and index information" && {
           WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack < "${PACK_FILE}"
+          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack < "$PACK_FILE"
         }
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the index and outputs information as JSON" && {
+            WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-as-json-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json index-from-pack < "$PACK_FILE"
+          }
+        )
+        fi
       )
     )
     (sandbox
@@ -194,7 +202,7 @@ title plumbing
     (with "statistics (JSON)"
       it "verifies the pack index successfully and with desired output" && {
         WITH_SNAPSHOT="$snapshot/plumbing-pack-verify-index-with-statistics-json-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" --threads 1 pack-verify --statistics --format json "$PACK_INDEX_FILE"
+        expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 pack-verify --statistics "$PACK_INDEX_FILE"
       }
     )
     fi

@@ -83,7 +83,7 @@ where
     };
     let out = ctx.out;
     let format = ctx.format;
-    match pack {
+    let res = match pack {
         Some(pack) => {
             let pack_len = pack.metadata()?.len();
             let pack_file = fs::File::open(pack)?;
@@ -94,15 +94,13 @@ where
             pack::Bundle::write_to_directory(stdin.lock(), None, directory, progress, options)
         }
     }
-    .with_context(|| "Failed to write pack and index")
-    .map(|res| {
-        match format {
-            OutputFormat::Human => drop(human_output(out, res)),
-            #[cfg(feature = "serde1")]
-            OutputFormat::Json => serde_json::to_writer_pretty(out, &res)?,
-        };
-        ()
-    })
+    .with_context(|| "Failed to write pack and index")?;
+    match format {
+        OutputFormat::Human => drop(human_output(out, res)),
+        #[cfg(feature = "serde1")]
+        OutputFormat::Json => serde_json::to_writer_pretty(out, &res)?,
+    };
+    Ok(())
 }
 
 fn human_output(mut out: impl io::Write, res: pack::bundle::write::Outcome) -> io::Result<()> {

@@ -36,6 +36,15 @@ mod options {
         #[clap(long, conflicts_with("verbose"), requires("progress"))]
         pub progress_keep_open: bool,
 
+        /// Determine the format to use when outputting statistics.
+        #[clap(
+            long,
+            short = "f",
+            default_value = "human",
+            possible_values(core::OutputFormat::variants())
+        )]
+        pub format: core::OutputFormat,
+
         #[clap(subcommand)]
         pub cmd: Subcommands,
     }
@@ -121,15 +130,6 @@ mod options {
             /// output statistical information about the pack
             #[clap(long, short = "s")]
             statistics: bool,
-            /// Determine the format to use when outputting statistics.
-            #[clap(
-                long,
-                short = "f",
-                default_value = "human",
-                possible_values(core::OutputFormat::variants())
-            )]
-            format: core::OutputFormat,
-
             /// The algorithm used to verify the pack. They differ in costs.
             #[clap(
                 long,
@@ -264,13 +264,16 @@ fn prepare_and_run<T: Send + 'static>(
 }
 
 pub fn main() -> Result<()> {
-    let args = Args::parse();
-    let thread_limit = args.threads;
-    let verbose = args.verbose;
-    let progress = args.progress;
-    let progress_keep_open = args.progress_keep_open;
+    let Args {
+        threads: thread_limit,
+        verbose,
+        progress,
+        progress_keep_open,
+        format,
+        cmd,
+    } = Args::parse();
 
-    match args.cmd {
+    match cmd {
         Subcommands::IndexFromPack {
             iteration_mode,
             pack_path,
@@ -280,7 +283,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
-            move |progress, _out, _err| {
+            move |progress, out, _err| {
                 core::pack::index::from_pack(
                     pack_path,
                     directory,
@@ -288,6 +291,8 @@ pub fn main() -> Result<()> {
                     core::pack::index::Context {
                         thread_limit,
                         iteration_mode,
+                        format,
+                        out,
                     },
                 )
             },
@@ -322,7 +327,6 @@ pub fn main() -> Result<()> {
         Subcommands::PackVerify {
             path,
             algorithm,
-            format,
             decode,
             re_encode,
             statistics,
