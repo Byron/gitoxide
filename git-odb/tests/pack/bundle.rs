@@ -79,6 +79,7 @@ mod write_to_directory {
     use git_odb::pack::{self, bundle};
     use std::fs;
     use std::path::Path;
+    use tempfile::TempDir;
 
     fn expected_outcome() -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
         Ok(pack::bundle::write::Outcome {
@@ -97,6 +98,24 @@ mod write_to_directory {
         let res = write_pack(None::<&Path>)?;
         assert_eq!(res, expected_outcome()?);
         Ok(())
+    }
+
+    #[test]
+    fn given_a_directory() -> Result<(), Box<dyn std::error::Error>> {
+        let dir = TempDir::new()?;
+        let res = write_pack(Some(&dir))?;
+        assert_eq!(res, expected_outcome()?);
+        let sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
+        assert_eq!(sorted_entries.len(), 2, "we want a pack and the corresponding index");
+
+        let pack_hash = res.index.pack_hash.to_sha1_hex_string();
+        assert_eq!(file_name(&sorted_entries[0]), format!("{}.idx", pack_hash));
+        assert_eq!(file_name(&sorted_entries[1]), format!("{}.pack", pack_hash));
+        Ok(())
+    }
+
+    fn file_name(entry: &fs::DirEntry) -> String {
+        entry.path().file_name().unwrap().to_str().unwrap().to_owned()
     }
 
     fn write_pack(directory: Option<impl AsRef<Path>>) -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
