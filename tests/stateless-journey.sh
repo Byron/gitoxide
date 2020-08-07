@@ -48,19 +48,19 @@ title plumbing
   (with "a valid and complete pack file"
     (with "NO output directory specified"
       (with "pack file passed as file"
-        it "generates an index and outputs pack and index information" && {
+        it "generates an index into a sink and outputs pack and index information" && {
           WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-success" \
           expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "$PACK_FILE"
         }
       )
       (with "pack file passed from stdin"
-        it "generates an index and outputs pack and index information" && {
+        it "generates an index into a sink and outputs pack and index information" && {
           WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-success" \
           expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack < "$PACK_FILE"
         }
         if test "$kind" = "max"; then
         (with "--format json"
-          it "generates the index and outputs information as JSON" && {
+          it "generates the index into a sink and outputs information as JSON" && {
             WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-no-output-dir-as-json-success" \
             expect_run $SUCCESSFULLY "$exe_plumbing" --format json index-from-pack < "$PACK_FILE"
           }
@@ -70,7 +70,14 @@ title plumbing
     )
     (sandbox
       (with "with an output directory specified"
-
+        it "generates an index and outputs information" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-output-dir-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "$PACK_FILE" "$PWD"
+        }
+        it "writes the index and pack into the directory (they have the same names, different suffixes)" && {
+          WITH_SNAPSHOT="$snapshot/plumbing-index-from-pack-output-dir-content" \
+          expect_run $SUCCESSFULLY ls
+        }
       )
     )
   )
