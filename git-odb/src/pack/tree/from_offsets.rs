@@ -117,6 +117,17 @@ impl<T> Tree<T> {
             .expect("continuously ascending pack offets") as usize;
         while bytes_to_skip != 0 {
             let buf = r.fill_buf().map_err(|err| Error::Io(err, "skip bytes"))?;
+            if buf.is_empty() {
+                // This means we have reached the end of file and can't make progress anymore, before we have satisfied our need
+                // for more
+                return Err(Error::Io(
+                    io::Error::new(
+                        io::ErrorKind::UnexpectedEof,
+                        "ran out of bytes before reading desired amount of bytes",
+                    ),
+                    "index file is damaged or corrupt",
+                ));
+            }
             let bytes = buf.len().min(bytes_to_skip);
             r.consume(bytes);
             bytes_to_skip -= bytes;

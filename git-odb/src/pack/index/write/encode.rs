@@ -93,7 +93,7 @@ pub(crate) fn to_write(
                     "Encoding breakdown - way too many 64bit offsets"
                 );
                 offsets64_be.push(entry.offset.to_be());
-                (offsets64_be.len() as u32) & HIGH_BIT
+                ((offsets64_be.len() - 1) as u32) | HIGH_BIT
             } else {
                 entry.offset as u32
             })?;

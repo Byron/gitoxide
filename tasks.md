@@ -41,7 +41,7 @@
 * **cli - verify**
    * [ ] break progress up into bytes decompressed and compressed bytes read
 * **progress - convenience**
-  * [ ] use usize for progress counting
+  * [x] use usize for progress counting
   * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
     * [ ] probably using 'display' types for units
   * [ ] Find a  way to measure live throughput (in line renderer and tui renderer)

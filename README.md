@@ -22,6 +22,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] [pack index verify](https://asciinema.org/a/346976) including each object sha1 and statistics
     * [x] pack explode, useful for transforming packs into loose objects for inspection or restoration
       * [x] verify written objects (by reading them back from disk)
+    * [x] index from pack - create an index file by streaming a pack file as done during clone and fetch
 * **git-object**
   * *decode (zero-copy)* borrowed objects
     * [x] commit

@@ -73,6 +73,7 @@ mod locate {
 }
 
 mod write_to_directory {
+    use crate::pack::SMALL_PACK_INDEX;
     use crate::{fixture_path, pack::SMALL_PACK};
     use git_features::progress;
     use git_object::owned;
@@ -97,8 +98,12 @@ mod write_to_directory {
 
     #[test]
     fn without_providing_one() -> Result<(), Box<dyn std::error::Error>> {
-        let res = write_pack(None::<&Path>)?;
+        let res = write_pack(None::<&Path>, SMALL_PACK)?;
         assert_eq!(res, expected_outcome()?);
+        assert_eq!(
+            res.index.index_hash,
+            pack::index::File::at(fixture_path(SMALL_PACK_INDEX))?.index_checksum()
+        );
         assert!(res.to_bundle().is_none());
         Ok(())
     }
@@ -106,7 +111,7 @@ mod write_to_directory {
     #[test]
     fn given_a_directory() -> Result<(), Box<dyn std::error::Error>> {
         let dir = TempDir::new()?;
-        let mut res = write_pack(Some(&dir))?;
+        let mut res = write_pack(Some(&dir), SMALL_PACK)?;
         let (index_path, data_path) = (res.index_path.take(), res.data_path.take());
         assert_eq!(res, expected_outcome()?);
         let mut sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
@@ -129,8 +134,11 @@ mod write_to_directory {
         entry.path().file_name().unwrap().to_str().unwrap().to_owned()
     }
 
-    fn write_pack(directory: Option<impl AsRef<Path>>) -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
-        let pack_file = fs::File::open(fixture_path(SMALL_PACK))?;
+    fn write_pack(
+        directory: Option<impl AsRef<Path>>,
+        pack_file: &str,
+    ) -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
+        let pack_file = fs::File::open(fixture_path(pack_file))?;
         pack::Bundle::write_to_directory(
             pack_file,
             None,
