@@ -37,9 +37,16 @@
   * [x] journey test for command-line capabilities
   * [x] unit tests for bundle index write
   * [ ] ~~nicer errors with descriptive messages~~ I don't feel it now, and it's trivial to add them when needed
-  * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
+  * [x] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli - verify**
-   * break progress up into bytes decompressed and compressed bytes read
+   * [ ] break progress up into bytes decompressed and compressed bytes read
+* **progress - convenience**
+  * [ ] use usize for progress counting
+  * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
+    * [ ] probably using 'display' types for units
+    * [ ] Find a  way to measure live throughput
+  * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
+  * [ ] percentages somewhere near the progress bar
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack
@@ -66,13 +73,6 @@
   * [ ] Clone into valid repository
   
 ### Other
-* **progress - convenience**
-  * [ ] use usize for progress counting
-  * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
-    * [ ] probably using 'display' types for units
-    * [ ] Find a  way to measure live throughput
-  * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
-  * [ ] percentages somewhere near the progress bar
 * **criner**
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
