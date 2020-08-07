@@ -19,6 +19,11 @@ fixtures="$root/fixtures"
 SUCCESSFULLY=0
 WITH_FAILURE=1
 
+
+function remove-paths() {
+  sed -E 's#/.*#"#g'
+}
+
 title "CLI ${kind}"
 (when "initializing a repository"
   snapshot="$snapshot/init"
@@ -99,6 +104,7 @@ snapshot="$snapshot/plumbing"
       (with "--format json and the very same output directory"
         it "generates the index, overwriting existing files, and outputs information as JSON" && {
           WITH_SNAPSHOT="$snapshot/output-dir-restore-as-json-success" \
+          SNAPSHOT_FILTER=remove-paths \
           expect_run $SUCCESSFULLY "$exe_plumbing" --format json index-from-pack -i restore $PWD < "$PACK_FILE"
         }
       )

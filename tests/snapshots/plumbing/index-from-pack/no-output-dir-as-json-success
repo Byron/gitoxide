@@ -23,7 +23,7 @@
       145,
       28
     ],
-    "pack_hash": [
+    "data_hash": [
       241,
       205,
       60,
@@ -47,5 +47,7 @@
     ],
     "num_objects": 30
   },
-  "pack_kind": "V2"
+  "pack_kind": "V2",
+  "index_path": null,
+  "data_path": null
 }
