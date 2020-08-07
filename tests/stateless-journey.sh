@@ -42,7 +42,8 @@ title "CLI ${kind}"
   )
 )
 
-(when "running 'plumbing pack-explode"
+title plumbing
+(when "running 'pack-explode"
   PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2"
   (with "no objects directory specified"
     it "explodes the pack successfully and with desired output" && {
@@ -60,14 +61,14 @@ title "CLI ${kind}"
             expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
           }
           it "removes the original files" && {
-            expect_run $WITH_FAILURE test -e ${PACK_FILE}.pack
-            expect_run $WITH_FAILURE test -e ${PACK_FILE}.idx
+            expect_run $WITH_FAILURE test -e "${PACK_FILE}".pack
+            expect_run $WITH_FAILURE test -e "${PACK_FILE}".idx
           }
         )
         (with "a pack file that is invalid somewhere"
           cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
           PACK_FILE="${PACK_FILE##*/}"
-          "$jtt" mess-in-the-middle ${PACK_FILE}.pack
+          "$jtt" mess-in-the-middle "${PACK_FILE}".pack
 
           (with "and all safety checks"
             it "does not explode the file at all" && {
@@ -76,8 +77,8 @@ title "CLI ${kind}"
             }
 
             it "did not touch index or pack file" && {
-              expect_exists ${PACK_FILE}.pack
-              expect_exists ${PACK_FILE}.idx
+              expect_exists "${PACK_FILE}".pack
+              expect_exists "${PACK_FILE}".idx
             }
           )
 
@@ -89,8 +90,8 @@ title "CLI ${kind}"
             }
 
             it "removes the original files" && {
-              expect_run $WITH_FAILURE test -e ${PACK_FILE}.pack
-              expect_run $WITH_FAILURE test -e ${PACK_FILE}.idx
+              expect_run $WITH_FAILURE test -e "${PACK_FILE}".pack
+              expect_run $WITH_FAILURE test -e "${PACK_FILE}".idx
             }
 
             (with_program tree
@@ -128,7 +129,7 @@ title "CLI ${kind}"
   )
 )
 
-(when "running 'plumbing pack-verify"
+(when "running 'pack-verify"
   (with "a valid pack file"
     PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
     it "verifies the pack successfully and with desired output" && {
