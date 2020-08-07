@@ -35,8 +35,8 @@
          * [x] fix typo :D - thanks IJ for confusing me
   * [x] move --verbose, --progress and --progress-keep-open to the top-level 
   * [x] journey test for command-line capabilities
-  * [ ] unit tests for bundle index write
-  * [ ] nicer errors with descriptive messages
+  * [x] unit tests for bundle index write
+  * [ ] ~~nicer errors with descriptive messages~~ I don't feel it now, and it's trivial to add them when needed
   * [ ] stress test generating an index for the linux kernel pack (uses 64 bit offsets)
 * **cli - verify**
    * break progress up into bytes decompressed and compressed bytes read

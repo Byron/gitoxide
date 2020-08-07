@@ -29,7 +29,9 @@ impl Default for TreeEntry {
 pub struct Outcome {
     pub index_kind: pack::index::Kind,
     pub index_hash: owned::Id,
-    pub pack_hash: owned::Id,
+
+    /// The hash of the '.pack' file, also found in its trailing bytes
+    pub data_hash: owned::Id,
     pub num_objects: u32,
 }
 
@@ -176,7 +178,7 @@ impl pack::index::File {
         Ok(Outcome {
             index_kind: kind,
             index_hash,
-            pack_hash,
+            data_hash: pack_hash,
             num_objects,
         })
     }

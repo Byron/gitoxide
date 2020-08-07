@@ -86,10 +86,12 @@ mod write_to_directory {
             index: pack::index::write::Outcome {
                 index_kind: pack::index::Kind::V2,
                 index_hash: owned::Id::from_40_bytes_in_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
-                pack_hash: owned::Id::from_40_bytes_in_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
+                data_hash: owned::Id::from_40_bytes_in_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
                 num_objects: 42,
             },
             pack_kind: pack::data::Kind::V2,
+            index_path: None,
+            data_path: None,
         })
     }
 
@@ -97,20 +99,28 @@ mod write_to_directory {
     fn without_providing_one() -> Result<(), Box<dyn std::error::Error>> {
         let res = write_pack(None::<&Path>)?;
         assert_eq!(res, expected_outcome()?);
+        assert!(res.to_bundle().is_none());
         Ok(())
     }
 
     #[test]
     fn given_a_directory() -> Result<(), Box<dyn std::error::Error>> {
         let dir = TempDir::new()?;
-        let res = write_pack(Some(&dir))?;
+        let mut res = write_pack(Some(&dir))?;
+        let (index_path, data_path) = (res.index_path.take(), res.data_path.take());
         assert_eq!(res, expected_outcome()?);
         let sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
         assert_eq!(sorted_entries.len(), 2, "we want a pack and the corresponding index");
 
-        let pack_hash = res.index.pack_hash.to_sha1_hex_string();
+        let pack_hash = res.index.data_hash.to_sha1_hex_string();
         assert_eq!(file_name(&sorted_entries[0]), format!("{}.idx", pack_hash));
+        assert_eq!(Some(sorted_entries[0].path()), index_path);
+
         assert_eq!(file_name(&sorted_entries[1]), format!("{}.pack", pack_hash));
+        assert_eq!(Some(sorted_entries[1].path()), data_path);
+
+        res.index_path = index_path;
+        assert!(res.to_bundle().transpose()?.is_some());
         Ok(())
     }
 

@@ -61,7 +61,7 @@ impl pack::Bundle {
         let pack_entries_iter = pack::data::Iter::new_from_header(buffered_pack, iteration_mode)?;
         let pack_kind = pack_entries_iter.kind();
 
-        let outcome = match directory {
+        let (outcome, data_path, index_path) = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = io::BufWriter::with_capacity(eight_pages, NamedTempFile::new_in(directory)?);
@@ -76,14 +76,14 @@ impl pack::Bundle {
                 )?;
 
                 let data_file = pack.writer.expect("data file to always be set in write mode");
-                let data_path = directory.join(format!("{}.pack", outcome.pack_hash.to_sha1_hex_string()));
+                let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_sha1_hex_string()));
                 let index_path = data_path.with_extension("idx");
 
                 data_file.persist(&data_path)?;
                 index_file
                     .into_inner()
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
-                    .persist(index_path)
+                    .persist(&index_path)
                     .map_err(|err| {
                         progress.info(format!(
                             "pack file at {} is retained despite failing to move the index file into place. You can use plumbing to make it usable.",
@@ -91,21 +91,27 @@ impl pack::Bundle {
                         ));
                         err
                     })?;
-                outcome
+                (outcome, Some(data_path), Some(index_path))
             }
-            None => pack::index::File::write_data_iter_to_stream(
-                index_kind,
-                move || new_pack_file_resolver(data_path),
-                pack_entries_iter,
-                thread_limit,
-                indexing_progress,
-                io::sink(),
-            )?,
+            None => (
+                pack::index::File::write_data_iter_to_stream(
+                    index_kind,
+                    move || new_pack_file_resolver(data_path),
+                    pack_entries_iter,
+                    thread_limit,
+                    indexing_progress,
+                    io::sink(),
+                )?,
+                None,
+                None,
+            ),
         };
 
         Ok(Outcome {
             index: outcome,
             pack_kind,
+            data_path,
+            index_path,
         })
     }
 }

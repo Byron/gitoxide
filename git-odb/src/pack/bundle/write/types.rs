@@ -1,5 +1,5 @@
 use crate::pack;
-use std::io;
+use std::{io, path::PathBuf};
 use tempfile::NamedTempFile;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -7,6 +7,15 @@ use tempfile::NamedTempFile;
 pub struct Outcome {
     pub index: pack::index::write::Outcome,
     pub pack_kind: pack::data::Kind,
+
+    pub index_path: Option<PathBuf>,
+    pub data_path: Option<PathBuf>,
+}
+
+impl Outcome {
+    pub fn to_bundle(&self) -> Option<Result<pack::Bundle, pack::bundle::Error>> {
+        self.index_path.as_ref().map(pack::Bundle::at)
+    }
 }
 
 pub(crate) struct PassThrough<R> {
