@@ -4,10 +4,11 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::Progress,
 };
+use git_object::owned;
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub(crate) fn traverse_with_lookup<P, C, Processor, E>(
+    pub fn traverse_with_lookup<P, C, Processor, E>(
         &self,
         check: SafetyCheck,
         thread_limit: Option<usize>,
@@ -15,7 +16,7 @@ impl index::File {
         new_cache: impl Fn() -> C + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(index::traverse::Outcome, P), Error>
+    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -28,6 +29,7 @@ impl index::File {
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
     {
+        let id = self.possibly_verify(pack, check, &mut root)?;
         let index_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
 
@@ -85,6 +87,6 @@ impl index::File {
             },
             Reducer::from_progress(&reduce_progress, pack.data_len(), check),
         )
-        .map(|res| (res, root))
+        .map(|res| (id, res, root))
     }
 }

@@ -42,22 +42,21 @@ impl index::File {
             &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
         ) -> Result<(), E>,
     {
-        let mut root = progress::DoOrDiscard::from(progress);
-        let id = self.possibly_verify(pack, check, &mut root)?;
+        let progress = progress::DoOrDiscard::from(progress);
         match algorithm {
-            Algorithm::Lookup => self.traverse_with_lookup(check, thread_limit, new_processor, new_cache, root, pack),
-            Algorithm::DeltaTreeLookup => {
-                self.traverse_with_index_lookup(check, thread_limit, new_processor, root, pack)
+            Algorithm::Lookup => {
+                self.traverse_with_lookup(check, thread_limit, new_processor, new_cache, progress, pack)
             }
+            Algorithm::DeltaTreeLookup => self.traverse_with_index(check, thread_limit, new_processor, progress, pack),
         }
-        .map(|(stats, root)| (id, stats, root.into_inner()))
+        .map(|(a, b, p)| (a, b, p.into_inner()))
     }
 
-    fn possibly_verify<P>(
+    pub(crate) fn possibly_verify<P>(
         &self,
         pack: &pack::data::File,
         check: SafetyCheck,
-        root: &mut progress::DoOrDiscard<P>,
+        root: &mut P,
     ) -> Result<owned::Id, Error>
     where
         P: Progress,

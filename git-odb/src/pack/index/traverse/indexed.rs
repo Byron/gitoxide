@@ -5,16 +5,17 @@ use crate::{
     pack::tree::traverse::Context,
 };
 use git_features::progress::Progress;
+use git_object::owned;
 
 impl index::File {
-    pub(crate) fn traverse_with_index_lookup<P, Processor, E>(
+    pub fn traverse_with_index<P, Processor, E>(
         &self,
         check: SafetyCheck,
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(index::traverse::Outcome, P), Error>
+    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send,
@@ -26,6 +27,8 @@ impl index::File {
         ) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        let id = self.possibly_verify(pack, check, &mut root)?;
+
         let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
         let tree = pack::tree::Tree::from_offsets_in_pack(
             sorted_entries.into_iter().map(EntryWithDefault::from),
@@ -84,7 +87,7 @@ impl index::File {
             },
         )?);
         outcome.pack_size = pack.data_len() as u64;
-        Ok((outcome, root))
+        Ok((id, outcome, root))
     }
 }
 
