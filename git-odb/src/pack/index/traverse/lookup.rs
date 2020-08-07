@@ -12,7 +12,7 @@ impl index::File {
         check: SafetyCheck,
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
-        make_cache: impl Fn() -> C + Send + Sync,
+        new_cache: impl Fn() -> C + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
     ) -> Result<(index::traverse::Outcome, P), Error>
@@ -41,7 +41,7 @@ impl index::File {
         });
         let state_per_thread = |index| {
             (
-                make_cache(),
+                new_cache(),
                 new_processor(),
                 Vec::with_capacity(2048),                                      // decode buffer
                 reduce_progress.lock().add_child(format!("thread {}", index)), // per thread progress

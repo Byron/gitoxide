@@ -92,11 +92,6 @@ impl index::File {
             Some((pack, mode, algorithm)) => self
                 .traverse(
                     pack,
-                    index::traverse::Options {
-                        algorithm,
-                        thread_limit,
-                        check: index::traverse::SafetyCheck::All,
-                    },
                     root.into_inner(),
                     || {
                         let mut encode_buf = Vec::with_capacity(2048);
@@ -105,6 +100,11 @@ impl index::File {
                         }
                     },
                     make_cache,
+                    index::traverse::Options {
+                        algorithm,
+                        thread_limit,
+                        check: index::traverse::SafetyCheck::All,
+                    },
                 )
                 .map(|(id, outcome, root)| (id, Some(outcome), root)),
         }

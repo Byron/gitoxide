@@ -186,11 +186,6 @@ where
         });
     let mut progress = bundle.index.traverse(
         &bundle.pack,
-        pack::index::traverse::Options {
-            algorithm,
-            thread_limit,
-            check: check.into(),
-        },
         progress,
         {
             let object_path = object_path.map(|p| p.as_ref().to_owned());
@@ -224,6 +219,11 @@ where
             }
         },
         pack::cache::DecodeEntryLRU::default,
+        pack::index::traverse::Options {
+            algorithm,
+            thread_limit,
+            check: check.into(),
+        },
     ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());

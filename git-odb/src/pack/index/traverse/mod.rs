@@ -21,14 +21,14 @@ impl index::File {
     pub fn traverse<P, C, Processor>(
         &self,
         pack: &pack::data::File,
+        progress: Option<P>,
+        new_processor: impl Fn() -> Processor + Send + Sync,
+        new_cache: impl Fn() -> C + Send + Sync,
         Options {
             algorithm,
             thread_limit,
             check,
         }: Options,
-        progress: Option<P>,
-        new_processor: impl Fn() -> Processor + Send + Sync,
-        make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Outcome, Option<P>), Error>
     where
         P: Progress,
@@ -70,7 +70,7 @@ impl index::File {
         };
 
         match algorithm {
-            Algorithm::Lookup => self.traverse_with_lookup(check, thread_limit, new_processor, make_cache, root, pack),
+            Algorithm::Lookup => self.traverse_with_lookup(check, thread_limit, new_processor, new_cache, root, pack),
             Algorithm::DeltaTreeLookup => {
                 self.traverse_with_index_lookup(check, thread_limit, new_processor, root, pack)
             }
