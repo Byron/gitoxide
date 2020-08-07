@@ -7,7 +7,7 @@ use crate::{
 use git_features::progress::Progress;
 
 impl index::File {
-    pub(crate) fn traverse_with_index_lookup<P, Processor>(
+    pub(crate) fn traverse_with_index_lookup<P, Processor, E>(
         &self,
         check: SafetyCheck,
         thread_limit: Option<usize>,
@@ -23,7 +23,8 @@ impl index::File {
             &[u8],
             &index::Entry,
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+        ) -> Result<(), E>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
         let tree = pack::tree::Tree::from_offsets_in_pack(

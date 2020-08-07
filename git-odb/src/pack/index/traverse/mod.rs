@@ -18,7 +18,7 @@ pub use types::{Algorithm, Options, Outcome, SafetyCheck};
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub fn traverse<P, C, Processor>(
+    pub fn traverse<P, C, Processor, E>(
         &self,
         pack: &pack::data::File,
         progress: Option<P>,
@@ -34,12 +34,13 @@ impl index::File {
         P: Progress,
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
+        E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(
             git_object::Kind,
             &[u8],
             &index::Entry,
             &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+        ) -> Result<(), E>,
     {
         let mut root = progress::DoOrDiscard::from(progress);
 
@@ -79,7 +80,7 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn process_entry_dispatch<C, P>(
+    pub(crate) fn process_entry_dispatch<C, P, E>(
         &self,
         check: SafetyCheck,
         pack: &pack::data::File,
@@ -88,16 +89,12 @@ impl index::File {
         progress: &mut P,
         header_buf: &mut [u8; 64],
         index_entry: &pack::index::Entry,
-        processor: &mut impl FnMut(
-            git_object::Kind,
-            &[u8],
-            &index::Entry,
-            &mut P,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+        processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
     ) -> Result<pack::data::decode::Outcome, Error>
     where
         C: pack::cache::DecodeEntry,
         P: Progress,
+        E: std::error::Error + Send + Sync + 'static,
     {
         let pack_entry = pack.entry(index_entry.pack_offset);
         let pack_entry_data_offset = pack_entry.data_offset;
@@ -132,7 +129,7 @@ impl index::File {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn process_entry<P>(
+pub(crate) fn process_entry<P, E>(
     check: SafetyCheck,
     object_kind: git_object::Kind,
     decompressed: &[u8],
@@ -140,15 +137,11 @@ pub(crate) fn process_entry<P>(
     header_buf: &mut [u8; 64],
     index_entry: &pack::index::Entry,
     pack_entry_crc32: impl FnOnce() -> u32,
-    processor: &mut impl FnMut(
-        git_object::Kind,
-        &[u8],
-        &index::Entry,
-        &mut P,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+    processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
 ) -> Result<(), Error>
 where
     P: Progress,
+    E: std::error::Error + Send + Sync + 'static,
 {
     if check.object_checksum() {
         let header_size =
@@ -179,5 +172,6 @@ where
             }
         }
     }
-    processor(object_kind, decompressed, &index_entry, progress).map_err(Into::into)
+    processor(object_kind, decompressed, &index_entry, progress)
+        .map_err(|err| Error::Processor(Box::new(err) as Box<dyn std::error::Error + Send + Sync>))
 }

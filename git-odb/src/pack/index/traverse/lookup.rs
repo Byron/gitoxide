@@ -7,7 +7,7 @@ use git_features::{
 
 /// Verify and validate the content of the index file
 impl index::File {
-    pub(crate) fn traverse_with_lookup<P, C, Processor>(
+    pub(crate) fn traverse_with_lookup<P, C, Processor, E>(
         &self,
         check: SafetyCheck,
         thread_limit: Option<usize>,
@@ -20,12 +20,13 @@ impl index::File {
         P: Progress,
         <P as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,
+        E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(
             git_object::Kind,
             &[u8],
             &index::Entry,
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>,
+        ) -> Result<(), E>,
     {
         let index_entries =
             util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));

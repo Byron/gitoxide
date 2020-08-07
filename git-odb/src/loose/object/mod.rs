@@ -17,4 +17,4 @@ pub struct Object {
 pub mod decode;
 pub mod header;
 pub mod stream;
-pub(crate) mod verify;
+pub mod verify;

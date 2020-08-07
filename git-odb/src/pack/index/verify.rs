@@ -118,7 +118,7 @@ impl index::File {
         buf: &[u8],
         index_entry: &index::Entry,
         progress: &mut P,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    ) -> Result<(), Error>
     where
         P: Progress,
     {
@@ -126,16 +126,12 @@ impl index::File {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let borrowed_object = borrowed::Object::from_bytes(object_kind, buf).map_err(|err| {
-                        Box::new(Error::ObjectDecode(err, object_kind, index_entry.oid))
-                            as Box<dyn std::error::Error + Send + Sync>
-                    })?;
+                    let borrowed_object = borrowed::Object::from_bytes(object_kind, buf)
+                        .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
                     if let Mode::Sha1CRC32DecodeEncode = mode {
                         let object = owned::Object::from(borrowed_object);
                         encode_buf.clear();
-                        object
-                            .write_to(&mut *encode_buf)
-                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+                        object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
                             if let git_object::Kind::Tree = object_kind {
@@ -145,12 +141,12 @@ impl index::File {
                                 }
                             }
                             if should_return_error {
-                                return Err(Box::new(Error::ObjectEncodeMismatch(
+                                return Err(Error::ObjectEncodeMismatch(
                                     object_kind,
                                     index_entry.oid,
                                     buf.into(),
                                     encode_buf.clone().into(),
-                                )));
+                                ));
                             }
                         }
                     }

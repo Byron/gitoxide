@@ -78,6 +78,11 @@ quick_error! {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
+        Verify(err: loose::object::verify::Error) {
+            display("Object didn't verify after right after writing it")
+            source(err)
+            from()
+        }
         ObjectEncodeMismatch(kind: git_object::Kind, actual: owned::Id, expected: owned::Id) {
             display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
         }
@@ -199,13 +204,12 @@ where
                 move |object_kind, buf, index_entry, progress| {
                     let written_id = out
                         .write_buf(object_kind, buf, HashKind::Sha1)
-                        .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))
-                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+                        .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))?;
                     if written_id != index_entry.oid {
                        if let git_object::Kind::Tree = object_kind {
                            progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
                        } else {
-                           return Err(Box::new(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id)))
+                           return Err(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id))
                        }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
