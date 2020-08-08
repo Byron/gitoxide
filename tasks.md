@@ -42,10 +42,9 @@
    * [ ] break progress up into bytes decompressed and compressed bytes read
 * **progress - convenience**
   * [x] use usize for progress counting
-  * [ ] Unit conversion probably using a new Unit enum (to support more than just bare strings)
-    * [ ] probably using 'display' types for units
-  * [ ] Find a  way to measure live throughput (in line renderer and tui renderer)
-  * [ ] ~~percentages somewhere near the progress bar~~ For that we have a progress bar I suppose
+  * [x] Unit conversion probably using a new Unit enum (to support more than just bare strings)
+  * [x] percentages somewhere near the progress bar
+  * [ ] Find a way to measure live throughput (in line renderer and tui renderer)
   * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
 * **asciinemas**
    * [ ] explode
