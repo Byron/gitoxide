@@ -40,7 +40,7 @@ impl pack::Bundle {
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
         let mut read_progress = progress.add_child("read pack");
-        read_progress.init(pack_size.map(|s| s as u32), Some("bytes"));
+        read_progress.init(pack_size.map(|s| s as usize), Some("bytes"));
         let pack = progress::Read {
             reader: pack,
             progress: read_progress,

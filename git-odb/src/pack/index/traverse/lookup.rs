@@ -39,7 +39,7 @@ impl index::File {
         let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
         let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Traversing");
-            p.init(Some(self.num_objects()), Some("objects"));
+            p.init(Some(self.num_objects() as usize), Some("objects"));
             p
         });
         let state_per_thread = |index| {
@@ -59,7 +59,7 @@ impl index::File {
             |entries: &[index::Entry],
              (cache, ref mut processor, buf, progress)|
              -> Result<Vec<decode::Outcome>, Error> {
-                progress.init(Some(entries.len() as u32), Some("entries"));
+                progress.init(Some(entries.len()), Some("entries"));
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {

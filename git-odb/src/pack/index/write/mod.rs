@@ -68,7 +68,7 @@ impl pack::index::File {
 
         root_progress.init(Some(4), Some("steps"));
         let mut progress = root_progress.add_child("indexing");
-        progress.init(entries.size_hint().1.map(|l| l as u32), Some("objects"));
+        progress.init(entries.size_hint().1, Some("objects"));
         let mut pack_entries_end: u64 = 0;
 
         for (eid, entry) in entries.enumerate() {
@@ -133,7 +133,7 @@ impl pack::index::File {
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
         last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
-        progress.show_throughput(indexing_start, num_objects, "objects");
+        progress.show_throughput(indexing_start, num_objects as usize, "objects");
         drop(progress);
 
         root_progress.inc();
@@ -174,7 +174,7 @@ impl pack::index::File {
             kind,
             root_progress.add_child("writing index file"),
         )?;
-        root_progress.show_throughput(indexing_start, num_objects, "objects");
+        root_progress.show_throughput(indexing_start, num_objects as usize, "objects");
         Ok(Outcome {
             index_kind: kind,
             index_hash,

@@ -9,15 +9,15 @@ impl Progress for Item {
         Item::add_child(self, name)
     }
 
-    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
-        Item::init(self, max, unit)
+    fn init(&mut self, max: Option<usize>, unit: Option<&'static str>) {
+        Item::init(self, max, unit.map(|u| u.into()))
     }
 
-    fn set(&mut self, step: u32) {
+    fn set(&mut self, step: usize) {
         Item::set(self, step)
     }
 
-    fn inc_by(&mut self, step: u32) {
+    fn inc_by(&mut self, step: usize) {
         self.inc_by(step)
     }
 

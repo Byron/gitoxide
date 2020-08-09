@@ -94,7 +94,7 @@ where
     P: Progress,
 {
     pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>) -> Self {
-        progress.lock().init(Some(num_objects), Some("objects"));
+        progress.lock().init(Some(num_objects as usize), Some("objects"));
         Reducer {
             item_count: 0,
             progress,
@@ -114,7 +114,7 @@ where
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let input = input?;
         self.item_count += input;
-        self.progress.lock().set(self.item_count as u32);
+        self.progress.lock().set(self.item_count);
         if is_interrupted() {
             return Err(Error::Interrupted);
         }
@@ -124,7 +124,7 @@ where
     fn finalize(self) -> Result<Self::Output, Self::Error> {
         self.progress
             .lock()
-            .show_throughput(self.start, self.item_count as u32, "objects");
+            .show_throughput(self.start, self.item_count, "objects");
         Ok(())
     }
 }

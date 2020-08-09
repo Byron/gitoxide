@@ -44,7 +44,7 @@
   * [x] use usize for progress counting
   * [x] Unit conversion probably using a new Unit enum (to support more than just bare strings)
   * [x] percentages somewhere near the progress bar
-  * [ ] Find a way to measure live throughput (in line renderer and tui renderer)
+  * [x] Find a way to measure live throughput (in line renderer and tui renderer)
   * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
 * **asciinemas**
    * [ ] explode

@@ -3,10 +3,10 @@ use std::time::Duration;
 
 pub struct Log {
     name: String,
-    max: Option<u32>,
+    max: Option<usize>,
     unit: Option<&'static str>,
     last_set: Option<std::time::SystemTime>,
-    step: u32,
+    step: usize,
     current_level: usize,
     max_level: usize,
 }
@@ -42,12 +42,12 @@ impl Progress for Log {
         }
     }
 
-    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
+    fn init(&mut self, max: Option<usize>, unit: Option<&'static str>) {
         self.max = max;
         self.unit = unit;
     }
 
-    fn set(&mut self, step: u32) {
+    fn set(&mut self, step: usize) {
         self.step = step;
         if self.current_level > self.max_level {
             return;
@@ -73,7 +73,7 @@ impl Progress for Log {
         }
     }
 
-    fn inc_by(&mut self, step: u32) {
+    fn inc_by(&mut self, step: usize) {
         self.set(self.step + step)
     }
 

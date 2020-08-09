@@ -22,7 +22,7 @@ pub struct Reducer<'a, P> {
     progress: &'a parking_lot::Mutex<P>,
     check: traverse::SafetyCheck,
     then: Instant,
-    entries_seen: u32,
+    entries_seen: usize,
     stats: traverse::Outcome,
 }
 
@@ -63,7 +63,7 @@ where
             }
             res => res,
         }?;
-        self.entries_seen += chunk_stats.len() as u32;
+        self.entries_seen += chunk_stats.len();
 
         let chunk_total = chunk_stats.into_iter().fold(
             decode::Outcome::default_from_kind(git_object::Kind::Tree),

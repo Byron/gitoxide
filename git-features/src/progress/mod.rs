@@ -32,19 +32,19 @@ pub trait Progress {
     /// to the progress tree (e.g. a headline).
     ///
     /// **Note** that this method can be called multiple times, changing the bounded-ness and unit at will.
-    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>);
+    fn init(&mut self, max: Option<usize>, unit: Option<&'static str>);
 
     /// Set the current progress to the given `step`. The cost of this call is negligible,
     /// making manual throttling *not* necessary.
     ///
     /// **Note**: that this call has no effect unless `init(…)` was called before.
-    fn set(&mut self, step: u32);
+    fn set(&mut self, step: usize);
 
     /// Increment the current progress to the given `step`. The cost of this call is negligible,
     /// making manual throttling *not* necessary.
     ///
     /// **Note**: that this call has no effect unless `init(…)` was called before.
-    fn inc_by(&mut self, step: u32);
+    fn inc_by(&mut self, step: usize);
 
     /// Increment the current progress to the given 1. The cost of this call is negligible,
     /// making manual throttling *not* necessary.
@@ -73,7 +73,7 @@ pub trait Progress {
         self.message(MessageLevel::Failure, message)
     }
     /// A shorthand to print throughput information
-    fn show_throughput(&mut self, start: Instant, total_items: u32, item_name: &str) {
+    fn show_throughput(&mut self, start: Instant, total_items: usize, item_name: &str) {
         let elapsed = start.elapsed().as_secs_f32();
         self.info(format!(
             "done {} {} in {:.02}s ({} {}/s)",
@@ -95,11 +95,11 @@ impl Progress for Discard {
         Discard
     }
 
-    fn init(&mut self, _max: Option<u32>, _unit: Option<&'static str>) {}
+    fn init(&mut self, _max: Option<usize>, _unit: Option<&'static str>) {}
 
-    fn set(&mut self, _step: u32) {}
+    fn set(&mut self, _step: usize) {}
 
-    fn inc_by(&mut self, _step: u32) {}
+    fn inc_by(&mut self, _step: usize) {}
 
     fn message(&mut self, _level: MessageLevel, _message: impl Into<String>) {}
 }
@@ -123,21 +123,21 @@ where
         }
     }
 
-    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
+    fn init(&mut self, max: Option<usize>, unit: Option<&'static str>) {
         match self {
             Either::Left(l) => l.init(max, unit),
             Either::Right(r) => r.init(max, unit),
         }
     }
 
-    fn set(&mut self, step: u32) {
+    fn set(&mut self, step: usize) {
         match self {
             Either::Left(l) => l.set(step),
             Either::Right(r) => r.set(step),
         }
     }
 
-    fn inc_by(&mut self, step: u32) {
+    fn inc_by(&mut self, step: usize) {
         match self {
             Either::Left(l) => l.inc_by(step),
             Either::Right(r) => r.inc_by(step),
@@ -184,15 +184,15 @@ where
         DoOrDiscard(self.0.add_child(name))
     }
 
-    fn init(&mut self, max: Option<u32>, unit: Option<&'static str>) {
+    fn init(&mut self, max: Option<usize>, unit: Option<&'static str>) {
         self.0.init(max, unit)
     }
 
-    fn set(&mut self, step: u32) {
+    fn set(&mut self, step: usize) {
         self.0.set(step)
     }
 
-    fn inc_by(&mut self, step: u32) {
+    fn inc_by(&mut self, step: usize) {
         self.0.inc_by(step)
     }
 
@@ -214,7 +214,7 @@ where
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let bytes_read = self.reader.read(buf)?;
-        self.progress.inc_by(bytes_read as u32);
+        self.progress.inc_by(bytes_read as usize);
         Ok(bytes_read)
     }
 }
