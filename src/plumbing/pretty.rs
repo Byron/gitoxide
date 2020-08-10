@@ -216,10 +216,10 @@ fn prepare_and_run<T: Send + 'static>(
             };
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
-            let render_tui = prodash::tui::render(
+            let render_tui = prodash::render::tui(
                 stdout(),
                 progress,
-                prodash::tui::Options {
+                prodash::render::tui::Options {
                     title: "gitoxide".into(),
                     frames_per_second: crate::shared::DEFAULT_FRAME_RATE,
                     stop_if_empty_progress: !progress_keep_open,

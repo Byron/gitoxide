@@ -66,9 +66,9 @@ impl pack::index::File {
         let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
 
-        root_progress.init(Some(4), Some("steps"));
+        root_progress.init(Some(4), Some("steps".into()));
         let mut progress = root_progress.add_child("indexing");
-        progress.init(entries.size_hint().1, Some("objects"));
+        progress.init(entries.size_hint().1, Some("objects".into()));
         let mut pack_entries_end: u64 = 0;
 
         for (eid, entry) in entries.enumerate() {

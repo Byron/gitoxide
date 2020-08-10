@@ -32,7 +32,7 @@ where
     };
 
     // Traverse the tree breadth first and loose the data produced for the base as it won't be needed anymore.
-    progress.init(None, Some("objects"));
+    progress.init(None, Some("objects".into()));
 
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed

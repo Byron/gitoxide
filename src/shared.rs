@@ -1,18 +1,18 @@
-#[cfg(any(feature = "prodash-line-renderer", feature = "prodash-tui-renderer"))]
+#[cfg(any(feature = "prodash-render-line", feature = "prodash-render-tui"))]
 pub const DEFAULT_FRAME_RATE: f32 = 6.0;
 
 #[allow(unused)]
-#[cfg(feature = "prodash-line-renderer")]
+#[cfg(feature = "prodash-render-line")]
 pub fn setup_line_renderer(
     progress: prodash::Tree,
-    level: prodash::tree::Level,
+    level: prodash::progress::key::Level,
     hide_cursor: bool,
-) -> prodash::line::JoinHandle {
+) -> prodash::render::line::JoinHandle {
     let output_is_terminal = atty::is(atty::Stream::Stderr);
-    prodash::line::render(
+    prodash::render::line(
         std::io::stderr(),
         progress,
-        prodash::line::Options {
+        prodash::render::line::Options {
             level_filter: Some(std::ops::RangeInclusive::new(level, level)),
             frames_per_second: DEFAULT_FRAME_RATE,
             initial_delay: Some(std::time::Duration::from_millis(1000)),
@@ -20,23 +20,23 @@ pub fn setup_line_renderer(
             colored: output_is_terminal && crosstermion::color::allowed(),
             timestamp: true,
             hide_cursor,
-            ..prodash::line::Options::default()
+            ..prodash::render::line::Options::default()
         },
     )
 }
 
 #[allow(unused)]
-#[cfg(feature = "prodash-line-renderer")]
+#[cfg(feature = "prodash-render-line")]
 pub fn setup_line_renderer_range(
     progress: prodash::Tree,
-    levels: std::ops::RangeInclusive<prodash::tree::Level>,
+    levels: std::ops::RangeInclusive<prodash::progress::key::Level>,
     hide_cursor: bool,
-) -> prodash::line::JoinHandle {
+) -> prodash::render::line::JoinHandle {
     let output_is_terminal = atty::is(atty::Stream::Stderr);
-    prodash::line::render(
+    prodash::render::line(
         std::io::stderr(),
         progress,
-        prodash::line::Options {
+        prodash::render::line::Options {
             level_filter: Some(levels),
             frames_per_second: DEFAULT_FRAME_RATE,
             initial_delay: Some(std::time::Duration::from_millis(1000)),
@@ -44,7 +44,7 @@ pub fn setup_line_renderer_range(
             colored: output_is_terminal && crosstermion::color::allowed(),
             timestamp: true,
             hide_cursor,
-            ..prodash::line::Options::default()
+            ..prodash::render::line::Options::default()
         },
     )
 }

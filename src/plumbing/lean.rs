@@ -146,25 +146,19 @@ use gitoxide_core::OutputFormat;
 use std::io;
 use std::io::{stderr, stdout};
 
-#[cfg(not(any(
-    feature = "prodash-line-renderer-crossterm",
-    feature = "prodash-line-renderer-termion"
-)))]
-fn prepare(verbose: bool, name: &str, _: u8, _: u8) -> ((), Option<progress::Log>) {
+#[cfg(not(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion")))]
+fn prepare(verbose: bool, name: &str, _: u8, _: u8) -> ((), Option<prodash::progress::Log>) {
     super::init_env_logger(verbose);
-    ((), Some(progress::Log::new(name, Some(1))))
+    ((), Some(prodash::progress::Log::new(name, Some(1))))
 }
 
-#[cfg(any(
-    feature = "prodash-line-renderer-crossterm",
-    feature = "prodash-line-renderer-termion"
-))]
+#[cfg(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion"))]
 fn prepare(
     verbose: bool,
     name: &str,
     level_start: u8,
     level_end: u8,
-) -> (Option<prodash::line::JoinHandle>, Option<prodash::tree::Item>) {
+) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
     super::init_env_logger(false);
 
     if verbose {

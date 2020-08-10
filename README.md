@@ -253,19 +253,19 @@ The top-level command-line interface.
     * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
     * If `pretty-cli` is enabled as well, `lean-cli` will take precedence, and you pay for building unnecessary dependencies.
     * provides a line renderer for log-like progress
-* **prodash-line-renderer-crossterm** or **prodash-line-renderer-termion** _(mutually exclusive)_
+* **prodash-render-line-crossterm** or **prodash-render-line-termion** _(mutually exclusive)_
   * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
     that appears after a short duration.
   
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-tui-renderer-crossterm*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm*
   * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-tui-renderer-termion*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion*
   * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-line-renderer-crossterm*
+* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm*
   * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-line-renderer-termion*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion*
   * for unix only, faster compile times, a little smaller
 * **light** = *lean-cli* + *fast*
   * crossplatform by nature as this comes with simplified log based progress
@@ -285,12 +285,6 @@ All feature toggles are additive.
 * **fast-sha1** 
   * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
     CPUs that support it, like AMD Ryzen or Intel Core i3.
-* **progress-log**
-  * Implement the `Progress` trait using the `log` crate. Throttle progress output to one every 0.5 seconds unless messages
-    are sent manually.
-* **progress-prodash**
-  * Implement the `Progress` trait for the tree data structures provided by `prodash`, which enables using a terminal user
-    interface for progress.
 * **interruptible**
   * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
   * If unset, these utilities will be a no-op which may lead to leaking temporary files when interrupted.

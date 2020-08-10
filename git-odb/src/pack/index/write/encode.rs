@@ -36,7 +36,7 @@ pub(crate) fn to_write(
     let needs_64bit_offsets =
         entries_sorted_by_oid.last().expect("at least one pack entry").offset > LARGE_OFFSET_THRESHOLD;
     let mut fan_out_be = [0u32; 256];
-    progress.init(Some(4), Some("steps"));
+    progress.init(Some(4), Some("steps".into()));
     let start = std::time::Instant::now();
     let _info = progress.add_child("generating fan-out table");
 

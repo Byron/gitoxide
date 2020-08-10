@@ -6,7 +6,7 @@ pub(crate) fn index_entries_sorted_by_offset_ascending(
     idx: &pack::index::File,
     mut progress: impl Progress,
 ) -> Vec<pack::index::Entry> {
-    progress.init(Some(idx.num_objects as usize), Some("entries"));
+    progress.init(Some(idx.num_objects as usize), Some("entries".into()));
     let start = Instant::now();
 
     let mut v = Vec::with_capacity(idx.num_objects as usize);
