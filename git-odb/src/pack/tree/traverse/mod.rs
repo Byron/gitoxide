@@ -51,7 +51,8 @@ where
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
-        progress: P,
+        object_progress: P,
+        size_progress: P,
         thread_limit: Option<usize>,
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Sync,
@@ -65,7 +66,7 @@ where
     {
         self.pack_entries_end = Some(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
-        let progress = parking_lot::Mutex::new(progress);
+        let object_progress = parking_lot::Mutex::new(object_progress);
 
         // SAFETY: We are owning 'self', and it's the UnsafeCell which we are supposed to use requiring unsafe on every access now.
         #[allow(unsafe_code)]
@@ -77,12 +78,12 @@ where
             |thread_index| {
                 (
                     Vec::<u8>::with_capacity(4096),
-                    progress.lock().add_child(format!("thread {}", thread_index)),
+                    object_progress.lock().add_child(format!("thread {}", thread_index)),
                     new_thread_state(),
                 )
             },
             |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &inspect_object),
-            Reducer::new(num_objects, &progress),
+            Reducer::new(num_objects, &object_progress, size_progress),
         )?;
         Ok(self.into_items())
     }
@@ -92,20 +93,23 @@ pub(crate) struct Reducer<'a, P> {
     item_count: usize,
     progress: &'a parking_lot::Mutex<P>,
     start: std::time::Instant,
+    size_progress: P,
 }
 
 impl<'a, P> Reducer<'a, P>
 where
     P: Progress,
 {
-    pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>) -> Self {
+    pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>, mut size_progress: P) -> Self {
         progress
             .lock()
             .init(Some(num_objects as usize), Some(progress::count("objects")));
+        size_progress.init(None, Some(progress::bytes()));
         Reducer {
             item_count: 0,
             progress,
             start: std::time::Instant::now(),
+            size_progress,
         }
     }
 }
@@ -114,13 +118,14 @@ impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,
 {
-    type Input = Result<usize, Error>;
+    type Input = Result<(usize, u64), Error>;
     type Output = ();
     type Error = Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-        let input = input?;
-        self.item_count += input;
+        let (num_objects, decompressed_size) = input?;
+        self.item_count += num_objects;
+        self.size_progress.inc_by(decompressed_size as usize);
         self.progress.lock().set(self.item_count);
         if is_interrupted() {
             return Err(Error::Interrupted);
@@ -128,8 +133,9 @@ where
         Ok(())
     }
 
-    fn finalize(self) -> Result<Self::Output, Self::Error> {
+    fn finalize(mut self) -> Result<Self::Output, Self::Error> {
         self.progress.lock().show_throughput(self.start);
+        self.size_progress.show_throughput(self.start);
         Ok(())
     }
 }

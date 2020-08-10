@@ -42,6 +42,7 @@ impl index::File {
             there_are_enough_objects,
             |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
             root.add_child("Resolving"),
+            root.add_child("Decoding"),
             thread_limit,
             pack.pack_end() as u64,
             || (new_processor(), [0u8; 64]),

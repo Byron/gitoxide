@@ -154,6 +154,7 @@ impl pack::index::File {
                 || bytes_to_process > 5_000_000,
                 resolver,
                 root_progress.add_child("Resolving"),
+                root_progress.add_child("Decoding"),
                 thread_limit,
                 pack_entries_end,
                 || (),

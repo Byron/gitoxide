@@ -10,7 +10,7 @@ pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     (bytes_buf, ref mut progress, state): &mut (Vec<u8>, P, S),
     resolve: F,
     modify_base: MBFN,
-) -> Result<usize, Error>
+) -> Result<(usize, u64), Error>
 where
     F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
@@ -21,6 +21,7 @@ where
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
     let bytes_buf = RefCell::new(bytes_buf);
     let mut num_objects = 0;
+    let mut decompressed_bytes: u64 = 0;
     let decompress_from_resolver = |slice: EntrySlice| -> Result<(pack::data::Entry, u64, Vec<u8>), Error> {
         let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize((slice.end - slice.start) as usize, 0);
@@ -60,6 +61,7 @@ where
         )
         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
         num_objects += 1;
+        decompressed_bytes += base_bytes.len() as u64;
         progress.inc();
         for child in base.store_changes_then_into_child_iter() {
             let (mut child_entry, entry_end, delta_bytes) = decompress_from_resolver(child.entry_slice())?;
@@ -88,7 +90,7 @@ where
         }
     }
 
-    Ok(num_objects)
+    Ok((num_objects, decompressed_bytes))
 }
 
 fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
