@@ -28,8 +28,8 @@ default = ["max"]
 max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm"]
 max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion"]
 
-lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interruptible"]
-lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interruptible"]
+lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interruptible", "prodash/progress-tree"]
+lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interruptible", "prodash/progress-tree"]
 
 light = ["fast", "lean-cli", "git-features/interruptible"]
 small = ["lean-cli"]
@@ -45,7 +45,7 @@ pretty-cli = ["clap",
     "prodash-render-line",
     "env_logger",
     "futures-lite"]
-lean-cli = ["argh", "prodash/progress-log", "prodash/progress-tree", "env_logger"]
+lean-cli = ["argh", "prodash/progress-log", "env_logger"]
 
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
 prodash-render-line-termion = ["prodash-render-line", "prodash/render-line-termion", "atty", "crosstermion"]

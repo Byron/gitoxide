@@ -13,7 +13,7 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 
 ##@ Release Builds
 
-release: release-default release-lean release-small ## all release builds
+release-all: release release-lean release-small ## all release builds
 
 release: always ## the default build, big but pretty (builds in ~2min 35s)
 	cargo build --release
