@@ -33,7 +33,6 @@ mod _impl {
     pub fn is_interrupted() -> bool {
         IS_INTERRUPTED.load(Ordering::Relaxed)
     }
-
     pub fn interrupt() {
         IS_INTERRUPTED.store(true, Ordering::Relaxed);
     }
@@ -45,6 +44,9 @@ mod _impl {
 #[cfg(not(feature = "interruptible"))]
 mod _impl {
     use std::io;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
     pub struct Read<R> {
         pub inner: R,
@@ -60,12 +62,14 @@ mod _impl {
     }
 
     pub fn is_interrupted() -> bool {
-        false
+        IS_INTERRUPTED.load(Ordering::Relaxed)
     }
-
-    pub fn interrupt() {}
-
-    pub fn uninterrupt() {}
+    pub fn interrupt() {
+        IS_INTERRUPTED.store(true, Ordering::Relaxed);
+    }
+    pub fn uninterrupt() {
+        IS_INTERRUPTED.store(false, Ordering::Relaxed);
+    }
 }
 
 pub use _impl::*;
