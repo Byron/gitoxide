@@ -192,7 +192,7 @@ where
 
 pub struct EagerIter<I: Iterator> {
     receiver: std::sync::mpsc::Receiver<Vec<I::Item>>,
-    chunk: Option<Vec<I::Item>>,
+    chunk: Option<std::vec::IntoIter<I::Item>>,
 }
 
 impl<I> EagerIter<I>
@@ -220,8 +220,8 @@ where
     }
 
     fn fill_buf_and_pop(&mut self) -> Option<I::Item> {
-        self.chunk = self.receiver.recv().ok();
-        self.chunk.as_mut().and_then(|c| c.pop())
+        self.chunk = self.receiver.recv().ok().map(|v| v.into_iter());
+        self.chunk.as_mut().and_then(|c| c.next())
     }
 }
 
@@ -234,7 +234,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.chunk.as_mut() {
-            Some(chunk) => chunk.pop(),
+            Some(chunk) => chunk.next(),
             None => self.fill_buf_and_pop(),
         }
     }
