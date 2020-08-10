@@ -2,29 +2,9 @@
 pub const DEFAULT_FRAME_RATE: f32 = 6.0;
 
 #[allow(unused)]
-#[cfg(feature = "prodash-render-line")]
-pub fn setup_line_renderer(
-    progress: prodash::Tree,
-    level: prodash::progress::key::Level,
-    hide_cursor: bool,
-) -> prodash::render::line::JoinHandle {
-    let output_is_terminal = atty::is(atty::Stream::Stderr);
-    prodash::render::line(
-        std::io::stderr(),
-        progress,
-        prodash::render::line::Options {
-            level_filter: Some(std::ops::RangeInclusive::new(level, level)),
-            frames_per_second: DEFAULT_FRAME_RATE,
-            initial_delay: Some(std::time::Duration::from_millis(1000)),
-            output_is_terminal,
-            colored: output_is_terminal && crosstermion::color::allowed(),
-            timestamp: true,
-            throughput: true,
-            hide_cursor,
-            ..prodash::render::line::Options::default()
-        },
-    )
-}
+pub type ProgressRange = std::ops::RangeInclusive<prodash::progress::key::Level>;
+#[allow(unused)]
+pub const STANDARD_RANGE: ProgressRange = 2..=2;
 
 #[allow(unused)]
 #[cfg(feature = "prodash-render-line")]

@@ -16,7 +16,7 @@ pub(crate) fn index_entries_sorted_by_offset_ascending(
     }
     v.sort_by_key(|e| e.pack_offset);
 
-    progress.show_throughput(start, idx.num_objects as usize, "entries");
+    progress.show_throughput(start);
     v
 }
 

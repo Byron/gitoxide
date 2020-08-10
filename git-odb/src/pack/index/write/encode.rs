@@ -114,7 +114,7 @@ pub(crate) fn to_write(
     out.inner.inner.flush()?;
 
     progress.inc();
-    progress.show_throughput(start, out.bytes as usize, "bytes");
+    progress.show_throughput(start);
 
     Ok(index_hash)
 }

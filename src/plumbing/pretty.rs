@@ -162,15 +162,19 @@ mod options {
     }
 }
 
+use crate::shared::ProgressRange;
+
 fn prepare_and_run<T: Send + 'static>(
     name: &str,
     verbose: bool,
     progress: bool,
     progress_keep_open: bool,
+    range: impl Into<Option<ProgressRange>>,
     run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>
         + Send
         + 'static,
 ) -> Result<T> {
+    use crate::shared::{self, STANDARD_RANGE};
     super::init_env_logger(false);
     use git_features::interruptible::{interrupt, is_interrupted};
     match (verbose, progress) {
@@ -183,7 +187,7 @@ fn prepare_and_run<T: Send + 'static>(
             let progress = prodash::Tree::new();
             let sub_progress = progress.add_child(name);
             let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
-            let ui_handle = crate::shared::setup_line_renderer(progress, 2, true);
+            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
             std::thread::spawn({
                 let tx = tx.clone();
                 move || loop {
@@ -284,6 +288,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
+            core::pack::index::PROGRESS_RANGE,
             move |progress, out, _err| {
                 core::pack::index::from_pack(
                     pack_path,
@@ -310,6 +315,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
+            None,
             move |progress, _out, _err| {
                 core::pack::explode::pack_or_pack_index(
                     pack_path,
@@ -336,6 +342,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
+            None,
             move |progress, out, err| {
                 let mode = match (decode, re_encode) {
                     (true, false) => verify::Mode::Sha1CRC32Decode,

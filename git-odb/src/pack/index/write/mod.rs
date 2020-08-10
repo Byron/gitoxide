@@ -136,7 +136,7 @@ impl pack::index::File {
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
         last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
-        progress.show_throughput(indexing_start, num_objects as usize, "objects");
+        progress.show_throughput(indexing_start);
         drop(progress);
 
         root_progress.inc();
@@ -177,7 +177,7 @@ impl pack::index::File {
             kind,
             root_progress.add_child("writing index file"),
         )?;
-        root_progress.show_throughput(indexing_start, num_objects as usize, "objects");
+        root_progress.show_throughput(indexing_start);
         Ok(Outcome {
             index_kind: kind,
             index_hash,

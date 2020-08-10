@@ -129,9 +129,7 @@ where
     }
 
     fn finalize(self) -> Result<Self::Output, Self::Error> {
-        self.progress
-            .lock()
-            .show_throughput(self.start, self.item_count, "objects");
+        self.progress.lock().show_throughput(self.start);
         Ok(())
     }
 }

@@ -65,6 +65,8 @@ pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
     Ok(len)
 }
 
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 2..=3;
+
 pub fn from_pack<P, W: io::Write>(
     pack: Option<PathBuf>,
     directory: Option<PathBuf>,

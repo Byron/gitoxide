@@ -70,10 +70,8 @@ impl<T> Tree<T> {
 
         let mut previous_cursor_position = None::<u64>;
 
-        let mut num_objects = 0;
         for data in data_sorted_by_offsets {
             let pack_offset = get_pack_offset(&data);
-            num_objects += 1;
             if let Some(previous_offset) = previous_cursor_position {
                 Self::advance_cursor_to_pack_offset(&mut r, pack_offset, previous_offset)?;
             };
@@ -103,7 +101,7 @@ impl<T> Tree<T> {
             progress.inc();
         }
 
-        progress.show_throughput(then, num_objects, "entries");
+        progress.show_throughput(then);
         Ok(tree)
     }
 
