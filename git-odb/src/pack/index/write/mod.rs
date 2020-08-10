@@ -70,8 +70,10 @@ impl pack::index::File {
         let indexing_start = std::time::Instant::now();
 
         root_progress.init(Some(4), Some(progress::steps()));
-        let mut progress = root_progress.add_child("indexing");
-        progress.init(entries.size_hint().1, Some(progress::count("objects")));
+        let mut objects_progress = root_progress.add_child("indexing");
+        objects_progress.init(entries.size_hint().1, Some(progress::count("objects")));
+        let mut decompressed_progress = root_progress.add_child("decompressing");
+        decompressed_progress.init(None, Some(progress::bytes()));
         let mut pack_entries_end: u64 = 0;
 
         for (eid, entry) in entries.enumerate() {
@@ -87,6 +89,8 @@ impl pack::index::File {
 
             let compressed_len = compressed.len();
             bytes_to_process += decompressed_size;
+            decompressed_progress.inc_by(decompressed_size as usize);
+
             let entry_len = header_size as usize + compressed_len;
             pack_entries_end = pack_offset + entry_len as u64;
 
@@ -124,10 +128,10 @@ impl pack::index::File {
             };
             last_seen_trailer = trailer;
             num_objects += 1;
-            progress.inc();
+            objects_progress.inc();
         }
         if num_objects != anticipated_num_objects {
-            progress.info(format!(
+            objects_progress.info(format!(
                 "Recovered from pack streaming error, anticipated {} objects, got {}",
                 anticipated_num_objects, num_objects
             ));
@@ -136,8 +140,11 @@ impl pack::index::File {
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
         last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
-        progress.show_throughput(indexing_start);
-        drop(progress);
+
+        objects_progress.show_throughput(indexing_start);
+        decompressed_progress.show_throughput(indexing_start);
+        drop(objects_progress);
+        drop(decompressed_progress);
 
         root_progress.inc();
 
