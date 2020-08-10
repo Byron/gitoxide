@@ -1,8 +1,12 @@
+use filebuffer::FileBuffer;
+
 use crate::pack;
 use git_features::{interruptible, progress, progress::Progress};
 use std::{
+    cell::RefCell,
     io,
     path::{Path, PathBuf},
+    rc::Rc,
 };
 use tempfile::NamedTempFile;
 
@@ -10,7 +14,6 @@ mod error;
 use error::Error;
 
 mod types;
-use filebuffer::FileBuffer;
 pub use types::Outcome;
 use types::PassThrough;
 
@@ -47,17 +50,17 @@ impl pack::Bundle {
         };
         let indexing_progress = progress.add_child("create index file");
 
-        let data_file = match directory.as_ref() {
-            Some(directory) => Some(NamedTempFile::new_in(directory.as_ref())?),
-            None => Some(NamedTempFile::new()?),
-        };
-        let data_path: Option<PathBuf> = data_file.as_ref().map(|f| f.as_ref().into());
-        let mut pack = PassThrough {
+        let data_file = Rc::new(RefCell::new(match directory.as_ref() {
+            Some(directory) => NamedTempFile::new_in(directory.as_ref())?,
+            None => NamedTempFile::new()?,
+        }));
+        let data_path: PathBuf = data_file.borrow().path().into();
+        let pack = PassThrough {
             reader: interruptible::Read { inner: pack },
-            writer: data_file,
+            writer: Some(data_file.clone()),
         };
         let eight_pages = 4096 * 8;
-        let buffered_pack = io::BufReader::with_capacity(eight_pages, &mut pack);
+        let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
         let pack_entries_iter = pack::data::Iter::new_from_header(buffered_pack, iteration_mode)?;
         let pack_kind = pack_entries_iter.kind();
 
@@ -75,11 +78,13 @@ impl pack::Bundle {
                     &mut index_file,
                 )?;
 
-                let data_file = pack.writer.expect("data file to always be set in write mode");
                 let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_sha1_hex_string()));
                 let index_path = data_path.with_extension("idx");
 
-                data_file.persist(&data_path)?;
+                Rc::try_unwrap(data_file)
+                    .expect("only one handle left after pack was consumed")
+                    .into_inner()
+                    .persist(&data_path)?;
                 index_file
                     .into_inner()
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
@@ -117,10 +122,9 @@ impl pack::Bundle {
 }
 
 fn new_pack_file_resolver(
-    data_path: Option<PathBuf>,
+    data_path: PathBuf,
 ) -> io::Result<impl Fn(pack::data::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> {
-    let data_path = data_path.expect("data path to be present if not in memory and there is no directory");
-    let mapped_file = FileBuffer::open(&data_path)?;
+    let mapped_file = FileBuffer::open(data_path)?;
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file
             .get(range.start as usize..range.end as usize)
