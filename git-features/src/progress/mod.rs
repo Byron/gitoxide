@@ -1,6 +1,6 @@
 use std::io;
 
-pub use prodash::progress::{Discard, DoOrDiscard, Either};
+pub use prodash::progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop};
 pub use prodash::{unit, Progress, Unit};
 
 pub fn bytes() -> Unit {

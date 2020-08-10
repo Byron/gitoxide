@@ -46,7 +46,7 @@ impl pack::Bundle {
         read_progress.init(pack_size.map(|s| s as usize), Some(progress::bytes()));
         let pack = progress::Read {
             reader: pack,
-            progress: read_progress,
+            progress: progress::ThroughputOnDrop::new(read_progress),
         };
         let indexing_progress = progress.add_child("create index file");
 
