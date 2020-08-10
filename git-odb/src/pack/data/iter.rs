@@ -224,10 +224,6 @@ where
 {
     type Item = Result<Entry, Error>;
 
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.objects_left as usize, Some(self.objects_left as usize))
-    }
-
     fn next(&mut self) -> Option<Self::Item> {
         if self.had_error || self.objects_left == 0 {
             return None;
@@ -242,6 +238,10 @@ where
         } else {
             Some(result)
         }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.objects_left as usize, Some(self.objects_left as usize))
     }
 }
 impl<R> std::iter::ExactSizeIterator for Iter<R> where R: io::BufRead {}
