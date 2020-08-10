@@ -1126,6 +1126,8 @@ dependencies = [
 [[package]]
 name = "prodash"
 version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7959e0ebe1ff13ae08d5125cd6dbef2e8856f14f7677bca7800985e7a31b73c3"
 dependencies = [
  "async-io",
  "bytesize",
