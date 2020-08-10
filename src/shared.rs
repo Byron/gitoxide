@@ -19,6 +19,7 @@ pub fn setup_line_renderer(
             output_is_terminal,
             colored: output_is_terminal && crosstermion::color::allowed(),
             timestamp: true,
+            throughput: true,
             hide_cursor,
             ..prodash::render::line::Options::default()
         },
@@ -44,6 +45,7 @@ pub fn setup_line_renderer_range(
             colored: output_is_terminal && crosstermion::color::allowed(),
             timestamp: true,
             hide_cursor,
+            throughput: true,
             ..prodash::render::line::Options::default()
         },
     )

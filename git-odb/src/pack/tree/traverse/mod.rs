@@ -3,7 +3,12 @@ use crate::{
     pack::data::EntrySlice,
     pack::tree::{Item, Tree},
 };
-use git_features::{interruptible::is_interrupted, parallel, parallel::in_parallel_if, progress::Progress};
+use git_features::{
+    interruptible::is_interrupted,
+    parallel,
+    parallel::in_parallel_if,
+    progress::{self, Progress},
+};
 use quick_error::quick_error;
 
 mod resolve;
@@ -94,7 +99,9 @@ where
     P: Progress,
 {
     pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>) -> Self {
-        progress.lock().init(Some(num_objects as usize), Some("objects".into()));
+        progress
+            .lock()
+            .init(Some(num_objects as usize), Some(progress::count("objects")));
         Reducer {
             item_count: 0,
             progress,

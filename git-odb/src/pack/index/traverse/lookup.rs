@@ -2,6 +2,7 @@ use super::{Error, Reducer, SafetyCheck};
 use crate::pack::{self, data::decode, index, index::util};
 use git_features::{
     parallel::{self, in_parallel_if},
+    progress,
     progress::Progress,
 };
 use git_object::owned;
@@ -39,7 +40,7 @@ impl index::File {
         let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
         let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Traversing");
-            p.init(Some(self.num_objects() as usize), Some("objects".into()));
+            p.init(Some(self.num_objects() as usize), Some(progress::count("objects")));
             p
         });
         let state_per_thread = |index| {
@@ -59,7 +60,7 @@ impl index::File {
             |entries: &[index::Entry],
              (cache, ref mut processor, buf, progress)|
              -> Result<Vec<decode::Outcome>, Error> {
-                progress.init(Some(entries.len()), Some("entries".into()));
+                progress.init(Some(entries.len()), Some(progress::count("entries")));
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {
