@@ -177,7 +177,7 @@ impl pack::index::File {
             kind,
             root_progress.add_child("writing index file"),
         )?;
-        root_progress.show_throughput(indexing_start);
+        root_progress.show_throughput_with(indexing_start, num_objects as usize, progress::count("objects"));
         Ok(Outcome {
             index_kind: kind,
             index_hash,
