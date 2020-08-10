@@ -46,6 +46,9 @@
   * [x] percentages somewhere near the progress bar
   * [x] Find a way to measure live throughput (in line renderer and tui renderer)
   * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
+* **parallel**
+  * [ ] sequential version of eager iterator
+  * [ ] auto-sequential eager iterator if there is not enough objects to process
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack

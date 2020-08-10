@@ -75,6 +75,7 @@ pub fn from_pack<P, W: io::Write>(
 ) -> anyhow::Result<()>
 where
     P: Progress,
+    <P as Progress>::SubProgress: Send + 'static,
     <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     use anyhow::Context;
@@ -93,7 +94,7 @@ where
         }
         None => {
             let stdin = io::stdin();
-            pack::Bundle::write_to_directory(stdin.lock(), None, directory, progress, options)
+            pack::Bundle::write_to_directory(stdin, None, directory, progress, options)
         }
     }
     .with_context(|| "Failed to write pack and index")?;

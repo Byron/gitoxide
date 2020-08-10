@@ -1,5 +1,5 @@
 use crate::pack;
-use std::{cell::RefCell, io, path::PathBuf, rc::Rc};
+use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -20,7 +20,7 @@ impl Outcome {
 
 pub(crate) struct PassThrough<R> {
     pub reader: R,
-    pub writer: Option<Rc<RefCell<NamedTempFile>>>,
+    pub writer: Option<Arc<parking_lot::Mutex<NamedTempFile>>>,
 }
 
 impl<R> io::Read for PassThrough<R>
@@ -31,7 +31,7 @@ where
         let bytes_read = self.reader.read(buf)?;
         if let Some(writer) = self.writer.as_mut() {
             use io::Write;
-            writer.borrow_mut().write_all(&buf[..bytes_read])?;
+            writer.lock().write_all(&buf[..bytes_read])?;
         }
         Ok(bytes_read)
     }
