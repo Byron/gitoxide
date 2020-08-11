@@ -285,8 +285,9 @@ All feature toggles are additive.
 * **fast-sha1** 
   * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on 
     CPUs that support it, like AMD Ryzen or Intel Core i3.
-* **interruptible**
+* **interrupt-handler**
   * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
+    * **Note that** `git_features::interruptible::init_interrupt_handler()` must be called at the start of the application.
   * If unset, these utilities will be a no-op which may lead to leaking temporary files when interrupted.
   * If the application already sets a handler, this handler will have no effect.
     

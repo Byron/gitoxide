@@ -28,15 +28,15 @@ default = ["max"]
 max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm"]
 max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion"]
 
-lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interruptible", "prodash/progress-tree"]
-lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interruptible", "prodash/progress-tree"]
+lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree"]
+lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree"]
 
-light = ["fast", "lean-cli", "git-features/interruptible"]
+light = ["fast", "lean-cli", "git-features/interrupt-handler"]
 small = ["lean-cli"]
 
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["clap",
-    "git-features/interruptible",
+    "git-features/interrupt-handler",
     "gitoxide-core/serde1",
     "prodash/progress-tree",
     "prodash/progress-tree-log",

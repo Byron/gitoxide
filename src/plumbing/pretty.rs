@@ -277,6 +277,7 @@ pub fn main() -> Result<()> {
         format,
         cmd,
     } = Args::parse();
+    git_features::interruptible::init_interrupt_handler();
 
     match cmd {
         Subcommands::IndexFromPack {
