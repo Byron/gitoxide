@@ -47,7 +47,8 @@
   * [x] Find a way to measure live throughput (in line renderer and tui renderer)
   * [ ] ~~a way to measure throughput on drop~~ - we don't know if the operation was successful, should not be automatic, ever
 * **parallel**
-  * [ ] sequential version of eager iterator
+  * [ ] ~~sequential version of eager iterator~~ - let's always keep it eager as this really helps with offloading IO and some processing
+        from the consumers.
   * [ ] auto-sequential eager iterator if there is not enough objects to process
 * **asciinemas**
    * [ ] explode
