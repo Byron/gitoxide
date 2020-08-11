@@ -3,12 +3,15 @@ use std::io;
 pub use prodash::progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop};
 pub use prodash::{unit, Progress, Unit};
 
-pub fn bytes() -> Unit {
-    unit::dynamic_and_mode(unit::Bytes, unit::display::Mode::with_throughput().and_percentage())
+pub fn bytes() -> Option<Unit> {
+    Some(unit::dynamic_and_mode(
+        unit::Bytes,
+        unit::display::Mode::with_throughput().and_percentage(),
+    ))
 }
 
-pub fn count(name: &'static str) -> Unit {
-    unit::dynamic_and_mode(
+pub fn count(name: &'static str) -> Option<Unit> {
+    Some(unit::dynamic_and_mode(
         unit::Human::new(
             {
                 let mut f = unit::human::Formatter::new();
@@ -18,11 +21,11 @@ pub fn count(name: &'static str) -> Unit {
             name,
         ),
         unit::display::Mode::with_throughput().and_percentage(),
-    )
+    ))
 }
 
-pub fn steps() -> Unit {
-    unit::dynamic(unit::Range::new("steps"))
+pub fn steps() -> Option<Unit> {
+    Some(unit::dynamic(unit::Range::new("steps")))
 }
 
 /// A structure passing every 'read' call through to the contained Progress instance using `inc_by(bytes_read)`.
