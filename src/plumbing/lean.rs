@@ -173,7 +173,7 @@ fn prepare(
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
-    git_features::interruptible::init_interrupt_handler();
+    git_features::interruptible::init_interrupt_handler(std::io::stderr());
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {

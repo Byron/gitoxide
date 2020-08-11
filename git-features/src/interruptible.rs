@@ -5,16 +5,33 @@ use std::{
 
 #[cfg(feature = "interrupt-handler")]
 mod _impl {
-    pub fn init_interrupt_handler() {
-        ctrlc::set_handler(|| {
-            super::IS_INTERRUPTED.store(true, std::sync::atomic::Ordering::Relaxed);
+    use std::{
+        io,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
+
+    pub fn init_interrupt_handler(mut message_channel: impl io::Write + Send + 'static) {
+        ctrlc::set_handler(move || {
+            const MESSAGES: &[&'static str] = &[
+                "interrupt requested", 
+                "please wait…", 
+                "the program will respond soon…", 
+                "if the program doesn't respond quickly enough, please let us know here: https://github.com/Byron/gitoxide/issues"
+            ];
+            static CURRENT_MESSAGE: AtomicUsize = AtomicUsize::new(0);
+            if !super::is_interrupted() {
+                CURRENT_MESSAGE.store(0, Ordering::Relaxed);
+            }
+            let msg_idx =CURRENT_MESSAGE.fetch_add(1, Ordering::Relaxed);
+            super::IS_INTERRUPTED.store(true, Ordering::Relaxed);
+            writeln!(message_channel, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
         })
         .expect("it is up to the application to ensure only one interrupt handler is installed, and this function is called only once.")
     }
 }
 #[cfg(not(feature = "interrupt-handler"))]
 mod _impl {
-    pub fn init_interrupt_handler() {}
+    pub fn init_interrupt_handler(mut message_channel: impl io::Write + Send + 'static) {}
 }
 pub use _impl::init_interrupt_handler;
 

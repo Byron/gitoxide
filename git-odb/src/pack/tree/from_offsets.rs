@@ -1,5 +1,8 @@
 use crate::{pack, pack::index::access::PackOffset, pack::tree::Tree};
-use git_features::progress::{self, Progress};
+use git_features::{
+    interruptible::is_interrupted,
+    progress::{self, Progress},
+};
 use quick_error::quick_error;
 use std::{
     fs, io,
@@ -25,6 +28,9 @@ quick_error! {
             display("An error occurred when handling the delta tree")
             source(err)
             from()
+        }
+        Interrupted {
+            display("Interrupted by user")
         }
     }
 }
@@ -70,7 +76,7 @@ impl<T> Tree<T> {
 
         let mut previous_cursor_position = None::<u64>;
 
-        for data in data_sorted_by_offsets {
+        for (idx, data) in data_sorted_by_offsets.enumerate() {
             let pack_offset = get_pack_offset(&data);
             if let Some(previous_offset) = previous_cursor_position {
                 Self::advance_cursor_to_pack_offset(&mut r, pack_offset, previous_offset)?;
@@ -99,6 +105,9 @@ impl<T> Tree<T> {
                 }
             };
             progress.inc();
+            if idx % 10_000 == 0 && is_interrupted() {
+                return Err(Error::Interrupted);
+            }
         }
 
         progress.show_throughput(then);
