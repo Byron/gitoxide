@@ -58,7 +58,7 @@ pub struct Iter<R> {
     hash: Option<Sha1>,
     mode: Mode,
     compressed: CompressedBytesMode,
-    compressed_buf: Vec<u8>,
+    compressed_buf: Option<Vec<u8>>,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -147,7 +147,7 @@ where
                 None
             },
             mode: trailer,
-            compressed_buf: Vec::with_capacity(4096),
+            compressed_buf: None,
         })
     }
 
@@ -174,9 +174,17 @@ where
 
         // Decompress object to learn it's compressed bytes
         let mut decompressor = self.decompressor.take().unwrap_or_default();
+        let compressed_buf = self.compressed_buf.take().unwrap_or_else(|| Vec::with_capacity(4096));
         decompressor.reset();
         let mut decompressed_reader = InflateReaderBoxed {
-            inner: read_and_pass_to(&mut self.read, Vec::with_capacity((entry.decompressed_size) as usize)),
+            inner: read_and_pass_to(
+                &mut self.read,
+                if self.compressed.keep() {
+                    Vec::with_capacity(entry.decompressed_size as usize)
+                } else {
+                    compressed_buf
+                },
+            ),
             decompressor,
         };
 
@@ -192,7 +200,7 @@ where
         self.offset += entry.header_size() as u64 + compressed_size;
         self.decompressor = Some(decompressed_reader.decompressor);
 
-        let compressed = decompressed_reader.inner.write;
+        let mut compressed = decompressed_reader.inner.write;
         debug_assert_eq!(
             compressed_size,
             compressed.len() as u64,
@@ -201,6 +209,23 @@ where
         if let Some(hash) = self.hash.as_mut() {
             hash.update(&compressed);
         }
+
+        let crc32 = if self.compressed.crc32() {
+            let mut header_buf = [0u8; 32];
+            let header_len = entry.header.to_write(bytes_copied, header_buf.as_mut())?;
+            let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
+            Some(git_features::hash::crc32_update(state, &compressed))
+        } else {
+            None
+        };
+
+        let compressed = if self.compressed.keep() {
+            Some(compressed)
+        } else {
+            compressed.clear();
+            self.compressed_buf = Some(compressed);
+            None
+        };
 
         // Last objects gets trailer (which is potentially verified)
         let trailer = if self.objects_left == 0 {
@@ -231,13 +256,12 @@ where
             None
         };
 
-        let compressed_size = compressed.len() as u64;
         Ok(Entry {
             header: entry.header,
             header_size: entry.header_size() as u16,
-            compressed: Some(compressed),
+            compressed,
             compressed_size,
-            crc32: None,
+            crc32,
             pack_offset,
             decompressed_size: bytes_copied,
             trailer,

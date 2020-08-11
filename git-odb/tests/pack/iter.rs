@@ -4,7 +4,7 @@ use git_odb::pack;
 fn size_of_entry() {
     assert_eq!(
         std::mem::size_of::<pack::data::iter::Entry>(),
-        88,
+        104,
         "let's keep the size in check as we have many of them"
     );
 }
@@ -74,8 +74,11 @@ mod new_from_header {
                     "last object contains the trailer - a hash over all bytes in the pack"
                 );
                 assert_eq!(iter.len(), 0);
+
+                assert_eq!(entry.crc32.is_none(), !compression_mode.crc32());
+                assert_eq!(entry.compressed.is_none(), !compression_mode.keep());
                 if compression_mode.crc32() {
-                    assert_eq!(entry.crc32.expect("crc32 computed"), 1234);
+                    assert_eq!(entry.crc32.expect("crc32 computed"), 3627824263);
                 }
                 if compression_mode.keep() {
                     assert_eq!(
@@ -83,7 +86,7 @@ mod new_from_header {
                             .compressed
                             .expect("bytes present when keeping compressed bytes")
                             .len(),
-                        42
+                        46
                     );
                 }
             }

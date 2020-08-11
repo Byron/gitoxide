@@ -2,10 +2,7 @@ use crate::{
     loose, pack,
     pack::tree::{traverse::Context, Tree},
 };
-use git_features::{
-    hash,
-    progress::{self, Progress},
-};
+use git_features::progress::{self, Progress};
 use git_object::{owned, HashKind};
 use std::{convert::Infallible, convert::TryInto, io};
 
@@ -66,7 +63,6 @@ impl pack::index::File {
         let mut last_base_index = None;
         let anticipated_num_objects = entries.size_hint().0;
         let mut tree = Tree::with_capacity(anticipated_num_objects)?;
-        let mut header_buf = [0u8; 16];
         let indexing_start = std::time::Instant::now();
 
         root_progress.init(Some(4), Some(progress::steps()));
@@ -80,10 +76,10 @@ impl pack::index::File {
             let pack::data::iter::Entry {
                 header,
                 pack_offset,
-                crc32: _, // TODO: use this
+                crc32,
                 header_size,
-                compressed,
-                compressed_size: _, // TODO: use this
+                compressed: _,
+                compressed_size,
                 decompressed_size,
                 trailer,
             } = entry?;
@@ -91,15 +87,10 @@ impl pack::index::File {
             bytes_to_process += decompressed_size;
             decompressed_progress.inc_by(decompressed_size as usize);
 
-            let compressed = compressed.expect("compressed bytes to be available for now");
-            let entry_len = header_size as usize + compressed.len();
-            pack_entries_end = pack_offset + entry_len as u64;
+            let entry_len = header_size as u64 + compressed_size;
+            pack_entries_end = pack_offset + entry_len;
 
-            let crc32 = {
-                let header_len = header.to_write(decompressed_size, header_buf.as_mut())?;
-                let state = hash::crc32_update(0, &header_buf[..header_len]);
-                hash::crc32_update(state, &compressed)
-            };
+            let crc32 = crc32.expect("crc32 to be computed by the iterator. Caller assures correct configuration.");
 
             use pack::data::Header::*;
             match header {
