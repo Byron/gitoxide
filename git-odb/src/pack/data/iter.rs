@@ -34,7 +34,13 @@ pub struct Entry {
     /// The bytes consumed while producing `decompressed`
     /// These do not contain the header, which makes it possible to easily replace a RefDelta with offset deltas
     /// when resolving thin packs.
-    pub compressed: Vec<u8>,
+    /// Depends on `CompressionMode` when the iterator is initialized
+    pub compressed: Option<Vec<u8>>,
+    /// The amount of bytes the compressed portion of the entry takes.
+    pub compressed_size: u64,
+    /// The CRC32 over the complete entry, that is encoded header and compressed object data.
+    /// Depends on `CompressionMode` when the iterator is initialized
+    pub crc32: Option<u32>,
     /// The amount of decompressed bytes
     pub decompressed_size: u64,
     /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
@@ -51,6 +57,8 @@ pub struct Iter<R> {
     objects_left: u32,
     hash: Option<Sha1>,
     mode: Mode,
+    compressed: CompressedBytesMode,
+    compressed_buf: Vec<u8>,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -83,6 +91,21 @@ pub enum CompressedBytesMode {
     KeepAndCRC32,
 }
 
+impl CompressedBytesMode {
+    pub fn crc32(&self) -> bool {
+        match self {
+            CompressedBytesMode::KeepAndCRC32 | CompressedBytesMode::CRC32 => true,
+            CompressedBytesMode::Keep | CompressedBytesMode::Ignore => false,
+        }
+    }
+    pub fn keep(&self) -> bool {
+        match self {
+            CompressedBytesMode::Keep | CompressedBytesMode::KeepAndCRC32 => true,
+            CompressedBytesMode::Ignore | CompressedBytesMode::CRC32 => false,
+        }
+    }
+}
+
 impl<R> Iter<R>
 where
     R: io::BufRead,
@@ -98,7 +121,7 @@ where
     /// Note that `read` is expected at the beginning of a valid pack file with header and trailer
     /// If `verify` is true, we will assert the SHA1 is actually correct before returning the last entry.
     /// Otherwise bit there is a chance that some kinds of bitrot or inconsistencies will not be detected.
-    pub fn new_from_header(mut read: R, trailer: Mode) -> Result<Iter<R>, Error> {
+    pub fn new_from_header(mut read: R, trailer: Mode, compressed: CompressedBytesMode) -> Result<Iter<R>, Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
@@ -111,6 +134,7 @@ where
         Ok(Iter {
             read,
             decompressor: None,
+            compressed,
             offset: 12,
             had_error: false,
             kind,
@@ -123,6 +147,7 @@ where
                 None
             },
             mode: trailer,
+            compressed_buf: Vec::with_capacity(4096),
         })
     }
 
@@ -150,12 +175,12 @@ where
         // Decompress object to learn it's compressed bytes
         let mut decompressor = self.decompressor.take().unwrap_or_default();
         decompressor.reset();
-        let mut reader = InflateReaderBoxed {
+        let mut decompressed_reader = InflateReaderBoxed {
             inner: read_and_pass_to(&mut self.read, Vec::with_capacity((entry.decompressed_size) as usize)),
             decompressor,
         };
 
-        let bytes_copied = io::copy(&mut reader, &mut io::sink())?;
+        let bytes_copied = io::copy(&mut decompressed_reader, &mut io::sink())?;
         debug_assert_eq!(
             bytes_copied, entry.decompressed_size,
             "We should have decompressed {} bytes, but got {} instead",
@@ -163,11 +188,11 @@ where
         );
 
         let pack_offset = self.offset;
-        let compressed_size = reader.decompressor.total_in;
+        let compressed_size = decompressed_reader.decompressor.total_in;
         self.offset += entry.header_size() as u64 + compressed_size;
-        self.decompressor = Some(reader.decompressor);
+        self.decompressor = Some(decompressed_reader.decompressor);
 
-        let compressed = reader.inner.write;
+        let compressed = decompressed_reader.inner.write;
         debug_assert_eq!(
             compressed_size,
             compressed.len() as u64,
@@ -206,11 +231,13 @@ where
             None
         };
 
+        let compressed_size = compressed.len() as u64;
         Ok(Entry {
             header: entry.header,
-            // TODO: remove this field once we can pack-encode the header above
             header_size: entry.header_size() as u16,
-            compressed,
+            compressed: Some(compressed),
+            compressed_size,
+            crc32: None,
             pack_offset,
             decompressed_size: bytes_copied,
             trailer,
@@ -296,6 +323,6 @@ impl pack::data::File {
     /// If an index is available, use the `traverse(…)` method instead for maximum performance.
     pub fn streaming_iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
-        Iter::new_from_header(reader, Mode::Verify)
+        Iter::new_from_header(reader, Mode::Verify, CompressedBytesMode::KeepAndCRC32)
     }
 }

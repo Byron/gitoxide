@@ -77,15 +77,20 @@ mod method {
         #[test]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[iter::Mode::AsIs, iter::Mode::Verify, iter::Mode::Restore] {
-                for (index_path, data_path) in V2_PACKS_AND_INDICES {
-                    let resolve = {
-                        let buf = FileBuffer::open(fixture_path(data_path))?;
-                        move |entry: EntrySlice, out: &mut Vec<u8>| {
-                            buf.get(entry.start as usize..entry.end as usize)
-                                .map(|slice| out.copy_from_slice(slice))
-                        }
-                    };
-                    assert_index_write(mode, index_path, data_path, resolve)?;
+                for compressed in &[
+                    iter::CompressedBytesMode::CRC32,
+                    iter::CompressedBytesMode::KeepAndCRC32,
+                ] {
+                    for (index_path, data_path) in V2_PACKS_AND_INDICES {
+                        let resolve = {
+                            let buf = FileBuffer::open(fixture_path(data_path))?;
+                            move |entry: EntrySlice, out: &mut Vec<u8>| {
+                                buf.get(entry.start as usize..entry.end as usize)
+                                    .map(|slice| out.copy_from_slice(slice))
+                            }
+                        };
+                        assert_index_write(mode, compressed, index_path, data_path, resolve)?;
+                    }
                 }
             }
             Ok(())
@@ -93,6 +98,7 @@ mod method {
 
         fn assert_index_write<F>(
             mode: &iter::Mode,
+            compressed: &iter::CompressedBytesMode,
             index_path: &&str,
             data_path: &&str,
             resolve: F,
@@ -100,8 +106,11 @@ mod method {
         where
             F: Fn(pack::data::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
         {
-            let pack_iter =
-                pack::data::Iter::new_from_header(io::BufReader::new(fs::File::open(fixture_path(data_path))?), *mode)?;
+            let pack_iter = pack::data::Iter::new_from_header(
+                io::BufReader::new(fs::File::open(fixture_path(data_path))?),
+                *mode,
+                *compressed,
+            )?;
 
             let mut actual = Vec::<u8>::new();
             let desired_kind = pack::index::Kind::default();
@@ -335,7 +344,10 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                 sorted_offsets[next_offset_index]
             };
             assert_eq!(
-                entry.compressed.len() as u64,
+                entry
+                    .compressed
+                    .expect("bytes present in default configuration of streaming iter")
+                    .len() as u64,
                 next_offset - entry.pack_offset - entry.header_size as u64,
                 "we get the compressed bytes region after the head to the next entry"
             );

@@ -61,7 +61,11 @@ impl pack::Bundle {
         };
         let eight_pages = 4096 * 8;
         let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
-        let pack_entries_iter = pack::data::Iter::new_from_header(buffered_pack, iteration_mode)?;
+        let pack_entries_iter = pack::data::Iter::new_from_header(
+            buffered_pack,
+            iteration_mode,
+            pack::data::iter::CompressedBytesMode::CRC32,
+        )?;
         let pack_kind = pack_entries_iter.kind();
         let pack_entries_iter = git_features::parallel::EagerIter::new(pack_entries_iter, 5000, 5);
 

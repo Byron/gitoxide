@@ -11,14 +11,21 @@ fn size_of_entry() {
 
 mod new_from_header {
     use crate::{fixture_path, pack::SMALL_PACK, pack::V2_PACKS_AND_INDICES};
-    use git_odb::{pack, pack::data::iter::Mode};
+    use git_odb::{
+        pack,
+        pack::data::iter::{CompressedBytesMode, Mode},
+    };
     use std::fs;
 
     #[test]
     fn header_encode() -> Result<(), Box<dyn std::error::Error>> {
         for (_, data_file) in V2_PACKS_AND_INDICES {
             let data = fs::read(fixture_path(data_file))?;
-            for entry in pack::data::Iter::new_from_header(std::io::BufReader::new(data.as_slice()), Mode::AsIs)? {
+            for entry in pack::data::Iter::new_from_header(
+                std::io::BufReader::new(data.as_slice()),
+                Mode::AsIs,
+                CompressedBytesMode::Ignore,
+            )? {
                 let entry = entry?;
 
                 let mut buf = Vec::<u8>::new();
@@ -42,23 +49,44 @@ mod new_from_header {
 
     #[test]
     fn generic_iteration() -> Result<(), Box<dyn std::error::Error>> {
-        for trailer_mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
-            let mut iter = pack::data::Iter::new_from_header(
-                std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
-                *trailer_mode,
-            )?;
+        for compression_mode in &[
+            CompressedBytesMode::Ignore,
+            CompressedBytesMode::Keep,
+            CompressedBytesMode::CRC32,
+            CompressedBytesMode::KeepAndCRC32,
+        ] {
+            for trailer_mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
+                let mut iter = pack::data::Iter::new_from_header(
+                    std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
+                    *trailer_mode,
+                    *compression_mode,
+                )?;
 
-            let num_objects = iter.len();
-            assert_eq!(iter.kind(), pack::data::Kind::V2);
-            assert_eq!(num_objects, 42);
-            assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
-            assert_eq!(iter.len(), 1);
-            assert_eq!(
-                iter.next().expect("last object")?.trailer.expect("trailer id"),
-                pack::data::File::at(fixture_path(SMALL_PACK))?.checksum(),
-                "last object contains the trailer - a hash over all bytes in the pack"
-            );
-            assert_eq!(iter.len(), 0);
+                let num_objects = iter.len();
+                assert_eq!(iter.kind(), pack::data::Kind::V2);
+                assert_eq!(num_objects, 42);
+                assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
+                assert_eq!(iter.len(), 1);
+                let entry = iter.next().expect("last object")?;
+                assert_eq!(
+                    entry.trailer.expect("trailer id"),
+                    pack::data::File::at(fixture_path(SMALL_PACK))?.checksum(),
+                    "last object contains the trailer - a hash over all bytes in the pack"
+                );
+                assert_eq!(iter.len(), 0);
+                if compression_mode.crc32() {
+                    assert_eq!(entry.crc32.expect("crc32 computed"), 1234);
+                }
+                if compression_mode.keep() {
+                    assert_eq!(
+                        entry
+                            .compressed
+                            .expect("bytes present when keeping compressed bytes")
+                            .len(),
+                        42
+                    );
+                }
+            }
         }
         Ok(())
     }
@@ -66,8 +94,11 @@ mod new_from_header {
     #[test]
     fn restore_missing_trailer() -> Result<(), Box<dyn std::error::Error>> {
         let pack = fs::read(fixture_path(SMALL_PACK))?;
-        let mut iter =
-            pack::data::Iter::new_from_header(std::io::BufReader::new(&pack[..pack.len() - 20]), Mode::Restore)?;
+        let mut iter = pack::data::Iter::new_from_header(
+            std::io::BufReader::new(&pack[..pack.len() - 20]),
+            Mode::Restore,
+            CompressedBytesMode::Ignore,
+        )?;
         let num_objects = iter.len();
         assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
         assert_eq!(
@@ -81,8 +112,11 @@ mod new_from_header {
     #[test]
     fn restore_partial_pack() -> Result<(), Box<dyn std::error::Error>> {
         let pack = fs::read(fixture_path(SMALL_PACK))?;
-        let mut iter =
-            pack::data::Iter::new_from_header(std::io::BufReader::new(&pack[..pack.len() / 2]), Mode::Restore)?;
+        let mut iter = pack::data::Iter::new_from_header(
+            std::io::BufReader::new(&pack[..pack.len() / 2]),
+            Mode::Restore,
+            CompressedBytesMode::Ignore,
+        )?;
         let mut num_objects = 0;
         while let Some(entry) = iter.next() {
             let entry = entry?;

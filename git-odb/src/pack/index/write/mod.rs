@@ -80,8 +80,10 @@ impl pack::index::File {
             let pack::data::iter::Entry {
                 header,
                 pack_offset,
+                crc32: _, // TODO: use this
                 header_size,
                 compressed,
+                compressed_size: _, // TODO: use this
                 decompressed_size,
                 trailer,
             } = entry?;
@@ -89,6 +91,7 @@ impl pack::index::File {
             bytes_to_process += decompressed_size;
             decompressed_progress.inc_by(decompressed_size as usize);
 
+            let compressed = compressed.expect("compressed bytes to be available for now");
             let entry_len = header_size as usize + compressed.len();
             pack_entries_end = pack_offset + entry_len as u64;
 
