@@ -144,7 +144,7 @@ where
             decompressor,
         };
 
-        let (bytes_copied, decompressed) = if entry.header.is_delta() {
+        let (bytes_copied, decompressed) = if entry.header.is_base() {
             let mut decompressed = Vec::with_capacity(entry.decompressed_size as usize);
             let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
             (bytes_copied, Some(decompressed))

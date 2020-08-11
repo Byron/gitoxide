@@ -87,11 +87,10 @@ impl pack::index::File {
                 trailer,
             } = entry?;
 
-            let compressed_len = compressed.len();
             bytes_to_process += decompressed_size;
             decompressed_progress.inc_by(decompressed_size as usize);
 
-            let entry_len = header_size as usize + compressed_len;
+            let entry_len = header_size as usize + compressed.len();
             pack_entries_end = pack_offset + entry_len as u64;
 
             let crc32 = {

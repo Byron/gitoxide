@@ -159,6 +159,9 @@ impl Header {
             _ => false,
         }
     }
+    pub fn is_base(&self) -> bool {
+        !self.is_delta()
+    }
 }
 
 impl Header {
