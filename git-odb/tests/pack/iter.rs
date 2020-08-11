@@ -4,7 +4,7 @@ use git_odb::pack;
 fn size_of_entry() {
     assert_eq!(
         std::mem::size_of::<pack::data::iter::Entry>(),
-        112,
+        88,
         "let's keep the size in check as we have many of them"
     );
 }

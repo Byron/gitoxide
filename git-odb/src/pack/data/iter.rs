@@ -35,8 +35,6 @@ pub struct Entry {
     /// These do not contain the header, which makes it possible to easily replace a RefDelta with offset deltas
     /// when resolving thin packs.
     pub compressed: Vec<u8>,
-    /// The decompressed data of a base object, which are the only ones who are fully resolved.
-    pub decompressed: Option<Vec<u8>>,
     /// The amount of decompressed bytes
     pub decompressed_size: u64,
     /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
@@ -70,6 +68,19 @@ pub enum Mode {
     /// This also means that algorithms must know about this possibility, or else might wrongfully
     /// assume the pack is finished.
     Restore,
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum CompressedBytesMode {
+    /// Do nothing with the compressed bytes we read
+    Ignore,
+    /// Only create a CRC32 of the entry, otherwise similar to `Ignore`
+    CRC32,
+    /// Keep them and pass them along in a newly allocated buffer
+    Keep,
+    /// As above, but also compute a CRC32
+    KeepAndCRC32,
 }
 
 impl<R> Iter<R>
@@ -144,13 +155,7 @@ where
             decompressor,
         };
 
-        let (bytes_copied, decompressed) = if entry.header.is_base() {
-            let mut decompressed = Vec::with_capacity(entry.decompressed_size as usize);
-            let bytes_copied = io::copy(&mut reader, &mut decompressed)?;
-            (bytes_copied, Some(decompressed))
-        } else {
-            (io::copy(&mut reader, &mut io::sink())?, None)
-        };
+        let bytes_copied = io::copy(&mut reader, &mut io::sink())?;
         debug_assert_eq!(
             bytes_copied, entry.decompressed_size,
             "We should have decompressed {} bytes, but got {} instead",
@@ -207,7 +212,6 @@ where
             header_size: entry.header_size() as u16,
             compressed,
             pack_offset,
-            decompressed,
             decompressed_size: bytes_copied,
             trailer,
         })

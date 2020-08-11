@@ -324,12 +324,6 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                 entry.decompressed_size,
                 "the decompressed length are the same no matter what decompressed them"
             );
-            if let Some(decompressed) = entry.decompressed {
-                assert_eq!(
-                    buf, decompressed,
-                    "the decompressed bytes are the same no matter what decompressed them"
-                );
-            }
 
             let next_offset_index = sorted_offsets
                 .binary_search(&entry.pack_offset)

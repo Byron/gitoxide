@@ -82,7 +82,6 @@ impl pack::index::File {
                 pack_offset,
                 header_size,
                 compressed,
-                decompressed: _,
                 decompressed_size,
                 trailer,
             } = entry?;
@@ -149,8 +148,9 @@ impl pack::index::File {
 
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
+            let in_parallel_if_pack_is_big_enough = || bytes_to_process > 5_000_000;
             let mut items = tree.traverse(
-                || bytes_to_process > 5_000_000,
+                in_parallel_if_pack_is_big_enough,
                 resolver,
                 root_progress.add_child("Resolving"),
                 root_progress.add_child("Decoding"),
