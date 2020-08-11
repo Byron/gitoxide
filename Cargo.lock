@@ -623,7 +623,6 @@ dependencies = [
  "crossbeam-utils",
  "ctrlc",
  "num_cpus",
- "once_cell",
  "prodash",
  "sha-1",
  "sha1",

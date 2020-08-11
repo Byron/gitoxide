@@ -5,16 +5,11 @@ use std::{
 
 #[cfg(feature = "interrupt-handler")]
 mod _impl {
-    use once_cell::sync::OnceCell;
-
     pub fn init_interrupt_handler() {
-        static INIT_INTERRUPT_ONCE: OnceCell<()> = OnceCell::new();
-        INIT_INTERRUPT_ONCE.get_or_init(|| {
-            ctrlc::set_handler(|| {
-                super::IS_INTERRUPTED.store(true, std::sync::atomic::Ordering::Relaxed);
-            })
-            .expect("it is up to the application to ensure only one interrupt handler is installed");
-        });
+        ctrlc::set_handler(|| {
+            super::IS_INTERRUPTED.store(true, std::sync::atomic::Ordering::Relaxed);
+        })
+        .expect("it is up to the application to ensure only one interrupt handler is installed, and this function is called only once.")
     }
 }
 #[cfg(not(feature = "interrupt-handler"))]
