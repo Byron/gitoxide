@@ -23,6 +23,6 @@ git-object = { version = "^0.2.0", path = "../git-object" }
 git-odb = { version = "0.1.0", path = "../git-odb" }
 git-features = { version = "^0.2.0", path = "../git-features" }
 anyhow = "1.0.31"
-quick-error = { version = "1.2.3", git = "https://github.com/tailhook/quick-error", rev = "aad5701556438218339fba452451ae63a47c31c2" }
+quick-error = "2.0.0"
 bytesize = "1.0.1"
 serde_json = { version = "1.0.56", optional = true }

@@ -13,4 +13,4 @@ doctest = false
 test = false
 
 [dependencies]
-quick-error = { version = "1.2.3", git = "https://github.com/tailhook/quick-error", rev = "aad5701556438218339fba452451ae63a47c31c2" }
+quick-error = "2.0.0"

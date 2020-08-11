@@ -641,7 +641,7 @@ dependencies = [
  "itoa",
  "nom",
  "pretty_assertions",
- "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
+ "quick-error 2.0.0",
  "serde",
  "smallvec",
 ]
@@ -663,7 +663,7 @@ dependencies = [
  "miniz_oxide",
  "parking_lot 0.11.0",
  "pretty_assertions",
- "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
+ "quick-error 2.0.0",
  "serde",
  "smallvec",
  "tempfile",
@@ -676,14 +676,14 @@ name = "git-ref"
 version = "0.2.0"
 dependencies = [
  "bstr",
- "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
+ "quick-error 2.0.0",
 ]
 
 [[package]]
 name = "git-repository"
 version = "0.1.0"
 dependencies = [
- "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
+ "quick-error 2.0.0",
 ]
 
 [[package]]
@@ -720,7 +720,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-repository",
- "quick-error 1.2.3 (git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2)",
+ "quick-error 2.0.0",
  "serde_json",
 ]
 
@@ -769,7 +769,7 @@ version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
 dependencies = [
- "quick-error 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quick-error 1.2.3",
 ]
 
 [[package]]
@@ -1169,13 +1169,14 @@ dependencies = [
 [[package]]
 name = "quick-error"
 version = "1.2.3"
-source = "git+https://github.com/tailhook/quick-error?rev=aad5701556438218339fba452451ae63a47c31c2#aad5701556438218339fba452451ae63a47c31c2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quick-error"
-version = "1.2.3"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
+checksum = "3ac73b1112776fc109b2e61909bc46c7e1bf0d7f690ffb1676553acce16d5cda"
 
 [[package]]
 name = "quote"
@@ -1400,9 +1401,9 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "smallvec"
-version = "1.4.1"
+version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3757cb9d89161a2f24e1cf78efa0c1fcff485d18e3f55e0aa3480824ddaa0f3f"
+checksum = "fbee7696b84bbf3d89a1c2eccff0850e3047ed46bfcd2e92c29a2d074d57e252"
 dependencies = [
  "serde",
 ]
