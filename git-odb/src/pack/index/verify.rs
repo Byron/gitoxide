@@ -85,12 +85,9 @@ impl index::File {
         C: pack::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);
-
-        let progress = root.add_child("Sha1 of index");
-        let verify_self = move || self.verify_checksum(progress);
-
         match pack {
-            None => verify_self()
+            None => self
+                .verify_checksum(root.add_child("Sha1 of index"))
                 .map_err(Into::into)
                 .map(|id| (id, None, root.into_inner())),
             Some((pack, mode, algorithm)) => self

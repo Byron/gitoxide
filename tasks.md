@@ -53,7 +53,7 @@
 **bugs**
   * [x] can abort sha1 of pack/index and ctrlc/interrupt is not intercepted.
   * [x] better usability for units
-  * [ ] When verifying, there is still 'sha1 of index' flying around despite being done
+  * [x] When verifying, there is still 'sha1 of index' flying around despite being done
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack
