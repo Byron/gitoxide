@@ -2,8 +2,7 @@ use super::{Error, Reducer, SafetyCheck};
 use crate::pack::{self, data::decode, index, index::util};
 use git_features::{
     parallel::{self, in_parallel_if},
-    progress,
-    progress::Progress,
+    progress::{self, unit, Progress},
 };
 use git_object::owned;
 
@@ -60,7 +59,13 @@ impl index::File {
             |entries: &[index::Entry],
              (cache, ref mut processor, buf, progress)|
              -> Result<Vec<decode::Outcome>, Error> {
-                progress.init(Some(entries.len()), Some(progress::count("entries")));
+                progress.init(
+                    Some(entries.len()),
+                    Some(unit::dynamic(unit::Human::new(
+                        unit::human::Formatter::new(),
+                        "objects",
+                    ))),
+                );
                 let mut stats = Vec::with_capacity(entries.len());
                 let mut header_buf = [0u8; 64];
                 for index_entry in entries.iter() {

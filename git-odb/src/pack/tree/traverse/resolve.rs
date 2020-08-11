@@ -2,7 +2,7 @@ use crate::{
     pack::{self, data::EntrySlice, tree::traverse::Context, tree::traverse::Error},
     zlib,
 };
-use git_features::progress::{self, Progress};
+use git_features::progress::{unit, Progress};
 use std::{cell::RefCell, collections::BTreeMap};
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
@@ -33,7 +33,13 @@ where
     };
 
     // Traverse the tree breadth first and loose the data produced for the base as it won't be needed anymore.
-    progress.init(None, Some(progress::count("objects")));
+    progress.init(
+        None,
+        Some(unit::dynamic(unit::Human::new(
+            unit::human::Formatter::new(),
+            "objects",
+        ))),
+    );
 
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
