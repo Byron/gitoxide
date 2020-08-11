@@ -53,7 +53,7 @@ impl<T> Tree<T> {
         );
 
         let anticpiated_num_objects = if let Some(num_objects) = data_sorted_by_offsets.size_hint().1 {
-            progress.init(Some(num_objects), Some(progress::count("objects")));
+            progress.init(Some(num_objects), progress::count("objects"));
             num_objects
         } else {
             0

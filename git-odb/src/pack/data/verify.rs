@@ -25,7 +25,7 @@ impl File {
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let mut hasher = git_features::hash::Sha1::default();
         let start = std::time::Instant::now();
-        progress.init(Some(self.data_len()), Some(progress::bytes()));
+        progress.init(Some(self.data_len()), progress::bytes());
 
         let actual = match std::fs::File::open(&self.path) {
             Ok(mut pack) => {

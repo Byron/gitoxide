@@ -39,7 +39,7 @@ impl index::File {
         let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
         let reduce_progress = parking_lot::Mutex::new({
             let mut p = root.add_child("Traversing");
-            p.init(Some(self.num_objects() as usize), Some(progress::count("objects")));
+            p.init(Some(self.num_objects() as usize), progress::count("objects"));
             p
         });
         let state_per_thread = |index| {

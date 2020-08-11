@@ -65,11 +65,11 @@ impl pack::index::File {
         let mut tree = Tree::with_capacity(anticipated_num_objects)?;
         let indexing_start = std::time::Instant::now();
 
-        root_progress.init(Some(4), Some(progress::steps()));
+        root_progress.init(Some(4), progress::steps());
         let mut objects_progress = root_progress.add_child("indexing");
-        objects_progress.init(entries.size_hint().1, Some(progress::count("objects")));
+        objects_progress.init(entries.size_hint().1, progress::count("objects"));
         let mut decompressed_progress = root_progress.add_child("decompressing");
-        decompressed_progress.init(None, Some(progress::bytes()));
+        decompressed_progress.init(None, progress::bytes());
         let mut pack_entries_end: u64 = 0;
 
         for (eid, entry) in entries.enumerate() {
@@ -178,7 +178,11 @@ impl pack::index::File {
             kind,
             root_progress.add_child("writing index file"),
         )?;
-        root_progress.show_throughput_with(indexing_start, num_objects as usize, progress::count("objects"));
+        root_progress.show_throughput_with(
+            indexing_start,
+            num_objects as usize,
+            progress::count("objects").expect("unit always set"),
+        );
         Ok(Outcome {
             index_kind: kind,
             index_hash,

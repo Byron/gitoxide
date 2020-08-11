@@ -103,8 +103,8 @@ where
     pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>, mut size_progress: P) -> Self {
         progress
             .lock()
-            .init(Some(num_objects as usize), Some(progress::count("objects")));
-        size_progress.init(None, Some(progress::bytes()));
+            .init(Some(num_objects as usize), progress::count("objects"));
+        size_progress.init(None, progress::bytes());
         Reducer {
             item_count: 0,
             progress,

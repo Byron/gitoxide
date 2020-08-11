@@ -12,7 +12,7 @@ mod _impl {
 
     pub fn init_interrupt_handler(mut message_channel: impl io::Write + Send + 'static) {
         ctrlc::set_handler(move || {
-            const MESSAGES: &[&'static str] = &[
+            const MESSAGES: &[&str] = &[
                 "interrupt requested", 
                 "please wait…", 
                 "the program will respond soon…", 
@@ -31,7 +31,9 @@ mod _impl {
 }
 #[cfg(not(feature = "interrupt-handler"))]
 mod _impl {
-    pub fn init_interrupt_handler(mut message_channel: impl io::Write + Send + 'static) {}
+    use std::io;
+
+    pub fn init_interrupt_handler(_message_channel: impl io::Write + Send + 'static) {}
 }
 pub use _impl::init_interrupt_handler;
 

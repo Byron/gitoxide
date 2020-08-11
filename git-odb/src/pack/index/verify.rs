@@ -51,7 +51,7 @@ impl index::File {
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let start = std::time::Instant::now();
-        progress.init(Some(data_len_without_trailer), Some(progress::bytes()));
+        progress.init(Some(data_len_without_trailer), progress::bytes());
 
         let mut hasher = git_features::hash::Sha1::default();
         hasher.update(&self.data[..data_len_without_trailer]);

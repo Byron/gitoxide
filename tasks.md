@@ -52,7 +52,7 @@
   * [x] auto-sequential eager iterator if there is not enough objects to process
 **bugs**
   * [x] can abort sha1 of pack/index and ctrlc/interrupt is not intercepted.
-  * [ ] better usability for units
+  * [x] better usability for units
   * [ ] When verifying, there is still 'sha1 of index' flying around despite being done
 * **asciinemas**
    * [ ] explode
