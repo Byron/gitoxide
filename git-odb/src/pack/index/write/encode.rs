@@ -26,7 +26,10 @@ pub(crate) fn to_write(
     );
 
     // Write header
-    let mut out = Count::new(hash::Write::new(out, kind.hash()));
+    let mut out = Count::new(std::io::BufWriter::with_capacity(
+        8 * 4096,
+        hash::Write::new(out, kind.hash()),
+    ));
     out.write_all(V2_SIGNATURE)?;
     out.write_u32::<BigEndian>(kind as u32)?;
 
@@ -66,9 +69,9 @@ pub(crate) fn to_write(
         }
     }
 
-    // SAFETY: It's safe to interpret 4BE bytes * 256 into 1byte * 1024 for the purpose of writing
+    // SAFETY: It's safe to interpret 4BE bytes * 256 into 1byte * 256 * 4 for the purpose of writing
     #[allow(unsafe_code)]
-    out.write_all(unsafe { &*(&fan_out_be as *const [u32; 256] as *const [u8; 1024]) })?;
+    out.write_all(unsafe { &*(&fan_out_be as *const [u32; 256] as *const [u8; 256 * 4]) })?;
 
     progress.inc();
     let _info = progress.add_child("writing ids");
@@ -109,12 +112,14 @@ pub(crate) fn to_write(
 
     out.write_all(pack_hash.as_slice())?;
 
-    let index_hash: owned::Id = out.inner.hash.digest().into();
-    out.inner.inner.write_all(index_hash.as_slice())?;
-    out.inner.inner.flush()?;
+    let bytes_written_without_trailer = out.bytes;
+    let mut out = out.inner.into_inner()?;
+    let index_hash: owned::Id = out.hash.digest().into();
+    out.inner.write_all(index_hash.as_slice())?;
+    out.inner.flush()?;
 
     progress.inc();
-    progress.show_throughput_with(start, out.bytes as usize, progress::bytes());
+    progress.show_throughput_with(start, (bytes_written_without_trailer + 20) as usize, progress::bytes());
 
     Ok(index_hash)
 }

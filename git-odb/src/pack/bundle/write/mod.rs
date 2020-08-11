@@ -68,7 +68,7 @@ impl pack::Bundle {
         let (outcome, data_path, index_path) = match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
-                let mut index_file = io::BufWriter::with_capacity(eight_pages, NamedTempFile::new_in(directory)?);
+                let mut index_file = NamedTempFile::new_in(directory)?;
 
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     index_kind,
@@ -87,8 +87,6 @@ impl pack::Bundle {
                     .into_inner()
                     .persist(&data_path)?;
                 index_file
-                    .into_inner()
-                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
                     .persist(&index_path)
                     .map_err(|err| {
                         progress.info(format!(
