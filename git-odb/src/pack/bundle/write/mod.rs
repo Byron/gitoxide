@@ -67,7 +67,9 @@ impl pack::Bundle {
             pack::data::iter::CompressedBytesMode::CRC32,
         )?;
         let pack_kind = pack_entries_iter.kind();
-        let pack_entries_iter = git_features::parallel::EagerIter::new(pack_entries_iter, 5000, 5);
+        let num_objects = pack_entries_iter.size_hint().0;
+        let pack_entries_iter =
+            git_features::parallel::EagerIterIf::new(|| num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
         let (outcome, data_path, index_path) = match directory {
             Some(directory) => {

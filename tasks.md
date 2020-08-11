@@ -49,7 +49,7 @@
 * **parallel**
   * [ ] ~~sequential version of eager iterator~~ - let's always keep it eager as this really helps with offloading IO and some processing
         from the consumers.
-  * [ ] auto-sequential eager iterator if there is not enough objects to process
+  * [x] auto-sequential eager iterator if there is not enough objects to process
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack

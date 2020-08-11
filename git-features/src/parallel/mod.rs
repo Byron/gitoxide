@@ -1,11 +1,3 @@
-pub trait Reducer {
-    type Input;
-    type Output;
-    type Error;
-    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error>;
-    fn finalize(self) -> Result<Self::Output, Self::Error>;
-}
-
 #[cfg(feature = "parallel")]
 mod in_parallel;
 mod serial;
@@ -17,7 +9,7 @@ pub use serial::*;
 pub use in_parallel::*;
 
 mod eager;
-pub use eager::EagerIter;
+pub use eager::{EagerIter, EagerIterIf};
 
 #[cfg(not(feature = "parallel"))]
 pub fn optimize_chunk_size_and_thread_limit(
@@ -81,6 +73,14 @@ pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
     thread_limit
         .map(|l| if l == 0 { logical_cores } else { l })
         .unwrap_or(logical_cores)
+}
+
+pub trait Reducer {
+    type Input;
+    type Output;
+    type Error;
+    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error>;
+    fn finalize(self) -> Result<Self::Output, Self::Error>;
 }
 
 pub fn in_parallel_if<I, S, O, R>(

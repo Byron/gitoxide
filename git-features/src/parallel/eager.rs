@@ -63,3 +63,43 @@ where
         self.size_hint
     }
 }
+
+pub enum EagerIterIf<I: Iterator> {
+    Eager(EagerIter<I>),
+    OnDemand(I),
+}
+
+impl<I> EagerIterIf<I>
+where
+    I: Iterator + Send + 'static,
+    <I as Iterator>::Item: Send,
+{
+    pub fn new(condition: impl FnOnce() -> bool, iter: I, chunk_size: usize, chunks_in_flight: usize) -> Self {
+        if condition() {
+            EagerIterIf::Eager(EagerIter::new(iter, chunk_size, chunks_in_flight))
+        } else {
+            EagerIterIf::OnDemand(iter)
+        }
+    }
+}
+impl<I> Iterator for EagerIterIf<I>
+where
+    I: Iterator + Send + 'static,
+    <I as Iterator>::Item: Send,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            EagerIterIf::OnDemand(i) => i.next(),
+            EagerIterIf::Eager(i) => i.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            EagerIterIf::OnDemand(i) => i.size_hint(),
+            EagerIterIf::Eager(i) => i.size_hint(),
+        }
+    }
+}
