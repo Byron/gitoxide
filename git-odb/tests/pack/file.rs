@@ -8,6 +8,7 @@ fn pack_at(at: &str) -> pack::data::File {
 
 mod method {
     use crate::{pack::file::pack_at, pack::SMALL_PACK};
+    use git_features::progress;
 
     #[test]
     fn checksum() {
@@ -21,7 +22,7 @@ mod method {
     #[test]
     fn verify_checksum() -> Result<(), Box<dyn std::error::Error>> {
         let p = pack_at(SMALL_PACK);
-        assert_eq!(p.verify_checksum()?, p.checksum());
+        assert_eq!(p.verify_checksum(progress::Discard)?, p.checksum());
         Ok(())
     }
 

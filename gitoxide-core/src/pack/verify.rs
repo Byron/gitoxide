@@ -1,7 +1,7 @@
 use crate::OutputFormat;
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
-use git_features::progress::Progress;
+use git_features::progress::{self, Progress};
 use git_object::{owned, Kind};
 use git_odb::pack::{self, index};
 use std::{io, path::Path, str::FromStr};
@@ -122,7 +122,8 @@ where
     let res = match ext {
         "pack" => {
             let pack = git_odb::pack::data::File::at(path).with_context(|| "Could not open pack file")?;
-            pack.verify_checksum().map(|id| (id, None))?
+            pack.verify_checksum(progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"))
+                .map(|id| (id, None))?
         }
         "idx" => {
             let idx = git_odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;

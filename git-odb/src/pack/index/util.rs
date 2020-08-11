@@ -20,32 +20,6 @@ pub(crate) fn index_entries_sorted_by_offset_ascending(
     v
 }
 
-/// Good if you know the amount of bytes in advance.
-pub(crate) struct TimeThroughput {
-    then: Instant,
-    byte_size: usize,
-}
-
-impl TimeThroughput {
-    pub fn new(byte_size: usize) -> TimeThroughput {
-        TimeThroughput {
-            then: Instant::now(),
-            byte_size,
-        }
-    }
-}
-
-impl Into<String> for TimeThroughput {
-    fn into(self) -> String {
-        let time_taken = self.then.elapsed().as_secs_f32();
-        format!(
-            "finished in {:.2}s at {}/s",
-            time_taken,
-            bytesize::ByteSize((self.byte_size as f32 / time_taken) as u64)
-        )
-    }
-}
-
 pub(crate) struct Chunks<I> {
     pub size: usize,
     pub iter: I,

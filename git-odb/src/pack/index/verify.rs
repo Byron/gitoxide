@@ -49,11 +49,15 @@ impl index::File {
     }
 
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
-        let throughput = index::util::TimeThroughput::new(self.data.len());
+        let data_len_without_trailer = self.data.len() - SHA1_SIZE;
+        let start = std::time::Instant::now();
+        progress.init(Some(data_len_without_trailer), Some(progress::bytes()));
+
         let mut hasher = git_features::hash::Sha1::default();
-        hasher.update(&self.data[..self.data.len() - SHA1_SIZE]);
+        hasher.update(&self.data[..data_len_without_trailer]);
+        progress.inc_by(data_len_without_trailer);
         let actual = owned::Id::new_sha1(hasher.digest());
-        progress.done(throughput);
+        progress.show_throughput(start);
 
         let expected = self.index_checksum();
         if actual == expected {

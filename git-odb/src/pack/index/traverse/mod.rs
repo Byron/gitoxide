@@ -1,4 +1,4 @@
-use crate::pack::{self, index, index::util::TimeThroughput};
+use crate::pack::{self, index};
 use git_features::{
     parallel,
     progress::{self, Progress},
@@ -71,13 +71,8 @@ impl index::File {
             }
             let (pack_res, id) = parallel::join(
                 {
-                    let mut progress = root.add_child("Sha1 of pack");
-                    move || {
-                        let throughput = TimeThroughput::new(pack.data_len());
-                        let res = pack.verify_checksum();
-                        progress.done(throughput);
-                        res
-                    }
+                    let progress = root.add_child("Sha1 of pack");
+                    move || pack.verify_checksum(progress)
                 },
                 {
                     let progress = root.add_child("Sha1 of index");

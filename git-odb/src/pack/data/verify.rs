@@ -1,4 +1,5 @@
 use crate::pack::data::File;
+use git_features::progress::{self, Progress};
 use git_object::{owned, SHA1_SIZE};
 use quick_error::quick_error;
 
@@ -21,8 +22,10 @@ impl File {
     pub fn checksum(&self) -> owned::Id {
         owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
-    pub fn verify_checksum(&self) -> Result<owned::Id, Error> {
+    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let mut hasher = git_features::hash::Sha1::default();
+        let start = std::time::Instant::now();
+        progress.init(Some(self.data_len()), Some(progress::bytes()));
 
         let actual = match std::fs::File::open(&self.path) {
             Ok(mut pack) => {
@@ -34,6 +37,7 @@ impl File {
                     let out = &mut buf[..BUF_SIZE.min(bytes_left)];
                     pack.read_exact(out)?;
                     bytes_left -= out.len();
+                    progress.inc_by(out.len());
                     hasher.update(out);
                 }
                 owned::Id::new_sha1(hasher.digest())
@@ -44,6 +48,7 @@ impl File {
                 owned::Id::new_sha1(hasher.digest())
             }
         };
+        progress.show_throughput(start);
 
         let expected = self.checksum();
         if actual == expected {
