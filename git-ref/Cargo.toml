@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/Byron/git-oxide"
 license = "MIT"
 description = "A crate to handle git references"

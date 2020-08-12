@@ -1,6 +1,6 @@
 [package]
 name = "git-odb"
-version = "0.1.0"
+version = "0.3.0"
 repository = "https://github.com/Byron/git-oxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT"
@@ -18,14 +18,15 @@ serde1 = ["serde", "git-object/serde1"]
 all-features = true
 
 [dependencies]
+git-object = { version = "^0.3.0", path = "../git-object" }
+git-features = { version = "^0.3.0", path = "../git-features" }
+
 quick-error = "2.0.0"
 walkdir = "2.1.4"
 miniz_oxide = "0.4.0"
 smallvec = "1.3.0"
 filebuffer = "0.4.0"
 byteorder = "1.2.3"
-git-object = { version = "^0.2.0", path = "../git-object" }
-git-features = { version = "^0.2.0", path = "../git-features" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 btoi = "0.4.2"
 uluru = "1.0.0"

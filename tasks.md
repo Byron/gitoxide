@@ -56,8 +56,8 @@
   * [x] When verifying, there is still 'sha1 of index' flying around despite being done
   * [x] parallelize initial verification of the pack and interrupt the rest on failure to trigger stopping everything else
 * **asciinemas**
-   * [ ] explode
-   * [ ] index-from-pack
+   * [x] explode
+   * [x] index-from-pack
   
 ### Cloning
 
@@ -85,7 +85,7 @@
 To be picked in any order….
 
 * **prodash**
-  * finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
+  * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **gitoxide performance**
   * [ ] @joshtriplett writes: "Regarding decompression performance, try replacing miniz_oxide with a better zlib decoder. Build with libz-sys, and then try substituting zlib-ng built with --zlib-compat. (I'm working on making that easier.) That should substantially improve decompression."
     * potential [savings: MASSIVE](https://github.com/Byron/gitoxide/issues/1#issuecomment-672626465) 

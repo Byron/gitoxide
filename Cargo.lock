@@ -618,7 +618,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "crc",
  "crossbeam-channel",
@@ -632,7 +632,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -648,7 +648,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -673,7 +673,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "quick-error 2.0.0",
@@ -681,7 +681,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "quick-error 2.0.0",
 ]
@@ -696,7 +696,7 @@ version = "0.0.0"
 
 [[package]]
 name = "gitoxide"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "argh",
@@ -712,7 +712,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "bytesize",

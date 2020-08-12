@@ -2,7 +2,7 @@
 name = "gitoxide-core"
 description = "The library implementating all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/git-oxide"
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT"
 edition = "2018"
@@ -18,10 +18,10 @@ serde1 = ["git-object/serde1", "git-odb/serde1", "serde_json"]
 all-features = true
 
 [dependencies]
-git-repository = { version = "0.1.0", path = "../git-repository" }
-git-object = { version = "^0.2.0", path = "../git-object" }
-git-odb = { version = "0.1.0", path = "../git-odb" }
-git-features = { version = "^0.2.0", path = "../git-features" }
+git-repository = { version = "0.3.0", path = "../git-repository" }
+git-object = { version = "^0.3.0", path = "../git-object" }
+git-odb = { version = "0.3.0", path = "../git-odb" }
+git-features = { version = "^0.3.0", path = "../git-features" }
 anyhow = "1.0.31"
 quick-error = "2.0.0"
 bytesize = "1.0.1"
