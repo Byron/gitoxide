@@ -57,11 +57,11 @@ impl index::File {
         &self,
         pack: &pack::data::File,
         check: SafetyCheck,
-        root: &mut P,
+        pack_progress: P,
+        index_progress: P,
     ) -> Result<owned::Id, Error>
     where
-        P: Progress,
-        <P as Progress>::SubProgress: Send,
+        P: Progress + Send,
     {
         Ok(if check.file_checksum() {
             if self.pack_checksum() != pack.checksum() {
@@ -71,14 +71,8 @@ impl index::File {
                 });
             }
             let (pack_res, id) = parallel::join(
-                {
-                    let progress = root.add_child("Sha1 of pack");
-                    move || pack.verify_checksum(progress)
-                },
-                {
-                    let progress = root.add_child("Sha1 of index");
-                    move || self.verify_checksum(progress)
-                },
+                move || pack.verify_checksum(pack_progress),
+                move || self.verify_checksum(index_progress),
             );
             pack_res?;
             id?

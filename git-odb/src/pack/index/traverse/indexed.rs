@@ -4,7 +4,8 @@ use crate::{
     pack::index::{self, util::index_entries_sorted_by_offset_ascending},
     pack::tree::traverse::Context,
 };
-use git_features::progress::Progress;
+use git_features::interruptible::{interrupt, ResetInterruptOnDrop};
+use git_features::{parallel, progress::Progress};
 use git_object::owned;
 
 impl index::File {
@@ -17,7 +18,7 @@ impl index::File {
         pack: &pack::data::File,
     ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
     where
-        P: Progress,
+        P: Progress + Send,
         <P as Progress>::SubProgress: Send,
         Processor: FnMut(
             git_object::Kind,
@@ -27,67 +28,85 @@ impl index::File {
         ) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let id = self.possibly_verify(pack, check, &mut root)?;
-
-        let sorted_entries = index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
-        let tree = pack::tree::Tree::from_offsets_in_pack(
-            sorted_entries.into_iter().map(EntryWithDefault::from),
-            |e| e.index_entry.pack_offset,
-            pack.path(),
-            root.add_child("indexing"),
-            |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
-        )?;
-        let there_are_enough_objects = || self.num_objects > 10_000;
-        let mut outcome = digest_statistics(tree.traverse(
-            there_are_enough_objects,
-            |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
-            root.add_child("Resolving"),
-            root.add_child("Decoding"),
-            thread_limit,
-            pack.pack_end() as u64,
-            || (new_processor(), [0u8; 64]),
-            |data,
-             progress,
-             Context {
-                 entry: pack_entry,
-                 entry_end,
-                 decompressed: bytes,
-                 state: (ref mut processor, ref mut header_buf),
-                 level,
-             }| {
-                let object_kind = pack_entry.header.to_kind().expect("non-delta object");
-                data.level = level;
-                data.decompressed_size = pack_entry.decompressed_size;
-                data.header_size = pack_entry.header_size() as u16;
-                data._object_kind = object_kind;
-                data.compressed_size = entry_end - pack_entry.data_offset;
-                data.object_size = bytes.len() as u64;
-                let result = pack::index::traverse::process_entry(
-                    check,
-                    object_kind,
-                    bytes,
-                    progress,
-                    header_buf,
-                    &data.index_entry,
-                    || {
-                        // debug_assert_eq!(&data.index_entry.pack_offset, &pack_entry.pack_offset()); // TODO: Fix this
-                        git_features::hash::crc32(
-                            pack.entry_slice(data.index_entry.pack_offset..entry_end)
-                                .expect("slice pointing into the pack (by now data is verified)"),
-                        )
-                    },
-                    processor,
-                );
-                match result {
-                    Err(err @ Error::PackDecode(_, _, _)) if !check.fatal_decode_error() => {
-                        progress.info(format!("Ignoring decode error: {}", err));
-                        Ok(())
+        let _reset_interrupt = ResetInterruptOnDrop::new();
+        let (verify_result, traversal_result) = parallel::join(
+            {
+                let pack_progress = root.add_child("SHA1 of pack");
+                let index_progress = root.add_child("SHA1 of index");
+                move || {
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress);
+                    if res.is_err() {
+                        interrupt();
                     }
-                    res => res,
+                    res
                 }
             },
-        )?);
-        outcome.pack_size = pack.data_len() as u64;
+            || -> Result<_, Error> {
+                let sorted_entries =
+                    index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
+                let tree = pack::tree::Tree::from_offsets_in_pack(
+                    sorted_entries.into_iter().map(EntryWithDefault::from),
+                    |e| e.index_entry.pack_offset,
+                    pack.path(),
+                    root.add_child("indexing"),
+                    |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
+                )?;
+                let there_are_enough_objects = || self.num_objects > 10_000;
+                let mut outcome = digest_statistics(tree.traverse(
+                    there_are_enough_objects,
+                    |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
+                    root.add_child("Resolving"),
+                    root.add_child("Decoding"),
+                    thread_limit,
+                    pack.pack_end() as u64,
+                    || (new_processor(), [0u8; 64]),
+                    |data,
+                     progress,
+                     Context {
+                         entry: pack_entry,
+                         entry_end,
+                         decompressed: bytes,
+                         state: (ref mut processor, ref mut header_buf),
+                         level,
+                     }| {
+                        let object_kind = pack_entry.header.to_kind().expect("non-delta object");
+                        data.level = level;
+                        data.decompressed_size = pack_entry.decompressed_size;
+                        data.header_size = pack_entry.header_size() as u16;
+                        data._object_kind = object_kind;
+                        data.compressed_size = entry_end - pack_entry.data_offset;
+                        data.object_size = bytes.len() as u64;
+                        let result = pack::index::traverse::process_entry(
+                            check,
+                            object_kind,
+                            bytes,
+                            progress,
+                            header_buf,
+                            &data.index_entry,
+                            || {
+                                // debug_assert_eq!(&data.index_entry.pack_offset, &pack_entry.pack_offset()); // TODO: Fix this
+                                git_features::hash::crc32(
+                                    pack.entry_slice(data.index_entry.pack_offset..entry_end)
+                                        .expect("slice pointing into the pack (by now data is verified)"),
+                                )
+                            },
+                            processor,
+                        );
+                        match result {
+                            Err(err @ Error::PackDecode(_, _, _)) if !check.fatal_decode_error() => {
+                                progress.info(format!("Ignoring decode error: {}", err));
+                                Ok(())
+                            }
+                            res => res,
+                        }
+                    },
+                )?);
+                outcome.pack_size = pack.data_len() as u64;
+                Ok(outcome)
+            },
+        );
+        let id = verify_result?;
+        let outcome = traversal_result?;
         Ok((id, outcome, root))
     }
 }

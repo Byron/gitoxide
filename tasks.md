@@ -54,7 +54,7 @@
   * [x] can abort sha1 of pack/index and ctrlc/interrupt is not intercepted.
   * [x] better usability for units
   * [x] When verifying, there is still 'sha1 of index' flying around despite being done
-  * [ ] parallelize initial verification of the pack and interrupt the rest on failure to trigger stopping everything else
+  * [x] parallelize initial verification of the pack and interrupt the rest on failure to trigger stopping everything else
 * **asciinemas**
    * [ ] explode
    * [ ] index-from-pack

@@ -34,13 +34,14 @@ impl index::File {
         let _reset_interrupt = ResetInterruptOnDrop::new();
         let (verify_result, traversal_result) = parallel::join(
             {
-                let mut verify_progress = root.add_child("verify file hashes");
+                let pack_progress = root.add_child("SHA1 of pack");
+                let index_progress = root.add_child("SHA1 of index");
                 move || {
-                    let res = self.possibly_verify(pack, check, &mut verify_progress);
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress);
                     if res.is_err() {
                         git_features::interruptible::interrupt();
                     }
-                    res.map_err(Error::from)
+                    res
                 }
             },
             || {
