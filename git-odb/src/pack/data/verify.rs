@@ -1,5 +1,5 @@
 use crate::pack::data::File;
-use git_features::progress::{self, Progress};
+use git_features::progress::Progress;
 use git_object::{owned, SHA1_SIZE};
 use quick_error::quick_error;
 
@@ -23,32 +23,18 @@ impl File {
         owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
-        let mut hasher = git_features::hash::Sha1::default();
-        let start = std::time::Instant::now();
-        progress.init(Some(self.data_len()), progress::bytes());
-
-        let actual = match std::fs::File::open(&self.path) {
-            Ok(mut pack) => {
-                use std::io::Read;
-                const BUF_SIZE: usize = u16::MAX as usize;
-                let mut buf = [0u8; BUF_SIZE];
-                let mut bytes_left = self.data.len() - SHA1_SIZE;
-                while bytes_left > 0 {
-                    let out = &mut buf[..BUF_SIZE.min(bytes_left)];
-                    pack.read_exact(out)?;
-                    bytes_left -= out.len();
-                    progress.inc_by(out.len());
-                    hasher.update(out);
-                }
-                owned::Id::new_sha1(hasher.digest())
-            }
-            Err(_) => {
-                let right_before_trailer = self.data.len() - SHA1_SIZE;
+        let right_before_trailer = self.data.len() - SHA1_SIZE;
+        let actual = match crate::hash::bytes_of_file(&self.path, right_before_trailer, &mut progress) {
+            Ok(id) => id,
+            Err(_io_err) => {
+                let start = std::time::Instant::now();
+                let mut hasher = git_features::hash::Sha1::default();
                 hasher.update(&self.data[..right_before_trailer]);
+                progress.inc_by(right_before_trailer);
+                progress.show_throughput(start);
                 owned::Id::new_sha1(hasher.digest())
             }
         };
-        progress.show_throughput(start);
 
         let expected = self.checksum();
         if actual == expected {

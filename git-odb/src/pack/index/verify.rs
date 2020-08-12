@@ -50,14 +50,17 @@ impl index::File {
 
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
-        let start = std::time::Instant::now();
-        progress.init(Some(data_len_without_trailer), progress::bytes());
-
-        let mut hasher = git_features::hash::Sha1::default();
-        hasher.update(&self.data[..data_len_without_trailer]);
-        progress.inc_by(data_len_without_trailer);
-        let actual = owned::Id::new_sha1(hasher.digest());
-        progress.show_throughput(start);
+        let actual = match crate::hash::bytes_of_file(&self.path, data_len_without_trailer, &mut progress) {
+            Ok(id) => id,
+            Err(_io_err) => {
+                let start = std::time::Instant::now();
+                let mut hasher = git_features::hash::Sha1::default();
+                hasher.update(&self.data[..data_len_without_trailer]);
+                progress.inc_by(data_len_without_trailer);
+                progress.show_throughput(start);
+                owned::Id::new_sha1(hasher.digest())
+            }
+        };
 
         let expected = self.index_checksum();
         if actual == expected {
