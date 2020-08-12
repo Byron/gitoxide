@@ -100,7 +100,7 @@ To be picked in any order….
 * **criner**
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
-* **quick-error** update
-  * We need a new release soon with the latest updates to get rid of our git dependency. Until then we can't release.
+* **miniz-oxide**
+  * Get [our PR](https://github.com/Frommi/miniz_oxide/pull/92) merged
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602

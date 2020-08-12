@@ -7,7 +7,7 @@ _user-experience_, and perform as _good or better than the native implementation
 Furthermore it provides **an easy and safe to use API** in the form of various small crates for implementing your own tools in a breeze.
 Please see _'Development Status'_ for a listing of all crates and their capabilities.
 
-[![asciicast](https://asciinema.org/a/346976.svg)](https://asciinema.org/a/346976)
+[![asciicast](https://asciinema.org/a/352942.svg)](https://asciinema.org/a/352942)
 
 ## Development Status
 
@@ -18,11 +18,12 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * repository
     * [x] init
   * plumbing
-    * [x] [pack verify](https://asciinema.org/a/346975)
-    * [x] [pack index verify](https://asciinema.org/a/346976) including each object sha1 and statistics
-    * [x] pack explode, useful for transforming packs into loose objects for inspection or restoration
+    * [x] [pack verify](https://asciinema.org/a/352942)
+    * [x] [pack index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
+    * [x] [pack explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
       * [x] verify written objects (by reading them back from disk)
-    * [x] index from pack - create an index file by streaming a pack file as done during clone and fetch
+    * [x] [index from pack](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
+      * [ ] support for thin packs (as needed for fetch/pull)
 * **git-object**
   * *decode (zero-copy)* borrowed objects
     * [x] commit
@@ -58,13 +59,13 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * _read as is, verify hash, and restore partial packs_
       * [x] create index from pack alone
         * _various memory options allow trading off speed for lower memory consumption_
-      * [ ] resolve 'thin' packs
+        * [ ] resolve 'thin' packs
     * [ ] encode
       * [ ] create new pack
       * [ ] create 'thin' pack
     * [x] verify pack with statistics
       * [x] brute force - less memory
-      * [x] indexed - more memory
+      * [x] indexed - faster, but more memory
     * **advanced**
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
@@ -107,7 +108,12 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
   * [ ] API documentation with examples
+* **git-protocol**
+  * [ ] client side
+  * [ ] server side
 * **git-transport**
+  * [ ] client side
+  * [ ] server side
   * [ ] via ssh
     * [ ] push
     * [ ] pull
