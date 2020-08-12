@@ -82,7 +82,7 @@ impl index::File {
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Option<index::traverse::Outcome>, Option<P>), index::traverse::Error>
     where
-        P: Progress,
+        P: Progress + Send,
         <P as Progress>::SubProgress: Send,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
         C: pack::cache::DecodeEntry,

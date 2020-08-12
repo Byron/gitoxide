@@ -64,3 +64,30 @@ pub fn interrupt() {
 pub fn uninterrupt() {
     IS_INTERRUPTED.store(false, Ordering::Relaxed);
 }
+
+/// Useful if some parts of the program set the interrupt programmatically to cause others to stop, while
+/// assuring the interrupt state is reset at the end of the function to avoid other side-effects.
+///
+/// Note that this is inherently racy and that this will only work deterministically if there is only one
+/// top-level function running in a process.
+pub struct ResetInterruptOnDrop {
+    was_interrupted: bool,
+}
+
+impl ResetInterruptOnDrop {
+    pub fn new() -> Self {
+        ResetInterruptOnDrop {
+            was_interrupted: is_interrupted(),
+        }
+    }
+}
+
+impl Drop for ResetInterruptOnDrop {
+    fn drop(&mut self) {
+        if self.was_interrupted {
+            interrupt()
+        } else {
+            uninterrupt()
+        }
+    }
+}

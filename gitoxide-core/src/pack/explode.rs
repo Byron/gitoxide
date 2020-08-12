@@ -156,8 +156,9 @@ pub fn pack_or_pack_index<P>(
     }: Context,
 ) -> Result<()>
 where
-    P: Progress,
+    P: Progress + Send,
     <P as Progress>::SubProgress: Send,
+    <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     use anyhow::Context;
 

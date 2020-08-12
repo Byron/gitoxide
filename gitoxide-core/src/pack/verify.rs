@@ -106,7 +106,7 @@ pub fn pack_or_pack_index<P, W1, W2>(
     }: Context<W1, W2>,
 ) -> Result<(owned::Id, Option<index::traverse::Outcome>)>
 where
-    P: Progress,
+    P: Progress + Send,
     <P as Progress>::SubProgress: Send,
     W1: io::Write,
     W2: io::Write,
