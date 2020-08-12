@@ -28,7 +28,7 @@ impl index::File {
         ) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let _reset_interrupt = ResetInterruptOnDrop::new();
+        let _reset_interrupt = ResetInterruptOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
                 let pack_progress = root.add_child("SHA1 of pack");

@@ -31,7 +31,7 @@ impl index::File {
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
     {
-        let _reset_interrupt = ResetInterruptOnDrop::new();
+        let _reset_interrupt = ResetInterruptOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
                 let pack_progress = root.add_child("SHA1 of pack");

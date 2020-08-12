@@ -74,8 +74,8 @@ pub struct ResetInterruptOnDrop {
     was_interrupted: bool,
 }
 
-impl ResetInterruptOnDrop {
-    pub fn new() -> Self {
+impl Default for ResetInterruptOnDrop {
+    fn default() -> Self {
         ResetInterruptOnDrop {
             was_interrupted: is_interrupted(),
         }
