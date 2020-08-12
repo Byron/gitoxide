@@ -30,7 +30,7 @@ quick_error! {
             from()
         }
         Interrupted {
-            display("Interrupted by user")
+            display("Interrupted")
         }
     }
 }

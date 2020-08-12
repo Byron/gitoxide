@@ -44,7 +44,7 @@ quick_error! {
             display("The CRC32 of {} object at offset {} didn't match the checksum in the index file: expected {}, got {}", kind, offset, expected, actual)
         }
         Interrupted {
-            display("Interrupted by user")
+            display("Interrupted")
         }
     }
 }
