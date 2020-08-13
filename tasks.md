@@ -1,8 +1,14 @@
 ### Cloning
 
-* **git-transport**
-  * [ ] transport layer https or ssh
-  * [ ] receive a pack
+* **JTT upload-pack-proxy** - obtaining real-world examples for the V1/V2 git protocols
+  * a plumbing program to serve as `git-proxy` when invoked like this
+    * `PATH="$PWD:$PATH" git -c core.gitproxy="git-proxy" clone git://localhost:9419/small-test`
+    * to be used to obtain more real-world samples of typical git interactions for use in the test-suite
+  * **git-protocol**
+    * [ ] parse pkt-lines support
+    * [ ] basic V1 parsing to understand data frames to allow placing them into individual files
+* **a way to intercept git-http communication**
+  * Maybe with a custom proxy as well, can't hurt to try APIs in real-world programs
 * **git-refs**
   * Enough to handle a git fetch - maybe we can just hardcode things for now…
 * **receive pack**

@@ -86,6 +86,33 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [ ] _an ODB for object lookup from multiple lower level ODB at once_
   * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
+* **git-protocol**
+  * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
+    * [ ] encode
+    * [ ] decode
+    * [ ] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
+  * [ ] `Iterator` for multi-plexed pack lines from `Read`
+  * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
+  * [ ] V1
+    * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
+      * [ ] client
+      * [ ] server
+    * [ ] push
+      * [ ] client
+      * [ ] server
+  * [ ] [V2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
+* **git-transport**
+  * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
+    * [ ] **initiate**
+      * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
+          * [ ] protocol version definition
+  * [ ] **[ssh](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L103:L103)**
+    * `ssh2` crate with [openssl vendoring support](https://lib.rs/crates/ssh2) for static linkage
+    * [ ] **initiate**
+      * extra paramaters (via environment variable)
+  * [ ] protocol for transfer via http(s)
+    * [ ] extra parameters
+  * [ ] API documentation with examples
 * **git-repository**
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
@@ -118,33 +145,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] ssh://user@example.com/project.git 
   * [ ] user@example.com:project.git
   * [ ] ssh://user@example.com/~alice/project.git
-* **git-protocol**
-  * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
-    * [ ] encode
-    * [ ] decode
-    * [ ] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
-  * [ ] `Iterator` for multi-plexed pack lines from `Read`
-  * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
-  * [ ] V1
-    * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
-      * [ ] client
-      * [ ] server
-    * [ ] push
-      * [ ] client
-      * [ ] server
-  * [ ] [V2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
-* **git-transport**
-  * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
-    * [ ] **initiate**
-      * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
-          * [ ] protocol version definition
-  * [ ] **[ssh](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L103:L103)**
-    * `ssh2` crate with [openssl vendoring support](https://lib.rs/crates/ssh2) for static linkage
-    * [ ] **initiate**
-      * extra paramaters (via environment variable)
-  * [ ] protocol for transfer via http(s)
-    * [ ] extra parameters
-  * [ ] API documentation with examples
 * **git-features**
   * **parallel** feature toggle
     * _When on…_
