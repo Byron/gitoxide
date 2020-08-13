@@ -156,7 +156,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 * **Stress Testing**
   * [x] Verify huge packs
   * [x] Explode a pack to disk 
-  * [ ] Generate huge back from a lot of loose objects
+  * [ ] Generate huge pack from a lot of loose objects
 * **Ideas for Demos**
   * [ ] A simple [`git-hours`][git-hours-algo] clone
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
@@ -210,12 +210,12 @@ Once installed, there are two binaries:
 ## Project Goals
 
  * **a pure-rust implementation of git**
-   * including *transport*, *object database*, *references* and *cli*
+   * including *transport*, *object database*, *references*, *cli* and *tui*
    * a simple command-line interface is provided for the most common git operations, optimized for
      user experience. A *simple-git* if you so will.
    * be the go-to implementation for anyone who wants to solve problems around git, and become
      *the* alternative to `GitPython` in the process.
-   * become the foundation for a free distributed alternative to github.
+   * become the foundation for a free distributed alternative to GitHub, and maybe even GitHub itself
  * **learn from the best to write the best possible idiomatic Rust**
    * *libgit2* is a fantastic resource to see what abstractions work, we will use them
    * use Rust's type system to make misuse impossible
@@ -362,7 +362,7 @@ From there, we can derive a few rules to try adhere to:
 
 ## Shortcomings
 
-* **lean** and **light** and **small** builds don't support non-UTF-8 paths
+* **lean** and **light** and **small** builds don't support non-UTF-8 paths _in the CLI_
   * This is because they depend on `argh`, which [does not yet support parsing OsStrings](https://github.com/google/argh/issues/33). We however
     believe it eventually will do so and thus don't move on to [`pico-args`](https://github.com/RazrFalcon/pico-args/blob/master/examples/app.rs).
 * **Packfiles use memory maps**
