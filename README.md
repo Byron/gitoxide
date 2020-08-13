@@ -2,7 +2,7 @@
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 
 **gix** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
-_user-experience_, and perform as _good or better than the native implementation_.
+_user-experience_, and perform as _good or better than the canonical implementation_.
 
 Furthermore it provides **an easy and safe to use API** in the form of various small crates for implementing your own tools in a breeze.
 Please see _'Development Status'_ for a listing of all crates and their capabilities.
@@ -15,15 +15,20 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
     and itself relies on all `git-*` crates.
   * limit amount of threads used in operations that support it.
-  * repository
-    * [x] init
-  * plumbing
-    * [x] [pack verify](https://asciinema.org/a/352942)
-    * [x] [pack index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
-    * [x] [pack explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
-      * [x] verify written objects (by reading them back from disk)
-    * [x] [index from pack](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
-      * [ ] support for thin packs (as needed for fetch/pull)
+  * choose between 'human' and 'json' output formats
+  * **the `gix` program** - convenient and for humans
+    * [x] init - initialize a new non-bare repository with a `main` branch
+  * **the `gixp` program** _(plumbing)_ - lower level commands for use in automation
+    * **pack**
+      * [x] [pack verify](https://asciinema.org/a/352942)
+      * [x] [pack index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
+      * [x] [pack explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
+        * [x] verify written objects (by reading them back from disk)
+      * [ ] pack-send - create a pack and send it using the pack protocol to stdout
+      * [ ] pack-receive - receive a pack produced by pack-send
+    * **index**
+      * [x] [index from pack](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
+          * [ ] support for thin packs (as needed for fetch/pull)
 * **git-object**
   * *decode (zero-copy)* borrowed objects
     * [x] commit
@@ -98,7 +103,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 * **git-ref**
   * Handle symbolic references and packed references
   * discover them in typical folder structures
-  * [x] name validation
+  * [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
   * [ ] API documentation with examples
 * **git-index**
   * read and write a git-index file
@@ -109,18 +114,36 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
   * [ ] API documentation with examples
+* **git-url**
+  * [ ] ssh://user@example.com/project.git 
+  * [ ] user@example.com:project.git
+  * [ ] ssh://user@example.com/~alice/project.git
 * **git-protocol**
-  * [ ] client side
-  * [ ] server side
+  * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
+    * [ ] encode
+    * [ ] decode
+    * [ ] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
+  * [ ] `Iterator` for multi-plexed pack lines from `Read`
+  * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
+  * [ ] V1
+    * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
+      * [ ] client
+      * [ ] server
+    * [ ] push
+      * [ ] client
+      * [ ] server
+  * [ ] [V2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
 * **git-transport**
-  * [ ] client side
-  * [ ] server side
-  * [ ] via ssh
-    * [ ] push
-    * [ ] pull
-  * [ ] via https
-    * [ ] push
-    * [ ] pull
+  * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
+    * [ ] **initiate**
+      * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
+          * [ ] protocol version definition
+  * [ ] **[ssh](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L103:L103)**
+    * `ssh2` crate with [openssl vendoring support](https://lib.rs/crates/ssh2) for static linkage
+    * [ ] **initiate**
+      * extra paramaters (via environment variable)
+  * [ ] protocol for transfer via http(s)
+    * [ ] extra parameters
   * [ ] API documentation with examples
 * **git-features**
   * **parallel** feature toggle

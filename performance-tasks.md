@@ -1,4 +1,6 @@
-### Potential for improving performance
+## Potential for improving performance
+
+### Pack Decoding
 
 * [ ] @joshtriplett writes: "Regarding decompression performance, try replacing miniz_oxide with a better zlib decoder. Build with libz-sys, and then try substituting zlib-ng built with --zlib-compat. (I'm working on making that easier.) That should substantially improve decompression."
   * @joshtriplett writes: "As far as I know, I'm not aware of flate2 adding any significant overhead, and it provides fairly low-level interfaces in addition to high-level ones. If there's a good reason to, you could use libz-sys directly, but that's a less safe interface. Either way, if you port to libz-sys or to a crate like flate2 that's based on libz-sys, that'll make it trivial to switch to zlib-ng later, as well as making it easy to test zlib-ng now via LD_LIBRARY_PATH."

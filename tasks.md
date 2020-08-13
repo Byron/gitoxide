@@ -1,7 +1,7 @@
 ### Cloning
 
 * **git-transport**
-  * [ ] transport layer
+  * [ ] transport layer https or ssh
   * [ ] receive a pack
 * **git-refs**
   * Enough to handle a git fetch - maybe we can just hardcode things for now…
