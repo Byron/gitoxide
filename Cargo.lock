@@ -647,6 +647,10 @@ name = "git-tui"
 version = "0.0.0"
 
 [[package]]
+name = "git-url"
+version = "0.0.0"
+
+[[package]]
 name = "gitoxide"
 version = "0.3.0"
 dependencies = [

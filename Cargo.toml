@@ -86,6 +86,7 @@ members = [
     "git-odb",
     "git-repository",
     "git-protocol",
+    "git-url",
     "git-transport",
     "git-tui",
 ]

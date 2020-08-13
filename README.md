@@ -99,7 +99,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [ ] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
   * [ ] `Iterator` for multi-plexed pack lines from `Read`
   * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
-  * [ ] V1
+  * [ ] **Version 1**
     * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
       * [ ] [ref advertisement](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L200:L200)
       * [ ] [upload request](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L245:L245)
@@ -110,7 +110,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [ ] multi-ack detailed
       * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
     * [ ] push
-  * [ ] [V2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
+  * [ ] [Version 2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
   
 ### git-transport
   * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
@@ -151,14 +151,18 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * read and write a git-index file
   * add and remove entries
   * [ ] API documentation with examples
+  
 ### git-diff
   * diffing of git-object::Tree structures
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
   * [ ] API documentation with examples
+  
 ### git-url
+  * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
   * [ ] ssh://user@example.com/project.git 
   * [ ] user@example.com:project.git
+  * [ ] git://user@example.com:project.git
   * [ ] ssh://user@example.com/~alice/project.git
   
 ### git-features
@@ -263,7 +267,7 @@ Once installed, there are two binaries:
    * Use `blocking` as well as `git-features::interruptible` to bring operations into the async world and to control 
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
-     though. It should be possible to put it behind a feature flag though.
+     though, but behind a feature flag.
 
 ## Roadmap to Future
 
