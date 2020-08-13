@@ -26,7 +26,6 @@ pub struct Item<T> {
     pub offset: u64,
     is_root: bool,
     pub data: T,
-    // TODO: figure out average amount of children per node and use smallvec instead
     children: Vec<usize>,
 }
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
@@ -63,6 +62,16 @@ impl<T> Tree<T> {
             Ok(offset)
         } else {
             Err(Error::InvariantIncreasingPackOffset(self.last_added_offset, offset))
+        }
+    }
+
+    /// Reduce the size of all child vectors to what's needed
+    pub fn compact(&mut self) {
+        // SAFETY: We are in save Rust, standard borrow checker rules apply
+        #[allow(unsafe_code)]
+        let items = unsafe { &mut *(self.items.get()) };
+        for item in items {
+            item.children.shrink_to_fit();
         }
     }
 
