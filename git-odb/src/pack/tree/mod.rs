@@ -65,16 +65,6 @@ impl<T> Tree<T> {
         }
     }
 
-    /// Reduce the size of all child vectors to what's needed
-    pub fn compact(&mut self) {
-        // SAFETY: We are in save Rust, standard borrow checker rules apply
-        #[allow(unsafe_code)]
-        let items = unsafe { &mut *(self.items.get()) };
-        for item in items {
-            item.children.shrink_to_fit();
-        }
-    }
-
     pub fn add_root(&mut self, offset: u64, data: T) -> Result<(), Error> {
         // SAFETY: Because we passed the assertion above which implies no other access is possible as per
         // standard borrow check rules.

@@ -122,7 +122,6 @@ impl pack::index::File {
             num_objects += 1;
             objects_progress.inc();
         }
-        // tree.compact();
         if num_objects != anticipated_num_objects {
             objects_progress.info(format!(
                 "Recovered from pack streaming error, anticipated {} objects, got {}",

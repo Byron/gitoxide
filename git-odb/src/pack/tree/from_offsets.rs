@@ -110,7 +110,6 @@ impl<T> Tree<T> {
             }
         }
 
-        tree.compact();
         progress.show_throughput(then);
         Ok(tree)
     }
