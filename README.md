@@ -61,6 +61,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * _various memory options allow trading off speed for lower memory consumption_
         * [ ] resolve 'thin' packs
     * [ ] encode
+      * [ ] Add support for zlib-ng for 2.5x compression performance and 20% faster decompression
       * [ ] create new pack
       * [ ] create 'thin' pack
     * [x] verify pack with statistics
