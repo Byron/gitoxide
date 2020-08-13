@@ -11,7 +11,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ## Development Status
 
-* **gitoxide** _(CLI)_
+### gitoxide _(CLI)_
   * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
     and itself relies on all `git-*` crates.
   * limit amount of threads used in operations that support it.
@@ -29,7 +29,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **index**
       * [x] [index from pack](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [ ] support for thin packs (as needed for fetch/pull)
-* **git-object**
+          
+### git-object
   * *decode (zero-copy)* borrowed objects
     * [x] commit
     * [x] tree
@@ -40,7 +41,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] tag
   * [x] transform borrowed to owned objects
   * [ ] API documentation with examples
-* **git-odb**
+  
+### git-odb
   * **loose objects**
     * [x] traverse
     * [x] read
@@ -86,7 +88,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [ ] _an ODB for object lookup from multiple lower level ODB at once_
   * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
-* **git-protocol**
+
+### git-protocol
   * We handle timeouts by shifting all IO into the transport layer, and for the transport itself, there could be 
     some sort of reactor which feeds the client/server respectively with deserialized lines. This enables us to
     start out with a sync implementation, and later add an async one that reuses all the protocol code.
@@ -108,7 +111,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
     * [ ] push
   * [ ] [V2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
-* **git-transport**
+  
+### git-transport
   * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
     * [ ] **initiate**
       * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
@@ -120,7 +124,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] protocol for transfer via http(s)
     * [ ] extra parameters
   * [ ] API documentation with examples
-* **git-repository**
+  
+### git-repository
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] read and write all data types
@@ -131,40 +136,47 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] stashing
   * [ ] API documentation with examples
   * [ ] _Commit Graph_ - split and unsplit
-* **git-config**
+  
+### git-config
   * read and write git configuration files
   * [ ] API documentation with examples
-* **git-ref**
+  
+### git-ref
   * Handle symbolic references and packed references
   * discover them in typical folder structures
   * [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
   * [ ] API documentation with examples
-* **git-index**
+  
+### git-index
   * read and write a git-index file
   * add and remove entries
   * [ ] API documentation with examples
-* **git-diff**
+### git-diff
   * diffing of git-object::Tree structures
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
   * [ ] API documentation with examples
-* **git-url**
+### git-url
   * [ ] ssh://user@example.com/project.git 
   * [ ] user@example.com:project.git
   * [ ] ssh://user@example.com/~alice/project.git
-* **git-features**
+  
+### git-features
   * **parallel** feature toggle
     * _When on…_
       * `in_parallel`
       * `join`
     * _When off all functions execute serially_
-* **git-tui**
+    
+### git-tui
   * _a terminal user interface seeking to replace and improve on `tig`_
-* **Stress Testing**
+  
+### Stress Testing
   * [x] Verify huge packs
   * [x] Explode a pack to disk 
   * [ ] Generate huge pack from a lot of loose objects
-* **Ideas for Demos**
+  
+### Ideas for Demos
   * [ ] A simple [`git-hours`][git-hours-algo] clone
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
         as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
