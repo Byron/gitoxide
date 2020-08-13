@@ -87,6 +87,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 * **git-protocol**
+  * We handle timeouts by shifting all IO into the transport layer, and for the transport itself, there could be 
+    some sort of reactor which feeds the client/server respectively with deserialized lines. This enables us to
+    start out with a sync implementation, and later add an async one that reuses all the protocol code.
   * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
     * [ ] encode
     * [ ] decode
@@ -95,11 +98,15 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
   * [ ] V1
     * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
-      * [ ] client
-      * [ ] server
+      * [ ] [ref advertisement](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L200:L200)
+      * [ ] [upload request](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L245:L245)
+      * [ ] [shallow update](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L305:L305)
+      * [ ] [upload haves](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L333:L333)
+        * [ ] 'simple' (multi-ack* is absent)
+        * [ ] multi-ack 
+        * [ ] multi-ack detailed
+      * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
     * [ ] push
-      * [ ] client
-      * [ ] server
   * [ ] [V2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
 * **git-transport**
   * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
