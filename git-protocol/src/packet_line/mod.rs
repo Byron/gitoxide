@@ -19,6 +19,13 @@ impl<'a> Borrowed<'a> {
             Borrowed::Data(d) => encode::data_to_write(d, out),
         }
     }
+
+    pub fn as_slice(&self) -> &[u8] {
+        match self {
+            Borrowed::Data(d) => d,
+            Borrowed::Flush => &[],
+        }
+    }
 }
 
 pub mod decode;

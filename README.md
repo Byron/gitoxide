@@ -95,8 +95,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     start out with a sync implementation, and later add an async one that reuses all the protocol code.
   * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
     * [ ] encode
-    * [ ] decode
+    * [ ] decode (zero-copy)
     * [ ] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
+    * [ ] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
+    * [ ]
   * [ ] `Iterator` for multi-plexed pack lines from `Read`
   * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
   * [ ] **Version 1**
