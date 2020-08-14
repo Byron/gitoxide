@@ -22,12 +22,14 @@ quick_error! {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Stream<'a> {
     Complete {
         line: packet_line::Borrowed<'a>,
         bytes_consumed: usize,
     },
     Incomplete {
+        /// The amount of additional bytes needed for the parsing to complete
         bytes_needed: usize,
     },
 }
@@ -50,18 +52,26 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
     let mut buf = [0u8; U16_HEX_BYTES / 2];
     hex::decode_to_slice(hex_bytes, &mut buf)?;
     let wanted_bytes = u16::from_be_bytes(buf) as usize;
-    if data_len < wanted_bytes {
-        return Ok(Stream::Incomplete {
-            bytes_needed: wanted_bytes,
-        });
-    }
     if wanted_bytes > MAX_LINE_LEN {
         return Err(Error::DataLengthLimitExceeded(wanted_bytes));
     }
+    if data_len < wanted_bytes {
+        return Ok(Stream::Incomplete {
+            bytes_needed: wanted_bytes - data_len,
+        });
+    }
+
+    if wanted_bytes == 4 {
+        return Err(Error::DataIsEmpty);
+    }
 
     // todo: error line
+    let mut data = &data[U16_HEX_BYTES..wanted_bytes];
+    if data[data.len() - 1] == b'\n' {
+        data = &data[..data.len() - 1];
+    }
     Ok(Stream::Complete {
-        line: packet_line::Borrowed::Data(&data[U16_HEX_BYTES..wanted_bytes]),
+        line: packet_line::Borrowed::Data(data),
         bytes_consumed: wanted_bytes,
     })
 }

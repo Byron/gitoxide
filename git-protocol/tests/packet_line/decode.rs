@@ -1,4 +1,5 @@
 mod streaming {
+    use crate::packet_line::assert_err_display;
     use git_protocol::{
         packet_line::decode::{self, streaming, Stream},
         PacketLine,
@@ -12,7 +13,7 @@ mod streaming {
         match res? {
             Stream::Complete { line, bytes_consumed } => {
                 assert_eq!(bytes_consumed, expected_consumed);
-                assert_eq!(line, expected_value);
+                assert_eq!(line.as_bstr(), expected_value.as_bstr());
             }
             Stream::Incomplete { .. } => panic!("expected parsing to be complete, not partial"),
         }
@@ -25,6 +26,32 @@ mod streaming {
     }
 
     #[test]
+    fn trailing_line_feeds_are_removed() -> crate::Result {
+        assert_complete(streaming(b"0006a\n"), 6, PacketLine::Data(b"a"))
+    }
+
+    #[test]
+    fn error_on_oversized_line() {
+        assert_err_display(
+            streaming(b"ffff"),
+            "The data received claims to be larger than than the maximum allowed size: got 65535, exceeds 65516",
+        );
+    }
+
+    #[test]
+    fn error_on_invalid_hex() {
+        assert_err_display(
+            streaming(b"fooo"),
+            "Failed to decode the first four hex bytes indicating the line length",
+        );
+    }
+
+    #[test]
+    fn error_on_empty_line() {
+        assert_err_display(streaming(b"0004"), "Received an invalid empty line");
+    }
+
+    #[test]
     fn round_trips() -> crate::Result {
         for (line, bytes) in &[(PacketLine::Flush, 4), (PacketLine::Data(b"hello there"), 15)] {
             let mut out = Vec::new();
@@ -32,5 +59,35 @@ mod streaming {
             assert_complete(streaming(&out), *bytes, *line)?;
         }
         Ok(())
+    }
+
+    mod incomplete {
+        use git_protocol::packet_line::decode::{self, streaming, Stream};
+
+        fn assert_incomplete(res: Result<Stream, decode::Error>, expected_missing: usize) -> crate::Result {
+            match res? {
+                Stream::Complete { .. } => {
+                    panic!("expected parsing to be partial, not complete");
+                }
+                Stream::Incomplete { bytes_needed } => {
+                    assert_eq!(bytes_needed, expected_missing);
+                }
+            }
+            Ok(())
+        }
+
+        #[test]
+        fn missing_hex_bytes() -> crate::Result {
+            assert_incomplete(streaming(b"0"), 3)?;
+            assert_incomplete(streaming(b"00"), 2)?;
+            Ok(())
+        }
+
+        #[test]
+        fn missing_data_bytes() -> crate::Result {
+            assert_incomplete(streaming(b"0005"), 1)?;
+            assert_incomplete(streaming(b"0006a"), 1)?;
+            Ok(())
+        }
     }
 }

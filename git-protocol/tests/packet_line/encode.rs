@@ -1,4 +1,5 @@
 mod data_to_write {
+    use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
     use git_protocol::packet_line::encode::{data_to_write, flush_to_write};
     use std::io;
@@ -7,13 +8,6 @@ mod data_to_write {
         let mut v = Vec::new();
         v.resize(size, 0);
         v
-    }
-
-    fn assert_err_display<T, E: std::error::Error>(res: Result<T, E>, expected: impl AsRef<str>) {
-        match res {
-            Ok(_) => assert!(false, "Expected error '{}', got value", expected.as_ref()),
-            Err(err) => assert_eq!(err.to_string(), expected.as_ref()),
-        }
     }
 
     #[test]

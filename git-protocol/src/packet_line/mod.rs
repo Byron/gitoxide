@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::io;
 
 pub(crate) const U16_HEX_BYTES: usize = 4;
@@ -25,6 +26,9 @@ impl<'a> Borrowed<'a> {
             Borrowed::Data(d) => d,
             Borrowed::Flush => &[],
         }
+    }
+    pub fn as_bstr(&self) -> &BStr {
+        self.as_slice().into()
     }
 }
 
