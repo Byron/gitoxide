@@ -1,5 +1,8 @@
-use crate::packet_line::{
-    self, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES,
+use crate::{
+    packet_line::{
+        DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES,
+    },
+    PacketLine,
 };
 use bstr::BString;
 use quick_error::quick_error;
@@ -27,7 +30,7 @@ quick_error! {
 #[derive(Debug, Clone)]
 pub enum Stream<'a> {
     Complete {
-        line: packet_line::Borrowed<'a>,
+        line: PacketLine<'a>,
         bytes_consumed: usize,
     },
     Incomplete {
@@ -44,23 +47,17 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
         });
     }
     let hex_bytes = &data[..U16_HEX_BYTES];
-    if hex_bytes == FLUSH_LINE {
-        return Ok(Stream::Complete {
-            line: packet_line::Borrowed::Flush,
-            bytes_consumed: 4,
-        });
-    }
-    if hex_bytes == DELIMITER_LINE {
-        return Ok(Stream::Complete {
-            line: packet_line::Borrowed::Delimiter,
-            bytes_consumed: 4,
-        });
-    }
-    if hex_bytes == RESPONSE_END_LINE {
-        return Ok(Stream::Complete {
-            line: packet_line::Borrowed::ResponseEnd,
-            bytes_consumed: 4,
-        });
+    for (line_bytes, line_type) in &[
+        (FLUSH_LINE, PacketLine::Flush),
+        (DELIMITER_LINE, PacketLine::Delimiter),
+        (RESPONSE_END_LINE, PacketLine::ResponseEnd),
+    ] {
+        if hex_bytes == *line_bytes {
+            return Ok(Stream::Complete {
+                line: *line_type,
+                bytes_consumed: 4,
+            });
+        }
     }
 
     let mut buf = [0u8; U16_HEX_BYTES / 2];
@@ -89,7 +86,7 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
     }
 
     Ok(Stream::Complete {
-        line: packet_line::Borrowed::Data(data),
+        line: PacketLine::Data(data),
         bytes_consumed: wanted_bytes,
     })
 }

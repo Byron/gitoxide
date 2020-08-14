@@ -93,12 +93,12 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * We handle timeouts by shifting all IO into the transport layer, and for the transport itself, there could be 
     some sort of reactor which feeds the client/server respectively with deserialized lines. This enables us to
     start out with a sync implementation, and later add an async one that reuses all the protocol code.
-  * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
+  * [x] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
     * [x] encode
     * [x] decode (zero-copy)
     * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
     * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
-    * [ ] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
+    * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
   * [ ] `Iterator` for multi-plexed pack lines from `Read`
   * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
   * [ ] **Version 1**
