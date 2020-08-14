@@ -4,7 +4,7 @@ use crate::{
     pack::index::{self, util::index_entries_sorted_by_offset_ascending},
     pack::tree::traverse::Context,
 };
-use git_features::interruptible::{interrupt, ResetInterruptOnDrop};
+use git_features::interrupt::{trigger, ResetOnDrop};
 use git_features::{parallel, progress::Progress};
 use git_object::owned;
 
@@ -28,7 +28,7 @@ impl index::File {
         ) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let _reset_interrupt = ResetInterruptOnDrop::default();
+        let _reset_interrupt = ResetOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
                 let pack_progress = root.add_child("SHA1 of pack");
@@ -36,7 +36,7 @@ impl index::File {
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress);
                     if res.is_err() {
-                        interrupt();
+                        trigger();
                     }
                     res
                 }

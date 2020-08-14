@@ -1,7 +1,7 @@
 use filebuffer::FileBuffer;
 
 use crate::pack;
-use git_features::{interruptible, progress, progress::Progress};
+use git_features::{interrupt, progress, progress::Progress};
 use std::{
     io,
     path::{Path, PathBuf},
@@ -56,7 +56,7 @@ impl pack::Bundle {
         }));
         let data_path: PathBuf = data_file.lock().path().into();
         let pack = PassThrough {
-            reader: interruptible::Read { inner: pack },
+            reader: interrupt::Read { inner: pack },
             writer: Some(data_file.clone()),
         };
         let eight_pages = 4096 * 8;

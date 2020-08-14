@@ -27,7 +27,7 @@ mod options {
 pub fn main() -> Result<()> {
     use options::*;
     let args = Args::parse();
-    git_features::interruptible::init_interrupt_handler(std::io::stderr());
+    git_features::interrupt::init_handler(std::io::stderr());
     match args.cmd {
         Subcommands::Init => core::repository::init(),
     }?;

@@ -30,7 +30,7 @@ use gitoxide_core as core;
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
-    git_features::interruptible::init_interrupt_handler(std::io::stderr());
+    git_features::interrupt::init_handler(std::io::stderr());
 
     match cli.subcommand {
         SubCommands::Init(_) => core::repository::init(),

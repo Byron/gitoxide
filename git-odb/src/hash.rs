@@ -1,5 +1,5 @@
 use git_features::hash;
-use git_features::interruptible::is_interrupted;
+use git_features::interrupt::is_triggered;
 use git_object::{owned, HashKind};
 use std::{io, path::Path};
 
@@ -58,7 +58,7 @@ pub(crate) fn bytes_of_file(
         bytes_left -= out.len();
         progress.inc_by(out.len());
         hasher.update(out);
-        if is_interrupted() {
+        if is_triggered() {
             return Err(io::Error::new(io::ErrorKind::Other, "Interrupted"));
         }
     }

@@ -17,6 +17,11 @@
    * ...even if that includes only the most common usecases.
  * **Prefer to increment major version rapidly...**
    * ...instead of keeping major version zero for longer than needed.
+ * **stability**
+   * we adhere to semantic versioning
+   * while below 1.0, expect a greater amount of breaking changes, which are announced with minor versions
+   * From 1.0, we will try hardest to keep the API and user interface non-breaking the closer to the user a library is. Thus the CLI should remain at version
+    1 for a long times. However, crates that make it up can change more rapidly and may see more major version changes over time.
   
 ### Guidelines
 
@@ -30,7 +35,7 @@
     * `blocking` can be used to make `Read` and `Iterator` async, or move any operation onto a thread which blends it into the 
       async world. 
        * Most operations are fast and 'interrupting' them is as easy as ignoring their result by cancelling their task.
-       * Long-running operations can be roughly interacted with using `git_features::interruptible::interrupt()` function, and after a moment
+       * Long-running operations can be roughly interacted with using `git_features::interrupt::trigger()` function, and after a moment
          of waiting the flag can be unset with the `…::uninterrupt()` function to allow new long-running operations to work. 
          Every long running operation supports this.
   * **server-side**
@@ -38,7 +43,7 @@
       needs a lot of resources and threads will do just fine.
       
 * **interruption of long-running operations**
-  * Use `git-features::interruptible::*` for building support for interruptions of long-running operations only.
+  * Use `git-features::interrupt::*` for building support for interruptions of long-running operations only.
     * It's up to the author to decide how to best integrate it, generally we use a poll-based mechanism to check whether
       an interrupt flag is set.
     * **this is a must if…**

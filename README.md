@@ -109,6 +109,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [ ] multi-ack 
         * [ ] multi-ack detailed
       * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
+        * [ ] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
     * [ ] push
   * [ ] [Version 2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
   
@@ -264,7 +265,7 @@ Once installed, there are two binaries:
  * **use async IO everywhere**
    * for the most part, git operations are heavily relying on memory mapped IO as well as CPU to decompress data,
      which doesn't lend itself well to async IO out of the box.
-   * Use `blocking` as well as `git-features::interruptible` to bring operations into the async world and to control 
+   * Use `blocking` as well as `git-features::interrupt` to bring operations into the async world and to control 
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though, but behind a feature flag.
@@ -340,7 +341,7 @@ All feature toggles are additive.
     CPUs that support it, like AMD Ryzen or Intel Core i3.
 * **interrupt-handler**
   * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
-    * **Note that** `git_features::interruptible::init_interrupt_handler()` must be called at the start of the application.
+    * **Note that** `git_features::interrupt::init_handler()` must be called at the start of the application.
   * If unset, these utilities will be a no-op which may lead to leaking temporary files when interrupted.
   * If the application already sets a handler, this handler will have no effect.
     

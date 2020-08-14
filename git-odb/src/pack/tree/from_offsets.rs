@@ -1,6 +1,6 @@
 use crate::{pack, pack::index::access::PackOffset, pack::tree::Tree};
 use git_features::{
-    interruptible::is_interrupted,
+    interrupt::is_triggered,
     progress::{self, Progress},
 };
 use quick_error::quick_error;
@@ -105,7 +105,7 @@ impl<T> Tree<T> {
                 }
             };
             progress.inc();
-            if idx % 10_000 == 0 && is_interrupted() {
+            if idx % 10_000 == 0 && is_triggered() {
                 return Err(Error::Interrupted);
             }
         }

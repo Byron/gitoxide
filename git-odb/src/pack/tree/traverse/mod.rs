@@ -4,7 +4,7 @@ use crate::{
     pack::tree::{Item, Tree},
 };
 use git_features::{
-    interruptible::is_interrupted,
+    interrupt::is_triggered,
     parallel,
     parallel::in_parallel_if,
     progress::{self, Progress},
@@ -127,7 +127,7 @@ where
         self.item_count += num_objects;
         self.size_progress.inc_by(decompressed_size as usize);
         self.progress.lock().set(self.item_count);
-        if is_interrupted() {
+        if is_triggered() {
             return Err(Error::Interrupted);
         }
         Ok(())

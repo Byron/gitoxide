@@ -10,7 +10,7 @@ mod _impl {
         sync::atomic::{AtomicUsize, Ordering},
     };
 
-    pub fn init_interrupt_handler(mut message_channel: impl io::Write + Send + 'static) {
+    pub fn init_handler(mut message_channel: impl io::Write + Send + 'static) {
         ctrlc::set_handler(move || {
             const MESSAGES: &[&str] = &[
                 "interrupt requested", 
@@ -19,7 +19,7 @@ mod _impl {
                 "if the program doesn't respond quickly enough, please let us know here: https://github.com/Byron/gitoxide/issues"
             ];
             static CURRENT_MESSAGE: AtomicUsize = AtomicUsize::new(0);
-            if !super::is_interrupted() {
+            if !super::is_triggered() {
                 CURRENT_MESSAGE.store(0, Ordering::Relaxed);
             }
             let msg_idx =CURRENT_MESSAGE.fetch_add(1, Ordering::Relaxed);
@@ -33,9 +33,9 @@ mod _impl {
 mod _impl {
     use std::io;
 
-    pub fn init_interrupt_handler(_message_channel: impl io::Write + Send + 'static) {}
+    pub fn init_handler(_message_channel: impl io::Write + Send + 'static) {}
 }
-pub use _impl::init_interrupt_handler;
+pub use _impl::init_handler;
 
 pub struct Read<R> {
     pub inner: R,
@@ -46,7 +46,7 @@ where
     R: io::Read,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        if is_interrupted() {
+        if is_triggered() {
             return Err(io::Error::new(io::ErrorKind::Other, "interrupted by user"));
         }
         self.inner.read(buf)
@@ -55,13 +55,13 @@ where
 
 static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
-pub fn is_interrupted() -> bool {
+pub fn is_triggered() -> bool {
     IS_INTERRUPTED.load(Ordering::Relaxed)
 }
-pub fn interrupt() {
+pub fn trigger() {
     IS_INTERRUPTED.store(true, Ordering::Relaxed);
 }
-pub fn uninterrupt() {
+pub fn reset() {
     IS_INTERRUPTED.store(false, Ordering::Relaxed);
 }
 
@@ -70,24 +70,24 @@ pub fn uninterrupt() {
 ///
 /// Note that this is inherently racy and that this will only work deterministically if there is only one
 /// top-level function running in a process.
-pub struct ResetInterruptOnDrop {
+pub struct ResetOnDrop {
     was_interrupted: bool,
 }
 
-impl Default for ResetInterruptOnDrop {
+impl Default for ResetOnDrop {
     fn default() -> Self {
-        ResetInterruptOnDrop {
-            was_interrupted: is_interrupted(),
+        ResetOnDrop {
+            was_interrupted: is_triggered(),
         }
     }
 }
 
-impl Drop for ResetInterruptOnDrop {
+impl Drop for ResetOnDrop {
     fn drop(&mut self) {
         if self.was_interrupted {
-            interrupt()
+            trigger()
         } else {
-            uninterrupt()
+            reset()
         }
     }
 }

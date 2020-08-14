@@ -1,6 +1,6 @@
 use super::{Error, Reducer, SafetyCheck};
 use crate::pack::{self, data::decode, index, index::util};
-use git_features::interruptible::ResetInterruptOnDrop;
+use git_features::interrupt::ResetOnDrop;
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
@@ -31,7 +31,7 @@ impl index::File {
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
     {
-        let _reset_interrupt = ResetInterruptOnDrop::default();
+        let _reset_interrupt = ResetOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
                 let pack_progress = root.add_child("SHA1 of pack");
@@ -39,7 +39,7 @@ impl index::File {
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress);
                     if res.is_err() {
-                        git_features::interruptible::interrupt();
+                        git_features::interrupt::trigger();
                     }
                     res
                 }
