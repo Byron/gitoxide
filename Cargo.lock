@@ -622,6 +622,11 @@ dependencies = [
 [[package]]
 name = "git-protocol"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+ "hex",
+ "quick-error 2.0.0",
+]
 
 [[package]]
 name = "git-ref"
