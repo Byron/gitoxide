@@ -195,8 +195,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 ### Binary Release
 
 ```sh
-curl -LSfs https://raw.githubusercontent.com/byron/git-oxide/master/ci/install.sh | \
-    sh -s -- --git byron/git-oxide --crate gix-max-termion
+curl -LSfs https://raw.githubusercontent.com/Byron/gitoxide/main/ci/install.sh | \
+    sh -s -- --git Byron/gitoxide --crate gix-max-termion
 ```
 
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
