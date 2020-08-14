@@ -1,4 +1,4 @@
-use crate::packet_line::{FLUSH_LINE, MAX_DATA_LEN};
+use crate::packet_line::{ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN};
 use quick_error::quick_error;
 use std::io;
 
@@ -18,8 +18,21 @@ quick_error! {
         }
     }
 }
+
 pub fn flush_to_write(mut out: impl io::Write) -> io::Result<usize> {
     out.write_all(FLUSH_LINE).map(|_| 4)
+}
+
+pub fn error_to_write(data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+    let data_with_prefix_end = data.len() + ERR_PREFIX.len();
+    if data_with_prefix_end > MAX_DATA_LEN {
+        return Err(Error::DataLengthLimitExceeded(data.len() - ERR_PREFIX.len()));
+    }
+    // This is a big buffer, but it's only used on error, so the program is on the way out
+    let mut buf = [0u8; MAX_DATA_LEN];
+    buf[..ERR_PREFIX.len()].copy_from_slice(ERR_PREFIX);
+    buf[ERR_PREFIX.len()..data_with_prefix_end].copy_from_slice(data);
+    data_to_write(&buf[..data_with_prefix_end], out)
 }
 
 pub fn data_to_write(data: &[u8], mut out: impl io::Write) -> Result<usize, Error> {

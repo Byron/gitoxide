@@ -94,11 +94,11 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     some sort of reactor which feeds the client/server respectively with deserialized lines. This enables us to
     start out with a sync implementation, and later add an async one that reuses all the protocol code.
   * [ ] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
-    * [ ] encode
-    * [ ] decode (zero-copy)
-    * [ ] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
+    * [x] encode
+    * [x] decode (zero-copy)
+    * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
     * [ ] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
-    * [ ]
+    * [ ] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
   * [ ] `Iterator` for multi-plexed pack lines from `Read`
   * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
   * [ ] **Version 1**
@@ -111,7 +111,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [ ] multi-ack 
         * [ ] multi-ack detailed
       * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
-        * [ ] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
     * [ ] push
   * [ ] [Version 2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
   

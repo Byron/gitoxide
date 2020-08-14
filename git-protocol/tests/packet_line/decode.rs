@@ -74,6 +74,14 @@ mod streaming {
         Ok(())
     }
 
+    #[test]
+    fn roundtrip_error_line() -> crate::Result {
+        let mut out = Vec::new();
+        PacketLine::Data(b"the error").to_error().to_write(&mut out)?;
+        assert_err_display(streaming(&out), "the error");
+        Ok(())
+    }
+
     mod incomplete {
         use git_protocol::packet_line::decode::{self, streaming, Stream};
 

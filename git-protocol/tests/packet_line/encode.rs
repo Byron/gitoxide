@@ -1,7 +1,7 @@
 mod data_to_write {
     use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
-    use git_protocol::packet_line::encode::{data_to_write, flush_to_write};
+    use git_protocol::packet_line::encode::{data_to_write, error_to_write, flush_to_write};
     use std::io;
 
     fn vec_sized(size: usize) -> Vec<u8> {
@@ -27,6 +27,14 @@ mod data_to_write {
         let mut out = Vec::new();
         assert_eq!(flush_to_write(&mut out)?, 4);
         assert_eq!(out.as_bstr(), b"0000".as_bstr());
+        Ok(())
+    }
+
+    #[test]
+    fn successful_write_of_error_line() -> crate::Result {
+        let mut out = Vec::new();
+        assert_eq!(error_to_write(b"hello error", &mut out)?, 19);
+        assert_eq!(out.as_bstr(), b"0013ERR hello error".as_bstr());
         Ok(())
     }
 

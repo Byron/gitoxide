@@ -6,8 +6,6 @@
     * to be used to obtain more real-world samples of typical git interactions for use in the test-suite
   * **git-protocol**
     * [ ] pkt-lines support
-      * [x] encoding including flush lines
-      * [ ] decoding
     * [ ] basic V1 parsing to understand data frames to allow placing them into individual files
 * **a way to intercept git-http communication**
   * Maybe with a custom proxy as well, can't hurt to try APIs in real-world programs

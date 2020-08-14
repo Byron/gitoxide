@@ -31,6 +31,17 @@ impl<'a> Borrowed<'a> {
     pub fn as_bstr(&self) -> &BStr {
         self.as_slice().into()
     }
+    pub fn to_error(&self) -> Error {
+        Error(self.as_slice())
+    }
+}
+
+pub struct Error<'a>(&'a [u8]);
+
+impl<'a> Error<'a> {
+    pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
+        encode::error_to_write(self.0, out)
+    }
 }
 
 pub mod decode;
