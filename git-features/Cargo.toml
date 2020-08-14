@@ -4,7 +4,7 @@ description = "A crate to integrate various capabilities using compile-time feat
 repository = "https://github.com/Byron/git-oxide"
 version = "0.3.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
-license = "MIT"
+license = "MIT/Apache-2.0"
 edition = "2018"
 
 [lib]

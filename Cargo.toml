@@ -4,10 +4,10 @@ description = "A command-line application for interacting with git repositories"
 repository = "https://github.com/Byron/git-oxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-license = "MIT"
+license = "MIT/Apache-2.0"
 version = "0.3.0"
 default-run = "gix"
-include = ["src/**/*", "LICENSE.md", "README.md", "CHANGELOG.md"]
+include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [[bin]]
 name = "gix"

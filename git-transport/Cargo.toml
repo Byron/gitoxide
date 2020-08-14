@@ -2,7 +2,7 @@
 name = "git-transport"
 version = "0.0.0"
 repository = "https://github.com/Byron/git-oxide"
-license = "MIT"
+license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"

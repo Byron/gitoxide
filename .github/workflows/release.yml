@@ -169,7 +169,7 @@ jobs:
           staging="${{ env.BIN_NAME }}-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
-          cp {README.md,LICENSE.md,CHANGELOG.md} "$staging/"
+          cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
           cp target/${{ matrix.target }}/release/${{ env.BIN_NAME }}{,p} "$staging/"
           tar czf "$staging.tar.gz" "$staging"
@@ -270,7 +270,7 @@ jobs:
           staging="${{ env.BIN_NAME }}-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
-          cp {README.md,LICENSE.md,CHANGELOG.md} "$staging/"
+          cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
           cp target/${{ matrix.target }}/release/${{ env.BIN_NAME }}{,p}.exe "$staging/"
           7z a "$staging.zip" "$staging"

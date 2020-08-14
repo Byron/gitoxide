@@ -4,7 +4,7 @@ version = "0.3.0"
 description = "Borrowed and owned git objects with deserialization and serialization support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/git-oxide"
-license = "MIT"
+license = "MIT/Apache-2.0"
 edition = "2018"
 include = ["src/**/*"]
 

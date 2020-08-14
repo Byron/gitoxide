@@ -2,7 +2,7 @@
 name = "git-repository"
 repository = "https://github.com/Byron/git-oxide"
 description = "Manipulation of git repositories"
-license = "MIT"
+license = "MIT/Apache-2.0"
 version = "0.3.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
