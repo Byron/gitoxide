@@ -31,10 +31,23 @@ mod streaming {
     }
 
     #[test]
+    fn ignore_extra_bytes() -> crate::Result {
+        assert_complete(streaming(b"0006a\nhello"), 6, PacketLine::Data(b"a"))
+    }
+
+    #[test]
     fn error_on_oversized_line() {
         assert_err_display(
             streaming(b"ffff"),
             "The data received claims to be larger than than the maximum allowed size: got 65535, exceeds 65516",
+        );
+    }
+
+    #[test]
+    fn error_on_error_line() {
+        assert_err_display(
+            streaming(b"0011ERR the error-and just ignored because not part of the size"),
+            "the error",
         );
     }
 

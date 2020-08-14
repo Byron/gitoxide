@@ -1,4 +1,4 @@
-use crate::packet_line::{self, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, U16_HEX_BYTES};
+use crate::packet_line::{self, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, U16_HEX_BYTES};
 use bstr::BString;
 use quick_error::quick_error;
 
@@ -16,7 +16,7 @@ quick_error! {
         DataIsEmpty {
             display("Received an invalid empty line")
         }
-        Line(data: BString) {
+        Line(data: BString, bytes_consumed: usize) {
             display("{}", data)
         }
     }
@@ -65,11 +65,15 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
         return Err(Error::DataIsEmpty);
     }
 
-    // todo: error line
     let mut data = &data[U16_HEX_BYTES..wanted_bytes];
     if data[data.len() - 1] == b'\n' {
         data = &data[..data.len() - 1];
     }
+
+    if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
+        return Err(Error::Line(data[ERR_PREFIX.len()..].into(), wanted_bytes));
+    }
+
     Ok(Stream::Complete {
         line: packet_line::Borrowed::Data(data),
         bytes_consumed: wanted_bytes,
