@@ -97,7 +97,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] encode
     * [x] decode (zero-copy)
     * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
-    * [ ] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
+    * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
     * [ ] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
   * [ ] `Iterator` for multi-plexed pack lines from `Read`
   * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)

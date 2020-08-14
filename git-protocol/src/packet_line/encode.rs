@@ -1,4 +1,4 @@
-use crate::packet_line::{DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
+use crate::packet_line::{Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
 use quick_error::quick_error;
 use std::io;
 
@@ -32,29 +32,34 @@ pub fn flush_to_write(mut out: impl io::Write) -> io::Result<usize> {
 }
 
 pub fn error_to_write(data: &[u8], out: impl io::Write) -> Result<usize, Error> {
-    let data_with_prefix_end = data.len() + ERR_PREFIX.len();
-    if data_with_prefix_end > MAX_DATA_LEN {
-        return Err(Error::DataLengthLimitExceeded(data.len() - ERR_PREFIX.len()));
-    }
-    // This is a big buffer, but it's only used on error, so the program is on the way out
-    let mut buf = [0u8; MAX_DATA_LEN];
-    buf[..ERR_PREFIX.len()].copy_from_slice(ERR_PREFIX);
-    buf[ERR_PREFIX.len()..data_with_prefix_end].copy_from_slice(data);
-    data_to_write(&buf[..data_with_prefix_end], out)
+    prefixed_data_to_write(ERR_PREFIX, data, out)
 }
 
-pub fn data_to_write(data: &[u8], mut out: impl io::Write) -> Result<usize, Error> {
-    if data.len() > MAX_DATA_LEN {
-        return Err(Error::DataLengthLimitExceeded(data.len()));
+pub fn band_to_write(kind: Channel, data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+    prefixed_data_to_write(&[kind as u8], data, out)
+}
+
+pub fn data_to_write(data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+    prefixed_data_to_write(&[], data, out)
+}
+
+fn prefixed_data_to_write(prefix: &[u8], data: &[u8], mut out: impl io::Write) -> Result<usize, Error> {
+    let data_len = prefix.len() + data.len();
+    if data_len > MAX_DATA_LEN {
+        return Err(Error::DataLengthLimitExceeded(data_len));
     }
     if data.is_empty() {
         return Err(Error::DataIsEmpty);
     }
 
     let mut buf = [0u8; 4];
-    let data_len = data.len() + 4;
+    let data_len = data_len + 4;
     hex::encode_to_slice((data_len as u16).to_be_bytes(), &mut buf).expect("two bytes to 4 hex chars never fails");
+
     out.write_all(&buf)?;
+    if !prefix.is_empty() {
+        out.write_all(prefix)?;
+    }
     out.write_all(data)?;
     Ok(data_len)
 }

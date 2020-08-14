@@ -1,5 +1,6 @@
 mod streaming {
     use crate::packet_line::assert_err_display;
+    use git_protocol::packet_line::Channel;
     use git_protocol::{
         packet_line::decode::{self, streaming, Stream},
         PacketLine,
@@ -84,6 +85,23 @@ mod streaming {
         let mut out = Vec::new();
         PacketLine::Data(b"the error").to_error().to_write(&mut out)?;
         assert_err_display(streaming(&out), "the error");
+        Ok(())
+    }
+
+    #[test]
+    fn roundtrip_side_bands() -> crate::Result {
+        for channel in &[Channel::Data, Channel::Error, Channel::Progress] {
+            let mut out = Vec::new();
+            let band = PacketLine::Data(b"band data").to_band(*channel);
+            band.to_write(&mut out)?;
+            match streaming(&out)? {
+                Stream::Complete { line, bytes_consumed } => {
+                    assert_eq!(bytes_consumed, out.len());
+                    assert_eq!(line.decode_band(), band);
+                }
+                Stream::Incomplete { .. } => panic!("roundtrips are never incomplete"),
+            }
+        }
         Ok(())
     }
 
