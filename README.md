@@ -254,6 +254,11 @@ Once installed, there are two binaries:
    * libraries use light-weight custom errors implemented using `quick-error`.
    * internationalization is nothing we are concerned with right now.
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
+ * **Cross platform support, including Windows**
+   * With the tools and experience available here there is no reason not to support Windows.
+   * [Windows is testsed on CI](https://github.com/Byron/git-oxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
+     and failures do prevent releases.
+     
 
 ## Non-Goals
 
