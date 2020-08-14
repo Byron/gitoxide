@@ -1,9 +1,4 @@
-use std::{
-    io,
-    sync::atomic::{AtomicBool, Ordering},
-};
-
-#[cfg(feature = "interrupt-handler")]
+#[cfg(all(feature = "interrupt-handler", not(feature = "disable-interrupts")))]
 mod _impl {
     use std::{
         io,
@@ -29,7 +24,11 @@ mod _impl {
         .expect("it is up to the application to ensure only one interrupt handler is installed, and this function is called only once.")
     }
 }
-#[cfg(not(feature = "interrupt-handler"))]
+use std::io;
+#[cfg(not(feature = "disable-interrupts"))]
+use std::sync::atomic::{AtomicBool, Ordering};
+
+#[cfg(any(feature = "disable-interrupts", not(feature = "interrupt-handler")))]
 mod _impl {
     use std::io;
 
@@ -53,15 +52,23 @@ where
     }
 }
 
+#[cfg(not(feature = "disable-interrupts"))]
 static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
+#[cfg(not(feature = "disable-interrupts"))]
 pub fn is_triggered() -> bool {
     IS_INTERRUPTED.load(Ordering::Relaxed)
 }
+#[cfg(feature = "disable-interrupts")]
+pub fn is_triggered() -> bool {
+    false
+}
 pub fn trigger() {
+    #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(true, Ordering::Relaxed);
 }
 pub fn reset() {
+    #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(false, Ordering::Relaxed);
 }
 

@@ -15,6 +15,7 @@ test = false
 parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus"]
 fast-sha1 = ["fastsha1"]
 interrupt-handler = ["ctrlc"]
+disable-interrupts = []
 
 [[test]]
 name = "parallel"
