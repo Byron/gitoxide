@@ -1,4 +1,4 @@
-use crate::packet_line::{ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN};
+use crate::packet_line::{DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
 use quick_error::quick_error;
 use std::io;
 
@@ -17,6 +17,14 @@ quick_error! {
             display("Empty lines are invalid")
         }
     }
+}
+
+pub fn response_end_to_write(mut out: impl io::Write) -> io::Result<usize> {
+    out.write_all(RESPONSE_END_LINE).map(|_| 4)
+}
+
+pub fn delim_to_write(mut out: impl io::Write) -> io::Result<usize> {
+    out.write_all(DELIMITER_LINE).map(|_| 4)
 }
 
 pub fn flush_to_write(mut out: impl io::Write) -> io::Result<usize> {

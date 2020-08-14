@@ -66,7 +66,12 @@ mod streaming {
 
     #[test]
     fn round_trips() -> crate::Result {
-        for (line, bytes) in &[(PacketLine::Flush, 4), (PacketLine::Data(b"hello there"), 15)] {
+        for (line, bytes) in &[
+            (PacketLine::ResponseEnd, 4),
+            (PacketLine::Delimiter, 4),
+            (PacketLine::Flush, 4),
+            (PacketLine::Data(b"hello there"), 15),
+        ] {
             let mut out = Vec::new();
             line.to_write(&mut out)?;
             assert_complete(streaming(&out), *bytes, *line)?;

@@ -1,4 +1,6 @@
-use crate::packet_line::{self, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, U16_HEX_BYTES};
+use crate::packet_line::{
+    self, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES,
+};
 use bstr::BString;
 use quick_error::quick_error;
 
@@ -45,6 +47,18 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
     if hex_bytes == FLUSH_LINE {
         return Ok(Stream::Complete {
             line: packet_line::Borrowed::Flush,
+            bytes_consumed: 4,
+        });
+    }
+    if hex_bytes == DELIMITER_LINE {
+        return Ok(Stream::Complete {
+            line: packet_line::Borrowed::Delimiter,
+            bytes_consumed: 4,
+        });
+    }
+    if hex_bytes == RESPONSE_END_LINE {
+        return Ok(Stream::Complete {
+            line: packet_line::Borrowed::ResponseEnd,
             bytes_consumed: 4,
         });
     }
