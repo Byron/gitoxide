@@ -30,7 +30,7 @@ pub struct Commit<'a> {
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 
-pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     if i.is_empty() {
         // newline + [message]
         return Err(nom::Err::Error(Error::NomDetail(i.into(), "commit message is missing")));
@@ -40,7 +40,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     Ok((&[], &i.as_bstr()))
 }
 
-pub fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
+fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
     let (i, tree) =
         parse::header_field(i, b"tree", parse::hex_sha1).map_err(Error::context("tree <40 lowercase hex char>"))?;
     let (i, parents) = many0(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
