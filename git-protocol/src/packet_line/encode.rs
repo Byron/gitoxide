@@ -1,7 +1,6 @@
+use crate::packet_line::{FLUSH_LINE, MAX_DATA_LEN};
 use quick_error::quick_error;
 use std::io;
-
-const MAX_DATA_LEN: usize = 65516;
 
 quick_error! {
     #[derive(Debug)]
@@ -20,7 +19,7 @@ quick_error! {
     }
 }
 pub fn flush_to_write(mut out: impl io::Write) -> io::Result<usize> {
-    out.write_all(b"0000").map(|_| 4)
+    out.write_all(FLUSH_LINE).map(|_| 4)
 }
 
 pub fn data_to_write(data: &[u8], mut out: impl io::Write) -> Result<usize, Error> {

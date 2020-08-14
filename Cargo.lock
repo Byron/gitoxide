@@ -626,6 +626,7 @@ dependencies = [
  "bstr",
  "hex",
  "quick-error 2.0.0",
+ "serde",
 ]
 
 [[package]]

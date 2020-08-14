@@ -368,6 +368,7 @@ All feature toggles are additive.
  
  * **git-object**
  * **git-odb**
+ * **git-protocol**
  * **gitoxide-core**
 
  
