@@ -37,11 +37,7 @@ mod read {
         pub fn new(inner: T) -> Self {
             Reader {
                 inner,
-                buf: {
-                    let mut v = Vec::with_capacity(MAX_LINE_LEN);
-                    v.resize(MAX_LINE_LEN, 0);
-                    v
-                },
+                buf: vec![0; MAX_LINE_LEN],
                 is_done: false,
             }
         }
