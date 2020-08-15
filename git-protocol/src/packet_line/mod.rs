@@ -52,9 +52,9 @@ mod read {
         ) -> io::Result<Result<Borrowed<'a>, decode::Error>> {
             let mut buf_end = 4;
             reader.read_exact(&mut buf[..buf_end])?;
-            let (from, rest) = buf.split_at_mut(buf_end);
+            let (hex_bytes, potential_data) = buf.split_at_mut(buf_end);
 
-            match decode::streaming(from) {
+            match decode::streaming(hex_bytes) {
                 Err(err) => Ok(Err(err)),
                 Ok(stream) => match stream {
                     decode::Stream::Complete {
@@ -62,14 +62,16 @@ mod read {
                         bytes_consumed: _,
                     } => Ok(Ok(line)),
                     decode::Stream::Incomplete { bytes_needed } => {
-                        reader.read_exact(rest)?;
+                        reader.read_exact(potential_data)?;
                         buf_end += bytes_needed;
-                        Ok(decode::streaming(&rest[..buf_end]).map(|stream| match stream {
-                            decode::Stream::Complete { line, .. } => line,
-                            decode::Stream::Incomplete { .. } => {
-                                unreachable!("we know that our streamer is happy once the missing bytes are provided")
-                            }
-                        }))
+                        Ok(
+                            decode::streaming(&potential_data[..buf_end]).map(|stream| match stream {
+                                decode::Stream::Complete { line, .. } => line,
+                                decode::Stream::Incomplete { .. } => unreachable!(
+                                    "we know that our streamer is happy once the missing bytes are provided"
+                                ),
+                            }),
+                        )
                     }
                 },
             }

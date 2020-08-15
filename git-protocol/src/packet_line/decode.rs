@@ -6,6 +6,7 @@ use crate::{
 };
 use bstr::BString;
 use quick_error::quick_error;
+use std::convert::TryInto;
 
 quick_error! {
     #[derive(Debug)]
@@ -39,6 +40,43 @@ pub enum Stream<'a> {
     },
 }
 
+pub enum PacketLineOrWantedSize<'a> {
+    Line(PacketLine<'a>),
+    Wanted(u16),
+}
+
+pub fn hex_prefix(data: &[u8; 4]) -> Result<PacketLineOrWantedSize, Error> {
+    for (line_bytes, line_type) in &[
+        (FLUSH_LINE, PacketLine::Flush),
+        (DELIMITER_LINE, PacketLine::Delimiter),
+        (RESPONSE_END_LINE, PacketLine::ResponseEnd),
+    ] {
+        if data == *line_bytes {
+            return Ok(PacketLineOrWantedSize::Line(*line_type));
+        }
+    }
+
+    let mut buf = [0u8; U16_HEX_BYTES / 2];
+    hex::decode_to_slice(data, &mut buf)?;
+    let wanted_bytes = u16::from_be_bytes(buf);
+    if wanted_bytes == 4 {
+        return Err(Error::DataIsEmpty);
+    }
+    Ok(PacketLineOrWantedSize::Wanted(wanted_bytes))
+}
+
+pub fn to_data_line(data: &[u8]) -> Result<PacketLine, Error> {
+    if data.len() > MAX_LINE_LEN {
+        return Err(Error::DataLengthLimitExceeded(data.len()));
+    }
+
+    if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
+        return Err(Error::Line(data[ERR_PREFIX.len()..].into(), data.len()));
+    }
+    Ok(PacketLine::Data(data))
+}
+
+// TODO: verify this one is actually needed in the end
 pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
     let data_len = data.len();
     if data_len < U16_HEX_BYTES {
@@ -46,23 +84,15 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
             bytes_needed: U16_HEX_BYTES - data_len,
         });
     }
-    let hex_bytes = &data[..U16_HEX_BYTES];
-    for (line_bytes, line_type) in &[
-        (FLUSH_LINE, PacketLine::Flush),
-        (DELIMITER_LINE, PacketLine::Delimiter),
-        (RESPONSE_END_LINE, PacketLine::ResponseEnd),
-    ] {
-        if hex_bytes == *line_bytes {
+    let wanted_bytes = match hex_prefix(data[..U16_HEX_BYTES].try_into().expect("sizes to match"))? {
+        PacketLineOrWantedSize::Wanted(s) => s as usize,
+        PacketLineOrWantedSize::Line(line) => {
             return Ok(Stream::Complete {
-                line: *line_type,
+                line,
                 bytes_consumed: 4,
-            });
+            })
         }
-    }
-
-    let mut buf = [0u8; U16_HEX_BYTES / 2];
-    hex::decode_to_slice(hex_bytes, &mut buf)?;
-    let wanted_bytes = u16::from_be_bytes(buf) as usize;
+    };
     if wanted_bytes > MAX_LINE_LEN {
         return Err(Error::DataLengthLimitExceeded(wanted_bytes));
     }
@@ -72,17 +102,8 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
         });
     }
 
-    if wanted_bytes == 4 {
-        return Err(Error::DataIsEmpty);
-    }
-
-    let data = &data[U16_HEX_BYTES..wanted_bytes];
-    if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
-        return Err(Error::Line(data[ERR_PREFIX.len()..].into(), wanted_bytes));
-    }
-
     Ok(Stream::Complete {
-        line: PacketLine::Data(data),
+        line: to_data_line(&data[U16_HEX_BYTES..wanted_bytes])?,
         bytes_consumed: wanted_bytes,
     })
 }
