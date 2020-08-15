@@ -22,6 +22,11 @@ where
         }
     }
 
+    pub fn reset(&mut self) {
+        debug_assert!(self.is_done, "reset is only effective if we are actually done");
+        self.is_done = false;
+    }
+
     fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<Borrowed<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
         reader.read_exact(hex_bytes)?;

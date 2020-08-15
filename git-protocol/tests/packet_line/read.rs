@@ -19,13 +19,13 @@ fn read_from_file_and_reader_advancement() -> crate::Result {
         PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n").as_bstr()
     );
     assert_eq!(exhaust(&mut rd) + 1, 1561, "it stops after seeing the flush byte");
-    let mut rd = packet_line::Reader::new(rd.inner);
+    rd.reset();
     assert_eq!(
         exhaust(&mut rd),
         1561,
         "it should read the second part of the identical file from the previously advanced reader"
     );
-    let mut rd = packet_line::Reader::new(rd.inner);
+    rd.reset();
     assert_eq!(
         rd.read_line().expect("some error").unwrap_err().kind(),
         io::ErrorKind::UnexpectedEof,
