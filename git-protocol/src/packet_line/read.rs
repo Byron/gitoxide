@@ -1,4 +1,5 @@
 use crate::packet_line::{decode, Borrowed, MAX_LINE_LEN};
+use git_features::progress::Progress;
 use std::io;
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
@@ -55,5 +56,24 @@ where
             }
             err => Some(err),
         }
+    }
+
+    pub fn to_read<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
+        ToRead { parent: self, progress }
+    }
+}
+
+pub struct ToRead<'a, T, P> {
+    parent: &'a mut Reader<T>,
+    progress: P,
+}
+
+impl<'a, T, P> io::Read for ToRead<'a, T, P>
+where
+    T: io::Read,
+    P: Progress,
+{
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        unimplemented!()
     }
 }

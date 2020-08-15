@@ -9,6 +9,34 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
     std::fs::read(fixture_path(path)).expect("readable fixture")
 }
 
+mod to_read {
+    use crate::packet_line::read::fixture_bytes;
+    use git_odb::pack;
+    use git_protocol::packet_line;
+    use std::io;
+
+    #[test]
+    fn read_pack_with_progress_extraction() -> crate::Result {
+        let buf = fixture_bytes("v1/01-clone.combined-output");
+        let mut rd = packet_line::Reader::new(&buf[..]);
+        let pack_read = io::BufReader::new(rd.to_read(git_features::progress::Discard));
+        let pack_entries = pack::data::Iter::new_from_header(
+            pack_read,
+            pack::data::iter::Mode::Verify,
+            pack::data::iter::CompressedBytesMode::Ignore,
+        )?;
+        let size = pack_entries.size_hint().0 - 1;
+        let last = pack_entries.skip(size).next().expect("last entry")?;
+        assert_eq!(
+            last.trailer
+                .expect("trailer to exist on last entry")
+                .to_sha1_hex_string(),
+            "foo"
+        );
+        Ok(())
+    }
+}
+
 #[test]
 fn read_from_file_and_reader_advancement() -> crate::Result {
     let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
