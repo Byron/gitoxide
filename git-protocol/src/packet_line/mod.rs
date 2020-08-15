@@ -53,21 +53,24 @@ mod read {
             let mut buf_end = 4;
             reader.read_exact(&mut buf[..buf_end])?;
 
-            loop {
-                match decode::streaming(&buf[..buf_end]) {
-                    Err(err) => break Ok(Err(err)),
-                    Ok(stream) => match stream {
-                        decode::Stream::Complete {
-                            line,
-                            bytes_consumed: _,
-                        } => break Ok(Ok(line)),
-                        decode::Stream::Incomplete { bytes_needed } => {
-                            reader.read_exact(&mut buf[buf_end..buf_end + bytes_needed])?;
-                            buf_end += bytes_needed;
-                            continue;
-                        }
-                    },
-                }
+            match decode::streaming(&buf[..buf_end]) {
+                Err(err) => Ok(Err(err)),
+                Ok(stream) => match stream {
+                    decode::Stream::Complete {
+                        line,
+                        bytes_consumed: _,
+                    } => Ok(Ok(line)),
+                    decode::Stream::Incomplete { bytes_needed } => {
+                        reader.read_exact(&mut buf[buf_end..buf_end + bytes_needed])?;
+                        buf_end += bytes_needed;
+                        Ok(decode::streaming(&buf[..buf_end]).map(|stream| match stream {
+                            decode::Stream::Complete { line, .. } => line,
+                            decode::Stream::Incomplete { .. } => {
+                                unreachable!("we know that our streamer is happy once the missing bytes are provided")
+                            }
+                        }))
+                    }
+                },
             }
         }
 

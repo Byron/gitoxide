@@ -19,7 +19,7 @@ mod read {
     #[test]
     fn read_from_file() {
         let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
-        let rd = packet_line::Reader::new(&bytes[..]);
+        let _rd = packet_line::Reader::new(&bytes[..]);
     }
 }
 mod decode;
