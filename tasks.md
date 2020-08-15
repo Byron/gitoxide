@@ -6,7 +6,7 @@
     * to be used to obtain more real-world samples of typical git interactions for use in the test-suite
   * [x] Don't forcibly remove newlines at the end of pack lines, but make that an extra step.
   * [x] decode band should be able to fail
-  * [ ] PacketLine 'Iterator' from `Read`
+  * [x] PacketLine 'Iterator' from `Read`
   * **git-protocol**
     * [ ] pkt-lines support
     * [ ] basic V1 parsing to understand data frames to allow placing them into individual files
