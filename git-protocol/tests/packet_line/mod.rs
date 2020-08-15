@@ -5,5 +5,22 @@ fn assert_err_display<T: std::fmt::Debug, E: std::error::Error>(res: Result<T, E
     }
 }
 
+mod read {
+    use git_protocol::packet_line;
+    use std::path::PathBuf;
+
+    fn fixture_path(path: &str) -> PathBuf {
+        PathBuf::from("tests/fixtures").join(path)
+    }
+    fn fixture_bytes(path: &str) -> Vec<u8> {
+        std::fs::read(fixture_path(path)).expect("readable fixture")
+    }
+
+    #[test]
+    fn read_from_file() {
+        let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
+        let rd = packet_line::Reader::new(&bytes[..]);
+    }
+}
 mod decode;
 mod encode;

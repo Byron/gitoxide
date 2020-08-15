@@ -90,18 +90,17 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 
 ### git-protocol
-  * We handle timeouts by shifting all IO into the transport layer, and for the transport itself, there could be 
-    some sort of reactor which feeds the client/server respectively with deserialized lines. This enables us to
-    start out with a sync implementation, and later add an async one that reuses all the protocol code.
+  * No matter what we do here, timeouts must be supported to prevent hanging forever.
+  * Packet lines must be abstracted from the client at least, as the 'dumb' transport doesn't use them.
   * [x] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
     * [x] encode
     * [x] decode (zero-copy)
     * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
     * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
     * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
-  * [ ] PacketLine `Iterator` from `Read`
-  * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
+  * [ ] PacketLine 'Iterator' from `Read`
   * [ ] **Version 1**
+    * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
     * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
       * [ ] [ref advertisement](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L200:L200)
       * [ ] [upload request](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L245:L245)
@@ -123,7 +122,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * `ssh2` crate with [openssl vendoring support](https://lib.rs/crates/ssh2) for static linkage
     * [ ] **initiate**
       * extra paramaters (via environment variable)
-  * [ ] protocol for transfer via http(s)
+  * [ ] protocol for transfer [via http(s)](https://github.com/git/git/blob/master/Documentation/technical/http-protocol.txt)
+    * [ ] 'smart'
+    * [ ] ~~dumb~~ (_opt out for now_)
     * [ ] extra parameters
   * [ ] API documentation with examples
   
