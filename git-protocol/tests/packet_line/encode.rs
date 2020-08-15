@@ -2,7 +2,7 @@ mod data_to_write {
     use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
     use git_protocol::packet_line::encode::{
-        data_to_write, delim_to_write, error_to_write, flush_to_write, response_end_to_write,
+        data_to_write, delim_to_write, error_to_write, flush_to_write, response_end_to_write, text_to_write,
     };
     use std::io;
 
@@ -21,6 +21,22 @@ mod data_to_write {
         out.clear();
         assert_eq!(data_to_write("hello world, it works\n".as_bytes(), &mut out)?, 26);
         assert_eq!(out.as_bstr(), b"001ahello world, it works\n".as_bstr());
+        Ok(())
+    }
+
+    #[test]
+    fn success_text_to_write_always_appends_a_newline() -> crate::Result {
+        let mut out = Vec::new();
+        assert_eq!(text_to_write(b"a", &mut out)?, 6);
+        assert_eq!(out.as_bstr(), b"0006a\n".as_bstr());
+
+        out.clear();
+        assert_eq!(text_to_write(b"a\n", &mut out)?, 7);
+        assert_eq!(
+            out.as_bstr(),
+            b"0007a\n\n".as_bstr(),
+            "newline must be appended, as the receiving end is likely to remove it"
+        );
         Ok(())
     }
 

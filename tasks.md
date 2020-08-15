@@ -4,6 +4,8 @@
   * a plumbing program to serve as `git-proxy` when invoked like this
     * `PATH="$PWD:$PATH" git -c core.gitproxy="git-proxy" clone git://localhost:9419/small-test`
     * to be used to obtain more real-world samples of typical git interactions for use in the test-suite
+  * [x] Don't forcibly remove newlines at the end of pack lines, but make that an extra step.
+  * [ ] decode band should be able to fail
   * **git-protocol**
     * [ ] pkt-lines support
     * [ ] basic V1 parsing to understand data frames to allow placing them into individual files

@@ -1,5 +1,6 @@
 mod streaming {
     use crate::packet_line::assert_err_display;
+    use bstr::ByteSlice;
     use git_protocol::packet_line::Channel;
     use git_protocol::{
         packet_line::decode::{self, streaming, Stream},
@@ -27,13 +28,26 @@ mod streaming {
     }
 
     #[test]
-    fn trailing_line_feeds_are_removed() -> crate::Result {
-        assert_complete(streaming(b"0006a\n"), 6, PacketLine::Data(b"a"))
+    fn trailing_line_feeds_are_not_removed_automatically() -> crate::Result {
+        assert_complete(streaming(b"0006a\n"), 6, PacketLine::Data(b"a\n"))
+    }
+
+    #[test]
+    fn trailing_line_feeds_are_removed_explicitly_roundtrip() -> crate::Result {
+        match streaming(b"0006a\n")? {
+            Stream::Complete { line, .. } => {
+                assert_eq!(line.to_text().0.as_bstr(), b"a".as_bstr());
+                let mut out = Vec::new();
+                line.to_text().to_write(&mut out).expect("write to memory works");
+            }
+            Stream::Incomplete { .. } => panic!("should be complete"),
+        }
+        Ok(())
     }
 
     #[test]
     fn ignore_extra_bytes() -> crate::Result {
-        assert_complete(streaming(b"0006a\nhello"), 6, PacketLine::Data(b"a"))
+        assert_complete(streaming(b"0006a\nhello"), 6, PacketLine::Data(b"a\n"))
     }
 
     #[test]

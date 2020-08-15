@@ -43,8 +43,21 @@ pub fn data_to_write(data: &[u8], out: impl io::Write) -> Result<usize, Error> {
     prefixed_data_to_write(&[], data, out)
 }
 
-fn prefixed_data_to_write(prefix: &[u8], data: &[u8], mut out: impl io::Write) -> Result<usize, Error> {
-    let data_len = prefix.len() + data.len();
+pub fn text_to_write(text: &[u8], out: impl io::Write) -> Result<usize, Error> {
+    prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out)
+}
+
+fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+    prefixed_and_suffixed_data_to_write(prefix, data, &[], out)
+}
+
+fn prefixed_and_suffixed_data_to_write(
+    prefix: &[u8],
+    data: &[u8],
+    suffix: &[u8],
+    mut out: impl io::Write,
+) -> Result<usize, Error> {
+    let data_len = prefix.len() + data.len() + suffix.len();
     if data_len > MAX_DATA_LEN {
         return Err(Error::DataLengthLimitExceeded(data_len));
     }
@@ -61,5 +74,8 @@ fn prefixed_data_to_write(prefix: &[u8], data: &[u8], mut out: impl io::Write) -
         out.write_all(prefix)?;
     }
     out.write_all(data)?;
+    if !suffix.is_empty() {
+        out.write_all(suffix)?;
+    }
     Ok(data_len)
 }

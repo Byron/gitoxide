@@ -76,11 +76,7 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
         return Err(Error::DataIsEmpty);
     }
 
-    let mut data = &data[U16_HEX_BYTES..wanted_bytes];
-    if data[data.len() - 1] == b'\n' {
-        data = &data[..data.len() - 1];
-    }
-
+    let data = &data[U16_HEX_BYTES..wanted_bytes];
     if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
         return Err(Error::Line(data[ERR_PREFIX.len()..].into(), wanted_bytes));
     }
