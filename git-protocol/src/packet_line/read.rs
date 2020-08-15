@@ -1,5 +1,6 @@
 use crate::packet_line::{borrowed::Band, decode, MAX_DATA_LEN, MAX_LINE_LEN};
 use crate::PacketLine;
+use bstr::ByteSlice;
 use git_features::progress::Progress;
 use std::io;
 
@@ -114,13 +115,13 @@ where
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                 match band {
                     Band::Data(ref mut d) => break d.read(&mut self.buf)?,
-                    Band::Progress(_d) => {
-                        continue;
+                    Band::Progress(d) => {
+                        // TODO: parse actual progress, but fallback to info()
+                        self.progress.info(d.as_bstr().to_string());
                         // unimplemented!("progress")
                     }
-                    Band::Error(_d) => {
-                        continue;
-                        // unimplemented!("err")
+                    Band::Error(d) => {
+                        self.progress.fail(d.as_bstr().to_string());
                     }
                 };
             };

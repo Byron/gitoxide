@@ -7,6 +7,9 @@
   * [x] Don't forcibly remove newlines at the end of pack lines, but make that an extra step.
   * [x] decode band should be able to fail
   * [x] PacketLine 'Iterator' from `Read`
+  * [x] `Read` from packet lines with sideband
+    * [ ] Progress parsing, with 'info(…)' fallback if that fails
+    * [ ] SetName in Progress trait (to allow setting the correct progress information)
   * **git-protocol**
     * [ ] pkt-lines support
     * [ ] basic V1 parsing to understand data frames to allow placing them into individual files
