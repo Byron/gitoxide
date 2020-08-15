@@ -1,4 +1,3 @@
-use git_protocol::packet_line::MAX_LINE_LEN;
 use git_protocol::{packet_line, PacketLine};
 use std::{io, path::PathBuf};
 
@@ -10,39 +9,38 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
     std::fs::read(fixture_path(path)).expect("readable fixture")
 }
 
-// mod to_read {
-//     use crate::packet_line::read::fixture_bytes;
-//     use git_odb::pack;
-//     use git_protocol::packet_line;
-//
-//     #[test]
-//     fn read_pack_with_progress_extraction() -> crate::Result {
-//         let buf = fixture_bytes("v1/01-clone.combined-output");
-//         let mut rd = packet_line::Reader::new(&buf[..]);
-//         let pack_read = rd.to_read(git_features::progress::Discard);
-//         let pack_entries = pack::data::Iter::new_from_header(
-//             pack_read,
-//             pack::data::iter::Mode::Verify,
-//             pack::data::iter::CompressedBytesMode::Ignore,
-//         )?;
-//         let size = pack_entries.size_hint().0 - 1;
-//         let last = pack_entries.skip(size).next().expect("last entry")?;
-//         assert_eq!(
-//             last.trailer
-//                 .expect("trailer to exist on last entry")
-//                 .to_sha1_hex_string(),
-//             "foo"
-//         );
-//         Ok(())
-//     }
-// }
+mod to_read {
+    use crate::packet_line::read::fixture_bytes;
+    use git_odb::pack;
+    use git_protocol::packet_line;
+
+    #[test]
+    fn read_pack_with_progress_extraction() -> crate::Result {
+        let buf = fixture_bytes("v1/01-clone.combined-output");
+        let mut rd = packet_line::Reader::new(&buf[..]);
+        let pack_read = rd.to_read(git_features::progress::Discard);
+        let pack_entries = pack::data::Iter::new_from_header(
+            pack_read,
+            pack::data::iter::Mode::Verify,
+            pack::data::iter::CompressedBytesMode::Ignore,
+        )?;
+        let size = pack_entries.size_hint().0 - 1;
+        let last = pack_entries.skip(size).next().expect("last entry")?;
+        assert_eq!(
+            last.trailer
+                .expect("trailer to exist on last entry")
+                .to_sha1_hex_string(),
+            "foo"
+        );
+        Ok(())
+    }
+}
 
 #[test]
 fn read_from_file_and_reader_advancement() -> crate::Result {
     let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
-    let mut buf = [0u8; MAX_LINE_LEN];
-    let mut rd = packet_line::Reader::new(&bytes[..], &mut buf);
+    let mut rd = packet_line::Reader::new(&bytes[..]);
     assert_eq!(
         rd.read_line().expect("a line")??.as_bstr(),
         PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n").as_bstr()
