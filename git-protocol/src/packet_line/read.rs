@@ -51,27 +51,4 @@ where
             err => Some(err),
         }
     }
-
-    pub fn iter(&mut self) -> Iterator<T> {
-        Iterator {
-            parent: self,
-            is_done: false,
-        }
-    }
-}
-
-pub struct Iterator<'a, T> {
-    parent: &'a mut Reader<T>,
-    is_done: bool,
-}
-
-impl<'a, T> std::iter::Iterator for Iterator<'a, T>
-where
-    T: io::Read,
-{
-    type Item = io::Result<Result<Borrowed<'_>, decode::Error>>;
-
-    fn next(&mut self) -> Option<io::Result<Result<Borrowed<'_>, decode::Error>>> {
-        self.parent.read_line()
-    }
 }
