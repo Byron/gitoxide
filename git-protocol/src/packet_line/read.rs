@@ -104,17 +104,25 @@ where
         use io::Read;
         if self.pos >= self.cap {
             debug_assert!(self.pos == self.cap);
-            let line = self
-                .parent
-                .read_line()?
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-            let mut band = line
-                .decode_band()
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-            self.cap = match band {
-                Band::Data(ref mut d) => d.read(&mut self.buf)?,
-                Band::Progress(_d) => unimplemented!("progress"),
-                Band::Error(_d) => unimplemented!("err"),
+            self.cap = loop {
+                let line = self
+                    .parent
+                    .read_line()?
+                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                let mut band = line
+                    .decode_band()
+                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                match band {
+                    Band::Data(ref mut d) => break d.read(&mut self.buf)?,
+                    Band::Progress(_d) => {
+                        continue;
+                        // unimplemented!("progress")
+                    }
+                    Band::Error(_d) => {
+                        continue;
+                        // unimplemented!("err")
+                    }
+                };
             };
             self.pos = 0;
         }

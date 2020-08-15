@@ -10,7 +10,8 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 }
 
 mod to_read {
-    use crate::packet_line::read::fixture_bytes;
+    use crate::packet_line::read::{exhaust, fixture_bytes};
+    use bstr::ByteSlice;
     use git_odb::pack;
     use git_protocol::packet_line;
 
@@ -18,6 +19,9 @@ mod to_read {
     fn read_pack_with_progress_extraction() -> crate::Result {
         let buf = fixture_bytes("v1/01-clone.combined-output");
         let mut rd = packet_line::Reader::new(&buf[..], None);
+        assert_eq!(exhaust(&mut rd), 2);
+        rd.reset();
+        assert_eq!(rd.read_line()??.to_text().0.as_bstr(), b"NAK".as_bstr());
         let pack_read = rd.to_read_with_sidebands(git_features::progress::Discard);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
@@ -30,7 +34,7 @@ mod to_read {
             last.trailer
                 .expect("trailer to exist on last entry")
                 .to_sha1_hex_string(),
-            "foo"
+            "150a1045f04dc0fc2dbf72313699fda696bf4126"
         );
         Ok(())
     }
