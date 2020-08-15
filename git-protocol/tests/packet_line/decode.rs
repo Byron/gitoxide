@@ -111,7 +111,7 @@ mod streaming {
             match streaming(&out)? {
                 Stream::Complete { line, bytes_consumed } => {
                     assert_eq!(bytes_consumed, out.len());
-                    assert_eq!(line.decode_band(), band);
+                    assert_eq!(line.decode_band().expect("valid band"), band);
                 }
                 Stream::Incomplete { .. } => panic!("roundtrips are never incomplete"),
             }

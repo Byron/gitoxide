@@ -54,16 +54,26 @@ impl<'a> Borrowed<'a> {
         }
     }
     /// Decode the band of the line, or panic if it is not actually a side-band line
-    pub fn decode_band(&self) -> Band {
+    pub fn decode_band(&self) -> Result<Band, DecodeBandError> {
         let d = match self {
             Borrowed::Data(d) => d,
             _ => panic!("cannot decode side-channel information from non-data lines"),
         };
-        match d[0] {
+        Ok(match d[0] {
             1 => Band::Data(&d[1..]),
             2 => Band::Progress(&d[1..]),
             3 => Band::Error(&d[1..]),
-            _ => panic!("attempt to decode a non-side channel line"),
+            band => return Err(DecodeBandError::InvalidSideBand(band)),
+        })
+    }
+}
+
+use quick_error::quick_error;
+quick_error! {
+    #[derive(Debug)]
+    pub enum DecodeBandError {
+        InvalidSideBand(band: u8) {
+            display("attempt to decode a non-side channel line or input was malformed: {}", band)
         }
     }
 }
