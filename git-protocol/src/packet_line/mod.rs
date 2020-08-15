@@ -1,6 +1,6 @@
 pub(crate) const U16_HEX_BYTES: usize = 4;
 pub(crate) const MAX_DATA_LEN: usize = 65516;
-pub(crate) const MAX_LINE_LEN: usize = MAX_DATA_LEN + U16_HEX_BYTES;
+pub const MAX_LINE_LEN: usize = MAX_DATA_LEN + U16_HEX_BYTES;
 pub(crate) const FLUSH_LINE: &[u8] = b"0000";
 pub(crate) const DELIMITER_LINE: &[u8] = b"0001";
 pub(crate) const RESPONSE_END_LINE: &[u8] = b"0002";
