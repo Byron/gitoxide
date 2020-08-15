@@ -18,7 +18,7 @@ mod to_read {
     fn read_pack_with_progress_extraction() -> crate::Result {
         let buf = fixture_bytes("v1/01-clone.combined-output");
         let mut rd = packet_line::Reader::new(&buf[..], None);
-        let pack_read = rd.to_read(git_features::progress::Discard);
+        let pack_read = rd.to_read_with_sidebands(git_features::progress::Discard);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
             pack::data::iter::Mode::Verify,

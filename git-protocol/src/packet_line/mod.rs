@@ -14,7 +14,7 @@ pub enum Channel {
     Error = 3,
 }
 
-mod borrowed;
+pub mod borrowed;
 pub use borrowed::Borrowed;
 
 pub mod read;

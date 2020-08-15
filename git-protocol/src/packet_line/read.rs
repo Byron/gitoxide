@@ -1,4 +1,4 @@
-use crate::packet_line::{decode, Borrowed, MAX_LINE_LEN};
+use crate::packet_line::{borrowed::Band, decode, MAX_DATA_LEN, MAX_LINE_LEN};
 use crate::PacketLine;
 use git_features::progress::Progress;
 use std::io;
@@ -31,7 +31,7 @@ where
         self.is_done = false;
     }
 
-    fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<Borrowed<'a>, decode::Error>> {
+    fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
         reader.read_exact(hex_bytes)?;
         let num_data_bytes = match decode::hex_prefix(hex_bytes) {
@@ -48,7 +48,7 @@ where
         }
     }
 
-    pub fn read_line(&mut self) -> io::Result<Result<Borrowed, decode::Error>> {
+    pub fn read_line(&mut self) -> io::Result<Result<PacketLine, decode::Error>> {
         let eof = || {
             Err(io::Error::new(
                 io::ErrorKind::UnexpectedEof,
@@ -59,7 +59,7 @@ where
             return eof();
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
-            Ok(Ok(line)) if line == Borrowed::Flush => {
+            Ok(Ok(line)) if line == self.delimiter => {
                 self.is_done = true;
                 eof()
             }
@@ -67,14 +67,32 @@ where
         }
     }
 
-    pub fn to_read<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
-        ToRead { parent: self, progress }
+    pub fn to_read_with_sidebands<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
+        ToRead::new(self, progress)
     }
 }
 
 pub struct ToRead<'a, T, P> {
     parent: &'a mut Reader<T>,
     progress: P,
+    buf: Vec<u8>,
+    pos: usize,
+    cap: usize,
+}
+impl<'a, T, P> ToRead<'a, T, P>
+where
+    T: io::Read,
+    P: Progress,
+{
+    fn new(parent: &'a mut Reader<T>, progress: P) -> Self {
+        ToRead {
+            parent,
+            progress,
+            buf: vec![0; MAX_DATA_LEN],
+            pos: 0,
+            cap: 0,
+        }
+    }
 }
 
 impl<'a, T, P> io::BufRead for ToRead<'a, T, P>
@@ -83,11 +101,28 @@ where
     P: Progress,
 {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        unimplemented!()
+        use io::Read;
+        if self.pos >= self.cap {
+            debug_assert!(self.pos == self.cap);
+            let line = self
+                .parent
+                .read_line()?
+                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+            let mut band = line
+                .decode_band()
+                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+            self.cap = match band {
+                Band::Data(ref mut d) => d.read(&mut self.buf)?,
+                Band::Progress(_d) => unimplemented!("progress"),
+                Band::Error(_d) => unimplemented!("err"),
+            };
+            self.pos = 0;
+        }
+        Ok(&self.buf[self.pos..self.cap])
     }
 
     fn consume(&mut self, amt: usize) {
-        unimplemented!()
+        self.pos = std::cmp::min(self.pos + amt, self.cap);
     }
 }
 
@@ -97,6 +132,12 @@ where
     P: Progress,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        unimplemented!()
+        use std::io::BufRead;
+        let nread = {
+            let mut rem = self.fill_buf()?;
+            rem.read(buf)?
+        };
+        self.consume(nread);
+        Ok(nread)
     }
 }
