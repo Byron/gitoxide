@@ -6,7 +6,6 @@ use crate::{
 };
 use bstr::BString;
 use quick_error::quick_error;
-use std::convert::TryInto;
 
 quick_error! {
     #[derive(Debug)]
@@ -45,19 +44,20 @@ pub enum PacketLineOrWantedSize<'a> {
     Wanted(u16),
 }
 
-pub fn hex_prefix(data: &[u8; 4]) -> Result<PacketLineOrWantedSize, Error> {
+pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize, Error> {
+    debug_assert_eq!(four_bytes.len(), 4, "need four hex bytes");
     for (line_bytes, line_type) in &[
         (FLUSH_LINE, PacketLine::Flush),
         (DELIMITER_LINE, PacketLine::Delimiter),
         (RESPONSE_END_LINE, PacketLine::ResponseEnd),
     ] {
-        if data == *line_bytes {
+        if four_bytes == *line_bytes {
             return Ok(PacketLineOrWantedSize::Line(*line_type));
         }
     }
 
     let mut buf = [0u8; U16_HEX_BYTES / 2];
-    hex::decode_to_slice(data, &mut buf)?;
+    hex::decode_to_slice(four_bytes, &mut buf)?;
     let wanted_bytes = u16::from_be_bytes(buf);
     if wanted_bytes == 4 {
         return Err(Error::DataIsEmpty);
@@ -84,7 +84,7 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
             bytes_needed: U16_HEX_BYTES - data_len,
         });
     }
-    let wanted_bytes = match hex_prefix(data[..U16_HEX_BYTES].try_into().expect("sizes to match"))? {
+    let wanted_bytes = match hex_prefix(&data[..U16_HEX_BYTES])? {
         PacketLineOrWantedSize::Wanted(s) => s as usize,
         PacketLineOrWantedSize::Line(line) => {
             return Ok(Stream::Complete {

@@ -50,30 +50,19 @@ mod read {
             reader: &mut T,
             buf: &'a mut Vec<u8>,
         ) -> io::Result<Result<Borrowed<'a>, decode::Error>> {
-            let mut buf_end = 4;
-            reader.read_exact(&mut buf[..buf_end])?;
-            let (hex_bytes, potential_data) = buf.split_at_mut(buf_end);
+            let (hex_bytes, data_bytes) = buf.split_at_mut(4);
+            reader.read_exact(hex_bytes)?;
+            let num_data_bytes = match decode::hex_prefix(hex_bytes) {
+                Ok(decode::PacketLineOrWantedSize::Line(line)) => return Ok(Ok(line)),
+                Ok(decode::PacketLineOrWantedSize::Wanted(additional_bytes)) => additional_bytes as usize,
+                Err(err) => return Ok(Err(err)),
+            };
 
-            match decode::streaming(hex_bytes) {
+            let (data_bytes, _) = data_bytes.split_at_mut(num_data_bytes);
+            reader.read_exact(data_bytes)?;
+            match decode::to_data_line(data_bytes) {
+                Ok(line) => Ok(Ok(line)),
                 Err(err) => Ok(Err(err)),
-                Ok(stream) => match stream {
-                    decode::Stream::Complete {
-                        line,
-                        bytes_consumed: _,
-                    } => Ok(Ok(line)),
-                    decode::Stream::Incomplete { bytes_needed } => {
-                        reader.read_exact(potential_data)?;
-                        buf_end += bytes_needed;
-                        Ok(
-                            decode::streaming(&potential_data[..buf_end]).map(|stream| match stream {
-                                decode::Stream::Complete { line, .. } => line,
-                                decode::Stream::Incomplete { .. } => unreachable!(
-                                    "we know that our streamer is happy once the missing bytes are provided"
-                                ),
-                            }),
-                        )
-                    }
-                },
             }
         }
 
