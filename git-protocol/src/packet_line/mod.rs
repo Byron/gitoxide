@@ -73,7 +73,7 @@ mod read {
             match Self::read_line_inner(&mut self.inner, &mut self.buf) {
                 Ok(Ok(line)) if line == Borrowed::Flush => {
                     self.is_done = true;
-                    return None;
+                    None
                 }
                 err => Some(err),
             }

@@ -21,6 +21,9 @@ quick_error! {
         DataIsEmpty {
             display("Received an invalid empty line")
         }
+        InvalidLineLength {
+            display("Received an invalid line of length 3")
+        }
         Line(data: BString, bytes_consumed: usize) {
             display("{}", data)
         }
@@ -59,10 +62,17 @@ pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize, Error> {
     let mut buf = [0u8; U16_HEX_BYTES / 2];
     hex::decode_to_slice(four_bytes, &mut buf)?;
     let wanted_bytes = u16::from_be_bytes(buf);
+    if wanted_bytes == 3 {
+        return Err(Error::InvalidLineLength);
+    }
     if wanted_bytes == 4 {
         return Err(Error::DataIsEmpty);
     }
-    Ok(PacketLineOrWantedSize::Wanted(wanted_bytes))
+    debug_assert!(
+        wanted_bytes as usize > U16_HEX_BYTES,
+        "by now there should be more wanted bytes than prefix bytes"
+    );
+    Ok(PacketLineOrWantedSize::Wanted(wanted_bytes - U16_HEX_BYTES as u16))
 }
 
 pub fn to_data_line(data: &[u8]) -> Result<PacketLine, Error> {
@@ -92,7 +102,7 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
                 bytes_consumed: 4,
             })
         }
-    };
+    } + U16_HEX_BYTES;
     if wanted_bytes > MAX_LINE_LEN {
         return Err(Error::DataLengthLimitExceeded(wanted_bytes));
     }
