@@ -26,8 +26,9 @@ mod read {
     /// start of whatever comes next.
     pub struct Reader<T> {
         pub inner: T,
-        buf: Option<Vec<u8>>,
+        buf: Vec<u8>,
         occupied: Option<std::ops::Range<usize>>,
+        is_done: bool,
     }
 
     impl<T> Reader<T>
@@ -37,14 +38,16 @@ mod read {
         pub fn new(inner: T) -> Self {
             Reader {
                 inner,
-                buf: Some({
+                buf: {
                     let mut v = Vec::with_capacity(MAX_LINE_LEN);
                     v.resize(MAX_LINE_LEN, 0);
                     v
-                }),
+                },
                 occupied: None,
+                is_done: false,
             }
         }
+
         fn read_line_inner<'a>(
             reader: &mut T,
             occupied: &mut Option<std::ops::Range<usize>>,
@@ -60,22 +63,20 @@ mod read {
         }
 
         pub fn read_line(&mut self) -> Option<io::Result<Result<Borrowed, decode::Error>>> {
-            match self.buf.as_mut() {
-                Some(buf) => {
-                    loop {
-                        match Self::read_line_inner(&mut self.inner, &mut self.occupied, buf) {
-                            Ok(Ok(line)) if line == Borrowed::Flush => {
-                                self.buf = None;
-                                return None;
-                            }
-                            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-                            // res => return Some(res),
-                            res => unimplemented!("tst"),
-                        }
-                    }
-                }
-                None => None,
+            if self.is_done {
+                return None;
             }
+            Some(loop {
+                match Self::read_line_inner(&mut self.inner, &mut self.occupied, &mut self.buf) {
+                    Ok(Ok(line)) if line == Borrowed::Flush => {
+                        self.is_done = true;
+                        return None;
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                    res => break res,
+                    // res => unimplemented!("tst"),
+                }
+            })
         }
     }
 }
