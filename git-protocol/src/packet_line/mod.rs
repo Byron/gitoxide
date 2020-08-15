@@ -27,7 +27,6 @@ mod read {
     pub struct Reader<T> {
         pub inner: T,
         buf: Vec<u8>,
-        occupied: Option<std::ops::Range<usize>>,
         is_done: bool,
     }
 
@@ -43,40 +42,46 @@ mod read {
                     v.resize(MAX_LINE_LEN, 0);
                     v
                 },
-                occupied: None,
                 is_done: false,
             }
         }
 
         fn read_line_inner<'a>(
             reader: &mut T,
-            occupied: &mut Option<std::ops::Range<usize>>,
             buf: &'a mut Vec<u8>,
         ) -> io::Result<Result<Borrowed<'a>, decode::Error>> {
-            if let None = occupied {
-                let range = 0..4;
-                reader.read_exact(&mut buf[range.clone()])?;
-                *occupied = Some(range);
-            };
-            // match
-            unimplemented!("try to get some more lines")
+            let mut buf_end = 4;
+            reader.read_exact(&mut buf[..buf_end])?;
+
+            loop {
+                match decode::streaming(&buf[..buf_end]) {
+                    Err(err) => break Ok(Err(err)),
+                    Ok(stream) => match stream {
+                        decode::Stream::Complete {
+                            line,
+                            bytes_consumed: _,
+                        } => break Ok(Ok(line)),
+                        decode::Stream::Incomplete { bytes_needed } => {
+                            reader.read_exact(&mut buf[buf_end..buf_end + bytes_needed])?;
+                            buf_end += bytes_needed;
+                            continue;
+                        }
+                    },
+                }
+            }
         }
 
         pub fn read_line(&mut self) -> Option<io::Result<Result<Borrowed, decode::Error>>> {
             if self.is_done {
                 return None;
             }
-            Some(loop {
-                match Self::read_line_inner(&mut self.inner, &mut self.occupied, &mut self.buf) {
-                    Ok(Ok(line)) if line == Borrowed::Flush => {
-                        self.is_done = true;
-                        return None;
-                    }
-                    Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-                    res => break res,
-                    // res => unimplemented!("tst"),
+            match Self::read_line_inner(&mut self.inner, &mut self.buf) {
+                Ok(Ok(line)) if line == Borrowed::Flush => {
+                    self.is_done = true;
+                    return None;
                 }
-            })
+                err => Some(err),
+            }
         }
     }
 }
