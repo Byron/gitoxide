@@ -1,4 +1,5 @@
 use crate::packet_line::{decode, Borrowed, MAX_LINE_LEN};
+use crate::PacketLine;
 use git_features::progress::Progress;
 use std::io;
 
@@ -8,6 +9,7 @@ use std::io;
 pub struct Reader<T> {
     pub inner: T,
     buf: Vec<u8>,
+    delimiter: PacketLine<'static>,
     is_done: bool,
 }
 
@@ -15,10 +17,11 @@ impl<T> Reader<T>
 where
     T: io::Read,
 {
-    pub fn new(inner: T) -> Self {
+    pub fn new(inner: T, delimiter: impl Into<Option<PacketLine<'static>>>) -> Self {
         Reader {
             inner,
             buf: vec![0; MAX_LINE_LEN],
+            delimiter: delimiter.into().unwrap_or(PacketLine::Flush),
             is_done: false,
         }
     }

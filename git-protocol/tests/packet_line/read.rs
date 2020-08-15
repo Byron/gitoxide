@@ -17,7 +17,7 @@ mod to_read {
     #[test]
     fn read_pack_with_progress_extraction() -> crate::Result {
         let buf = fixture_bytes("v1/01-clone.combined-output");
-        let mut rd = packet_line::Reader::new(&buf[..]);
+        let mut rd = packet_line::Reader::new(&buf[..], None);
         let pack_read = rd.to_read(git_features::progress::Discard);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
@@ -40,7 +40,7 @@ mod to_read {
 fn read_from_file_and_reader_advancement() -> crate::Result {
     let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
-    let mut rd = packet_line::Reader::new(&bytes[..]);
+    let mut rd = packet_line::Reader::new(&bytes[..], None);
     assert_eq!(
         rd.read_line()??.as_bstr(),
         PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n").as_bstr()
