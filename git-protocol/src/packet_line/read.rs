@@ -45,16 +45,22 @@ where
         }
     }
 
-    pub fn read_line(&mut self) -> Option<io::Result<Result<Borrowed, decode::Error>>> {
+    pub fn read_line(&mut self) -> io::Result<Result<Borrowed, decode::Error>> {
+        let eof = || {
+            Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "attempt to read past flush line",
+            ))
+        };
         if self.is_done {
-            return None;
+            return eof();
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
             Ok(Ok(line)) if line == Borrowed::Flush => {
                 self.is_done = true;
-                None
+                eof()
             }
-            err => Some(err),
+            err => err,
         }
     }
 
