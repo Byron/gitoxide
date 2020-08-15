@@ -1,5 +1,4 @@
 use crate::packet_line::{decode, Borrowed, MAX_LINE_LEN};
-use crate::PacketLine;
 use git_features::progress::Progress;
 use std::io;
 
@@ -60,18 +59,27 @@ where
     }
 
     pub fn to_read<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
-        ToRead {
-            parent: self,
-            progress,
-            line: None,
-        }
+        ToRead { parent: self, progress }
     }
 }
 
 pub struct ToRead<'a, T, P> {
     parent: &'a mut Reader<T>,
-    line: Option<PacketLine<'a>>,
     progress: P,
+}
+
+impl<'a, T, P> io::BufRead for ToRead<'a, T, P>
+where
+    T: io::Read,
+    P: Progress,
+{
+    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        unimplemented!()
+    }
+
+    fn consume(&mut self, amt: usize) {
+        unimplemented!()
+    }
 }
 
 impl<'a, T, P> io::Read for ToRead<'a, T, P>
@@ -80,10 +88,6 @@ where
     P: Progress,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        match self.parent.read_line() {
-            Some(Ok(Ok(line))) => self.line = Some(line),
-            _ => unimplemented!("handle everything else correctly"),
-        }
         unimplemented!()
     }
 }

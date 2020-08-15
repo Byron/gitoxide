@@ -13,13 +13,12 @@ mod to_read {
     use crate::packet_line::read::fixture_bytes;
     use git_odb::pack;
     use git_protocol::packet_line;
-    use std::io;
 
     #[test]
     fn read_pack_with_progress_extraction() -> crate::Result {
         let buf = fixture_bytes("v1/01-clone.combined-output");
         let mut rd = packet_line::Reader::new(&buf[..]);
-        let pack_read = io::BufReader::new(rd.to_read(git_features::progress::Discard));
+        let pack_read = rd.to_read(git_features::progress::Discard);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
             pack::data::iter::Mode::Verify,
