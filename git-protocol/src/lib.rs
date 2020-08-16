@@ -2,7 +2,8 @@
 
 pub mod packet_line;
 
-pub mod progress;
+mod progress;
+pub use progress::RemoteProgress;
 
 #[doc(inline)]
 pub use packet_line::Borrowed as PacketLine;

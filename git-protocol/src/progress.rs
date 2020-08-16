@@ -8,14 +8,14 @@ use std::convert::TryFrom;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Remote<'a> {
+pub struct RemoteProgress<'a> {
     pub action: &'a BStr,
     pub percent: Option<u32>,
     pub step: Option<usize>,
     pub max: Option<usize>,
 }
 
-impl<'a> Remote<'a> {
+impl<'a> RemoteProgress<'a> {
     pub fn from_bytes(line: &'a [u8]) -> Option<Self> {
         parse_progress(line).ok().and_then(|(_, r)| {
             if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
@@ -45,14 +45,14 @@ fn next_optional_number(i: &[u8]) -> nom::IResult<&[u8], Option<usize>> {
     opt(preceded(take_till(|c: u8| c.is_ascii_digit()), parse_number))(i)
 }
 
-fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], Remote> {
+fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], RemoteProgress> {
     let (i, action) = take_till1(|c| c == b':')(line)?;
     let (i, percent) = next_optional_percentage(i)?;
     let (i, step) = next_optional_number(i)?;
     let (i, max) = next_optional_number(i)?;
     Ok((
         i,
-        Remote {
+        RemoteProgress {
             action: action.into(),
             percent,
             step,
