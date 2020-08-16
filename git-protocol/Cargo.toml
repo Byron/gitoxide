@@ -19,6 +19,8 @@ git-features = { version = "^0.3.0", path = "../git-features" }
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+nom = { version = "6.0.0-alpha1", default-features = false, features = ["alloc"]}
+btoi = "0.4.2"
 hex = "0.4.2"
 
 [dev-dependencies]

@@ -624,9 +624,11 @@ name = "git-protocol"
 version = "0.0.0"
 dependencies = [
  "bstr",
+ "btoi",
  "git-features",
  "git-odb",
  "hex",
+ "nom",
  "quick-error 2.0.0",
  "serde",
 ]
