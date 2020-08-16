@@ -1,10 +1,8 @@
 use bstr::BStr;
-use nom::bytes::complete::tag;
-use nom::sequence::terminated;
 use nom::{
-    bytes::complete::{take_till, take_till1},
+    bytes::complete::{tag, take_till, take_till1},
     combinator::{map_res, opt},
-    sequence::preceded,
+    sequence::{preceded, terminated},
 };
 use std::convert::TryFrom;
 
@@ -18,22 +16,14 @@ pub struct Remote<'a> {
 }
 
 impl<'a> Remote<'a> {
-    pub fn from_bytes(line: &'a [u8]) -> Self {
-        parse_progress(line)
-            .ok()
-            .and_then(|(_, r)| {
-                if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
-                    None
-                } else {
-                    Some(r)
-                }
-            })
-            .unwrap_or_else(|| Remote {
-                action: line.into(),
-                percent: None,
-                step: None,
-                max: None,
-            })
+    pub fn from_bytes(line: &'a [u8]) -> Option<Self> {
+        parse_progress(line).ok().and_then(|(_, r)| {
+            if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
+                None
+            } else {
+                Some(r)
+            }
+        })
     }
 }
 
