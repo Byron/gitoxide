@@ -2,7 +2,7 @@ use crate::packet_line::{
     borrowed::{Band, Text},
     decode, MAX_DATA_LEN, MAX_LINE_LEN,
 };
-use crate::PacketLine;
+use crate::{PacketLine, RemoteProgress};
 use bstr::ByteSlice;
 use git_features::progress::Progress;
 use std::io;
@@ -119,8 +119,21 @@ where
                 match band {
                     Band::Data(ref mut d) => break d.read(&mut self.buf)?,
                     Band::Progress(d) => {
-                        // TODO: parse actual progress, but fallback to info()
-                        self.progress.info(Text::from(d).0.as_bstr().to_string());
+                        let text = Text::from(d).0;
+                        match RemoteProgress::from_bytes(text) {
+                            Some(RemoteProgress {
+                                action: _,
+                                percent: _,
+                                step,
+                                max,
+                            }) => {
+                                self.progress.init(max, git_features::progress::count("objects"));
+                                if let Some(step) = step {
+                                    self.progress.set(step);
+                                }
+                            }
+                            None => self.progress.info(text.as_bstr().to_string()),
+                        };
                         // unimplemented!("progress")
                     }
                     Band::Error(d) => {

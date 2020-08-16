@@ -6,7 +6,7 @@
   * [x] decode band should be able to fail
   * [x] PacketLine 'Iterator' from `Read`
   * [x] `Read` from packet lines with sideband
-    * [ ] Progress parsing, with 'info(…)' fallback if that fails
+    * [x] Progress parsing, with 'info(…)' fallback if that fails
     * [ ] SetName in Progress trait (to allow setting the correct progress information)
   * **connect**
     * [ ] via file and `git-upload-pack`

@@ -9,6 +9,7 @@ use std::convert::TryFrom;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct RemoteProgress<'a> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub action: &'a BStr,
     pub percent: Option<u32>,
     pub step: Option<usize>,
