@@ -370,10 +370,10 @@ All feature toggles are additive.
  The feature above is provided by the crates:
  
  * **git-object**
+ * **git-url**
  * **git-odb**
  * **git-protocol**
  * **gitoxide-core**
-
  
 ## Plumbing vs Porcelain
 

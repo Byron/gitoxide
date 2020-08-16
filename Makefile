@@ -85,6 +85,8 @@ check: ## Build all code in suitable configurations
 			   && cargo check
 	cd git-protocol && cargo check --all-features \
 			   && cargo check
+	cd git-url && cargo check --all-features \
+			   && cargo check
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
 			   && cargo check --features fast-sha1 \

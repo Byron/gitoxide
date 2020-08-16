@@ -658,7 +658,13 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.0.0"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "nom",
+ "quick-error 2.0.0",
+ "serde",
+]
 
 [[package]]
 name = "gitoxide"
