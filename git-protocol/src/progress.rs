@@ -36,7 +36,7 @@ fn next_optional_percentage(i: &[u8]) -> nom::IResult<&[u8], Option<u32>> {
     opt(terminated(
         preceded(
             take_till(|c: u8| c.is_ascii_digit()),
-            map_res(parse_number, |num| u32::try_from(num)),
+            map_res(parse_number, u32::try_from),
         ),
         tag(b"%"),
     ))(i)
