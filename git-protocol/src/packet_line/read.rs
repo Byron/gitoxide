@@ -116,29 +116,33 @@ where
                 let mut band = line
                     .decode_band()
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                fn progress_name(current: Option<String>, action: &[u8]) -> String {
+                    match current {
+                        Some(current) => format!("{}: {}", current, action.as_bstr()),
+                        None => action.as_bstr().to_string(),
+                    }
+                }
                 match band {
                     Band::Data(ref mut d) => break d.read(&mut self.buf)?,
                     Band::Progress(d) => {
                         let text = Text::from(d).0;
                         match RemoteProgress::from_bytes(text) {
                             Some(RemoteProgress {
-                                action: _,
+                                action,
                                 percent: _,
                                 step,
                                 max,
                             }) => {
+                                self.progress.set_name(progress_name(self.progress.name(), action));
                                 self.progress.init(max, git_features::progress::count("objects"));
                                 if let Some(step) = step {
                                     self.progress.set(step);
                                 }
                             }
-                            None => self.progress.info(text.as_bstr().to_string()),
+                            None => self.progress.set_name(progress_name(self.progress.name(), text)),
                         };
-                        // unimplemented!("progress")
                     }
-                    Band::Error(d) => {
-                        self.progress.fail(Text::from(d).0.as_bstr().to_string());
-                    }
+                    Band::Error(d) => self.progress.fail(progress_name(None, Text::from(d).0)),
                 };
             };
             self.pos = 0;

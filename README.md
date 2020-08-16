@@ -24,8 +24,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] [pack index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
       * [x] [pack explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
         * [x] verify written objects (by reading them back from disk)
-      * [ ] pack-receive - receive a pack produced by pack-send
-      * [ ] pack-send - create a pack and send it using the pack protocol to stdout
+      * [ ] **pack-receive** - receive a pack produced by **pack-send** or _git-upload-pack_
+      * [ ] **pack-send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
+            for consumption by **pack-receive** or _git-receive-pack_
     * **pack-index**
       * [x] [index from data](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [ ] support for thin packs (as needed for fetch/pull)
@@ -50,7 +51,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] streaming
       * [x] verify checksum
     * [x] streaming write for blobs
-    * [x] buffer write for small in-memory objects/non-blobs
+    * [x] buffer write for small in-memory objects/non-blobs to bring IO down to open-read-close == 3 syscalls
   * **packs**
     * [x] traverse pack index
     * [x] 'object' abstraction
@@ -62,10 +63,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] deltified objects
     * **streaming**
       * _decode a pack from `Read` input_
-      * [x] `Read` to `Iterator`
+      * [x] `Read` to `Iterator` of entries
         * _read as is, verify hash, and restore partial packs_
-      * [x] create index from pack alone
-        * _various memory options allow trading off speed for lower memory consumption_
+      * [x] create index from pack alone (_much faster than git_)
         * [ ] resolve 'thin' packs
     * [ ] encode
       * [ ] Add support for zlib-ng for 2.5x compression performance and 20% faster decompression
@@ -90,7 +90,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 
 ### git-protocol
-  * No matter what we do here, timeouts must be supported to prevent hanging forever.
+  * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
   * Packet lines must be abstracted from the client at least, as the 'dumb' transport doesn't use them.
   * [x] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
     * [x] encode
@@ -98,6 +98,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
     * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
     * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
+    * [x] `Read` from packet line sidebands with progress support
   * [ ] **Version 1**
     * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
     * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)

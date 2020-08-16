@@ -7,7 +7,9 @@
   * [x] PacketLine 'Iterator' from `Read`
   * [x] `Read` from packet lines with sideband
     * [x] Progress parsing, with 'info(…)' fallback if that fails
-    * [ ] SetName in Progress trait (to allow setting the correct progress information)
+    * [x] SetName in Progress trait (to allow setting the correct progress information)
+  * **git-url**
+    * [ ] parse into components to make them easy to understand
   * **connect**
     * [ ] via file and `git-upload-pack`
       * [ ] receive pack with V1 protocol
@@ -54,6 +56,7 @@ To be picked in any order….
 * **prodash**
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
+  * [ ] upgrade to prodash 9.0
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 * **miniz-oxide**
