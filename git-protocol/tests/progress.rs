@@ -1,4 +1,4 @@
-mod decode {
+mod parse {
     use bstr::ByteSlice;
     use git_protocol::RemoteProgress;
 
