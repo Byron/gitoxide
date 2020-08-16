@@ -1,4 +1,7 @@
-use crate::packet_line::{borrowed::Band, decode, MAX_DATA_LEN, MAX_LINE_LEN};
+use crate::packet_line::{
+    borrowed::{Band, Text},
+    decode, MAX_DATA_LEN, MAX_LINE_LEN,
+};
 use crate::PacketLine;
 use bstr::ByteSlice;
 use git_features::progress::Progress;
@@ -117,11 +120,11 @@ where
                     Band::Data(ref mut d) => break d.read(&mut self.buf)?,
                     Band::Progress(d) => {
                         // TODO: parse actual progress, but fallback to info()
-                        self.progress.info(d.as_bstr().to_string());
+                        self.progress.info(Text::from(d).0.as_bstr().to_string());
                         // unimplemented!("progress")
                     }
                     Band::Error(d) => {
-                        self.progress.fail(d.as_bstr().to_string());
+                        self.progress.fail(Text::from(d).0.as_bstr().to_string());
                     }
                 };
             };

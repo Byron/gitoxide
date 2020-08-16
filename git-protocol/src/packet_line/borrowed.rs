@@ -35,11 +35,10 @@ impl<'a> Borrowed<'a> {
     }
     pub fn to_text(&self) -> Text {
         let d = match self {
-            Borrowed::Data(d) => d,
+            Borrowed::Data(d) => *d,
             _ => panic!("cannot convert non-data to text"),
         };
-        let d = if d[d.len() - 1] == b'\n' { &d[..d.len() - 1] } else { d };
-        Text(d)
+        d.into()
     }
     pub fn to_band(&self, kind: Channel) -> Band {
         let d = match self {
@@ -91,6 +90,13 @@ impl<'a> Error<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Text<'a>(pub &'a [u8]);
+
+impl<'a> From<&'a [u8]> for Text<'a> {
+    fn from(d: &'a [u8]) -> Self {
+        let d = if d[d.len() - 1] == b'\n' { &d[..d.len() - 1] } else { d };
+        Text(d)
+    }
+}
 
 impl<'a> Text<'a> {
     pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
