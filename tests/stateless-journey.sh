@@ -50,27 +50,27 @@ title "CLI ${kind}"
 
 title plumbing
 snapshot="$snapshot/plumbing"
-(when "running 'index-from-pack"
-  snapshot="$snapshot/index-from-pack"
+(when "running 'pack-index-from-data"
+  snapshot="$snapshot/pack-index-from-data"
   PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
   (with "a valid and complete pack file"
     (with "NO output directory specified"
       (with "pack file passed as file"
         it "generates an index into a sink and outputs pack and index information" && {
           WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "$PACK_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data -p "$PACK_FILE"
         }
       )
       (with "pack file passed from stdin"
         it "generates an index into a sink and outputs pack and index information" && {
           WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack < "$PACK_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data < "$PACK_FILE"
         }
         if test "$kind" = "max"; then
         (with "--format json"
           it "generates the index into a sink and outputs information as JSON" && {
             WITH_SNAPSHOT="$snapshot/no-output-dir-as-json-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" --format json index-from-pack < "$PACK_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-index-from-data < "$PACK_FILE"
           }
         )
         fi
@@ -80,7 +80,7 @@ snapshot="$snapshot/plumbing"
       (with "with an output directory specified"
         it "generates an index and outputs information" && {
           WITH_SNAPSHOT="$snapshot/output-dir-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -p "$PACK_FILE" "$PWD"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data -p "$PACK_FILE" "$PWD"
         }
         it "writes the index and pack into the directory (they have the same names, different suffixes)" && {
           WITH_SNAPSHOT="$snapshot/output-dir-content" \
@@ -97,7 +97,7 @@ snapshot="$snapshot/plumbing"
 
       it "generates an index and outputs information (instead of failing)" && {
         WITH_SNAPSHOT="$snapshot/output-dir-restore-success" \
-        expect_run $SUCCESSFULLY "$exe_plumbing" index-from-pack -i restore -p "$PACK_FILE" "$PWD"
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data -i restore -p "$PACK_FILE" "$PWD"
       }
 
       if test "$kind" = "max"; then
@@ -105,7 +105,7 @@ snapshot="$snapshot/plumbing"
         it "generates the index, overwriting existing files, and outputs information as JSON" && {
           WITH_SNAPSHOT="$snapshot/output-dir-restore-as-json-success" \
           SNAPSHOT_FILTER=remove-paths \
-          expect_run $SUCCESSFULLY "$exe_plumbing" --format json index-from-pack -i restore $PWD < "$PACK_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-index-from-data -i restore $PWD < "$PACK_FILE"
         }
       )
       fi

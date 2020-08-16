@@ -126,7 +126,7 @@ $(linux_repo):
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
 	time ./target/release/gixp --verbose pack-verify --re-encode $(linux_repo)/objects/pack/*.idx
-	mkdir out && time ./target/release/gixp --verbose index-from-pack -p $(linux_repo)/objects/pack/*.pack out/
+	mkdir out && time ./target/release/gixp --verbose pack-index-from-data -p $(linux_repo)/objects/pack/*.pack out/
 	time ./target/release/gixp --verbose pack-verify out/*.idx
 
 	time ./target/release/gixp --verbose pack-verify --statistics $(rust_repo)/objects/pack/*.idx

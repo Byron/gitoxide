@@ -11,7 +11,7 @@
   that could be used for the improved cache. With the current cache and no sorted offsets, the time nearly triples.
 * [ ] _progress measuring costs when using 96 cores_ (see [this comment][josh-aug-12])
   * potential savings: low
-* [ ] Add '--chunk|batch-size' flag to `pack-verify` and `index-from-pack` to allow tuning sizes for large amounts of cores
+* [ ] Add '--chunk|batch-size' flag to `pack-verify` and `pack-index-from-data` to allow tuning sizes for large amounts of cores
   * @joshtriplett write: "I did find that algorithm when I was looking for the chunk size, though I didn't dig into the details. As a quick hack, I tried dropping the upper number from 1000 to 250, which made no apparent difference in performance."
   * potential savings: ~~medium~~ unclear
 * [ ] On 96 core machines, it takes visible time until all threads are started and have work. Is it because starting 100 threads takes so long? Or is it contention to get work?

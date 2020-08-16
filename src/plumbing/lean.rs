@@ -36,7 +36,7 @@ mod options {
     ///
     /// This command can also be used to stream packs to standard input or to repair partial packs.
     #[derive(FromArgs, PartialEq, Debug)]
-    #[argh(subcommand, name = "index-from-pack")]
+    #[argh(subcommand, name = "pack-index-from-data")]
     pub struct IndexFromPack {
         /// specify how to iterate the pack, defaults to 'verify'
         ///

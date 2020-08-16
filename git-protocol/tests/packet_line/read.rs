@@ -22,7 +22,7 @@ mod to_read {
         assert_eq!(exhaust(&mut rd), 2);
         rd.reset();
         assert_eq!(rd.read_line()??.to_text().0.as_bstr(), b"NAK".as_bstr());
-        let pack_read = rd.to_read_with_sidebands(git_features::progress::Discard);
+        let pack_read = rd.as_read_with_sidebands(git_features::progress::Discard);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
             pack::data::iter::Mode::Verify,

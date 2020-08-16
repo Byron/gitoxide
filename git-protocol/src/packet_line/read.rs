@@ -68,7 +68,7 @@ where
         }
     }
 
-    pub fn to_read_with_sidebands<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
+    pub fn as_read_with_sidebands<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
         ToRead::new(self, progress)
     }
 }

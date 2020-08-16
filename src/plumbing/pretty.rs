@@ -56,7 +56,7 @@ mod options {
         /// This command can also be used to stream packs to standard input or to repair partial packs.
         #[clap(setting = AppSettings::ColoredHelp)]
         #[clap(setting = AppSettings::DisableVersion)]
-        IndexFromPack {
+        PackIndexFromData {
             /// Specify how to iterate the pack, defaults to 'verify'
             ///
             /// Valid values are
@@ -280,12 +280,12 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
 
     match cmd {
-        Subcommands::IndexFromPack {
+        Subcommands::PackIndexFromData {
             iteration_mode,
             pack_path,
             directory,
         } => prepare_and_run(
-            "index-from-pack",
+            "pack-index-from-data",
             verbose,
             progress,
             progress_keep_open,
