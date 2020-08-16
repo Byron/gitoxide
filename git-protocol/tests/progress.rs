@@ -27,4 +27,17 @@ mod decode {
             }
         )
     }
+
+    #[test]
+    fn counting_objects_with_percentage() {
+        assert_eq!(
+            progress::Remote::from_bytes(b"Counting objects: 50% (5/10), done."),
+            progress::Remote {
+                action: b"Counting objects".as_bstr(),
+                percent: Some(50),
+                step: Some(5),
+                max: Some(10)
+            }
+        )
+    }
 }

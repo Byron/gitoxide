@@ -1,9 +1,12 @@
 use bstr::BStr;
+use nom::bytes::complete::tag;
+use nom::sequence::terminated;
 use nom::{
     bytes::complete::{take_till, take_till1},
     combinator::{map_res, opt},
     sequence::preceded,
 };
+use std::convert::TryFrom;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -38,19 +41,30 @@ fn parse_number(i: &[u8]) -> nom::IResult<&[u8], usize> {
     map_res(take_till(|c: u8| !c.is_ascii_digit()), btoi::btoi)(i)
 }
 
+fn next_optional_percentage(i: &[u8]) -> nom::IResult<&[u8], Option<u32>> {
+    opt(terminated(
+        preceded(
+            take_till(|c: u8| c.is_ascii_digit()),
+            map_res(parse_number, |num| u32::try_from(num)),
+        ),
+        tag(b"%"),
+    ))(i)
+}
+
 fn next_optional_number(i: &[u8]) -> nom::IResult<&[u8], Option<usize>> {
     opt(preceded(take_till(|c: u8| c.is_ascii_digit()), parse_number))(i)
 }
 
 fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], Remote> {
     let (i, action) = take_till1(|c| c == b':')(line)?;
+    let (i, percent) = next_optional_percentage(i)?;
     let (i, step) = next_optional_number(i)?;
     let (i, max) = next_optional_number(i)?;
     Ok((
         i,
         Remote {
             action: action.into(),
-            percent: None,
+            percent,
             step,
             max,
         },
