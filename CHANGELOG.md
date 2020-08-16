@@ -1,3 +1,9 @@
+### v0.4
+
+#### CLI Breaking
+
+ * rename plumbing sub-command from `index-from-pack` to `pack-index-from-data`
+
 ### v0.3
 
 * add `pack-explode` and `pack-index-from-data` sub-commands
