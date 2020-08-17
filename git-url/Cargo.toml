@@ -11,13 +11,11 @@ edition = "2018"
 doctest = false
 
 [features]
-serde1 = ["serde", "bstr/serde1"]
+serde1 = ["serde"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nom = { version = "6.0.0-alpha1", default-features = false, features = ["alloc"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
-bstr = { version = "0.2.13", default-features = false, features = ["std"] }
-btoi = "0.4.2"
 quick-error = "2.0.0"
+url = "2.1.1"

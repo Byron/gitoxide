@@ -1,17 +1,35 @@
 #![forbid(unsafe_code)]
 
-/// For convenience to allow using `bstr` without adding it to own cargo manifest
-pub use bstr;
-
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Protocol {
     Ssh,
 }
 
-pub mod borrowed;
+pub mod owned {
+    use crate::Protocol;
+
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum UserExpansion {
+        Current,
+        Name(String),
+    }
+
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Url {
+        pub protocol: Protocol,
+        pub user: Option<String>,
+        pub host: Option<String>,
+        pub port: Option<u16>,
+        pub path: String,
+        pub expand_user: Option<UserExpansion>,
+    }
+}
+
 #[doc(inline)]
-pub use borrowed::Url as Borrowed;
+pub use owned::Url as Owned;
 
 pub mod parse;
 #[doc(inline)]
