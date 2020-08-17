@@ -12,6 +12,7 @@ pub enum Protocol {
 
 pub mod owned {
     use crate::Protocol;
+    use bstr::BString;
 
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -27,7 +28,7 @@ pub mod owned {
         pub user: Option<String>,
         pub host: Option<String>,
         pub port: Option<u16>,
-        pub path: Vec<u8>,
+        pub path: BString,
         pub expansion: Option<UserExpansion>,
     }
 
@@ -38,7 +39,7 @@ pub mod owned {
                 user: None,
                 host: None,
                 port: None,
-                path: Vec::new(),
+                path: BString::default(),
                 expansion: None,
             }
         }
