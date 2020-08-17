@@ -1,3 +1,4 @@
+use crate::owned::UserExpansion;
 use crate::{owned, Protocol};
 use bstr::ByteSlice;
 use quick_error::quick_error;
@@ -21,6 +22,9 @@ quick_error! {
         }
         EmptyPath {
             display("Paths cannot be empty")
+        }
+        RelativeURL(url: String) {
+            display("Relative URLs are not permitted: '{}'", url)
         }
     }
 }
@@ -65,6 +69,46 @@ fn possibly_strip_file_protocol(url: &[u8]) -> &[u8] {
     }
 }
 
+fn to_owned_url(url: url::Url) -> Result<owned::Url, Error> {
+    Ok(owned::Url {
+        protocol: str_to_protocol(url.scheme())?,
+        user: if url.username().is_empty() {
+            None
+        } else {
+            Some(url.username().into())
+        },
+        host: url.host_str().map(Into::into),
+        port: url.port(),
+        path: url.path().into(),
+        expand_user: None,
+    })
+}
+
+fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
+    if !["ssh", "git"].contains(&url.scheme()) {
+        return to_owned_url(url);
+    }
+
+    dbg!(url.path_segments().map(|v| v.collect::<Vec<_>>()));
+    let expand_user = match url.path_segments().and_then(|mut s| s.next()) {
+        Some(segment) => {
+            if segment.starts_with("~") {
+                if segment.len() == 1 {
+                    Some(UserExpansion::Current)
+                } else {
+                    Some(UserExpansion::Name(segment.into()))
+                }
+            } else {
+                None
+            }
+        }
+        None => None,
+    };
+    let mut url = to_owned_url(url)?;
+    url.expand_user = expand_user;
+    Ok(url)
+}
+
 /// Note: We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
@@ -91,7 +135,7 @@ pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
         }
         Err(err) => return Err(err.into()),
     };
-    // SCP like URLs without user parse as 'something' with the scheme being the host
+    // SCP like URLs without user parse as 'something' with the scheme being the 'host'. Hosts always have dots.
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
@@ -99,16 +143,9 @@ pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
     if url.path().is_empty() {
         return Err(Error::EmptyPath);
     }
-    Ok(owned::Url {
-        protocol: str_to_protocol(url.scheme())?,
-        user: if url.username().is_empty() {
-            None
-        } else {
-            Some(url.username().into())
-        },
-        host: url.host_str().map(Into::into),
-        port: url.port(),
-        path: url.path().into(),
-        expand_user: None,
-    })
+    if url.cannot_be_a_base() {
+        return Err(Error::RelativeURL(url.into_string()));
+    }
+
+    with_parsed_user_expansion(url)
 }

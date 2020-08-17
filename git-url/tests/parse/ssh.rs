@@ -1,4 +1,5 @@
 use crate::parse::{assert_url, url};
+use git_url::owned::UserExpansion;
 use git_url::Protocol;
 
 #[test]
@@ -23,6 +24,36 @@ fn host_is_ipv4() -> crate::Result {
 }
 
 #[test]
+fn username_expansion_with_username() -> crate::Result {
+    assert_url(
+        "ssh://example.com/~byron/hello",
+        url(
+            Protocol::Ssh,
+            None,
+            "example.com",
+            None,
+            b"/hello",
+            UserExpansion::Name("byron".into()),
+        ),
+    )
+}
+
+#[test]
+fn username_expansion_without_username() -> crate::Result {
+    assert_url(
+        "ssh://example.com/~/hello/git",
+        url(
+            Protocol::Ssh,
+            None,
+            "example.com",
+            None,
+            b"/hello/git",
+            UserExpansion::Current,
+        ),
+    )
+}
+
+#[test]
 fn with_user_and_without_port() -> crate::Result {
     assert_url(
         "ssh://user@host.xz/.git",
@@ -35,6 +66,29 @@ fn scp_like_without_user() -> crate::Result {
     assert_url(
         "host.xz:path/to/git",
         url(Protocol::Ssh, None, "host.xz", None, b"/path/to/git", None),
+    )
+}
+
+#[test]
+fn scp_like_without_user_and_username_expansion_without_username() -> crate::Result {
+    assert_url(
+        "host.xz:path/~/to/git",
+        url(Protocol::Ssh, None, "host.xz", None, b"/to/git", UserExpansion::Current),
+    )
+}
+
+#[test]
+fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result {
+    assert_url(
+        "host.xz:path/~byron/to/git",
+        url(
+            Protocol::Ssh,
+            None,
+            "host.xz",
+            None,
+            b"/to/git",
+            UserExpansion::Name("byron".into()),
+        ),
     )
 }
 

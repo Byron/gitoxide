@@ -18,6 +18,21 @@ fn file_path_without_protocol() -> crate::Result {
 }
 
 #[test]
+fn no_username_expansion_for_file_paths_without_protocol() -> crate::Result {
+    assert_url(
+        "~/path/to/git",
+        url(Protocol::File, None, None, None, b"~/path/to/git", None),
+    )
+}
+#[test]
+fn no_username_expansion_for_file_paths_with_protocol() -> crate::Result {
+    assert_url(
+        "file://~username/path/to/git",
+        url(Protocol::File, None, None, None, b"~username/path/to/git", None),
+    )
+}
+
+#[test]
 fn non_utf8_file_path_without_protocol() -> crate::Result {
     assert_eq!(
         git_url::parse(b"/path/to\xff/git")?,
