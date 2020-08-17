@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+use std::convert::TryFrom;
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Protocol {
@@ -38,6 +40,20 @@ impl Default for Url {
             path: bstr::BString::default(),
             expansion: None,
         }
+    }
+}
+
+impl Url {
+    pub fn from_bytes(url: &[u8]) -> Result<Self, parse::Error> {
+        parse(url)
+    }
+}
+
+impl TryFrom<&[u8]> for Url {
+    type Error = parse::Error;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_bytes(value)
     }
 }
 
