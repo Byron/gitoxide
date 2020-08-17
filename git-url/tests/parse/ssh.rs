@@ -39,9 +39,9 @@ fn scp_like_without_user() -> crate::Result {
 }
 
 #[test]
-fn scp_like_with_user() -> crate::Result {
+fn scp_like_with_user_and_relative_path_turns_into_absolute_path() -> crate::Result {
     assert_url(
         "user@host.xz:./relative",
-        url(Protocol::Ssh, "user", "host.xz", None, "./relative", None),
+        url(Protocol::Ssh, "user", "host.xz", None, "/relative", None),
     )
 }

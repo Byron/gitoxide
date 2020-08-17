@@ -52,8 +52,19 @@ fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
     }
 }
 
+fn has_no_explicit_protocol(url: &str) -> bool {
+    url.find("://").is_none()
+}
+
 pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
     let url_str = std::str::from_utf8(url)?;
+    if has_no_explicit_protocol(url_str) && guess_protocol(url_str) == "file" {
+        return Ok(owned::Url {
+            protocol: Protocol::File,
+            path: url_str.into(),
+            ..Default::default()
+        });
+    }
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
         Err(url::ParseError::RelativeUrlWithoutBase) => {

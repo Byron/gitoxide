@@ -27,6 +27,19 @@ pub mod owned {
         pub path: String,
         pub expand_user: Option<UserExpansion>,
     }
+
+    impl Default for Url {
+        fn default() -> Self {
+            Url {
+                protocol: Protocol::Ssh,
+                user: None,
+                host: None,
+                port: None,
+                path: "".to_string(),
+                expand_user: None,
+            }
+        }
+    }
 }
 
 #[doc(inline)]
