@@ -20,7 +20,7 @@ fn protocol(i: &[u8]) -> IResult<&[u8], Protocol, Error> {
         .map_err(Error::context("protocol parsing failed"))
 }
 fn v4n(i: &[u8]) -> IResult<&[u8], u8, Error> {
-    map_res(take_while_m_n(1, 3, is_digit), |d| btoi::btoi(d))(i)
+    map_res(take_while_m_n(1, 3, is_digit), btoi::btoi)(i)
 }
 
 fn host(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
@@ -46,9 +46,7 @@ fn user(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
 }
 
 fn port(i: &[u8]) -> IResult<&[u8], u32, Error> {
-    map_res(preceded(tag(b":"), take_while1(is_digit)), |input: &[u8]| {
-        btoi::btoi(input)
-    })(i)
+    map_res(preceded(tag(b":"), take_while1(is_digit)), btoi::btoi)(i)
 }
 
 fn full_url(i: &[u8]) -> IResult<&[u8], borrowed::Url, Error> {
