@@ -1,5 +1,4 @@
-use crate::owned::UserExpansion;
-use crate::{owned, Protocol};
+use crate::{Protocol, UserExpansion};
 use bstr::ByteSlice;
 use quick_error::quick_error;
 use std::borrow::Cow;
@@ -12,10 +11,8 @@ quick_error! {
             from()
             source(err)
         }
-        Url(err: url::ParseError) {
-            display("the URL could not be parsed")
-            from()
-            source(err)
+        Url(err: String) {
+            display("the URL could not be parsed: {}", err)
         }
         UnsupportedProtocol(protocol: String) {
             display("Protocol '{}' is not supported", protocol)
@@ -72,8 +69,8 @@ fn possibly_strip_file_protocol(url: &[u8]) -> &[u8] {
     }
 }
 
-fn to_owned_url(url: url::Url) -> Result<owned::Url, Error> {
-    Ok(owned::Url {
+fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
+    Ok(crate::Url {
         protocol: str_to_protocol(url.scheme())?,
         user: if url.username().is_empty() {
             None
@@ -87,7 +84,7 @@ fn to_owned_url(url: url::Url) -> Result<owned::Url, Error> {
     })
 }
 
-fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
+fn with_parsed_user_expansion(url: url::Url) -> Result<crate::Url, Error> {
     if !["ssh", "git"].contains(&url.scheme()) {
         return to_owned_url(url);
     }
@@ -117,10 +114,10 @@ fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
 
 /// Note: We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
-pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
+pub fn parse(url: &[u8]) -> Result<crate::Url, Error> {
     let guessed_protocol = guess_protocol(url);
     if possibly_strip_file_protocol(url) != url || (has_no_explicit_protocol(url) && guessed_protocol == "file") {
-        return Ok(owned::Url {
+        return Ok(crate::Url {
             protocol: Protocol::File,
             path: possibly_strip_file_protocol(url).into(),
             ..Default::default()
@@ -130,21 +127,23 @@ pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
     let url_str = std::str::from_utf8(url)?;
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
-        Err(url::ParseError::RelativeUrlWithoutBase) => {
+        Err(::url::ParseError::RelativeUrlWithoutBase) => {
             // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
             // which we are trying to detect.
             url::Url::parse(&format!(
                 "{}://{}",
                 guessed_protocol,
                 sanitize_for_protocol(guessed_protocol, url_str)
-            ))?
+            ))
+            .map_err(|err| Error::Url(err.to_string()))?
         }
-        Err(err) => return Err(err.into()),
+        Err(err) => return Err(Error::Url(err.to_string())),
     };
     // SCP like URLs without user parse as 'something' with the scheme being the 'host'. Hosts always have dots.
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
-        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
+        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))
+            .map_err(|err| Error::Url(err.to_string()))?;
     }
     if url.path().is_empty() {
         return Err(Error::EmptyPath);

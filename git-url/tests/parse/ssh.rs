@@ -1,6 +1,5 @@
 use crate::parse::{assert_url, assert_url_and, url};
-use git_url::owned::UserExpansion;
-use git_url::Protocol;
+use git_url::{Protocol, UserExpansion};
 use std::path::Path;
 
 #[test]
