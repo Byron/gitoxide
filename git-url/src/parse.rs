@@ -90,20 +90,19 @@ fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
     }
 
     dbg!(url.path_segments().map(|v| v.collect::<Vec<_>>()));
-    let expand_user = match url.path_segments().and_then(|mut s| s.next()) {
-        Some(segment) => {
+    let expand_user = url.path_segments().and_then(|mut iter| {
+        iter.next().and_then(|segment| {
             if segment.starts_with("~") {
                 if segment.len() == 1 {
                     Some(UserExpansion::Current)
                 } else {
-                    Some(UserExpansion::Name(segment.into()))
+                    Some(UserExpansion::Name(segment[1..].into()))
                 }
             } else {
                 None
             }
-        }
-        None => None,
-    };
+        })
+    });
     let mut url = to_owned_url(url)?;
     url.expand_user = expand_user;
     Ok(url)

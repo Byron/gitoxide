@@ -72,7 +72,7 @@ fn scp_like_without_user() -> crate::Result {
 #[test]
 fn scp_like_without_user_and_username_expansion_without_username() -> crate::Result {
     assert_url(
-        "host.xz:path/~/to/git",
+        "host.xz:~/to/git",
         url(Protocol::Ssh, None, "host.xz", None, b"/to/git", UserExpansion::Current),
     )
 }
@@ -80,7 +80,7 @@ fn scp_like_without_user_and_username_expansion_without_username() -> crate::Res
 #[test]
 fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result {
     assert_url(
-        "host.xz:path/~byron/to/git",
+        "host.xz:~byron/to/git",
         url(
             Protocol::Ssh,
             None,
