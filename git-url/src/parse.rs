@@ -1,18 +1,17 @@
 use crate::{borrowed, bstr::ByteSlice, Protocol};
 use bstr::BStr;
-use nom::{
-    bytes::complete::{tag, take_till1, take_while, take_while1},
-    character::complete::alphanumeric1,
-    combinator::{opt, recognize},
-    sequence::tuple,
-    IResult, Parser,
-};
 
 mod error;
 pub use error::Error;
-use nom::character::is_digit;
-use nom::combinator::map_res;
-use nom::sequence::preceded;
+use nom::{
+    branch::alt,
+    bytes::complete::{tag, take_till1, take_while, take_while1, take_while_m_n},
+    character::{complete::alphanumeric1, is_digit},
+    combinator::{map_res, opt, recognize},
+    multi::many_m_n,
+    sequence::{preceded, terminated, tuple},
+    IResult, Parser,
+};
 
 fn protocol(i: &[u8]) -> IResult<&[u8], Protocol, Error> {
     tag(b"ssh://")
@@ -20,11 +19,17 @@ fn protocol(i: &[u8]) -> IResult<&[u8], Protocol, Error> {
         .parse(i)
         .map_err(Error::context("protocol parsing failed"))
 }
+fn v4n(i: &[u8]) -> IResult<&[u8], u8, Error> {
+    map_res(take_while_m_n(1, 3, is_digit), |d| btoi::btoi(d))(i)
+}
 
 fn host(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
-    recognize(tuple((take_till1(|c| c == b'.'), tag(b"."), alphanumeric1)))
-        .map(|host: &[u8]| host.as_bstr())
-        .parse(i)
+    alt((
+        recognize(tuple((many_m_n(3, 3, tuple((v4n, tag(b".")))), v4n))),
+        recognize(tuple((take_till1(|c| c == b'.'), tag(b"."), alphanumeric1))),
+    ))
+    .map(|host: &[u8]| host.as_bstr())
+    .parse(i)
 }
 
 fn path(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
@@ -34,6 +39,11 @@ fn path(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
         .parse(i)
         .map_err(Error::context("paths cannot be empty and start with '/'"))
 }
+fn user(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+    terminated(take_while1(|c: u8| c != b'@'), tag(b"@"))
+        .map(|user: &[u8]| user.as_bstr())
+        .parse(i)
+}
 
 fn port(i: &[u8]) -> IResult<&[u8], u32, Error> {
     map_res(preceded(tag(b":"), take_while1(is_digit)), |input: &[u8]| {
@@ -42,10 +52,10 @@ fn port(i: &[u8]) -> IResult<&[u8], u32, Error> {
 }
 
 fn full_url(i: &[u8]) -> IResult<&[u8], borrowed::Url, Error> {
-    tuple((protocol, host, opt(port), path))
-        .map(|(proto, host, port, path)| borrowed::Url {
+    tuple((protocol, opt(user), host, opt(port), path))
+        .map(|(proto, user, host, port, path)| borrowed::Url {
             protocol: proto,
-            user: None,
+            user,
             host: Some(host),
             port,
             path,
