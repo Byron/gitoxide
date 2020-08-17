@@ -38,10 +38,21 @@ fn username_expansion_with_username() -> crate::Result {
     )?
     .expand_path_with(|user: &UserExpansion| match user {
         UserExpansion::Current => unreachable!("we have a name"),
-        UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
+        UserExpansion::Name(name) => Some(user_home(name)),
     })?;
     assert_eq!(expanded_path, Path::new("/home/byron/hello"));
     Ok(())
+}
+
+#[cfg(windows)]
+fn user_home(name: &str) -> std::path::PathBuf {
+    format!("C:\\UserProfiles\\{}", name).into()
+}
+
+#[cfg(not(windows))]
+fn user_home(name: &str) -> std::path::PathBuf {
+    #[cfg(not(windows))]
+    format!("/home/{}", name).into()
 }
 
 #[test]
@@ -58,7 +69,7 @@ fn username_expansion_without_username() -> crate::Result {
         ),
     )?
     .expand_path_with(|user: &UserExpansion| match user {
-        UserExpansion::Current => Some("/home/byron".into()),
+        UserExpansion::Current => Some(user_home("byron")),
         UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
     })?;
     assert_eq!(expanded_path, Path::new("/home/byron/hello/git"));
