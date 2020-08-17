@@ -26,13 +26,13 @@ fn host_is_ipv4() -> crate::Result {
 #[test]
 fn username_expansion_with_username() -> crate::Result {
     let expanded_path = assert_url_and(
-        "ssh://example.com/~byron/hello",
+        "ssh://example.com/~byron/hello/git",
         url(
             Protocol::Ssh,
             None,
             "example.com",
             None,
-            b"/hello",
+            b"/hello/git",
             UserExpansion::Name("byron".into()),
         ),
     )?
@@ -40,13 +40,23 @@ fn username_expansion_with_username() -> crate::Result {
         UserExpansion::Current => unreachable!("we have a name"),
         UserExpansion::Name(name) => Some(user_home(name)),
     })?;
-    assert_eq!(expanded_path, Path::new("/home/byron/hello"));
+    assert_eq!(expanded_path, expected_path());
     Ok(())
 }
 
 #[cfg(windows)]
+fn expected_path() -> std::path::PathBuf {
+    Path::new("C:\\UserProfiles\\byron\\hello\\git").into()
+}
+
+#[cfg(not(windows))]
+fn expected_path() -> std::path::PathBuf {
+    Path::new("/home/byron/hello/git").into()
+}
+
+#[cfg(windows)]
 fn user_home(name: &str) -> std::path::PathBuf {
-    format!("C:\\UserProfiles\\{}", name).into()
+    Path::new("C:").join("UserProfiles").join(name)
 }
 
 #[cfg(not(windows))]
@@ -72,7 +82,7 @@ fn username_expansion_without_username() -> crate::Result {
         UserExpansion::Current => Some(user_home("byron")),
         UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
     })?;
-    assert_eq!(expanded_path, Path::new("/home/byron/hello/git"));
+    assert_eq!(expanded_path, expected_path());
     Ok(())
 }
 
