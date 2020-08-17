@@ -89,6 +89,13 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
 
+### git-url
+  * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
+  * [ ] ssh URLs and special cases
+  * [ ] git, and SSH
+  * [ ] paths
+  * [ ] API documentation with examples
+  
 ### git-protocol
   * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
   * Packet lines must be abstracted from the client at least, as the 'dumb' transport doesn't use them.
@@ -112,6 +119,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
     * [ ] push
   * [ ] [Version 2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
+  * [ ] API documentation with examples
   
 ### git-transport
   * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
@@ -161,13 +169,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
   * [ ] API documentation with examples
-  
-### git-url
-  * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
-  * [ ] ssh://user@example.com/project.git 
-  * [ ] user@example.com:project.git
-  * [ ] git://user@example.com:project.git
-  * [ ] ssh://user@example.com/~alice/project.git
   
 ### git-features
   * **parallel** feature toggle
