@@ -12,6 +12,7 @@ doctest = false
 
 [features]
 serde1 = ["serde"]
+expand-path = ["home"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,3 +21,4 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 quick-error = "2.0.0"
 url = "2.1.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+home = { version = "0.5.3", optional = true }

@@ -362,6 +362,10 @@ All feature toggles are additive.
     * this facility is a global one.
     * Probably useful for server implementations.
     
+### git-url
+
+* **expand-user**
+    
 ### Serialization Support
  
  What follows is feature toggles to control serialization of all public facing simple data types.

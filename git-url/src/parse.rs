@@ -83,7 +83,7 @@ fn to_owned_url(url: url::Url) -> Result<owned::Url, Error> {
         host: url.host_str().map(Into::into),
         port: url.port(),
         path: url.path().into(),
-        expand_user: None,
+        expansion: None,
     })
 }
 
@@ -110,7 +110,7 @@ fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
         })
         .unwrap_or_else(|| (None, url.path().into()));
     let mut url = to_owned_url(url)?;
-    url.expand_user = expand_user;
+    url.expansion = expand_user;
     url.path = path;
     Ok(url)
 }

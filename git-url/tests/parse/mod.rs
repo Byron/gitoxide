@@ -27,7 +27,7 @@ fn url(
         host: host.into().map(Into::into),
         port: port.into(),
         path: path.into(),
-        expand_user: expand_user.into(),
+        expansion: expand_user.into(),
     }
 }
 
