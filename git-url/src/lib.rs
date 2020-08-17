@@ -66,18 +66,7 @@ pub mod owned {
                 None => self.path.to_path().ok().map(ToOwned::to_owned),
             }
         }
-    }
-}
 
-#[doc(inline)]
-pub use owned::Url as Owned;
-
-#[cfg(feature = "expand-path")]
-mod expand_user {
-    use crate::owned::{Url, UserExpansion};
-    use std::path::PathBuf;
-
-    impl Url {
         pub fn expand_user(&self) -> Option<PathBuf> {
             self.expand_path_with(|user| match user {
                 UserExpansion::Current => home::home_dir(),
@@ -88,6 +77,9 @@ mod expand_user {
         }
     }
 }
+
+#[doc(inline)]
+pub use owned::Url as Owned;
 
 pub mod parse;
 #[doc(inline)]
