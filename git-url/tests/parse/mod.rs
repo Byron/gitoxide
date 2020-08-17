@@ -6,8 +6,8 @@ fn assert_url(url: &[u8], expected: git_url::Borrowed) -> crate::Result {
     Ok(())
 }
 
-fn assert_failure(url: &[u8], expected_err: &str) {
-    assert_eq!(git_url::parse(url).unwrap_err().to_string(), expected_err);
+fn assert_failure(url: &str, expected_err: &str) {
+    assert_eq!(git_url::parse(url.as_bytes()).unwrap_err().to_string(), expected_err);
 }
 
 fn url(

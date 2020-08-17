@@ -2,15 +2,15 @@ use nom::error::ParseError;
 use quick_error::quick_error;
 
 quick_error! {
-#[derive(Debug)]
-pub enum Error {
-    Nom(err_msg: String) {
-        display("{}", err_msg)
+    #[derive(Debug)]
+    pub enum Error {
+        Nom(err_msg: String) {
+            display("{}", err_msg)
+        }
+        NomDetail(input: bstr::BString, msg: &'static str) {
+            display("{}: '{}' could not be parsed", msg, input)
+        }
     }
-    NomDetail(input: bstr::BString, msg: &'static str) {
-        display("{}: '{}' could not be parsed", msg, input)
-    }
-}
 }
 
 impl From<nom::Err<Error>> for Error {

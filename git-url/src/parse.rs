@@ -1,15 +1,18 @@
 use crate::{borrowed, bstr::ByteSlice, Protocol};
 use bstr::BStr;
 use nom::{
-    bytes::complete::{tag, take_till1, take_while1},
+    bytes::complete::{tag, take_till1, take_while, take_while1},
     character::complete::alphanumeric1,
-    combinator::recognize,
+    combinator::{opt, recognize},
     sequence::tuple,
     IResult, Parser,
 };
 
 mod error;
 pub use error::Error;
+use nom::character::is_digit;
+use nom::combinator::map_res;
+use nom::sequence::preceded;
 
 fn protocol(i: &[u8]) -> IResult<&[u8], Protocol, Error> {
     tag(b"ssh://")
@@ -26,16 +29,25 @@ fn host(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
 
 fn path(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     // TODO: be much less permissive
-    take_while1(|_| true).map(|path: &[u8]| path.as_bstr()).parse(i)
+    recognize(preceded(tag(b"/"), take_while(|_| true)))
+        .map(|path: &[u8]| path.as_bstr())
+        .parse(i)
+        .map_err(Error::context("paths cannot be empty and start with '/'"))
+}
+
+fn port(i: &[u8]) -> IResult<&[u8], u32, Error> {
+    map_res(preceded(tag(b":"), take_while1(is_digit)), |input: &[u8]| {
+        btoi::btoi(input)
+    })(i)
 }
 
 fn full_url(i: &[u8]) -> IResult<&[u8], borrowed::Url, Error> {
-    tuple((protocol, host, path))
-        .map(|(proto, host, path)| borrowed::Url {
+    tuple((protocol, host, opt(port), path))
+        .map(|(proto, host, port, path)| borrowed::Url {
             protocol: proto,
             user: None,
             host: Some(host),
-            port: None,
+            port,
             path,
             expand_user: None,
         })
