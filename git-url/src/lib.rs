@@ -4,6 +4,7 @@
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Protocol {
     Ssh,
+    File,
 }
 
 pub mod owned {

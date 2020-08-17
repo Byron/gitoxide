@@ -1,5 +1,6 @@
 use crate::{owned, Protocol};
 use quick_error::quick_error;
+use std::borrow::Cow;
 
 quick_error! {
     #[derive(Debug)]
@@ -26,15 +27,52 @@ quick_error! {
 fn str_to_protocol(s: &str) -> Result<Protocol, Error> {
     Ok(match s {
         "ssh" => Protocol::Ssh,
+        "file" => Protocol::File,
         _ => return Err(Error::UnsupportedProtocol(s.into())),
     })
 }
 
+fn guess_protocol(url: &str) -> &str {
+    match url.find(':') {
+        Some(colon_pos) => {
+            if url[..colon_pos].find('.').is_some() {
+                "ssh"
+            } else {
+                "file"
+            }
+        }
+        None => "file",
+    }
+}
+
+fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
+    match protocol {
+        "ssh" => url.replacen(":", "/", 1).into(),
+        _ => url.into(),
+    }
+}
+
 pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
-    let url = url::Url::parse(std::str::from_utf8(url)?)?;
+    let url_str = std::str::from_utf8(url)?;
+    let mut url = match url::Url::parse(url_str) {
+        Ok(url) => url,
+        Err(url::ParseError::RelativeUrlWithoutBase) => {
+            // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
+            // which we are trying to detect.
+            let protocol = guess_protocol(url_str);
+            url::Url::parse(&format!("{}://{}", protocol, sanitize_for_protocol(protocol, url_str)))?
+        }
+        Err(err) => return Err(err.into()),
+    };
+    // SCP like URLs without user parse as 'something' with the scheme being the host
+    if url.scheme().find('.').is_some() {
+        // try again with prefixed protocol
+        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
+    }
     if url.path().is_empty() {
         return Err(Error::EmptyPath);
     }
+    dbg!(&url);
     Ok(owned::Url {
         protocol: str_to_protocol(url.scheme())?,
         user: if url.username().is_empty() {

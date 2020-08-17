@@ -1,7 +1,7 @@
 use git_url::{owned::UserExpansion, Protocol};
 
-fn assert_url(url: &[u8], expected: git_url::Owned) -> crate::Result {
-    assert_eq!(git_url::parse(url)?, expected);
+fn assert_url(url: &str, expected: git_url::Owned) -> crate::Result {
+    assert_eq!(git_url::parse(url.as_bytes())?, expected);
     Ok(())
 }
 
@@ -27,5 +27,6 @@ fn url(
     }
 }
 
+mod file;
 mod invalid;
 mod ssh;
