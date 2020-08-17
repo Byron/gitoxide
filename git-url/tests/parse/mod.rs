@@ -30,3 +30,41 @@ fn url(
 mod file;
 mod invalid;
 mod ssh;
+mod http {
+    use crate::parse::{assert_url, url};
+    use git_url::Protocol;
+
+    #[test]
+    fn username_expansion_is_unsupported() -> crate::Result {
+        assert_url(
+            "http://example.com/~byron/hello",
+            url(Protocol::Http, None, "example.com", None, b"/~byron/hello", None),
+        )
+    }
+    #[test]
+    fn secure() -> crate::Result {
+        assert_url(
+            "https://github.com/byron/gitoxide",
+            url(Protocol::Https, None, "github.com", None, b"/byron/gitoxide", None),
+        )
+    }
+}
+mod git {
+    use crate::parse::{assert_url, url};
+    use git_url::{owned::UserExpansion, Protocol};
+
+    #[test]
+    fn username_expansion_with_username() -> crate::Result {
+        assert_url(
+            "git://example.com/~byron/hello",
+            url(
+                Protocol::Git,
+                None,
+                "example.com",
+                None,
+                b"/hello",
+                UserExpansion::Name("byron".into()),
+            ),
+        )
+    }
+}

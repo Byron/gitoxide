@@ -33,6 +33,9 @@ fn str_to_protocol(s: &str) -> Result<Protocol, Error> {
     Ok(match s {
         "ssh" => Protocol::Ssh,
         "file" => Protocol::File,
+        "git" => Protocol::Git,
+        "http" => Protocol::Http,
+        "https" => Protocol::Https,
         _ => return Err(Error::UnsupportedProtocol(s.into())),
     })
 }
@@ -89,22 +92,26 @@ fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
         return to_owned_url(url);
     }
 
-    dbg!(url.path_segments().map(|v| v.collect::<Vec<_>>()));
-    let expand_user = url.path_segments().and_then(|mut iter| {
-        iter.next().and_then(|segment| {
-            if segment.starts_with("~") {
-                if segment.len() == 1 {
-                    Some(UserExpansion::Current)
+    let (expand_user, path) = url
+        .path_segments()
+        .and_then(|mut iter| {
+            iter.next().map(|segment| {
+                if segment.starts_with("~") {
+                    let eu = if segment.len() == 1 {
+                        Some(UserExpansion::Current)
+                    } else {
+                        Some(UserExpansion::Name(segment[1..].into()))
+                    };
+                    (eu, format!("/{}", iter.collect::<Vec<_>>().join("/")).into())
                 } else {
-                    Some(UserExpansion::Name(segment[1..].into()))
+                    (None, url.path().into())
                 }
-            } else {
-                None
-            }
+            })
         })
-    });
+        .unwrap_or_else(|| (None, url.path().into()));
     let mut url = to_owned_url(url)?;
     url.expand_user = expand_user;
+    url.path = path;
     Ok(url)
 }
 
