@@ -35,7 +35,11 @@ impl Url {
         }
         let path = self.path.to_path()?;
         Ok(match self.expansion.as_ref() {
-            Some(user) => home_for_user(user).ok_or(Error::MissingHome)?.join(make_relative(path)),
+            Some(user) => {
+                let home_dir = home_for_user(user).ok_or(Error::MissingHome)?;
+                dbg!(&home_dir, path, make_relative(path));
+                home_dir.join(make_relative(path))
+            }
             None => self.path.to_path()?.into(),
         })
     }
