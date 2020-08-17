@@ -23,13 +23,12 @@ impl Url {
         &self,
         home_for_user: impl FnOnce(&UserExpansion) -> Option<PathBuf>,
     ) -> Result<PathBuf, Error> {
-        fn join_relative(mut base: PathBuf, path: &Path) -> PathBuf {
-            base.extend(path.components().skip(1));
-            base
+        fn make_relative(path: &Path) -> PathBuf {
+            path.components().skip(1).collect()
         }
         let path = self.path.to_path()?;
         Ok(match self.expansion.as_ref() {
-            Some(user) => join_relative(home_for_user(user).ok_or(Error::MissingHome)?, path),
+            Some(user) => home_for_user(user).ok_or(Error::MissingHome)?.join(make_relative(path)),
             None => self.path.to_path()?.into(),
         })
     }
