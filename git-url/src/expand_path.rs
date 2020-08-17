@@ -24,11 +24,7 @@ impl Url {
         home_for_user: impl FnOnce(&UserExpansion) -> Option<PathBuf>,
     ) -> Result<PathBuf, Error> {
         fn join_relative(mut base: PathBuf, path: &Path) -> PathBuf {
-            if path.is_relative() {
-                base.extend(path.components());
-            } else {
-                base.extend(path.components().skip(1));
-            }
+            base.extend(path.components().skip(1));
             base
         }
         let path = self.path.to_path()?;
