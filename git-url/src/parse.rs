@@ -96,7 +96,7 @@ fn with_parsed_user_expansion(url: url::Url) -> Result<owned::Url, Error> {
         .path_segments()
         .and_then(|mut iter| {
             iter.next().map(|segment| {
-                if segment.starts_with("~") {
+                if segment.starts_with('~') {
                     let eu = if segment.len() == 1 {
                         Some(UserExpansion::Current)
                     } else {
