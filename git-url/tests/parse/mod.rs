@@ -1,8 +1,12 @@
 use git_url::{owned::UserExpansion, Protocol};
 
-fn assert_url(url: &str, expected: git_url::Owned) -> crate::Result {
+fn assert_url_and(url: &str, expected: git_url::Owned) -> Result<git_url::Owned, crate::Error> {
     assert_eq!(git_url::parse(url.as_bytes())?, expected);
-    Ok(())
+    Ok(expected)
+}
+
+fn assert_url(url: &str, expected: git_url::Owned) -> crate::Result {
+    assert_url_and(url, expected).map(|_| ())
 }
 
 fn assert_failure(url: &str, expected_err: &str) {

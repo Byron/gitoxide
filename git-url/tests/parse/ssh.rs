@@ -1,6 +1,7 @@
-use crate::parse::{assert_url, url};
+use crate::parse::{assert_url, assert_url_and, url};
 use git_url::owned::UserExpansion;
 use git_url::Protocol;
+use std::path::Path;
 
 #[test]
 fn without_user_and_without_port() -> crate::Result {
@@ -25,7 +26,7 @@ fn host_is_ipv4() -> crate::Result {
 
 #[test]
 fn username_expansion_with_username() -> crate::Result {
-    assert_url(
+    let expanded_path = assert_url_and(
         "ssh://example.com/~byron/hello",
         url(
             Protocol::Ssh,
@@ -35,12 +36,18 @@ fn username_expansion_with_username() -> crate::Result {
             b"/hello",
             UserExpansion::Name("byron".into()),
         ),
-    )
+    )?
+    .expand_path_with(|user: &UserExpansion| match user {
+        UserExpansion::Current => unreachable!("we have a name"),
+        UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
+    });
+    assert_eq!(expanded_path, Some(Path::new("/home/byron/hello").into()));
+    Ok(())
 }
 
 #[test]
 fn username_expansion_without_username() -> crate::Result {
-    assert_url(
+    let expanded_path = assert_url_and(
         "ssh://example.com/~/hello/git",
         url(
             Protocol::Ssh,
@@ -50,7 +57,13 @@ fn username_expansion_without_username() -> crate::Result {
             b"/hello/git",
             UserExpansion::Current,
         ),
-    )
+    )?
+    .expand_path_with(|user: &UserExpansion| match user {
+        UserExpansion::Current => Some("/home/byron".into()),
+        UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
+    });
+    assert_eq!(expanded_path, Some(Path::new("/home/byron/hello/git").into()));
+    Ok(())
 }
 
 #[test]
