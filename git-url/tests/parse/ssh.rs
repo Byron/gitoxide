@@ -56,7 +56,7 @@ fn expected_path() -> std::path::PathBuf {
 
 #[cfg(windows)]
 fn user_home(name: &str) -> std::path::PathBuf {
-    Path::new("C:").join("UserProfiles").join(name)
+    Path::new("C:\\").join("UserProfiles").join(name)
 }
 
 #[cfg(not(windows))]
