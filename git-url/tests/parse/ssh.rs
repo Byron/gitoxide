@@ -40,8 +40,8 @@ fn username_expansion_with_username() -> crate::Result {
     .expand_path_with(|user: &UserExpansion| match user {
         UserExpansion::Current => unreachable!("we have a name"),
         UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
-    });
-    assert_eq!(expanded_path, Some(Path::new("/home/byron/hello").into()));
+    })?;
+    assert_eq!(expanded_path, Path::new("/home/byron/hello"));
     Ok(())
 }
 
@@ -61,8 +61,8 @@ fn username_expansion_without_username() -> crate::Result {
     .expand_path_with(|user: &UserExpansion| match user {
         UserExpansion::Current => Some("/home/byron".into()),
         UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
-    });
-    assert_eq!(expanded_path, Some(Path::new("/home/byron/hello/git").into()));
+    })?;
+    assert_eq!(expanded_path, Path::new("/home/byron/hello/git"));
     Ok(())
 }
 
