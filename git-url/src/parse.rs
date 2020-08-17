@@ -56,15 +56,22 @@ fn has_no_explicit_protocol(url: &str) -> bool {
     url.find("://").is_none()
 }
 
+fn strip_trivial_file_protocol(url: &str) -> Option<&str> {
+    url.strip_prefix("file://")
+}
+
 pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
     let url_str = std::str::from_utf8(url)?;
-    if has_no_explicit_protocol(url_str) && guess_protocol(url_str) == "file" {
+    if strip_trivial_file_protocol(url_str).is_some()
+        || (has_no_explicit_protocol(url_str) && guess_protocol(url_str) == "file")
+    {
         return Ok(owned::Url {
             protocol: Protocol::File,
-            path: url_str.into(),
+            path: strip_trivial_file_protocol(url_str).unwrap_or(url_str).into(),
             ..Default::default()
         });
     }
+
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
         Err(url::ParseError::RelativeUrlWithoutBase) => {
@@ -83,7 +90,6 @@ pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
     if url.path().is_empty() {
         return Err(Error::EmptyPath);
     }
-    dbg!(&url);
     Ok(owned::Url {
         protocol: str_to_protocol(url.scheme())?,
         user: if url.username().is_empty() {
