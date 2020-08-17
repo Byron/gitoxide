@@ -28,16 +28,5 @@ fn url(
     }
 }
 
-mod invalid {
-    use crate::parse::assert_failure;
-
-    #[test]
-    fn unknown_protocol() {
-        assert_failure(
-            b"foo://host.xz/path/to/repo.git/",
-            "protocol parsing failed: 'foo://host.xz/path/to/repo.git/' could not be parsed",
-        )
-    }
-}
-
+mod invalid;
 mod ssh;
