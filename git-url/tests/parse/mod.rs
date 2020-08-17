@@ -14,7 +14,7 @@ fn url(
     user: impl Into<Option<&'static str>>,
     host: impl Into<Option<&'static str>>,
     port: impl Into<Option<u16>>,
-    path: &'static str,
+    path: &'static [u8],
     expand_user: impl Into<Option<UserExpansion>>,
 ) -> git_url::Owned {
     git_url::Owned {

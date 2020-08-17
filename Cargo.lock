@@ -660,6 +660,7 @@ version = "0.0.0"
 name = "git-url"
 version = "0.1.0"
 dependencies = [
+ "bstr",
  "quick-error 2.0.0",
  "serde",
  "url",

@@ -1,4 +1,5 @@
 use crate::{owned, Protocol};
+use bstr::ByteSlice;
 use quick_error::quick_error;
 use std::borrow::Cow;
 
@@ -32,10 +33,10 @@ fn str_to_protocol(s: &str) -> Result<Protocol, Error> {
     })
 }
 
-fn guess_protocol(url: &str) -> &str {
-    match url.find(':') {
+fn guess_protocol(url: &[u8]) -> &str {
+    match url.find_byte(b':') {
         Some(colon_pos) => {
-            if url[..colon_pos].find('.').is_some() {
+            if url[..colon_pos].find_byte(b'.').is_some() {
                 "ssh"
             } else {
                 "file"
@@ -52,33 +53,41 @@ fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
     }
 }
 
-fn has_no_explicit_protocol(url: &str) -> bool {
-    url.find("://").is_none()
+fn has_no_explicit_protocol(url: &[u8]) -> bool {
+    url.find(b"://").is_none()
 }
 
-fn strip_trivial_file_protocol(url: &str) -> Option<&str> {
-    url.strip_prefix("file://")
+fn possibly_strip_file_protocol(url: &[u8]) -> &[u8] {
+    if url.starts_with(b"file://") {
+        &url[b"file://".len()..]
+    } else {
+        url
+    }
 }
 
+/// Note: We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
+/// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(url: &[u8]) -> Result<owned::Url, Error> {
-    let url_str = std::str::from_utf8(url)?;
-    if strip_trivial_file_protocol(url_str).is_some()
-        || (has_no_explicit_protocol(url_str) && guess_protocol(url_str) == "file")
-    {
+    let guessed_protocol = guess_protocol(url);
+    if possibly_strip_file_protocol(url) != url || (has_no_explicit_protocol(url) && guessed_protocol == "file") {
         return Ok(owned::Url {
             protocol: Protocol::File,
-            path: strip_trivial_file_protocol(url_str).unwrap_or(url_str).into(),
+            path: possibly_strip_file_protocol(url).into(),
             ..Default::default()
         });
     }
 
+    let url_str = std::str::from_utf8(url)?;
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
         Err(url::ParseError::RelativeUrlWithoutBase) => {
             // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
             // which we are trying to detect.
-            let protocol = guess_protocol(url_str);
-            url::Url::parse(&format!("{}://{}", protocol, sanitize_for_protocol(protocol, url_str)))?
+            url::Url::parse(&format!(
+                "{}://{}",
+                guessed_protocol,
+                sanitize_for_protocol(guessed_protocol, url_str)
+            ))?
         }
         Err(err) => return Err(err.into()),
     };

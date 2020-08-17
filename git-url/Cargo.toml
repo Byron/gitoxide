@@ -19,3 +19,4 @@ serde1 = ["serde"]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 quick-error = "2.0.0"
 url = "2.1.1"
+bstr = { version = "0.2.13", default-features = false, features = ["std"] }

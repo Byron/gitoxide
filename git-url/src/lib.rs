@@ -24,7 +24,7 @@ pub mod owned {
         pub user: Option<String>,
         pub host: Option<String>,
         pub port: Option<u16>,
-        pub path: String,
+        pub path: Vec<u8>,
         pub expand_user: Option<UserExpansion>,
     }
 
@@ -35,7 +35,7 @@ pub mod owned {
                 user: None,
                 host: None,
                 port: None,
-                path: "".to_string(),
+                path: Vec::new(),
                 expand_user: None,
             }
         }
