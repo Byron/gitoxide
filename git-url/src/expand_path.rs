@@ -27,6 +27,7 @@ impl Url {
         home_for_user: impl FnOnce(&UserExpansion) -> Option<PathBuf>,
     ) -> Result<PathBuf, Error> {
         fn make_relative(path: &Path) -> Cow<Path> {
+            dbg!(path.components().collect::<Vec<_>>());
             if path.is_relative() {
                 return path.into();
             }
