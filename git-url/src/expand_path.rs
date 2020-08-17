@@ -1,10 +1,7 @@
 use crate::{Url, UserExpansion};
 use bstr::ByteSlice;
 use quick_error::quick_error;
-use std::{
-    borrow::Cow,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 quick_error! {
     #[derive(Debug)]
@@ -26,20 +23,17 @@ impl Url {
         &self,
         home_for_user: impl FnOnce(&UserExpansion) -> Option<PathBuf>,
     ) -> Result<PathBuf, Error> {
-        fn make_relative(path: &Path) -> Cow<Path> {
-            dbg!(path.components().collect::<Vec<_>>());
+        fn join_relative(mut base: PathBuf, path: &Path) -> PathBuf {
             if path.is_relative() {
-                return path.into();
+                base.extend(path.components());
+            } else {
+                base.extend(path.components().skip(1));
             }
-            path.components().skip(1).collect::<PathBuf>().into()
+            base
         }
         let path = self.path.to_path()?;
         Ok(match self.expansion.as_ref() {
-            Some(user) => {
-                let home_dir = home_for_user(user).ok_or(Error::MissingHome)?;
-                dbg!(&home_dir, path, make_relative(path));
-                home_dir.join(make_relative(path))
-            }
+            Some(user) => join_relative(home_for_user(user).ok_or(Error::MissingHome)?, path),
             None => self.path.to_path()?.into(),
         })
     }
