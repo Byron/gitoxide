@@ -416,7 +416,8 @@ From there, we can derive a few rules to try adhere to:
   * _potential remedy_: implement a sliding window to map and unmap portions of the file as needed.
 * **CRC32** implementation doesn't use SIMD
   * Probably at no cost one could upgrade to the **crc32fast** crate, but it looks unmaintained and has more code.
-
+* **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
+  
 ## Credits
 
 * **itertools** _(MIT Licensed)_
