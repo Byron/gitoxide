@@ -11,8 +11,8 @@ quick_error! {
             from()
             source(err)
         }
-        MissingHome {
-            display("Home directory could not be obtained")
+        MissingHome(user: Option<String>) {
+            display("Home directory could not be obtained for {}", match user {Some(user) => format!("user '{}'", user), None => "current user".into()})
         }
     }
 }
@@ -28,7 +28,9 @@ impl Url {
         }
         let path = self.path.to_path()?;
         Ok(match self.expansion.as_ref() {
-            Some(user) => home_for_user(user).ok_or(Error::MissingHome)?.join(make_relative(path)),
+            Some(user) => home_for_user(user)
+                .ok_or(Error::MissingHome(user.to_owned().into()))?
+                .join(make_relative(path)),
             None => self.path.to_path()?.into(),
         })
     }

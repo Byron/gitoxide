@@ -19,6 +19,15 @@ pub enum UserExpansion {
     Name(String),
 }
 
+impl From<UserExpansion> for Option<String> {
+    fn from(v: UserExpansion) -> Self {
+        match v {
+            UserExpansion::Current => None,
+            UserExpansion::Name(user) => Some(user),
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
