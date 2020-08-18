@@ -29,7 +29,7 @@ impl Url {
         let path = self.path.to_path()?;
         Ok(match self.expansion.as_ref() {
             Some(user) => home_for_user(user)
-                .ok_or(Error::MissingHome(user.to_owned().into()))?
+                .ok_or_else(|| Error::MissingHome(user.to_owned().into()))?
                 .join(make_relative(path)),
             None => self.path.to_path()?.into(),
         })

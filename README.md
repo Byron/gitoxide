@@ -107,6 +107,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
     * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
     * [x] `Read` from packet line sidebands with progress support
+  * [ ] shallow clones
   * [ ] **Version 1**
     * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
     * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
