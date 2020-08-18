@@ -1,4 +1,4 @@
-use git_protocol::{packet_line, PacketLine};
+use git_transport::{packet_line, PacketLine};
 use std::{io, path::PathBuf};
 
 fn fixture_path(path: &str) -> PathBuf {
@@ -13,7 +13,7 @@ mod to_read {
     use crate::packet_line::read::{exhaust, fixture_bytes};
     use bstr::ByteSlice;
     use git_odb::pack;
-    use git_protocol::packet_line;
+    use git_transport::packet_line;
 
     #[test]
     fn read_pack_with_progress_extraction() -> crate::Result {

@@ -1,9 +1,4 @@
 #![forbid(unsafe_code)]
 
-pub mod packet_line;
-
-mod progress;
-pub use progress::RemoteProgress;
-
-#[doc(inline)]
-pub use packet_line::Borrowed as PacketLine;
+mod remote_progress;
+pub use remote_progress::from_bytes as parse_remote_progress;

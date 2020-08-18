@@ -1,11 +1,12 @@
 mod parse {
     use bstr::ByteSlice;
-    use git_protocol::RemoteProgress;
+    use git_protocol::parse_remote_progress;
+    use git_transport::RemoteProgress;
 
     #[test]
     fn a_message_we_dont_understand() {
         assert_eq!(
-            RemoteProgress::from_bytes(b"something that might be progress: but is not."),
+            parse_remote_progress(b"something that might be progress: but is not."),
             None
         )
     }
@@ -13,7 +14,7 @@ mod parse {
     #[test]
     fn enumerating_just_with_count() {
         assert_eq!(
-            RemoteProgress::from_bytes(b"Enumerating objects: 10, done."),
+            parse_remote_progress(b"Enumerating objects: 10, done."),
             Some(RemoteProgress {
                 action: b"Enumerating objects".as_bstr(),
                 percent: None,
@@ -26,7 +27,7 @@ mod parse {
     #[test]
     fn counting_objects_with_percentage() {
         assert_eq!(
-            RemoteProgress::from_bytes(b"Counting objects: 50% (5/10), done."),
+            parse_remote_progress(b"Counting objects: 50% (5/10), done."),
             Some(RemoteProgress {
                 action: b"Counting objects".as_bstr(),
                 percent: Some(50),

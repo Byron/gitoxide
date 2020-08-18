@@ -625,9 +625,7 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "btoi",
- "git-features",
- "git-odb",
- "hex",
+ "git-transport",
  "nom",
  "quick-error 2.0.0",
  "serde",
@@ -652,7 +650,11 @@ dependencies = [
 name = "git-transport"
 version = "0.1.0"
 dependencies = [
+ "bstr",
+ "git-features",
+ "git-odb",
  "git-url",
+ "hex",
  "quick-error 2.0.0",
  "serde",
 ]

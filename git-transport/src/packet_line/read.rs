@@ -126,7 +126,7 @@ where
                     Band::Data(ref mut d) => break d.read(&mut self.buf)?,
                     Band::Progress(d) => {
                         let text = Text::from(d).0;
-                        match RemoteProgress::from_bytes(text) {
+                        match None::<RemoteProgress> {
                             Some(RemoteProgress {
                                 action,
                                 percent: _,

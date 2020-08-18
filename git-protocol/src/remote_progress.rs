@@ -1,4 +1,4 @@
-use bstr::BStr;
+use git_transport::RemoteProgress;
 use nom::{
     bytes::complete::{tag, take_till, take_till1},
     combinator::{map_res, opt},
@@ -6,26 +6,14 @@ use nom::{
 };
 use std::convert::TryFrom;
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct RemoteProgress<'a> {
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub action: &'a BStr,
-    pub percent: Option<u32>,
-    pub step: Option<usize>,
-    pub max: Option<usize>,
-}
-
-impl<'a> RemoteProgress<'a> {
-    pub fn from_bytes(line: &'a [u8]) -> Option<Self> {
-        parse_progress(line).ok().and_then(|(_, r)| {
-            if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
-                None
-            } else {
-                Some(r)
-            }
-        })
-    }
+pub fn from_bytes(line: &[u8]) -> Option<RemoteProgress> {
+    parse_progress(line).ok().and_then(|(_, r)| {
+        if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
+            None
+        } else {
+            Some(r)
+        }
+    })
 }
 
 fn parse_number(i: &[u8]) -> nom::IResult<&[u8], usize> {
