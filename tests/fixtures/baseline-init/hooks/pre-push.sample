@@ -17,7 +17,7 @@
 #   <local ref> <local sha1> <remote ref> <remote sha1>
 #
 # This sample shows how to prevent push of commits where the log message starts
-# with "WIP" (work in remote_progress).
+# with "WIP" (work in progress).
 
 remote="$1"
 url="$2"
