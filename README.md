@@ -309,24 +309,26 @@ The top-level command-line interface.
   * Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
     as well as fast, hardware accelerated hashing.
   * If disabled, the binary will be visibly smaller.
+* **http**
+  * support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) at the expense of compile times and binary size
 * _(mutually exclusive)_
   * **pretty-cli**
     * Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
     * provides a terminal user interface for detailed and exhaustive progress.
-    * provides a line renderer for log-like progress
+    * provides a line renderer for leaner progress
   * **lean-cli**
     * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
     * If `pretty-cli` is enabled as well, `lean-cli` will take precedence, and you pay for building unnecessary dependencies.
-    * provides a line renderer for log-like progress
+    * provides a line renderer for lean but pretty progress
 * **prodash-render-line-crossterm** or **prodash-render-line-termion** _(mutually exclusive)_
   * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
     that appears after a short duration.
   
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http*
   * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http*
   * for unix only, faster compile times, a little smaller
 * **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm*
   * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
@@ -363,6 +365,11 @@ All feature toggles are additive.
     * this facility is a global one.
     * Probably useful for server implementations.
     
+### git-transport
+
+* **http-curl**
+  * Adds support for the http and https transports using the Rust bindings for `libcurl`
+  
 ### Serialization Support
  
  What follows is feature toggles to control serialization of all public facing simple data types.

@@ -46,9 +46,8 @@ pub mod ssh {
 }
 
 pub mod http {
-    use crate::client::git;
     use quick_error::quick_error;
-    use std::{path::Path, process};
+    use std::path::Path;
 
     quick_error! {
         #[derive(Debug)]
@@ -59,6 +58,18 @@ pub mod http {
         }
     }
 
+    pub struct Connection {}
+
+    impl crate::client::Connection for Connection {
+        fn cached_capabilities(&self) -> &[&str] {
+            unimplemented!("cached capabilities")
+        }
+
+        fn command_capabilities(&self, _command: &str, _out: &mut Vec<&str>) -> bool {
+            unimplemented!("command capabilities")
+        }
+    }
+
     pub fn connect(
         _host: &str,
         _path: &Path,
@@ -66,7 +77,7 @@ pub mod http {
         _user: Option<&str>,
         _port: Option<u16>,
         _secure: bool,
-    ) -> Result<git::Connection<process::ChildStdout, process::ChildStdin>, Error> {
+    ) -> Result<Connection, Error> {
         unimplemented!("file connection")
     }
 }
@@ -136,6 +147,10 @@ quick_error! {
         UnsupportedUrlTokens(url: bstr::BString, scheme: git_url::Protocol) {
             display("The url '{}' contains information that would not be used by the '{}' protocol", url, scheme)
         }
+        #[cfg(not(feature = "http-curl"))]
+        CompiledWithoutHttp(scheme: git_url::Protocol) {
+            display("'{}' is not compiled in. Compile with the 'http' cargo feature", scheme)
+        }
     }
 }
 
@@ -187,6 +202,9 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Connectio
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }
+        #[cfg(not(feature = "http-curl"))]
+        git_url::Protocol::Https | git_url::Protocol::Http => return Err(Error::CompiledWithoutHttp(url.protocol)),
+        #[cfg(feature = "http-curl")]
         git_url::Protocol::Https | git_url::Protocol::Http => Box::new(
             crate::client::http::connect(
                 &url.host.as_ref().expect("host is present in url"),
