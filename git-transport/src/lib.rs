@@ -16,10 +16,8 @@ pub mod client {
         quick_error! {
             #[derive(Debug)]
             pub enum Error {
-                Url(err: git_url::parse::Error) {
-                    display("The URL could not be parsed")
-                    from()
-                    source(err)
+                Tbd {
+                    display("tbd")
                 }
             }
         }
@@ -27,6 +25,31 @@ pub mod client {
         pub fn connect(
             _path: PathBuf,
             _version: crate::Protocol,
+        ) -> Result<git::Connection<process::ChildStdout, process::ChildStdin>, Error> {
+            unimplemented!("file connection")
+        }
+    }
+
+    pub mod ssh {
+        use crate::client::git;
+        use quick_error::quick_error;
+        use std::{path::PathBuf, process};
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Tbd {
+                    display("tbd")
+                }
+            }
+        }
+
+        pub fn connect(
+            _host: &str,
+            _path: PathBuf,
+            _version: crate::Protocol,
+            _user: Option<&str>,
+            _port: Option<u16>,
         ) -> Result<git::Connection<process::ChildStdout, process::ChildStdin>, Error> {
             unimplemented!("file connection")
         }
@@ -75,6 +98,7 @@ pub mod client {
 
     pub trait Connection {
         /// a listing of the Server capabilities, as received with the first request
+        /// These are provided in both V1 and V2
         fn cached_capabilities(&self) -> &[&str];
     }
 
@@ -84,6 +108,16 @@ pub mod client {
             git_url::Protocol::File => Box::new(
                 crate::client::file::connect(url.expand_user()?, version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
+            ),
+            git_url::Protocol::Ssh => Box::new(
+                crate::client::ssh::connect(
+                    &url.host.as_ref().expect("host is present in url"),
+                    url.expand_user()?,
+                    version,
+                    url.user.as_ref().map(|u| u.as_str()),
+                    url.port,
+                )
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             ),
             _ => unimplemented!("all protocol connections"),
         })
