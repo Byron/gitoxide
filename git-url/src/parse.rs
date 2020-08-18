@@ -1,4 +1,4 @@
-use crate::{Protocol, UserExpansion};
+use crate::Protocol;
 use bstr::ByteSlice;
 use quick_error::quick_error;
 use std::borrow::Cow;
@@ -80,36 +80,7 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
         host: url.host_str().map(Into::into),
         port: url.port(),
         path: url.path().into(),
-        expansion: None,
     })
-}
-
-fn with_parsed_user_expansion(url: url::Url) -> Result<crate::Url, Error> {
-    if !["ssh", "git"].contains(&url.scheme()) {
-        return to_owned_url(url);
-    }
-
-    let (expand_user, path) = url
-        .path_segments()
-        .and_then(|mut iter| {
-            iter.next().map(|segment| {
-                if segment.starts_with('~') {
-                    let eu = if segment.len() == 1 {
-                        Some(UserExpansion::Current)
-                    } else {
-                        Some(UserExpansion::Name(segment[1..].into()))
-                    };
-                    (eu, format!("/{}", iter.collect::<Vec<_>>().join("/")).into())
-                } else {
-                    (None, url.path().into())
-                }
-            })
-        })
-        .unwrap_or_else(|| (None, url.path().into()));
-    let mut url = to_owned_url(url)?;
-    url.expansion = expand_user;
-    url.path = path;
-    Ok(url)
 }
 
 /// Note: We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
@@ -152,5 +123,5 @@ pub fn parse(url: &[u8]) -> Result<crate::Url, Error> {
         return Err(Error::RelativeURL(url.into_string()));
     }
 
-    with_parsed_user_expansion(url)
+    to_owned_url(url)
 }

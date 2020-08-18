@@ -14,29 +14,12 @@ pub enum Protocol {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum UserExpansion {
-    Current,
-    Name(String),
-}
-
-impl From<UserExpansion> for Option<String> {
-    fn from(v: UserExpansion) -> Self {
-        match v {
-            UserExpansion::Current => None,
-            UserExpansion::Name(user) => Some(user),
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
     pub protocol: Protocol,
     pub user: Option<String>,
     pub host: Option<String>,
     pub port: Option<u16>,
     pub path: bstr::BString,
-    pub expansion: Option<UserExpansion>,
 }
 
 impl Default for Url {
@@ -47,7 +30,6 @@ impl Default for Url {
             host: None,
             port: None,
             path: bstr::BString::default(),
-            expansion: None,
         }
     }
 }
@@ -67,6 +49,8 @@ impl TryFrom<&[u8]> for Url {
 }
 
 pub mod expand_path;
+#[doc(inline)]
+pub use expand_path::doit as expand_path;
 
 pub mod parse;
 #[doc(inline)]

@@ -1,6 +1,5 @@
-use crate::parse::{assert_url, assert_url_and, url};
-use git_url::{Protocol, UserExpansion};
-use std::path::Path;
+use crate::parse::{assert_url, url};
+use git_url::Protocol;
 
 #[test]
 fn without_user_and_without_port() -> crate::Result {
@@ -25,65 +24,18 @@ fn host_is_ipv4() -> crate::Result {
 
 #[test]
 fn username_expansion_with_username() -> crate::Result {
-    let expanded_path = assert_url_and(
+    assert_url(
         "ssh://example.com/~byron/hello/git",
-        url(
-            Protocol::Ssh,
-            None,
-            "example.com",
-            None,
-            b"/hello/git",
-            UserExpansion::Name("byron".into()),
-        ),
-    )?
-    .expand_path_with(|user: &UserExpansion| match user {
-        UserExpansion::Current => unreachable!("we have a name"),
-        UserExpansion::Name(name) => Some(user_home(name)),
-    })?;
-    assert_eq!(expanded_path, expected_path());
-    Ok(())
-}
-
-#[cfg(windows)]
-fn expected_path() -> std::path::PathBuf {
-    Path::new("C:\\UserProfiles\\byron\\hello\\git").into()
-}
-
-#[cfg(not(windows))]
-fn expected_path() -> std::path::PathBuf {
-    Path::new("/home/byron/hello/git").into()
-}
-
-#[cfg(windows)]
-fn user_home(name: &str) -> std::path::PathBuf {
-    Path::new("C:\\").join("UserProfiles").join(name)
-}
-
-#[cfg(not(windows))]
-fn user_home(name: &str) -> std::path::PathBuf {
-    #[cfg(not(windows))]
-    format!("/home/{}", name).into()
+        url(Protocol::Ssh, None, "example.com", None, b"/~byron/hello/git", None),
+    )
 }
 
 #[test]
 fn username_expansion_without_username() -> crate::Result {
-    let expanded_path = assert_url_and(
+    assert_url(
         "ssh://example.com/~/hello/git",
-        url(
-            Protocol::Ssh,
-            None,
-            "example.com",
-            None,
-            b"/hello/git",
-            UserExpansion::Current,
-        ),
-    )?
-    .expand_path_with(|user: &UserExpansion| match user {
-        UserExpansion::Current => Some(user_home("byron")),
-        UserExpansion::Name(name) => Some(format!("/home/{}", name).into()),
-    })?;
-    assert_eq!(expanded_path, expected_path());
-    Ok(())
+        url(Protocol::Ssh, None, "example.com", None, b"/~/hello/git", None),
+    )
 }
 
 #[test]
@@ -106,7 +58,7 @@ fn scp_like_without_user() -> crate::Result {
 fn scp_like_without_user_and_username_expansion_without_username() -> crate::Result {
     assert_url(
         "host.xz:~/to/git",
-        url(Protocol::Ssh, None, "host.xz", None, b"/to/git", UserExpansion::Current),
+        url(Protocol::Ssh, None, "host.xz", None, b"/~/to/git", None),
     )
 }
 
@@ -114,14 +66,7 @@ fn scp_like_without_user_and_username_expansion_without_username() -> crate::Res
 fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result {
     assert_url(
         "host.xz:~byron/to/git",
-        url(
-            Protocol::Ssh,
-            None,
-            "host.xz",
-            None,
-            b"/to/git",
-            UserExpansion::Name("byron".into()),
-        ),
+        url(Protocol::Ssh, None, "host.xz", None, b"/~byron/to/git", None),
     )
 }
 

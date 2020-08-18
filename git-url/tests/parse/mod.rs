@@ -1,4 +1,4 @@
-use git_url::{Protocol, UserExpansion};
+use git_url::Protocol;
 
 fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
     assert_eq!(git_url::parse(url.as_bytes())?, expected);
@@ -19,7 +19,7 @@ fn url(
     host: impl Into<Option<&'static str>>,
     port: impl Into<Option<u16>>,
     path: &'static [u8],
-    expand_user: impl Into<Option<UserExpansion>>,
+    _expand_user: impl Into<Option<()>>,
 ) -> git_url::Url {
     git_url::Url {
         protocol,
@@ -27,7 +27,6 @@ fn url(
         host: host.into().map(Into::into),
         port: port.into(),
         path: path.into(),
-        expansion: expand_user.into(),
     }
 }
 
@@ -55,20 +54,13 @@ mod http {
 }
 mod git {
     use crate::parse::{assert_url, url};
-    use git_url::{Protocol, UserExpansion};
+    use git_url::Protocol;
 
     #[test]
     fn username_expansion_with_username() -> crate::Result {
         assert_url(
             "git://example.com/~byron/hello",
-            url(
-                Protocol::Git,
-                None,
-                "example.com",
-                None,
-                b"/hello",
-                UserExpansion::Name("byron".into()),
-            ),
+            url(Protocol::Git, None, "example.com", None, b"/~byron/hello", None),
         )
     }
 }

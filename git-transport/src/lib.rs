@@ -27,7 +27,7 @@ pub mod client {
     pub mod file {
         use crate::client::git;
         use quick_error::quick_error;
-        use std::{path::PathBuf, process};
+        use std::{path::Path, process};
 
         quick_error! {
             #[derive(Debug)]
@@ -39,7 +39,7 @@ pub mod client {
         }
 
         pub fn connect(
-            _path: PathBuf,
+            _path: &Path,
             _version: crate::Protocol,
         ) -> Result<git::Connection<process::ChildStdout, process::ChildStdin>, Error> {
             unimplemented!("file connection")
@@ -49,7 +49,7 @@ pub mod client {
     pub mod ssh {
         use crate::client::git;
         use quick_error::quick_error;
-        use std::{path::PathBuf, process};
+        use std::{path::Path, process};
 
         quick_error! {
             #[derive(Debug)]
@@ -62,7 +62,7 @@ pub mod client {
 
         pub fn connect(
             _host: &str,
-            _path: PathBuf,
+            _path: &Path,
             _version: crate::Protocol,
             _user: Option<&str>,
             _port: Option<u16>,
@@ -90,6 +90,7 @@ pub mod client {
         }
     }
 
+    use bstr::ByteSlice;
     use quick_error::quick_error;
     quick_error! {
         #[derive(Debug)]
@@ -99,8 +100,8 @@ pub mod client {
                 from()
                 source(err)
             }
-            ExpandPath(err: git_url::expand_path::Error) {
-                display("The git repository paths could not be expanded")
+            PathConversion(err: bstr::Utf8Error) {
+                display("The git repository paths could not be converted to UTF8")
                 from()
                 source(err)
             }
@@ -122,13 +123,13 @@ pub mod client {
         let url = git_url::parse(url)?;
         Ok(match url.protocol {
             git_url::Protocol::File => Box::new(
-                crate::client::file::connect(url.expand_user()?, version)
+                crate::client::file::connect(url.path.to_path()?, version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             ),
             git_url::Protocol::Ssh => Box::new(
                 crate::client::ssh::connect(
                     &url.host.as_ref().expect("host is present in url"),
-                    url.expand_user()?,
+                    url.path.to_path()?,
                     version,
                     url.user.as_ref().map(|u| u.as_str()),
                     url.port,
