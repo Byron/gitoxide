@@ -9,7 +9,6 @@ edition = "2018"
 
 [lib]
 doctest = false
-test = false
 
 [features]
 serde1 = ["serde"]
