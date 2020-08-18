@@ -131,7 +131,7 @@ pub mod client {
                     &url.host.as_ref().expect("host is present in url"),
                     url.path.to_path()?,
                     version,
-                    url.user.as_ref().map(|u| u.as_str()),
+                    url.user.as_deref(),
                     url.port,
                 )
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
