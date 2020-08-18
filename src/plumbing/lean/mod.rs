@@ -38,6 +38,24 @@ pub fn main() -> Result<()> {
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {
+        SubCommands::PackReceive(PackReceive {
+            protocol,
+            url,
+            directory,
+        }) => {
+            let (_handle, progress) = prepare(verbose, "pack-receive", None);
+            core::pack::receive(
+                protocol,
+                &url,
+                directory,
+                progress::DoOrDiscard::from(progress),
+                core::pack::receive::Context {
+                    thread_limit,
+                    format: OutputFormat::Human,
+                    out: io::stdout(),
+                },
+            )
+        }
         SubCommands::IndexFromPack(IndexFromPack {
             iteration_mode,
             pack_path,

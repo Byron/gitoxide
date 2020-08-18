@@ -30,6 +30,7 @@ pub enum SubCommands {
     PackVerify(PackVerify),
     PackExplode(PackExplode),
     IndexFromPack(IndexFromPack),
+    PackReceive(PackReceive),
 }
 
 /// Create an index from a packfile.
@@ -57,6 +58,30 @@ pub struct IndexFromPack {
     /// the folder into which to place the pack and the generated index file
     ///
     /// If unset, only informational output will be provided to standard output.
+    #[argh(positional)]
+    pub directory: Option<PathBuf>,
+}
+
+/// Receive a pack from a remote identified by a url.
+///
+/// This is the plumbing equivalent of `git clone` and `git-fetch`.
+/// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "pack-receive")]
+pub struct PackReceive {
+    /// the protocol version to use. Valid values are 1 and 2
+    #[argh(option)]
+    pub protocol: Option<core::pack::receive::Protocol>,
+
+    /// the URLs or path from which to receive the pack.
+    ///
+    /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+    #[argh(positional)]
+    pub url: String,
+
+    /// the directory into which to write the received pack and index.
+    ///
+    /// If unset, they will be discarded.
     #[argh(positional)]
     pub directory: Option<PathBuf>,
 }
