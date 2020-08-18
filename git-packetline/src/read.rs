@@ -1,4 +1,4 @@
-use crate::packet_line::{
+use crate::{
     borrowed::{Band, Text},
     decode, MAX_DATA_LEN, MAX_LINE_LEN,
 };

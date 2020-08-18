@@ -1,4 +1,4 @@
-use crate::packet_line::{encode, Channel};
+use crate::{encode, Channel};
 use bstr::BStr;
 use std::io;
 

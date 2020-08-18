@@ -1,7 +1,7 @@
 mod parse {
     use bstr::ByteSlice;
+    use git_packetline::RemoteProgress;
     use git_protocol::parse_remote_progress;
-    use git_transport::RemoteProgress;
 
     #[test]
     fn a_message_we_dont_understand() {

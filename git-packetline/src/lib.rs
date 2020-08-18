@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 pub(crate) const U16_HEX_BYTES: usize = 4;
 pub(crate) const MAX_DATA_LEN: usize = 65516;
 pub(crate) const MAX_LINE_LEN: usize = MAX_DATA_LEN + U16_HEX_BYTES;
@@ -14,8 +15,18 @@ pub enum Channel {
     Error = 3,
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct RemoteProgress<'a> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    pub action: &'a bstr::BStr,
+    pub percent: Option<u32>,
+    pub step: Option<usize>,
+    pub max: Option<usize>,
+}
+
 pub mod borrowed;
-pub use borrowed::Borrowed;
+pub use borrowed::Borrowed as PacketLine;
 
 pub mod read;
 #[doc(inline)]

@@ -142,6 +142,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
+  * [ ] sparse checkout support
+  * [ ] .gitignore handling
+  * [ ] checkout/stage conversions clean + smudge as in .gitattributes
   * [ ] read and write all data types
   * [ ] rev-parsing and ref history
   * [ ] remotes with push and pull

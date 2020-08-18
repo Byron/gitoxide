@@ -83,6 +83,8 @@ check: ## Build all code in suitable configurations
 	cd git-object && cargo check --all-features
 	cd git-odb && cargo check --all-features \
 			   && cargo check
+	cd git-packetline && cargo check --all-features \
+			   && cargo check
 	cd git-protocol && cargo check --all-features \
 			   && cargo check
 	cd git-url && cargo check --all-features \

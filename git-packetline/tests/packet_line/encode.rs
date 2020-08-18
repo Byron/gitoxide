@@ -1,7 +1,7 @@
 mod data_to_write {
     use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
-    use git_transport::packet_line::encode::{
+    use git_packetline::encode::{
         data_to_write, delim_to_write, error_to_write, flush_to_write, response_end_to_write, text_to_write,
     };
     use std::io;

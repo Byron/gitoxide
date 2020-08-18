@@ -1,4 +1,4 @@
-use crate::packet_line::{Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
+use crate::{Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
 use quick_error::quick_error;
 use std::io;
 

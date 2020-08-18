@@ -1,4 +1,4 @@
-use git_transport::RemoteProgress;
+use git_packetline::RemoteProgress;
 use nom::{
     bytes::complete::{tag, take_till, take_till1},
     combinator::{map_res, opt},

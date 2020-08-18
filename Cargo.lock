@@ -650,12 +650,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-packetline"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "git-features",
+ "git-odb",
+ "hex",
+ "quick-error 2.0.0",
+ "serde",
+]
+
+[[package]]
 name = "git-protocol"
 version = "0.1.0"
 dependencies = [
  "bstr",
  "btoi",
- "git-transport",
+ "git-packetline",
  "nom",
  "quick-error 2.0.0",
  "serde",
@@ -683,9 +695,7 @@ dependencies = [
  "bstr",
  "curl",
  "git-features",
- "git-odb",
  "git-url",
- "hex",
  "quick-error 2.0.0",
  "serde",
 ]

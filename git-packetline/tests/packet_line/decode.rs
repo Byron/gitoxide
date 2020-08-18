@@ -1,10 +1,9 @@
 mod streaming {
     use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
-    use git_transport::packet_line::Channel;
-    use git_transport::{
-        packet_line::decode::{self, streaming, Stream},
-        PacketLine,
+    use git_packetline::{
+        decode::{self, streaming, Stream},
+        Channel, PacketLine,
     };
 
     fn assert_complete(
@@ -120,7 +119,7 @@ mod streaming {
     }
 
     mod incomplete {
-        use git_transport::packet_line::decode::{self, streaming, Stream};
+        use git_packetline::decode::{self, streaming, Stream};
 
         fn assert_incomplete(res: Result<Stream, decode::Error>, expected_missing: usize) -> crate::Result {
             match res? {

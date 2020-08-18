@@ -1,4 +1,4 @@
-use git_transport::{packet_line, PacketLine};
+use git_packetline::PacketLine;
 use std::{io, path::PathBuf};
 
 fn fixture_path(path: &str) -> PathBuf {
@@ -13,12 +13,12 @@ mod to_read {
     use crate::packet_line::read::{exhaust, fixture_bytes};
     use bstr::ByteSlice;
     use git_odb::pack;
-    use git_transport::{packet_line, RemoteProgress};
+    use git_packetline::RemoteProgress;
 
     #[test]
     fn read_pack_with_progress_extraction() -> crate::Result {
         let buf = fixture_bytes("v1/01-clone.combined-output");
-        let mut rd = packet_line::Reader::new(&buf[..], None);
+        let mut rd = git_packetline::Reader::new(&buf[..], None);
         assert_eq!(exhaust(&mut rd), 2);
         rd.reset();
         assert_eq!(rd.read_line()??.to_text().0.as_bstr(), b"NAK".as_bstr());
@@ -47,7 +47,7 @@ mod to_read {
 fn read_from_file_and_reader_advancement() -> crate::Result {
     let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
-    let mut rd = packet_line::Reader::new(&bytes[..], None);
+    let mut rd = git_packetline::Reader::new(&bytes[..], None);
     assert_eq!(
         rd.read_line()??.as_bstr(),
         PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n").as_bstr()
@@ -68,7 +68,7 @@ fn read_from_file_and_reader_advancement() -> crate::Result {
     Ok(())
 }
 
-fn exhaust(rd: &mut packet_line::Reader<&[u8]>) -> i32 {
+fn exhaust(rd: &mut git_packetline::Reader<&[u8]>) -> i32 {
     let mut count = 0;
     while let Ok(_) = rd.read_line() {
         count += 1;

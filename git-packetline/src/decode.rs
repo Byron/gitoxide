@@ -1,8 +1,5 @@
 use crate::{
-    packet_line::{
-        DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES,
-    },
-    PacketLine,
+    PacketLine, {DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES},
 };
 use bstr::BString;
 use quick_error::quick_error;
