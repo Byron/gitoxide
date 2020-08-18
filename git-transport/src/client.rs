@@ -45,6 +45,32 @@ pub mod ssh {
     }
 }
 
+pub mod http {
+    use crate::client::git;
+    use quick_error::quick_error;
+    use std::{path::Path, process};
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Tbd {
+                display("tbd")
+            }
+        }
+    }
+
+    pub fn connect(
+        _host: &str,
+        _path: &Path,
+        _version: crate::Protocol,
+        _user: Option<&str>,
+        _port: Option<u16>,
+        _secure: bool,
+    ) -> Result<git::Connection<process::ChildStdout, process::ChildStdin>, Error> {
+        unimplemented!("file connection")
+    }
+}
+
 pub mod git {
     use std::{io, net::TcpStream, path::Path};
 
@@ -161,6 +187,16 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Connectio
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }
-        _ => unimplemented!("all protocol connections"),
+        git_url::Protocol::Https | git_url::Protocol::Http => Box::new(
+            crate::client::http::connect(
+                &url.host.as_ref().expect("host is present in url"),
+                url.path.to_path()?,
+                version,
+                url.user.as_deref(),
+                url.port,
+                url.protocol == git_url::Protocol::Https,
+            )
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
+        ),
     })
 }
