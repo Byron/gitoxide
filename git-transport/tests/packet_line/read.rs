@@ -13,7 +13,7 @@ mod to_read {
     use crate::packet_line::read::{exhaust, fixture_bytes};
     use bstr::ByteSlice;
     use git_odb::pack;
-    use git_transport::packet_line;
+    use git_transport::{packet_line, RemoteProgress};
 
     #[test]
     fn read_pack_with_progress_extraction() -> crate::Result {
@@ -22,7 +22,10 @@ mod to_read {
         assert_eq!(exhaust(&mut rd), 2);
         rd.reset();
         assert_eq!(rd.read_line()??.to_text().0.as_bstr(), b"NAK".as_bstr());
-        let pack_read = rd.as_read_with_sidebands(git_features::progress::Discard);
+        fn no_parsing(_: &[u8]) -> Option<RemoteProgress> {
+            None
+        }
+        let pack_read = rd.as_read_with_sidebands(git_features::progress::Discard, no_parsing);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
             pack::data::iter::Mode::Verify,

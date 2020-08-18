@@ -71,8 +71,12 @@ where
         }
     }
 
-    pub fn as_read_with_sidebands<P: Progress>(&mut self, progress: P) -> ToRead<T, P> {
-        ToRead::new(self, progress)
+    pub fn as_read_with_sidebands<P: Progress>(
+        &mut self,
+        progress: P,
+        parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
+    ) -> ToRead<T, P> {
+        ToRead::new(self, progress, parse_progress)
     }
 }
 
@@ -82,19 +86,21 @@ pub struct ToRead<'a, T, P> {
     buf: Vec<u8>,
     pos: usize,
     cap: usize,
+    parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
 }
 impl<'a, T, P> ToRead<'a, T, P>
 where
     T: io::Read,
     P: Progress,
 {
-    fn new(parent: &'a mut Reader<T>, progress: P) -> Self {
+    fn new(parent: &'a mut Reader<T>, progress: P, parse_progress: fn(&[u8]) -> Option<RemoteProgress>) -> Self {
         ToRead {
             parent,
             progress,
             buf: vec![0; MAX_DATA_LEN],
             pos: 0,
             cap: 0,
+            parse_progress,
         }
     }
 }
@@ -126,7 +132,7 @@ where
                     Band::Data(ref mut d) => break d.read(&mut self.buf)?,
                     Band::Progress(d) => {
                         let text = Text::from(d).0;
-                        match None::<RemoteProgress> {
+                        match (self.parse_progress)(text) {
                             Some(RemoteProgress {
                                 action,
                                 percent: _,
