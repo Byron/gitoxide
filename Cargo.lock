@@ -650,7 +650,12 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
-version = "0.0.0"
+version = "0.1.0"
+dependencies = [
+ "git-url",
+ "quick-error 2.0.0",
+ "serde",
+]
 
 [[package]]
 name = "git-tui"
@@ -694,6 +699,7 @@ dependencies = [
  "git-odb",
  "git-protocol",
  "git-repository",
+ "git-transport",
  "quick-error 2.0.0",
  "serde_json",
 ]

@@ -60,6 +60,5 @@ To be picked in any order….
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 * **miniz-oxide**
-  * Wait for release so we can use the new reset capability introduced by [this PR](https://github.com/Frommi/miniz_oxide/pull/91)
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602

@@ -22,6 +22,7 @@ git-repository = { version = "0.3.0", path = "../git-repository" }
 git-object = { version = "^0.3.0", path = "../git-object" }
 git-odb = { version = "0.3.0", path = "../git-odb" }
 git-protocol = { version = "0.1.0", path = "../git-protocol" }
+git-transport = { version = "0.1.0", path = "../git-transport" }
 git-features = { version = "^0.3.0", path = "../git-features" }
 anyhow = "1.0.31"
 quick-error = "2.0.0"
