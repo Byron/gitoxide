@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-use std::convert::TryFrom;
+use std::{convert::TryFrom, fmt};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -10,6 +10,19 @@ pub enum Protocol {
     Ssh,
     Http,
     Https,
+}
+
+impl fmt::Display for Protocol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Protocol::*;
+        f.write_str(match self {
+            File => "file",
+            Git => "git",
+            Ssh => "ssh",
+            Http => "http",
+            Https => "https",
+        })
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

@@ -100,13 +100,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 ### git-protocol
   * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
   * Packet lines must be abstracted from the client at least, as the 'dumb' transport doesn't use them.
-  * [x] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
-    * [x] encode
-    * [x] decode (zero-copy)
-    * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
-    * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
-    * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
-    * [x] `Read` from packet line sidebands with progress support
   * [ ] shallow clones
   * [ ] **Version 1**
     * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
@@ -124,18 +117,25 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] API documentation with examples
   
 ### git-transport
-  * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
-    * [ ] **initiate**
-      * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
-          * [ ] protocol version definition
-  * [ ] **[ssh](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L103:L103)**
-    * `ssh2` crate with [openssl vendoring support](https://lib.rs/crates/ssh2) for static linkage
-    * [ ] **initiate**
-      * extra paramaters (via environment variable)
-  * [ ] protocol for transfer [via http(s)](https://github.com/git/git/blob/master/Documentation/technical/http-protocol.txt)
-    * [ ] 'smart'
-    * [ ] ~~dumb~~ (_opt out for now_)
-    * [ ] extra parameters
+  * [x] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
+    * [x] encode
+    * [x] decode (zero-copy)
+    * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
+    * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
+    * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
+    * [x] `Read` from packet line sidebands with progress support
+  * [ ] general purpose `connect(…)` for clients
+    * [ ] `git-config` support for configuring the actual connections using git compatible configuration read via configuration files
+  * [ ] general purpose `accept(…)` for servers
+  * [ ] **initiate connection(s)**
+    * [ ] **file** - directly via git-upload-pack
+    * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
+       * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
+             , protocol version definition
+    * [ ] **[ssh](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L103:L103)**
+    * [ ] [via http(s)](https://github.com/git/git/blob/master/Documentation/technical/http-protocol.txt)
+       * [ ] 'smart'
+       * [ ] ~~dumb~~ (_opt out for now, using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_)
   * [ ] API documentation with examples
   
 ### git-repository
