@@ -99,7 +99,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   
 ### git-protocol
   * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
-  * Packet lines must be abstracted from the client at least, as the 'dumb' transport doesn't use them.
   * [ ] shallow clones
   * [ ] **Version 1**
     * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)

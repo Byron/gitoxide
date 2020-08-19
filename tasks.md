@@ -8,6 +8,7 @@
   * [x] `Read` from packet lines with sideband
     * [x] Progress parsing, with 'info(…)' fallback if that fails
     * [x] SetName in Progress trait (to allow setting the correct progress information)
+    * [ ] Disable sideband support (e.g. github http V2 doesn't have it)
   * **git-url**
     * [ ] parse into components to make them easy to understand
   * **connect**
@@ -49,6 +50,13 @@
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
   
+### Notes
+
+* response-end packets of V2 are [not sent in stateless-rpc mode](https://github.com/git/git/blob/master/serve.c#L246:L246) (i.e. http mode) and maybe even V2 daemons
+* protocol V2 [is always stateless](https://github.com/git/git/blob/master/builtin/upload-pack.c#L54:L54)
+* The negotiation is the meat of the fetch algorithm, and even though not important for clones, the back-and-forth seems very relevant 
+  to how the transfer interface should be built. I feel it must be on packet line level.
+
 ### Other
 
 To be picked in any order….
