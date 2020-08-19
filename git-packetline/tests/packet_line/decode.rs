@@ -35,9 +35,13 @@ mod streaming {
     fn trailing_line_feeds_are_removed_explicitly_roundtrip() -> crate::Result {
         match streaming(b"0006a\n")? {
             Stream::Complete { line, .. } => {
-                assert_eq!(line.to_text().0.as_bstr(), b"a".as_bstr());
+                assert_eq!(line.to_text().expect("text").0.as_bstr(), b"a".as_bstr());
                 let mut out = Vec::new();
-                line.to_text().to_write(&mut out).expect("write to memory works");
+                line.to_text()
+                    .expect("text")
+                    .to_write(&mut out)
+                    .expect("write to memory works");
+                assert_eq!(out, b"0006a\n", "it appends a newline in text mode");
             }
             Stream::Incomplete { .. } => panic!("should be complete"),
         }
@@ -96,7 +100,10 @@ mod streaming {
     #[test]
     fn roundtrip_error_line() -> crate::Result {
         let mut out = Vec::new();
-        PacketLine::Data(b"the error").to_error().to_write(&mut out)?;
+        PacketLine::Data(b"the error")
+            .to_error()
+            .expect("data line")
+            .to_write(&mut out)?;
         assert_err_display(streaming(&out), "the error");
         Ok(())
     }
@@ -105,7 +112,9 @@ mod streaming {
     fn roundtrip_side_bands() -> crate::Result {
         for channel in &[Channel::Data, Channel::Error, Channel::Progress] {
             let mut out = Vec::new();
-            let band = PacketLine::Data(b"band data").to_band(*channel);
+            let band = PacketLine::Data(b"band data")
+                .to_band(*channel)
+                .expect("data is valid for band");
             band.to_write(&mut out)?;
             match streaming(&out)? {
                 Stream::Complete { line, bytes_consumed } => {

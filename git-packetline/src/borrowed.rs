@@ -21,43 +21,31 @@ impl<'a> Borrowed<'a> {
         }
     }
 
-    pub fn as_slice(&self) -> &[u8] {
+    pub fn as_slice(&self) -> Option<&[u8]> {
         match self {
-            Borrowed::Data(d) => d,
-            Borrowed::Flush | Borrowed::Delimiter | Borrowed::ResponseEnd => &[],
+            Borrowed::Data(d) => Some(d),
+            Borrowed::Flush | Borrowed::Delimiter | Borrowed::ResponseEnd => None,
         }
     }
-    pub fn as_bstr(&self) -> &BStr {
-        self.as_slice().into()
+    pub fn as_bstr(&self) -> Option<&BStr> {
+        self.as_slice().map(Into::into)
     }
-    pub fn to_error(&self) -> Error {
-        Error(self.as_slice())
+    pub fn to_error(&self) -> Option<Error> {
+        self.as_slice().map(Error)
     }
-    pub fn to_text(&self) -> Text {
-        let d = match self {
-            Borrowed::Data(d) => *d,
-            _ => panic!("cannot convert non-data to text"),
-        };
-        d.into()
+    pub fn to_text(&self) -> Option<Text> {
+        self.as_slice().map(Into::into)
     }
-    pub fn to_band(&self, kind: Channel) -> Band {
-        let d = match self {
-            Borrowed::Data(d) => d,
-            _ => panic!("cannot side-channel non-data lines"),
-        };
-
-        match kind {
+    pub fn to_band(&self, kind: Channel) -> Option<Band> {
+        self.as_slice().map(|d| match kind {
             Channel::Data => Band::Data(d),
             Channel::Progress => Band::Progress(d),
             Channel::Error => Band::Error(d),
-        }
+        })
     }
     /// Decode the band of the line, or panic if it is not actually a side-band line
     pub fn decode_band(&self) -> Result<Band, DecodeBandError> {
-        let d = match self {
-            Borrowed::Data(d) => d,
-            _ => panic!("cannot decode side-channel information from non-data lines"),
-        };
+        let d = self.as_slice().ok_or(DecodeBandError::NonDataLine)?;
         Ok(match d[0] {
             1 => Band::Data(&d[1..]),
             2 => Band::Progress(&d[1..]),
@@ -73,6 +61,9 @@ quick_error! {
     pub enum DecodeBandError {
         InvalidSideBand(band: u8) {
             display("attempt to decode a non-side channel line or input was malformed: {}", band)
+        }
+        NonDataLine {
+            display("attempt to decode a non-data line into a side-channel band")
         }
     }
 }

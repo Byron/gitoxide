@@ -170,7 +170,17 @@ where
                             Band::Error(d) => progress.fail(progress_name(None, Text::from(d).0)),
                         };
                     }
-                    None => break line.as_slice().read(&mut self.buf)?,
+                    None => {
+                        break match line.as_slice() {
+                            Some(ref mut d) => d.read(&mut self.buf)?,
+                            None => {
+                                return Err(io::Error::new(
+                                    io::ErrorKind::UnexpectedEof,
+                                    "encountered non-data line in a data-line only context",
+                                ))
+                            }
+                        }
+                    }
                 }
             };
             self.pos = 0;

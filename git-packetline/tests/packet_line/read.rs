@@ -28,7 +28,15 @@ mod to_read {
         assert_eq!(out.as_bstr(), b"808e50d724f604f69ab93c6da2919c014667bedb HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master\n".as_bstr());
 
         rd.reset();
-        assert_eq!(rd.read_line().expect("line")??.to_text().0.as_bstr(), b"NAK".as_bstr());
+        assert_eq!(
+            rd.read_line()
+                .expect("line")??
+                .to_text()
+                .expect("data line")
+                .0
+                .as_bstr(),
+            b"NAK".as_bstr()
+        );
         fn no_parsing(_: &[u8]) -> Option<RemoteProgress> {
             None
         }
