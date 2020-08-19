@@ -75,12 +75,12 @@ where
         &mut self,
         progress: P,
         parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
-    ) -> ToRead<T, P> {
-        ToRead::new(self, progress, parse_progress)
+    ) -> ReadWithProgressOptional<T, P> {
+        ReadWithProgressOptional::with_progress(self, progress, parse_progress)
     }
 }
 
-pub struct ToRead<'a, T, P> {
+pub struct ReadWithProgressOptional<'a, T, P> {
     parent: &'a mut Reader<T>,
     progress: P,
     buf: Vec<u8>,
@@ -88,13 +88,17 @@ pub struct ToRead<'a, T, P> {
     cap: usize,
     parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
 }
-impl<'a, T, P> ToRead<'a, T, P>
+impl<'a, T, P> ReadWithProgressOptional<'a, T, P>
 where
     T: io::Read,
     P: Progress,
 {
-    fn new(parent: &'a mut Reader<T>, progress: P, parse_progress: fn(&[u8]) -> Option<RemoteProgress>) -> Self {
-        ToRead {
+    fn with_progress(
+        parent: &'a mut Reader<T>,
+        progress: P,
+        parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
+    ) -> Self {
+        ReadWithProgressOptional {
             parent,
             progress,
             buf: vec![0; MAX_DATA_LEN],
@@ -105,7 +109,7 @@ where
     }
 }
 
-impl<'a, T, P> io::BufRead for ToRead<'a, T, P>
+impl<'a, T, P> io::BufRead for ReadWithProgressOptional<'a, T, P>
 where
     T: io::Read,
     P: Progress,
@@ -161,7 +165,7 @@ where
     }
 }
 
-impl<'a, T, P> io::Read for ToRead<'a, T, P>
+impl<'a, T, P> io::Read for ReadWithProgressOptional<'a, T, P>
 where
     T: io::Read,
     P: Progress,

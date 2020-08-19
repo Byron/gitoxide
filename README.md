@@ -115,14 +115,16 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] [Version 2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
   * [ ] API documentation with examples
   
+### git-packetline
+  * [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
+  * [x] encode
+  * [x] decode (zero-copy)
+  * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
+  * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
+  * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
+  * [x] `Read` from packet line with (optional) progress support via sidebands
+
 ### git-transport
-  * [x] [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
-    * [x] encode
-    * [x] decode (zero-copy)
-    * [x] [error line](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L28:L28)
-    * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
-    * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
-    * [x] `Read` from packet line sidebands with progress support
   * [ ] general purpose `connect(…)` for clients
     * [ ] `git-config` support for configuring the actual connections using git compatible configuration read via configuration files
   * [ ] general purpose `accept(…)` for servers
