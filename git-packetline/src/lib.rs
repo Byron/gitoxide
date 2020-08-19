@@ -34,10 +34,8 @@ pub mod read;
 #[doc(inline)]
 pub use read::Reader;
 
-pub mod write {
-    /// An implementor of `Write` which passes all input to an inner `Write` in packet line data encoding.
-    pub struct Writer {}
-}
+pub mod write;
+pub use write::Writer;
 
 pub mod decode;
 pub mod encode;

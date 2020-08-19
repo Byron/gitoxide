@@ -8,3 +8,4 @@ fn assert_err_display<T: std::fmt::Debug, E: std::error::Error>(res: Result<T, E
 mod decode;
 mod encode;
 mod read;
+mod write;
