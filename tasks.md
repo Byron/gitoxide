@@ -1,14 +1,16 @@
 ### Cloning
 * **gixp-pack-receive**
   * _a program to (initially only) clone from a given URL_, storing a full pack with index only. No support for `git-refs`.
-  * [x] pkt-lines support
-  * [x] Don't forcibly remove newlines at the end of pack lines, but make that an extra step.
-  * [x] decode band should be able to fail
-  * [x] PacketLine 'Iterator' from `Read`
-  * [x] `Read` from packet lines with sideband
-    * [x] Progress parsing, with 'info(…)' fallback if that fails
-    * [x] SetName in Progress trait (to allow setting the correct progress information)
-    * [ ] Disable sideband support (e.g. github http V2 doesn't have it)
+  * **git-packetline**
+    * [x] pkt-lines support
+    * [x] Don't forcibly remove newlines at the end of pack lines, but make that an extra step.
+    * [x] decode band should be able to fail
+    * [x] PacketLine 'Iterator' from `Read`
+    * [x] `Read` from packet lines with sideband
+      * [x] Progress parsing, with 'info(…)' fallback if that fails
+      * [x] SetName in Progress trait (to allow setting the correct progress information)
+      * [x] Disable sideband support (e.g. github http V2 doesn't have it)
+    * [ ] don't coerce line delimiters into empty slices.
   * **git-url**
     * [ ] parse into components to make them easy to understand
   * **connect**

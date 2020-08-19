@@ -11,7 +11,6 @@ use std::io;
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaving `Read` at the
 /// start of whatever comes next.
-/// It signals encountering a flush line with `UnexpectedEof`
 pub struct Reader<T> {
     pub inner: T,
     buf: Vec<u8>,
@@ -54,22 +53,16 @@ where
         }
     }
 
-    pub fn read_line(&mut self) -> io::Result<Result<PacketLine, decode::Error>> {
-        let eof = || {
-            Err(io::Error::new(
-                io::ErrorKind::UnexpectedEof,
-                "attempt to read past flush line",
-            ))
-        };
+    pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
         if self.is_done {
-            return eof();
+            return None;
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
             Ok(Ok(line)) if line == self.delimiter => {
                 self.is_done = true;
-                eof()
+                None
             }
-            err => err,
+            res => Some(res),
         }
     }
 
@@ -139,10 +132,10 @@ where
         if self.pos >= self.cap {
             debug_assert!(self.pos == self.cap);
             self.cap = loop {
-                let line = self
-                    .parent
-                    .read_line()?
-                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                let line = match self.parent.read_line() {
+                    Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
+                    None => break 0,
+                };
                 match self.progress_and_parse.as_mut() {
                     Some((progress, parse_progress)) => {
                         let mut band = line
