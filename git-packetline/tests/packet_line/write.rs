@@ -44,3 +44,11 @@ fn empty_writes_fail_with_error() {
         "empty packet lines are not permitted as '0004' is invalid"
     )
 }
+
+#[test]
+fn nothing_happens_on_drop() {
+    let mut out = Vec::new();
+    let w = Writer::new(&mut out);
+    drop(w);
+    assert!(out.is_empty());
+}

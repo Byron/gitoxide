@@ -123,7 +123,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [x] [V2 additions](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt#L35:L36)
   * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
   * [x] `Read` from packet line with (optional) progress support via sidebands
-  * [ ] `Write` with built-in packet line encoding
+  * [x] `Write` with built-in packet line encoding
 
 ### git-transport
   * [ ] general purpose `connect(…)` for clients

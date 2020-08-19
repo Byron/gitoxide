@@ -12,7 +12,7 @@
       * [x] Disable sideband support (e.g. github http V2 doesn't have it)
     * [x] don't coerce line delimiters into empty slices.
     * [x] Make 'ERR <error>' handling as error optional, as it may occur only in certain contexts.
-    * [ ] `Write` with packet line encoding
+    * [x] `Write` with packet line encoding
   * **git-url**
     * [ ] parse into components to make them easy to understand
   * **connect**
