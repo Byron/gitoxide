@@ -14,11 +14,17 @@ mod to_read {
     use bstr::ByteSlice;
     use git_odb::pack;
     use git_packetline::RemoteProgress;
+    use std::io::Read;
 
     #[test]
     fn read_pack_with_progress_extraction() -> crate::Result {
         let buf = fixture_bytes("v1/01-clone.combined-output");
         let mut rd = git_packetline::Reader::new(&buf[..], None);
+
+        let mut out = Vec::new();
+        rd.as_read().read_to_end(&mut out)?;
+        assert_eq!(out.as_bstr(), b"foo".as_bstr());
+
         assert_eq!(exhaust(&mut rd), 2);
         rd.reset();
         assert_eq!(rd.read_line()??.to_text().0.as_bstr(), b"NAK".as_bstr());

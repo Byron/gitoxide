@@ -4,12 +4,14 @@ use crate::{
 };
 use crate::{PacketLine, RemoteProgress};
 use bstr::ByteSlice;
+use git_features::progress;
 use git_features::progress::Progress;
 use std::io;
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
-/// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaver `Read` at the
+/// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaving `Read` at the
 /// start of whatever comes next.
+/// It signals encountering a flush line with `UnexpectedEof`
 pub struct Reader<T> {
     pub inner: T,
     buf: Vec<u8>,
@@ -78,16 +80,35 @@ where
     ) -> ReadWithProgressOptional<T, P> {
         ReadWithProgressOptional::with_progress(self, progress, parse_progress)
     }
+
+    pub fn as_read(&mut self) -> ReadWithProgressOptional<T, progress::Discard> {
+        ReadWithProgressOptional::new(self)
+    }
 }
 
 pub struct ReadWithProgressOptional<'a, T, P> {
     parent: &'a mut Reader<T>,
-    progress: P,
+    progress_and_parse: Option<(P, fn(&[u8]) -> Option<RemoteProgress>)>,
     buf: Vec<u8>,
     pos: usize,
     cap: usize,
-    parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
 }
+
+impl<'a, T> ReadWithProgressOptional<'a, T, progress::Discard>
+where
+    T: io::Read,
+{
+    fn new(parent: &'a mut Reader<T>) -> Self {
+        ReadWithProgressOptional {
+            parent,
+            progress_and_parse: None,
+            buf: vec![0; MAX_DATA_LEN],
+            pos: 0,
+            cap: 0,
+        }
+    }
+}
+
 impl<'a, T, P> ReadWithProgressOptional<'a, T, P>
 where
     T: io::Read,
@@ -100,11 +121,10 @@ where
     ) -> Self {
         ReadWithProgressOptional {
             parent,
-            progress,
+            progress_and_parse: Some((progress, parse_progress)),
             buf: vec![0; MAX_DATA_LEN],
             pos: 0,
             cap: 0,
-            parse_progress,
         }
     }
 }
@@ -123,37 +143,42 @@ where
                     .parent
                     .read_line()?
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-                let mut band = line
-                    .decode_band()
-                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-                fn progress_name(current: Option<String>, action: &[u8]) -> String {
-                    match current {
-                        Some(current) => format!("{}: {}", current, action.as_bstr()),
-                        None => action.as_bstr().to_string(),
-                    }
-                }
-                match band {
-                    Band::Data(ref mut d) => break d.read(&mut self.buf)?,
-                    Band::Progress(d) => {
-                        let text = Text::from(d).0;
-                        match (self.parse_progress)(text) {
-                            Some(RemoteProgress {
-                                action,
-                                percent: _,
-                                step,
-                                max,
-                            }) => {
-                                self.progress.set_name(progress_name(self.progress.name(), action));
-                                self.progress.init(max, git_features::progress::count("objects"));
-                                if let Some(step) = step {
-                                    self.progress.set(step);
-                                }
+                match self.progress_and_parse.as_mut() {
+                    Some((progress, parse_progress)) => {
+                        let mut band = line
+                            .decode_band()
+                            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                        fn progress_name(current: Option<String>, action: &[u8]) -> String {
+                            match current {
+                                Some(current) => format!("{}: {}", current, action.as_bstr()),
+                                None => action.as_bstr().to_string(),
                             }
-                            None => self.progress.set_name(progress_name(self.progress.name(), text)),
+                        }
+                        match band {
+                            Band::Data(ref mut d) => break d.read(&mut self.buf)?,
+                            Band::Progress(d) => {
+                                let text = Text::from(d).0;
+                                match (parse_progress)(text) {
+                                    Some(RemoteProgress {
+                                        action,
+                                        percent: _,
+                                        step,
+                                        max,
+                                    }) => {
+                                        progress.set_name(progress_name(progress.name(), action));
+                                        progress.init(max, git_features::progress::count("objects"));
+                                        if let Some(step) = step {
+                                            progress.set(step);
+                                        }
+                                    }
+                                    None => progress.set_name(progress_name(progress.name(), text)),
+                                };
+                            }
+                            Band::Error(d) => progress.fail(progress_name(None, Text::from(d).0)),
                         };
                     }
-                    Band::Error(d) => self.progress.fail(progress_name(None, Text::from(d).0)),
-                };
+                    None => break line.as_slice().read(&mut self.buf)?,
+                }
             };
             self.pos = 0;
         }
