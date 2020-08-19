@@ -4,8 +4,7 @@ use crate::{
 };
 use crate::{PacketLine, RemoteProgress};
 use bstr::ByteSlice;
-use git_features::progress;
-use git_features::progress::Progress;
+use git_features::{progress, progress::Progress};
 use std::io;
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
@@ -79,9 +78,11 @@ where
     }
 }
 
+type ProgressAndParser<P> = (P, fn(&[u8]) -> Option<RemoteProgress>);
+
 pub struct ReadWithProgressOptional<'a, T, P> {
     parent: &'a mut Reader<T>,
-    progress_and_parse: Option<(P, fn(&[u8]) -> Option<RemoteProgress>)>,
+    progress_and_parse: Option<ProgressAndParser<P>>,
     buf: Vec<u8>,
     pos: usize,
     cap: usize,
