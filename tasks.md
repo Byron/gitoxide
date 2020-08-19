@@ -10,7 +10,8 @@
       * [x] Progress parsing, with 'info(…)' fallback if that fails
       * [x] SetName in Progress trait (to allow setting the correct progress information)
       * [x] Disable sideband support (e.g. github http V2 doesn't have it)
-    * [ ] don't coerce line delimiters into empty slices.
+    * [x] don't coerce line delimiters into empty slices.
+    * [x] Make 'ERR <error>' handling as error optional, as it may occur only in certain contexts.
   * **git-url**
     * [ ] parse into components to make them easy to understand
   * **connect**

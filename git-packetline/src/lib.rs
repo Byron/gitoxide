@@ -15,6 +15,8 @@ pub enum Channel {
     Error = 3,
 }
 
+/// The information usually found in remote progress messages as sent by a git server during
+/// fetch, clone and push.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct RemoteProgress<'a> {
@@ -31,6 +33,11 @@ pub use borrowed::Borrowed as PacketLine;
 pub mod read;
 #[doc(inline)]
 pub use read::Reader;
+
+pub mod write {
+    /// An implementor of `Write` which passes all input to an inner `Write` in packet line data encoding.
+    pub struct Writer {}
+}
 
 pub mod decode;
 pub mod encode;

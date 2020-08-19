@@ -1,6 +1,7 @@
 mod streaming {
     use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
+    use git_packetline::borrowed::Error;
     use git_packetline::{
         decode::{self, streaming, Stream},
         Channel, PacketLine,
@@ -62,11 +63,18 @@ mod streaming {
     }
 
     #[test]
-    fn error_on_error_line() {
-        assert_err_display(
+    fn error_on_error_line() -> crate::Result {
+        let line = PacketLine::Data(b"ERR the error");
+        assert_complete(
             streaming(b"0011ERR the error-and just ignored because not part of the size"),
-            "the error",
+            17,
+            line,
+        )?;
+        assert_eq!(
+            line.check_error().expect("error to be parsed here"),
+            Error(b"the error")
         );
+        Ok(())
     }
 
     #[test]
@@ -104,7 +112,10 @@ mod streaming {
             .to_error()
             .expect("data line")
             .to_write(&mut out)?;
-        assert_err_display(streaming(&out), "the error");
+        match streaming(&out).expect("decode success") {
+            Stream::Complete { line, .. } => assert_eq!(line.check_error().expect("err").0, b"the error"),
+            Stream::Incomplete { .. } => unreachable!(),
+        };
         Ok(())
     }
 

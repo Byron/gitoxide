@@ -1,4 +1,4 @@
-use crate::{encode, Channel};
+use crate::{encode, Channel, ERR_PREFIX};
 use bstr::BStr;
 use std::io;
 
@@ -32,6 +32,15 @@ impl<'a> Borrowed<'a> {
     }
     pub fn to_error(&self) -> Option<Error> {
         self.as_slice().map(Error)
+    }
+    pub fn check_error(&self) -> Option<Error> {
+        self.as_slice().and_then(|data| {
+            if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
+                Some(Error(&data[ERR_PREFIX.len()..]))
+            } else {
+                None
+            }
+        })
     }
     pub fn to_text(&self) -> Option<Text> {
         self.as_slice().map(Into::into)

@@ -1,5 +1,5 @@
 use crate::{
-    PacketLine, {DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES},
+    PacketLine, {DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES},
 };
 use bstr::BString;
 use quick_error::quick_error;
@@ -77,9 +77,6 @@ pub fn to_data_line(data: &[u8]) -> Result<PacketLine, Error> {
         return Err(Error::DataLengthLimitExceeded(data.len()));
     }
 
-    if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
-        return Err(Error::Line(data[ERR_PREFIX.len()..].into(), data.len()));
-    }
     Ok(PacketLine::Data(data))
 }
 
