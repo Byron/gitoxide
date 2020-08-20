@@ -60,7 +60,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
             Box::new(
                 crate::client::git::connect(
                     &url.host.as_ref().expect("host is present in url"),
-                    url.path.to_path()?,
+                    url.path,
                     version,
                     url.port,
                 )

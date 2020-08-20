@@ -12,15 +12,7 @@ quick_error! {
 
 pub struct Transport {}
 
-impl crate::client::Transport for Transport {
-    fn set_service(&self) -> &[&str] {
-        unimplemented!("cached capabilities")
-    }
-
-    fn command_capabilities(&self, _command: &str, _out: &mut Vec<&str>) -> bool {
-        unimplemented!("command capabilities")
-    }
-}
+impl crate::client::Transport for Transport {}
 
 pub fn connect(
     _host: &str,

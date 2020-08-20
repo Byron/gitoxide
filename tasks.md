@@ -12,16 +12,15 @@
       * [x] Disable sideband support (e.g. github http V2 doesn't have it)
     * [x] don't coerce line delimiters into empty slices.
     * [x] Make 'ERR <error>' handling as error optional, as it may occur only in certain contexts.
+      * [ ] Allow to enable handling it in `Read` adapter, if configured
     * [x] `Write` with packet line encoding
-  * **git-url**
-    * [ ] parse into components to make them easy to understand
-  * **connect**
-    * [ ] via file and `git-upload-pack`
-      * [ ] receive pack with V1 protocol
-      * [ ] receive pack with V2 protocol
-    * [ ] via https
-      * [ ] receive pack with V1 protocol
-      * [ ] receive pack with V2 protocol
+  * **git-transport**
+    * [ ] git://git-upload-pack
+      * [ ] handshake
+      * [ ] receive V1 response
+      * [ ] receige V2 response
+    * [ ] http://git-upload-pack
+      * [ ] handshake and response handling
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
   * [ ] create ref pointing to ID
