@@ -51,9 +51,6 @@ pub mod capabilities {
             let capabilities = &bytes[delimiter_pos + 1..];
             Ok((Capabilities(capabilities.as_bstr().to_owned()), delimiter_pos))
         }
-        pub fn len(&self) -> usize {
-            self.0.len()
-        }
         pub fn iter(&self) -> impl Iterator<Item = Capability> {
             self.0.split(|b| *b == b' ').map(|c| Capability(c.as_bstr()))
         }
