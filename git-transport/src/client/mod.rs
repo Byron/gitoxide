@@ -39,7 +39,7 @@ pub mod capabilities {
                 .as_bstr()
         }
         pub fn value(&self) -> Option<&BStr> {
-            self.0.splitn(2, |b| *b == b'=').skip(1).next().map(|s| s.as_bstr())
+            self.0.splitn(2, |b| *b == b'=').nth(1).map(|s| s.as_bstr())
         }
     }
 
