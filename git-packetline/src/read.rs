@@ -13,6 +13,7 @@ use std::io;
 pub struct Reader<T> {
     pub inner: T,
     peek_buf: Vec<u8>,
+    fail_on_err_lines: bool,
     buf: Vec<u8>,
     delimiter: PacketLine<'static>,
     is_done: bool,
@@ -28,18 +29,24 @@ where
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
             delimiter: delimiter.into().unwrap_or(PacketLine::Flush),
+            fail_on_err_lines: false,
             is_done: false,
         }
     }
 
     pub fn reset(&mut self) {
         debug_assert!(self.is_done, "reset is only effective if we are actually done");
-        self.is_done = false;
+        self.reset_with(self.delimiter);
     }
 
     pub fn reset_with(&mut self, delimiter: PacketLine<'static>) {
         self.delimiter = delimiter;
+        self.fail_on_err_lines = false;
         self.is_done = false;
+    }
+
+    pub fn fail_on_err_lines(&mut self, value: bool) {
+        self.fail_on_err_lines = value;
     }
 
     fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
@@ -71,9 +78,21 @@ where
             self.buf.resize(MAX_LINE_LEN, 0);
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
-            Ok(Ok(line)) if line == self.delimiter => {
-                self.is_done = true;
-                None
+            Ok(Ok(line)) => {
+                if line == self.delimiter {
+                    self.is_done = true;
+                    None
+                } else if self.fail_on_err_lines {
+                    match line.check_error() {
+                        Some(err) => {
+                            self.is_done = true;
+                            Some(Err(io::Error::new(io::ErrorKind::Other, err.0.as_bstr().to_string())))
+                        }
+                        None => Some(Ok(Ok(line))),
+                    }
+                } else {
+                    Some(Ok(Ok(line)))
+                }
             }
             res => Some(res),
         }

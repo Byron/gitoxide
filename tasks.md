@@ -13,17 +13,16 @@
     * [x] don't coerce line delimiters into empty slices.
     * [x] Make 'ERR <error>' handling as error optional, as it may occur only in certain contexts.
     * Reader improvements
-      * [ ] Allow to enable error handling in `Read` adapter, if configured
+      * [x] Allow to enable error handling in `Reader`
       * [x] Allow peeking one line
     * [x] `Write` with packet line encoding
   * **git-transport**
     * [x] parse capabilities
     * [ ] git://git-upload-pack
-      * [ ] handshake
-      * [ ] receive V1 response
-      * [ ] receige V2 response
+      * [x] V1 handshake
+      * [ ] V2 handshake
     * [ ] http://git-upload-pack
-      * [ ] handshake and response handling
+      * [ ] V1 handshake
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
   * [ ] create ref pointing to ID

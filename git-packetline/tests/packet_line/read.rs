@@ -80,6 +80,39 @@ fn peek_non_data() -> crate::Result {
 }
 
 #[test]
+fn fail_on_err_lines() -> crate::Result {
+    let input = b"00010009ERR e0002";
+    let mut rd = git_packetline::Reader::new(&input[..], None);
+    assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
+    assert_eq!(
+        rd.read_line().expect("line")??.as_bstr(),
+        Some(b"ERR e".as_bstr()),
+        "by default no special handling"
+    );
+
+    let mut rd = git_packetline::Reader::new(&input[..], None);
+    rd.fail_on_err_lines(true);
+    assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
+    assert_eq!(
+        rd.read_line().expect("line").unwrap_err().to_string(),
+        "e",
+        "io errors are used to communicate remote errors"
+    );
+    assert!(rd.read_line().is_none(), "iteration is done after the first error");
+
+    rd.reset();
+    rd.inner = input;
+    assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
+    assert_eq!(
+        rd.read_line().expect("line")??.as_bstr(),
+        Some(b"ERR e".as_bstr()),
+        "a reset also resets error handling to the default"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn peek() -> crate::Result {
     let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     let mut rd = git_packetline::Reader::new(&bytes[..], None);

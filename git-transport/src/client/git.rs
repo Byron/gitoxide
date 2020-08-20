@@ -58,6 +58,7 @@ where
         ))?;
         self.write.flush()?;
 
+        self.line_reader.fail_on_err_lines(true);
         let capabilities = self
             .line_reader
             .peek_line()
