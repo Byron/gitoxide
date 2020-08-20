@@ -69,18 +69,18 @@ where
         &mut self,
         progress: P,
         parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
-    ) -> ReadWithProgressOptional<T, P> {
-        ReadWithProgressOptional::with_progress(self, progress, parse_progress)
+    ) -> ReadWithProgress<T, P> {
+        ReadWithProgress::with_progress(self, progress, parse_progress)
     }
 
-    pub fn as_read(&mut self) -> ReadWithProgressOptional<T, progress::Discard> {
-        ReadWithProgressOptional::new(self)
+    pub fn as_read(&mut self) -> ReadWithProgress<T, progress::Discard> {
+        ReadWithProgress::new(self)
     }
 }
 
 type ProgressAndParser<P> = (P, fn(&[u8]) -> Option<RemoteProgress>);
 
-pub struct ReadWithProgressOptional<'a, T, P> {
+pub struct ReadWithProgress<'a, T, P> {
     parent: &'a mut Reader<T>,
     progress_and_parse: Option<ProgressAndParser<P>>,
     buf: Vec<u8>,
@@ -88,12 +88,12 @@ pub struct ReadWithProgressOptional<'a, T, P> {
     cap: usize,
 }
 
-impl<'a, T> ReadWithProgressOptional<'a, T, progress::Discard>
+impl<'a, T> ReadWithProgress<'a, T, progress::Discard>
 where
     T: io::Read,
 {
     fn new(parent: &'a mut Reader<T>) -> Self {
-        ReadWithProgressOptional {
+        ReadWithProgress {
             parent,
             progress_and_parse: None,
             buf: vec![0; MAX_DATA_LEN],
@@ -103,7 +103,7 @@ where
     }
 }
 
-impl<'a, T, P> ReadWithProgressOptional<'a, T, P>
+impl<'a, T, P> ReadWithProgress<'a, T, P>
 where
     T: io::Read,
     P: Progress,
@@ -113,7 +113,7 @@ where
         progress: P,
         parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
     ) -> Self {
-        ReadWithProgressOptional {
+        ReadWithProgress {
             parent,
             progress_and_parse: Some((progress, parse_progress)),
             buf: vec![0; MAX_DATA_LEN],
@@ -123,7 +123,7 @@ where
     }
 }
 
-impl<'a, T, P> io::BufRead for ReadWithProgressOptional<'a, T, P>
+impl<'a, T, P> io::BufRead for ReadWithProgress<'a, T, P>
 where
     T: io::Read,
     P: Progress,
@@ -194,7 +194,7 @@ where
     }
 }
 
-impl<'a, T, P> io::Read for ReadWithProgressOptional<'a, T, P>
+impl<'a, T, P> io::Read for ReadWithProgress<'a, T, P>
 where
     T: io::Read,
     P: Progress,

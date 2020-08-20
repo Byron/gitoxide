@@ -20,6 +20,7 @@ http-curl = ["curl"]
 [dependencies]
 git-features = { version = "^0.4.0", path = "../git-features" }
 git-url = { version = "^0.1.0", path = "../git-url" }
+git-packetline = { version = "^0.1.0", path = "../git-packetline" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 quick-error = "2.0.0"

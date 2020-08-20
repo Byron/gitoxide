@@ -695,6 +695,7 @@ dependencies = [
  "bstr",
  "curl",
  "git-features",
+ "git-packetline",
  "git-url",
  "quick-error 2.0.0",
  "serde",
