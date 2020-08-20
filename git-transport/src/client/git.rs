@@ -70,7 +70,7 @@ where
                     .ok_or(crate::client::Error::ExpectedDataLine)?
                     .as_slice(),
             )?,
-            refs: Some(self.line_reader.as_read() as &mut dyn io::BufRead),
+            refs: Some(Box::new(self.line_reader.as_read())),
         })
     }
 }

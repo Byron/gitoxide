@@ -43,6 +43,7 @@ mod connect_message {
 
 mod upload_pack {
     use crate::fixture_bytes;
+    use bstr::ByteSlice;
     use git_transport::{client::TransportSketch, Protocol, Service};
     use std::io::BufRead;
 
@@ -60,7 +61,13 @@ mod upload_pack {
         );
         let res = c.set_service(Service::UploadPack)?;
         assert_eq!(res.actual_protocol, Protocol::V1);
-        // assert_eq!(res.capabilities, vec!["hello"].into());
+        assert_eq!(
+            res.capabilities
+                .iter()
+                .flat_map(|c| c.value().map(|v| v.to_owned()))
+                .collect::<Vec<_>>(),
+            vec![b"hello".as_bstr()]
+        );
         let refs = res
             .refs
             .expect("v1 protocol provides refs")

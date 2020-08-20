@@ -98,7 +98,7 @@ pub struct SetServiceResponse<'a> {
     pub actual_protocol: Protocol,
     pub capabilities: Capabilities,
     /// In protocol version one, this is set to a list of refs and their peeled counterparts.
-    pub refs: Option<&'a mut dyn io::BufRead>,
+    pub refs: Option<Box<dyn io::BufRead + 'a>>,
 }
 
 /// All methods provided here must be called in the correct order according to the communication protocol used to connect to them.
