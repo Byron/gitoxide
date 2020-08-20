@@ -17,33 +17,49 @@ where
 {
 }
 
+pub fn connect_message(
+    service: Service,
+    version: Protocol,
+    path: &[u8],
+    virtual_host: Option<&(String, Option<u16>)>,
+) -> BString {
+    let mut out = bstr::BString::from(service.as_str());
+    out.push(b' ');
+    out.extend_from_slice(&path);
+    out.push(0);
+    if let Some((host, port)) = virtual_host {
+        out.push_str("host=");
+        out.extend_from_slice(host.as_bytes());
+        if let Some(port) = port {
+            out.push_byte(b':');
+            out.push_str(&format!("{}", port));
+        }
+        out.push(0);
+    }
+    if version != Protocol::V1 {
+        out.push(0);
+        out.push_str(format!("version={}", version as usize));
+        out.push(0);
+    }
+    out
+}
+
 impl<R, W> crate::client::TransportSketch for Connection<R, W>
 where
     R: io::Read,
     W: io::Write,
 {
     fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
-        let mut out = bstr::BString::from(service.as_str());
-        out.push(b' ');
-        out.extend_from_slice(&self.path);
-        out.push(0);
-        if let Some((host, port)) = self.virtual_host.as_ref() {
-            out.push_str("host=");
-            out.extend_from_slice(host.as_bytes());
-            out.push(0);
-            if let Some(port) = port {
-                out.push_byte(b':');
-                out.push_str(&format!("{}", port));
-            }
-        }
-        out.push(0);
-        out.push_str(format!("version={}", self.protocol as usize));
-        out.push(0);
-        self.write.write_all(&out)?;
+        self.write.write_all(&connect_message(
+            service,
+            self.protocol,
+            &self.path,
+            self.virtual_host.as_ref(),
+        ))?;
         self.write.flush()?;
 
         Ok(SetServiceResponse {
-            actual_protocol: Protocol::V1, // TODO
+            actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
             capabilities: vec![],          // TODO
             refs: None,                    // TODO
         })
