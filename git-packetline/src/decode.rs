@@ -24,6 +24,9 @@ quick_error! {
         Line(data: BString, bytes_consumed: usize) {
             display("{}", data)
         }
+        NotEnoughData(bytes_needed: usize) {
+            display("Needing {} additional bytes to decode the line successfully", bytes_needed)
+        }
     }
 }
 
@@ -109,4 +112,11 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
         line: to_data_line(&data[U16_HEX_BYTES..wanted_bytes])?,
         bytes_consumed: wanted_bytes,
     })
+}
+
+pub fn all_at_once(data: &[u8]) -> Result<PacketLine, Error> {
+    match streaming(data)? {
+        Stream::Complete { line, .. } => Ok(line),
+        Stream::Incomplete { bytes_needed } => Err(Error::NotEnoughData(bytes_needed)),
+    }
 }

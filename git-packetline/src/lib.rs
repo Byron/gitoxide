@@ -38,4 +38,5 @@ pub mod write;
 pub use write::Writer;
 
 pub mod decode;
+pub use decode::all_at_once as decode;
 pub mod encode;

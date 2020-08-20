@@ -34,18 +34,14 @@ mod streaming {
 
     #[test]
     fn trailing_line_feeds_are_removed_explicitly_roundtrip() -> crate::Result {
-        match streaming(b"0006a\n")? {
-            Stream::Complete { line, .. } => {
-                assert_eq!(line.to_text().expect("text").0.as_bstr(), b"a".as_bstr());
-                let mut out = Vec::new();
-                line.to_text()
-                    .expect("text")
-                    .to_write(&mut out)
-                    .expect("write to memory works");
-                assert_eq!(out, b"0006a\n", "it appends a newline in text mode");
-            }
-            Stream::Incomplete { .. } => panic!("should be complete"),
-        }
+        let line = decode::all_at_once(b"0006a\n")?;
+        assert_eq!(line.to_text().expect("text").0.as_bstr(), b"a".as_bstr());
+        let mut out = Vec::new();
+        line.to_text()
+            .expect("text")
+            .to_write(&mut out)
+            .expect("write to memory works");
+        assert_eq!(out, b"0006a\n", "it appends a newline in text mode");
         Ok(())
     }
 
@@ -112,10 +108,8 @@ mod streaming {
             .to_error()
             .expect("data line")
             .to_write(&mut out)?;
-        match streaming(&out).expect("decode success") {
-            Stream::Complete { line, .. } => assert_eq!(line.check_error().expect("err").0, b"the error"),
-            Stream::Incomplete { .. } => unreachable!(),
-        };
+        let line = decode::all_at_once(&out)?;
+        assert_eq!(line.check_error().expect("err").0, b"the error");
         Ok(())
     }
 
@@ -127,13 +121,8 @@ mod streaming {
                 .to_band(*channel)
                 .expect("data is valid for band");
             band.to_write(&mut out)?;
-            match streaming(&out)? {
-                Stream::Complete { line, bytes_consumed } => {
-                    assert_eq!(bytes_consumed, out.len());
-                    assert_eq!(line.decode_band().expect("valid band"), band);
-                }
-                Stream::Incomplete { .. } => panic!("roundtrips are never incomplete"),
-            }
+            let line = decode::all_at_once(&out)?;
+            assert_eq!(line.decode_band().expect("valid band"), band);
         }
         Ok(())
     }

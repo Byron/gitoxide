@@ -62,16 +62,28 @@ mod to_read {
 fn first_line() -> PacketLine<'static> {
     PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n")
 }
+#[test]
+fn peek_non_data() -> crate::Result {
+    let mut rd = git_packetline::Reader::new(&b"000000010002"[..], Some(PacketLine::ResponseEnd));
+    assert_eq!(rd.read_line().expect("line")??, PacketLine::Flush);
+    assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
+    rd.reset_with(PacketLine::Flush);
+    assert_eq!(rd.read_line().expect("line")??, PacketLine::ResponseEnd);
+    for _ in 0..2 {
+        assert_eq!(
+            rd.peek_line().expect("error").unwrap_err().kind(),
+            std::io::ErrorKind::UnexpectedEof,
+            "peeks on error/eof repeat the error"
+        );
+    }
+    Ok(())
+}
 
 #[test]
 fn peek() -> crate::Result {
     let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     let mut rd = git_packetline::Reader::new(&bytes[..], None);
-    assert_eq!(
-        rd.peek_line().expect("line")??.as_bstr(),
-        first_line().as_bstr(),
-        "peek returns first line"
-    );
+    assert_eq!(rd.peek_line().expect("line")??, first_line(), "peek returns first line");
     assert_eq!(
         rd.peek_line().expect("line")??,
         first_line(),
@@ -80,14 +92,19 @@ fn peek() -> crate::Result {
     assert_eq!(
         rd.read_line().expect("line")??,
         first_line(),
-        "read_line removes the peek"
+        "read_line returns the peek once"
+    );
+    assert_eq!(
+        rd.read_line().expect("line")??.as_bstr(),
+        Some(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 refs/heads/master\n".as_bstr()),
+        "the next read_line returns the next line"
     );
     assert_eq!(
         rd.peek_line().expect("line")??.as_bstr(),
-        Some(b"hello".as_bstr()),
+        Some(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 refs/remotes/origin/HEAD\n".as_bstr()),
         "peek always gets the next line verbatim"
     );
-
+    assert_eq!(exhaust(&mut rd), 1559);
     Ok(())
 }
 

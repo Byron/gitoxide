@@ -1,6 +1,6 @@
 use crate::{
     borrowed::{Band, Text},
-    decode, MAX_DATA_LEN, MAX_LINE_LEN,
+    decode, MAX_DATA_LEN, MAX_LINE_LEN, U16_HEX_BYTES,
 };
 use crate::{PacketLine, RemoteProgress};
 use bstr::ByteSlice;
@@ -37,6 +37,11 @@ where
         self.is_done = false;
     }
 
+    pub fn reset_with(&mut self, delimiter: PacketLine<'static>) {
+        self.delimiter = delimiter;
+        self.is_done = false;
+    }
+
     fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
         reader.read_exact(hex_bytes)?;
@@ -61,7 +66,9 @@ where
         if !self.peek_buf.is_empty() {
             std::mem::swap(&mut self.peek_buf, &mut self.buf);
             self.peek_buf.clear();
-            return Some(Ok(Ok(PacketLine::Data(&self.buf))));
+            return Some(Ok(Ok(crate::decode(&self.buf).expect("only valid data in peek buf"))));
+        } else if self.buf.len() != MAX_LINE_LEN {
+            self.buf.resize(MAX_LINE_LEN, 0);
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
             Ok(Ok(line)) if line == self.delimiter => {
@@ -76,14 +83,16 @@ where
         if self.is_done {
             return None;
         }
-        if self.peek_buf.is_empty() {
+        Some(if self.peek_buf.is_empty() {
             self.peek_buf.resize(MAX_LINE_LEN, 0);
-            Some(match Self::read_line_inner(&mut self.inner, &mut self.peek_buf) {
+            match Self::read_line_inner(&mut self.inner, &mut self.peek_buf) {
                 Ok(Ok(line)) => {
-                    let len = line.as_slice().map(|s| s.len()).unwrap_or(0);
-                    drop(line);
+                    let len = line
+                        .as_slice()
+                        .map(|s| s.len() + U16_HEX_BYTES)
+                        .unwrap_or(U16_HEX_BYTES);
                     self.peek_buf.resize(len, 0);
-                    Ok(Ok(PacketLine::Data(&self.peek_buf)))
+                    Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
                 }
                 Ok(Err(err)) => {
                     self.peek_buf.clear();
@@ -93,10 +102,10 @@ where
                     self.peek_buf.clear();
                     Err(err)
                 }
-            })
+            }
         } else {
-            Some(Ok(Ok(PacketLine::Data(&self.peek_buf))))
-        }
+            Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
+        })
     }
 
     pub fn as_read_with_sidebands<P: Progress>(

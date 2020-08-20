@@ -12,8 +12,9 @@
       * [x] Disable sideband support (e.g. github http V2 doesn't have it)
     * [x] don't coerce line delimiters into empty slices.
     * [x] Make 'ERR <error>' handling as error optional, as it may occur only in certain contexts.
-      * [ ] Allow to enable handling it in `Read` adapter, if configured
-      * [ ] Allow peeking one line
+    * Reader improvements
+      * [ ] Allow to enable error handling in `Read` adapter, if configured
+      * [x] Allow peeking one line
     * [x] `Write` with packet line encoding
   * **git-transport**
     * [ ] git://git-upload-pack
