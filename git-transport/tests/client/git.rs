@@ -1,6 +1,5 @@
 mod connect_message {
-    use git_transport::client::git;
-    use git_transport::{Protocol, Service};
+    use git_transport::{client::git, Protocol, Service};
 
     #[test]
     fn version_1_without_host_and_version() {
