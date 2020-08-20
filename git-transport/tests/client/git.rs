@@ -48,7 +48,6 @@ mod upload_pack {
     use std::io::BufRead;
 
     #[test]
-    #[ignore]
     fn clone_v1() -> crate::Result {
         let mut out = Vec::new();
         let input = fixture_bytes("v1/clone.response");
@@ -64,9 +63,13 @@ mod upload_pack {
         assert_eq!(
             res.capabilities
                 .iter()
-                .flat_map(|c| c.value().map(|v| v.to_owned()))
+                .flat_map(|c| c.value().map(ToOwned::to_owned))
                 .collect::<Vec<_>>(),
-            vec![b"hello".as_bstr()]
+            vec![
+                b"HEAD:refs/heads/master".as_bstr(),
+                b"sha1".as_bstr(),
+                b"git/2.28.0".as_bstr()
+            ]
         );
         let refs = res
             .refs
@@ -74,7 +77,13 @@ mod upload_pack {
             .lines()
             .flat_map(Result::ok)
             .collect::<Vec<_>>();
-        assert_eq!(refs, vec!["HEAD"]);
+        assert_eq!(
+            refs,
+            vec![
+                "808e50d724f604f69ab93c6da2919c014667bedb HEAD",
+                "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master"
+            ]
+        );
         Ok(())
     }
 
