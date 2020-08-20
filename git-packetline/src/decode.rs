@@ -80,7 +80,6 @@ pub fn to_data_line(data: &[u8]) -> Result<PacketLine, Error> {
     Ok(PacketLine::Data(data))
 }
 
-// TODO: verify this one is actually needed in the end
 pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
     let data_len = data.len();
     if data_len < U16_HEX_BYTES {

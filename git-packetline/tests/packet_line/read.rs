@@ -67,7 +67,11 @@ fn first_line() -> PacketLine<'static> {
 fn peek() -> crate::Result {
     let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     let mut rd = git_packetline::Reader::new(&bytes[..], None);
-    assert_eq!(rd.peek_line().expect("line")??, first_line(), "peek returns first line");
+    assert_eq!(
+        rd.peek_line().expect("line")??.as_bstr(),
+        first_line().as_bstr(),
+        "peek returns first line"
+    );
     assert_eq!(
         rd.peek_line().expect("line")??,
         first_line(),

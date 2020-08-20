@@ -12,7 +12,7 @@ use std::io;
 /// start of whatever comes next.
 pub struct Reader<T> {
     pub inner: T,
-    peek_buf: Option<Vec<u8>>,
+    peek_buf: Vec<u8>,
     buf: Vec<u8>,
     delimiter: PacketLine<'static>,
     is_done: bool,
@@ -26,7 +26,7 @@ where
         Reader {
             inner,
             buf: vec![0; MAX_LINE_LEN],
-            peek_buf: None,
+            peek_buf: Vec::new(),
             delimiter: delimiter.into().unwrap_or(PacketLine::Flush),
             is_done: false,
         }
@@ -58,8 +58,9 @@ where
         if self.is_done {
             return None;
         }
-        if let Some(peek) = self.peek_buf.take() {
-            self.buf = peek;
+        if !self.peek_buf.is_empty() {
+            std::mem::swap(&mut self.peek_buf, &mut self.buf);
+            self.peek_buf.clear();
             return Some(Ok(Ok(PacketLine::Data(&self.buf))));
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
@@ -71,32 +72,31 @@ where
         }
     }
 
-    fn peek_line_inner<'a>(
-        peek_buf: &'a mut Option<Vec<u8>>,
-        reader: &mut T,
-        buf: &'a mut Vec<u8>,
-    ) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
-        match peek_buf.as_ref() {
-            Some(buf) => Ok(Ok(PacketLine::Data(&buf))),
-            None => match Self::read_line_inner(reader, buf) {
-                Ok(Ok(line)) => {
-                    *peek_buf = Some(buf.clone());
-                    Ok(Ok(line))
-                }
-                res => res,
-            },
-        }
-    }
-
     pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
         if self.is_done {
             return None;
         }
-        Some(Self::peek_line_inner(
-            &mut self.peek_buf,
-            &mut self.inner,
-            &mut self.buf,
-        ))
+        if self.peek_buf.is_empty() {
+            self.peek_buf.resize(MAX_LINE_LEN, 0);
+            Some(match Self::read_line_inner(&mut self.inner, &mut self.peek_buf) {
+                Ok(Ok(line)) => {
+                    let len = line.as_slice().map(|s| s.len()).unwrap_or(0);
+                    drop(line);
+                    self.peek_buf.resize(len, 0);
+                    Ok(Ok(PacketLine::Data(&self.peek_buf)))
+                }
+                Ok(Err(err)) => {
+                    self.peek_buf.clear();
+                    Ok(Err(err))
+                }
+                Err(err) => {
+                    self.peek_buf.clear();
+                    Err(err)
+                }
+            })
+        } else {
+            Some(Ok(Ok(PacketLine::Data(&self.peek_buf))))
+        }
     }
 
     pub fn as_read_with_sidebands<P: Progress>(
