@@ -153,9 +153,13 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] configuration
   * [ ] merging
   * [ ] stashing
+  * [ ] Use _Commit Graph_ to speed up certain queries
   * [ ] API documentation with examples
-  * [ ] _Commit Graph_ - split and unsplit
   
+### git-commitgraph
+  * Access to all capabilities provided by the file format, as well as their maintenance
+  * [ ] API documentation with examples
+
 ### git-config
   * read and write git configuration files
   * [ ] API documentation with examples

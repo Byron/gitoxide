@@ -1,0 +1,16 @@
+[package]
+name = "git-commitgraph"
+version = "0.0.0"
+repository = "https://github.com/Byron/git-oxide"
+documentation = "https://git-scm.com/docs/commit-graph#:~:text=The%20commit-graph%20file%20is%20a%20supplemental%20data%20structure,or%20in%20the%20info%20directory%20of%20an%20alternate."
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dedicated implementing the git commitgraph file format and its maintenance"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+
+[lib]
+doctest = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

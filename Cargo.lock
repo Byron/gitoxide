@@ -595,6 +595,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-commitgraph"
+version = "0.0.0"
+
+[[package]]
 name = "git-features"
 version = "0.4.0"
 dependencies = [

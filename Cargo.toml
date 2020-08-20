@@ -92,5 +92,6 @@ members = [
     "git-url",
     "git-transport",
     "git-packetline",
+    "git-commitgraph",
     "git-tui",
 ]
