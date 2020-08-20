@@ -1,10 +1,13 @@
-use crate::client::Capabilities;
-use crate::{Protocol, Service};
+use crate::{
+    client::{Capabilities, SetServiceResponse},
+    Protocol, Service,
+};
 use std::{io, net::TcpStream, path::Path};
 
 pub struct Connection<R, W> {
-    _read: R,
-    _write: W,
+    read: R,
+    write: W,
+    protocol: Protocol,
 }
 
 impl<R, W> crate::client::Transport for Connection<R, W>
@@ -27,11 +30,25 @@ where
     W: io::Write,
 {
     fn set_service(
-        &self,
+        &mut self,
         _service: Service,
         _protocol: Protocol,
-    ) -> Result<(Capabilities, Option<Box<dyn io::BufRead>>), crate::client::Error> {
+    ) -> Result<SetServiceResponse, crate::client::Error> {
         unimplemented!()
+    }
+}
+
+impl<R, W> Connection<R, W>
+where
+    R: io::Read,
+    W: io::Write,
+{
+    pub fn new(read: R, write: W, desired_version: Protocol) -> Self {
+        Connection {
+            read,
+            write,
+            protocol: desired_version,
+        }
     }
 }
 
