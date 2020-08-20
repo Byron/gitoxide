@@ -65,9 +65,8 @@ fn prefixed_and_suffixed_data_to_write(
         return Err(Error::DataIsEmpty);
     }
 
-    let mut buf = [0u8; 4];
     let data_len = data_len + 4;
-    hex::encode_to_slice((data_len as u16).to_be_bytes(), &mut buf).expect("two bytes to 4 hex chars never fails");
+    let buf = u16_to_hex(data_len as u16);
 
     out.write_all(&buf)?;
     if !prefix.is_empty() {
@@ -78,4 +77,10 @@ fn prefixed_and_suffixed_data_to_write(
         out.write_all(suffix)?;
     }
     Ok(data_len)
+}
+
+pub(crate) fn u16_to_hex(value: u16) -> [u8; 4] {
+    let mut buf = [0u8; 4];
+    hex::encode_to_slice((value as u16).to_be_bytes(), &mut buf).expect("two bytes to 4 hex chars never fails");
+    buf
 }

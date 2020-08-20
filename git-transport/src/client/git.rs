@@ -57,19 +57,22 @@ where
             self.virtual_host.as_ref(),
         ))?;
         self.write.flush()?;
+
         let capabilities = self
             .line_reader
             .peek_line()
             .ok_or(crate::client::Error::ExpectedLine("capabilities or version"))???;
-
+        let (capabilities, delimiter_position) = Capabilities::from_bytes(
+            capabilities
+                .to_text()
+                .ok_or(crate::client::Error::ExpectedDataLine)?
+                .as_slice(),
+        )?;
+        self.line_reader
+            .peek_buffer_replace_and_truncate(delimiter_position, b'\n');
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
-            capabilities: Capabilities::try_from(
-                capabilities
-                    .to_text()
-                    .ok_or(crate::client::Error::ExpectedDataLine)?
-                    .as_slice(),
-            )?,
+            capabilities,
             refs: Some(Box::new(self.line_reader.as_read())),
         })
     }
@@ -99,7 +102,6 @@ where
 
 use crate::client::Capabilities;
 use quick_error::quick_error;
-use std::convert::TryFrom;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {

@@ -14,7 +14,6 @@ pub use connect::connect;
 pub mod capabilities {
     use bstr::{BStr, BString, ByteSlice};
     use quick_error::quick_error;
-    use std::convert::TryFrom;
 
     quick_error! {
         #[derive(Debug)]
@@ -44,21 +43,19 @@ pub mod capabilities {
     }
 
     impl Capabilities {
-        pub fn iter(&self) -> impl Iterator<Item = Capability> {
-            self.0.split(|b| *b == b' ').map(|c| Capability(c.as_bstr()))
-        }
-    }
-
-    impl TryFrom<&[u8]> for Capabilities {
-        type Error = Error;
-
-        fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-            let delimiter = value.find_byte(0).ok_or(Error::MissingDelimitingNullByte)?;
-            if delimiter + 1 == value.len() {
+        pub fn from_bytes(bytes: &[u8]) -> Result<(Capabilities, usize), Error> {
+            let delimiter_pos = bytes.find_byte(0).ok_or(Error::MissingDelimitingNullByte)?;
+            if delimiter_pos + 1 == bytes.len() {
                 return Err(Error::NoCapabilities);
             }
-            let capabilities = &value[delimiter + 1..];
-            Ok(Capabilities(capabilities.as_bstr().to_owned()))
+            let capabilities = &bytes[delimiter_pos + 1..];
+            Ok((Capabilities(capabilities.as_bstr().to_owned()), delimiter_pos))
+        }
+        pub fn len(&self) -> usize {
+            self.0.len()
+        }
+        pub fn iter(&self) -> impl Iterator<Item = Capability> {
+            self.0.split(|b| *b == b' ').map(|c| Capability(c.as_bstr()))
         }
     }
 }

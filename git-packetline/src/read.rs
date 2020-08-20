@@ -79,6 +79,15 @@ where
         }
     }
 
+    /// position does not include the 4 bytes prefix (they are invisible outside the reader)
+    pub fn peek_buffer_replace_and_truncate(&mut self, position: usize, replace_with: u8) {
+        let position = position + U16_HEX_BYTES;
+        self.peek_buf[position] = replace_with;
+
+        let new_len = position + 1;
+        self.peek_buf.truncate(new_len);
+        self.peek_buf[..4].copy_from_slice(&crate::encode::u16_to_hex((new_len) as u16));
+    }
     pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
         if self.is_done {
             return None;
