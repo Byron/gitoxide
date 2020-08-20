@@ -12,6 +12,7 @@ use std::io;
 /// start of whatever comes next.
 pub struct Reader<T> {
     pub inner: T,
+    peek_buf: Option<Vec<u8>>,
     buf: Vec<u8>,
     delimiter: PacketLine<'static>,
     is_done: bool,
@@ -25,6 +26,7 @@ where
         Reader {
             inner,
             buf: vec![0; MAX_LINE_LEN],
+            peek_buf: None,
             delimiter: delimiter.into().unwrap_or(PacketLine::Flush),
             is_done: false,
         }
@@ -56,6 +58,10 @@ where
         if self.is_done {
             return None;
         }
+        if let Some(peek) = self.peek_buf.take() {
+            self.buf = peek;
+            return Some(Ok(Ok(PacketLine::Data(&self.buf))));
+        }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
             Ok(Ok(line)) if line == self.delimiter => {
                 self.is_done = true;
@@ -63,6 +69,34 @@ where
             }
             res => Some(res),
         }
+    }
+
+    fn peek_line_inner<'a>(
+        peek_buf: &'a mut Option<Vec<u8>>,
+        reader: &mut T,
+        buf: &'a mut Vec<u8>,
+    ) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
+        match peek_buf.as_ref() {
+            Some(buf) => Ok(Ok(PacketLine::Data(&buf))),
+            None => match Self::read_line_inner(reader, buf) {
+                Ok(Ok(line)) => {
+                    *peek_buf = Some(buf.clone());
+                    Ok(Ok(line))
+                }
+                res => res,
+            },
+        }
+    }
+
+    pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
+        if self.is_done {
+            return None;
+        }
+        Some(Self::peek_line_inner(
+            &mut self.peek_buf,
+            &mut self.inner,
+            &mut self.buf,
+        ))
     }
 
     pub fn as_read_with_sidebands<P: Progress>(

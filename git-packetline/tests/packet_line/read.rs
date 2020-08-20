@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use git_packetline::PacketLine;
 use std::io;
 use std::path::PathBuf;
@@ -58,15 +59,40 @@ mod to_read {
     }
 }
 
+fn first_line() -> PacketLine<'static> {
+    PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n")
+}
+
+#[test]
+fn peek() -> crate::Result {
+    let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
+    let mut rd = git_packetline::Reader::new(&bytes[..], None);
+    assert_eq!(rd.peek_line().expect("line")??, first_line(), "peek returns first line");
+    assert_eq!(
+        rd.peek_line().expect("line")??,
+        first_line(),
+        "peeked lines are never exhausted, unless they are finally read"
+    );
+    assert_eq!(
+        rd.read_line().expect("line")??,
+        first_line(),
+        "read_line removes the peek"
+    );
+    assert_eq!(
+        rd.peek_line().expect("line")??.as_bstr(),
+        Some(b"hello".as_bstr()),
+        "peek always gets the next line verbatim"
+    );
+
+    Ok(())
+}
+
 #[test]
 fn read_from_file_and_reader_advancement() -> crate::Result {
     let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
     let mut rd = git_packetline::Reader::new(&bytes[..], None);
-    assert_eq!(
-        rd.read_line().expect("line")??.as_bstr(),
-        PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n").as_bstr()
-    );
+    assert_eq!(rd.read_line().expect("line")??, first_line());
     assert_eq!(exhaust(&mut rd) + 1, 1561, "it stops after seeing the flush byte");
     rd.reset();
     assert_eq!(
