@@ -205,9 +205,9 @@ checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
 
 [[package]]
 name = "cc"
-version = "1.0.58"
+version = "1.0.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9a06fb2e53271d7c279ec1efea6ab691c35a2ae67ec0d91d7acec0caf13b518"
+checksum = "66120af515773fb005778dc07c261bd201ec8ce50bd6e7144c927753fe013381"
 
 [[package]]
 name = "cfg-if"
@@ -403,9 +403,9 @@ dependencies = [
 
 [[package]]
 name = "curl"
-version = "0.4.31"
+version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9447ad28eee2a5cfb031c329d46bef77487244fff6a724b378885b8691a35f78"
+checksum = "78baca05127a115136a9898e266988fc49ca7ea2c839f60fc6e1fc9df1599168"
 dependencies = [
  "curl-sys",
  "libc",
@@ -418,9 +418,9 @@ dependencies = [
 
 [[package]]
 name = "curl-sys"
-version = "0.4.34+curl-7.71.1"
+version = "0.4.36+curl-7.71.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad4eff0be6985b7e709f64b5a541f700e9ad1407190a29f4884319eb663ed1d6"
+checksum = "68cad94adeb0c16558429c3c34a607acc9ea58e09a7b66310aabc9788fc5d721"
 dependencies = [
  "cc",
  "libc",
@@ -1167,9 +1167,9 @@ dependencies = [
 
 [[package]]
 name = "ppv-lite86"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "237a5ed80e274dbc66f86bd59c1e25edc039660be53194b5fe0a482e0f2612ea"
+checksum = "c36fa947111f5c62a733b652544dd0016a43ce89619538a8ef92724a6f501a20"
 
 [[package]]
 name = "pretty_assertions"
