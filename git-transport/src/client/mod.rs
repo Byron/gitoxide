@@ -87,6 +87,9 @@ quick_error! {
         ExpectedLine(message: &'static str) {
             display("A {} line was expected, but there was none", message)
         }
+        ExpectedDataLine {
+            display("Expected a data line, but got a delimiter")
+        }
     }
 }
 

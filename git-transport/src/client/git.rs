@@ -3,9 +3,8 @@ use bstr::{BString, ByteVec};
 use std::{io, net::TcpStream};
 
 pub struct Connection<R, W> {
-    read: R,
     write: W,
-    line_buf: Vec<u8>,
+    line_reader: git_packetline::Reader<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     protocol: Protocol,
@@ -58,14 +57,19 @@ where
             self.virtual_host.as_ref(),
         ))?;
         self.write.flush()?;
-        let mut rd = git_packetline::read::borrowed::Reader::new(&mut self.read, &mut self.line_buf, None);
-        let line = rd
+        let capabilities = self
+            .line_reader
             .peek_line()
             .ok_or(crate::client::Error::ExpectedLine("capabilities or version"))???;
 
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
-            capabilities: Capabilities::try_from(&b"tbd"[..])?,
+            capabilities: Capabilities::try_from(
+                capabilities
+                    .to_text()
+                    .ok_or(crate::client::Error::ExpectedDataLine)?
+                    .as_slice(),
+            )?,
             refs: None, // TODO
         })
     }
@@ -84,9 +88,8 @@ where
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
     ) -> Self {
         Connection {
-            read,
             write,
-            line_buf: Vec::new(),
+            line_reader: git_packetline::Reader::new(read, None),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             protocol: desired_version,

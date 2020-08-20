@@ -99,6 +99,12 @@ impl<'a> From<&'a [u8]> for Text<'a> {
 }
 
 impl<'a> Text<'a> {
+    pub fn as_slice(&self) -> &[u8] {
+        self.0
+    }
+    pub fn as_bstr(&self) -> &BStr {
+        self.0.into()
+    }
     pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
         encode::text_to_write(self.0, out)
     }
