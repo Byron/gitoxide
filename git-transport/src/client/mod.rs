@@ -93,12 +93,12 @@ quick_error! {
     }
 }
 
-pub struct SetServiceResponse {
+pub struct SetServiceResponse<'a> {
     /// The protocol the service can provide. May be different from the requested one
     pub actual_protocol: Protocol,
     pub capabilities: Capabilities,
     /// In protocol version one, this is set to a list of refs and their peeled counterparts.
-    pub refs: Option<Box<dyn io::BufRead>>,
+    pub refs: Option<&'a mut dyn io::BufRead>,
 }
 
 /// All methods provided here must be called in the correct order according to the communication protocol used to connect to them.
