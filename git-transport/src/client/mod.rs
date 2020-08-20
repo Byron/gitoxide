@@ -11,7 +11,59 @@ pub mod ssh;
 #[doc(inline)]
 pub use connect::connect;
 
-pub type Capabilities = Vec<String>;
+pub mod capabilities {
+    use bstr::{BStr, BString, ByteSlice};
+    use quick_error::quick_error;
+    use std::convert::TryFrom;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            MissingDelimitingNullByte {
+                display("Capabilities were missing entirely as there was no 0 byte")
+            }
+            NoCapabilities {
+                display("there was not a single capability behind the delimiter")
+            }
+        }
+    }
+    pub struct Capabilities(BString);
+    pub struct Capability<'a>(&'a BStr);
+
+    impl<'a> Capability<'a> {
+        pub fn name(&self) -> &BStr {
+            self.0
+                .splitn(2, |b| *b == b'=')
+                .next()
+                .expect("there is always a single item")
+                .as_bstr()
+        }
+        pub fn value(&self) -> Option<&BStr> {
+            self.0.splitn(2, |b| *b == b'=').skip(1).next().map(|s| s.as_bstr())
+        }
+    }
+
+    impl Capabilities {
+        pub fn iter(&self) -> impl Iterator<Item = Capability> {
+            self.0.split(|b| *b == b' ').map(|c| Capability(c.as_bstr()))
+        }
+    }
+
+    impl TryFrom<&[u8]> for Capabilities {
+        type Error = Error;
+
+        fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+            let delimiter = value.find_byte(0).ok_or(Error::MissingDelimitingNullByte)?;
+            if delimiter + 1 == value.len() {
+                return Err(Error::NoCapabilities);
+            }
+            let capabilities = &value[delimiter + 1..];
+            Ok(Capabilities(capabilities.as_bstr().to_owned()))
+        }
+    }
+}
+pub use capabilities::Capabilities;
+
 pub type Refs = Vec<String>;
 
 quick_error! {
@@ -19,6 +71,11 @@ quick_error! {
     pub enum Error {
         Io(err: io::Error) {
             display("An IO error occurred when talking to the server")
+            from()
+            source(err)
+        }
+        Capabilities(err: capabilities::Error) {
+            display("Capabilities could not be parsed")
             from()
             source(err)
         }

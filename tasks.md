@@ -17,6 +17,7 @@
       * [x] Allow peeking one line
     * [x] `Write` with packet line encoding
   * **git-transport**
+    * [x] parse capabilities
     * [ ] git://git-upload-pack
       * [ ] handshake
       * [ ] receive V1 response

@@ -60,8 +60,8 @@ where
 
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
-            capabilities: vec![],          // TODO
-            refs: None,                    // TODO
+            capabilities: Capabilities::try_from(&b"tbd"[..])?,
+            refs: None, // TODO
         })
     }
 }
@@ -88,7 +88,9 @@ where
     }
 }
 
+use crate::client::Capabilities;
 use quick_error::quick_error;
+use std::convert::TryFrom;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
