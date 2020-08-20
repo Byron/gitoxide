@@ -5,6 +5,7 @@ use std::{io, net::TcpStream};
 pub struct Connection<R, W> {
     read: R,
     write: W,
+    line_buf: Vec<u8>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     protocol: Protocol,
@@ -57,6 +58,10 @@ where
             self.virtual_host.as_ref(),
         ))?;
         self.write.flush()?;
+        let mut rd = git_packetline::read::borrowed::Reader::new(&mut self.read, &mut self.line_buf, None);
+        let line = rd
+            .peek_line()
+            .ok_or(crate::client::Error::ExpectedLine("capabilities or version"))???;
 
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
@@ -81,6 +86,7 @@ where
         Connection {
             read,
             write,
+            line_buf: Vec::new(),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             protocol: desired_version,

@@ -79,6 +79,14 @@ quick_error! {
             from()
             source(err)
         }
+        LineDecode(err: git_packetline::decode::Error) {
+            display("A packet line could not be decoded")
+            from()
+            source(err)
+        }
+        ExpectedLine(message: &'static str) {
+            display("A {} line was expected, but there was none", message)
+        }
     }
 }
 
