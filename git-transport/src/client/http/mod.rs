@@ -43,7 +43,7 @@ trait Http {
 }
 
 #[cfg(feature = "http-client-curl")]
-type HttpImpl = curl::CurlHttp;
+type HttpImpl = curl::Http;
 
 pub struct Transport {
     url: String,
