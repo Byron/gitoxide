@@ -5,7 +5,7 @@ use std::io;
 pub mod connect;
 pub mod file;
 pub mod git;
-#[cfg(feature = "http-curl")]
+#[cfg(feature = "http-client-curl")]
 pub mod http;
 pub mod ssh;
 #[doc(inline)]

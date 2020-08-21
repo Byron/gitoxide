@@ -22,6 +22,9 @@
       * [x] V1 handshake
       * [ ] V2 handshake
     * [ ] http://git-upload-pack
+      * **prerequisites**
+        * [ ] pipe to link writers with readers using bytes
+        * [ ] HTTP trait for simple gets and post implemented for Curl
       * [ ] V1 handshake
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)

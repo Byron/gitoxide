@@ -25,15 +25,15 @@ doctest = false
 [features]
 default = ["max"]
 
-max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "http-curl"]
-max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "http-curl"]
+max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "http-client-curl"]
+max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "http-client-curl"]
 
 lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree"]
 lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree"]
 
 light = ["fast", "lean-cli", "git-features/interrupt-handler"]
 small = ["lean-cli"]
-http-curl = ["git-transport/http-curl"]
+http-client-curl = ["git-transport/http-client-curl"]
 
 fast = ["git-features/parallel", "git-features/fast-sha1"]
 pretty-cli = ["clap",

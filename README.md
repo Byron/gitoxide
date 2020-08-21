@@ -376,7 +376,7 @@ All feature toggles are additive.
     
 ### git-transport
 
-* **http-curl**
+* **http-client-curl**
   * Adds support for the http and https transports using the Rust bindings for `libcurl`
   
 ### Serialization Support

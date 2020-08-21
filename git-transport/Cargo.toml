@@ -13,7 +13,7 @@ doctest = false
 
 [features]
 serde1 = ["serde"]
-http-curl = ["curl"]
+http-client-curl = ["curl"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,5 +26,5 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
-# for http-curl
+# for http-client-curl
 curl = { version = "0.4.31", optional = true, features = ["static-ssl", "static-curl"] }

@@ -22,7 +22,7 @@ quick_error! {
         UnsupportedUrlTokens(url: bstr::BString, scheme: git_url::Protocol) {
             display("The url '{}' contains information that would not be used by the '{}' protocol", url, scheme)
         }
-        #[cfg(not(feature = "http-curl"))]
+        #[cfg(not(feature = "http-client-curl"))]
         CompiledWithoutHttp(scheme: git_url::Protocol) {
             display("'{}' is not compiled in. Compile with the 'http' cargo feature", scheme)
         }
@@ -67,9 +67,9 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }
-        #[cfg(not(feature = "http-curl"))]
+        #[cfg(not(feature = "http-client-curl"))]
         git_url::Protocol::Https | git_url::Protocol::Http => return Err(Error::CompiledWithoutHttp(url.protocol)),
-        #[cfg(feature = "http-curl")]
+        #[cfg(feature = "http-client-curl")]
         git_url::Protocol::Https | git_url::Protocol::Http => Box::new(
             crate::client::http::connect(
                 &url.host.as_ref().expect("host is present in url"),
