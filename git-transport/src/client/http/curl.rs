@@ -8,21 +8,35 @@ struct Handler;
 impl curl::easy::Handler for Handler {}
 
 pub struct CurlHttp {
-    _handle: Easy2<Handler>,
+    handle: Option<Easy2<Handler>>,
+}
+
+impl CurlHttp {
+    pub fn new() -> Self {
+        CurlHttp {
+            handle: Some(Easy2::new(Handler)),
+        }
+    }
 }
 
 impl Http for CurlHttp {
-    type Response = pipe::Reader;
+    type Headers = pipe::Iter<Vec<u8>>;
+    type ResponseBody = pipe::Reader;
 
-    fn get(_url: &str, _headers: impl Iterator<Item = impl AsRef<str>>) -> Result<Self::Response, Error> {
+    fn get(
+        &mut self,
+        _url: &str,
+        _headers: impl Iterator<Item = impl AsRef<str>>,
+    ) -> Result<(Self::Headers, Self::ResponseBody), Error> {
         unimplemented!()
     }
 
     fn post(
+        &mut self,
         _url: &str,
         _headers: impl Iterator<Item = impl AsRef<str>>,
         _body: impl Read,
-    ) -> Result<Self::Response, Error> {
+    ) -> Result<(Self::Headers, Self::ResponseBody), Error> {
         unimplemented!()
     }
 }

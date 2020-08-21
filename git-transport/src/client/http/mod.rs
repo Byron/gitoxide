@@ -13,14 +13,20 @@ quick_error! {
 pub(crate) mod curl;
 
 trait Http {
-    type Response: io::Read;
+    type Headers: Iterator<Item = Vec<u8>>;
+    type ResponseBody: io::Read;
 
-    fn get(url: &str, headers: impl Iterator<Item = impl AsRef<str>>) -> Result<Self::Response, Error>;
+    fn get(
+        &mut self,
+        url: &str,
+        headers: impl Iterator<Item = impl AsRef<str>>,
+    ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
     fn post(
+        &mut self,
         url: &str,
         headers: impl Iterator<Item = impl AsRef<str>>,
         body: impl io::Read,
-    ) -> Result<Self::Response, Error>;
+    ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
 }
 
 pub struct Transport {}

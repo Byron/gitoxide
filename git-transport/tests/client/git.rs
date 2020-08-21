@@ -88,13 +88,9 @@ mod upload_pack {
     }
 
     #[test]
-    fn upload_pack_clone_v2() {
+    #[ignore]
+    fn tbd_upload_pack_clone_v2() {
         // With port
         // it lists the version in the first line
-    }
-    #[test]
-    #[ignore]
-    fn upload_pack_clone_version_unsupported() {
-        // it replies with version 1, but doesn't list the version number, we can't test it actually, that's alright
     }
 }
