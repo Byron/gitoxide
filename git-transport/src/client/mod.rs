@@ -84,6 +84,11 @@ quick_error! {
         ExpectedDataLine {
             display("Expected a data line, but got a delimiter")
         }
+        Http(err: http::Error) {
+            display("A error specific to the HTTP protocol occurred")
+            from()
+            source(err)
+        }
     }
 }
 

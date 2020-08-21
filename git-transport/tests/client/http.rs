@@ -61,7 +61,6 @@ fn serve_once(name: &str) -> MockServer {
 mod upload_pack {
     use crate::client::http::serve_once;
     use git_transport::Protocol;
-    use std::path::Path;
 
     #[test]
     #[ignore]

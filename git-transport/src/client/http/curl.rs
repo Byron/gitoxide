@@ -26,7 +26,7 @@ impl Http for CurlHttp {
     fn get(
         &mut self,
         _url: &str,
-        _headers: impl Iterator<Item = impl AsRef<str>>,
+        _headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<(Self::Headers, Self::ResponseBody), Error> {
         unimplemented!()
     }
@@ -34,7 +34,7 @@ impl Http for CurlHttp {
     fn post(
         &mut self,
         _url: &str,
-        _headers: impl Iterator<Item = impl AsRef<str>>,
+        _headers: impl IntoIterator<Item = impl AsRef<str>>,
         _body: impl Read,
     ) -> Result<(Self::Headers, Self::ResponseBody), Error> {
         unimplemented!()
