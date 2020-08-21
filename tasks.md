@@ -24,6 +24,7 @@
     * [ ] http://git-upload-pack
       * **prerequisites**
         * [x] pipe to link writers with readers using bytes
+        * [x] piped iterator
         * [ ] HTTP trait for simple gets and post implemented for Curl
       * [ ] V1 handshake
 * **git-refs**
