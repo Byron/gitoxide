@@ -22,16 +22,6 @@ name = "parallel"
 path = "tests/parallel.rs"
 required-features = ["parallel"]
 
-[[test]]
-name = "hash"
-path = "tests/hash.rs"
-required-features = ["fast-sha1"]
-
-[[test]]
-name = "slow-hash"
-path = "tests/hash.rs"
-required-features = []
-
 [dependencies]
 # 'parallel' feature
 crossbeam-utils = { version = "0.7.2", optional = true }
