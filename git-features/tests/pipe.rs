@@ -28,6 +28,19 @@ fn write_failure_propagates() {
 }
 
 #[test]
+fn continue_on_empty_writes() {
+    let (mut writer, mut reader) = pipe::unidirectional(2);
+    writer.write(&[]).expect("write successful and non-blocking");
+    let input = b"hello";
+    writer
+        .write(input)
+        .expect("second write works as well as there is capacity");
+    let mut buf = vec![0u8; input.len()];
+    assert_eq!(reader.read(&mut buf).expect("read succeeds"), input.len());
+    assert_eq!(buf, &input[..]);
+}
+
+#[test]
 fn small_reads() {
     const BLOCK_SIZE: usize = 20;
     let block_count = 20;

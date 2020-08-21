@@ -16,11 +16,9 @@ impl io::Read for Reader {
         let mut written = 0;
         while !out.is_empty() {
             if self.buf.is_empty() {
-                if let Ok(buf) = self.channel.recv() {
-                    self.buf = buf;
-                }
-                if self.buf.is_empty() {
-                    break;
+                match self.channel.recv() {
+                    Ok(buf) => self.buf = buf,
+                    Err(_) => break,
                 }
             }
             let bytes_to_write = self.buf.len().min(out.len());
