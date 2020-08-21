@@ -3,7 +3,7 @@ use std::thread::spawn;
 
 #[test]
 fn threaded() {
-    let (mut write, mut read) = git_features::pipe::unidirectional();
+    let (mut write, mut read) = git_features::pipe::unidirectional(0);
 
     let message = "Hello, world!";
     spawn(move || write.write_all(message.as_bytes()).unwrap());
