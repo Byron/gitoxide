@@ -63,6 +63,7 @@ mod upload_pack {
     use git_transport::{client::TransportSketch, Protocol, Service};
 
     #[test]
+    #[ignore]
     fn clone_v1() -> crate::Result {
         let mut server = serve_once("v1/http-handshake.response");
         let mut c = git_transport::client::http::connect(

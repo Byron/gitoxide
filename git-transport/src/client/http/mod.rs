@@ -1,9 +1,7 @@
 use crate::client::SetServiceResponse;
 use crate::{Protocol, Service};
 use quick_error::quick_error;
-use std::borrow::Cow;
-use std::convert::Infallible;
-use std::io;
+use std::{borrow::Cow, convert::Infallible, io};
 
 quick_error! {
     #[derive(Debug)]
@@ -16,6 +14,7 @@ quick_error! {
         }
     }
 }
+
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
 
@@ -70,7 +69,9 @@ impl crate::client::TransportSketch for Transport {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        self.http
+            .get(&url, static_headers.iter().chain(&dynamic_headers))
+            .map_err(|err| Box::new(err) as Box<dyn std::error::Error>)?;
         unimplemented!("set service http")
     }
 }
