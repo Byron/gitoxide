@@ -19,7 +19,7 @@ impl io::Read for Reader {
                 if let Ok(buf) = self.channel.recv() {
                     self.buf = buf;
                 }
-                if self.buf.len() == 0 {
+                if self.buf.is_empty() {
                     break;
                 }
             }
