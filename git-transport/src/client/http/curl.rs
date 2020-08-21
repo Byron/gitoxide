@@ -3,19 +3,29 @@ use curl::easy::Easy2;
 use git_features::pipe;
 use std::io::Read;
 
-struct Handler;
+#[derive(Default)]
+struct Handler {
+    send_header: Option<std::sync::mpsc::SyncSender<Vec<u8>>>,
+    send_data: Option<pipe::Writer>,
+}
 
 impl curl::easy::Handler for Handler {}
 
 pub struct CurlHttp {
-    handle: Option<Easy2<Handler>>,
+    handle: Easy2<Handler>,
 }
 
 impl CurlHttp {
     pub fn new() -> Self {
         CurlHttp {
-            handle: Some(Easy2::new(Handler)),
+            handle: Easy2::new(Handler::default()),
         }
+    }
+}
+
+impl From<curl::Error> for Error {
+    fn from(err: curl::Error) -> Self {
+        Error::Detail(err.to_string())
     }
 }
 
@@ -25,10 +35,22 @@ impl Http for CurlHttp {
 
     fn get(
         &mut self,
-        _url: &str,
-        _headers: impl IntoIterator<Item = impl AsRef<str>>,
+        url: &str,
+        headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<(Self::Headers, Self::ResponseBody), Error> {
-        unimplemented!()
+        self.handle.url(url)?;
+        let mut list = curl::easy::List::new();
+        for header in headers {
+            list.append(header.as_ref())?;
+        }
+        self.handle.http_headers(list)?;
+
+        let (send, receive_data) = pipe::unidirectional(1);
+        self.handle.get_mut().send_data = Some(send);
+        let (send, receive_headers) = pipe::iter(1);
+        self.handle.get_mut().send_header = Some(send);
+
+        Ok((receive_headers, receive_data))
     }
 
     fn post(

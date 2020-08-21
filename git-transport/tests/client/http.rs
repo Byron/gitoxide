@@ -60,19 +60,19 @@ fn serve_once(name: &str) -> MockServer {
 
 mod upload_pack {
     use crate::client::http::serve_once;
-    use git_transport::Protocol;
+    use git_transport::{client::TransportSketch, Protocol, Service};
 
     #[test]
-    #[ignore]
     fn clone_v1() -> crate::Result {
         let mut server = serve_once("v1/http-handshake.response");
-        let c = git_transport::client::http::connect(
+        let mut c = git_transport::client::http::connect(
             &format!(
                 "http://{}/path/not/important/due/to/mock",
                 &server.addr().ip().to_string()
             ),
             Protocol::V1,
         )?;
+        let _response = c.set_service(Service::UploadPack)?;
         assert_eq!(&server.received_as_string(), "hello");
         Ok(())
     }
