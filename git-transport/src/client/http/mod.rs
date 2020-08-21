@@ -1,5 +1,7 @@
+use crate::client::SetServiceResponse;
+use crate::Service;
 use quick_error::quick_error;
-use std::{io, path::Path};
+use std::io;
 
 quick_error! {
     #[derive(Debug)]
@@ -29,17 +31,27 @@ trait Http {
     ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
 }
 
-pub struct Transport {}
+#[cfg(feature = "http-client-curl")]
+type HttpImpl = curl::CurlHttp;
+
+pub struct Transport {
+    url: String,
+    version: crate::Protocol,
+    http: HttpImpl,
+}
 
 impl crate::client::Transport for Transport {}
 
-pub fn connect(
-    _host: &str,
-    _path: &Path,
-    _version: crate::Protocol,
-    _user: Option<&str>,
-    _port: Option<u16>,
-    _secure: bool,
-) -> Result<Transport, Error> {
-    unimplemented!("file connection")
+impl crate::client::TransportSketch for Transport {
+    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse<'static>, crate::client::Error> {
+        unimplemented!("set service http")
+    }
+}
+
+pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport, Error> {
+    Ok(Transport {
+        url: url.to_owned(),
+        version,
+        http: HttpImpl::new(),
+    })
 }

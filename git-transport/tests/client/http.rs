@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 struct MockServer {
-    addr: String,
+    addr: SocketAddr,
     thread: Option<std::thread::JoinHandle<Vec<u8>>>,
 }
 
@@ -19,7 +19,7 @@ impl MockServer {
                 .as_slice(),
         )
         .expect("one of these ports to be free");
-        let addr = listener.local_addr().expect("a local address").to_string();
+        let addr = listener.local_addr().expect("a local address");
         MockServer {
             addr,
             thread: Some(std::thread::spawn(move || {
@@ -45,8 +45,8 @@ impl MockServer {
             .expect("join to be called only once")
     }
 
-    pub fn addr(&self) -> &str {
-        self.addr.as_str()
+    pub fn addr(&self) -> &SocketAddr {
+        &self.addr
     }
 
     pub fn received_as_string(&mut self) -> String {
@@ -58,14 +58,23 @@ fn serve_once(name: &str) -> MockServer {
     MockServer::new(fixture_bytes(name))
 }
 
-mod curl {
+mod upload_pack {
     use crate::client::http::serve_once;
+    use git_transport::Protocol;
+    use std::path::Path;
 
     #[test]
     #[ignore]
-    fn http_get_with_headers() {
+    fn clone_v1() -> crate::Result {
         let mut server = serve_once("v1/http-handshake.response");
-
+        let c = git_transport::client::http::connect(
+            &format!(
+                "http://{}/path/not/important/due/to/mock",
+                &server.addr().ip().to_string()
+            ),
+            Protocol::V1,
+        )?;
         assert_eq!(&server.received_as_string(), "hello");
+        Ok(())
     }
 }

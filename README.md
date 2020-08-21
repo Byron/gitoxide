@@ -128,6 +128,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 ### git-transport
   * [ ] general purpose `connect(…)` for clients
     * [ ] `git-config` support for configuring the actual connections using git compatible configuration read via configuration files
+    * [ ] authentication
   * [ ] general purpose `accept(…)` for servers
   * [ ] **initiate connection(s)**
     * [ ] **file** - directly via git-upload-pack
