@@ -1,5 +1,5 @@
 use crate::{client::SetServiceResponse, Protocol, Service};
-use bstr::{BString, ByteVec};
+use bstr::BString;
 use std::{io, net::TcpStream};
 
 pub struct Connection<R, W> {
@@ -17,50 +17,47 @@ where
 {
 }
 
-pub fn connect_message(
-    service: Service,
-    version: Protocol,
-    path: &[u8],
-    virtual_host: Option<&(String, Option<u16>)>,
-) -> BString {
-    let mut out = bstr::BString::from(service.as_str());
-    out.push(b' ');
-    out.extend_from_slice(&path);
-    out.push(0);
-    if let Some((host, port)) = virtual_host {
-        out.push_str("host=");
-        out.extend_from_slice(host.as_bytes());
-        if let Some(port) = port {
-            out.push_byte(b':');
-            out.push_str(&format!("{}", port));
+pub mod message {
+    use crate::{Protocol, Service};
+    use bstr::{BString, ByteVec};
+
+    pub fn connect(
+        service: Service,
+        version: Protocol,
+        path: &[u8],
+        virtual_host: Option<&(String, Option<u16>)>,
+    ) -> BString {
+        let mut out = bstr::BString::from(service.as_str());
+        out.push(b' ');
+        out.extend_from_slice(&path);
+        out.push(0);
+        if let Some((host, port)) = virtual_host {
+            out.push_str("host=");
+            out.extend_from_slice(host.as_bytes());
+            if let Some(port) = port {
+                out.push_byte(b':');
+                out.push_str(&format!("{}", port));
+            }
+            out.push(0);
         }
-        out.push(0);
+        if version != Protocol::V1 {
+            out.push(0);
+            out.push_str(format!("version={}", version as usize));
+            out.push(0);
+        }
+        out
     }
-    if version != Protocol::V1 {
-        out.push(0);
-        out.push_str(format!("version={}", version as usize));
-        out.push(0);
-    }
-    out
 }
 
-impl<R, W> crate::client::TransportSketch for Connection<R, W>
-where
-    R: io::Read,
-    W: io::Write,
-{
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
-        self.write.write_all(&connect_message(
-            service,
-            self.protocol,
-            &self.path,
-            self.virtual_host.as_ref(),
-        ))?;
-        self.write.flush()?;
+pub(crate) mod recv {
+    use crate::client::Capabilities;
+    use std::io;
 
-        self.line_reader.fail_on_err_lines(true);
-        let capabilities = self
-            .line_reader
+    pub fn capabilties_and_possibly_refs<'a, T: io::Read>(
+        rd: &'a mut git_packetline::Reader<T>,
+    ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>), crate::client::Error> {
+        rd.fail_on_err_lines(true);
+        let capabilities = rd
             .peek_line()
             .ok_or(crate::client::Error::ExpectedLine("capabilities or version"))???;
         let (capabilities, delimiter_position) = Capabilities::from_bytes(
@@ -69,12 +66,30 @@ where
                 .ok_or(crate::client::Error::ExpectedDataLine)?
                 .as_slice(),
         )?;
-        self.line_reader
-            .peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+        rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+        Ok((capabilities, Some(Box::new(rd.as_read()))))
+    }
+}
+
+impl<R, W> crate::client::TransportSketch for Connection<R, W>
+where
+    R: io::Read,
+    W: io::Write,
+{
+    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
+        self.write.write_all(&message::connect(
+            service,
+            self.protocol,
+            &self.path,
+            self.virtual_host.as_ref(),
+        ))?;
+        self.write.flush()?;
+
+        let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_reader)?;
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
             capabilities,
-            refs: Some(Box::new(self.line_reader.as_read())),
+            refs,
         })
     }
 }
@@ -101,7 +116,6 @@ where
     }
 }
 
-use crate::client::Capabilities;
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]

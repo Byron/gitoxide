@@ -4,21 +4,21 @@ mod connect_message {
     #[test]
     fn version_1_without_host_and_version() {
         assert_eq!(
-            git::connect_message(Service::UploadPack, Protocol::V1, b"hello/world", None),
+            git::message::connect(Service::UploadPack, Protocol::V1, b"hello/world", None),
             "git-upload-pack hello/world\0"
         )
     }
     #[test]
     fn version_2_without_host_and_version() {
         assert_eq!(
-            git::connect_message(Service::UploadPack, Protocol::V2, b"hello\\world", None),
+            git::message::connect(Service::UploadPack, Protocol::V2, b"hello\\world", None),
             "git-upload-pack hello\\world\0\0version=2\0"
         )
     }
     #[test]
     fn with_host_without_port() {
         assert_eq!(
-            git::connect_message(
+            git::message::connect(
                 Service::UploadPack,
                 Protocol::V1,
                 b"hello\\world",
@@ -30,7 +30,7 @@ mod connect_message {
     #[test]
     fn with_host_with_port() {
         assert_eq!(
-            git::connect_message(
+            git::message::connect(
                 Service::UploadPack,
                 Protocol::V1,
                 b"hello\\world",
