@@ -16,11 +16,17 @@ parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus"]
 fast-sha1 = ["fastsha1"]
 interrupt-handler = ["ctrlc"]
 disable-interrupts = []
+pipe = ["bytes"]
 
 [[test]]
 name = "parallel"
 path = "tests/parallel.rs"
 required-features = ["parallel"]
+
+[[test]]
+name = "pipe"
+path = "tests/pipe.rs"
+required-features = ["pipe"]
 
 [dependencies]
 # 'parallel' feature
@@ -38,6 +44,9 @@ prodash = { version = "9.0.0", default-features = false, features = ["unit-bytes
 
 # interrupt-handler
 ctrlc = { version = "3.1.4", optional = true, default-features = false, features = ['termination'] }
+
+# pipe
+bytes = { version = "0.5.6", optional = true }
 
 [package.metadata.docs.rs]
 all-features = true

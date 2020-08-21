@@ -1,16 +1,16 @@
 use std::io;
 
-pub struct PipeWriter;
+pub struct Writer;
 
-pub struct PipeReader;
+pub struct Reader;
 
-impl io::Read for PipeReader {
+impl io::Read for Reader {
     fn read(&mut self, _buf: &mut [u8]) -> io::Result<usize> {
         unimplemented!()
     }
 }
 
-impl io::Write for PipeWriter {
+impl io::Write for Writer {
     fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
         unimplemented!()
     }
@@ -20,6 +20,6 @@ impl io::Write for PipeWriter {
     }
 }
 
-pub fn _unidirectional() -> (PipeWriter, PipeReader) {
+pub fn unidirectional() -> (Writer, Reader) {
     unimplemented!("unidirectional pipe")
 }

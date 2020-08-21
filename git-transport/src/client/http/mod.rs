@@ -11,8 +11,6 @@ quick_error! {
 }
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
-#[cfg(feature = "http-client-curl")]
-pub(crate) mod pipe;
 
 trait Http {
     type Response: io::Read;

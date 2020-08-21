@@ -1,5 +1,6 @@
-use crate::client::http::{pipe::PipeReader, Error, Http};
+use crate::client::http::{Error, Http};
 use curl::easy::Easy2;
+use git_features::pipe;
 use std::io::Read;
 
 struct Handler;
@@ -11,7 +12,7 @@ pub struct CurlHttp {
 }
 
 impl Http for CurlHttp {
-    type Response = PipeReader;
+    type Response = pipe::Reader;
 
     fn get(_url: &str, _headers: impl Iterator<Item = impl AsRef<str>>) -> Result<Self::Response, Error> {
         unimplemented!()

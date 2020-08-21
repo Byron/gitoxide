@@ -373,6 +373,8 @@ All feature toggles are additive.
     * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all,
     * this facility is a global one.
     * Probably useful for server implementations.
+* **pipe**
+  * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
     
 ### git-transport
 
