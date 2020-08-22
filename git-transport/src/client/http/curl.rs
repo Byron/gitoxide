@@ -1,18 +1,97 @@
 use crate::client::http;
 use curl::easy::Easy2;
 use git_features::pipe;
-use std::io::Read;
+use std::{
+    io,
+    io::Read,
+    sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError},
+};
 
 #[derive(Default)]
 struct Handler {
     send_header: Option<pipe::Writer>,
     send_data: Option<pipe::Writer>,
+    receive_body: Option<pipe::Reader>,
 }
 
 impl curl::easy::Handler for Handler {}
 
 pub struct Curl {
     handle: Easy2<Handler>,
+}
+
+struct Request {
+    url: String,
+    headers: curl::easy::List,
+}
+
+struct Response {
+    headers: pipe::Reader,
+    body: pipe::Reader,
+    upload_body: pipe::Writer,
+}
+
+fn new_remote_curl() -> (
+    std::thread::JoinHandle<Result<(), curl::Error>>,
+    SyncSender<Request>,
+    Receiver<Response>,
+) {
+    let (req_send, req_recv) = sync_channel(0);
+    let (res_send, res_recv) = sync_channel(0);
+    let handle = std::thread::spawn(move || -> Result<(), curl::Error> {
+        let mut handle = Easy2::new(Handler::default());
+        for Request { url, headers } in req_recv {
+            handle.url(&url)?;
+            handle.http_headers(headers)?;
+
+            let (receive_data, receive_headers, send_body) = {
+                let handler = handle.get_mut();
+                let (send, receive_data) = pipe::unidirectional(1);
+                handler.send_data = Some(send);
+                let (send, receive_headers) = pipe::unidirectional(1);
+                handler.send_header = Some(send);
+                let (send_body, receive_body) = pipe::unidirectional(None);
+                handler.receive_body = Some(receive_body);
+                (receive_data, receive_headers, send_body)
+            };
+
+            if let Err(err) = handle.perform() {
+                let handler = handle.get_mut();
+                let err = Err(io::Error::new(io::ErrorKind::Other, err));
+                handler.receive_body.take();
+                if let Some(header) = handler.send_header.take() {
+                    match header.channel.try_send(err) {
+                        Ok(_) => {
+                            handler.send_data.take();
+                        }
+                        Err(TrySendError::Disconnected(err)) | Err(TrySendError::Full(err)) => {
+                            if let Some(body) = handler.send_data.take() {
+                                body.channel.try_send(err).ok();
+                            }
+                        }
+                    }
+                }
+            } else {
+                let handler = handle.get_mut();
+                handler.receive_body.take();
+                handler.send_header.take();
+                handler.send_data.take();
+            }
+
+            if res_send
+                .send(Response {
+                    headers: receive_headers,
+                    body: receive_data,
+                    upload_body: send_body,
+                })
+                .is_err()
+            {
+                break;
+            }
+        }
+        Ok(())
+    });
+    (handle, req_send, res_recv)
 }
 
 impl Curl {
