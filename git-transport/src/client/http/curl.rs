@@ -176,30 +176,7 @@ impl crate::client::http::Http for Curl {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<(Self::Headers, Self::ResponseBody), http::Error> {
-        let mut list = curl::easy::List::new();
-        for header in headers {
-            list.append(header.as_ref())?;
-        }
-        if self
-            .req
-            .send(Request {
-                url: url.to_owned(),
-                headers: list,
-            })
-            .is_err()
-        {
-            return Err(self.restore_thread_after_failure());
-        }
-        let Response {
-            headers,
-            body,
-            upload_body: _,
-        } = match self.res.recv() {
-            Ok(res) => res,
-            Err(_) => return Err(self.restore_thread_after_failure()),
-        };
-
-        Ok((headers, body))
+        self.make_request(url, headers, None::<std::fs::File>)
     }
 
     fn post(
