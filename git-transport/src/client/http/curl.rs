@@ -18,10 +18,14 @@ struct Handler {
 impl curl::easy::Handler for Handler {
     fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
         drop(self.send_header.take()); // signal header readers to stop trying
-        match self.send_data.as_mut() {
+        use bstr::ByteSlice;
+        eprintln!("DATA: {}", data.as_bstr());
+        let res = match self.send_data.as_mut() {
             Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
             None => Ok(0), // abort
-        }
+        };
+        dbg!(data.len());
+        dbg!(res)
     }
     fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
         match self.receive_body.as_mut() {
@@ -31,6 +35,8 @@ impl curl::easy::Handler for Handler {
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
+        use bstr::ByteSlice;
+        eprintln!("HEADER: {}", data.as_bstr());
         match self.send_header.as_mut() {
             Some(writer) => writer.write_all(data).is_ok(),
             None => false,
@@ -63,7 +69,6 @@ impl Curl {
         for header in headers {
             list.append(header.as_ref())?;
         }
-        eprintln!("sending request");
         if self
             .req
             .send(Request {
@@ -74,7 +79,6 @@ impl Curl {
         {
             return Err(self.restore_thread_after_failure());
         }
-        eprintln!("receiving handler response");
         let Response {
             headers,
             body,
@@ -83,7 +87,6 @@ impl Curl {
             Ok(res) => res,
             Err(_) => return Err(self.restore_thread_after_failure()),
         };
-        eprintln!("done with work assignment");
         Ok(http::PostResponse {
             post_body: upload_body,
             headers,
