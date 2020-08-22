@@ -35,7 +35,6 @@ where
     }
 
     pub fn reset(&mut self) {
-        debug_assert!(self.is_done, "reset is only effective if we are actually done");
         self.reset_with(self.delimiter);
     }
 
@@ -151,12 +150,24 @@ where
 
 type ProgressAndParser<P> = (P, fn(&[u8]) -> Option<RemoteProgress>);
 
-pub struct ReadWithProgress<'a, T, P> {
+pub struct ReadWithProgress<'a, T, P>
+where
+    T: io::Read,
+{
     parent: &'a mut Reader<T>,
     progress_and_parse: Option<ProgressAndParser<P>>,
     buf: Vec<u8>,
     pos: usize,
     cap: usize,
+}
+
+impl<'a, T, P> Drop for ReadWithProgress<'a, T, P>
+where
+    T: io::Read,
+{
+    fn drop(&mut self) {
+        self.parent.reset();
+    }
 }
 
 impl<'a, T> ReadWithProgress<'a, T, progress::Discard>
