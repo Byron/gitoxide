@@ -1,7 +1,6 @@
-use crate::client::SetServiceResponse;
+use crate::client::{git, SetServiceResponse};
 use crate::{Protocol, Service};
 use quick_error::quick_error;
-use std::io::BufRead;
 use std::{borrow::Cow, convert::Infallible, io};
 
 quick_error! {
@@ -87,18 +86,26 @@ impl crate::client::TransportSketch for Transport {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
-        eprintln!("HEADERS");
-        for header in headers.lines() {
-            let header = header?;
-            eprintln!("{}", header);
-        }
-        eprintln!("BODY");
-        for line in body.lines() {
-            let line = line?;
-            eprintln!("{}", line);
-        }
-        unimplemented!("set service http")
+        let GetResponse { mut headers, mut body } =
+            self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        io::copy(&mut headers, &mut io::stderr())?;
+
+        // TODO: keep it around, it's expensive
+        let mut rd = git_packetline::Reader::new(&mut body, None);
+        let _service = rd
+            .read_line()
+            .ok_or(crate::client::Error::ExpectedLine("server marker"))???; // TODO: verify this line
+        dbg!(_service.as_bstr());
+        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut rd)?;
+        Ok(SetServiceResponse {
+            actual_protocol: Protocol::V1, // TODO
+            capabilities,
+            refs: refs.map(|mut r| {
+                let mut v = Vec::new();
+                io::copy(&mut r, &mut v).ok();
+                Box::new(io::Cursor::new(v)) as Box<dyn io::BufRead>
+            }),
+        })
     }
 }
 
