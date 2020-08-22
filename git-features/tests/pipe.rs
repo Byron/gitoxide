@@ -1,6 +1,6 @@
 mod io {
     use git_features::pipe;
-    use std::io::{ErrorKind, Read, Write};
+    use std::io::{BufRead, ErrorKind, Read, Write};
 
     #[test]
     fn threaded_read_to_end() {
@@ -20,11 +20,61 @@ mod io {
     }
 
     #[test]
-    fn write_failure_propagates() {
+    fn lack_of_reader_fails_with_broken_pipe() {
         let (mut writer, _) = pipe::unidirectional(None);
         assert_eq!(
             writer.write_all(b"must fail").unwrap_err().kind(),
             ErrorKind::BrokenPipe
+        );
+    }
+    #[test]
+    fn line_reading_one_by_one() {
+        let (mut writer, mut reader) = pipe::unidirectional(2);
+        writer.write_all(b"a\n").expect("success");
+        writer.write_all(b"b\nc").expect("success");
+        drop(writer);
+        let mut buf = String::new();
+        for expected in &["a\n", "b\n", "c"] {
+            buf.clear();
+            assert_eq!(reader.read_line(&mut buf).expect("success"), expected.len());
+            assert_eq!(buf, *expected);
+        }
+    }
+
+    #[test]
+    fn line_reading() {
+        let (mut writer, reader) = pipe::unidirectional(2);
+        writer.write_all(b"a\n").expect("success");
+        writer.write_all(b"b\nc\n").expect("success");
+        drop(writer);
+        assert_eq!(
+            reader.lines().flat_map(Result::ok).collect::<Vec<_>>(),
+            vec!["a", "b", "c"]
+        )
+    }
+
+    #[test]
+    fn writer_can_inject_errors() {
+        let (writer, mut reader) = pipe::unidirectional(1);
+        writer
+            .channel
+            .send(Err(std::io::Error::new(std::io::ErrorKind::Other, "the error")))
+            .expect("send success");
+        let mut buf = [0];
+        assert_eq!(
+            reader.read(&mut buf).unwrap_err().to_string(),
+            "the error",
+            "using Read trait, errors are propagated"
+        );
+
+        writer
+            .channel
+            .send(Err(std::io::Error::new(std::io::ErrorKind::Other, "the error")))
+            .expect("send success");
+        assert_eq!(
+            reader.fill_buf().unwrap_err().to_string(),
+            "the error",
+            "using BufRead trait, errors are propagated"
         );
     }
 

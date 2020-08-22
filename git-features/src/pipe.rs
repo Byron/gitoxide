@@ -18,7 +18,7 @@ mod io {
                 match self.channel.recv() {
                     Ok(Ok(buf)) => self.buf = buf,
                     Ok(Err(err)) => return Err(err),
-                    Err(_) => return Err(io::Error::new(io::ErrorKind::BrokenPipe, "read on a closed channel")),
+                    Err(_) => {}
                 }
             };
             Ok(&self.buf)
