@@ -11,6 +11,11 @@ pub mod ssh;
 #[doc(inline)]
 pub use connect::connect;
 
+#[cfg(feature = "http-client-curl")]
+type HttpError = http::Error;
+#[cfg(not(feature = "http-client-curl"))]
+type HttpError = std::convert::Infallible;
+
 pub mod capabilities {
     use bstr::{BStr, BString, ByteSlice};
     use quick_error::quick_error;
@@ -84,10 +89,9 @@ quick_error! {
         ExpectedDataLine {
             display("Expected a data line, but got a delimiter")
         }
-        Http(err: Box<dyn std::error::Error>) {
-            display("A error specific to the HTTP protocol occurred")
+        Http(err: HttpError) {
+            display("A error specific to the HTTP protocol occurred: {}", err)
             from()
-            source(&**err)
         }
     }
 }

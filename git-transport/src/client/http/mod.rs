@@ -69,9 +69,7 @@ impl crate::client::TransportSketch for Transport {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        self.http
-            .get(&url, static_headers.iter().chain(&dynamic_headers))
-            .map_err(|err| Box::new(err) as Box<dyn std::error::Error>)?;
+        self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
         unimplemented!("set service http")
     }
 }
