@@ -34,6 +34,7 @@ impl MockServer {
             stream.read_to_end(&mut out).ok();
             stream.write_all(&fixture).expect("write to always work");
             stream.flush().expect("flush to work");
+            eprintln!("flushing and done");
             out
         });
         is_ready.recv().expect("someone sending eventually");

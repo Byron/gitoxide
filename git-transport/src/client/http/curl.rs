@@ -63,6 +63,7 @@ impl Curl {
         for header in headers {
             list.append(header.as_ref())?;
         }
+        eprintln!("sending request");
         if self
             .req
             .send(Request {
@@ -73,6 +74,7 @@ impl Curl {
         {
             return Err(self.restore_thread_after_failure());
         }
+        eprintln!("receiving handler response");
         let Response {
             headers,
             body,
@@ -81,6 +83,7 @@ impl Curl {
             Ok(res) => res,
             Err(_) => return Err(self.restore_thread_after_failure()),
         };
+        eprintln!("done with work assignment");
         Ok(http::PostResponse {
             post_body: upload_body,
             headers,
@@ -139,6 +142,17 @@ fn new_remote_curl() -> (
                 (receive_data, receive_headers, send_body)
             };
 
+            if res_send
+                .send(Response {
+                    headers: receive_headers,
+                    body: receive_data,
+                    upload_body: send_body,
+                })
+                .is_err()
+            {
+                break;
+            }
+
             if let Err(err) = handle.perform() {
                 let handler = handle.get_mut();
                 let err = Err(io::Error::new(io::ErrorKind::Other, err));
@@ -163,17 +177,6 @@ fn new_remote_curl() -> (
                 handler.receive_body.take();
                 handler.send_header.take();
                 handler.send_data.take();
-            }
-
-            if res_send
-                .send(Response {
-                    headers: receive_headers,
-                    body: receive_data,
-                    upload_body: send_body,
-                })
-                .is_err()
-            {
-                break;
             }
         }
         Ok(())
