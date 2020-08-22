@@ -33,14 +33,49 @@ impl Curl {
         }
     }
 
+    fn make_request(
+        &mut self,
+        url: &str,
+        headers: impl IntoIterator<Item = impl AsRef<str>>,
+        post_body: Option<impl Read>,
+    ) -> Result<(pipe::Reader, pipe::Reader), http::Error> {
+        let mut list = curl::easy::List::new();
+        for header in headers {
+            list.append(header.as_ref())?;
+        }
+        if self
+            .req
+            .send(Request {
+                url: url.to_owned(),
+                headers: list,
+            })
+            .is_err()
+        {
+            return Err(self.restore_thread_after_failure());
+        }
+        let Response {
+            headers,
+            body,
+            mut upload_body,
+        } = match self.res.recv() {
+            Ok(res) => res,
+            Err(_) => return Err(self.restore_thread_after_failure()),
+        };
+        if let Some(mut body) = post_body {
+            io::copy(&mut body, &mut upload_body)?;
+        }
+
+        Ok((headers, body))
+    }
+
     fn restore_thread_after_failure(&mut self) -> http::Error {
         let err_that_brought_thread_down = self
             .handle
             .take()
-            .expect("thread present")
+            .expect("thread handle present")
             .join()
             .expect("handler thread should never panic")
-            .expect_err("something should have gone wrong with curl");
+            .expect_err("something should have gone wrong with curl (we join on error only)");
         let (handle, req, res) = new_remote_curl();
         self.handle = Some(handle);
         self.req = req;
@@ -57,7 +92,7 @@ struct Request {
 struct Response {
     headers: pipe::Reader,
     body: pipe::Reader,
-    _upload_body: pipe::Writer,
+    upload_body: pipe::Writer,
 }
 
 fn new_remote_curl() -> (
@@ -114,7 +149,7 @@ fn new_remote_curl() -> (
                 .send(Response {
                     headers: receive_headers,
                     body: receive_data,
-                    _upload_body: send_body,
+                    upload_body: send_body,
                 })
                 .is_err()
             {
@@ -158,7 +193,7 @@ impl crate::client::http::Http for Curl {
         let Response {
             headers,
             body,
-            _upload_body: _,
+            upload_body: _,
         } = match self.res.recv() {
             Ok(res) => res,
             Err(_) => return Err(self.restore_thread_after_failure()),

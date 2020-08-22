@@ -26,7 +26,8 @@
         * [x] pipe to link writers with readers using bytes
         * [x] piped iterator
         * [ ] HTTP trait for simple gets and post implemented for Curl
-        * [ ] non-OK is propagated
+        * [x] non-OK is propagated
+        * [ ] timeout configuration
       * [ ] V1 handshake
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)

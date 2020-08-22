@@ -9,6 +9,11 @@ quick_error! {
         Detail(description: String) {
             display("{}", description)
         }
+        PostBody(err: io::Error) {
+            display("An IO error occurred while uploading the body of a POST request")
+            from()
+            source(err)
+        }
     }
 }
 
