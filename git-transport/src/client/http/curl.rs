@@ -1,7 +1,7 @@
 use crate::client::http;
 use curl::easy::Easy2;
 use git_features::pipe;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::{
     io,
     sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError},
@@ -16,13 +16,18 @@ struct Handler {
 }
 
 impl curl::easy::Handler for Handler {
-    fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
+    fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
         drop(self.send_header.take()); // signal header readers to stop trying
         match self.send_data.as_mut() {
-            Some(writer) => writer.write_all(data).map_err(|_| curl::easy::ReadError::Abort)?,
-            None => return Err(curl::easy::ReadError::Abort),
+            Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
+            None => Ok(0), // abort
         }
-        Ok(data.len())
+    }
+    fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
+        match self.receive_body.as_mut() {
+            Some(reader) => reader.read(data).map_err(|_err| curl::easy::ReadError::Abort),
+            None => Err(curl::easy::ReadError::Abort),
+        }
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
