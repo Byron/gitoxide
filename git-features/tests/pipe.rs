@@ -1,16 +1,3 @@
-mod iter {
-    use git_features::pipe;
-
-    #[test]
-    fn iterator_ends_when_sender_is_dropped() {
-        let (send, mut iter) = pipe::iter(1);
-        send.send(1).expect("buffered send successful");
-        assert_eq!(iter.next(), Some(1), "it receives the item");
-        drop(send);
-        assert_eq!(iter.next(), None, "sender is dropped, so no more items for us");
-    }
-}
-
 mod io {
     use git_features::pipe;
     use std::io::{ErrorKind, Read, Write};

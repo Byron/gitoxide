@@ -19,8 +19,8 @@ quick_error! {
 pub(crate) mod curl;
 
 trait Http {
-    type Headers: Iterator<Item = Vec<u8>>;
-    type ResponseBody: io::Read;
+    type Headers: io::BufRead;
+    type ResponseBody: io::BufRead;
 
     fn get(
         &mut self,

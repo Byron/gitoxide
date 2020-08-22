@@ -1,22 +1,3 @@
-mod iter {
-    pub struct Iter<T> {
-        channel: std::sync::mpsc::Receiver<T>,
-    }
-    pub fn iter<T>(in_flight_writes: impl Into<Option<usize>>) -> (std::sync::mpsc::SyncSender<T>, Iter<T>) {
-        let (tx, rx) = std::sync::mpsc::sync_channel(in_flight_writes.into().unwrap_or(0));
-        (tx, Iter { channel: rx })
-    }
-
-    impl<T> Iterator for Iter<T> {
-        type Item = T;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            self.channel.recv().ok()
-        }
-    }
-}
-pub use iter::{iter, Iter};
-
 mod io {
     use bytes::{Buf, BufMut, BytesMut};
     use std::io;

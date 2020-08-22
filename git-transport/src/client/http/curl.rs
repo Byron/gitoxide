@@ -5,7 +5,7 @@ use std::io::Read;
 
 #[derive(Default)]
 struct Handler {
-    send_header: Option<std::sync::mpsc::SyncSender<Vec<u8>>>,
+    send_header: Option<pipe::Writer>,
     send_data: Option<pipe::Writer>,
 }
 
@@ -30,7 +30,7 @@ impl From<curl::Error> for http::Error {
 }
 
 impl crate::client::http::Http for Curl {
-    type Headers = pipe::Iter<Vec<u8>>;
+    type Headers = pipe::Reader;
     type ResponseBody = pipe::Reader;
 
     fn get(
@@ -47,7 +47,7 @@ impl crate::client::http::Http for Curl {
 
         let (send, receive_data) = pipe::unidirectional(1);
         self.handle.get_mut().send_data = Some(send);
-        let (send, receive_headers) = pipe::iter(1);
+        let (send, receive_headers) = pipe::unidirectional(1);
         self.handle.get_mut().send_header = Some(send);
 
         Ok((receive_headers, receive_data))
