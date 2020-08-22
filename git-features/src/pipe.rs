@@ -31,6 +31,22 @@ mod io {
         buf: BytesMut,
     }
 
+    impl io::BufRead for Reader {
+        fn fill_buf(&mut self) -> io::Result<&[u8]> {
+            if self.buf.is_empty() {
+                match self.channel.recv() {
+                    Ok(buf) => self.buf = buf,
+                    Err(_) => return Err(io::Error::new(io::ErrorKind::BrokenPipe, "read on a closed channel")),
+                }
+            };
+            Ok(&self.buf)
+        }
+
+        fn consume(&mut self, amt: usize) {
+            self.buf.advance(amt.min(self.buf.len()));
+        }
+    }
+
     impl io::Read for Reader {
         fn read(&mut self, mut out: &mut [u8]) -> io::Result<usize> {
             let mut written = 0;
