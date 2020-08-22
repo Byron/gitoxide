@@ -28,3 +28,4 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 # for http-client-curl
 curl = { version = "0.4.31", optional = true, features = ["static-ssl", "static-curl"] }
+thiserror = "1.0.20"

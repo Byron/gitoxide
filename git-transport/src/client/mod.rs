@@ -1,5 +1,4 @@
 use crate::{Protocol, Service};
-use quick_error::quick_error;
 use std::io;
 
 pub mod connect;
@@ -63,37 +62,29 @@ pub mod capabilities {
 }
 pub use capabilities::Capabilities;
 
-pub type Refs = Vec<String>;
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: io::Error) {
-            display("An IO error occurred when talking to the server")
-            from()
-            source(err)
-        }
-        Capabilities(err: capabilities::Error) {
-            display("Capabilities could not be parsed")
-            from()
-            source(err)
-        }
-        LineDecode(err: git_packetline::decode::Error) {
-            display("A packet line could not be decoded")
-            from()
-            source(err)
-        }
-        ExpectedLine(message: &'static str) {
-            display("A {} line was expected, but there was none", message)
-        }
-        ExpectedDataLine {
-            display("Expected a data line, but got a delimiter")
-        }
-        Http(err: HttpError) {
-            display("A error specific to the HTTP protocol occurred: {}", err)
-            from()
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("An IO error occurred when talking to the server")]
+    Io {
+        #[from]
+        err: io::Error,
+    },
+    #[error("Capabilities could not be parsed")]
+    Capabilities {
+        #[from]
+        err: capabilities::Error,
+    },
+    #[error("A packet line could not be decoded")]
+    LineDecode {
+        #[from]
+        err: git_packetline::decode::Error,
+    },
+    #[error("A {0} line was expected, but there was none")]
+    ExpectedLine(&'static str),
+    #[error("Expected a data line, but got a delimiter")]
+    ExpectedDataLine,
+    #[error(transparent)]
+    Http(#[from] HttpError),
 }
 
 pub struct SetServiceResponse<'a> {
