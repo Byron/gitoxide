@@ -18,31 +18,25 @@ quick_error! {
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
 
-#[must_use = "`join()` should be called to handle error conditions."]
-trait Joiner {
-    fn join(self) -> Result<(), Error>;
-}
-
 trait Http {
     type Headers: Iterator<Item = Vec<u8>>;
     type ResponseBody: io::Read;
-    type Handle: Joiner;
 
     fn get(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<(Self::Handle, Self::Headers, Self::ResponseBody), Error>;
+    ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
     fn post(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
         body: impl io::Read,
-    ) -> Result<(Self::Handle, Self::Headers, Self::ResponseBody), Error>;
+    ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
 }
 
 #[cfg(feature = "http-client-curl")]
-type HttpImpl = curl::Http;
+type HttpImpl = curl::Curl;
 
 pub struct Transport {
     url: String,

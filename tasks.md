@@ -71,6 +71,10 @@
 
 To be picked in any order….
 
+* **git-odb**
+  * Find errors with `Box<dyn std::error::Error>` fields and see if these could be generic with the use of `thiserror`
+    * [ ] [definitely here](https://github.com/Byron/gitoxide/blob/8f8d14f4606e99dc710eb352a985db48c00ea4f4/git-odb/src/pack/index/traverse/mod.rs#L142)
+    * [ ] _…keep looking…_
 * **prodash**
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
