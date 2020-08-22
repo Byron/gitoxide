@@ -20,21 +20,42 @@ quick_error! {
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
 
+pub struct GetResponse<H, B> {
+    headers: H,
+    body: B,
+}
+
+pub struct PostResponse<H, B, PB> {
+    /// **Note**: Implementations should drop the handle to avoid deadlocks
+    post_body: PB,
+    headers: H,
+    body: B,
+}
+
+impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
+    fn from(v: PostResponse<A, B, C>) -> Self {
+        GetResponse {
+            headers: v.headers,
+            body: v.body,
+        }
+    }
+}
+
 trait Http {
     type Headers: io::BufRead;
     type ResponseBody: io::BufRead;
+    type PostBody: io::Write;
 
     fn get(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
+    ) -> Result<GetResponse<Self::Headers, Self::ResponseBody>, Error>;
     fn post(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
-        body: impl io::Read,
-    ) -> Result<(Self::Headers, Self::ResponseBody), Error>;
+    ) -> Result<PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, Error>;
 }
 
 #[cfg(feature = "http-client-curl")]

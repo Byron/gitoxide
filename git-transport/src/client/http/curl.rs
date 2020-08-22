@@ -3,7 +3,6 @@ use curl::easy::Easy2;
 use git_features::pipe;
 use std::{
     io,
-    io::Read,
     sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError},
     thread,
 };
@@ -37,8 +36,7 @@ impl Curl {
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
-        post_body: Option<impl Read>,
-    ) -> Result<(pipe::Reader, pipe::Reader), http::Error> {
+    ) -> Result<http::PostResponse<pipe::Reader, pipe::Reader, pipe::Writer>, http::Error> {
         let mut list = curl::easy::List::new();
         for header in headers {
             list.append(header.as_ref())?;
@@ -56,16 +54,16 @@ impl Curl {
         let Response {
             headers,
             body,
-            mut upload_body,
+            upload_body,
         } = match self.res.recv() {
             Ok(res) => res,
             Err(_) => return Err(self.restore_thread_after_failure()),
         };
-        if let Some(mut body) = post_body {
-            io::copy(&mut body, &mut upload_body)?;
-        }
-
-        Ok((headers, body))
+        Ok(http::PostResponse {
+            post_body: upload_body,
+            headers,
+            body,
+        })
     }
 
     fn restore_thread_after_failure(&mut self) -> http::Error {
@@ -170,21 +168,21 @@ impl From<curl::Error> for http::Error {
 impl crate::client::http::Http for Curl {
     type Headers = pipe::Reader;
     type ResponseBody = pipe::Reader;
+    type PostBody = pipe::Writer;
 
     fn get(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<(Self::Headers, Self::ResponseBody), http::Error> {
-        self.make_request(url, headers, None::<std::fs::File>)
+    ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
+        self.make_request(url, headers).map(Into::into)
     }
 
     fn post(
         &mut self,
-        _url: &str,
-        _headers: impl IntoIterator<Item = impl AsRef<str>>,
-        _body: impl Read,
-    ) -> Result<(Self::Headers, Self::ResponseBody), http::Error> {
-        unimplemented!()
+        url: &str,
+        headers: impl IntoIterator<Item = impl AsRef<str>>,
+    ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
+        self.make_request(url, headers)
     }
 }
