@@ -31,6 +31,7 @@ impl curl::easy::Handler for Handler {
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
+        // TODO: check for HTTP status!
         match self.send_header.as_mut() {
             Some(writer) => writer.write_all(data).is_ok(),
             None => false,

@@ -8,7 +8,6 @@ pub fn capabilties_and_possibly_refs<'a, T: io::Read>(
     let capabilities = rd
         .peek_line()
         .ok_or(crate::client::Error::ExpectedLine("capabilities or version"))???;
-    dbg!(capabilities);
     let (capabilities, delimiter_position) = Capabilities::from_bytes(
         capabilities
             .to_text()

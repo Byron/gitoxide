@@ -34,7 +34,6 @@ impl MockServer {
             stream.read_to_end(&mut out).ok();
             stream.write_all(&fixture).expect("write to always work");
             stream.flush().expect("flush to work");
-            eprintln!("flushing and done");
             out
         });
         is_ready.recv().expect("someone sending eventually");
@@ -80,7 +79,20 @@ mod upload_pack {
             Protocol::V1,
         )?;
         let _response = c.set_service(Service::UploadPack)?;
-        assert_eq!(&server.received_as_string(), "hello");
+        assert_eq!(
+            server.received_as_string().lines().collect::<Vec<_>>(),
+            format!(
+                "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Accept: */*
+User-Agent: git/oxide-0.1.0
+
+",
+                server.addr.port()
+            )
+            .lines()
+            .collect::<Vec<_>>()
+        );
         Ok(())
     }
 }

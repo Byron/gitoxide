@@ -1,6 +1,7 @@
 use crate::client::{git, SetServiceResponse};
 use crate::{Protocol, Service};
 use quick_error::quick_error;
+use std::io::Read;
 use std::{borrow::Cow, convert::Infallible, io};
 
 quick_error! {
@@ -88,14 +89,14 @@ impl crate::client::TransportSketch for Transport {
         }
         let GetResponse { mut headers, mut body } =
             self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
-        io::copy(&mut headers, &mut io::stderr())?;
+        // TODO: check for Content-Type: application/x-git-upload-pack-advertisement
+        io::copy(&mut headers, &mut io::sink())?;
 
         // TODO: keep it around, it's expensive
         let mut rd = git_packetline::Reader::new(&mut body, None);
-        let _service = rd
-            .read_line()
-            .ok_or(crate::client::Error::ExpectedLine("server marker"))???; // TODO: verify this line
-        dbg!(_service.as_bstr());
+        let mut _service = String::new();
+        rd.as_read().read_to_string(&mut _service)?;
+        dbg!(_service);
         let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut rd)?;
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO
