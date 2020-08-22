@@ -58,6 +58,7 @@ impl Curl {
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
+        upload: bool,
     ) -> Result<http::PostResponse<pipe::Reader, pipe::Reader, pipe::Writer>, http::Error> {
         let mut list = curl::easy::List::new();
         for header in headers {
@@ -68,6 +69,7 @@ impl Curl {
             .send(Request {
                 url: url.to_owned(),
                 headers: list,
+                upload,
             })
             .is_err()
         {
@@ -107,6 +109,7 @@ impl Curl {
 struct Request {
     url: String,
     headers: curl::easy::List,
+    upload: bool,
 }
 
 struct Response {
@@ -128,8 +131,10 @@ fn new_remote_curl() -> (
         handle.transfer_encoding(false)?;
         handle.http_transfer_decoding(false)?;
 
-        for Request { url, headers } in req_recv {
+        for Request { url, headers, upload } in req_recv {
             handle.url(&url)?;
+            handle.upload(upload)?;
+            handle.post(upload)?;
             handle.http_headers(headers)?;
 
             let (receive_data, receive_headers, send_body) = {
@@ -201,7 +206,7 @@ impl crate::client::http::Http for Curl {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
-        self.make_request(url, headers).map(Into::into)
+        self.make_request(url, headers, false).map(Into::into)
     }
 
     fn post(
@@ -209,6 +214,6 @@ impl crate::client::http::Http for Curl {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
-        self.make_request(url, headers)
+        self.make_request(url, headers, true)
     }
 }
