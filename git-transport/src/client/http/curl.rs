@@ -59,18 +59,21 @@ fn new_remote_curl() -> (
                 let handler = handle.get_mut();
                 let err = Err(io::Error::new(io::ErrorKind::Other, err));
                 handler.receive_body.take();
-                if let Some(header) = handler.send_header.take() {
-                    match header.channel.try_send(err) {
-                        Ok(_) => {
-                            handler.send_data.take();
-                        }
-                        Err(TrySendError::Disconnected(err)) | Err(TrySendError::Full(err)) => {
-                            if let Some(body) = handler.send_data.take() {
+                match (handler.send_header.take(), handler.send_data.take()) {
+                    (Some(header), mut data) => {
+                        if let Err(TrySendError::Disconnected(err)) | Err(TrySendError::Full(err)) =
+                            header.channel.try_send(err)
+                        {
+                            if let Some(body) = data.take() {
                                 body.channel.try_send(err).ok();
                             }
                         }
                     }
-                }
+                    (None, Some(body)) => {
+                        body.channel.try_send(err).ok();
+                    }
+                    (None, None) => {}
+                };
             } else {
                 let handler = handle.get_mut();
                 handler.receive_body.take();
