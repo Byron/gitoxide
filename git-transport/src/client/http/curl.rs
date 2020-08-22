@@ -18,14 +18,10 @@ struct Handler {
 impl curl::easy::Handler for Handler {
     fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
         drop(self.send_header.take()); // signal header readers to stop trying
-        use bstr::ByteSlice;
-        eprintln!("DATA: {}", data.as_bstr());
-        let res = match self.send_data.as_mut() {
+        match self.send_data.as_mut() {
             Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
             None => Ok(0), // abort
-        };
-        dbg!(data.len());
-        dbg!(res)
+        }
     }
     fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
         match self.receive_body.as_mut() {
@@ -35,8 +31,6 @@ impl curl::easy::Handler for Handler {
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
-        use bstr::ByteSlice;
-        eprintln!("HEADER: {}", data.as_bstr());
         match self.send_header.as_mut() {
             Some(writer) => writer.write_all(data).is_ok(),
             None => false,
@@ -130,6 +124,10 @@ fn new_remote_curl() -> (
     let (res_send, res_recv) = sync_channel(0);
     let handle = std::thread::spawn(move || -> Result<(), curl::Error> {
         let mut handle = Easy2::new(Handler::default());
+        // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
+        handle.transfer_encoding(false)?;
+        handle.http_transfer_decoding(false)?;
+
         for Request { url, headers } in req_recv {
             handle.url(&url)?;
             handle.http_headers(headers)?;
