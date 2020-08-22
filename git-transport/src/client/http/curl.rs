@@ -5,6 +5,7 @@ use std::{
     io,
     io::Read,
     sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError},
+    thread,
 };
 
 #[derive(Default)]
@@ -17,7 +18,35 @@ struct Handler {
 impl curl::easy::Handler for Handler {}
 
 pub struct Curl {
-    handle: Easy2<Handler>,
+    req: SyncSender<Request>,
+    res: Receiver<Response>,
+    handle: Option<thread::JoinHandle<Result<(), curl::Error>>>,
+}
+
+impl Curl {
+    pub fn new() -> Self {
+        let (handle, req, res) = new_remote_curl();
+        Curl {
+            handle: Some(handle),
+            req,
+            res,
+        }
+    }
+
+    fn restore_thread_after_failure(&mut self) -> http::Error {
+        let err_that_brought_thread_down = self
+            .handle
+            .take()
+            .expect("thread present")
+            .join()
+            .expect("handler thread should never panic")
+            .expect_err("something should have gone wrong with curl");
+        let (handle, req, res) = new_remote_curl();
+        self.handle = Some(handle);
+        self.req = req;
+        self.res = res;
+        return err_that_brought_thread_down.into();
+    }
 }
 
 struct Request {
@@ -28,11 +57,11 @@ struct Request {
 struct Response {
     headers: pipe::Reader,
     body: pipe::Reader,
-    upload_body: pipe::Writer,
+    _upload_body: pipe::Writer,
 }
 
 fn new_remote_curl() -> (
-    std::thread::JoinHandle<Result<(), curl::Error>>,
+    thread::JoinHandle<Result<(), curl::Error>>,
     SyncSender<Request>,
     Receiver<Response>,
 ) {
@@ -85,7 +114,7 @@ fn new_remote_curl() -> (
                 .send(Response {
                     headers: receive_headers,
                     body: receive_data,
-                    upload_body: send_body,
+                    _upload_body: send_body,
                 })
                 .is_err()
             {
@@ -95,14 +124,6 @@ fn new_remote_curl() -> (
         Ok(())
     });
     (handle, req_send, res_recv)
-}
-
-impl Curl {
-    pub fn new() -> Self {
-        Curl {
-            handle: Easy2::new(Handler::default()),
-        }
-    }
 }
 
 impl From<curl::Error> for http::Error {
@@ -120,19 +141,30 @@ impl crate::client::http::Http for Curl {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<(Self::Headers, Self::ResponseBody), http::Error> {
-        self.handle.url(url)?;
         let mut list = curl::easy::List::new();
         for header in headers {
             list.append(header.as_ref())?;
         }
-        self.handle.http_headers(list)?;
+        if self
+            .req
+            .send(Request {
+                url: url.to_owned(),
+                headers: list,
+            })
+            .is_err()
+        {
+            return Err(self.restore_thread_after_failure());
+        }
+        let Response {
+            headers,
+            body,
+            _upload_body: _,
+        } = match self.res.recv() {
+            Ok(res) => res,
+            Err(_) => return Err(self.restore_thread_after_failure()),
+        };
 
-        let (send, receive_data) = pipe::unidirectional(1);
-        self.handle.get_mut().send_data = Some(send);
-        let (send, receive_headers) = pipe::unidirectional(1);
-        self.handle.get_mut().send_header = Some(send);
-
-        Ok((receive_headers, receive_data))
+        Ok((headers, body))
     }
 
     fn post(

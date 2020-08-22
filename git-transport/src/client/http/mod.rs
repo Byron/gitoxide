@@ -9,9 +9,6 @@ quick_error! {
         Detail(description: String) {
             display("{}", description)
         }
-        Status(status: u16, method: &'static str, url: String) {
-            display("{}:{} saw HTTP status {}", method, url, status)
-        }
     }
 }
 
