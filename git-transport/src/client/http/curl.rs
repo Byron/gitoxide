@@ -130,6 +130,7 @@ fn new_remote_curl() -> (
         // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
         handle.transfer_encoding(false)?;
         handle.http_transfer_decoding(false)?;
+        handle.http_content_decoding(false)?;
 
         for Request { url, headers, upload } in req_recv {
             handle.url(&url)?;
