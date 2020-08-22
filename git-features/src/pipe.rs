@@ -22,12 +22,12 @@ mod io {
     use std::io;
 
     pub struct Writer {
-        channel: std::sync::mpsc::SyncSender<BytesMut>,
+        pub channel: std::sync::mpsc::SyncSender<io::Result<BytesMut>>,
         buf: BytesMut,
     }
 
     pub struct Reader {
-        channel: std::sync::mpsc::Receiver<BytesMut>,
+        channel: std::sync::mpsc::Receiver<io::Result<BytesMut>>,
         buf: BytesMut,
     }
 
@@ -35,7 +35,8 @@ mod io {
         fn fill_buf(&mut self) -> io::Result<&[u8]> {
             if self.buf.is_empty() {
                 match self.channel.recv() {
-                    Ok(buf) => self.buf = buf,
+                    Ok(Ok(buf)) => self.buf = buf,
+                    Ok(Err(err)) => return Err(err),
                     Err(_) => return Err(io::Error::new(io::ErrorKind::BrokenPipe, "read on a closed channel")),
                 }
             };
@@ -53,7 +54,8 @@ mod io {
             while !out.is_empty() {
                 if self.buf.is_empty() {
                     match self.channel.recv() {
-                        Ok(buf) => self.buf = buf,
+                        Ok(Ok(buf)) => self.buf = buf,
+                        Ok(Err(err)) => return Err(err),
                         Err(_) => break,
                     }
                 }
@@ -71,7 +73,7 @@ mod io {
         fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
             self.buf.put_slice(buf);
             self.channel
-                .send(self.buf.split())
+                .send(Ok(self.buf.split()))
                 .map_err(|err| io::Error::new(io::ErrorKind::BrokenPipe, err))?;
             Ok(buf.len())
         }
