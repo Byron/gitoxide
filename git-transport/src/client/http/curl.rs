@@ -103,7 +103,7 @@ impl Curl {
         self.handle = Some(handle);
         self.req = req;
         self.res = res;
-        return err_that_brought_thread_down.into();
+        err_that_brought_thread_down.into()
     }
 }
 
@@ -199,6 +199,7 @@ impl From<curl::Error> for http::Error {
     }
 }
 
+#[allow(clippy::type_complexity)]
 impl crate::client::http::Http for Curl {
     type Headers = pipe::Reader;
     type ResponseBody = pipe::Reader;

@@ -42,6 +42,7 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
     }
 }
 
+#[allow(clippy::type_complexity)]
 trait Http {
     type Headers: io::BufRead;
     type ResponseBody: io::BufRead;
