@@ -127,16 +127,17 @@ fn new_remote_curl() -> (
     let (res_send, res_recv) = sync_channel(0);
     let handle = std::thread::spawn(move || -> Result<(), curl::Error> {
         let mut handle = Easy2::new(Handler::default());
-        // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
-        handle.transfer_encoding(false)?;
-        handle.http_transfer_decoding(false)?;
-        handle.http_content_decoding(false)?;
 
         for Request { url, headers, upload } in req_recv {
             handle.url(&url)?;
+
+            // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
             handle.upload(upload)?;
             handle.post(upload)?;
             handle.http_headers(headers)?;
+            handle.transfer_encoding(false)?;
+            handle.http_transfer_decoding(false)?;
+            handle.http_content_decoding(false)?;
 
             let (receive_data, receive_headers, send_body) = {
                 let handler = handle.get_mut();
