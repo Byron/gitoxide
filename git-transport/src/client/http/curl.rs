@@ -1,6 +1,7 @@
 use crate::client::http;
 use curl::easy::Easy2;
 use git_features::pipe;
+use std::io::Write;
 use std::{
     io,
     sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError},
@@ -14,7 +15,23 @@ struct Handler {
     receive_body: Option<pipe::Reader>,
 }
 
-impl curl::easy::Handler for Handler {}
+impl curl::easy::Handler for Handler {
+    fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
+        drop(self.send_header.take()); // signal header readers to stop trying
+        match self.send_data.as_mut() {
+            Some(writer) => writer.write_all(data).map_err(|_| curl::easy::ReadError::Abort)?,
+            None => return Err(curl::easy::ReadError::Abort),
+        }
+        Ok(data.len())
+    }
+
+    fn header(&mut self, data: &[u8]) -> bool {
+        match self.send_header.as_mut() {
+            Some(writer) => writer.write_all(data).is_ok(),
+            None => false,
+        }
+    }
+}
 
 pub struct Curl {
     req: SyncSender<Request>,

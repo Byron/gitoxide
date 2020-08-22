@@ -25,7 +25,8 @@
       * **prerequisites**
         * [x] pipe to link writers with readers using bytes
         * [x] piped iterator
-        * [ ] HTTP trait for simple gets and post implemented for Curl
+        * [x] HTTP trait for simple gets and post implemented for Curl
+        * [ ] propagate HTTP status code
         * [x] non-OK is propagated
         * [ ] timeout configuration
       * [ ] V1 handshake

@@ -20,21 +20,26 @@ impl MockServer {
         )
         .expect("one of these ports to be free");
         let addr = listener.local_addr().expect("a local address");
+        let (set_ready, is_ready) = std::sync::mpsc::sync_channel(0);
+        let handle = std::thread::spawn(move || {
+            set_ready.send(()).expect("someone listening");
+            let (mut stream, _) = listener.accept().expect("accept to always work");
+            stream
+                .set_read_timeout(Some(Duration::from_millis(50)))
+                .expect("timeout to always work");
+            stream
+                .set_write_timeout(Some(Duration::from_millis(50)))
+                .expect("timeout to always work");
+            let mut out = Vec::new();
+            stream.read_to_end(&mut out).ok();
+            stream.write_all(&fixture).expect("write to always work");
+            stream.flush().expect("flush to work");
+            out
+        });
+        is_ready.recv().expect("someone sending eventually");
         MockServer {
             addr,
-            thread: Some(std::thread::spawn(move || {
-                let (mut stream, _) = listener.accept().expect("accept to always work");
-                stream
-                    .set_read_timeout(Some(Duration::from_millis(50)))
-                    .expect("timeout to always work");
-                stream
-                    .set_write_timeout(Some(Duration::from_millis(50)))
-                    .expect("timeout to always work");
-                let mut out = Vec::new();
-                stream.read_to_end(&mut out).expect("reading to always work");
-                stream.write_all(&fixture).expect("write to always work");
-                out
-            })),
+            thread: Some(handle),
         }
     }
 
@@ -63,13 +68,13 @@ mod upload_pack {
     use git_transport::{client::TransportSketch, Protocol, Service};
 
     #[test]
-    #[ignore]
     fn clone_v1() -> crate::Result {
         let mut server = serve_once("v1/http-handshake.response");
         let mut c = git_transport::client::http::connect(
             &format!(
-                "http://{}/path/not/important/due/to/mock",
-                &server.addr().ip().to_string()
+                "http://{}:{}/path/not/important/due/to/mock",
+                &server.addr().ip().to_string(),
+                &server.addr().port()
             ),
             Protocol::V1,
         )?;

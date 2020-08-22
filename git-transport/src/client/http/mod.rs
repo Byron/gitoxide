@@ -1,6 +1,7 @@
 use crate::client::SetServiceResponse;
 use crate::{Protocol, Service};
 use quick_error::quick_error;
+use std::io::BufRead;
 use std::{borrow::Cow, convert::Infallible, io};
 
 quick_error! {
@@ -86,7 +87,17 @@ impl crate::client::TransportSketch for Transport {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        eprintln!("HEADERS");
+        for header in headers.lines() {
+            let header = header?;
+            eprintln!("{}", header);
+        }
+        eprintln!("BODY");
+        for line in body.lines() {
+            let line = line?;
+            eprintln!("{}", line);
+        }
         unimplemented!("set service http")
     }
 }
