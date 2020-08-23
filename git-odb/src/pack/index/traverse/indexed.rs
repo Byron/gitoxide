@@ -76,7 +76,7 @@ impl index::File {
                         data.level = level;
                         data.decompressed_size = pack_entry.decompressed_size;
                         data.header_size = pack_entry.header_size() as u16;
-                        data._object_kind = object_kind;
+                        data.object_kind = object_kind;
                         data.compressed_size = entry_end - pack_entry.data_offset;
                         data.object_size = bytes.len() as u64;
                         let result = pack::index::traverse::process_entry(
