@@ -11,7 +11,7 @@ use std::io;
 /// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaving `Read` at the
 /// start of whatever comes next.
 pub struct Reader<T> {
-    pub inner: T,
+    inner: T,
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
     buf: Vec<u8>,
@@ -32,6 +32,12 @@ where
             fail_on_err_lines: false,
             is_done: false,
         }
+    }
+
+    pub fn replace(&mut self, read: T) -> T {
+        let prev = std::mem::replace(&mut self.inner, read);
+        self.reset();
+        prev
     }
 
     pub fn reset(&mut self) {

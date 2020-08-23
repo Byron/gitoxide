@@ -100,8 +100,7 @@ fn fail_on_err_lines() -> crate::Result {
     );
     assert!(rd.read_line().is_none(), "iteration is done after the first error");
 
-    rd.reset();
-    rd.inner = input;
+    rd.replace(input);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
     assert_eq!(
         rd.read_line().expect("line")??.as_bstr(),

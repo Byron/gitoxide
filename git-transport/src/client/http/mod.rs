@@ -1,8 +1,14 @@
-use crate::client::{git, SetServiceResponse};
-use crate::{Protocol, Service};
+use crate::{
+    client::{git, SetServiceResponse},
+    Protocol, Service,
+};
+use git_features::pipe;
 use quick_error::quick_error;
-use std::io::Read;
-use std::{borrow::Cow, convert::Infallible, io};
+use std::{
+    borrow::Cow,
+    convert::Infallible,
+    io::{self, Read},
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -68,6 +74,19 @@ pub struct Transport {
     user_agent_header: &'static str,
     version: crate::Protocol,
     http: HttpImpl,
+    line_reader: git_packetline::Reader<pipe::Reader>,
+}
+
+impl Transport {
+    pub fn new(url: &str, version: crate::Protocol) -> Self {
+        Transport {
+            url: url.to_owned(),
+            user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
+            version,
+            http: HttpImpl::new(),
+            line_reader: git_packetline::Reader::new(pipe::unidirectional(0).1, None),
+        }
+    }
 }
 
 impl crate::client::Transport for Transport {}
@@ -81,41 +100,30 @@ fn append_url(base: &str, suffix: String) -> String {
 }
 
 impl crate::client::TransportSketch for Transport {
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse<'static>, crate::client::Error> {
+    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
         let url = append_url(&self.url, format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<str>>::new();
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        let GetResponse { mut headers, mut body } =
-            self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        let GetResponse { mut headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
         // TODO: check for Content-Type: application/x-git-upload-pack-advertisement
         io::copy(&mut headers, &mut io::sink())?;
 
-        // TODO: keep it around, it's expensive
-        let mut rd = git_packetline::Reader::new(&mut body, None);
+        self.line_reader.replace(body);
         let mut _service = String::new();
-        rd.as_read().read_to_string(&mut _service)?;
+        self.line_reader.as_read().read_to_string(&mut _service)?;
         dbg!(_service);
-        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut rd)?;
+        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader)?;
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO
             capabilities,
-            refs: refs.map(|mut r| {
-                let mut v = Vec::new();
-                io::copy(&mut r, &mut v).ok();
-                Box::new(io::Cursor::new(v)) as Box<dyn io::BufRead>
-            }),
+            refs,
         })
     }
 }
 
 pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport, Infallible> {
-    Ok(Transport {
-        url: url.to_owned(),
-        user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
-        version,
-        http: HttpImpl::new(),
-    })
+    Ok(Transport::new(url, version))
 }
