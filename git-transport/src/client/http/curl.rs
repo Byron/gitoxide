@@ -31,7 +31,6 @@ impl curl::easy::Handler for Handler {
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
-        // TODO: check for HTTP status!
         match self.send_header.as_mut() {
             Some(writer) => writer.write_all(data).is_ok(),
             None => false,
@@ -185,7 +184,17 @@ fn new_remote_curl() -> (
                 let handler = handle.get_mut();
                 handler.receive_body.take();
                 handler.send_header.take();
-                handler.send_data.take();
+                if let Some(data) = handler.send_data.take() {
+                    let status = handle.response_code()?;
+                    if status < 200 || status > 299 {
+                        data.channel
+                            .try_send(Err(io::Error::new(
+                                io::ErrorKind::Other,
+                                format!("Received HTTP status {}", status),
+                            )))
+                            .ok();
+                    }
+                }
             }
         }
         Ok(())
