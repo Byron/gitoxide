@@ -20,17 +20,22 @@ impl Handler {
     fn reset(&mut self) {
         self.checked_status = false;
     }
-    fn parse_status(data: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn parse_status_inner(data: &[u8]) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
         let code = data
             .split(|b| *b == b' ')
             .nth(1)
             .ok_or_else(|| "Expected HTTP/<VERSION> STATUS")?;
         let code = std::str::from_utf8(code)?;
-        let status: usize = code.parse()?;
-        if status < 200 || status > 299 {
-            return Err(format!("Received HTTP status {}", status).into());
+        code.parse().map_err(Into::into)
+    }
+    fn parse_status(data: &[u8]) -> Option<(usize, Box<dyn std::error::Error + Send + Sync>)> {
+        match Self::parse_status_inner(data) {
+            Ok(status) if status < 200 || status > 299 => {
+                Some((status, format!("Received HTTP status {}", status).into()))
+            }
+            Ok(_) => None,
+            Err(err) => Some((500, err.into())),
         }
-        Ok(())
     }
 }
 
@@ -57,9 +62,19 @@ impl curl::easy::Handler for Handler {
                 } else {
                     self.checked_status = true;
                     match Handler::parse_status(data) {
-                        Ok(()) => true,
-                        Err(err) => {
-                            writer.channel.send(Err(io::Error::new(io::ErrorKind::Other, err))).ok();
+                        None => true,
+                        Some((status, err)) => {
+                            writer
+                                .channel
+                                .send(Err(io::Error::new(
+                                    if status == 401 {
+                                        io::ErrorKind::PermissionDenied
+                                    } else {
+                                        io::ErrorKind::Other
+                                    },
+                                    err,
+                                )))
+                                .ok();
                             false
                         }
                     }

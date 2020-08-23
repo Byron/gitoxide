@@ -23,14 +23,9 @@
       * [ ] V2 handshake
     * [ ] http://git-upload-pack
       * **prerequisites**
-        * [x] pipe to link writers with readers using bytes
-        * [x] piped iterator
-        * [x] HTTP trait for simple gets and post implemented for Curl
-        * [x] propagate HTTP status code
-        * [x] non-OK is propagated
-        * [x] test for auto-reset on ReadWithProgress drop
         * [ ] timeout configuration
-      * [ ] V1 handshake
+      * [x] V1 handshake
+      * [ ] V2 handshake
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
   * [ ] create ref pointing to ID
