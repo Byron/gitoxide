@@ -28,7 +28,7 @@
         * [x] HTTP trait for simple gets and post implemented for Curl
         * [x] propagate HTTP status code
         * [x] non-OK is propagated
-        * [ ] test for auto-reset on ReadWithProgress drop
+        * [x] test for auto-reset on ReadWithProgress drop
         * [ ] timeout configuration
       * [ ] V1 handshake
 * **git-refs**

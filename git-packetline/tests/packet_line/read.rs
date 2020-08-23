@@ -28,7 +28,6 @@ mod to_read {
         rd.as_read().read_to_end(&mut out)?;
         assert_eq!(out.as_bstr(), b"808e50d724f604f69ab93c6da2919c014667bedb HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master\n".as_bstr());
 
-        rd.reset();
         assert_eq!(
             rd.read_line()
                 .expect("line")??
