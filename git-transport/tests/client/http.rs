@@ -1,8 +1,11 @@
 use crate::fixture_bytes;
 use bstr::ByteVec;
-use std::io::{Read, Write};
-use std::net::SocketAddr;
-use std::time::Duration;
+use git_transport::{client::TransportSketch, Protocol, Service};
+use std::{
+    io::{Read, Write},
+    net::SocketAddr,
+    time::Duration,
+};
 
 struct MockServer {
     addr: SocketAddr,
@@ -63,21 +66,50 @@ fn serve_once(name: &str) -> MockServer {
     MockServer::new(fixture_bytes(name))
 }
 
+fn serve_and_connect(
+    name: &str,
+    path: &str,
+    version: Protocol,
+) -> Result<(MockServer, git_transport::client::http::Transport), crate::Error> {
+    let server = serve_once(name);
+    let client = git_transport::client::http::connect(
+        &format!(
+            "http://{}:{}/{}",
+            &server.addr().ip().to_string(),
+            &server.addr().port(),
+            path
+        ),
+        version,
+    )?;
+    Ok((server, client))
+}
+
+#[test]
+#[ignore]
+fn http_error_results_in_observable_error() -> crate::Result {
+    let (_server, mut client) = serve_and_connect("http-404.response", "path/not-important", Protocol::V1)?;
+    assert_eq!(
+        client
+            .set_service(Service::UploadPack)
+            .err()
+            .expect("non-200 status causes error")
+            .to_string(),
+        "something about the status"
+    );
+    Ok(())
+}
+
 mod upload_pack {
-    use crate::client::http::serve_once;
+    use crate::client::http::serve_and_connect;
     use bstr::ByteSlice;
     use git_transport::{client::SetServiceResponse, client::TransportSketch, Protocol, Service};
     use std::io::BufRead;
 
     #[test]
     fn clone_v1() -> crate::Result {
-        let mut server = serve_once("v1/http-handshake.response");
-        let mut c = git_transport::client::http::connect(
-            &format!(
-                "http://{}:{}/path/not/important/due/to/mock",
-                &server.addr().ip().to_string(),
-                &server.addr().port()
-            ),
+        let (mut server, mut c) = serve_and_connect(
+            "v1/http-handshake.response",
+            "path/not/important/due/to/mock",
             Protocol::V1,
         )?;
         let SetServiceResponse {

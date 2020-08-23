@@ -1,0 +1,9 @@
+HTTP/1.1 401 Authorization Required
+Server: GitHub Babel 2.0
+Content-Type: text/plain
+Content-Length: 21
+WWW-Authenticate: Basic realm="GitHub"
+X-Frame-Options: DENY
+X-GitHub-Request-Id: 8218:55B2:A3C3DD:E4C9DC:5F420446
+
+Repository not found.
