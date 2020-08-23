@@ -35,7 +35,7 @@ impl Handler {
                 Some((status, format!("Received HTTP status {}", status).into()))
             }
             Ok(_) => None,
-            Err(err) => Some((500, err.into())),
+            Err(err) => Some((500, err)),
         }
     }
 }
