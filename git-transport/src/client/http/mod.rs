@@ -112,9 +112,18 @@ impl crate::client::TransportSketch for Transport {
         io::copy(&mut headers, &mut io::sink())?;
 
         self.line_reader.replace(body);
-        let mut _service = String::new();
-        self.line_reader.as_read().read_to_string(&mut _service)?;
-        dbg!(_service);
+
+        let mut announced_service = String::new();
+        self.line_reader.as_read().read_to_string(&mut announced_service)?;
+        let expected_service_announcement = format!("# service={}", service.as_str());
+        if announced_service.trim() != expected_service_announcement {
+            return Err(crate::client::Error::Http(Error::Detail(format!(
+                "Expected to see {:?}, but got {:?}",
+                expected_service_announcement,
+                announced_service.trim()
+            ))));
+        }
+
         let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader)?;
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO
