@@ -85,9 +85,9 @@ fn serve_and_connect(
     Ok((server, client))
 }
 
-#[test]
-fn http_authentication_error_can_be_differentiated() -> crate::Result {
-    let (_server, mut client) = serve_and_connect("http-401.response", "path/not-important", Protocol::V1)?;
+fn assert_error_status(status: usize, kind: std::io::ErrorKind) -> crate::Result {
+    let (_server, mut client) =
+        serve_and_connect(&format!("http-{}.response", status), "path/not-important", Protocol::V1)?;
     let error = client
         .set_service(Service::UploadPack)
         .err()
@@ -97,26 +97,19 @@ fn http_authentication_error_can_be_differentiated() -> crate::Result {
         .expect("source")
         .downcast_ref::<std::io::Error>()
         .expect("io error as source");
-    assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
-    assert_eq!(error.to_string(), "Received HTTP status 401");
+    assert_eq!(error.kind(), kind);
+    assert_eq!(error.to_string(), format!("Received HTTP status {}", status));
     Ok(())
 }
 
 #[test]
+fn http_authentication_error_can_be_differentiated() -> crate::Result {
+    assert_error_status(401, std::io::ErrorKind::PermissionDenied)
+}
+
+#[test]
 fn http_error_results_in_observable_error() -> crate::Result {
-    let (_server, mut client) = serve_and_connect("http-404.response", "path/not-important", Protocol::V1)?;
-    let error = client
-        .set_service(Service::UploadPack)
-        .err()
-        .expect("non-200 status causes error");
-    let error = error
-        .source()
-        .expect("source")
-        .downcast_ref::<std::io::Error>()
-        .expect("io error as source");
-    assert_eq!(error.kind(), std::io::ErrorKind::Other);
-    assert_eq!(error.to_string(), "Received HTTP status 404");
-    Ok(())
+    assert_error_status(404, std::io::ErrorKind::Other)
 }
 
 mod upload_pack {
