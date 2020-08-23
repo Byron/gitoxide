@@ -1,6 +1,7 @@
 use crate::client::http;
 use curl::easy::Easy2;
 use git_features::pipe;
+use std::time::Duration;
 use std::{
     io,
     io::{Read, Write},
@@ -185,6 +186,10 @@ fn new_remote_curl() -> (
             handle.transfer_encoding(false)?;
             handle.http_transfer_decoding(false)?;
             handle.http_content_decoding(false)?;
+            handle.connect_timeout(Duration::from_secs(20))?;
+            let low_bytes_per_second = 1024;
+            handle.low_speed_limit(low_bytes_per_second)?;
+            handle.low_speed_time(Duration::from_secs(5))?;
 
             let (receive_data, receive_headers, send_body) = {
                 let handler = handle.get_mut();

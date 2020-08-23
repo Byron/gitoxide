@@ -22,8 +22,6 @@
       * [x] V1 handshake
       * [ ] V2 handshake
     * [ ] http://git-upload-pack
-      * **prerequisites**
-        * [ ] timeout configuration
       * [x] V1 handshake
       * [ ] V2 handshake
 * **git-refs**
