@@ -4,6 +4,7 @@ use crate::{
 };
 use git_features::pipe;
 use quick_error::quick_error;
+use std::io::BufRead;
 use std::{
     borrow::Cow,
     convert::Infallible,
@@ -34,7 +35,7 @@ pub struct GetResponse<H, B> {
 
 pub struct PostResponse<H, B, PB> {
     /// **Note**: Implementations should drop the handle to avoid deadlocks
-    post_body: PB,
+    _post_body: PB,
     headers: H,
     body: B,
 }
@@ -107,9 +108,19 @@ impl crate::client::TransportSketch for Transport {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        let GetResponse { mut headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
-        // TODO: check for Content-Type: application/x-git-upload-pack-advertisement
-        io::copy(&mut headers, &mut io::sink())?;
+        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        let wanted_content_type = format!("Content-Type: application/x-{}-advertisement", service.as_str());
+        if !headers
+            .lines()
+            .collect::<Result<Vec<_>, _>>()?
+            .iter()
+            .any(|l| l == &wanted_content_type)
+        {
+            return Err(crate::client::Error::Http(Error::Detail(format!(
+                "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
+                wanted_content_type
+            ))));
+        }
 
         self.line_reader.replace(body);
 
