@@ -26,7 +26,7 @@
         * [x] pipe to link writers with readers using bytes
         * [x] piped iterator
         * [x] HTTP trait for simple gets and post implemented for Curl
-        * [ ] propagate HTTP status code
+        * [x] propagate HTTP status code
         * [x] non-OK is propagated
         * [ ] test for auto-reset on ReadWithProgress drop
         * [ ] timeout configuration

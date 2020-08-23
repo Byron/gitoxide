@@ -85,16 +85,18 @@ fn serve_and_connect(
 }
 
 #[test]
-#[ignore]
 fn http_error_results_in_observable_error() -> crate::Result {
     let (_server, mut client) = serve_and_connect("http-404.response", "path/not-important", Protocol::V1)?;
+    use std::error::Error;
     assert_eq!(
         client
             .set_service(Service::UploadPack)
             .err()
             .expect("non-200 status causes error")
+            .source()
+            .expect("source")
             .to_string(),
-        "something about the status"
+        "Received HTTP status 404"
     );
     Ok(())
 }
