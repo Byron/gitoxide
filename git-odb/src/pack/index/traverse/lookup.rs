@@ -1,7 +1,7 @@
 use super::{Error, Reducer, SafetyCheck};
 use crate::pack::{self, data::decode, index, index::util};
-use git_features::interrupt::ResetOnDrop;
 use git_features::{
+    interrupt::ResetOnDrop,
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };

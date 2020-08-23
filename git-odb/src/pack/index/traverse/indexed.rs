@@ -1,11 +1,14 @@
 use super::{Error, SafetyCheck};
-use crate::{
-    pack,
-    pack::index::{self, util::index_entries_sorted_by_offset_ascending},
-    pack::tree::traverse::Context,
+use crate::pack::{
+    self,
+    index::{self, util::index_entries_sorted_by_offset_ascending},
+    tree::traverse::Context,
 };
-use git_features::interrupt::{trigger, ResetOnDrop};
-use git_features::{parallel, progress::Progress};
+use git_features::{
+    interrupt::{trigger, ResetOnDrop},
+    parallel,
+    progress::Progress,
+};
 use git_object::owned;
 
 impl index::File {
@@ -84,7 +87,9 @@ impl index::File {
                             header_buf,
                             &data.index_entry,
                             || {
-                                // debug_assert_eq!(&data.index_entry.pack_offset, &pack_entry.pack_offset()); // TODO: Fix this
+                                // TODO: Fix this - we overwrite the header of 'data' which also changes the computed entry size,
+                                // causing index and pack to seemingly mismatch. This is surprising, and should be done differently.
+                                // debug_assert_eq!(&data.index_entry.pack_offset, &pack_entry.pack_offset());
                                 git_features::hash::crc32(
                                     pack.entry_slice(data.index_entry.pack_offset..entry_end)
                                         .expect("slice pointing into the pack (by now data is verified)"),
@@ -113,8 +118,7 @@ impl index::File {
 
 pub struct EntryWithDefault {
     index_entry: pack::index::Entry,
-    // TODO: count how many objects of a kind there are
-    _object_kind: git_object::Kind,
+    object_kind: git_object::Kind,
     object_size: u64,
     decompressed_size: u64,
     compressed_size: u64,
@@ -131,7 +135,7 @@ impl Default for EntryWithDefault {
                 oid: git_object::owned::Id::null(),
             },
             level: 0,
-            _object_kind: git_object::Kind::Tree,
+            object_kind: git_object::Kind::Tree,
             object_size: 0,
             decompressed_size: 0,
             compressed_size: 0,
@@ -145,7 +149,7 @@ impl From<pack::index::Entry> for EntryWithDefault {
         EntryWithDefault {
             index_entry,
             level: 0,
-            _object_kind: git_object::Kind::Tree,
+            object_kind: git_object::Kind::Tree,
             object_size: 0,
             decompressed_size: 0,
             compressed_size: 0,
@@ -168,7 +172,7 @@ fn digest_statistics(items: Vec<pack::tree::Item<EntryWithDefault>>) -> index::t
         average.object_size += item.data.object_size;
         average.num_deltas += item.data.level as u32;
         use git_object::Kind::*;
-        match item.data._object_kind {
+        match item.data.object_kind {
             Blob => res.num_blobs += 1,
             Tree => res.num_trees += 1,
             Tag => res.num_tags += 1,

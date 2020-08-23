@@ -16,7 +16,7 @@ quick_error! {
 impl Db {
     pub fn iter(&self) -> impl Iterator<Item = Result<owned::Id, Error>> {
         use std::path::Component::Normal;
-        // TODO: Put this behind a feature flag in git-features and allow iterting with jwalk
+        // TODO: Put this behind a feature flag in git-features and allow iterating with jwalk
         WalkDir::new(&self.path)
             .min_depth(2)
             .max_depth(3)
