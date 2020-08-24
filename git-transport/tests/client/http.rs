@@ -119,7 +119,7 @@ mod upload_pack {
     use std::io::BufRead;
 
     #[test]
-    fn clone_v1() -> crate::Result {
+    fn handshake_v1() -> crate::Result {
         let (mut server, mut c) = serve_and_connect(
             "v1/http-handshake.response",
             "path/not/important/due/to/mock",
@@ -199,6 +199,41 @@ mod upload_pack {
                 "e8df6c1ffb7afa27aff9abbe11c7e4b80d19b61e refs/tags/v0.3.0^{}"
             ]
         );
+        assert_eq!(
+            server.received_as_string().lines().collect::<Vec<_>>(),
+            format!(
+                "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Accept: */*
+User-Agent: git/oxide-{}
+
+",
+                server.addr.port(),
+                env!("CARGO_PKG_VERSION")
+            )
+            .lines()
+            .collect::<Vec<_>>()
+        );
+        Ok(())
+    }
+    #[test]
+    fn handshake_v2() -> crate::Result {
+        let (mut server, mut c) = serve_and_connect(
+            "v2/http-handshake.response",
+            "path/not/important/due/to/mock",
+            Protocol::V2,
+        )?;
+        let SetServiceResponse {
+            actual_protocol,
+            capabilities,
+            refs,
+        } = c.set_service(Service::UploadPack)?;
+        assert_eq!(actual_protocol, Protocol::V2);
+        assert!(
+            refs.is_none(),
+            "refs are only returned in V1, as V2 favors a separate command (with more options)"
+        );
+
         assert_eq!(
             server.received_as_string().lines().collect::<Vec<_>>(),
             format!(
