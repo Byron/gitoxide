@@ -1,3 +1,11 @@
+use bstr::ByteSlice;
+use nom::{
+    bytes::complete::{tag, take_till, take_till1},
+    combinator::{map_res, opt},
+    sequence::{preceded, terminated},
+};
+use std::convert::TryFrom;
+
 /// The information usually found in remote progress messages as sent by a git server during
 /// fetch, clone and push.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -20,14 +28,35 @@ impl<'a> RemoteProgress<'a> {
             }
         })
     }
-}
 
-use nom::{
-    bytes::complete::{tag, take_till, take_till1},
-    combinator::{map_res, opt},
-    sequence::{preceded, terminated},
-};
-use std::convert::TryFrom;
+    pub fn translate_to_progress(is_error: bool, text: &[u8], progress: &mut impl git_features::progress::Progress) {
+        fn progress_name(current: Option<String>, action: &[u8]) -> String {
+            match current {
+                Some(current) => format!("{}: {}", current, action.as_bstr()),
+                None => action.as_bstr().to_string(),
+            }
+        }
+        if is_error {
+            progress.fail(progress_name(None, text));
+        } else {
+            match Self::from_bytes(text) {
+                Some(RemoteProgress {
+                    action,
+                    percent: _,
+                    step,
+                    max,
+                }) => {
+                    progress.set_name(progress_name(progress.name(), action));
+                    progress.init(max, git_features::progress::count("objects"));
+                    if let Some(step) = step {
+                        progress.set(step);
+                    }
+                }
+                None => progress.set_name(progress_name(progress.name(), text)),
+            };
+        }
+    }
+}
 
 fn parse_number(i: &[u8]) -> nom::IResult<&[u8], usize> {
     map_res(take_till(|c: u8| !c.is_ascii_digit()), btoi::btoi)(i)
