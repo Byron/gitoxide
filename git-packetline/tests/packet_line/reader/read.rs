@@ -1,7 +1,46 @@
 use crate::packet_line::reader::fixture_bytes;
 use bstr::{BString, ByteSlice};
 use git_odb::pack;
-use std::io::Read;
+use std::io::{BufRead, Read};
+
+#[test]
+#[ignore]
+fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
+    let buf = fixture_bytes("v1/01-clone.combined-output");
+    let mut rd = git_packetline::Reader::new(&buf[..], None);
+
+    let mut out = String::new();
+    let mut r = rd.as_read();
+    r.read_line(&mut out)?;
+    assert_eq!(out, "808e50d724f604f69ab93c6da2919c014667bedb HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n");
+    out.clear();
+    r.read_line(&mut out)?;
+    assert_eq!(out, "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master\n");
+    out.clear();
+    r.read_line(&mut out)?;
+    assert_eq!(out, "", "flush means empty lines…");
+    out.clear();
+    r.read_line(&mut out)?;
+    assert_eq!(out, "", "…which can't be overcome unless the reader is reset");
+
+    drop(r);
+    rd.reset();
+
+    let mut r = rd.as_read();
+    r.read_line(&mut out)?;
+    assert_eq!(out, "NAK\n");
+
+    drop(r);
+    let mut r = rd.as_read_with_sidebands(|_, _| ());
+    let mut assert_next = |line: &str| -> crate::Result {
+        out.clear();
+        r.read_line(&mut out)?;
+        assert_eq!(out, line);
+        Ok(())
+    };
+    assert_next("foo\n")?;
+    Ok(())
+}
 
 #[test]
 fn read_pack_with_progress_extraction() -> crate::Result {
