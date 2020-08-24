@@ -58,7 +58,7 @@ mod upload_pack {
             "/foo.git",
             Some(("example.org", None)),
         );
-        let res = c.set_service(Service::UploadPack)?;
+        let mut res = c.set_service(Service::UploadPack)?;
         assert_eq!(res.actual_protocol, Protocol::V1);
         assert_eq!(
             res.capabilities
@@ -73,6 +73,7 @@ mod upload_pack {
         );
         let refs = res
             .refs
+            .as_mut()
             .expect("v1 protocol provides refs")
             .lines()
             .flat_map(Result::ok)
@@ -83,6 +84,12 @@ mod upload_pack {
                 "808e50d724f604f69ab93c6da2919c014667bedb HEAD",
                 "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master"
             ]
+        );
+        drop(res);
+        assert_eq!(
+            out.as_slice().as_bstr(),
+            b"002egit-upload-pack /foo.git\0host=example.org\0".as_bstr(),
+            "it sends the correct request"
         );
         Ok(())
     }

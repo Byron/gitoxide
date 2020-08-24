@@ -19,7 +19,7 @@ where
     W: io::Write,
 {
     fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
-        self.write.write_all(&message::connect(
+        self.write.write(&message::connect(
             service,
             self.protocol,
             &self.path,
@@ -47,9 +47,9 @@ where
         desired_version: Protocol,
         repository_path: impl Into<BString>,
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
-    ) -> Self {
+    ) -> Connection<R, git_packetline::Writer<W>> {
         Connection {
-            write,
+            write: git_packetline::Writer::new(write),
             line_reader: git_packetline::Reader::new(read, None),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
