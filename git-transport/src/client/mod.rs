@@ -67,8 +67,9 @@ impl Default for WriteMode {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum DropBehavior {
-    WriteFlush,
+pub enum MessageKind {
+    Flush,
+    Text(&'static [u8]),
 }
 
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
@@ -126,9 +127,9 @@ pub trait TransportSketch {
     /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
     fn request(
         &mut self,
-        _write_mode: WriteMode,
-        _on_drop: Option<DropBehavior>,
-        _handle_progress: Option<HandleProgress>,
+        write_mode: WriteMode,
+        on_drop: Vec<MessageKind>,
+        handle_progress: Option<HandleProgress>,
     ) -> Result<RequestWriter, Error>;
 }
 

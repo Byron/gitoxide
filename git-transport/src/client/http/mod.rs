@@ -147,7 +147,7 @@ impl client::TransportSketch for Transport {
     fn request(
         &mut self,
         _write_mode: client::WriteMode,
-        _on_drop: Option<client::DropBehavior>,
+        _on_drop: Vec<client::MessageKind>,
         _handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
         unimplemented!("http line writer: POST")

@@ -39,21 +39,20 @@ where
     fn request(
         &mut self,
         write_mode: client::WriteMode,
-        on_drop: Option<client::DropBehavior>,
+        on_drop: Vec<client::MessageKind>,
         handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
         match write_mode {
             client::WriteMode::Binary => self.line_writer.enable_binary_mode(),
             client::WriteMode::OneLFTerminatedLinePerWriteCall => self.line_writer.enable_text_mode(),
         }
-        let writer: Box<dyn io::Write> = match on_drop {
-            Some(behavior) => Box::new(WritePacketOnDrop {
+        let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
+            Box::new(WritePacketOnDrop {
                 inner: &mut self.line_writer,
-                on_drop: match behavior {
-                    client::DropBehavior::WriteFlush => PacketLine::Flush,
-                },
-            }),
-            None => Box::new(&mut self.line_writer),
+                on_drop,
+            })
+        } else {
+            Box::new(&mut self.line_writer)
         };
         Ok(client::RequestWriter {
             writer,
@@ -67,7 +66,7 @@ where
 
 struct WritePacketOnDrop<'a, W: io::Write> {
     inner: &'a mut git_packetline::Writer<W>,
-    on_drop: PacketLine<'a>,
+    on_drop: Vec<client::MessageKind>,
 }
 
 impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
@@ -82,9 +81,13 @@ impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
 
 impl<'a, W: io::Write> Drop for WritePacketOnDrop<'a, W> {
     fn drop(&mut self) {
-        self.on_drop
-            .to_write(&mut self.inner)
+        for msg in self.on_drop.drain(..) {
+            match msg {
+                client::MessageKind::Flush => PacketLine::Flush.to_write(&mut self.inner),
+                client::MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner),
+            }
             .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
+        }
     }
 }
 
