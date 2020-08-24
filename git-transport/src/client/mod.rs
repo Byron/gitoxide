@@ -104,6 +104,8 @@ impl<'a> io::Read for ResponseReader<'a> {
     }
 }
 
+pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
+
 /// All methods provided here must be called in the correct order according to the communication protocol used to connect to them.
 /// It does, however, know just enough to be able to provide a higher-level interface than would otherwise be possible.
 /// Thus the consumer of this trait will not have to deal with packet lines at all.
@@ -126,7 +128,7 @@ pub trait TransportSketch {
         &mut self,
         _write_mode: WriteMode,
         _on_drop: Option<DropBehavior>,
-        _handle_progress: Option<Box<dyn FnMut(bool, &[u8])>>,
+        _handle_progress: Option<HandleProgress>,
     ) -> Result<RequestWriter, Error>;
 }
 

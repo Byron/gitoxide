@@ -40,7 +40,7 @@ where
         &mut self,
         write_mode: client::WriteMode,
         on_drop: Option<client::DropBehavior>,
-        handle_progress: Option<Box<dyn FnMut(bool, &[u8])>>,
+        handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
         match write_mode {
             client::WriteMode::Binary => self.line_writer.enable_binary_mode(),
