@@ -18,6 +18,7 @@
     * [x] `Write` with packet line encoding
   * **git-transport**
     * [x] parse capabilities
+    * [x] assure packet reader's `read_line(…)` is doing things exactly as we think it will (it does!)
     * [ ] support for authentication providers
       * [ ] http
       * [ ] ssh?

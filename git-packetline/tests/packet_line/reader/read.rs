@@ -5,7 +5,7 @@ use std::io::{BufRead, Read};
 
 #[test]
 fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
-    let buf = fixture_bytes("v1/01-clone.combined-output");
+    let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
     let mut rd = git_packetline::Reader::new(&buf[..], None);
 
     let mut out = String::new();
@@ -37,7 +37,8 @@ fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
         assert_eq!(out, line);
         Ok(())
     };
-    assert_next("foo\n")?;
+    assert_next("&")?;
+    assert_next("")?;
     Ok(())
 }
 
