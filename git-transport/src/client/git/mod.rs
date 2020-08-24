@@ -1,4 +1,4 @@
-use crate::{client, client::SetServiceResponse, Protocol, Service};
+use crate::{client, client::SetServiceResponse, client::WritePacketOnDrop, Protocol, Service};
 use bstr::BString;
 use std::{io, io::Write, net::TcpStream};
 
@@ -64,33 +64,6 @@ where
     }
 }
 
-struct WritePacketOnDrop<'a, W: io::Write> {
-    inner: &'a mut git_packetline::Writer<W>,
-    on_drop: Vec<client::MessageKind>,
-}
-
-impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.inner.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.inner.flush()
-    }
-}
-
-impl<'a, W: io::Write> Drop for WritePacketOnDrop<'a, W> {
-    fn drop(&mut self) {
-        for msg in self.on_drop.drain(..) {
-            match msg {
-                client::MessageKind::Flush => PacketLine::Flush.to_write(&mut self.inner),
-                client::MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner),
-            }
-            .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
-        }
-    }
-}
-
 impl<R, W> Connection<R, W>
 where
     R: io::Read,
@@ -120,7 +93,6 @@ where
 {
 }
 
-use git_packetline::PacketLine;
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]

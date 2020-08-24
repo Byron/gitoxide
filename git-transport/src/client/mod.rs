@@ -107,6 +107,33 @@ impl<'a> io::Read for ResponseReader<'a> {
 
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
+pub(crate) struct WritePacketOnDrop<'a, W: io::Write> {
+    inner: &'a mut git_packetline::Writer<W>,
+    on_drop: Vec<MessageKind>,
+}
+
+impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.inner.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+
+impl<'a, W: io::Write> Drop for WritePacketOnDrop<'a, W> {
+    fn drop(&mut self) {
+        for msg in self.on_drop.drain(..) {
+            match msg {
+                MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.inner),
+                MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner),
+            }
+            .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
+        }
+    }
+}
+
 /// All methods provided here must be called in the correct order according to the communication protocol used to connect to them.
 /// It does, however, know just enough to be able to provide a higher-level interface than would otherwise be possible.
 /// Thus the consumer of this trait will not have to deal with packet lines at all.
