@@ -48,7 +48,7 @@ mod upload_pack {
     use std::io::BufRead;
 
     #[test]
-    fn clone_v1() -> crate::Result {
+    fn handshake_v1() -> crate::Result {
         let mut out = Vec::new();
         let input = fixture_bytes("v1/clone.response");
         let mut c = git_transport::client::git::Connection::new(
@@ -95,9 +95,25 @@ mod upload_pack {
     }
 
     #[test]
-    #[ignore]
-    fn tbd_upload_pack_clone_v2() {
-        // With port
-        // it lists the version in the first line
+    fn handshake_v2() -> crate::Result {
+        let mut out = Vec::new();
+        let input = fixture_bytes("v2/clone.response");
+        let mut c = git_transport::client::git::Connection::new(
+            input.as_slice(),
+            &mut out,
+            Protocol::V2,
+            "/bar.git",
+            Some(("example.org", None)),
+        );
+        let mut res = c.set_service(Service::UploadPack)?;
+        assert_eq!(res.actual_protocol, Protocol::V1);
+
+        drop(res);
+        assert_eq!(
+            out.as_slice().as_bstr(),
+            b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\0".as_bstr(),
+            "it sends the correct request, including the adjusted version"
+        );
+        Ok(())
     }
 }

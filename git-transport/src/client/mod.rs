@@ -15,51 +15,8 @@ type HttpError = http::Error;
 #[cfg(not(feature = "http-client-curl"))]
 type HttpError = std::convert::Infallible;
 
-pub mod capabilities {
-    use bstr::{BStr, BString, ByteSlice};
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            MissingDelimitingNullByte {
-                display("Capabilities were missing entirely as there was no 0 byte")
-            }
-            NoCapabilities {
-                display("there was not a single capability behind the delimiter")
-            }
-        }
-    }
-    pub struct Capabilities(BString);
-    pub struct Capability<'a>(&'a BStr);
-
-    impl<'a> Capability<'a> {
-        pub fn name(&self) -> &BStr {
-            self.0
-                .splitn(2, |b| *b == b'=')
-                .next()
-                .expect("there is always a single item")
-                .as_bstr()
-        }
-        pub fn value(&self) -> Option<&BStr> {
-            self.0.splitn(2, |b| *b == b'=').nth(1).map(|s| s.as_bstr())
-        }
-    }
-
-    impl Capabilities {
-        pub fn from_bytes(bytes: &[u8]) -> Result<(Capabilities, usize), Error> {
-            let delimiter_pos = bytes.find_byte(0).ok_or(Error::MissingDelimitingNullByte)?;
-            if delimiter_pos + 1 == bytes.len() {
-                return Err(Error::NoCapabilities);
-            }
-            let capabilities = &bytes[delimiter_pos + 1..];
-            Ok((Capabilities(capabilities.as_bstr().to_owned()), delimiter_pos))
-        }
-        pub fn iter(&self) -> impl Iterator<Item = Capability> {
-            self.0.split(|b| *b == b' ').map(|c| Capability(c.as_bstr()))
-        }
-    }
-}
+pub mod capabilities;
+#[doc(inline)]
 pub use capabilities::Capabilities;
 
 #[derive(thiserror::Error, Debug)]

@@ -135,7 +135,7 @@ impl crate::client::TransportSketch for Transport {
             ))));
         }
 
-        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader)?;
+        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO
             capabilities,

@@ -1,16 +1,16 @@
 use crate::{client::SetServiceResponse, Protocol, Service};
 use bstr::BString;
-use std::{io, net::TcpStream};
+use std::{io, io::Write, net::TcpStream};
 
 pub mod message;
 pub(crate) mod recv;
 
 pub struct Connection<R, W> {
-    write: W,
+    line_writer: git_packetline::Writer<W>,
     line_reader: git_packetline::Reader<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
-    protocol: Protocol,
+    version: Protocol,
 }
 
 impl<R, W> crate::client::TransportSketch for Connection<R, W>
@@ -19,15 +19,15 @@ where
     W: io::Write,
 {
     fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
-        self.write.write(&message::connect(
+        self.line_writer.write(&message::connect(
             service,
-            self.protocol,
+            self.version,
             &self.path,
             self.virtual_host.as_ref(),
         ))?;
-        self.write.flush()?;
+        self.line_writer.flush()?;
 
-        let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_reader)?;
+        let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
         Ok(SetServiceResponse {
             actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
             capabilities,
@@ -47,13 +47,13 @@ where
         desired_version: Protocol,
         repository_path: impl Into<BString>,
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
-    ) -> Connection<R, git_packetline::Writer<W>> {
+    ) -> Self {
         Connection {
-            write: git_packetline::Writer::new(write),
+            line_writer: git_packetline::Writer::new(write),
             line_reader: git_packetline::Reader::new(read, None),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
-            protocol: desired_version,
+            version: desired_version,
         }
     }
 }
