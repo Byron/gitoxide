@@ -1,4 +1,4 @@
-use crate::{client::SetServiceResponse, Protocol, Service};
+use crate::{client, client::SetServiceResponse, Protocol, Service};
 use bstr::BString;
 use std::{io, io::Write, net::TcpStream};
 
@@ -13,12 +13,12 @@ pub struct Connection<R, W> {
     version: Protocol,
 }
 
-impl<R, W> crate::client::TransportSketch for Connection<R, W>
+impl<R, W> client::TransportSketch for Connection<R, W>
 where
     R: io::Read,
     W: io::Write,
 {
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
+    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
         self.line_writer.set_binary_mode();
         self.line_writer.write_all(&message::connect(
             service,
@@ -34,6 +34,15 @@ where
             capabilities,
             refs,
         })
+    }
+
+    fn request(
+        &mut self,
+        _write_mode: client::WriteMode,
+        _on_drop: Option<client::DropBehavior>,
+        _handle_progress: Option<Box<dyn FnMut(&[u8])>>,
+    ) -> Result<client::RequestWriter, client::Error> {
+        unimplemented!("line writer")
     }
 }
 
@@ -59,7 +68,7 @@ where
     }
 }
 
-impl<R, W> crate::client::Transport for Connection<R, W>
+impl<R, W> client::Transport for Connection<R, W>
 where
     R: io::Read,
     W: io::Write,

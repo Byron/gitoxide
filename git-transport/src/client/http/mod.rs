@@ -1,4 +1,5 @@
 use crate::{
+    client,
     client::{git, SetServiceResponse},
     Protocol, Service,
 };
@@ -90,7 +91,7 @@ impl Transport {
     }
 }
 
-impl crate::client::Transport for Transport {}
+impl client::Transport for Transport {}
 
 fn append_url(base: &str, suffix: String) -> String {
     if base.ends_with('/') {
@@ -100,8 +101,8 @@ fn append_url(base: &str, suffix: String) -> String {
     }
 }
 
-impl crate::client::TransportSketch for Transport {
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
+impl client::TransportSketch for Transport {
+    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
         let url = append_url(&self.url, format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<str>>::new();
@@ -116,7 +117,7 @@ impl crate::client::TransportSketch for Transport {
             .iter()
             .any(|l| l == &wanted_content_type)
         {
-            return Err(crate::client::Error::Http(Error::Detail(format!(
+            return Err(client::Error::Http(Error::Detail(format!(
                 "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
                 wanted_content_type
             ))));
@@ -128,7 +129,7 @@ impl crate::client::TransportSketch for Transport {
         self.line_reader.as_read().read_to_string(&mut announced_service)?;
         let expected_service_announcement = format!("# service={}", service.as_str());
         if announced_service.trim() != expected_service_announcement {
-            return Err(crate::client::Error::Http(Error::Detail(format!(
+            return Err(client::Error::Http(Error::Detail(format!(
                 "Expected to see {:?}, but got {:?}",
                 expected_service_announcement,
                 announced_service.trim()
@@ -141,6 +142,15 @@ impl crate::client::TransportSketch for Transport {
             capabilities,
             refs,
         })
+    }
+
+    fn request(
+        &mut self,
+        _write_mode: client::WriteMode,
+        _on_drop: Option<client::DropBehavior>,
+        _handle_progress: Option<Box<dyn FnMut(&[u8])>>,
+    ) -> Result<client::RequestWriter, client::Error> {
+        unimplemented!("http line writer: POST")
     }
 }
 
