@@ -4,11 +4,11 @@ use crate::{
 };
 use git_features::pipe;
 use quick_error::quick_error;
-use std::io::BufRead;
 use std::{
     borrow::Cow,
     convert::Infallible,
-    io::{self, Read},
+    io,
+    io::{BufRead, Read},
 };
 
 quick_error! {

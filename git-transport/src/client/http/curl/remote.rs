@@ -1,12 +1,12 @@
 use crate::client::http;
 use curl::easy::Easy2;
 use git_features::pipe;
-use std::time::Duration;
 use std::{
     io,
     io::{Read, Write},
     sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError},
     thread,
+    time::Duration,
 };
 
 #[derive(Default)]
@@ -86,87 +86,19 @@ impl curl::easy::Handler for Handler {
     }
 }
 
-pub struct Curl {
-    req: SyncSender<Request>,
-    res: Receiver<Response>,
-    handle: Option<thread::JoinHandle<Result<(), curl::Error>>>,
+pub struct Request {
+    pub url: String,
+    pub headers: curl::easy::List,
+    pub upload: bool,
 }
 
-impl Curl {
-    pub fn new() -> Self {
-        let (handle, req, res) = new_remote_curl();
-        Curl {
-            handle: Some(handle),
-            req,
-            res,
-        }
-    }
-
-    fn make_request(
-        &mut self,
-        url: &str,
-        headers: impl IntoIterator<Item = impl AsRef<str>>,
-        upload: bool,
-    ) -> Result<http::PostResponse<pipe::Reader, pipe::Reader, pipe::Writer>, http::Error> {
-        let mut list = curl::easy::List::new();
-        for header in headers {
-            list.append(header.as_ref())?;
-        }
-        if self
-            .req
-            .send(Request {
-                url: url.to_owned(),
-                headers: list,
-                upload,
-            })
-            .is_err()
-        {
-            return Err(self.restore_thread_after_failure());
-        }
-        let Response {
-            headers,
-            body,
-            upload_body,
-        } = match self.res.recv() {
-            Ok(res) => res,
-            Err(_) => return Err(self.restore_thread_after_failure()),
-        };
-        Ok(http::PostResponse {
-            _post_body: upload_body,
-            headers,
-            body,
-        })
-    }
-
-    fn restore_thread_after_failure(&mut self) -> http::Error {
-        let err_that_brought_thread_down = self
-            .handle
-            .take()
-            .expect("thread handle present")
-            .join()
-            .expect("handler thread should never panic")
-            .expect_err("something should have gone wrong with curl (we join on error only)");
-        let (handle, req, res) = new_remote_curl();
-        self.handle = Some(handle);
-        self.req = req;
-        self.res = res;
-        err_that_brought_thread_down.into()
-    }
+pub struct Response {
+    pub headers: pipe::Reader,
+    pub body: pipe::Reader,
+    pub upload_body: pipe::Writer,
 }
 
-struct Request {
-    url: String,
-    headers: curl::easy::List,
-    upload: bool,
-}
-
-struct Response {
-    headers: pipe::Reader,
-    body: pipe::Reader,
-    upload_body: pipe::Writer,
-}
-
-fn new_remote_curl() -> (
+pub fn new() -> (
     thread::JoinHandle<Result<(), curl::Error>>,
     SyncSender<Request>,
     Receiver<Response>,
@@ -249,28 +181,5 @@ fn new_remote_curl() -> (
 impl From<curl::Error> for http::Error {
     fn from(err: curl::Error) -> Self {
         http::Error::Detail(err.to_string())
-    }
-}
-
-#[allow(clippy::type_complexity)]
-impl crate::client::http::Http for Curl {
-    type Headers = pipe::Reader;
-    type ResponseBody = pipe::Reader;
-    type PostBody = pipe::Writer;
-
-    fn get(
-        &mut self,
-        url: &str,
-        headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
-        self.make_request(url, headers, false).map(Into::into)
-    }
-
-    fn post(
-        &mut self,
-        url: &str,
-        headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
-        self.make_request(url, headers, true)
     }
 }

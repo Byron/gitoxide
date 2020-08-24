@@ -18,6 +18,9 @@
     * [x] `Write` with packet line encoding
   * **git-transport**
     * [x] parse capabilities
+    * [ ] support for authentication providers
+      * [ ] http
+      * [ ] ssh?
     * [ ] git://git-upload-pack
       * [x] V1 handshake
       * [ ] V2 handshake
