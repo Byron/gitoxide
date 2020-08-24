@@ -19,7 +19,8 @@ where
     W: io::Write,
 {
     fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, crate::client::Error> {
-        self.line_writer.write(&message::connect(
+        self.line_writer.set_binary_mode();
+        self.line_writer.write_all(&message::connect(
             service,
             self.version,
             &self.path,

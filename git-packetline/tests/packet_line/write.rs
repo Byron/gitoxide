@@ -8,7 +8,7 @@ const MAX_LINE_LEN: usize = 4 + MAX_DATA_LEN;
 #[test]
 fn each_write_results_in_one_line() -> crate::Result {
     let mut w = Writer::new(Vec::new());
-    w.write(b"hello")?;
+    w.write_all(b"hello")?;
     w.write(b"world!")?;
     assert_eq!(w.inner.as_bstr(), b"0009hello000aworld!".as_bstr());
     Ok(())
@@ -17,7 +17,7 @@ fn each_write_results_in_one_line() -> crate::Result {
 #[test]
 fn write_text_and_write_binary() -> crate::Result {
     let mut w = Writer::new(Vec::new()).text_mode();
-    w.write(b"hello")?;
+    w.write_all(b"hello")?;
     w = w.binary_mode();
     w.write(b"world")?;
     assert_eq!(w.inner.as_bstr(), b"000ahello\n0009world".as_bstr());

@@ -1,4 +1,4 @@
-use crate::MAX_DATA_LEN;
+use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
 use std::io;
 
 /// An implementor of `Write` which passes all input to an inner `Write` in packet line data encoding, one line per `write(…)`
@@ -11,6 +11,12 @@ pub struct Writer<T> {
 impl<T: io::Write> Writer<T> {
     pub fn new(inner: T) -> Self {
         Writer { inner, binary: true }
+    }
+    pub fn set_binary_mode(&mut self) {
+        self.binary = true;
+    }
+    pub fn set_text_mode(&mut self) {
+        self.binary = false;
     }
     pub fn text_mode(mut self) -> Self {
         self.binary = false;
@@ -48,6 +54,8 @@ impl<T: io::Write> io::Write for Writer<T> {
                     }
                 }
             })?;
+            // subtract header (and trailng NL) because write-all can't handle writing more than it passes in
+            written -= U16_HEX_BYTES + if self.binary { 0 } else { 1 };
             buf = rest;
         }
         Ok(written)
