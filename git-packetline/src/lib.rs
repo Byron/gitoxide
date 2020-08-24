@@ -30,9 +30,9 @@ pub struct RemoteProgress<'a> {
 pub mod borrowed;
 pub use borrowed::Borrowed as PacketLine;
 
-pub mod read;
+pub mod reader;
 #[doc(inline)]
-pub use read::Reader;
+pub use reader::Reader;
 
 pub mod write;
 pub use write::Writer;
