@@ -23,7 +23,7 @@
       * [ ] ssh?
     * [ ] git://git-upload-pack
       * [x] V1 handshake
-      * [ ] V2 handshake
+      * [x] V2 handshake
     * [ ] http://git-upload-pack
       * [x] V1 handshake
       * [ ] V2 handshake

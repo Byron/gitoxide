@@ -29,7 +29,7 @@ where
 
         let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
         Ok(SetServiceResponse {
-            actual_protocol: Protocol::V1, // TODO - read actual only if we are in version two or above
+            actual_protocol: self.version, // verified by capability parsing. Version is otherwise assumed V1
             capabilities,
             refs,
         })

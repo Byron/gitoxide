@@ -105,8 +105,28 @@ mod upload_pack {
             "/bar.git",
             Some(("example.org", None)),
         );
-        let mut res = c.set_service(Service::UploadPack)?;
-        assert_eq!(res.actual_protocol, Protocol::V1);
+        let res = c.set_service(Service::UploadPack)?;
+        assert_eq!(res.actual_protocol, Protocol::V2);
+        assert!(
+            res.refs.is_none(),
+            "V2 needs a separate trip for getting refs (with additional capabilities)"
+        );
+        assert_eq!(
+            res.capabilities
+                .iter()
+                .map(|c| (c.name().to_owned(), c.value().map(ToOwned::to_owned)))
+                .collect::<Vec<_>>(),
+            [
+                ("agent", Some("git/2.28.0")),
+                ("ls-refs", None),
+                ("fetch", Some("shallow")),
+                ("server-option", None),
+                ("object-format", Some("sha1"))
+            ]
+            .iter()
+            .map(|(k, v)| (k.as_bytes().into(), v.map(|v| v.as_bytes().into())))
+            .collect::<Vec<_>>()
+        );
 
         drop(res);
         assert_eq!(
