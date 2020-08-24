@@ -23,10 +23,16 @@
       * [ ] ssh?
     * [ ] git://git-upload-pack
       * [x] V1 handshake
+        * [ ] send values
+        * [ ] receive data with sidebands
       * [x] V2 handshake
+        * [ ] send command request
     * [ ] http://git-upload-pack
       * [x] V1 handshake
-      * [ ] V2 handshake
+        * [ ] send values
+        * [ ] receive data with sidebands
+      * [x] V2 handshake
+        * [ ] send command request
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
   * [ ] create ref pointing to ID

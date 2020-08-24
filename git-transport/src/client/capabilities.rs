@@ -29,7 +29,10 @@ quick_error! {
     }
 }
 
-pub struct Capabilities(BString);
+pub struct Capabilities {
+    data: BString,
+    value_sep: u8,
+}
 pub struct Capability<'a>(&'a BStr);
 
 impl<'a> Capability<'a> {
@@ -43,6 +46,9 @@ impl<'a> Capability<'a> {
     pub fn value(&self) -> Option<&BStr> {
         self.0.splitn(2, |b| *b == b'=').nth(1).map(|s| s.as_bstr())
     }
+    pub fn values(&self) -> Option<impl Iterator<Item = &BStr>> {
+        self.value().map(|v| v.split(|b| *b == b' ').map(|s| s.as_bstr()))
+    }
 }
 
 impl Capabilities {
@@ -52,7 +58,13 @@ impl Capabilities {
             return Err(Error::NoCapabilities);
         }
         let capabilities = &bytes[delimiter_pos + 1..];
-        Ok((Capabilities(capabilities.as_bstr().to_owned()), delimiter_pos))
+        Ok((
+            Capabilities {
+                data: capabilities.as_bstr().to_owned(),
+                value_sep: b' ',
+            },
+            delimiter_pos,
+        ))
     }
     pub fn from_lines(read: impl io::BufRead) -> Result<Capabilities, Error> {
         let mut lines = read.lines();
@@ -69,23 +81,26 @@ impl Capabilities {
             }
             _ => return Err(Error::MalformattedVersionLine(version_line)),
         };
-        Ok(Capabilities(
-            lines
+        Ok(Capabilities {
+            value_sep: b'\n',
+            data: lines
                 .inspect(|l| {
                     if let Ok(l) = l {
                         assert!(
-                            !l.contains(" "),
-                            "spaces are not expected in keys or values, got '{}'",
+                            !l.contains('\n'),
+                            "newlines are not expected in keys or values, got '{}'",
                             l
                         )
                     }
                 })
                 .collect::<Result<Vec<_>, _>>()?
-                .join(" ")
+                .join("\n")
                 .into(),
-        ))
+        })
     }
     pub fn iter(&self) -> impl Iterator<Item = Capability> {
-        self.0.split(|b| *b == b' ').map(|c| Capability(c.as_bstr()))
+        self.data
+            .split(move |b| *b == self.value_sep)
+            .map(|c| Capability(c.as_bstr()))
     }
 }

@@ -233,6 +233,29 @@ User-Agent: git/oxide-{}
             refs.is_none(),
             "refs are only returned in V1, as V2 favors a separate command (with more options)"
         );
+        assert_eq!(
+            capabilities
+                .iter()
+                .map(|v| {
+                    (
+                        v.name().to_owned(),
+                        v.values().map(|v| v.map(ToOwned::to_owned).collect::<Vec<_>>()),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            [
+                ("agent", Some(&["git/github-gdf51a71f0236"][..])),
+                ("ls-refs", None),
+                ("fetch", Some(&["shallow", "filter"])),
+                ("server-option", None)
+            ]
+            .iter()
+            .map(|(k, v)| (
+                k.as_bytes().into(),
+                v.map(|v| v.iter().map(|v| v.as_bytes().into()).collect::<Vec<_>>())
+            ))
+            .collect::<Vec<_>>()
+        );
 
         assert_eq!(
             server.received_as_string().lines().collect::<Vec<_>>(),
@@ -241,6 +264,7 @@ User-Agent: git/oxide-{}
 Host: 127.0.0.1:{}
 Accept: */*
 User-Agent: git/oxide-{}
+Git-Protocol: version=2
 
 ",
                 server.addr.port(),
