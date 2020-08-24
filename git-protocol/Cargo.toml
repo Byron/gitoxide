@@ -15,8 +15,6 @@ doctest = false
 serde1 = ["serde", "bstr/serde1"]
 
 [dependencies]
-git-packetline = { version = "^0.1.0", path = "../git-packetline" }
-
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }

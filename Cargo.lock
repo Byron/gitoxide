@@ -678,7 +678,6 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "btoi",
- "git-packetline",
  "nom",
  "quick-error 2.0.0",
  "serde",

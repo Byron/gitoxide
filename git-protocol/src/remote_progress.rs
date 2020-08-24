@@ -1,20 +1,33 @@
-use git_packetline::RemoteProgress;
+/// The information usually found in remote progress messages as sent by a git server during
+/// fetch, clone and push.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct RemoteProgress<'a> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    pub action: &'a bstr::BStr,
+    pub percent: Option<u32>,
+    pub step: Option<usize>,
+    pub max: Option<usize>,
+}
+
+impl<'a> RemoteProgress<'a> {
+    pub fn from_bytes(line: &[u8]) -> Option<RemoteProgress> {
+        parse_progress(line).ok().and_then(|(_, r)| {
+            if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
+                None
+            } else {
+                Some(r)
+            }
+        })
+    }
+}
+
 use nom::{
     bytes::complete::{tag, take_till, take_till1},
     combinator::{map_res, opt},
     sequence::{preceded, terminated},
 };
 use std::convert::TryFrom;
-
-pub fn from_bytes(line: &[u8]) -> Option<RemoteProgress> {
-    parse_progress(line).ok().and_then(|(_, r)| {
-        if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
-            None
-        } else {
-            Some(r)
-        }
-    })
-}
 
 fn parse_number(i: &[u8]) -> nom::IResult<&[u8], usize> {
     map_res(take_till(|c: u8| !c.is_ascii_digit()), btoi::btoi)(i)
