@@ -4,7 +4,6 @@ use git_odb::pack;
 use std::io::{BufRead, Read};
 
 #[test]
-#[ignore]
 fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output");
     let mut rd = git_packetline::Reader::new(&buf[..], None);
