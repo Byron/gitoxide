@@ -58,7 +58,7 @@ mod upload_pack {
             "/foo.git",
             Some(("example.org", None)),
         );
-        let mut res = c.set_service(Service::UploadPack)?;
+        let mut res = c.handshake(Service::UploadPack)?;
         assert_eq!(res.actual_protocol, Protocol::V1);
         assert_eq!(
             res.capabilities
@@ -105,7 +105,7 @@ mod upload_pack {
             "/bar.git",
             Some(("example.org", None)),
         );
-        let res = c.set_service(Service::UploadPack)?;
+        let res = c.handshake(Service::UploadPack)?;
         assert_eq!(res.actual_protocol, Protocol::V2);
         assert!(
             res.refs.is_none(),

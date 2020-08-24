@@ -12,10 +12,10 @@ impl<T: io::Write> Writer<T> {
     pub fn new(inner: T) -> Self {
         Writer { inner, binary: true }
     }
-    pub fn set_binary_mode(&mut self) {
+    pub fn enable_binary_mode(&mut self) {
         self.binary = true;
     }
-    pub fn set_text_mode(&mut self) {
+    pub fn enable_text_mode(&mut self) {
         self.binary = false;
     }
     pub fn text_mode(mut self) -> Self {

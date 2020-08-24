@@ -52,6 +52,8 @@ pub struct SetServiceResponse<'a> {
     pub refs: Option<Box<dyn io::BufRead + 'a>>,
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum WriteMode {
     Binary,
     OneLFTerminatedLinePerWriteCall,
@@ -63,6 +65,8 @@ impl Default for WriteMode {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum DropBehavior {
     WriteFlush,
 }
@@ -70,7 +74,7 @@ pub enum DropBehavior {
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
 pub struct RequestWriter<'a> {
     pub(crate) writer: Box<dyn io::Write + 'a>,
-    pub(crate) _reader: Box<dyn io::BufRead + 'a>,
+    pub(crate) reader: Box<dyn io::BufRead + 'a>,
 }
 
 impl<'a> io::Write for RequestWriter<'a> {
@@ -85,18 +89,18 @@ impl<'a> io::Write for RequestWriter<'a> {
 
 impl<'a> RequestWriter<'a> {
     pub fn into_read(self) -> ResponseReader<'a> {
-        ResponseReader { _reader: self._reader }
+        ResponseReader { reader: self.reader }
     }
 }
 
 /// A type implementing `Read` to obtain the server response.
 pub struct ResponseReader<'a> {
-    _reader: Box<dyn io::BufRead + 'a>,
+    reader: Box<dyn io::BufRead + 'a>,
 }
 
 impl<'a> io::Read for ResponseReader<'a> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self._reader.read(buf)
+        self.reader.read(buf)
     }
 }
 
@@ -111,7 +115,7 @@ pub trait TransportSketch {
     /// This means that asking for an unsupported protocol will result in a protocol downgrade to the given one.
     /// using the `read_line(…)` function of the given BufReader. It must be exhausted, that is, read to the end,
     /// before the next method can be invoked.
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, Error>;
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error>;
 
     /// Obtain a writer for sending data and obtaining the response. It can be configured in various ways,
     /// and should to support with the task at hand.

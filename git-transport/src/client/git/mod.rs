@@ -18,8 +18,8 @@ where
     R: io::Read,
     W: io::Write,
 {
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
-        self.line_writer.set_binary_mode();
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
+        self.line_writer.enable_binary_mode();
         self.line_writer.write_all(&message::connect(
             service,
             self.version,
@@ -38,11 +38,53 @@ where
 
     fn request(
         &mut self,
-        _write_mode: client::WriteMode,
-        _on_drop: Option<client::DropBehavior>,
-        _handle_progress: Option<Box<dyn FnMut(bool, &[u8])>>,
+        write_mode: client::WriteMode,
+        on_drop: Option<client::DropBehavior>,
+        handle_progress: Option<Box<dyn FnMut(bool, &[u8])>>,
     ) -> Result<client::RequestWriter, client::Error> {
-        unimplemented!("line writer")
+        match write_mode {
+            client::WriteMode::Binary => self.line_writer.enable_binary_mode(),
+            client::WriteMode::OneLFTerminatedLinePerWriteCall => self.line_writer.enable_text_mode(),
+        }
+        let writer: Box<dyn io::Write> = match on_drop {
+            Some(behavior) => Box::new(WritePacketOnDrop {
+                inner: &mut self.line_writer,
+                on_drop: match behavior {
+                    client::DropBehavior::WriteFlush => PacketLine::Flush,
+                },
+            }),
+            None => Box::new(&mut self.line_writer),
+        };
+        Ok(client::RequestWriter {
+            writer,
+            reader: match handle_progress {
+                Some(handler) => Box::new(self.line_reader.as_read_with_sidebands(handler)),
+                None => Box::new(self.line_reader.as_read()),
+            },
+        })
+    }
+}
+
+struct WritePacketOnDrop<'a, W: io::Write> {
+    inner: &'a mut git_packetline::Writer<W>,
+    on_drop: PacketLine<'a>,
+}
+
+impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.inner.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+
+impl<'a, W: io::Write> Drop for WritePacketOnDrop<'a, W> {
+    fn drop(&mut self) {
+        self.on_drop
+            .to_write(&mut self.inner)
+            .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
     }
 }
 
@@ -75,6 +117,7 @@ where
 {
 }
 
+use git_packetline::PacketLine;
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]

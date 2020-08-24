@@ -89,7 +89,7 @@ fn assert_error_status(status: usize, kind: std::io::ErrorKind) -> crate::Result
     let (_server, mut client) =
         serve_and_connect(&format!("http-{}.response", status), "path/not-important", Protocol::V1)?;
     let error = client
-        .set_service(Service::UploadPack)
+        .handshake(Service::UploadPack)
         .err()
         .expect("non-200 status causes error");
     let error = error
@@ -129,7 +129,7 @@ mod upload_pack {
             actual_protocol,
             capabilities,
             refs,
-        } = c.set_service(Service::UploadPack)?;
+        } = c.handshake(Service::UploadPack)?;
         assert_eq!(actual_protocol, Protocol::V1);
         assert_eq!(
             capabilities
@@ -227,7 +227,7 @@ User-Agent: git/oxide-{}
             actual_protocol,
             capabilities,
             refs,
-        } = c.set_service(Service::UploadPack)?;
+        } = c.handshake(Service::UploadPack)?;
         assert_eq!(actual_protocol, Protocol::V2);
         assert!(
             refs.is_none(),

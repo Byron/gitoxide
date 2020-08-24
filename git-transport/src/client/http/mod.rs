@@ -102,7 +102,7 @@ fn append_url(base: &str, suffix: String) -> String {
 }
 
 impl client::TransportSketch for Transport {
-    fn set_service(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
         let url = append_url(&self.url, format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<str>>::new();
