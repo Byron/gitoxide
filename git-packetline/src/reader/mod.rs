@@ -1,11 +1,10 @@
+use crate::PacketLine;
 use crate::{decode, MAX_LINE_LEN, U16_HEX_BYTES};
-use crate::{PacketLine, RemoteProgress};
 use bstr::ByteSlice;
-use git_features::{progress, progress::Progress};
 use std::io;
 
 mod read;
-pub use read::ReadWithProgress;
+pub use read::ReadWithSidebands;
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaving `Read` at the
@@ -141,15 +140,11 @@ where
         })
     }
 
-    pub fn as_read_with_sidebands<P: Progress>(
-        &mut self,
-        progress: P,
-        parse_progress: fn(&[u8]) -> Option<RemoteProgress>,
-    ) -> ReadWithProgress<T, P> {
-        ReadWithProgress::with_progress(self, progress, parse_progress)
+    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> ReadWithSidebands<T, F> {
+        ReadWithSidebands::with_progress_handler(self, handle_progress)
     }
 
-    pub fn as_read(&mut self) -> ReadWithProgress<T, progress::Discard> {
-        ReadWithProgress::new(self)
+    pub fn as_read(&mut self) -> ReadWithSidebands<T, fn(bool, &[u8])> {
+        ReadWithSidebands::new(self)
     }
 }

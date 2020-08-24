@@ -665,7 +665,6 @@ name = "git-packetline"
 version = "0.1.0"
 dependencies = [
  "bstr",
- "git-features",
  "git-odb",
  "hex",
  "quick-error 2.0.0",

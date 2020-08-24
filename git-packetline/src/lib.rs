@@ -15,18 +15,6 @@ pub enum Channel {
     Error = 3,
 }
 
-/// The information usually found in remote progress messages as sent by a git server during
-/// fetch, clone and push.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct RemoteProgress<'a> {
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub action: &'a bstr::BStr,
-    pub percent: Option<u32>,
-    pub step: Option<usize>,
-    pub max: Option<usize>,
-}
-
 pub mod borrowed;
 pub use borrowed::Borrowed as PacketLine;
 

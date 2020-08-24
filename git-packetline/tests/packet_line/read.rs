@@ -1,7 +1,6 @@
 use bstr::ByteSlice;
 use git_packetline::PacketLine;
-use std::io;
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
 
 fn fixture_path(path: &str) -> PathBuf {
     PathBuf::from("tests/fixtures").join(path)
@@ -15,7 +14,6 @@ mod to_read {
     use crate::packet_line::read::fixture_bytes;
     use bstr::ByteSlice;
     use git_odb::pack;
-    use git_packetline::RemoteProgress;
     use std::io::Read;
 
     #[test]
@@ -37,10 +35,8 @@ mod to_read {
                 .as_bstr(),
             b"NAK".as_bstr()
         );
-        fn no_parsing(_: &[u8]) -> Option<RemoteProgress> {
-            None
-        }
-        let pack_read = rd.as_read_with_sidebands(git_features::progress::Discard, no_parsing);
+        fn do_nothing(_is_err: bool, _data: &[u8]) {}
+        let pack_read = rd.as_read_with_sidebands(do_nothing);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
             pack::data::iter::Mode::Verify,
