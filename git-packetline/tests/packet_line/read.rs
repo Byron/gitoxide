@@ -12,7 +12,7 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 
 mod to_read {
     use crate::packet_line::read::fixture_bytes;
-    use bstr::ByteSlice;
+    use bstr::{BString, ByteSlice};
     use git_odb::pack;
     use std::io::Read;
 
@@ -35,8 +35,12 @@ mod to_read {
                 .as_bstr(),
             b"NAK".as_bstr()
         );
-        fn do_nothing(_is_err: bool, _data: &[u8]) {}
-        let pack_read = rd.as_read_with_sidebands(do_nothing);
+        let mut seen_texts = Vec::<BString>::new();
+        let mut do_nothing = |is_err: bool, data: &[u8]| {
+            assert!(!is_err);
+            seen_texts.push(data.as_bstr().into());
+        };
+        let pack_read = rd.as_read_with_sidebands(&mut do_nothing);
         let pack_entries = pack::data::Iter::new_from_header(
             pack_read,
             pack::data::iter::Mode::Verify,
@@ -49,6 +53,20 @@ mod to_read {
                 .expect("trailer to exist on last entry")
                 .to_sha1_hex_string(),
             "150a1045f04dc0fc2dbf72313699fda696bf4126"
+        );
+        assert_eq!(
+            seen_texts,
+            [
+                "Enumerating objects: 3, done.",
+                "Counting objects:  33% (1/3)\r",
+                "Counting objects:  66% (2/3)\r",
+                "Counting objects: 100% (3/3)\r",
+                "Counting objects: 100% (3/3), done.",
+                "Total 3 (delta 0), reused 0 (delta 0), pack-reused 0"
+            ]
+            .iter()
+            .map(|v| v.as_bytes().as_bstr().to_owned())
+            .collect::<Vec<_>>()
         );
         Ok(())
     }

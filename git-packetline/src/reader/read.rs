@@ -78,11 +78,11 @@ where
                             Band::Data(ref mut d) => break d.read(&mut self.buf)?,
                             Band::Progress(d) => {
                                 let text = Text::from(d).0;
-                                (handle_progress)(false, text);
+                                handle_progress(false, text);
                             }
                             Band::Error(d) => {
                                 let text = Text::from(d).0;
-                                (handle_progress)(true, text);
+                                handle_progress(true, text);
                             }
                         };
                     }
