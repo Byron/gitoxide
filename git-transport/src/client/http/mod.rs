@@ -148,7 +148,7 @@ impl client::TransportSketch for Transport {
         &mut self,
         _write_mode: client::WriteMode,
         _on_drop: Option<client::DropBehavior>,
-        _handle_progress: Option<Box<dyn FnMut(&[u8])>>,
+        _handle_progress: Option<Box<dyn FnMut(bool, &[u8])>>,
     ) -> Result<client::RequestWriter, client::Error> {
         unimplemented!("http line writer: POST")
     }
