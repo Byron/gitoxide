@@ -1,72 +1,16 @@
-use crate::{
-    client,
-    client::{git, SetServiceResponse},
-    Protocol, Service,
-};
+use crate::{client, client::git, Protocol, Service};
 use git_features::pipe;
-use quick_error::quick_error;
 use std::{
     borrow::Cow,
     convert::Infallible,
-    io,
     io::{BufRead, Read},
 };
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Detail(description: String) {
-            display("{}", description)
-        }
-        PostBody(err: io::Error) {
-            display("An IO error occurred while uploading the body of a POST request")
-            from()
-            source(err)
-        }
-    }
-}
 
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
 
-pub struct GetResponse<H, B> {
-    headers: H,
-    body: B,
-}
-
-pub struct PostResponse<H, B, PB> {
-    /// **Note**: Implementations should drop the handle to avoid deadlocks
-    post_body: PB,
-    headers: H,
-    body: B,
-}
-
-impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
-    fn from(v: PostResponse<A, B, C>) -> Self {
-        GetResponse {
-            headers: v.headers,
-            body: v.body,
-        }
-    }
-}
-
-#[allow(clippy::type_complexity)]
-trait Http {
-    type Headers: io::BufRead;
-    type ResponseBody: io::BufRead;
-    type PostBody: io::Write;
-
-    fn get(
-        &mut self,
-        url: &str,
-        headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<GetResponse<Self::Headers, Self::ResponseBody>, Error>;
-    fn post(
-        &mut self,
-        url: &str,
-        headers: impl IntoIterator<Item = impl AsRef<str>>,
-    ) -> Result<PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, Error>;
-}
+mod traits;
+pub use traits::{Error, GetResponse, Http, PostResponse};
 
 #[cfg(feature = "http-client-curl")]
 type HttpImpl = curl::Curl;
@@ -107,7 +51,7 @@ fn append_url(base: &str, suffix: &str) -> String {
 }
 
 impl client::TransportSketch for Transport {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
+    fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse, client::Error> {
         let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<str>>::new();
@@ -143,7 +87,7 @@ impl client::TransportSketch for Transport {
 
         let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
         self.service = Some(service);
-        Ok(SetServiceResponse {
+        Ok(client::SetServiceResponse {
             actual_protocol: self.version,
             capabilities,
             refs,
