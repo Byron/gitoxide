@@ -2,7 +2,7 @@ use crate::{client, client::Capabilities, Protocol};
 use std::io;
 
 pub fn capabilties_and_possibly_refs<'a, T: io::Read>(
-    rd: &'a mut git_packetline::Reader<T>,
+    rd: &'a mut git_packetline::Provider<T>,
     version: Protocol,
 ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>), client::Error> {
     rd.fail_on_err_lines(true);

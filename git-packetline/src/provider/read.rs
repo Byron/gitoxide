@@ -1,6 +1,6 @@
 use crate::{
     borrowed::{Band, Text},
-    Reader, MAX_DATA_LEN,
+    Provider, MAX_DATA_LEN,
 };
 use std::io;
 
@@ -8,7 +8,7 @@ pub struct ReadWithSidebands<'a, T, F>
 where
     T: io::Read,
 {
-    parent: &'a mut Reader<T>,
+    parent: &'a mut Provider<T>,
     handle_progress: Option<F>,
     buf: Vec<u8>,
     pos: usize,
@@ -28,7 +28,7 @@ impl<'a, T> ReadWithSidebands<'a, T, fn(bool, &[u8])>
 where
     T: io::Read,
 {
-    pub fn new(parent: &'a mut Reader<T>) -> Self {
+    pub fn new(parent: &'a mut Provider<T>) -> Self {
         ReadWithSidebands {
             parent,
             handle_progress: None,
@@ -44,7 +44,7 @@ where
     T: io::Read,
     F: FnMut(bool, &[u8]),
 {
-    pub fn with_progress_handler(parent: &'a mut Reader<T>, handle_progress: F) -> Self {
+    pub fn with_progress_handler(parent: &'a mut Provider<T>, handle_progress: F) -> Self {
         ReadWithSidebands {
             parent,
             handle_progress: Some(handle_progress),

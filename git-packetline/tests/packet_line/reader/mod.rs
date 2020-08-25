@@ -17,7 +17,7 @@ fn first_line() -> PacketLine<'static> {
 }
 #[test]
 fn peek_non_data() -> crate::Result {
-    let mut rd = git_packetline::Reader::new(&b"000000010002"[..], Some(PacketLine::ResponseEnd));
+    let mut rd = git_packetline::Provider::new(&b"000000010002"[..], Some(PacketLine::ResponseEnd));
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Flush);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
     rd.reset_with(PacketLine::Flush);
@@ -35,7 +35,7 @@ fn peek_non_data() -> crate::Result {
 #[test]
 fn fail_on_err_lines() -> crate::Result {
     let input = b"00010009ERR e0002";
-    let mut rd = git_packetline::Reader::new(&input[..], None);
+    let mut rd = git_packetline::Provider::new(&input[..], None);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
     assert_eq!(
         rd.read_line().expect("line")??.as_bstr(),
@@ -43,7 +43,7 @@ fn fail_on_err_lines() -> crate::Result {
         "by default no special handling"
     );
 
-    let mut rd = git_packetline::Reader::new(&input[..], None);
+    let mut rd = git_packetline::Provider::new(&input[..], None);
     rd.fail_on_err_lines(true);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
     assert_eq!(
@@ -67,7 +67,7 @@ fn fail_on_err_lines() -> crate::Result {
 #[test]
 fn peek() -> crate::Result {
     let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
-    let mut rd = git_packetline::Reader::new(&bytes[..], None);
+    let mut rd = git_packetline::Provider::new(&bytes[..], None);
     assert_eq!(rd.peek_line().expect("line")??, first_line(), "peek returns first line");
     assert_eq!(
         rd.peek_line().expect("line")??,
@@ -97,7 +97,7 @@ fn peek() -> crate::Result {
 fn read_from_file_and_reader_advancement() -> crate::Result {
     let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
     bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
-    let mut rd = git_packetline::Reader::new(&bytes[..], None);
+    let mut rd = git_packetline::Provider::new(&bytes[..], None);
     assert_eq!(rd.read_line().expect("line")??, first_line());
     assert_eq!(exhaust(&mut rd) + 1, 1561, "it stops after seeing the flush byte");
     rd.reset();
@@ -117,7 +117,7 @@ fn read_from_file_and_reader_advancement() -> crate::Result {
     Ok(())
 }
 
-fn exhaust(rd: &mut git_packetline::Reader<&[u8]>) -> i32 {
+fn exhaust(rd: &mut git_packetline::Provider<&[u8]>) -> i32 {
     let mut count = 0;
     while let Some(_) = rd.read_line() {
         count += 1;

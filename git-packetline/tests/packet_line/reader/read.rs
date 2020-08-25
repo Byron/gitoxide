@@ -6,7 +6,7 @@ use std::io::{BufRead, Read};
 #[test]
 fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
-    let mut rd = git_packetline::Reader::new(&buf[..], None);
+    let mut rd = git_packetline::Provider::new(&buf[..], None);
 
     let mut out = String::new();
     let mut r = rd.as_read();
@@ -45,7 +45,7 @@ fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
 #[test]
 fn read_pack_with_progress_extraction() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output");
-    let mut rd = git_packetline::Reader::new(&buf[..], None);
+    let mut rd = git_packetline::Provider::new(&buf[..], None);
 
     // Read without sideband decoding
     let mut out = Vec::new();

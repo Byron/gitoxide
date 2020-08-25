@@ -9,7 +9,7 @@ pub use read::ReadWithSidebands;
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaving `Read` at the
 /// start of whatever comes next.
-pub struct Reader<T> {
+pub struct Provider<T> {
     inner: T,
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
@@ -18,12 +18,12 @@ pub struct Reader<T> {
     is_done: bool,
 }
 
-impl<T> Reader<T>
+impl<T> Provider<T>
 where
     T: io::Read,
 {
     pub fn new(inner: T, delimiter: impl Into<Option<PacketLine<'static>>>) -> Self {
-        Reader {
+        Provider {
             inner,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),

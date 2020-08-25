@@ -18,9 +18,9 @@ pub enum Channel {
 pub mod borrowed;
 pub use borrowed::Borrowed as PacketLine;
 
-pub mod reader;
+pub mod provider;
 #[doc(inline)]
-pub use reader::Reader;
+pub use provider::Provider;
 
 pub mod write;
 pub use write::Writer;

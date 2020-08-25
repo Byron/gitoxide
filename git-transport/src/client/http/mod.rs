@@ -1,5 +1,4 @@
 use crate::{client, client::git, Protocol, Service};
-use git_features::pipe;
 use std::{
     borrow::Cow,
     convert::Infallible,
@@ -21,7 +20,7 @@ pub struct Transport<H: Http> {
     version: crate::Protocol,
     http: H,
     service: Option<Service>,
-    line_reader: git_packetline::Reader<H::ResponseBody>,
+    line_reader: Option<git_packetline::Provider<H::ResponseBody>>,
 }
 
 impl Transport<Impl> {
@@ -32,7 +31,7 @@ impl Transport<Impl> {
             version,
             service: None,
             http: Impl::new(),
-            line_reader: git_packetline::Reader::new(pipe::unidirectional(0).1, None),
+            line_reader: None,
         }
     }
 }
@@ -69,10 +68,12 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             ))));
         }
 
-        self.line_reader.replace(body);
+        let line_reader = self
+            .line_reader
+            .get_or_insert_with(|| git_packetline::Provider::new(body, None));
 
         let mut announced_service = String::new();
-        self.line_reader.as_read().read_to_string(&mut announced_service)?;
+        line_reader.as_read().read_to_string(&mut announced_service)?;
         let expected_service_announcement = format!("# service={}", service.as_str());
         if announced_service.trim() != expected_service_announcement {
             return Err(client::Error::Http(Error::Detail(format!(
@@ -82,7 +83,7 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             ))));
         }
 
-        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
+        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(line_reader, self.version)?;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
             actual_protocol: self.version,

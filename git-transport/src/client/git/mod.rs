@@ -7,7 +7,7 @@ pub(crate) mod recv;
 
 pub struct Connection<R, W> {
     line_writer: git_packetline::Writer<W>,
-    line_reader: git_packetline::Reader<R>,
+    line_reader: git_packetline::Provider<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     version: Protocol,
@@ -78,7 +78,7 @@ where
     ) -> Self {
         Connection {
             line_writer: git_packetline::Writer::new(write),
-            line_reader: git_packetline::Reader::new(read, None),
+            line_reader: git_packetline::Provider::new(read, None),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             version: desired_version,
