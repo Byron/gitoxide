@@ -22,20 +22,17 @@ pub struct Transport<H: Http> {
     http: H,
     service: Option<Service>,
     line_reader: git_packetline::Reader<H::ResponseBody>,
-    line_writer: git_packetline::Writer<H::PostBody>,
 }
 
 impl Transport<Impl> {
     pub fn new(url: &str, version: crate::Protocol) -> Self {
-        let dummy = pipe::unidirectional(0);
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             version,
             service: None,
             http: Impl::new(),
-            line_reader: git_packetline::Reader::new(dummy.1, None),
-            line_writer: git_packetline::Writer::new(dummy.0),
+            line_reader: git_packetline::Reader::new(pipe::unidirectional(0).1, None),
         }
     }
 }
@@ -108,7 +105,6 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             body,
             post_body,
         } = self.http.post(&url, headers)?;
-        self.line_writer.inner = post_body;
         unimplemented!("http line writer: POST")
     }
 }
