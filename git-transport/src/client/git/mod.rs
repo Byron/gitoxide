@@ -7,7 +7,7 @@ pub mod message;
 pub(crate) mod recv;
 
 pub struct Connection<R, W> {
-    line_writer: git_packetline::Writer<W>,
+    writer: W,
     line_reader: git_packetline::Provider<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
@@ -20,14 +20,14 @@ where
     W: io::Write,
 {
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
-        self.line_writer.enable_binary_mode();
-        self.line_writer.write_all(&message::connect(
+        let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
+        line_writer.write_all(&message::connect(
             service,
             self.version,
             &self.path,
             self.virtual_host.as_ref(),
         ))?;
-        self.line_writer.flush()?;
+        line_writer.flush()?;
 
         let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
         Ok(SetServiceResponse {
@@ -43,14 +43,15 @@ where
         on_drop: Vec<client::MessageKind>,
         handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
+        let mut writer = git_packetline::Writer::new(&mut self.writer);
         match write_mode {
-            client::WriteMode::Binary => self.line_writer.enable_binary_mode(),
-            client::WriteMode::OneLFTerminatedLinePerWriteCall => self.line_writer.enable_text_mode(),
+            client::WriteMode::Binary => writer.enable_binary_mode(),
+            client::WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
         }
         let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
-            Box::new(WritePacketOnDrop::new(&mut self.line_writer, on_drop))
+            Box::new(WritePacketOnDrop::new(writer, on_drop))
         } else {
-            Box::new(&mut self.line_writer)
+            Box::new(writer)
         };
         Ok(client::RequestWriter {
             writer,
@@ -75,7 +76,7 @@ where
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
     ) -> Self {
         Connection {
-            line_writer: git_packetline::Writer::new(write),
+            writer: write,
             line_reader: git_packetline::Provider::new(read, PacketLine::Flush),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),

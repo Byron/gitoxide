@@ -108,13 +108,13 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             body,
             post_body,
         } = self.http.post(&url, headers)?;
-        let writer = match write_mode {
-            client::WriteMode::OneLFTerminatedLinePerWriteCall => git_packetline::Writer::new(post_body).text_mode(),
-            client::WriteMode::Binary => git_packetline::Writer::new(post_body).binary_mode(),
+        let mut writer = git_packetline::Writer::new(post_body);
+        match write_mode {
+            client::WriteMode::Binary => writer.enable_binary_mode(),
+            client::WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
         };
         let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
-            unimplemented!("writer should be owned")
-        // Box::new(client::WritePacketOnDrop::new(&mut writer, on_drop))
+            Box::new(client::WritePacketOnDrop::new(writer, on_drop))
         } else {
             Box::new(writer)
         };

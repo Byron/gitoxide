@@ -107,18 +107,18 @@ impl<'a> io::Read for ResponseReader<'a> {
 
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
-pub(crate) struct WritePacketOnDrop<'a, W: io::Write> {
-    inner: &'a mut git_packetline::Writer<W>,
+pub(crate) struct WritePacketOnDrop<W: io::Write> {
+    inner: git_packetline::Writer<W>,
     on_drop: Vec<MessageKind>,
 }
 
-impl<'a, W: io::Write> WritePacketOnDrop<'a, W> {
-    pub fn new(inner: &'a mut git_packetline::Writer<W>, on_drop: Vec<MessageKind>) -> Self {
+impl<W: io::Write> WritePacketOnDrop<W> {
+    pub fn new(inner: git_packetline::Writer<W>, on_drop: Vec<MessageKind>) -> Self {
         WritePacketOnDrop { inner, on_drop }
     }
 }
 
-impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
+impl<W: io::Write> io::Write for WritePacketOnDrop<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.inner.write(buf)
     }
@@ -128,7 +128,7 @@ impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
     }
 }
 
-impl<'a, W: io::Write> Drop for WritePacketOnDrop<'a, W> {
+impl<W: io::Write> Drop for WritePacketOnDrop<W> {
     fn drop(&mut self) {
         for msg in self.on_drop.drain(..) {
             match msg {
