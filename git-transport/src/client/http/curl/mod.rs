@@ -68,7 +68,7 @@ impl Curl {
             Err(_) => return Err(self.restore_thread_after_failure()),
         };
         Ok(http::PostResponse {
-            _post_body: upload_body,
+            post_body: upload_body,
             headers,
             body,
         })

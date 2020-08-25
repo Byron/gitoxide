@@ -36,7 +36,7 @@ pub struct GetResponse<H, B> {
 
 pub struct PostResponse<H, B, PB> {
     /// **Note**: Implementations should drop the handle to avoid deadlocks
-    _post_body: PB,
+    post_body: PB,
     headers: H,
     body: B,
 }
@@ -76,24 +76,29 @@ pub struct Transport {
     user_agent_header: &'static str,
     version: crate::Protocol,
     http: HttpImpl,
+    service: Option<Service>,
     line_reader: git_packetline::Reader<pipe::Reader>,
+    line_writer: git_packetline::Writer<pipe::Writer>,
 }
 
 impl Transport {
     pub fn new(url: &str, version: crate::Protocol) -> Self {
+        let dummy = pipe::unidirectional(0);
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             version,
+            service: None,
             http: HttpImpl::new(),
-            line_reader: git_packetline::Reader::new(pipe::unidirectional(0).1, None),
+            line_reader: git_packetline::Reader::new(dummy.1, None),
+            line_writer: git_packetline::Writer::new(dummy.0),
         }
     }
 }
 
 impl client::Transport for Transport {}
 
-fn append_url(base: &str, suffix: String) -> String {
+fn append_url(base: &str, suffix: &str) -> String {
     if base.ends_with('/') {
         format!("{}{}", base, suffix)
     } else {
@@ -103,7 +108,7 @@ fn append_url(base: &str, suffix: String) -> String {
 
 impl client::TransportSketch for Transport {
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
-        let url = append_url(&self.url, format!("info/refs?service={}", service.as_str()));
+        let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<str>>::new();
         if self.version != Protocol::V1 {
@@ -137,6 +142,7 @@ impl client::TransportSketch for Transport {
         }
 
         let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
+        self.service = Some(service);
         Ok(SetServiceResponse {
             actual_protocol: self.version,
             capabilities,
@@ -150,6 +156,15 @@ impl client::TransportSketch for Transport {
         _on_drop: Vec<client::MessageKind>,
         _handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
+        let service = self.service.expect("handshake() must have been called first");
+        let url = append_url(&self.url, service.as_str());
+        let headers = &[format!("Content-Type: application/x-git-{}-request", service.as_str())];
+        let PostResponse {
+            headers,
+            body,
+            post_body,
+        } = self.http.post(&url, headers)?;
+        self.line_writer.inner = post_body;
         unimplemented!("http line writer: POST")
     }
 }
