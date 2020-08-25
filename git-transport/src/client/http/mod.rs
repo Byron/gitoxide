@@ -2,7 +2,6 @@ use crate::{client, client::git, Protocol, Service};
 use std::{
     borrow::Cow,
     convert::Infallible,
-    io,
     io::{BufRead, Read},
 };
 
@@ -10,6 +9,7 @@ use std::{
 pub(crate) mod curl;
 
 mod traits;
+use crate::client::RequestWriter;
 use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
@@ -22,7 +22,7 @@ pub struct Transport<H: Http> {
     version: crate::Protocol,
     http: H,
     service: Option<Service>,
-    line_reader: Option<git_packetline::Provider<H::ResponseBody>>,
+    line_provider: Option<git_packetline::Provider<H::ResponseBody>>,
 }
 
 impl Transport<Impl> {
@@ -33,7 +33,7 @@ impl Transport<Impl> {
             version,
             service: None,
             http: Impl::new(),
-            line_reader: None,
+            line_provider: None,
         }
     }
 }
@@ -71,7 +71,7 @@ impl<H: Http> client::TransportSketch for Transport<H> {
         }
 
         let line_reader = self
-            .line_reader
+            .line_provider
             .get_or_insert_with(|| git_packetline::Provider::new(body, PacketLine::Flush));
 
         let mut announced_service = String::new();
@@ -98,7 +98,7 @@ impl<H: Http> client::TransportSketch for Transport<H> {
         &mut self,
         write_mode: client::WriteMode,
         on_drop: Vec<client::MessageKind>,
-        _handle_progress: Option<client::HandleProgress>,
+        handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
@@ -108,17 +108,18 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             body,
             post_body,
         } = self.http.post(&url, headers)?;
-        let mut writer = git_packetline::Writer::new(post_body);
-        match write_mode {
-            client::WriteMode::Binary => writer.enable_binary_mode(),
-            client::WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
-        };
-        let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
-            Box::new(client::WritePacketOnDrop::new(writer, on_drop))
-        } else {
-            Box::new(writer)
-        };
-        unimplemented!("http line writer: POST")
+        let line_provider = self
+            .line_provider
+            .as_mut()
+            .expect("handshake to have been called first");
+        line_provider.replace(body);
+        Ok(RequestWriter::new(
+            post_body,
+            line_provider,
+            write_mode,
+            on_drop,
+            handle_progress,
+        ))
     }
 }
 

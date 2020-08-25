@@ -1,4 +1,4 @@
-use crate::{client, client::SetServiceResponse, client::WritePacketOnDrop, Protocol, Service};
+use crate::{client, client::SetServiceResponse, Protocol, Service};
 use bstr::BString;
 use git_packetline::PacketLine;
 use std::{io, io::Write, net::TcpStream};
@@ -8,7 +8,7 @@ pub(crate) mod recv;
 
 pub struct Connection<R, W> {
     writer: W,
-    line_reader: git_packetline::Provider<R>,
+    line_provider: git_packetline::Provider<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     version: Protocol,
@@ -29,7 +29,7 @@ where
         ))?;
         line_writer.flush()?;
 
-        let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_reader, self.version)?;
+        let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_provider, self.version)?;
         Ok(SetServiceResponse {
             actual_protocol: self.version, // verified by capability parsing. Version is otherwise assumed V1
             capabilities,
@@ -43,23 +43,13 @@ where
         on_drop: Vec<client::MessageKind>,
         handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
-        let mut writer = git_packetline::Writer::new(&mut self.writer);
-        match write_mode {
-            client::WriteMode::Binary => writer.enable_binary_mode(),
-            client::WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
-        }
-        let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
-            Box::new(WritePacketOnDrop::new(writer, on_drop))
-        } else {
-            Box::new(writer)
-        };
-        Ok(client::RequestWriter {
-            writer,
-            reader: match handle_progress {
-                Some(handler) => Box::new(self.line_reader.as_read_with_sidebands(handler)),
-                None => Box::new(self.line_reader.as_read()),
-            },
-        })
+        Ok(client::RequestWriter::new(
+            &mut self.writer,
+            &mut self.line_provider,
+            write_mode,
+            on_drop,
+            handle_progress,
+        ))
     }
 }
 
@@ -77,7 +67,7 @@ where
     ) -> Self {
         Connection {
             writer: write,
-            line_reader: git_packetline::Provider::new(read, PacketLine::Flush),
+            line_provider: git_packetline::Provider::new(read, PacketLine::Flush),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             version: desired_version,
