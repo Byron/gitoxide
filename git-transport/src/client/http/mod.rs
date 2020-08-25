@@ -32,7 +32,7 @@ impl Transport<Impl> {
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             version,
             service: None,
-            http: Impl::new(),
+            http: Impl::default(),
             line_provider: None,
         }
     }

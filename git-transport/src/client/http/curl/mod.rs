@@ -14,15 +14,6 @@ pub struct Curl {
 }
 
 impl Curl {
-    pub fn new() -> Self {
-        let (handle, req, res) = remote::new();
-        Curl {
-            handle: Some(handle),
-            req,
-            res,
-        }
-    }
-
     fn restore_thread_after_failure(&mut self) -> http::Error {
         let err_that_brought_thread_down = self
             .handle
@@ -72,6 +63,17 @@ impl Curl {
             headers,
             body,
         })
+    }
+}
+
+impl Default for Curl {
+    fn default() -> Self {
+        let (handle, req, res) = remote::new();
+        Curl {
+            handle: Some(handle),
+            req,
+            res,
+        }
     }
 }
 
