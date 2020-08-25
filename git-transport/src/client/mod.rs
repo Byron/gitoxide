@@ -112,6 +112,12 @@ pub(crate) struct WritePacketOnDrop<'a, W: io::Write> {
     on_drop: Vec<MessageKind>,
 }
 
+impl<'a, W: io::Write> WritePacketOnDrop<'a, W> {
+    pub fn new(inner: &'a mut git_packetline::Writer<W>, on_drop: Vec<MessageKind>) -> Self {
+        WritePacketOnDrop { inner, on_drop }
+    }
+}
+
 impl<'a, W: io::Write> io::Write for WritePacketOnDrop<'a, W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.inner.write(buf)

@@ -48,10 +48,7 @@ where
             client::WriteMode::OneLFTerminatedLinePerWriteCall => self.line_writer.enable_text_mode(),
         }
         let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
-            Box::new(WritePacketOnDrop {
-                inner: &mut self.line_writer,
-                on_drop,
-            })
+            Box::new(WritePacketOnDrop::new(&mut self.line_writer, on_drop))
         } else {
             Box::new(&mut self.line_writer)
         };

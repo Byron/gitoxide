@@ -2,6 +2,7 @@ use crate::{client, client::git, Protocol, Service};
 use std::{
     borrow::Cow,
     convert::Infallible,
+    io,
     io::{BufRead, Read},
 };
 
@@ -95,8 +96,8 @@ impl<H: Http> client::TransportSketch for Transport<H> {
 
     fn request(
         &mut self,
-        _write_mode: client::WriteMode,
-        _on_drop: Vec<client::MessageKind>,
+        write_mode: client::WriteMode,
+        on_drop: Vec<client::MessageKind>,
         _handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
@@ -107,6 +108,16 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             body,
             post_body,
         } = self.http.post(&url, headers)?;
+        let writer = match write_mode {
+            client::WriteMode::OneLFTerminatedLinePerWriteCall => git_packetline::Writer::new(post_body).text_mode(),
+            client::WriteMode::Binary => git_packetline::Writer::new(post_body).binary_mode(),
+        };
+        let writer: Box<dyn io::Write> = if !on_drop.is_empty() {
+            unimplemented!("writer should be owned")
+        // Box::new(client::WritePacketOnDrop::new(&mut writer, on_drop))
+        } else {
+            Box::new(writer)
+        };
         unimplemented!("http line writer: POST")
     }
 }
