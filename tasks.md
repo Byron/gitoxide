@@ -85,6 +85,5 @@ To be picked in any order….
   * [ ] upgrade to prodash 9.0
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
-* **miniz-oxide**
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602

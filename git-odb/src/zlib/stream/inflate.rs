@@ -33,7 +33,7 @@ impl Default for Inflate {
 
 impl Inflate {
     pub fn reset(&mut self) {
-        self.state.reset(DataFormat::Zlib);
+        self.state.reset_as(inflate::stream::MinReset);
         self.total_in = 0;
         self.total_out = 0;
     }

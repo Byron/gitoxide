@@ -21,12 +21,4 @@
   * potential savings: unknown
   
   ### Miniz Oxide
-  * [ ] Wait for release so we can use the new reset capability introduced by [this PR](https://github.com/Frommi/miniz_oxide/pull/91)
-  * **unnecessary buffer reset**
-    * In the [`InflateState` struct][miniz-inflatestate], there is a big 32kb buffer which gets zeroed for every decompression attempt.
-    * This costs ~4s for 7.5 million objects.
-  * **reuse of state between decompressions could be faster**
-    * Similar to above, there are several occasions when we decompress in an 'all at once', which also requires to recreate a 32kb buffer
-      filled with zeroes. If most of that state could be reused, we would save time when handling millions of objects both during pack
-      lookup as well as pack streaming.
-    
+  * [x] Wait for release so we can use the new reset capability introduced by [this PR](https://github.com/Frommi/miniz_oxide/pull/91)
