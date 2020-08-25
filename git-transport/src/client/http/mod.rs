@@ -38,6 +38,24 @@ impl Transport<Impl> {
     }
 }
 
+impl<H: Http> Transport<H> {
+    fn check_content_type(service: Service, headers: <H as Http>::Headers) -> Result<(), client::Error> {
+        let wanted_content_type = format!("Content-Type: application/x-{}-advertisement", service.as_str());
+        if !headers
+            .lines()
+            .collect::<Result<Vec<_>, _>>()?
+            .iter()
+            .any(|l| l == &wanted_content_type)
+        {
+            return Err(client::Error::Http(Error::Detail(format!(
+                "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
+                wanted_content_type
+            ))));
+        }
+        Ok(())
+    }
+}
+
 impl<H: Http> client::Transport for Transport<H> {}
 
 fn append_url(base: &str, suffix: &str) -> String {
@@ -57,18 +75,7 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
         let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
-        let wanted_content_type = format!("Content-Type: application/x-{}-advertisement", service.as_str());
-        if !headers
-            .lines()
-            .collect::<Result<Vec<_>, _>>()?
-            .iter()
-            .any(|l| l == &wanted_content_type)
-        {
-            return Err(client::Error::Http(Error::Detail(format!(
-                "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
-                wanted_content_type
-            ))));
-        }
+        <Transport<H>>::check_content_type(service, headers)?;
 
         let line_reader = self
             .line_provider
@@ -108,6 +115,7 @@ impl<H: Http> client::TransportSketch for Transport<H> {
             body,
             post_body,
         } = self.http.post(&url, headers)?;
+        <Transport<H>>::check_content_type(service, headers)?;
         let line_provider = self
             .line_provider
             .as_mut()
