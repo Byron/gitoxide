@@ -1,6 +1,6 @@
 use crate::fixture_bytes;
 use bstr::ByteVec;
-use git_transport::{client::TransportSketch, Protocol, Service};
+use git_transport::{client::Transport, Protocol, Service};
 use std::{
     error::Error,
     io::{Read, Write},
@@ -121,7 +121,7 @@ fn http_error_results_in_observable_error() -> crate::Result {
 mod upload_pack {
     use crate::client::http::serve_and_connect;
     use bstr::ByteSlice;
-    use git_transport::{client::SetServiceResponse, client::TransportSketch, Protocol, Service};
+    use git_transport::{client::SetServiceResponse, client::Transport, Protocol, Service};
     use std::io::BufRead;
 
     #[test]

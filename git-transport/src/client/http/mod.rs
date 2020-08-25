@@ -56,8 +56,6 @@ impl<H: Http> Transport<H> {
     }
 }
 
-impl<H: Http> client::Transport for Transport<H> {}
-
 fn append_url(base: &str, suffix: &str) -> String {
     if base.ends_with('/') {
         format!("{}{}", base, suffix)
@@ -66,7 +64,7 @@ fn append_url(base: &str, suffix: &str) -> String {
     }
 }
 
-impl<H: Http> client::TransportSketch for Transport<H> {
+impl<H: Http> client::Transport for Transport<H> {
     fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse, client::Error> {
         let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];

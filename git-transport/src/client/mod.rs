@@ -169,7 +169,7 @@ impl<W: io::Write> Drop for WritePacketOnDrop<W> {
 /// It does, however, know just enough to be able to provide a higher-level interface than would otherwise be possible.
 /// Thus the consumer of this trait will not have to deal with packet lines at all.
 /// Generally, whenever a `Read` trait or `Write` trait is produced, it must be exhausted..
-pub trait TransportSketch {
+pub trait Transport {
     /// Initiate connection to the given service.
     /// Returns the service capabilities according according to the actual Protocol it supports,
     /// and possibly a list of refs to be obtained.
@@ -190,5 +190,3 @@ pub trait TransportSketch {
         handle_progress: Option<HandleProgress>,
     ) -> Result<RequestWriter, Error>;
 }
-
-pub trait Transport {}

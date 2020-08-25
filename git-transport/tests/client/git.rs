@@ -44,7 +44,7 @@ mod connect_message {
 mod upload_pack {
     use crate::fixture_bytes;
     use bstr::ByteSlice;
-    use git_transport::{client::TransportSketch, Protocol, Service};
+    use git_transport::{client::Transport, Protocol, Service};
     use std::io::BufRead;
 
     #[test]

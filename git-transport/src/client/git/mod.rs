@@ -14,7 +14,7 @@ pub struct Connection<R, W> {
     version: Protocol,
 }
 
-impl<R, W> client::TransportSketch for Connection<R, W>
+impl<R, W> client::Transport for Connection<R, W>
 where
     R: io::Read,
     W: io::Write,
@@ -73,13 +73,6 @@ where
             version: desired_version,
         }
     }
-}
-
-impl<R, W> client::Transport for Connection<R, W>
-where
-    R: io::Read,
-    W: io::Write,
-{
 }
 
 use quick_error::quick_error;
