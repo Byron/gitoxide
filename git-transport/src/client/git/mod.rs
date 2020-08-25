@@ -1,5 +1,6 @@
 use crate::{client, client::SetServiceResponse, client::WritePacketOnDrop, Protocol, Service};
 use bstr::BString;
+use git_packetline::PacketLine;
 use std::{io, io::Write, net::TcpStream};
 
 pub mod message;
@@ -78,7 +79,7 @@ where
     ) -> Self {
         Connection {
             line_writer: git_packetline::Writer::new(write),
-            line_reader: git_packetline::Provider::new(read, None),
+            line_reader: git_packetline::Provider::new(read, PacketLine::Flush),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             version: desired_version,

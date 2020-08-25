@@ -22,12 +22,12 @@ impl<T> Provider<T>
 where
     T: io::Read,
 {
-    pub fn new(inner: T, delimiter: impl Into<Option<PacketLine<'static>>>) -> Self {
+    pub fn new(inner: T, delimiter: PacketLine<'static>) -> Self {
         Provider {
             inner,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
-            delimiter: delimiter.into().unwrap_or(PacketLine::Flush),
+            delimiter,
             fail_on_err_lines: false,
             is_done: false,
         }

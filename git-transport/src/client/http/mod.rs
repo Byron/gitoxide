@@ -9,6 +9,7 @@ use std::{
 pub(crate) mod curl;
 
 mod traits;
+use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 #[cfg(feature = "http-client-curl")]
@@ -70,7 +71,7 @@ impl<H: Http> client::TransportSketch for Transport<H> {
 
         let line_reader = self
             .line_reader
-            .get_or_insert_with(|| git_packetline::Provider::new(body, None));
+            .get_or_insert_with(|| git_packetline::Provider::new(body, PacketLine::Flush));
 
         let mut announced_service = String::new();
         line_reader.as_read().read_to_string(&mut announced_service)?;
