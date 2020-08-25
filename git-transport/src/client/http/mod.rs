@@ -13,19 +13,19 @@ mod traits;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 #[cfg(feature = "http-client-curl")]
-type HttpImpl = curl::Curl;
+pub type Impl = curl::Curl;
 
-pub struct Transport {
+pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
     version: crate::Protocol,
-    http: HttpImpl,
+    http: H,
     service: Option<Service>,
-    line_reader: git_packetline::Reader<pipe::Reader>,
-    line_writer: git_packetline::Writer<pipe::Writer>,
+    line_reader: git_packetline::Reader<H::ResponseBody>,
+    line_writer: git_packetline::Writer<H::PostBody>,
 }
 
-impl Transport {
+impl Transport<Impl> {
     pub fn new(url: &str, version: crate::Protocol) -> Self {
         let dummy = pipe::unidirectional(0);
         Transport {
@@ -33,14 +33,14 @@ impl Transport {
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             version,
             service: None,
-            http: HttpImpl::new(),
+            http: Impl::new(),
             line_reader: git_packetline::Reader::new(dummy.1, None),
             line_writer: git_packetline::Writer::new(dummy.0),
         }
     }
 }
 
-impl client::Transport for Transport {}
+impl<H: Http> client::Transport for Transport<H> {}
 
 fn append_url(base: &str, suffix: &str) -> String {
     if base.ends_with('/') {
@@ -50,7 +50,7 @@ fn append_url(base: &str, suffix: &str) -> String {
     }
 }
 
-impl client::TransportSketch for Transport {
+impl<H: Http> client::TransportSketch for Transport<H> {
     fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse, client::Error> {
         let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
@@ -113,6 +113,6 @@ impl client::TransportSketch for Transport {
     }
 }
 
-pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport, Infallible> {
+pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {
     Ok(Transport::new(url, version))
 }

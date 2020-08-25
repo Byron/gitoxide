@@ -71,7 +71,13 @@ fn serve_and_connect(
     name: &str,
     path: &str,
     version: Protocol,
-) -> Result<(MockServer, git_transport::client::http::Transport), crate::Error> {
+) -> Result<
+    (
+        MockServer,
+        git_transport::client::http::Transport<git_transport::client::http::Impl>,
+    ),
+    crate::Error,
+> {
     let server = serve_once(name);
     let client = git_transport::client::http::connect(
         &format!(
