@@ -107,7 +107,11 @@ impl<H: Http> client::Transport for Transport<H> {
     ) -> Result<client::RequestWriter, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
-        let headers = &[format!("Content-Type: application/x-git-{}-request", service.as_str())];
+        let headers = &[
+            format!("Content-Type: application/x-git-{}-request", service.as_str()),
+            format!("Accept: application/x-git-{}-result", service.as_str()),
+            format!("Expect:"),
+        ];
         let PostResponse {
             headers,
             body,
