@@ -129,6 +129,16 @@ impl<'a> RequestWriter<'a> {
     }
 }
 
+pub trait SetProgressHandlerBufRead: io::BufRead {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
+}
+
+impl<'a, T: io::Read> SetProgressHandlerBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+        self.set_progress_handler(handle_progress)
+    }
+}
+
 /// A type implementing `Read` to obtain the server response.
 pub struct ResponseReader<'a> {
     reader: Box<dyn io::BufRead + 'a>,

@@ -53,6 +53,10 @@ where
             cap: 0,
         }
     }
+
+    pub fn set_progress_handler(&mut self, handle_progress: Option<F>) {
+        self.handle_progress = handle_progress;
+    }
 }
 
 impl<'a, T, F> io::BufRead for ReadWithSidebands<'a, T, F>
