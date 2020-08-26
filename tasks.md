@@ -22,9 +22,10 @@
     * [ ] support for authentication providers
       * [ ] http
       * [ ] ssh?
-    * [ ] git://git-upload-pack
+    * [x] git://git-upload-pack
       * [x] V1 handshake
-        * [ ] send values + receive data with sidebands
+        * [x] send values + receive data with sidebands
+        * [ ] support for non-static closures for progress handler
       * [x] V2 handshake
         * [ ] send command request
     * [ ] http://git-upload-pack

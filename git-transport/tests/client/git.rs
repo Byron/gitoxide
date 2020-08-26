@@ -100,8 +100,7 @@ fn handshake_v1_and_request() -> crate::Result {
     let sidebands = Rc::new(RefCell::new(Vec::<String>::new()));
     let mut writer = c.request(
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
-        // vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
-        Vec::new(),
+        vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
         Some(Box::new({
             let sb = sidebands.clone();
             move |is_err, data| {
@@ -126,7 +125,8 @@ fn handshake_v1_and_request() -> crate::Result {
     assert_eq!(
         out.as_slice().as_bstr(),
         b"002egit-upload-pack /foo.git\0host=example.org\0000ahello\n\
-        000aworld\n"
+        000aworld\n\
+        00000009done\n"
             .as_bstr(),
         "it sends the correct request"
     );

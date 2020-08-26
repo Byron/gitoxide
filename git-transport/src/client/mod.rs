@@ -167,8 +167,8 @@ impl<W: io::Write> Drop for WritePacketOnDrop<W> {
     fn drop(&mut self) {
         for msg in self.on_drop.drain(..) {
             match msg {
-                MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.inner),
-                MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner),
+                MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.inner.inner),
+                MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner.inner),
             }
             .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
         }
