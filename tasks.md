@@ -19,13 +19,9 @@
   * **git-transport**
     * [x] parse capabilities
     * [x] assure packet reader's `read_line(…)` is doing things exactly as we think it will (it does!)
-    * [ ] support for authentication providers
-      * [ ] http
-      * [ ] ssh?
-    * [x] git://git-upload-pack
+    * [ ] git://git-upload-pack
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
-        * [ ] ~~support for non-static closures for progress handler~~ - I can't do it, no matter what :/
       * [x] V2 handshake
         * [ ] send command request
     * [ ] http://git-upload-pack
@@ -33,6 +29,10 @@
         * [ ] send values + receive data with sidebands
       * [x] V2 handshake
         * [ ] send command request
+  * **git-protocol**
+    * [ ] support for authentication providers
+      * [ ] know why it failed by extracting PermissionErrors from io errors
+      * [ ] implement authentication provider using git-helpers
 * **git-refs**
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
   * [ ] create ref pointing to ID
