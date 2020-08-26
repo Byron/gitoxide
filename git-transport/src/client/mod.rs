@@ -96,6 +96,22 @@ impl<'a> RequestWriter<'a> {
         on_drop: Vec<MessageKind>,
         handle_progress: Option<HandleProgress>,
     ) -> Self {
+        Self::new_from_bufread(
+            writer,
+            match handle_progress {
+                Some(handler) => Box::new(line_provider.as_read_with_sidebands(handler)),
+                None => Box::new(line_provider.as_read()),
+            },
+            write_mode,
+            on_drop,
+        )
+    }
+    pub fn new_from_bufread<W: io::Write + 'a>(
+        writer: W,
+        reader: Box<dyn io::BufRead + 'a>,
+        write_mode: WriteMode,
+        on_drop: Vec<MessageKind>,
+    ) -> Self {
         let mut writer = git_packetline::Writer::new(writer);
         match write_mode {
             WriteMode::Binary => writer.enable_binary_mode(),
@@ -106,13 +122,7 @@ impl<'a> RequestWriter<'a> {
         } else {
             Box::new(WritePacketOnDrop::new(writer, on_drop))
         };
-        RequestWriter {
-            writer,
-            reader: match handle_progress {
-                Some(handler) => Box::new(line_provider.as_read_with_sidebands(handler)),
-                None => Box::new(line_provider.as_read()),
-            },
-        }
+        RequestWriter { writer, reader }
     }
     pub fn into_read(self) -> ResponseReader<'a> {
         ResponseReader { reader: self.reader }

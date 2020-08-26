@@ -241,6 +241,7 @@ User-Agent: git/oxide-{}
 }
 
 #[test]
+#[ignore]
 fn clone_v1() -> crate::Result {
     let (mut server, mut c) = serve_and_connect(
         "v1/http-handshake.response",
