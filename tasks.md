@@ -25,7 +25,7 @@
     * [x] git://git-upload-pack
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
-        * [ ] support for non-static closures for progress handler
+        * [ ] ~~support for non-static closures for progress handler~~ - I can't do it, no matter what :/
       * [x] V2 handshake
         * [ ] send command request
     * [ ] http://git-upload-pack
