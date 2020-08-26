@@ -117,7 +117,7 @@ impl<H: Http> client::Transport for Transport<H> {
             body,
             post_body,
         } = self.http.post(&url, headers)?;
-        <Transport<H>>::check_content_type(service, "result", headers)?;
+        // <Transport<H>>::check_content_type(service, "result", headers)?;
         let line_provider = self
             .line_provider
             .as_mut()
