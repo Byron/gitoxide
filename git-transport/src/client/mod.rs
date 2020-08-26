@@ -75,7 +75,7 @@ pub enum MessageKind {
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
 pub struct RequestWriter<'a> {
     pub(crate) writer: Box<dyn io::Write + 'a>,
-    pub(crate) reader: Box<dyn io::BufRead + 'a>,
+    pub(crate) reader: Box<dyn SetProgressHandlerBufRead + 'a>,
 }
 
 impl<'a> io::Write for RequestWriter<'a> {
@@ -89,26 +89,9 @@ impl<'a> io::Write for RequestWriter<'a> {
 }
 
 impl<'a> RequestWriter<'a> {
-    pub fn new<R: io::Read, W: io::Write + 'a>(
-        writer: W,
-        line_provider: &'a mut git_packetline::Provider<R>,
-        write_mode: WriteMode,
-        on_drop: Vec<MessageKind>,
-        handle_progress: Option<HandleProgress>,
-    ) -> Self {
-        Self::new_from_bufread(
-            writer,
-            match handle_progress {
-                Some(handler) => Box::new(line_provider.as_read_with_sidebands(handler)),
-                None => Box::new(line_provider.as_read()),
-            },
-            write_mode,
-            on_drop,
-        )
-    }
     pub fn new_from_bufread<W: io::Write + 'a>(
         writer: W,
-        reader: Box<dyn io::BufRead + 'a>,
+        reader: Box<dyn SetProgressHandlerBufRead + 'a>,
         write_mode: WriteMode,
         on_drop: Vec<MessageKind>,
     ) -> Self {
@@ -139,9 +122,15 @@ impl<'a, T: io::Read> SetProgressHandlerBufRead for git_packetline::provider::Re
     }
 }
 
+impl<'a> SetProgressHandlerBufRead for ResponseReader<'a> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+        self.reader.set_progress_handler(handle_progress)
+    }
+}
+
 /// A type implementing `Read` to obtain the server response.
 pub struct ResponseReader<'a> {
-    reader: Box<dyn io::BufRead + 'a>,
+    reader: Box<dyn SetProgressHandlerBufRead + 'a>,
 }
 
 impl<'a> io::Read for ResponseReader<'a> {
@@ -213,10 +202,5 @@ pub trait Transport {
     /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_drop` determines what
     /// to do when the writer is consumed or dropped.
     /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
-    fn request(
-        &mut self,
-        write_mode: WriteMode,
-        on_drop: Vec<MessageKind>,
-        handle_progress: Option<HandleProgress>,
-    ) -> Result<RequestWriter, Error>;
+    fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error>;
 }

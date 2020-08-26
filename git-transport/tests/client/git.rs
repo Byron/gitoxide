@@ -43,6 +43,7 @@ mod connect_message {
 
 use crate::fixture_bytes;
 use bstr::ByteSlice;
+use git_transport::client::SetProgressHandlerBufRead;
 use git_transport::{
     client::{self, git, Transport},
     Protocol, Service,
@@ -94,33 +95,34 @@ fn handshake_v1_and_request() -> crate::Result {
     );
     drop(res);
 
-    let writer = c.request(client::WriteMode::Binary, Vec::new(), None)?;
+    let writer = c.request(client::WriteMode::Binary, Vec::new())?;
     assert_eq!(writer.into_read().lines().next().expect("exactly one line")?, "NAK");
 
-    let sidebands = Rc::new(RefCell::new(Vec::<String>::new()));
     let mut writer = c.request(
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
         vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
-        Some(Box::new({
-            let sb = sidebands.clone();
-            move |is_err, data| {
-                assert!(!is_err);
-                sb.deref()
-                    .borrow_mut()
-                    .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
-            }
-        })),
     )?;
 
     writer.write_all(b"hello")?;
     writer.write_all(b"world")?;
+
     let mut reader = writer.into_read();
+    let messages = Rc::new(RefCell::new(Vec::<String>::new()));
+    reader.set_progress_handler(Some(Box::new({
+        let sb = messages.clone();
+        move |is_err, data| {
+            assert!(!is_err);
+            sb.deref()
+                .borrow_mut()
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+        }
+    })));
     let mut pack = Vec::new();
     reader.read_to_end(&mut pack)?;
     assert_eq!(pack.len(), 876, "we receive the whole pack…");
 
     drop(reader);
-    let sidebands = Rc::try_unwrap(sidebands).expect("no other handle").into_inner();
+    let sidebands = Rc::try_unwrap(messages).expect("no other handle").into_inner();
     assert_eq!(sidebands.len(), 6, "…along with some status messages");
     assert_eq!(
         out.as_slice().as_bstr(),

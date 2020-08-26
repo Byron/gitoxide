@@ -54,6 +54,16 @@ where
         }
     }
 
+    pub fn without_progress_handler(parent: &'a mut Provider<T>) -> Self {
+        ReadWithSidebands {
+            parent,
+            handle_progress: None,
+            buf: vec![0; MAX_DATA_LEN],
+            pos: 0,
+            cap: 0,
+        }
+    }
+
     pub fn set_progress_handler(&mut self, handle_progress: Option<F>) {
         self.handle_progress = handle_progress;
     }

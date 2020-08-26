@@ -1,10 +1,14 @@
 use crate::fixture_bytes;
 use bstr::{ByteSlice, ByteVec};
+use git_transport::client::SetProgressHandlerBufRead;
 use git_transport::{client, client::http, client::SetServiceResponse, client::Transport, Protocol, Service};
 use std::{
+    cell::RefCell,
     error::Error,
     io::{self, BufRead, Read, Write},
     net::SocketAddr,
+    ops::Deref,
+    rc::Rc,
     time::Duration,
 };
 
@@ -258,7 +262,6 @@ fn clone_v1() -> crate::Result {
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
         // vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
         Vec::new(),
-        None,
     )?;
     eprintln!("about to write data");
     writer.write_all(b"hello")?;
@@ -267,8 +270,25 @@ fn clone_v1() -> crate::Result {
     let mut reader = writer.into_read();
     let mut line = String::new();
     reader.read_line(&mut line)?;
-    // TODO: switch to binary with progress and
+    assert_eq!(line, "NAK", "we received a NAK in text mode");
 
+    let messages = Rc::new(RefCell::new(Vec::<String>::new()));
+    reader.set_progress_handler(Some(Box::new({
+        let sb = messages.clone();
+        move |is_err, data| {
+            assert!(!is_err);
+            sb.deref()
+                .borrow_mut()
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+        }
+    })));
+    let mut pack = Vec::new();
+    reader.read_to_end(&mut pack)?;
+    assert_eq!(pack.len(), 876, "we receive the whole pack…");
+    drop(reader);
+
+    let sidebands = Rc::try_unwrap(messages).expect("no other handle").into_inner();
+    assert_eq!(sidebands.len(), 6);
     assert_eq!(
         server.received_as_string(),
         "hello world with packet lines and on-drop flush and done"

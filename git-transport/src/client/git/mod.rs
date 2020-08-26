@@ -41,14 +41,12 @@ where
         &mut self,
         write_mode: client::WriteMode,
         on_drop: Vec<client::MessageKind>,
-        handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
-        Ok(client::RequestWriter::new(
+        Ok(client::RequestWriter::new_from_bufread(
             &mut self.writer,
-            &mut self.line_provider,
+            Box::new(self.line_provider.as_read_without_sidebands()),
             write_mode,
             on_drop,
-            handle_progress,
         ))
     }
 }

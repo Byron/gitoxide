@@ -144,6 +144,10 @@ where
         ReadWithSidebands::with_progress_handler(self, handle_progress)
     }
 
+    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> ReadWithSidebands<T, F> {
+        ReadWithSidebands::without_progress_handler(self)
+    }
+
     pub fn as_read(&mut self) -> ReadWithSidebands<T, fn(bool, &[u8])> {
         ReadWithSidebands::new(self)
     }

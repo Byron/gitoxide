@@ -103,7 +103,6 @@ impl<H: Http> client::Transport for Transport<H> {
         &mut self,
         write_mode: client::WriteMode,
         on_drop: Vec<client::MessageKind>,
-        handle_progress: Option<client::HandleProgress>,
     ) -> Result<client::RequestWriter, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
@@ -113,22 +112,22 @@ impl<H: Http> client::Transport for Transport<H> {
             "Expect:".into(),
         ];
         let PostResponse {
-            headers,
+            headers: _,
             body,
             post_body,
         } = self.http.post(&url, headers)?;
+        // TODO: combine header handling with body reader
         // <Transport<H>>::check_content_type(service, "result", headers)?;
         let line_provider = self
             .line_provider
             .as_mut()
             .expect("handshake to have been called first");
         line_provider.replace(body);
-        Ok(RequestWriter::new(
+        Ok(RequestWriter::new_from_bufread(
             post_body,
-            line_provider,
+            Box::new(line_provider.as_read_without_sidebands()),
             write_mode,
             on_drop,
-            handle_progress,
         ))
     }
 }
