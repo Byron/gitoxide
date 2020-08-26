@@ -110,7 +110,7 @@ impl<H: Http> client::Transport for Transport<H> {
         let headers = &[
             format!("Content-Type: application/x-git-{}-request", service.as_str()),
             format!("Accept: application/x-git-{}-result", service.as_str()),
-            format!("Expect:"),
+            "Expect:".into(),
         ];
         let PostResponse {
             headers,
