@@ -245,7 +245,6 @@ User-Agent: git/oxide-{}
 }
 
 #[test]
-#[ignore]
 fn clone_v1() -> crate::Result {
     let (mut server, mut c) = serve_and_connect(
         "v1/http-handshake.response",
@@ -267,7 +266,7 @@ fn clone_v1() -> crate::Result {
     let mut reader = writer.into_read();
     let mut line = String::new();
     reader.read_line(&mut line)?;
-    assert_eq!(line, "NAK", "we received a NAK in text mode");
+    assert_eq!(line, "NAK\n", "we receive a NAK in text mode before the PACK is sent");
 
     let messages = Rc::new(RefCell::new(Vec::<String>::new()));
     reader.set_progress_handler(Some(Box::new({
@@ -285,10 +284,28 @@ fn clone_v1() -> crate::Result {
     drop(reader);
 
     let sidebands = Rc::try_unwrap(messages).expect("no other handle").into_inner();
-    assert_eq!(sidebands.len(), 6);
+    assert_eq!(sidebands.len(), 3);
     assert_eq!(
-        server.received_as_string(),
-        "hello world with packet lines and on-drop flush and done"
+        server.received_as_string().lines().collect::<Vec<_>>(),
+        format!(
+            "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Transfer-Encoding: chunked
+Content-Type: application/x-git-upload-pack-request
+Accept: application/x-git-upload-pack-result
+
+21
+000ahello
+000aworld
+00000009done
+
+0
+
+",
+            server.addr.port(),
+        )
+        .lines()
+        .collect::<Vec<_>>()
     );
     Ok(())
 }

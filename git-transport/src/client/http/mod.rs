@@ -108,17 +108,15 @@ impl<H: Http> client::Transport for Transport<H> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
         let headers = &[
-            format!("Content-Type: application/x-git-{}-request", service.as_str()),
-            format!("Accept: application/x-git-{}-result", service.as_str()),
-            "Expect:".into(),
+            format!("Content-Type: application/x-{}-request", service.as_str()),
+            format!("Accept: application/x-{}-result", service.as_str()),
+            "Expect:".into(), // needed to avoid sending Expect: 100-continue, which adds another response and only CURL wants that
         ];
         let PostResponse {
-            headers: _,
+            headers,
             body,
             post_body,
         } = self.http.post(&url, headers)?;
-        // TODO: combine header handling with body reader
-        // <Transport<H>>::check_content_type(service, "result", headers)?;
         let line_provider = self
             .line_provider
             .as_mut()
@@ -126,7 +124,11 @@ impl<H: Http> client::Transport for Transport<H> {
         line_provider.replace(body);
         Ok(RequestWriter::new_from_bufread(
             post_body,
-            Box::new(line_provider.as_read_without_sidebands()),
+            Box::new(HeadersThenBody::<H, _> {
+                service,
+                headers: Some(headers),
+                body: line_provider.as_read_without_sidebands(),
+            }),
             write_mode,
             on_drop,
         ))
