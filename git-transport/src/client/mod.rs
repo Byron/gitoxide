@@ -130,6 +130,16 @@ impl<'a> io::Read for ResponseReader<'a> {
     }
 }
 
+impl<'a> io::BufRead for ResponseReader<'a> {
+    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        self.reader.fill_buf()
+    }
+
+    fn consume(&mut self, amt: usize) {
+        self.reader.consume(amt)
+    }
+}
+
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
 pub(crate) struct WritePacketOnDrop<W: io::Write> {
