@@ -8,9 +8,18 @@ use std::{
     time::Duration,
 };
 
+enum Command {
+    ReadAndRespond(Vec<u8>),
+}
+
+enum CommandResult {
+    ReadAndRespond(Vec<u8>),
+}
+
 struct MockServer {
     addr: SocketAddr,
-    thread: Option<std::thread::JoinHandle<Vec<u8>>>,
+    send_command: std::sync::mpsc::SyncSender<Command>,
+    recv_result: std::sync::mpsc::Receiver<CommandResult>,
 }
 
 impl MockServer {
@@ -24,34 +33,44 @@ impl MockServer {
         )
         .expect("one of these ports to be free");
         let addr = listener.local_addr().expect("a local address");
-        let (set_ready, is_ready) = std::sync::mpsc::sync_channel(0);
-        let handle = std::thread::spawn(move || {
-            set_ready.send(()).expect("someone listening");
-            let (mut stream, _) = listener.accept().expect("accept to always work");
-            stream
-                .set_read_timeout(Some(Duration::from_millis(50)))
-                .expect("timeout to always work");
-            stream
-                .set_write_timeout(Some(Duration::from_millis(50)))
-                .expect("timeout to always work");
-            let mut out = Vec::new();
-            stream.read_to_end(&mut out).ok();
-            stream.write_all(&fixture).expect("write to always work");
-            stream.flush().expect("flush to work");
-            out
+        let (send_result, recv_result) = std::sync::mpsc::sync_channel(0);
+        let (send_command, recv_commands) = std::sync::mpsc::sync_channel(0);
+        std::thread::spawn(move || {
+            for command in recv_commands {
+                match command {
+                    Command::ReadAndRespond(response) => {
+                        let (mut stream, _) = listener.accept().expect("accept to always work");
+                        stream
+                            .set_read_timeout(Some(Duration::from_millis(50)))
+                            .expect("timeout to always work");
+                        stream
+                            .set_write_timeout(Some(Duration::from_millis(50)))
+                            .expect("timeout to always work");
+                        let mut out = Vec::new();
+                        stream.read_to_end(&mut out).ok();
+                        stream.write_all(&response).expect("write to always work");
+                        stream.flush().expect("flush to work");
+                        if send_result.send(CommandResult::ReadAndRespond(out)).is_err() {
+                            break;
+                        }
+                    }
+                }
+            }
         });
-        is_ready.recv().expect("someone sending eventually");
+        send_command
+            .send(Command::ReadAndRespond(fixture))
+            .expect("send to go through when thread is up");
         MockServer {
             addr,
-            thread: Some(handle),
+            send_command,
+            recv_result,
         }
     }
 
     pub fn received(&mut self) -> Vec<u8> {
-        self.thread
-            .take()
-            .and_then(|h| h.join().ok())
-            .expect("join to be called only once")
+        match self.recv_result.recv().expect("thread to be up") {
+            CommandResult::ReadAndRespond(received) => received,
+        }
     }
 
     pub fn addr(&self) -> &SocketAddr {
