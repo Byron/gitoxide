@@ -67,6 +67,16 @@ impl MockServer {
         }
     }
 
+    pub fn next_read_and_respond_with(&self, fixture: Vec<u8>) {
+        self.send_command
+            .send(Command::ReadAndRespond(fixture))
+            .expect("thread to be waiting");
+    }
+
+    pub fn ignore_this_result(&self) {
+        self.recv_result.recv().ok();
+    }
+
     pub fn received(&mut self) -> Vec<u8> {
         match self.recv_result.recv().expect("thread to be up") {
             CommandResult::ReadAndRespond(received) => received,
@@ -233,22 +243,34 @@ User-Agent: git/oxide-{}
 #[test]
 #[ignore]
 fn clone_v1() -> crate::Result {
-    let (server, mut c) = serve_and_connect(
+    let (mut server, mut c) = serve_and_connect(
         "v1/http-handshake.response",
         "path/not/important/due/to/mock",
         Protocol::V1,
     )?;
     let SetServiceResponse { refs, .. } = c.handshake(Service::UploadPack)?;
     io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
-    drop(server);
+    server.ignore_this_result();
 
-    let server = serve_once("v1/http-clone.response");
-    dbg!(&server.addr);
-    c.request(
+    server.next_read_and_respond_with(fixture_bytes("v1/http-clone.response"));
+    let mut writer = c.request(
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
-        vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
+        // vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
+        Vec::new(),
         None,
     )?;
+    writer.write_all(b"hello")?;
+    writer.write_all(b"world")?;
+
+    let mut reader = writer.into_read();
+    let mut line = String::new();
+    reader.read_line(&mut line)?;
+    // TODO: switch to binary with progress and
+
+    assert_eq!(
+        server.received_as_string(),
+        "hello world with packet lines and on-drop flush and done"
+    );
     Ok(())
 }
 

@@ -42,6 +42,7 @@ impl Handler {
 
 impl curl::easy::Handler for Handler {
     fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
+        eprintln!("receiving data");
         drop(self.send_header.take()); // signal header readers to stop trying
         match self.send_data.as_mut() {
             Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
@@ -49,6 +50,7 @@ impl curl::easy::Handler for Handler {
         }
     }
     fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
+        eprintln!("posting data");
         match self.receive_body.as_mut() {
             Some(reader) => reader.read(data).map_err(|_err| curl::easy::ReadError::Abort),
             None => Err(curl::easy::ReadError::Abort),
@@ -56,6 +58,7 @@ impl curl::easy::Handler for Handler {
     }
 
     fn header(&mut self, data: &[u8]) -> bool {
+        eprintln!("receiving header");
         match self.send_header.as_mut() {
             Some(writer) => {
                 if self.checked_status {
@@ -148,6 +151,7 @@ pub fn new() -> (
             if let Err(err) = handle.perform() {
                 let handler = handle.get_mut();
                 handler.reset();
+                dbg!(&err);
                 let err = Err(io::Error::new(io::ErrorKind::Other, err));
                 handler.receive_body.take();
                 match (handler.send_header.take(), handler.send_data.take()) {
