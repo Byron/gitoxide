@@ -257,13 +257,10 @@ fn clone_v1() -> crate::Result {
     server.ignore_this_result();
 
     server.next_read_and_respond_with(fixture_bytes("v1/http-clone.response"));
-    eprintln!("creating request");
     let mut writer = c.request(
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
-        // vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
-        Vec::new(),
+        vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
     )?;
-    eprintln!("about to write data");
     writer.write_all(b"hello")?;
     writer.write_all(b"world")?;
 

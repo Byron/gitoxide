@@ -42,7 +42,6 @@ impl Handler {
 
 impl curl::easy::Handler for Handler {
     fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
-        eprintln!("posting data");
         drop(self.send_header.take()); // signal header readers to stop trying
         match self.send_data.as_mut() {
             Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
@@ -50,7 +49,6 @@ impl curl::easy::Handler for Handler {
         }
     }
     fn read(&mut self, data: &mut [u8]) -> Result<usize, curl::easy::ReadError> {
-        eprintln!("posting data");
         match self.receive_body.as_mut() {
             Some(reader) => reader.read(data).map_err(|_err| curl::easy::ReadError::Abort),
             None => Ok(0), // nothing more to read/writer depleted
