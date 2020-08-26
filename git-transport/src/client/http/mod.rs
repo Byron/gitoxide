@@ -2,6 +2,7 @@ use crate::{client, client::git, Protocol, Service};
 use std::{
     borrow::Cow,
     convert::Infallible,
+    io,
     io::{BufRead, Read},
 };
 
@@ -9,7 +10,7 @@ use std::{
 pub(crate) mod curl;
 
 mod traits;
-use crate::client::RequestWriter;
+use crate::client::{HandleProgress, RequestWriter, SetProgressHandlerBufRead};
 use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
@@ -129,6 +130,46 @@ impl<H: Http> client::Transport for Transport<H> {
             write_mode,
             on_drop,
         ))
+    }
+}
+
+struct HeadersThenBody<H, B> {
+    service: Service,
+    headers: Option<H>,
+    body: B,
+}
+
+impl<H: io::BufRead, B> HeadersThenBody<H, B> {
+    fn handle_headers(&mut self) -> io::Result<()> {
+        if let Some(headers) = self.headers.take() {
+            // <Transport<H>>::check_content_type(self.service, "result", headers)
+            //     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
+        }
+        Ok(())
+    }
+}
+
+impl<H: io::BufRead, B: SetProgressHandlerBufRead> io::Read for HeadersThenBody<H, B> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.handle_headers()?;
+        self.body.read(buf)
+    }
+}
+
+impl<H: io::BufRead, B: SetProgressHandlerBufRead> io::BufRead for HeadersThenBody<H, B> {
+    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        self.handle_headers()?;
+        self.body.fill_buf()
+    }
+
+    fn consume(&mut self, amt: usize) {
+        self.body.consume(amt)
+    }
+}
+
+impl<H: io::BufRead, B: SetProgressHandlerBufRead> SetProgressHandlerBufRead for HeadersThenBody<H, B> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+        self.body.set_progress_handler(handle_progress)
     }
 }
 
