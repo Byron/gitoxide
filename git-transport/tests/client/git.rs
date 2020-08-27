@@ -171,7 +171,9 @@ fn handshake_v2_and_request() -> crate::Result {
 
     c.invoke(
         "ls-refs",
-        [("agent", "git/2.28.0"), ("object-format", "sha1")].iter().cloned(),
+        [("agent", Some("git/2.28.0")), ("object-format", Some("sha1"))]
+            .iter()
+            .cloned(),
         Some(
             [
                 "peel",

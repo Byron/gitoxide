@@ -19,6 +19,7 @@ pub mod capabilities;
 use bstr::BString;
 #[doc(inline)]
 pub use capabilities::Capabilities;
+use std::io::Write;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -209,21 +210,33 @@ pub trait Transport {
 pub trait TransportV2Ext {
     /// Invoke a protocol V2 style `command` with given `capabilities` and optional command specific `arguments`.
     /// The `capabilities` were communicated during the handshake.
+    /// _Note:_ panics if handshake wasn't performed beforehand.
     fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl IntoIterator<Item = (&'a str, &'a str)>,
+        capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         arguments: Option<impl IntoIterator<Item = bstr::BString>>,
-    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error>;
+    ) -> Result<ResponseReader, Error>;
 }
 
 impl<T: Transport> TransportV2Ext for T {
     fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl IntoIterator<Item = (&'a str, &'a str)>,
+        capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         arguments: Option<impl IntoIterator<Item = BString>>,
-    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error> {
-        unimplemented!("todo")
+    ) -> Result<ResponseReader, Error> {
+        let mut writer = self.request(WriteMode::OneLFTerminatedLinePerWriteCall, vec![MessageKind::Flush])?;
+        writer.write_all(format!("command={}", command).as_bytes())?;
+        for (name, value) in capabilities {
+            match value {
+                Some(value) => writer.write_all(format!("{}={}", name, value).as_bytes()),
+                None => writer.write_all(name.as_bytes()),
+            }?;
+        }
+        if let Some(_arguments) = arguments {
+            unimplemented!("arguments");
+        }
+        Ok(writer.into_read())
     }
 }
