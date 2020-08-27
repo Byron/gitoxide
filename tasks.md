@@ -19,25 +19,39 @@
   * **git-transport**
     * [x] parse capabilities
     * [x] assure packet reader's `read_line(…)` is doing things exactly as we think it will (it does!)
-    * [ ] git://git-upload-pack
+    * [x] git://git-upload-pack
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
-        * [ ] send command request
+        * [x] send command request
     * [ ] http://git-upload-pack
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
         * [ ] send command request
+    * [ ] connect
+      * [ ] file
+      * [ ] ssh
+      * [ ] git
+      * [x] http(s)
   * **git-protocol**
+    * [ ] delegate to support clone
+      * [ ] assure there is a way to do fetches with have/want negotiation
+    * [ ] progress
     * [ ] support for authentication providers
       * [ ] know why it failed by extracting PermissionErrors from io errors
       * [ ] implement authentication provider using git-helpers
-* **git-refs**
+* **git-refs** _(minimal)_
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
+* **gixp-pack-receive**
+  * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
+  * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
+
+### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
+
+* **git-refs**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
-  * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
 * **git-repository**
   * [ ] instance for a valid looking repository
     * [ ] support shallow repos/references
@@ -46,9 +60,6 @@
   * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
     * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates.
   * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
-
-### Fetching _more analysis needed after previous block_
-
 * **git-daemon-proxy** - obtain real-world examples for the V1/V2 git protocols
   * a standalone tool to serve as `git-daemon-proxy`, which intercepts all interactions with it and dumps each one
     into files like N.request and N.response.
@@ -71,6 +82,8 @@
 * protocol V2 [is always stateless](https://github.com/git/git/blob/master/builtin/upload-pack.c#L54:L54)
 * The negotiation is the meat of the fetch algorithm, and even though not important for clones, the back-and-forth seems very relevant 
   to how the transfer interface should be built. I feel it must be on packet line level.
+  * after having looked at the http implementation and actual HTTP chatter, there is no need for packet line level in `git-protocol` after all.
+    All good.
 
 ### Other
 
