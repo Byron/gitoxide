@@ -24,11 +24,11 @@
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
         * [x] send command request
-    * [ ] http://git-upload-pack
+    * [x] http://git-upload-pack
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
-        * [ ] send command request
+        * [x] send command request
     * [ ] connect
       * [ ] file
       * [ ] ssh

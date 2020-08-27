@@ -311,7 +311,7 @@ Accept: application/x-git-upload-pack-result
 }
 
 #[test]
-fn handshake_and_lsrefs_v2() -> crate::Result {
+fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
     let (mut server, mut c) = serve_and_connect(
         "v2/http-handshake.response",
         "path/not/important/due/to/mock",
@@ -407,5 +407,50 @@ Accept: application/x-git-upload-pack-result
         .collect::<Vec<_>>()
     );
 
+    server.next_read_and_respond_with(fixture_bytes("v2/http-fetch.response"));
+    let mut res = c.invoke("fetch", Vec::new(), None::<Vec<bstr::BString>>)?;
+    let mut line = String::new();
+    res.read_line(&mut line)?;
+    assert_eq!(line, "packfile\n");
+
+    let messages = Rc::new(RefCell::new(Vec::<String>::new()));
+    res.set_progress_handler(Some(Box::new({
+        let sb = messages.clone();
+        move |is_err, data| {
+            assert!(!is_err);
+            sb.deref()
+                .borrow_mut()
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+        }
+    })));
+
+    let mut pack = Vec::new();
+    res.read_to_end(&mut pack)?;
+    assert_eq!(pack.len(), 876);
+
+    drop(res);
+    let messages = Rc::try_unwrap(messages).expect("no other handle").into_inner();
+    assert_eq!(messages.len(), 5);
+
+    assert_eq!(
+        server.received_as_string().lines().collect::<Vec<_>>(),
+        format!(
+            "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Transfer-Encoding: chunked
+Content-Type: application/x-git-upload-pack-request
+Accept: application/x-git-upload-pack-result
+
+16
+0012command=fetch
+0000
+0
+
+",
+            server.addr.port(),
+        )
+        .lines()
+        .collect::<Vec<_>>()
+    );
     Ok(())
 }
