@@ -194,6 +194,51 @@ fn handshake_v2_and_request() -> crate::Result {
             "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master".into()
         ]
     );
+
+    let mut res = c.invoke(
+        "fetch",
+        [
+            ("agent", Some("git/2.28.0")),
+            ("something-without-value", None),
+            ("object-format", Some("sha1")),
+        ]
+        .iter()
+        .cloned(),
+        Some(
+            [
+                "thin-pack",
+                "ofs-delta",
+                "want 808e50d724f604f69ab93c6da2919c014667bedb",
+                "done",
+            ]
+            .iter()
+            .map(|s| s.as_bytes().as_bstr().to_owned()),
+        ),
+    )?;
+
+    let mut line = String::new();
+    res.read_line(&mut line)?;
+    assert_eq!(line, "packfile\n");
+
+    let messages = Rc::new(RefCell::new(Vec::<String>::new()));
+    res.set_progress_handler(Some(Box::new({
+        let sb = messages.clone();
+        move |is_err, data| {
+            assert!(!is_err);
+            sb.deref()
+                .borrow_mut()
+                .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
+        }
+    })));
+
+    let mut pack = Vec::new();
+    res.read_to_end(&mut pack)?;
+    assert_eq!(pack.len(), 876);
+
+    drop(res);
+    let messages = Rc::try_unwrap(messages).expect("no other handle").into_inner();
+    assert_eq!(messages.len(), 4);
+
     assert_eq!(
         out.as_slice().as_bstr(),
         b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
@@ -204,6 +249,14 @@ fn handshake_v2_and_request() -> crate::Result {
 0014ref-prefix HEAD
 001bref-prefix refs/heads/
 0019ref-prefix refs/tags
+00000012command=fetch
+0015agent=git/2.28.0
+001csomething-without-value
+0017object-format=sha1
+0001000ethin-pack
+000eofs-delta
+0032want 808e50d724f604f69ab93c6da2919c014667bedb
+0009done
 0000"
             .as_bstr(),
         "it sends the correct request, including the adjusted version"
