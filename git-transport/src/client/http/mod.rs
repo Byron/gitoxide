@@ -10,7 +10,7 @@ use std::{
 pub(crate) mod curl;
 
 mod traits;
-use crate::client::{HandleProgress, RequestWriter, SetProgressHandlerBufRead};
+use crate::client::{ExtendedBufRead, HandleProgress, RequestWriter};
 use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
@@ -151,14 +151,14 @@ impl<H: Http, B> HeadersThenBody<H, B> {
     }
 }
 
-impl<H: Http, B: SetProgressHandlerBufRead> io::Read for HeadersThenBody<H, B> {
+impl<H: Http, B: ExtendedBufRead> io::Read for HeadersThenBody<H, B> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.handle_headers()?;
         self.body.read(buf)
     }
 }
 
-impl<H: Http, B: SetProgressHandlerBufRead> io::BufRead for HeadersThenBody<H, B> {
+impl<H: Http, B: ExtendedBufRead> io::BufRead for HeadersThenBody<H, B> {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
         self.handle_headers()?;
         self.body.fill_buf()
@@ -169,7 +169,7 @@ impl<H: Http, B: SetProgressHandlerBufRead> io::BufRead for HeadersThenBody<H, B
     }
 }
 
-impl<H: Http, B: SetProgressHandlerBufRead> SetProgressHandlerBufRead for HeadersThenBody<H, B> {
+impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.body.set_progress_handler(handle_progress)
     }

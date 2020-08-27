@@ -16,6 +16,7 @@ type HttpError = http::Error;
 type HttpError = std::convert::Infallible;
 
 pub mod capabilities;
+use bstr::BString;
 #[doc(inline)]
 pub use capabilities::Capabilities;
 
@@ -75,7 +76,7 @@ pub enum MessageKind {
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
 pub struct RequestWriter<'a> {
     pub(crate) writer: Box<dyn io::Write + 'a>,
-    pub(crate) reader: Box<dyn SetProgressHandlerBufRead + 'a>,
+    pub(crate) reader: Box<dyn ExtendedBufRead + 'a>,
 }
 
 impl<'a> io::Write for RequestWriter<'a> {
@@ -91,7 +92,7 @@ impl<'a> io::Write for RequestWriter<'a> {
 impl<'a> RequestWriter<'a> {
     pub fn new_from_bufread<W: io::Write + 'a>(
         writer: W,
-        reader: Box<dyn SetProgressHandlerBufRead + 'a>,
+        reader: Box<dyn ExtendedBufRead + 'a>,
         write_mode: WriteMode,
         on_drop: Vec<MessageKind>,
     ) -> Self {
@@ -112,17 +113,17 @@ impl<'a> RequestWriter<'a> {
     }
 }
 
-pub trait SetProgressHandlerBufRead: io::BufRead {
+pub trait ExtendedBufRead: io::BufRead {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
 }
 
-impl<'a, T: io::Read> SetProgressHandlerBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
+impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
     }
 }
 
-impl<'a> SetProgressHandlerBufRead for ResponseReader<'a> {
+impl<'a> ExtendedBufRead for ResponseReader<'a> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.reader.set_progress_handler(handle_progress)
     }
@@ -130,7 +131,7 @@ impl<'a> SetProgressHandlerBufRead for ResponseReader<'a> {
 
 /// A type implementing `Read` to obtain the server response.
 pub struct ResponseReader<'a> {
-    reader: Box<dyn SetProgressHandlerBufRead + 'a>,
+    reader: Box<dyn ExtendedBufRead + 'a>,
 }
 
 impl<'a> io::Read for ResponseReader<'a> {
@@ -203,4 +204,26 @@ pub trait Transport {
     /// to do when the writer is consumed or dropped.
     /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
     fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error>;
+}
+
+pub trait TransportV2Ext {
+    /// Invoke a protocol V2 style `command` with given `capabilities` and optional command specific `arguments`.
+    /// The `capabilities` were communicated during the handshake.
+    fn invoke<'a>(
+        &mut self,
+        command: &str,
+        capabilities: impl IntoIterator<Item = (&'a str, &'a str)>,
+        arguments: Option<impl IntoIterator<Item = bstr::BString>>,
+    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error>;
+}
+
+impl<T: Transport> TransportV2Ext for T {
+    fn invoke<'a>(
+        &mut self,
+        command: &str,
+        capabilities: impl IntoIterator<Item = (&'a str, &'a str)>,
+        arguments: Option<impl IntoIterator<Item = BString>>,
+    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error> {
+        unimplemented!("todo")
+    }
 }

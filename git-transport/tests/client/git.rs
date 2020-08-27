@@ -43,9 +43,8 @@ mod connect_message {
 
 use crate::fixture_bytes;
 use bstr::ByteSlice;
-use git_transport::client::SetProgressHandlerBufRead;
 use git_transport::{
-    client::{self, git, Transport},
+    client::{self, git, ExtendedBufRead, Transport, TransportV2Ext},
     Protocol, Service,
 };
 use std::{
@@ -136,7 +135,7 @@ fn handshake_v1_and_request() -> crate::Result {
 }
 
 #[test]
-fn handshake_v2() -> crate::Result {
+fn handshake_v2_and_request() -> crate::Result {
     let mut out = Vec::new();
     let input = fixture_bytes("v2/clone.response");
     let mut c = git::Connection::new(
@@ -168,8 +167,23 @@ fn handshake_v2() -> crate::Result {
         .map(|(k, v)| (k.as_bytes().into(), v.map(|v| v.as_bytes().into())))
         .collect::<Vec<_>>()
     );
-
     drop(res);
+
+    c.invoke(
+        "ls-refs",
+        [("agent", "git/2.28.0"), ("object-format", "sha1")].iter().cloned(),
+        Some(
+            [
+                "peel",
+                "symrefs",
+                "ref-prefix HEAD",
+                "ref-prefix refs/heads/",
+                "ref-prefix refs/tags",
+            ]
+            .iter()
+            .map(|s| s.as_bytes().as_bstr().to_owned()),
+        ),
+    )?;
     assert_eq!(
         out.as_slice().as_bstr(),
         b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\0".as_bstr(),

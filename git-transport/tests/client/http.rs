@@ -1,6 +1,6 @@
 use crate::fixture_bytes;
 use bstr::{ByteSlice, ByteVec};
-use git_transport::client::SetProgressHandlerBufRead;
+use git_transport::client::ExtendedBufRead;
 use git_transport::{client, client::http, client::SetServiceResponse, client::Transport, Protocol, Service};
 use std::{
     cell::RefCell,
@@ -367,5 +367,12 @@ Git-Protocol: version=2
         .lines()
         .collect::<Vec<_>>()
     );
+    Ok(())
+}
+
+#[test]
+#[ignore]
+fn clone_v2() -> crate::Result {
+    let (_server, _c) = serve_and_connect("v2/http-clone.response", "path/not/important/due/to/mock", Protocol::V2)?;
     Ok(())
 }
