@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Server: GitHub Babel 2.0
+Content-Type: application/x-git-upload-pack-result
+Transfer-Encoding: chunked
+Expires: Fri, 01 Jan 1980 00:00:00 GMT
+Pragma: no-cache
+Cache-Control: no-cache, max-age=0, must-revalidate
+Vary: Accept-Encoding
+X-Frame-Options: DENY
+X-GitHub-Request-Id: C4CD:7267:7457DB:9E9119:5F47AFF9
+
+0052808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/master
+003f808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master
+0000

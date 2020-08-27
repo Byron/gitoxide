@@ -1,5 +1,6 @@
 use crate::fixture_bytes;
 use bstr::{ByteSlice, ByteVec};
+use git_transport::client::TransportV2Ext;
 use git_transport::{client, client::http, client::SetServiceResponse, client::Transport, Protocol, Service};
 use std::{
     cell::RefCell,
@@ -310,7 +311,7 @@ Accept: application/x-git-upload-pack-result
 }
 
 #[test]
-fn handshake_v2() -> crate::Result {
+fn handshake_and_lsrefs_v2() -> crate::Result {
     let (mut server, mut c) = serve_and_connect(
         "v2/http-handshake.response",
         "path/not/important/due/to/mock",
@@ -366,12 +367,45 @@ Git-Protocol: version=2
         .lines()
         .collect::<Vec<_>>()
     );
-    Ok(())
-}
 
-#[test]
-#[ignore]
-fn clone_v2() -> crate::Result {
-    let (_server, _c) = serve_and_connect("v2/http-clone.response", "path/not/important/due/to/mock", Protocol::V2)?;
+    server.next_read_and_respond_with(fixture_bytes("v2/http-lsrefs.response"));
+    drop(refs);
+    let res = c.invoke(
+        "ls-refs",
+        [("without-value", None), ("with-value", Some("value"))].iter().cloned(),
+        Some(vec!["arg1".as_bytes().as_bstr().to_owned()]),
+    )?;
+    assert_eq!(
+        res.lines().collect::<Result<Vec<_>, _>>()?,
+        vec![
+            "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/master",
+            "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master"
+        ]
+    );
+
+    assert_eq!(
+        server.received_as_string().lines().collect::<Vec<_>>(),
+        format!(
+            "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Transfer-Encoding: chunked
+Content-Type: application/x-git-upload-pack-request
+Accept: application/x-git-upload-pack-result
+
+4c
+0014command=ls-refs
+0012without-value
+0015with-value=value
+00010009arg1
+0000
+0
+
+",
+            server.addr.port(),
+        )
+        .lines()
+        .collect::<Vec<_>>()
+    );
+
     Ok(())
 }
