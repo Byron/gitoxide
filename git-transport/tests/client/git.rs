@@ -169,7 +169,7 @@ fn handshake_v2_and_request() -> crate::Result {
     );
     drop(res);
 
-    c.invoke(
+    let res = c.invoke(
         "ls-refs",
         [("agent", Some("git/2.28.0")), ("object-format", Some("sha1"))]
             .iter()
@@ -186,9 +186,26 @@ fn handshake_v2_and_request() -> crate::Result {
             .map(|s| s.as_bytes().as_bstr().to_owned()),
         ),
     )?;
+
+    assert_eq!(
+        res.lines().collect::<Result<Vec<_>, _>>()?,
+        vec![
+            "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/master".to_string(),
+            "808e50d724f604f69ab93c6da2919c014667bedb refs/heads/master".into()
+        ]
+    );
     assert_eq!(
         out.as_slice().as_bstr(),
-        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\0".as_bstr(),
+        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
+0015agent=git/2.28.0
+0017object-format=sha1
+00010009peel
+000csymrefs
+0014ref-prefix HEAD
+001bref-prefix refs/heads/
+0019ref-prefix refs/tags
+0000"
+            .as_bstr(),
         "it sends the correct request, including the adjusted version"
     );
     Ok(())

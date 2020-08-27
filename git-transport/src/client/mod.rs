@@ -71,6 +71,8 @@ impl Default for WriteMode {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum MessageKind {
     Flush,
+    /// A V2 delimiter
+    Delimiter,
     Text(&'static [u8]),
 }
 
@@ -110,6 +112,10 @@ impl<'a> RequestWriter<'a> {
     pub fn into_read(self) -> Box<dyn ExtendedBufRead + 'a> {
         self.reader
     }
+
+    pub fn write_message(&mut self, kind: MessageKind) -> io::Result<()> {
+        self.writer.write_message(kind)
+    }
 }
 
 pub trait ExtendedBufRead: io::BufRead {
@@ -133,6 +139,16 @@ impl<W: io::Write> WritePacketOnDrop<W> {
     pub fn new(inner: git_packetline::Writer<W>, on_drop: Vec<MessageKind>) -> Self {
         WritePacketOnDrop { inner, on_drop }
     }
+
+    pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
+        match message {
+            MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.inner.inner),
+            MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.to_write(&mut self.inner.inner),
+            MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner.inner),
+        }
+        .map(|_| ())
+        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
+    }
 }
 
 impl<W: io::Write> io::Write for WritePacketOnDrop<W> {
@@ -147,12 +163,10 @@ impl<W: io::Write> io::Write for WritePacketOnDrop<W> {
 
 impl<W: io::Write> Drop for WritePacketOnDrop<W> {
     fn drop(&mut self) {
-        for msg in self.on_drop.drain(..) {
-            match msg {
-                MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.inner.inner),
-                MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner.inner),
-            }
-            .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
+        let mut on_drop = std::mem::take(&mut self.on_drop);
+        for msg in on_drop.drain(..) {
+            self.write_message(msg)
+                .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
         }
     }
 }
@@ -205,8 +219,11 @@ impl<T: Transport> TransportV2Ext for T {
                 None => writer.write_all(name.as_bytes()),
             }?;
         }
-        if let Some(_arguments) = arguments {
-            unimplemented!("arguments");
+        if let Some(arguments) = arguments {
+            writer.write_message(MessageKind::Delimiter)?;
+            for argument in arguments {
+                writer.write_all(argument.as_ref())?;
+            }
         }
         Ok(writer.into_read())
     }
