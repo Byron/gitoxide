@@ -76,7 +76,7 @@ pub enum MessageKind {
 
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
 pub struct RequestWriter<'a> {
-    pub(crate) writer: Box<dyn io::Write + 'a>,
+    pub(crate) writer: WritePacketOnDrop<Box<dyn io::Write + 'a>>,
     pub(crate) reader: Box<dyn ExtendedBufRead + 'a>,
 }
 
@@ -97,17 +97,15 @@ impl<'a> RequestWriter<'a> {
         write_mode: WriteMode,
         on_drop: Vec<MessageKind>,
     ) -> Self {
-        let mut writer = git_packetline::Writer::new(writer);
+        let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn io::Write>);
         match write_mode {
             WriteMode::Binary => writer.enable_binary_mode(),
             WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
         }
-        let writer: Box<dyn io::Write> = if on_drop.is_empty() {
-            Box::new(writer)
-        } else {
-            Box::new(WritePacketOnDrop::new(writer, on_drop))
-        };
-        RequestWriter { writer, reader }
+        RequestWriter {
+            writer: WritePacketOnDrop::new(writer, on_drop),
+            reader,
+        }
     }
     pub fn into_read(self) -> ResponseReader<'a> {
         ResponseReader { reader: self.reader }
