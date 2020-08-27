@@ -44,7 +44,7 @@ mod connect_message {
 use crate::fixture_bytes;
 use bstr::ByteSlice;
 use git_transport::{
-    client::{self, git, ExtendedBufRead, Transport, TransportV2Ext},
+    client::{self, git, Transport, TransportV2Ext},
     Protocol, Service,
 };
 use std::{

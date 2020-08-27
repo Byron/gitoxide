@@ -107,8 +107,8 @@ impl<'a> RequestWriter<'a> {
             reader,
         }
     }
-    pub fn into_read(self) -> ResponseReader<'a> {
-        ResponseReader { reader: self.reader }
+    pub fn into_read(self) -> Box<dyn ExtendedBufRead + 'a> {
+        self.reader
     }
 }
 
@@ -119,33 +119,6 @@ pub trait ExtendedBufRead: io::BufRead {
 impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
-    }
-}
-
-impl<'a> ExtendedBufRead for ResponseReader<'a> {
-    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
-        self.reader.set_progress_handler(handle_progress)
-    }
-}
-
-/// A type implementing `Read` to obtain the server response.
-pub struct ResponseReader<'a> {
-    reader: Box<dyn ExtendedBufRead + 'a>,
-}
-
-impl<'a> io::Read for ResponseReader<'a> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.reader.read(buf)
-    }
-}
-
-impl<'a> io::BufRead for ResponseReader<'a> {
-    fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        self.reader.fill_buf()
-    }
-
-    fn consume(&mut self, amt: usize) {
-        self.reader.consume(amt)
     }
 }
 
@@ -214,7 +187,7 @@ pub trait TransportV2Ext {
         command: &str,
         capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         arguments: Option<impl IntoIterator<Item = bstr::BString>>,
-    ) -> Result<ResponseReader, Error>;
+    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error>;
 }
 
 impl<T: Transport> TransportV2Ext for T {
@@ -223,7 +196,7 @@ impl<T: Transport> TransportV2Ext for T {
         command: &str,
         capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         arguments: Option<impl IntoIterator<Item = BString>>,
-    ) -> Result<ResponseReader, Error> {
+    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLFTerminatedLinePerWriteCall, vec![MessageKind::Flush])?;
         writer.write_all(format!("command={}", command).as_bytes())?;
         for (name, value) in capabilities {

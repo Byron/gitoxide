@@ -1,6 +1,5 @@
 use crate::fixture_bytes;
 use bstr::{ByteSlice, ByteVec};
-use git_transport::client::ExtendedBufRead;
 use git_transport::{client, client::http, client::SetServiceResponse, client::Transport, Protocol, Service};
 use std::{
     cell::RefCell,
