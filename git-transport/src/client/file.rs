@@ -2,12 +2,9 @@ use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Service,
 };
+use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
-use std::process::Stdio;
-use std::{
-    path::{Path, PathBuf},
-    process,
-};
+use std::process::{self, Stdio};
 
 quick_error! {
     #[derive(Debug)]
@@ -38,8 +35,7 @@ const ENV_VARS_TO_REMOVE: &'static [&'static str] = &[
 ];
 
 pub struct SpawnProcessOnDemand {
-    path: PathBuf,
-    version: crate::Protocol,
+    path: BString,
     connection: Option<git::Connection<process::ChildStdout, process::ChildStdin>>,
 }
 
@@ -54,21 +50,32 @@ impl client::Transport for SpawnProcessOnDemand {
             cmd.env_remove(env_to_remove);
         }
         cmd.stderr(Stdio::null()).stdout(Stdio::piped()).stdin(Stdio::piped());
-        cmd.arg("--strict").arg("--timeout=0");
-        let _child = cmd.spawn()?;
-        // self.connection = Some(git::Connection::new_for_spawned_process())
-        unimplemented!("invoke command")
+        cmd.arg("--strict").arg("--timeout=0").arg(self.path.to_os_str_lossy());
+
+        let child = cmd.spawn()?;
+        self.connection = Some(git::Connection::new_for_spawned_process(
+            child.stdout.expect("stdout configured"),
+            child.stdin.expect("stdin configured"),
+            self.path.clone(),
+        ));
+        let c = self
+            .connection
+            .as_mut()
+            .expect("connection to be there right after setting it");
+        c.handshake(service)
     }
 
-    fn request(&mut self, _write_mode: WriteMode, _on_drop: Vec<MessageKind>) -> Result<RequestWriter, client::Error> {
-        unimplemented!()
+    fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, client::Error> {
+        self.connection
+            .as_mut()
+            .expect("handshake() to have been called first")
+            .request(write_mode, on_drop)
     }
 }
 
-pub fn connect(path: &Path, version: crate::Protocol) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
+pub fn connect(path: impl Into<BString>) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
     Ok(SpawnProcessOnDemand {
-        path: path.to_owned(),
-        version,
+        path: path.into(),
         connection: None,
     })
 }

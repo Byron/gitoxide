@@ -30,7 +30,7 @@
       * [x] V2 handshake
         * [x] send command request
     * [ ] connect
-      * [ ] file
+      * [x] file
       * [ ] ssh
       * [ ] git
       * [x] http(s)

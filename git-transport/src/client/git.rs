@@ -142,8 +142,15 @@ where
             mode,
         }
     }
-    pub(crate) fn new_for_spawned_process(reader: R, writer: W, path: BString, version: Protocol) -> Self {
-        Self::new(reader, writer, version, path, None::<(&str, _)>, ConnectMode::Process)
+    pub(crate) fn new_for_spawned_process(reader: R, writer: W, repository_path: impl Into<BString>) -> Self {
+        Self::new(
+            reader,
+            writer,
+            Protocol::V1, // only V1 is actually supported, as V2 really needs a server, which is not present here
+            repository_path,
+            None::<(&str, _)>,
+            ConnectMode::Process,
+        )
     }
 }
 use quick_error::quick_error;

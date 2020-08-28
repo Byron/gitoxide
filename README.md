@@ -127,7 +127,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ### git-transport
   * [ ] general purpose `connect(…)` for clients
-    * [ ] _file://_ launches service application
+    * [x] _file://_ launches service application
     * [ ] _ssh://_ launches service application in a remote shell using _ssh_
     * [ ] _git://_ establishes a tcp connection to a git daemon
     * [x] _http(s)://_ establishes connections to web server

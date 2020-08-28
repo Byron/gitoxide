@@ -186,8 +186,8 @@ pub trait Transport {
 
     /// Obtain a writer for sending data and obtaining the response. It can be configured in various ways,
     /// and should to support with the task at hand.
-    /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_drop` determines what
-    /// to do when the writer is consumed or dropped.
+    /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_drop` determines
+    /// which messages to write when the writer is dropped. This happens naturally when switching to reading the response with `into_read()`.
     /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
     fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error>;
 }
