@@ -3,8 +3,68 @@ use bstr::BString;
 use git_packetline::PacketLine;
 use std::{io, io::Write, net::TcpStream};
 
-pub mod message;
-pub(crate) mod recv;
+pub mod message {
+    use crate::{Protocol, Service};
+    use bstr::{BString, ByteVec};
+
+    pub fn connect(
+        service: Service,
+        version: Protocol,
+        path: &[u8],
+        virtual_host: Option<&(String, Option<u16>)>,
+    ) -> BString {
+        let mut out = bstr::BString::from(service.as_str());
+        out.push(b' ');
+        out.extend_from_slice(&path);
+        out.push(0);
+        if let Some((host, port)) = virtual_host {
+            out.push_str("host=");
+            out.extend_from_slice(host.as_bytes());
+            if let Some(port) = port {
+                out.push_byte(b':');
+                out.push_str(&format!("{}", port));
+            }
+            out.push(0);
+        }
+        // We only send the version when needed, as otherwise a V2 server who is asked for V1 will respond with 'version 1'
+        // as extra lines in the reply, which we don't want to handle. Especially since an old server will not respond with that
+        // line (is what I assume, at least), so it's an optional part in the response to understand and handle. There is no value
+        // in that, so let's help V2 servers to respond in a way that assumes V1.
+        if version != Protocol::V1 {
+            out.push(0);
+            out.push_str(format!("version={}", version as usize));
+            out.push(0);
+        }
+        out
+    }
+}
+pub(crate) mod recv {
+    use crate::{client, client::Capabilities, Protocol};
+    use std::io;
+
+    pub fn capabilties_and_possibly_refs<'a, T: io::Read>(
+        rd: &'a mut git_packetline::Provider<T>,
+        version: Protocol,
+    ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>), client::Error> {
+        rd.fail_on_err_lines(true);
+        match version {
+            Protocol::V1 => {
+                let capabilities = rd
+                    .peek_line()
+                    .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+                let (capabilities, delimiter_position) = Capabilities::from_bytes(
+                    capabilities
+                        .to_text()
+                        .ok_or(client::Error::ExpectedLine("text"))?
+                        .as_slice(),
+                )?;
+                rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+                Ok((capabilities, Some(Box::new(rd.as_read()))))
+            }
+            Protocol::V2 => Ok((Capabilities::from_lines(rd.as_read())?, None)),
+        }
+    }
+}
 
 pub struct Connection<R, W> {
     writer: W,

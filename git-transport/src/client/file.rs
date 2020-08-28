@@ -55,12 +55,12 @@ impl client::Transport for SpawnProcessOnDemand {
         }
         cmd.stderr(Stdio::null()).stdout(Stdio::piped()).stdin(Stdio::piped());
         cmd.arg("--strict").arg("--timeout=0");
-        let child = cmd.spawn()?;
+        let _child = cmd.spawn()?;
         // self.connection = Some(git::Connection {})
         unimplemented!("invoke command")
     }
 
-    fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, client::Error> {
+    fn request(&mut self, _write_mode: WriteMode, _on_drop: Vec<MessageKind>) -> Result<RequestWriter, client::Error> {
         unimplemented!()
     }
 }
