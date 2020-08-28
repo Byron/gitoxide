@@ -66,12 +66,19 @@ pub(crate) mod recv {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum ConnectMode {
+    Daemon,
+    Process,
+}
+
 pub struct Connection<R, W> {
     writer: W,
     line_provider: git_packetline::Provider<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     version: Protocol,
+    mode: ConnectMode,
 }
 
 impl<R, W> client::Transport for Connection<R, W>
@@ -80,14 +87,16 @@ where
     W: io::Write,
 {
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
-        let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
-        line_writer.write_all(&message::connect(
-            service,
-            self.version,
-            &self.path,
-            self.virtual_host.as_ref(),
-        ))?;
-        line_writer.flush()?;
+        if self.mode == ConnectMode::Daemon {
+            let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
+            line_writer.write_all(&message::connect(
+                service,
+                self.version,
+                &self.path,
+                self.virtual_host.as_ref(),
+            ))?;
+            line_writer.flush()?;
+        }
 
         let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_provider, self.version)?;
         Ok(SetServiceResponse {
@@ -122,6 +131,7 @@ where
         desired_version: Protocol,
         repository_path: impl Into<BString>,
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
+        mode: ConnectMode,
     ) -> Self {
         Connection {
             writer: write,
@@ -129,10 +139,13 @@ where
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             version: desired_version,
+            mode,
         }
     }
+    pub(crate) fn new_for_spawned_process(reader: R, writer: W, path: BString, version: Protocol) -> Self {
+        Self::new(reader, writer, version, path, None::<(&str, _)>, ConnectMode::Process)
+    }
 }
-
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]

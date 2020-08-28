@@ -64,6 +64,7 @@ fn handshake_v1_and_request() -> crate::Result {
         Protocol::V1,
         "/foo.git",
         Some(("example.org", None)),
+        git::ConnectMode::Daemon,
     );
     let mut res = c.handshake(Service::UploadPack)?;
     assert_eq!(res.actual_protocol, Protocol::V1);
@@ -135,6 +136,28 @@ fn handshake_v1_and_request() -> crate::Result {
 }
 
 #[test]
+fn handshake_v1_process_mode() -> crate::Result {
+    let mut out = Vec::new();
+    let server_response = fixture_bytes("v1/clone.response");
+    let mut c = git::Connection::new(
+        server_response.as_slice(),
+        &mut out,
+        Protocol::V1,
+        "/foo.git",
+        Some(("example.org", None)),
+        git::ConnectMode::Process,
+    );
+    c.handshake(Service::UploadPack)?;
+
+    assert_eq!(
+        out.as_slice().as_bstr(),
+        b"".as_bstr(),
+        "it sends no introductory line to help the daemon start the right thing"
+    );
+    Ok(())
+}
+
+#[test]
 fn handshake_v2_and_request() -> crate::Result {
     let mut out = Vec::new();
     let input = fixture_bytes("v2/clone.response");
@@ -144,6 +167,7 @@ fn handshake_v2_and_request() -> crate::Result {
         Protocol::V2,
         "/bar.git",
         Some(("example.org", None)),
+        git::ConnectMode::Daemon,
     );
     let res = c.handshake(Service::UploadPack)?;
     assert_eq!(res.actual_protocol, Protocol::V2);

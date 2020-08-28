@@ -56,7 +56,7 @@ impl client::Transport for SpawnProcessOnDemand {
         cmd.stderr(Stdio::null()).stdout(Stdio::piped()).stdin(Stdio::piped());
         cmd.arg("--strict").arg("--timeout=0");
         let _child = cmd.spawn()?;
-        // self.connection = Some(git::Connection {})
+        // self.connection = Some(git::Connection::new_for_spawned_process())
         unimplemented!("invoke command")
     }
 
