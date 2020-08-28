@@ -3,17 +3,7 @@ use crate::{
     Service,
 };
 use bstr::{BString, ByteSlice};
-use quick_error::quick_error;
 use std::process::{self, Stdio};
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Tbd {
-            display("tbd")
-        }
-    }
-}
 
 // from https://github.com/git/git/blob/20de7e7e4f4e9ae52e6cc7cfaa6469f186ddb0fa/environment.c#L115:L115
 const ENV_VARS_TO_REMOVE: &[&str] = &[
@@ -37,6 +27,15 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 pub struct SpawnProcessOnDemand {
     path: BString,
     connection: Option<git::Connection<process::ChildStdout, process::ChildStdin>>,
+    child: Option<std::process::Child>,
+}
+
+impl Drop for SpawnProcessOnDemand {
+    fn drop(&mut self) {
+        if let Some(mut child) = self.child.take() {
+            child.wait().ok();
+        }
+    }
 }
 
 impl client::Transport for SpawnProcessOnDemand {
@@ -52,12 +51,13 @@ impl client::Transport for SpawnProcessOnDemand {
         cmd.stderr(Stdio::null()).stdout(Stdio::piped()).stdin(Stdio::piped());
         cmd.arg("--strict").arg("--timeout=0").arg(self.path.to_os_str_lossy());
 
-        let child = cmd.spawn()?;
+        let mut child = cmd.spawn()?;
         self.connection = Some(git::Connection::new_for_spawned_process(
-            child.stdout.expect("stdout configured"),
-            child.stdin.expect("stdin configured"),
+            child.stdout.take().expect("stdout configured"),
+            child.stdin.take().expect("stdin configured"),
             self.path.clone(),
         ));
+        self.child = Some(child);
         let c = self
             .connection
             .as_mut()
@@ -75,6 +75,7 @@ impl client::Transport for SpawnProcessOnDemand {
 
 pub fn connect(path: impl Into<BString>) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
     Ok(SpawnProcessOnDemand {
+        child: None,
         path: path.into(),
         connection: None,
     })
