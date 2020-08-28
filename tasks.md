@@ -29,9 +29,9 @@
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
         * [x] send command request
-    * [ ] connect
+    * [x] connect
       * [x] file
-      * [ ] ssh
+      * [x] ssh
       * [x] git
       * [x] http(s)
   * **git-protocol**
