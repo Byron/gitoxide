@@ -1,5 +1,4 @@
 use crate::client::Transport;
-use bstr::ByteSlice;
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
@@ -46,7 +45,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
         git_url::Protocol::Ssh => Box::new(
             crate::client::ssh::connect(
                 &url.host.as_ref().expect("host is present in url"),
-                url.path.to_path()?,
+                url.path,
                 version,
                 url.user.as_deref(),
                 url.port,
@@ -70,9 +69,12 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
         #[cfg(not(feature = "http-client-curl"))]
         git_url::Protocol::Https | git_url::Protocol::Http => return Err(Error::CompiledWithoutHttp(url.protocol)),
         #[cfg(feature = "http-client-curl")]
-        git_url::Protocol::Https | git_url::Protocol::Http => Box::new(
-            crate::client::http::connect(urlb.to_str()?, version)
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
-        ),
+        git_url::Protocol::Https | git_url::Protocol::Http => {
+            use bstr::ByteSlice;
+            Box::new(
+                crate::client::http::connect(urlb.to_str()?, version)
+                    .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
+            )
+        }
     })
 }
