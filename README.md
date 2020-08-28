@@ -127,7 +127,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ### git-transport
   * [ ] general purpose `connect(…)` for clients
-    * [ ] _file://_ and launching service application
+    * [ ] _file://_ launches service application
     * [ ] _ssh://_ launches service application in a remote shell using _ssh_
     * [ ] _git://_ establishes a tcp connection to a git daemon
     * [x] _http(s)://_ establishes connections to web server
@@ -143,7 +143,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] send values + receive data with sidebands
     * [x] V2 handshake
       * [x] send command request, receive response with sideband support
-    * [ ] ~~dumb~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
+    * [ ] ~~'dumb'~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
   * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry
   * [ ] API documentation with examples
 

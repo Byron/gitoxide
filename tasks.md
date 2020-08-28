@@ -46,6 +46,12 @@
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
   * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
+  * [ ] journey tests for each connection method
+    * [ ] file
+    * [ ] git
+    * [ ] ssh
+    * [ ] https (unauthenticated)
+    * [ ] https (authenticated)
 
 ### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
 

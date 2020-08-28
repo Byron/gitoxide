@@ -46,6 +46,10 @@ fn relative_file_path_without_protocol() -> crate::Result {
     assert_url(
         "../../path/to/git",
         url(Protocol::File, None, None, None, b"../../path/to/git", None),
+    )?;
+    assert_url(
+        "path/to/git",
+        url(Protocol::File, None, None, None, b"path/to/git", None),
     )
 }
 
