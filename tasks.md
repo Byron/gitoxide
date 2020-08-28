@@ -32,7 +32,7 @@
     * [ ] connect
       * [x] file
       * [ ] ssh
-      * [ ] git
+      * [x] git
       * [x] http(s)
   * **git-protocol**
     * [ ] delegate to support clone

@@ -129,7 +129,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] general purpose `connect(…)` for clients
     * [x] _file://_ launches service application
     * [ ] _ssh://_ launches service application in a remote shell using _ssh_
-    * [ ] _git://_ establishes a tcp connection to a git daemon
+    * [x] _git://_ establishes a tcp connection to a git daemon
     * [x] _http(s)://_ establishes connections to web server
     * [ ] pass context for scheme specific configuration, like authentication information
   * [ ] general purpose `accept(…)` for servers

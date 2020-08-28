@@ -153,21 +153,33 @@ where
         )
     }
 }
+
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Tbd {
-            display("tbd")
+        Io(err: io::Error){
+            display("An IO error occurred when connecting to the server")
+            from()
+            source(err)
         }
     }
 }
 
 pub fn connect(
-    _host: &str,
-    _path: BString,
-    _version: crate::Protocol,
-    _port: Option<u16>,
+    host: &str,
+    path: BString,
+    version: crate::Protocol,
+    port: Option<u16>,
 ) -> Result<Connection<TcpStream, TcpStream>, Error> {
-    unimplemented!("file connection")
+    let read = TcpStream::connect((host, port.unwrap_or(9418)))?;
+    let write = read.try_clone()?;
+    Ok(Connection::new(
+        read,
+        write,
+        version,
+        path,
+        None::<(&str, _)>,
+        ConnectMode::Daemon,
+    ))
 }
