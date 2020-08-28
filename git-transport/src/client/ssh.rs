@@ -23,17 +23,15 @@ pub fn connect(
     let mut ssh_cmd_line = ssh_cmd_line.split(' ');
     let ssh_cmd = ssh_cmd_line.next().expect("there is always a single item");
 
-    let args_and_env: Option<(Vec<Cow<str>>, Vec<(&'static str, String)>)> = match ssh_cmd {
+    type EnvVar = (&'static str, String);
+    let args_and_env: Option<(Vec<Cow<str>>, Vec<EnvVar>)> = match ssh_cmd {
         "ssh" | "ssh.exe" => {
             if version != Protocol::V1 {
-                let mut args = vec![Cow::from("-o"), format!("SendEnv=GIT_PROTOCOL").into()];
+                let mut args = vec![Cow::from("-o"), "SendEnv=GIT_PROTOCOL".into()];
                 if let Some(port) = port {
                     args.push(format!("-p={}", port).into());
                 }
-                Some((
-                    args,
-                    vec![("GIT_PROTOCOL", format!("version={}", version as usize).into())],
-                ))
+                Some((args, vec![("GIT_PROTOCOL", format!("version={}", version as usize))]))
             } else {
                 None
             }
@@ -48,7 +46,7 @@ pub fn connect(
     Ok(match args_and_env {
         Some((args, envs)) => client::file::SpawnProcessOnDemand::new_ssh(
             ssh_cmd.into(),
-            ssh_cmd_line.map(|s| Cow::from(s)).chain(args).chain(Some(host.into())),
+            ssh_cmd_line.map(Cow::from).chain(args).chain(Some(host.into())),
             envs,
             path,
         ),

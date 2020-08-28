@@ -49,7 +49,7 @@ impl SpawnProcessOnDemand {
         path: BString,
     ) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
-            path: path.into(),
+            path,
             ssh_program: Some(program),
             ssh_args: args.into_iter().map(|s| s.into()).collect(),
             ssh_env: env.into_iter().map(|(k, v)| (k, v.into())).collect(),
@@ -59,7 +59,7 @@ impl SpawnProcessOnDemand {
     }
     pub(crate) fn new(path: BString) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
-            path: path.into(),
+            path,
             ssh_program: None,
             ssh_args: Vec::new(),
             ssh_env: Vec::new(),
