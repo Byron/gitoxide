@@ -127,18 +127,24 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ### git-transport
   * [ ] general purpose `connect(…)` for clients
-    * [ ] `git-config` support for configuring the actual connections using git compatible configuration read via configuration files
-    * [ ] authentication
+    * [ ] _file://_ and launching service application
+    * [ ] _ssh://_ launches service application in a remote shell using _ssh_
+    * [ ] _git://_ establishes a tcp connection to a git daemon
+    * [x] _http(s)://_ establishes connections to web server
+    * [ ] pass context for scheme specific configuration, like authentication information
   * [ ] general purpose `accept(…)` for servers
-  * [ ] **initiate connection(s)**
-    * [ ] **file** - directly via git-upload-pack
-    * [ ] **[git](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L66:L66)**
-       * [ ] [extra parameters](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L52:L52) via null separated k=v pairs
-             , protocol version definition
-    * [ ] **[ssh](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L103:L103)**
-    * [ ] [via http(s)](https://github.com/git/git/blob/master/Documentation/technical/http-protocol.txt)
-       * [ ] 'smart'
-       * [ ] ~~dumb~~ (_opt out for now, using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_)
+  * [x] git://<service>
+    * [x] V1 handshake
+      * [x] send values + receive data with sidebands
+    * [x] V2 handshake
+      * [x] send command request, receive response with sideband support
+  * [x] http(s)://<service>
+    * [x] V1 handshake
+      * [x] send values + receive data with sidebands
+    * [x] V2 handshake
+      * [x] send command request, receive response with sideband support
+    * [ ] ~~dumb~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
+  * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry
   * [ ] API documentation with examples
   
 ### git-repository

@@ -41,7 +41,7 @@
     * [ ] support for authentication providers
       * [ ] know why it failed by extracting PermissionErrors from io errors
       * [ ] implement authentication provider using git-helpers
-* **git-refs** _(minimal)_
+* **git-ref** _(minimal)_
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
@@ -49,7 +49,7 @@
 
 ### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
 
-* **git-refs**
+* **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
 * **git-repository**
