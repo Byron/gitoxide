@@ -3,7 +3,7 @@ use crate::{
     Service,
 };
 use bstr::{BString, ByteSlice};
-use std::process::{self, Stdio};
+use std::process::{self, Command, Stdio};
 
 // from https://github.com/git/git/blob/20de7e7e4f4e9ae52e6cc7cfaa6469f186ddb0fa/environment.c#L115:L115
 const ENV_VARS_TO_REMOVE: &[&str] = &[
@@ -26,6 +26,9 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 
 pub struct SpawnProcessOnDemand {
     path: BString,
+    ssh_program: Option<String>,
+    ssh_args: Vec<String>,
+    ssh_env: Vec<(&'static str, String)>,
     connection: Option<git::Connection<process::ChildStdout, process::ChildStdin>>,
     child: Option<std::process::Child>,
 }
@@ -38,17 +41,53 @@ impl Drop for SpawnProcessOnDemand {
     }
 }
 
+impl SpawnProcessOnDemand {
+    pub(crate) fn new_ssh(
+        program: String,
+        args: impl IntoIterator<Item = impl Into<String>>,
+        env: impl IntoIterator<Item = (&'static str, impl Into<String>)>,
+        path: BString,
+    ) -> SpawnProcessOnDemand {
+        SpawnProcessOnDemand {
+            path: path.into(),
+            ssh_program: Some(program),
+            ssh_args: args.into_iter().map(|s| s.into()).collect(),
+            ssh_env: env.into_iter().map(|(k, v)| (k, v.into())).collect(),
+            child: None,
+            connection: None,
+        }
+    }
+    pub(crate) fn new(path: BString) -> SpawnProcessOnDemand {
+        SpawnProcessOnDemand {
+            path: path.into(),
+            ssh_program: None,
+            ssh_args: Vec::new(),
+            ssh_env: Vec::new(),
+            child: None,
+            connection: None,
+        }
+    }
+}
+
 impl client::Transport for SpawnProcessOnDemand {
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
         assert!(
             self.connection.is_none(),
             "cannot handshake twice with the same connection"
         );
-        let mut cmd = std::process::Command::new(service.as_str());
+        let mut cmd = match &self.ssh_program {
+            Some(program) => Command::new(program),
+            None => Command::new(service.as_str()),
+        };
         for env_to_remove in ENV_VARS_TO_REMOVE {
             cmd.env_remove(env_to_remove);
         }
+        cmd.envs(std::mem::take(&mut self.ssh_env));
+        cmd.args(&mut self.ssh_args);
         cmd.stderr(Stdio::null()).stdout(Stdio::piped()).stdin(Stdio::piped());
+        if self.ssh_program.is_some() {
+            cmd.arg(service.as_str());
+        }
         cmd.arg("--strict").arg("--timeout=0").arg(self.path.to_os_str_lossy());
 
         let mut child = cmd.spawn()?;
@@ -74,9 +113,5 @@ impl client::Transport for SpawnProcessOnDemand {
 }
 
 pub fn connect(path: impl Into<BString>) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
-    Ok(SpawnProcessOnDemand {
-        child: None,
-        path: path.into(),
-        connection: None,
-    })
+    Ok(SpawnProcessOnDemand::new(path.into()))
 }

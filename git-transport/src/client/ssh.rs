@@ -1,8 +1,7 @@
 use crate::client::git;
 use crate::Protocol;
 use quick_error::quick_error;
-use std::borrow::Cow;
-use std::{path::Path, process};
+use std::{borrow::Cow, path::Path, process};
 
 quick_error! {
     #[derive(Debug)]
