@@ -84,6 +84,7 @@ build-override = { opt-level = 0 }
 members = [
     "gitoxide-core",
     "git-features",
+    "git-index",
     "git-object",
     "git-ref",
     "git-odb",

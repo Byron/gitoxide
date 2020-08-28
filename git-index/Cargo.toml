@@ -1,0 +1,15 @@
+[package]
+name = "git-index"
+version = "0.0.0"
+repository = "https://github.com/Byron/git-oxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project dedicated implementing the git index file"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+
+[lib]
+doctest = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

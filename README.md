@@ -146,6 +146,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [ ] ~~dumb~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
   * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry
   * [ ] API documentation with examples
+
+### git-index
+  * handle git index files for primary use by the git-repository while crafting new commits
+  * [ ] API documentation with examples
   
 ### git-repository
   * [x] initialize
