@@ -163,7 +163,22 @@ quick_error! {
             from()
             source(err)
         }
+        VirtualHostInvalid(host: String) {
+            display("Could not parse '{}' as virtual host with format <host>[:port]", host)
+        }
     }
+}
+
+fn parse_host(input: String) -> Result<(String, Option<u16>), Error> {
+    let mut tokens = input.splitn(2, ':');
+    Ok(match (tokens.next(), tokens.next()) {
+        (Some(host), None) => (host.to_owned(), None),
+        (Some(host), Some(port)) => (
+            host.to_owned(),
+            Some(port.parse().map_err(|_| Error::VirtualHostInvalid(input))?),
+        ),
+        _ => unreachable!("we expect at least one token, the original string"),
+    })
 }
 
 pub fn connect(
@@ -174,12 +189,9 @@ pub fn connect(
 ) -> Result<Connection<TcpStream, TcpStream>, Error> {
     let read = TcpStream::connect((host, port.unwrap_or(9418)))?;
     let write = read.try_clone()?;
-    Ok(Connection::new(
-        read,
-        write,
-        version,
-        path,
-        None::<(&str, _)>,
-        ConnectMode::Daemon,
-    ))
+    let vhost = std::env::var("GIT_OVERRIDE_VIRTUAL_HOST")
+        .ok()
+        .map(parse_host)
+        .transpose()?;
+    Ok(Connection::new(read, write, version, path, vhost, ConnectMode::Daemon))
 }
