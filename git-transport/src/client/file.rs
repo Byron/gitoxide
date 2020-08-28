@@ -16,7 +16,7 @@ quick_error! {
 }
 
 // from https://github.com/git/git/blob/20de7e7e4f4e9ae52e6cc7cfaa6469f186ddb0fa/environment.c#L115:L115
-const ENV_VARS_TO_REMOVE: &'static [&'static str] = &[
+const ENV_VARS_TO_REMOVE: &[&str] = &[
     "GIT_ALTERNATE_OBJECT_DIRECTORIES",
     "GIT_CONFIG",
     "GIT_CONFIG_PARAMETERS",
