@@ -1,9 +1,9 @@
-use crate::parse::{assert_url, url};
+use crate::parse::{assert_url_and, assert_url_roundtrip, url};
 use git_url::Protocol;
 
 #[test]
 fn without_user_and_without_port() -> crate::Result {
-    assert_url(
+    assert_url_roundtrip(
         "ssh://host.xz/path/to/repo.git/",
         url(Protocol::Ssh, None, "host.xz", None, b"/path/to/repo.git/"),
     )
@@ -11,12 +11,12 @@ fn without_user_and_without_port() -> crate::Result {
 
 #[test]
 fn without_user_and_with_port() -> crate::Result {
-    assert_url("ssh://host.xz:21/", url(Protocol::Ssh, None, "host.xz", 21, b"/"))
+    assert_url_roundtrip("ssh://host.xz:21/", url(Protocol::Ssh, None, "host.xz", 21, b"/"))
 }
 
 #[test]
 fn host_is_ipv4() -> crate::Result {
-    assert_url(
+    assert_url_roundtrip(
         "ssh://127.69.0.1/hello",
         url(Protocol::Ssh, None, "127.69.0.1", None, b"/hello"),
     )
@@ -24,7 +24,7 @@ fn host_is_ipv4() -> crate::Result {
 
 #[test]
 fn username_expansion_with_username() -> crate::Result {
-    assert_url(
+    assert_url_roundtrip(
         "ssh://example.com/~byron/hello/git",
         url(Protocol::Ssh, None, "example.com", None, b"/~byron/hello/git"),
     )
@@ -32,7 +32,7 @@ fn username_expansion_with_username() -> crate::Result {
 
 #[test]
 fn username_expansion_without_username() -> crate::Result {
-    assert_url(
+    assert_url_roundtrip(
         "ssh://example.com/~/hello/git",
         url(Protocol::Ssh, None, "example.com", None, b"/~/hello/git"),
     )
@@ -40,7 +40,7 @@ fn username_expansion_without_username() -> crate::Result {
 
 #[test]
 fn with_user_and_without_port() -> crate::Result {
-    assert_url(
+    assert_url_roundtrip(
         "ssh://user@host.xz/.git",
         url(Protocol::Ssh, "user", "host.xz", None, b"/.git"),
     )
@@ -48,32 +48,44 @@ fn with_user_and_without_port() -> crate::Result {
 
 #[test]
 fn scp_like_without_user() -> crate::Result {
-    assert_url(
+    let url = assert_url_and(
         "host.xz:path/to/git",
         url(Protocol::Ssh, None, "host.xz", None, b"/path/to/git"),
-    )
+    )?
+    .to_string();
+    assert_eq!(url, "ssh://host.xz/path/to/git");
+    Ok(())
 }
 
 #[test]
 fn scp_like_without_user_and_username_expansion_without_username() -> crate::Result {
-    assert_url(
+    let url = assert_url_and(
         "host.xz:~/to/git",
         url(Protocol::Ssh, None, "host.xz", None, b"/~/to/git"),
-    )
+    )?
+    .to_string();
+    assert_eq!(url, "ssh://host.xz/~/to/git");
+    Ok(())
 }
 
 #[test]
 fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result {
-    assert_url(
+    let url = assert_url_and(
         "host.xz:~byron/to/git",
         url(Protocol::Ssh, None, "host.xz", None, b"/~byron/to/git"),
-    )
+    )?
+    .to_string();
+    assert_eq!(url, "ssh://host.xz/~byron/to/git");
+    Ok(())
 }
 
 #[test]
 fn scp_like_with_user_and_relative_path_turns_into_absolute_path() -> crate::Result {
-    assert_url(
+    let url = assert_url_and(
         "user@host.xz:./relative",
         url(Protocol::Ssh, "user", "host.xz", None, b"/relative"),
-    )
+    )?
+    .to_string();
+    assert_eq!(url, "ssh://user@host.xz/relative");
+    Ok(())
 }

@@ -35,12 +35,13 @@
       * [x] git
       * [x] http(s)
   * **git-protocol**
-    * [ ] delegate to support clone
-      * [ ] assure there is a way to do fetches with have/want negotiation
-    * [ ] progress
     * [ ] support for authentication providers
       * [ ] know why it failed by extracting PermissionErrors from io errors
       * [ ] implement authentication provider using git-helpers
+        * [ ] git-url round tripping
+    * [ ] delegate to support clone
+      * [ ] assure there is a way to do fetches with have/want negotiation
+    * [ ] progress
 * **git-ref** _(minimal)_
   * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
 * **gixp-pack-receive**

@@ -96,7 +96,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] file, git, and SSH
     * [x] paths (OS paths, without need for UTF-8)
   * [x] username expansion for ssh and git urls
-  * [ ] convert URL to string
+  * [x] convert URL to string
   * [ ] API documentation with examples
   
 ### git-protocol
