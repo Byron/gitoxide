@@ -9,6 +9,11 @@ fn assert_url(url: &str, expected: git_url::Url) -> crate::Result {
     assert_url_and(url, expected).map(|_| ())
 }
 
+fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
+    assert_eq!(assert_url_and(url, expected).map(|s| s.to_string())?, url);
+    Ok(())
+}
+
 fn assert_failure(url: &str, expected_err: &str) {
     assert_eq!(git_url::parse(url.as_bytes()).unwrap_err().to_string(), expected_err);
 }
@@ -34,12 +39,12 @@ mod file;
 mod invalid;
 mod ssh;
 mod http {
-    use crate::parse::{assert_url, url};
+    use crate::parse::{assert_url, assert_url_roundtrip, url};
     use git_url::Protocol;
 
     #[test]
     fn username_expansion_is_unsupported() -> crate::Result {
-        assert_url(
+        assert_url_roundtrip(
             "http://example.com/~byron/hello",
             url(Protocol::Http, None, "example.com", None, b"/~byron/hello", None),
         )

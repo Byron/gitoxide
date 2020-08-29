@@ -47,6 +47,24 @@ impl Default for Url {
     }
 }
 
+impl fmt::Display for Url {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.protocol.fmt(f)?;
+        f.write_str("://")?;
+        match (&self.user, &self.host) {
+            (Some(user), Some(host)) => f.write_fmt(format_args!("{}@{}", user, host)),
+            (None, Some(host)) => f.write_str(host),
+            (None, None) => Ok(()),
+            _ => return Err(fmt::Error),
+        }?;
+        if let Some(port) = &self.port {
+            f.write_char(':')?;
+            f.write_fmt(format_args!("{}", port))?;
+        }
+        f.write_str(self.path.to_str_lossy().as_ref())
+    }
+}
+
 impl Url {
     pub fn from_bytes(url: &[u8]) -> Result<Self, parse::Error> {
         parse(url)
@@ -66,5 +84,7 @@ pub mod expand_path;
 pub use expand_path::doit as expand_path;
 
 pub mod parse;
+use bstr::ByteSlice;
 #[doc(inline)]
 pub use parse::parse;
+use std::fmt::Write;

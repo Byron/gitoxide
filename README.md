@@ -91,14 +91,17 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ### git-url
   * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
-  * [x] ssh URLs and SCP like syntax
-  * [x] file, git, and SSH
-  * [x] paths (OS paths, without need for UTF-8)
+  * **parse**
+    * [x] ssh URLs and SCP like syntax
+    * [x] file, git, and SSH
+    * [x] paths (OS paths, without need for UTF-8)
   * [x] username expansion for ssh and git urls
+  * [ ] convert URL to string
   * [ ] API documentation with examples
   
 ### git-protocol
   * [ ] clone
+    * [ ] auto-authentication when needed using git credential helpers
   * [ ] fetch
   * [ ] push
   * [ ] shallow clones
