@@ -155,6 +155,7 @@ where
 }
 
 use quick_error::quick_error;
+use std::net::ToSocketAddrs;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
@@ -187,7 +188,13 @@ pub fn connect(
     version: crate::Protocol,
     port: Option<u16>,
 ) -> Result<Connection<TcpStream, TcpStream>, Error> {
-    let read = TcpStream::connect((host, port.unwrap_or(9418)))?;
+    let read = TcpStream::connect_timeout(
+        &(host, port.unwrap_or(9418))
+            .to_socket_addrs()?
+            .next()
+            .expect("after successful resolution there is an IP address"),
+        std::time::Duration::from_secs(5),
+    )?;
     let write = read.try_clone()?;
     let vhost = std::env::var("GIT_OVERRIDE_VIRTUAL_HOST")
         .ok()

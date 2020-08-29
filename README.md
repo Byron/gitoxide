@@ -122,14 +122,14 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] _ssh://_ launches service application in a remote shell using _ssh_
       * [x] _git://_ establishes a tcp connection to a git daemon
       * [x] _http(s)://_ establishes connections to web server
-      * [ ] pass context for scheme specific configuration, like authentication information
+      * [ ] pass context for scheme specific configuration, like authentication information or timeouts
     * [x] git://<service>
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
         * [x] send command request, receive response with sideband support
     * [x] http(s)://<service>
-      * [ ] pass in basic auth
+      * [ ] pass in (or set) basic auth
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
       * [x] V2 handshake
