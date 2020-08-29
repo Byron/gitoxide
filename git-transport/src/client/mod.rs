@@ -42,6 +42,8 @@ pub enum Error {
     ExpectedLine(&'static str),
     #[error("Expected a data line, but got a delimiter")]
     ExpectedDataLine,
+    #[error("The transport layer does not support authentication")]
+    AuthenticationUnsupported,
     #[error(transparent)]
     Http(#[from] HttpError),
 }
@@ -74,6 +76,13 @@ pub enum MessageKind {
     /// A V2 delimiter
     Delimiter,
     Text(&'static [u8]),
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+/// An identity for use when authenticating the transport layer.
+pub enum Identity {
+    Account { username: String, password: String },
 }
 
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
@@ -184,6 +193,15 @@ pub trait Transport {
     /// before the next method can be invoked.
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error>;
 
+    /// If the handshake or subsequent reads failed with io::ErrorKind::PermissionDenied, use this method to
+    /// inform the transport layer about the identity to use for subsequent calls.
+    /// If authentication continues to fail even with an identity set, consider communicating this to the provider
+    /// of the identity in order to mark it as invalid. Otherwise the user might have difficulty updating obsolete
+    /// credentials.
+    /// Please note that most transport layers are unauthenticated and thus return an error here.
+    fn set_identity(&mut self, _identity: Identity) -> Result<(), Error> {
+        Err(Error::AuthenticationUnsupported)
+    }
     /// Obtain a writer for sending data and obtaining the response. It can be configured in various ways,
     /// and should to support with the task at hand.
     /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_drop` determines

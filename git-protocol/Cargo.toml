@@ -16,6 +16,7 @@ serde1 = ["serde", "bstr/serde1"]
 
 [dependencies]
 git-features = { version = "0.4.0", path = "../git-features" }
+git-transport = { version = "0.1.0", path = "../git-transport" }
 
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

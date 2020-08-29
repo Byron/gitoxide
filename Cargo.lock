@@ -682,6 +682,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-features",
+ "git-transport",
  "nom",
  "quick-error 2.0.0",
  "serde",
