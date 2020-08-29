@@ -1,7 +1,8 @@
 use crate::fixture_bytes;
 use bstr::ByteSlice;
+use git_transport::client::Identity;
 use git_transport::{
-    client::{self, SetServiceResponse, Transport, TransportV2Ext},
+    client::{self, http, SetServiceResponse, Transport, TransportV2Ext},
     Protocol, Service,
 };
 use std::{
@@ -14,8 +15,11 @@ use std::{
 
 mod mock;
 
-fn assert_error_status(status: usize, kind: std::io::ErrorKind) -> crate::Result {
-    let (_server, mut client) =
+fn assert_error_status(
+    status: usize,
+    kind: std::io::ErrorKind,
+) -> Result<(mock::Server, http::Transport<http::Impl>), crate::Error> {
+    let (server, mut client) =
         mock::serve_and_connect(&format!("http-{}.response", status), "path/not-important", Protocol::V1)?;
     let error = client
         .handshake(Service::UploadPack)
@@ -28,22 +32,49 @@ fn assert_error_status(status: usize, kind: std::io::ErrorKind) -> crate::Result
         .expect("io error as source");
     assert_eq!(error.kind(), kind);
     assert_eq!(error.to_string(), format!("Received HTTP status {}", status));
+    drop(server.received());
+    Ok((server, client))
+}
+
+#[test]
+fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
+    let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
+    server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
+    client.set_identity(Identity::Account {
+        username: "user".into(),
+        password: "password".into(),
+    })?;
+    client.handshake(Service::UploadPack)?;
+
+    assert_eq!(
+        server.received_as_string().lines().collect::<Vec<_>>(),
+        format!(
+            "GET /path/not-important/info/refs?service=git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Accept: */*
+User-Agent: git/oxide-{}
+Authorization: Basic dXNlcjpwYXNzd29yZA==
+
+",
+            server.addr.port(),
+            env!("CARGO_PKG_VERSION")
+        )
+        .lines()
+        .collect::<Vec<_>>()
+    );
+
     Ok(())
 }
 
 #[test]
-fn http_authentication_error_can_be_differentiated() -> crate::Result {
-    assert_error_status(401, std::io::ErrorKind::PermissionDenied)
-}
-
-#[test]
 fn http_error_results_in_observable_error() -> crate::Result {
-    assert_error_status(404, std::io::ErrorKind::Other)
+    assert_error_status(404, std::io::ErrorKind::Other)?;
+    Ok(())
 }
 
 #[test]
 fn handshake_v1() -> crate::Result {
-    let (mut server, mut c) = mock::serve_and_connect(
+    let (server, mut c) = mock::serve_and_connect(
         "v1/http-handshake.response",
         "path/not/important/due/to/mock",
         Protocol::V1,
@@ -142,7 +173,7 @@ User-Agent: git/oxide-{}
 
 #[test]
 fn clone_v1() -> crate::Result {
-    let (mut server, mut c) = mock::serve_and_connect(
+    let (server, mut c) = mock::serve_and_connect(
         "v1/http-handshake.response",
         "path/not/important/due/to/mock",
         Protocol::V1,
@@ -208,7 +239,7 @@ Accept: application/x-git-upload-pack-result
 
 #[test]
 fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
-    let (mut server, mut c) = mock::serve_and_connect(
+    let (server, mut c) = mock::serve_and_connect(
         "v2/http-handshake.response",
         "path/not/important/due/to/mock",
         Protocol::V2,

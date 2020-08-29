@@ -24,6 +24,7 @@ pub struct Transport<H: Http> {
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::Provider<H::ResponseBody>>,
+    identity: Option<client::Identity>,
 }
 
 impl Transport<Impl> {
@@ -35,6 +36,7 @@ impl Transport<Impl> {
             service: None,
             http: Impl::default(),
             line_provider: None,
+            identity: None,
         }
     }
 }
@@ -73,6 +75,14 @@ impl<H: Http> client::Transport for Transport<H> {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
+        if let Some(identity) = &self.identity {
+            match identity {
+                client::Identity::Account { username, password } => dynamic_headers.push(Cow::Owned(format!(
+                    "Authorization: Basic {}",
+                    base64::encode(format!("{}:{}", username, password))
+                ))),
+            }
+        }
         let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
         <Transport<H>>::check_content_type(service, "advertisement", headers)?;
 
@@ -98,6 +108,11 @@ impl<H: Http> client::Transport for Transport<H> {
             capabilities,
             refs,
         })
+    }
+
+    fn set_identity(&mut self, identity: client::Identity) -> Result<(), client::Error> {
+        self.identity = Some(identity);
+        Ok(())
     }
 
     fn request(

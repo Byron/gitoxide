@@ -15,13 +15,13 @@ enum CommandResult {
     ReadAndRespond(Vec<u8>),
 }
 
-pub struct MockServer {
+pub struct Server {
     pub addr: SocketAddr,
     send_command: std::sync::mpsc::SyncSender<Command>,
     recv_result: std::sync::mpsc::Receiver<CommandResult>,
 }
 
-impl MockServer {
+impl Server {
     pub fn new(fixture: Vec<u8>) -> Self {
         let ports = (15411..).take(10);
         let listener = std::net::TcpListener::bind(
@@ -59,7 +59,7 @@ impl MockServer {
         send_command
             .send(Command::ReadAndRespond(fixture))
             .expect("send to go through when thread is up");
-        MockServer {
+        Server {
             addr,
             send_command,
             recv_result,
@@ -76,7 +76,7 @@ impl MockServer {
         self.recv_result.recv().ok();
     }
 
-    pub fn received(&mut self) -> Vec<u8> {
+    pub fn received(&self) -> Vec<u8> {
         match self.recv_result.recv().expect("thread to be up") {
             CommandResult::ReadAndRespond(received) => received,
         }
@@ -86,20 +86,20 @@ impl MockServer {
         &self.addr
     }
 
-    pub fn received_as_string(&mut self) -> String {
+    pub fn received_as_string(&self) -> String {
         self.received().into_string().expect("utf8 only")
     }
 }
 
-pub fn serve_once(name: &str) -> MockServer {
-    MockServer::new(fixture_bytes(name))
+pub fn serve_once(name: &str) -> Server {
+    Server::new(fixture_bytes(name))
 }
 
 pub fn serve_and_connect(
     name: &str,
     path: &str,
     version: Protocol,
-) -> Result<(MockServer, http::Transport<http::Impl>), crate::Error> {
+) -> Result<(Server, http::Transport<http::Impl>), crate::Error> {
     let server = serve_once(name);
     let client = git_transport::client::http::connect(
         &format!(
