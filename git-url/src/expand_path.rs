@@ -83,7 +83,7 @@ pub fn with(
     })
 }
 
-pub fn doit(user: Option<&ForUser>, path: &BStr) -> Result<PathBuf, Error> {
+pub fn expand_path(user: Option<&ForUser>, path: &BStr) -> Result<PathBuf, Error> {
     with(user, path, |user| match user {
         ForUser::Current => home::home_dir(),
         ForUser::Name(user) => {

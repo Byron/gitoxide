@@ -81,7 +81,7 @@ impl TryFrom<&[u8]> for Url {
 
 pub mod expand_path;
 #[doc(inline)]
-pub use expand_path::doit as expand_path;
+pub use expand_path::expand_path;
 
 pub mod parse;
 use bstr::ByteSlice;

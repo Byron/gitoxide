@@ -3,6 +3,8 @@
 mod remote_progress;
 pub use remote_progress::RemoteProgress;
 
+pub mod credential;
+
 pub mod fetch {
     use git_transport::client;
 
