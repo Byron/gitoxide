@@ -24,7 +24,6 @@ fn url(
     host: impl Into<Option<&'static str>>,
     port: impl Into<Option<u16>>,
     path: &'static [u8],
-    _expand_user: impl Into<Option<()>>,
 ) -> git_url::Url {
     git_url::Url {
         protocol,
@@ -46,14 +45,14 @@ mod http {
     fn username_expansion_is_unsupported() -> crate::Result {
         assert_url_roundtrip(
             "http://example.com/~byron/hello",
-            url(Protocol::Http, None, "example.com", None, b"/~byron/hello", None),
+            url(Protocol::Http, None, "example.com", None, b"/~byron/hello"),
         )
     }
     #[test]
     fn secure() -> crate::Result {
         assert_url(
             "https://github.com/byron/gitoxide",
-            url(Protocol::Https, None, "github.com", None, b"/byron/gitoxide", None),
+            url(Protocol::Https, None, "github.com", None, b"/byron/gitoxide"),
         )
     }
 }
@@ -65,7 +64,7 @@ mod git {
     fn username_expansion_with_username() -> crate::Result {
         assert_url(
             "git://example.com/~byron/hello",
-            url(Protocol::Git, None, "example.com", None, b"/~byron/hello", None),
+            url(Protocol::Git, None, "example.com", None, b"/~byron/hello"),
         )
     }
 }
