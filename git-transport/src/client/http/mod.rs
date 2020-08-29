@@ -164,6 +164,9 @@ impl<H: Http> client::Transport for Transport<H> {
             on_drop,
         ))
     }
+    fn to_url(&self) -> String {
+        self.url.to_owned()
+    }
 }
 
 struct HeadersThenBody<H: Http, B> {

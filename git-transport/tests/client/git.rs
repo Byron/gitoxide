@@ -66,6 +66,7 @@ fn handshake_v1_and_request() -> crate::Result {
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
     );
+    assert_eq!(c.to_url(), "file:///foo.git");
     let mut res = c.handshake(Service::UploadPack)?;
     assert_eq!(res.actual_protocol, Protocol::V1);
     assert_eq!(

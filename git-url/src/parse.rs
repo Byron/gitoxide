@@ -1,4 +1,4 @@
-use crate::Protocol;
+use crate::Scheme;
 use bstr::ByteSlice;
 use quick_error::quick_error;
 use std::borrow::Cow;
@@ -26,13 +26,13 @@ quick_error! {
     }
 }
 
-fn str_to_protocol(s: &str) -> Result<Protocol, Error> {
+fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
     Ok(match s {
-        "ssh" => Protocol::Ssh,
-        "file" => Protocol::File,
-        "git" => Protocol::Git,
-        "http" => Protocol::Http,
-        "https" => Protocol::Https,
+        "ssh" => Scheme::Ssh,
+        "file" => Scheme::File,
+        "git" => Scheme::Git,
+        "http" => Scheme::Http,
+        "https" => Scheme::Https,
         _ => return Err(Error::UnsupportedProtocol(s.into())),
     })
 }
@@ -71,7 +71,7 @@ fn possibly_strip_file_protocol(url: &[u8]) -> &[u8] {
 
 fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
     Ok(crate::Url {
-        protocol: str_to_protocol(url.scheme())?,
+        scheme: str_to_protocol(url.scheme())?,
         user: if url.username().is_empty() {
             None
         } else {
@@ -89,7 +89,7 @@ pub fn parse(url: &[u8]) -> Result<crate::Url, Error> {
     let guessed_protocol = guess_protocol(url);
     if possibly_strip_file_protocol(url) != url || (has_no_explicit_protocol(url) && guessed_protocol == "file") {
         return Ok(crate::Url {
-            protocol: Protocol::File,
+            scheme: Scheme::File,
             path: possibly_strip_file_protocol(url).into(),
             ..Default::default()
         });

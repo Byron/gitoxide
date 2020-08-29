@@ -25,6 +25,7 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 ];
 
 pub struct SpawnProcessOnDemand {
+    url: git_url::Url,
     path: BString,
     ssh_program: Option<String>,
     ssh_args: Vec<String>,
@@ -43,12 +44,14 @@ impl Drop for SpawnProcessOnDemand {
 
 impl SpawnProcessOnDemand {
     pub(crate) fn new_ssh(
+        url: git_url::Url,
         program: String,
         args: impl IntoIterator<Item = impl Into<String>>,
         env: impl IntoIterator<Item = (&'static str, impl Into<String>)>,
         path: BString,
     ) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
+            url,
             path,
             ssh_program: Some(program),
             ssh_args: args.into_iter().map(|s| s.into()).collect(),
@@ -57,8 +60,15 @@ impl SpawnProcessOnDemand {
             connection: None,
         }
     }
-    pub(crate) fn new(path: BString) -> SpawnProcessOnDemand {
+    pub(crate) fn new_local(path: BString) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
+            url: git_url::Url {
+                scheme: git_url::Scheme::File,
+                user: None,
+                host: None,
+                port: None,
+                path: path.clone(),
+            },
             path,
             ssh_program: None,
             ssh_args: Vec::new(),
@@ -110,8 +120,12 @@ impl client::Transport for SpawnProcessOnDemand {
             .expect("handshake() to have been called first")
             .request(write_mode, on_drop)
     }
+
+    fn to_url(&self) -> String {
+        self.url.to_string()
+    }
 }
 
 pub fn connect(path: impl Into<BString>) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
-    Ok(SpawnProcessOnDemand::new(path.into()))
+    Ok(SpawnProcessOnDemand::new_local(path.into()))
 }

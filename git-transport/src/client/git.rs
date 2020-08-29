@@ -118,6 +118,16 @@ where
             on_drop,
         ))
     }
+    fn to_url(&self) -> String {
+        git_url::Url {
+            scheme: git_url::Scheme::File,
+            user: None,
+            host: None,
+            port: None,
+            path: self.path.clone(),
+        }
+        .to_string()
+    }
 }
 
 impl<R, W> Connection<R, W>

@@ -4,7 +4,7 @@ use std::{convert::TryFrom, fmt};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Protocol {
+pub enum Scheme {
     File,
     Git,
     Ssh,
@@ -12,9 +12,9 @@ pub enum Protocol {
     Https,
 }
 
-impl fmt::Display for Protocol {
+impl fmt::Display for Scheme {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Protocol::*;
+        use Scheme::*;
         f.write_str(match self {
             File => "file",
             Git => "git",
@@ -28,7 +28,7 @@ impl fmt::Display for Protocol {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
-    pub protocol: Protocol,
+    pub scheme: Scheme,
     pub user: Option<String>,
     pub host: Option<String>,
     pub port: Option<u16>,
@@ -38,7 +38,7 @@ pub struct Url {
 impl Default for Url {
     fn default() -> Self {
         Url {
-            protocol: Protocol::Ssh,
+            scheme: Scheme::Ssh,
             user: None,
             host: None,
             port: None,
@@ -49,7 +49,7 @@ impl Default for Url {
 
 impl fmt::Display for Url {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.protocol.fmt(f)?;
+        self.scheme.fmt(f)?;
         f.write_str("://")?;
         match (&self.user, &self.host) {
             (Some(user), Some(host)) => f.write_fmt(format_args!("{}@{}", user, host)),

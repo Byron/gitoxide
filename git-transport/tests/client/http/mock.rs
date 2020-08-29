@@ -1,5 +1,6 @@
 use crate::fixture_bytes;
 use bstr::ByteVec;
+use git_transport::client::Transport;
 use git_transport::{client::http, Protocol};
 use std::{
     io::{Read, Write},
@@ -101,14 +102,13 @@ pub fn serve_and_connect(
     version: Protocol,
 ) -> Result<(Server, http::Transport<http::Impl>), crate::Error> {
     let server = serve_once(name);
-    let client = git_transport::client::http::connect(
-        &format!(
-            "http://{}:{}/{}",
-            &server.addr().ip().to_string(),
-            &server.addr().port(),
-            path
-        ),
-        version,
-    )?;
+    let url = format!(
+        "http://{}:{}/{}",
+        &server.addr().ip().to_string(),
+        &server.addr().port(),
+        path
+    );
+    let client = git_transport::client::http::connect(&url, version)?;
+    assert_eq!(url, client.to_url());
     Ok((server, client))
 }

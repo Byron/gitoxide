@@ -39,18 +39,27 @@ pub fn connect(
         _ => return Err(Error::UnsupportedSshCommand(ssh_cmd.into())),
     };
 
-    let host = match user {
+    let host = match user.as_ref() {
         Some(user) => format!("{}@{}", user, host),
         None => host.into(),
     };
+    let url = git_url::Url {
+        scheme: git_url::Scheme::Ssh,
+        user: user.map(Into::into),
+        host: Some(host.clone()),
+        port,
+        path: path.clone(),
+    };
     Ok(match args_and_env {
         Some((args, envs)) => client::file::SpawnProcessOnDemand::new_ssh(
+            url,
             ssh_cmd.into(),
             ssh_cmd_line.map(Cow::from).chain(args).chain(Some(host.into())),
             envs,
             path,
         ),
         None => client::file::SpawnProcessOnDemand::new_ssh(
+            url,
             ssh_cmd.into(),
             ssh_cmd_line.chain(Some(host.as_str())),
             None::<(&str, String)>,

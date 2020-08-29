@@ -1,4 +1,4 @@
-use git_url::Protocol;
+use git_url::Scheme;
 
 fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
     assert_eq!(git_url::parse(url.as_bytes())?, expected);
@@ -15,14 +15,14 @@ fn assert_failure(url: &str, expected_err: &str) {
 }
 
 fn url(
-    protocol: Protocol,
+    protocol: Scheme,
     user: impl Into<Option<&'static str>>,
     host: impl Into<Option<&'static str>>,
     port: impl Into<Option<u16>>,
     path: &'static [u8],
 ) -> git_url::Url {
     git_url::Url {
-        protocol,
+        scheme: protocol,
         user: user.into().map(Into::into),
         host: host.into().map(Into::into),
         port: port.into(),
@@ -35,32 +35,32 @@ mod invalid;
 mod ssh;
 mod http {
     use crate::parse::{assert_url_roundtrip, url};
-    use git_url::Protocol;
+    use git_url::Scheme;
 
     #[test]
     fn username_expansion_is_unsupported() -> crate::Result {
         assert_url_roundtrip(
             "http://example.com/~byron/hello",
-            url(Protocol::Http, None, "example.com", None, b"/~byron/hello"),
+            url(Scheme::Http, None, "example.com", None, b"/~byron/hello"),
         )
     }
     #[test]
     fn secure() -> crate::Result {
         assert_url_roundtrip(
             "https://github.com/byron/gitoxide",
-            url(Protocol::Https, None, "github.com", None, b"/byron/gitoxide"),
+            url(Scheme::Https, None, "github.com", None, b"/byron/gitoxide"),
         )
     }
 }
 mod git {
     use crate::parse::{assert_url_roundtrip, url};
-    use git_url::Protocol;
+    use git_url::Scheme;
 
     #[test]
     fn username_expansion_with_username() -> crate::Result {
         assert_url_roundtrip(
             "git://example.com/~byron/hello",
-            url(Protocol::Git, None, "example.com", None, b"/~byron/hello"),
+            url(Scheme::Git, None, "example.com", None, b"/~byron/hello"),
         )
     }
 }
