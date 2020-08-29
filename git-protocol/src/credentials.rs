@@ -1,10 +1,26 @@
+use quick_error::quick_error;
 use std::io;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Io(err: io::Error) {
+            display("An IO error occurred while communicating to the credentials helper")
+            from()
+            source(err)
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum Action {
     Fill,
     Approve,
     Reject,
+}
+
+pub fn credential(_url: &str, _action: Action) -> Result<git_transport::client::Identity, Error> {
+    unimplemented!("credential")
 }
 
 pub fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {

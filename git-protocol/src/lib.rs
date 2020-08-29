@@ -3,9 +3,10 @@
 mod remote_progress;
 pub use remote_progress::RemoteProgress;
 
-pub mod credential;
+pub mod credentials;
 
 pub mod fetch {
+    use crate::credentials;
     use git_transport::client;
 
     pub trait Delegate {}
@@ -13,7 +14,7 @@ pub mod fetch {
     pub fn fetch(
         _transport: impl client::Transport,
         _delegate: impl Delegate,
-        _authenticate: impl FnMut() -> client::Identity,
+        _authenticate: impl FnMut(credentials::Action, &str) -> Result<client::Identity, crate::credentials::Error>,
     ) {
         unimplemented!("fetch")
     }
