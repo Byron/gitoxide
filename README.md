@@ -98,21 +98,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] API documentation with examples
   
 ### git-protocol
-  * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
+  * [ ] clone
+  * [ ] fetch
+  * [ ] push
   * [ ] shallow clones
-  * [ ] **Version 1**
-    * [ ] parse and serialize [capabilities](https://github.com/git/git/blob/master/Documentation/technical/protocol-capabilities.txt#L1:L1)
-    * [ ] [fetch](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L157:L157)
-      * [ ] [ref advertisement](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L200:L200)
-      * [ ] [upload request](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L245:L245)
-      * [ ] [shallow update](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L305:L305)
-      * [ ] [upload haves](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L333:L333)
-        * [ ] 'simple' (multi-ack* is absent)
-        * [ ] multi-ack 
-        * [ ] multi-ack detailed
-      * [ ] [server-response (pack)](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L404:L404)
-    * [ ] push
-  * [ ] [Version 2](https://github.com/git/git/blob/master/Documentation/technical/protocol-v2.txt)
   * [ ] API documentation with examples
   
 ### git-packetline
@@ -126,26 +115,29 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [x] `Write` with built-in packet line encoding
 
 ### git-transport
-  * [x] general purpose `connect(…)` for clients
-    * [x] _file://_ launches service application
-    * [x] _ssh://_ launches service application in a remote shell using _ssh_
-    * [x] _git://_ establishes a tcp connection to a git daemon
-    * [x] _http(s)://_ establishes connections to web server
-    * [ ] pass context for scheme specific configuration, like authentication information
-  * [ ] general purpose `accept(…)` for servers
-  * [x] git://<service>
-    * [x] V1 handshake
-      * [x] send values + receive data with sidebands
-    * [x] V2 handshake
-      * [x] send command request, receive response with sideband support
-  * [x] http(s)://<service>
-    * [ ] pass in basic auth
-    * [x] V1 handshake
-      * [x] send values + receive data with sidebands
-    * [x] V2 handshake
-      * [x] send command request, receive response with sideband support
-    * [ ] ~~'dumb'~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
-  * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry
+  * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
+  * **client**
+    * [x] general purpose `connect(…)` for clients
+      * [x] _file://_ launches service application
+      * [x] _ssh://_ launches service application in a remote shell using _ssh_
+      * [x] _git://_ establishes a tcp connection to a git daemon
+      * [x] _http(s)://_ establishes connections to web server
+      * [ ] pass context for scheme specific configuration, like authentication information
+    * [x] git://<service>
+      * [x] V1 handshake
+        * [x] send values + receive data with sidebands
+      * [x] V2 handshake
+        * [x] send command request, receive response with sideband support
+    * [x] http(s)://<service>
+      * [ ] pass in basic auth
+      * [x] V1 handshake
+        * [x] send values + receive data with sidebands
+      * [x] V2 handshake
+        * [x] send command request, receive response with sideband support
+      * [ ] ~~'dumb'~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
+    * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry
+  * **server**
+      * [ ] general purpose `accept(…)` for servers
   * [ ] API documentation with examples
 
 ### git-index
