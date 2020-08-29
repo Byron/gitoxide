@@ -100,8 +100,11 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] API documentation with examples
   
 ### git-protocol
+  * [x] **credentials**
+    * [x] via git-credentials
+    * [ ] via pure Rust implementation if no git is installed
   * [ ] clone
-    * [ ] auto-authentication when needed using git credential helpers
+    * [ ] control credentials provider to fill, approve and reject
   * [ ] fetch
   * [ ] push
   * [ ] shallow clones

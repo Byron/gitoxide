@@ -1,5 +1,11 @@
+use git_transport::client;
 use quick_error::quick_error;
-use std::io;
+use std::{
+    io::{self, Write},
+    process::{Command, Stdio},
+};
+
+pub type Result = std::result::Result<Outcome, Error>;
 
 quick_error! {
     #[derive(Debug)]
@@ -9,18 +15,96 @@ quick_error! {
             from()
             source(err)
         }
+        KeyNotFound(name: String) {
+            display("Could not find '{}' in output of git credentials helper", name)
+        }
+        CredentialsHelperFailed(code: Option<i32>) {
+            display("Credentials helper program failed with status code {:?}", code)
+        }
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Action {
     Fill,
-    Approve,
-    Reject,
+    Approve(Vec<u8>),
+    Reject(Vec<u8>),
 }
 
-pub fn credential(_url: &str, _action: Action) -> Result<git_transport::client::Identity, Error> {
-    unimplemented!("credential")
+impl Action {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Action::Approve(_) => "approve",
+            Action::Fill => "fill",
+            Action::Reject(_) => "reject",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct NextAction {
+    previous_output: Vec<u8>,
+}
+
+impl NextAction {
+    pub fn approve(self) -> Action {
+        Action::Approve(self.previous_output)
+    }
+    pub fn reject(self) -> Action {
+        Action::Reject(self.previous_output)
+    }
+}
+
+pub struct Outcome {
+    pub identity: client::Identity,
+    pub next: NextAction,
+}
+
+#[cfg(windows)]
+fn git_program() -> &'static str {
+    "git.exe"
+}
+
+#[cfg(not(windows))]
+fn git_program() -> &'static str {
+    "git"
+}
+
+pub fn helper(url: &str, action: Action) -> Result {
+    let mut cmd = Command::new(git_program());
+    cmd.arg("credential")
+        .arg(action.as_str())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped());
+    let mut child = cmd.spawn()?;
+    let mut stdin = child.stdin.take().expect("stdin to be configured");
+
+    match action {
+        Action::Fill => encode_message(url, stdin)?,
+        Action::Approve(last) | Action::Reject(last) => stdin.write_all(&last)?,
+    }
+
+    let output = child.wait_with_output()?;
+    if !output.status.success() {
+        return Err(Error::CredentialsHelperFailed(output.status.code()));
+    }
+    let stdout = output.stdout;
+    let kvs = decode_message(stdout.as_slice())?;
+    let find = |name: &str| {
+        kvs.iter()
+            .find(|(k, _)| k == name)
+            .ok_or_else(|| Error::KeyNotFound(name.into()))
+            .map(|(_, n)| n.to_owned())
+    };
+    Ok(Outcome {
+        identity: client::Identity::Account {
+            username: find("username")?,
+            password: find("password")?,
+        },
+        next: NextAction {
+            previous_output: stdout,
+        },
+    })
 }
 
 pub fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {

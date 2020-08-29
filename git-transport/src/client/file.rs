@@ -94,7 +94,7 @@ impl client::Transport for SpawnProcessOnDemand {
         }
         cmd.envs(std::mem::take(&mut self.ssh_env));
         cmd.args(&mut self.ssh_args);
-        cmd.stderr(Stdio::null()).stdout(Stdio::piped()).stdin(Stdio::piped());
+        cmd.stdin(Stdio::piped()).stdout(Stdio::piped());
         if self.ssh_program.is_some() {
             cmd.arg(service.as_str());
         }
