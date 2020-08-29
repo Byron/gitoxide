@@ -34,3 +34,51 @@ mod encode_message {
         }
     }
 }
+
+mod decode_message {
+    use git_protocol::credential;
+
+    #[test]
+    fn typical_response() -> crate::Result {
+        assert_eq!(
+            credential::decode_message(
+                "protocol=https
+host=example.com
+username=bob
+password=secr3t\n\n
+this=is-skipped-past-empty-line"
+                    .as_bytes()
+            )?,
+            vec![
+                ("protocol", "https"),
+                ("host", "example.com"),
+                ("username", "bob"),
+                ("password", "secr3t")
+            ]
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect::<Vec<_>>()
+        );
+        Ok(())
+    }
+
+    mod invalid {
+        use git_protocol::credential;
+        use std::io;
+
+        #[test]
+        fn null_in_key() -> crate::Result {
+            assert_eq!(
+                credential::decode_message(
+                    "protocol=https
+host=examp\0le.com"
+                        .as_bytes()
+                )
+                .err()
+                .map(|e| e.kind()),
+                Some(io::ErrorKind::Other),
+            );
+            Ok(())
+        }
+    }
+}
