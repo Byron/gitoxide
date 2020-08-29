@@ -44,6 +44,8 @@ pub enum Error {
     ExpectedDataLine,
     #[error("The transport layer does not support authentication")]
     AuthenticationUnsupported,
+    #[error("The transport layer refuses to use a given identity: {0}")]
+    AuthenticationRefused(&'static str),
     #[error(transparent)]
     Http(#[from] HttpError),
 }

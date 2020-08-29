@@ -57,6 +57,26 @@ impl<H: Http> Transport<H> {
         }
         Ok(())
     }
+
+    fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<str>>) -> Result<(), client::Error> {
+        if let Some(identity) = &self.identity {
+            match identity {
+                client::Identity::Account { username, password } => {
+                    #[cfg(not(debug_assertions))]
+                    if self.url.starts_with("http://") {
+                        return Err(client::Error::AuthenticationRefused(
+                            "Will not send credentials in clear text over http",
+                        ));
+                    }
+                    headers.push(Cow::Owned(format!(
+                        "Authorization: Basic {}",
+                        base64::encode(format!("{}:{}", username, password))
+                    )))
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 fn append_url(base: &str, suffix: &str) -> String {
@@ -75,14 +95,7 @@ impl<H: Http> client::Transport for Transport<H> {
         if self.version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
         }
-        if let Some(identity) = &self.identity {
-            match identity {
-                client::Identity::Account { username, password } => dynamic_headers.push(Cow::Owned(format!(
-                    "Authorization: Basic {}",
-                    base64::encode(format!("{}:{}", username, password))
-                ))),
-            }
-        }
+        self.add_basic_auth_if_present(&mut dynamic_headers)?;
         let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
         <Transport<H>>::check_content_type(service, "advertisement", headers)?;
 
@@ -122,16 +135,19 @@ impl<H: Http> client::Transport for Transport<H> {
     ) -> Result<client::RequestWriter, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
-        let headers = &[
-            format!("Content-Type: application/x-{}-request", service.as_str()),
-            format!("Accept: application/x-{}-result", service.as_str()),
+        let static_headers = &[
+            Cow::Owned(format!("Content-Type: application/x-{}-request", service.as_str())),
+            format!("Accept: application/x-{}-result", service.as_str()).into(),
             "Expect:".into(), // needed to avoid sending Expect: 100-continue, which adds another response and only CURL wants that
         ];
+        let mut dynamic_headers = Vec::new();
+        self.add_basic_auth_if_present(&mut dynamic_headers)?;
+
         let PostResponse {
             headers,
             body,
             post_body,
-        } = self.http.post(&url, headers)?;
+        } = self.http.post(&url, static_headers.iter().chain(&dynamic_headers))?;
         let line_provider = self
             .line_provider
             .as_mut()

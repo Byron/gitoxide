@@ -129,7 +129,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] V2 handshake
         * [x] send command request, receive response with sideband support
     * [x] http(s)://<service>
-      * [ ] pass in (or set) basic auth
+      * [x] set identity for basic authentication
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
       * [x] V2 handshake

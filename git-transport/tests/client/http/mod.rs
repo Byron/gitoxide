@@ -63,6 +63,28 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
         .collect::<Vec<_>>()
     );
 
+    server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
+    client.request(client::WriteMode::Binary, Vec::new())?;
+
+    assert_eq!(
+        server.received_as_string().lines().collect::<Vec<_>>(),
+        format!(
+            "POST /path/not-important/git-upload-pack HTTP/1.1
+Host: 127.0.0.1:{}
+Transfer-Encoding: chunked
+Content-Type: application/x-git-upload-pack-request
+Accept: application/x-git-upload-pack-result
+Authorization: Basic dXNlcjpwYXNzd29yZA==
+
+0
+
+",
+            server.addr.port(),
+        )
+        .lines()
+        .collect::<Vec<_>>()
+    );
+
     Ok(())
 }
 
