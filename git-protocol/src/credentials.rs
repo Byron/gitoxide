@@ -25,14 +25,14 @@ quick_error! {
 }
 
 #[derive(Clone, Debug)]
-pub enum Action {
-    /// Provide credentials using the given URL (as String) as context
-    Fill(String),
+pub enum Action<'a> {
+    /// Provide credentials using the given URL (as &str) as context
+    Fill(&'a str),
     Approve(Vec<u8>),
     Reject(Vec<u8>),
 }
 
-impl Action {
+impl<'a> Action<'a> {
     pub fn as_str(&self) -> &str {
         match self {
             Action::Approve(_) => "approve",
@@ -48,10 +48,10 @@ pub struct NextAction {
 }
 
 impl NextAction {
-    pub fn approve(self) -> Action {
+    pub fn approve(self) -> Action<'static> {
         Action::Approve(self.previous_output)
     }
-    pub fn reject(self) -> Action {
+    pub fn reject(self) -> Action<'static> {
         Action::Reject(self.previous_output)
     }
 }
@@ -81,7 +81,7 @@ pub fn helper(action: Action) -> Result {
     let mut stdin = child.stdin.take().expect("stdin to be configured");
 
     match action {
-        Action::Fill(url) => encode_message(&url, stdin)?,
+        Action::Fill(url) => encode_message(url, stdin)?,
         Action::Approve(last) | Action::Reject(last) => stdin.write_all(&last)?,
     }
 
