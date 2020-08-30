@@ -26,7 +26,8 @@ quick_error! {
 
 #[derive(Clone, Debug)]
 pub enum Action {
-    Fill,
+    /// Provide credentials using the given URL (as String) as context
+    Fill(String),
     Approve(Vec<u8>),
     Reject(Vec<u8>),
 }
@@ -35,7 +36,7 @@ impl Action {
     pub fn as_str(&self) -> &str {
         match self {
             Action::Approve(_) => "approve",
-            Action::Fill => "fill",
+            Action::Fill(_) => "fill",
             Action::Reject(_) => "reject",
         }
     }
@@ -70,7 +71,7 @@ fn git_program() -> &'static str {
     "git"
 }
 
-pub fn helper(url: &str, action: Action) -> Result {
+pub fn helper(action: Action) -> Result {
     let mut cmd = Command::new(git_program());
     cmd.arg("credential")
         .arg(action.as_str())
@@ -80,7 +81,7 @@ pub fn helper(url: &str, action: Action) -> Result {
     let mut stdin = child.stdin.take().expect("stdin to be configured");
 
     match action {
-        Action::Fill => encode_message(url, stdin)?,
+        Action::Fill(url) => encode_message(&url, stdin)?,
         Action::Approve(last) | Action::Reject(last) => stdin.write_all(&last)?,
     }
 
