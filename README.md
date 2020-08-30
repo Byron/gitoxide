@@ -128,7 +128,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] _ssh://_ launches service application in a remote shell using _ssh_
       * [x] _git://_ establishes a tcp connection to a git daemon
       * [x] _http(s)://_ establishes connections to web server
-      * [ ] pass context for scheme specific configuration, like authentication information or timeouts
+      * [ ] pass context for scheme specific configuration, like timeouts
     * [x] git://<service>
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
@@ -141,7 +141,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] V2 handshake
         * [x] send command request, receive response with sideband support
       * [ ] ~~'dumb'~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
-    * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry
+    * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry with authentication
   * **server**
       * [ ] general purpose `accept(…)` for servers
   * [ ] API documentation with examples
