@@ -86,6 +86,7 @@ impl From<client::Capabilities> for Capabilities {
 /// This monstrosity is only needed because for some reason, a match statement takes the drop scope of the enclosing scope, and not of
 /// the match arm. This makes it think that a borrowed Ok(value) is still in scope, even though we are in the Err(err) branch.
 /// The idea here is that we can workaround this by setting the scope to the level of the function, by splitting everything up accordingly.
+/// Tracking issue: https://github.com/rust-lang/rust/issues/76149
 fn fetch_inner<F: FnMut(credentials::Action) -> credentials::Result>(
     transport: &mut impl client::Transport,
     delegate: &mut impl Delegate,
