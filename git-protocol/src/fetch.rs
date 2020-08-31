@@ -3,6 +3,7 @@ use bstr::{BStr, BString, ByteSlice};
 use git_transport::{client, Service};
 use quick_error::quick_error;
 use std::collections::BTreeMap;
+use std::io;
 
 quick_error! {
     #[derive(Debug)]
@@ -85,13 +86,31 @@ impl From<client::Capabilities> for Capabilities {
 pub fn fetch(
     mut transport: impl client::Transport,
     mut delegate: impl Delegate,
-    _authenticate: impl FnMut(credentials::Action) -> credentials::Result,
+    mut authenticate: impl FnMut(credentials::Action) -> credentials::Result,
 ) -> Result<(), Error> {
     let client::SetServiceResponse {
         actual_protocol,
         capabilities,
         refs: _,
-    } = transport.handshake(Service::UploadPack)?;
+    } = match transport.handshake(Service::UploadPack) {
+        Ok(v) => v,
+        Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+            let url = transport.to_url();
+            let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
+            transport.set_identity(identity)?;
+            match transport.handshake(Service::UploadPack) {
+                Ok(v) => {
+                    authenticate(next.approve())?;
+                    v
+                }
+                Err(err) => {
+                    authenticate(next.reject())?;
+                    return Err(err.into());
+                }
+            }
+        }
+        Err(err) => return Err(err.into()),
+    };
 
     let mut capabilities = Capabilities::from(capabilities);
     delegate.adjust_capabilities(actual_protocol, &mut capabilities);
