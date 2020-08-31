@@ -128,7 +128,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 ) -> Result<(), Error> {
     let mut next = None;
     match fetch_inner(&mut transport, &mut delegate, None::<&mut F>, &mut next) {
-        Ok(v) => Ok(v),
+        Ok(()) => Ok(()),
         Err(Error::Transport(client::Error::Io { err })) if err.kind() == io::ErrorKind::PermissionDenied => {
             fetch_inner(&mut transport, &mut delegate, Some(&mut authenticate), &mut next).map_err(|err| {
                 if let Some(next) = next {
