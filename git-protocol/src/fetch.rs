@@ -83,37 +83,70 @@ impl From<client::Capabilities> for Capabilities {
 // V1
 // 0098want 808e50d724f604f69ab93c6da2919c014667bedb multi_ack_detailed no-done side-band-64k thin-pack ofs-delta deepen-since deepen-not agent=git/2.28.0
 
-pub fn fetch(
-    mut transport: impl client::Transport,
-    mut delegate: impl Delegate,
-    mut authenticate: impl FnMut(credentials::Action) -> credentials::Result,
+/// This monstrosity is only needed because for some reason, a match statement takes the drop scope of the enclosing scope, and not of
+/// the match arm. This makes it think that a borrowed Ok(value) is still in scope, even though we are in the Err(err) branch.
+/// The idea here is that we can workaround this by setting the scope to the level of the function, by splitting everything up accordingly.
+fn fetch_inner<F: FnMut(credentials::Action) -> credentials::Result>(
+    transport: &mut impl client::Transport,
+    delegate: &mut impl Delegate,
+    mut authenticate: Option<&mut F>,
+    out: &mut Option<credentials::NextAction>,
 ) -> Result<(), Error> {
+    if let Some(authenticate) = authenticate.as_mut() {
+        let url = transport.to_url();
+        let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
+        transport.set_identity(identity)?;
+        // Remember the output of the authentication function to provide in case we still error with
+        // a permission issue.
+        *out = Some(next);
+    };
+
     let client::SetServiceResponse {
         actual_protocol,
         capabilities,
         refs: _,
-    } = match transport.handshake(Service::UploadPack) {
-        Ok(v) => v,
-        Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
-            let url = transport.to_url();
-            let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
-            transport.set_identity(identity)?;
-            match transport.handshake(Service::UploadPack) {
-                Ok(v) => {
-                    authenticate(next.approve())?;
-                    v
-                }
-                Err(err) => {
-                    authenticate(next.reject())?;
-                    return Err(err.into());
-                }
-            }
-        }
-        Err(err) => return Err(err.into()),
-    };
+    } = transport.handshake(Service::UploadPack)?;
+
+    if let Some(authenticate) = authenticate {
+        authenticate(
+            out.take()
+                .expect("we put next action in before if an authenticator is present")
+                .approve(),
+        )?;
+    }
 
     let mut capabilities = Capabilities::from(capabilities);
     delegate.adjust_capabilities(actual_protocol, &mut capabilities);
     capabilities.set_agent_version();
     unimplemented!("fetch")
+}
+
+pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
+    mut transport: impl client::Transport,
+    mut delegate: impl Delegate,
+    mut authenticate: F,
+) -> Result<(), Error> {
+    let mut next = None;
+    match fetch_inner(&mut transport, &mut delegate, None::<&mut F>, &mut next) {
+        Ok(v) => Ok(v),
+        Err(Error::Transport(client::Error::Io { err })) if err.kind() == io::ErrorKind::PermissionDenied => {
+            fetch_inner(&mut transport, &mut delegate, Some(&mut authenticate), &mut next).map_err(|err| {
+                if let Some(next) = next {
+                    match &err {
+                        // Still no permission? Reject the credentials
+                        Error::Transport(client::Error::Io { err })
+                            if err.kind() == io::ErrorKind::PermissionDenied =>
+                        {
+                            authenticate(next.reject())
+                        }
+                        // Otherwise it's some other error, still OK to approve the credentials
+                        _ => authenticate(next.approve()),
+                    }
+                    .ok();
+                };
+                err
+            })
+        }
+        Err(err) => Err(err),
+    }
 }
