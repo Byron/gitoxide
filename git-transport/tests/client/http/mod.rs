@@ -110,9 +110,34 @@ fn handshake_v1() -> crate::Result {
     assert_eq!(
         capabilities
             .iter()
-            .filter_map(|c| c.value().map(ToOwned::to_owned))
+            .map(|c| (c.name().to_owned(), c.value().map(ToOwned::to_owned)))
             .collect::<Vec<_>>(),
-        vec![b"HEAD:refs/heads/main".as_bstr(), b"git/github-gdf51a71f0236".as_bstr(),]
+        [
+            ("multi_ack", None),
+            ("thin-pack", None),
+            ("side-band", None),
+            ("side-band-64k", None),
+            ("ofs-delta", None),
+            ("shallow", None),
+            ("deepen-since", None),
+            ("deepen-not", None),
+            ("deepen-relative", None),
+            ("no-progress", None),
+            ("include-tag", None),
+            ("multi_ack_detailed", None),
+            ("allow-tip-sha1-in-want", None),
+            ("allow-reachable-sha1-in-want", None),
+            ("no-done", None),
+            ("symref", Some("HEAD:refs/heads/main")),
+            ("filter", None),
+            ("agent", Some("git/github-gdf51a71f0236"))
+        ]
+        .iter()
+        .map(|(n, v)| (
+            n.as_bytes().as_bstr().to_owned(),
+            v.map(|v| v.as_bytes().as_bstr().to_owned())
+        ))
+        .collect::<Vec<_>>()
     );
     let refs = refs
         .expect("v1 protocol provides refs")

@@ -72,13 +72,31 @@ fn handshake_v1_and_request() -> crate::Result {
     assert_eq!(
         res.capabilities
             .iter()
-            .flat_map(|c| c.value().map(ToOwned::to_owned))
+            .map(|c| (c.name().to_owned(), c.value().map(ToOwned::to_owned)))
             .collect::<Vec<_>>(),
-        vec![
-            b"HEAD:refs/heads/master".as_bstr(),
-            b"sha1".as_bstr(),
-            b"git/2.28.0".as_bstr()
+        [
+            ("multi_ack", None),
+            ("thin-pack", None),
+            ("side-band", None),
+            ("side-band-64k", None),
+            ("ofs-delta", None),
+            ("shallow", None),
+            ("deepen-since", None),
+            ("deepen-not", None),
+            ("deepen-relative", None),
+            ("no-progress", None),
+            ("include-tag", None),
+            ("multi_ack_detailed", None),
+            ("symref", Some("HEAD:refs/heads/master")),
+            ("object-format", Some("sha1")),
+            ("agent", Some("git/2.28.0"))
         ]
+        .iter()
+        .map(|(n, v)| (
+            n.as_bytes().as_bstr().to_owned(),
+            v.map(|v| v.as_bytes().as_bstr().to_owned())
+        ))
+        .collect::<Vec<_>>()
     );
     let refs = res
         .refs
