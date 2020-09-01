@@ -157,17 +157,16 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     capabilities.set_agent_version();
 
     let mut parsed_refs = Vec::<Ref>::new();
-    refs::extract_symrefs(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
+    refs::from_capabilities(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
 
     match refs {
-        Some(refs) => {
+        Some(mut refs) => {
             assert_eq!(
                 actual_protocol,
                 git_transport::Protocol::V1,
                 "Only V1 auto-responds with refs"
             );
-            use io::BufRead;
-            let _refs = refs.lines().collect::<Vec<_>>();
+            refs::from_v1_refs_received_as_part_of_handshake(&mut parsed_refs, &mut refs)?;
         }
         None => {
             assert_eq!(
