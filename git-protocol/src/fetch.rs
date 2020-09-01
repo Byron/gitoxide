@@ -21,6 +21,9 @@ quick_error! {
             from()
             source(err)
         }
+        SymrefWithoutValue {
+            display("A symref 'capability' is expected to have a value")
+        }
     }
 }
 
@@ -32,6 +35,7 @@ pub trait Delegate {
 
 pub struct Capabilities {
     pub available: BTreeMap<BString, Option<BString>>,
+    pub symrefs: Vec<BString>,
 }
 
 impl Capabilities {
@@ -53,13 +57,20 @@ impl Capabilities {
 
 impl From<client::Capabilities> for Capabilities {
     fn from(c: client::Capabilities) -> Self {
-        Capabilities {
-            available: {
-                let mut map = BTreeMap::new();
-                map.extend(c.iter().map(|c| (c.name().to_owned(), c.value().map(|v| v.to_owned()))));
-                map
-            },
-        }
+        let (available, symrefs) = {
+            let mut map = BTreeMap::new();
+            let mut symrefs = Vec::new();
+            map.extend(c.iter().filter_map(|c| {
+                if c.name() == b"symref".as_bstr() {
+                    symrefs.push(c.value().expect("fixme: need value here").to_owned());
+                    None
+                } else {
+                    Some((c.name().to_owned(), c.value().map(|v| v.to_owned())))
+                }
+            }));
+            (map, symrefs)
+        };
+        Capabilities { available, symrefs }
     }
 }
 
@@ -151,7 +162,7 @@ pub enum Ref {
     },
 }
 
-fn extract_symrefs(out_refs: &mut Vec<Ref>, capabilities: &mut Capabilities) {
+fn extract_symrefs(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) {
     // capabilities.available.iter()
 }
 
@@ -200,7 +211,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     delegate.adjust_capabilities(actual_protocol, &mut capabilities);
     capabilities.set_agent_version();
     let mut parsed_refs = Vec::<Ref>::new();
-    extract_symrefs(&mut parsed_refs, &mut capabilities);
+    extract_symrefs(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs));
 
     match refs {
         Some(refs) => {
@@ -226,30 +237,36 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
 #[cfg(test)]
 mod tests {
-    use super::{extract_symrefs, Capabilities};
-    use std::collections::BTreeMap;
+    use super::{extract_symrefs, Capabilities, Ref};
+    use git_transport::client;
+    use std::convert::TryInto;
 
     #[test]
-    fn extract_symbolic_references_from_capabilities() {
-        let mut caps = Capabilities {
-            available: {
-                let mut m = BTreeMap::new();
-                m.insert("unrelated".into(), None);
-                m.insert("symref".into(), Some("HEAD:refs/heads/main".into()));
-                m.insert("symref".into(), Some("ANOTHER:refs/heads/baz".into()));
-                m.insert("also-unrelated".into(), Some("with-value".into()));
-                m
-            },
-        };
+    fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> {
+        let (caps, _) = client::Capabilities::from_bytes(
+            b"\0unrelated symref=HEAD:refs/heads/main symref=ANOTHER:refs/heads/foo agent=git/2.28.0",
+        )?;
+        let mut caps: Capabilities = caps.try_into().expect("this is a working example");
         let mut out = Vec::new();
-        extract_symrefs(&mut out, &mut caps);
+        extract_symrefs(&mut out, std::mem::take(&mut caps.symrefs));
 
         assert_eq!(
             caps.available.into_iter().collect::<Vec<_>>(),
+            vec![("agent".into(), Some("git/2.28.0".into())), ("unrelated".into(), None)]
+        );
+        assert_eq!(
+            out,
             vec![
-                ("unrelated".into(), None),
-                ("unrelated".into(), Some("with-value".into()))
+                Ref::SymbolicForLookup {
+                    path: "HEAD".into(),
+                    target: "refs/heads/main".into()
+                },
+                Ref::SymbolicForLookup {
+                    path: "ANOTHER".into(),
+                    target: "refs/heads/foo".into()
+                }
             ]
-        )
+        );
+        Ok(())
     }
 }
