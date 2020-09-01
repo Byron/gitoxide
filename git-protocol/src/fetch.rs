@@ -1,10 +1,12 @@
 use crate::credentials;
 use bstr::{BStr, BString, ByteSlice};
-use git_transport::client::SetServiceResponse;
-use git_transport::{client, Service};
+use git_object::owned;
+use git_transport::{
+    client::{self, SetServiceResponse},
+    Service,
+};
 use quick_error::quick_error;
-use std::collections::BTreeMap;
-use std::io;
+use std::{collections::BTreeMap, io};
 
 quick_error! {
     #[derive(Debug)]
@@ -125,6 +127,34 @@ impl<'a> From<LeakedSetServiceResponse<'a>> for client::SetServiceResponse<'a> {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum Ref {
+    Tag {
+        path: BString,
+        id: owned::Id,
+    },
+    Commit {
+        path: BString,
+        id: owned::Id,
+    },
+    Symbolic {
+        path: BString,
+        target: BString,
+        id: owned::Id,
+    },
+    /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
+    /// These don't contain the Id
+    SymbolicForLookup {
+        path: BString,
+        target: BString,
+    },
+}
+
+fn extract_symrefs(out_refs: &mut Vec<Ref>, capabilities: &mut Capabilities) {
+    // capabilities.available.iter()
+}
+
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut transport: impl client::Transport,
     mut delegate: impl Delegate,
@@ -133,7 +163,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     let SetServiceResponse {
         actual_protocol,
         capabilities,
-        refs: _,
+        refs,
     } = match transport
         .handshake(Service::UploadPack)
         .map(LeakedSetServiceResponse::from)
@@ -169,6 +199,57 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     let mut capabilities: Capabilities = capabilities.into();
     delegate.adjust_capabilities(actual_protocol, &mut capabilities);
     capabilities.set_agent_version();
+    let mut parsed_refs = Vec::<Ref>::new();
+    extract_symrefs(&mut parsed_refs, &mut capabilities);
+
+    match refs {
+        Some(refs) => {
+            assert_eq!(
+                actual_protocol,
+                git_transport::Protocol::V1,
+                "Only V1 auto-responds with refs"
+            );
+            use io::BufRead;
+            let refs = refs.lines().collect::<Vec<_>>();
+        }
+        None => {
+            assert_eq!(
+                actual_protocol,
+                git_transport::Protocol::V2,
+                "Only V2 needs a separate request to get specific refs"
+            );
+        }
+    };
 
     unimplemented!("rest of fetch")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{extract_symrefs, Capabilities};
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn extract_symbolic_references_from_capabilities() {
+        let mut caps = Capabilities {
+            available: {
+                let mut m = BTreeMap::new();
+                m.insert("unrelated".into(), None);
+                m.insert("symref".into(), Some("HEAD:refs/heads/main".into()));
+                m.insert("symref".into(), Some("ANOTHER:refs/heads/baz".into()));
+                m.insert("also-unrelated".into(), Some("with-value".into()));
+                m
+            },
+        };
+        let mut out = Vec::new();
+        extract_symrefs(&mut out, &mut caps);
+
+        assert_eq!(
+            caps.available.into_iter().collect::<Vec<_>>(),
+            vec![
+                ("unrelated".into(), None),
+                ("unrelated".into(), Some("with-value".into()))
+            ]
+        )
+    }
 }

@@ -688,6 +688,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-features",
+ "git-object",
  "git-transport",
  "nom",
  "quick-error 2.0.0",
