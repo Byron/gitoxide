@@ -77,7 +77,7 @@ mod streaming {
     fn error_on_invalid_hex() {
         assert_err_display(
             streaming(b"fooo"),
-            "Failed to decode the first four hex bytes indicating the line length",
+            "Failed to decode the first four hex bytes indicating the line length: Invalid character 'o' at position 1",
         );
     }
 
