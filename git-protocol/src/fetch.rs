@@ -100,7 +100,7 @@ impl<'a> From<client::SetServiceResponse<'a>> for LeakedSetServiceResponse<'a> {
         LeakedSetServiceResponse {
             actual_protocol: v.actual_protocol,
             capabilities: v.capabilities.into(),
-            refs: v.refs.map(|b| Box::leak(b)),
+            refs: v.refs.map(Box::leak),
         }
     }
 }
@@ -140,13 +140,13 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
                 // Still no permission? Reject the credentials.
                 Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
                     authenticate(next.reject())?;
-                    Err(client::Error::Io { err }.into())
+                    Err(client::Error::Io { err })
                 }
                 // Otherwise it's some other error, still OK to approve the credentials. We also do this to not accidentally
                 // discard credentials that have been previously stored.
                 Err(err) => {
                     authenticate(next.approve())?;
-                    Err(err.into())
+                    Err(err)
                 }
             }
         }
