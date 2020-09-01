@@ -35,10 +35,12 @@
       * [x] git
       * [x] http(s)
   * **git-protocol**
-    * [ ] support for authentication providers
-      * [ ] know why it failed by extracting PermissionErrors from io errors
+    * [x] support for authentication providers
+      * [x] know why it failed by extracting PermissionErrors from io errors
       * [x] implement authentication provider using git-helpers
         * [x] git-url round tripping
+      * [x] v1 ref parsing
+      * [ ] v2 ref parsing
     * [ ] delegate to support clone
       * [ ] assure there is a way to do fetches with have/want negotiation
     * [ ] progress
