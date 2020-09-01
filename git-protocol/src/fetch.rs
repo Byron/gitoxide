@@ -6,7 +6,11 @@ use git_transport::{
     Service,
 };
 use quick_error::quick_error;
-use std::{collections::BTreeMap, io};
+use std::{
+    collections::BTreeMap,
+    convert::{TryFrom, TryInto},
+    io,
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -23,6 +27,9 @@ quick_error! {
         }
         SymrefWithoutValue {
             display("A symref 'capability' is expected to have a value")
+        }
+        MalformedSymref(offender: BString) {
+            display("'{}' could not be parsed. A symref is expected to look like <NAME>:<target>.", offender)
         }
     }
 }
@@ -55,22 +62,23 @@ impl Capabilities {
     }
 }
 
-impl From<client::Capabilities> for Capabilities {
-    fn from(c: client::Capabilities) -> Self {
+impl TryFrom<client::Capabilities> for Capabilities {
+    type Error = Error;
+
+    fn try_from(c: client::Capabilities) -> Result<Self, Self::Error> {
         let (available, symrefs) = {
             let mut map = BTreeMap::new();
             let mut symrefs = Vec::new();
-            map.extend(c.iter().filter_map(|c| {
+            for c in c.iter() {
                 if c.name() == b"symref".as_bstr() {
-                    symrefs.push(c.value().expect("fixme: need value here").to_owned());
-                    None
+                    symrefs.push(c.value().ok_or(Error::SymrefWithoutValue)?.to_owned());
                 } else {
-                    Some((c.name().to_owned(), c.value().map(|v| v.to_owned())))
+                    map.insert(c.name().to_owned(), c.value().map(|v| v.to_owned()));
                 }
-            }));
+            }
             (map, symrefs)
         };
-        Capabilities { available, symrefs }
+        Ok(Capabilities { available, symrefs })
     }
 }
 
@@ -162,8 +170,19 @@ pub enum Ref {
     },
 }
 
-fn extract_symrefs(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) {
-    // capabilities.available.iter()
+fn extract_symrefs(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) -> Result<(), Error> {
+    for symref in symrefs.into_iter() {
+        let (left, right) = symref.split_at(
+            symref
+                .find_byte(b':')
+                .ok_or_else(|| Error::MalformedSymref(symref.clone()))?,
+        );
+        out_refs.push(Ref::SymbolicForLookup {
+            path: left.into(),
+            target: right[1..].into(),
+        })
+    }
+    Ok(())
 }
 
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
@@ -207,11 +226,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     }?
     .into();
 
-    let mut capabilities: Capabilities = capabilities.into();
+    let mut capabilities: Capabilities = capabilities.try_into()?;
     delegate.adjust_capabilities(actual_protocol, &mut capabilities);
     capabilities.set_agent_version();
+
     let mut parsed_refs = Vec::<Ref>::new();
-    extract_symrefs(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs));
+    extract_symrefs(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
 
     match refs {
         Some(refs) => {
@@ -221,7 +241,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
                 "Only V1 auto-responds with refs"
             );
             use io::BufRead;
-            let refs = refs.lines().collect::<Vec<_>>();
+            let _refs = refs.lines().collect::<Vec<_>>();
         }
         None => {
             assert_eq!(
