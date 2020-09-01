@@ -130,7 +130,11 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let res: SetServiceResponse = match transport
+    let SetServiceResponse {
+        actual_protocol,
+        capabilities,
+        refs: _,
+    } = match transport
         .handshake(Service::UploadPack)
         .map(LeakedSetServiceResponse::from)
     {
@@ -152,20 +156,18 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
                     authenticate(next.reject())?;
                     Err(client::Error::Io { err })
                 }
-                // Otherwise it's some other error, still OK to approve the credentials. We also do this to not accidentally
-                // discard credentials that have been previously stored.
-                Err(err) => {
-                    authenticate(next.approve())?;
-                    Err(err)
-                }
+                // Otherwise, do nothing, as we don't know if it actually got to try the credentials.
+                // If they were previously stored, they remain. In the worst case, the user has to enter them again
+                // next time they try.
+                Err(err) => Err(err),
             }
         }
         Err(err) => Err(err),
     }?
     .into();
 
-    let mut capabilities: Capabilities = res.capabilities.clone().into();
-    delegate.adjust_capabilities(res.actual_protocol, &mut capabilities);
+    let mut capabilities: Capabilities = capabilities.into();
+    delegate.adjust_capabilities(actual_protocol, &mut capabilities);
     capabilities.set_agent_version();
 
     unimplemented!("rest of fetch")
