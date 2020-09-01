@@ -84,36 +84,6 @@ impl From<client::Capabilities> for Capabilities {
 // V1
 // 0098want 808e50d724f604f69ab93c6da2919c014667bedb multi_ack_detailed no-done side-band-64k thin-pack ofs-delta deepen-since deepen-not agent=git/2.28.0
 
-/// This is only needed because for some reason, a match statement takes the drop scope of the enclosing scope, and not of
-/// the match arm. This makes it think that a borrowed Ok(value) is still in scope, even though we are in the Err(err) branch.
-/// The idea here is that we can workaround this by setting the scope to the level of the function, by splitting everything up accordingly.
-/// Tracking issue: https://github.com/rust-lang/rust/issues/76149 - discarded, as currently documented/known behaviour.
-fn perform_handshake<'a, F: FnMut(credentials::Action) -> credentials::Result>(
-    transport: &'a mut impl client::Transport,
-    delegate: &mut impl Delegate,
-    mut authenticate: Option<&mut F>,
-    out: &mut Option<credentials::NextAction>,
-) -> Result<client::SetServiceResponse<'a>, Error> {
-    if let Some(authenticate) = authenticate.as_mut() {
-        let url = transport.to_url();
-        let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
-        transport.set_identity(identity)?;
-        // Remember the output of the authentication function to provide in case we still error with
-        // a permission issue.
-        *out = Some(next);
-    };
-
-    let response = transport.handshake(Service::UploadPack)?;
-    if let Some(authenticate) = authenticate {
-        authenticate(
-            out.take()
-                .expect("we put next action in before if an authenticator is present")
-                .approve(),
-        )?;
-    }
-    Ok(response)
-}
-
 /// This types sole purpose is to 'disable' the destructor on the Box provided in the `SetServiceResponse` type
 /// by leaking the box. We provide a method to restore the box and drop it right away to not actually leak.
 /// However, we do leak in error cases because we don't call the manual destructor then.
@@ -140,7 +110,9 @@ impl<'a> LeakedSetServiceResponse<'a> {
         if let Some(b) = self.refs.take() {
             // SAFETY: We are bound to lifetime 'a, which is the lifetime of the thing pointed to by the trait object in the box.
             // Thus we can only drop the box while that thing is indeed valid, due to Rusts standard lifetime rules.
-            // The box itself was leaked by us
+            // The box itself was leaked by us.
+            // Note that this is only required because Drop scopes are the outer ones in the match, not the match arms, making them
+            // too broad to be usable intuitively. I consider this a technical shortcoming and hope there is a way to resolve it.
             #[allow(unsafe_code)]
             unsafe {
                 drop(Box::from_raw(b as *mut _))
@@ -154,32 +126,32 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let mut next = None;
-    let mut res: LeakedSetServiceResponse =
-        match perform_handshake(&mut transport, &mut delegate, None::<&mut F>, &mut next).map(Into::into) {
-            Ok(v) => Ok(v),
-            Err(Error::Transport(client::Error::Io { err })) if err.kind() == io::ErrorKind::PermissionDenied => {
-                perform_handshake(&mut transport, &mut delegate, Some(&mut authenticate), &mut next)
-                    .map_err(|err| {
-                        if let Some(next) = next {
-                            match &err {
-                                // Still no permission? Reject the credentials
-                                Error::Transport(client::Error::Io { err })
-                                    if err.kind() == io::ErrorKind::PermissionDenied =>
-                                {
-                                    authenticate(next.reject())
-                                }
-                                // Otherwise it's some other error, still OK to approve the credentials
-                                _ => authenticate(next.approve()),
-                            }
-                            .ok();
-                        };
-                        err
-                    })
-                    .map(Into::into)
+    let mut res: LeakedSetServiceResponse = match transport.handshake(Service::UploadPack).map(Into::into) {
+        Ok(v) => Ok(v),
+        Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+            let url = transport.to_url();
+            let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
+            transport.set_identity(identity)?;
+            match transport.handshake(Service::UploadPack).map(Into::into) {
+                Ok(v) => {
+                    authenticate(next.approve())?;
+                    Ok(v)
+                }
+                // Still no permission? Reject the credentials.
+                Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+                    authenticate(next.reject())?;
+                    Err(client::Error::Io { err }.into())
+                }
+                // Otherwise it's some other error, still OK to approve the credentials. We also do this to not accidentally
+                // discard credentials that have been previously stored.
+                Err(err) => {
+                    authenticate(next.approve())?;
+                    Err(err.into())
+                }
             }
-            Err(err) => Err(err),
-        }?;
+        }
+        Err(err) => Err(err),
+    }?;
 
     delegate.adjust_capabilities(res.actual_protocol, &mut res.capabilities);
     res.capabilities.set_agent_version();
