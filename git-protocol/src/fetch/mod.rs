@@ -1,6 +1,5 @@
 use crate::credentials;
 use bstr::{BStr, BString, ByteSlice};
-use git_object::owned;
 use git_transport::{
     client::{self, SetServiceResponse},
     Service,
@@ -11,6 +10,12 @@ use std::{
     convert::{TryFrom, TryInto},
     io,
 };
+
+mod refs;
+pub use refs::Ref;
+
+#[cfg(test)]
+mod tests;
 
 quick_error! {
     #[derive(Debug)]
@@ -146,45 +151,6 @@ impl<'a> From<LeakedSetServiceResponse<'a>> for client::SetServiceResponse<'a> {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Ref {
-    Tag {
-        path: BString,
-        id: owned::Id,
-    },
-    Commit {
-        path: BString,
-        id: owned::Id,
-    },
-    Symbolic {
-        path: BString,
-        target: BString,
-        id: owned::Id,
-    },
-    /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
-    /// These don't contain the Id
-    SymbolicForLookup {
-        path: BString,
-        target: BString,
-    },
-}
-
-fn extract_symrefs(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) -> Result<(), Error> {
-    for symref in symrefs.into_iter() {
-        let (left, right) = symref.split_at(
-            symref
-                .find_byte(b':')
-                .ok_or_else(|| Error::MalformedSymref(symref.clone()))?,
-        );
-        out_refs.push(Ref::SymbolicForLookup {
-            path: left.into(),
-            target: right[1..].into(),
-        })
-    }
-    Ok(())
-}
-
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut transport: impl client::Transport,
     mut delegate: impl Delegate,
@@ -231,7 +197,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     capabilities.set_agent_version();
 
     let mut parsed_refs = Vec::<Ref>::new();
-    extract_symrefs(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
+    refs::extract_symrefs(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
 
     match refs {
         Some(refs) => {
@@ -253,40 +219,4 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     };
 
     unimplemented!("rest of fetch")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{extract_symrefs, Capabilities, Ref};
-    use git_transport::client;
-    use std::convert::TryInto;
-
-    #[test]
-    fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> {
-        let (caps, _) = client::Capabilities::from_bytes(
-            b"\0unrelated symref=HEAD:refs/heads/main symref=ANOTHER:refs/heads/foo agent=git/2.28.0",
-        )?;
-        let mut caps: Capabilities = caps.try_into().expect("this is a working example");
-        let mut out = Vec::new();
-        extract_symrefs(&mut out, std::mem::take(&mut caps.symrefs));
-
-        assert_eq!(
-            caps.available.into_iter().collect::<Vec<_>>(),
-            vec![("agent".into(), Some("git/2.28.0".into())), ("unrelated".into(), None)]
-        );
-        assert_eq!(
-            out,
-            vec![
-                Ref::SymbolicForLookup {
-                    path: "HEAD".into(),
-                    target: "refs/heads/main".into()
-                },
-                Ref::SymbolicForLookup {
-                    path: "ANOTHER".into(),
-                    target: "refs/heads/foo".into()
-                }
-            ]
-        );
-        Ok(())
-    }
 }
