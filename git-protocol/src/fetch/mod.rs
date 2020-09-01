@@ -12,6 +12,7 @@ use std::{
 };
 
 mod refs;
+mod workaround;
 pub use refs::Ref;
 
 #[cfg(test)]
@@ -110,47 +111,6 @@ impl TryFrom<client::Capabilities> for Capabilities {
 // V1
 // 0098want 808e50d724f604f69ab93c6da2919c014667bedb multi_ack_detailed no-done side-band-64k thin-pack ofs-delta deepen-since deepen-not agent=git/2.28.0
 
-/// This types sole purpose is to 'disable' the destructor on the Box provided in the `SetServiceResponse` type
-/// by leaking the box. We provide a method to restore the box and drop it right away to not actually leak.
-/// However, we do leak in error cases because we don't call the manual destructor then.
-struct LeakedSetServiceResponse<'a> {
-    /// The protocol the service can provide. May be different from the requested one
-    pub actual_protocol: git_transport::Protocol,
-    pub capabilities: client::Capabilities,
-    /// In protocol version one, this is set to a list of refs and their peeled counterparts.
-    pub refs: Option<&'a mut dyn io::BufRead>,
-}
-
-impl<'a> From<client::SetServiceResponse<'a>> for LeakedSetServiceResponse<'a> {
-    fn from(v: SetServiceResponse<'a>) -> Self {
-        LeakedSetServiceResponse {
-            actual_protocol: v.actual_protocol,
-            capabilities: v.capabilities,
-            refs: v.refs.map(Box::leak),
-        }
-    }
-}
-
-impl<'a> From<LeakedSetServiceResponse<'a>> for client::SetServiceResponse<'a> {
-    fn from(v: LeakedSetServiceResponse<'a>) -> Self {
-        SetServiceResponse {
-            actual_protocol: v.actual_protocol,
-            capabilities: v.capabilities,
-            refs: v.refs.map(|b| {
-                // SAFETY: We are bound to lifetime 'a, which is the lifetime of the thing pointed to by the trait object in the box.
-                // Thus we can only drop the box while that thing is indeed valid, due to Rusts standard lifetime rules.
-                // The box itself was leaked by us.
-                // Note that this is only required because Drop scopes are the outer ones in the match, not the match arms, making them
-                // too broad to be usable intuitively. I consider this a technical shortcoming and hope there is a way to resolve it.
-                #[allow(unsafe_code)]
-                unsafe {
-                    Box::from_raw(b as *mut _)
-                }
-            }),
-        }
-    }
-}
-
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut transport: impl client::Transport,
     mut delegate: impl Delegate,
@@ -162,7 +122,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         refs,
     } = match transport
         .handshake(Service::UploadPack)
-        .map(LeakedSetServiceResponse::from)
+        .map(workaround::LeakedSetServiceResponse::from)
     {
         Ok(v) => Ok(v),
         Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
@@ -171,7 +131,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             transport.set_identity(identity)?;
             match transport
                 .handshake(Service::UploadPack)
-                .map(LeakedSetServiceResponse::from)
+                .map(workaround::LeakedSetServiceResponse::from)
             {
                 Ok(v) => {
                     authenticate(next.approve())?;
