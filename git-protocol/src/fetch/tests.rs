@@ -57,7 +57,7 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
 
         assert_eq!(
             caps.available.into_iter().collect::<Vec<_>>(),
-            vec![("agent".into(), Some("git/2.28.0".into())), ("unrelated".into(), None)]
+            vec![("unrelated".into(), None), ("agent".into(), Some("git/2.28.0".into()))]
         );
         assert_eq!(
             out,
