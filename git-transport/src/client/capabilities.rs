@@ -70,18 +70,17 @@ impl Capabilities {
     pub fn from_lines(read: impl io::BufRead) -> Result<Capabilities, Error> {
         let mut lines = read.lines();
         let version_line = lines.next().ok_or(Error::MissingVersionLine)??;
-        let mut version_tokens = version_line.splitn(2, |b| b == ' ');
-        match (version_tokens.next(), version_tokens.next()) {
-            (Some(name), Some(value)) => {
-                if name != "version" {
-                    return Err(Error::MalformattedVersionLine(version_line));
-                }
-                if value != "2" {
-                    return Err(Error::UnsupportedVersion(Protocol::V2, value.to_owned()));
-                }
-            }
-            _ => return Err(Error::MalformattedVersionLine(version_line)),
-        };
+        let (name, value) = version_line.split_at(
+            version_line
+                .find(' ')
+                .ok_or_else(|| Error::MalformattedVersionLine(version_line.clone()))?,
+        );
+        if name != "version" {
+            return Err(Error::MalformattedVersionLine(version_line));
+        }
+        if value != " 2" {
+            return Err(Error::UnsupportedVersion(Protocol::V2, value.to_owned()));
+        }
         Ok(Capabilities {
             value_sep: b'\n',
             data: lines
