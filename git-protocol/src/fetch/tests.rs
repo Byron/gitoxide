@@ -8,7 +8,6 @@ fn oid(hex_sha: &str) -> owned::Id {
 }
 
 #[test]
-#[ignore]
 fn extract_references_from_v1_refs() {
     let input: &mut dyn io::BufRead = &mut "73a6868963993a3328e7d8fe94e5a6ac5078a944 HEAD
 73a6868963993a3328e7d8fe94e5a6ac5078a944 refs/heads/main

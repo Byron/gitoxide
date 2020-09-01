@@ -21,6 +21,11 @@ mod tests;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        Io(err: io::Error) {
+            display("An IO error occurred while reading a response from or writing to the remote")
+            from()
+            source(err)
+        }
         Credentials(err: credentials::Error) {
             display("Failed to obtain, approve or reject credentials")
             from()
@@ -34,8 +39,14 @@ quick_error! {
         SymrefWithoutValue {
             display("A symref 'capability' is expected to have a value")
         }
-        MalformedSymref(offender: BString) {
-            display("'{}' could not be parsed. A symref is expected to look like <NAME>:<target>.", offender)
+        MalformedSymref(symref: BString) {
+            display("'{}' could not be parsed. A symref is expected to look like <NAME>:<target>.", symref)
+        }
+        MalformedV1RefLine(line: String) {
+            display("'{}' could not be parsed. A V1 ref line should be '<hex-hash> <path>'.", line)
+        }
+        InvariantViolation(message: &'static str) {
+            display("{}", message)
         }
     }
 }
