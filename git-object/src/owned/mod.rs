@@ -7,7 +7,7 @@ mod convert;
 mod ser;
 
 mod id;
-pub use id::*;
+pub use id::{Error, Id};
 
 mod tag;
 pub use tag::Tag;
@@ -34,11 +34,11 @@ mod blob {
         }
     }
 }
-pub use blob::*;
+pub use blob::Blob;
 
 pub mod signature;
 #[doc(inline)]
 pub use signature::Signature;
 
 mod object;
-pub use object::*;
+pub use object::Object;
