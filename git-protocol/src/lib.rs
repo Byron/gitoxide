@@ -1,4 +1,4 @@
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 
 mod remote_progress;
 pub use remote_progress::RemoteProgress;

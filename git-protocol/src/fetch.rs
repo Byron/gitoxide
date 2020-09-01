@@ -1,5 +1,6 @@
 use crate::credentials;
 use bstr::{BStr, BString, ByteSlice};
+use git_transport::client::SetServiceResponse;
 use git_transport::{client, Service};
 use quick_error::quick_error;
 use std::collections::BTreeMap;
@@ -83,16 +84,16 @@ impl From<client::Capabilities> for Capabilities {
 // V1
 // 0098want 808e50d724f604f69ab93c6da2919c014667bedb multi_ack_detailed no-done side-band-64k thin-pack ofs-delta deepen-since deepen-not agent=git/2.28.0
 
-/// This monstrosity is only needed because for some reason, a match statement takes the drop scope of the enclosing scope, and not of
+/// This is only needed because for some reason, a match statement takes the drop scope of the enclosing scope, and not of
 /// the match arm. This makes it think that a borrowed Ok(value) is still in scope, even though we are in the Err(err) branch.
 /// The idea here is that we can workaround this by setting the scope to the level of the function, by splitting everything up accordingly.
 /// Tracking issue: https://github.com/rust-lang/rust/issues/76149 - discarded, as currently documented/known behaviour.
-fn perform_handshake<F: FnMut(credentials::Action) -> credentials::Result>(
-    transport: &mut impl client::Transport,
+fn perform_handshake<'a, F: FnMut(credentials::Action) -> credentials::Result>(
+    transport: &'a mut impl client::Transport,
     delegate: &mut impl Delegate,
     mut authenticate: Option<&mut F>,
     out: &mut Option<credentials::NextAction>,
-) -> Result<(), Error> {
+) -> Result<client::SetServiceResponse<'a>, Error> {
     if let Some(authenticate) = authenticate.as_mut() {
         let url = transport.to_url();
         let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
@@ -102,12 +103,7 @@ fn perform_handshake<F: FnMut(credentials::Action) -> credentials::Result>(
         *out = Some(next);
     };
 
-    let client::SetServiceResponse {
-        actual_protocol,
-        capabilities,
-        refs: _,
-    } = transport.handshake(Service::UploadPack)?;
-
+    let response = transport.handshake(Service::UploadPack)?;
     if let Some(authenticate) = authenticate {
         authenticate(
             out.take()
@@ -115,11 +111,42 @@ fn perform_handshake<F: FnMut(credentials::Action) -> credentials::Result>(
                 .approve(),
         )?;
     }
+    Ok(response)
+}
 
-    let mut capabilities = Capabilities::from(capabilities);
-    delegate.adjust_capabilities(actual_protocol, &mut capabilities);
-    capabilities.set_agent_version();
-    unimplemented!("fetch")
+/// This types sole purpose is to 'disable' the destructor on the Box provided in the `SetServiceResponse` type
+/// by leaking the box. We provide a method to restore the box and drop it right away to not actually leak.
+/// However, we do leak in error cases because we don't call the manual destructor then.
+struct LeakedSetServiceResponse<'a> {
+    /// The protocol the service can provide. May be different from the requested one
+    pub actual_protocol: git_transport::Protocol,
+    pub capabilities: Capabilities,
+    /// In protocol version one, this is set to a list of refs and their peeled counterparts.
+    pub refs: Option<&'a mut dyn io::BufRead>,
+}
+
+impl<'a> From<client::SetServiceResponse<'a>> for LeakedSetServiceResponse<'a> {
+    fn from(v: SetServiceResponse<'a>) -> Self {
+        LeakedSetServiceResponse {
+            actual_protocol: v.actual_protocol,
+            capabilities: v.capabilities.into(),
+            refs: v.refs.map(|b| Box::leak(b)),
+        }
+    }
+}
+
+impl<'a> LeakedSetServiceResponse<'a> {
+    fn drop_explicitly(&mut self) {
+        if let Some(b) = self.refs.take() {
+            // SAFETY: We are bound to lifetime 'a, which is the lifetime of the thing pointed to by the trait object in the box.
+            // Thus we can only drop the box while that thing is indeed valid, due to Rusts standard lifetime rules.
+            // The box itself was leaked by us
+            #[allow(unsafe_code)]
+            unsafe {
+                drop(Box::from_raw(b as *mut _))
+            }
+        }
+    }
 }
 
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
@@ -128,26 +155,35 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut authenticate: F,
 ) -> Result<(), Error> {
     let mut next = None;
-    match perform_handshake(&mut transport, &mut delegate, None::<&mut F>, &mut next) {
-        Ok(()) => Ok(()),
-        Err(Error::Transport(client::Error::Io { err })) if err.kind() == io::ErrorKind::PermissionDenied => {
-            perform_handshake(&mut transport, &mut delegate, Some(&mut authenticate), &mut next).map_err(|err| {
-                if let Some(next) = next {
-                    match &err {
-                        // Still no permission? Reject the credentials
-                        Error::Transport(client::Error::Io { err })
-                            if err.kind() == io::ErrorKind::PermissionDenied =>
-                        {
-                            authenticate(next.reject())
-                        }
-                        // Otherwise it's some other error, still OK to approve the credentials
-                        _ => authenticate(next.approve()),
-                    }
-                    .ok();
-                };
-                err
-            })
-        }
-        Err(err) => Err(err),
-    }
+    let mut res: LeakedSetServiceResponse =
+        match perform_handshake(&mut transport, &mut delegate, None::<&mut F>, &mut next).map(Into::into) {
+            Ok(v) => Ok(v),
+            Err(Error::Transport(client::Error::Io { err })) if err.kind() == io::ErrorKind::PermissionDenied => {
+                perform_handshake(&mut transport, &mut delegate, Some(&mut authenticate), &mut next)
+                    .map_err(|err| {
+                        if let Some(next) = next {
+                            match &err {
+                                // Still no permission? Reject the credentials
+                                Error::Transport(client::Error::Io { err })
+                                    if err.kind() == io::ErrorKind::PermissionDenied =>
+                                {
+                                    authenticate(next.reject())
+                                }
+                                // Otherwise it's some other error, still OK to approve the credentials
+                                _ => authenticate(next.approve()),
+                            }
+                            .ok();
+                        };
+                        err
+                    })
+                    .map(Into::into)
+            }
+            Err(err) => Err(err),
+        }?;
+
+    delegate.adjust_capabilities(res.actual_protocol, &mut res.capabilities);
+    res.capabilities.set_agent_version();
+
+    res.drop_explicitly();
+    unimplemented!("rest of fetch")
 }
