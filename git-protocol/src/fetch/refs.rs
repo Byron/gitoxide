@@ -104,7 +104,7 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
                 .pop()
                 .and_then(Ref::unpack_direct)
                 .ok_or_else(|| Error::InvariantViolation("Expecting peeled refs to be preceeded by direct refs"))?;
-            if previous_path != &path[..path.len() - "^{}".len()] {
+            if previous_path != path[..path.len() - "^{}".len()] {
                 return Err(Error::InvariantViolation(
                     "Expecting peeled refs to have the same base path as the previous, unpeeled one",
                 ));
