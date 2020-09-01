@@ -86,8 +86,8 @@ impl From<client::Capabilities> for Capabilities {
 /// This monstrosity is only needed because for some reason, a match statement takes the drop scope of the enclosing scope, and not of
 /// the match arm. This makes it think that a borrowed Ok(value) is still in scope, even though we are in the Err(err) branch.
 /// The idea here is that we can workaround this by setting the scope to the level of the function, by splitting everything up accordingly.
-/// Tracking issue: https://github.com/rust-lang/rust/issues/76149
-fn fetch_inner<F: FnMut(credentials::Action) -> credentials::Result>(
+/// Tracking issue: https://github.com/rust-lang/rust/issues/76149 - discarded, as currently documented/known behaviour.
+fn perform_handshake<F: FnMut(credentials::Action) -> credentials::Result>(
     transport: &mut impl client::Transport,
     delegate: &mut impl Delegate,
     mut authenticate: Option<&mut F>,
@@ -128,10 +128,10 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut authenticate: F,
 ) -> Result<(), Error> {
     let mut next = None;
-    match fetch_inner(&mut transport, &mut delegate, None::<&mut F>, &mut next) {
+    match perform_handshake(&mut transport, &mut delegate, None::<&mut F>, &mut next) {
         Ok(()) => Ok(()),
         Err(Error::Transport(client::Error::Io { err })) if err.kind() == io::ErrorKind::PermissionDenied => {
-            fetch_inner(&mut transport, &mut delegate, Some(&mut authenticate), &mut next).map_err(|err| {
+            perform_handshake(&mut transport, &mut delegate, Some(&mut authenticate), &mut next).map_err(|err| {
                 if let Some(next) = next {
                     match &err {
                         // Still no permission? Reject the credentials
