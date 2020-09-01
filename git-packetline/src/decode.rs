@@ -7,10 +7,8 @@ use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        HexDecode(err: hex::FromHexError) {
-            display("Failed to decode the first four hex bytes indicating the line length")
-            from()
-            source(err)
+        HexDecode(err: String) {
+            display("Failed to decode the first four hex bytes indicating the line length: {}", err)
         }
         DataLengthLimitExceeded(length_in_bytes: usize) {
             display("The data received claims to be larger than than the maximum allowed size: got {}, exceeds {}", length_in_bytes, MAX_DATA_LEN)
@@ -60,7 +58,7 @@ pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize, Error> {
     }
 
     let mut buf = [0u8; U16_HEX_BYTES / 2];
-    hex::decode_to_slice(four_bytes, &mut buf)?;
+    hex::decode_to_slice(four_bytes, &mut buf).map_err(|err| Error::HexDecode(err.to_string()))?;
     let wanted_bytes = u16::from_be_bytes(buf);
     if wanted_bytes == 3 {
         return Err(Error::InvalidLineLength);

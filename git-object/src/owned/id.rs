@@ -1,6 +1,16 @@
 use crate::{borrowed, SHA1_SIZE};
 use bstr::ByteSlice;
+use quick_error::quick_error;
 use std::{fmt, io, ops::Deref};
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        HexDecode(err: String) {
+            display("Failed to hex hash: {}", err)
+        }
+    }
+}
 
 /// An owned SHA1 identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -30,9 +40,11 @@ impl Id {
 
 /// Sha1 hash specific methods
 impl Id {
-    pub fn from_40_bytes_in_hex(buf: &[u8]) -> Result<Id, hex::FromHexError> {
+    pub fn from_40_bytes_in_hex(buf: &[u8]) -> Result<Id, Error> {
         use hex::FromHex;
-        Ok(Id(<[u8; 20]>::from_hex(buf)?))
+        Ok(Id(
+            <[u8; 20]>::from_hex(buf).map_err(|err| Error::HexDecode(err.to_string()))?
+        ))
     }
     pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
         &self.0
