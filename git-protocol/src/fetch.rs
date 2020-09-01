@@ -90,7 +90,7 @@ impl From<client::Capabilities> for Capabilities {
 struct LeakedSetServiceResponse<'a> {
     /// The protocol the service can provide. May be different from the requested one
     pub actual_protocol: git_transport::Protocol,
-    pub capabilities: Capabilities,
+    pub capabilities: client::Capabilities,
     /// In protocol version one, this is set to a list of refs and their peeled counterparts.
     pub refs: Option<&'a mut dyn io::BufRead>,
 }
@@ -99,24 +99,28 @@ impl<'a> From<client::SetServiceResponse<'a>> for LeakedSetServiceResponse<'a> {
     fn from(v: SetServiceResponse<'a>) -> Self {
         LeakedSetServiceResponse {
             actual_protocol: v.actual_protocol,
-            capabilities: v.capabilities.into(),
+            capabilities: v.capabilities,
             refs: v.refs.map(Box::leak),
         }
     }
 }
 
-impl<'a> LeakedSetServiceResponse<'a> {
-    fn drop_explicitly(&mut self) {
-        if let Some(b) = self.refs.take() {
-            // SAFETY: We are bound to lifetime 'a, which is the lifetime of the thing pointed to by the trait object in the box.
-            // Thus we can only drop the box while that thing is indeed valid, due to Rusts standard lifetime rules.
-            // The box itself was leaked by us.
-            // Note that this is only required because Drop scopes are the outer ones in the match, not the match arms, making them
-            // too broad to be usable intuitively. I consider this a technical shortcoming and hope there is a way to resolve it.
-            #[allow(unsafe_code)]
-            unsafe {
-                drop(Box::from_raw(b as *mut _))
-            }
+impl<'a> From<LeakedSetServiceResponse<'a>> for client::SetServiceResponse<'a> {
+    fn from(v: LeakedSetServiceResponse<'a>) -> Self {
+        SetServiceResponse {
+            actual_protocol: v.actual_protocol,
+            capabilities: v.capabilities,
+            refs: v.refs.map(|b| {
+                // SAFETY: We are bound to lifetime 'a, which is the lifetime of the thing pointed to by the trait object in the box.
+                // Thus we can only drop the box while that thing is indeed valid, due to Rusts standard lifetime rules.
+                // The box itself was leaked by us.
+                // Note that this is only required because Drop scopes are the outer ones in the match, not the match arms, making them
+                // too broad to be usable intuitively. I consider this a technical shortcoming and hope there is a way to resolve it.
+                #[allow(unsafe_code)]
+                unsafe {
+                    Box::from_raw(b as *mut _)
+                }
+            }),
         }
     }
 }
@@ -126,13 +130,19 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let mut res: LeakedSetServiceResponse = match transport.handshake(Service::UploadPack).map(Into::into) {
+    let res: SetServiceResponse = match transport
+        .handshake(Service::UploadPack)
+        .map(LeakedSetServiceResponse::from)
+    {
         Ok(v) => Ok(v),
         Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
             let url = transport.to_url();
             let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
             transport.set_identity(identity)?;
-            match transport.handshake(Service::UploadPack).map(Into::into) {
+            match transport
+                .handshake(Service::UploadPack)
+                .map(LeakedSetServiceResponse::from)
+            {
                 Ok(v) => {
                     authenticate(next.approve())?;
                     Ok(v)
@@ -151,11 +161,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             }
         }
         Err(err) => Err(err),
-    }?;
+    }?
+    .into();
 
-    delegate.adjust_capabilities(res.actual_protocol, &mut res.capabilities);
-    res.capabilities.set_agent_version();
+    let mut capabilities: Capabilities = res.capabilities.clone().into();
+    delegate.adjust_capabilities(res.actual_protocol, &mut capabilities);
+    capabilities.set_agent_version();
 
-    res.drop_explicitly();
     unimplemented!("rest of fetch")
 }
