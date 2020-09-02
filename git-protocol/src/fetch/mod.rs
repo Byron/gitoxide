@@ -1,14 +1,10 @@
 use crate::credentials;
-use bstr::{BStr, BString, ByteSlice};
 use git_transport::{
     client::{self, SetServiceResponse},
     Service,
 };
 use quick_error::quick_error;
-use std::{
-    convert::{TryFrom, TryInto},
-    io,
-};
+use std::{convert::TryInto, io};
 
 mod refs;
 pub use refs::Ref;
@@ -17,7 +13,7 @@ pub use refs::Ref;
 mod tests;
 
 // Note that arguments suffixed by spaces take another value.
-const _BUILTIN_V2_COMMAND_ARGUMENT_NAMES: &[(&str, &[&str])] = &[
+const BUILTIN_V2_COMMAND_ARGUMENT_NAMES: &[(&str, &[&str])] = &[
     ("ls-refs", &["symrefs", "peel", "ref-prefix "]),
     (
         "fetch",
@@ -70,21 +66,87 @@ quick_error! {
     }
 }
 
+/// Define what to do next.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum Action {
+    /// Continue the typical flow of operations in this flow.
+    Continue,
+    /// Close the connection without making any further requests.
+    Close,
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum Command {
+    LsRefs,
+}
+
+impl Command {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Command::LsRefs => "ls-refs",
+        }
+    }
+    fn builtin_argument_prefixes(&self) -> &'static [&'static str] {
+        let name = self.as_str();
+        BUILTIN_V2_COMMAND_ARGUMENT_NAMES
+            .iter()
+            .find_map(|(n, v)| if *n == name { Some(v) } else { None })
+            .expect("command to be found")
+    }
+
+    /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
+    fn validate_prefixes_or_panic(&self, server: &Capabilities, arguments: &[String], features: &[&str]) {
+        let allowed = self.builtin_argument_prefixes();
+        for arg in arguments {
+            if allowed.iter().any(|allowed| arg.starts_with(allowed)) {
+                continue;
+            }
+            panic!("{}: argument {} is not known or allowed", self.as_str(), arg);
+        }
+        if let Some(allowed) = server
+            .values_of(self.as_str())
+            .map(|v| v.map(|f| f.to_str_lossy()).collect::<Vec<_>>())
+        {
+            for feature in features {
+                if allowed.iter().any(|allowed| feature.starts_with(allowed.as_ref())) {
+                    continue;
+                }
+                panic!("{}: feature/capability {} is not supported", self.as_str(), feature);
+            }
+        }
+    }
+}
+
 pub trait Delegate {
     /// A chance to inspect or adjust the Capabilities returned after handshake with the server.
     /// They will be used in subsequent calls to the server, but the client is free to cache information as they see fit.
     fn adjust_capabilities(&mut self, _version: git_transport::Protocol, _capabilities: &mut Capabilities) {}
+
+    /// Called before invoking a given `command` to allow providing it with additional `arguments` and to enable `features`.
+    /// Note that some arguments might be preset based on typical usage.
+    /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake.
+    fn prepare_command(
+        &mut self,
+        _command: Command,
+        _server: &Capabilities,
+        _arguments: &mut Vec<String>,
+        _features: &mut Vec<&str>,
+    ) -> Action {
+        Action::Continue
+    }
 }
 
 mod capabilities;
+use bstr::ByteSlice;
 pub use capabilities::Capabilities;
 
+/// Note that depending on the `delegate`, the actual action peformed can be `ls-refs`, `clone` or `fetch`.
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut transport: impl client::Transport,
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let (actual_protocol, _refs, _capabilities, call_ls_refs) = {
+    let (actual_protocol, _refs, capabilities, call_ls_refs) = {
         let result = transport.handshake(Service::UploadPack);
         let SetServiceResponse {
             actual_protocol,
@@ -147,7 +209,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         // arguments: Option<impl IntoIterator<Item = BString>>,
-        // let next = delegate.prepare_command("ls-refs", &capabilities);
+        let mut ls_features = Vec::new();
+        let mut ls_args = vec!["peel".to_string(), "symrefs".into()];
+        let ls_refs = Command::LsRefs;
+        let _next = delegate.prepare_command(ls_refs, &capabilities, &mut ls_args, &mut ls_features);
+        ls_refs.validate_prefixes_or_panic(&capabilities, &ls_args, &ls_features);
+
         // transport.request(client::WriteMode::Binary, Vec::new())?;
     }
 
