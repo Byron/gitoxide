@@ -146,7 +146,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let (actual_protocol, _refs, capabilities, call_ls_refs) = {
+    let (actual_protocol, mut parsed_refs, capabilities, call_ls_refs) = {
         let result = transport.handshake(Service::UploadPack);
         let SetServiceResponse {
             actual_protocol,
@@ -216,11 +216,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         let _next = delegate.prepare_command(ls_refs, &capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_prefixes_or_panic(&capabilities, &ls_args, &ls_features);
 
-        let _refs = transport.invoke(
+        let mut refs = transport.invoke(
             ls_refs.as_str(),
             ls_features.iter().map(|f| (*f, None)).chain(Some(agent)),
             if ls_args.is_empty() { None } else { Some(ls_args) },
         )?;
+        refs::from_v2_refs(&mut parsed_refs, &mut refs)?;
     }
 
     transport.close()?;

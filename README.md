@@ -105,9 +105,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [ ] via pure Rust implementation if no git is installed
   * [ ] fetch & clone
     * [x] control credentials provider to fill, approve and reject
-    * [ ] ls-ref
+    * [x] ls-ref
       * [x] parse V1 refs as provided during handshake
-      * [ ] parse V2 refs
+      * [x] parse V2 refs
   * [ ] push
   * [ ] shallow clones
   * [ ] API documentation with examples

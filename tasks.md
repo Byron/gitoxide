@@ -40,7 +40,7 @@
       * [x] implement authentication provider using git-helpers
         * [x] git-url round tripping
       * [x] v1 ref parsing
-      * [ ] v2 ref parsing
+      * [x] v2 ref parsing
     * [ ] delegate to support clone
       * [ ] assure there is a way to do fetches with have/want negotiation
     * [ ] progress

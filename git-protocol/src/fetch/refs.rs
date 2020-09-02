@@ -22,6 +22,12 @@ quick_error! {
         MalformedV1RefLine(line: String) {
             display("'{}' could not be parsed. A V1 ref line should be '<hex-hash> <path>'.", line)
         }
+        MalformedV2RefLine(line: String) {
+            display("'{}' could not be parsed. A V2 ref line should be '<hex-hash> <path>[ (peeled|symref-target):<value>'.", line)
+        }
+        UnkownAttribute(attribute: String, line: String) {
+            display("The ref attribute '{}' is unknown. Found in line '{}'", attribute, line)
+        }
         InvariantViolation(message: &'static str) {
             display("{}", message)
         }
@@ -79,6 +85,58 @@ pub(crate) fn from_capabilities(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) 
             path: left.into(),
             target: right[1..].into(),
         })
+    }
+    Ok(())
+}
+
+pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRead) -> Result<(), Error> {
+    let mut line = String::new();
+    loop {
+        line.clear();
+        let bytes_read = in_refs.read_line(&mut line)?;
+        if bytes_read == 0 {
+            break;
+        }
+        let trimmed = line.trim_end();
+        let mut tokens = trimmed.splitn(3, ' ');
+        match (tokens.next(), tokens.next()) {
+            (Some(hex_hash), Some(path)) => {
+                let id = owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
+                if path.is_empty() {
+                    return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
+                }
+                out_refs.push(if let Some(attribute) = tokens.next() {
+                    let mut tokens = attribute.splitn(2, ':');
+                    match (tokens.next(), tokens.next()) {
+                        (Some(attribute), Some(value)) => {
+                            if value.is_empty() {
+                                return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
+                            }
+                            match attribute {
+                                "peeled" => Ref::Peeled {
+                                    path: path.into(),
+                                    object: owned::Id::from_40_bytes_in_hex(value.as_bytes())?,
+                                    tag: id,
+                                },
+                                "symref-target" => Ref::Symbolic {
+                                    path: path.into(),
+                                    object: id,
+                                    target: value.into(),
+                                },
+                                _ => return Err(Error::UnkownAttribute(attribute.to_owned(), trimmed.to_owned())),
+                            }
+                        }
+                        _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned())),
+                    }
+                } else {
+                    Ref::Direct {
+                        object: id,
+                        path: path.into(),
+                    }
+                });
+            }
+            _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned())),
+        }
     }
     Ok(())
 }

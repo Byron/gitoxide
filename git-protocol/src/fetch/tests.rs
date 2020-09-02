@@ -9,6 +9,43 @@ mod refs {
     }
 
     #[test]
+    fn extract_references_from_v2_refs() {
+        let input: &mut dyn io::BufRead =
+            &mut "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/main
+808e50d724f604f69ab93c6da2919c014667bedb refs/heads/main
+7fe1b98b39423b71e14217aa299a03b7c937d656 refs/tags/foo peeled:808e50d724f604f69ab93c6da2919c014667bedb
+7fe1b98b39423b71e14217aa299a03b7c937d6ff refs/tags/blaz
+"
+            .as_bytes();
+        let mut out = Vec::new();
+        refs::from_v2_refs(&mut out, input).expect("no failure on valid input");
+
+        assert_eq!(
+            out,
+            vec![
+                Ref::Symbolic {
+                    path: "HEAD".into(),
+                    target: "refs/heads/main".into(),
+                    object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
+                },
+                Ref::Direct {
+                    path: "refs/heads/main".into(),
+                    object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
+                },
+                Ref::Peeled {
+                    path: "refs/tags/foo".into(),
+                    tag: oid("7fe1b98b39423b71e14217aa299a03b7c937d656"),
+                    object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
+                },
+                Ref::Direct {
+                    path: "refs/tags/blaz".into(),
+                    object: oid("7fe1b98b39423b71e14217aa299a03b7c937d6ff")
+                },
+            ]
+        )
+    }
+
+    #[test]
     fn extract_references_from_v1_refs() {
         let input: &mut dyn io::BufRead = &mut "73a6868963993a3328e7d8fe94e5a6ac5078a944 HEAD
 73a6868963993a3328e7d8fe94e5a6ac5078a944 refs/heads/main
