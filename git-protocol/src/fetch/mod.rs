@@ -1,6 +1,7 @@
 use crate::credentials;
+use bstr::{BString, ByteSlice};
 use git_transport::{
-    client::{self, SetServiceResponse},
+    client::{self, SetServiceResponse, TransportV2Ext},
     Service,
 };
 use quick_error::quick_error;
@@ -95,10 +96,10 @@ impl Command {
     }
 
     /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
-    fn validate_prefixes_or_panic(&self, server: &Capabilities, arguments: &[String], features: &[&str]) {
+    fn validate_prefixes_or_panic(&self, server: &Capabilities, arguments: &[BString], features: &[&str]) {
         let allowed = self.builtin_argument_prefixes();
         for arg in arguments {
-            if allowed.iter().any(|allowed| arg.starts_with(allowed)) {
+            if allowed.iter().any(|allowed| arg.starts_with(allowed.as_bytes())) {
                 continue;
             }
             panic!("{}: argument {} is not known or allowed", self.as_str(), arg);
@@ -129,7 +130,7 @@ pub trait Delegate {
         &mut self,
         _command: Command,
         _server: &Capabilities,
-        _arguments: &mut Vec<String>,
+        _arguments: &mut Vec<BString>,
         _features: &mut Vec<&str>,
     ) -> Action {
         Action::Continue
@@ -137,7 +138,6 @@ pub trait Delegate {
 }
 
 mod capabilities;
-use bstr::ByteSlice;
 pub use capabilities::Capabilities;
 
 /// Note that depending on the `delegate`, the actual action peformed can be `ls-refs`, `clone` or `fetch`.
@@ -210,12 +210,16 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         // arguments: Option<impl IntoIterator<Item = BString>>,
         let mut ls_features = Vec::new();
-        let mut ls_args = vec!["peel".to_string(), "symrefs".into()];
+        let mut ls_args = vec!["peel".into(), "symrefs".into()];
         let ls_refs = Command::LsRefs;
         let _next = delegate.prepare_command(ls_refs, &capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_prefixes_or_panic(&capabilities, &ls_args, &ls_features);
 
-        // transport.request(client::WriteMode::Binary, Vec::new())?;
+        let _refs = transport.invoke(
+            ls_refs.as_str(),
+            ls_features.iter().map(|f| (*f, None)),
+            if ls_args.is_empty() { None } else { Some(ls_args) },
+        )?;
     }
 
     transport.close()?;
