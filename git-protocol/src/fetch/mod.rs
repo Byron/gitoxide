@@ -101,10 +101,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         (actual_protocol, parsed_refs, capabilities, call_ls_refs)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
-    let agent = (
-        "agent".into(),
-        Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")).into()),
-    );
+    let agent = ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))));
     if call_ls_refs {
         assert_eq!(
             actual_protocol,
@@ -115,7 +112,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         let mut ls_features = Vec::new();
         let mut ls_args = vec!["peel".into(), "symrefs".into()];
         let ls_refs = Command::LsRefs;
-        let _next = delegate.prepare_command(ls_refs, &capabilities, &mut ls_args, &mut ls_features);
+        delegate.prepare_ls_refs(ls_refs, &capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_prefixes_or_panic(&capabilities, &ls_args, &ls_features);
 
         let mut refs = transport.invoke(

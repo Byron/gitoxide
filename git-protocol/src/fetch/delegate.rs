@@ -88,16 +88,15 @@ pub trait Delegate {
     /// They will be used in subsequent calls to the server, but the client is free to cache information as they see fit.
     fn adjust_capabilities(&mut self, _version: git_transport::Protocol, _capabilities: &mut Capabilities) {}
 
-    /// Called before invoking a given `command` to allow providing it with additional `arguments` and to enable `features`.
-    /// Note that some arguments might be preset based on typical usage.
+    /// Called before invoking ls-refs to allow providing it with additional `arguments` and to enable `features`.
+    /// Note that some arguments are preset based on typical usage.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake.
-    fn prepare_command(
+    fn prepare_ls_refs(
         &mut self,
         _command: Command,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<&str>,
-    ) -> Action {
-        Action::Continue
+    ) {
     }
 }
