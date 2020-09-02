@@ -37,7 +37,10 @@ impl<'a> RemoteProgress<'a> {
             }
         }
         if is_error {
-            progress.fail(progress_name(None, text));
+            // ignore keep-alive packages sent with 'sideband-all'
+            if !text.is_empty() {
+                progress.fail(progress_name(None, text));
+            }
         } else {
             match Self::from_bytes(text) {
                 Some(RemoteProgress {
