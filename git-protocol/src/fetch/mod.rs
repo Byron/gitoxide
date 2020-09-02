@@ -98,61 +98,70 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let result = transport.handshake(Service::UploadPack);
-    let SetServiceResponse {
-        actual_protocol,
-        capabilities,
-        refs,
-    } = match result {
-        Ok(v) => Ok(v),
-        Err(client::Error::Io { ref err }) if err.kind() == io::ErrorKind::PermissionDenied => {
-            drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
-            let url = transport.to_url();
-            let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
-            transport.set_identity(identity)?;
-            match transport.handshake(Service::UploadPack) {
-                Ok(v) => {
-                    authenticate(next.approve())?;
-                    Ok(v)
+    let (_refs, _capabilities) = {
+        let result = transport.handshake(Service::UploadPack);
+        let SetServiceResponse {
+            actual_protocol,
+            capabilities,
+            refs,
+        } = match result {
+            Ok(v) => Ok(v),
+            Err(client::Error::Io { ref err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+                drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
+                let url = transport.to_url();
+                let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
+                transport.set_identity(identity)?;
+                match transport.handshake(Service::UploadPack) {
+                    Ok(v) => {
+                        authenticate(next.approve())?;
+                        Ok(v)
+                    }
+                    // Still no permission? Reject the credentials.
+                    Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+                        authenticate(next.reject())?;
+                        Err(client::Error::Io { err })
+                    }
+                    // Otherwise, do nothing, as we don't know if it actually got to try the credentials.
+                    // If they were previously stored, they remain. In the worst case, the user has to enter them again
+                    // next time they try.
+                    Err(err) => Err(err),
                 }
-                // Still no permission? Reject the credentials.
-                Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
-                    authenticate(next.reject())?;
-                    Err(client::Error::Io { err })
-                }
-                // Otherwise, do nothing, as we don't know if it actually got to try the credentials.
-                // If they were previously stored, they remain. In the worst case, the user has to enter them again
-                // next time they try.
-                Err(err) => Err(err),
             }
-        }
-        Err(err) => Err(err),
-    }?;
+            Err(err) => Err(err),
+        }?;
 
-    let mut capabilities: Capabilities = capabilities.try_into()?;
-    delegate.adjust_capabilities(actual_protocol, &mut capabilities);
-    capabilities.set_agent_version();
+        let mut capabilities: Capabilities = capabilities.try_into()?;
+        delegate.adjust_capabilities(actual_protocol, &mut capabilities);
+        capabilities.set_agent_version();
 
-    let mut parsed_refs = Vec::<Ref>::new();
-    refs::from_capabilities(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
+        let mut parsed_refs = Vec::<Ref>::new();
+        refs::from_capabilities(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
 
-    match refs {
-        Some(mut refs) => {
-            assert_eq!(
-                actual_protocol,
-                git_transport::Protocol::V1,
-                "Only V1 auto-responds with refs"
-            );
-            refs::from_v1_refs_received_as_part_of_handshake(&mut parsed_refs, &mut refs)?;
-        }
-        None => {
-            assert_eq!(
-                actual_protocol,
-                git_transport::Protocol::V2,
-                "Only V2 needs a separate request to get specific refs"
-            );
-        }
+        match refs {
+            Some(mut refs) => {
+                assert_eq!(
+                    actual_protocol,
+                    git_transport::Protocol::V1,
+                    "Only V1 auto-responds with refs"
+                );
+                refs::from_v1_refs_received_as_part_of_handshake(&mut parsed_refs, &mut refs)?;
+            }
+            None => {
+                assert_eq!(
+                    actual_protocol,
+                    git_transport::Protocol::V2,
+                    "Only V2 needs a separate request to get specific refs"
+                );
+
+                // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
+                // arguments: Option<impl IntoIterator<Item = BString>>,
+                // delegate.prepare_command("ls-refs", &capabilities)
+                // transport.request(client::WriteMode::Binary, Vec::new());
+            }
+        };
+        (parsed_refs, capabilities)
     };
 
+    transport.close()?;
     unimplemented!("rest of fetch")
 }
