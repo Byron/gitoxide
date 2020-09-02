@@ -98,7 +98,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
-    let (_refs, _capabilities) = {
+    let (actual_protocol, _refs, _capabilities, call_ls_refs) = {
         let result = transport.handshake(Service::UploadPack);
         let SetServiceResponse {
             actual_protocol,
@@ -137,7 +137,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         let mut parsed_refs = Vec::<Ref>::new();
         refs::from_capabilities(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
 
-        match refs {
+        let call_ls_refs = match refs {
             Some(mut refs) => {
                 assert_eq!(
                     actual_protocol,
@@ -145,22 +145,25 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
                     "Only V1 auto-responds with refs"
                 );
                 refs::from_v1_refs_received_as_part_of_handshake(&mut parsed_refs, &mut refs)?;
+                false
             }
-            None => {
-                assert_eq!(
-                    actual_protocol,
-                    git_transport::Protocol::V2,
-                    "Only V2 needs a separate request to get specific refs"
-                );
-
-                // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
-                // arguments: Option<impl IntoIterator<Item = BString>>,
-                // delegate.prepare_command("ls-refs", &capabilities)
-                // transport.request(client::WriteMode::Binary, Vec::new());
-            }
+            None => true,
         };
-        (parsed_refs, capabilities)
-    };
+        (actual_protocol, parsed_refs, capabilities, call_ls_refs)
+    }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
+
+    if call_ls_refs {
+        assert_eq!(
+            actual_protocol,
+            git_transport::Protocol::V2,
+            "Only V2 needs a separate request to get specific refs"
+        );
+
+        // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
+        // arguments: Option<impl IntoIterator<Item = BString>>,
+        // delegate.prepare_command("ls-refs", &capabilities)
+        // transport.request(client::WriteMode::Binary, Vec::new())?;
+    }
 
     transport.close()?;
     unimplemented!("rest of fetch")
