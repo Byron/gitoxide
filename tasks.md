@@ -1,51 +1,16 @@
 ### Cloning
-* **gixp-pack-receive**
-  * _a program to (initially only) clone from a given URL_, storing a full pack with index only. No support for `git-refs`.
-  * **git-packetline**
-    * [x] pkt-lines support
-    * [x] Don't forcibly remove newlines at the end of pack lines, but make that an extra step.
-    * [x] decode band should be able to fail
-    * [x] PacketLine 'Iterator' from `Read`
-    * [x] `Read` from packet lines with sideband
-      * [x] Progress parsing, with 'info(…)' fallback if that fails
-      * [x] SetName in Progress trait (to allow setting the correct progress information)
-      * [x] Disable sideband support (e.g. github http V2 doesn't have it)
-    * [x] don't coerce line delimiters into empty slices.
-    * [x] Make 'ERR <error>' handling as error optional, as it may occur only in certain contexts.
-    * Reader improvements
-      * [x] Allow to enable error handling in `Reader`
-      * [x] Allow peeking one line
-    * [x] `Write` with packet line encoding
-  * **git-transport**
-    * [x] parse capabilities
-    * [x] assure packet reader's `read_line(…)` is doing things exactly as we think it will (it does!)
-    * [x] git://git-upload-pack
-      * [x] V1 handshake
-        * [x] send values + receive data with sidebands
-      * [x] V2 handshake
-        * [x] send command request
-    * [x] http://git-upload-pack
-      * [x] V1 handshake
-        * [x] send values + receive data with sidebands
-      * [x] V2 handshake
-        * [x] send command request
-    * [x] connect
-      * [x] file
-      * [x] ssh
-      * [x] git
-      * [x] http(s)
-  * **git-protocol**
-    * [x] support for authentication providers
-      * [x] know why it failed by extracting PermissionErrors from io errors
-      * [x] implement authentication provider using git-helpers
-        * [x] git-url round tripping
-      * [x] v1 ref parsing
-      * [x] v2 ref parsing
+* **gixp-ls-remote**
+  * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
+  * [ ] journey tests for each connection method
+    * [ ] file
+    * [ ] git
+    * [ ] ssh
+    * [ ] https (unauthenticated)
+    * [ ] https (authenticated)
+* **git-protocol**
     * [ ] delegate to support clone
       * [ ] assure there is a way to do fetches with have/want negotiation
     * [ ] progress
-* **git-ref** _(minimal)_
-  * [ ] a way to know if a ref needs to be parsed (like `ref/name^{}`)
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
   * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
@@ -55,8 +20,6 @@
     * [ ] ssh
     * [ ] https (unauthenticated)
     * [ ] https (authenticated)
-* **gixp-ls-remote**
-  * A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
 
 ### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
 
