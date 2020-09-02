@@ -11,7 +11,6 @@ use std::{
 };
 
 mod refs;
-mod workaround;
 pub use refs::Ref;
 
 #[cfg(test)]
@@ -99,23 +98,19 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut delegate: impl Delegate,
     mut authenticate: F,
 ) -> Result<(), Error> {
+    let result = transport.handshake(Service::UploadPack);
     let SetServiceResponse {
         actual_protocol,
         capabilities,
         refs,
-    } = match transport
-        .handshake(Service::UploadPack)
-        .map(workaround::LeakedSetServiceResponse::from)
-    {
+    } = match result {
         Ok(v) => Ok(v),
-        Err(client::Error::Io { err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+        Err(client::Error::Io { ref err }) if err.kind() == io::ErrorKind::PermissionDenied => {
+            drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
             let url = transport.to_url();
             let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
             transport.set_identity(identity)?;
-            match transport
-                .handshake(Service::UploadPack)
-                .map(workaround::LeakedSetServiceResponse::from)
-            {
+            match transport.handshake(Service::UploadPack) {
                 Ok(v) => {
                     authenticate(next.approve())?;
                     Ok(v)
@@ -132,8 +127,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             }
         }
         Err(err) => Err(err),
-    }?
-    .into();
+    }?;
 
     let mut capabilities: Capabilities = capabilities.try_into()?;
     delegate.adjust_capabilities(actual_protocol, &mut capabilities);
