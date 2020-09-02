@@ -16,6 +16,36 @@ pub use refs::Ref;
 #[cfg(test)]
 mod tests;
 
+// Note that arguments suffixed by spaces take another value.
+const _BUILTIN_V2_COMMAND_ARGUMENT_NAMES: &[(&str, &[&str])] = &[
+    ("ls-refs", &["symrefs", "peel", "ref-prefix "]),
+    (
+        "fetch",
+        &[
+            "want ", // hex oid
+            "have ", // hex oid
+            "done",
+            "thin-pack",
+            "no-progress",
+            "include-tag",
+            "ofs-delta",
+            // Shallow feature/capability
+            "shallow ", // hex oid
+            "deepen ",  // commit depth
+            "deepen-relative",
+            "deepen-since ", // time-stamp
+            "deepen-not ",   // rev
+            // filter feature/capability
+            "filter ", // filter-spec
+            // ref-in-want feature
+            "want-ref ", // ref path
+            "sideband-all",
+            // packfile-uris feature
+            "packfile-uris ", // protocols
+        ],
+    ),
+];
+
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
@@ -46,52 +76,8 @@ pub trait Delegate {
     fn adjust_capabilities(&mut self, _version: git_transport::Protocol, _capabilities: &mut Capabilities) {}
 }
 
-pub struct Capabilities {
-    pub available: Vec<(BString, Option<BString>)>,
-    pub symrefs: Vec<BString>,
-}
-
-impl Capabilities {
-    pub fn find_first(&self, name: &str) -> Option<&(BString, Option<BString>)> {
-        self.available.iter().find(|(n, _)| n == name.as_bytes().as_bstr())
-    }
-    /// Returns values of capability of the given name, if present.
-    /// Useful when handling capabilities of V2 commands.
-    pub fn values_of(&self, name: &str) -> Option<impl Iterator<Item = &BStr>> {
-        self.find_first(name)
-            .and_then(|(_, v)| v.as_ref().map(|v| v.split(|b| *b == b' ').map(|v| v.as_bstr())))
-    }
-
-    pub(crate) fn set_agent_version(&mut self) {
-        if let Some(position) = self.available.iter().position(|(n, _)| n == b"agent".as_bstr()) {
-            self.available.remove(position);
-        }
-        self.available.push((
-            "agent".into(),
-            Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")).into()),
-        ));
-    }
-}
-
-impl TryFrom<client::Capabilities> for Capabilities {
-    type Error = Error;
-
-    fn try_from(c: client::Capabilities) -> Result<Self, Self::Error> {
-        let (available, symrefs) = {
-            let mut caps = Vec::new();
-            let mut symrefs = Vec::new();
-            for c in c.iter() {
-                if c.name() == b"symref".as_bstr() {
-                    symrefs.push(c.value().ok_or(Error::SymrefWithoutValue)?.to_owned());
-                } else {
-                    caps.push((c.name().to_owned(), c.value().map(|v| v.to_owned())));
-                }
-            }
-            (caps, symrefs)
-        };
-        Ok(Capabilities { available, symrefs })
-    }
-}
+mod capabilities;
+pub use capabilities::Capabilities;
 
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut transport: impl client::Transport,
@@ -161,7 +147,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         // arguments: Option<impl IntoIterator<Item = BString>>,
-        // delegate.prepare_command("ls-refs", &capabilities)
+        // let next = delegate.prepare_command("ls-refs", &capabilities);
         // transport.request(client::WriteMode::Binary, Vec::new())?;
     }
 
