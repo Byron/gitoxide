@@ -180,7 +180,6 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         let mut capabilities: Capabilities = capabilities.try_into()?;
         delegate.adjust_capabilities(actual_protocol, &mut capabilities);
-        capabilities.set_agent_version();
 
         let mut parsed_refs = Vec::<Ref>::new();
         refs::from_capabilities(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
@@ -200,6 +199,10 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         (actual_protocol, parsed_refs, capabilities, call_ls_refs)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
+    let agent = (
+        "agent".into(),
+        Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")).into()),
+    );
     if call_ls_refs {
         assert_eq!(
             actual_protocol,
@@ -207,8 +210,6 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             "Only V2 needs a separate request to get specific refs"
         );
 
-        // capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
-        // arguments: Option<impl IntoIterator<Item = BString>>,
         let mut ls_features = Vec::new();
         let mut ls_args = vec!["peel".into(), "symrefs".into()];
         let ls_refs = Command::LsRefs;
@@ -217,7 +218,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         let _refs = transport.invoke(
             ls_refs.as_str(),
-            ls_features.iter().map(|f| (*f, None)),
+            ls_features.iter().map(|f| (*f, None)).chain(Some(agent)),
             if ls_args.is_empty() { None } else { Some(ls_args) },
         )?;
     }

@@ -55,6 +55,8 @@
     * [ ] ssh
     * [ ] https (unauthenticated)
     * [ ] https (authenticated)
+* **gixp-ls-remote**
+  * A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
 
 ### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
 

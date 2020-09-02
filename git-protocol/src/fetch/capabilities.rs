@@ -18,16 +18,6 @@ impl Capabilities {
         self.find_first(name)
             .and_then(|(_, v)| v.as_ref().map(|v| v.split(|b| *b == b' ').map(|v| v.as_bstr())))
     }
-
-    pub(crate) fn set_agent_version(&mut self) {
-        if let Some(position) = self.available.iter().position(|(n, _)| n == b"agent".as_bstr()) {
-            self.available.remove(position);
-        }
-        self.available.push((
-            "agent".into(),
-            Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")).into()),
-        ));
-    }
 }
 
 impl TryFrom<client::Capabilities> for Capabilities {
