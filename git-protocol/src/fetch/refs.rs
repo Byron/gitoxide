@@ -103,7 +103,7 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
         );
         let path = &path[1..];
         if path.is_empty() {
-            return Err(Error::MalformedV1RefLine(trimmed.to_owned()))?;
+            return Err(Error::MalformedV1RefLine(trimmed.to_owned()));
         }
         if path.ends_with("^{}") {
             let (previous_path, tag) = out_refs
