@@ -200,6 +200,8 @@ fn handshake_v1() -> crate::Result {
             "e8df6c1ffb7afa27aff9abbe11c7e4b80d19b61e refs/tags/v0.3.0^{}"
         ]
     );
+    c.close()?;
+
     assert_eq!(
         server.received_as_string().lines().collect::<Vec<_>>(),
         format!(
@@ -405,6 +407,7 @@ Accept: application/x-git-upload-pack-result
     drop(res);
     let messages = Rc::try_unwrap(messages).expect("no other handle").into_inner();
     assert_eq!(messages.len(), 5);
+    c.close()?;
 
     assert_eq!(
         server.received_as_string().lines().collect::<Vec<_>>(),

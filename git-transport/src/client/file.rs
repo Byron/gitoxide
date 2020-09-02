@@ -121,6 +121,14 @@ impl client::Transport for SpawnProcessOnDemand {
             .request(write_mode, on_drop)
     }
 
+    fn close(mut self) -> Result<(), client::Error> {
+        if let Some(c) = self.connection.take() {
+            c.close()
+        } else {
+            Ok(())
+        }
+    }
+
     fn to_url(&self) -> String {
         self.url.to_string()
     }

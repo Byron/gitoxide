@@ -118,6 +118,15 @@ where
             on_drop,
         ))
     }
+
+    fn close(mut self) -> Result<(), client::Error> {
+        if self.version == Protocol::V2 {
+            git_packetline::encode::flush_to_write(&mut self.writer)?;
+            self.writer.flush()?;
+        }
+        Ok(())
+    }
+
     fn to_url(&self) -> String {
         git_url::Url {
             scheme: git_url::Scheme::File,

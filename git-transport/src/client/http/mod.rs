@@ -164,6 +164,11 @@ impl<H: Http> client::Transport for Transport<H> {
             on_drop,
         ))
     }
+
+    fn close(self) -> Result<(), client::Error> {
+        Ok(())
+    }
+
     fn to_url(&self) -> String {
         self.url.to_owned()
     }
