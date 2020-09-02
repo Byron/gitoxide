@@ -72,6 +72,9 @@ pub(crate) fn from_capabilities(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) 
                 .find_byte(b':')
                 .ok_or_else(|| Error::MalformedSymref(symref.clone()))?,
         );
+        if left.is_empty() || right.is_empty() {
+            return Err(Error::MalformedSymref(symref));
+        }
         out_refs.push(Ref::SymbolicForLookup {
             path: left.into(),
             target: right[1..].into(),
@@ -99,6 +102,9 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
                 .ok_or_else(|| Error::MalformedV1RefLine(trimmed.to_owned()))?,
         );
         let path = &path[1..];
+        if path.is_empty() {
+            return Err(Error::MalformedV1RefLine(trimmed.to_owned()))?;
+        }
         if path.ends_with("^{}") {
             let (previous_path, tag) = out_refs
                 .pop()
