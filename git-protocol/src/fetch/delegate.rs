@@ -1,4 +1,4 @@
-use crate::fetch::Capabilities;
+use crate::fetch::{Capabilities, Ref};
 use bstr::{BString, ByteSlice};
 
 // Note that arguments suffixed by spaces take another value.
@@ -61,7 +61,13 @@ impl Command {
     }
 
     /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
-    pub(crate) fn validate_prefixes_or_panic(&self, server: &Capabilities, arguments: &[BString], features: &[&str]) {
+    pub(crate) fn validate_prefixes_or_panic(
+        &self,
+        version: git_transport::Protocol,
+        server: &Capabilities,
+        arguments: &[BString],
+        features: &[&str],
+    ) {
         let allowed = self.builtin_argument_prefixes();
         for arg in arguments {
             if allowed.iter().any(|allowed| arg.starts_with(allowed.as_bytes())) {
@@ -69,15 +75,31 @@ impl Command {
             }
             panic!("{}: argument {} is not known or allowed", self.as_str(), arg);
         }
-        if let Some(allowed) = server
-            .values_of(self.as_str())
-            .map(|v| v.map(|f| f.to_str_lossy()).collect::<Vec<_>>())
-        {
-            for feature in features {
-                if allowed.iter().any(|allowed| feature.starts_with(allowed.as_ref())) {
-                    continue;
+        match version {
+            git_transport::Protocol::V1 => {
+                for feature in features {
+                    if server
+                        .available
+                        .iter()
+                        .any(|(allowed, _)| feature.starts_with(allowed.to_str_lossy().as_ref()))
+                    {
+                        continue;
+                    }
+                    panic!("{}: capability {} is not supported", self.as_str(), feature);
                 }
-                panic!("{}: feature/capability {} is not supported", self.as_str(), feature);
+            }
+            git_transport::Protocol::V2 => {
+                if let Some(allowed) = server
+                    .values_of(self.as_str())
+                    .map(|v| v.map(|f| f.to_str_lossy()).collect::<Vec<_>>())
+                {
+                    for feature in features {
+                        if allowed.iter().any(|allowed| feature.starts_with(allowed.as_ref())) {
+                            continue;
+                        }
+                        panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature);
+                    }
+                }
             }
         }
     }
@@ -91,12 +113,20 @@ pub trait Delegate {
     /// Called before invoking ls-refs to allow providing it with additional `arguments` and to enable `features`.
     /// Note that some arguments are preset based on typical usage.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake.
-    fn prepare_ls_refs(
+    /// Note that this is called only if we are using protocol version 2.
+    fn prepare_ls_refs(&mut self, _server: &Capabilities, _arguments: &mut Vec<BString>, _features: &mut Vec<&str>) {}
+
+    /// Called before invoking the 'fetch' interaction, with `arguments` and `features` pre-filled for typical use.
+    /// `refs` is a list of known references on the remote, based on the handshake or a prior call to ls_refs.
+    /// As there will be another call allowing to post arguments conveniently in the correct format, i.e. `want hex-oid`,
+    /// there is no way to set arguments at this time.
+    fn prepare_fetch(
         &mut self,
-        _command: Command,
+        _version: git_transport::Protocol,
         _server: &Capabilities,
-        _arguments: &mut Vec<BString>,
         _features: &mut Vec<&str>,
-    ) {
+        _refs: &[Ref],
+    ) -> Action {
+        Action::Continue
     }
 }
