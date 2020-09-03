@@ -43,32 +43,56 @@ pub enum Action {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Command {
     LsRefs,
+    Fetch,
 }
 
 impl Command {
     pub fn as_str(&self) -> &'static str {
         match self {
             Command::LsRefs => "ls-refs",
+            Command::Fetch => "fetch",
         }
     }
 
-    fn builtin_argument_prefixes(&self) -> &'static [&'static str] {
+    fn all_argument_prefixes(&self) -> &'static [&'static str] {
         let name = self.as_str();
         BUILTIN_V2_COMMAND_ARGUMENT_NAMES
             .iter()
             .find_map(|(n, v)| if *n == name { Some(v) } else { None })
             .expect("command to be found")
     }
+    fn all_features(&self) -> impl Iterator<Item = &str> {
+        self.all_argument_prefixes()
+            .iter()
+            .filter(|s| !(s.ends_with(' ') || s.ends_with('=')))
+            .map(|s| *s)
+    }
 
+    pub(crate) fn collect_initial_features(
+        &self,
+        version: git_transport::Protocol,
+        capabtilies: &Capabilities,
+    ) -> Vec<(&str, Option<&str>)> {
+        let all_features = self.all_features();
+
+        all_features
+            .filter(|f| match self {
+                Command::LsRefs => true,
+                Command::Fetch => !["no-progress"].contains(f),
+            })
+            .map(|s| (s, None))
+            .chain(Some(("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))))
+            .collect()
+    }
     /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
-    pub(crate) fn validate_prefixes_or_panic(
+    pub(crate) fn validate_argument_prefixes_or_panic(
         &self,
         version: git_transport::Protocol,
         server: &Capabilities,
         arguments: &[BString],
-        features: &[&str],
+        features: &[(&str, Option<&str>)],
     ) {
-        let allowed = self.builtin_argument_prefixes();
+        let allowed = self.all_argument_prefixes();
         for arg in arguments {
             if allowed.iter().any(|allowed| arg.starts_with(allowed.as_bytes())) {
                 continue;
@@ -77,7 +101,7 @@ impl Command {
         }
         match version {
             git_transport::Protocol::V1 => {
-                for feature in features {
+                for (feature, _) in features {
                     if server
                         .available
                         .iter()
@@ -93,7 +117,7 @@ impl Command {
                     .values_of(self.as_str())
                     .map(|v| v.map(|f| f.to_str_lossy()).collect::<Vec<_>>())
                 {
-                    for feature in features {
+                    for (feature, _) in features {
                         if allowed.iter().any(|allowed| feature.starts_with(allowed.as_ref())) {
                             continue;
                         }
@@ -114,7 +138,13 @@ pub trait Delegate {
     /// Note that some arguments are preset based on typical usage.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake.
     /// Note that this is called only if we are using protocol version 2.
-    fn prepare_ls_refs(&mut self, _server: &Capabilities, _arguments: &mut Vec<BString>, _features: &mut Vec<&str>) {}
+    fn prepare_ls_refs(
+        &mut self,
+        _server: &Capabilities,
+        _arguments: &mut Vec<BString>,
+        _features: &mut Vec<(&str, Option<&str>)>,
+    ) {
+    }
 
     /// Called before invoking the 'fetch' interaction, with `arguments` and `features` pre-filled for typical use.
     /// `refs` is a list of known references on the remote, based on the handshake or a prior call to ls_refs.
@@ -124,7 +154,7 @@ pub trait Delegate {
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
-        _features: &mut Vec<&str>,
+        _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
     ) -> Action {
         Action::Continue

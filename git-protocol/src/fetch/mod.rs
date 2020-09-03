@@ -113,17 +113,17 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         let mut ls_args = vec!["peel".into(), "symrefs".into()];
         let ls_refs = Command::LsRefs;
         delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
-        ls_refs.validate_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
+        ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
         let mut refs = transport.invoke(
             ls_refs.as_str(),
-            ls_features.iter().map(|f| (*f, None)).chain(Some(agent)),
+            ls_features.iter().cloned().chain(Some(agent)),
             if ls_args.is_empty() { None } else { Some(ls_args) },
         )?;
         refs::from_v2_refs(&mut parsed_refs, &mut refs)?;
     }
 
-    let mut fetch_features = Vec::new();
+    let mut fetch_features = Command::Fetch.collect_initial_features(protocol_version, &capabilities);
     let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
     if next == Action::Close {
         transport.close()?;

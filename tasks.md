@@ -9,6 +9,9 @@
     * [ ] https (authenticated)
 * **git-protocol**
     * [ ] delegate to support clone
+      * [ ] parse server negotiation response
+      * [ ] negotiation via delegate
+      * [ ] pack file receive passed to delegate
       * [ ] assure there is a way to do fetches with have/want negotiation
     * [ ] progress
 * **gixp-pack-receive**

@@ -6,6 +6,7 @@ impl fetch::Delegate for CloneDelegate {}
 #[derive(Default)]
 struct LsRemoteDelegate {
     refs: Vec<fetch::Ref>,
+    capabilities: Vec<(String, Option<String>)>,
 }
 
 impl fetch::Delegate for LsRemoteDelegate {
@@ -13,10 +14,14 @@ impl fetch::Delegate for LsRemoteDelegate {
         &mut self,
         _version: git_transport::Protocol,
         _server: &fetch::Capabilities,
-        _features: &mut Vec<&str>,
+        features: &mut Vec<(&str, Option<&str>)>,
         refs: &[fetch::Ref],
     ) -> fetch::Action {
         self.refs = refs.to_owned();
+        self.capabilities = features
+            .iter()
+            .map(|(n, v)| (n.to_string(), v.map(ToOwned::to_owned)))
+            .collect();
         fetch::Action::Close
     }
 }
@@ -71,6 +76,23 @@ mod v1 {
         assert!(
             out.is_empty(),
             "we dont have to send anything in V1, everything happens 'by default'"
+        );
+        assert_eq!(
+            delegate.capabilities,
+            &[
+                ("multi_ack_detailed".into(), None),
+                ("side-band-64k".into(), None),
+                ("ofs-delta".into(), None),
+                ("thin-pack".into(), None),
+                ("shallow".into(), None),
+                ("deepen-since".into(), None),
+                ("deepen-not".into(), None),
+                ("deepen-relative".into(), None),
+                (
+                    "agent".into(),
+                    Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")).into())
+                )
+            ]
         );
         Ok(())
     }
