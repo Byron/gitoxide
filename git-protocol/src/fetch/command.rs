@@ -62,7 +62,7 @@ impl Command {
     pub(crate) fn collect_initial_features<'a>(
         &'a self,
         _version: git_transport::Protocol,
-        capabilities: &'a Capabilities,
+        server: &'a Capabilities,
     ) -> impl Iterator<Item = (&str, Option<&str>)> + 'a {
         match Command::LsRefs {
             Command::Fetch => unimplemented!("collect for fetch"),
@@ -70,7 +70,7 @@ impl Command {
                 .all_features()
                 .filter(move |feature| {
                     if *feature == "symrefs" {
-                        capabilities.iter().any(|c| c.name() == b"symref".as_bstr())
+                        server.iter().any(|c| c.name() == b"symref".as_bstr())
                     } else {
                         true
                     }
@@ -104,6 +104,11 @@ impl Command {
                         continue;
                     }
                     panic!("{}: capability {} is not supported", self.as_str(), feature);
+                }
+                if *self == Command::LsRefs {
+                    if arguments.iter().any(|a| a.starts_with_str("ref-prefix ")) {
+                        panic!("ref-prefix is not supported in V1 ls-refs");
+                    }
                 }
             }
             git_transport::Protocol::V2 => {

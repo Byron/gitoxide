@@ -1,15 +1,30 @@
-mod v1 {
-    fn capabilities_from_v1(input: &str) -> git_transport::client::Capabilities {
-        git_transport::client::Capabilities::from_bytes(format!("\0{}", input).as_bytes())
-            .expect("valid input capabilities")
-            .0
-    }
+fn capabilities(input: &str) -> git_transport::client::Capabilities {
+    git_transport::client::Capabilities::from_bytes(format!("\0{}", input).as_bytes())
+        .expect("valid input capabilities")
+        .0
+}
 
+mod v1 {
     mod ls_refs {
+        mod validate_arguments {
+            use crate::{fetch::tests::command::capabilities, fetch::Command};
+            use bstr::ByteSlice;
+
+            #[test]
+            #[should_panic]
+            fn ref_prefixes_cannot_be_used() {
+                Command::LsRefs.validate_argument_prefixes_or_panic(
+                    git_transport::Protocol::V1,
+                    &capabilities("do-not-matter"),
+                    &[b"ref-prefix hello/".as_bstr().into()],
+                    &[],
+                );
+            }
+        }
         mod collect_initial_features {
             use crate::{
                 fetch,
-                fetch::{tests::command::v1::capabilities_from_v1, Command},
+                fetch::{tests::command::capabilities, Command},
             };
 
             #[test]
@@ -18,7 +33,7 @@ mod v1 {
                     Command::LsRefs
                         .collect_initial_features(
                             git_transport::Protocol::V1,
-                            &capabilities_from_v1("symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0")
+                            &capabilities("symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0")
                         )
                         .collect::<Vec<_>>(),
                     &[("symrefs", None), ("peel", None), fetch::agent()]
@@ -31,10 +46,29 @@ mod v1 {
                     Command::LsRefs
                         .collect_initial_features(
                             git_transport::Protocol::V1,
-                            &capabilities_from_v1("object-format=sha1 agent=git/2.28.0")
+                            &capabilities("object-format=sha1 agent=git/2.28.0")
                         )
                         .collect::<Vec<_>>(),
                     &[("peel", None), fetch::agent()]
+                );
+            }
+        }
+    }
+}
+
+mod v2 {
+    mod ls_refs {
+        mod validate_arguments {
+            use crate::{fetch::tests::command::capabilities, fetch::Command};
+            use bstr::ByteSlice;
+
+            #[test]
+            fn ref_prefixes_always_be_used() {
+                Command::LsRefs.validate_argument_prefixes_or_panic(
+                    git_transport::Protocol::V2,
+                    &capabilities("do-not-matter"),
+                    &[b"ref-prefix hello/".as_bstr().into()],
+                    &[],
                 );
             }
         }
