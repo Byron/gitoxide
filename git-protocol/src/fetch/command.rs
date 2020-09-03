@@ -167,10 +167,8 @@ impl Command {
                     }
                     panic!("{}: capability {} is not supported", self.as_str(), feature);
                 }
-                if *self == Command::LsRefs {
-                    if arguments.iter().any(|a| a.starts_with_str("ref-prefix ")) {
-                        panic!("ref-prefix is not supported in V1 ls-refs");
-                    }
+                if *self == Command::LsRefs && arguments.iter().any(|a| a.starts_with_str("ref-prefix ")) {
+                    panic!("ref-prefix is not supported in V1 ls-refs");
                 }
             }
             git_transport::Protocol::V2 => {
