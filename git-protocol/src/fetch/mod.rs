@@ -9,6 +9,9 @@ use std::{convert::TryInto, io};
 mod refs;
 pub use refs::Ref;
 
+mod command;
+pub use command::Command;
+
 #[cfg(test)]
 mod tests;
 
@@ -37,7 +40,7 @@ quick_error! {
 }
 
 mod delegate;
-pub use delegate::{Action, Command, Delegate};
+pub use delegate::{Action, Delegate};
 
 mod capabilities;
 pub use capabilities::Capabilities;
