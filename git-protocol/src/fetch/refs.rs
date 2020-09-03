@@ -76,7 +76,7 @@ pub(crate) fn from_capabilities<'a>(
     capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
 ) -> Result<(), Error> {
     let symref_values = capabilities.filter_map(|c| {
-        if c.name() == "symref".as_bytes().as_bstr() {
+        if c.name() == b"symref".as_bstr() {
             c.value().map(ToOwned::to_owned)
         } else {
             None

@@ -56,7 +56,7 @@ impl Command {
         self.all_argument_prefixes()
             .iter()
             .filter(|s| !(s.ends_with(' ') || s.ends_with('=')))
-            .map(|s| *s)
+            .copied()
     }
 
     pub(crate) fn collect_initial_features<'a>(
