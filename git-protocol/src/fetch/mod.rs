@@ -129,6 +129,8 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         transport.close()?;
         return Ok(());
     }
+    let mut _fetch_arguments = Command::Fetch.initial_arguments(&fetch_features);
+    // TODO: negotiation rounds till pack file is received or someone aborts.
 
     transport.close()?;
     unimplemented!("rest of fetch or clone")

@@ -100,17 +100,19 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [ ] API documentation with examples
   
 ### git-protocol
+  * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
   * [x] **credentials**
     * [x] via git-credentials
     * [ ] via pure Rust implementation if no git is installed
   * [ ] fetch & clone
     * [x] control credentials provider to fill, approve and reject
-    * [x] ls-ref
+    * [x] command: ls-ref
       * [x] parse V1 refs as provided during handshake
       * [x] parse V2 refs
     * [x] initialize and validate command arguments and features sanely
+    * [x] abort early for ls-remote capabilities
+    * [ ] packfile negotiation
   * [ ] push
-  * [ ] shallow clones
   * [ ] API documentation with examples
   
 ### git-packetline

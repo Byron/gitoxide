@@ -13,7 +13,7 @@ pub enum Action {
 
 pub trait Delegate {
     /// Called before invoking ls-refs to allow providing it with additional `arguments` and to enable `features`.
-    /// Note that some arguments are preset based on typical usage.
+    /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake.
     /// Note that this is called only if we are using protocol version 2.
     fn prepare_ls_refs(
@@ -24,7 +24,8 @@ pub trait Delegate {
     ) {
     }
 
-    /// Called before invoking the 'fetch' interaction, with `arguments` and `features` pre-filled for typical use.
+    /// Called before invoking the 'fetch' interaction, with `features` pre-filled for typical use
+    /// and to maximize capabilities.
     /// `refs` is a list of known references on the remote, based on the handshake or a prior call to ls_refs.
     /// As there will be another call allowing to post arguments conveniently in the correct format, i.e. `want hex-oid`,
     /// there is no way to set arguments at this time.

@@ -29,7 +29,7 @@ quick_error! {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Capabilities {
     data: BString,
     value_sep: u8,
