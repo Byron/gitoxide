@@ -72,10 +72,19 @@ impl Command {
         }
     }
 
-    /// Only V2
-    pub(crate) fn initial_arguments<'a>(&'a self, _features: &[(&str, Option<&str>)]) -> Vec<BString> {
+    /// Compute initial arguments based on the given `features`. They are typically provided by the `default_features(…)` method.
+    pub(crate) fn initial_arguments<'a>(&'a self, features: &[(&str, Option<&str>)]) -> Vec<BString> {
         match self {
-            Command::Fetch => unimplemented!("todo fetch arguments"),
+            Command::Fetch => ["thin-pack", "include-tag", "ofs-delta"]
+                .iter()
+                .map(|s| s.as_bytes().as_bstr().to_owned())
+                .chain(
+                    ["sideband-all", "ref-in-want", "packfile-uris"]
+                        .iter()
+                        .filter(|f| features.iter().any(|(sf, _)| sf == *f))
+                        .map(|f| f.as_bytes().as_bstr().to_owned()),
+                )
+                .collect(),
             Command::LsRefs => vec![b"symrefs".as_bstr().to_owned(), b"peel".as_bstr().to_owned()],
         }
     }
@@ -103,7 +112,25 @@ impl Command {
                         .chain(Some(agent()))
                         .collect()
                 }
-                git_transport::Protocol::V2 => unimplemented!("fetch V2"),
+                git_transport::Protocol::V2 => {
+                    let supported_features = server_capabilities
+                        .iter()
+                        .find_map(|c| {
+                            if c.name() == Command::Fetch.as_str().as_bytes().as_bstr() {
+                                c.values().map(|v| v.map(|f| f.to_owned()).collect())
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or_else(Vec::new);
+                    self.all_features(version)
+                        .iter()
+                        .copied()
+                        .filter(|feature| supported_features.iter().any(|supported| supported == feature))
+                        .map(|s| (s, None))
+                        .chain(Some(agent()))
+                        .collect()
+                }
             },
             Command::LsRefs => {
                 debug_assert!(

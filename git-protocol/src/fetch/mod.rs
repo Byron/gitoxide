@@ -123,7 +123,6 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         refs::from_v2_refs(&mut parsed_refs, &mut refs)?;
     }
 
-    // let mut fetch_features = Command::Fetch.collect_initial_features(protocol_version, &capabilities);
     let mut fetch_features = Command::Fetch.default_features(protocol_version, &capabilities);
     let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
     if next == Action::Close {

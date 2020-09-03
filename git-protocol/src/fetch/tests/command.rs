@@ -1,15 +1,17 @@
-fn capabilities(input: &str) -> git_transport::client::Capabilities {
-    git_transport::client::Capabilities::from_bytes(format!("\0{}", input).as_bytes())
-        .expect("valid input capabilities")
-        .0
-}
-
 mod v1 {
+    fn capabilities(input: &str) -> git_transport::client::Capabilities {
+        git_transport::client::Capabilities::from_bytes(format!("\0{}", input).as_bytes())
+            .expect("valid input capabilities")
+            .0
+    }
+
+    const GITHUB_CAPABILITIES: &str = "multi_ack thin-pack side-band ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag allow-tip-sha1-in-want allow-reachable-sha1-in-want no-done symref=HEAD:refs/heads/main filter agent=git/github-gdf51a71f0236";
     mod fetch {
-        mod collect_initial_features {
-            use crate::{
-                fetch,
-                fetch::{tests::command::capabilities, Command},
+        mod default_features {
+            use crate::fetch::{
+                self,
+                tests::command::v1::{capabilities, GITHUB_CAPABILITIES},
+                Command,
             };
 
             #[test]
@@ -26,16 +28,13 @@ mod v1 {
             #[test]
             fn it_chooses_all_supported_non_stacking_capabilities_and_leaves_no_progress() {
                 assert_eq!(
-                    Command::Fetch
-                        .default_features(
-                            git_transport::Protocol::V1,
-                            &capabilities("multi_ack thin-pack side-band ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag allow-tip-sha1-in-want allow-reachable-sha1-in-want no-done symref=HEAD:refs/heads/main filter agent=git/github-gdf51a71f0236")
-                        ),
+                    Command::Fetch.default_features(git_transport::Protocol::V1, &capabilities(GITHUB_CAPABILITIES)),
                     &[
-                        ("multi_ack", None), 
+                        ("multi_ack", None),
                         ("thin-pack", None),
-                        ("side-band", None), ("ofs-delta", None),
-                        ("shallow", None), 
+                        ("side-band", None),
+                        ("ofs-delta", None),
+                        ("shallow", None),
                         ("deepen-since", None),
                         ("deepen-not", None),
                         ("deepen-relative", None),
@@ -44,14 +43,15 @@ mod v1 {
                         ("no-done", None),
                         ("filter", None),
                         fetch::agent()
-                    ], "we don't enforce include-tag or no-progress"
+                    ],
+                    "we don't enforce include-tag or no-progress"
                 );
             }
         }
     }
     mod ls_refs {
         mod validate_arguments {
-            use crate::{fetch::tests::command::capabilities, fetch::Command};
+            use crate::{fetch::tests::command::v1::capabilities, fetch::Command};
             use bstr::ByteSlice;
 
             #[test]
@@ -81,19 +81,70 @@ mod v1 {
 }
 
 mod v2 {
+    use git_transport::client::Capabilities;
+
+    fn capabilities(command: &str, input: &str) -> Capabilities {
+        Capabilities::from_lines(format!("version 2\n{}={}", command, input).as_bytes())
+            .expect("valid input for V2 capabilities")
+    }
+
+    mod fetch {
+        mod default_features {
+            use crate::fetch::{self, tests::command::v2::capabilities, Command};
+
+            #[test]
+            fn all_features() {
+                assert_eq!(
+                    Command::Fetch.default_features(
+                        git_transport::Protocol::V2,
+                        &capabilities("fetch", "shallow filter ref-in-want sideband-all packfile-uris")
+                    ),
+                    ["shallow", "filter", "ref-in-want", "sideband-all", "packfile-uris"]
+                        .iter()
+                        .map(|s| (*s, None))
+                        .chain(Some(fetch::agent()))
+                        .collect::<Vec<_>>()
+                )
+            }
+        }
+
+        mod initial_arguments {
+            use crate::fetch::{tests::command::v2::capabilities, Command};
+            use bstr::ByteSlice;
+
+            #[test]
+            fn for_all_features() {
+                assert_eq!(
+                    Command::Fetch.initial_arguments(&Command::Fetch.default_features(
+                        git_transport::Protocol::V2,
+                        &capabilities("fetch", "shallow filter ref-in-want sideband-all packfile-uris")
+                    )),
+                    [
+                        "thin-pack",
+                        "include-tag",
+                        "ofs-delta",
+                        "sideband-all",
+                        "ref-in-want",
+                        "packfile-uris"
+                    ]
+                    .iter()
+                    .map(|s| s.as_bytes().as_bstr().to_owned())
+                    .collect::<Vec<_>>()
+                )
+            }
+        }
+    }
+
     mod ls_refs {
         mod default_features {
-            use crate::{
-                fetch,
-                fetch::{tests::command::capabilities, Command},
-            };
+            use crate::fetch::{self, tests::command::v2::capabilities, Command};
 
             #[test]
             fn default_as_there_are_no_features() {
                 assert_eq!(
                     Command::LsRefs.default_features(
                         git_transport::Protocol::V2,
-                        &capabilities("does not matter - there are none")
+                        &capabilities("something-else", "does not matter as there are none")
                     ),
                     &[fetch::agent()]
                 );
@@ -101,14 +152,14 @@ mod v2 {
         }
 
         mod validate_arguments {
-            use crate::{fetch::tests::command::capabilities, fetch::Command};
+            use crate::fetch::{tests::command::v2::capabilities, Command};
             use bstr::ByteSlice;
 
             #[test]
             fn ref_prefixes_always_be_used() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
                     git_transport::Protocol::V2,
-                    &capabilities("do-not-matter"),
+                    &capabilities("something else", "do-not-matter"),
                     &[b"ref-prefix hello/".as_bstr().into()],
                     &[],
                 );
