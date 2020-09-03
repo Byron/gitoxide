@@ -108,6 +108,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] ls-ref
       * [x] parse V1 refs as provided during handshake
       * [x] parse V2 refs
+    * [x] initialize and validate command arguments and features sanely
   * [ ] push
   * [ ] shallow clones
   * [ ] API documentation with examples

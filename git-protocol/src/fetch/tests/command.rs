@@ -64,6 +64,17 @@ mod v1 {
                     &[],
                 );
             }
+
+            #[test]
+            #[should_panic]
+            fn unknown_argument() {
+                Command::LsRefs.validate_argument_prefixes_or_panic(
+                    git_transport::Protocol::V1,
+                    &capabilities("do-not-matter"),
+                    &[b"definitely-nothing-we-know".as_bstr().into()],
+                    &[],
+                );
+            }
         }
         mod initial_arguments {
             use crate::fetch::Command;
@@ -156,11 +167,22 @@ mod v2 {
             use bstr::ByteSlice;
 
             #[test]
-            fn ref_prefixes_always_be_used() {
+            fn ref_prefixes_can_always_be_used() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
                     git_transport::Protocol::V2,
                     &capabilities("something else", "do-not-matter"),
                     &[b"ref-prefix hello/".as_bstr().into()],
+                    &[],
+                );
+            }
+
+            #[test]
+            #[should_panic]
+            fn unknown_argument() {
+                Command::LsRefs.validate_argument_prefixes_or_panic(
+                    git_transport::Protocol::V1,
+                    &capabilities("other", "do-not-matter"),
+                    &[b"definitely-nothing-we-know".as_bstr().into()],
                     &[],
                 );
             }
