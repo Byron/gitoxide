@@ -6,25 +6,40 @@ mod command {
                 .0
         }
 
-        const ALL_FEATURES: &str = "symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0";
-
         mod ls_refs {
-            use crate::fetch::{
-                tests::command::v1::{capabilities_from_v1, ALL_FEATURES},
-                Command,
-            };
+            mod collect_initial_features {
+                use crate::{
+                    fetch,
+                    fetch::{tests::command::v1::capabilities_from_v1, Command},
+                };
 
-            #[test]
-            fn collect_initial_features() {
-                assert_eq!(
-                    Command::LsRefs
-                        .collect_initial_features(git_transport::Protocol::V1, &capabilities_from_v1(ALL_FEATURES)),
-                    &[
-                        ("symrefs", None),
-                        ("peel", None),
-                        ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
-                    ]
-                );
+                #[test]
+                fn with_simrefs_in_capabilities() {
+                    assert_eq!(
+                        Command::LsRefs
+                            .collect_initial_features(
+                                git_transport::Protocol::V1,
+                                &capabilities_from_v1(
+                                    "symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0"
+                                )
+                            )
+                            .collect::<Vec<_>>(),
+                        &[("symrefs", None), ("peel", None), fetch::agent()]
+                    );
+                }
+
+                #[test]
+                fn without_simrefs_in_capabilities() {
+                    assert_eq!(
+                        Command::LsRefs
+                            .collect_initial_features(
+                                git_transport::Protocol::V1,
+                                &capabilities_from_v1("object-format=sha1 agent=git/2.28.0")
+                            )
+                            .collect::<Vec<_>>(),
+                        &[("peel", None), fetch::agent()]
+                    );
+                }
             }
         }
     }

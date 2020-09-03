@@ -59,21 +59,25 @@ impl Command {
             .map(|s| *s)
     }
 
-    pub(crate) fn collect_initial_features(
-        &self,
+    pub(crate) fn collect_initial_features<'a>(
+        &'a self,
         _version: git_transport::Protocol,
-        _capabilities: &Capabilities,
-    ) -> Vec<(&str, Option<&str>)> {
-        let all_features = self.all_features();
-
-        all_features
-            .filter(|f| match self {
-                Command::LsRefs => true,
-                Command::Fetch => !["no-progress"].contains(f),
-            })
-            .map(|s| (s, None))
-            .chain(Some(("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))))
-            .collect()
+        capabilities: &'a Capabilities,
+    ) -> impl Iterator<Item = (&str, Option<&str>)> + 'a {
+        match Command::LsRefs {
+            Command::Fetch => unimplemented!("collect for fetch"),
+            Command::LsRefs => self
+                .all_features()
+                .filter(move |feature| {
+                    if *feature == "symrefs" {
+                        capabilities.iter().any(|c| c.name() == b"symref".as_bstr())
+                    } else {
+                        true
+                    }
+                })
+                .map(|s| (s, None))
+                .chain(Some(("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")))))),
+        }
     }
     /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
     pub(crate) fn validate_argument_prefixes_or_panic(
