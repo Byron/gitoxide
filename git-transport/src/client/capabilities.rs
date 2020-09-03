@@ -98,6 +98,11 @@ impl Capabilities {
                 .into(),
         })
     }
+
+    pub fn contains(&self, feature: &str) -> bool {
+        self.iter().any(|c| c.name() == feature.as_bytes().as_bstr())
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = Capability> {
         self.data
             .split(move |b| *b == self.value_sep)

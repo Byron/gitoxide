@@ -1,5 +1,4 @@
 use crate::credentials;
-use bstr::ByteSlice;
 use git_transport::{
     client::{self, SetServiceResponse, TransportV2Ext},
     Service,
@@ -112,10 +111,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         let mut ls_features = Vec::new();
         let ls_refs = Command::LsRefs;
-        let mut ls_args: Vec<_> = ls_refs
-            .collect_initial_features(protocol_version, &capabilities)
-            .map(|(n, _)| n.as_bytes().as_bstr().to_owned())
-            .collect();
+        let mut ls_args = ls_refs.initial_arguments(&[]);
         delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
@@ -128,7 +124,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     }
 
     // let mut fetch_features = Command::Fetch.collect_initial_features(protocol_version, &capabilities);
-    let mut fetch_features = Vec::new();
+    let mut fetch_features = Command::Fetch.default_features(protocol_version, &capabilities);
     let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
     if next == Action::Close {
         transport.close()?;
