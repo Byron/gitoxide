@@ -1,5 +1,6 @@
-use crate::fetch::{Capabilities, Ref};
+use crate::fetch::Ref;
 use bstr::BString;
+use git_transport::client::Capabilities;
 
 /// Define what to do next.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -11,10 +12,6 @@ pub enum Action {
 }
 
 pub trait Delegate {
-    /// A chance to inspect or adjust the Capabilities returned after handshake with the server.
-    /// They will be used in subsequent calls to the server, but the client is free to cache information as they see fit.
-    fn adjust_capabilities(&mut self, _version: git_transport::Protocol, _capabilities: &mut Capabilities) {}
-
     /// Called before invoking ls-refs to allow providing it with additional `arguments` and to enable `features`.
     /// Note that some arguments are preset based on typical usage.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake.

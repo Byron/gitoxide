@@ -1,4 +1,5 @@
 use git_protocol::fetch;
+use git_transport::client::Capabilities;
 
 struct CloneDelegate;
 impl fetch::Delegate for CloneDelegate {}
@@ -6,22 +7,17 @@ impl fetch::Delegate for CloneDelegate {}
 #[derive(Default)]
 struct LsRemoteDelegate {
     refs: Vec<fetch::Ref>,
-    capabilities: Vec<(String, Option<String>)>,
 }
 
 impl fetch::Delegate for LsRemoteDelegate {
     fn prepare_fetch(
         &mut self,
         _version: git_transport::Protocol,
-        _server: &fetch::Capabilities,
-        features: &mut Vec<(&str, Option<&str>)>,
+        _server: &Capabilities,
+        _features: &mut Vec<(&str, Option<&str>)>,
         refs: &[fetch::Ref],
     ) -> fetch::Action {
         self.refs = refs.to_owned();
-        self.capabilities = features
-            .iter()
-            .map(|(n, v)| (n.to_string(), v.map(ToOwned::to_owned)))
-            .collect();
         fetch::Action::Close
     }
 }
@@ -71,28 +67,9 @@ mod v1 {
                 }
             ]
         );
-        // TODO: check we send the correct features
-        // multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0
         assert!(
             out.is_empty(),
             "we dont have to send anything in V1, everything happens 'by default'"
-        );
-        assert_eq!(
-            delegate.capabilities,
-            &[
-                ("multi_ack_detailed".into(), None),
-                ("side-band-64k".into(), None),
-                ("ofs-delta".into(), None),
-                ("thin-pack".into(), None),
-                ("shallow".into(), None),
-                ("deepen-since".into(), None),
-                ("deepen-not".into(), None),
-                ("deepen-relative".into(), None),
-                (
-                    "agent".into(),
-                    Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION")).into())
-                )
-            ]
         );
         Ok(())
     }

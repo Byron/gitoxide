@@ -1,5 +1,5 @@
-use crate::fetch;
 use bstr::{BString, ByteSlice};
+use git_transport::client::Capabilities;
 
 // Note that arguments suffixed by spaces take another value.
 const BUILTIN_V2_COMMAND_ARGUMENT_NAMES: &[(&str, &[&str])] = &[
@@ -61,8 +61,8 @@ impl Command {
 
     pub(crate) fn collect_initial_features(
         &self,
-        version: git_transport::Protocol,
-        capabtilies: &fetch::Capabilities,
+        _version: git_transport::Protocol,
+        _capabilities: &Capabilities,
     ) -> Vec<(&str, Option<&str>)> {
         let all_features = self.all_features();
 
@@ -79,7 +79,7 @@ impl Command {
     pub(crate) fn validate_argument_prefixes_or_panic(
         &self,
         version: git_transport::Protocol,
-        server: &fetch::Capabilities,
+        server: &Capabilities,
         arguments: &[BString],
         features: &[(&str, Option<&str>)],
     ) {
@@ -94,9 +94,8 @@ impl Command {
             git_transport::Protocol::V1 => {
                 for (feature, _) in features {
                     if server
-                        .available
                         .iter()
-                        .any(|(allowed, _)| feature.starts_with(allowed.to_str_lossy().as_ref()))
+                        .any(|c| feature.starts_with(c.name().to_str_lossy().as_ref()))
                     {
                         continue;
                     }
@@ -104,12 +103,15 @@ impl Command {
                 }
             }
             git_transport::Protocol::V2 => {
-                if let Some(allowed) = server
-                    .values_of(self.as_str())
-                    .map(|v| v.map(|f| f.to_str_lossy()).collect::<Vec<_>>())
-                {
+                if let Some(allowed) = server.iter().find_map(|c| {
+                    if c.name() == self.as_str().as_bytes().as_bstr() {
+                        c.values().map(|v| v.map(|f| f.to_string()).collect::<Vec<_>>())
+                    } else {
+                        None
+                    }
+                }) {
                     for (feature, _) in features {
-                        if allowed.iter().any(|allowed| feature.starts_with(allowed.as_ref())) {
+                        if allowed.iter().any(|allowed| feature.starts_with(allowed)) {
                             continue;
                         }
                         panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature);

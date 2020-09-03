@@ -4,7 +4,7 @@ use git_transport::{
     Service,
 };
 use quick_error::quick_error;
-use std::{convert::TryInto, io};
+use std::io;
 
 mod refs;
 pub use refs::Ref;
@@ -42,8 +42,9 @@ quick_error! {
 mod delegate;
 pub use delegate::{Action, Delegate};
 
-mod capabilities;
-pub use capabilities::Capabilities;
+pub fn agent() -> (&'static str, Option<&'static str>) {
+    ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
+}
 
 /// Note that depending on the `delegate`, the actual action peformed can be `ls-refs`, `clone` or `fetch`.
 pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
@@ -83,11 +84,8 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             Err(err) => Err(err),
         }?;
 
-        let mut capabilities: Capabilities = capabilities.try_into()?;
-        delegate.adjust_capabilities(actual_protocol, &mut capabilities);
-
         let mut parsed_refs = Vec::<Ref>::new();
-        refs::from_capabilities(&mut parsed_refs, std::mem::take(&mut capabilities.symrefs))?;
+        refs::from_capabilities(&mut parsed_refs, capabilities.iter())?;
 
         let call_ls_refs = match refs {
             Some(mut refs) => {
@@ -104,7 +102,6 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         (actual_protocol, parsed_refs, capabilities, call_ls_refs)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
-    let agent = ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))));
     if call_ls_refs {
         assert_eq!(
             protocol_version,
@@ -120,7 +117,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         let mut refs = transport.invoke(
             ls_refs.as_str(),
-            ls_features.iter().cloned().chain(Some(agent)),
+            ls_features.iter().cloned().chain(Some(agent())),
             if ls_args.is_empty() { None } else { Some(ls_args) },
         )?;
         refs::from_v2_refs(&mut parsed_refs, &mut refs)?;

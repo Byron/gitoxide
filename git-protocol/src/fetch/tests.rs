@@ -1,8 +1,40 @@
+mod command {
+    mod v1 {
+        fn capabilities_from_v1(input: &str) -> git_transport::client::Capabilities {
+            git_transport::client::Capabilities::from_bytes(format!("\0{}", input).as_bytes())
+                .expect("valid input capabilities")
+                .0
+        }
+
+        const ALL_FEATURES: &str = "symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0";
+
+        mod ls_refs {
+            use crate::fetch::{
+                tests::command::v1::{capabilities_from_v1, ALL_FEATURES},
+                Command,
+            };
+
+            #[test]
+            fn collect_initial_features() {
+                assert_eq!(
+                    Command::LsRefs
+                        .collect_initial_features(git_transport::Protocol::V1, &capabilities_from_v1(ALL_FEATURES)),
+                    &[
+                        ("symrefs", None),
+                        ("peel", None),
+                        ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
+                    ]
+                );
+            }
+        }
+    }
+}
+
 mod refs {
-    use super::super::{refs, Capabilities, Ref};
+    use super::super::{refs, Ref};
     use git_object::owned;
     use git_transport::client;
-    use std::{convert::TryInto, io};
+    use std::io;
 
     fn oid(hex_sha: &str) -> owned::Id {
         owned::Id::from_40_bytes_in_hex(hex_sha.as_bytes()).expect("valid input")
@@ -85,17 +117,13 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
 
     #[test]
     fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> {
-        let (caps, _) = client::Capabilities::from_bytes(
+        let caps = client::Capabilities::from_bytes(
             b"\0unrelated symref=HEAD:refs/heads/main symref=ANOTHER:refs/heads/foo agent=git/2.28.0",
-        )?;
-        let mut caps: Capabilities = caps.try_into().expect("this is a working example");
+        )?
+        .0;
         let mut out = Vec::new();
-        refs::from_capabilities(&mut out, std::mem::take(&mut caps.symrefs)).expect("a working example");
+        refs::from_capabilities(&mut out, caps.iter()).expect("a working example");
 
-        assert_eq!(
-            caps.available.into_iter().collect::<Vec<_>>(),
-            vec![("unrelated".into(), None), ("agent".into(), Some("git/2.28.0".into()))]
-        );
         assert_eq!(
             out,
             vec![

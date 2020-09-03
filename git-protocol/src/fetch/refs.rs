@@ -71,15 +71,25 @@ impl Ref {
     }
 }
 
-pub(crate) fn from_capabilities(out_refs: &mut Vec<Ref>, symrefs: Vec<BString>) -> Result<(), Error> {
-    for symref in symrefs.into_iter() {
+pub(crate) fn from_capabilities<'a>(
+    out_refs: &mut Vec<Ref>,
+    capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
+) -> Result<(), Error> {
+    let symref_values = capabilities.filter_map(|c| {
+        if c.name() == "symref".as_bytes().as_bstr() {
+            c.value().map(ToOwned::to_owned)
+        } else {
+            None
+        }
+    });
+    for symref in symref_values {
         let (left, right) = symref.split_at(
             symref
                 .find_byte(b':')
-                .ok_or_else(|| Error::MalformedSymref(symref.clone()))?,
+                .ok_or_else(|| Error::MalformedSymref(symref.to_owned()))?,
         );
         if left.is_empty() || right.is_empty() {
-            return Err(Error::MalformedSymref(symref));
+            return Err(Error::MalformedSymref(symref.to_owned()));
         }
         out_refs.push(Ref::SymbolicForLookup {
             path: left.into(),
