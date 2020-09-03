@@ -66,6 +66,7 @@ mod v1 {
                 }
             ]
         );
+        // TODO: check we send the correct features
         // multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0
         assert!(
             out.is_empty(),
