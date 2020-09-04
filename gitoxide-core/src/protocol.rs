@@ -17,3 +17,18 @@ impl FromStr for Protocol {
         })
     }
 }
+
+impl From<Protocol> for git_transport::Protocol {
+    fn from(v: Protocol) -> Self {
+        match v {
+            Protocol::V1 => git_transport::Protocol::V1,
+            Protocol::V2 => git_transport::Protocol::V2,
+        }
+    }
+}
+
+impl Default for Protocol {
+    fn default() -> Self {
+        Protocol::V2
+    }
+}
