@@ -1,4 +1,5 @@
 use crate::credentials;
+use git_features::{progress, progress::Progress};
 use git_transport::{
     client::{self, SetServiceResponse, TransportV2Ext},
     Service,
@@ -51,8 +52,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     mut transport: impl client::Transport,
     delegate: &mut impl Delegate,
     mut authenticate: F,
+    mut progress: impl Progress,
 ) -> Result<(), Error> {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
+        progress.init(None, progress::steps());
+        progress.set_name("handshake");
+        progress.step();
         let result = transport.handshake(Service::UploadPack);
         let SetServiceResponse {
             actual_protocol,
@@ -63,8 +68,11 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             Err(client::Error::Io { ref err }) if err.kind() == io::ErrorKind::PermissionDenied => {
                 drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
                 let url = transport.to_url();
+                progress.set_name("authentication");
                 let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
                 transport.set_identity(identity)?;
+                progress.step();
+                progress.set_name("handshake (authenticated)");
                 match transport.handshake(Service::UploadPack) {
                     Ok(v) => {
                         authenticate(next.approve())?;
@@ -102,6 +110,14 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         (actual_protocol, parsed_refs, capabilities, call_ls_refs)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
+    if transport.desired_protocol_version() != protocol_version {
+        progress.info(format!(
+            "server did not support protocol {} and downgraded to {}",
+            transport.desired_protocol_version() as usize,
+            protocol_version as usize,
+        ));
+    }
+
     if call_ls_refs {
         assert_eq!(
             protocol_version,
@@ -115,6 +131,8 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
+        progress.step();
+        progress.set_name("list refs");
         let mut refs = transport.invoke(
             ls_refs.as_str(),
             ls_features,
@@ -133,6 +151,9 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         return Ok(());
     }
     let mut _fetch_arguments = fetch.initial_arguments(&fetch_features);
+    progress.step();
+    progress.set_name("negotiate (round 1)");
+
     // TODO: negotiation rounds till pack file is received or someone aborts.
 
     transport.close()?;

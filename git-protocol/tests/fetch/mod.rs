@@ -47,6 +47,7 @@ fn transport<'a>(
 
 mod v1 {
     use crate::fetch::{oid, transport, CloneDelegate, LsRemoteDelegate};
+    use git_features::progress;
     use git_protocol::fetch;
     use git_transport::Protocol;
 
@@ -58,6 +59,7 @@ mod v1 {
             transport(&mut out, "v1/clone.response", Protocol::V1),
             &mut CloneDelegate,
             git_protocol::credentials::helper,
+            progress::Discard,
         )?;
         Ok(())
     }
@@ -70,6 +72,7 @@ mod v1 {
             transport(&mut out, "v1/clone.response", Protocol::V1),
             &mut delegate,
             git_protocol::credentials::helper,
+            progress::Discard,
         )?;
 
         assert_eq!(
@@ -97,6 +100,7 @@ mod v1 {
 mod v2 {
     use crate::fetch::{oid, transport, LsRemoteDelegate};
     use bstr::ByteSlice;
+    use git_features::progress;
     use git_protocol::fetch;
     use git_transport::Protocol;
 
@@ -108,6 +112,7 @@ mod v2 {
             transport(&mut out, "v2/clone.response", Protocol::V2),
             &mut delegate,
             git_protocol::credentials::helper,
+            progress::Discard,
         )?;
 
         assert_eq!(

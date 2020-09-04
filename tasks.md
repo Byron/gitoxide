@@ -1,4 +1,7 @@
 ### Cloning
+* **protocol**
+  * [ ] allow automatic downgrade (request V2, deal with that not supported and fallback to V1)
+  * [x] basic progress
 * **gixp-ls-remote**
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
   * [ ] journey tests for each connection method
@@ -13,7 +16,6 @@
       * [ ] negotiation via delegate
       * [ ] pack file receive passed to delegate
       * [ ] assure there is a way to do fetches with have/want negotiation
-    * [ ] progress
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
   * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
