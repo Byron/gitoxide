@@ -173,7 +173,7 @@ impl<H: Http> client::Transport for Transport<H> {
         ))
     }
 
-    fn close(self) -> Result<(), client::Error> {
+    fn close(&mut self) -> Result<(), client::Error> {
         Ok(())
     }
 

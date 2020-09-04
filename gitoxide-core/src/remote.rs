@@ -42,7 +42,7 @@ pub mod refs {
         <P as Progress>::SubProgress: Send + 'static,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
-        let mut transport = git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+        let transport = git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let mut delegate = LsRemotes::default();
         git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
 
@@ -54,16 +54,20 @@ pub mod refs {
         Ok(())
     }
 
-    fn print(out: impl io::Write, refs: &[Ref]) -> io::Result<()> {
+    fn print(mut out: impl io::Write, refs: &[Ref]) -> io::Result<()> {
         for r in refs {
             match r {
-                Ref::Direct { path, object } => writeln!(out, "{} {}", object.to_sha1_hex_string(), path),
+                Ref::Direct { path, object } => writeln!(&mut out, "{} {}", object.to_sha1_hex_string(), path),
                 Ref::Peeled { path, object, tag } => {
-                    writeln!(out, "{} {} tag:{}", object.to_sha1_hex_string(), path, tag)
+                    writeln!(&mut out, "{} {} tag:{}", object.to_sha1_hex_string(), path, tag)
                 }
-                Ref::Symbolic { path, target, object } => {
-                    writeln!(out, "{} {} symref-target:{}", object.to_sha1_hex_string(), path, target)
-                }
+                Ref::Symbolic { path, target, object } => writeln!(
+                    &mut out,
+                    "{} {} symref-target:{}",
+                    object.to_sha1_hex_string(),
+                    path,
+                    target
+                ),
                 Ref::SymbolicForLookup { .. } => unreachable!("Bug: these should be resolved already"),
             }?;
         }

@@ -103,7 +103,7 @@ where
         ))
     }
 
-    fn close(mut self) -> Result<(), client::Error> {
+    fn close(&mut self) -> Result<(), client::Error> {
         if self.actual_version == Protocol::V2 {
             git_packetline::encode::flush_to_write(&mut self.writer)?;
             self.writer.flush()?;

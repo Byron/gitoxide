@@ -214,7 +214,7 @@ pub trait Transport {
     fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
-    fn close(self) -> Result<(), Error>;
+    fn close(&mut self) -> Result<(), Error>;
 
     /// Returns the canonical URL pointing to the destination of this transport.
     /// Please note that local paths may not be represented correctly, as they will go through a potentially lossy

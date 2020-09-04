@@ -121,8 +121,8 @@ impl client::Transport for SpawnProcessOnDemand {
             .request(write_mode, on_drop)
     }
 
-    fn close(mut self) -> Result<(), client::Error> {
-        if let Some(c) = self.connection.take() {
+    fn close(&mut self) -> Result<(), client::Error> {
+        if let Some(mut c) = self.connection.take() {
             c.close()
         } else {
             Ok(())

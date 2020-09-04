@@ -28,6 +28,41 @@ quick_error! {
     }
 }
 
+/// Would be so nice if this wasn't necessary
+mod box_impl {
+    use crate::{
+        client::{self, Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+        Protocol, Service,
+    };
+    use std::ops::{Deref, DerefMut};
+
+    impl client::Transport for Box<dyn client::Transport> {
+        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error> {
+            self.deref_mut().handshake(service)
+        }
+
+        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+            self.deref_mut().set_identity(identity)
+        }
+
+        fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error> {
+            self.deref_mut().request(write_mode, on_drop)
+        }
+
+        fn close(&mut self) -> Result<(), Error> {
+            self.deref_mut().close()
+        }
+
+        fn to_url(&self) -> String {
+            self.deref().to_url()
+        }
+
+        fn desired_protocol_version(&self) -> Protocol {
+            self.deref().desired_protocol_version()
+        }
+    }
+}
+
 /// A general purpose connector with just the default configuration.
 pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport>, Error> {
     let urlb = url;
