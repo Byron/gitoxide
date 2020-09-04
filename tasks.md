@@ -1,6 +1,6 @@
 ### Cloning
 * **protocol**
-  * [ ] allow automatic downgrade (request V2, deal with that not supported and fallback to V1)
+  * [x] allow automatic downgrade (request V2, deal with that not supported and fallback to V1)
   * [x] basic progress
 * **gixp-ls-remote**
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible

@@ -11,6 +11,12 @@ pub enum Action {
     Close,
 }
 
+/// The protocol delegate is the bare minimal interface needed to fully control the 'fetch' operation.
+/// It's controlled by code with intricate knowledge about how that works in protocol version V1 and V2,
+/// so you don't have to.
+/// Everything is tucked away behind type-safety so nothing can go wrong. Runtime assertions assure invalid
+/// features or arguments don't make it to the server in the first place.
+/// Please note that this trait mostly corresponds to what V2 would look like.
 pub trait Delegate {
     /// Called before invoking ls-refs to allow providing it with additional `arguments` and to enable `features`.
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.

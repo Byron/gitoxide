@@ -117,8 +117,7 @@ impl<H: Http> client::Transport for Transport<H> {
             ))));
         }
 
-        let (capabilities, refs, actual_protocol) =
-            git::recv::capabilities_and_possibly_refs(line_reader, self.desired_version)?;
+        let (capabilities, refs, actual_protocol) = git::recv::capabilities_and_possibly_refs(line_reader)?;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
             actual_protocol,

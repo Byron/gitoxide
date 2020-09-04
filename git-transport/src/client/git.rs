@@ -40,24 +40,32 @@ pub mod message {
 }
 pub(crate) mod recv {
     use crate::{client, client::Capabilities, Protocol};
+    use bstr::ByteSlice;
     use std::io;
 
     pub fn capabilities_and_possibly_refs<'a, T: io::Read>(
         rd: &'a mut git_packetline::Provider<T>,
-        version: Protocol,
     ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>, Protocol), client::Error> {
         rd.fail_on_err_lines(true);
+        let capabilities_or_version = rd
+            .peek_line()
+            .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+        let first_line = capabilities_or_version
+            .to_text()
+            .ok_or(client::Error::ExpectedLine("text"))?;
+
+        let version = if first_line.as_bstr().starts_with_str("version ") {
+            if first_line.as_bstr().ends_with_str(" 1") {
+                Protocol::V1
+            } else {
+                Protocol::V2
+            }
+        } else {
+            Protocol::V1
+        };
         match version {
             Protocol::V1 => {
-                let capabilities = rd
-                    .peek_line()
-                    .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
-                let (capabilities, delimiter_position) = Capabilities::from_bytes(
-                    capabilities
-                        .to_text()
-                        .ok_or(client::Error::ExpectedLine("text"))?
-                        .as_slice(),
-                )?;
+                let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
                 rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
                 Ok((capabilities, Some(Box::new(rd.as_read())), Protocol::V1))
             }
@@ -99,8 +107,7 @@ where
             line_writer.flush()?;
         }
 
-        let (capabilities, refs, actual_protocol) =
-            recv::capabilities_and_possibly_refs(&mut self.line_provider, self.desired_version)?;
+        let (capabilities, refs, actual_protocol) = recv::capabilities_and_possibly_refs(&mut self.line_provider)?;
         Ok(SetServiceResponse {
             actual_protocol,
             capabilities,

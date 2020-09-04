@@ -309,3 +309,27 @@ fn handshake_v2_and_request() -> crate::Result {
     );
     Ok(())
 }
+
+#[test]
+fn handshake_v2_downgrade_to_v1() -> crate::Result {
+    let mut out = Vec::new();
+    let input = fixture_bytes("v1/clone.response");
+    let mut c = git::Connection::new(
+        input.as_slice(),
+        &mut out,
+        Protocol::V2,
+        "/bar.git",
+        Some(("example.org", None)),
+        git::ConnectMode::Daemon,
+    );
+    let res = c.handshake(Service::UploadPack)?;
+    assert_eq!(res.actual_protocol, Protocol::V1);
+    assert!(
+        res.refs.is_some(),
+        "V1 downgrades 'just happen', so we should have refs as part of the handshake"
+    );
+    drop(res);
+
+    assert_eq!(c.desired_protocol_version(), Protocol::V2);
+    Ok(())
+}
