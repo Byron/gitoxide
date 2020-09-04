@@ -10,7 +10,7 @@ use std::{
     net::{TcpStream, ToSocketAddrs},
 };
 
-pub mod message {
+pub(crate) mod message {
     use crate::{Protocol, Service};
     use bstr::{BString, ByteVec};
 

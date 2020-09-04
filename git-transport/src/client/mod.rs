@@ -1,5 +1,9 @@
 use crate::{Protocol, Service};
-use std::io;
+use bstr::BString;
+use std::{io, io::Write};
+
+#[cfg(test)]
+mod tests;
 
 pub mod connect;
 pub mod file;
@@ -10,16 +14,14 @@ pub mod ssh;
 #[doc(inline)]
 pub use connect::connect;
 
+pub mod capabilities;
+#[doc(inline)]
+pub use capabilities::Capabilities;
+
 #[cfg(feature = "http-client-curl")]
 type HttpError = http::Error;
 #[cfg(not(feature = "http-client-curl"))]
 type HttpError = std::convert::Infallible;
-
-pub mod capabilities;
-use bstr::BString;
-#[doc(inline)]
-pub use capabilities::Capabilities;
-use std::io::Write;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

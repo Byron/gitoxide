@@ -6,7 +6,7 @@ use std::io::{self, stderr, stdout};
 
 #[cfg(not(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion")))]
 fn prepare(verbose: bool, name: &str, _: impl Into<Option<ProgressRange>>) -> ((), Option<prodash::progress::Log>) {
-    super::init_env_logger(verbose);
+    crate::plumbing::init_env_logger(verbose);
     ((), Some(prodash::progress::Log::new(name, Some(1))))
 }
 
