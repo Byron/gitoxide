@@ -1,6 +1,6 @@
 use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
-    Service,
+    Protocol, Service,
 };
 use bstr::{BString, ByteSlice};
 use std::process::{self, Command, Stdio};
@@ -131,6 +131,16 @@ impl client::Transport for SpawnProcessOnDemand {
 
     fn to_url(&self) -> String {
         self.url.to_string()
+    }
+
+    fn desired_protocol_version(&self) -> Protocol {
+        match self.connection.as_ref() {
+            Some(connection) => connection.desired_protocol_version(),
+            None => {
+                // Only V1 is supported when invoking the upload pack program directly
+                Protocol::V1
+            }
+        }
     }
 }
 

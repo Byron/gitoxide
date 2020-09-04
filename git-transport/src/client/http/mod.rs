@@ -20,7 +20,7 @@ pub type Impl = curl::Curl;
 pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
-    version: crate::Protocol,
+    desired_version: crate::Protocol,
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::Provider<H::ResponseBody>>,
@@ -32,7 +32,7 @@ impl Transport<Impl> {
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
-            version,
+            desired_version: version,
             service: None,
             http: Impl::default(),
             line_provider: None,
@@ -92,8 +92,11 @@ impl<H: Http> client::Transport for Transport<H> {
         let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<str>>::new();
-        if self.version != Protocol::V1 {
-            dynamic_headers.push(Cow::Owned(format!("Git-Protocol: version={}", self.version as usize)));
+        if self.desired_version != Protocol::V1 {
+            dynamic_headers.push(Cow::Owned(format!(
+                "Git-Protocol: version={}",
+                self.desired_version as usize
+            )));
         }
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
         let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
@@ -114,10 +117,11 @@ impl<H: Http> client::Transport for Transport<H> {
             ))));
         }
 
-        let (capabilities, refs) = git::recv::capabilties_and_possibly_refs(line_reader, self.version)?;
+        let (capabilities, refs, actual_protocol) =
+            git::recv::capabilities_and_possibly_refs(line_reader, self.desired_version)?;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
-            actual_protocol: self.version,
+            actual_protocol,
             capabilities,
             refs,
         })
@@ -171,6 +175,10 @@ impl<H: Http> client::Transport for Transport<H> {
 
     fn to_url(&self) -> String {
         self.url.to_owned()
+    }
+
+    fn desired_protocol_version(&self) -> Protocol {
+        self.desired_version
     }
 }
 

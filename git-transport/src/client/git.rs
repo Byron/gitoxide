@@ -42,10 +42,10 @@ pub(crate) mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use std::io;
 
-    pub fn capabilties_and_possibly_refs<'a, T: io::Read>(
+    pub fn capabilities_and_possibly_refs<'a, T: io::Read>(
         rd: &'a mut git_packetline::Provider<T>,
         version: Protocol,
-    ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>), client::Error> {
+    ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>, Protocol), client::Error> {
         rd.fail_on_err_lines(true);
         match version {
             Protocol::V1 => {
@@ -59,9 +59,9 @@ pub(crate) mod recv {
                         .as_slice(),
                 )?;
                 rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
-                Ok((capabilities, Some(Box::new(rd.as_read()))))
+                Ok((capabilities, Some(Box::new(rd.as_read())), Protocol::V1))
             }
-            Protocol::V2 => Ok((Capabilities::from_lines(rd.as_read())?, None)),
+            Protocol::V2 => Ok((Capabilities::from_lines(rd.as_read())?, None, Protocol::V2)),
         }
     }
 }
@@ -77,7 +77,8 @@ pub struct Connection<R, W> {
     line_provider: git_packetline::Provider<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
-    version: Protocol,
+    desired_version: Protocol,
+    actual_version: Protocol,
     mode: ConnectMode,
 }
 
@@ -91,16 +92,17 @@ where
             let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
             line_writer.write_all(&message::connect(
                 service,
-                self.version,
+                self.desired_version,
                 &self.path,
                 self.virtual_host.as_ref(),
             ))?;
             line_writer.flush()?;
         }
 
-        let (capabilities, refs) = recv::capabilties_and_possibly_refs(&mut self.line_provider, self.version)?;
+        let (capabilities, refs, actual_protocol) =
+            recv::capabilities_and_possibly_refs(&mut self.line_provider, self.desired_version)?;
         Ok(SetServiceResponse {
-            actual_protocol: self.version, // verified by capability parsing. Version is otherwise assumed V1
+            actual_protocol,
             capabilities,
             refs,
         })
@@ -120,7 +122,7 @@ where
     }
 
     fn close(mut self) -> Result<(), client::Error> {
-        if self.version == Protocol::V2 {
+        if self.actual_version == Protocol::V2 {
             git_packetline::encode::flush_to_write(&mut self.writer)?;
             self.writer.flush()?;
         }
@@ -136,6 +138,10 @@ where
             path: self.path.clone(),
         }
         .to_string()
+    }
+
+    fn desired_protocol_version(&self) -> Protocol {
+        self.desired_version
     }
 }
 
@@ -157,7 +163,8 @@ where
             line_provider: git_packetline::Provider::new(read, PacketLine::Flush),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
-            version: desired_version,
+            desired_version,
+            actual_version: desired_version,
             mode,
         }
     }

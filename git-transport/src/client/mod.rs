@@ -218,6 +218,11 @@ pub trait Transport {
     /// Please note that local paths may not be represented correctly, as they will go through a potentially lossy
     /// unicode conversion.
     fn to_url(&self) -> String;
+
+    /// Returns the protocol version that was initially desired upon connection
+    /// Please note that the actual protocol might differ after the handshake was conducted in case the server
+    /// does not support it.
+    fn desired_protocol_version(&self) -> Protocol;
 }
 
 pub trait TransportV2Ext {
