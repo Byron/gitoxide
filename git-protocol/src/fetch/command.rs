@@ -133,13 +133,7 @@ impl Command {
                         .collect()
                 }
             },
-            Command::LsRefs => {
-                debug_assert!(
-                    !server_capabilities.contains("ls-refs"),
-                    "we don't currently know about any features for ls-refs. Time to have a look"
-                );
-                vec![agent()]
-            }
+            Command::LsRefs => vec![agent()],
         }
     }
     /// Panics if the given arguments and features don't match what's statically known. It's considered a bug in the delegate.
@@ -181,7 +175,10 @@ impl Command {
                         if allowed.iter().any(|allowed| feature == allowed) {
                             continue;
                         }
-                        panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature);
+                        match *feature {
+                            "agent" => {}
+                            _ => panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature),
+                        }
                     }
                 }
             }

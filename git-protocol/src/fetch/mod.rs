@@ -109,27 +109,30 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             "Only V2 needs a separate request to get specific refs"
         );
 
-        let mut ls_features = Vec::new();
         let ls_refs = Command::LsRefs;
-        let mut ls_args = ls_refs.initial_arguments(&[]);
+        let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
+        let mut ls_args = ls_refs.initial_arguments(&ls_features);
         delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
         let mut refs = transport.invoke(
             ls_refs.as_str(),
-            ls_features.iter().cloned().chain(Some(agent())),
+            ls_features,
             if ls_args.is_empty() { None } else { Some(ls_args) },
         )?;
         refs::from_v2_refs(&mut parsed_refs, &mut refs)?;
     }
 
-    let mut fetch_features = Command::Fetch.default_features(protocol_version, &capabilities);
+    let fetch = Command::Fetch;
+    let mut fetch_features = fetch.default_features(protocol_version, &capabilities);
     let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
+    fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
+
     if next == Action::Close {
         transport.close()?;
         return Ok(());
     }
-    let mut _fetch_arguments = Command::Fetch.initial_arguments(&fetch_features);
+    let mut _fetch_arguments = fetch.initial_arguments(&fetch_features);
     // TODO: negotiation rounds till pack file is received or someone aborts.
 
     transport.close()?;

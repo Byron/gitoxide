@@ -126,12 +126,16 @@ mod v2 {
         );
         assert_eq!(
             out.as_bstr(),
-            b"0014command=ls-refs
-001aagent=git/oxide-0.1.0
+            format!(
+                "0014command=ls-refs
+001aagent={}
 0001000csymrefs
 0009peel
-00000000"
-                .as_bstr()
+00000000",
+                fetch::agent().1.expect("value set")
+            )
+            .as_bytes()
+            .as_bstr()
         );
         Ok(())
     }
