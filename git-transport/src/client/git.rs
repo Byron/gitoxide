@@ -43,9 +43,15 @@ pub(crate) mod recv {
     use bstr::ByteSlice;
     use std::io;
 
-    pub fn capabilities_and_possibly_refs<'a, T: io::Read>(
-        rd: &'a mut git_packetline::Provider<T>,
-    ) -> Result<(Capabilities, Option<Box<dyn io::BufRead + 'a>>, Protocol), client::Error> {
+    pub struct Outcome<'a> {
+        pub capabilities: Capabilities,
+        pub refs: Option<Box<dyn io::BufRead + 'a>>,
+        pub protocol: Protocol,
+    }
+
+    pub fn capabilities_and_possibly_refs<T: io::Read>(
+        rd: &mut git_packetline::Provider<T>,
+    ) -> Result<Outcome, client::Error> {
         rd.fail_on_err_lines(true);
         let capabilities_or_version = rd
             .peek_line()
@@ -67,9 +73,17 @@ pub(crate) mod recv {
             Protocol::V1 => {
                 let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
                 rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
-                Ok((capabilities, Some(Box::new(rd.as_read())), Protocol::V1))
+                Ok(Outcome {
+                    capabilities,
+                    refs: Some(Box::new(rd.as_read())),
+                    protocol: Protocol::V1,
+                })
             }
-            Protocol::V2 => Ok((Capabilities::from_lines(rd.as_read())?, None, Protocol::V2)),
+            Protocol::V2 => Ok(Outcome {
+                capabilities: Capabilities::from_lines(rd.as_read())?,
+                refs: None,
+                protocol: Protocol::V2,
+            }),
         }
     }
 }
@@ -107,7 +121,11 @@ where
             line_writer.flush()?;
         }
 
-        let (capabilities, refs, actual_protocol) = recv::capabilities_and_possibly_refs(&mut self.line_provider)?;
+        let recv::Outcome {
+            capabilities,
+            refs,
+            protocol: actual_protocol,
+        } = recv::capabilities_and_possibly_refs(&mut self.line_provider)?;
         Ok(SetServiceResponse {
             actual_protocol,
             capabilities,
