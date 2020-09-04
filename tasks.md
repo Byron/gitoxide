@@ -6,8 +6,11 @@
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
   * [ ] journey tests for each connection method
     * [ ] file
-    * [ ] git
+    * [ ] file JT
+    * [x] git
+    * [ ] git JT
     * [ ] ssh
+    * [ ] ssh JT
     * [ ] https (unauthenticated)
     * [ ] https (authenticated)
 * **git-protocol**

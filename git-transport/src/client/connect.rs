@@ -36,7 +36,7 @@ mod box_impl {
     };
     use std::ops::{Deref, DerefMut};
 
-    impl client::Transport for Box<dyn client::Transport> {
+    impl<T: client::Transport + ?Sized> client::Transport for Box<T> {
         fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error> {
             self.deref_mut().handshake(service)
         }
