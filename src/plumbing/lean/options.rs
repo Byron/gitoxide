@@ -30,6 +30,7 @@ pub enum SubCommands {
     PackVerify(PackVerify),
     PackExplode(PackExplode),
     IndexFromPack(IndexFromPack),
+    RemoteRefList(RemoteRefList),
     PackReceive(PackReceive),
 }
 
@@ -62,6 +63,24 @@ pub struct IndexFromPack {
     pub directory: Option<PathBuf>,
 }
 
+/// List remote references from a remote identified by a url.
+///
+/// This is the plumbing equivalent of `git ls-remote`.
+/// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "remote-ref-ls")]
+pub struct RemoteRefList {
+    /// the protocol version to use. Valid values are 1 and 2
+    #[argh(option)]
+    pub protocol: Option<core::Protocol>,
+
+    /// the URLs or path from which to receive references
+    ///
+    /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+    #[argh(positional)]
+    pub url: String,
+}
+
 /// Receive a pack from a remote identified by a url.
 ///
 /// This is the plumbing equivalent of `git clone` and `git-fetch`.
@@ -71,7 +90,7 @@ pub struct IndexFromPack {
 pub struct PackReceive {
     /// the protocol version to use. Valid values are 1 and 2
     #[argh(option)]
-    pub protocol: Option<core::pack::receive::Protocol>,
+    pub protocol: Option<core::Protocol>,
 
     /// the URLs or path from which to receive the pack.
     ///

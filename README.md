@@ -30,6 +30,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **pack-index**
       * [x] [index from data](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [ ] support for thin packs (as needed for fetch/pull)
+    * **remote-ref-ls**
+      * [ ] list all (or given) references from a remote at the given URL
           
 ### git-object
   * *decode (zero-copy)* borrowed objects
@@ -105,6 +107,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] via git-credentials
     * [ ] via pure Rust implementation if no git is installed
   * [ ] fetch & clone
+    * [x] detailed progress
     * [x] control credentials provider to fill, approve and reject
     * [x] command: ls-ref
       * [x] parse V1 refs as provided during handshake

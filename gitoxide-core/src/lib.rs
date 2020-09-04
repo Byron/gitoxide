@@ -33,5 +33,9 @@ impl FromStr for OutputFormat {
     }
 }
 
+mod protocol;
+pub use protocol::Protocol;
+
 pub mod pack;
+pub mod remote;
 pub mod repository;
