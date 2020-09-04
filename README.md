@@ -115,6 +115,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] initialize and validate command arguments and features sanely
     * [x] abort early for ls-remote capabilities
     * [ ] packfile negotiation
+      * [ ] delegate can support for all fetch features, including shallow, deepen, etc.
   * [ ] push
   * [ ] API documentation with examples
   
@@ -162,6 +163,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
+  * [ ] clone
+    * [ ] shallow
   * [ ] sparse checkout support
   * [ ] .gitignore handling
   * [ ] checkout/stage conversions clean + smudge as in .gitattributes
