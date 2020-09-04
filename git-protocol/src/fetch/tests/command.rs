@@ -49,46 +49,6 @@ mod v1 {
             }
         }
     }
-    mod ls_refs {
-        mod validate_arguments {
-            use crate::{fetch::tests::command::v1::capabilities, fetch::Command};
-            use bstr::ByteSlice;
-
-            #[test]
-            #[should_panic]
-            fn ref_prefixes_cannot_be_used() {
-                Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V1,
-                    &capabilities("do-not-matter"),
-                    &[b"ref-prefix hello/".as_bstr().into()],
-                    &[],
-                );
-            }
-
-            #[test]
-            #[should_panic]
-            fn unknown_argument() {
-                Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V1,
-                    &capabilities("do-not-matter"),
-                    &[b"definitely-nothing-we-know".as_bstr().into()],
-                    &[],
-                );
-            }
-        }
-        mod initial_arguments {
-            use crate::fetch::Command;
-            use bstr::ByteSlice;
-
-            #[test]
-            fn default_as_there_are_no_features_yet() {
-                assert_eq!(
-                    Command::LsRefs.initial_arguments(&[]),
-                    &[b"symrefs".as_bstr(), b"peel".as_bstr()]
-                );
-            }
-        }
-    }
 }
 
 mod v2 {
@@ -162,7 +122,7 @@ mod v2 {
             }
         }
 
-        mod validate_arguments {
+        mod validate {
             use crate::fetch::{tests::command::v2::capabilities, Command};
             use bstr::ByteSlice;
 
@@ -184,6 +144,17 @@ mod v2 {
                     &capabilities("other", "do-not-matter"),
                     &[b"definitely-nothing-we-know".as_bstr().into()],
                     &[],
+                );
+            }
+
+            #[test]
+            #[should_panic]
+            fn unknown_feature() {
+                Command::LsRefs.validate_argument_prefixes_or_panic(
+                    git_transport::Protocol::V1,
+                    &capabilities("other", "do-not-matter"),
+                    &[],
+                    &[("some-feature-that-does-not-exist", None)],
                 );
             }
         }

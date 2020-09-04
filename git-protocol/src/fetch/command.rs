@@ -73,6 +73,7 @@ impl Command {
     }
 
     /// Compute initial arguments based on the given `features`. They are typically provided by the `default_features(…)` method.
+    /// Only useful for V2
     pub(crate) fn initial_arguments<'a>(&'a self, features: &[(&str, Option<&str>)]) -> Vec<BString> {
         match self {
             Command::Fetch => ["thin-pack", "include-tag", "ofs-delta"]
@@ -167,9 +168,6 @@ impl Command {
                     }
                     panic!("{}: capability {} is not supported", self.as_str(), feature);
                 }
-                if *self == Command::LsRefs && arguments.iter().any(|a| a.starts_with_str("ref-prefix ")) {
-                    panic!("ref-prefix is not supported in V1 ls-refs");
-                }
             }
             git_transport::Protocol::V2 => {
                 if let Some(allowed) = server.iter().find_map(|c| {
@@ -180,7 +178,7 @@ impl Command {
                     }
                 }) {
                     for (feature, _) in features {
-                        if allowed.iter().any(|allowed| feature.starts_with(allowed)) {
+                        if allowed.iter().any(|allowed| feature == allowed) {
                             continue;
                         }
                         panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature);
