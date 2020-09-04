@@ -12,7 +12,7 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
-serde1 = ["serde", "bstr/serde1", "git-object/serde1"]
+serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-object/serde1"]
 
 [dependencies]
 git-features = { version = "0.4.0", path = "../git-features" }

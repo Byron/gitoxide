@@ -774,7 +774,6 @@ dependencies = [
  "git-odb",
  "git-protocol",
  "git-repository",
- "git-transport",
  "quick-error 2.0.0",
  "serde_json",
 ]

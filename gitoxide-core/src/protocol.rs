@@ -1,3 +1,4 @@
+use git_protocol::git_transport;
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug)]

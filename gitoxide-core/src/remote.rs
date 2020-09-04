@@ -1,8 +1,10 @@
 pub mod refs {
     use crate::{OutputFormat, Protocol};
     use git_features::progress::Progress;
-    use git_protocol::fetch::{Action, Ref};
-    use git_transport::client::Capabilities;
+    use git_protocol::{
+        fetch::{Action, Ref},
+        git_transport,
+    };
     use std::io;
 
     #[derive(Default)]
@@ -14,7 +16,7 @@ pub mod refs {
         fn prepare_fetch(
             &mut self,
             _version: git_transport::Protocol,
-            _server: &Capabilities,
+            _server: &git_transport::client::Capabilities,
             _features: &mut Vec<(&str, Option<&str>)>,
             refs: &[Ref],
         ) -> Action {

@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+pub use git_transport;
+
 mod remote_progress;
 pub use remote_progress::RemoteProgress;
 
