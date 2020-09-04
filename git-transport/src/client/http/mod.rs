@@ -1,17 +1,18 @@
-use crate::{client, client::git, Protocol, Service};
+use crate::{
+    client::{self, capabilities, ExtendedBufRead, HandleProgress, RequestWriter},
+    Protocol, Service,
+};
+use git_packetline::PacketLine;
 use std::{
     borrow::Cow,
     convert::Infallible,
-    io,
-    io::{BufRead, Read},
+    io::{self, BufRead, Read},
 };
 
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
 
 mod traits;
-use crate::client::{ExtendedBufRead, HandleProgress, RequestWriter};
-use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 #[cfg(feature = "http-client-curl")]
@@ -117,11 +118,11 @@ impl<H: Http> client::Transport for Transport<H> {
             ))));
         }
 
-        let git::recv::Outcome {
+        let capabilities::recv::Outcome {
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = git::recv::capabilities_and_possibly_refs(line_reader)?;
+        } = capabilities::recv::v1_or_v2_as_detected(line_reader)?;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
             actual_protocol,

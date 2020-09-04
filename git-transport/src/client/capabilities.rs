@@ -109,3 +109,51 @@ impl Capabilities {
             .map(|c| Capability(c.as_bstr()))
     }
 }
+
+pub(crate) mod recv {
+    use crate::{client, client::Capabilities, Protocol};
+    use bstr::ByteSlice;
+    use std::io;
+
+    pub struct Outcome<'a> {
+        pub capabilities: Capabilities,
+        pub refs: Option<Box<dyn io::BufRead + 'a>>,
+        pub protocol: Protocol,
+    }
+
+    pub fn v1_or_v2_as_detected<T: io::Read>(rd: &mut git_packetline::Provider<T>) -> Result<Outcome, client::Error> {
+        rd.fail_on_err_lines(true);
+        let capabilities_or_version = rd
+            .peek_line()
+            .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+        let first_line = capabilities_or_version
+            .to_text()
+            .ok_or(client::Error::ExpectedLine("text"))?;
+
+        let version = if first_line.as_bstr().starts_with_str("version ") {
+            if first_line.as_bstr().ends_with_str(" 1") {
+                Protocol::V1
+            } else {
+                Protocol::V2
+            }
+        } else {
+            Protocol::V1
+        };
+        match version {
+            Protocol::V1 => {
+                let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
+                rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+                Ok(Outcome {
+                    capabilities,
+                    refs: Some(Box::new(rd.as_read())),
+                    protocol: Protocol::V1,
+                })
+            }
+            Protocol::V2 => Ok(Outcome {
+                capabilities: Capabilities::from_lines(rd.as_read())?,
+                refs: None,
+                protocol: Protocol::V2,
+            }),
+        }
+    }
+}

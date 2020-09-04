@@ -1,7 +1,14 @@
-use crate::{client, client::SetServiceResponse, Protocol, Service};
+use crate::{
+    client::{self, capabilities, SetServiceResponse},
+    Protocol, Service,
+};
 use bstr::BString;
 use git_packetline::PacketLine;
-use std::{io, io::Write, net::TcpStream};
+use std::{
+    io,
+    io::Write,
+    net::{TcpStream, ToSocketAddrs},
+};
 
 pub mod message {
     use crate::{Protocol, Service};
@@ -38,56 +45,6 @@ pub mod message {
         out
     }
 }
-pub(crate) mod recv {
-    use crate::{client, client::Capabilities, Protocol};
-    use bstr::ByteSlice;
-    use std::io;
-
-    pub struct Outcome<'a> {
-        pub capabilities: Capabilities,
-        pub refs: Option<Box<dyn io::BufRead + 'a>>,
-        pub protocol: Protocol,
-    }
-
-    pub fn capabilities_and_possibly_refs<T: io::Read>(
-        rd: &mut git_packetline::Provider<T>,
-    ) -> Result<Outcome, client::Error> {
-        rd.fail_on_err_lines(true);
-        let capabilities_or_version = rd
-            .peek_line()
-            .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
-        let first_line = capabilities_or_version
-            .to_text()
-            .ok_or(client::Error::ExpectedLine("text"))?;
-
-        let version = if first_line.as_bstr().starts_with_str("version ") {
-            if first_line.as_bstr().ends_with_str(" 1") {
-                Protocol::V1
-            } else {
-                Protocol::V2
-            }
-        } else {
-            Protocol::V1
-        };
-        match version {
-            Protocol::V1 => {
-                let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
-                rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
-                Ok(Outcome {
-                    capabilities,
-                    refs: Some(Box::new(rd.as_read())),
-                    protocol: Protocol::V1,
-                })
-            }
-            Protocol::V2 => Ok(Outcome {
-                capabilities: Capabilities::from_lines(rd.as_read())?,
-                refs: None,
-                protocol: Protocol::V2,
-            }),
-        }
-    }
-}
-
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum ConnectMode {
     Daemon,
@@ -121,11 +78,11 @@ where
             line_writer.flush()?;
         }
 
-        let recv::Outcome {
+        let capabilities::recv::Outcome {
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = recv::capabilities_and_possibly_refs(&mut self.line_provider)?;
+        } = capabilities::recv::v1_or_v2_as_detected(&mut self.line_provider)?;
         Ok(SetServiceResponse {
             actual_protocol,
             capabilities,
@@ -206,7 +163,6 @@ where
 }
 
 use quick_error::quick_error;
-use std::net::ToSocketAddrs;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
