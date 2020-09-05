@@ -69,7 +69,8 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
                 drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
                 let url = transport.to_url();
                 progress.set_name("authentication");
-                let credentials::Outcome { identity, next } = authenticate(credentials::Action::Fill(&url))?;
+                let credentials::Outcome { identity, next } =
+                    authenticate(credentials::Action::Fill(&url))?.expect("FILL provides an identity");
                 transport.set_identity(identity)?;
                 progress.step();
                 progress.set_name("handshake (authenticated)");

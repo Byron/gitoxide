@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-pub type Result = std::result::Result<Outcome, Error>;
+pub type Result = std::result::Result<Option<Outcome>, Error>;
 
 quick_error! {
     #[derive(Debug)]
@@ -33,6 +33,12 @@ pub enum Action<'a> {
 }
 
 impl<'a> Action<'a> {
+    pub fn is_fill(&self) -> bool {
+        match self {
+            Action::Fill(_) => true,
+            _ => false,
+        }
+    }
     pub fn as_str(&self) -> &str {
         match self {
             Action::Approve(_) => "approve",
@@ -76,13 +82,20 @@ pub fn helper(action: Action) -> Result {
     cmd.arg("credential")
         .arg(action.as_str())
         .stdin(Stdio::piped())
-        .stdout(Stdio::piped());
+        .stdout(if action.is_fill() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        });
     let mut child = cmd.spawn()?;
     let mut stdin = child.stdin.take().expect("stdin to be configured");
 
     match action {
         Action::Fill(url) => encode_message(url, stdin)?,
-        Action::Approve(last) | Action::Reject(last) => stdin.write_all(&last)?,
+        Action::Approve(last) | Action::Reject(last) => {
+            stdin.write_all(&last)?;
+            stdin.write_all(&[b'\n'])?
+        }
     }
 
     let output = child.wait_with_output()?;
@@ -90,22 +103,26 @@ pub fn helper(action: Action) -> Result {
         return Err(Error::CredentialsHelperFailed(output.status.code()));
     }
     let stdout = output.stdout;
-    let kvs = decode_message(stdout.as_slice())?;
-    let find = |name: &str| {
-        kvs.iter()
-            .find(|(k, _)| k == name)
-            .ok_or_else(|| Error::KeyNotFound(name.into()))
-            .map(|(_, n)| n.to_owned())
-    };
-    Ok(Outcome {
-        identity: client::Identity::Account {
-            username: find("username")?,
-            password: find("password")?,
-        },
-        next: NextAction {
-            previous_output: stdout,
-        },
-    })
+    if stdout.is_empty() {
+        Ok(None)
+    } else {
+        let kvs = decode_message(stdout.as_slice())?;
+        let find = |name: &str| {
+            kvs.iter()
+                .find(|(k, _)| k == name)
+                .ok_or_else(|| Error::KeyNotFound(name.into()))
+                .map(|(_, n)| n.to_owned())
+        };
+        Ok(Some(Outcome {
+            identity: client::Identity::Account {
+                username: find("username")?,
+                password: find("password")?,
+            },
+            next: NextAction {
+                previous_output: stdout,
+            },
+        }))
+    }
 }
 
 pub fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {
