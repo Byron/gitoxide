@@ -9,7 +9,8 @@
     * [ ] file JT
     * [x] git
     * [ ] git JT
-    * [ ] ssh
+    * [x] ssh
+      * [ ] expand user support
     * [ ] ssh JT
     * [x] https (unauthenticated)
     * [x] https (authenticated)
