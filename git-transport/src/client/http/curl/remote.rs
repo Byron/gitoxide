@@ -40,10 +40,55 @@ impl Handler {
     }
 }
 
+mod chunks {
+    pub struct Iter<'a> {
+        data: &'a [u8],
+    }
+
+    impl<'a> Iterator for Iter<'a> {
+        type Item = &'a [u8];
+
+        fn next(&mut self) -> Option<Self::Item> {
+            unimplemented!()
+        }
+    }
+
+    pub fn iter(data: &[u8]) -> Iter {
+        Iter { data }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn iteration_without_trailer() {
+            assert_eq!(
+                iter(b"1e\r\n001e# service=git-upload-pack\n\r\n4\r\n0000\r\n").collect::<Vec<_>>(),
+                vec![&b"001e# service=git-upload-pack\n"[..], b"0000"]
+            );
+        }
+
+        #[test]
+        fn zero_trailing_buffer() {
+            assert_eq!(iter(b"0\r\n\r\n").collect::<Vec<_>>(), vec![&b""[..]]);
+        }
+    }
+}
+
 impl curl::easy::Handler for Handler {
     fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
         drop(self.send_header.take()); // signal header readers to stop trying
         match self.send_data.as_mut() {
+            // Some(writer) => {
+            //     // when testing, we don't actually have chunks
+            //     for chunk in chunks::iter(data) {
+            //         if let Err(_) = writer.write_all(chunk) {
+            //             return Ok(0);
+            //         }
+            //     }
+            //     Ok(data.len())
+            // }
             Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
             None => Ok(0), // nothing more to receive, reader is done
         }
@@ -115,8 +160,8 @@ pub fn new() -> (
             handle.post(upload)?;
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
-            handle.http_transfer_decoding(false)?;
-            handle.http_content_decoding(false)?;
+            // handle.http_transfer_decoding(false)?;
+            // handle.http_content_decoding(false)?;
             handle.connect_timeout(Duration::from_secs(20))?;
             let low_bytes_per_second = 1024;
             handle.low_speed_limit(low_bytes_per_second)?;
