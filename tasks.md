@@ -8,7 +8,7 @@
     * [x] file
     * [ ] file JT
     * [x] git
-      * [ ] expand user support
+      * [x] expand user support
     * [ ] git JT
     * [x] ssh
       * [x] expand user support

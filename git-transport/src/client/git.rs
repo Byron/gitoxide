@@ -22,6 +22,7 @@ pub(crate) mod message {
     ) -> BString {
         let mut out = bstr::BString::from(service.as_str());
         out.push(b' ');
+        let path = git_url::expand_path::for_shell(path.into());
         out.extend_from_slice(&path);
         out.push(0);
         if let Some((host, port)) = virtual_host {
