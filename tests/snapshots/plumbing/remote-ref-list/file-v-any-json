@@ -1,0 +1,35 @@
+fatal: the remote end hung up unexpectedly
+[
+  {
+    "Symbolic": {
+      "path": "HEAD",
+      "target": "refs/heads/master",
+      "object": "3f72b39ad1600e6dac63430c15e0d875e9d3f9d6"
+    }
+  },
+  {
+    "Direct": {
+      "path": "refs/heads/dev",
+      "object": "ee3c97678e89db4eab7420b04aef51758359f152"
+    }
+  },
+  {
+    "Direct": {
+      "path": "refs/heads/master",
+      "object": "3f72b39ad1600e6dac63430c15e0d875e9d3f9d6"
+    }
+  },
+  {
+    "Peeled": {
+      "path": "refs/tags/annotated",
+      "tag": "feae03400632392a7f38e5b2775f98a439f5eaf5",
+      "object": "ee3c97678e89db4eab7420b04aef51758359f152"
+    }
+  },
+  {
+    "Direct": {
+      "path": "refs/tags/unannotated",
+      "object": "efa596d621559707b2d221f10490959b2decbc6c"
+    }
+  }
+]

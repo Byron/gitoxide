@@ -50,6 +50,55 @@ title "CLI ${kind}"
 
 title plumbing
 snapshot="$snapshot/plumbing"
+(when "running 'remote-ref-list'"
+  snapshot="$snapshot/remote-ref-list"
+  (sandbox
+    {
+      git init
+      git config commit.gpgsign false
+      set -a
+      export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
+      export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
+      export GIT_AUTHOR_NAME="Sebastian Thiel"
+      export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
+      export GIT_AUTHOR_EMAIL="git@example.com"
+      export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
+      touch a
+      git add a
+      git commit -m "first"
+      git tag unannotated
+      touch b
+      git add b
+      git commit -m "second"
+      git tag annotated -m "tag message"
+      git branch dev
+      echo hi >> b
+      git commit -am "third"
+    } &>/dev/null
+    (with "file:// protocol"
+      (with "version 1"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 .git
+        }
+      )
+      (with "version 2"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list --protocol 2 "$PWD/.git"
+        }
+      )
+      if test "$kind" = "max"; then
+      (with "--format json"
+        it "generates the correct output in JSON format" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any-json" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote-ref-list .git
+        }
+      )
+      fi
+    )
+  )
+)
 (when "running 'pack-index-from-data"
   snapshot="$snapshot/pack-index-from-data"
   PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"

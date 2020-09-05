@@ -8,7 +8,7 @@
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
   * [ ] journey tests for each connection method
     * [x] file
-    * [ ] file JT
+    * [x] file JT
     * [x] git
       * [x] expand user support
     * [ ] git JT
