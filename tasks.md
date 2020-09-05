@@ -5,8 +5,8 @@
 * **gixp-ls-remote**
   * [x] pretty version with json support
     * [x] usable JSON
-  * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
-  * [ ] journey tests for each connection method
+  * [x] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
+  * [x] journey tests for each connection method
     * [x] file
     * [x] file JT
     * [x] git
@@ -16,7 +16,7 @@
       * [x] expand user support
     * [ ] ~~ssh JT~~
     * [x] https (unauthenticated)
-    * [ ] https (unauthenticated) JIT
+    * [x] https (unauthenticated) JIT
     * [x] https (authenticated)
 * **git-protocol**
     * [ ] delegate interaction to support clone

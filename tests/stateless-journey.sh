@@ -98,11 +98,12 @@ snapshot="$snapshot/plumbing"
       fi
     )
     (with "git:// protocol"
-      git daemon  --verbose --base-path=. --export-all --user-path &
+      git daemon  --verbose --base-path=. --export-all --user-path &>/dev/null &
       daemon_pid=$!
       while ! nc -z localhost 9418; do
         sleep 0.1
       done
+      trap 'kill $daemon_pid' EXIT
       (with "version 1"
         it "generates the correct output" && {
           WITH_SNAPSHOT="$snapshot/file-v-any" \
@@ -115,7 +116,30 @@ snapshot="$snapshot/plumbing"
           expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 git://localhost/
         }
       )
-      trap 'kill $daemon_pid' EXIT
+    )
+    if test "$kind" != "max"; then
+    (with "https:// protocol (in small builds)"
+      it "generates the correct output" && {
+        WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
+        expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
+      }
+    )
+    fi
+    (on_ci
+      if test "$kind" = "max"; then
+      (with "https:// protocol"
+        (with "version 1"
+          it "generates the correct output" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
+          }
+        )
+        (with "version 2"
+          it "generates the correct output" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 https://github.com/byron/gitoxide
+          }
+        )
+      )
+      fi
     )
   )
 )
