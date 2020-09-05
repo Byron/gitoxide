@@ -1,5 +1,5 @@
 use crate::{client, Protocol};
-use bstr::{BString, ByteSlice, ByteVec};
+use bstr::BString;
 use quick_error::quick_error;
 use std::borrow::Cow;
 
@@ -44,22 +44,7 @@ pub fn connect(
         None => host.into(),
     };
 
-    let path = match git_url::expand_path::parse(path.as_slice().as_bstr()) {
-        Ok((user, mut path)) => match user {
-            Some(git_url::expand_path::ForUser::Current) => {
-                path.insert(0, b'~');
-                path
-            }
-            Some(git_url::expand_path::ForUser::Name(mut user)) => {
-                user.insert(0, b'~');
-                user.append(path.as_vec_mut());
-                user
-            }
-            None => path,
-        },
-        Err(_) => path,
-    };
-
+    let path = git_url::expand_path::for_shell(path);
     let url = git_url::Url {
         scheme: git_url::Scheme::Ssh,
         user: user.map(Into::into),
