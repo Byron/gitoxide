@@ -22,6 +22,7 @@ pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
     desired_version: crate::Protocol,
+    actual_version: crate::Protocol,
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::Provider<H::ResponseBody>>,
@@ -34,6 +35,7 @@ impl Transport<Impl> {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             desired_version: version,
+            actual_version: version,
             service: None,
             http: Impl::default(),
             line_provider: None,
@@ -123,6 +125,7 @@ impl<H: Http> client::Transport for Transport<H> {
             refs,
             protocol: actual_protocol,
         } = capabilities::recv::v1_or_v2_as_detected(line_reader)?;
+        self.actual_version = actual_protocol;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
             actual_protocol,
@@ -144,12 +147,19 @@ impl<H: Http> client::Transport for Transport<H> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
         let static_headers = &[
+            Cow::Borrowed(self.user_agent_header),
             Cow::Owned(format!("Content-Type: application/x-{}-request", service.as_str())),
             format!("Accept: application/x-{}-result", service.as_str()).into(),
             "Expect:".into(), // needed to avoid sending Expect: 100-continue, which adds another response and only CURL wants that
         ];
         let mut dynamic_headers = Vec::new();
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
+        if self.actual_version != Protocol::V1 {
+            dynamic_headers.push(Cow::Owned(format!(
+                "Git-Protocol: version={}",
+                self.actual_version as usize
+            )));
+        }
 
         let PostResponse {
             headers,

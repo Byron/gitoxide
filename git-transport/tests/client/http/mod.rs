@@ -72,6 +72,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
             "POST /path/not-important/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 Transfer-Encoding: chunked
+User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
 Authorization: Basic dXNlcjpwYXNzd29yZA==
@@ -80,9 +81,11 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
 
 ",
             server.addr.port(),
+            env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>(),
+        "the authentication information is used in subsequent calls"
     );
 
     Ok(())
@@ -267,6 +270,7 @@ fn clone_v1() -> crate::Result {
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 Transfer-Encoding: chunked
+User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
 
@@ -279,6 +283,7 @@ Accept: application/x-git-upload-pack-result
 
 ",
             server.addr.port(),
+            env!("CARGO_PKG_VERSION")
         )
         .lines()
         .collect::<Vec<_>>()
@@ -365,8 +370,10 @@ Git-Protocol: version=2
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 Transfer-Encoding: chunked
+User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
+Git-Protocol: version=2
 
 4c
 0014command=ls-refs
@@ -378,6 +385,7 @@ Accept: application/x-git-upload-pack-result
 
 ",
             server.addr.port(),
+            env!("CARGO_PKG_VERSION")
         )
         .lines()
         .collect::<Vec<_>>()
@@ -415,8 +423,10 @@ Accept: application/x-git-upload-pack-result
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 Transfer-Encoding: chunked
+User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
+Git-Protocol: version=2
 
 16
 0012command=fetch
@@ -425,6 +435,7 @@ Accept: application/x-git-upload-pack-result
 
 ",
             server.addr.port(),
+            env!("CARGO_PKG_VERSION")
         )
         .lines()
         .collect::<Vec<_>>()

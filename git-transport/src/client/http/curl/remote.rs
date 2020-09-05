@@ -116,6 +116,7 @@ pub fn new() -> (
             handle.http_headers(headers)?;
             handle.transfer_encoding(false)?;
             handle.connect_timeout(Duration::from_secs(20))?;
+            // handle.proxy("http://localhost:9090")?;
             let low_bytes_per_second = 1024;
             handle.low_speed_limit(low_bytes_per_second)?;
             handle.low_speed_time(Duration::from_secs(20))?;
