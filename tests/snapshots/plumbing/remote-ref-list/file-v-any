@@ -1,4 +1,3 @@
-fatal: the remote end hung up unexpectedly
 3f72b39ad1600e6dac63430c15e0d875e9d3f9d6 HEAD symref-target:refs/heads/master
 ee3c97678e89db4eab7420b04aef51758359f152 refs/heads/dev
 3f72b39ad1600e6dac63430c15e0d875e9d3f9d6 refs/heads/master

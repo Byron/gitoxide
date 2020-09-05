@@ -47,6 +47,7 @@ fn transport<'a>(
 
 mod v1 {
     use crate::fetch::{oid, transport, CloneDelegate, LsRemoteDelegate};
+    use bstr::ByteSlice;
     use git_features::progress;
     use git_protocol::fetch;
     use git_transport::Protocol;
@@ -89,8 +90,9 @@ mod v1 {
                 }
             ]
         );
-        assert!(
-            out.is_empty(),
+        assert_eq!(
+            out.as_bstr(),
+            b"0000".as_bstr(),
             "we dont have to send anything in V1, everything happens 'by default'"
         );
         Ok(())

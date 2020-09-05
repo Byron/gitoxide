@@ -58,7 +58,6 @@ pub struct Connection<R, W> {
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     desired_version: Protocol,
-    actual_version: Protocol,
     mode: ConnectMode,
 }
 
@@ -105,10 +104,8 @@ where
     }
 
     fn close(&mut self) -> Result<(), client::Error> {
-        if self.actual_version == Protocol::V2 {
-            git_packetline::encode::flush_to_write(&mut self.writer)?;
-            self.writer.flush()?;
-        }
+        git_packetline::encode::flush_to_write(&mut self.writer)?;
+        self.writer.flush()?;
         Ok(())
     }
 
@@ -147,7 +144,6 @@ where
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,
-            actual_version: desired_version,
             mode,
         }
     }
