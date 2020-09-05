@@ -2,7 +2,7 @@ use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
 };
-use bstr::{BString, ByteSlice, ByteVec};
+use bstr::{BString, ByteSlice};
 use std::process::{self, Command, Stdio};
 
 // from https://github.com/git/git/blob/20de7e7e4f4e9ae52e6cc7cfaa6469f186ddb0fa/environment.c#L115:L115
@@ -26,12 +26,12 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 
 pub struct SpawnProcessOnDemand {
     url: git_url::Url,
-    path: BString,
+    pub(crate) path: BString,
     ssh_program: Option<String>,
     ssh_args: Vec<String>,
     ssh_env: Vec<(&'static str, String)>,
     connection: Option<git::Connection<process::ChildStdout, process::ChildStdin>>,
-    child: Option<std::process::Child>,
+    child: Option<process::Child>,
 }
 
 impl Drop for SpawnProcessOnDemand {
@@ -98,21 +98,7 @@ impl client::Transport for SpawnProcessOnDemand {
         if self.ssh_program.is_some() {
             cmd.arg(service.as_str());
         }
-        let (user, mut path) = git_url::expand_path::parse(self.path.as_slice().as_bstr()).expect("fixme!");
-        let path = match user {
-            Some(git_url::expand_path::ForUser::Current) => {
-                path.insert(0, b'~');
-                path
-            }
-            Some(git_url::expand_path::ForUser::Name(mut user)) => {
-                user.insert(0, b'~');
-                user.push_byte(b'/');
-                user.append(path.as_vec_mut());
-                user
-            }
-            None => path,
-        };
-        cmd.arg("--strict").arg("--timeout=0").arg(path.to_os_str_lossy());
+        cmd.arg("--strict").arg("--timeout=0").arg(self.path.to_os_str_lossy());
 
         let mut child = cmd.spawn()?;
         self.connection = Some(git::Connection::new_for_spawned_process(

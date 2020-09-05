@@ -1,5 +1,5 @@
 use crate::{client, Protocol};
-use bstr::BString;
+use bstr::{BString, ByteSlice, ByteVec};
 use quick_error::quick_error;
 use std::borrow::Cow;
 
@@ -43,6 +43,23 @@ pub fn connect(
         Some(user) => format!("{}@{}", user, host),
         None => host.into(),
     };
+
+    let path = match git_url::expand_path::parse(path.as_slice().as_bstr()) {
+        Ok((user, mut path)) => match user {
+            Some(git_url::expand_path::ForUser::Current) => {
+                path.insert(0, b'~');
+                path
+            }
+            Some(git_url::expand_path::ForUser::Name(mut user)) => {
+                user.insert(0, b'~');
+                user.append(path.as_vec_mut());
+                user
+            }
+            None => path,
+        },
+        Err(_) => path,
+    };
+
     let url = git_url::Url {
         scheme: git_url::Scheme::Ssh,
         user: user.map(Into::into),
@@ -66,4 +83,29 @@ pub fn connect(
             path,
         ),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{client::ssh::connect, Protocol};
+
+    #[test]
+    fn connect_with_tilde_in_path() {
+        let url = git_url::parse(b"ssh://host.xy/~/repo").expect("valid url");
+        let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
+        assert_eq!(
+            cmd.path, "~/repo",
+            "the path is prepared to be substituted by the remote shell"
+        );
+    }
+
+    #[test]
+    fn connect_with_tilde_and_user_in_path() {
+        let url = git_url::parse(b"ssh://host.xy/~username/repo").expect("valid url");
+        let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
+        assert_eq!(
+            cmd.path, "~username/repo",
+            "the path is prepared to be substituted by the remote shell or git-upload-pack"
+        );
+    }
 }
