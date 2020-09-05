@@ -88,24 +88,21 @@ pub fn connect(
 #[cfg(test)]
 mod tests {
     use crate::{client::ssh::connect, Protocol};
+    use bstr::ByteSlice;
 
     #[test]
     fn connect_with_tilde_in_path() {
-        let url = git_url::parse(b"ssh://host.xy/~/repo").expect("valid url");
-        let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
-        assert_eq!(
-            cmd.path, "~/repo",
-            "the path is prepared to be substituted by the remote shell"
-        );
-    }
-
-    #[test]
-    fn connect_with_tilde_and_user_in_path() {
-        let url = git_url::parse(b"ssh://host.xy/~username/repo").expect("valid url");
-        let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
-        assert_eq!(
-            cmd.path, "~username/repo",
-            "the path is prepared to be substituted by the remote shell or git-upload-pack"
-        );
+        for (url, expected) in &[
+            ("ssh://host.xy/~/repo", "~/repo"),
+            ("ssh://host.xy/~username/repo", "~username/repo"),
+        ] {
+            let url = git_url::parse(url.as_bytes()).expect("valid url");
+            let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
+            assert_eq!(
+                cmd.path,
+                expected.as_bytes().as_bstr(),
+                "the path is prepared to be substituted by the remote shell"
+            );
+        }
     }
 }
