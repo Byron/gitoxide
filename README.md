@@ -30,7 +30,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **pack-index**
       * [x] [index from data](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [ ] support for thin packs (as needed for fetch/pull)
-    * **remote-ref-ls**
+    * **remote-ref-list**
       * [x] list all (or given) references from a remote at the given URL
           
 ### git-object

@@ -3,6 +3,8 @@
   * [x] allow automatic downgrade (request V2, deal with that not supported and fallback to V1)
   * [x] basic progress
 * **gixp-ls-remote**
+  * [x] pretty version with json support
+    * [ ] usable JSON
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
   * [ ] journey tests for each connection method
     * [x] file
@@ -12,11 +14,12 @@
     * [ ] git JT
     * [x] ssh
       * [x] expand user support
-    * [ ] ssh JT
+    * [ ] ~~ssh JT~~
     * [x] https (unauthenticated)
+    * [ ] https (unauthenticated) JIT
     * [x] https (authenticated)
 * **git-protocol**
-    * [ ] delegate to support clone
+    * [ ] delegate interaction to support clone
       * [ ] parse server negotiation response
       * [ ] negotiation via delegate
       * [ ] pack file receive passed to delegate

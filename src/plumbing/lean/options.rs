@@ -68,10 +68,10 @@ pub struct IndexFromPack {
 /// This is the plumbing equivalent of `git ls-remote`.
 /// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
 #[derive(FromArgs, PartialEq, Debug)]
-#[argh(subcommand, name = "remote-ref-ls")]
+#[argh(subcommand, name = "remote-ref-list")]
 pub struct RemoteRefList {
     /// the protocol version to use. Valid values are 1 and 2
-    #[argh(option)]
+    #[argh(option, short = 'p')]
     pub protocol: Option<core::Protocol>,
 
     /// the URLs or path from which to receive references

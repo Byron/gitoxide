@@ -42,9 +42,22 @@ pub struct Args {
 
 #[derive(Debug, Clap)]
 pub enum Subcommands {
-    /// Create an index from a packfile.
+    /// List remote references from a remote identified by a url.
     ///
-    /// This command can also be used to stream packs to standard input or to repair partial packs.
+    /// This is the plumbing equivalent of `git ls-remote`.
+    /// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
+    #[clap(setting = AppSettings::ColoredHelp)]
+    #[clap(setting = AppSettings::DisableVersion)]
+    RemoteRefList {
+        /// The protocol version to use. Valid values are 1 and 2
+        #[clap(long, short = "p")]
+        protocol: Option<core::Protocol>,
+
+        /// the URLs or path from which to receive references
+        ///
+        /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+        url: String,
+    },
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
     PackIndexFromData {
