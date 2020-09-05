@@ -5,6 +5,7 @@ pub mod refs {
         fetch::{Action, Ref},
         git_transport,
     };
+    pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
     use std::io;
 
     #[derive(Default)]

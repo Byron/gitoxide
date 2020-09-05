@@ -37,7 +37,7 @@ pub fn main() -> Result<()> {
     let verbose = cli.verbose;
     match cli.subcommand {
         SubCommands::RemoteRefList(RemoteRefList { protocol, url }) => {
-            let (_handle, progress) = prepare(verbose, "remote-ref-list", None);
+            let (_handle, progress) = prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
             core::remote::refs::list(
                 protocol,
                 &url,

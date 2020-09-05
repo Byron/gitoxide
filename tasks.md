@@ -5,14 +5,14 @@
 * **gixp-ls-remote**
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
   * [ ] journey tests for each connection method
-    * [ ] file
+    * [x] file
     * [ ] file JT
     * [x] git
     * [ ] git JT
     * [ ] ssh
     * [ ] ssh JT
-    * [ ] https (unauthenticated)
-    * [ ] https (authenticated)
+    * [x] https (unauthenticated)
+    * [x] https (authenticated)
 * **git-protocol**
     * [ ] delegate to support clone
       * [ ] parse server negotiation response
