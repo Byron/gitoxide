@@ -4,7 +4,7 @@
   * [x] basic progress
 * **gixp-ls-remote**
   * [x] pretty version with json support
-    * [ ] usable JSON
+    * [x] usable JSON
   * [ ] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
   * [ ] journey tests for each connection method
     * [x] file

@@ -775,6 +775,7 @@ dependencies = [
  "git-protocol",
  "git-repository",
  "quick-error 2.0.0",
+ "serde",
  "serde_json",
 ]
 

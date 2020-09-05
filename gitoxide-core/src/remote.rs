@@ -50,9 +50,54 @@ pub mod refs {
         match ctx.format {
             OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
             #[cfg(feature = "serde1")]
-            OutputFormat::Json => serde_json::to_writer_pretty(ctx.out, &delegate.refs)?,
+            OutputFormat::Json => serde_json::to_writer_pretty(
+                ctx.out,
+                &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+            )?,
         };
         Ok(())
+    }
+
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum JsonRef {
+        Peeled {
+            path: String,
+            tag: String,
+            object: String,
+        },
+        Direct {
+            path: String,
+            object: String,
+        },
+        Symbolic {
+            path: String,
+            target: String,
+            object: String,
+        },
+    }
+
+    impl From<Ref> for JsonRef {
+        fn from(value: Ref) -> Self {
+            match value {
+                Ref::Direct { path, object } => JsonRef::Direct {
+                    path: path.to_string(),
+                    object: object.to_string(),
+                },
+                Ref::Symbolic { path, target, object } => JsonRef::Symbolic {
+                    path: path.to_string(),
+                    target: target.to_string(),
+                    object: object.to_string(),
+                },
+                Ref::Peeled { path, tag, object } => JsonRef::Peeled {
+                    path: path.to_string(),
+                    tag: tag.to_string(),
+                    object: object.to_string(),
+                },
+                Ref::SymbolicForLookup { .. } => {
+                    unreachable!("Symbolic refs for lookup should never remain in the system")
+                }
+            }
+        }
     }
 
     fn print(mut out: impl io::Write, refs: &[Ref]) -> io::Result<()> {
