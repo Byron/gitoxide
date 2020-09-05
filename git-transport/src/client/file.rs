@@ -2,7 +2,7 @@ use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
 };
-use bstr::{BString, ByteSlice};
+use bstr::{BString, ByteSlice, ByteVec};
 use std::process::{self, Command, Stdio};
 
 // from https://github.com/git/git/blob/20de7e7e4f4e9ae52e6cc7cfaa6469f186ddb0fa/environment.c#L115:L115
@@ -98,7 +98,21 @@ impl client::Transport for SpawnProcessOnDemand {
         if self.ssh_program.is_some() {
             cmd.arg(service.as_str());
         }
-        cmd.arg("--strict").arg("--timeout=0").arg(self.path.to_os_str_lossy());
+        let (user, mut path) = git_url::expand_path::parse(self.path.as_slice().as_bstr()).expect("fixme!");
+        let path = match user {
+            Some(git_url::expand_path::ForUser::Current) => {
+                path.insert(0, b'~');
+                path
+            }
+            Some(git_url::expand_path::ForUser::Name(mut user)) => {
+                user.insert(0, b'~');
+                user.push_byte(b'/');
+                user.append(path.as_vec_mut());
+                user
+            }
+            None => path,
+        };
+        cmd.arg("--strict").arg("--timeout=0").arg(path.to_os_str_lossy());
 
         let mut child = cmd.spawn()?;
         self.connection = Some(git::Connection::new_for_spawned_process(
