@@ -97,6 +97,26 @@ snapshot="$snapshot/plumbing"
       )
       fi
     )
+    (with "git:// protocol"
+      git daemon  --verbose --base-path=. --export-all --user-path &
+      daemon_pid=$!
+      while ! nc -z localhost 9418; do
+        sleep 0.1
+      done
+      (with "version 1"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 git://localhost/
+        }
+      )
+      (with "version 2"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 git://localhost/
+        }
+      )
+      trap 'kill $daemon_pid' EXIT
+    )
   )
 )
 (when "running 'pack-index-from-data"

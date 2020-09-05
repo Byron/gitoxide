@@ -11,7 +11,7 @@
     * [x] file JT
     * [x] git
       * [x] expand user support
-    * [ ] git JT
+    * [x] git JT
     * [x] ssh
       * [x] expand user support
     * [ ] ~~ssh JT~~
