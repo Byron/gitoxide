@@ -1,29 +1,10 @@
 ### Cloning
-* **protocol**
-  * [x] allow automatic downgrade (request V2, deal with that not supported and fallback to V1)
-  * [x] basic progress
-* **gixp-ls-remote**
-  * [x] pretty version with json support
-    * [x] usable JSON
-  * [x] A V1/V2 version of a delegate to list remotes of a given remote, attempting to use as many features as possible
-  * [x] journey tests for each connection method
-    * [x] file
-    * [x] file JT
-    * [x] git
-      * [x] expand user support
-    * [x] git JT
-    * [x] ssh
-      * [x] expand user support
-    * [ ] ~~ssh JT~~
-    * [x] https (unauthenticated)
-    * [x] https (unauthenticated) JIT
-    * [x] https (authenticated)
 * **git-protocol**
-    * [ ] delegate interaction to support clone
-      * [ ] parse server negotiation response
-      * [ ] negotiation via delegate
-      * [ ] pack file receive passed to delegate
-      * [ ] assure there is a way to do fetches with have/want negotiation
+  * [ ] delegate interaction to support clone
+    * [ ] parse server negotiation response
+    * [ ] negotiation via delegate
+    * [ ] pack file receive passed to delegate
+    * [ ] assure there is a way to do fetches with have/want negotiation
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
   * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory

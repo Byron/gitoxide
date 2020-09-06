@@ -93,7 +93,7 @@ mod v1 {
         assert_eq!(
             out.as_bstr(),
             b"0000".as_bstr(),
-            "we dont have to send anything in V1, everything happens 'by default'"
+            "we dont have to send anything in V1, except for the final flush byte to indicate we are done"
         );
         Ok(())
     }

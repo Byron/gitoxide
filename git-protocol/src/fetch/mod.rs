@@ -134,12 +134,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
 
         progress.step();
         progress.set_name("list refs");
-        let mut refs = transport.invoke(
+        let mut remote_refs = transport.invoke(
             ls_refs.as_str(),
             ls_features,
             if ls_args.is_empty() { None } else { Some(ls_args) },
         )?;
-        refs::from_v2_refs(&mut parsed_refs, &mut refs)?;
+        refs::from_v2_refs(&mut parsed_refs, &mut remote_refs)?;
     }
 
     let fetch = Command::Fetch;
