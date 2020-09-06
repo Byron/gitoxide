@@ -1,4 +1,6 @@
 ### Cloning
+* **git-transport**
+ * a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-protocol**
   * [ ] delegate interaction to support clone
     * [ ] parse server negotiation response
