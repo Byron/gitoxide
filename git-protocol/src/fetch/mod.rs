@@ -158,5 +158,5 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     // TODO: negotiation rounds till pack file is received or someone aborts.
 
     transport.close()?;
-    unimplemented!("rest of fetch or clone")
+    Ok(())
 }

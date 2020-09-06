@@ -164,21 +164,23 @@ impl Command {
                 }
             }
             git_transport::Protocol::V2 => {
-                if let Some(allowed) = server.iter().find_map(|c| {
-                    if c.name() == self.as_str().as_bytes().as_bstr() {
-                        c.values().map(|v| v.map(|f| f.to_string()).collect::<Vec<_>>())
-                    } else {
-                        None
+                let allowed = server
+                    .iter()
+                    .find_map(|c| {
+                        if c.name() == self.as_str().as_bytes().as_bstr() {
+                            c.values().map(|v| v.map(|f| f.to_string()).collect::<Vec<_>>())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_default();
+                for (feature, _) in features {
+                    if allowed.iter().any(|allowed| feature == allowed) {
+                        continue;
                     }
-                }) {
-                    for (feature, _) in features {
-                        if allowed.iter().any(|allowed| feature == allowed) {
-                            continue;
-                        }
-                        match *feature {
-                            "agent" => {}
-                            _ => panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature),
-                        }
+                    match *feature {
+                        "agent" => {}
+                        _ => panic!("{}: V2 feature/capability {} is not supported", self.as_str(), feature),
                     }
                 }
             }

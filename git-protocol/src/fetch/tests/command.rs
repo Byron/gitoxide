@@ -140,7 +140,7 @@ mod v2 {
             #[should_panic]
             fn unknown_argument() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V1,
+                    git_transport::Protocol::V2,
                     &capabilities("other", "do-not-matter"),
                     &[b"definitely-nothing-we-know".as_bstr().into()],
                     &[],
@@ -151,7 +151,7 @@ mod v2 {
             #[should_panic]
             fn unknown_feature() {
                 Command::LsRefs.validate_argument_prefixes_or_panic(
-                    git_transport::Protocol::V1,
+                    git_transport::Protocol::V2,
                     &capabilities("other", "do-not-matter"),
                     &[],
                     &[("some-feature-that-does-not-exist", None)],

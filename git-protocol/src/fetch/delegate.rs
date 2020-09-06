@@ -33,6 +33,7 @@ pub trait Delegate {
     /// Called before invoking the 'fetch' interaction, with `features` pre-filled for typical use
     /// and to maximize capabilities.
     /// `refs` is a list of known references on the remote, based on the handshake or a prior call to ls_refs.
+    /// These can be used to abort early in case the refs are already known here.
     /// As there will be another call allowing to post arguments conveniently in the correct format, i.e. `want hex-oid`,
     /// there is no way to set arguments at this time.
     fn prepare_fetch(
