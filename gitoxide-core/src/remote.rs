@@ -6,6 +6,7 @@ pub mod refs {
         git_transport,
     };
     pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
+    use git_protocol::fetch::{Arguments, Response};
     use std::io;
 
     #[derive(Default)]
@@ -23,6 +24,15 @@ pub mod refs {
         ) -> Action {
             self.refs = refs.into();
             Action::Close
+        }
+
+        fn negotiate(
+            &mut self,
+            _refs: &[Ref],
+            _arguments: &mut Arguments,
+            _previous_result: Option<&Response>,
+        ) -> Action {
+            unreachable!("not to be called due to Action::Close in `prepare_fetch`")
         }
     }
 

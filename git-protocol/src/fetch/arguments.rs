@@ -1,10 +1,12 @@
 use crate::fetch::command::Feature;
+use crate::fetch::Command;
 use bstr::{BStr, BString};
 use git_object::borrowed;
 use git_transport::Protocol;
 use std::fmt;
 
 pub struct Arguments {
+    _base_args: Vec<BString>,
     args: Vec<BString>,
 
     filter: bool,
@@ -12,6 +14,8 @@ pub struct Arguments {
     deepen_since: bool,
     deepen_not: bool,
     deepen_relative: bool,
+
+    features_for_first_want: Option<Vec<String>>,
 }
 
 impl Arguments {
@@ -35,7 +39,10 @@ impl Arguments {
     }
 
     pub fn want(&mut self, id: borrowed::Id) {
-        self.prefixed("want ", &id.to_string());
+        match self.features_for_first_want.take() {
+            Some(features) => self.prefixed("want ", format!("{}\0{}", id, features.join(" "))),
+            None => self.prefixed("want ", id),
+        }
     }
     pub fn have(&mut self, id: borrowed::Id) {
         self.prefixed("have ", id);
@@ -61,29 +68,39 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
-    pub(crate) fn new(initial_arguments: Vec<BString>, version: Protocol, features: &[Feature]) -> Self {
+    pub(crate) fn new(version: Protocol, features: &[Feature]) -> Self {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");
         let mut deepen_since = shallow;
         let mut deepen_not = shallow;
         let mut deepen_relative = shallow;
-        match version {
+        let (initial_arguments, features_for_first_want) = match version {
             Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");
+                let baked_features = features
+                    .iter()
+                    .map(|(n, v)| match v {
+                        Some(v) => format!("{}={}", n, v),
+                        None => n.to_string(),
+                    })
+                    .collect();
+                (Vec::new(), Some(baked_features))
             }
-            Protocol::V2 => {}
+            Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
         Arguments {
+            _base_args: initial_arguments.clone(),
             args: initial_arguments,
             filter,
             shallow,
             deepen_not,
             deepen_relative,
             deepen_since,
+            features_for_first_want,
         }
     }
 }

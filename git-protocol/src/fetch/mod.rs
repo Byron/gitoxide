@@ -154,12 +154,26 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         transport.close()?;
         return Ok(());
     }
-    let mut _fetch_arguments = fetch.initial_arguments(&fetch_features);
-    progress.step();
-    progress.set_name("negotiate (round 1)");
+    let mut arguments = Arguments::new(protocol_version, &fetch_features);
+    let previous_response = None::<Response>;
+    for round in 1..=16 {
+        // 16? Git does it that way, limiting the amount of lines sent at a time
+        progress.step();
+        progress.set_name(format!("negotiate (round {})", round));
+        let _action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
+        // match action {
+        //     Action::Close {
+        //
+        //     }
+        // }
+    }
 
     // TODO: negotiation rounds till pack file is received or someone aborts.
-
     transport.close()?;
     Ok(())
 }
+
+mod response {
+    pub struct Response;
+}
+pub use response::Response;

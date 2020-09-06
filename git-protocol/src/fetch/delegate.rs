@@ -1,4 +1,4 @@
-use crate::fetch::Ref;
+use crate::fetch::{Arguments, Ref, Response};
 use bstr::BString;
 use git_transport::client::Capabilities;
 
@@ -45,4 +45,11 @@ pub trait Delegate {
     ) -> Action {
         Action::Continue
     }
+
+    /// Given a list of `arguments` to populate to be send to the remote to start negotiating wants and haves.
+    /// `refs` are passed in each round, unchanged.
+    /// `previous_result` will be populated after the first server response has been received and can be used to figure
+    /// out whether to continue negotiating, or be done by returning `Action::Close`. The latter will be used to cause the
+    /// server to send a pack, if possible.
+    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous_result: Option<&Response>) -> Action;
 }
