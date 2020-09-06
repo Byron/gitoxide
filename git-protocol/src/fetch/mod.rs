@@ -13,6 +13,9 @@ pub use refs::Ref;
 mod command;
 pub use command::Command;
 
+mod arguments;
+pub use arguments::Arguments;
+
 #[cfg(test)]
 mod tests;
 
