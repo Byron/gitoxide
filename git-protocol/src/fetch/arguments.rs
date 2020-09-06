@@ -1,12 +1,13 @@
-use crate::fetch::command::Feature;
-use crate::fetch::Command;
+use crate::fetch::{command::Feature, Command};
 use bstr::{BStr, BString};
 use git_object::borrowed;
-use git_transport::Protocol;
+use git_transport::client::TransportV2Ext;
+use git_transport::{client, Protocol};
 use std::fmt;
+use std::io::Write;
 
 pub struct Arguments {
-    _base_args: Vec<BString>,
+    base_args: Vec<BString>,
     args: Vec<BString>,
 
     filter: bool,
@@ -93,7 +94,7 @@ impl Arguments {
         };
 
         Arguments {
-            _base_args: initial_arguments.clone(),
+            base_args: initial_arguments.clone(),
             args: initial_arguments,
             filter,
             shallow,
@@ -101,6 +102,37 @@ impl Arguments {
             deepen_relative,
             deepen_since,
             features_for_first_want,
+        }
+    }
+    pub(crate) fn send<'a, T: client::Transport + 'a>(
+        &mut self,
+        version: Protocol,
+        transport: &'a mut T,
+        features: &[Feature],
+        is_done: bool,
+    ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
+        let has = |name: &str| features.iter().any(|(n, _)| *n == name);
+        let is_done = is_done && !(has("no-done") && has("multi_ack_detailed"));
+        match version {
+            git_transport::Protocol::V1 => {
+                // TODO: figure out how stateless RPC would affect this, probably we have to know what it is
+                let mut on_drop = vec![client::MessageKind::Flush];
+                if is_done {
+                    on_drop.push(client::MessageKind::Text(&b"done"[..]));
+                }
+                let mut line_writer = transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_drop)?;
+                for arg in self.args.drain(..) {
+                    line_writer.write_all(&arg)?;
+                }
+                Ok(line_writer.into_read())
+            }
+            git_transport::Protocol::V2 => {
+                let mut arguments = std::mem::replace(&mut self.args, self.base_args.clone());
+                if is_done {
+                    arguments.push("done".into());
+                }
+                transport.invoke(Command::Fetch.as_str(), features.iter().cloned(), Some(arguments))
+            }
         }
     }
 }

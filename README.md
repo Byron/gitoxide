@@ -141,6 +141,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] git://<service>
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
+        * [ ] support for receiving 'shallow' refs
       * [x] V2 handshake
         * [x] send command request, receive response with sideband support
     * [x] http(s)://<service>
