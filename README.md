@@ -478,9 +478,6 @@ This project is licensed under either of
 
 at your option.
 
-  
-[miniz-inflatestate]: https://github.com/Frommi/miniz_oxide/blob/7f5aedd7cc553b624902210a7d136440c138dc80/miniz_oxide/src/inflate/stream.rs#L102
-
 ## Fun facts
 
 * Originally I was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)

@@ -112,12 +112,15 @@ impl Arguments {
         is_done: bool,
     ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
         let has = |name: &str| features.iter().any(|(n, _)| *n == name);
-        let is_done = is_done && !(has("no-done") && has("multi_ack_detailed"));
+        let mut add_done_argument = is_done;
+        if has("no-done") && has("multi_ack_detailed") {
+            add_done_argument = false;
+        }
         match version {
             git_transport::Protocol::V1 => {
                 // TODO: figure out how stateless RPC would affect this, probably we have to know what it is
                 let mut on_drop = vec![client::MessageKind::Flush];
-                if is_done {
+                if add_done_argument {
                     on_drop.push(client::MessageKind::Text(&b"done"[..]));
                 }
                 let mut line_writer = transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_drop)?;
@@ -128,7 +131,7 @@ impl Arguments {
             }
             git_transport::Protocol::V2 => {
                 let mut arguments = std::mem::replace(&mut self.args, self.base_args.clone());
-                if is_done {
+                if add_done_argument {
                     arguments.push("done".into());
                 }
                 transport.invoke(Command::Fetch.as_str(), features.iter().cloned(), Some(arguments))
