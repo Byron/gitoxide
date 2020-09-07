@@ -77,7 +77,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
             Box::new(
-                crate::client::file::connect(url.path)
+                crate::client::file::connect(url.path, version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }

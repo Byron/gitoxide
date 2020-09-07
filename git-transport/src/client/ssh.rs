@@ -59,6 +59,7 @@ pub fn connect(
             ssh_cmd_line.map(Cow::from).chain(args).chain(Some(host.into())),
             envs,
             path,
+            version,
         ),
         None => client::file::SpawnProcessOnDemand::new_ssh(
             url,
@@ -66,6 +67,7 @@ pub fn connect(
             ssh_cmd_line.chain(Some(host.as_str())),
             None::<(&str, String)>,
             path,
+            version,
         ),
     })
 }

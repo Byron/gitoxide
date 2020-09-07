@@ -25,6 +25,7 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
 ];
 
 pub struct SpawnProcessOnDemand {
+    desired_version: Protocol,
     url: git_url::Url,
     pub(crate) path: BString,
     ssh_program: Option<String>,
@@ -49,6 +50,7 @@ impl SpawnProcessOnDemand {
         args: impl IntoIterator<Item = impl Into<String>>,
         env: impl IntoIterator<Item = (&'static str, impl Into<String>)>,
         path: BString,
+        version: Protocol,
     ) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
             url,
@@ -58,9 +60,10 @@ impl SpawnProcessOnDemand {
             ssh_env: env.into_iter().map(|(k, v)| (k, v.into())).collect(),
             child: None,
             connection: None,
+            desired_version: version,
         }
     }
-    pub(crate) fn new_local(path: BString) -> SpawnProcessOnDemand {
+    pub(crate) fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
             url: git_url::Url {
                 scheme: git_url::Scheme::File,
@@ -75,6 +78,7 @@ impl SpawnProcessOnDemand {
             ssh_env: Vec::new(),
             child: None,
             connection: None,
+            desired_version: version,
         }
     }
 }
@@ -104,6 +108,7 @@ impl client::Transport for SpawnProcessOnDemand {
         self.connection = Some(git::Connection::new_for_spawned_process(
             child.stdout.take().expect("stdout configured"),
             child.stdin.take().expect("stdin configured"),
+            self.desired_version,
             self.path.clone(),
         ));
         self.child = Some(child);
@@ -134,13 +139,7 @@ impl client::Transport for SpawnProcessOnDemand {
     }
 
     fn desired_protocol_version(&self) -> Protocol {
-        match self.connection.as_ref() {
-            Some(connection) => connection.desired_protocol_version(),
-            None => {
-                // Only V1 is supported when invoking the upload pack program directly
-                Protocol::V1
-            }
-        }
+        self.desired_version
     }
 
     fn is_stateful(&self) -> bool {
@@ -148,6 +147,6 @@ impl client::Transport for SpawnProcessOnDemand {
     }
 }
 
-pub fn connect(path: impl Into<BString>) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
-    Ok(SpawnProcessOnDemand::new_local(path.into()))
+pub fn connect(path: impl Into<BString>, version: Protocol) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
+    Ok(SpawnProcessOnDemand::new_local(path.into(), version))
 }

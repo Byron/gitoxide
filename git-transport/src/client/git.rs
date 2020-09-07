@@ -151,11 +151,16 @@ where
             mode,
         }
     }
-    pub(crate) fn new_for_spawned_process(reader: R, writer: W, repository_path: impl Into<BString>) -> Self {
+    pub(crate) fn new_for_spawned_process(
+        reader: R,
+        writer: W,
+        desired_version: Protocol,
+        repository_path: impl Into<BString>,
+    ) -> Self {
         Self::new(
             reader,
             writer,
-            Protocol::V1, // only V1 is actually supported, as V2 really needs a server, which is not present here
+            desired_version,
             repository_path,
             None::<(&str, _)>,
             ConnectMode::Process,
