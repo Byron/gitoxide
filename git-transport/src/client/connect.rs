@@ -45,8 +45,8 @@ mod box_impl {
             self.deref_mut().set_identity(identity)
         }
 
-        fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error> {
-            self.deref_mut().request(write_mode, on_drop)
+        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error> {
+            self.deref_mut().request(write_mode, on_into_read)
         }
 
         fn close(&mut self) -> Result<(), Error> {

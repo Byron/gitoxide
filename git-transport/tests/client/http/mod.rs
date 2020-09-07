@@ -64,7 +64,7 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
     );
 
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
-    client.request(client::WriteMode::Binary, Vec::new())?;
+    client.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
 
     assert_eq!(
         server.received_as_string().lines().collect::<Vec<_>>(),
@@ -238,12 +238,12 @@ fn clone_v1() -> crate::Result {
     server.next_read_and_respond_with(fixture_bytes("v1/http-clone.response"));
     let mut writer = c.request(
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
-        vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
+        client::MessageKind::Text(b"done"),
     )?;
     writer.write_all(b"hello")?;
     writer.write_all(b"world")?;
 
-    let mut reader = writer.into_read();
+    let mut reader = writer.into_read()?;
     let mut line = String::new();
     reader.read_line(&mut line)?;
     assert_eq!(line, "NAK\n", "we receive a NAK in text mode before the PACK is sent");
@@ -275,10 +275,10 @@ User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
 
-21
+1d
 000ahello
 000aworld
-00000009done
+0009done
 
 0
 

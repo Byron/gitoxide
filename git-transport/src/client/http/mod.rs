@@ -142,7 +142,7 @@ impl<H: Http> client::Transport for Transport<H> {
     fn request(
         &mut self,
         write_mode: client::WriteMode,
-        on_drop: Vec<client::MessageKind>,
+        on_into_read: client::MessageKind,
     ) -> Result<client::RequestWriter, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
@@ -179,7 +179,7 @@ impl<H: Http> client::Transport for Transport<H> {
                 body: line_provider.as_read_without_sidebands(),
             }),
             write_mode,
-            on_drop,
+            on_into_read,
         ))
     }
 

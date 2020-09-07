@@ -121,14 +121,15 @@ impl Arguments {
         }
         match version {
             git_transport::Protocol::V1 => {
-                let mut on_drop = if add_done_argument {
-                    vec![client::MessageKind::Text(&b"done"[..])]
+                let on_into_read = if add_done_argument {
+                    client::MessageKind::Text(&b"done"[..])
                 } else {
-                    vec![client::MessageKind::Flush]
+                    client::MessageKind::Flush
                 };
                 let is_stateful = transport.is_stateful();
                 let retained_state = if is_stateful { None } else { Some(self.args.clone()) };
-                let mut line_writer = transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_drop)?;
+                let mut line_writer =
+                    transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_into_read)?;
 
                 for arg in self.args.drain(..) {
                     line_writer.write_all(&arg)?;
@@ -140,7 +141,7 @@ impl Arguments {
                 if let Some(next_args) = retained_state {
                     self.args = next_args;
                 }
-                Ok(line_writer.into_read())
+                Ok(line_writer.into_read()?)
             }
             git_transport::Protocol::V2 => {
                 let mut arguments = std::mem::replace(&mut self.args, self.base_args.clone());

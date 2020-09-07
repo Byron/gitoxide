@@ -114,11 +114,11 @@ impl client::Transport for SpawnProcessOnDemand {
         c.handshake(service)
     }
 
-    fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, client::Error> {
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, client::Error> {
         self.connection
             .as_mut()
             .expect("handshake() to have been called first")
-            .request(write_mode, on_drop)
+            .request(write_mode, on_into_read)
     }
 
     fn close(&mut self) -> Result<(), client::Error> {

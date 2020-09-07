@@ -72,18 +72,18 @@ fn handshake_v1_and_request() -> crate::Result {
     );
     drop(res);
 
-    let writer = c.request(client::WriteMode::Binary, Vec::new())?;
-    assert_eq!(writer.into_read().lines().next().expect("exactly one line")?, "NAK");
+    let writer = c.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
+    assert_eq!(writer.into_read()?.lines().next().expect("exactly one line")?, "NAK");
 
     let mut writer = c.request(
         client::WriteMode::OneLFTerminatedLinePerWriteCall,
-        vec![client::MessageKind::Flush, client::MessageKind::Text(b"done")],
+        client::MessageKind::Text(b"done"),
     )?;
 
     writer.write_all(b"hello")?;
     writer.write_all(b"world")?;
 
-    let mut reader = writer.into_read();
+    let mut reader = writer.into_read()?;
     let messages = Rc::new(RefCell::new(Vec::<String>::new()));
     reader.set_progress_handler(Some(Box::new({
         let sb = messages.clone();
@@ -105,9 +105,9 @@ fn handshake_v1_and_request() -> crate::Result {
 
     assert_eq!(
         out.as_slice().as_bstr(),
-        b"002egit-upload-pack /foo.git\0host=example.org\0000ahello\n\
+        b"002egit-upload-pack /foo.git\0host=example.org\00000000ahello\n\
         000aworld\n\
-        00000009done\n0000"
+        0009done\n0000"
             .as_bstr(),
         "it sends the correct request"
     );

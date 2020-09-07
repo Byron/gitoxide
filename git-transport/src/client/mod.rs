@@ -91,7 +91,8 @@ pub enum Identity {
 
 /// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
 pub struct RequestWriter<'a> {
-    pub(crate) writer: WritePacketOnDrop<Box<dyn io::Write + 'a>>,
+    on_into_read: MessageKind,
+    pub(crate) writer: git_packetline::Writer<Box<dyn io::Write + 'a>>,
     pub(crate) reader: Box<dyn ExtendedBufRead + 'a>,
 }
 
@@ -110,7 +111,7 @@ impl<'a> RequestWriter<'a> {
         writer: W,
         reader: Box<dyn ExtendedBufRead + 'a>,
         write_mode: WriteMode,
-        on_drop: Vec<MessageKind>,
+        on_into_read: MessageKind,
     ) -> Self {
         let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn io::Write>);
         match write_mode {
@@ -118,16 +119,24 @@ impl<'a> RequestWriter<'a> {
             WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
         }
         RequestWriter {
-            writer: WritePacketOnDrop::new(writer, on_drop),
+            on_into_read,
+            writer,
             reader,
         }
     }
-    pub fn into_read(self) -> Box<dyn ExtendedBufRead + 'a> {
-        self.reader
+    pub fn into_read(mut self) -> io::Result<Box<dyn ExtendedBufRead + 'a>> {
+        self.write_message(self.on_into_read)?;
+        Ok(self.reader)
     }
 
-    pub fn write_message(&mut self, kind: MessageKind) -> io::Result<()> {
-        self.writer.write_message(kind)
+    pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
+        match message {
+            MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.writer.inner),
+            MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.to_write(&mut self.writer.inner),
+            MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.writer.inner),
+        }
+        .map(|_| ())
+        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
     }
 }
 
@@ -142,47 +151,6 @@ impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSide
 }
 
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
-
-pub(crate) struct WritePacketOnDrop<W: io::Write> {
-    inner: git_packetline::Writer<W>,
-    on_drop: Vec<MessageKind>,
-}
-
-impl<W: io::Write> WritePacketOnDrop<W> {
-    pub fn new(inner: git_packetline::Writer<W>, on_drop: Vec<MessageKind>) -> Self {
-        WritePacketOnDrop { inner, on_drop }
-    }
-
-    pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
-        match message {
-            MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.inner.inner),
-            MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.to_write(&mut self.inner.inner),
-            MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.inner.inner),
-        }
-        .map(|_| ())
-        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-    }
-}
-
-impl<W: io::Write> io::Write for WritePacketOnDrop<W> {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.inner.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.inner.flush()
-    }
-}
-
-impl<W: io::Write> Drop for WritePacketOnDrop<W> {
-    fn drop(&mut self) {
-        let mut on_drop = std::mem::take(&mut self.on_drop);
-        for msg in on_drop.drain(..) {
-            self.write_message(msg)
-                .expect("packet line write on drop must work or we may as well panic to prevent weird surprises");
-        }
-    }
-}
 
 /// All methods provided here must be called in the correct order according to the communication protocol used to connect to them.
 /// It does, however, know just enough to be able to provide a higher-level interface than would otherwise be possible.
@@ -208,10 +176,10 @@ pub trait Transport {
     }
     /// Obtain a writer for sending data and obtaining the response. It can be configured in various ways,
     /// and should to support with the task at hand.
-    /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_drop` determines
-    /// which messages to write when the writer is dropped. This happens naturally when switching to reading the response with `into_read()`.
+    /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_into_read` determines
+    /// which message to write when the writer is turned into the response reader using `into_read()`.
     /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
-    fn request(&mut self, write_mode: WriteMode, on_drop: Vec<MessageKind>) -> Result<RequestWriter, Error>;
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
     fn close(&mut self) -> Result<(), Error>;
@@ -253,7 +221,7 @@ impl<T: Transport> TransportV2Ext for T {
         capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         arguments: Option<impl IntoIterator<Item = BString>>,
     ) -> Result<Box<dyn ExtendedBufRead + '_>, Error> {
-        let mut writer = self.request(WriteMode::OneLFTerminatedLinePerWriteCall, vec![MessageKind::Flush])?;
+        let mut writer = self.request(WriteMode::OneLFTerminatedLinePerWriteCall, MessageKind::Flush)?;
         writer.write_all(format!("command={}", command).as_bytes())?;
         for (name, value) in capabilities {
             match value {
@@ -267,6 +235,6 @@ impl<T: Transport> TransportV2Ext for T {
                 writer.write_all(argument.as_ref())?;
             }
         }
-        Ok(writer.into_read())
+        Ok(writer.into_read()?)
     }
 }

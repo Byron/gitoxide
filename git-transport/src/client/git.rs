@@ -93,13 +93,13 @@ where
     fn request(
         &mut self,
         write_mode: client::WriteMode,
-        on_drop: Vec<client::MessageKind>,
+        on_into_read: client::MessageKind,
     ) -> Result<client::RequestWriter, client::Error> {
         Ok(client::RequestWriter::new_from_bufread(
             &mut self.writer,
             Box::new(self.line_provider.as_read_without_sidebands()),
             write_mode,
-            on_drop,
+            on_into_read,
         ))
     }
 
