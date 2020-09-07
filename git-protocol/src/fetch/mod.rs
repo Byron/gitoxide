@@ -40,6 +40,9 @@ quick_error! {
             from()
             source(err)
         }
+        MissingServerCapability(feature: &'static str) {
+            display("Currently we require feature '{}', which is not supported by the server", feature)
+        }
     }
 }
 
@@ -154,7 +157,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         transport.close()?;
         return Ok(());
     }
-    let mut arguments = Arguments::new(protocol_version, &fetch_features);
+    let mut arguments = Arguments::new(protocol_version, &fetch_features)?;
     let previous_response = None::<Response>;
     // 16? Git does it that way, limiting the amount of iterations we take.
     // TODO: Make this a loop and abort after having exchanged a certain amount of objects instead

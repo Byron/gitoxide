@@ -1,10 +1,11 @@
-use crate::fetch::{command::Feature, Command};
+use crate::fetch::{self, command::Feature, Command};
 use bstr::{BStr, BString};
 use git_object::borrowed;
-use git_transport::client::TransportV2Ext;
-use git_transport::{client, Protocol};
-use std::fmt;
-use std::io::Write;
+use git_transport::{
+    client::{self, TransportV2Ext},
+    Protocol,
+};
+use std::{fmt, io::Write};
 
 pub struct Arguments {
     base_args: Vec<BString>,
@@ -71,7 +72,7 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
-    pub(crate) fn new(version: Protocol, features: &[Feature]) -> Self {
+    pub(crate) fn new(version: Protocol, features: &[Feature]) -> Result<Self, fetch::Error> {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");
@@ -80,6 +81,10 @@ impl Arguments {
         let mut deepen_relative = shallow;
         let (initial_arguments, features_for_first_want) = match version {
             Protocol::V1 => {
+                // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
+                if !has("multi_ack_detailed") {
+                    return Err(fetch::Error::MissingServerCapability("multi_ack_detailed"));
+                }
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");
@@ -95,7 +100,7 @@ impl Arguments {
             Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
-        Arguments {
+        Ok(Arguments {
             base_args: initial_arguments.clone(),
             args: initial_arguments,
             haves: Vec::new(),
@@ -105,7 +110,7 @@ impl Arguments {
             deepen_relative,
             deepen_since,
             features_for_first_want,
-        }
+        })
     }
     pub(crate) fn send<'a, T: client::Transport + 'a>(
         &mut self,
