@@ -3,12 +3,16 @@ use bstr::ByteSlice;
 use git_transport::Protocol;
 use std::io;
 
-fn new(protocol: git_transport::Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
+fn new(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(
         protocol,
         features
             .into_iter()
-            .chain(Some("multi_ack_detailed"))
+            .chain(if protocol == Protocol::V1 {
+                Some("multi_ack_detailed")
+            } else {
+                None
+            })
             .map(|n| (n, None))
             .collect(),
     )
@@ -53,6 +57,29 @@ mod v1 {
             .as_bstr()
         );
     }
+
+    #[test]
+    fn haves_and_wants_for_fetch() {
+        let mut out = Vec::new();
+        let mut t = transport(&mut out);
+        let mut arguments = new(Protocol::V1, ["feature-a"].iter().cloned());
+
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+        arguments.send(&mut t, false).expect("sending to buffer to work");
+
+        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+        arguments.send(&mut t, true).expect("sending to buffer to work");
+        assert_eq!(
+            out.as_bstr(),
+            b"004fwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a multi_ack_detailed
+00000032have 0000000000000000000000000000000000000000
+000000000032have 1111111111111111111111111111111111111111
+0009done
+"
+            .as_bstr()
+        );
+    }
 }
 
 mod v2 {
@@ -74,12 +101,44 @@ mod v2 {
             b"0012command=fetch
 000efeature-a
 000efeature-b
-0017multi_ack_detailed
 0001000ethin-pack
 0010include-tag
 000eofs-delta
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
+0009done
+0000"
+                .as_bstr()
+        );
+    }
+
+    #[test]
+    fn haves_and_wants_for_fetch() {
+        let mut out = Vec::new();
+        let mut t = transport(&mut out);
+        let mut arguments = new(Protocol::V2, ["feature-a"].iter().cloned());
+
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+        arguments.send(&mut t, false).expect("sending to buffer to work");
+
+        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+        arguments.send(&mut t, true).expect("sending to buffer to work");
+        assert_eq!(
+            out.as_bstr(),
+            b"0012command=fetch
+000efeature-a
+0001000ethin-pack
+0010include-tag
+000eofs-delta
+0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
+0032have 0000000000000000000000000000000000000000
+00000012command=fetch
+000efeature-a
+0001000ethin-pack
+0010include-tag
+000eofs-delta
+0032have 1111111111111111111111111111111111111111
 0009done
 0000"
                 .as_bstr()

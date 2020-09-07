@@ -128,10 +128,9 @@ impl Arguments {
         if has("no-done") && has("multi_ack_detailed") {
             add_done_argument = false;
         }
-        assert!(
-            self.haves.is_empty() && is_done,
-            "If there are no haves, is_done must be true."
-        );
+        if self.haves.is_empty() {
+            assert!(is_done, "If there are no haves, is_done must be true.");
+        }
         match self.version {
             git_transport::Protocol::V1 => {
                 let on_into_read = if add_done_argument {
