@@ -171,7 +171,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
-        arguments.send(&mut transport, action == Action::Close)?;
+        let _response = arguments.send(&mut transport, action == Action::Close)?;
         // TODO: read server response in a protocol independent way
         // match action {
         //     Action::Close {

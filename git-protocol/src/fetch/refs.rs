@@ -53,6 +53,16 @@ pub enum Ref {
     },
 }
 
+impl Ref {
+    pub fn unpack_common(&self) -> (&BString, &owned::Id) {
+        match self {
+            Ref::Direct { path, object, .. }
+            | Ref::Peeled { path, object, .. }
+            | Ref::Symbolic { path, object, .. } => (path, object),
+        }
+    }
+}
+
 impl From<InternalRef> for Ref {
     fn from(v: InternalRef) -> Self {
         match v {

@@ -7,8 +7,11 @@ use git_transport::client::Capabilities;
 
 struct CloneDelegate;
 impl fetch::Delegate for CloneDelegate {
-    fn negotiate(&mut self, _refs: &[Ref], _arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
-        unimplemented!("basic cloning")
+    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
+        for r in refs {
+            arguments.want(r.unpack_common().1.to_borrowed());
+        }
+        Action::Close
     }
 }
 
@@ -62,7 +65,6 @@ mod v1 {
     use git_transport::Protocol;
 
     #[test]
-    #[ignore]
     fn clone() -> crate::Result {
         let mut out = Vec::new();
         git_protocol::fetch(
