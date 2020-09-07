@@ -7,10 +7,10 @@ use std::fmt;
 use std::io::Write;
 
 pub struct Arguments {
-    base_features: Vec<String>,
     base_args: Vec<BString>,
 
     args: Vec<BString>,
+    haves: Vec<BString>,
 
     filter: bool,
     shallow: bool,
@@ -48,7 +48,7 @@ impl Arguments {
         }
     }
     pub fn have(&mut self, id: borrowed::Id) {
-        self.prefixed("have ", id);
+        self.haves.push(format!("have {}", id).into());
     }
     pub fn deepen(&mut self, depth: usize) {
         assert!(self.shallow, "'shallow' feature required for deepen");
@@ -78,7 +78,7 @@ impl Arguments {
         let mut deepen_since = shallow;
         let mut deepen_not = shallow;
         let mut deepen_relative = shallow;
-        let (initial_arguments, base_features, features_for_first_want) = match version {
+        let (initial_arguments, features_for_first_want) = match version {
             Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
@@ -90,15 +90,15 @@ impl Arguments {
                         None => n.to_string(),
                     })
                     .collect::<Vec<_>>();
-                (Vec::new(), baked_features.clone(), Some(baked_features))
+                (Vec::new(), Some(baked_features))
             }
-            Protocol::V2 => (Command::Fetch.initial_arguments(&features), Vec::new(), None),
+            Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
         Arguments {
-            base_features,
             base_args: initial_arguments.clone(),
             args: initial_arguments,
+            haves: Vec::new(),
             filter,
             shallow,
             deepen_not,
@@ -121,17 +121,24 @@ impl Arguments {
         }
         match version {
             git_transport::Protocol::V1 => {
-                let mut on_drop = vec![client::MessageKind::Flush];
-                if add_done_argument {
-                    on_drop.push(client::MessageKind::Text(&b"done"[..]));
-                }
+                let mut on_drop = if add_done_argument {
+                    vec![client::MessageKind::Text(&b"done"[..])]
+                } else {
+                    vec![client::MessageKind::Flush]
+                };
+                let is_stateful = transport.is_stateful();
+                let retained_state = if is_stateful { None } else { Some(self.args.clone()) };
                 let mut line_writer = transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_drop)?;
+
                 for arg in self.args.drain(..) {
                     line_writer.write_all(&arg)?;
                 }
-                if !is_done {
-                    // re-install features for the next round
-                    self.features_for_first_want = Some(self.base_features.clone());
+                line_writer.write_message(client::MessageKind::Flush)?;
+                for line in self.haves.drain(..) {
+                    line_writer.write_all(&line)?;
+                }
+                if let Some(next_args) = retained_state {
+                    self.args = next_args;
                 }
                 Ok(line_writer.into_read())
             }

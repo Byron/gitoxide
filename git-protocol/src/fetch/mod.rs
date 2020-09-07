@@ -156,7 +156,8 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     }
     let mut arguments = Arguments::new(protocol_version, &fetch_features);
     let previous_response = None::<Response>;
-    // 16? Git does it that way, limiting the amount of lines sent at a time
+    // 16? Git does it that way, limiting the amount of iterations we take.
+    // TODO: Make this a loop and abort after having exchanged a certain amount of objects instead
     for round in 1..=16 {
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
@@ -167,7 +168,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             &fetch_features,
             action == Action::Close,
         )?;
-        // TODO: read result in a protocol independent way
+        // TODO: read server response in a protocol independent way
         // match action {
         //     Action::Close {
         //

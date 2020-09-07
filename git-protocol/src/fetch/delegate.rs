@@ -46,10 +46,23 @@ pub trait Delegate {
         Action::Continue
     }
 
-    /// Given a list of `arguments` to populate to be send to the remote to start negotiating wants and haves.
-    /// `refs` are passed in each round, unchanged.
-    /// `previous_result` will be populated after the first server response has been received and can be used to figure
-    /// out whether to continue negotiating, or be done by returning `Action::Close`. The latter will be used to cause the
-    /// server to send a pack, if possible.
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous_result: Option<&Response>) -> Action;
+    /// ### `previous` is None
+    /// Given a list of `arguments` to populate to be send to the remote to start negotiation with wants, shallows, filters and
+    /// other contextual information. This method is called once.
+    /// Send the objects you `have` have afterwards based on your tips, in preparation to walk down their parents with each call
+    /// to `negotiate` in find the common base.
+    /// Note that you should not `want` and object that you already have.
+    /// `refs` are the the tips of on the server side, effectively the latest objects they have.
+    ///
+    /// Return `Action::Close` if you know that there are no `haves` on your end to allow the server to send all of its objects,
+    /// as done during clone.
+    ///
+    /// ### `previous` is Some
+    /// Populate `arguments` with the objects you `have` starting from the tips, taking into consideration the `previous` response of the server to see
+    /// which objects they acknowledged to have. You have to maintain enough state to be able to walk down from your tips on each call,
+    /// if they are not in common, and keep setting `have` for those which are in common if that helps teaching the server about our state.
+    /// This method is called until the other side signals they are ready to send a pack.
+    /// Return `Action::Close` if you want to give up before finding a common base. This can happen if the remote repository has radically changed
+    /// so there are no bases, or they are very far in the past.
+    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
 }
