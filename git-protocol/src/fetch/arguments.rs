@@ -8,6 +8,8 @@ use git_transport::{
 use std::{fmt, io::Write};
 
 pub struct Arguments {
+    /// The active features/capabilities of the fetch invocation
+    features: Vec<Feature>,
     base_args: Vec<BString>,
 
     args: Vec<BString>,
@@ -20,6 +22,7 @@ pub struct Arguments {
     deepen_relative: bool,
 
     features_for_first_want: Option<Vec<String>>,
+    version: Protocol,
 }
 
 impl Arguments {
@@ -72,7 +75,7 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
-    pub(crate) fn new(version: Protocol, features: &[Feature]) -> Result<Self, fetch::Error> {
+    pub(crate) fn new(version: Protocol, features: Vec<Feature>) -> Result<Self, fetch::Error> {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");
@@ -100,7 +103,10 @@ impl Arguments {
             Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
+        drop(has);
         Ok(Arguments {
+            features,
+            version,
             base_args: initial_arguments.clone(),
             args: initial_arguments,
             haves: Vec::new(),
@@ -114,12 +120,10 @@ impl Arguments {
     }
     pub(crate) fn send<'a, T: client::Transport + 'a>(
         &mut self,
-        version: Protocol,
         transport: &'a mut T,
-        features: &[Feature],
         is_done: bool,
     ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
-        let has = |name: &str| features.iter().any(|(n, _)| *n == name);
+        let has = |name: &str| self.features.iter().any(|(n, _)| *n == name);
         let mut add_done_argument = is_done;
         if has("no-done") && has("multi_ack_detailed") {
             add_done_argument = false;
@@ -128,7 +132,7 @@ impl Arguments {
             self.haves.is_empty() && is_done,
             "If there are no haves, is_done must be true."
         );
-        match version {
+        match self.version {
             git_transport::Protocol::V1 => {
                 let on_into_read = if add_done_argument {
                     client::MessageKind::Text(&b"done"[..])
@@ -161,7 +165,7 @@ impl Arguments {
                 if add_done_argument {
                     arguments.push("done".into());
                 }
-                transport.invoke(Command::Fetch.as_str(), features.iter().cloned(), Some(arguments))
+                transport.invoke(Command::Fetch.as_str(), self.features.iter().cloned(), Some(arguments))
             }
         }
     }

@@ -157,7 +157,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         transport.close()?;
         return Ok(());
     }
-    let mut arguments = Arguments::new(protocol_version, &fetch_features)?;
+    let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let previous_response = None::<Response>;
     // 16? Git does it that way, limiting the amount of iterations we take.
     // TODO: Make this a loop and abort after having exchanged a certain amount of objects instead
@@ -165,12 +165,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
-        arguments.send(
-            protocol_version,
-            &mut transport,
-            &fetch_features,
-            action == Action::Close,
-        )?;
+        arguments.send(&mut transport, action == Action::Close)?;
         // TODO: read server response in a protocol independent way
         // match action {
         //     Action::Close {

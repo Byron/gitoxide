@@ -8,7 +8,7 @@ pub enum Command {
     Fetch,
 }
 
-pub type Feature<'a> = (&'a str, Option<&'a str>);
+pub type Feature = (&'static str, Option<&'static str>);
 
 impl Command {
     pub fn as_str(&self) -> &'static str {
@@ -76,7 +76,7 @@ impl Command {
 
     /// Compute initial arguments based on the given `features`. They are typically provided by the `default_features(…)` method.
     /// Only useful for V2
-    pub(crate) fn initial_arguments<'a>(&'a self, features: &[Feature]) -> Vec<BString> {
+    pub(crate) fn initial_arguments(&self, features: &[Feature]) -> Vec<BString> {
         match self {
             Command::Fetch => ["thin-pack", "include-tag", "ofs-delta"]
                 .iter()
@@ -92,10 +92,10 @@ impl Command {
         }
     }
 
-    pub(crate) fn default_features<'a>(
-        &'a self,
+    pub(crate) fn default_features(
+        &self,
         version: git_transport::Protocol,
-        server_capabilities: &'a Capabilities,
+        server_capabilities: &Capabilities,
     ) -> Vec<Feature> {
         match self {
             Command::Fetch => match version {
