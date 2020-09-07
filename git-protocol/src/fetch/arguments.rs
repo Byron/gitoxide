@@ -7,7 +7,9 @@ use std::fmt;
 use std::io::Write;
 
 pub struct Arguments {
+    base_features: Vec<String>,
     base_args: Vec<BString>,
+
     args: Vec<BString>,
 
     filter: bool,
@@ -76,7 +78,7 @@ impl Arguments {
         let mut deepen_since = shallow;
         let mut deepen_not = shallow;
         let mut deepen_relative = shallow;
-        let (initial_arguments, features_for_first_want) = match version {
+        let (initial_arguments, base_features, features_for_first_want) = match version {
             Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
@@ -87,13 +89,14 @@ impl Arguments {
                         Some(v) => format!("{}={}", n, v),
                         None => n.to_string(),
                     })
-                    .collect();
-                (Vec::new(), Some(baked_features))
+                    .collect::<Vec<_>>();
+                (Vec::new(), baked_features.clone(), Some(baked_features))
             }
-            Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
+            Protocol::V2 => (Command::Fetch.initial_arguments(&features), Vec::new(), None),
         };
 
         Arguments {
+            base_features,
             base_args: initial_arguments.clone(),
             args: initial_arguments,
             filter,
@@ -126,6 +129,10 @@ impl Arguments {
                 let mut line_writer = transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_drop)?;
                 for arg in self.args.drain(..) {
                     line_writer.write_all(&arg)?;
+                }
+                if !is_done {
+                    // re-install features for the next round
+                    self.features_for_first_want = Some(self.base_features.clone());
                 }
                 Ok(line_writer.into_read())
             }
