@@ -103,7 +103,6 @@ impl Arguments {
             Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
-        drop(has);
         Ok(Arguments {
             features,
             version,
