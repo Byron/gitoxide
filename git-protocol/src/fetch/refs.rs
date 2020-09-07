@@ -51,28 +51,59 @@ pub enum Ref {
         target: BString,
         object: owned::Id,
     },
+}
+
+impl From<InternalRef> for Ref {
+    fn from(v: InternalRef) -> Self {
+        match v {
+            InternalRef::Symbolic { path, target, object } => Ref::Symbolic { path, target, object },
+            InternalRef::Peeled { path, tag, object } => Ref::Peeled { path, tag, object },
+            InternalRef::Direct { path, object } => Ref::Direct { path, object },
+            InternalRef::SymbolicForLookup { .. } => {
+                unreachable!("this case should have been removed during processing")
+            }
+        }
+    }
+}
+
+#[cfg_attr(test, derive(PartialEq, Eq, Debug, Clone))]
+pub(crate) enum InternalRef {
+    /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
+    Peeled {
+        path: BString,
+        tag: owned::Id,
+        object: owned::Id,
+    },
+    /// A ref pointing to a commit object
+    Direct { path: BString, object: owned::Id },
+    /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
+    Symbolic {
+        path: BString,
+        target: BString,
+        object: owned::Id,
+    },
     /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
     /// These don't contain the Id
     SymbolicForLookup { path: BString, target: BString },
 }
 
-impl Ref {
+impl InternalRef {
     fn unpack_direct(self) -> Option<(BString, owned::Id)> {
         match self {
-            Ref::Direct { path, object } => Some((path, object)),
+            InternalRef::Direct { path, object } => Some((path, object)),
             _ => None,
         }
     }
     fn lookup_symbol_has_path(&self, predicate_path: &str) -> bool {
         match self {
-            Ref::SymbolicForLookup { path, .. } if path == predicate_path => true,
+            InternalRef::SymbolicForLookup { path, .. } if path == predicate_path => true,
             _ => false,
         }
     }
 }
 
 pub(crate) fn from_capabilities<'a>(
-    out_refs: &mut Vec<Ref>,
+    out_refs: &mut Vec<InternalRef>,
     capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
 ) -> Result<(), Error> {
     let symref_values = capabilities.filter_map(|c| {
@@ -91,7 +122,7 @@ pub(crate) fn from_capabilities<'a>(
         if left.is_empty() || right.is_empty() {
             return Err(Error::MalformedSymref(symref.to_owned()));
         }
-        out_refs.push(Ref::SymbolicForLookup {
+        out_refs.push(InternalRef::SymbolicForLookup {
             path: left.into(),
             target: right[1..].into(),
         })
@@ -152,7 +183,7 @@ pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRea
 }
 
 pub(crate) fn from_v1_refs_received_as_part_of_handshake(
-    out_refs: &mut Vec<Ref>,
+    out_refs: &mut Vec<InternalRef>,
     in_refs: &mut dyn io::BufRead,
 ) -> Result<(), Error> {
     let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
@@ -176,14 +207,14 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
         if path.ends_with("^{}") {
             let (previous_path, tag) = out_refs
                 .pop()
-                .and_then(Ref::unpack_direct)
+                .and_then(InternalRef::unpack_direct)
                 .ok_or_else(|| Error::InvariantViolation("Expecting peeled refs to be preceeded by direct refs"))?;
             if previous_path != path[..path.len() - "^{}".len()] {
                 return Err(Error::InvariantViolation(
                     "Expecting peeled refs to have the same base path as the previous, unpeeled one",
                 ));
             }
-            out_refs.push(Ref::Peeled {
+            out_refs.push(InternalRef::Peeled {
                 path: previous_path,
                 tag,
                 object: owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?,
@@ -196,14 +227,14 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
                 .position(|r| r.lookup_symbol_has_path(path))
             {
                 Some(position) => match out_refs.swap_remove(position) {
-                    Ref::SymbolicForLookup { path: _, target } => out_refs.push(Ref::Symbolic {
+                    InternalRef::SymbolicForLookup { path: _, target } => out_refs.push(InternalRef::Symbolic {
                         path: path.into(),
                         object,
                         target,
                     }),
                     _ => unreachable!("Bug in lookup_symbol_has_path - must return lookup symbols"),
                 },
-                None => out_refs.push(Ref::Direct {
+                None => out_refs.push(InternalRef::Direct {
                     object,
                     path: path.into(),
                 }),

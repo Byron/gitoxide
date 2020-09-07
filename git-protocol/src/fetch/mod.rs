@@ -8,6 +8,7 @@ use quick_error::quick_error;
 use std::io;
 
 mod refs;
+use refs::InternalRef;
 pub use refs::Ref;
 
 mod command;
@@ -99,7 +100,7 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             Err(err) => Err(err),
         }?;
 
-        let mut parsed_refs = Vec::<Ref>::new();
+        let mut parsed_refs = Vec::<InternalRef>::new();
         refs::from_capabilities(&mut parsed_refs, capabilities.iter())?;
 
         let call_ls_refs = match refs {
@@ -114,7 +115,12 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
             }
             None => true,
         };
-        (actual_protocol, parsed_refs, capabilities, call_ls_refs)
+        (
+            actual_protocol,
+            parsed_refs.into_iter().map(Into::into).collect::<Vec<Ref>>(),
+            capabilities,
+            call_ls_refs,
+        )
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
     if transport.desired_protocol_version() != protocol_version {

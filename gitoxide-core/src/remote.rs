@@ -103,9 +103,6 @@ pub mod refs {
                     tag: tag.to_string(),
                     object: object.to_string(),
                 },
-                Ref::SymbolicForLookup { .. } => {
-                    unreachable!("Symbolic refs for lookup should never remain in the system")
-                }
             }
         }
     }
@@ -124,7 +121,6 @@ pub mod refs {
                     path,
                     target
                 ),
-                Ref::SymbolicForLookup { .. } => unreachable!("Bug: these should be resolved already"),
             }?;
         }
         Ok(())

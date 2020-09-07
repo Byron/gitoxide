@@ -1,4 +1,4 @@
-use super::super::{refs, Ref};
+use super::super::{refs, InternalRef, Ref};
 use git_object::owned;
 use git_transport::client;
 use std::io;
@@ -51,7 +51,7 @@ fn extract_references_from_v1_refs() {
 dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
 21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/git-commitgraph-v0.0.0^{}"
         .as_bytes();
-    let mut out = vec![Ref::SymbolicForLookup {
+    let mut out = vec![InternalRef::SymbolicForLookup {
         path: "HEAD".into(),
         target: "refs/heads/main".into(),
     }];
@@ -59,20 +59,20 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
     assert_eq!(
         out,
         vec![
-            Ref::Symbolic {
+            InternalRef::Symbolic {
                 path: "HEAD".into(),
                 target: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
-            Ref::Direct {
+            InternalRef::Direct {
                 path: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
-            Ref::Direct {
+            InternalRef::Direct {
                 path: "refs/pull/13/head".into(),
                 object: oid("8e472f9ccc7d745927426cbb2d9d077de545aa4e")
             },
-            Ref::Peeled {
+            InternalRef::Peeled {
                 path: "refs/tags/git-commitgraph-v0.0.0".into(),
                 tag: oid("dce0ea858eef7ff61ad345cc5cdac62203fb3c10"),
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
@@ -93,11 +93,11 @@ fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> 
     assert_eq!(
         out,
         vec![
-            Ref::SymbolicForLookup {
+            InternalRef::SymbolicForLookup {
                 path: "HEAD".into(),
                 target: "refs/heads/main".into()
             },
-            Ref::SymbolicForLookup {
+            InternalRef::SymbolicForLookup {
                 path: "ANOTHER".into(),
                 target: "refs/heads/foo".into()
             }
