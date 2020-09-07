@@ -121,7 +121,6 @@ impl Arguments {
         }
         match version {
             git_transport::Protocol::V1 => {
-                // TODO: figure out how stateless RPC would affect this, probably we have to know what it is
                 let mut on_drop = vec![client::MessageKind::Flush];
                 if add_done_argument {
                     on_drop.push(client::MessageKind::Text(&b"done"[..]));

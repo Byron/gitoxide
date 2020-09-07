@@ -23,6 +23,7 @@ fn handshake_v1_and_request() -> crate::Result {
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
     );
+    assert!(c.is_stateful(), "tcp connections are stateful");
     assert_eq!(c.to_url(), "file:///foo.git");
     let mut res = c.handshake(Service::UploadPack)?;
     assert_eq!(res.actual_protocol, Protocol::V1);
@@ -146,6 +147,10 @@ fn handshake_v2_and_request() -> crate::Result {
         "/bar.git",
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
+    );
+    assert!(
+        c.is_stateful(),
+        "tcp connections are stateful despite the protocol version"
     );
     let res = c.handshake(Service::UploadPack)?;
     assert_eq!(res.actual_protocol, Protocol::V2);

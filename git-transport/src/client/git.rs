@@ -123,6 +123,10 @@ where
     fn desired_protocol_version(&self) -> Protocol {
         self.desired_version
     }
+
+    fn is_stateful(&self) -> bool {
+        true
+    }
 }
 
 impl<R, W> Connection<R, W>

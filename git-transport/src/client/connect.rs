@@ -60,6 +60,10 @@ mod box_impl {
         fn desired_protocol_version(&self) -> Protocol {
             self.deref().desired_protocol_version()
         }
+
+        fn is_stateful(&self) -> bool {
+            self.deref().is_stateful()
+        }
     }
 }
 

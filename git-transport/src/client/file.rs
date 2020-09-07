@@ -142,6 +142,10 @@ impl client::Transport for SpawnProcessOnDemand {
             }
         }
     }
+
+    fn is_stateful(&self) -> bool {
+        true
+    }
 }
 
 pub fn connect(path: impl Into<BString>) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {

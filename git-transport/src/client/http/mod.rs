@@ -194,6 +194,10 @@ impl<H: Http> client::Transport for Transport<H> {
     fn desired_protocol_version(&self) -> Protocol {
         self.desired_version
     }
+
+    fn is_stateful(&self) -> bool {
+        false
+    }
 }
 
 struct HeadersThenBody<H: Http, B> {

@@ -225,6 +225,13 @@ pub trait Transport {
     /// Please note that the actual protocol might differ after the handshake was conducted in case the server
     /// does not support it.
     fn desired_protocol_version(&self) -> Protocol;
+
+    /// Returns true if the transport is inherently stateful, or false otherwise.
+    /// Not being stateful implies that certain information has to be resent on each 'turn'
+    /// of the fetch negotiation.
+    /// This answer should not be based on the Protocol itself, which might enforce stateless
+    /// interactions despite the connections staying intact.
+    fn is_stateful(&self) -> bool;
 }
 
 pub trait TransportV2Ext {
