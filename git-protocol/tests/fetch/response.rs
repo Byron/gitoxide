@@ -17,7 +17,14 @@ mod v1 {
         use git_transport::Protocol;
 
         #[test]
-        #[ignore]
+        fn clone() {
+            let mut provider = mock_reader("v1/clone-only.response");
+            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))
+                .expect("reading to succeed");
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
+        }
+
+        #[test]
         fn simple_fetch_acks_and_pack() {
             let mut provider = mock_reader("v1/fetch.response");
             let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))

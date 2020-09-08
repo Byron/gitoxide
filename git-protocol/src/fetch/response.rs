@@ -95,14 +95,15 @@ impl Response {
         match version {
             Protocol::V1 => {
                 enum State {
-                    FirstCheckClone,
+                    AtFirstCheckClone,
                     ParseAcks(Vec<Acknowledgement>),
                 }
-                let mut state = State::FirstCheckClone;
+                let mut state = State::AtFirstCheckClone;
+                let mut line = String::new();
                 let acks = loop {
+                    line.clear();
                     match state {
-                        State::FirstCheckClone => {
-                            let mut line = String::new();
+                        State::AtFirstCheckClone => {
                             if reader.read_line(&mut line)? == 0 {
                                 return Err(Error::Io(io::Error::new(
                                     io::ErrorKind::UnexpectedEof,
@@ -121,7 +122,28 @@ impl Response {
                                 }
                             }
                         }
-                        State::ParseAcks(_acks) => unimplemented!("ack parsing"),
+                        State::ParseAcks(mut acks) => {
+                            let peeked_line = match reader.peek_data_line() {
+                                Some(line) => String::from_utf8_lossy(line??),
+                                None => break acks, // EOF
+                            };
+                            // assuming a cooperative server, we just assume that a non-ack line is a pack line
+                            // which is our hint to stop here.
+                            let ack = match Acknowledgement::from_line(&peeked_line) {
+                                Ok(ack) => ack,
+                                Err(_) => break acks,
+                            };
+                            assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
+                            match ack.id() {
+                                Some(id) => {
+                                    if !acks.iter().any(|a| a.id() == Some(id)) {
+                                        acks.push(ack);
+                                    }
+                                }
+                                None => acks.push(ack),
+                            }
+                            state = State::ParseAcks(acks)
+                        }
                     }
                 };
                 Ok(Response { acks })
