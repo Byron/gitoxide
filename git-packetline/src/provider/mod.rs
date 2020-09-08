@@ -14,7 +14,7 @@ pub struct Provider<T> {
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
     buf: Vec<u8>,
-    delimiter: PacketLine<'static>,
+    delimiters: Vec<PacketLine<'static>>,
     is_done: bool,
 }
 
@@ -22,12 +22,12 @@ impl<T> Provider<T>
 where
     T: io::Read,
 {
-    pub fn new(inner: T, delimiter: PacketLine<'static>) -> Self {
+    pub fn new(inner: T, delimiters: impl IntoIterator<Item = PacketLine<'static>>) -> Self {
         Provider {
             inner,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
-            delimiter,
+            delimiters: delimiters.into_iter().collect(),
             fail_on_err_lines: false,
             is_done: false,
         }
@@ -40,11 +40,12 @@ where
     }
 
     pub fn reset(&mut self) {
-        self.reset_with(self.delimiter);
+        let delimiters = std::mem::take(&mut self.delimiters);
+        self.reset_with(delimiters);
     }
 
-    pub fn reset_with(&mut self, delimiter: PacketLine<'static>) {
-        self.delimiter = delimiter;
+    pub fn reset_with(&mut self, delimiters: impl IntoIterator<Item = PacketLine<'static>>) {
+        self.delimiters = delimiters.into_iter().collect();
         self.fail_on_err_lines = false;
         self.is_done = false;
     }
@@ -83,7 +84,7 @@ where
         }
         match Self::read_line_inner(&mut self.inner, &mut self.buf) {
             Ok(Ok(line)) => {
-                if line == self.delimiter {
+                if self.delimiters.contains(&line) {
                     self.is_done = true;
                     None
                 } else if self.fail_on_err_lines {

@@ -167,6 +167,7 @@ impl Response {
                         "acknowledgments" => {
                             let acks = acks.get_or_insert_with(Vec::new);
                             line.clear();
+                            // reader.reset_with(Some(client::MessageKind::Delimiter));
                             while reader.read_line(&mut line)? != 0 {
                                 acks.push(Acknowledgement::from_line(&line)?);
                                 line.clear();

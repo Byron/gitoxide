@@ -144,7 +144,7 @@ where
     ) -> Self {
         Connection {
             writer: write,
-            line_provider: git_packetline::Provider::new(read, PacketLine::Flush),
+            line_provider: git_packetline::Provider::new(read, Some(PacketLine::Flush)),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,
