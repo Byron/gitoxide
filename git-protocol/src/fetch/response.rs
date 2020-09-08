@@ -47,13 +47,12 @@ impl Acknowledgement {
                             .map_err(|_| Error::UnknownLineType(line.to_owned()))?,
                         None => return Err(Error::UnknownLineType(line.to_owned())),
                     };
-                    match description {
-                        Some(description) => match description {
+                    if let Some(description) = description {
+                        match description {
                             "common" => {}
                             "ready" => return Ok(Acknowledgement::Ready),
                             _ => return Err(Error::UnknownLineType(line.to_owned())),
-                        },
-                        None => {}
+                        }
                     }
                     Acknowledgement::Common(id)
                 }
