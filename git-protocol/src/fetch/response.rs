@@ -56,6 +56,6 @@ impl Response {
     }
 
     pub fn acknowledgements(&self) -> Option<&[Acknowledgement]> {
-        self.acks.as_ref().map(|v| v.as_slice())
+        self.acks.as_deref()
     }
 }
