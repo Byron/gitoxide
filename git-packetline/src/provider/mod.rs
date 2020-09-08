@@ -14,7 +14,7 @@ pub struct Provider<T> {
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
     buf: Vec<u8>,
-    delimiters: Vec<PacketLine<'static>>,
+    delimiters: &'static [PacketLine<'static>],
     is_done: bool,
 }
 
@@ -22,12 +22,12 @@ impl<T> Provider<T>
 where
     T: io::Read,
 {
-    pub fn new(inner: T, delimiters: impl IntoIterator<Item = PacketLine<'static>>) -> Self {
+    pub fn new(inner: T, delimiters: &'static [PacketLine<'static>]) -> Self {
         Provider {
             inner,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
-            delimiters: delimiters.into_iter().collect(),
+            delimiters,
             fail_on_err_lines: false,
             is_done: false,
         }
@@ -44,8 +44,8 @@ where
         self.reset_with(delimiters);
     }
 
-    pub fn reset_with(&mut self, delimiters: impl IntoIterator<Item = PacketLine<'static>>) {
-        self.delimiters = delimiters.into_iter().collect();
+    pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
+        self.delimiters = delimiters;
         self.fail_on_err_lines = false;
         self.is_done = false;
     }

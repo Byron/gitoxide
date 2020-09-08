@@ -107,7 +107,7 @@ impl<H: Http> client::Transport for Transport<H> {
 
         let line_reader = self
             .line_provider
-            .get_or_insert_with(|| git_packetline::Provider::new(body, Some(PacketLine::Flush)));
+            .get_or_insert_with(|| git_packetline::Provider::new(body, &[PacketLine::Flush]));
 
         let mut announced_service = String::new();
         line_reader.as_read().read_to_string(&mut announced_service)?;

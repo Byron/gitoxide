@@ -3,7 +3,7 @@ use std::io;
 fn mock_reader(path: &str) -> git_packetline::Provider<std::io::Cursor<Vec<u8>>> {
     use crate::fixture_bytes;
     let buf = fixture_bytes(path);
-    git_packetline::Provider::new(io::Cursor::new(buf), Some(git_packetline::PacketLine::Flush))
+    git_packetline::Provider::new(io::Cursor::new(buf), &[git_packetline::PacketLine::Flush])
 }
 
 fn id(hex: &str) -> git_object::owned::Id {
