@@ -84,10 +84,6 @@ impl Arguments {
         let mut deepen_relative = shallow;
         let (initial_arguments, features_for_first_want) = match version {
             Protocol::V1 => {
-                // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
-                if !has("multi_ack_detailed") {
-                    return Err(fetch::Error::MissingServerCapability("multi_ack_detailed"));
-                }
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");

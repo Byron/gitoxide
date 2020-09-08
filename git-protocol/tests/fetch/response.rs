@@ -11,25 +11,27 @@ fn id(hex: &str) -> git_object::owned::Id {
 }
 
 mod v1 {
-    use crate::fetch::response::{id, mock_reader};
-    use git_protocol::fetch::{self, response::Acknowledgement};
-    use git_transport::Protocol;
+    mod from_line_reader {
+        use crate::fetch::response::{id, mock_reader};
+        use git_protocol::fetch::{self, response::Acknowledgement};
+        use git_transport::Protocol;
 
-    #[test]
-    #[ignore]
-    fn parse_fetch_response() {
-        let mut provider = mock_reader("v1/fetch.response");
-        let r = fetch::Response::from_line_reader(Protocol::V1, provider.as_read_without_sidebands())
-            .expect("reading to succeed");
-        assert_eq!(
-            r.acknowledgements().expect("acks to be present"),
-            &[
-                Acknowledgement::Common(id("6504930888c9c5337e7e065c964f87b60d16a7d7")),
-                Acknowledgement::Common(id("fe17165c392110d1305674c06e4aec35728bfab7")),
-                Acknowledgement::Common(id("f22743895a3024bb0c958335981439f1fa747d57")),
-                Acknowledgement::Ready,
-                Acknowledgement::NAK,
-            ]
-        );
+        #[test]
+        #[ignore]
+        fn simple_fetch_acks_and_pack() {
+            let mut provider = mock_reader("v1/fetch.response");
+            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))
+                .expect("reading to succeed");
+            assert_eq!(
+                r.acknowledgements().expect("acks to be present"),
+                &[
+                    Acknowledgement::Common(id("6504930888c9c5337e7e065c964f87b60d16a7d7")),
+                    Acknowledgement::Common(id("fe17165c392110d1305674c06e4aec35728bfab7")),
+                    Acknowledgement::Common(id("f22743895a3024bb0c958335981439f1fa747d57")),
+                    Acknowledgement::Ready,
+                    Acknowledgement::NAK,
+                ]
+            );
+        }
     }
 }

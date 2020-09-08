@@ -17,6 +17,9 @@ pub use command::Command;
 mod arguments;
 pub use arguments::Arguments;
 
+pub mod response;
+pub use response::Response;
+
 #[cfg(test)]
 mod tests;
 
@@ -163,6 +166,8 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         transport.close()?;
         return Ok(());
     }
+
+    Response::check_required_features(&fetch_features)?;
     let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let previous_response = None::<Response>;
     // 16? Git does it that way, limiting the amount of iterations we take.
@@ -184,42 +189,3 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
     transport.close()?;
     Ok(())
 }
-
-pub mod response {
-    use bstr::BString;
-    use git_object::owned;
-    use git_transport::{client::ExtendedBufRead, Protocol};
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            UnknownPrefix(prefix: BString) {
-                display("Encountered an unknown line prefix: {}", prefix)
-            }
-        }
-    }
-
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    pub enum Acknowledgement {
-        Common(owned::Id),
-        Ready,
-        NAK,
-    }
-
-    /// A representation of a complete fetch response
-    pub struct Response {
-        acks: Option<Vec<Acknowledgement>>,
-    }
-
-    impl Response {
-        pub fn from_line_reader(_version: Protocol, _reader: impl ExtendedBufRead) -> Result<Response, Error> {
-            unimplemented!("from line reader")
-        }
-        pub fn acknowledgements(&self) -> Option<&[Acknowledgement]> {
-            self.acks.as_ref().map(|v| v.as_slice())
-        }
-    }
-}
-pub use response::Response;

@@ -4,20 +4,8 @@ use git_transport::client::{Error, Identity, MessageKind, RequestWriter, SetServ
 use git_transport::{client, Protocol, Service};
 use std::io;
 
-fn new(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
-    fetch::Arguments::new(
-        protocol,
-        features
-            .into_iter()
-            .chain(if protocol == Protocol::V1 {
-                Some("multi_ack_detailed")
-            } else {
-                None
-            })
-            .map(|n| (n, None))
-            .collect(),
-    )
-    .expect("all required features")
+fn arguments(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
+    fetch::Arguments::new(protocol, features.into_iter().map(|n| (n, None)).collect()).expect("all required features")
 }
 
 struct Transport<T: client::Transport> {
@@ -77,7 +65,7 @@ fn id(hex: &str) -> git_object::owned::Id {
 }
 
 mod v1 {
-    use crate::fetch::tests::arguments::{id, new, transport};
+    use crate::fetch::tests::arguments::{arguments, id, transport};
     use bstr::ByteSlice;
     use git_transport::Protocol;
 
@@ -85,14 +73,14 @@ mod v1 {
     fn haves_and_wants_for_clone() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
-        let mut arguments = new(Protocol::V1, ["feature-a", "feature-b"].iter().cloned());
+        let mut arguments = arguments(Protocol::V1, ["feature-a", "feature-b"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"0059want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a feature-b multi_ack_detailed
+            b"0046want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a feature-b
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 00000009done
 "
@@ -104,7 +92,7 @@ mod v1 {
     fn haves_and_wants_for_fetch() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
-        let mut arguments = new(Protocol::V1, ["feature-a"].iter().cloned());
+        let mut arguments = arguments(Protocol::V1, ["feature-a"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
@@ -114,7 +102,7 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"004fwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a multi_ack_detailed
+            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a
 00000032have 0000000000000000000000000000000000000000
 000000000032have 1111111111111111111111111111111111111111
 0009done
@@ -127,7 +115,7 @@ mod v1 {
     fn haves_and_wants_for_fetch_stateless() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, false);
-        let mut arguments = new(Protocol::V1, ["feature-a"].iter().cloned());
+        let mut arguments = arguments(Protocol::V1, ["feature-a"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
@@ -137,9 +125,9 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"004fwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a multi_ack_detailed
+            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a
 00000032have 0000000000000000000000000000000000000000
-0000004fwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a multi_ack_detailed
+0000003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a
 00000032have 1111111111111111111111111111111111111111
 0009done
 "
@@ -149,7 +137,7 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::tests::arguments::{id, new, transport};
+    use crate::fetch::tests::arguments::{arguments, id, transport};
     use bstr::ByteSlice;
     use git_transport::Protocol;
 
@@ -157,7 +145,7 @@ mod v2 {
     fn haves_and_wants_for_clone() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
-        let mut arguments = new(Protocol::V2, ["feature-a", "feature-b"].iter().cloned());
+        let mut arguments = arguments(Protocol::V2, ["feature-a", "feature-b"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
@@ -183,7 +171,7 @@ mod v2 {
         for is_stateful in &[true, false] {
             let mut out = Vec::new();
             let mut t = transport(&mut out, *is_stateful);
-            let mut arguments = new(Protocol::V2, ["feature-a"].iter().cloned());
+            let mut arguments = arguments(Protocol::V2, ["feature-a"].iter().cloned());
 
             arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
             arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
