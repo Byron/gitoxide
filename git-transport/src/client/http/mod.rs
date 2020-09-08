@@ -242,6 +242,10 @@ impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], client::Error>>> {
         self.body.peek_data_line()
     }
+
+    fn reset(&mut self, version: Protocol) {
+        self.body.reset(version)
+    }
 }
 
 pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {

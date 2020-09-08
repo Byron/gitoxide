@@ -153,8 +153,9 @@ impl Response {
             Protocol::V2 => {
                 // NOTE: We only read acknowledgements and scrub to the pack file, until we have use for the other features
                 let mut line = String::new();
-                let acks = loop {
-                    let mut acks = None::<Vec<Acknowledgement>>;
+                reader.reset(Protocol::V2);
+                let mut acks = None::<Vec<Acknowledgement>>;
+                let acks = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
                         return Err(Error::Io(io::Error::new(
@@ -167,15 +168,16 @@ impl Response {
                         "acknowledgments" => {
                             let acks = acks.get_or_insert_with(Vec::new);
                             line.clear();
-                            // reader.reset_with(Some(client::MessageKind::Delimiter));
                             while reader.read_line(&mut line)? != 0 {
                                 acks.push(Acknowledgement::from_line(&line)?);
                                 line.clear();
                             }
+                            reader.reset(Protocol::V2);
+                            // TODO: figure out if this is the end of the stream: did we see a flush packet line last?
                         }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
-                            break acks.unwrap_or_default();
+                            break 'section acks.unwrap_or_default();
                         }
                         _ => return Err(Error::UnknownSectionHeader(line)),
                     }

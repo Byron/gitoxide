@@ -146,6 +146,9 @@ impl<'a> RequestWriter<'a> {
 pub trait ExtendedBufRead: io::BufRead {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>>;
+    /// Resets the reader to allow reading past a previous stop, and sets delimiters according to the
+    /// given protocol.
+    fn reset(&mut self, version: Protocol);
 }
 
 impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
@@ -158,6 +161,14 @@ impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSide
             Some(Ok(Err(err))) => Some(Ok(Err(err.into()))),
             Some(Err(err)) => Some(Err(err)),
             None => None,
+        }
+    }
+    fn reset(&mut self, version: Protocol) {
+        match version {
+            Protocol::V1 => self.reset_with(&[git_packetline::PacketLine::Flush]),
+            Protocol::V2 => {
+                self.reset_with(&[git_packetline::PacketLine::Delimiter, git_packetline::PacketLine::Flush])
+            }
         }
     }
 }

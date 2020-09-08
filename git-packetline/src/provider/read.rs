@@ -1,6 +1,6 @@
 use crate::{
     borrowed::{Band, Text},
-    Provider, MAX_DATA_LEN,
+    PacketLine, Provider, MAX_DATA_LEN,
 };
 use std::io;
 
@@ -64,6 +64,10 @@ where
             pos: 0,
             cap: 0,
         }
+    }
+
+    pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
+        self.parent.reset_with(delimiters)
     }
 
     pub fn set_progress_handler(&mut self, handle_progress: Option<F>) {
