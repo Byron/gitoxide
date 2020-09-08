@@ -239,8 +239,13 @@ impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
         self.body.set_progress_handler(handle_progress)
     }
 
-    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], git_packetline::decode::Error>>> {
-        self.body.peek_data_line()
+    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], client::Error>>> {
+        match self.body.peek_data_line() {
+            Some(Ok(Ok(line))) => Some(Ok(Ok(line))),
+            Some(Ok(Err(err))) => Some(Ok(Err(err.into()))),
+            Some(Err(err)) => Some(Err(err)),
+            None => None,
+        }
     }
 }
 
