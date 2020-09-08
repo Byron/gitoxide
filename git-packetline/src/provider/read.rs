@@ -67,6 +67,18 @@ where
     pub fn set_progress_handler(&mut self, handle_progress: Option<F>) {
         self.handle_progress = handle_progress;
     }
+
+    pub fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], crate::decode::Error>>> {
+        match self.parent.peek_line() {
+            Some(Ok(Ok(line))) => match line {
+                crate::PacketLine::Data(line) => Some(Ok(Ok(line))),
+                _ => None,
+            },
+            Some(Ok(Err(err))) => Some(Ok(Err(err))),
+            Some(Err(err)) => Some(Err(err)),
+            None => None,
+        }
+    }
 }
 
 impl<'a, T, F> io::BufRead for ReadWithSidebands<'a, T, F>

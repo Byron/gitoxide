@@ -238,6 +238,10 @@ impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.body.set_progress_handler(handle_progress)
     }
+
+    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], git_packetline::decode::Error>>> {
+        self.body.peek_data_line()
+    }
 }
 
 pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {

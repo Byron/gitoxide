@@ -21,6 +21,15 @@ pub enum Acknowledgement {
     NAK,
 }
 
+impl Acknowledgement {
+    pub fn id(&self) -> Option<&owned::Id> {
+        match self {
+            Acknowledgement::Common(id) => Some(id),
+            _ => None,
+        }
+    }
+}
+
 /// A representation of a complete fetch response
 pub struct Response {
     acks: Option<Vec<Acknowledgement>>,

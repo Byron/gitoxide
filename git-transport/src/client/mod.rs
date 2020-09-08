@@ -142,11 +142,15 @@ impl<'a> RequestWriter<'a> {
 
 pub trait ExtendedBufRead: io::BufRead {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
+    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], git_packetline::decode::Error>>>;
 }
 
 impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
+    }
+    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], git_packetline::decode::Error>>> {
+        self.peek_data_line()
     }
 }
 
