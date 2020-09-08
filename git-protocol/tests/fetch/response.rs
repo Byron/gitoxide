@@ -42,3 +42,33 @@ mod v1 {
         }
     }
 }
+mod v2 {
+    mod from_line_reader {
+        use crate::fetch::response::{id, mock_reader};
+        use git_protocol::fetch::{self, response::Acknowledgement};
+        use git_transport::Protocol;
+
+        #[test]
+        fn clone() {
+            let mut provider = mock_reader("v2/clone-only.response");
+            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))
+                .expect("reading to succeed");
+            assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+        }
+
+        #[test]
+        fn simple_fetch_acks_and_pack() {
+            let mut provider = mock_reader("v2/fetch.response");
+            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))
+                .expect("reading to succeed");
+            assert_eq!(
+                r.acknowledgements(),
+                &[
+                    Acknowledgement::Common(id("190c3f6b2319c1f4ec854215533caf8623f8f870")),
+                    Acknowledgement::Common(id("97c5a932b3940a09683e924ef6a92b31a6f7c6de")),
+                    Acknowledgement::Ready,
+                ]
+            );
+        }
+    }
+}

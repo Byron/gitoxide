@@ -23,6 +23,9 @@ quick_error! {
         UnknownLineType(line: String) {
             display("Encountered an unknown line prefix in '{}'", line)
         }
+        UnknownSectionHeader(header: String) {
+            display("Unknown or unsupported header: '{}'", header)
+        }
     }
 }
 
@@ -39,7 +42,7 @@ impl Acknowledgement {
         let mut tokens = line.trim_end().splitn(3, ' ');
         Ok(match (tokens.next(), tokens.next(), tokens.next()) {
             (Some(first), id, description) => match first {
-                "Ready" => Acknowledgement::Ready, // V2
+                "ready" => Acknowledgement::Ready, // V2
                 "NAK" => Acknowledgement::NAK,     // V1
                 "ACK" => {
                     let id = match id {
@@ -147,7 +150,37 @@ impl Response {
                 };
                 Ok(Response { acks })
             }
-            Protocol::V2 => unimplemented!("read v2"),
+            Protocol::V2 => {
+                // NOTE: We only read acknowledgements and scrub to the pack file, until we have use for the other features
+                let mut line = String::new();
+                let acks = loop {
+                    let mut acks = None::<Vec<Acknowledgement>>;
+                    line.clear();
+                    if reader.read_line(&mut line)? == 0 {
+                        return Err(Error::Io(io::Error::new(
+                            io::ErrorKind::UnexpectedEof,
+                            "Could not read message headline",
+                        )));
+                    };
+
+                    match line.trim_end() {
+                        "acknowledgments" => {
+                            let acks = acks.get_or_insert_with(Vec::new);
+                            line.clear();
+                            while reader.read_line(&mut line)? != 0 {
+                                acks.push(Acknowledgement::from_line(&line)?);
+                                line.clear();
+                            }
+                        }
+                        "packfile" => {
+                            // what follows is the packfile itself, which can be read with a sideband enabled reader
+                            break acks.unwrap_or_default();
+                        }
+                        _ => return Err(Error::UnknownSectionHeader(line)),
+                    }
+                };
+                Ok(Response { acks })
+            }
         }
     }
 
