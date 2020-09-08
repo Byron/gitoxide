@@ -695,6 +695,7 @@ dependencies = [
  "btoi",
  "git-features",
  "git-object",
+ "git-packetline",
  "git-transport",
  "nom",
  "quick-error 2.0.0",

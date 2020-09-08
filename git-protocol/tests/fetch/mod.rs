@@ -1,9 +1,10 @@
 use crate::fixture_bytes;
 use bstr::ByteSlice;
 use git_object::owned;
-use git_protocol::fetch;
-use git_protocol::fetch::{Action, Arguments, Ref, Response};
+use git_protocol::fetch::{self, Action, Arguments, Ref, Response};
 use git_transport::client::Capabilities;
+
+mod response;
 
 struct CloneDelegate;
 impl fetch::Delegate for CloneDelegate {

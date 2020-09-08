@@ -25,3 +25,5 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "6.0.0-alpha1", default-features = false, features = ["alloc"]}
 btoi = "0.4.2"
 
+[dev-dependencies]
+git-packetline = { version = "^0.1.0", path = "../git-packetline" }

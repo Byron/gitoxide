@@ -125,6 +125,7 @@ impl Arguments {
         let has = |name: &str| self.features.iter().any(|(n, _)| *n == name);
         let mut add_done_argument = is_done;
         if has("no-done") && has("multi_ack_detailed") {
+            // I think we would be free to send the "done" line, but for now avoid doing that.
             add_done_argument = false;
         }
         if self.haves.is_empty() {
