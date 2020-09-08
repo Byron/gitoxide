@@ -1,6 +1,7 @@
 use crate::fetch;
 use bstr::ByteSlice;
-use git_transport::Protocol;
+use git_transport::client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode};
+use git_transport::{client, Protocol, Service};
 use std::io;
 
 fn new(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
@@ -19,15 +20,56 @@ fn new(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> 
     .expect("all required features")
 }
 
-fn transport(out: &mut Vec<u8>) -> git_transport::client::git::Connection<io::Cursor<Vec<u8>>, &mut Vec<u8>> {
-    git_transport::client::git::Connection::new(
-        io::Cursor::new(Vec::new()),
-        out,
-        Protocol::V1, // does not matter
-        b"does/not/matter".as_bstr().to_owned(),
-        None::<(&str, _)>,
-        git_transport::client::git::ConnectMode::Process, // avoid header to be sent
-    )
+struct Transport<T: client::Transport> {
+    inner: T,
+    stateful: bool,
+}
+
+impl<T: client::Transport> client::Transport for Transport<T> {
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error> {
+        self.inner.handshake(service)
+    }
+
+    fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+        self.inner.set_identity(identity)
+    }
+
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error> {
+        self.inner.request(write_mode, on_into_read)
+    }
+
+    fn close(&mut self) -> Result<(), Error> {
+        self.inner.close()
+    }
+
+    fn to_url(&self) -> String {
+        self.inner.to_url()
+    }
+
+    fn desired_protocol_version(&self) -> Protocol {
+        self.inner.desired_protocol_version()
+    }
+
+    fn is_stateful(&self) -> bool {
+        self.stateful
+    }
+}
+
+fn transport(
+    out: &mut Vec<u8>,
+    stateful: bool,
+) -> Transport<git_transport::client::git::Connection<io::Cursor<Vec<u8>>, &mut Vec<u8>>> {
+    Transport {
+        inner: git_transport::client::git::Connection::new(
+            io::Cursor::new(Vec::new()),
+            out,
+            Protocol::V1, // does not matter
+            b"does/not/matter".as_bstr().to_owned(),
+            None::<(&str, _)>,
+            git_transport::client::git::ConnectMode::Process, // avoid header to be sent
+        ),
+        stateful,
+    }
 }
 
 fn id(hex: &str) -> git_object::owned::Id {
@@ -42,7 +84,7 @@ mod v1 {
     #[test]
     fn haves_and_wants_for_clone() {
         let mut out = Vec::new();
-        let mut t = transport(&mut out);
+        let mut t = transport(&mut out, true);
         let mut arguments = new(Protocol::V1, ["feature-a", "feature-b"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
@@ -61,7 +103,7 @@ mod v1 {
     #[test]
     fn haves_and_wants_for_fetch() {
         let mut out = Vec::new();
-        let mut t = transport(&mut out);
+        let mut t = transport(&mut out, true);
         let mut arguments = new(Protocol::V1, ["feature-a"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
@@ -80,6 +122,30 @@ mod v1 {
             .as_bstr()
         );
     }
+
+    #[test]
+    fn haves_and_wants_for_fetch_stateless() {
+        let mut out = Vec::new();
+        let mut t = transport(&mut out, false);
+        let mut arguments = new(Protocol::V1, ["feature-a"].iter().cloned());
+
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+        arguments.send(&mut t, false).expect("sending to buffer to work");
+
+        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+        arguments.send(&mut t, true).expect("sending to buffer to work");
+        assert_eq!(
+            out.as_bstr(),
+            b"004fwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a multi_ack_detailed
+00000032have 0000000000000000000000000000000000000000
+0000004fwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a multi_ack_detailed
+00000032have 1111111111111111111111111111111111111111
+0009done
+"
+            .as_bstr()
+        );
+    }
 }
 
 mod v2 {
@@ -90,7 +156,7 @@ mod v2 {
     #[test]
     fn haves_and_wants_for_clone() {
         let mut out = Vec::new();
-        let mut t = transport(&mut out);
+        let mut t = transport(&mut out, true);
         let mut arguments = new(Protocol::V2, ["feature-a", "feature-b"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
@@ -114,19 +180,20 @@ mod v2 {
 
     #[test]
     fn haves_and_wants_for_fetch() {
-        let mut out = Vec::new();
-        let mut t = transport(&mut out);
-        let mut arguments = new(Protocol::V2, ["feature-a"].iter().cloned());
+        for is_stateful in &[true, false] {
+            let mut out = Vec::new();
+            let mut t = transport(&mut out, *is_stateful);
+            let mut arguments = new(Protocol::V2, ["feature-a"].iter().cloned());
 
-        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
-        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
-        arguments.send(&mut t, false).expect("sending to buffer to work");
+            arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+            arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+            arguments.send(&mut t, false).expect("sending to buffer to work");
 
-        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
-        arguments.send(&mut t, true).expect("sending to buffer to work");
-        assert_eq!(
-            out.as_bstr(),
-            b"0012command=fetch
+            arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+            arguments.send(&mut t, true).expect("sending to buffer to work");
+            assert_eq!(
+                out.as_bstr(),
+                b"0012command=fetch
 000efeature-a
 0001000ethin-pack
 0010include-tag
@@ -141,7 +208,9 @@ mod v2 {
 0032have 1111111111111111111111111111111111111111
 0009done
 0000"
-                .as_bstr()
-        );
+                    .as_bstr(),
+                "V2 is stateless by default"
+            );
+        }
     }
 }
