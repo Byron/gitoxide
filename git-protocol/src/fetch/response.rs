@@ -1,17 +1,27 @@
 use crate::fetch::command::Feature;
-use bstr::BString;
 use git_object::owned;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
+use std::{io, io::BufRead};
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        Io(err: io::Error) {
+            display("Failed to read from line reader")
+            from()
+            source(err)
+        }
+        Transport(err: client::Error) {
+            display("An error occurred when decoding a line")
+            from()
+            source(err)
+        }
         MissingServerCapability(feature: &'static str) {
             display("Currently we require feature '{}', which is not supported by the server", feature)
         }
-        UnknownPrefix(prefix: BString) {
-            display("Encountered an unknown line prefix: {}", prefix)
+        UnknownLineType(line: String) {
+            display("Encountered an unknown line prefix in '{}'", line)
         }
     }
 }
@@ -25,6 +35,33 @@ pub enum Acknowledgement {
 }
 
 impl Acknowledgement {
+    fn from_line(line: &str) -> Result<Acknowledgement, Error> {
+        let mut tokens = line.trim_end().splitn(3, ' ');
+        Ok(match (tokens.next(), tokens.next(), tokens.next()) {
+            (Some(first), id, description) => match first {
+                "Ready" => Acknowledgement::Ready, // V2
+                "NAK" => Acknowledgement::NAK,     // V1
+                "ACK" => {
+                    let id = match id {
+                        Some(id) => owned::Id::from_40_bytes_in_hex(id.as_bytes())
+                            .map_err(|_| Error::UnknownLineType(line.to_owned()))?,
+                        None => return Err(Error::UnknownLineType(line.to_owned())),
+                    };
+                    match description {
+                        Some(description) => match description {
+                            "common" => {}
+                            "ready" => return Ok(Acknowledgement::Ready),
+                            _ => return Err(Error::UnknownLineType(line.to_owned())),
+                        },
+                        None => {}
+                    }
+                    Acknowledgement::Common(id)
+                }
+                _ => return Err(Error::UnknownLineType(line.to_owned())),
+            },
+            (None, _, _) => unreachable!("cannot have an entirely empty line"),
+        })
+    }
     pub fn id(&self) -> Option<&owned::Id> {
         match self {
             Acknowledgement::Common(id) => Some(id),
@@ -35,7 +72,7 @@ impl Acknowledgement {
 
 /// A representation of a complete fetch response
 pub struct Response {
-    acks: Option<Vec<Acknowledgement>>,
+    acks: Vec<Acknowledgement>,
 }
 
 impl Response {
@@ -53,15 +90,47 @@ impl Response {
     }
     pub fn from_line_reader(
         version: Protocol,
-        _reader: Box<dyn client::ExtendedBufRead + '_>,
+        mut reader: Box<dyn client::ExtendedBufRead + '_>,
     ) -> Result<Response, Error> {
         match version {
-            Protocol::V1 => unimplemented!("read v1"),
+            Protocol::V1 => {
+                enum State {
+                    FirstCheckClone,
+                    ParseAcks(Vec<Acknowledgement>),
+                }
+                let mut state = State::FirstCheckClone;
+                let acks = loop {
+                    match state {
+                        State::FirstCheckClone => {
+                            let mut line = String::new();
+                            if reader.read_line(&mut line)? == 0 {
+                                return Err(Error::Io(io::Error::new(
+                                    io::ErrorKind::UnexpectedEof,
+                                    "Could not read a single line",
+                                )));
+                            };
+                            let acks = vec![Acknowledgement::from_line(&line)?];
+                            match acks.last().expect("one ack present") {
+                                Acknowledgement::NAK => {
+                                    // we are a clone (or so we think) as the first line is a NAK
+                                    // We expect the following to be the pack
+                                    break acks;
+                                }
+                                _ => {
+                                    state = State::ParseAcks(acks);
+                                }
+                            }
+                        }
+                        State::ParseAcks(_acks) => unimplemented!("ack parsing"),
+                    }
+                };
+                Ok(Response { acks })
+            }
             Protocol::V2 => unimplemented!("read v2"),
         }
     }
 
-    pub fn acknowledgements(&self) -> Option<&[Acknowledgement]> {
-        self.acks.as_deref()
+    pub fn acknowledgements(&self) -> &[Acknowledgement] {
+        &self.acks
     }
 }

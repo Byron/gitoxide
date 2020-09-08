@@ -23,7 +23,7 @@ mod v1 {
             let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))
                 .expect("reading to succeed");
             assert_eq!(
-                r.acknowledgements().expect("acks to be present"),
+                r.acknowledgements(),
                 &[
                     Acknowledgement::Common(id("6504930888c9c5337e7e065c964f87b60d16a7d7")),
                     Acknowledgement::Common(id("fe17165c392110d1305674c06e4aec35728bfab7")),
