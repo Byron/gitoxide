@@ -44,8 +44,10 @@ quick_error! {
             from()
             source(err)
         }
-        MissingServerCapability(feature: &'static str) {
-            display("Currently we require feature '{}', which is not supported by the server", feature)
+        Response(err: response::Error) {
+            display("The server response could not be parsed")
+            from()
+            source(err)
         }
     }
 }

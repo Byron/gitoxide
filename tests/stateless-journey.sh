@@ -119,7 +119,7 @@ snapshot="$snapshot/plumbing"
     )
     if test "$kind" != "max"; then
     (with "https:// protocol (in small builds)"
-      it "generates the correct output" && {
+      it "fails as http is not compiled in" && {
         WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
         expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
       }

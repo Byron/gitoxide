@@ -4,6 +4,8 @@ use crate::{
 };
 use std::io;
 
+/// Note: Reading from this intermediary copies bytes 3 times:
+/// OS -> (parent) line provider buffer -> our buffer -> caller's output buffer
 pub struct ReadWithSidebands<'a, T, F>
 where
     T: io::Read,

@@ -140,6 +140,9 @@ impl<'a> RequestWriter<'a> {
     }
 }
 
+/// This trait exists to get a version of a git_packetline::Provider without type parameters.
+/// For the sake of usability, it also implements std::io::BufRead making it trivial to (eventually)
+/// read pack files while keeping the possibility to read individual lines with  low overhead.
 pub trait ExtendedBufRead: io::BufRead {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>>;
