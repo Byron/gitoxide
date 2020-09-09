@@ -13,6 +13,7 @@ use std::{
 pub(crate) mod curl;
 
 mod traits;
+use crate::client::MessageKind;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 #[cfg(feature = "http-client-curl")]
@@ -245,6 +246,10 @@ impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
 
     fn reset(&mut self, version: Protocol) {
         self.body.reset(version)
+    }
+
+    fn stopped_at(&self) -> Option<MessageKind> {
+        self.body.stopped_at()
     }
 }
 

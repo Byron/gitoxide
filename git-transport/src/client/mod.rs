@@ -79,6 +79,7 @@ pub enum MessageKind {
     Flush,
     /// A V2 delimiter
     Delimiter,
+    ResponseEnd,
     Text(&'static [u8]),
 }
 
@@ -133,6 +134,7 @@ impl<'a> RequestWriter<'a> {
         match message {
             MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.writer.inner),
             MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.to_write(&mut self.writer.inner),
+            MessageKind::ResponseEnd => git_packetline::PacketLine::ResponseEnd.to_write(&mut self.writer.inner),
             MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.writer.inner),
         }
         .map(|_| ())
@@ -149,11 +151,20 @@ pub trait ExtendedBufRead: io::BufRead {
     /// Resets the reader to allow reading past a previous stop, and sets delimiters according to the
     /// given protocol.
     fn reset(&mut self, version: Protocol);
+    fn stopped_at(&self) -> Option<MessageKind>;
 }
 
 impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
+    }
+    fn stopped_at(&self) -> Option<MessageKind> {
+        self.stopped_at().map(|l| match l {
+            git_packetline::PacketLine::Flush => MessageKind::Flush,
+            git_packetline::PacketLine::Delimiter => MessageKind::Delimiter,
+            git_packetline::PacketLine::ResponseEnd => MessageKind::ResponseEnd,
+            git_packetline::PacketLine::Data(_) => unreachable!("data cannot be a delimiter"),
+        })
     }
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
         match self.peek_data_line() {

@@ -151,14 +151,14 @@ impl<'a> Response<'a> {
                                 a.push(Acknowledgement::from_line(&line)?);
                                 line.clear();
                             }
-                            reader.reset(Protocol::V2);
-                            // TODO: implement this
                             // End of message, or end of section?
-                            // if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
-                            //     reader.reset(Protocol::V2);
-                            // } else {
-                            //     break 'section acks.expect("initialized acknowledgements vector");
-                            // }
+                            if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
+                                // try reading more sections
+                                reader.reset(Protocol::V2);
+                            } else {
+                                // we are done, there is no pack
+                                break 'section (acks.expect("initialized acknowledgements vector"), None);
+                            }
                         }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
