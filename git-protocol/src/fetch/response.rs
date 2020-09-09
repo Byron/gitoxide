@@ -73,11 +73,18 @@ impl Acknowledgement {
 }
 
 /// A representation of a complete fetch response
-pub struct Response {
+pub struct Response<'a> {
     acks: Vec<Acknowledgement>,
+    pack: Option<Box<dyn client::ExtendedBufRead + 'a>>,
 }
 
-impl Response {
+impl<'a> Response<'a> {
+    pub fn try_into_pack(self) -> Result<Box<dyn client::ExtendedBufRead + 'a>, Self> {
+        match self.pack {
+            Some(pack) => Ok(pack),
+            None => Err(self),
+        }
+    }
     pub fn check_required_features(features: &[Feature]) -> Result<(), Error> {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
@@ -92,8 +99,8 @@ impl Response {
     }
     pub fn from_line_reader(
         version: Protocol,
-        mut reader: Box<dyn client::ExtendedBufRead + '_>,
-    ) -> Result<Response, Error> {
+        mut reader: Box<dyn client::ExtendedBufRead + 'a>,
+    ) -> Result<Response<'a>, Error> {
         match version {
             Protocol::V1 => {
                 enum State {
@@ -102,7 +109,7 @@ impl Response {
                 }
                 let mut state = State::AtFirstCheckClone;
                 let mut line = String::new();
-                let acks = loop {
+                let (acks, pack) = loop {
                     line.clear();
                     match state {
                         State::AtFirstCheckClone => {
@@ -117,7 +124,7 @@ impl Response {
                                 Acknowledgement::NAK => {
                                     // we are a clone (or so we think) as the first line is a NAK
                                     // We expect the following to be the pack
-                                    break acks;
+                                    break (acks, Some(reader));
                                 }
                                 _ => {
                                     state = State::ParseAcks(acks);
@@ -127,13 +134,14 @@ impl Response {
                         State::ParseAcks(mut acks) => {
                             let peeked_line = match reader.peek_data_line() {
                                 Some(line) => String::from_utf8_lossy(line??),
-                                None => break acks, // EOF
+                                None => break (acks, None), // EOF
                             };
-                            // assuming a cooperative server, we just assume that a non-ack line is a pack line
+
+                            // with a friendly server, we just assume that a non-ack line is a pack line
                             // which is our hint to stop here.
                             let ack = match Acknowledgement::from_line(&peeked_line) {
                                 Ok(ack) => ack,
-                                Err(_) => break acks,
+                                Err(_) => break (acks, Some(reader)),
                             };
                             assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
                             match ack.id() {
@@ -148,14 +156,14 @@ impl Response {
                         }
                     }
                 };
-                Ok(Response { acks })
+                Ok(Response { acks, pack })
             }
             Protocol::V2 => {
                 // NOTE: We only read acknowledgements and scrub to the pack file, until we have use for the other features
                 let mut line = String::new();
                 reader.reset(Protocol::V2);
                 let mut acks = None::<Vec<Acknowledgement>>;
-                let acks = 'section: loop {
+                let (acks, pack) = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
                         return Err(Error::Io(io::Error::new(
@@ -166,23 +174,29 @@ impl Response {
 
                     match line.trim_end() {
                         "acknowledgments" => {
-                            let acks = acks.get_or_insert_with(Vec::new);
+                            let a = acks.get_or_insert_with(Vec::new);
                             line.clear();
                             while reader.read_line(&mut line)? != 0 {
-                                acks.push(Acknowledgement::from_line(&line)?);
+                                a.push(Acknowledgement::from_line(&line)?);
                                 line.clear();
                             }
                             reader.reset(Protocol::V2);
-                            // TODO: figure out if this is the end of the stream: did we see a flush packet line last?
+                            // TODO: implement this
+                            // End of message, or end of section?
+                            // if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
+                            //     reader.reset(Protocol::V2);
+                            // } else {
+                            //     break 'section acks.expect("initialized acknowledgements vector");
+                            // }
                         }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
-                            break 'section acks.unwrap_or_default();
+                            break 'section (acks.unwrap_or_default(), Some(reader));
                         }
                         _ => return Err(Error::UnknownSectionHeader(line)),
                     }
                 };
-                Ok(Response { acks })
+                Ok(Response { acks, pack })
             }
         }
     }

@@ -17,18 +17,25 @@ mod v1 {
         use git_transport::Protocol;
 
         #[test]
-        fn clone() {
+        fn clone() -> crate::Result {
             let mut provider = mock_reader("v1/clone-only.response");
-            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))
-                .expect("reading to succeed");
+            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))?;
             assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
+            match r.try_into_pack() {
+                Ok(mut pack_read) => {
+                    let mut buf = Vec::new();
+                    let bytes_read = pack_read.read_to_end(&mut buf)?;
+                    assert_eq!(bytes_read, 1090, "should be able to read the whole pack");
+                }
+                Err(_) => panic!("We must get a pack out of a clone response"),
+            }
+            Ok(())
         }
 
         #[test]
-        fn simple_fetch_acks_and_pack() {
+        fn simple_fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch.response");
-            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))
-                .expect("reading to succeed");
+            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -39,6 +46,7 @@ mod v1 {
                     Acknowledgement::NAK,
                 ]
             );
+            Ok(())
         }
     }
 }
@@ -47,20 +55,28 @@ mod v2 {
         use crate::fetch::response::{id, mock_reader};
         use git_protocol::fetch::{self, response::Acknowledgement};
         use git_transport::Protocol;
+        use std::io::Read;
 
         #[test]
-        fn clone() {
+        fn clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-only.response");
-            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))
-                .expect("reading to succeed");
+            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+            match r.try_into_pack() {
+                Ok(mut pack_read) => {
+                    let mut buf = Vec::new();
+                    let bytes_read = pack_read.read_to_end(&mut buf)?;
+                    assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
+                }
+                Err(_) => panic!("We must get a pack out of a clone response"),
+            }
+            Ok(())
         }
 
         #[test]
-        fn simple_fetch_acks_and_pack() {
+        fn simple_fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch.response");
-            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))
-                .expect("reading to succeed");
+            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -69,6 +85,7 @@ mod v2 {
                     Acknowledgement::Ready,
                 ]
             );
+            Ok(())
         }
     }
 }
