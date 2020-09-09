@@ -105,28 +105,27 @@ impl<'a> Response<'a> {
             Protocol::V1 => {
                 let mut line = String::new();
                 let mut acks = Vec::<Acknowledgement>::new();
-                let (acks, pack) = loop {
+                let (acks, pack) = 'lines: loop {
                     line.clear();
                     let peeked_line = match reader.peek_data_line() {
                         Some(line) => String::from_utf8_lossy(line??),
-                        None => break (acks, None), // EOF
+                        None => break 'lines (acks, None), // EOF
                     };
 
                     // with a friendly server, we just assume that a non-ack line is a pack line
                     // which is our hint to stop here.
-                    let ack = match Acknowledgement::from_line(&peeked_line) {
-                        Ok(ack) => ack,
-                        Err(_) => break (acks, Some(reader)),
+                    match Acknowledgement::from_line(&peeked_line) {
+                        Ok(ack) => match ack.id() {
+                            Some(id) => {
+                                if !acks.iter().any(|a| a.id() == Some(id)) {
+                                    acks.push(ack);
+                                }
+                            }
+                            None => acks.push(ack),
+                        },
+                        Err(_) => break 'lines (acks, Some(reader)),
                     };
                     assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
-                    match ack.id() {
-                        Some(id) => {
-                            if !acks.iter().any(|a| a.id() == Some(id)) {
-                                acks.push(ack);
-                            }
-                        }
-                        None => acks.push(ack),
-                    }
                 };
                 Ok(Response { acks, pack })
             }
