@@ -70,6 +70,10 @@ where
         self.parent.reset_with(delimiters)
     }
 
+    pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
+        self.parent.stopped_at
+    }
+
     pub fn set_progress_handler(&mut self, handle_progress: Option<F>) {
         self.handle_progress = handle_progress;
     }

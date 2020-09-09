@@ -29,13 +29,18 @@ fn peek_non_data() -> crate::Result {
             "peeks on error/eof repeat the error"
         );
     }
+    assert_eq!(
+        rd.stopped_at(),
+        None,
+        "The reader is configured to ignore ResponseEnd, and thus hits the end of stream"
+    );
     Ok(())
 }
 
 #[test]
 fn fail_on_err_lines() -> crate::Result {
     let input = b"00010009ERR e0002";
-    let mut rd = git_packetline::Provider::new(&input[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::Provider::new(&input[..], &[]);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
     assert_eq!(
         rd.read_line().expect("line")??.as_bstr(),
@@ -43,7 +48,7 @@ fn fail_on_err_lines() -> crate::Result {
         "by default no special handling"
     );
 
-    let mut rd = git_packetline::Provider::new(&input[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::Provider::new(&input[..], &[]);
     rd.fail_on_err_lines(true);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
     assert_eq!(
@@ -58,9 +63,8 @@ fn fail_on_err_lines() -> crate::Result {
     assert_eq!(
         rd.read_line().expect("line")??.as_bstr(),
         Some(b"ERR e".as_bstr()),
-        "a reset also resets error handling to the default"
+        "a 'replace' also resets error handling to the default: false"
     );
-
     Ok(())
 }
 
@@ -90,6 +94,11 @@ fn peek() -> crate::Result {
         "peek always gets the next line verbatim"
     );
     assert_eq!(exhaust(&mut rd), 1559);
+    assert_eq!(
+        rd.stopped_at(),
+        Some(PacketLine::Flush),
+        "A flush packet line ends every pack file"
+    );
     Ok(())
 }
 

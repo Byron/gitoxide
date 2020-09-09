@@ -22,6 +22,11 @@ fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     out.clear();
     r.read_line(&mut out)?;
     assert_eq!(out, "", "…which can't be overcome unless the reader is reset");
+    assert_eq!(
+        r.stopped_at(),
+        Some(PacketLine::Flush),
+        "it knows what stopped the reader"
+    );
 
     drop(r);
     rd.reset();
@@ -96,4 +101,34 @@ fn read_pack_with_progress_extraction() -> crate::Result {
         .collect::<Vec<_>>()
     );
     Ok(())
+}
+
+#[test]
+fn handling_of_err_lines() {
+    let input = b"0009ERR e0009ERR x0000";
+    let mut rd = git_packetline::Provider::new(&input[..], &[]);
+    rd.fail_on_err_lines(true);
+    let mut buf = [0u8; 2];
+    let mut reader = rd.as_read();
+    assert_eq!(
+        reader.read(buf.as_mut()).unwrap_err().to_string(),
+        "e",
+        "it respects errors and passes them on"
+    );
+    assert_eq!(
+        reader.read(buf.as_mut()).expect("read to succeed - EOF"),
+        0,
+        "it stops reading after an error despite there being more to read"
+    );
+    reader.reset_with(&[PacketLine::Flush]);
+    assert_eq!(
+        reader.read(buf.as_mut()).unwrap_err().to_string(),
+        "x",
+        "after a reset it continues reading, but retains the 'fail_on_err_lines' setting"
+    );
+    assert_eq!(
+        reader.stopped_at(),
+        None,
+        "An error can also be the reason, which is not distinguishable from an EOF"
+    );
 }

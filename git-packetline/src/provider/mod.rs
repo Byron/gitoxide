@@ -16,6 +16,7 @@ pub struct Provider<T> {
     buf: Vec<u8>,
     delimiters: &'static [PacketLine<'static>],
     is_done: bool,
+    stopped_at: Option<PacketLine<'static>>,
 }
 
 impl<T> Provider<T>
@@ -30,12 +31,20 @@ where
             delimiters,
             fail_on_err_lines: false,
             is_done: false,
+            stopped_at: None,
         }
+    }
+
+    /// Returns None if the end wasn't reached yet, on EOF, or if fail_on_err_lines was true.
+    /// Otherwise it returns the packet line that stopped the iteration.
+    pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
+        self.stopped_at.clone()
     }
 
     pub fn replace(&mut self, read: T) -> T {
         let prev = std::mem::replace(&mut self.inner, read);
         self.reset();
+        self.fail_on_err_lines = false;
         prev
     }
 
@@ -46,8 +55,8 @@ where
 
     pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
         self.delimiters = delimiters;
-        self.fail_on_err_lines = false;
         self.is_done = false;
+        self.stopped_at = None;
     }
 
     pub fn fail_on_err_lines(&mut self, value: bool) {
@@ -86,6 +95,7 @@ where
             Ok(Ok(line)) => {
                 if self.delimiters.contains(&line) {
                     self.is_done = true;
+                    self.stopped_at = self.delimiters.iter().find(|l| **l == line).cloned();
                     None
                 } else if self.fail_on_err_lines {
                     match line.check_error() {
