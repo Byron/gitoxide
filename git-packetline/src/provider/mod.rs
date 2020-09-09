@@ -38,7 +38,7 @@ where
     /// Returns None if the end wasn't reached yet, on EOF, or if fail_on_err_lines was true.
     /// Otherwise it returns the packet line that stopped the iteration.
     pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
-        self.stopped_at.clone()
+        self.stopped_at
     }
 
     pub fn replace(&mut self, read: T) -> T {
