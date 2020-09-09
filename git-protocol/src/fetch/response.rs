@@ -103,57 +103,29 @@ impl<'a> Response<'a> {
     ) -> Result<Response<'a>, Error> {
         match version {
             Protocol::V1 => {
-                enum State {
-                    AtFirstCheckClone,
-                    ParseAcks(Vec<Acknowledgement>),
-                }
-                let mut state = State::AtFirstCheckClone;
                 let mut line = String::new();
+                let mut acks = Vec::<Acknowledgement>::new();
                 let (acks, pack) = loop {
                     line.clear();
-                    match state {
-                        State::AtFirstCheckClone => {
-                            if reader.read_line(&mut line)? == 0 {
-                                return Err(Error::Io(io::Error::new(
-                                    io::ErrorKind::UnexpectedEof,
-                                    "Could not read a single line",
-                                )));
-                            };
-                            let acks = vec![Acknowledgement::from_line(&line)?];
-                            match acks.last().expect("one ack present") {
-                                Acknowledgement::NAK => {
-                                    // we are a clone (or so we think) as the first line is a NAK
-                                    // We expect the following to be the pack
-                                    break (acks, Some(reader));
-                                }
-                                _ => {
-                                    state = State::ParseAcks(acks);
-                                }
-                            }
-                        }
-                        State::ParseAcks(mut acks) => {
-                            let peeked_line = match reader.peek_data_line() {
-                                Some(line) => String::from_utf8_lossy(line??),
-                                None => break (acks, None), // EOF
-                            };
+                    let peeked_line = match reader.peek_data_line() {
+                        Some(line) => String::from_utf8_lossy(line??),
+                        None => break (acks, None), // EOF
+                    };
 
-                            // with a friendly server, we just assume that a non-ack line is a pack line
-                            // which is our hint to stop here.
-                            let ack = match Acknowledgement::from_line(&peeked_line) {
-                                Ok(ack) => ack,
-                                Err(_) => break (acks, Some(reader)),
-                            };
-                            assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
-                            match ack.id() {
-                                Some(id) => {
-                                    if !acks.iter().any(|a| a.id() == Some(id)) {
-                                        acks.push(ack);
-                                    }
-                                }
-                                None => acks.push(ack),
+                    // with a friendly server, we just assume that a non-ack line is a pack line
+                    // which is our hint to stop here.
+                    let ack = match Acknowledgement::from_line(&peeked_line) {
+                        Ok(ack) => ack,
+                        Err(_) => break (acks, Some(reader)),
+                    };
+                    assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
+                    match ack.id() {
+                        Some(id) => {
+                            if !acks.iter().any(|a| a.id() == Some(id)) {
+                                acks.push(ack);
                             }
-                            state = State::ParseAcks(acks)
                         }
+                        None => acks.push(ack),
                     }
                 };
                 Ok(Response { acks, pack })
