@@ -3,7 +3,7 @@
  * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-protocol**
   * [ ] delegate interaction to support clone
-    * [ ] parse server negotiation response
+    * [x] parse server negotiation response
     * [ ] negotiation via delegate
     * [ ] received pack file passed to delegate
     * [x] assure there is a way to do fetches with have/want negotiation
