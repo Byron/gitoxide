@@ -185,7 +185,7 @@ where
     let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let mut previous_response = None::<Response>;
     let mut round = 1;
-    loop {
+    'negotiation: loop {
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         round += 1;
@@ -202,10 +202,10 @@ where
                 setup_remote_progress(&mut progress, &mut reader);
             }
             delegate.receive_pack(reader, progress, &parsed_refs, &response)?;
-            break;
+            break 'negotiation;
         } else {
             match action {
-                Action::Close => break,
+                Action::Close => break 'negotiation,
                 Action::Continue => Some(response),
             }
         }
