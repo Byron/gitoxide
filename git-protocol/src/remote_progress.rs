@@ -32,7 +32,11 @@ impl<'a> RemoteProgress<'a> {
     pub fn translate_to_progress(is_error: bool, text: &[u8], progress: &mut impl git_features::progress::Progress) {
         fn progress_name(current: Option<String>, action: &[u8]) -> String {
             match current {
-                Some(current) => format!("{}: {}", current, action.as_bstr()),
+                Some(current) => format!(
+                    "{}: {}",
+                    current.splitn(2, ':').next().expect("token"),
+                    action.as_bstr()
+                ),
                 None => action.as_bstr().to_string(),
             }
         }
