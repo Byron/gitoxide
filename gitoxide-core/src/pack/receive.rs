@@ -1,7 +1,10 @@
 use crate::{OutputFormat, Protocol};
 use git_features::progress::Progress;
+use git_odb::pack;
 use git_protocol::fetch::{Action, Arguments, Ref, Response};
 use std::{io, io::BufRead, path::PathBuf};
+
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
 pub struct Context<W: io::Write> {
     pub thread_limit: Option<usize>,
@@ -19,22 +22,28 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
         for r in refs {
             arguments.want(r.unpack_common().1.to_borrowed());
         }
-        Action::Continue
+        Action::Close
     }
 
-    fn receive_pack<P>(&mut self, input: impl BufRead, progress: P, refs: &[Ref], previous: &Response) -> io::Result<()>
+    fn receive_pack<P>(
+        &mut self,
+        input: impl BufRead,
+        progress: P,
+        _refs: &[Ref],
+        _previous: &Response,
+    ) -> io::Result<()>
     where
         P: Progress,
         <P as Progress>::SubProgress: Send + 'static,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
     {
-        let options = git_odb::pack::bundle::write::Options {
+        let options = pack::bundle::write::Options {
             thread_limit: self.ctx.thread_limit,
-            index_kind: git_odb::pack::index::Kind::V2,
-            iteration_mode: git_odb::pack::data::iter::Mode::Verify,
+            index_kind: pack::index::Kind::V2,
+            iteration_mode: pack::data::iter::Mode::Verify,
         };
         let outcome =
-            git_odb::pack::bundle::Bundle::write_to_directory(input, None, self.directory.take(), progress, options)
+            pack::bundle::Bundle::write_stream_to_directory(input, None, self.directory.take(), progress, options)
                 .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         writeln!(self.ctx.out, "{:?}", outcome)?;
         Ok(())

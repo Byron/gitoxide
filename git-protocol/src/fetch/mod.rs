@@ -180,7 +180,7 @@ where
         return Ok(());
     }
 
-    Response::check_required_features(&fetch_features)?;
+    Response::check_required_features(protocol_version, &fetch_features)?;
     let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
     let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let mut previous_response = None::<Response>;

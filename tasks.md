@@ -10,6 +10,7 @@
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
   * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
+  * [ ] json support
   * [ ] journey tests for each connection method
     * [ ] file
     * [ ] git

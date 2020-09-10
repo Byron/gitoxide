@@ -82,15 +82,20 @@ impl Response {
     pub fn has_pack(&self) -> bool {
         self.has_pack
     }
-    pub fn check_required_features(features: &[Feature]) -> Result<(), Error> {
-        let has = |name: &str| features.iter().any(|f| f.0 == name);
-        // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
-        if !has("multi_ack_detailed") {
-            return Err(Error::MissingServerCapability("multi_ack_detailed"));
-        }
-        // It's easy to NOT do sideband for us, but then again, everyone supports it.
-        if !has("side-band") && !has("side-band-64k") {
-            return Err(Error::MissingServerCapability("side-band OR side-band-64k"));
+    pub fn check_required_features(version: Protocol, features: &[Feature]) -> Result<(), Error> {
+        match version {
+            Protocol::V1 => {
+                let has = |name: &str| features.iter().any(|f| f.0 == name);
+                // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
+                if !has("multi_ack_detailed") {
+                    return Err(Error::MissingServerCapability("multi_ack_detailed"));
+                }
+                // It's easy to NOT do sideband for us, but then again, everyone supports it.
+                if !has("side-band") && !has("side-band-64k") {
+                    return Err(Error::MissingServerCapability("side-band OR side-band-64k"));
+                }
+            }
+            Protocol::V2 => {}
         }
         Ok(())
     }

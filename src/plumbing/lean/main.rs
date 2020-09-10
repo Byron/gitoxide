@@ -54,7 +54,7 @@ pub fn main() -> Result<()> {
             url,
             directory,
         }) => {
-            let (_handle, progress) = prepare(verbose, "pack-receive", None);
+            let (_handle, progress) = prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
             core::pack::receive(
                 protocol,
                 &url,

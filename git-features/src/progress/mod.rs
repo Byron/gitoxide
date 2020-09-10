@@ -45,3 +45,17 @@ where
         Ok(bytes_read)
     }
 }
+
+impl<R, P> io::BufRead for Read<R, P>
+where
+    R: io::BufRead,
+    P: Progress,
+{
+    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        self.reader.fill_buf()
+    }
+
+    fn consume(&mut self, amt: usize) {
+        self.reader.consume(amt)
+    }
+}

@@ -90,11 +90,11 @@ where
         Some(pack) => {
             let pack_len = pack.metadata()?.len();
             let pack_file = fs::File::open(pack)?;
-            pack::Bundle::write_to_directory(pack_file, Some(pack_len), directory, progress, options)
+            pack::Bundle::write_to_directory_eagerly(pack_file, Some(pack_len), directory, progress, options)
         }
         None => {
             let stdin = io::stdin();
-            pack::Bundle::write_to_directory(stdin, None, directory, progress, options)
+            pack::Bundle::write_to_directory_eagerly(stdin, None, directory, progress, options)
         }
     }
     .with_context(|| "Failed to write pack and index")?;

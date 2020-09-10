@@ -139,7 +139,7 @@ mod write_to_directory {
         pack_file: &str,
     ) -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
         let pack_file = fs::File::open(fixture_path(pack_file))?;
-        pack::Bundle::write_to_directory(
+        pack::Bundle::write_to_directory_eagerly(
             pack_file,
             None,
             directory,

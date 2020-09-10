@@ -25,17 +25,12 @@ pub struct Options {
 }
 
 impl pack::Bundle {
-    /// If `directory` is `None`, the output will be written to a sink
-    pub fn write_to_directory<P>(
-        pack: impl io::Read + Send + 'static,
+    pub fn write_stream_to_directory<P>(
+        pack: impl io::BufRead,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: P,
-        Options {
-            thread_limit,
-            iteration_mode,
-            index_kind,
-        }: Options,
+        options: Options,
     ) -> Result<Outcome, Error>
     where
         P: Progress,
@@ -48,7 +43,53 @@ impl pack::Bundle {
             reader: pack,
             progress: progress::ThroughputOnDrop::new(read_progress),
         };
-        let indexing_progress = progress.add_child("create index file");
+
+        let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
+            Some(directory) => NamedTempFile::new_in(directory.as_ref())?,
+            None => NamedTempFile::new()?,
+        }));
+        let data_path: PathBuf = data_file.lock().path().into();
+        let pack = PassThrough {
+            reader: interrupt::Read { inner: pack },
+            writer: Some(data_file.clone()),
+        };
+        let pack_entries_iter = pack::data::Iter::new_from_header(
+            pack,
+            options.iteration_mode,
+            pack::data::iter::CompressedBytesMode::CRC32,
+        )?;
+        let pack_kind = pack_entries_iter.kind();
+        let (outcome, data_path, index_path) =
+            pack::Bundle::inner_write(directory, progress, options, data_file, data_path, pack_entries_iter)?;
+
+        Ok(Outcome {
+            index: outcome,
+            pack_kind,
+            data_path,
+            index_path,
+        })
+    }
+    /// If `directory` is `None`, the output will be written to a sink
+    /// In this case, `pack` will be read in its own thread to offset these costs.
+    /// If that's not possible, use `write_stream_to_directory` instead.
+    pub fn write_to_directory_eagerly<P>(
+        pack: impl io::Read + Send + 'static,
+        pack_size: Option<u64>,
+        directory: Option<impl AsRef<Path>>,
+        mut progress: P,
+        options: Options,
+    ) -> Result<Outcome, Error>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send + 'static,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
+    {
+        let mut read_progress = progress.add_child("read pack");
+        read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
+        let pack = progress::Read {
+            reader: pack,
+            progress: progress::ThroughputOnDrop::new(read_progress),
+        };
 
         let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
             Some(directory) => NamedTempFile::new_in(directory.as_ref())?,
@@ -63,7 +104,7 @@ impl pack::Bundle {
         let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
         let pack_entries_iter = pack::data::Iter::new_from_header(
             buffered_pack,
-            iteration_mode,
+            options.iteration_mode,
             pack::data::iter::CompressedBytesMode::CRC32,
         )?;
         let pack_kind = pack_entries_iter.kind();
@@ -71,7 +112,37 @@ impl pack::Bundle {
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(|| num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
-        let (outcome, data_path, index_path) = match directory {
+        let (outcome, data_path, index_path) =
+            pack::Bundle::inner_write(directory, progress, options, data_file, data_path, pack_entries_iter)?;
+
+        Ok(Outcome {
+            index: outcome,
+            pack_kind,
+            data_path,
+            index_path,
+        })
+    }
+
+    fn inner_write<P, I>(
+        directory: Option<impl AsRef<Path>>,
+        mut progress: P,
+        Options {
+            thread_limit,
+            iteration_mode: _,
+            index_kind,
+        }: Options,
+        data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
+        data_path: PathBuf,
+        pack_entries_iter: I,
+    ) -> Result<(pack::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error>
+    where
+        I: Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
+        P: Progress,
+        <P as Progress>::SubProgress: Send + 'static,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
+    {
+        let indexing_progress = progress.add_child("create index file");
+        Ok(match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
                 let mut index_file = NamedTempFile::new_in(directory)?;
@@ -115,13 +186,6 @@ impl pack::Bundle {
                 None,
                 None,
             ),
-        };
-
-        Ok(Outcome {
-            index: outcome,
-            pack_kind,
-            data_path,
-            index_path,
         })
     }
 }
