@@ -122,7 +122,12 @@ pub(crate) mod recv {
     }
 
     pub fn v1_or_v2_as_detected<T: io::Read>(rd: &mut git_packetline::Provider<T>) -> Result<Outcome, client::Error> {
+        // NOTE that this is vitally important - it is turned on and stays on for all following requests so
+        // we automatically abort if the server sends an ERR line anywhere.
+        // We are sure this can't clash with binary data when sent due to the way the PACK
+        // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
         rd.fail_on_err_lines(true);
+
         let capabilities_or_version = rd
             .peek_line()
             .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
