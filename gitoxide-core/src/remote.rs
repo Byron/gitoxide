@@ -7,7 +7,7 @@ pub mod refs {
     };
     pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
     use git_protocol::fetch::{Arguments, Response};
-    use std::io;
+    use std::{io, io::BufRead};
 
     #[derive(Default)]
     struct LsRemotes {
@@ -33,6 +33,10 @@ pub mod refs {
             _previous_result: Option<&Response>,
         ) -> Action {
             unreachable!("not to be called due to Action::Close in `prepare_fetch`")
+        }
+
+        fn receive_pack(&mut self, _input: impl BufRead, _refs: &[Ref], _previous: &Response) -> io::Result<()> {
+            unreachable!("not called for ls-refs")
         }
     }
 

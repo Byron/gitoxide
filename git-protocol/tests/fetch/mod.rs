@@ -3,16 +3,26 @@ use bstr::ByteSlice;
 use git_object::owned;
 use git_protocol::fetch::{self, Action, Arguments, Ref, Response};
 use git_transport::client::Capabilities;
+use std::{io, io::BufRead};
 
 mod response;
 
-struct CloneDelegate;
+#[derive(Default)]
+struct CloneDelegate {
+    pack_bytes: usize,
+}
+
 impl fetch::Delegate for CloneDelegate {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
         for r in refs {
             arguments.want(r.unpack_common().1.to_borrowed());
         }
         Action::Close
+    }
+
+    fn receive_pack(&mut self, mut input: impl BufRead, _refs: &[Ref], _previous: &Response) -> io::Result<()> {
+        self.pack_bytes = io::copy(&mut input, &mut io::sink())? as usize;
+        Ok(())
     }
 }
 
@@ -35,6 +45,10 @@ impl fetch::Delegate for LsRemoteDelegate {
 
     fn negotiate(&mut self, _refs: &[Ref], _arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
+    }
+
+    fn receive_pack(&mut self, _input: impl BufRead, _refs: &[Ref], _previous: &Response) -> io::Result<()> {
+        unreachable!("Should not be called for ls-refs");
     }
 }
 
@@ -66,15 +80,16 @@ mod v1 {
     use git_transport::Protocol;
 
     #[test]
-    #[ignore]
     fn clone() -> crate::Result {
         let mut out = Vec::new();
+        let mut dlg = CloneDelegate::default();
         git_protocol::fetch(
             transport(&mut out, "v1/clone.response", Protocol::V1),
-            &mut CloneDelegate,
+            &mut dlg,
             git_protocol::credentials::helper,
             progress::Discard,
         )?;
+        assert_eq!(dlg.pack_bytes, 876, "It be able to read pack bytes");
         Ok(())
     }
 

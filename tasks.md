@@ -2,9 +2,11 @@
 * **git-transport**
  * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-protocol**
+  * [ ] sideband-all support
+  * [ ] test for multi-stage fetch response (one without a pack file in first round)
   * [ ] delegate interaction to support clone
     * [x] parse server negotiation response
-    * [ ] negotiation via delegate
+    * [x] negotiation via delegate
     * [ ] received pack file passed to delegate
     * [x] assure there is a way to do fetches with have/want negotiation
 * **gixp-pack-receive**

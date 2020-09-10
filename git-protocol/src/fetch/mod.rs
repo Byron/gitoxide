@@ -26,6 +26,11 @@ mod tests;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        PackIo(err: io::Error) {
+            display("Could not read streaming pack file")
+            from()
+            source(err)
+        }
         Credentials(err: credentials::Error) {
             display("Failed to obtain, approve or reject credentials")
             from()
@@ -60,12 +65,17 @@ pub fn agent() -> (&'static str, Option<&'static str>) {
 }
 
 /// Note that depending on the `delegate`, the actual action peformed can be `ls-refs`, `clone` or `fetch`.
-pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
+pub fn fetch<F, P>(
     mut transport: impl client::Transport,
     delegate: &mut impl Delegate,
     mut authenticate: F,
-    mut progress: impl Progress,
-) -> Result<(), Error> {
+    mut progress: P,
+) -> Result<(), Error>
+where
+    F: FnMut(credentials::Action) -> credentials::Result,
+    P: Progress,
+    <P as Progress>::SubProgress: 'static,
+{
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
         progress.set_name("handshake");
@@ -181,7 +191,16 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         let mut reader = arguments.send(&mut transport, action == Action::Close)?;
         let response = Response::from_line_reader(protocol_version, &mut reader)?;
         previous_response = if response.has_pack() {
-            unimplemented!("delegate pack reading");
+            progress.step();
+            progress.set_name("receiving pack");
+            reader.set_progress_handler(Some(Box::new({
+                let mut remote_progress = progress.add_child("remote");
+                move |is_err: bool, data: &[u8]| {
+                    crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
+                }
+            }) as git_transport::client::HandleProgress));
+            delegate.receive_pack(reader, &parsed_refs, &response)?;
+            break;
         } else {
             match action {
                 Action::Close => break,

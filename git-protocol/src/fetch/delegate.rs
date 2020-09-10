@@ -1,6 +1,7 @@
 use crate::fetch::{Arguments, Ref, Response};
 use bstr::BString;
 use git_transport::client::Capabilities;
+use std::io;
 
 /// Define what to do next.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -65,4 +66,8 @@ pub trait Delegate {
     /// Return `Action::Close` if you want to give up before finding a common base. This can happen if the remote repository has radically changed
     /// so there are no bases, or they are very far in the past.
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
+
+    /// Receive a pack provided from the given `input`. `refs` are provided to not hide any context, along with the
+    /// parsed response in case you want to check additional acks.
+    fn receive_pack(&mut self, input: impl io::BufRead, refs: &[Ref], previous: &Response) -> io::Result<()>;
 }
