@@ -180,6 +180,7 @@ where
     }
 
     Response::check_required_features(&fetch_features)?;
+    let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
     let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let mut previous_response = None::<Response>;
     // 16? Git does it that way, limiting the amount of iterations we take.
@@ -189,16 +190,16 @@ where
         progress.set_name(format!("negotiate (round {})", round));
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
         let mut reader = arguments.send(&mut transport, action == Action::Close)?;
+        if sideband_all {
+            setup_remote_progress(&mut progress, &mut reader);
+        }
         let response = Response::from_line_reader(protocol_version, &mut reader)?;
         previous_response = if response.has_pack() {
             progress.step();
             progress.set_name("receiving pack");
-            reader.set_progress_handler(Some(Box::new({
-                let mut remote_progress = progress.add_child("remote");
-                move |is_err: bool, data: &[u8]| {
-                    crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
-                }
-            }) as git_transport::client::HandleProgress));
+            if !sideband_all {
+                setup_remote_progress(&mut progress, &mut reader);
+            }
             delegate.receive_pack(reader, &parsed_refs, &response)?;
             break;
         } else {
@@ -210,4 +211,19 @@ where
     }
     transport.close()?;
     Ok(())
+}
+
+fn setup_remote_progress<P: Progress>(
+    progress: &mut P,
+    reader: &mut Box<dyn git_transport::client::ExtendedBufRead + '_>,
+) where
+    P: Progress,
+    <P as Progress>::SubProgress: 'static,
+{
+    reader.set_progress_handler(Some(Box::new({
+        let mut remote_progress = progress.add_child("remote");
+        move |is_err: bool, data: &[u8]| {
+            crate::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
+        }
+    }) as git_transport::client::HandleProgress));
 }

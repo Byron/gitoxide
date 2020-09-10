@@ -2,7 +2,7 @@
 * **git-transport**
  * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-protocol**
-  * [ ] sideband-all support
+  * [x] sideband-all support
   * [ ] test for multi-stage fetch response (one without a pack file in first round)
   * [ ] delegate interaction to support clone
     * [x] parse server negotiation response
