@@ -102,7 +102,17 @@ impl Response {
                 let (acks, has_pack) = 'lines: loop {
                     line.clear();
                     let peeked_line = match reader.peek_data_line() {
-                        Some(line) => String::from_utf8_lossy(line??),
+                        Some(Ok(Ok(line))) => String::from_utf8_lossy(line),
+                        // This special case (block) deals with a single NAK being a legitimate EOF sometimes
+                        // Note that this might block forever in stateful connections as there it's not really clear
+                        // if something will be following or not by just looking at the response. Instead you have to know
+                        // the arguments sent to the server and count response lines based on intricate knowledge on how the
+                        // server works.
+                        // For now this is acceptable, as V2 can be used as a workaround, which also is the default.
+                        Some(Err(err)) if err.kind() == io::ErrorKind::UnexpectedEof => break 'lines (acks, false),
+                        Some(Err(err)) => return Err(err.into()),
+                        Some(Ok(Err(err))) => return Err(err.into()),
+
                         None => break 'lines (acks, false), // EOF
                     };
 

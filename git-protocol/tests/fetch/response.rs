@@ -31,7 +31,22 @@ mod v1 {
         }
 
         #[test]
-        fn simple_fetch_acks_and_pack() -> crate::Result {
+        fn fetch_acks_without_pack() -> crate::Result {
+            let mut provider = mock_reader("v1/fetch-no-pack.response");
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands())?;
+            assert_eq!(
+                r.acknowledgements(),
+                &[
+                    Acknowledgement::Common(id("47ee0b7fe4f3a7d776c78794873e6467e1c47e59")),
+                    Acknowledgement::Common(id("3f02c0ad360d96e8dbba92f97b42ebbaa4319db1")),
+                    Acknowledgement::NAK,
+                ]
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch.response");
             let mut reader = provider.as_read_without_sidebands();
             let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
@@ -74,7 +89,15 @@ mod v2 {
         }
 
         #[test]
-        fn simple_fetch_acks_and_pack() -> crate::Result {
+        fn fetch_acks_without_pack() -> crate::Result {
+            let mut provider = mock_reader("v2/fetch-no-pack.response");
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands())?;
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK,]);
+            Ok(())
+        }
+
+        #[test]
+        fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch.response");
             let mut reader = provider.as_read_without_sidebands();
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;

@@ -1,13 +1,11 @@
 ### Cloning
-* **git-transport**
- * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-protocol**
   * [x] sideband-all support
-  * [ ] test for multi-stage fetch response (one without a pack file in first round)
-  * [ ] delegate interaction to support clone
+  * [x] test for multi-stage fetch response (one without a pack file in first round)
+  * [x] delegate interaction to support clone
     * [x] parse server negotiation response
     * [x] negotiation via delegate
-    * [ ] received pack file passed to delegate
+    * [x] received pack file passed to delegate
     * [x] assure there is a way to do fetches with have/want negotiation
 * **gixp-pack-receive**
   * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
@@ -21,6 +19,10 @@
 
 ### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
 
+* **git-transport**
+ * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
+* **prodash**
+  * [ ] force sub-progress 
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_

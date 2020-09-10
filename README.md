@@ -445,6 +445,8 @@ From there, we can derive a few rules to try adhere to:
 
 ## Shortcomings
 
+* **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
+  * This can be fixed by making response parsing.
 * **lean** and **light** and **small** builds don't support non-UTF-8 paths _in the CLI_
   * This is because they depend on `argh`, which [does not yet support parsing OsStrings](https://github.com/google/argh/issues/33). We however
     believe it eventually will do so and thus don't move on to [`pico-args`](https://github.com/RazrFalcon/pico-args/blob/master/examples/app.rs).
