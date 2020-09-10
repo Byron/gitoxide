@@ -183,9 +183,7 @@ where
     let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
     let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let mut previous_response = None::<Response>;
-    // 16? Git does it that way, limiting the amount of iterations we take.
-    // TODO: Make this a loop and abort after having exchanged a certain amount of objects instead
-    for round in 1..=16 {
+    loop {
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
