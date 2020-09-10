@@ -1,5 +1,6 @@
 use crate::fetch::{Arguments, Ref, Response};
 use bstr::BString;
+use git_features::progress::Progress;
 use git_transport::client::Capabilities;
 use std::io;
 
@@ -69,5 +70,15 @@ pub trait Delegate {
 
     /// Receive a pack provided from the given `input`. `refs` are provided to not hide any context, along with the
     /// parsed response in case you want to check additional acks.
-    fn receive_pack(&mut self, input: impl io::BufRead, refs: &[Ref], previous: &Response) -> io::Result<()>;
+    fn receive_pack<P>(
+        &mut self,
+        input: impl io::BufRead,
+        progress: P,
+        refs: &[Ref],
+        previous: &Response,
+    ) -> io::Result<()>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send + 'static,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static;
 }

@@ -74,7 +74,8 @@ pub fn fetch<F, P>(
 where
     F: FnMut(credentials::Action) -> credentials::Result,
     P: Progress,
-    <P as Progress>::SubProgress: 'static,
+    <P as Progress>::SubProgress: Send + 'static,
+    <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
 {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
@@ -183,9 +184,11 @@ where
     let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
     let mut arguments = Arguments::new(protocol_version, fetch_features)?;
     let mut previous_response = None::<Response>;
+    let mut round = 1;
     loop {
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
+        round += 1;
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
         let mut reader = arguments.send(&mut transport, action == Action::Close)?;
         if sideband_all {
@@ -198,7 +201,7 @@ where
             if !sideband_all {
                 setup_remote_progress(&mut progress, &mut reader);
             }
-            delegate.receive_pack(reader, &parsed_refs, &response)?;
+            delegate.receive_pack(reader, progress, &parsed_refs, &response)?;
             break;
         } else {
             match action {

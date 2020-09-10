@@ -1,9 +1,10 @@
 use crate::fixture_bytes;
 use bstr::ByteSlice;
+use git_features::progress::Progress;
 use git_object::owned;
 use git_protocol::fetch::{self, Action, Arguments, Ref, Response};
 use git_transport::client::Capabilities;
-use std::{io, io::BufRead};
+use std::io;
 
 mod response;
 
@@ -20,7 +21,18 @@ impl fetch::Delegate for CloneDelegate {
         Action::Close
     }
 
-    fn receive_pack(&mut self, mut input: impl BufRead, _refs: &[Ref], _previous: &Response) -> io::Result<()> {
+    fn receive_pack<P>(
+        &mut self,
+        mut input: impl io::BufRead,
+        _progress: P,
+        _refs: &[Ref],
+        _previous: &Response,
+    ) -> io::Result<()>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send + 'static,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
+    {
         self.pack_bytes = io::copy(&mut input, &mut io::sink())? as usize;
         Ok(())
     }
@@ -47,7 +59,18 @@ impl fetch::Delegate for LsRemoteDelegate {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
     }
 
-    fn receive_pack(&mut self, _input: impl BufRead, _refs: &[Ref], _previous: &Response) -> io::Result<()> {
+    fn receive_pack<P>(
+        &mut self,
+        _input: impl io::BufRead,
+        _progress: P,
+        _refs: &[Ref],
+        _previous: &Response,
+    ) -> io::Result<()>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: Send + 'static,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
+    {
         unreachable!("Should not be called for ls-refs");
     }
 }

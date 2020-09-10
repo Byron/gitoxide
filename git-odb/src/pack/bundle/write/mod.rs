@@ -39,7 +39,7 @@ impl pack::Bundle {
     ) -> Result<Outcome, Error>
     where
         P: Progress,
-        <P as Progress>::SubProgress: std::marker::Send + 'static,
+        <P as Progress>::SubProgress: Send + 'static,
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
         let mut read_progress = progress.add_child("read pack");
