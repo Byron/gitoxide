@@ -106,7 +106,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * [x] **credentials**
     * [x] via git-credentials
     * [ ] via pure Rust implementation if no git is installed
-  * [ ] fetch & clone
+  * [x] fetch & clone
     * [x] detailed progress
     * [x] control credentials provider to fill, approve and reject
     * [x] command: ls-ref
@@ -114,8 +114,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] parse V2 refs
     * [x] initialize and validate command arguments and features sanely
     * [x] abort early for ls-remote capabilities
-    * [ ] packfile negotiation
-      * [ ] delegate can support for all fetch features, including shallow, deepen, etc.
+    * [x] packfile negotiation
+      * [x] delegate can support for all fetch features, including shallow, deepen, etc.
+      * [ ] receive parsed shallow feature
   * [ ] push
   * [ ] API documentation with examples
   
