@@ -15,27 +15,26 @@ mod v1 {
         use crate::fetch::response::{id, mock_reader};
         use git_protocol::fetch::{self, response::Acknowledgement};
         use git_transport::Protocol;
+        use std::io::Read;
 
         #[test]
         fn clone() -> crate::Result {
             let mut provider = mock_reader("v1/clone-only.response");
-            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))?;
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
             assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
-            match r.try_into_pack() {
-                Ok(mut pack_read) => {
-                    let mut buf = Vec::new();
-                    let bytes_read = pack_read.read_to_end(&mut buf)?;
-                    assert_eq!(bytes_read, 1090, "should be able to read the whole pack");
-                }
-                Err(_) => panic!("We must get a pack out of a clone response"),
-            }
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 1090, "should be able to read the whole pack");
             Ok(())
         }
 
         #[test]
         fn simple_fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch.response");
-            let r = fetch::Response::from_line_reader(Protocol::V1, Box::new(provider.as_read_without_sidebands()))?;
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -46,6 +45,10 @@ mod v1 {
                     Acknowledgement::NAK,
                 ]
             );
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 9703, "should be able to read the whole pack");
             Ok(())
         }
     }
@@ -60,23 +63,21 @@ mod v2 {
         #[test]
         fn clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-only.response");
-            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))?;
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
-            match r.try_into_pack() {
-                Ok(mut pack_read) => {
-                    let mut buf = Vec::new();
-                    let bytes_read = pack_read.read_to_end(&mut buf)?;
-                    assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
-                }
-                Err(_) => panic!("We must get a pack out of a clone response"),
-            }
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
             Ok(())
         }
 
         #[test]
         fn simple_fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch.response");
-            let r = fetch::Response::from_line_reader(Protocol::V2, Box::new(provider.as_read_without_sidebands()))?;
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -85,6 +86,13 @@ mod v2 {
                     Acknowledgement::Ready,
                 ]
             );
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            reader.set_progress_handler(Some(Box::new(|a: bool, b: &[u8]| {
+                git_protocol::RemoteProgress::translate_to_progress(a, b, &mut git_features::progress::Discard)
+            }) as git_transport::client::HandleProgress));
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 5360, "should be able to read the whole pack");
             Ok(())
         }
     }

@@ -1,6 +1,10 @@
 use crate::{Protocol, Service};
 use bstr::BString;
-use std::{io, io::Write};
+use std::{
+    io,
+    io::Write,
+    ops::{Deref, DerefMut},
+};
 
 #[cfg(test)]
 mod tests;
@@ -154,17 +158,27 @@ pub trait ExtendedBufRead: io::BufRead {
     fn stopped_at(&self) -> Option<MessageKind>;
 }
 
+impl<'a, T: ExtendedBufRead + ?Sized + 'a> ExtendedBufRead for Box<T> {
+    fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
+        self.deref_mut().set_progress_handler(handle_progress)
+    }
+
+    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
+        self.deref_mut().peek_data_line()
+    }
+
+    fn reset(&mut self, version: Protocol) {
+        self.deref_mut().reset(version)
+    }
+
+    fn stopped_at(&self) -> Option<MessageKind> {
+        self.deref().stopped_at()
+    }
+}
+
 impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
-    }
-    fn stopped_at(&self) -> Option<MessageKind> {
-        self.stopped_at().map(|l| match l {
-            git_packetline::PacketLine::Flush => MessageKind::Flush,
-            git_packetline::PacketLine::Delimiter => MessageKind::Delimiter,
-            git_packetline::PacketLine::ResponseEnd => MessageKind::ResponseEnd,
-            git_packetline::PacketLine::Data(_) => unreachable!("data cannot be a delimiter"),
-        })
     }
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>> {
         match self.peek_data_line() {
@@ -181,6 +195,14 @@ impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSide
                 self.reset_with(&[git_packetline::PacketLine::Delimiter, git_packetline::PacketLine::Flush])
             }
         }
+    }
+    fn stopped_at(&self) -> Option<MessageKind> {
+        self.stopped_at().map(|l| match l {
+            git_packetline::PacketLine::Flush => MessageKind::Flush,
+            git_packetline::PacketLine::Delimiter => MessageKind::Delimiter,
+            git_packetline::PacketLine::ResponseEnd => MessageKind::ResponseEnd,
+            git_packetline::PacketLine::Data(_) => unreachable!("data cannot be a delimiter"),
+        })
     }
 }
 

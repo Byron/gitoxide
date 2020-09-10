@@ -66,6 +66,7 @@ mod v1 {
     use git_transport::Protocol;
 
     #[test]
+    #[ignore]
     fn clone() -> crate::Result {
         let mut out = Vec::new();
         git_protocol::fetch(

@@ -178,14 +178,16 @@ pub fn fetch<F: FnMut(credentials::Action) -> credentials::Result>(
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
-        let reader = arguments.send(&mut transport, action == Action::Close)?;
-        previous_response = match Response::from_line_reader(protocol_version, reader)?.try_into_pack() {
-            Ok(pack) => unimplemented!("delegate pack reading"),
-            Err(response) => match action {
+        let mut reader = arguments.send(&mut transport, action == Action::Close)?;
+        let response = Response::from_line_reader(protocol_version, &mut reader)?;
+        previous_response = if response.has_pack() {
+            unimplemented!("delegate pack reading");
+        } else {
+            match action {
                 Action::Close => break,
                 Action::Continue => Some(response),
-            },
-        };
+            }
+        }
     }
     transport.close()?;
     Ok(())

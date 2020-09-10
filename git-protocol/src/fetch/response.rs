@@ -2,7 +2,7 @@ use crate::fetch::command::Feature;
 use git_object::owned;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
-use std::{io, io::BufRead};
+use std::io;
 
 quick_error! {
     #[derive(Debug)]
@@ -73,17 +73,14 @@ impl Acknowledgement {
 }
 
 /// A representation of a complete fetch response
-pub struct Response<'a> {
+pub struct Response {
     acks: Vec<Acknowledgement>,
-    pack: Option<Box<dyn client::ExtendedBufRead + 'a>>,
+    has_pack: bool,
 }
 
-impl<'a> Response<'a> {
-    pub fn try_into_pack(self) -> Result<Box<dyn client::ExtendedBufRead + 'a>, Self> {
-        match self.pack {
-            Some(pack) => Ok(pack),
-            None => Err(self),
-        }
+impl Response {
+    pub fn has_pack(&self) -> bool {
+        self.has_pack
     }
     pub fn check_required_features(features: &[Feature]) -> Result<(), Error> {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
@@ -97,19 +94,16 @@ impl<'a> Response<'a> {
         }
         Ok(())
     }
-    pub fn from_line_reader(
-        version: Protocol,
-        mut reader: Box<dyn client::ExtendedBufRead + 'a>,
-    ) -> Result<Response<'a>, Error> {
+    pub fn from_line_reader(version: Protocol, reader: &mut impl client::ExtendedBufRead) -> Result<Response, Error> {
         match version {
             Protocol::V1 => {
                 let mut line = String::new();
                 let mut acks = Vec::<Acknowledgement>::new();
-                let (acks, pack) = 'lines: loop {
+                let (acks, has_pack) = 'lines: loop {
                     line.clear();
                     let peeked_line = match reader.peek_data_line() {
                         Some(line) => String::from_utf8_lossy(line??),
-                        None => break 'lines (acks, None), // EOF
+                        None => break 'lines (acks, false), // EOF
                     };
 
                     // with a friendly server, we just assume that a non-ack line is a pack line
@@ -123,18 +117,18 @@ impl<'a> Response<'a> {
                             }
                             None => acks.push(ack),
                         },
-                        Err(_) => break 'lines (acks, Some(reader)),
+                        Err(_) => break 'lines (acks, true),
                     };
                     assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
                 };
-                Ok(Response { acks, pack })
+                Ok(Response { acks, has_pack })
             }
             Protocol::V2 => {
                 // NOTE: We only read acknowledgements and scrub to the pack file, until we have use for the other features
                 let mut line = String::new();
                 reader.reset(Protocol::V2);
                 let mut acks = None::<Vec<Acknowledgement>>;
-                let (acks, pack) = 'section: loop {
+                let (acks, has_pack) = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
                         return Err(Error::Io(io::Error::new(
@@ -157,17 +151,17 @@ impl<'a> Response<'a> {
                                 reader.reset(Protocol::V2);
                             } else {
                                 // we are done, there is no pack
-                                break 'section (acks.expect("initialized acknowledgements vector"), None);
+                                break 'section (acks.expect("initialized acknowledgements vector"), false);
                             }
                         }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
-                            break 'section (acks.unwrap_or_default(), Some(reader));
+                            break 'section (acks.unwrap_or_default(), true);
                         }
                         _ => return Err(Error::UnknownSectionHeader(line)),
                     }
                 };
-                Ok(Response { acks, pack })
+                Ok(Response { acks, has_pack })
             }
         }
     }
