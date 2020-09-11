@@ -42,9 +42,8 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
             index_kind: pack::index::Kind::V2,
             iteration_mode: pack::data::iter::Mode::Verify,
         };
-        let outcome =
-            pack::bundle::Bundle::write_stream_to_directory(input, None, self.directory.take(), progress, options)
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+        let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
         writeln!(self.ctx.out, "{:?}", outcome)?;
         Ok(())
     }

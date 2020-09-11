@@ -27,7 +27,6 @@ pub struct Options {
 impl pack::Bundle {
     pub fn write_stream_to_directory<P>(
         pack: impl io::BufRead,
-        pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: P,
         options: Options,
@@ -38,7 +37,7 @@ impl pack::Bundle {
         <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
     {
         let mut read_progress = progress.add_child("read pack");
-        read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
+        read_progress.init(None, progress::bytes());
         let pack = progress::Read {
             reader: pack,
             progress: progress::ThroughputOnDrop::new(read_progress),

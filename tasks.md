@@ -8,9 +8,9 @@
     * [x] received pack file passed to delegate
     * [x] assure there is a way to do fetches with have/want negotiation
 * **gixp-pack-receive**
-  * [ ] hookup `git-protocol` with delegate to allow for receiving full packs
-  * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
+  * [x] hookup `git-protocol` with delegate to allow for receiving full packs
   * [ ] json support
+  * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
   * [ ] journey tests for each connection method
     * [ ] file
     * [ ] git
