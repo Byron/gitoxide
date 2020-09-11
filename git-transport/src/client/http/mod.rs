@@ -241,6 +241,9 @@ impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
     }
 
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], client::Error>>> {
+        if let Err(err) = self.handle_headers() {
+            return Some(Err(err));
+        }
         self.body.peek_data_line()
     }
 

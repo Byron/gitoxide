@@ -116,11 +116,10 @@ impl Arguments {
     pub(crate) fn send<'a, T: client::Transport + 'a>(
         &mut self,
         transport: &'a mut T,
-        is_done: bool,
+        add_done_argument: bool,
     ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
-        let add_done_argument = is_done;
         if self.haves.is_empty() {
-            assert!(is_done, "If there are no haves, is_done must be true.");
+            assert!(add_done_argument, "If there are no haves, is_done must be true.");
         }
         match self.version {
             git_transport::Protocol::V1 => {
