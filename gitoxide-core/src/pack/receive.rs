@@ -57,8 +57,28 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
 }
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct JSONBundleWriteOutcome {
+    pub index_kind: pack::index::Kind,
+    pub index_hash: String,
+
+    pub data_hash: String,
+    pub num_objects: u32,
+}
+
+impl From<pack::index::write::Outcome> for JSONBundleWriteOutcome {
+    fn from(v: pack::index::write::Outcome) -> Self {
+        JSONBundleWriteOutcome {
+            index_kind: v.index_kind,
+            num_objects: v.num_objects,
+            data_hash: v.data_hash.to_string(),
+            index_hash: v.index_hash.to_string(),
+        }
+    }
+}
+
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JSONOutcome {
-    pub index: pack::index::write::Outcome,
+    pub index: JSONBundleWriteOutcome,
     pub pack_kind: pack::data::Kind,
 
     pub index_path: Option<PathBuf>,
@@ -70,7 +90,7 @@ pub struct JSONOutcome {
 impl JSONOutcome {
     pub fn from_outcome_and_refs(v: pack::bundle::write::Outcome, refs: &[Ref]) -> Self {
         JSONOutcome {
-            index: v.index,
+            index: v.index.into(),
             pack_kind: v.pack_kind,
             index_path: v.index_path,
             data_path: v.data_path,

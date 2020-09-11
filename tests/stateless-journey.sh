@@ -93,6 +93,10 @@ snapshot="$snapshot/plumbing"
             WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
             expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git out/
           }
+          it "creates an index and a pack in the output directory" && {
+            WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
+            expect_run $SUCCESSFULLY ls out/
+          }
         )
         if test "$kind" = "max"; then
         (with "--format json"
