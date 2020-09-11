@@ -1,1 +1,0 @@
-Outcome { index: Outcome { index_kind: V2, index_hash: Id([199, 135, 222, 42, 175, 184, 151, 65, 124, 168, 22, 123, 174, 177, 70, 234, 189, 24, 188, 95]), data_hash: Id([52, 101, 116, 183, 51, 29, 195, 161, 114, 77, 162, 24, 214, 34, 198, 225, 182, 198, 106, 87]), num_objects: 9 }, pack_kind: V2, index_path: None, data_path: None }

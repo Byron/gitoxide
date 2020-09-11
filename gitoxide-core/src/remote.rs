@@ -122,7 +122,7 @@ pub mod refs {
         }
     }
 
-    fn print(mut out: impl io::Write, refs: &[Ref]) -> io::Result<()> {
+    pub(crate) fn print(mut out: impl io::Write, refs: &[Ref]) -> io::Result<()> {
         for r in refs {
             match r {
                 Ref::Direct { path, object } => writeln!(&mut out, "{} {}", object.to_sha1_hex_string(), path),

@@ -1,5 +1,6 @@
 use crate::{OutputFormat, Protocol};
 use git_features::progress::Progress;
+use git_object::owned;
 use git_odb::pack;
 use git_protocol::fetch::{Action, Arguments, Ref, Response};
 use std::{io, io::BufRead, path::PathBuf};
@@ -29,7 +30,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
         &mut self,
         input: impl BufRead,
         progress: P,
-        _refs: &[Ref],
+        refs: &[Ref],
         _previous: &Response,
     ) -> io::Result<()>
     where
@@ -44,9 +45,31 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
         };
         let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-        writeln!(self.ctx.out, "{:?}", outcome)?;
+        match self.ctx.format {
+            OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
+            #[cfg(feature = "serde1")]
+            OutputFormat::Json => unimplemented!("json"),
+            //     serde_json::to_writer_pretty(
+            //     ctx.out,
+            //     &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+            // )?,
+        };
         Ok(())
     }
+}
+fn print_hash_and_path(out: &mut impl io::Write, name: &str, id: owned::Id, path: Option<PathBuf>) -> io::Result<()> {
+    match path {
+        Some(path) => writeln!(out, "{}: {} ({})", name, id, path.display()),
+        None => writeln!(out, "{}: {}", name, id),
+    }
+}
+
+fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Ref]) -> io::Result<()> {
+    print_hash_and_path(out, "index", res.index.index_hash, res.index_path)?;
+    print_hash_and_path(out, "pack", res.index.data_hash, res.data_path)?;
+    writeln!(out)?;
+    crate::remote::refs::print(out, refs)?;
+    Ok(())
 }
 
 pub fn receive<P, W: io::Write>(

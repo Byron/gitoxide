@@ -81,10 +81,17 @@ snapshot="$snapshot/plumbing"
   (small-repo-in-sandbox
     (with "file:// protocol"
       (with "version 1"
-        (with "no output directory"
+        (with "NO output directory"
           it "generates the correct output" && {
-            WITH_SNAPSHOT="$snapshot/file-v-any" \
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
             expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git
+          }
+        )
+        (with "output directory"
+          mkdir out
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git out/
           }
         )
       )
