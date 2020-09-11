@@ -210,7 +210,6 @@ where
             }
         }
     }
-    transport.close()?;
     Ok(())
 }
 
