@@ -53,12 +53,14 @@ pub fn main() -> Result<()> {
             protocol,
             url,
             directory,
+            write_refs,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
             core::pack::receive(
                 protocol,
                 &url,
                 directory,
+                write_refs,
                 progress::DoOrDiscard::from(progress),
                 core::pack::receive::Context {
                     thread_limit,

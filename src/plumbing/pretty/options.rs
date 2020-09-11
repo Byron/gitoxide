@@ -49,6 +49,10 @@ pub enum Subcommands {
         #[clap(long, short = "p")]
         protocol: Option<core::Protocol>,
 
+        /// Write references to the given directory as well, right next to the pack and index file.
+        #[clap(long, short = "r")]
+        write_refs: bool,
+
         /// The URLs or path from which to receive the pack.
         ///
         /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls

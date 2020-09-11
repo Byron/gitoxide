@@ -106,6 +106,15 @@ snapshot="$snapshot/plumbing"
             WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
             expect_run $SUCCESSFULLY ls out/
           }
+          (with "--write-refs set"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 --write-refs .git out/
+            }
+            it "writes references into the refs folder of the output directory" && {
+              expect_snapshot "$snapshot/repo-refs" out/refs
+            }
+          )
         )
         if test "$kind" = "max"; then
         (with "--format json"

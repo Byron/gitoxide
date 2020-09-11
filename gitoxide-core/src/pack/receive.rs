@@ -1,9 +1,12 @@
 use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
 use git_features::progress::Progress;
-use git_object::owned;
+use git_object::{bstr::ByteSlice, owned};
 use git_odb::pack;
 use git_protocol::fetch::{Action, Arguments, Ref, Response};
-use std::{io, io::BufRead, path::PathBuf};
+use std::{
+    io::{self, BufRead},
+    path::PathBuf,
+};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
@@ -16,6 +19,7 @@ pub struct Context<W: io::Write> {
 struct CloneDelegate<W: io::Write> {
     ctx: Context<W>,
     directory: Option<PathBuf>,
+    write_refs: bool,
 }
 
 impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
@@ -43,8 +47,30 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
             index_kind: pack::index::Kind::V2,
             iteration_mode: pack::data::iter::Mode::Verify,
         };
-        let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
+        let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.clone(), progress, options)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+
+        if let Some(directory) = self.directory.take() {
+            let assure_dir = |path: &git_object::bstr::BString| {
+                assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
+                let path = directory.join(path.to_path_lossy());
+                std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+            };
+            if self.write_refs {
+                for r in refs {
+                    match r {
+                        Ref::Symbolic { path, target, .. } => {
+                            assure_dir(path).map(|path| (path, format!("ref: {}", target)))
+                        }
+                        Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
+                            assure_dir(path).map(|path| (path, object.to_string()))
+                        }
+                    }
+                    .and_then(|(path, content)| std::fs::write(path, content.as_bytes()))?;
+                }
+            }
+        }
+
         match self.ctx.format {
             OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
             #[cfg(feature = "serde1")]
@@ -118,6 +144,7 @@ pub fn receive<P, W: io::Write>(
     protocol: Option<Protocol>,
     url: &str,
     directory: Option<PathBuf>,
+    write_refs: bool,
     progress: P,
     ctx: Context<W>,
 ) -> anyhow::Result<()>
@@ -127,7 +154,11 @@ where
     <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     let transport = git_protocol::git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
-    let mut delegate = CloneDelegate { ctx, directory };
+    let mut delegate = CloneDelegate {
+        ctx,
+        directory,
+        write_refs,
+    };
     git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
     Ok(())
 }

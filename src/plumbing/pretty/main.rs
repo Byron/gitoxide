@@ -127,6 +127,7 @@ pub fn main() -> Result<()> {
     match cmd {
         Subcommands::PackReceive {
             protocol,
+            write_refs,
             url,
             directory,
         } => prepare_and_run(
@@ -140,6 +141,7 @@ pub fn main() -> Result<()> {
                     protocol,
                     &url,
                     directory,
+                    write_refs,
                     git_features::progress::DoOrDiscard::from(progress),
                     core::pack::receive::Context {
                         thread_limit,

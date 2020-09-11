@@ -92,6 +92,10 @@ pub struct PackReceive {
     #[argh(option, short = 'p')]
     pub protocol: Option<core::Protocol>,
 
+    /// write references to the given directory as well, right next to the pack and index file.
+    #[argh(switch, short = 'r')]
+    pub write_refs: bool,
+
     /// the URLs or path from which to receive the pack.
     ///
     /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
