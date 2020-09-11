@@ -57,15 +57,13 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
                 std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
             };
             for r in refs {
-                match r {
-                    Ref::Symbolic { path, target, .. } => {
-                        assure_dir(path).map(|path| (path, format!("ref: {}", target)))
-                    }
+                let (path, content) = match r {
+                    Ref::Symbolic { path, target, .. } => (assure_dir(path)?, format!("ref: {}", target)),
                     Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                        assure_dir(path).map(|path| (path, object.to_string()))
+                        (assure_dir(path)?, object.to_string())
                     }
-                }
-                .and_then(|(path, content)| std::fs::write(path, content.as_bytes()))?;
+                };
+                std::fs::write(path, content.as_bytes())?;
             }
         }
 
