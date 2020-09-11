@@ -80,7 +80,7 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"0046want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a feature-b
+            b"0046want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a feature-b
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 00000009done
 "
@@ -102,7 +102,7 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a
+            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
 00000032have 0000000000000000000000000000000000000000
 000000000032have 1111111111111111111111111111111111111111
 0009done
@@ -125,9 +125,9 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a
+            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
 00000032have 0000000000000000000000000000000000000000
-0000003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907\0feature-a
+0000003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
 00000032have 1111111111111111111111111111111111111111
 0009done
 "

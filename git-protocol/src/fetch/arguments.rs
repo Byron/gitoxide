@@ -47,7 +47,7 @@ impl Arguments {
 
     pub fn want(&mut self, id: borrowed::Id) {
         match self.features_for_first_want.take() {
-            Some(features) => self.prefixed("want ", format!("{}\0{}", id, features.join(" "))),
+            Some(features) => self.prefixed("want ", format!("{} {}", id, features.join(" "))),
             None => self.prefixed("want ", id),
         }
     }

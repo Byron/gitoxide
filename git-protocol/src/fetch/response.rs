@@ -91,6 +91,9 @@ impl Response {
                     return Err(Error::MissingServerCapability("multi_ack_detailed"));
                 }
                 // It's easy to NOT do sideband for us, but then again, everyone supports it.
+                // CORRECTION: If side-band is off, it would send the packfile without packet line encoding,
+                // which is nothing we ever want to deal with (despite it being more efficient). In V2, this
+                // is not even an option anymore, sidebands are always present.
                 if !has("side-band") && !has("side-band-64k") {
                     return Err(Error::MissingServerCapability("side-band OR side-band-64k"));
                 }
