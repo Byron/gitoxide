@@ -74,6 +74,15 @@ function small-repo-in-sandbox() {
   } &>/dev/null
 }
 
+function launch_git_daemon() {
+    git daemon  --verbose --base-path=. --export-all --user-path &>/dev/null &
+    daemon_pid=$!
+    while ! nc -z localhost 9418; do
+      sleep 0.1
+    done
+    trap 'kill $daemon_pid' EXIT
+}
+
 title plumbing
 snapshot="$snapshot/plumbing"
 (when "running 'pack-receive'"
@@ -134,6 +143,53 @@ snapshot="$snapshot/plumbing"
         fi
       )
     )
+    (with "git:// protocol"
+      launch_git_daemon
+      (with "version 1"
+        (with "NO output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 git://localhost/
+          }
+        )
+        (with "output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 git://localhost/ out/
+          }
+        )
+      )
+      (with "version 2"
+        (with "NO output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 git://localhost/
+          }
+        )
+        (with "output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive git://localhost/ out/
+          }
+        )
+      )
+    )
+    (on_ci
+      if test "$kind" = "max"; then
+      (with "https:// protocol"
+        (with "version 1"
+          it "works" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 https://github.com/byron/gitoxide
+          }
+        )
+        (with "version 2"
+          it "works" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 https://github.com/byron/gitoxide
+          }
+        )
+      )
+      fi
+    )
   )
 )
 (when "running 'remote-ref-list'"
@@ -162,12 +218,7 @@ snapshot="$snapshot/plumbing"
       fi
     )
     (with "git:// protocol"
-      git daemon  --verbose --base-path=. --export-all --user-path &>/dev/null &
-      daemon_pid=$!
-      while ! nc -z localhost 9418; do
-        sleep 0.1
-      done
-      trap 'kill $daemon_pid' EXIT
+      launch_git_daemon
       (with "version 1"
         it "generates the correct output" && {
           WITH_SNAPSHOT="$snapshot/file-v-any" \
