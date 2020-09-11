@@ -107,6 +107,32 @@ snapshot="$snapshot/plumbing"
         )
         fi
       )
+      (with "version 2"
+        (with "NO output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 .git
+          }
+        )
+        (with "output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive .git out/
+          }
+          it "creates an index and a pack in the output directory" && {
+            WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
+            expect_run $SUCCESSFULLY ls out/
+          }
+        )
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the correct output in JSON format" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-receive --protocol 2 .git
+          }
+        )
+        fi
+      )
     )
   )
 )

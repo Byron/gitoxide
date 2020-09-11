@@ -12,7 +12,7 @@
   * [x] json support
   * [ ] **gixp-pack-receive** may optionally write received refs to the specified directory
   * [ ] journey tests for each connection method
-    * [ ] file
+    * [x] file
     * [ ] git
     * [ ] ssh
     * [ ] https (unauthenticated)
