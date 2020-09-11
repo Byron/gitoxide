@@ -16,7 +16,7 @@ struct CloneDelegate {
 impl fetch::Delegate for CloneDelegate {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
         for r in refs {
-            arguments.want(r.unpack_common().1.to_borrowed());
+            arguments.want(r.unpack().1.to_borrowed());
         }
         Action::Close
     }

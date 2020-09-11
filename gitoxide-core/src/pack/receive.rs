@@ -20,7 +20,7 @@ struct CloneDelegate<W: io::Write> {
 impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous: Option<&Response>) -> Action {
         for r in refs {
-            arguments.want(r.unpack_common().1.to_borrowed());
+            arguments.want(r.unpack().1.to_borrowed());
         }
         Action::Close
     }

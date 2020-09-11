@@ -54,10 +54,12 @@ pub enum Ref {
 }
 
 impl Ref {
-    pub fn unpack_common(&self) -> (&BString, &owned::Id) {
+    /// Provide shared fields referring to the ref itself. In case of peeled refs, the tag object itself is returned as it is what
+    /// the path refers to.
+    pub fn unpack(&self) -> (&BString, &owned::Id) {
         match self {
             Ref::Direct { path, object, .. }
-            | Ref::Peeled { path, object, .. }
+            | Ref::Peeled { path, tag: object, .. } // the tag acts as reference
             | Ref::Symbolic { path, object, .. } => (path, object),
         }
     }
