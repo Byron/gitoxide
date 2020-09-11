@@ -89,6 +89,24 @@ mod v2 {
         }
 
         #[test]
+        fn clone_with_sidebands() -> crate::Result {
+            let mut provider = mock_reader("v2/clone-only.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+            assert!(r.has_pack());
+
+            let mut buf = Vec::new();
+            reader.set_progress_handler(Some(Box::new(|is_err: bool, _data: &[u8]| {
+                assert!(!is_err, "fixture does not have an error");
+            }) as git_transport::client::HandleProgress));
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 876, "should be able to read the whole pack");
+            assert_eq!(&buf[..4], b"PACK");
+            Ok(())
+        }
+
+        #[test]
         fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands())?;
