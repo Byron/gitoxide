@@ -52,8 +52,13 @@ impl pack::Bundle {
             reader: interrupt::Read { inner: pack },
             writer: Some(data_file.clone()),
         };
+        // This buff-reader is required to assure we call 'read()' in order to fill the (extra) buffer. Otherwise all the counting
+        // we do with the wrapped pack reader doesn't work as it does not expect anyone to call BufRead functions directly.
+        // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
+        // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
+        let buffered_pack = io::BufReader::new(pack);
         let pack_entries_iter = pack::data::Iter::new_from_header(
-            pack,
+            buffered_pack,
             options.iteration_mode,
             pack::data::iter::CompressedBytesMode::CRC32,
         )?;
