@@ -4,7 +4,7 @@ use git_odb::pack;
 use git_protocol::fetch::{Action, Arguments, Ref, Response};
 use std::{io, io::BufRead, path::PathBuf};
 
-pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub struct Context<W: io::Write> {
     pub thread_limit: Option<usize>,
