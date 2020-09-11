@@ -19,7 +19,7 @@ pub struct Context<W: io::Write> {
 struct CloneDelegate<W: io::Write> {
     ctx: Context<W>,
     directory: Option<PathBuf>,
-    write_refs: bool,
+    refs_directory: Option<PathBuf>,
 }
 
 impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
@@ -47,27 +47,25 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
             index_kind: pack::index::Kind::V2,
             iteration_mode: pack::data::iter::Mode::Verify,
         };
-        let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.clone(), progress, options)
+        let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
-        if let Some(directory) = self.directory.take() {
+        if let Some(directory) = self.refs_directory.take() {
             let assure_dir = |path: &git_object::bstr::BString| {
                 assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
                 let path = directory.join(path.to_path_lossy());
                 std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
             };
-            if self.write_refs {
-                for r in refs {
-                    match r {
-                        Ref::Symbolic { path, target, .. } => {
-                            assure_dir(path).map(|path| (path, format!("ref: {}", target)))
-                        }
-                        Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                            assure_dir(path).map(|path| (path, object.to_string()))
-                        }
+            for r in refs {
+                match r {
+                    Ref::Symbolic { path, target, .. } => {
+                        assure_dir(path).map(|path| (path, format!("ref: {}", target)))
                     }
-                    .and_then(|(path, content)| std::fs::write(path, content.as_bytes()))?;
+                    Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
+                        assure_dir(path).map(|path| (path, object.to_string()))
+                    }
                 }
+                .and_then(|(path, content)| std::fs::write(path, content.as_bytes()))?;
             }
         }
 
@@ -144,7 +142,7 @@ pub fn receive<P, W: io::Write>(
     protocol: Option<Protocol>,
     url: &str,
     directory: Option<PathBuf>,
-    write_refs: bool,
+    refs_directory: Option<PathBuf>,
     progress: P,
     ctx: Context<W>,
 ) -> anyhow::Result<()>
@@ -157,7 +155,7 @@ where
     let mut delegate = CloneDelegate {
         ctx,
         directory,
-        write_refs,
+        refs_directory,
     };
     git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
     Ok(())

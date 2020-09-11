@@ -49,9 +49,11 @@ pub enum Subcommands {
         #[clap(long, short = "p")]
         protocol: Option<core::Protocol>,
 
-        /// Write references to the given directory as well, right next to the pack and index file.
+        /// the directory into which to write references. Existing files will be overwritten.
+        ///
+        /// Note that the directory will be created if needed.
         #[clap(long, short = "r")]
-        write_refs: bool,
+        refs_directory: Option<PathBuf>,
 
         /// The URLs or path from which to receive the pack.
         ///

@@ -127,9 +127,9 @@ pub fn main() -> Result<()> {
     match cmd {
         Subcommands::PackReceive {
             protocol,
-            write_refs,
             url,
             directory,
+            refs_directory,
         } => prepare_and_run(
             "pack-receive",
             verbose,
@@ -141,7 +141,7 @@ pub fn main() -> Result<()> {
                     protocol,
                     &url,
                     directory,
-                    write_refs,
+                    refs_directory,
                     git_features::progress::DoOrDiscard::from(progress),
                     core::pack::receive::Context {
                         thread_limit,

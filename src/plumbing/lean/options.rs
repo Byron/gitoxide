@@ -92,9 +92,11 @@ pub struct PackReceive {
     #[argh(option, short = 'p')]
     pub protocol: Option<core::Protocol>,
 
-    /// write references to the given directory as well, right next to the pack and index file.
-    #[argh(switch, short = 'r')]
-    pub write_refs: bool,
+    /// the directory into which to write references. Existing files will be overwritten.
+    ///
+    /// Note that the directory will be created if needed.
+    #[argh(option, short = 'r')]
+    pub refs_directory: Option<PathBuf>,
 
     /// the URLs or path from which to receive the pack.
     ///
