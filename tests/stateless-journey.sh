@@ -48,33 +48,52 @@ title "CLI ${kind}"
   )
 )
 
+function small-repo-in-sandbox() {
+  sandbox
+  {
+    git init
+    git config commit.gpgsign false
+    set -a
+    export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
+    export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
+    export GIT_AUTHOR_NAME="Sebastian Thiel"
+    export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
+    export GIT_AUTHOR_EMAIL="git@example.com"
+    export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
+    touch a
+    git add a
+    git commit -m "first"
+    git tag unannotated
+    touch b
+    git add b
+    git commit -m "second"
+    git tag annotated -m "tag message"
+    git branch dev
+    echo hi >> b
+    git commit -am "third"
+  } &>/dev/null
+}
+
 title plumbing
 snapshot="$snapshot/plumbing"
+(when "running 'pack-receive'"
+  snapshot="$snapshot/pack-receive"
+  (small-repo-in-sandbox
+    (with "file:// protocol"
+      (with "version 1"
+        (with "no output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git
+          }
+        )
+      )
+    )
+  )
+)
 (when "running 'remote-ref-list'"
   snapshot="$snapshot/remote-ref-list"
-  (sandbox
-    {
-      git init
-      git config commit.gpgsign false
-      set -a
-      export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
-      export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
-      export GIT_AUTHOR_NAME="Sebastian Thiel"
-      export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
-      export GIT_AUTHOR_EMAIL="git@example.com"
-      export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
-      touch a
-      git add a
-      git commit -m "first"
-      git tag unannotated
-      touch b
-      git add b
-      git commit -m "second"
-      git tag annotated -m "tag message"
-      git branch dev
-      echo hi >> b
-      git commit -am "third"
-    } &>/dev/null
+  (small-repo-in-sandbox
     (with "file:// protocol"
       (with "version 1"
         it "generates the correct output" && {

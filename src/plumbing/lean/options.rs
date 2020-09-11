@@ -89,7 +89,7 @@ pub struct RemoteRefList {
 #[argh(subcommand, name = "pack-receive")]
 pub struct PackReceive {
     /// the protocol version to use. Valid values are 1 and 2
-    #[argh(option)]
+    #[argh(option, short = 'p')]
     pub protocol: Option<core::Protocol>,
 
     /// the URLs or path from which to receive the pack.

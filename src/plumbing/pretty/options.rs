@@ -42,6 +42,23 @@ pub struct Args {
 
 #[derive(Debug, Clap)]
 pub enum Subcommands {
+    #[clap(setting = AppSettings::ColoredHelp)]
+    #[clap(setting = AppSettings::DisableVersion)]
+    PackReceive {
+        /// The protocol version to use. Valid values are 1 and 2
+        #[clap(long, short = "p")]
+        protocol: Option<core::Protocol>,
+
+        /// The URLs or path from which to receive the pack.
+        ///
+        /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+        url: String,
+
+        /// The directory into which to write the received pack and index.
+        ///
+        /// If unset, they will be discarded.
+        directory: Option<PathBuf>,
+    },
     /// List remote references from a remote identified by a url.
     ///
     /// This is the plumbing equivalent of `git ls-remote`.

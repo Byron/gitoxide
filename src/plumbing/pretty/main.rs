@@ -125,6 +125,30 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
 
     match cmd {
+        Subcommands::PackReceive {
+            protocol,
+            url,
+            directory,
+        } => prepare_and_run(
+            "pack-receive",
+            verbose,
+            progress,
+            progress_keep_open,
+            core::pack::receive::PROGRESS_RANGE,
+            move |progress, out, _err| {
+                core::pack::receive(
+                    protocol,
+                    &url,
+                    directory,
+                    git_features::progress::DoOrDiscard::from(progress),
+                    core::pack::receive::Context {
+                        thread_limit,
+                        format,
+                        out,
+                    },
+                )
+            },
+        ),
         Subcommands::RemoteRefList { protocol, url } => prepare_and_run(
             "remote-ref-list",
             verbose,
