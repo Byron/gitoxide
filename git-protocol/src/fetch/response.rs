@@ -111,7 +111,7 @@ impl Response {
                     line.clear();
                     let peeked_line = match reader.peek_data_line() {
                         Some(Ok(Ok(line))) => String::from_utf8_lossy(line),
-                        // This special case (block) deals with a single NAK being a legitimate EOF sometimes
+                        // This special case (hang/block forver) deals with a single NAK being a legitimate EOF sometimes
                         // Note that this might block forever in stateful connections as there it's not really clear
                         // if something will be following or not by just looking at the response. Instead you have to know
                         // the arguments sent to the server and count response lines based on intricate knowledge on how the

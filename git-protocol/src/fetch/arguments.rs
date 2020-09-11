@@ -118,12 +118,7 @@ impl Arguments {
         transport: &'a mut T,
         is_done: bool,
     ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
-        let has = |name: &str| self.features.iter().any(|(n, _)| *n == name);
-        let mut add_done_argument = is_done;
-        if has("no-done") && has("multi_ack_detailed") {
-            // I think we would be free to send the "done" line, but for now avoid doing that.
-            add_done_argument = false;
-        }
+        let add_done_argument = is_done;
         if self.haves.is_empty() {
             assert!(is_done, "If there are no haves, is_done must be true.");
         }
