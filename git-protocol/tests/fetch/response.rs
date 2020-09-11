@@ -90,7 +90,7 @@ mod v2 {
 
         #[test]
         fn clone_with_sidebands() -> crate::Result {
-            let mut provider = mock_reader("v2/clone-only.response");
+            let mut provider = mock_reader("v2/clone-only-2.response");
             let mut reader = provider.as_read_without_sidebands();
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
@@ -101,8 +101,12 @@ mod v2 {
                 assert!(!is_err, "fixture does not have an error");
             }) as git_transport::client::HandleProgress));
             let bytes_read = reader.read_to_end(&mut buf)?;
-            assert_eq!(bytes_read, 876, "should be able to read the whole pack");
+            assert_eq!(bytes_read, 1643, "should be able to read the whole pack");
             assert_eq!(&buf[..4], b"PACK");
+            assert_eq!(
+                git_object::owned::Id::from_20_bytes(&buf[buf.len() - 20..]).to_string(),
+                "f34c9be7e0c3ef2c3ed7c62cc7791dbf6dc5ec9a"
+            );
             Ok(())
         }
 
