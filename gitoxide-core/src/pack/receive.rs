@@ -1,4 +1,4 @@
-use crate::{OutputFormat, Protocol};
+use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
 use git_features::progress::Progress;
 use git_object::owned;
 use git_odb::pack;
@@ -48,15 +48,37 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
         match self.ctx.format {
             OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
             #[cfg(feature = "serde1")]
-            OutputFormat::Json => unimplemented!("json"),
-            //     serde_json::to_writer_pretty(
-            //     ctx.out,
-            //     &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
-            // )?,
+            OutputFormat::Json => {
+                serde_json::to_writer_pretty(&mut self.ctx.out, &JSONOutcome::from_outcome_and_refs(outcome, refs))?
+            }
         };
         Ok(())
     }
 }
+
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct JSONOutcome {
+    pub index: pack::index::write::Outcome,
+    pub pack_kind: pack::data::Kind,
+
+    pub index_path: Option<PathBuf>,
+    pub data_path: Option<PathBuf>,
+
+    pub refs: Vec<JsonRef>,
+}
+
+impl JSONOutcome {
+    pub fn from_outcome_and_refs(v: pack::bundle::write::Outcome, refs: &[Ref]) -> Self {
+        JSONOutcome {
+            index: v.index,
+            pack_kind: v.pack_kind,
+            index_path: v.index_path,
+            data_path: v.data_path,
+            refs: refs.iter().cloned().map(Into::into).collect(),
+        }
+    }
+}
+
 fn print_hash_and_path(out: &mut impl io::Write, name: &str, id: owned::Id, path: Option<PathBuf>) -> io::Result<()> {
     match path {
         Some(path) => writeln!(out, "{}: {} ({})", name, id, path.display()),

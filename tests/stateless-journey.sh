@@ -94,6 +94,14 @@ snapshot="$snapshot/plumbing"
             expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git out/
           }
         )
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the correct output in JSON format" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-receive --protocol 1 .git
+          }
+        )
+        fi
       )
     )
   )
