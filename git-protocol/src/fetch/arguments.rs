@@ -160,7 +160,11 @@ impl Arguments {
                 if add_done_argument {
                     arguments.push("done".into());
                 }
-                transport.invoke(Command::Fetch.as_str(), self.features.iter().cloned(), Some(arguments))
+                transport.invoke(
+                    Command::Fetch.as_str(),
+                    self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
+                    Some(arguments),
+                )
             }
         }
     }

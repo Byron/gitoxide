@@ -153,8 +153,6 @@ mod v2 {
         assert_eq!(
             out.as_bstr(),
             b"0012command=fetch
-000efeature-a
-000efeature-b
 0001000ethin-pack
 0010include-tag
 000eofs-delta
@@ -162,7 +160,7 @@ mod v2 {
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 0009done
 0000"
-                .as_bstr()
+                .as_bstr(), "we filter features/capabilities without value as these apparently sholdn't be listed (remote dies otherwise)"
         );
     }
 
@@ -182,14 +180,12 @@ mod v2 {
             assert_eq!(
                 out.as_bstr(),
                 b"0012command=fetch
-000efeature-a
 0001000ethin-pack
 0010include-tag
 000eofs-delta
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032have 0000000000000000000000000000000000000000
 00000012command=fetch
-000efeature-a
 0001000ethin-pack
 0010include-tag
 000eofs-delta
@@ -197,7 +193,7 @@ mod v2 {
 0009done
 0000"
                     .as_bstr(),
-                "V2 is stateless by default"
+                "V2 is stateless by default, so it repeats everything needed to run a command successfully"
             );
         }
     }
