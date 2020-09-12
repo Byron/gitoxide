@@ -17,6 +17,7 @@
     * [ ] ~~ssh~~
     * [x] https (unauthenticated)
     * [ ] ~~https (authenticated)~~
+  * [ ] make cloning https://github.com/torvalds/linux work - it's probably about not sending too many wants and filtering refs to send
 
 ### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
 
