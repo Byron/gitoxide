@@ -17,7 +17,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * limit amount of threads used in operations that support it.
   * choose between 'human' and 'json' output formats
   * **the `gix` program** - convenient and for humans
-    * [x] init - initialize a new non-bare repository with a `main` branch
+    * [x] **init** - initialize a new non-bare repository with a `main` branch
+    * [ ] **clone** - initialize a local copy of a remote repository
   * **the `gixp` program** _(plumbing)_ - lower level commands for use in automation
     * **pack**
       * [x] [pack verify](https://asciinema.org/a/352942)

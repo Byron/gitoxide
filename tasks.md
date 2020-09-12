@@ -1,30 +1,9 @@
-### Cloning
-* **git-protocol**
-  * [x] sideband-all support
-  * [x] test for multi-stage fetch response (one without a pack file in first round)
-  * [x] delegate interaction to support clone
-    * [x] parse server negotiation response
-    * [x] negotiation via delegate
-    * [x] received pack file passed to delegate
-    * [x] assure there is a way to do fetches with have/want negotiation
-* **gixp-pack-receive**
-  * [x] hookup `git-protocol` with delegate to allow for receiving full packs
-  * [x] json support
-  * [x] may optionally write received refs to the specified directory
-  * [x] journey tests for each connection method
-    * [x] file
-    * [x] git
-    * [ ] ~~ssh~~
-    * [x] https (unauthenticated)
-    * [ ] ~~https (authenticated)~~
-  * [x] make cloning https://github.com/torvalds/linux work - it's probably about not sending too many wants and filtering refs to send
+### Repository Clone
 
-### NEXT ITERATION: Fetching _(more analysis needed after previous block)_
-
-* **git-transport**
- * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **prodash**
   * [ ] force sub-progress support for `Send` and `'static` bounds
+* **git-transport**
+ * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
@@ -36,10 +15,6 @@
   * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
     * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates.
   * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
-* **git-daemon-proxy** - obtain real-world examples for the V1/V2 git protocols
-  * a standalone tool to serve as `git-daemon-proxy`, which intercepts all interactions with it and dumps each one
-    into files like N.request and N.response.
-  * Differentiate request and response delimiters using timeouts
 * **receive pack**
   * [ ] resolve thin pack with Bundle
 * **git-repository**
