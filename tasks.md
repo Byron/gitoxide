@@ -24,7 +24,7 @@
 * **git-transport**
  * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **prodash**
-  * [ ] force sub-progress 
+  * [ ] force sub-progress support for `Send` and `'static` bounds
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_

@@ -28,7 +28,7 @@ struct CloneDelegate<W: io::Write> {
     refs_directory: Option<PathBuf>,
     ref_filter: Option<&'static [&'static str]>,
 }
-static FILTER: &'static [&'static str] = &["HEAD", "refs/tags", "refs/heads"];
+static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
 
 impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
     fn prepare_ls_refs(

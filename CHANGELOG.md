@@ -1,5 +1,7 @@
 ### v0.4
 
+* add `remote-ref-list` and `pack-receive` subcommands to **gixp**
+
 #### CLI Breaking
 
  * rename plumbing sub-command from `index-from-pack` to `pack-index-from-data`
