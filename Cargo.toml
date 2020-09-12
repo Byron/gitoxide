@@ -60,7 +60,7 @@ prodash-render-line = ["prodash/render-line"]
 anyhow = "1.0.31"
 
 gitoxide-core = { version = "0.3.0", path = "gitoxide-core" }
-git-features = { version = "^0.4.0", path = "git-features" }
+git-features = { version = "^0.5.0", path = "git-features" }
 # just for feature configuration
 git-transport = { optional = true, version = "0.1.0", path = "git-transport" }
 
