@@ -100,7 +100,11 @@ impl Capabilities {
     }
 
     pub fn contains(&self, feature: &str) -> bool {
-        self.iter().any(|c| c.name() == feature.as_bytes().as_bstr())
+        self.capability(feature).is_some()
+    }
+
+    pub fn capability(&self, name: &str) -> Option<Capability> {
+        self.iter().find(|c| c.name() == name.as_bytes().as_bstr())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = Capability> {

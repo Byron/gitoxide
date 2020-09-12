@@ -1,8 +1,14 @@
 use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
 use git_features::progress::Progress;
-use git_object::{bstr::ByteSlice, owned};
+use git_object::{
+    bstr::{BString, ByteSlice},
+    owned,
+};
 use git_odb::pack;
-use git_protocol::fetch::{Action, Arguments, Ref, Response};
+use git_protocol::{
+    fetch::{Action, Arguments, Ref, Response},
+    git_transport::{self, client::Capabilities},
+};
 use std::{
     io::{self, BufRead},
     path::PathBuf,
@@ -20,12 +26,46 @@ struct CloneDelegate<W: io::Write> {
     ctx: Context<W>,
     directory: Option<PathBuf>,
     refs_directory: Option<PathBuf>,
+    ref_filter: Option<&'static [&'static str]>,
 }
+static FILTER: &'static [&'static str] = &["HEAD", "refs/tags", "refs/heads"];
 
 impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
+    fn prepare_ls_refs(
+        &mut self,
+        server: &Capabilities,
+        arguments: &mut Vec<BString>,
+        _features: &mut Vec<(&str, Option<&str>)>,
+    ) {
+        if server.contains("ls-refs") {
+            arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
+        }
+    }
+
+    fn prepare_fetch(
+        &mut self,
+        version: git_transport::Protocol,
+        _server: &Capabilities,
+        _features: &mut Vec<(&str, Option<&str>)>,
+        _refs: &[Ref],
+    ) -> Action {
+        if version == git_transport::Protocol::V1 {
+            self.ref_filter = Some(&FILTER);
+        }
+        Action::Continue
+    }
+
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous: Option<&Response>) -> Action {
         for r in refs {
-            arguments.want(r.unpack().1.to_borrowed());
+            let (path, id) = r.unpack();
+            match self.ref_filter {
+                Some(ref_prefixes) => {
+                    if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
+                        arguments.want(id.to_borrowed());
+                    }
+                }
+                None => arguments.want(id.to_borrowed()),
+            }
         }
         Action::Close
     }
@@ -154,6 +194,7 @@ where
         ctx,
         directory,
         refs_directory,
+        ref_filter: None,
     };
     git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
     Ok(())
