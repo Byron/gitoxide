@@ -18,7 +18,7 @@ serde1 = ["serde", "bstr/serde1", "smallvec/serde"]
 all-features = true
 
 [dependencies]
-git-ref = { version = "^0.3.0", path = "../git-ref" }
+git-ref = { version = "^0.4.0", path = "../git-ref" }
 quick-error = "2.0.0"
 hex = "0.4.2"
 btoi = "0.4.2"
