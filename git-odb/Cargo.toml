@@ -18,7 +18,7 @@ serde1 = ["serde", "git-object/serde1"]
 all-features = true
 
 [dependencies]
-git-object = { version = "^0.3.0", path = "../git-object" }
+git-object = { version = "^0.4.0", path = "../git-object" }
 git-features = { version = "^0.5.0", path = "../git-features" }
 
 quick-error = "2.0.0"
