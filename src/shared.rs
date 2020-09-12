@@ -23,6 +23,7 @@ pub fn setup_line_renderer_range(
             initial_delay: Some(std::time::Duration::from_millis(1000)),
             output_is_terminal,
             colored: output_is_terminal && crosstermion::color::allowed(),
+            terminal_dimensions: crosstermion::terminal::size().unwrap_or((80, 20)),
             timestamp: true,
             hide_cursor,
             throughput: true,
