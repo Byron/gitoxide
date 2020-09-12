@@ -712,7 +712,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "quick-error 2.0.0",
 ]
