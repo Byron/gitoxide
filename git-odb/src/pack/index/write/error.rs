@@ -38,7 +38,7 @@ quick_error! {
             source(err)
             from()
         }
-        TreeTraversal(err: pack::tree::traverse::Error<Box<dyn std::error::Error + Send + Sync + 'static>>) {
+        TreeTraversal(err: pack::tree::traverse::Error) {
             display("Tree traversal failed")
             source(err)
             from()

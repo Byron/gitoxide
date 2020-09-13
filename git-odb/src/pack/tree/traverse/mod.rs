@@ -13,19 +13,25 @@ use quick_error::quick_error;
 
 mod resolve;
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error<E: std::error::Error + Send + Sync + 'static + ?Sized> {
-    #[error("{msg}")]
-    ZlibInflate {
-        source: crate::zlib::Error,
-        msg: &'static str,
-    },
-    #[error("The resolver failed to obtain the pack entry bytes for the entry at {pack_offset}")]
-    ResolveFailed { pack_offset: u64 },
-    #[error("One of the object inspectors failed")]
-    Inspect(#[from] E),
-    #[error("Interrupted")]
-    Interrupted,
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
+            display("{}", msg)
+            source(err)
+        }
+        ResolveFailed(pack_offset: u64) {
+            display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
+        }
+        Inspect(err: Box<dyn std::error::Error + Send + Sync>) {
+            display("One of the object inspectors failed")
+            source(&**err)
+            from()
+        }
+        Interrupted {
+            display("Interrupted")
+        }
+    }
 }
 
 pub struct Context<'a, S> {
@@ -51,7 +57,7 @@ where
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Sync,
         inspect_object: MBFN,
-    ) -> Result<Vec<Item<T>>, Error<E>>
+    ) -> Result<Vec<Item<T>>, Error>
     where
         F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
@@ -83,15 +89,14 @@ where
     }
 }
 
-pub(crate) struct Reducer<'a, P, E> {
+pub(crate) struct Reducer<'a, P> {
     item_count: usize,
     progress: &'a parking_lot::Mutex<P>,
     start: std::time::Instant,
     size_progress: P,
-    _error: std::marker::PhantomData<E>,
 }
 
-impl<'a, P, E> Reducer<'a, P, E>
+impl<'a, P> Reducer<'a, P>
 where
     P: Progress,
 {
@@ -105,19 +110,17 @@ where
             progress,
             start: std::time::Instant::now(),
             size_progress,
-            _error: Default::default(),
         }
     }
 }
 
-impl<'a, P, E> parallel::Reducer for Reducer<'a, P, E>
+impl<'a, P> parallel::Reducer for Reducer<'a, P>
 where
     P: Progress,
-    E: std::error::Error + Send + Sync + 'static,
 {
-    type Input = Result<(usize, u64), Error<E>>;
+    type Input = Result<(usize, u64), Error>;
     type Output = ();
-    type Error = Error<E>;
+    type Error = Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let (num_objects, decompressed_size) = input?;
