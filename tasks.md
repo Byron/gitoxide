@@ -1,11 +1,11 @@
 ### Repository Clone
 
-* **prodash**
- * upgrade dependencies
-* **criner**
- * upgrade dependencies
-* **git-transport**
+* **git-transport** _(shallow - for completeness and because it's still fresh)_
  * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
+ * [ ] shallow support for V2
+* **git-odb**
+  * [ ] alternate DB
+  * [ ] multi-odb 
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
@@ -29,15 +29,6 @@
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
   
-### Notes
-
-* response-end packets of V2 are [not sent in stateless-rpc mode](https://github.com/git/git/blob/master/serve.c#L246:L246) (i.e. http mode) and maybe even V2 daemons
-* protocol V2 [is always stateless](https://github.com/git/git/blob/master/builtin/upload-pack.c#L54:L54)
-* The negotiation is the meat of the fetch algorithm, and even though not important for clones, the back-and-forth seems very relevant 
-  to how the transfer interface should be built. I feel it must be on packet line level.
-  * after having looked at the http implementation and actual HTTP chatter, there is no need for packet line level in `git-protocol` after all.
-    All good.
-
 ### Other
 
 To be picked in any order….
@@ -45,7 +36,7 @@ To be picked in any order….
 * **prodash**
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
-  * [ ] upgrade to prodash 9.0
+  * [x] upgrade to prodash 9.0
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 
