@@ -103,6 +103,7 @@ impl index::File {
                             }
                             res => res,
                         }
+                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                     },
                 )?);
                 outcome.pack_size = pack.data_len() as u64;
