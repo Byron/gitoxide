@@ -74,7 +74,7 @@ impl index::File {
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     /// redoing a lot of work across multiple objects.
-    pub fn verify_integrity<P, C>(
+    pub fn verify_integrity<C, P>(
         &self,
         pack: Option<(&pack::data::File, Mode, index::traverse::Algorithm)>,
         thread_limit: Option<usize>,
@@ -82,9 +82,7 @@ impl index::File {
         make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<(owned::Id, Option<index::traverse::Outcome>, Option<P>), index::traverse::Error>
     where
-        P: Progress + Send,
-        <P as Progress>::SubProgress: Send,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
+        P: Progress,
         C: pack::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);

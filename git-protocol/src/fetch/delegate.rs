@@ -70,15 +70,11 @@ pub trait Delegate {
 
     /// Receive a pack provided from the given `input`. `refs` are provided to not hide any context, along with the
     /// parsed response in case you want to check additional acks.
-    fn receive_pack<P>(
+    fn receive_pack(
         &mut self,
         input: impl io::BufRead,
-        progress: P,
+        progress: impl Progress,
         refs: &[Ref],
         previous: &Response,
-    ) -> io::Result<()>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static;
+    ) -> io::Result<()>;
 }

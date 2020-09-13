@@ -21,8 +21,7 @@ impl index::File {
         pack: &pack::data::File,
     ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
     where
-        P: Progress + Send,
-        <P as Progress>::SubProgress: Send,
+        P: Progress,
         Processor: FnMut(
             git_object::Kind,
             &[u8],

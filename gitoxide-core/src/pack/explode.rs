@@ -143,23 +143,18 @@ pub struct Context {
     pub verify: bool,
 }
 
-pub fn pack_or_pack_index<P>(
+pub fn pack_or_pack_index(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    progress: Option<P>,
+    progress: Option<impl Progress>,
     Context {
         thread_limit,
         delete_pack,
         sink_compress,
         verify,
     }: Context,
-) -> Result<()>
-where
-    P: Progress + Send,
-    <P as Progress>::SubProgress: Send,
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-{
+) -> Result<()> {
     use anyhow::Context;
 
     let path = pack_path.as_ref();

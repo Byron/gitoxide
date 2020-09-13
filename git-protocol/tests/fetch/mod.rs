@@ -21,18 +21,13 @@ impl fetch::Delegate for CloneDelegate {
         Action::Close
     }
 
-    fn receive_pack<P>(
+    fn receive_pack(
         &mut self,
         mut input: impl io::BufRead,
-        _progress: P,
+        _progress: impl Progress,
         _refs: &[Ref],
         _previous: &Response,
-    ) -> io::Result<()>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
-    {
+    ) -> io::Result<()> {
         self.pack_bytes = io::copy(&mut input, &mut io::sink())? as usize;
         Ok(())
     }
@@ -59,18 +54,13 @@ impl fetch::Delegate for LsRemoteDelegate {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
     }
 
-    fn receive_pack<P>(
+    fn receive_pack(
         &mut self,
         _input: impl io::BufRead,
-        _progress: P,
+        _progress: impl Progress,
         _refs: &[Ref],
         _previous: &Response,
-    ) -> io::Result<()>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
-    {
+    ) -> io::Result<()> {
         unreachable!("Should not be called for ls-refs");
     }
 }

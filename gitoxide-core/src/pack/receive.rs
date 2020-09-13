@@ -70,18 +70,13 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
         Action::Close
     }
 
-    fn receive_pack<P>(
+    fn receive_pack(
         &mut self,
         input: impl BufRead,
-        progress: P,
+        progress: impl Progress,
         refs: &[Ref],
         _previous: &Response,
-    ) -> io::Result<()>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
-    {
+    ) -> io::Result<()> {
         let options = pack::bundle::write::Options {
             thread_limit: self.ctx.thread_limit,
             index_kind: pack::index::Kind::V2,
@@ -176,19 +171,14 @@ fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Re
     Ok(())
 }
 
-pub fn receive<P, W: io::Write>(
+pub fn receive<P: Progress, W: io::Write>(
     protocol: Option<Protocol>,
     url: &str,
     directory: Option<PathBuf>,
     refs_directory: Option<PathBuf>,
     progress: P,
     ctx: Context<W>,
-) -> anyhow::Result<()>
-where
-    P: Progress,
-    <P as Progress>::SubProgress: Send + 'static,
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-{
+) -> anyhow::Result<()> {
     let transport = git_protocol::git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
     let mut delegate = CloneDelegate {
         ctx,

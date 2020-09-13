@@ -31,9 +31,7 @@ impl index::File {
         }: Options,
     ) -> Result<(owned::Id, Outcome, Option<P>), Error>
     where
-        P: Progress + Send,
-        <P as Progress>::SubProgress: Send,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
+        P: Progress,
         C: pack::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(

@@ -35,18 +35,13 @@ pub mod refs {
             unreachable!("not to be called due to Action::Close in `prepare_fetch`")
         }
 
-        fn receive_pack<P>(
+        fn receive_pack(
             &mut self,
             _input: impl io::BufRead,
-            _progress: P,
+            _progress: impl Progress,
             _refs: &[Ref],
             _previous: &Response,
-        ) -> io::Result<()>
-        where
-            P: Progress,
-            <P as Progress>::SubProgress: Send + 'static,
-            <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
-        {
+        ) -> io::Result<()> {
             unreachable!("not called for ls-refs")
         }
     }
@@ -57,17 +52,12 @@ pub mod refs {
         pub out: W,
     }
 
-    pub fn list<P, W: io::Write>(
+    pub fn list(
         protocol: Option<Protocol>,
         url: &str,
-        progress: P,
-        ctx: Context<W>,
-    ) -> anyhow::Result<()>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-    {
+        progress: impl Progress,
+        ctx: Context<impl io::Write>,
+    ) -> anyhow::Result<()> {
         let transport = git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let mut delegate = LsRemotes::default();
         git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;

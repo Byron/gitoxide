@@ -25,17 +25,12 @@ pub struct Options {
 }
 
 impl pack::Bundle {
-    pub fn write_stream_to_directory<P>(
+    pub fn write_stream_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        mut progress: impl Progress,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-    {
+    ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
@@ -76,18 +71,13 @@ impl pack::Bundle {
     /// If `directory` is `None`, the output will be written to a sink
     /// In this case, `pack` will be read in its own thread to offset these costs.
     /// If that's not possible, use `write_stream_to_directory` instead.
-    pub fn write_to_directory_eagerly<P>(
+    pub fn write_to_directory_eagerly(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        mut progress: impl Progress,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-    {
+    ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
@@ -127,9 +117,9 @@ impl pack::Bundle {
         })
     }
 
-    fn inner_write<P, I>(
+    fn inner_write(
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        mut progress: impl Progress,
         Options {
             thread_limit,
             iteration_mode: _,
@@ -137,14 +127,8 @@ impl pack::Bundle {
         }: Options,
         data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
         data_path: PathBuf,
-        pack_entries_iter: I,
-    ) -> Result<(pack::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error>
-    where
-        I: Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
-        P: Progress,
-        <P as Progress>::SubProgress: Send + 'static,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-    {
+        pack_entries_iter: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
+    ) -> Result<(pack::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
             Some(directory) => {

@@ -65,17 +65,14 @@ pub fn agent() -> (&'static str, Option<&'static str>) {
 }
 
 /// Note that depending on the `delegate`, the actual action peformed can be `ls-refs`, `clone` or `fetch`.
-pub fn fetch<F, P>(
+pub fn fetch<F>(
     mut transport: impl client::Transport,
     delegate: &mut impl Delegate,
     mut authenticate: F,
-    mut progress: P,
+    mut progress: impl Progress,
 ) -> Result<(), Error>
 where
     F: FnMut(credentials::Action) -> credentials::Result,
-    P: Progress,
-    <P as Progress>::SubProgress: Send + 'static,
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Send + 'static,
 {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
@@ -213,13 +210,10 @@ where
     Ok(())
 }
 
-fn setup_remote_progress<P: Progress>(
-    progress: &mut P,
+fn setup_remote_progress(
+    progress: &mut impl Progress,
     reader: &mut Box<dyn git_transport::client::ExtendedBufRead + '_>,
-) where
-    P: Progress,
-    <P as Progress>::SubProgress: 'static,
-{
+) {
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child("remote");
         move |is_err: bool, data: &[u8]| {

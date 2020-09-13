@@ -19,9 +19,7 @@ impl index::File {
         pack: &pack::data::File,
     ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
     where
-        P: Progress + Send,
-        <P as Progress>::SubProgress: Send,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
+        P: Progress,
         C: pack::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(

@@ -67,17 +67,12 @@ pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 2..=3;
 
-pub fn from_pack<P, W: io::Write>(
+pub fn from_pack(
     pack: Option<PathBuf>,
     directory: Option<PathBuf>,
-    progress: P,
-    ctx: Context<W>,
-) -> anyhow::Result<()>
-where
-    P: Progress,
-    <P as Progress>::SubProgress: Send + 'static,
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
-{
+    progress: impl Progress,
+    ctx: Context<impl io::Write>,
+) -> anyhow::Result<()> {
     use anyhow::Context;
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,

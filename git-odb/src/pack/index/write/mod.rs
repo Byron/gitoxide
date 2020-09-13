@@ -40,19 +40,17 @@ impl pack::index::File {
     /// Note that neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
     /// `make_resolver()`:  It will only be called after the iterator stopped returning elements and produces a function that
     /// provides all bytes belonging to an entry.
-    pub fn write_data_iter_to_stream<F, F2, P>(
+    pub fn write_data_iter_to_stream<F, F2>(
         kind: pack::index::Kind,
         make_resolver: F,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         thread_limit: Option<usize>,
-        mut root_progress: P,
+        mut root_progress: impl Progress,
         out: impl io::Write,
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
         F2: for<'r> Fn(pack::data::EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
-        P: Progress,
-        <P as Progress>::SubProgress: Send,
     {
         if kind != pack::index::Kind::default() {
             return Err(Error::Unsupported(kind));

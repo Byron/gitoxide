@@ -93,9 +93,9 @@ impl pack::cache::DecodeEntry for EitherCache {
     }
 }
 
-pub fn pack_or_pack_index<P, W1, W2>(
+pub fn pack_or_pack_index<W1, W2>(
     path: impl AsRef<Path>,
-    progress: Option<P>,
+    progress: Option<impl Progress>,
     Context {
         mut out,
         mut err,
@@ -106,11 +106,8 @@ pub fn pack_or_pack_index<P, W1, W2>(
     }: Context<W1, W2>,
 ) -> Result<(owned::Id, Option<index::traverse::Outcome>)>
 where
-    P: Progress + Send,
-    <P as Progress>::SubProgress: Send,
     W1: io::Write,
     W2: io::Write,
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Send,
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {
