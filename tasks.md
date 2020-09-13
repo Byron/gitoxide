@@ -1,11 +1,9 @@
 ### Repository Clone
 
 * **prodash**
-  * [x] force sub-progress support for `Send` and `'static` bounds
-* **git-odb**
-  * Find errors with `Box<dyn std::error::Error>` fields and see if these could be generic with the use of `thiserror`
-    * [x] odb-traversal
-    * ~~[ ] tree traversal~~ - we don't do that as we would end up with a top-level
+ * upgrade dependencies
+* **criner**
+ * upgrade dependencies
 * **git-transport**
  * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
 * **git-ref**

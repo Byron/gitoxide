@@ -93,19 +93,22 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "0.1.11"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ae22a338d28c75b53702b66f77979062cb29675db376d99e451af4fa79dedb3"
+checksum = "c59a2cdfa8ad60643ec249f7cdbd6a9b0163c07cbd3f2b79e07d2c267ac81a70"
 dependencies = [
  "cfg-if",
  "concurrent-queue",
+ "fastrand",
  "futures-lite",
  "libc",
+ "log",
  "once_cell",
  "parking",
  "polling",
  "socket2",
  "vec-arena",
+ "waker-fn",
  "wepoll-sys-stjepang",
  "winapi",
 ]
@@ -382,9 +385,9 @@ dependencies = [
 
 [[package]]
 name = "crosstermion"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5da9c0d4d1875d2553f0388e43c48a7323da8c879a4586178609cb6daea823e6"
+checksum = "2a26a64b586e36bd6052921b59912a73a1b3299ab2345889bdc093c108de9b55"
 dependencies = [
  "ansi_term 0.12.1",
  "async-channel",
@@ -550,9 +553,9 @@ checksum = "de27142b013a8e869c14957e6d2edeef89e97c289e69d042ee3a49acd8b51789"
 
 [[package]]
 name = "futures-lite"
-version = "0.1.11"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97999970129b808f0ccba93211201d431fcc12d7e1ffae03a61b5cedd1a7ced2"
+checksum = "ba659a67bd5ac00896b31e1f4095174134a31e448893d73256f1d51b81abbd62"
 dependencies = [
  "fastrand",
  "futures-core",
@@ -1191,9 +1194,9 @@ checksum = "d36492546b6af1463394d46f0c834346f31548646f6ba10849802c9c9a27ac33"
 
 [[package]]
 name = "polling"
-version = "0.1.9"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fffa183f6bd5f1a8a3e1f60ce2f8d5621e350eed84a62d6daaa5b9d1aaf6fbd"
+checksum = "0835fa5f9af34c170eb38638ae6bc88e1b11ecdd0b968c9d9de8e343450385eb"
 dependencies = [
  "cfg-if",
  "libc",
@@ -1263,9 +1266,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "10.0.0"
+version = "10.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "944a01f36f7038719e861978631f3e975802066d9d55f13b9b16f9bf7e392692"
+checksum = "3012b03d6fa569e37a4d27912705d29a45f7834fbb4e1d961987278ade3e53d1"
 dependencies = [
  "async-io",
  "bytesize",
@@ -1676,9 +1679,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.2.18"
+version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12785163ae8a1cbb52a5db39af4a5baabd3fe49f07f76f952f89d7e89e5ce531"
+checksum = "80c1a1fd93112fc50b11c43a1def21f926be3c18884fad676ea879572da070a1"
 dependencies = [
  "const_fn",
  "libc",
@@ -1814,9 +1817,9 @@ checksum = "6454029bf181f092ad1b853286f23e2c507d8e8194d01d92da4a55c274a5508c"
 
 [[package]]
 name = "vec-arena"
-version = "0.5.2"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cb18268690309760d59ee1a9b21132c126ba384f374c59a94db4bc03adeb561"
+checksum = "eafc1b9b2dfc6f5529177b62cf806484db55b32dc7c9658a118e11bbeb33061d"
 
 [[package]]
 name = "vec_map"
