@@ -18,15 +18,16 @@ fn div_decode_result(lhs: &mut decode::Outcome, div: usize) {
     }
 }
 
-pub struct Reducer<'a, P> {
+pub struct Reducer<'a, P, E> {
     progress: &'a parking_lot::Mutex<P>,
     check: traverse::SafetyCheck,
     then: Instant,
     entries_seen: usize,
     stats: traverse::Outcome,
+    _error: std::marker::PhantomData<E>,
 }
 
-impl<'a, P> Reducer<'a, P>
+impl<'a, P, E> Reducer<'a, P, E>
 where
     P: Progress,
 {
@@ -43,21 +44,23 @@ where
             then: Instant::now(),
             entries_seen: 0,
             stats,
+            _error: Default::default(),
         }
     }
 }
 
-impl<'a, P> parallel::Reducer for Reducer<'a, P>
+impl<'a, P, E> parallel::Reducer for Reducer<'a, P, E>
 where
     P: Progress,
+    E: std::error::Error + Send + Sync + 'static,
 {
-    type Input = Result<Vec<decode::Outcome>, traverse::Error>;
+    type Input = Result<Vec<decode::Outcome>, traverse::Error<E>>;
     type Output = traverse::Outcome;
-    type Error = traverse::Error;
+    type Error = traverse::Error<E>;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
         let chunk_stats: Vec<_> = match input {
-            Err(err @ traverse::Error::PackDecode(_, _, _)) if !self.check.fatal_decode_error() => {
+            Err(err @ traverse::Error::PackDecode { .. }) if !self.check.fatal_decode_error() => {
                 self.progress.lock().info(format!("Ignoring decode error: {}", err));
                 return Ok(());
             }

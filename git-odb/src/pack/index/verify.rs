@@ -80,17 +80,16 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
         make_cache: impl Fn() -> C + Send + Sync,
-    ) -> Result<(owned::Id, Option<index::traverse::Outcome>, Option<P>), index::traverse::Error>
+    ) -> Result<
+        (owned::Id, Option<index::traverse::Outcome>, Option<P>),
+        index::traverse::Error<pack::index::verify::Error>,
+    >
     where
         P: Progress,
         C: pack::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);
         match pack {
-            None => self
-                .verify_checksum(root.add_child("Sha1 of index"))
-                .map_err(Into::into)
-                .map(|id| (id, None, root.into_inner())),
             Some((pack, mode, algorithm)) => self
                 .traverse(
                     pack,
@@ -109,6 +108,10 @@ impl index::File {
                     },
                 )
                 .map(|(id, outcome, root)| (id, Some(outcome), root)),
+            None => self
+                .verify_checksum(root.add_child("Sha1 of index"))
+                .map_err(Into::into)
+                .map(|id| (id, None, root.into_inner())),
         }
     }
 

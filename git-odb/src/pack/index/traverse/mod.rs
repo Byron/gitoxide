@@ -29,7 +29,7 @@ impl index::File {
             thread_limit,
             check,
         }: Options,
-    ) -> Result<(owned::Id, Outcome, Option<P>), Error>
+    ) -> Result<(owned::Id, Outcome, Option<P>), Error<E>>
     where
         P: Progress,
         C: pack::cache::DecodeEntry,
@@ -51,15 +51,15 @@ impl index::File {
         .map(|(a, b, p)| (a, b, p.into_inner()))
     }
 
-    pub(crate) fn possibly_verify<P>(
+    pub(crate) fn possibly_verify<E>(
         &self,
         pack: &pack::data::File,
         check: SafetyCheck,
-        pack_progress: P,
-        index_progress: P,
-    ) -> Result<owned::Id, Error>
+        pack_progress: impl Progress,
+        index_progress: impl Progress,
+    ) -> Result<owned::Id, Error<E>>
     where
-        P: Progress + Send,
+        E: std::error::Error + Send + Sync + 'static,
     {
         Ok(if check.file_checksum() {
             if self.pack_checksum() != pack.checksum() {
@@ -90,7 +90,7 @@ impl index::File {
         header_buf: &mut [u8; 64],
         index_entry: &pack::index::Entry,
         processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
-    ) -> Result<pack::data::decode::Outcome, Error>
+    ) -> Result<pack::data::decode::Outcome, Error<E>>
     where
         C: pack::cache::DecodeEntry,
         P: Progress,
@@ -109,7 +109,11 @@ impl index::File {
                 },
                 cache,
             )
-            .map_err(|e| Error::PackDecode(e, index_entry.oid, index_entry.pack_offset))?;
+            .map_err(|e| Error::PackDecode {
+                source: e,
+                id: index_entry.oid,
+                offset: index_entry.pack_offset,
+            })?;
         let object_kind = entry_stats.kind;
         let header_size = (pack_entry_data_offset - index_entry.pack_offset) as usize;
         let entry_len = header_size + entry_stats.compressed_size;
@@ -138,7 +142,7 @@ pub(crate) fn process_entry<P, E>(
     index_entry: &pack::index::Entry,
     pack_entry_crc32: impl FnOnce() -> u32,
     processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
-) -> Result<(), Error>
+) -> Result<(), Error<E>>
 where
     P: Progress,
     E: std::error::Error + Send + Sync + 'static,
@@ -172,6 +176,5 @@ where
             }
         }
     }
-    processor(object_kind, decompressed, &index_entry, progress)
-        .map_err(|err| Error::Processor(Box::new(err) as Box<dyn std::error::Error + Send + Sync>))
+    processor(object_kind, decompressed, &index_entry, progress).map_err(Error::Processor)
 }

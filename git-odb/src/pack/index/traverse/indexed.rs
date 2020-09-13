@@ -19,7 +19,7 @@ impl index::File {
         new_processor: impl Fn() -> Processor + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
+    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
         Processor: FnMut(
@@ -43,7 +43,7 @@ impl index::File {
                     res
                 }
             },
-            || -> Result<_, Error> {
+            || -> Result<_, Error<_>> {
                 let sorted_entries =
                     index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
                 let tree = pack::tree::Tree::from_offsets_in_pack(
@@ -97,7 +97,7 @@ impl index::File {
                             processor,
                         );
                         match result {
-                            Err(err @ Error::PackDecode(_, _, _)) if !check.fatal_decode_error() => {
+                            Err(err @ Error::PackDecode { .. }) if !check.fatal_decode_error() => {
                                 progress.info(format!("Ignoring decode error: {}", err));
                                 Ok(())
                             }

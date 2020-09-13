@@ -672,6 +672,7 @@ dependencies = [
  "serde",
  "smallvec",
  "tempfile",
+ "thiserror",
  "uluru",
  "walkdir",
 ]
@@ -1262,7 +1263,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "9.0.0"
+version = "10.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "944a01f36f7038719e861978631f3e975802066d9d55f13b9b16f9bf7e392692"
 dependencies = [
  "async-io",
  "bytesize",

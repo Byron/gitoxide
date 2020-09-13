@@ -17,7 +17,7 @@ impl index::File {
         new_cache: impl Fn() -> C + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error>
+    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
         C: pack::cache::DecodeEntry,
@@ -71,7 +71,7 @@ impl index::File {
                     state_per_thread,
                     |entries: &[index::Entry],
                      (cache, ref mut processor, buf, progress)|
-                     -> Result<Vec<decode::Outcome>, Error> {
+                     -> Result<Vec<decode::Outcome>, Error<_>> {
                         progress.init(
                             Some(entries.len()),
                             Some(unit::dynamic(unit::Human::new(
@@ -94,7 +94,7 @@ impl index::File {
                             );
                             progress.inc();
                             let stat = match result {
-                                Err(err @ Error::PackDecode(_, _, _)) if !check.fatal_decode_error() => {
+                                Err(err @ Error::PackDecode { .. }) if !check.fatal_decode_error() => {
                                     progress.info(format!("Ignoring decode error: {}", err));
                                     continue;
                                 }
