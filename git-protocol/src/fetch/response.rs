@@ -190,9 +190,9 @@ impl Response {
                 // NOTE: We only read acknowledgements and scrub to the pack file, until we have use for the other features
                 let mut line = String::new();
                 reader.reset(Protocol::V2);
-                let mut acks = None::<Vec<Acknowledgement>>;
+                let mut acks = Vec::<Acknowledgement>::new();
                 let shallows = Vec::<ShallowUpdate>::new();
-                let (acks, has_pack) = 'section: loop {
+                let has_pack = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
                         return Err(Error::Io(io::Error::new(
@@ -203,10 +203,9 @@ impl Response {
 
                     match line.trim_end() {
                         "acknowledgments" => {
-                            let a = acks.get_or_insert_with(Vec::new);
                             line.clear();
                             while reader.read_line(&mut line)? != 0 {
-                                a.push(Acknowledgement::from_line(&line)?);
+                                acks.push(Acknowledgement::from_line(&line)?);
                                 line.clear();
                             }
                             // End of message, or end of section?
@@ -215,12 +214,12 @@ impl Response {
                                 reader.reset(Protocol::V2);
                             } else {
                                 // we are done, there is no pack
-                                break 'section (acks.expect("initialized acknowledgements vector"), false);
+                                break 'section false;
                             }
                         }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
-                            break 'section (acks.unwrap_or_default(), true);
+                            break 'section true;
                         }
                         _ => return Err(Error::UnknownSectionHeader(line)),
                     }

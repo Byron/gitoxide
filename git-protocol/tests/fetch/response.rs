@@ -51,6 +51,20 @@ mod v1 {
         }
 
         #[test]
+        fn empty_shallow_clone_due_to_depth_being_too_high() -> crate::Result {
+            let mut provider = mock_reader("v1/clone-deepen-5.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
+            assert!(r.shallow_updates().is_empty());
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 1988, "should be able to read the whole pack");
+            Ok(())
+        }
+
+        #[test]
         fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands())?;
@@ -91,6 +105,7 @@ mod v1 {
 mod v2 {
     mod from_line_reader {
         use crate::fetch::response::{id, mock_reader};
+        use git_protocol::fetch::response::ShallowUpdate;
         use git_protocol::fetch::{self, response::Acknowledgement};
         use git_transport::Protocol;
         use std::io::Read;
@@ -101,6 +116,37 @@ mod v2 {
             let mut reader = provider.as_read_without_sidebands();
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
+            Ok(())
+        }
+
+        #[test]
+        fn shallow_clone() -> crate::Result {
+            let mut provider = mock_reader("v2/clone-deepen-1.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+            assert_eq!(
+                r.shallow_updates(),
+                &[ShallowUpdate::Shallow(id("808e50d724f604f69ab93c6da2919c014667bedb"))]
+            );
+            assert!(r.has_pack());
+            let mut buf = Vec::new();
+            let bytes_read = reader.read_to_end(&mut buf)?;
+            assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
+            Ok(())
+        }
+
+        #[test]
+        fn empty_shallow_clone() -> crate::Result {
+            let mut provider = mock_reader("v2/clone-deepen-5.response");
+            let mut reader = provider.as_read_without_sidebands();
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+            assert!(r.shallow_updates().is_empty(), "it should go straight to the packfile");
             assert!(r.has_pack());
             let mut buf = Vec::new();
             let bytes_read = reader.read_to_end(&mut buf)?;
