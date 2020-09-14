@@ -141,11 +141,13 @@ impl Arguments {
                 if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
                     self.args.swap(first_arg_position, 0);
                 }
+                let had_args = !self.args.is_empty();
                 for arg in self.args.drain(..) {
                     line_writer.write_all(&arg)?;
                 }
-
-                line_writer.write_message(client::MessageKind::Flush)?;
+                if had_args {
+                    line_writer.write_message(client::MessageKind::Flush)?;
+                }
                 for line in self.haves.drain(..) {
                     line_writer.write_all(&line)?;
                 }
