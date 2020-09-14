@@ -57,6 +57,10 @@ impl Arguments {
         assert!(self.shallow, "'shallow' feature required for deepen");
         self.prefixed("deepen ", depth);
     }
+    pub fn shallow(&mut self, id: borrowed::Id) {
+        assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
+        self.prefixed("shallow ", id);
+    }
     pub fn deepen_since(&mut self, seconds_since_unix_epoch: usize) {
         assert!(self.deepen_since, "'deepen-since' feature required");
         self.prefixed("deepen-since ", seconds_since_unix_epoch);
@@ -151,11 +155,7 @@ impl Arguments {
                 Ok(line_writer.into_read()?)
             }
             git_transport::Protocol::V2 => {
-                let retained_state = if transport.is_stateful() {
-                    None
-                } else {
-                    Some(self.args.clone())
-                };
+                let retained_state = self.args.clone();
                 self.args.extend(self.haves.drain(..));
                 if add_done_argument {
                     self.args.push("done".into());
@@ -163,10 +163,7 @@ impl Arguments {
                 transport.invoke(
                     Command::Fetch.as_str(),
                     self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
-                    Some(match retained_state {
-                        None => std::mem::take(&mut self.args),
-                        Some(args) => std::mem::replace(&mut self.args, args),
-                    }),
+                    Some(std::mem::replace(&mut self.args, retained_state)),
                 )
             }
         }
