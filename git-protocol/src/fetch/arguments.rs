@@ -1,5 +1,5 @@
 use crate::fetch::{self, command::Feature, Command};
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 use git_object::borrowed;
 use git_transport::{
     client::{self, TransportV2Ext},
@@ -134,9 +134,13 @@ impl Arguments {
                 let mut line_writer =
                     transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_into_read)?;
 
+                if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
+                    self.args.swap(first_arg_position, 0);
+                }
                 for arg in self.args.drain(..) {
                     line_writer.write_all(&arg)?;
                 }
+
                 line_writer.write_message(client::MessageKind::Flush)?;
                 for line in self.haves.drain(..) {
                     line_writer.write_all(&line)?;

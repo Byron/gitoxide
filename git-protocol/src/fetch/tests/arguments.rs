@@ -123,8 +123,9 @@ mod v1 {
     fn haves_and_wants_for_fetch_stateless() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, false);
-        let mut arguments = arguments(Protocol::V1, ["feature-a"].iter().cloned());
+        let mut arguments = arguments(Protocol::V1, ["feature-a", "shallow"].iter().copied());
 
+        arguments.deepen(1);
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
         arguments.send(&mut t, false).expect("sending to buffer to work");
@@ -133,9 +134,11 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
+            b"0044want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow
+000ddeepen 1
 00000032have 0000000000000000000000000000000000000000
-0000003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
+00000044want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow
+000ddeepen 1
 00000032have 1111111111111111111111111111111111111111
 0009done
 "
@@ -145,16 +148,16 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::tests::arguments::{arguments, arguments_v2, id, transport};
+    use crate::fetch::tests::arguments::{arguments_v2, id, transport};
     use bstr::ByteSlice;
-    use git_transport::Protocol;
 
     #[test]
-    fn haves_and_wants_for_clone() {
+    fn haves_and_wants_for_clone_stateful() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
-        let mut arguments = arguments(Protocol::V2, ["feature-a", "feature-b"].iter().cloned());
+        let mut arguments = arguments_v2(["feature-a", "shallow"].iter().copied());
 
+        arguments.deepen(1);
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
         arguments.send(&mut t, true).expect("sending to buffer to work");
@@ -164,6 +167,7 @@ mod v2 {
 0001000ethin-pack
 0010include-tag
 000eofs-delta
+000ddeepen 1
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 0009done
