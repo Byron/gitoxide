@@ -108,6 +108,7 @@ mod v2 {
         use git_protocol::fetch::response::ShallowUpdate;
         use git_protocol::fetch::{self, response::Acknowledgement};
         use git_transport::Protocol;
+        use std::io;
         use std::io::Read;
 
         #[test]
@@ -134,9 +135,11 @@ mod v2 {
                 &[ShallowUpdate::Shallow(id("808e50d724f604f69ab93c6da2919c014667bedb"))]
             );
             assert!(r.has_pack());
-            let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
-            assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
+            assert_eq!(
+                io::copy(&mut reader, &mut io::sink())?,
+                1991,
+                "should be able to read the whole pack"
+            );
             Ok(())
         }
 
@@ -150,7 +153,7 @@ mod v2 {
             assert!(r.has_pack());
             let mut buf = Vec::new();
             let bytes_read = reader.read_to_end(&mut buf)?;
-            assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
+            assert_eq!(bytes_read, 1989, "should be able to read the whole pack");
             Ok(())
         }
 

@@ -118,7 +118,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] abort early for ls-remote capabilities
     * [x] packfile negotiation
       * [x] delegate can support for all fetch features, including shallow, deepen, etc.
-      * [ ] receive parsed shallow refs
+      * [x] receive parsed shallow refs
   * [ ] push
   * [ ] API documentation with examples
   
@@ -144,7 +144,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [x] git://<service>
       * [x] V1 handshake
         * [x] send values + receive data with sidebands
-        * [ ] support for receiving 'shallow' refs in case the remote repository is shallow itself (I presume)
+        * [ ] ~~support for receiving 'shallow' refs in case the remote repository is shallow itself (I presume)~~
+          * Since V2 doesn't seem to support that, let's skip this until there is an actual need. No completionist :D
       * [x] V2 handshake
         * [x] send command request, receive response with sideband support
     * [x] http(s)://<service>

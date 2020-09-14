@@ -191,7 +191,7 @@ impl Response {
                 let mut line = String::new();
                 reader.reset(Protocol::V2);
                 let mut acks = Vec::<Acknowledgement>::new();
-                let shallows = Vec::<ShallowUpdate>::new();
+                let mut shallows = Vec::<ShallowUpdate>::new();
                 let has_pack = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
@@ -203,17 +203,12 @@ impl Response {
 
                     match line.trim_end() {
                         "acknowledgments" => {
-                            line.clear();
-                            while reader.read_line(&mut line)? != 0 {
-                                acks.push(Acknowledgement::from_line(&line)?);
-                                line.clear();
+                            if parse_section(&mut line, reader, &mut acks, Acknowledgement::from_line)? {
+                                break 'section false;
                             }
-                            // End of message, or end of section?
-                            if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
-                                // try reading more sections
-                                reader.reset(Protocol::V2);
-                            } else {
-                                // we are done, there is no pack
+                        }
+                        "shallow-info" => {
+                            if parse_section(&mut line, reader, &mut shallows, ShallowUpdate::from_line)? {
                                 break 'section false;
                             }
                         }
@@ -240,4 +235,26 @@ impl Response {
     pub fn shallow_updates(&self) -> &[ShallowUpdate] {
         &self.shallows
     }
+}
+
+fn parse_section<T>(
+    line: &mut String,
+    reader: &mut impl client::ExtendedBufRead,
+    res: &mut Vec<T>,
+    parse: impl Fn(&str) -> Result<T, Error>,
+) -> Result<bool, Error> {
+    line.clear();
+    while reader.read_line(line)? != 0 {
+        res.push(parse(line)?);
+        line.clear();
+    }
+    // End of message, or end of section?
+    Ok(if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
+        // try reading more sections
+        reader.reset(Protocol::V2);
+        false
+    } else {
+        // we are done, there is no pack
+        true
+    })
 }
