@@ -37,6 +37,29 @@ fn peek_follows_read_line_delimiter_logic() -> crate::Result {
 }
 
 #[test]
+fn peek_follows_read_line_err_logic() -> crate::Result {
+    let mut rd = git_packetline::Provider::new(&b"0005a0009ERR e0000"[..], &[PacketLine::Flush]);
+    rd.fail_on_err_lines(true);
+    assert_eq!(rd.peek_line().expect("line")??, PacketLine::Data(b"a"));
+    rd.read_line();
+    assert_eq!(
+        rd.peek_line().expect("line").unwrap_err().to_string(),
+        "e",
+        "io errors are used to communicate remote errors when peeking"
+    );
+    assert!(rd.peek_line().is_none(), "we are still done, no way around it");
+    assert_eq!(rd.stopped_at(), None, "we stopped not because of a delimiter");
+    rd.reset();
+    assert!(rd.peek_line().is_none(), "it should stop due to the delimiter");
+    assert_eq!(
+        rd.stopped_at(),
+        Some(PacketLine::Flush),
+        "Stopped tracking is done even when peeking"
+    );
+    Ok(())
+}
+
+#[test]
 fn peek_non_data() -> crate::Result {
     let mut rd = git_packetline::Provider::new(&b"000000010002"[..], &[PacketLine::ResponseEnd]);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Flush);

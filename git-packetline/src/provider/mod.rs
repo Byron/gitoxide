@@ -136,14 +136,20 @@ where
                         self.stopped_at = self.delimiters.iter().find(|l| **l == line).cloned();
                         self.peek_buf.clear();
                         return None;
-                    } else {
-                        let len = line
-                            .as_slice()
-                            .map(|s| s.len() + U16_HEX_BYTES)
-                            .unwrap_or(U16_HEX_BYTES);
-                        self.peek_buf.resize(len, 0);
-                        Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
+                    } else if self.fail_on_err_lines {
+                        if let Some(err) = line.check_error() {
+                            self.is_done = true;
+                            let err = err.0.as_bstr().to_string();
+                            self.peek_buf.clear();
+                            return Some(Err(io::Error::new(io::ErrorKind::Other, err)));
+                        }
                     }
+                    let len = line
+                        .as_slice()
+                        .map(|s| s.len() + U16_HEX_BYTES)
+                        .unwrap_or(U16_HEX_BYTES);
+                    self.peek_buf.resize(len, 0);
+                    Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
                 }
                 Ok(Err(err)) => {
                     self.peek_buf.clear();
