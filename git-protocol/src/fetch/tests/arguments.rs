@@ -169,6 +169,7 @@ mod v2 {
         let mut arguments = arguments_v2(["feature-a", "shallow"].iter().copied());
 
         arguments.deepen(1);
+        arguments.deepen_relative();
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
         arguments.send(&mut t, true).expect("sending to buffer to work");
@@ -179,6 +180,7 @@ mod v2 {
 0010include-tag
 000eofs-delta
 000ddeepen 1
+0014deepen-relative
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 0009done
