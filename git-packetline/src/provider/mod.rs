@@ -122,6 +122,7 @@ where
         self.peek_buf.truncate(new_len);
         self.peek_buf[..4].copy_from_slice(&crate::encode::u16_to_hex((new_len) as u16));
     }
+
     pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
         if self.is_done {
             return None;
@@ -130,12 +131,19 @@ where
             self.peek_buf.resize(MAX_LINE_LEN, 0);
             match Self::read_line_inner(&mut self.inner, &mut self.peek_buf) {
                 Ok(Ok(line)) => {
-                    let len = line
-                        .as_slice()
-                        .map(|s| s.len() + U16_HEX_BYTES)
-                        .unwrap_or(U16_HEX_BYTES);
-                    self.peek_buf.resize(len, 0);
-                    Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
+                    if self.delimiters.contains(&line) {
+                        self.is_done = true;
+                        self.stopped_at = self.delimiters.iter().find(|l| **l == line).cloned();
+                        self.peek_buf.clear();
+                        return None;
+                    } else {
+                        let len = line
+                            .as_slice()
+                            .map(|s| s.len() + U16_HEX_BYTES)
+                            .unwrap_or(U16_HEX_BYTES);
+                        self.peek_buf.resize(len, 0);
+                        Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
+                    }
                 }
                 Ok(Err(err)) => {
                     self.peek_buf.clear();

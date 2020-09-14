@@ -16,6 +16,27 @@ fn first_line() -> PacketLine<'static> {
     PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n")
 }
 #[test]
+fn peek_follows_read_line_delimiter_logic() -> crate::Result {
+    let mut rd = git_packetline::Provider::new(&b"0005a00000005b"[..], &[PacketLine::Flush]);
+    assert_eq!(rd.peek_line().expect("line")??, PacketLine::Data(b"a"));
+    rd.read_line();
+    assert!(rd.peek_line().is_none(), "we hit the delmiter, and thus are EOF");
+    assert_eq!(
+        rd.stopped_at(),
+        Some(PacketLine::Flush),
+        "Stopped tracking is done even when peeking"
+    );
+    assert!(rd.peek_line().is_none(), "we are still done, no way around it");
+    rd.reset();
+    assert_eq!(
+        rd.peek_line().expect("line")??,
+        PacketLine::Data(b"b"),
+        "after resetting, we get past the delimiter"
+    );
+    Ok(())
+}
+
+#[test]
 fn peek_non_data() -> crate::Result {
     let mut rd = git_packetline::Provider::new(&b"000000010002"[..], &[PacketLine::ResponseEnd]);
     assert_eq!(rd.read_line().expect("line")??, PacketLine::Flush);
