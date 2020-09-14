@@ -10,7 +10,6 @@ use std::{fmt, io::Write};
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
     features: Vec<Feature>,
-    base_args: Vec<BString>,
 
     args: Vec<BString>,
     haves: Vec<BString>,
@@ -102,7 +101,6 @@ impl Arguments {
         Ok(Arguments {
             features,
             version,
-            base_args: initial_arguments.clone(),
             args: initial_arguments,
             haves: Vec::new(),
             filter,
@@ -149,15 +147,22 @@ impl Arguments {
                 Ok(line_writer.into_read()?)
             }
             git_transport::Protocol::V2 => {
-                let mut arguments = std::mem::replace(&mut self.args, self.base_args.clone());
-                arguments.extend(self.haves.drain(..));
+                let retained_state = if transport.is_stateful() {
+                    None
+                } else {
+                    Some(self.args.clone())
+                };
+                self.args.extend(self.haves.drain(..));
                 if add_done_argument {
-                    arguments.push("done".into());
+                    self.args.push("done".into());
                 }
                 transport.invoke(
                     Command::Fetch.as_str(),
                     self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
-                    Some(arguments),
+                    Some(match retained_state {
+                        None => std::mem::take(&mut self.args),
+                        Some(args) => std::mem::replace(&mut self.args, args),
+                    }),
                 )
             }
         }

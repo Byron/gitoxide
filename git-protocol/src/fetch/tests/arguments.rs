@@ -1,11 +1,19 @@
 use crate::fetch;
 use bstr::ByteSlice;
-use git_transport::client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode};
-use git_transport::{client, Protocol, Service};
+use git_transport::{
+    client,
+    client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+    Protocol, Service,
+};
 use std::io;
 
 fn arguments(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(protocol, features.into_iter().map(|n| (n, None)).collect()).expect("all required features")
+}
+
+fn arguments_v2(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
+    fetch::Arguments::new(Protocol::V2, features.into_iter().map(|n| (n, None)).collect())
+        .expect("all required features")
 }
 
 struct Transport<T: client::Transport> {
@@ -137,7 +145,7 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::tests::arguments::{arguments, id, transport};
+    use crate::fetch::tests::arguments::{arguments, arguments_v2, id, transport};
     use bstr::ByteSlice;
     use git_transport::Protocol;
 
@@ -165,36 +173,38 @@ mod v2 {
     }
 
     #[test]
-    fn haves_and_wants_for_fetch() {
-        for is_stateful in &[true, false] {
-            let mut out = Vec::new();
-            let mut t = transport(&mut out, *is_stateful);
-            let mut arguments = arguments(Protocol::V2, ["feature-a"].iter().cloned());
+    fn haves_and_wants_for_fetch_stateless() {
+        let mut out = Vec::new();
+        let mut t = transport(&mut out, false);
+        let mut arguments = arguments_v2(Some("shallow"));
 
-            arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
-            arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
-            arguments.send(&mut t, false).expect("sending to buffer to work");
+        arguments.deepen(1);
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+        arguments.send(&mut t, false).expect("sending to buffer to work");
 
-            arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
-            arguments.send(&mut t, true).expect("sending to buffer to work");
-            assert_eq!(
-                out.as_bstr(),
-                b"0012command=fetch
+        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+        arguments.send(&mut t, true).expect("sending to buffer to work");
+        assert_eq!(
+            out.as_bstr(),
+            b"0012command=fetch
 0001000ethin-pack
 0010include-tag
 000eofs-delta
+000ddeepen 1
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032have 0000000000000000000000000000000000000000
 00000012command=fetch
 0001000ethin-pack
 0010include-tag
 000eofs-delta
+000ddeepen 1
+0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032have 1111111111111111111111111111111111111111
 0009done
 0000"
-                    .as_bstr(),
-                "V2 is stateless by default, so it repeats everything needed to run a command successfully"
-            );
-        }
+                .as_bstr(),
+            "V2 is stateless by default, so it repeats all but 'haves' in each request"
+        );
     }
 }
