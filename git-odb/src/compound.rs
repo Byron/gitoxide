@@ -32,8 +32,16 @@ mod locate {
     }
 
     impl compound::Db {
-        pub fn locate<'a>(&self, _id: borrowed::Id, _buffer: &'a mut Vec<u8>) -> Option<Result<Object<'a>, Error>> {
-            unimplemented!("object location")
+        pub fn locate<'a>(&self, id: borrowed::Id, buffer: &'a mut Vec<u8>) -> Option<Result<Object<'a>, Error>> {
+            if let Some(object) = self
+                .packs
+                .iter()
+                .find_map(|pack| pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop))
+            {
+                Some(object.map(|object| Object::Borrowed(object)).map_err(Into::into))
+            } else {
+                unimplemented!("object location")
+            }
         }
     }
 }
