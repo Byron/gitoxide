@@ -1,8 +1,5 @@
 ### Repository Clone
 
-* **git-transport** _(shallow - for completeness and because it's still fresh)_
- * [ ] ~~a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)~~
- * [x] shallow support for V2
 * **git-odb**
   * [ ] alternate DB
   * [ ] multi-odb 

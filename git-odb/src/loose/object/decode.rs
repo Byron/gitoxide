@@ -52,7 +52,7 @@ impl loose::Object {
         }
     }
 
-    pub fn decompress_all(&mut self) -> Result<(), Error> {
+    pub(crate) fn decompress_all(&mut self) -> Result<(), Error> {
         if self.decompression_complete {
             debug_assert!(
                 self.size + self.header_size == self.decompressed_data.len(),
