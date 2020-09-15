@@ -12,4 +12,6 @@ pub use sink::{sink, Sink};
 pub(crate) mod hash;
 mod traits;
 
+pub mod borrowed;
+
 pub use traits::*;

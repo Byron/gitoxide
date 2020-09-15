@@ -1,5 +1,6 @@
 use git_object::borrowed;
 
+/// A borrowed object using a borrowed slice as backing buffer.
 pub struct Object<'a> {
     pub kind: git_object::Kind,
     pub data: &'a [u8],
@@ -17,7 +18,7 @@ impl<'a> Object<'a> {
 }
 
 pub mod verify {
-    use crate::{hash, loose, pack};
+    use crate::{hash, loose};
     use git_object::{borrowed, owned};
     use quick_error::quick_error;
     use std::io;
@@ -31,7 +32,7 @@ pub mod verify {
         }
     }
 
-    impl pack::Object<'_> {
+    impl crate::borrowed::Object<'_> {
         pub fn verify_checksum(&self, desired: borrowed::Id) -> Result<(), Error> {
             let mut sink = hash::Write::new(io::sink(), desired.kind());
 
