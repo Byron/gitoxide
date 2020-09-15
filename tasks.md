@@ -1,8 +1,11 @@
 ### Repository Clone
 
 * **git-odb**
+  * [ ] compound-odb 
+    * [ ] Write forwarding to loose odbn
+    * [ ] locate object and figure out how to deal with differences of ODBs databases
   * [ ] alternate DB
-  * [ ] multi-odb 
+  * [ ] loose upgrade: jwalk powered iteration behind a feature flag
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_

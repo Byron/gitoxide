@@ -2,6 +2,7 @@
 
 mod zlib;
 
+pub mod compound;
 pub mod loose;
 pub mod pack;
 

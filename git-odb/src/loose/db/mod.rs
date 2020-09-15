@@ -7,8 +7,12 @@ pub struct Db {
 
 /// Initialization
 impl Db {
-    pub fn at(path: impl Into<PathBuf>) -> Db {
-        Db { path: path.into() }
+    /// Initialize the Db with the `objects_directory` containing the hexadecimal first byte subdirectories, which in turn
+    /// contain all loose objects.
+    pub fn at(objects_directory: impl Into<PathBuf>) -> Db {
+        Db {
+            path: objects_directory.into(),
+        }
     }
 }
 
