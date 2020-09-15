@@ -615,6 +615,13 @@ dependencies = [
 [[package]]
 name = "git-commitgraph"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+ "byteorder",
+ "filebuffer",
+ "git-object",
+ "quick-error 2.0.0",
+]
 
 [[package]]
 name = "git-features"
