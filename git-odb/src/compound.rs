@@ -5,6 +5,39 @@ pub struct Db {
     pub packs: Vec<pack::Bundle>,
 }
 
+mod locate {
+    use crate::{compound, loose, pack};
+    use git_object::borrowed;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Loose(err: loose::db::locate::Error) {
+                display("An error occurred while obtaining an object from the loose object store")
+                source(err)
+                from()
+            }
+            Pack(err: pack::bundle::locate::Error) {
+                display("An error occurred while obtaining an object from the packed object store")
+                source(err)
+                from()
+            }
+        }
+    }
+
+    pub enum Object<'a> {
+        Loose(loose::Object),
+        Borrowed(crate::borrowed::Object<'a>),
+    }
+
+    impl compound::Db {
+        pub fn locate<'a>(&self, _id: borrowed::Id, _buffer: &'a mut Vec<u8>) -> Option<Result<Object<'a>, Error>> {
+            unimplemented!("object location")
+        }
+    }
+}
+
 mod write {
     use crate::{compound, loose};
     use git_object::{owned, HashKind, Kind};
@@ -53,21 +86,22 @@ mod init {
     impl compound::Db {
         pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Db, Error> {
             let loose_objects = objects_directory.into();
-            let packs = std::fs::read_dir(loose_objects.join("packs"))
-                .map(|entries| {
-                    entries
-                        .filter_map(Result::ok)
-                        .filter(|e| e.file_type().map(|t| t.is_file()).unwrap_or(false))
-                        .map(|e| e.path().to_owned())
-                        .filter(|p| p.extension().unwrap_or_default() == "idx" && p.starts_with("pack-"))
-                        .map(pack::Bundle::at)
-                        .collect::<Result<Vec<_>, _>>()
-                })
-                .unwrap_or_else(|_read_dir_io_err| Ok(Vec::new()))?;
+            let mut packs_and_sizes = if let Ok(entries) = std::fs::read_dir(loose_objects.join("packs")) {
+                entries
+                    .filter_map(Result::ok)
+                    .filter(|e| e.file_type().map(|t| t.is_file()).unwrap_or(false))
+                    .filter_map(|e| e.metadata().map(|md| (e.path().to_owned(), md)).ok())
+                    .filter(|(p, _)| p.extension().unwrap_or_default() == "idx" && p.starts_with("pack-"))
+                    .map(|(p, md)| pack::Bundle::at(p).map(|b| (b, md.len())))
+                    .collect::<Result<Vec<_>, _>>()?
+            } else {
+                Vec::new()
+            };
+            packs_and_sizes.sort_by_key(|e| e.1);
 
             Ok(compound::Db {
                 loose: loose::Db::at(loose_objects),
-                packs,
+                packs: packs_and_sizes.into_iter().rev().map(|(b, _)| b).collect(),
             })
         }
     }
