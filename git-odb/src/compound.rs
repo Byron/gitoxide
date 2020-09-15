@@ -36,10 +36,12 @@ mod locate {
             for pack in &self.packs {
                 if pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).is_some() {
                     let object = pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).unwrap();
-                    return Some(object.map(|object| Object::Borrowed(object)).map_err(Into::into));
+                    return Some(object.map(Object::Borrowed).map_err(Into::into));
                 }
             }
-            unimplemented!("object location")
+            self.loose
+                .locate(id)
+                .map(|object| object.map_err(Into::into).map(Object::Loose))
         }
     }
 }
@@ -95,7 +97,7 @@ mod init {
             let packs = if let Ok(entries) = std::fs::read_dir(loose_objects.join("packs")) {
                 let mut packs_and_sizes = entries
                     .filter_map(Result::ok)
-                    .filter_map(|e| e.metadata().map(|md| (e.path().to_owned(), md)).ok())
+                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
                     .filter(|(_, md)| md.file_type().is_file())
                     .filter(|(p, _)| p.extension().unwrap_or_default() == "idx" && p.starts_with("pack-"))
                     .map(|(p, md)| pack::Bundle::at(p).map(|b| (b, md.len())))
