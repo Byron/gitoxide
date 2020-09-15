@@ -89,8 +89,8 @@ mod init {
             let mut packs_and_sizes = if let Ok(entries) = std::fs::read_dir(loose_objects.join("packs")) {
                 entries
                     .filter_map(Result::ok)
-                    .filter(|e| e.file_type().map(|t| t.is_file()).unwrap_or(false))
                     .filter_map(|e| e.metadata().map(|md| (e.path().to_owned(), md)).ok())
+                    .filter(|(_, md)| md.file_type().is_file())
                     .filter(|(p, _)| p.extension().unwrap_or_default() == "idx" && p.starts_with("pack-"))
                     .map(|(p, md)| pack::Bundle::at(p).map(|b| (b, md.len())))
                     .collect::<Result<Vec<_>, _>>()?
