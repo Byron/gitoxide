@@ -34,10 +34,10 @@ mod locate {
     impl compound::Db {
         pub fn locate<'a>(&self, id: borrowed::Id, buffer: &'a mut Vec<u8>) -> Option<Result<Object<'a>, Error>> {
             for pack in &self.packs {
-                // The reason for the rust-toolchain requirement is this:
-                // See https://stackoverflow.com/questions/50519147/double-mutable-borrow-error-in-a-loop-happens-even-with-nll-on
-                // and https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425
-                if let Some(object) = pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop) {
+                // TODO: Improve this to not locate twice.
+                // See https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425
+                if pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).is_some() {
+                    let object = pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).unwrap();
                     return Some(object.map(Object::Borrowed).map_err(Into::into));
                 }
             }
