@@ -462,6 +462,9 @@ From there, we can derive a few rules to try adhere to:
 * **Packfiles cannot load files bigger than 2^31 or 2^32 on 32 bit systems**
   * As these systems cannot address more memory than that.
   * _potential remedy_: implement a sliding window to map and unmap portions of the file as needed.
+* **Objects larger than 32bits cannot be loaded on 32 bit systems**
+  * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
+  * This should not affect git LFS though.
 * **CRC32** implementation doesn't use SIMD
   * Probably at no cost one could upgrade to the **crc32fast** crate, but it looks unmaintained and has more code.
 * **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
