@@ -3,21 +3,15 @@ use crate::{
     zlib,
 };
 use git_object::{self as object, borrowed, owned};
-use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{convert::TryInto, io, ops::Range};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
-            display("{}", msg)
-            source(err)
-        }
-        DeltaBaseUnresolved(id: owned::Id) {
-            display("A delta chain could not be applied as the ref base with id {} could not be found", id)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Failed to decompress pack entry")]
+    ZlibInflate(#[from] crate::zlib::Error),
+    #[error("A delta chain could not be applied as the ref base with id {0} could not be found")]
+    DeltaBaseUnresolved(owned::Id),
 }
 
 #[derive(Debug)]
@@ -114,7 +108,7 @@ impl File {
 
         zlib::Inflate::default()
             .once(&self.data[offset..], out, true)
-            .map_err(|e| Error::ZlibInflate(e, "Failed to decompress pack entry"))
+            .map_err(Into::into)
             .map(|(_, consumed_in, _)| consumed_in)
     }
 
