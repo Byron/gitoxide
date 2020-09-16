@@ -1,5 +1,11 @@
 ## Potential for improving performance
 
+### NLL/Borrowcheck limitation in git-odb
+
+* Once polonius is available with production-ready performance, we have to [make this code less wasteful](https://github.com/Byron/gitoxide/blob/b125c763c5d628c397dce9a5d085fbf123ce1f29/git-odb/src/compound.rs#L42)
+ * See https://github.com/rust-lang/rust/issues/45402 for a discussion and more links
+ * Here is [a commit](https://github.com/Byron/gitoxide/commit/8c5bd095539042d7db0e611460803cdbf172beb0) that sets up polonius, which greatly degrades borrow check times (as of 2020-09-15)
+
 ### Pack Decoding
 
 * [ ] @joshtriplett writes: "Regarding decompression performance, try replacing miniz_oxide with a better zlib decoder. Build with libz-sys, and then try substituting zlib-ng built with --zlib-compat. (I'm working on making that easier.) That should substantially improve decompression."
