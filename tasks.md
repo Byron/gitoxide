@@ -4,7 +4,8 @@
   * [ ] compound-odb 
     * [x] Write forwarding to loose odb
     * [x] locate object and figure out how to deal with differences of ODBs databases
-    * [ ] make NLL issue work
+    * [x] make NLL issue work
+    * [ ] Nice access to compound::Object
   * [ ] Add #![deny(rust_2018_idioms)] everywhere
   * [ ] alternate DB (location - it's really must following the chain until a compound DB can be created)
   * [ ] loose upgrade: jwalk powered iteration behind a feature flag

@@ -1,6 +1,7 @@
 use git_object::borrowed;
 
 /// A borrowed object using a borrowed slice as backing buffer.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Object<'a> {
     pub kind: git_object::Kind,
     pub data: &'a [u8],
