@@ -1,4 +1,6 @@
 #![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
+
 pub(crate) const U16_HEX_BYTES: usize = 4;
 pub(crate) const MAX_DATA_LEN: usize = 65516;
 pub(crate) const MAX_LINE_LEN: usize = MAX_DATA_LEN + U16_HEX_BYTES;

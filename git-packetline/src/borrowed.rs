@@ -30,10 +30,10 @@ impl<'a> Borrowed<'a> {
     pub fn as_bstr(&self) -> Option<&BStr> {
         self.as_slice().map(Into::into)
     }
-    pub fn to_error(&self) -> Option<Error> {
+    pub fn to_error(&self) -> Option<Error<'_>> {
         self.as_slice().map(Error)
     }
-    pub fn check_error(&self) -> Option<Error> {
+    pub fn check_error(&self) -> Option<Error<'_>> {
         self.as_slice().and_then(|data| {
             if data.len() >= ERR_PREFIX.len() && &data[..ERR_PREFIX.len()] == ERR_PREFIX {
                 Some(Error(&data[ERR_PREFIX.len()..]))
@@ -42,10 +42,10 @@ impl<'a> Borrowed<'a> {
             }
         })
     }
-    pub fn to_text(&self) -> Option<Text> {
+    pub fn to_text(&self) -> Option<Text<'_>> {
         self.as_slice().map(Into::into)
     }
-    pub fn to_band(&self, kind: Channel) -> Option<Band> {
+    pub fn to_band(&self, kind: Channel) -> Option<Band<'_>> {
         self.as_slice().map(|d| match kind {
             Channel::Data => Band::Data(d),
             Channel::Progress => Band::Progress(d),
@@ -53,7 +53,7 @@ impl<'a> Borrowed<'a> {
         })
     }
     /// Decode the band of the line, or panic if it is not actually a side-band line
-    pub fn decode_band(&self) -> Result<Band, DecodeBandError> {
+    pub fn decode_band(&self) -> Result<Band<'_>, DecodeBandError> {
         let d = self.as_slice().ok_or(DecodeBandError::NonDataLine)?;
         Ok(match d[0] {
             1 => Band::Data(&d[1..]),

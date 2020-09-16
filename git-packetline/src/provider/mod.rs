@@ -80,7 +80,7 @@ where
         }
     }
 
-    pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
+    pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
         if self.is_done {
             return None;
         }
@@ -123,7 +123,7 @@ where
         self.peek_buf[..4].copy_from_slice(&crate::encode::u16_to_hex((new_len) as u16));
     }
 
-    pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine, decode::Error>>> {
+    pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
         if self.is_done {
             return None;
         }
@@ -165,15 +165,15 @@ where
         })
     }
 
-    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> ReadWithSidebands<T, F> {
+    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> ReadWithSidebands<'_, T, F> {
         ReadWithSidebands::with_progress_handler(self, handle_progress)
     }
 
-    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> ReadWithSidebands<T, F> {
+    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> ReadWithSidebands<'_, T, F> {
         ReadWithSidebands::without_progress_handler(self)
     }
 
-    pub fn as_read(&mut self) -> ReadWithSidebands<T, fn(bool, &[u8])> {
+    pub fn as_read(&mut self) -> ReadWithSidebands<'_, T, fn(bool, &[u8])> {
         ReadWithSidebands::new(self)
     }
 }
