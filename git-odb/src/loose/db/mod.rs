@@ -16,7 +16,7 @@ impl Db {
     }
 }
 
-pub(crate) fn sha1_path(id: borrowed::Id, mut root: PathBuf) -> PathBuf {
+pub(crate) fn sha1_path(id: borrowed::Id<'_>, mut root: PathBuf) -> PathBuf {
     match id.kind() {
         HashKind::Sha1 => {
             let hex = id.to_sha1_hex();

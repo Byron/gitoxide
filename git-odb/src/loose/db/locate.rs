@@ -31,7 +31,7 @@ quick_error! {
 impl Db {
     const OPEN_ACTION: &'static str = "open";
 
-    pub fn locate(&self, id: borrowed::Id) -> Option<Result<Object, Error>> {
+    pub fn locate(&self, id: borrowed::Id<'_>) -> Option<Result<Object, Error>> {
         match self.locate_inner(id) {
             Ok(obj) => Some(Ok(obj)),
             Err(err) => match err {
@@ -47,7 +47,7 @@ impl Db {
         }
     }
 
-    fn locate_inner(&self, id: borrowed::Id) -> Result<Object, Error> {
+    fn locate_inner(&self, id: borrowed::Id<'_>) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();

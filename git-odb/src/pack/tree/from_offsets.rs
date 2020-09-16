@@ -45,7 +45,7 @@ impl<T> Tree<T> {
         get_pack_offset: impl Fn(&T) -> PackOffset,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
-        resolve_in_pack_id: impl Fn(git_object::borrowed::Id) -> Option<PackOffset>,
+        resolve_in_pack_id: impl Fn(git_object::borrowed::Id<'_>) -> Option<PackOffset>,
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(
             8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k

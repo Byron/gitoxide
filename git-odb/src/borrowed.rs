@@ -8,7 +8,7 @@ pub struct Object<'a> {
 }
 
 impl<'a> Object<'a> {
-    pub fn decode(&self) -> Result<borrowed::Object, borrowed::Error> {
+    pub fn decode(&self) -> Result<borrowed::Object<'_>, borrowed::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(self.data)?),
             git_object::Kind::Blob => borrowed::Object::Blob(borrowed::Blob { data: self.data }),
@@ -34,7 +34,7 @@ pub mod verify {
     }
 
     impl crate::borrowed::Object<'_> {
-        pub fn verify_checksum(&self, desired: borrowed::Id) -> Result<(), Error> {
+        pub fn verify_checksum(&self, desired: borrowed::Id<'_>) -> Result<(), Error> {
             let mut sink = hash::Write::new(io::sink(), desired.kind());
 
             loose::object::header::encode(self.kind, self.data.len() as u64, &mut sink).expect("hash to always work");

@@ -126,7 +126,7 @@ impl File {
         &self,
         entry: pack::data::Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(borrowed::Id<'_>, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::pack::data::header::Header::*;
@@ -157,7 +157,7 @@ impl File {
     fn resolve_deltas(
         &self,
         last: pack::data::Entry,
-        resolve: impl Fn(borrowed::Id, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(borrowed::Id<'_>, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {

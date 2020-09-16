@@ -19,7 +19,7 @@ impl pack::Bundle {
     /// For the latter, pack streams are required.
     pub fn locate<'a>(
         &self,
-        id: borrowed::Id,
+        id: borrowed::Id<'_>,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
     ) -> Option<Result<crate::borrowed::Object<'a>, Error>> {

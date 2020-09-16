@@ -40,7 +40,7 @@ mod locate {
     impl compound::Db {
         pub fn locate<'a>(
             &self,
-            id: borrowed::Id,
+            id: borrowed::Id<'_>,
             buffer: &'a mut Vec<u8>,
         ) -> Option<Result<compound::Object<'a>, Error>> {
             for pack in &self.packs {

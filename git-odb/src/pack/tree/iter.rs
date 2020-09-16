@@ -77,7 +77,7 @@ impl<T> Tree<T> {
 /// Iteration
 impl<T> Tree<T> {
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<T> {
+    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<'_, T> {
         Chunks {
             tree: self,
             size,
