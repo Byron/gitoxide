@@ -2,26 +2,16 @@ use crate::zlib::stream::inflate::InflateReaderBoxed;
 use crate::{hash, pack, zlib::stream::inflate::Inflate};
 use git_features::hash::Sha1;
 use git_object::owned;
-use quick_error::quick_error;
 use std::{fs, io};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: io::Error) {
-            display("An IO operation failed while streaming an entry")
-            from()
-            source(err)
-        }
-        PackParse(err: pack::data::parse::Error) {
-            display("The pack header could not be parsed")
-            from()
-            source(err)
-        }
-        ChecksumMismatch { expected: owned::Id, actual: owned::Id } {
-            display("pack checksum in trailer was {}, but actual checksum was {}", expected, actual)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("An IO operation failed while streaming an entry")]
+    Io(#[from] io::Error),
+    #[error(transparent)]
+    PackParse(#[from] pack::data::parse::Error),
+    #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
+    ChecksumMismatch { expected: owned::Id, actual: owned::Id },
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
