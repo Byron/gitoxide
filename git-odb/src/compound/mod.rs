@@ -33,22 +33,13 @@ pub mod object {
 
     pub mod decode {
         use crate::{compound::Object, loose};
-        use quick_error::quick_error;
 
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Decode(err: git_object::borrowed::Error) {
-                    display("An object could not be decoded")
-                    source(err)
-                    from()
-                }
-                LooseObject(err: loose::object::decode::Error) {
-                    display("A loose object could not be read")
-                    source(err)
-                    from()
-                }
-            }
+        #[derive(thiserror::Error, Debug)]
+        pub enum Error {
+            #[error(transparent)]
+            Decode(#[from] git_object::borrowed::Error),
+            #[error(transparent)]
+            LooseObject(#[from] loose::object::decode::Error),
         }
 
         impl<'a> Object<'a> {
