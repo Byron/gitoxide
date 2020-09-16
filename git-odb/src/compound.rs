@@ -34,6 +34,8 @@ mod locate {
     impl compound::Db {
         pub fn locate<'a>(&self, id: borrowed::Id, buffer: &'a mut Vec<u8>) -> Option<Result<Object<'a>, Error>> {
             for pack in &self.packs {
+                // TODO: Improve this to not locate twice.
+                // See https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425
                 if pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).is_some() {
                     let object = pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).unwrap();
                     return Some(object.map(Object::Borrowed).map_err(Into::into));
@@ -41,7 +43,7 @@ mod locate {
             }
             self.loose
                 .locate(id)
-                .map(|object| object.map_err(Into::into).map(Object::Loose))
+                .map(|object| object.map(Object::Loose).map_err(Into::into))
         }
     }
 }

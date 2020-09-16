@@ -2,9 +2,11 @@
 
 * **git-odb**
   * [ ] compound-odb 
-    * [ ] Write forwarding to loose odbn
-    * [ ] locate object and figure out how to deal with differences of ODBs databases
-  * [ ] alternate DB
+    * [x] Write forwarding to loose odb
+    * [x] locate object and figure out how to deal with differences of ODBs databases
+    * [ ] make NLL issue work
+  * [ ] Add #![deny(rust_2018_idioms)] everywhere
+  * [ ] alternate DB (location - it's really must following the chain until a compound DB can be created)
   * [ ] loose upgrade: jwalk powered iteration behind a feature flag
 * **git-ref**
   * [ ] create ref pointing to ID
