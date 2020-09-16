@@ -77,7 +77,7 @@ fn git_program() -> &'static str {
     "git"
 }
 
-pub fn helper(action: Action) -> Result {
+pub fn helper(action: Action<'_>) -> Result {
     let mut cmd = Command::new(git_program());
     cmd.arg("credential")
         .arg(action.as_str())

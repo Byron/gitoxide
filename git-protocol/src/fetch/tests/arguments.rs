@@ -23,7 +23,7 @@ struct Transport<T: client::Transport> {
 }
 
 impl<T: client::Transport> client::Transport for Transport<T> {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error> {
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
         self.inner.handshake(service)
     }
 
@@ -31,7 +31,7 @@ impl<T: client::Transport> client::Transport for Transport<T> {
         self.inner.set_identity(identity)
     }
 
-    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error> {
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
         self.inner.request(write_mode, on_into_read)
     }
 

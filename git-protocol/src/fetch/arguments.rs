@@ -44,16 +44,16 @@ impl Arguments {
         self.deepen_relative
     }
 
-    pub fn want(&mut self, id: borrowed::Id) {
+    pub fn want(&mut self, id: borrowed::Id<'_>) {
         match self.features_for_first_want.take() {
             Some(features) => self.prefixed("want ", format!("{} {}", id, features.join(" "))),
             None => self.prefixed("want ", id),
         }
     }
-    pub fn have(&mut self, id: borrowed::Id) {
+    pub fn have(&mut self, id: borrowed::Id<'_>) {
         self.haves.push(format!("have {}", id).into());
     }
-    pub fn shallow(&mut self, id: borrowed::Id) {
+    pub fn shallow(&mut self, id: borrowed::Id<'_>) {
         assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
         self.prefixed("shallow ", id);
     }

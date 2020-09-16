@@ -19,7 +19,7 @@ pub struct RemoteProgress<'a> {
 }
 
 impl<'a> RemoteProgress<'a> {
-    pub fn from_bytes(line: &[u8]) -> Option<RemoteProgress> {
+    pub fn from_bytes(line: &[u8]) -> Option<RemoteProgress<'_>> {
         parse_progress(line).ok().and_then(|(_, r)| {
             if r.percent.is_none() && r.step.is_none() && r.max.is_none() {
                 None
@@ -83,7 +83,7 @@ fn next_optional_number(i: &[u8]) -> nom::IResult<&[u8], Option<usize>> {
     opt(preceded(take_till(|c: u8| c.is_ascii_digit()), parse_number))(i)
 }
 
-fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], RemoteProgress> {
+fn parse_progress(line: &[u8]) -> nom::IResult<&[u8], RemoteProgress<'_>> {
     let (i, action) = take_till1(|c| c == b':')(line)?;
     let (i, percent) = next_optional_percentage(i)?;
     let (i, step) = next_optional_number(i)?;

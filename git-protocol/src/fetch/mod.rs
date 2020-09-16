@@ -72,7 +72,7 @@ pub fn fetch<F>(
     mut progress: impl Progress,
 ) -> Result<(), Error>
 where
-    F: FnMut(credentials::Action) -> credentials::Result,
+    F: FnMut(credentials::Action<'_>) -> credentials::Result,
 {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
