@@ -52,6 +52,28 @@ pub mod object {
         }
     }
 
+    pub mod verify {
+        use crate::{compound::Object, loose};
+        use git_object::borrowed;
+
+        #[derive(thiserror::Error, Debug)]
+        pub enum Error {
+            #[error(transparent)]
+            Pack(#[from] crate::borrowed::verify::Error),
+            #[error(transparent)]
+            Loose(#[from] loose::object::verify::Error),
+        }
+
+        impl<'a> Object<'a> {
+            pub fn verify_checksum(&mut self, desired: borrowed::Id<'_>) -> Result<(), Error> {
+                match self {
+                    Object::Borrowed(object) => object.verify_checksum(desired).map_err(Into::into),
+                    Object::Loose(object) => object.verify_checksum(desired).map_err(Into::into),
+                }
+            }
+        }
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;

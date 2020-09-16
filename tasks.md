@@ -1,15 +1,17 @@
 ### Repository Clone
 
 * **git-odb**
-  * [ ] compound-odb 
+  * [x] compound-odb 
     * [x] Write forwarding to loose odb
     * [x] locate object and figure out how to deal with differences of ODBs databases
     * [x] make NLL issue work
-    * [ ] Nice access to compound::Object
+    * [x] Nice access to compound::Object
   * [x] Add #![deny(rust_2018_idioms)] everywhere
   * [ ] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
   * [ ] alternate DB (location - it's really must following the chain until a compound DB can be created)
   * [ ] loose upgrade: jwalk powered iteration behind a feature flag
+* **git-config**
+  * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
