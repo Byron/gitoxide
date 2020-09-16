@@ -84,7 +84,7 @@ impl SpawnProcessOnDemand {
 }
 
 impl client::Transport for SpawnProcessOnDemand {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
         assert!(
             self.connection.is_none(),
             "cannot handshake twice with the same connection"
@@ -119,7 +119,11 @@ impl client::Transport for SpawnProcessOnDemand {
         c.handshake(service)
     }
 
-    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, client::Error> {
+    fn request(
+        &mut self,
+        write_mode: WriteMode,
+        on_into_read: MessageKind,
+    ) -> Result<RequestWriter<'_>, client::Error> {
         self.connection
             .as_mut()
             .expect("handshake() to have been called first")

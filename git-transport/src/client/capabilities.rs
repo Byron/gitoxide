@@ -103,11 +103,11 @@ impl Capabilities {
         self.capability(feature).is_some()
     }
 
-    pub fn capability(&self, name: &str) -> Option<Capability> {
+    pub fn capability(&self, name: &str) -> Option<Capability<'_>> {
         self.iter().find(|c| c.name() == name.as_bytes().as_bstr())
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = Capability> {
+    pub fn iter(&self) -> impl Iterator<Item = Capability<'_>> {
         self.data
             .split(move |b| *b == self.value_sep)
             .map(|c| Capability(c.as_bstr()))
@@ -125,7 +125,9 @@ pub(crate) mod recv {
         pub protocol: Protocol,
     }
 
-    pub fn v1_or_v2_as_detected<T: io::Read>(rd: &mut git_packetline::Provider<T>) -> Result<Outcome, client::Error> {
+    pub fn v1_or_v2_as_detected<T: io::Read>(
+        rd: &mut git_packetline::Provider<T>,
+    ) -> Result<Outcome<'_>, client::Error> {
         // NOTE that this is vitally important - it is turned on and stays on for all following requests so
         // we automatically abort if the server sends an ERR line anywhere.
         // We are sure this can't clash with binary data when sent due to the way the PACK

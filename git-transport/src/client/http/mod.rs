@@ -62,7 +62,7 @@ impl<H: Http> Transport<H> {
         Ok(())
     }
 
-    fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<str>>) -> Result<(), client::Error> {
+    fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<'_, str>>) -> Result<(), client::Error> {
         if let Some(identity) = &self.identity {
             match identity {
                 client::Identity::Account { username, password } => {
@@ -92,10 +92,10 @@ fn append_url(base: &str, suffix: &str) -> String {
 }
 
 impl<H: Http> client::Transport for Transport<H> {
-    fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse, client::Error> {
+    fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse<'_>, client::Error> {
         let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
-        let mut dynamic_headers = Vec::<Cow<str>>::new();
+        let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
         if self.desired_version != Protocol::V1 {
             dynamic_headers.push(Cow::Owned(format!(
                 "Git-Protocol: version={}",
@@ -144,7 +144,7 @@ impl<H: Http> client::Transport for Transport<H> {
         &mut self,
         write_mode: client::WriteMode,
         on_into_read: client::MessageKind,
-    ) -> Result<client::RequestWriter, client::Error> {
+    ) -> Result<client::RequestWriter<'_>, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
         let static_headers = &[

@@ -66,7 +66,7 @@ where
     R: io::Read,
     W: io::Write,
 {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, client::Error> {
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == ConnectMode::Daemon {
             let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
             line_writer.write_all(&message::connect(
@@ -94,7 +94,7 @@ where
         &mut self,
         write_mode: client::WriteMode,
         on_into_read: client::MessageKind,
-    ) -> Result<client::RequestWriter, client::Error> {
+    ) -> Result<client::RequestWriter<'_>, client::Error> {
         Ok(client::RequestWriter::new_from_bufread(
             &mut self.writer,
             Box::new(self.line_provider.as_read_without_sidebands()),
