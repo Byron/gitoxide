@@ -73,6 +73,14 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * don't use unwrap, not even in tests. Instead use `quick_error!()` or `Box<dyn std::error::Error>`.
 * Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
   answer "This should work _because_…<expect(…)>"
+ 
+ 
+## Why the Nightly Rust compiler?
+
+`git-odb` runs into a known [limitation](https://github.com/rust-lang/rust/issues/45402) that can be worked around only with an improved
+borrow checker.
+Once `polonius` lands in stable, we can go back. Generally we avoid using nightly features and really want to run on stable.
+https://github.com/rust-lang/rust/issues/51132
    
    
 ## Maintenance Guide
