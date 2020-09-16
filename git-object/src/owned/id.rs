@@ -21,7 +21,7 @@ impl Id {
     pub fn kind(&self) -> crate::HashKind {
         crate::HashKind::Sha1
     }
-    pub fn to_borrowed(&self) -> borrowed::Id {
+    pub fn to_borrowed(&self) -> borrowed::Id<'_> {
         borrowed::Id::from(&self.0)
     }
     pub fn as_slice(&self) -> &[u8] {

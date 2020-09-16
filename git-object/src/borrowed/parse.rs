@@ -72,7 +72,7 @@ pub(crate) fn hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
 }
 
-pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature, Error> {
+pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, Error> {
     let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
         terminated(take_until(&b" <"[..]), take(2usize)),
         terminated(take_until(&b"> "[..]), take(2usize)),
