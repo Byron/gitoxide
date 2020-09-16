@@ -21,16 +21,12 @@ impl<'a> Object<'a> {
 pub mod verify {
     use crate::{hash, loose};
     use git_object::{borrowed, owned};
-    use quick_error::quick_error;
     use std::io;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            ChecksumMismatch(desired: owned::Id, actual: owned::Id) {
-                display("Object expected to have id {}, but actual id was {}", desired, actual)
-            }
-        }
+    #[derive(thiserror::Error, Debug)]
+    pub enum Error {
+        #[error("Object expected to have id {desired}, but actual id was {actual}")]
+        ChecksumMismatch { desired: owned::Id, actual: owned::Id },
     }
 
     impl crate::borrowed::Object<'_> {
@@ -42,7 +38,10 @@ pub mod verify {
 
             let actual_id = owned::Id::from(sink.hash.digest());
             if desired != actual_id.to_borrowed() {
-                return Err(Error::ChecksumMismatch(desired.into(), actual_id));
+                return Err(Error::ChecksumMismatch {
+                    desired: desired.into(),
+                    actual: actual_id,
+                });
             }
             Ok(())
         }
