@@ -1,20 +1,13 @@
 use crate::pack::data::File;
 use git_features::progress::Progress;
 use git_object::{owned, SHA1_SIZE};
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Mismatch { expected: owned::Id, actual: owned::Id } {
-            display("pack checksum mismatch: expected {}, got {}", expected, actual)
-        }
-        Io(err: std::io::Error) {
-            display("could not read pack file")
-            from()
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("pack checksum mismatch: expected {expected}, got {actual}")]
+    Mismatch { expected: owned::Id, actual: owned::Id },
+    #[error("could not read pack file")]
+    Io(#[from] std::io::Error),
 }
 
 /// Checksums and verify checksums
