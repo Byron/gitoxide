@@ -90,7 +90,7 @@ impl<'a> CommitData<'a> {
         }
     }
 
-    pub fn id(&self) -> borrowed::Id {
+    pub fn id(&self) -> borrowed::Id<'_> {
         self.file.id_at(self.lex_pos)
     }
 
@@ -98,7 +98,7 @@ impl<'a> CommitData<'a> {
         self.iter_parents().next().transpose()
     }
 
-    pub fn root_tree_id(&self) -> borrowed::Id {
+    pub fn root_tree_id(&self) -> borrowed::Id<'_> {
         self.root_tree_id
     }
 }

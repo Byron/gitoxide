@@ -99,7 +99,7 @@ impl Into<owned::tree::Entry> for borrowed::tree::Entry<'_> {
 }
 
 impl<'a> From<borrowed::Object<'a>> for owned::Object {
-    fn from(v: borrowed::Object) -> Self {
+    fn from(v: borrowed::Object<'_>) -> Self {
         match v {
             borrowed::Object::Tree(v) => owned::Object::Tree(v.into()),
             borrowed::Object::Blob(v) => owned::Object::Blob(v.into()),

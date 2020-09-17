@@ -19,10 +19,10 @@ impl pack::Bundle {
     /// For the latter, pack streams are required.
     pub fn locate<'a>(
         &self,
-        id: borrowed::Id,
+        id: borrowed::Id<'_>,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Option<Result<pack::Object<'a>, Error>> {
+    ) -> Option<Result<crate::borrowed::Object<'a>, Error>> {
         let idx = self.index.lookup(id)?;
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
@@ -38,7 +38,7 @@ impl pack::Bundle {
                 cache,
             )
             .map_err(Error::Decode)
-            .map(move |r| pack::Object {
+            .map(move |r| crate::borrowed::Object {
                 kind: r.kind,
                 data: out.as_slice(),
             })

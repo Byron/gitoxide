@@ -1,11 +1,20 @@
 use crate::fetch;
 use bstr::ByteSlice;
-use git_transport::client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode};
-use git_transport::{client, Protocol, Service};
+use git_transport::{
+    client,
+    client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+    Protocol, Service,
+};
 use std::io;
 
-fn arguments(protocol: Protocol, features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
-    fetch::Arguments::new(protocol, features.into_iter().map(|n| (n, None)).collect()).expect("all required features")
+fn arguments_v1(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
+    fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect())
+        .expect("all required features")
+}
+
+fn arguments_v2(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
+    fetch::Arguments::new(Protocol::V2, features.into_iter().map(|n| (n, None)).collect())
+        .expect("all required features")
 }
 
 struct Transport<T: client::Transport> {
@@ -14,7 +23,7 @@ struct Transport<T: client::Transport> {
 }
 
 impl<T: client::Transport> client::Transport for Transport<T> {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error> {
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
         self.inner.handshake(service)
     }
 
@@ -22,7 +31,7 @@ impl<T: client::Transport> client::Transport for Transport<T> {
         self.inner.set_identity(identity)
     }
 
-    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error> {
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
         self.inner.request(write_mode, on_into_read)
     }
 
@@ -65,15 +74,14 @@ fn id(hex: &str) -> git_object::owned::Id {
 }
 
 mod v1 {
-    use crate::fetch::tests::arguments::{arguments, id, transport};
+    use crate::fetch::tests::arguments::{arguments_v1, id, transport};
     use bstr::ByteSlice;
-    use git_transport::Protocol;
 
     #[test]
     fn haves_and_wants_for_clone() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
-        let mut arguments = arguments(Protocol::V1, ["feature-a", "feature-b"].iter().cloned());
+        let mut arguments = arguments_v1(["feature-a", "feature-b"].iter().cloned());
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
@@ -89,12 +97,16 @@ mod v1 {
     }
 
     #[test]
-    fn haves_and_wants_for_fetch() {
+    fn haves_and_wants_for_fetch_stateless() {
         let mut out = Vec::new();
-        let mut t = transport(&mut out, true);
-        let mut arguments = arguments(Protocol::V1, ["feature-a"].iter().cloned());
+        let mut t = transport(&mut out, false);
+        let mut arguments = arguments_v1(["feature-a", "shallow", "deepen-since", "deepen-not"].iter().copied());
 
+        arguments.deepen(1);
+        arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff").to_borrowed());
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+        arguments.deepen_since(12345);
+        arguments.deepen_not("refs/heads/main".into());
         arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
         arguments.send(&mut t, false).expect("sending to buffer to work");
 
@@ -102,9 +114,18 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
+            b"005cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow deepen-since deepen-not
+0035shallow 7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff
+000ddeepen 1
+0017deepen-since 12345
+001fdeepen-not refs/heads/main
 00000032have 0000000000000000000000000000000000000000
-000000000032have 1111111111111111111111111111111111111111
+0000005cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow deepen-since deepen-not
+0035shallow 7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff
+000ddeepen 1
+0017deepen-since 12345
+001fdeepen-not refs/heads/main
+00000032have 1111111111111111111111111111111111111111
 0009done
 "
             .as_bstr()
@@ -112,11 +133,12 @@ mod v1 {
     }
 
     #[test]
-    fn haves_and_wants_for_fetch_stateless() {
+    fn haves_and_wants_for_fetch_stateful() {
         let mut out = Vec::new();
-        let mut t = transport(&mut out, false);
-        let mut arguments = arguments(Protocol::V1, ["feature-a"].iter().cloned());
+        let mut t = transport(&mut out, true);
+        let mut arguments = arguments_v1(["feature-a", "shallow"].iter().copied());
 
+        arguments.deepen(1);
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
         arguments.send(&mut t, false).expect("sending to buffer to work");
@@ -125,9 +147,9 @@ mod v1 {
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
-            b"003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
+            b"0044want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow
+000ddeepen 1
 00000032have 0000000000000000000000000000000000000000
-0000003cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a
 00000032have 1111111111111111111111111111111111111111
 0009done
 "
@@ -137,16 +159,17 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::tests::arguments::{arguments, id, transport};
+    use crate::fetch::tests::arguments::{arguments_v2, id, transport};
     use bstr::ByteSlice;
-    use git_transport::Protocol;
 
     #[test]
-    fn haves_and_wants_for_clone() {
+    fn haves_and_wants_for_clone_stateful() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
-        let mut arguments = arguments(Protocol::V2, ["feature-a", "feature-b"].iter().cloned());
+        let mut arguments = arguments_v2(["feature-a", "shallow"].iter().copied());
 
+        arguments.deepen(1);
+        arguments.deepen_relative();
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
         arguments.send(&mut t, true).expect("sending to buffer to work");
@@ -156,6 +179,8 @@ mod v2 {
 0001000ethin-pack
 0010include-tag
 000eofs-delta
+000ddeepen 1
+0014deepen-relative
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 0009done
@@ -165,13 +190,17 @@ mod v2 {
     }
 
     #[test]
-    fn haves_and_wants_for_fetch() {
-        for is_stateful in &[true, false] {
+    fn haves_and_wants_for_fetch_stateless_and_stateful() {
+        for is_stateful in &[false, true] {
             let mut out = Vec::new();
             let mut t = transport(&mut out, *is_stateful);
-            let mut arguments = arguments(Protocol::V2, ["feature-a"].iter().cloned());
+            let mut arguments = arguments_v2(Some("shallow"));
 
+            arguments.deepen(1);
+            arguments.deepen_since(12345);
+            arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff").to_borrowed());
             arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+            arguments.deepen_not("refs/heads/main".into());
             arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
             arguments.send(&mut t, false).expect("sending to buffer to work");
 
@@ -183,17 +212,26 @@ mod v2 {
 0001000ethin-pack
 0010include-tag
 000eofs-delta
+000ddeepen 1
+0017deepen-since 12345
+0035shallow 7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff
 0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
+001fdeepen-not refs/heads/main
 0032have 0000000000000000000000000000000000000000
 00000012command=fetch
 0001000ethin-pack
 0010include-tag
 000eofs-delta
+000ddeepen 1
+0017deepen-since 12345
+0035shallow 7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff
+0032want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907
+001fdeepen-not refs/heads/main
 0032have 1111111111111111111111111111111111111111
 0009done
 0000"
                     .as_bstr(),
-                "V2 is stateless by default, so it repeats everything needed to run a command successfully"
+                "V2 is stateless by default, so it repeats all but 'haves' in each request"
             );
         }
     }

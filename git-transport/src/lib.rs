@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

@@ -1,23 +1,19 @@
 use crate::pack::data;
 use byteorder::{BigEndian, ByteOrder};
-use quick_error::quick_error;
 
 pub(crate) const N32_SIZE: usize = std::mem::size_of::<u32>();
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open pack file at '{}'", path.display())
-            source(err)
-        }
-        Corrupt(msg: String) {
-            display("{}", msg)
-        }
-        UnsupportedVersion(version: u32) {
-            display("Unsupported pack version: {}", version)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Could not open pack file at '{path}'")]
+    Io {
+        source: std::io::Error,
+        path: std::path::PathBuf,
+    },
+    #[error("{0}")]
+    Corrupt(String),
+    #[error("Unsupported pack version: {0}")]
+    UnsupportedVersion(u32),
 }
 
 // Return (data::Kind, num_objects_in_pack)

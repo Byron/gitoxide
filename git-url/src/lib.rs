@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
 
 use std::{convert::TryFrom, fmt};
 

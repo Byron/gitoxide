@@ -45,7 +45,7 @@ pub enum PacketLineOrWantedSize<'a> {
     Wanted(u16),
 }
 
-pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize, Error> {
+pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize<'_>, Error> {
     debug_assert_eq!(four_bytes.len(), 4, "need four hex bytes");
     for (line_bytes, line_type) in &[
         (FLUSH_LINE, PacketLine::Flush),
@@ -73,7 +73,7 @@ pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize, Error> {
     Ok(PacketLineOrWantedSize::Wanted(wanted_bytes - U16_HEX_BYTES as u16))
 }
 
-pub fn to_data_line(data: &[u8]) -> Result<PacketLine, Error> {
+pub fn to_data_line(data: &[u8]) -> Result<PacketLine<'_>, Error> {
     if data.len() > MAX_LINE_LEN {
         return Err(Error::DataLengthLimitExceeded(data.len()));
     }
@@ -81,7 +81,7 @@ pub fn to_data_line(data: &[u8]) -> Result<PacketLine, Error> {
     Ok(PacketLine::Data(data))
 }
 
-pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
+pub fn streaming(data: &[u8]) -> Result<Stream<'_>, Error> {
     let data_len = data.len();
     if data_len < U16_HEX_BYTES {
         return Ok(Stream::Incomplete {
@@ -112,7 +112,7 @@ pub fn streaming(data: &[u8]) -> Result<Stream, Error> {
     })
 }
 
-pub fn all_at_once(data: &[u8]) -> Result<PacketLine, Error> {
+pub fn all_at_once(data: &[u8]) -> Result<PacketLine<'_>, Error> {
     match streaming(data)? {
         Stream::Complete { line, .. } => Ok(line),
         Stream::Incomplete { bytes_needed } => Err(Error::NotEnoughData(bytes_needed)),

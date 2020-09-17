@@ -64,7 +64,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for Id<'a> {
         }
         impl<'de: 'a, 'a> serde::de::Visitor<'de> for __Visitor<'de, 'a> {
             type Value = Id<'a>;
-            fn expecting(&self, __formatter: &mut serde::export::Formatter) -> serde::export::fmt::Result {
+            fn expecting(&self, __formatter: &mut serde::export::Formatter<'_>) -> serde::export::fmt::Result {
                 serde::export::Formatter::write_str(__formatter, "tuple struct Id")
             }
             #[inline]

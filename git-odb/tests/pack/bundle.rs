@@ -4,7 +4,7 @@ mod locate {
     use git_object::Kind;
     use git_odb::pack;
 
-    fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> pack::Object<'a> {
+    fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_odb::borrowed::Object<'a> {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).expect("pack and idx");
         bundle
             .locate(hex_to_id(hex_id).to_borrowed(), out, &mut pack::cache::DecodeEntryNoop)

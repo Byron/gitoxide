@@ -24,7 +24,7 @@ pub fn connect(
     let ssh_cmd = ssh_cmd_line.next().expect("there is always a single item");
 
     type EnvVar = (&'static str, String);
-    let args_and_env: Option<(Vec<Cow<str>>, Vec<EnvVar>)> = match ssh_cmd {
+    let args_and_env: Option<(Vec<Cow<'_, str>>, Vec<EnvVar>)> = match ssh_cmd {
         "ssh" | "ssh.exe" => {
             if version != Protocol::V1 {
                 let mut args = vec![Cow::from("-o"), "SendEnv=GIT_PROTOCOL".into()];

@@ -4,32 +4,32 @@ use crate::{CommitData, Graph, GraphFile};
 use git_object::borrowed;
 
 impl Graph {
-    pub fn commit_at(&self, pos: GraphPosition) -> CommitData {
+    pub fn commit_at(&self, pos: GraphPosition) -> CommitData<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.commit_at(r.lex_pos)
     }
 
-    pub fn commit_by_id(&self, id: borrowed::Id) -> Option<CommitData> {
+    pub fn commit_by_id(&self, id: borrowed::Id<'_>) -> Option<CommitData<'_>> {
         let r = self.lookup_by_id(id)?;
         Some(r.file.commit_at(r.lex_pos))
     }
 
-    pub fn id_at(&self, pos: GraphPosition) -> borrowed::Id {
+    pub fn id_at(&self, pos: GraphPosition) -> borrowed::Id<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.id_at(r.lex_pos)
     }
 
     /// Iterate over commits in unsorted order.
-    pub fn iter_commits(&self) -> impl Iterator<Item = CommitData> {
+    pub fn iter_commits(&self) -> impl Iterator<Item = CommitData<'_>> {
         self.files.iter().flat_map(|file| file.iter_commits())
     }
 
     /// Iterate over commit IDs in unsorted order.
-    pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id> {
+    pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
         self.files.iter().flat_map(|file| file.iter_ids())
     }
 
-    pub fn lookup(&self, id: borrowed::Id) -> Option<GraphPosition> {
+    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<GraphPosition> {
         Some(self.lookup_by_id(id)?.graph_pos)
     }
 
@@ -39,7 +39,7 @@ impl Graph {
 }
 
 impl Graph {
-    fn lookup_by_id(&self, id: borrowed::Id) -> Option<LookupByIdResult> {
+    fn lookup_by_id(&self, id: borrowed::Id<'_>) -> Option<LookupByIdResult<'_>> {
         let mut current_file_start = 0;
         for file in self.files.iter() {
             if let Some(lex_pos) = file.lookup(id) {
@@ -54,7 +54,7 @@ impl Graph {
         None
     }
 
-    fn lookup_by_pos(&self, pos: GraphPosition) -> LookupByPositionResult {
+    fn lookup_by_pos(&self, pos: GraphPosition) -> LookupByPositionResult<'_> {
         let mut remaining = pos.0;
         for file in self.files.iter() {
             match remaining.checked_sub(file.num_commits()) {

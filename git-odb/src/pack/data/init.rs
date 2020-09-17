@@ -16,7 +16,10 @@ impl TryFrom<&Path> for data::File {
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
         use data::parse::N32_SIZE;
 
-        let data = FileBuffer::open(path).map_err(|e| data::parse::Error::Io(e, path.to_owned()))?;
+        let data = FileBuffer::open(path).map_err(|e| data::parse::Error::Io {
+            source: e,
+            path: path.to_owned(),
+        })?;
         let pack_len = data.len();
         if pack_len < N32_SIZE * 3 + SHA1_SIZE {
             return Err(data::parse::Error::Corrupt(format!(

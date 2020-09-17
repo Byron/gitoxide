@@ -1,5 +1,5 @@
 use crate::fetch::{self, command::Feature, Command};
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 use git_object::borrowed;
 use git_transport::{
     client::{self, TransportV2Ext},
@@ -10,7 +10,6 @@ use std::{fmt, io::Write};
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
     features: Vec<Feature>,
-    base_args: Vec<BString>,
 
     args: Vec<BString>,
     haves: Vec<BString>,
@@ -45,14 +44,18 @@ impl Arguments {
         self.deepen_relative
     }
 
-    pub fn want(&mut self, id: borrowed::Id) {
+    pub fn want(&mut self, id: borrowed::Id<'_>) {
         match self.features_for_first_want.take() {
             Some(features) => self.prefixed("want ", format!("{} {}", id, features.join(" "))),
             None => self.prefixed("want ", id),
         }
     }
-    pub fn have(&mut self, id: borrowed::Id) {
+    pub fn have(&mut self, id: borrowed::Id<'_>) {
         self.haves.push(format!("have {}", id).into());
+    }
+    pub fn shallow(&mut self, id: borrowed::Id<'_>) {
+        assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
+        self.prefixed("shallow ", id);
     }
     pub fn deepen(&mut self, depth: usize) {
         assert!(self.shallow, "'shallow' feature required for deepen");
@@ -62,15 +65,19 @@ impl Arguments {
         assert!(self.deepen_since, "'deepen-since' feature required");
         self.prefixed("deepen-since ", seconds_since_unix_epoch);
     }
-    pub fn filter(&mut self, spec: &str) {
-        assert!(self.filter, "'filter' feature required");
-        self.prefixed("filter ", spec);
+    pub fn deepen_relative(&mut self) {
+        assert!(self.deepen_relative, "'deepen-relative' feature required");
+        self.args.push("deepen-relative".into());
     }
     pub fn deepen_not(&mut self, ref_path: &BStr) {
         assert!(self.deepen_not, "'deepen-not' feature required");
         let mut line = BString::from("deepen-not ");
         line.extend_from_slice(&ref_path);
         self.args.push(line);
+    }
+    pub fn filter(&mut self, spec: &str) {
+        assert!(self.filter, "'filter' feature required");
+        self.prefixed("filter ", spec);
     }
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
@@ -102,7 +109,6 @@ impl Arguments {
         Ok(Arguments {
             features,
             version,
-            base_args: initial_arguments.clone(),
             args: initial_arguments,
             haves: Vec::new(),
             filter,
@@ -136,10 +142,16 @@ impl Arguments {
                 let mut line_writer =
                     transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_into_read)?;
 
+                if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
+                    self.args.swap(first_arg_position, 0);
+                }
+                let had_args = !self.args.is_empty();
                 for arg in self.args.drain(..) {
                     line_writer.write_all(&arg)?;
                 }
-                line_writer.write_message(client::MessageKind::Flush)?;
+                if had_args {
+                    line_writer.write_message(client::MessageKind::Flush)?;
+                }
                 for line in self.haves.drain(..) {
                     line_writer.write_all(&line)?;
                 }
@@ -149,15 +161,15 @@ impl Arguments {
                 Ok(line_writer.into_read()?)
             }
             git_transport::Protocol::V2 => {
-                let mut arguments = std::mem::replace(&mut self.args, self.base_args.clone());
-                arguments.extend(self.haves.drain(..));
+                let retained_state = self.args.clone();
+                self.args.extend(self.haves.drain(..));
                 if add_done_argument {
-                    arguments.push("done".into());
+                    self.args.push("done".into());
                 }
                 transport.invoke(
                     Command::Fetch.as_str(),
                     self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
-                    Some(arguments),
+                    Some(std::mem::replace(&mut self.args, retained_state)),
                 )
             }
         }

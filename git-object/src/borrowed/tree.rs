@@ -44,7 +44,7 @@ impl TryFrom<&[u8]> for TreeMode {
 }
 
 const NULL: &[u8] = b"\0";
-fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
+fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, Error> {
     let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
     let mode = TreeMode::try_from(mode).map_err(nom::Err::Error)?;
     let (i, filename) = terminated(take_while1(|b| b != NULL[0]), tag(NULL))(i)?;
@@ -60,7 +60,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry, Error> {
     ))
 }
 
-fn parse(i: &[u8]) -> IResult<&[u8], Tree, Error> {
+fn parse(i: &[u8]) -> IResult<&[u8], Tree<'_>, Error> {
     let (i, entries) = all_consuming(many1(parse_entry))(i)?;
     Ok((i, Tree { entries }))
 }

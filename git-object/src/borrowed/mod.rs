@@ -24,7 +24,7 @@ mod blob {
     }
 
     impl<'a> Blob<'a> {
-        pub fn from_bytes(input: &[u8]) -> Result<Blob, Infallible> {
+        pub fn from_bytes(input: &[u8]) -> Result<Blob<'_>, Infallible> {
             Ok(Blob { data: input })
         }
     }

@@ -4,42 +4,44 @@ use crate::{
 };
 use git_object as object;
 use object::borrowed;
-use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        DecompressFile(err: zlib::Error, path: PathBuf) {
-            display("decompression of loose object at '{}' failed", path.display())
-            source(err)
-        }
-        Decode(err: header::Error) {
-            display("Could not decode header")
-            from()
-            source(err)
-        }
-        Io(err: std::io::Error, action: &'static str, path: PathBuf) {
-            display("Could not {} data at '{}'", action, path.display())
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("decompression of loose object at '{path}' failed")]
+    DecompressFile { source: zlib::Error, path: PathBuf },
+    #[error(transparent)]
+    Decode(#[from] header::Error),
+    #[error("Could not {action} data at '{path}'")]
+    Io {
+        source: std::io::Error,
+        action: &'static str,
+        path: PathBuf,
+    },
 }
 
 /// Object lookup
 impl Db {
     const OPEN_ACTION: &'static str = "open";
 
-    pub fn locate(&self, id: borrowed::Id) -> Option<Result<Object, Error>> {
+    pub fn locate(&self, id: borrowed::Id<'_>) -> Option<Result<Object, Error>> {
         match self.locate_inner(id) {
             Ok(obj) => Some(Ok(obj)),
             Err(err) => match err {
-                Error::Io(err, action, path) => {
+                Error::Io {
+                    source: err,
+                    action,
+                    path,
+                } => {
                     if action == Self::OPEN_ACTION {
                         None
                     } else {
-                        Some(Err(Error::Io(err, action, path)))
+                        Some(Err(Error::Io {
+                            source: err,
+                            action,
+                            path,
+                        }))
                     }
                 }
                 err => Some(Err(err)),
@@ -47,21 +49,30 @@ impl Db {
         }
     }
 
-    fn locate_inner(&self, id: borrowed::Id) -> Result<Object, Error> {
+    fn locate_inner(&self, id: borrowed::Id<'_>) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
         let mut decompressed = [0; HEADER_READ_UNCOMPRESSED_BYTES];
         let mut compressed = [0; HEADER_READ_COMPRESSED_BYTES];
         let ((_status, _consumed_in, consumed_out), bytes_read, mut input_stream) = {
-            let mut istream = fs::File::open(&path).map_err(|e| Error::Io(e, Self::OPEN_ACTION, path.to_owned()))?;
-            let bytes_read = istream
-                .read(&mut compressed[..])
-                .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
+            let mut istream = fs::File::open(&path).map_err(|e| Error::Io {
+                source: e,
+                action: Self::OPEN_ACTION,
+                path: path.to_owned(),
+            })?;
+            let bytes_read = istream.read(&mut compressed[..]).map_err(|e| Error::Io {
+                source: e,
+                action: "read",
+                path: path.to_owned(),
+            })?;
             (
                 inflate
                     .once(&compressed[..bytes_read], &mut decompressed[..], true)
-                    .map_err(|e| Error::DecompressFile(e, path.to_owned()))?,
+                    .map_err(|e| Error::DecompressFile {
+                        source: e,
+                        path: path.to_owned(),
+                    })?,
                 bytes_read,
                 istream,
             )
@@ -81,7 +92,11 @@ impl Db {
                     // have a data handle available and 'hot'. Note that we don't decompress yet!
                     let file_size = input_stream
                         .metadata()
-                        .map_err(|e| Error::Io(e, "read metadata", path.to_owned()))?
+                        .map_err(|e| Error::Io {
+                            source: e,
+                            action: "read metadata",
+                            path: path.to_owned(),
+                        })?
                         .len();
                     assert!(file_size <= ::std::usize::MAX as u64);
                     let file_size = file_size as usize;
@@ -97,7 +112,11 @@ impl Db {
                         compressed.resize(file_size, 0);
                         input_stream
                             .read_exact(&mut compressed[bytes_read..])
-                            .map_err(|e| Error::Io(e, "read", path.to_owned()))?;
+                            .map_err(|e| Error::Io {
+                                source: e,
+                                action: "read",
+                                path: path.to_owned(),
+                            })?;
                         (compressed, None)
                     }
                 }

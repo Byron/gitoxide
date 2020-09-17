@@ -6,7 +6,7 @@ use git_features::progress::{unit, Progress};
 use std::{cell::RefCell, collections::BTreeMap};
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
-    nodes: Vec<pack::tree::Node<T>>,
+    nodes: Vec<pack::tree::Node<'_, T>>,
     (bytes_buf, ref mut progress, state): &mut (Vec<u8>, P, S),
     resolve: F,
     modify_base: MBFN,

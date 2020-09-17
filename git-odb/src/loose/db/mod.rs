@@ -7,12 +7,16 @@ pub struct Db {
 
 /// Initialization
 impl Db {
-    pub fn at(path: impl Into<PathBuf>) -> Db {
-        Db { path: path.into() }
+    /// Initialize the Db with the `objects_directory` containing the hexadecimal first byte subdirectories, which in turn
+    /// contain all loose objects.
+    pub fn at(objects_directory: impl Into<PathBuf>) -> Db {
+        Db {
+            path: objects_directory.into(),
+        }
     }
 }
 
-pub(crate) fn sha1_path(id: borrowed::Id, mut root: PathBuf) -> PathBuf {
+pub(crate) fn sha1_path(id: borrowed::Id<'_>, mut root: PathBuf) -> PathBuf {
     match id.kind() {
         HashKind::Sha1 => {
             let hex = id.to_sha1_hex();

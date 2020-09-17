@@ -1,6 +1,6 @@
 [package]
 name = "git-protocol"
-version = "0.1.0"
+version = "0.1.1"
 repository = "https://github.com/Byron/git-oxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project for implementing git protocols"
@@ -15,7 +15,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-object/serde1"]
 
 [dependencies]
-git-features = { version = "^0.5.0", path = "../git-features" }
+git-features = { version = "^0.6.0", path = "../git-features" }
 git-transport = { version = "^0.2.0", path = "../git-transport" }
 git-object = { version = "^0.4.0", path = "../git-object" }
 

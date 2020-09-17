@@ -40,7 +40,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
     Ok((&[], &i.as_bstr()))
 }
 
-fn parse(i: &[u8]) -> IResult<&[u8], Commit, Error> {
+fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, Error> {
     let (i, tree) =
         parse::header_field(i, b"tree", parse::hex_sha1).map_err(Error::context("tree <40 lowercase hex char>"))?;
     let (i, parents) = many0(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)

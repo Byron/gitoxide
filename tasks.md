@@ -1,13 +1,17 @@
 ### Repository Clone
 
-* **prodash**
-  * [x] force sub-progress support for `Send` and `'static` bounds
 * **git-odb**
-  * Find errors with `Box<dyn std::error::Error>` fields and see if these could be generic with the use of `thiserror`
-    * [x] odb-traversal
-    * ~~[ ] tree traversal~~ - we don't do that as we would end up with a top-level
-* **git-transport**
- * [ ] a way to support shallow lines during V1 handshake (doesnt' seem to happen in V2 at all)
+  * [x] compound-odb 
+    * [x] Write forwarding to loose odb
+    * [x] locate object and figure out how to deal with differences of ODBs databases
+    * [x] make NLL issue work
+    * [x] Nice access to compound::Object
+  * [x] Add #![deny(rust_2018_idioms)] everywhere
+  * [ ] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
+  * [ ] alternate DB (location - it's really must following the chain until a compound DB can be created)
+  * [ ] loose upgrade: jwalk powered iteration behind a feature flag
+* **git-config**
+  * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
@@ -31,15 +35,6 @@
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
   
-### Notes
-
-* response-end packets of V2 are [not sent in stateless-rpc mode](https://github.com/git/git/blob/master/serve.c#L246:L246) (i.e. http mode) and maybe even V2 daemons
-* protocol V2 [is always stateless](https://github.com/git/git/blob/master/builtin/upload-pack.c#L54:L54)
-* The negotiation is the meat of the fetch algorithm, and even though not important for clones, the back-and-forth seems very relevant 
-  to how the transfer interface should be built. I feel it must be on packet line level.
-  * after having looked at the http implementation and actual HTTP chatter, there is no need for packet line level in `git-protocol` after all.
-    All good.
-
 ### Other
 
 To be picked in any order….
@@ -47,7 +42,7 @@ To be picked in any order….
 * **prodash**
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
-  * [ ] upgrade to prodash 9.0
+  * [x] upgrade to prodash 9.0
   * [ ] switch to `isahc`
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 

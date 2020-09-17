@@ -5,25 +5,26 @@ use git_object::{
     bstr::{BString, ByteSlice},
     owned, SHA1_SIZE,
 };
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Mismatch { expected: owned::Id, actual: owned::Id } {
-            display("index checksum mismatch: expected {}, got {}", expected, actual)
-        }
-        ObjectDecode(err: borrowed::Error, kind: git_object::Kind, oid: owned::Id) {
-            display("{} object {} could not be decoded", kind, oid)
-            source(err)
-        }
-        ObjectEncodeMismatch(kind: git_object::Kind, oid: owned::Id, expected: BString, actual: BString) {
-            display("{} object {} wasn't re-encoded without change, wanted\n{}\n\nGOT\n\n{}", kind, oid, expected, actual)
-        }
-        ObjectEncode(err: std::io::Error) {
-            from()
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("index checksum mismatch: expected {expected}, got {actual}")]
+    Mismatch { expected: owned::Id, actual: owned::Id },
+    #[error("{kind} object {id} could not be decoded")]
+    ObjectDecode {
+        source: borrowed::Error,
+        kind: git_object::Kind,
+        id: owned::Id,
+    },
+    #[error("{kind} object {id} wasn't re-encoded without change, wanted\n{expected}\n\nGOT\n\n{actual}")]
+    ObjectEncodeMismatch {
+        kind: git_object::Kind,
+        id: owned::Id,
+        expected: BString,
+        actual: BString,
+    },
+    #[error(transparent)]
+    ObjectEncode(#[from] std::io::Error),
 }
 
 /// Various ways in which a pack and index can be verified
@@ -131,8 +132,12 @@ impl index::File {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let borrowed_object = borrowed::Object::from_bytes(object_kind, buf)
-                        .map_err(|err| Error::ObjectDecode(err, object_kind, index_entry.oid))?;
+                    let borrowed_object =
+                        borrowed::Object::from_bytes(object_kind, buf).map_err(|err| Error::ObjectDecode {
+                            source: err,
+                            kind: object_kind,
+                            id: index_entry.oid,
+                        })?;
                     if let Mode::Sha1CRC32DecodeEncode = mode {
                         let object = owned::Object::from(borrowed_object);
                         encode_buf.clear();
@@ -146,12 +151,12 @@ impl index::File {
                                 }
                             }
                             if should_return_error {
-                                return Err(Error::ObjectEncodeMismatch(
-                                    object_kind,
-                                    index_entry.oid,
-                                    buf.into(),
-                                    encode_buf.clone().into(),
-                                ));
+                                return Err(Error::ObjectEncodeMismatch {
+                                    kind: object_kind,
+                                    id: index_entry.oid,
+                                    expected: buf.into(),
+                                    actual: encode_buf.clone().into(),
+                                });
                             }
                         }
                     }

@@ -13,7 +13,7 @@ impl GraphFile {
     /// # Panics
     ///
     /// Panics if `pos` is out of bounds.
-    pub fn commit_at(&self, pos: LexPosition) -> CommitData {
+    pub fn commit_at(&self, pos: LexPosition) -> CommitData<'_> {
         CommitData::new(self, pos)
     }
 
@@ -24,7 +24,7 @@ impl GraphFile {
     // copied from git-odb/src/pack/index/access.rs
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The position ranges from 0 to self.num_commits()
-    pub fn id_at(&self, pos: LexPosition) -> borrowed::Id {
+    pub fn id_at(&self, pos: LexPosition) -> borrowed::Id<'_> {
         assert!(
             pos.0 < self.num_commits(),
             "expected lex position less than {}, got {}",
@@ -39,7 +39,7 @@ impl GraphFile {
         borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
-    pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = borrowed::Id> {
+    pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
         let base_graphs_list = match self.base_graphs_list_offset {
             Some(v) => &self.data[v..v + (SHA1_SIZE * self.base_graph_count as usize)],
             None => &[],
@@ -49,16 +49,16 @@ impl GraphFile {
             .map(|bytes| borrowed::Id::try_from(bytes).expect("20 bytes SHA1 to be alright"))
     }
 
-    pub fn iter_commits(&self) -> impl Iterator<Item = CommitData> {
+    pub fn iter_commits(&self) -> impl Iterator<Item = CommitData<'_>> {
         (0..self.num_commits()).map(move |i| self.commit_at(LexPosition(i)))
     }
 
-    pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id> {
+    pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
         (0..self.num_commits()).map(move |i| self.id_at(LexPosition(i)))
     }
 
     // copied from git-odb/src/pack/index/access.rs
-    pub fn lookup(&self, id: borrowed::Id) -> Option<LexPosition> {
+    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<LexPosition> {
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };

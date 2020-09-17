@@ -37,7 +37,7 @@ mod box_impl {
     use std::ops::{Deref, DerefMut};
 
     impl<T: client::Transport + ?Sized> client::Transport for Box<T> {
-        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error> {
+        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
             self.deref_mut().handshake(service)
         }
 
@@ -45,7 +45,7 @@ mod box_impl {
             self.deref_mut().set_identity(identity)
         }
 
-        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error> {
+        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
             self.deref_mut().request(write_mode, on_into_read)
         }
 

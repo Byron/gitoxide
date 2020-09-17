@@ -1,19 +1,16 @@
-use quick_error::quick_error;
 use std::cell::UnsafeCell;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        InvariantIncreasingPackOffset(last_pack_offset: u64, pack_offset: u64) {
-            display("Pack offsets must only increment. The previous pack offset was {}, the current one is {}", last_pack_offset, pack_offset)
-        }
-        InvariantNonEmpty {
-            display("Is there ever a need to create empty indices? If so, please post a PR.")
-        }
-        InvariantBasesBeforeDeltasNeedThem(delta_pack_offset: u64, base_pack_offset: u64) {
-            display("The delta at pack offset {} could not find its base at {} - it should have been seen already", delta_pack_offset, base_pack_offset)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Pack offsets must only increment. The previous pack offset was {last_pack_offset}, the current one is {pack_offset}")]
+    InvariantIncreasingPackOffset { last_pack_offset: u64, pack_offset: u64 },
+    #[error("Is there ever a need to create empty indices? If so, please post a PR.")]
+    InvariantNonEmpty,
+    #[error("The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already")]
+    InvariantBasesBeforeDeltasNeedThem {
+        delta_pack_offset: u64,
+        base_pack_offset: u64,
+    },
 }
 
 mod iter;
@@ -61,7 +58,10 @@ impl<T> Tree<T> {
             self.last_added_offset = offset;
             Ok(offset)
         } else {
-            Err(Error::InvariantIncreasingPackOffset(self.last_added_offset, offset))
+            Err(Error::InvariantIncreasingPackOffset {
+                last_pack_offset: self.last_added_offset,
+                pack_offset: offset,
+            })
         }
     }
 
@@ -87,9 +87,12 @@ impl<T> Tree<T> {
         #[allow(unsafe_code)]
         let items = unsafe { &mut *(self.items.get()) };
         let offset = self.assert_is_incrementing(offset)?;
-        let base_index = items
-            .binary_search_by_key(&base_offset, |e| e.offset)
-            .map_err(|_| Error::InvariantBasesBeforeDeltasNeedThem(offset, base_offset))?;
+        let base_index = items.binary_search_by_key(&base_offset, |e| e.offset).map_err(|_| {
+            Error::InvariantBasesBeforeDeltasNeedThem {
+                delta_pack_offset: offset,
+                base_pack_offset: base_offset,
+            }
+        })?;
         let child_index = items.len();
         items[base_index].children.push(child_index);
         items.push(Item {

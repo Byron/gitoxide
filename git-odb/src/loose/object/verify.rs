@@ -23,7 +23,7 @@ quick_error! {
 }
 
 impl loose::Object {
-    pub fn verify_checksum(&mut self, desired: borrowed::Id) -> Result<(), Error> {
+    pub fn verify_checksum(&mut self, desired: borrowed::Id<'_>) -> Result<(), Error> {
         let mut sink = HashWrite::new(io::sink(), desired.kind());
         let (kind, size) = (self.kind, self.size);
         let mut reader = self.stream()?;

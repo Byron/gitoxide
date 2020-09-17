@@ -219,7 +219,7 @@ pub trait Transport {
     /// This means that asking for an unsupported protocol will result in a protocol downgrade to the given one.
     /// using the `read_line(…)` function of the given BufReader. It must be exhausted, that is, read to the end,
     /// before the next method can be invoked.
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse, Error>;
+    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error>;
 
     /// If the handshake or subsequent reads failed with io::ErrorKind::PermissionDenied, use this method to
     /// inform the transport layer about the identity to use for subsequent calls.
@@ -235,7 +235,7 @@ pub trait Transport {
     /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_into_read` determines
     /// which message to write when the writer is turned into the response reader using `into_read()`.
     /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
-    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter, Error>;
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
     fn close(&mut self) -> Result<(), Error>;

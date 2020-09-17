@@ -7,20 +7,13 @@ use miniz_oxide::{
         TINFLStatus,
     },
 };
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        WriteInflated(err: std::io::Error) {
-            display("Could not write all bytes when decompressing content")
-            from()
-            source(err)
-        }
-        Inflate(status: miniz_oxide::inflate::TINFLStatus) {
-            display("Could not decode zip stream, status was '{:?}'", status)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Could not write all bytes when decompressing content")]
+    WriteInflated(#[from] std::io::Error),
+    #[error("Could not decode zip stream, status was '{0:?}'")]
+    Inflate(miniz_oxide::inflate::TINFLStatus),
 }
 
 /// Decompress a few bytes of a zlib stream without allocation

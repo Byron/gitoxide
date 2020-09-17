@@ -1,18 +1,13 @@
 use super::Status;
 use miniz_oxide::{inflate, inflate::stream::InflateState, DataFormat, MZError, MZFlush, MZStatus};
-use quick_error::quick_error;
 use std::{io, io::BufRead};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Decompression {
-            display("The decompression failed due to an unknown error")
-        }
-        ZLibNeedDict(adler: u32) {
-            display("Probably the stream is damaged, adler value is {}", adler)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("The decompression failed due to an unknown error")]
+    Decompression,
+    #[error("Probably the stream is damaged, adler value is {0}")]
+    ZLibNeedDict(u32),
 }
 
 pub(crate) struct Inflate {

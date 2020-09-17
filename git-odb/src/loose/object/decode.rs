@@ -30,13 +30,13 @@ quick_error! {
 impl loose::Object {
     /// **Note**: Blobs are loaded into memory and are made available that way.
     /// Consider using `stream()` if large Blobs are expected.
-    pub fn decode(&mut self) -> Result<borrowed::Object, Error> {
+    pub fn decode(&mut self) -> Result<borrowed::Object<'_>, Error> {
         self.decompress_all()?;
         let bytes = &self.decompressed_data[self.header_size..];
         Ok(borrowed::Object::from_bytes(self.kind, bytes)?)
     }
 
-    pub fn stream(&mut self) -> Result<stream::Reader, Error> {
+    pub fn stream(&mut self) -> Result<stream::Reader<'_>, Error> {
         match &self.path {
             Some(path) => Ok(stream::Reader::from_read(
                 self.header_size,
@@ -52,7 +52,7 @@ impl loose::Object {
         }
     }
 
-    pub fn decompress_all(&mut self) -> Result<(), Error> {
+    pub(crate) fn decompress_all(&mut self) -> Result<(), Error> {
         if self.decompression_complete {
             debug_assert!(
                 self.size + self.header_size == self.decompressed_data.len(),

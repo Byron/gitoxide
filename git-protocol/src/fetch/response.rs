@@ -37,6 +37,31 @@ pub enum Acknowledgement {
     NAK,
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum ShallowUpdate {
+    Shallow(owned::Id),
+    Unshallow(owned::Id),
+}
+
+impl ShallowUpdate {
+    fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
+        let mut tokens = line.trim_end().splitn(2, ' ');
+        match (tokens.next(), tokens.next()) {
+            (Some(prefix), Some(id)) => {
+                let id = owned::Id::from_40_bytes_in_hex(id.as_bytes())
+                    .map_err(|_| Error::UnknownLineType(line.to_owned()))?;
+                Ok(match prefix {
+                    "shallow" => ShallowUpdate::Shallow(id),
+                    "unshallow" => ShallowUpdate::Unshallow(id),
+                    _ => return Err(Error::UnknownLineType(line.to_owned())),
+                })
+            }
+            _ => unreachable!("cannot have an entirely empty line"),
+        }
+    }
+}
+
 impl Acknowledgement {
     fn from_line(line: &str) -> Result<Acknowledgement, Error> {
         let mut tokens = line.trim_end().splitn(3, ' ');
@@ -75,6 +100,7 @@ impl Acknowledgement {
 /// A representation of a complete fetch response
 pub struct Response {
     acks: Vec<Acknowledgement>,
+    shallows: Vec<ShallowUpdate>,
     has_pack: bool,
 }
 
@@ -107,7 +133,8 @@ impl Response {
             Protocol::V1 => {
                 let mut line = String::new();
                 let mut acks = Vec::<Acknowledgement>::new();
-                let (acks, has_pack) = 'lines: loop {
+                let mut shallows = Vec::<ShallowUpdate>::new();
+                let has_pack = 'lines: loop {
                     line.clear();
                     let peeked_line = match reader.peek_data_line() {
                         Some(Ok(Ok(line))) => String::from_utf8_lossy(line),
@@ -117,11 +144,20 @@ impl Response {
                         // the arguments sent to the server and count response lines based on intricate knowledge on how the
                         // server works.
                         // For now this is acceptable, as V2 can be used as a workaround, which also is the default.
-                        Some(Err(err)) if err.kind() == io::ErrorKind::UnexpectedEof => break 'lines (acks, false),
+                        Some(Err(err)) if err.kind() == io::ErrorKind::UnexpectedEof => break 'lines false,
                         Some(Err(err)) => return Err(err.into()),
                         Some(Ok(Err(err))) => return Err(err.into()),
-
-                        None => break 'lines (acks, false), // EOF
+                        None => {
+                            // maybe we saw a shallow flush packet, let's reset and retry
+                            reader.read_line(&mut line)?;
+                            reader.reset(Protocol::V1);
+                            match reader.peek_data_line() {
+                                Some(Ok(Ok(line))) => String::from_utf8_lossy(line),
+                                Some(Err(err)) => return Err(err.into()),
+                                Some(Ok(Err(err))) => return Err(err.into()),
+                                None => break 'lines false, // EOF
+                            }
+                        }
                     };
 
                     // with a friendly server, we just assume that a non-ack line is a pack line
@@ -135,18 +171,28 @@ impl Response {
                             }
                             None => acks.push(ack),
                         },
-                        Err(_) => break 'lines (acks, true),
+                        Err(_) => match ShallowUpdate::from_line(&peeked_line) {
+                            Ok(shallow) => {
+                                shallows.push(shallow);
+                            }
+                            Err(_) => break 'lines true,
+                        },
                     };
                     assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
                 };
-                Ok(Response { acks, has_pack })
+                Ok(Response {
+                    acks,
+                    has_pack,
+                    shallows,
+                })
             }
             Protocol::V2 => {
                 // NOTE: We only read acknowledgements and scrub to the pack file, until we have use for the other features
                 let mut line = String::new();
                 reader.reset(Protocol::V2);
-                let mut acks = None::<Vec<Acknowledgement>>;
-                let (acks, has_pack) = 'section: loop {
+                let mut acks = Vec::<Acknowledgement>::new();
+                let mut shallows = Vec::<ShallowUpdate>::new();
+                let has_pack = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
                         return Err(Error::Io(io::Error::new(
@@ -157,29 +203,27 @@ impl Response {
 
                     match line.trim_end() {
                         "acknowledgments" => {
-                            let a = acks.get_or_insert_with(Vec::new);
-                            line.clear();
-                            while reader.read_line(&mut line)? != 0 {
-                                a.push(Acknowledgement::from_line(&line)?);
-                                line.clear();
+                            if parse_section(&mut line, reader, &mut acks, Acknowledgement::from_line)? {
+                                break 'section false;
                             }
-                            // End of message, or end of section?
-                            if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
-                                // try reading more sections
-                                reader.reset(Protocol::V2);
-                            } else {
-                                // we are done, there is no pack
-                                break 'section (acks.expect("initialized acknowledgements vector"), false);
+                        }
+                        "shallow-info" => {
+                            if parse_section(&mut line, reader, &mut shallows, ShallowUpdate::from_line)? {
+                                break 'section false;
                             }
                         }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
-                            break 'section (acks.unwrap_or_default(), true);
+                            break 'section true;
                         }
                         _ => return Err(Error::UnknownSectionHeader(line)),
                     }
                 };
-                Ok(Response { acks, has_pack })
+                Ok(Response {
+                    acks,
+                    has_pack,
+                    shallows,
+                })
             }
         }
     }
@@ -187,4 +231,30 @@ impl Response {
     pub fn acknowledgements(&self) -> &[Acknowledgement] {
         &self.acks
     }
+
+    pub fn shallow_updates(&self) -> &[ShallowUpdate] {
+        &self.shallows
+    }
+}
+
+fn parse_section<T>(
+    line: &mut String,
+    reader: &mut impl client::ExtendedBufRead,
+    res: &mut Vec<T>,
+    parse: impl Fn(&str) -> Result<T, Error>,
+) -> Result<bool, Error> {
+    line.clear();
+    while reader.read_line(line)? != 0 {
+        res.push(parse(line)?);
+        line.clear();
+    }
+    // End of message, or end of section?
+    Ok(if reader.stopped_at() == Some(client::MessageKind::Delimiter) {
+        // try reading more sections
+        reader.reset(Protocol::V2);
+        false
+    } else {
+        // we are done, there is no pack
+        true
+    })
 }

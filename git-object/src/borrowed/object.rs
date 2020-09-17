@@ -47,7 +47,7 @@ impl<'a> Object<'a> {
 
 /// Convenient access to contained objects
 impl<'a> Object<'a> {
-    pub fn as_blob(&self) -> Option<&borrowed::Blob> {
+    pub fn as_blob(&self) -> Option<&borrowed::Blob<'_>> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
@@ -59,13 +59,13 @@ impl<'a> Object<'a> {
             _ => None,
         }
     }
-    pub fn as_tree(&self) -> Option<&borrowed::Tree> {
+    pub fn as_tree(&self) -> Option<&borrowed::Tree<'_>> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
-    pub fn as_tag(&self) -> Option<&borrowed::Tag> {
+    pub fn as_tag(&self) -> Option<&borrowed::Tag<'_>> {
         match self {
             Object::Tag(v) => Some(v),
             _ => None,
