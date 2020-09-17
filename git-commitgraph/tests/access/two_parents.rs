@@ -14,7 +14,7 @@ fn v1() -> Result<(), Box<dyn std::error::Error>> {
     let parent2_id = hex_to_id(PARENT2);
     let merge_id = hex_to_id(MERGE);
 
-    let cg = Graph::from_object_dir(fixture_path("v1/two_parents"))?;
+    let cg = Graph::from_info_dir(fixture_path("v1/two_parents/info"))?;
     assert_eq!(cg.num_commits(), 3);
     assert_eq!(cg.id_at(PARENT1_INDEX), parent1_id.to_borrowed());
     assert_eq!(cg.id_at(PARENT2_INDEX), parent2_id.to_borrowed());

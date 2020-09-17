@@ -7,7 +7,7 @@ const COMMIT: &[u8] = b"771fa42310bb3d221f4cf82613a491b0957d2003";
 fn v1() -> Result<(), Box<dyn std::error::Error>> {
     let commit_id = hex_to_id(COMMIT);
 
-    let cg = Graph::from_object_dir(fixture_path("v1/single_commit"))?;
+    let cg = Graph::from_info_dir(fixture_path("v1/single_commit/info"))?;
     assert_eq!(cg.num_commits(), 1);
     assert_eq!(cg.id_at(GraphPosition(0)), commit_id.to_borrowed());
     assert_eq!(cg.iter_ids().collect::<Vec<_>>(), vec![commit_id.to_borrowed()]);

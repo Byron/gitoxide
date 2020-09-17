@@ -48,18 +48,19 @@ quick_error! {
 }
 
 impl Graph {
-    pub fn from_object_dir(object_dir: impl AsRef<Path>) -> Result<Self, Error> {
-        Self::from_single_file(object_dir.as_ref()).or_else(|_| Self::from_split_chain(object_dir.as_ref()))
+    pub fn from_info_dir(info_dir: impl AsRef<Path>) -> Result<Self, Error> {
+        Self::from_single_file(info_dir.as_ref())
+            .or_else(|_| Self::from_split_chain(info_dir.as_ref().join("commit-graphs")))
     }
 
-    pub fn from_single_file(object_dir: impl AsRef<Path>) -> Result<Self, Error> {
-        let single_graph_file = object_dir.as_ref().join("info").join("commit-graph");
+    pub fn from_single_file(info_dir: impl AsRef<Path>) -> Result<Self, Error> {
+        let single_graph_file = info_dir.as_ref().join("commit-graph");
         let file = GraphFile::at(&single_graph_file).map_err(|e| Error::GraphFile(e, single_graph_file.clone()))?;
         Self::new(vec![file])
     }
 
-    pub fn from_split_chain(object_dir: impl AsRef<Path>) -> Result<Self, Error> {
-        let commit_graphs_dir = object_dir.as_ref().join("info").join("commit-graphs");
+    pub fn from_split_chain(commit_graphs_dir: impl AsRef<Path>) -> Result<Self, Error> {
+        let commit_graphs_dir = commit_graphs_dir.as_ref();
         let chain_file_path = commit_graphs_dir.join("commit-graph-chain");
         let chain_file = std::fs::File::open(&chain_file_path).map_err(|e| Error::Io(e, chain_file_path.clone()))?;
         let mut files: Vec<GraphFile> = Vec::new();

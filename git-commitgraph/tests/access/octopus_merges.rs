@@ -26,7 +26,7 @@ fn v1() -> Result<(), Box<dyn std::error::Error>> {
     let three_parents_id = hex_to_id(THREE_PARENTS);
     let four_parents_id = hex_to_id(FOUR_PARENTS);
 
-    let cg = Graph::from_object_dir(fixture_path("v1/octopus_merges"))?;
+    let cg = Graph::from_info_dir(fixture_path("v1/octopus_merges/info"))?;
     assert_eq!(cg.num_commits(), 7);
     assert_eq!(cg.id_at(ROOT_INDEX), root_id.to_borrowed());
     assert_eq!(cg.id_at(COMMIT1_INDEX), commit1_id.to_borrowed());

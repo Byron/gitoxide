@@ -9,7 +9,7 @@ fn v1() -> Result<(), Box<dyn std::error::Error>> {
     let parent_id = hex_to_id(PARENT);
     let child_id = hex_to_id(CHILD);
 
-    let cg = Graph::from_object_dir(fixture_path("v1/single_parent"))?;
+    let cg = Graph::from_info_dir(fixture_path("v1/single_parent/info"))?;
     assert_eq!(cg.num_commits(), 2);
     assert_eq!(cg.id_at(GraphPosition(0)), child_id.to_borrowed());
     assert_eq!(
