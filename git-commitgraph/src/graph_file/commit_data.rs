@@ -80,7 +80,7 @@ impl<'a> CommitData<'a> {
         self.generation
     }
 
-    pub fn iter_parent_indices(&'a self) -> impl Iterator<Item = Result<GraphPosition, Error>> + 'a {
+    pub fn iter_parents(&'a self) -> impl Iterator<Item = Result<GraphPosition, Error>> + 'a {
         // I didn't find a combinator approach that a) was as strict as ParentIterator, b) supported
         // fuse-after-first-error behavior, and b) was significantly shorter or more understandable
         // than ParentIterator. So here we are.
@@ -95,7 +95,7 @@ impl<'a> CommitData<'a> {
     }
 
     pub fn parent1(&self) -> Result<Option<GraphPosition>, Error> {
-        self.iter_parent_indices().next().transpose()
+        self.iter_parents().next().transpose()
     }
 
     pub fn root_tree_id(&self) -> borrowed::Id {
