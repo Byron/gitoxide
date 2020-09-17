@@ -34,16 +34,6 @@ quick_error! {
                 MAX_COMMITS,
             )
         }
-        // This might actually be legal...
-        VersionMismatch(path1: PathBuf, version1: graph_file::Kind, path2: PathBuf, version2: graph_file::Kind) {
-            display(
-                "Commit-graph files mismatch: '{}' is version {:?}, but '{}' is version {:?}",
-                path1.display(),
-                version1,
-                path2.display(),
-                version2,
-            )
-        }
     }
 }
 
@@ -82,14 +72,6 @@ impl Graph {
         for window in files.windows(2) {
             let f1 = &window[0];
             let f2 = &window[1];
-            if f1.kind() != f2.kind() {
-                return Err(Error::VersionMismatch(
-                    f1.path().to_owned(),
-                    f1.kind(),
-                    f2.path().to_owned(),
-                    f2.kind(),
-                ));
-            }
             if f1.hash_kind() != f2.hash_kind() {
                 return Err(Error::HashVersionMismatch(
                     f1.path().to_owned(),

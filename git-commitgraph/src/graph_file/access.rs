@@ -1,4 +1,4 @@
-use crate::graph_file::{Kind, LexPosition, COMMIT_DATA_ENTRY_SIZE};
+use crate::graph_file::{LexPosition, COMMIT_DATA_ENTRY_SIZE};
 use crate::{CommitData, GraphFile};
 use git_object::{borrowed, HashKind, SHA1_SIZE};
 use std::convert::{TryFrom, TryInto};
@@ -55,10 +55,6 @@ impl GraphFile {
 
     pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id> {
         (0..self.num_commits()).map(move |i| self.id_at(LexPosition(i)))
-    }
-
-    pub fn kind(&self) -> Kind {
-        Kind::V1
     }
 
     // copied from git-odb/src/pack/index/access.rs

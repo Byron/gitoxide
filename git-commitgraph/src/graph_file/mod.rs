@@ -45,9 +45,3 @@ impl Display for LexPosition {
         self.0.fmt(f)
     }
 }
-
-/// The version of a commit graph file.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum Kind {
-    V1,
-}
