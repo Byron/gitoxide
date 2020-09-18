@@ -1,4 +1,5 @@
-use crate::{graph_file, Graph, GraphFile, MAX_COMMITS};
+use crate::graph_file::GraphFile;
+use crate::{graph_file, Graph, MAX_COMMITS};
 use git_object::HashKind;
 use quick_error::quick_error;
 use std::io::{BufRead, BufReader};

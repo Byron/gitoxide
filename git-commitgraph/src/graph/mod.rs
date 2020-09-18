@@ -1,7 +1,7 @@
 mod access;
 mod init;
 
-use crate::GraphFile;
+use crate::graph_file::GraphFile;
 use std::fmt::{Display, Formatter};
 
 /// A complete commit graph.

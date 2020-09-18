@@ -1,6 +1,5 @@
 use crate::graph::GraphPosition;
-use crate::graph_file::LexPosition;
-use crate::GraphFile;
+use crate::graph_file::{GraphFile, LexPosition};
 use byteorder::{BigEndian, ByteOrder};
 use git_object::{borrowed, owned, SHA1_SIZE};
 use quick_error::quick_error;

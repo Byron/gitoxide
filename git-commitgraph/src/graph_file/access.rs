@@ -1,5 +1,5 @@
-use crate::graph_file::{LexPosition, COMMIT_DATA_ENTRY_SIZE};
-use crate::{CommitData, GraphFile};
+use crate::graph_file::{GraphFile, LexPosition, COMMIT_DATA_ENTRY_SIZE};
+use crate::CommitData;
 use git_object::{borrowed, HashKind, SHA1_SIZE};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{Debug, Formatter};

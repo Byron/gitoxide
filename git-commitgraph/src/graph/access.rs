@@ -1,6 +1,6 @@
 use crate::graph::GraphPosition;
-use crate::graph_file::LexPosition;
-use crate::{CommitData, Graph, GraphFile};
+use crate::graph_file::{GraphFile, LexPosition};
+use crate::{CommitData, Graph};
 use git_object::borrowed;
 
 impl Graph {
