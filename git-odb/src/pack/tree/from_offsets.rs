@@ -3,36 +3,24 @@ use git_features::{
     interrupt::is_triggered,
     progress::{self, Progress},
 };
-use quick_error::quick_error;
 use std::{
     fs, io,
     io::{BufRead, Read},
     time::Instant,
 };
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: io::Error, msg: &'static str) {
-            display("{}", msg)
-            source(err)
-        }
-        Header(err: pack::data::parse::Error) {
-            source(err)
-            from()
-        }
-        UnresolvedRefDelta(id: git_object::owned::Id) {
-            display("Could find object with id {} in this pack. Thin packs are not supported", id)
-        }
-        Tree(err: pack::tree::Error) {
-            display("An error occurred when handling the delta tree")
-            source(err)
-            from()
-        }
-        Interrupted {
-            display("Interrupted")
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("{message}")]
+    Io { source: io::Error, message: &'static str },
+    #[error(transparent)]
+    Header(#[from] pack::data::parse::Error),
+    #[error("Could find object with id {id} in this pack. Thin packs are not supported")]
+    UnresolvedRefDelta { id: git_object::owned::Id },
+    #[error(transparent)]
+    Tree(#[from] pack::tree::Error),
+    #[error("Interrupted")]
+    Interrupted,
 }
 
 const PACK_HEADER_LEN: usize = 12;
@@ -49,7 +37,10 @@ impl<T> Tree<T> {
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(
             8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k
-            fs::File::open(pack_path).map_err(|err| Error::Io(err, "open pack path"))?,
+            fs::File::open(pack_path).map_err(|err| Error::Io {
+                source: err,
+                message: "open pack path",
+            })?,
         );
 
         let anticpiated_num_objects = if let Some(num_objects) = data_sorted_by_offsets.size_hint().1 {
@@ -63,11 +54,9 @@ impl<T> Tree<T> {
         {
             // safety check - assure ourselves it's a pack we can handle
             let mut buf = [0u8; PACK_HEADER_LEN];
-            r.read_exact(&mut buf).map_err(|err| {
-                Error::Io(
-                    err,
-                    "reading header buffer with at least 12 bytes failed - pack file truncated?",
-                )
+            r.read_exact(&mut buf).map_err(|err| Error::Io {
+                source: err,
+                message: "reading header buffer with at least 12 bytes failed - pack file truncated?",
             })?;
             pack::data::parse::header(&buf)?;
         }
@@ -81,8 +70,10 @@ impl<T> Tree<T> {
             if let Some(previous_offset) = previous_cursor_position {
                 Self::advance_cursor_to_pack_offset(&mut r, pack_offset, previous_offset)?;
             };
-            let entry = pack::data::Entry::from_read(&mut r, pack_offset)
-                .map_err(|err| Error::Io(err, "EOF while parsing header"))?;
+            let entry = pack::data::Entry::from_read(&mut r, pack_offset).map_err(|err| Error::Io {
+                source: err,
+                message: "EOF while parsing header",
+            })?;
             previous_cursor_position = Some(pack_offset + entry.header_size() as u64);
 
             use pack::data::Header::*;
@@ -92,7 +83,7 @@ impl<T> Tree<T> {
                 }
                 RefDelta { base_id } => {
                     resolve_in_pack_id(base_id.to_borrowed())
-                        .ok_or_else(|| Error::UnresolvedRefDelta(base_id))
+                        .ok_or_else(|| Error::UnresolvedRefDelta { id: base_id })
                         .and_then(|base_pack_offset| {
                             tree.add_child(base_pack_offset, pack_offset, data).map_err(Into::into)
                         })?;
@@ -123,17 +114,20 @@ impl<T> Tree<T> {
             .checked_sub(previous_offset)
             .expect("continuously ascending pack offets") as usize;
         while bytes_to_skip != 0 {
-            let buf = r.fill_buf().map_err(|err| Error::Io(err, "skip bytes"))?;
+            let buf = r.fill_buf().map_err(|err| Error::Io {
+                source: err,
+                message: "skip bytes",
+            })?;
             if buf.is_empty() {
                 // This means we have reached the end of file and can't make progress anymore, before we have satisfied our need
                 // for more
-                return Err(Error::Io(
-                    io::Error::new(
+                return Err(Error::Io {
+                    source: io::Error::new(
                         io::ErrorKind::UnexpectedEof,
                         "ran out of bytes before reading desired amount of bytes",
                     ),
-                    "index file is damaged or corrupt",
-                ));
+                    message: "index file is damaged or corrupt",
+                });
             }
             let bytes = buf.len().min(bytes_to_skip);
             r.consume(bytes);
