@@ -11,6 +11,13 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ## Development Status
 
+**Please note** that from 2020-09-17, the development speed will be reduced greatly. I will do my best to create at least
+one commit per day ramp it up from there to eventually arrive at a new baseline velocity. It will be lower than what it was before, and
+I hope 1/2 to 2/3 of that will be realistic.
+
+This is entirely unrelated to the project and I still can't wait to use `gitoxide` on a daily basis once the first high-level commands
+become available.
+
 ### gitoxide _(CLI)_
   * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
     and itself relies on all `git-*` crates.
