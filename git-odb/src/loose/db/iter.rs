@@ -1,15 +1,11 @@
 use crate::loose::Db;
 use git_object::owned;
-use quick_error::quick_error;
 use walkdir::WalkDir;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        WalkDir(err: walkdir::Error) {
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    WalkDir(#[from] walkdir::Error),
 }
 
 /// Iteration and traversal

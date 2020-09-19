@@ -1,21 +1,13 @@
 use super::Status;
 use miniz_oxide::{deflate, deflate::core::CompressorOxide, MZError, MZFlush, MZStatus};
-use quick_error::quick_error;
 use std::io;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Compression {
-            display("The compression failed due to an unknown error")
-        }
-        ZLibNeedDict {
-            display("Need dictionary")
-        }
-        Error(err: MZError) {
-            display("A compression error occurred: {:?}", err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Need dictionary")]
+    ZLibNeedDict,
+    #[error("A compression error occurred: {0:?}")]
+    Error(MZError),
 }
 
 pub struct Deflate {
