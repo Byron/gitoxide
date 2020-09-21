@@ -1,21 +1,12 @@
 use crate::{compound, loose, pack};
 use git_object::borrowed;
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Loose(err: loose::db::locate::Error) {
-            display("An error occurred while obtaining an object from the loose object store")
-            source(err)
-            from()
-        }
-        Pack(err: pack::bundle::locate::Error) {
-            display("An error occurred while obtaining an object from the packed object store")
-            source(err)
-            from()
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("An error occurred while obtaining an object from the loose object store")]
+    Loose(#[from] loose::db::locate::Error),
+    #[error("An error occurred while obtaining an object from the packed object store")]
+    Pack(#[from] pack::bundle::locate::Error),
 }
 
 impl compound::Db {

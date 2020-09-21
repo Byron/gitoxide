@@ -650,7 +650,6 @@ dependencies = [
  "miniz_oxide",
  "parking_lot 0.11.0",
  "pretty_assertions",
- "quick-error 2.0.0",
  "serde",
  "smallvec",
  "tempfile",
