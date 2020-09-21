@@ -1,16 +1,10 @@
 use crate::{compound, loose, pack};
-use quick_error::quick_error;
 use std::path::PathBuf;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Pack(err: pack::bundle::Error) {
-            display("Failed to instantiate a pack bundle")
-            source(err)
-            from()
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    Pack(#[from] pack::bundle::Error),
 }
 
 /// Instantiation
