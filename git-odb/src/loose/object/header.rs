@@ -1,23 +1,18 @@
 use byteorder::WriteBytesExt;
 use git_object as object;
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        ParseIntegerError(msg: &'static str, number: Vec<u8>, err: btoi::ParseIntegerError) {
-            display("{}: {:?}", msg, std::str::from_utf8(number))
-            source(err)
-        }
-        InvalidHeader(msg: &'static str) {
-            display("{}", msg)
-        }
-        ObjectHeader(err: object::Error) {
-            display("Could not parse object kind")
-            from()
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("{message}: {:?}", std::str::from_utf8(.number))]
+    ParseIntegerError {
+        source: btoi::ParseIntegerError,
+        message: &'static str,
+        number: Vec<u8>,
+    },
+    #[error("{0}")]
+    InvalidHeader(&'static str),
+    #[error(transparent)]
+    ObjectHeader(#[from] object::Error),
 }
 
 pub fn decode(input: &[u8]) -> Result<(object::Kind, u64, usize), Error> {
@@ -30,8 +25,10 @@ pub fn decode(input: &[u8]) -> Result<(object::Kind, u64, usize), Error> {
     match (split.next(), split.next()) {
         (Some(kind), Some(size)) => Ok((
             object::Kind::from_bytes(kind)?,
-            btoi::btoi(size).map_err(|e| {
-                Error::ParseIntegerError("Object size in header could not be parsed", size.to_owned(), e)
+            btoi::btoi(size).map_err(|source| Error::ParseIntegerError {
+                message: "Object size in header could not be parsed",
+                number: size.to_owned(),
+                source,
             })?,
             header_end + 1, // account for 0 byte
         )),
