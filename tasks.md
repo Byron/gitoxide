@@ -7,7 +7,7 @@
     * [x] make NLL issue work
     * [x] Nice access to compound::Object
   * [x] Add #![deny(rust_2018_idioms)] everywhere
-  * [ ] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
+  * [x] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
   * [ ] alternate DB (location - it's really must following the chain until a compound DB can be created)
   * [ ] loose upgrade: jwalk powered iteration behind a feature flag
 * **git-config**
