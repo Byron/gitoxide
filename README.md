@@ -171,17 +171,24 @@ become available.
   * handle git index files for primary use by the git-repository while crafting new commits
   * [ ] API documentation with examples
   
+### git-bundle
+  * [ ] create a bundle from an archive
+  * [ ] extract a branch from a bundle into a repository
+  
 ### git-repository
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
   * [ ] clone
     * [ ] shallow
+    * [ ] namespaces support
   * [ ] sparse checkout support
+  * [ ] execute hooks
   * [ ] .gitignore handling
   * [ ] checkout/stage conversions clean + smudge as in .gitattributes
   * [ ] read and write all data types
   * [ ] rev-parsing and ref history
+  * [ ] worktree
   * [ ] remotes with push and pull
   * [ ] configuration
   * [ ] merging
