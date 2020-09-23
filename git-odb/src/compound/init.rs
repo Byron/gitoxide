@@ -5,6 +5,8 @@ use std::path::PathBuf;
 pub enum Error {
     #[error(transparent)]
     Pack(#[from] pack::bundle::Error),
+    #[error(transparent)]
+    Alternate(#[from] Box<crate::alternate::Error>),
 }
 
 /// Instantiation
@@ -26,8 +28,11 @@ impl compound::Db {
         };
 
         Ok(compound::Db {
-            loose: loose::Db::at(loose_objects),
+            loose: loose::Db::at(loose_objects.clone()),
             packs,
+            alternate: crate::alternate::resolve(loose_objects)
+                .map_err(Box::new)?
+                .map(Box::new),
         })
     }
 }
