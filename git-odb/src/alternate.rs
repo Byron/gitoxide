@@ -13,28 +13,25 @@ pub enum Error {
 }
 
 pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Option<compound::Db>, Error> {
-    let mut directories = vec![objects_directory.into()];
+    let mut dir = objects_directory.into();
     let mut count = 0;
-    while let Some(dir) = directories.pop() {
+    loop {
         let content = match fs::read(dir.join("info").join("alternates")) {
             Ok(d) => d,
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
-                if count == 0 {
-                    return Ok(None);
+                return if count == 0 {
+                    Ok(None)
                 } else {
-                    return Ok(Some(compound::Db::at(dir)?));
+                    Ok(Some(compound::Db::at(dir)?))
                 }
             }
             Err(err) => return Err(err.into()),
         };
-        directories.push(
-            content
-                .as_bstr()
-                .to_path()
-                .map(ToOwned::to_owned)
-                .map_err(|_| Error::PathConversion(content.into()))?,
-        );
+        dir = content
+            .as_bstr()
+            .to_path()
+            .map(ToOwned::to_owned)
+            .map_err(|_| Error::PathConversion(content.into()))?;
         count += 1;
     }
-    unreachable!("must either find an alternate, or not")
 }
