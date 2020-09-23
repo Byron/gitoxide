@@ -31,7 +31,7 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Option<compound:
             .as_bstr()
             .to_path()
             .map(ToOwned::to_owned)
-            .map_err(|_| Error::PathConversion(content.into()))?;
+            .map_err(|_| Error::PathConversion(content))?;
         count += 1;
     }
 }
