@@ -90,6 +90,6 @@ pub mod object {
 }
 pub use object::Object;
 
-mod init;
-mod locate;
+pub mod init;
+pub mod locate;
 mod write;
