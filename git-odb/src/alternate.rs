@@ -10,12 +10,19 @@ pub enum Error {
     PathConversion(Vec<u8>),
     #[error(transparent)]
     Init(#[from] compound::init::Error),
+    #[error("Alternates form a cycle: {} -> {}", .0.iter().map(|p| format!("'{}'", p.display())).collect::<Vec<_>>().join(" -> "), .0.first().expect("more than one directories").display())]
+    Cycle(Vec<PathBuf>),
 }
 
 pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Option<compound::Db>, Error> {
     let mut dir = objects_directory.into();
     let mut count = 0;
+    let mut seen = Vec::new();
     loop {
+        if seen.contains(&dir) {
+            break Err(Error::Cycle(seen));
+        }
+        seen.push(dir.clone());
         let content = match fs::read(dir.join("info").join("alternates")) {
             Ok(d) => d,
             Err(err) if err.kind() == io::ErrorKind::NotFound => {

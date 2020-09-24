@@ -6,18 +6,29 @@ fn alternate(objects_at: impl Into<PathBuf>, objects_to: impl Into<PathBuf>) -> 
     let to = objects_to.into();
     let at_info = at.join("info");
     fs::create_dir_all(&at_info)?;
-    fs::create_dir(&to)?;
+    fs::create_dir_all(&to)?;
     fs::write(at_info.join("alternates"), to.to_string_lossy().as_bytes())?;
     Ok((at, to))
 }
 
 #[test]
-#[ignore]
 fn circular_alternates_are_detected() -> crate::Result {
     let tmp = tempdir::TempDir::new("alternates")?;
-    alternate(tmp.path().join("a"), tmp.path().join("b"))?;
+    let (from, _) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
     alternate(tmp.path().join("b"), tmp.path().join("a"))?;
 
+    match alternate::resolve(&from) {
+        Err(alternate::Error::Cycle(chain)) => {
+            assert_eq!(
+                chain
+                    .into_iter()
+                    .map(|p| p.file_name().expect("non-root").to_str().expect("utf8").to_owned())
+                    .collect::<Vec<_>>(),
+                vec!["a", "b"]
+            );
+        }
+        _ => unreachable!("should be a specific kind of error"),
+    }
     Ok(())
 }
 
