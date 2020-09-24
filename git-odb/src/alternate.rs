@@ -19,13 +19,13 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Option<compound:
         let content = match fs::read(dir.join("info").join("alternates")) {
             Ok(d) => d,
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
-                return if count == 0 {
+                break if count == 0 {
                     Ok(None)
                 } else {
                     Ok(Some(compound::Db::at(dir)?))
                 }
             }
-            Err(err) => return Err(err.into()),
+            Err(err) => break Err(err.into()),
         };
         dir = content
             .as_bstr()
