@@ -11,7 +11,7 @@
   * [x] alternate DB (location - it's really must following the chain until a compound DB can be created)
     * [x] circular dependencies test
     * [x] basic test
-  * [ ] loose upgrade: jwalk powered iteration behind a feature flag
+  * [x] loose upgrade: jwalk powered iteration behind a feature flag
   * [ ] full docs
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
