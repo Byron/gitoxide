@@ -57,7 +57,8 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
 
 pub fn create_repo(script_path: &str) -> tempfile::TempDir {
     let dir = tempfile::tempdir().expect("failed to create temp dir");
-    let status = Command::new(fixture_path(script_path))
+    let status = Command::new("bash")
+        .arg(fixture_path(script_path))
         .arg(dir.path())
         .env_remove("GIT_DIR")
         .status()
