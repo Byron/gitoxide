@@ -1,16 +1,15 @@
 //! Operations on a single commit-graph file.
-use filebuffer::FileBuffer;
-use git_object::SHA1_SIZE;
-use std::ops::Range;
-use std::path::PathBuf;
-
 mod access;
 pub mod commit;
 mod init;
 
 pub use commit::Commit;
+use filebuffer::FileBuffer;
+use git_object::SHA1_SIZE;
 pub use init::Error;
 use std::fmt::{Display, Formatter};
+use std::ops::Range;
+use std::path::PathBuf;
 
 const COMMIT_DATA_ENTRY_SIZE: usize = SHA1_SIZE + 16;
 const FAN_LEN: usize = 256;
