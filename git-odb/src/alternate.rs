@@ -14,13 +14,17 @@ pub enum Error {
 }
 
 pub mod parse {
-    use git_object::bstr::ByteSlice;
-    use std::path::PathBuf;
+    use git_object::bstr::{BStr, ByteSlice};
+    use std::{borrow::Cow, path::PathBuf};
 
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
         #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(&.0))]
         PathConversion(Vec<u8>),
+    }
+
+    fn unquote_ansi_c(line: &BStr) -> Cow<'_, BStr> {
+        line.into()
     }
 
     pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
@@ -31,9 +35,14 @@ pub mod parse {
                 continue;
             }
             out.push(
-                line.to_path()
-                    .map(ToOwned::to_owned)
-                    .map_err(|_| Error::PathConversion(line.to_vec()))?,
+                if line.starts_with(b"\"") {
+                    unquote_ansi_c(line)
+                } else {
+                    Cow::Borrowed(line)
+                }
+                .to_path()
+                .map(ToOwned::to_owned)
+                .map_err(|_| Error::PathConversion(line.to_vec()))?,
             )
         }
         Ok(out)
