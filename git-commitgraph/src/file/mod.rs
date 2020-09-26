@@ -1,3 +1,4 @@
+//! Operations on a single commit-graph file.
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
 use std::ops::Range;

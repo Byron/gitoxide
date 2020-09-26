@@ -1,3 +1,4 @@
+//! Operations on a complete commit graph.
 mod access;
 mod init;
 
