@@ -8,6 +8,7 @@ mod access;
 pub mod commit;
 mod init;
 
+pub use commit::Commit;
 pub use init::Error;
 use std::fmt::{Display, Formatter};
 

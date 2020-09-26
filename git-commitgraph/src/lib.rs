@@ -4,7 +4,6 @@
 pub mod file;
 pub mod graph;
 
-pub use file::commit::Commit;
 pub use graph::{Graph, GraphPosition};
 
 /// The maximum number of commits that can be stored in a commit graph.

@@ -1,5 +1,5 @@
+use crate::file::commit::Commit;
 use crate::file::{File, LexPosition, COMMIT_DATA_ENTRY_SIZE};
-use crate::Commit;
 use git_object::{borrowed, HashKind, SHA1_SIZE};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{Debug, Formatter};
