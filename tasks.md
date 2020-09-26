@@ -11,8 +11,8 @@
   * [x] alternate DB (location - it's really must following the chain until a compound DB can be created)
     * [x] circular dependencies test
     * [x] basic test
-    * [ ] multiple alternates in a single file
-    * [ ] comments
+    * [x] multiple alternates in a single file
+    * [x] comments
     * [ ] quotes 
     * [x] support for relative directories
     * [ ] lookup uses alternates

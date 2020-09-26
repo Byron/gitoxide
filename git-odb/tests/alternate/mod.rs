@@ -52,11 +52,11 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
 }
 
 #[test]
-fn single_link() -> crate::Result {
+fn single_link_with_comment_before_path() -> crate::Result {
     let tmp = tempdir::TempDir::new("alternates")?;
     let non_alternate = tmp.path().join("actual");
 
-    let (from, to) = alternate(tmp.path().join("a"), non_alternate)?;
+    let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n"))?;
     let alternates = alternate::resolve(from)?;
     assert_eq!(alternates.len(), 1);
     assert_eq!(alternates[0].loose.path, to);
