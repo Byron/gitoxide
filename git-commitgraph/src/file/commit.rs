@@ -1,5 +1,5 @@
+use crate::file::{File, LexPosition};
 use crate::graph::GraphPosition;
-use crate::graph_file::{GraphFile, LexPosition};
 use byteorder::{BigEndian, ByteOrder};
 use git_object::{borrowed, owned, SHA1_SIZE};
 use quick_error::quick_error;
@@ -40,7 +40,7 @@ const NO_PARENT: u32 = 0x7000_0000;
 const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
 
 pub struct Commit<'a> {
-    file: &'a GraphFile,
+    file: &'a File,
     lex_pos: LexPosition,
     // We can parse the below fields lazily if needed.
     commit_timestamp: u64,
@@ -51,7 +51,7 @@ pub struct Commit<'a> {
 }
 
 impl<'a> Commit<'a> {
-    pub(crate) fn new(file: &'a GraphFile, pos: LexPosition) -> Self {
+    pub(crate) fn new(file: &'a File, pos: LexPosition) -> Self {
         let bytes = file.commit_data_bytes(pos);
         Commit {
             file,
@@ -121,7 +121,7 @@ impl<'a> Eq for Commit<'a> {}
 
 impl<'a> PartialEq for Commit<'a> {
     fn eq(&self, other: &Self) -> bool {
-        self.file as *const GraphFile == other.file as *const GraphFile && self.lex_pos == other.lex_pos
+        self.file as *const File == other.file as *const File && self.lex_pos == other.lex_pos
     }
 }
 

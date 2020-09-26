@@ -1,4 +1,4 @@
-use crate::graph_file::{GraphFile, COMMIT_DATA_ENTRY_SIZE, FAN_LEN, SIGNATURE};
+use crate::file::{File, COMMIT_DATA_ENTRY_SIZE, FAN_LEN, SIGNATURE};
 use bstr::ByteSlice;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
@@ -15,7 +15,7 @@ quick_error! {
     pub enum Error {
         BaseGraphMismatch(from_header: u8, from_chunk: u32) {
             display(
-                "Commit-graph {} chunk contains {} base graphs, but commit-graph graph_file header claims {} base graphs",
+                "Commit-graph {} chunk contains {} base graphs, but commit-graph file header claims {} base graphs",
                 BASE_GRAPHS_LIST_CHUNK_ID.as_bstr(),
                 from_chunk,
                 from_header,
@@ -34,7 +34,7 @@ quick_error! {
             display("{}", msg)
         }
         DuplicateChunk(id: ChunkId) {
-            display("Commit-graph graph_file contains multiple {:?} chunks", id.as_bstr())
+            display("Commit-graph file contains multiple {:?} chunks", id.as_bstr())
         }
         // This error case is disabled, as git allows extra garbage in the extra edges list.
         // ExtraEdgesOverflow {
@@ -44,17 +44,17 @@ quick_error! {
             display("Commit-graph chunk {:?} has invalid size: {}", id.as_bstr(), msg)
         }
         Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open commit-graph graph_file at '{}'", path.display())
+            display("Could not open commit-graph file at '{}'", path.display())
             source(err)
         }
         MissingChunk(id: ChunkId) {
             display("Missing required chunk {:?}", id.as_bstr())
         }
         UnsupportedHashVersion(version: u8) {
-            display("Commit-graph graph_file uses unsupported hash version: {}", version)
+            display("Commit-graph file uses unsupported hash version: {}", version)
         }
         UnsupportedVersion(version: u8) {
-            display("Unsupported commit-graph graph_file version: {}", version)
+            display("Unsupported commit-graph file version: {}", version)
         }
     }
 }
@@ -73,13 +73,13 @@ const OID_FAN_CHUNK_ID: ChunkId = *b"OIDF";
 const OID_LOOKUP_CHUNK_ID: ChunkId = *b"OIDL";
 const SENTINEL_CHUNK_ID: ChunkId = [0u8; 4];
 
-impl GraphFile {
-    pub fn at(path: impl AsRef<Path>) -> Result<GraphFile, Error> {
+impl File {
+    pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
         Self::try_from(path.as_ref())
     }
 }
 
-impl TryFrom<&Path> for GraphFile {
+impl TryFrom<&Path> for File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
@@ -87,14 +87,14 @@ impl TryFrom<&Path> for GraphFile {
         let data_size = data.len();
         if data_size < MIN_FILE_SIZE {
             return Err(Error::Corrupt(
-                "Commit-graph graph_file too small even for an empty graph".to_owned(),
+                "Commit-graph file too small even for an empty graph".to_owned(),
             ));
         }
 
         let mut ofs = 0;
         if &data[ofs..ofs + SIGNATURE.len()] != SIGNATURE {
             return Err(Error::Corrupt(
-                "Commit-graph graph_file does not start with expected signature".to_owned(),
+                "Commit-graph file does not start with expected signature".to_owned(),
             ));
         }
         ofs += SIGNATURE.len();
@@ -126,7 +126,7 @@ impl TryFrom<&Path> for GraphFile {
         let chunk_lookup_end = ofs + ((chunk_count as usize + 1) * CHUNK_LOOKUP_SIZE);
         if chunk_lookup_end > data_size {
             return Err(Error::Corrupt(format!(
-                "Commit-graph graph_file is too small to hold {} chunks",
+                "Commit-graph file is too small to hold {} chunks",
                 chunk_count
             )));
         }
@@ -168,7 +168,7 @@ impl TryFrom<&Path> for GraphFile {
             if next_chunk_offset >= data_size {
                 return Err(Error::InvalidChunkSize(
                     chunk_id,
-                    "chunk extends beyond end of graph_file".to_string(),
+                    "chunk extends beyond end of file".to_string(),
                 ));
             }
 
@@ -260,7 +260,7 @@ impl TryFrom<&Path> for GraphFile {
         }
         if chunk_id != SENTINEL_CHUNK_ID {
             return Err(Error::Corrupt(format!(
-                "Commit-graph graph_file has invalid last chunk ID: {:?}",
+                "Commit-graph file has invalid last chunk ID: {:?}",
                 chunk_id.as_bstr()
             )));
         }
@@ -289,7 +289,7 @@ impl TryFrom<&Path> for GraphFile {
                 commit_data_count,
             ));
         }
-        Ok(GraphFile {
+        Ok(File {
             base_graph_count,
             base_graphs_list_offset,
             commit_data_offset,

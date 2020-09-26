@@ -1,11 +1,11 @@
-use crate::graph_file::{GraphFile, LexPosition, COMMIT_DATA_ENTRY_SIZE};
+use crate::file::{File, LexPosition, COMMIT_DATA_ENTRY_SIZE};
 use crate::Commit;
 use git_object::{borrowed, HashKind, SHA1_SIZE};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
-impl GraphFile {
+impl File {
     /// Returns the commit data for the commit located at the given lex position.
     ///
     /// `pos` must range from 0 to self.num_commits().
@@ -94,7 +94,7 @@ impl GraphFile {
     }
 }
 
-impl GraphFile {
+impl File {
     /// Returns the byte slice for the given commit in this file's Commit Data (CDAT) chunk.
     pub(crate) fn commit_data_bytes(&self, pos: LexPosition) -> &[u8] {
         assert!(
@@ -117,8 +117,8 @@ impl GraphFile {
     }
 }
 
-impl Debug for GraphFile {
+impl Debug for File {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, r#"GraphFile("{:?}")"#, self.path.display())
+        write!(f, r#"File("{:?}")"#, self.path.display())
     }
 }

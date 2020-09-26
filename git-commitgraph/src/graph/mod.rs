@@ -1,7 +1,7 @@
 mod access;
 mod init;
 
-use crate::graph_file::GraphFile;
+use crate::file::File;
 use std::fmt::{Display, Formatter};
 
 /// A complete commit graph.
@@ -10,7 +10,7 @@ use std::fmt::{Display, Formatter};
 /// may come from one or more `objects/info/commit-graphs/graph-*.graph` files. These files are
 /// generated via `git commit-graph write ...` commands.
 pub struct Graph {
-    files: Vec<GraphFile>,
+    files: Vec<File>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]

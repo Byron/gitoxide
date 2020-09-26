@@ -1,5 +1,5 @@
-use crate::graph_file::GraphFile;
-use crate::{graph_file, Graph, MAX_COMMITS};
+use crate::file::File;
+use crate::{file, Graph, MAX_COMMITS};
 use git_object::HashKind;
 use quick_error::quick_error;
 use std::io::{BufRead, BufReader};
@@ -11,7 +11,7 @@ quick_error! {
         Corrupt(msg: String, path: PathBuf) {
             display("{}", msg)
         }
-        GraphFile(err: graph_file::Error, path: PathBuf) {
+        File(err: file::Error, path: PathBuf) {
             display("{}", path.display())
             source(err)
         }
@@ -25,7 +25,7 @@ quick_error! {
             )
         }
         Io(err: std::io::Error, path: PathBuf) {
-            display("Could not open commit-graph graph_file at '{}'", path.display())
+            display("Could not open commit-graph file at '{}'", path.display())
             source(err)
         }
         TooManyCommits(num_commits: u64) {
@@ -46,7 +46,7 @@ impl Graph {
 
     pub fn from_single_file(info_dir: impl AsRef<Path>) -> Result<Self, Error> {
         let single_graph_file = info_dir.as_ref().join("commit-graph");
-        let file = GraphFile::at(&single_graph_file).map_err(|e| Error::GraphFile(e, single_graph_file.clone()))?;
+        let file = File::at(&single_graph_file).map_err(|e| Error::File(e, single_graph_file.clone()))?;
         Self::new(vec![file])
     }
 
@@ -54,17 +54,17 @@ impl Graph {
         let commit_graphs_dir = commit_graphs_dir.as_ref();
         let chain_file_path = commit_graphs_dir.join("commit-graph-chain");
         let chain_file = std::fs::File::open(&chain_file_path).map_err(|e| Error::Io(e, chain_file_path.clone()))?;
-        let mut files: Vec<GraphFile> = Vec::new();
+        let mut files: Vec<File> = Vec::new();
         for line in BufReader::new(chain_file).lines() {
             let line = line.map_err(|e| Error::Io(e, chain_file_path.clone()))?;
             let graph_filename = format!("graph-{}.graph", line);
             let graph_file_path = commit_graphs_dir.join(graph_filename);
-            files.push(GraphFile::at(&graph_file_path).map_err(|e| Error::GraphFile(e, graph_file_path.clone()))?);
+            files.push(File::at(&graph_file_path).map_err(|e| Error::File(e, graph_file_path.clone()))?);
         }
         Self::new(files)
     }
 
-    pub fn new(files: Vec<GraphFile>) -> Result<Self, Error> {
+    pub fn new(files: Vec<File>) -> Result<Self, Error> {
         let num_commits: u64 = files.iter().map(|f| f.num_commits() as u64).sum();
         if num_commits > MAX_COMMITS as u64 {
             return Err(Error::TooManyCommits(num_commits));

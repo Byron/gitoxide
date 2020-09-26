@@ -16,9 +16,9 @@ const SIGNATURE: &[u8] = b"CGPH";
 
 /// A single commit-graph file.
 ///
-/// All operations on a `GraphFile` are local to that graph file. Since a commit graph can span
-/// multiple files, all interesting graph operations belong on `Graph`.  
-pub struct GraphFile {
+/// All operations on a `File` are local to that graph file. Since a commit graph can span multiple
+/// files, all interesting graph operations belong on `Graph`.
+pub struct File {
     base_graph_count: u8,
     base_graphs_list_offset: Option<usize>,
     commit_data_offset: usize,

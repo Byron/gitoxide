@@ -1,5 +1,5 @@
+use crate::file::{File, LexPosition};
 use crate::graph::GraphPosition;
-use crate::graph_file::{GraphFile, LexPosition};
 use crate::{Commit, Graph};
 use git_object::borrowed;
 
@@ -72,12 +72,12 @@ impl Graph {
 }
 
 struct LookupByIdResult<'a> {
-    pub file: &'a GraphFile,
+    pub file: &'a File,
     pub graph_pos: GraphPosition,
     pub lex_pos: LexPosition,
 }
 
 struct LookupByPositionResult<'a> {
-    pub file: &'a GraphFile,
+    pub file: &'a File,
     pub lex_pos: LexPosition,
 }
