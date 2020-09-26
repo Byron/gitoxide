@@ -8,9 +8,6 @@ use std::path::{Path, PathBuf};
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Corrupt(msg: String, path: PathBuf) {
-            display("{}", msg)
-        }
         File(err: file::Error, path: PathBuf) {
             display("{}", path.display())
             source(err)
