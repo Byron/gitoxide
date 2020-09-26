@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("The objects directory at '{0}' is not an accessible directory")]
+    Inaccessible(PathBuf),
     #[error(transparent)]
     Pack(#[from] pack::bundle::Error),
     #[error(transparent)]
@@ -13,6 +15,9 @@ pub enum Error {
 impl compound::Db {
     pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Db, Error> {
         let loose_objects = objects_directory.into();
+        if !loose_objects.is_dir() {
+            return Err(Error::Inaccessible(loose_objects));
+        }
         let packs = if let Ok(entries) = std::fs::read_dir(loose_objects.join("packs")) {
             let mut packs_and_sizes = entries
                 .filter_map(Result::ok)
