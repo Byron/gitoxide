@@ -35,9 +35,7 @@ impl compound::Db {
         Ok(compound::Db {
             loose: loose::Db::at(loose_objects.clone()),
             packs,
-            alternate: crate::alternate::resolve(loose_objects)
-                .map_err(Box::new)?
-                .map(Box::new),
+            alternates: crate::alternate::resolve(loose_objects).map_err(Box::new)?,
         })
     }
 }

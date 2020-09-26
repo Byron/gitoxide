@@ -11,6 +11,11 @@
   * [x] alternate DB (location - it's really must following the chain until a compound DB can be created)
     * [x] circular dependencies test
     * [x] basic test
+    * [ ] are multiple alternates supported, too? YES
+    * [ ] comments
+    * [ ] quotes 
+    * [ ] support for relative directories
+    * [ ] alternates lookup
   * [x] loose upgrade: jwalk powered iteration behind a feature flag
   * [ ] full docs
 * **git-config**

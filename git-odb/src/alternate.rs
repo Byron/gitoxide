@@ -14,31 +14,35 @@ pub enum Error {
     Cycle(Vec<PathBuf>),
 }
 
-pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Option<compound::Db>, Error> {
-    let mut dir = objects_directory.into();
-    let mut count = 0;
+pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db>, Error> {
+    let mut dirs = vec![(0, objects_directory.into())];
+    let mut out = Vec::new();
     let mut seen = Vec::new();
-    loop {
+    while let Some((depth, dir)) = dirs.pop() {
         if seen.contains(&dir) {
-            break Err(Error::Cycle(seen));
+            return Err(Error::Cycle(seen));
         }
         seen.push(dir.clone());
-        let content = match fs::read(dir.join("info").join("alternates")) {
-            Ok(d) => d,
+        match fs::read(dir.join("info").join("alternates")) {
+            Ok(content) => {
+                dirs.push((
+                    depth + 1,
+                    content
+                        .as_bstr()
+                        .to_path()
+                        .map(ToOwned::to_owned)
+                        .map_err(|_| Error::PathConversion(content))?,
+                ));
+            }
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
-                break if count == 0 {
-                    Ok(None)
-                } else {
-                    Ok(Some(compound::Db::at(dir)?))
+                // Only resolve for repositories with at least one link, otherwise the line below isn't safe to call
+                if depth != 0 {
+                    // The tail of a chain doesn't have alternates, and thus is the real deal
+                    out.push(compound::Db::at(dir)?);
                 }
             }
-            Err(err) => break Err(err.into()),
+            Err(err) => return Err(err.into()),
         };
-        dir = content
-            .as_bstr()
-            .to_path()
-            .map(ToOwned::to_owned)
-            .map_err(|_| Error::PathConversion(content))?;
-        count += 1;
     }
+    Ok(out)
 }

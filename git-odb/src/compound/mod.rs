@@ -3,7 +3,7 @@ use crate::{loose, pack};
 pub struct Db {
     pub loose: loose::Db,
     pub packs: Vec<pack::Bundle>,
-    pub alternate: Option<Box<Db>>,
+    pub alternates: Vec<Db>,
 }
 
 pub mod object {
