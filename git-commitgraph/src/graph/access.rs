@@ -1,15 +1,15 @@
 use crate::graph::GraphPosition;
 use crate::graph_file::{GraphFile, LexPosition};
-use crate::{CommitData, Graph};
+use crate::{Commit, Graph};
 use git_object::borrowed;
 
 impl Graph {
-    pub fn commit_at(&self, pos: GraphPosition) -> CommitData<'_> {
+    pub fn commit_at(&self, pos: GraphPosition) -> Commit<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.commit_at(r.lex_pos)
     }
 
-    pub fn commit_by_id(&self, id: borrowed::Id<'_>) -> Option<CommitData<'_>> {
+    pub fn commit_by_id(&self, id: borrowed::Id<'_>) -> Option<Commit<'_>> {
         let r = self.lookup_by_id(id)?;
         Some(r.file.commit_at(r.lex_pos))
     }
@@ -20,7 +20,7 @@ impl Graph {
     }
 
     /// Iterate over commits in unsorted order.
-    pub fn iter_commits(&self) -> impl Iterator<Item = CommitData<'_>> {
+    pub fn iter_commits(&self) -> impl Iterator<Item = Commit<'_>> {
         self.files.iter().flat_map(|file| file.iter_commits())
     }
 

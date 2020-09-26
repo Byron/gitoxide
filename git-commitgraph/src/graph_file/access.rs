@@ -1,5 +1,5 @@
 use crate::graph_file::{GraphFile, LexPosition, COMMIT_DATA_ENTRY_SIZE};
-use crate::CommitData;
+use crate::Commit;
 use git_object::{borrowed, HashKind, SHA1_SIZE};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{Debug, Formatter};
@@ -13,8 +13,8 @@ impl GraphFile {
     /// # Panics
     ///
     /// Panics if `pos` is out of bounds.
-    pub fn commit_at(&self, pos: LexPosition) -> CommitData<'_> {
-        CommitData::new(self, pos)
+    pub fn commit_at(&self, pos: LexPosition) -> Commit<'_> {
+        Commit::new(self, pos)
     }
 
     pub fn hash_kind(&self) -> HashKind {
@@ -49,7 +49,7 @@ impl GraphFile {
             .map(|bytes| borrowed::Id::try_from(bytes).expect("20 bytes SHA1 to be alright"))
     }
 
-    pub fn iter_commits(&self) -> impl Iterator<Item = CommitData<'_>> {
+    pub fn iter_commits(&self) -> impl Iterator<Item = Commit<'_>> {
         (0..self.num_commits()).map(move |i| self.commit_at(LexPosition(i)))
     }
 

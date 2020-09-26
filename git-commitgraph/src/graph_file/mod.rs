@@ -4,7 +4,7 @@ use std::ops::Range;
 use std::path::PathBuf;
 
 mod access;
-pub mod commit_data;
+pub mod commit;
 mod init;
 
 pub use init::Error;

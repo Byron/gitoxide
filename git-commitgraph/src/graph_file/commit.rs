@@ -39,7 +39,7 @@ quick_error! {
 const NO_PARENT: u32 = 0x7000_0000;
 const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
 
-pub struct CommitData<'a> {
+pub struct Commit<'a> {
     file: &'a GraphFile,
     lex_pos: LexPosition,
     // We can parse the below fields lazily if needed.
@@ -50,10 +50,10 @@ pub struct CommitData<'a> {
     root_tree_id: borrowed::Id<'a>,
 }
 
-impl<'a> CommitData<'a> {
+impl<'a> Commit<'a> {
     pub(crate) fn new(file: &'a GraphFile, pos: LexPosition) -> Self {
         let bytes = file.commit_data_bytes(pos);
-        CommitData {
+        Commit {
             file,
             lex_pos: pos,
             root_tree_id: borrowed::Id::try_from(&bytes[..SHA1_SIZE]).expect("20 bytes SHA1 to be alright"),
@@ -102,11 +102,11 @@ impl<'a> CommitData<'a> {
     }
 }
 
-impl<'a> Debug for CommitData<'a> {
+impl<'a> Debug for Commit<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "CommitData {{ id: {}, lex_pos: {}, generation: {}, root_tree_oid: {}, parent1: {:?}, parent2: {:?} }}",
+            "Commit {{ id: {}, lex_pos: {}, generation: {}, root_tree_id: {}, parent1: {:?}, parent2: {:?} }}",
             self.id(),
             self.lex_pos,
             self.generation(),
@@ -117,16 +117,16 @@ impl<'a> Debug for CommitData<'a> {
     }
 }
 
-impl<'a> Eq for CommitData<'a> {}
+impl<'a> Eq for Commit<'a> {}
 
-impl<'a> PartialEq for CommitData<'a> {
+impl<'a> PartialEq for Commit<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.file as *const GraphFile == other.file as *const GraphFile && self.lex_pos == other.lex_pos
     }
 }
 
 pub struct ParentIterator<'a> {
-    commit_data: &'a CommitData<'a>,
+    commit_data: &'a Commit<'a>,
     state: ParentIteratorState<'a>,
 }
 
