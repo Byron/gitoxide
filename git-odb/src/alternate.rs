@@ -10,12 +10,13 @@ pub enum Error {
     PathConversion(Vec<u8>),
     #[error(transparent)]
     Init(#[from] compound::init::Error),
-    #[error("Alternates form a cycle: {} -> {}", .0.iter().map(|p| format!("'{}'", p.display())).collect::<Vec<_>>().join(" -> "), .0.first().expect("more than one directories").display())]
+    #[error("Alternates form a cycle: {}", .0.iter().map(|p| format!("'{}'", p.display())).collect::<Vec<_>>().join(" -> "))]
     Cycle(Vec<PathBuf>),
 }
 
 pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db>, Error> {
-    let mut dirs = vec![(0, objects_directory.into())];
+    let relative_base = objects_directory.into();
+    let mut dirs = vec![(0, relative_base.clone())];
     let mut out = Vec::new();
     let mut seen = Vec::new();
     while let Some((depth, dir)) = dirs.pop() {
@@ -27,11 +28,15 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db
                 seen.push(dir.clone());
                 dirs.push((
                     depth + 1,
-                    content
-                        .as_bstr()
-                        .to_path()
-                        .map(ToOwned::to_owned)
-                        .map_err(|_| Error::PathConversion(content))?,
+                    relative_base
+                        .join(
+                            content
+                                .as_bstr()
+                                .to_path()
+                                .map(ToOwned::to_owned)
+                                .map_err(|_| Error::PathConversion(content))?,
+                        )
+                        .canonicalize()?,
                 ));
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => {

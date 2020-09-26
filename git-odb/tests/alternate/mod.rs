@@ -1,5 +1,8 @@
 use git_odb::alternate;
-use std::{fs, io, path::PathBuf};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 fn alternate(objects_at: impl Into<PathBuf>, objects_to: impl Into<PathBuf>) -> Result<(PathBuf, PathBuf), io::Error> {
     alternate_with(objects_at, objects_to, None)
@@ -28,10 +31,10 @@ fn alternate_with(
 }
 
 #[test]
-fn circular_alternates_are_detected() -> crate::Result {
+fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
     let tmp = tempdir::TempDir::new("alternates")?;
     let (from, _) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
-    alternate(tmp.path().join("b"), tmp.path().join("a"))?;
+    alternate(tmp.path().join("b"), Path::new("..").join("a"))?;
 
     match alternate::resolve(&from) {
         Err(alternate::Error::Cycle(chain)) => {
@@ -40,7 +43,7 @@ fn circular_alternates_are_detected() -> crate::Result {
                     .into_iter()
                     .map(|p| p.file_name().expect("non-root").to_str().expect("utf8").to_owned())
                     .collect::<Vec<_>>(),
-                vec!["a", "b"]
+                vec!["a", "b", "a"]
             );
         }
         _ => unreachable!("should be a specific kind of error"),
