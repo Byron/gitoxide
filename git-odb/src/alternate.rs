@@ -19,12 +19,12 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db
     let mut out = Vec::new();
     let mut seen = Vec::new();
     while let Some((depth, dir)) = dirs.pop() {
-        if seen.contains(&dir) {
-            return Err(Error::Cycle(seen));
-        }
-        seen.push(dir.clone());
         match fs::read(dir.join("info").join("alternates")) {
             Ok(content) => {
+                if seen.contains(&dir) {
+                    continue;
+                }
+                seen.push(dir.clone());
                 dirs.push((
                     depth + 1,
                     content
@@ -43,6 +43,10 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db
             }
             Err(err) => return Err(err.into()),
         };
+    }
+
+    if out.is_empty() && !seen.is_empty() {
+        return Err(Error::Cycle(seen));
     }
     Ok(out)
 }
