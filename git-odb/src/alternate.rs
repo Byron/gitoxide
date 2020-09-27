@@ -67,6 +67,12 @@ pub mod unquote {
                                 b'n' => out.push(b'\n'),
                                 b'r' => out.push(b'\r'),
                                 b't' => out.push(b'\t'),
+                                b'a' => out.push(7),
+                                b'b' => out.push(8),
+                                b'v' => out.push(0xb),
+                                b'f' => out.push(0xc),
+                                b'"' => out.push(b'"'),
+                                b'\\' => out.push(b'\\'),
                                 _ => {
                                     return Err(Error::UnsupportedEscapeByte {
                                         byte: next,
@@ -108,6 +114,8 @@ pub mod unquote {
         test!(empty_surrounded_by_quotes, "\"\"", "");
         test!(surrounded_only_by_quotes, "\"hello\"", "hello");
         test!(typical_escapes, r#""\n\r\t""#, b"\n\r\t");
+        test!(untypical_escapes, r#""\a\b\f\v""#, b"\x07\x08\x0c\x0b");
+        test!(literal_escape_and_double_quote, r#""\"\\""#, br#""\"#);
     }
 }
 
