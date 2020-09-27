@@ -58,12 +58,12 @@ pub fn ansi_c(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
                             b'\\' => out.push(b'\\'),
                             b'0' | b'1' | b'2' | b'3' => {
                                 let mut buf = [next; 3];
-                                &input
+                                input
                                     .get(..2)
                                     .ok_or_else(|| {
                                         Error::new("Unexpected end of input when fetching two more octal bytes", input)
                                     })?
-                                    .read(&mut buf[1..])
+                                    .read_exact(&mut buf[1..])
                                     .expect("impossible to fail as numbers match");
                                 let byte = btoi::btou_radix(&buf, 8).map_err(|e| Error::new(e, original))?;
                                 out.push(byte);

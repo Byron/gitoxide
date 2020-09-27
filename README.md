@@ -91,9 +91,9 @@ become available.
   * **sink**
     * [x] write objects and obtain id
   * **alternates**
-    * [ ] _database that act as link to other known git ODBs on disk_
-    * [ ] safe with cycles and recursive configurations
-    * [ ] multi-line with comments and quotes
+    * _database that act as link to other known git ODBs on disk_
+    * [x] safe with cycles and recursive configurations
+    * [x] multi-line with comments and quotes
   * **multi-odb**
     * [ ] _an ODB for object lookup from multiple lower level ODB at once_
   * **promisor**

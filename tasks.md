@@ -13,7 +13,7 @@
     * [x] basic test
     * [x] multiple alternates in a single file
     * [x] comments
-    * [ ] quotes 
+    * [x] quotes 
     * [x] support for relative directories
     * [x] lookup uses alternates
   * [x] loose upgrade: jwalk powered iteration behind a feature flag
