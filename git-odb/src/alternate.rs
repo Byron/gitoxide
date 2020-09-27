@@ -14,7 +14,7 @@ pub enum Error {
 }
 
 pub mod unquote {
-    use git_object::bstr::BStr;
+    use git_object::bstr::{BStr, BString, ByteSlice};
     use std::borrow::Cow;
 
     #[derive(thiserror::Error, Debug)]
@@ -39,8 +39,25 @@ pub mod unquote {
         if input.len() < 2 {
             return Err(Error::new("Input must be surrounded by double quotes", input));
         }
-        let input = &input[1..input.len() - 1];
-        Ok(input.into())
+        let input = &input[1..];
+        let mut out = BString::default();
+        loop {
+            match input.find_byteset(b"\"\\") {
+                Some(position) => match input[position] {
+                    b'"' => {
+                        out.extend_from_slice(&input[..position]);
+                        break;
+                    }
+                    b'\\' => unimplemented!("actual unescaping"),
+                    _ => unreachable!("cannot find character that we didn't search for"),
+                },
+                None => {
+                    out.extend_from_slice(input);
+                    break;
+                }
+            }
+        }
+        Ok(out.into())
     }
 
     #[cfg(test)]
