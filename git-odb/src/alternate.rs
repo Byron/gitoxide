@@ -13,18 +13,70 @@ pub enum Error {
     Cycle(Vec<PathBuf>),
 }
 
+pub mod unquote {
+    use git_object::bstr::BStr;
+    use std::borrow::Cow;
+
+    #[derive(thiserror::Error, Debug)]
+    pub enum Error {
+        #[error("{message}: {:?}", String::from_utf8_lossy(&.input))]
+        InvalidInput { message: &'static str, input: Vec<u8> },
+    }
+
+    impl Error {
+        fn new(message: &'static str, input: &BStr) -> Error {
+            Error::InvalidInput {
+                message,
+                input: input.to_vec(),
+            }
+        }
+    }
+
+    pub fn ansi_c(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
+        if !input.starts_with(b"\"") {
+            return Ok(input.into());
+        }
+        if input.len() < 2 {
+            return Err(Error::new("Input must be surrounded by double quotes", input));
+        }
+        let input = &input[1..input.len() - 1];
+        Ok(input.into())
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use git_object::bstr::ByteSlice;
+
+        macro_rules! test {
+            ($name:ident, $input:literal, $expected:literal) => {
+                #[test]
+                fn $name() {
+                    assert_eq!(
+                        ansi_c($input.as_bytes().as_bstr()).expect("valid input"),
+                        std::borrow::Cow::Borrowed($expected.as_bytes().as_bstr())
+                    );
+                }
+            };
+        }
+
+        test!(unquoted_remains_unchanged, "hello", "hello");
+        test!(empty_surrounded_by_quotes, "\"\"", "");
+        test!(surrounded_only_by_quotes, "\"hello\"", "hello");
+    }
+}
+
 pub mod parse {
-    use git_object::bstr::{BStr, ByteSlice};
+    use crate::alternate::unquote;
+    use git_object::bstr::ByteSlice;
     use std::{borrow::Cow, path::PathBuf};
 
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
         #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(&.0))]
         PathConversion(Vec<u8>),
-    }
-
-    fn unquote_ansi_c(line: &BStr) -> Cow<'_, BStr> {
-        line.into()
+        #[error("Could not unquote alternate path")]
+        Unquote(#[from] unquote::Error),
     }
 
     pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
@@ -36,7 +88,7 @@ pub mod parse {
             }
             out.push(
                 if line.starts_with(b"\"") {
-                    unquote_ansi_c(line)
+                    unquote::ansi_c(line)?
                 } else {
                     Cow::Borrowed(line)
                 }
