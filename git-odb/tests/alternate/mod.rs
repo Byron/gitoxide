@@ -43,7 +43,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
                     .into_iter()
                     .map(|p| p.file_name().expect("non-root").to_str().expect("utf8").to_owned())
                     .collect::<Vec<_>>(),
-                vec!["a", "b", "a"]
+                vec!["a", "b"]
             );
         }
         _ => unreachable!("should be a specific kind of error"),
@@ -52,10 +52,11 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
 }
 
 #[test]
-fn single_link_with_comment_before_path() -> crate::Result {
+fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
     let tmp = tempdir::TempDir::new("alternates")?;
     let non_alternate = tmp.path().join("actual");
 
+    // let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n\"../a\"\n"))?;
     let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n"))?;
     let alternates = alternate::resolve(from)?;
     assert_eq!(alternates.len(), 1);

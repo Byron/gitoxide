@@ -9,7 +9,7 @@ pub enum Error {
     Parse(#[from] parse::Error),
     #[error(transparent)]
     Init(#[from] compound::init::Error),
-    #[error("Alternates form a cycle: {}", .0.iter().map(|p| format!("'{}'", p.display())).collect::<Vec<_>>().join(" -> "))]
+    #[error("Alternates form a cycle: {} -> {}", .0.iter().map(|p| format!("'{}'", p.display())).collect::<Vec<_>>().join(" -> "), .0.first().expect("more than one directories").display())]
     Cycle(Vec<PathBuf>),
 }
 
@@ -53,7 +53,7 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db
     let relative_base = objects_directory.into();
     let mut dirs = vec![(0, relative_base.clone())];
     let mut out = Vec::new();
-    let mut seen = vec![relative_base.clone()];
+    let mut seen = vec![relative_base.canonicalize()?];
     while let Some((depth, dir)) = dirs.pop() {
         match fs::read(dir.join("info").join("alternates")) {
             Ok(input) => {
