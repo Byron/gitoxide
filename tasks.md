@@ -15,7 +15,7 @@
     * [x] comments
     * [ ] quotes 
     * [x] support for relative directories
-    * [ ] lookup uses alternates
+    * [x] lookup uses alternates
   * [x] loose upgrade: jwalk powered iteration behind a feature flag
   * [ ] full docs
 * **git-config**
