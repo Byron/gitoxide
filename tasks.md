@@ -51,7 +51,7 @@ To be picked in any order….
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
   * [x] upgrade to prodash 9.0
-  * [ ] switch to `isahc`
+  * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602
