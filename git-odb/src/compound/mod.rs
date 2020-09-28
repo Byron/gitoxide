@@ -3,6 +3,7 @@ use crate::{loose, pack};
 pub struct Db {
     pub loose: loose::Db,
     pub packs: Vec<pack::Bundle>,
+    pub alternates: Vec<Db>,
 }
 
 pub mod object {
@@ -90,6 +91,6 @@ pub mod object {
 }
 pub use object::Object;
 
-mod init;
-mod locate;
+pub mod init;
+pub mod locate;
 mod write;

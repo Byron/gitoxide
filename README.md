@@ -11,6 +11,13 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ## Development Status
 
+**Please note** that from 2020-09-17, the development speed will be reduced greatly. I will do my best to create at least
+one commit per day ramp it up from there to eventually arrive at a new baseline velocity. It will be lower than what it was before, and
+I hope 1/2 to 2/3 of that will be realistic.
+
+This is entirely unrelated to the project and I still can't wait to use `gitoxide` on a daily basis once the first high-level commands
+become available.
+
 ### gitoxide _(CLI)_
   * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
     and itself relies on all `git-*` crates.
@@ -84,9 +91,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * **sink**
     * [x] write objects and obtain id
   * **alternates**
-    * [ ] _database that act as link to other known ODB types on disk_
-    * [ ] handles cycles
-    * [ ] handles recursive configurations
+    * _database that act as link to other known git ODBs on disk_
+    * [x] safe with cycles and recursive configurations
+    * [x] multi-line with comments and quotes
   * **multi-odb**
     * [ ] _an ODB for object lookup from multiple lower level ODB at once_
   * **promisor**
@@ -164,17 +171,24 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
   * handle git index files for primary use by the git-repository while crafting new commits
   * [ ] API documentation with examples
   
+### git-bundle
+  * [ ] create a bundle from an archive
+  * [ ] extract a branch from a bundle into a repository
+  
 ### git-repository
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
   * [ ] clone
     * [ ] shallow
+    * [ ] namespaces support
   * [ ] sparse checkout support
+  * [ ] execute hooks
   * [ ] .gitignore handling
   * [ ] checkout/stage conversions clean + smudge as in .gitattributes
   * [ ] read and write all data types
   * [ ] rev-parsing and ref history
+  * [ ] worktree
   * [ ] remotes with push and pull
   * [ ] configuration
   * [ ] merging

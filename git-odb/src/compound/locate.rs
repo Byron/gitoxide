@@ -1,21 +1,12 @@
 use crate::{compound, loose, pack};
 use git_object::borrowed;
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Loose(err: loose::db::locate::Error) {
-            display("An error occurred while obtaining an object from the loose object store")
-            source(err)
-            from()
-        }
-        Pack(err: pack::bundle::locate::Error) {
-            display("An error occurred while obtaining an object from the packed object store")
-            source(err)
-            from()
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("An error occurred while obtaining an object from the loose object store")]
+    Loose(#[from] loose::db::locate::Error),
+    #[error("An error occurred while obtaining an object from the packed object store")]
+    Pack(#[from] pack::bundle::locate::Error),
 }
 
 impl compound::Db {
@@ -24,6 +15,14 @@ impl compound::Db {
         id: borrowed::Id<'_>,
         buffer: &'a mut Vec<u8>,
     ) -> Option<Result<compound::Object<'a>, Error>> {
+        for alternate in &self.alternates {
+            // See 8c5bd095539042d7db0e611460803cdbf172beb0 for a commit that adds polonius and makes the proper version compile.
+            // See https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425
+            // More see below! Of course we don't want to do the lookup twice… but have to until this is fixed or we compile nightly.
+            if alternate.locate(id, buffer).is_some() {
+                return alternate.locate(id, buffer);
+            }
+        }
         for pack in &self.packs {
             // See 8c5bd095539042d7db0e611460803cdbf172beb0 for a commit that adds polonius and makes the proper version compile.
             // See https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425

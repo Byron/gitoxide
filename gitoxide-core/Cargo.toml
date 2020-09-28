@@ -2,7 +2,7 @@
 name = "gitoxide-core"
 description = "The library implementating all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/git-oxide"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"

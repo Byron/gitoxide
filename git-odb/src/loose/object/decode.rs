@@ -3,28 +3,21 @@ use crate::{loose, zlib};
 use git_object as object;
 use miniz_oxide::inflate::decompress_to_vec_zlib;
 use object::borrowed;
-use quick_error::quick_error;
 use smallvec::SmallVec;
 use std::{io::Read, path::PathBuf};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Decompress(err: zlib::Error) {
-            display("decompression of object data failed")
-            from()
-            source(err)
-        }
-        Parse(err: borrowed::Error) {
-            display("Could not parse object object")
-            from()
-            source(err)
-        }
-        Io(err: std::io::Error, action: &'static str, path: PathBuf) {
-            display("Could not {} data at '{}'", action, path.display())
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("decompression of object data failed")]
+    Decompress(#[from] zlib::Error),
+    #[error(transparent)]
+    Parse(#[from] borrowed::Error),
+    #[error("Could not {action} data at '{path}'")]
+    Io {
+        source: std::io::Error,
+        action: &'static str,
+        path: PathBuf,
+    },
 }
 
 impl loose::Object {
@@ -40,7 +33,11 @@ impl loose::Object {
         match &self.path {
             Some(path) => Ok(stream::Reader::from_read(
                 self.header_size,
-                std::fs::File::open(path).map_err(|e| Error::Io(e, "open", path.to_owned()))?,
+                std::fs::File::open(path).map_err(|source| Error::Io {
+                    source,
+                    action: "open",
+                    path: path.to_owned(),
+                })?,
             )),
             None => {
                 self.decompress_all()?;
@@ -64,13 +61,25 @@ impl loose::Object {
         if let Some(path) = self.path.take() {
             // NOTE: For now we just re-read everything from the beginning without seeking, as our buffer
             // is small so the seek might be more expensive than just reading everything.
-            let mut file = std::fs::File::open(&path).map_err(|e| Error::Io(e, "open", path.clone()))?;
+            let mut file = std::fs::File::open(&path).map_err(|source| Error::Io {
+                source,
+                action: "open",
+                path: path.clone(),
+            })?;
             let file_size = file
                 .metadata()
-                .map_err(|e| Error::Io(e, "read metadata", path.clone()))?
+                .map_err(|source| Error::Io {
+                    source,
+                    action: "read metadata",
+                    path: path.clone(),
+                })?
                 .len() as usize;
             let mut buf = Vec::with_capacity(file_size);
-            file.read_to_end(&mut buf).map_err(|e| Error::Io(e, "read", path))?;
+            file.read_to_end(&mut buf).map_err(|source| Error::Io {
+                source,
+                action: "read",
+                path,
+            })?;
             self.compressed_data = SmallVec::from(buf);
         }
         self.decompressed_data = SmallVec::from(decompress_to_vec_zlib(&self.compressed_data[..]).unwrap());

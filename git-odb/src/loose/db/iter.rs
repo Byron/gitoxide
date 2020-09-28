@@ -1,22 +1,17 @@
 use crate::loose::Db;
+use git_features::fs::WalkDir;
 use git_object::owned;
-use quick_error::quick_error;
-use walkdir::WalkDir;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        WalkDir(err: walkdir::Error) {
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    WalkDir(#[from] git_features::fs::walkdir::Error),
 }
 
 /// Iteration and traversal
 impl Db {
     pub fn iter(&self) -> impl Iterator<Item = Result<owned::Id, Error>> {
         use std::path::Component::Normal;
-        // TODO: Put this behind a feature flag in git-features and allow iterating with jwalk
         WalkDir::new(&self.path)
             .min_depth(2)
             .max_depth(3)

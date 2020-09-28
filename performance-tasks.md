@@ -1,6 +1,6 @@
 ## Potential for improving performance
 
-### NLL/Borrowcheck limitation in git-odb
+### NLL/Borrowcheck limitation git-odb::CompoundDb cause half-of-possible performance during object lookup
 
 * Once polonius is available with production-ready performance, we have to [make this code less wasteful](https://github.com/Byron/gitoxide/blob/b125c763c5d628c397dce9a5d085fbf123ce1f29/git-odb/src/compound.rs#L42)
  * See https://github.com/rust-lang/rust/issues/45402 for a discussion and more links

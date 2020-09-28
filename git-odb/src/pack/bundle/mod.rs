@@ -1,5 +1,4 @@
 use crate::pack;
-use quick_error::quick_error;
 use std::{
     convert::TryFrom,
     path::{Path, PathBuf},
@@ -8,23 +7,14 @@ use std::{
 pub mod locate;
 pub mod write;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        InvalidPath(path: PathBuf) {
-            display("An 'idx' extension is expected of an index file: '{}'", path.display())
-        }
-        Pack(err: pack::data::parse::Error) {
-            display("Could not instantiate pack")
-            from()
-            source(err)
-        }
-        Index(err: pack::index::init::Error) {
-            display("Could not instantiate pack index")
-            from()
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("An 'idx' extension is expected of an index file: '{0}'")]
+    InvalidPath(PathBuf),
+    #[error(transparent)]
+    Pack(#[from] pack::data::parse::Error),
+    #[error(transparent)]
+    Index(#[from] pack::index::init::Error),
 }
 
 /// A packfile with an index

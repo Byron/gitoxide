@@ -1,14 +1,10 @@
 use crate::pack;
 use git_object::borrowed;
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Decode(err: pack::data::decode::Error) {
-            display("Could not decode object")
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    Decode(pack::data::decode::Error),
 }
 
 impl pack::Bundle {

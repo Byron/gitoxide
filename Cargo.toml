@@ -5,7 +5,7 @@ repository = "https://github.com/Byron/git-oxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-version = "0.4.0"
+version = "0.4.3"
 default-run = "gix"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
@@ -64,7 +64,7 @@ git-features = { version = "^0.6.0", path = "git-features" }
 # just for feature configuration
 git-transport = { optional = true, version = "^0.2.0", path = "git-transport" }
 
-clap = { version = "3.0.0-beta.1", optional = true }
+clap = { version = "=3.0.0-beta.2", optional = true }
 argh = { version = "0.1.3", optional = true, default-features = false }
 prodash = { version = "10.0.0", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }

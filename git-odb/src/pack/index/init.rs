@@ -2,23 +2,19 @@ use crate::pack::index::{self, Kind, FAN_LEN, V2_SIGNATURE};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
-use quick_error::quick_error;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open pack index file at '{}'", path.display())
-            source(err)
-        }
-        Corrupt(msg: String) {
-            display("{}", msg)
-        }
-        UnsupportedVersion(version: u32) {
-            display("Unsupported index version: {}", version)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Could not open pack index file at '{path}'")]
+    Io {
+        source: std::io::Error,
+        path: std::path::PathBuf,
+    },
+    #[error("{message}")]
+    Corrupt { message: String },
+    #[error("Unsupported index version: {version})")]
+    UnsupportedVersion { version: u32 },
 }
 
 const N32_SIZE: usize = size_of::<u32>();
@@ -35,13 +31,15 @@ impl TryFrom<&Path> for index::File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = FileBuffer::open(&path).map_err(|e| Error::Io(e, path.to_owned()))?;
+        let data = FileBuffer::open(&path).map_err(|e| Error::Io {
+            source: e,
+            path: path.to_owned(),
+        })?;
         let idx_len = data.len();
         if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
-            return Err(Error::Corrupt(format!(
-                "Pack index of size {} is too small for even an empty index",
-                idx_len
-            )));
+            return Err(Error::Corrupt {
+                message: format!("Pack index of size {} is too small for even an empty index", idx_len),
+            });
         }
         let (kind, version, fan, num_objects) = {
             let (kind, d) = {
@@ -53,16 +51,16 @@ impl TryFrom<&Path> for index::File {
                 }
             };
             let (version, d) = {
-                let (mut v, mut d) = (1, d);
+                let (mut version, mut d) = (1, d);
                 if let Kind::V2 = kind {
                     let (vd, dr) = d.split_at(N32_SIZE);
                     d = dr;
-                    v = BigEndian::read_u32(vd);
-                    if v != Kind::V2 as u32 {
-                        return Err(Error::UnsupportedVersion(v));
+                    version = BigEndian::read_u32(vd);
+                    if version != Kind::V2 as u32 {
+                        return Err(Error::UnsupportedVersion { version });
                     }
                 }
-                (v, d)
+                (version, d)
             };
             let (fan, bytes_read) = read_fan(d);
             let (_, _d) = d.split_at(bytes_read);

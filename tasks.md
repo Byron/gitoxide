@@ -7,9 +7,17 @@
     * [x] make NLL issue work
     * [x] Nice access to compound::Object
   * [x] Add #![deny(rust_2018_idioms)] everywhere
-  * [ ] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
-  * [ ] alternate DB (location - it's really must following the chain until a compound DB can be created)
-  * [ ] loose upgrade: jwalk powered iteration behind a feature flag
+  * [x] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
+  * [x] alternate DB (location - it's really must following the chain until a compound DB can be created)
+    * [x] circular dependencies test
+    * [x] basic test
+    * [x] multiple alternates in a single file
+    * [x] comments
+    * [x] quotes 
+    * [x] support for relative directories
+    * [x] lookup uses alternates
+  * [x] loose upgrade: jwalk powered iteration behind a feature flag
+  * [ ] full docs
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**
@@ -43,7 +51,7 @@ To be picked in any order….
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
   * [x] upgrade to prodash 9.0
-  * [ ] switch to `isahc`
+  * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602

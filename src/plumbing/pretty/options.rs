@@ -7,14 +7,14 @@ use std::path::PathBuf;
 #[clap(setting = AppSettings::SubcommandRequired)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Args {
-    #[clap(long, short = "t")]
+    #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.
     ///
     /// If unset, or the value is 0, there is no limit and all logical cores can be used.
     pub threads: Option<usize>,
 
     /// Display verbose messages and progress information
-    #[clap(long, short = "v")]
+    #[clap(long, short = 'v')]
     pub verbose: bool,
 
     /// Bring up a terminal user interface displaying progress visually
@@ -30,7 +30,7 @@ pub struct Args {
     /// Determine the format to use when outputting statistics.
     #[clap(
         long,
-        short = "f",
+        short = 'f',
         default_value = "human",
         possible_values(core::OutputFormat::variants())
     )]
@@ -46,13 +46,13 @@ pub enum Subcommands {
     #[clap(setting = AppSettings::DisableVersion)]
     PackReceive {
         /// The protocol version to use. Valid values are 1 and 2
-        #[clap(long, short = "p")]
+        #[clap(long, short = 'p')]
         protocol: Option<core::Protocol>,
 
         /// the directory into which to write references. Existing files will be overwritten.
         ///
         /// Note that the directory will be created if needed.
-        #[clap(long, short = "r")]
+        #[clap(long, short = 'r')]
         refs_directory: Option<PathBuf>,
 
         /// The URLs or path from which to receive the pack.
@@ -73,7 +73,7 @@ pub enum Subcommands {
     #[clap(setting = AppSettings::DisableVersion)]
     RemoteRefList {
         /// The protocol version to use. Valid values are 1 and 2
-        #[clap(long, short = "p")]
+        #[clap(long, short = 'p')]
         protocol: Option<core::Protocol>,
 
         /// the URLs or path from which to receive references
@@ -93,7 +93,7 @@ pub enum Subcommands {
         ///  **restore** hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
         #[clap(
             long,
-            short = "i",
+            short = 'i',
             default_value = "verify",
             possible_values(core::pack::index::IterationMode::variants())
         )]
@@ -102,7 +102,7 @@ pub enum Subcommands {
         /// Path to the pack file to read (with .pack extension).
         ///
         /// If unset, the pack file is expected on stdin.
-        #[clap(long, short = "p")]
+        #[clap(long, short = 'p')]
         pack_path: Option<PathBuf>,
 
         /// The folder into which to place the pack and the generated index file
@@ -128,7 +128,7 @@ pub enum Subcommands {
         /// The amount of checks to run
         #[clap(
             long,
-            short = "c",
+            short = 'c',
             default_value = "all",
             possible_values(core::pack::explode::SafetyCheck::variants())
         )]
@@ -155,12 +155,12 @@ pub enum Subcommands {
     #[clap(setting = AppSettings::DisableVersion)]
     PackVerify {
         /// output statistical information about the pack
-        #[clap(long, short = "s")]
+        #[clap(long, short = 's')]
         statistics: bool,
         /// The algorithm used to verify the pack. They differ in costs.
         #[clap(
             long,
-            short = "a",
+            short = 'a',
             default_value = "less-time",
             possible_values(core::pack::verify::Algorithm::variants())
         )]

@@ -1,6 +1,8 @@
 use git_object::owned;
 use std::path::PathBuf;
 
+type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+
 #[cfg(not(windows))]
 fn fixup(v: Vec<u8>) -> Vec<u8> {
     v
@@ -22,6 +24,7 @@ pub fn fixture_path(path: &str) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path)
 }
 
+mod alternate;
 mod loose;
 mod pack;
 mod sink;

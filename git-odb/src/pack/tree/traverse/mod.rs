@@ -9,29 +9,22 @@ use git_features::{
     parallel::in_parallel_if,
     progress::{self, Progress},
 };
-use quick_error::quick_error;
 
 mod resolve;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        ZlibInflate(err: crate::zlib::Error, msg: &'static str) {
-            display("{}", msg)
-            source(err)
-        }
-        ResolveFailed(pack_offset: u64) {
-            display("The resolver failed to obtain the pack entry bytes for the entry at {}", pack_offset)
-        }
-        Inspect(err: Box<dyn std::error::Error + Send + Sync>) {
-            display("One of the object inspectors failed")
-            source(&**err)
-            from()
-        }
-        Interrupted {
-            display("Interrupted")
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("{message}")]
+    ZlibInflate {
+        source: crate::zlib::Error,
+        message: &'static str,
+    },
+    #[error("The resolver failed to obtain the pack entry bytes for the entry at {pack_offset}")]
+    ResolveFailed { pack_offset: u64 },
+    #[error("One of the object inspectors failed")]
+    Inspect(#[from] Box<dyn std::error::Error + Send + Sync>),
+    #[error("Interrupted")]
+    Interrupted,
 }
 
 pub struct Context<'a, S> {

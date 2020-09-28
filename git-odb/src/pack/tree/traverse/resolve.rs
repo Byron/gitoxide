@@ -25,7 +25,9 @@ where
     let decompress_from_resolver = |slice: EntrySlice| -> Result<(pack::data::Entry, u64, Vec<u8>), Error> {
         let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize((slice.end - slice.start) as usize, 0);
-        resolve(slice.clone(), &mut bytes_buf).ok_or_else(|| Error::ResolveFailed(slice.start))?;
+        resolve(slice.clone(), &mut bytes_buf).ok_or_else(|| Error::ResolveFailed {
+            pack_offset: slice.start,
+        })?;
         let entry = pack::data::Entry::from_bytes(&bytes_buf, slice.start);
         let compressed = &bytes_buf[entry.header_size() as usize..];
         let decompressed_len = entry.decompressed_size as usize;
@@ -104,6 +106,9 @@ fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, 
     out.resize(decompressed_len, 0);
     zlib::Inflate::default()
         .once(&b, &mut out, true)
-        .map_err(|err| Error::ZlibInflate(err, "Failed to decompress entry"))?;
+        .map_err(|err| Error::ZlibInflate {
+            source: err,
+            message: "Failed to decompress entry",
+        })?;
     Ok(out)
 }

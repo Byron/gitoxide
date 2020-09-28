@@ -1,3 +1,7 @@
+### v0.4.1
+
+* fix installation via `cargo install`
+
 ### v0.4
 
 * add `remote-ref-list` and `pack-receive` subcommands to **gixp**
