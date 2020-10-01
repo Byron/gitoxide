@@ -3,7 +3,7 @@ mod access;
 mod init;
 
 use crate::file::File;
-use std::fmt::{Display, Formatter};
+use std::fmt;
 
 /// A complete commit graph.
 ///
@@ -14,11 +14,11 @@ pub struct Graph {
     files: Vec<File>,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct GraphPosition(pub u32);
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
+pub struct Position(pub u32);
 
-impl Display for GraphPosition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }

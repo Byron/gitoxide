@@ -1,5 +1,5 @@
 use crate::file::{File, LexPosition};
-use crate::graph::GraphPosition;
+use crate::graph::Position;
 use byteorder::{BigEndian, ByteOrder};
 use git_object::{borrowed, owned, SHA1_SIZE};
 use quick_error::quick_error;
@@ -79,7 +79,7 @@ impl<'a> Commit<'a> {
         self.generation
     }
 
-    pub fn iter_parents(&'a self) -> impl Iterator<Item = Result<GraphPosition, Error>> + 'a {
+    pub fn iter_parents(&'a self) -> impl Iterator<Item = Result<Position, Error>> + 'a {
         // I didn't find a combinator approach that a) was as strict as ParentIterator, b) supported
         // fuse-after-first-error behavior, and b) was significantly shorter or more understandable
         // than ParentIterator. So here we are.
@@ -93,7 +93,7 @@ impl<'a> Commit<'a> {
         self.file.id_at(self.lex_pos)
     }
 
-    pub fn parent1(&self) -> Result<Option<GraphPosition>, Error> {
+    pub fn parent1(&self) -> Result<Option<Position>, Error> {
         self.iter_parents().next().transpose()
     }
 
@@ -131,7 +131,7 @@ pub struct ParentIterator<'a> {
 }
 
 impl<'a> Iterator for ParentIterator<'a> {
-    type Item = Result<GraphPosition, Error>;
+    type Item = Result<Position, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let state = std::mem::replace(&mut self.state, ParentIteratorState::Exhausted);
@@ -219,7 +219,7 @@ enum ParentIteratorState<'a> {
 #[derive(Clone, Copy, Debug)]
 enum ParentEdge {
     None,
-    GraphPosition(GraphPosition),
+    GraphPosition(Position),
     ExtraEdgeIndex(u32),
 }
 
@@ -231,7 +231,7 @@ impl ParentEdge {
         if raw & EXTENDED_EDGES_MASK != 0 {
             ParentEdge::ExtraEdgeIndex(raw & !EXTENDED_EDGES_MASK)
         } else {
-            ParentEdge::GraphPosition(GraphPosition(raw))
+            ParentEdge::GraphPosition(Position(raw))
         }
     }
 }
@@ -239,16 +239,16 @@ impl ParentEdge {
 const LAST_EXTENDED_EDGE_MASK: u32 = 0x8000_0000;
 
 enum ExtraEdge {
-    Internal(GraphPosition),
-    Last(GraphPosition),
+    Internal(Position),
+    Last(Position),
 }
 
 impl ExtraEdge {
     pub fn from_raw(raw: u32) -> Self {
         if raw & LAST_EXTENDED_EDGE_MASK != 0 {
-            Self::Last(GraphPosition(raw & !LAST_EXTENDED_EDGE_MASK))
+            Self::Last(Position(raw & !LAST_EXTENDED_EDGE_MASK))
         } else {
-            Self::Internal(GraphPosition(raw))
+            Self::Internal(Position(raw))
         }
     }
 }

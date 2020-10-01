@@ -1,4 +1,4 @@
-use git_commitgraph::{Graph, GraphPosition};
+use git_commitgraph::{graph::Position as GraphPosition, Graph};
 use git_object::{borrowed, owned};
 use std::{
     collections::{HashMap, HashSet},

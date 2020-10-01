@@ -1,9 +1,13 @@
-use crate::file::File;
-use crate::{file, Graph, MAX_COMMITS};
+use crate::{
+    file::{self, File},
+    Graph, MAX_COMMITS,
+};
 use git_object::HashKind;
 use quick_error::quick_error;
-use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
+use std::{
+    io::{BufRead, BufReader},
+    path::{Path, PathBuf},
+};
 
 quick_error! {
     #[derive(Debug)]

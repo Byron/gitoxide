@@ -1,9 +1,12 @@
-use crate::file::{Commit, File, LexPosition};
-use crate::graph::{Graph, GraphPosition};
+use crate::{
+    file::{Commit, File, LexPosition},
+    graph::{Graph, Position},
+};
 use git_object::borrowed;
 
+/// Access convenience
 impl Graph {
-    pub fn commit_at(&self, pos: GraphPosition) -> Commit<'_> {
+    pub fn commit_at(&self, pos: Position) -> Commit<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.commit_at(r.lex_pos)
     }
@@ -13,7 +16,7 @@ impl Graph {
         Some(r.file.commit_at(r.lex_pos))
     }
 
-    pub fn id_at(&self, pos: GraphPosition) -> borrowed::Id<'_> {
+    pub fn id_at(&self, pos: Position) -> borrowed::Id<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.id_at(r.lex_pos)
     }
@@ -28,7 +31,7 @@ impl Graph {
         self.files.iter().flat_map(|file| file.iter_ids())
     }
 
-    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<GraphPosition> {
+    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<Position> {
         Some(self.lookup_by_id(id)?.graph_pos)
     }
 
@@ -37,15 +40,16 @@ impl Graph {
     }
 }
 
+/// Access fundamentals
 impl Graph {
     fn lookup_by_id(&self, id: borrowed::Id<'_>) -> Option<LookupByIdResult<'_>> {
         let mut current_file_start = 0;
-        for file in self.files.iter() {
+        for file in &self.files {
             if let Some(lex_pos) = file.lookup(id) {
                 return Some(LookupByIdResult {
                     file,
                     lex_pos,
-                    graph_pos: GraphPosition(current_file_start + lex_pos.0),
+                    graph_pos: Position(current_file_start + lex_pos.0),
                 });
             }
             current_file_start += file.num_commits();
@@ -53,9 +57,9 @@ impl Graph {
         None
     }
 
-    fn lookup_by_pos(&self, pos: GraphPosition) -> LookupByPositionResult<'_> {
+    fn lookup_by_pos(&self, pos: Position) -> LookupByPositionResult<'_> {
         let mut remaining = pos.0;
-        for file in self.files.iter() {
+        for file in &self.files {
             match remaining.checked_sub(file.num_commits()) {
                 Some(v) => remaining = v,
                 None => {
@@ -70,12 +74,14 @@ impl Graph {
     }
 }
 
+#[derive(Clone)]
 struct LookupByIdResult<'a> {
     pub file: &'a File,
-    pub graph_pos: GraphPosition,
+    pub graph_pos: Position,
     pub lex_pos: LexPosition,
 }
 
+#[derive(Clone)]
 struct LookupByPositionResult<'a> {
     pub file: &'a File,
     pub lex_pos: LexPosition,

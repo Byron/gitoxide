@@ -197,7 +197,9 @@ become available.
   * [ ] API documentation with examples
   
 ### git-commitgraph
-  * Access to all capabilities provided by the file format, as well as their maintenance
+  * [x] read-only access
+     * [x] Graph lookup of commit information to obtain timestamps, generation and parents
+  * [ ] create and update graphs and graph files
   * [ ] API documentation with examples
 
 ### git-config
