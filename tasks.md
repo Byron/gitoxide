@@ -20,7 +20,8 @@
   * [ ] full docs
 * **git-commitgraph** review
   * [x] adjust tests to disable gpgsignatures
-  * [ ] make tests depend on checked-in fixtures, instead of generating them (and depend on git on CI), making it easy to recreate them
+  * [ ] ~~make tests depend on checked-in fixtures, instead of generating them (and depend on git on CI), making it easy to recreate them~~
+     * the tests currently rely on calling git, see `inspect_refs(…)`
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**

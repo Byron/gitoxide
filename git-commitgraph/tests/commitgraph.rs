@@ -1,11 +1,13 @@
 use git_commitgraph::{Graph, GraphPosition};
 use git_object::{borrowed, owned};
-use std::collections::{HashMap, HashSet};
-use std::convert::{TryFrom, TryInto};
-use std::hash::BuildHasher;
-use std::io::{BufRead, Cursor};
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    collections::{HashMap, HashSet},
+    convert::{TryFrom, TryInto},
+    hash::BuildHasher,
+    io::{BufRead, Cursor},
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 mod access;
 
