@@ -1,10 +1,12 @@
-use crate::file::commit::Commit;
-use crate::file::{File, LexPosition, COMMIT_DATA_ENTRY_SIZE};
+use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
 use git_object::{borrowed, HashKind, SHA1_SIZE};
-use std::convert::{TryFrom, TryInto};
-use std::fmt::{Debug, Formatter};
-use std::path::Path;
+use std::{
+    convert::{TryFrom, TryInto},
+    fmt::{Debug, Formatter},
+    path::Path,
+};
 
+/// Access
 impl File {
     /// Returns the commit data for the commit located at the given lex position.
     ///
@@ -13,7 +15,7 @@ impl File {
     /// # Panics
     ///
     /// Panics if `pos` is out of bounds.
-    pub fn commit_at(&self, pos: LexPosition) -> Commit<'_> {
+    pub fn commit_at(&self, pos: file::Position) -> Commit<'_> {
         Commit::new(self, pos)
     }
 
@@ -24,7 +26,7 @@ impl File {
     // copied from git-odb/src/pack/index/access.rs
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The position ranges from 0 to self.num_commits()
-    pub fn id_at(&self, pos: LexPosition) -> borrowed::Id<'_> {
+    pub fn id_at(&self, pos: file::Position) -> borrowed::Id<'_> {
         assert!(
             pos.0 < self.num_commits(),
             "expected lex position less than {}, got {}",
@@ -50,15 +52,15 @@ impl File {
     }
 
     pub fn iter_commits(&self) -> impl Iterator<Item = Commit<'_>> {
-        (0..self.num_commits()).map(move |i| self.commit_at(LexPosition(i)))
+        (0..self.num_commits()).map(move |i| self.commit_at(file::Position(i)))
     }
 
     pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
-        (0..self.num_commits()).map(move |i| self.id_at(LexPosition(i)))
+        (0..self.num_commits()).map(move |i| self.id_at(file::Position(i)))
     }
 
     // copied from git-odb/src/pack/index/access.rs
-    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<LexPosition> {
+    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<file::Position> {
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
@@ -69,12 +71,12 @@ impl File {
         // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
-            let mid_sha = self.id_at(LexPosition(mid));
+            let mid_sha = self.id_at(file::Position(mid));
 
             use std::cmp::Ordering::*;
             match id.cmp(&mid_sha) {
                 Less => upper_bound = mid,
-                Equal => return Some(LexPosition(mid)),
+                Equal => return Some(file::Position(mid)),
                 Greater => lower_bound = mid + 1,
             }
         }
@@ -83,7 +85,7 @@ impl File {
 
     /// Returns the number of commits in this graph file.
     ///
-    /// The maximum valid `LexPosition` that can be used with this file is one less than
+    /// The maximum valid `Lexfile::Position` that can be used with this file is one less than
     /// `num_commits()`.
     pub fn num_commits(&self) -> u32 {
         self.fan[255]
@@ -96,7 +98,7 @@ impl File {
 
 impl File {
     /// Returns the byte slice for the given commit in this file's Commit Data (CDAT) chunk.
-    pub(crate) fn commit_data_bytes(&self, pos: LexPosition) -> &[u8] {
+    pub(crate) fn commit_data_bytes(&self, pos: file::Position) -> &[u8] {
         assert!(
             pos.0 < self.num_commits(),
             "expected lex position less than {}, got {}",

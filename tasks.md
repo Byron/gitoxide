@@ -25,6 +25,12 @@
   * [ ] feature-toggled support for serde
   * [ ] ~~make tests depend on checked-in fixtures, instead of generating them (and depend on git on CI), making it easy to recreate them~~
      * the tests currently rely on calling git, see `inspect_refs(…)`
+  * **Questions**
+    * ~~How can `Commit` return Graph positions? It doesn't seem to learn about an offset.~~
+      * Parent IDs are indeed specified as graph positions, not file positions, as they may be in previous commit graph files.
+  * **Still to be done**
+    * A plumbing command to extract some value from the current implementation, maybe statistics, or verification
+    * Application of the command above in a stress test
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**

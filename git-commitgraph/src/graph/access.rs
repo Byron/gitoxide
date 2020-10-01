@@ -1,12 +1,12 @@
 use crate::{
-    file::{Commit, File, LexPosition},
-    graph::{Graph, Position},
+    file::{self, Commit, File},
+    graph::{self, Graph},
 };
 use git_object::borrowed;
 
-/// Access convenience
+/// Access
 impl Graph {
-    pub fn commit_at(&self, pos: Position) -> Commit<'_> {
+    pub fn commit_at(&self, pos: graph::Position) -> Commit<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.commit_at(r.lex_pos)
     }
@@ -16,7 +16,7 @@ impl Graph {
         Some(r.file.commit_at(r.lex_pos))
     }
 
-    pub fn id_at(&self, pos: Position) -> borrowed::Id<'_> {
+    pub fn id_at(&self, pos: graph::Position) -> borrowed::Id<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.id_at(r.lex_pos)
     }
@@ -31,7 +31,7 @@ impl Graph {
         self.files.iter().flat_map(|file| file.iter_ids())
     }
 
-    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<Position> {
+    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<graph::Position> {
         Some(self.lookup_by_id(id)?.graph_pos)
     }
 
@@ -49,7 +49,7 @@ impl Graph {
                 return Some(LookupByIdResult {
                     file,
                     lex_pos,
-                    graph_pos: Position(current_file_start + lex_pos.0),
+                    graph_pos: graph::Position(current_file_start + lex_pos.0),
                 });
             }
             current_file_start += file.num_commits();
@@ -57,7 +57,7 @@ impl Graph {
         None
     }
 
-    fn lookup_by_pos(&self, pos: Position) -> LookupByPositionResult<'_> {
+    fn lookup_by_pos(&self, pos: graph::Position) -> LookupByPositionResult<'_> {
         let mut remaining = pos.0;
         for file in &self.files {
             match remaining.checked_sub(file.num_commits()) {
@@ -65,7 +65,7 @@ impl Graph {
                 None => {
                     return LookupByPositionResult {
                         file,
-                        lex_pos: LexPosition(remaining),
+                        lex_pos: file::Position(remaining),
                     }
                 }
             }
@@ -77,12 +77,12 @@ impl Graph {
 #[derive(Clone)]
 struct LookupByIdResult<'a> {
     pub file: &'a File,
-    pub graph_pos: Position,
-    pub lex_pos: LexPosition,
+    pub graph_pos: graph::Position,
+    pub lex_pos: file::Position,
 }
 
 #[derive(Clone)]
 struct LookupByPositionResult<'a> {
     pub file: &'a File,
-    pub lex_pos: LexPosition,
+    pub lex_pos: file::Position,
 }

@@ -4,9 +4,11 @@ use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
 use quick_error::quick_error;
-use std::convert::{TryFrom, TryInto};
-use std::ops::Range;
-use std::path::Path;
+use std::{
+    convert::{TryFrom, TryInto},
+    ops::Range,
+    path::Path,
+};
 
 type ChunkId = [u8; 4];
 
