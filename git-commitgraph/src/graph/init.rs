@@ -39,6 +39,7 @@ quick_error! {
     }
 }
 
+/// Instantiate a `Graph` from various sources
 impl Graph {
     pub fn from_info_dir(info_dir: impl AsRef<Path>) -> Result<Self, Error> {
         Self::from_single_file(info_dir.as_ref())
@@ -55,11 +56,10 @@ impl Graph {
         let commit_graphs_dir = commit_graphs_dir.as_ref();
         let chain_file_path = commit_graphs_dir.join("commit-graph-chain");
         let chain_file = std::fs::File::open(&chain_file_path).map_err(|e| Error::Io(e, chain_file_path.clone()))?;
-        let mut files: Vec<File> = Vec::new();
+        let mut files = Vec::new();
         for line in BufReader::new(chain_file).lines() {
-            let line = line.map_err(|e| Error::Io(e, chain_file_path.clone()))?;
-            let graph_filename = format!("graph-{}.graph", line);
-            let graph_file_path = commit_graphs_dir.join(graph_filename);
+            let hash = line.map_err(|e| Error::Io(e, chain_file_path.clone()))?;
+            let graph_file_path = commit_graphs_dir.join(format!("graph-{}.graph", hash));
             files.push(File::at(&graph_file_path).map_err(|e| Error::File(e, graph_file_path.clone()))?);
         }
         Self::new(files)
