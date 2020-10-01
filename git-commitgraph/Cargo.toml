@@ -1,11 +1,11 @@
 [package]
 name = "git-commitgraph"
 version = "0.0.0"
-repository = "https://github.com/Byron/git-oxide"
+repository = "https://github.com/Byron/gitxoxide"
 documentation = "https://git-scm.com/docs/commit-graph#:~:text=The%20commit-graph%20file%20is%20a%20supplemental%20data%20structure,or%20in%20the%20info%20directory%20of%20an%20alternate."
 license = "MIT/Apache-2.0"
-description = "A WIP crate of the gitoxide project dedicated implementing the git commitgraph file format and its maintenance"
-authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>", "Conor Davis <gitoxide@conor.fastmail.fm>"]
+description = "A crate of the gitoxide project dedicated implementing the git commitgraph file format and its maintenance"
+authors = ["Conor Davis <gitoxide@conor.fastmail.fm>", "Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 
 [lib]

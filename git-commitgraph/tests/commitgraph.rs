@@ -9,6 +9,8 @@ use std::{
     process::Command,
 };
 
+type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+
 mod access;
 
 pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHasher>) {
@@ -35,6 +37,7 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
                     .expect("find RefInfo by id")
             })
             .collect();
+
         let commit = cg.commit_at(ref_info.pos());
         assert_eq!(commit.id(), ref_info.id());
         assert_eq!(commit.root_tree_id(), ref_info.root_tree_id());
@@ -45,7 +48,7 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
         assert_eq!(
             commit
                 .iter_parents()
-                .collect::<Result<Vec<_>, _>>()
+                .collect::<std::result::Result<Vec<_>, _>>()
                 .expect("failed to access commit's parents"),
             expected_parents.iter().map(|x| x.pos()).collect::<Vec<_>>()
         );
@@ -134,10 +137,11 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
     infos.sort_by_key(|x| x.1);
 
     let get_pos = |id: borrowed::Id| -> GraphPosition {
-        let pos = infos
+        let pos: u32 = infos
             .binary_search_by_key(&id, |x| x.1.to_borrowed())
-            .expect("sorted_ids to contain id");
-        let pos: u32 = pos.try_into().expect("graph position to fit in u32");
+            .expect("sorted_ids to contain id")
+            .try_into()
+            .expect("graph position to fit in u32");
         GraphPosition(pos)
     };
 

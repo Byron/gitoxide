@@ -2,7 +2,7 @@ use crate::{check_common, create_repo, inspect_refs};
 use git_commitgraph::Graph;
 
 #[test]
-fn single_parent() -> Result<(), Box<dyn std::error::Error>> {
+fn single_parent() -> crate::Result {
     let repo_dir = create_repo("single_parent.sh");
     let refs = inspect_refs(repo_dir.path(), &["parent", "child"]);
     let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
@@ -15,7 +15,7 @@ fn single_parent() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn octupus_merges() -> Result<(), Box<dyn std::error::Error>> {
+fn octupus_merges() -> crate::Result {
     let repo_dir = create_repo("octopus_merges.sh");
     let refs = inspect_refs(
         repo_dir.path(),
@@ -44,7 +44,7 @@ fn octupus_merges() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn single_commit() -> Result<(), Box<dyn std::error::Error>> {
+fn single_commit() -> crate::Result {
     let repo_dir = create_repo("single_commit.sh");
     let refs = inspect_refs(repo_dir.path(), &["commit"]);
     let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
@@ -56,7 +56,7 @@ fn single_commit() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn two_parents() -> Result<(), Box<dyn std::error::Error>> {
+fn two_parents() -> crate::Result {
     let repo_dir = create_repo("two_parents.sh");
     let refs = inspect_refs(repo_dir.path(), &["parent1", "parent2", "child"]);
     let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
