@@ -1,4 +1,4 @@
-[![Rust](https://github.com/Byron/git-oxide/workflows/Rust/badge.svg)](https://github.com/Byron/git-oxide/actions)
+[![Rust](https://github.com/Byron/gitoxide/workflows/Rust/badge.svg)](https://github.com/Byron/gitoxide/actions)
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
 
 **gix** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
@@ -259,7 +259,7 @@ curl -LSfs https://raw.githubusercontent.com/Byron/gitoxide/main/ci/install.sh |
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
 on your needs, for _Linux_, _MacOS_ and _Windows_.
 
-[releases]: https://github.com/Byron/git-oxide/releases
+[releases]: https://github.com/Byron/gitoxide/releases
 
 #### Cargo
 
@@ -278,7 +278,7 @@ cargo install gitoxide --no-default-features --features max-termion
 cargo install gitoxide --no-default-features --features lean
 ```
 
-[releases]: https://github.com/Byron/git-oxide/releases 
+[releases]: https://github.com/Byron/gitoxide/releases 
 [rustup]: https://rustup.rs
 
 ## Usage
@@ -315,7 +315,7 @@ Once installed, there are two binaries:
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
  * **Cross platform support, including Windows**
    * With the tools and experience available here there is no reason not to support Windows.
-   * [Windows is testsed on CI](https://github.com/Byron/git-oxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
+   * [Windows is testsed on CI](https://github.com/Byron/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
      and failures do prevent releases.
      
 

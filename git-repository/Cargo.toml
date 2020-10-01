@@ -1,6 +1,6 @@
 [package]
 name = "git-repository"
-repository = "https://github.com/Byron/git-oxide"
+repository = "https://github.com/Byron/gitoxide"
 description = "Manipulation of git repositories"
 license = "MIT/Apache-2.0"
 version = "0.4.0"

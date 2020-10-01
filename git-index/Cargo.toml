@@ -1,7 +1,7 @@
 [package]
 name = "git-index"
 version = "0.0.0"
-repository = "https://github.com/Byron/git-oxide"
+repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing the git index file"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

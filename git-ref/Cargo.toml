@@ -1,7 +1,7 @@
 [package]
 name = "git-ref"
 version = "0.4.0"
-repository = "https://github.com/Byron/git-oxide"
+repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
