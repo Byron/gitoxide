@@ -136,7 +136,7 @@ impl TryFrom<&Path> for File {
         let mut base_graphs_list_offset: Option<usize> = None;
         let mut commit_data_offset: Option<usize> = None;
         let mut commit_data_count = 0u32;
-        let mut extended_edges_list_range: Option<Range<usize>> = None;
+        let mut extra_edges_list_range: Option<Range<usize>> = None;
         let mut fan_offset: Option<usize> = None;
         let mut oid_lookup_offset: Option<usize> = None;
         let mut oid_lookup_count = 0u32;
@@ -208,11 +208,11 @@ impl TryFrom<&Path> for File {
                     commit_data_count = (chunk_size / COMMIT_DATA_ENTRY_SIZE) as u32;
                 }
                 EXTENDED_EDGES_LIST_CHUNK_ID => {
-                    if extended_edges_list_range.is_some() {
+                    if extra_edges_list_range.is_some() {
                         return Err(Error::DuplicateChunk(chunk_id));
                     }
 
-                    extended_edges_list_range = Some(Range {
+                    extra_edges_list_range = Some(Range {
                         start: chunk_offset,
                         end: next_chunk_offset,
                     })
@@ -245,6 +245,7 @@ impl TryFrom<&Path> for File {
                     }
                     oid_lookup_offset = Some(chunk_offset);
                     oid_lookup_count = (chunk_size / OID_LOOKUP_ENTRY_SIZE) as u32;
+                    // TODO(ST): Figure out how to handle this. Don't know what to do with the commented code.
                     // git allows extra garbage in the extra edges list chunk?
                     // if oid_lookup_count > 0 {
                     //     let last_edge = &data[next_chunk_offset - 4..next_chunk_offset];
@@ -296,7 +297,7 @@ impl TryFrom<&Path> for File {
             base_graphs_list_offset,
             commit_data_offset,
             data,
-            extra_edges_list_range: extended_edges_list_range,
+            extra_edges_list_range,
             fan,
             oid_lookup_offset,
             path: path.to_owned(),

@@ -28,6 +28,8 @@
   * **Questions**
     * ~~How can `Commit` return Graph positions? It doesn't seem to learn about an offset.~~
       * Parent IDs are indeed specified as graph positions, not file positions, as they may be in previous commit graph files.
+    * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248), 
+      some code is commented out.
   * **Future Work**
     * A plumbing command to extract some value from the current implementation, maybe statistics, or verification
     * Application of the command above in a stress test
