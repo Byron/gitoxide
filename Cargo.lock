@@ -659,7 +659,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bstr",
  "byteorder",
