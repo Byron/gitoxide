@@ -18,6 +18,9 @@
     * [x] lookup uses alternates
   * [x] loose upgrade: jwalk powered iteration behind a feature flag
   * [ ] full docs
+* **git-commitgraph** review
+  * [x] adjust tests to disable gpgsignatures
+  * [ ] make tests depend on checked-in fixtures, instead of generating them (and depend on git on CI), making it easy to recreate them
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**

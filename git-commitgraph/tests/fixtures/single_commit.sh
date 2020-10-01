@@ -13,6 +13,7 @@ export GIT_COMMITTER_NAME=committer
 mkdir -p "$1"
 cd "$1"
 git init -q
+git config commit.gpgsign false
 
 git checkout -q -b commit
 git commit -q --allow-empty -m commit
