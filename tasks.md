@@ -1,35 +1,5 @@
 ### Repository Clone
 
-* **git-odb**
-  * [x] compound-odb 
-    * [x] Write forwarding to loose odb
-    * [x] locate object and figure out how to deal with differences of ODBs databases
-    * [x] make NLL issue work
-    * [x] Nice access to compound::Object
-  * [x] Add #![deny(rust_2018_idioms)] everywhere
-  * [x] Where 'thiserror' is available, use it for all Errors. It is more powerful, and if we paid for it already, let's use it.
-  * [x] alternate DB (location - it's really must following the chain until a compound DB can be created)
-    * [x] circular dependencies test
-    * [x] basic test
-    * [x] multiple alternates in a single file
-    * [x] comments
-    * [x] quotes 
-    * [x] support for relative directories
-    * [x] lookup uses alternates
-  * [x] loose upgrade: jwalk powered iteration behind a feature flag
-  * [ ] full docs
-* **git-commitgraph** review
-  * [x] adjust tests to disable gpgsignatures
-  * [ ] ~~do graph results need a reference to their owning file?~~
-     * Yes, as it allows to obtain additional information related to the item in the file itself, like `File::commit_at(…)`
-  * [ ] ~~feature-toggled support for serde~~ - not really all that useful there, unless `Commit` can be serialized. Let's rather wait with this.
-  * [ ] ~~make tests depend on checked-in fixtures, instead of generating them (and depend on git on CI), making it easy to recreate them~~
-     * the tests currently rely on calling git, see `inspect_refs(…)`
-  * **Questions**
-    * ~~How can `Commit` return Graph positions? It doesn't seem to learn about an offset.~~
-      * Parent IDs are indeed specified as graph positions, not file positions, as they may be in previous commit graph files.
-    * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248), 
-      some code is commented out.
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**
@@ -59,6 +29,10 @@
 
 * [ ] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
 * [ ] Application of the command above in a stress test
+
+* **Questions**
+  * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248), 
+    some code is commented out.
   
 ### Other
 
