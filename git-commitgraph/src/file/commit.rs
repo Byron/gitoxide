@@ -39,7 +39,7 @@ quick_error! {
 }
 
 // Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for
-// NO_PARENT.
+// NO_PARENT. Fixed in https://github.com/git/git/commit/4d515253afcef985e94400adbfed7044959f9121 .
 const NO_PARENT: u32 = 0x7000_0000;
 const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
 

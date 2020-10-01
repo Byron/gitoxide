@@ -171,9 +171,17 @@ become available.
   * handle git index files for primary use by the git-repository while crafting new commits
   * [ ] API documentation with examples
   
-### git-bundle
-  * [ ] create a bundle from an archive
-  * [ ] extract a branch from a bundle into a repository
+### git-commitgraph
+  * [x] read-only access
+     * [x] Graph lookup of commit information to obtain timestamps, generation and parents, and extra edges
+     * [ ] Bloom filter index
+     * [ ] Bloom filter data
+  * [ ] create and update graphs and graph files
+  * [ ] API documentation with examples
+
+### git-config
+  * read and write git configuration files
+  * [ ] API documentation with examples
   
 ### git-repository
   * [x] initialize
@@ -196,15 +204,9 @@ become available.
   * [ ] Use _Commit Graph_ to speed up certain queries
   * [ ] API documentation with examples
   
-### git-commitgraph
-  * [x] read-only access
-     * [x] Graph lookup of commit information to obtain timestamps, generation and parents
-  * [ ] create and update graphs and graph files
-  * [ ] API documentation with examples
-
-### git-config
-  * read and write git configuration files
-  * [ ] API documentation with examples
+### git-bundle
+  * [ ] create a bundle from an archive
+  * [ ] extract a branch from a bundle into a repository
   
 ### git-ref
   * Handle symbolic references and packed references
