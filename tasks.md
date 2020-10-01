@@ -22,7 +22,7 @@
   * [x] adjust tests to disable gpgsignatures
   * [ ] ~~do graph results need a reference to their owning file?~~
      * Yes, as it allows to obtain additional information related to the item in the file itself, like `File::commit_at(…)`
-  * [ ] feature-toggled support for serde
+  * [ ] ~~feature-toggled support for serde~~ - not really all that useful there, unless `Commit` can be serialized. Let's rather wait with this.
   * [ ] ~~make tests depend on checked-in fixtures, instead of generating them (and depend on git on CI), making it easy to recreate them~~
      * the tests currently rely on calling git, see `inspect_refs(…)`
   * **Questions**
