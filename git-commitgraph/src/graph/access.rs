@@ -8,17 +8,17 @@ use git_object::borrowed;
 impl Graph {
     pub fn commit_at(&self, pos: graph::Position) -> Commit<'_> {
         let r = self.lookup_by_pos(pos);
-        r.file.commit_at(r.lex_pos)
+        r.file.commit_at(r.pos)
     }
 
     pub fn commit_by_id(&self, id: borrowed::Id<'_>) -> Option<Commit<'_>> {
         let r = self.lookup_by_id(id)?;
-        Some(r.file.commit_at(r.lex_pos))
+        Some(r.file.commit_at(r.file_pos))
     }
 
     pub fn id_at(&self, pos: graph::Position) -> borrowed::Id<'_> {
         let r = self.lookup_by_pos(pos);
-        r.file.id_at(r.lex_pos)
+        r.file.id_at(r.pos)
     }
 
     /// Iterate over commits in unsorted order.
@@ -48,7 +48,7 @@ impl Graph {
             if let Some(lex_pos) = file.lookup(id) {
                 return Some(LookupByIdResult {
                     file,
-                    lex_pos,
+                    file_pos: lex_pos,
                     graph_pos: graph::Position(current_file_start + lex_pos.0),
                 });
             }
@@ -65,7 +65,7 @@ impl Graph {
                 None => {
                     return LookupByPositionResult {
                         file,
-                        lex_pos: file::Position(remaining),
+                        pos: file::Position(remaining),
                     }
                 }
             }
@@ -78,11 +78,11 @@ impl Graph {
 struct LookupByIdResult<'a> {
     pub file: &'a File,
     pub graph_pos: graph::Position,
-    pub lex_pos: file::Position,
+    pub file_pos: file::Position,
 }
 
 #[derive(Clone)]
 struct LookupByPositionResult<'a> {
     pub file: &'a File,
-    pub lex_pos: file::Position,
+    pub pos: file::Position,
 }

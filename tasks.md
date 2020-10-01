@@ -28,7 +28,7 @@
   * **Questions**
     * ~~How can `Commit` return Graph positions? It doesn't seem to learn about an offset.~~
       * Parent IDs are indeed specified as graph positions, not file positions, as they may be in previous commit graph files.
-  * **Still to be done**
+  * **Future Work**
     * A plumbing command to extract some value from the current implementation, maybe statistics, or verification
     * Application of the command above in a stress test
 * **git-config**

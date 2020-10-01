@@ -8,7 +8,7 @@ use std::{
 
 /// Access
 impl File {
-    /// Returns the commit data for the commit located at the given lex position.
+    /// Returns the commit data for the commit located at the given lexigraphical position.
     ///
     /// `pos` must range from 0 to self.num_commits().
     ///
@@ -23,13 +23,13 @@ impl File {
         HashKind::Sha1
     }
 
-    // copied from git-odb/src/pack/index/access.rs
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The position ranges from 0 to self.num_commits()
+    // copied from git-odb/src/pack/index/access.rs
     pub fn id_at(&self, pos: file::Position) -> borrowed::Id<'_> {
         assert!(
             pos.0 < self.num_commits(),
-            "expected lex position less than {}, got {}",
+            "expected lexigraphical position less than {}, got {}",
             self.num_commits(),
             pos.0
         );
@@ -85,7 +85,7 @@ impl File {
 
     /// Returns the number of commits in this graph file.
     ///
-    /// The maximum valid `Lexfile::Position` that can be used with this file is one less than
+    /// The maximum valid `file::Position` that can be used with this file is one less than
     /// `num_commits()`.
     pub fn num_commits(&self) -> u32 {
         self.fan[255]
@@ -101,7 +101,7 @@ impl File {
     pub(crate) fn commit_data_bytes(&self, pos: file::Position) -> &[u8] {
         assert!(
             pos.0 < self.num_commits(),
-            "expected lex position less than {}, got {}",
+            "expected lexigraphical position less than {}, got {}",
             self.num_commits(),
             pos.0
         );

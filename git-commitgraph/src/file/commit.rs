@@ -45,7 +45,7 @@ const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
 
 pub struct Commit<'a> {
     file: &'a File,
-    lex_pos: file::Position,
+    pos: file::Position,
     // We can parse the below fields lazily if needed.
     commit_timestamp: u64,
     generation: u32,
@@ -59,7 +59,7 @@ impl<'a> Commit<'a> {
         let bytes = file.commit_data_bytes(pos);
         Commit {
             file,
-            lex_pos: pos,
+            pos,
             root_tree_id: borrowed::Id::try_from(&bytes[..SHA1_SIZE]).expect("20 bytes SHA1 to be alright"),
             parent1: ParentEdge::from_raw(BigEndian::read_u32(&bytes[SHA1_SIZE..SHA1_SIZE + 4])),
             parent2: ParentEdge::from_raw(BigEndian::read_u32(&bytes[SHA1_SIZE + 4..SHA1_SIZE + 8])),
@@ -94,7 +94,7 @@ impl<'a> Commit<'a> {
     }
 
     pub fn id(&self) -> borrowed::Id<'_> {
-        self.file.id_at(self.lex_pos)
+        self.file.id_at(self.pos)
     }
 
     pub fn parent1(&self) -> Result<Option<graph::Position>, Error> {
@@ -112,7 +112,7 @@ impl<'a> Debug for Commit<'a> {
             f,
             "Commit {{ id: {}, lex_pos: {}, generation: {}, root_tree_id: {}, parent1: {:?}, parent2: {:?} }}",
             self.id(),
-            self.lex_pos,
+            self.pos,
             self.generation(),
             self.root_tree_id(),
             self.parent1,
@@ -125,7 +125,7 @@ impl<'a> Eq for Commit<'a> {}
 
 impl<'a> PartialEq for Commit<'a> {
     fn eq(&self, other: &Self) -> bool {
-        self.file as *const File == other.file as *const File && self.lex_pos == other.lex_pos
+        self.file as *const File == other.file as *const File && self.pos == other.pos
     }
 }
 
