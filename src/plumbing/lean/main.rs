@@ -140,5 +140,17 @@ pub fn main() -> Result<()> {
             )
             .map(|_| ())
         }
+        SubCommands::CommitGraphVerify(CommitGraphVerify { path }) => {
+            use self::core::commitgraph::verify;
+
+            verify::graph_or_file(
+                path,
+                verify::Context {
+                    out: stdout(),
+                    err: stderr(),
+                },
+            )
+            .map(|_| ())
+        }
     }
 }

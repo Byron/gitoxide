@@ -868,6 +868,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "bytesize",
+ "git-commitgraph",
  "git-features",
  "git-object",
  "git-odb",

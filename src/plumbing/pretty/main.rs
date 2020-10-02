@@ -256,6 +256,17 @@ pub fn main() -> Result<()> {
             },
         )
         .map(|_| ()),
+        Subcommands::CommitGraphVerify { path } => prepare_and_run(
+            "commit-graph-verify",
+            verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, out, err| {
+                core::commitgraph::verify::graph_or_file(path, core::commitgraph::verify::Context { out, err })
+            },
+        )
+        .map(|_| ()),
     }?;
     Ok(())
 }

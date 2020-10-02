@@ -32,6 +32,7 @@ pub enum SubCommands {
     IndexFromPack(IndexFromPack),
     RemoteRefList(RemoteRefList),
     PackReceive(PackReceive),
+    CommitGraphVerify(CommitGraphVerify),
 }
 
 /// Create an index from a packfile.
@@ -185,6 +186,14 @@ pub struct PackVerify {
     #[argh(switch, short = 's')]
     pub statistics: bool,
     /// the '.pack' or '.idx' file whose checksum to validate.
+    #[argh(positional)]
+    pub path: PathBuf,
+}
+
+/// Verify a commit graph
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "commit-graph-verify")]
+pub struct CommitGraphVerify {
     #[argh(positional)]
     pub path: PathBuf,
 }
