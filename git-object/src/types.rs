@@ -91,7 +91,7 @@ impl Kind {
 
 impl fmt::Display for Kind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(std::str::from_utf8(self.to_bytes()).expect("valid utf8 in kind name"))
+        f.write_str(std::str::from_utf8(self.to_bytes()).expect("invalid utf8 in kind name"))
     }
 }
 
