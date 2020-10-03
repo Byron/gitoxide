@@ -21,7 +21,7 @@ quick_error! {
             display("Refusing to initialize the existing '{}' directory", path.display())
         }
         CreateDirectory(err: std::io::Error, path: PathBuf) {
-            display("Cold not create directory at '{}'", path.display())
+            display("Could not create directory at '{}'", path.display())
             source(err)
         }
     }
