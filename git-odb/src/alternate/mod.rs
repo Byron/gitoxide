@@ -1,3 +1,21 @@
+//! A file with directories of other git object databases to use when reading objects.
+//!
+//! This inherently makes alternates read-only.
+//!
+//! An alternate file in `<git-dir>/info/alternates` can look as follows:
+//!
+//! ```text
+//! # a comment, empty lines are also allowed
+//! # relative paths resolve relative to the parent git repository
+//! ../path/relative/to/repo/.git
+//! /absolute/path/to/repo/.git
+//!
+//! "/a/ansi-c-quoted/path/with/tabs\t/.git"
+//!
+//! # each .git directory should indeed be a directory, and not a file
+//! ```
+//!
+//! Based on the [canonical implementation](https://github.com/git/git/blob/master/sha1-file.c#L598:L609).
 use crate::compound;
 use std::{fs, io, path::PathBuf};
 
@@ -16,6 +34,10 @@ pub enum Error {
     Cycle(Vec<PathBuf>),
 }
 
+/// Given an objects directory, try to resolve alternate object directories possibly located in the
+/// `./info/alternates` file.
+/// If no alternate object database was resolved, the reesulting `Vec` is empty, and it is not an error
+/// if there are no alternates, or if there is a cycle while there is at least one valid alternate.
 pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db>, Error> {
     let relative_base = objects_directory.into();
     let mut dirs = vec![(0, relative_base.clone())];
