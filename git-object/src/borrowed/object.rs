@@ -43,6 +43,10 @@ impl<'a> Object<'a> {
             Kind::Tag => Object::Tag(Tag::from_bytes(bytes)?),
         })
     }
+
+    pub fn into_owned(self) -> crate::owned::Object {
+        self.into()
+    }
 }
 
 /// Convenient access to contained objects

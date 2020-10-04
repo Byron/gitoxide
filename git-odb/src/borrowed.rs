@@ -1,3 +1,4 @@
+//! Contains a borrowed Object bound to a buffer holding its decompressed data.
 use git_object::borrowed;
 
 /// A borrowed object using a borrowed slice as backing buffer.
@@ -8,6 +9,11 @@ pub struct Object<'a> {
 }
 
 impl<'a> Object<'a> {
+    /// Decodes the data in the backing slice into a [`borrowed::Object`], allowing to access all of its data
+    /// conveniently. The cost of parsing an object is negligible.
+    ///
+    /// **Note** that [owned, decoded objects][git_object::owned::Object] can be created from a [`borrowed::Object`]
+    /// using [`borrowed::Object::into_owned()`].
     pub fn decode(&self) -> Result<borrowed::Object<'_>, borrowed::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(self.data)?),
@@ -18,6 +24,7 @@ impl<'a> Object<'a> {
     }
 }
 
+/// Types supporting object hash verification
 pub mod verify {
     use crate::{hash, loose};
     use git_object::{borrowed, owned};
@@ -30,6 +37,9 @@ pub mod verify {
     }
 
     impl crate::borrowed::Object<'_> {
+        /// Compute the checksum of `self` and compare it with the `desired` hash.
+        /// If the hashes do not match, an [`Error`] is returned, containing the actual
+        /// hash of `self`.
         pub fn verify_checksum(&self, desired: borrowed::Id<'_>) -> Result<(), Error> {
             let mut sink = hash::Write::new(io::sink(), desired.kind());
 
