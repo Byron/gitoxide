@@ -66,25 +66,7 @@ mod value {
 }
 
 mod decode {
-    use bstr::BStr;
-    use quick_error::quick_error;
-    use std::borrow::Cow;
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Tbd {
-                display("let's see what can go wrong and how we do it")
-            }
-        }
-    }
-
-    pub fn value(_input: &BStr) -> Result<Cow<'_, BStr>, Error> {
-        unimplemented!("decode value from bstr")
-    }
-}
-
-mod borrowed {
-    use crate::{decode, file::File, value::Color, Span};
+    use crate::{borrowed, value};
     use bstr::BStr;
     use quick_error::quick_error;
     use std::{borrow::Cow, path::PathBuf};
@@ -92,24 +74,22 @@ mod borrowed {
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
-            Decode(err: decode::Error) {
-                display("A string value could not be decoded")
-                from()
-                source(err)
+            Tbd {
+                display("let's see what can go wrong and how we do it")
+            }
+            NoValue {
+                display("Entry has no value (TODO: much more error information)")
             }
         }
     }
 
-    struct Entry<'a> {
-        parent: &'a File,
-        section: Section,
-        name: Span,
-        value: Span,
+    pub fn value(_input: &BStr) -> Result<Cow<'_, BStr>, Error> {
+        unimplemented!("decode value from bstr")
     }
 
-    impl<'a> Entry<'a> {
+    impl<'a> borrowed::Entry<'a> {
         pub fn as_string(&self) -> Result<Cow<'a, BStr>, Error> {
-            decode::value(self.parent.bytes_at(self.value)).map_err(Into::into)
+            value(self.parent.bytes_at(self.value.ok_or_else(|| Error::NoValue)?)).map_err(Into::into)
         }
         pub fn as_int(&self) -> Result<i64, Error> {
             unimplemented!("as int")
@@ -120,13 +100,40 @@ mod borrowed {
         pub fn as_path(&self) -> Result<PathBuf, Error> {
             unimplemented!("as bool")
         }
-        pub fn as_color(&self) -> Result<Color, Error> {
+        pub fn as_color(&self) -> Result<value::Color, Error> {
             unimplemented!("as bool")
         }
     }
+}
 
-    enum Section {
-        Level1 { name: Span },
-        Level2 { parent_name: Span, name: Span },
+mod borrowed {
+    use crate::{file::File, Span};
+
+    mod spanned {
+        use crate::Span;
+
+        pub struct Section {
+            pub(crate) name: Span,
+            pub(crate) sub_name: Option<Span>,
+        }
+
+        pub struct Entry {
+            pub(crate) name: Span,
+            pub(crate) value: Option<Span>,
+        }
+    }
+
+    pub struct Entry<'a> {
+        pub(crate) parent: &'a File,
+        section: spanned::Section,
+        name: Span,
+        pub(crate) value: Option<Span>,
+    }
+
+    struct Section<'a> {
+        parent: &'a File,
+        name: Span,
+        sub_name: Option<Span>,
+        entries: Vec<spanned::Entry>,
     }
 }
