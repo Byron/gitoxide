@@ -180,7 +180,16 @@ become available.
   * [ ] API documentation with examples
 
 ### git-config
-  * read and write git configuration files
+  * [ ] read
+    * line-wise parsing with decent error messages
+    * [ ] decode value
+      * [ ] boolean
+      * [ ] integer
+      * [ ] color
+      * [ ] path (incl. resolution)
+      * [ ] include
+  * [ ] write
+    * keep comments and whitespace, and only change lines that are affected by actual changes.
   * [ ] API documentation with examples
   
 ### git-repository
