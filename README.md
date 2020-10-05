@@ -189,7 +189,7 @@ become available.
       * [ ] path (incl. resolution)
       * [ ] include
   * [ ] write
-    * keep comments and whitespace, and only change lines that are affected by actual changes.
+    * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
   * [ ] API documentation with examples
   
 ### git-repository

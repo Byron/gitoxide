@@ -25,11 +25,21 @@ impl Span {
 }
 
 mod file {
-    use crate::Span;
+    use crate::{spanned, Span};
     use bstr::{BStr, ByteSlice};
+
+    enum Token {
+        Section(spanned::Section),
+        Entry(spanned::Entry),
+        Comment(spanned::Comment),
+    }
 
     pub struct File {
         buf: Vec<u8>,
+        tokens: Vec<Token>, // but how do we get fast lookups and proper value lookup based on decoded values?
+                            // On the fly is easier, otherwise we have to deal with a lookup cache of sorts and
+                            // many more allocations up front (which might be worth it). Cow<'a, _> would bind to
+                            // our buffer so the cache can't be in this type
     }
 
     impl File {
@@ -106,22 +116,25 @@ mod decode {
     }
 }
 
-mod borrowed {
-    use crate::{file::File, Span};
+mod spanned {
+    use crate::Span;
+    // we parse leading and trailing whitespace into comments, avoiding the notion of whitespace.
+    // This means we auto-trim whitespace otherwise, which I consider a feature
+    pub(crate) type Comment = Span;
 
-    mod spanned {
-        use crate::Span;
-
-        pub struct Section {
-            pub(crate) name: Span,
-            pub(crate) sub_name: Option<Span>,
-        }
-
-        pub struct Entry {
-            pub(crate) name: Span,
-            pub(crate) value: Option<Span>,
-        }
+    pub(crate) struct Section {
+        pub(crate) name: Span,
+        pub(crate) sub_name: Option<Span>,
     }
+
+    pub(crate) struct Entry {
+        pub(crate) name: Span,
+        pub(crate) value: Option<Span>,
+    }
+}
+
+mod borrowed {
+    use crate::{file::File, spanned, Span};
 
     pub struct Entry<'a> {
         pub(crate) parent: &'a File,
