@@ -675,6 +675,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-config"
+version = "0.0.0"
+
+[[package]]
 name = "git-features"
 version = "0.6.0"
 dependencies = [
