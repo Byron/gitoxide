@@ -188,6 +188,7 @@ become available.
       * [ ] color
       * [ ] path (incl. resolution)
       * [ ] include
+      * [ ] includeIf
   * [ ] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
   * [ ] API documentation with examples

@@ -29,10 +29,19 @@ mod file {
     use crate::{spanned, Span};
     use bstr::{BStr, ByteSlice};
 
-    enum Token {
+    pub(crate) enum Token {
         Section(spanned::Section),
         Entry(spanned::Entry),
         Comment(spanned::Comment),
+    }
+
+    impl Token {
+        pub fn as_entry(&self) -> Option<&spanned::Entry> {
+            match self {
+                Token::Entry(v) => Some(v),
+                _ => None,
+            }
+        }
     }
 
     pub struct File {
@@ -40,12 +49,18 @@ mod file {
         tokens: Vec<Token>, // but how do we get fast lookups and proper value lookup based on decoded values?
                             // On the fly is easier, otherwise we have to deal with a lookup cache of sorts and
                             // many more allocations up front (which might be worth it). Cow<'a, _> would bind to
-                            // our buffer so the cache can't be in this type
+                            // our buffer so the cache can't be in this type.
+                            // Probably it could be the 'Config' type which handles multiple files and treats them as one,
+                            // and only if there is any need.
     }
 
     impl File {
         pub(crate) fn bytes_at(&self, span: Span) -> &BStr {
             &self.buf[span.to_range()].as_bstr()
+        }
+
+        pub(crate) fn token(&self, index: usize) -> &Token {
+            &self.tokens[index]
         }
     }
 }
@@ -76,6 +91,37 @@ mod value {
     }
 }
 
+mod spanned {
+    use crate::Span;
+    // we parse leading and trailing whitespace into comments, avoiding the notion of whitespace.
+    // This means we auto-trim whitespace otherwise, which I consider a feature
+    pub(crate) type Comment = Span;
+
+    pub(crate) struct Section {
+        pub(crate) name: Span,
+        pub(crate) sub_name: Option<Span>,
+    }
+
+    pub(crate) struct Entry {
+        pub(crate) name: Span,
+        pub(crate) value: Option<Span>,
+    }
+}
+
+mod borrowed {
+    use crate::file::File;
+
+    pub struct Entry<'a> {
+        pub(crate) parent: &'a File,
+        pub(crate) index: usize,
+    }
+
+    struct Section<'a> {
+        parent: &'a File,
+        index: usize,
+    }
+}
+
 mod decode {
     use crate::{borrowed, value};
     use bstr::BStr;
@@ -100,7 +146,17 @@ mod decode {
 
     impl<'a> borrowed::Entry<'a> {
         pub fn as_string(&self) -> Result<Cow<'a, BStr>, Error> {
-            value(self.parent.bytes_at(self.value.ok_or_else(|| Error::NoValue)?)).map_err(Into::into)
+            value(
+                self.parent.bytes_at(
+                    self.parent
+                        .token(self.index)
+                        .as_entry()
+                        .expect("entry")
+                        .value
+                        .ok_or_else(|| Error::NoValue)?,
+                ),
+            )
+            .map_err(Into::into)
         }
         pub fn as_int(&self) -> Result<i64, Error> {
             unimplemented!("as int")
@@ -114,40 +170,5 @@ mod decode {
         pub fn as_color(&self) -> Result<value::Color, Error> {
             unimplemented!("as bool")
         }
-    }
-}
-
-mod spanned {
-    use crate::Span;
-    // we parse leading and trailing whitespace into comments, avoiding the notion of whitespace.
-    // This means we auto-trim whitespace otherwise, which I consider a feature
-    pub(crate) type Comment = Span;
-
-    pub(crate) struct Section {
-        pub(crate) name: Span,
-        pub(crate) sub_name: Option<Span>,
-    }
-
-    pub(crate) struct Entry {
-        pub(crate) name: Span,
-        pub(crate) value: Option<Span>,
-    }
-}
-
-mod borrowed {
-    use crate::{file::File, spanned, Span};
-
-    pub struct Entry<'a> {
-        pub(crate) parent: &'a File,
-        section: spanned::Section,
-        name: Span,
-        pub(crate) value: Option<Span>,
-    }
-
-    struct Section<'a> {
-        parent: &'a File,
-        name: Span,
-        sub_name: Option<Span>,
-        entries: Vec<spanned::Entry>,
     }
 }
