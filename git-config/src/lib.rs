@@ -26,7 +26,7 @@ impl Span {
 }
 
 mod file {
-    use crate::{spanned, Span};
+    use crate::{borrowed, spanned, Span};
     use bstr::{BStr, ByteSlice};
 
     pub(crate) enum Token {
@@ -62,6 +62,11 @@ mod file {
         pub(crate) fn token(&self, index: usize) -> &Token {
             &self.tokens[index]
         }
+        // access for sections
+    }
+
+    impl<'a> borrowed::Section<'a> {
+        // Access for entries
     }
 }
 
@@ -116,7 +121,7 @@ mod borrowed {
         pub(crate) index: usize,
     }
 
-    struct Section<'a> {
+    pub struct Section<'a> {
         parent: &'a File,
         index: usize,
     }
