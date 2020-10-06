@@ -15,5 +15,3 @@ doctest = false
 [dependencies]
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 quick-error = "2.0.0"
-
-[workspace]
