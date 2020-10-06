@@ -83,7 +83,6 @@ build-override = { opt-level = 0 }
 [workspace]
 members = [
     "gitoxide-core",
-    "git-config",
     "git-features",
     "git-index",
     "git-object",
