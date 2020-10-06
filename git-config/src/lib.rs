@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 // #![forbid(rust_2018_idioms)]
+#![allow(dead_code)]
 
 use std::ops::Range;
 
