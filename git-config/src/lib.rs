@@ -92,13 +92,17 @@ mod file {
                 fn next(&mut self) -> Option<Self::Item> {
                     match self.inner.as_ref() {
                         Some(s) => {
-                            let r = s
-                                .get(self.index)
-                                .filter(|t| t.as_entry().is_some())
-                                .map(|_| borrowed::Entry {
+                            let r = match s.get(self.index) {
+                                Some(Token::Section(_)) => {
+                                    self.inner = None;
+                                    None
+                                }
+                                Some(Token::Entry(_)) => Some(borrowed::Entry {
                                     parent: self.parent,
                                     index: self.index + self.offset,
-                                });
+                                }),
+                                _ => None,
+                            };
                             self.index += 1;
                             r
                         }
@@ -106,11 +110,12 @@ mod file {
                     }
                 }
             }
+            let start_of_entries = self.index + 1;
             Iter {
-                inner: self.parent.tokens.get(self.index + 1..),
+                inner: self.parent.tokens.get(start_of_entries..),
                 parent: self.parent,
                 index: 0,
-                offset: self.index + 1,
+                offset: start_of_entries,
             }
         }
     }
