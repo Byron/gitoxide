@@ -92,16 +92,18 @@ mod file {
                 fn next(&mut self) -> Option<Self::Item> {
                     match self.inner.as_ref() {
                         Some(s) => {
-                            let r = match s.get(self.index) {
-                                Some(Token::Section(_)) => {
-                                    self.inner = None;
-                                    None
-                                }
-                                Some(Token::Entry(_)) => Some(borrowed::Entry {
-                                    parent: self.parent,
-                                    index: self.index + self.offset,
-                                }),
-                                _ => None,
+                            let r = loop {
+                                break match s.get(self.index) {
+                                    None | Some(Token::Section(_)) => {
+                                        self.inner = None;
+                                        None
+                                    }
+                                    Some(Token::Entry(_)) => Some(borrowed::Entry {
+                                        parent: self.parent,
+                                        index: self.index + self.offset,
+                                    }),
+                                    Some(Token::Comment(_)) => continue,
+                                };
                             };
                             self.index += 1;
                             r
