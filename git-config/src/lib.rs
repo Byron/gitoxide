@@ -42,6 +42,12 @@ mod file {
                 _ => None,
             }
         }
+        pub fn as_section(&self) -> Option<&spanned::Section> {
+            match self {
+                Token::Section(v) => Some(v),
+                _ => None,
+            }
+        }
     }
 
     pub struct File {
@@ -62,11 +68,51 @@ mod file {
         pub(crate) fn token(&self, index: usize) -> &Token {
             &self.tokens[index]
         }
-        // access for sections
+    }
+    impl File {
+        pub fn sections(&self) -> impl Iterator<Item = borrowed::Section<'_>> {
+            self.tokens
+                .iter()
+                .enumerate()
+                .filter_map(move |(index, t)| t.as_section().map(|_| borrowed::Section { parent: self, index }))
+        }
     }
 
     impl<'a> borrowed::Section<'a> {
-        // Access for entries
+        pub fn entries(&self) -> impl Iterator<Item = borrowed::Entry<'_>> {
+            struct Iter<'a> {
+                inner: Option<&'a [Token]>,
+                parent: &'a File,
+                index: usize,
+                offset: usize,
+            }
+            impl<'a> Iterator for Iter<'a> {
+                type Item = borrowed::Entry<'a>;
+
+                fn next(&mut self) -> Option<Self::Item> {
+                    match self.inner.as_ref() {
+                        Some(s) => {
+                            let r = s
+                                .get(self.index)
+                                .filter(|t| t.as_entry().is_some())
+                                .map(|_| borrowed::Entry {
+                                    parent: self.parent,
+                                    index: self.index + self.offset,
+                                });
+                            self.index += 1;
+                            r
+                        }
+                        None => None,
+                    }
+                }
+            }
+            Iter {
+                inner: self.parent.tokens.get(self.index + 1..),
+                parent: self.parent,
+                index: 0,
+                offset: self.index + 1,
+            }
+        }
     }
 }
 
@@ -122,8 +168,8 @@ mod borrowed {
     }
 
     pub struct Section<'a> {
-        parent: &'a File,
-        index: usize,
+        pub(crate) parent: &'a File,
+        pub(crate) index: usize,
     }
 }
 
