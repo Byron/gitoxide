@@ -10,6 +10,8 @@ pub enum Error {
 }
 
 impl compound::Db {
+    /// Find an object as identified by [`id`][borrowed::Id] and store its data in full in the provided `buffer`.
+    /// This will search the object in all contained object databases.
     pub fn locate<'a>(
         &self,
         id: borrowed::Id<'_>,

@@ -13,6 +13,7 @@ pub enum Error {
 
 /// Instantiation
 impl compound::Db {
+    /// Returns a compound database as initialized from the given git `objects_directory`.
     pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Db, Error> {
         let loose_objects = objects_directory.into();
         if !loose_objects.is_dir() {
