@@ -96,6 +96,15 @@ mod owned {
                 span: None,
             }
         }
+
+        pub fn name(mut self, name: impl Into<BString>) -> Self {
+            self.name = name.into();
+            self
+        }
+        pub fn value(mut self, name: Option<BString>) -> Self {
+            self.value = name;
+            self
+        }
     }
 
     impl Section {
@@ -106,6 +115,15 @@ mod owned {
                 entries,
                 span: None,
             }
+        }
+
+        pub fn name(mut self, name: impl Into<BString>) -> Self {
+            self.name = name.into();
+            self
+        }
+        pub fn sub_name(mut self, sub_name: Option<BString>) -> Self {
+            self.sub_name = sub_name;
+            self
         }
     }
 }

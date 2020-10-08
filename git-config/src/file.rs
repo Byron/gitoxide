@@ -97,6 +97,7 @@ impl<'a> borrowed::Section<'a> {
 
 mod edit {
     use crate::{borrowed, file::File, owned, Span};
+    use std::io;
 
     impl Into<Edit> for owned::Section {
         fn into(self) -> Edit {
@@ -137,8 +138,8 @@ mod edit {
         }
         // Use with [`owned::Section`].
         //
-        // Newly instantiated sections will be appended, and existing ones can be edited
-        // by calling [`borrowed::Section::edit()`].
+        // Newly [instantiated][owned::Section::new()] sections will be appended, and existing ones can be edited
+        // by calling [`borrowed::Section::to_editable()`].
         pub fn create_or_update_section(&mut self, section: owned::Section) -> &mut Self {
             self.edits.push(Edit::SetSection(section));
             self
@@ -146,6 +147,10 @@ mod edit {
         pub fn create_or_update_entry(&mut self, entry: owned::Entry) -> &mut Self {
             self.edits.push(Edit::SetEntry(entry));
             self
+        }
+
+        pub fn to_write(&self, out: impl io::Write) -> io::Result<()> {
+            unimplemented!("to write")
         }
     }
 }
