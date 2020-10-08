@@ -149,8 +149,17 @@ mod edit {
             self
         }
 
-        pub fn to_write(&self, out: impl io::Write) -> io::Result<()> {
+        pub fn to_write(&self, _out: impl io::Write) -> io::Result<()> {
             unimplemented!("to write")
+        }
+    }
+
+    impl File {
+        pub fn edit(&self) -> Edits {
+            Edits {
+                parent: self,
+                edits: Vec::new(),
+            }
         }
     }
 }
