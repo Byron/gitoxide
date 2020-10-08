@@ -25,103 +25,8 @@ impl Span {
     }
 }
 
-mod file {
-    use crate::{borrowed, spanned, Span};
-    use bstr::{BStr, ByteSlice};
-
-    pub(crate) enum Token {
-        Section(spanned::Section),
-        Entry(spanned::Entry),
-        Comment(spanned::Comment),
-    }
-
-    impl Token {
-        pub fn as_entry(&self) -> Option<&spanned::Entry> {
-            match self {
-                Token::Entry(v) => Some(v),
-                _ => None,
-            }
-        }
-        pub fn as_section(&self) -> Option<&spanned::Section> {
-            match self {
-                Token::Section(v) => Some(v),
-                _ => None,
-            }
-        }
-    }
-
-    pub struct File {
-        buf: Vec<u8>,
-        tokens: Vec<Token>, // but how do we get fast lookups and proper value lookup based on decoded values?
-                            // On the fly is easier, otherwise we have to deal with a lookup cache of sorts and
-                            // many more allocations up front (which might be worth it). Cow<'a, _> would bind to
-                            // our buffer so the cache can't be in this type.
-                            // Probably it could be the 'Config' type which handles multiple files and treats them as one,
-                            // and only if there is any need.
-    }
-
-    impl File {
-        pub(crate) fn bytes_at(&self, span: Span) -> &BStr {
-            &self.buf[span.to_range()].as_bstr()
-        }
-
-        pub(crate) fn token(&self, index: usize) -> &Token {
-            &self.tokens[index]
-        }
-    }
-    impl File {
-        pub fn sections(&self) -> impl Iterator<Item = borrowed::Section<'_>> {
-            self.tokens
-                .iter()
-                .enumerate()
-                .filter_map(move |(index, t)| t.as_section().map(|_| borrowed::Section { parent: self, index }))
-        }
-    }
-
-    impl<'a> borrowed::Section<'a> {
-        pub fn entries(&self) -> impl Iterator<Item = borrowed::Entry<'_>> {
-            struct Iter<'a> {
-                inner: Option<&'a [Token]>,
-                parent: &'a File,
-                index: usize,
-                offset: usize,
-            }
-            impl<'a> Iterator for Iter<'a> {
-                type Item = borrowed::Entry<'a>;
-
-                fn next(&mut self) -> Option<Self::Item> {
-                    match self.inner.as_ref() {
-                        Some(s) => {
-                            let r = loop {
-                                break match s.get(self.index) {
-                                    None | Some(Token::Section(_)) => {
-                                        self.inner = None;
-                                        None
-                                    }
-                                    Some(Token::Entry(_)) => Some(borrowed::Entry {
-                                        parent: self.parent,
-                                        index: self.index + self.offset,
-                                    }),
-                                    Some(Token::Comment(_)) => continue,
-                                };
-                            };
-                            self.index += 1;
-                            r
-                        }
-                        None => None,
-                    }
-                }
-            }
-            let start_of_entries = self.index + 1;
-            Iter {
-                inner: self.parent.tokens.get(start_of_entries..),
-                parent: self.parent,
-                index: 0,
-                offset: start_of_entries,
-            }
-        }
-    }
-}
+pub mod file;
+pub use file::File;
 
 mod value {
     pub enum Color {
@@ -166,17 +71,79 @@ mod spanned {
     }
 }
 
+mod owned {
+    use crate::Span;
+    use bstr::BString;
+
+    pub struct Entry {
+        pub name: BString,
+        pub value: Option<BString>,
+        pub(crate) span: Option<Span>,
+    }
+
+    pub struct Section {
+        pub name: BString,
+        pub sub_name: Option<BString>,
+        pub entries: Vec<Entry>,
+        pub(crate) span: Option<Span>,
+    }
+
+    impl Entry {
+        pub fn new(name: BString, value: Option<BString>) -> Self {
+            Entry {
+                name,
+                value,
+                span: None,
+            }
+        }
+    }
+
+    impl Section {
+        pub fn new(name: BString, sub_name: Option<BString>, entries: Vec<Entry>) -> Self {
+            Section {
+                name,
+                sub_name,
+                entries,
+                span: None,
+            }
+        }
+    }
+}
+
 mod borrowed {
-    use crate::file::File;
+    use crate::{file::File, owned};
 
     pub struct Entry<'a> {
         pub(crate) parent: &'a File,
         pub(crate) index: usize,
     }
 
+    impl<'a> Entry<'a> {
+        pub fn to_editable(&self) -> owned::Entry {
+            let entry = self.parent.token(self.index).as_entry().expect("entry");
+            owned::Entry {
+                name: self.parent.bytes_at(entry.name).into(),
+                value: entry.value.map(|span| self.parent.bytes_at(span).into()),
+                span: Some(entry.name),
+            }
+        }
+    }
+
     pub struct Section<'a> {
         pub(crate) parent: &'a File,
         pub(crate) index: usize,
+    }
+
+    impl<'a> Section<'a> {
+        pub fn to_editable(&self) -> owned::Section {
+            let section = self.parent.token(self.index).as_section().expect("section");
+            owned::Section {
+                name: self.parent.bytes_at(section.name).into(),
+                sub_name: section.sub_name.map(|span| self.parent.bytes_at(span).into()),
+                span: Some(section.name),
+                entries: self.entries().map(|e| e.to_editable()).collect(),
+            }
+        }
     }
 }
 
