@@ -147,7 +147,7 @@ impl index::File {
                 v
             }
         };
-        ofs.sort();
+        ofs.sort_unstable();
         ofs
     }
 

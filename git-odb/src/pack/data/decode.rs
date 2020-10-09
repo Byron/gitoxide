@@ -79,11 +79,7 @@ impl File {
 
     fn assure_v2(&self) {
         assert!(
-            if let crate::pack::data::Kind::V2 = self.kind {
-                true
-            } else {
-                false
-            },
+            matches!(self.kind, crate::pack::data::Kind::V2),
             "Only V2 is implemented"
         );
     }

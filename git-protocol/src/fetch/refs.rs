@@ -107,10 +107,7 @@ impl InternalRef {
         }
     }
     fn lookup_symbol_has_path(&self, predicate_path: &str) -> bool {
-        match self {
-            InternalRef::SymbolicForLookup { path, .. } if path == predicate_path => true,
-            _ => false,
-        }
+        matches!(self, InternalRef::SymbolicForLookup { path, .. } if path == predicate_path)
     }
 }
 

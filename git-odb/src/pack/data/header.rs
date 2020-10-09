@@ -154,10 +154,7 @@ impl Header {
         }
     }
     pub fn is_delta(&self) -> bool {
-        match self {
-            Header::OfsDelta { .. } | Header::RefDelta { .. } => true,
-            _ => false,
-        }
+        matches!(self, Header::OfsDelta { .. } | Header::RefDelta { .. })
     }
     pub fn is_base(&self) -> bool {
         !self.is_delta()

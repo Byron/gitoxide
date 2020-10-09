@@ -58,16 +58,10 @@ pub enum SafetyCheck {
 
 impl SafetyCheck {
     pub fn file_checksum(&self) -> bool {
-        match self {
-            SafetyCheck::All => true,
-            _ => false,
-        }
+        matches!(self, SafetyCheck::All)
     }
     pub fn object_checksum(&self) -> bool {
-        match self {
-            SafetyCheck::All | SafetyCheck::SkipFileChecksumVerification => true,
-            _ => false,
-        }
+        matches!(self, SafetyCheck::All | SafetyCheck::SkipFileChecksumVerification)
     }
     pub fn fatal_decode_error(&self) -> bool {
         match self {

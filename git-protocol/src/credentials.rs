@@ -34,10 +34,7 @@ pub enum Action<'a> {
 
 impl<'a> Action<'a> {
     pub fn is_fill(&self) -> bool {
-        match self {
-            Action::Fill(_) => true,
-            _ => false,
-        }
+        matches!(self, Action::Fill(_))
     }
     pub fn as_str(&self) -> &str {
         match self {
