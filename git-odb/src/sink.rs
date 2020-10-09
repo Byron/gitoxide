@@ -6,11 +6,16 @@ use std::{
     io::{self, Write},
 };
 
+/// An object database equivalent to `/dev/null`, dropping all objects stored into it.
+///
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Db`].
+///
 pub struct Sink {
     compressor: Option<RefCell<DeflateWriter<io::Sink>>>,
 }
 
 impl Sink {
+    /// Enable or disable compression. Compression is disabled by default
     pub fn compress(mut self, enable: bool) -> Self {
         if enable {
             self.compressor = Some(RefCell::new(DeflateWriter::new(io::sink())));
@@ -21,6 +26,7 @@ impl Sink {
     }
 }
 
+/// Create a new [`Sink`] with compression disabled.
 pub fn sink() -> Sink {
     Sink { compressor: None }
 }

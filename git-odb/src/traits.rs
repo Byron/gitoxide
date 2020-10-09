@@ -1,6 +1,7 @@
 use git_object::{owned, HashKind};
 use std::io;
 
+/// Describe the capability to write git objects into an object store.
 pub trait Write {
     type Error: std::error::Error + From<io::Error>;
 
