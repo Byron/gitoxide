@@ -20,7 +20,7 @@ git-object = { version = "^0.4.0", path = "../git-object" }
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 byteorder = "1.2.3"
 filebuffer = "0.4.0"
-quick-error = "2.0.0"
+thiserror = "1.0.20"
 
 [dev-dependencies]
 tempfile = "3.1.0"

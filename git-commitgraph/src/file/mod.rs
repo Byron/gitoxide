@@ -1,7 +1,6 @@
 //! Operations on a single commit-graph file.
 mod access;
 pub mod commit;
-
 mod init;
 pub use init::Error;
 

@@ -3,40 +3,37 @@ use crate::{
     Graph, MAX_COMMITS,
 };
 use git_object::HashKind;
-use quick_error::quick_error;
 use std::{
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        File(err: file::Error, path: PathBuf) {
-            display("{}", path.display())
-            source(err)
-        }
-        HashVersionMismatch(path1: PathBuf, hash1: HashKind, path2: PathBuf, hash2: HashKind) {
-            display(
-                "Commit-graph files mismatch: '{}' uses hash {:?}, but '{}' uses hash {:?}",
-                path1.display(),
-                hash1,
-                path2.display(),
-                hash2,
-            )
-        }
-        Io(err: std::io::Error, path: PathBuf) {
-            display("Could not open commit-graph file at '{}'", path.display())
-            source(err)
-        }
-        TooManyCommits(num_commits: u64) {
-            display(
-                "Commit-graph files contain {} commits altogether, but only {} commits are allowed",
-                num_commits,
-                MAX_COMMITS,
-            )
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("{}", .path.display())]
+    File {
+        #[source]
+        err: file::Error,
+        path: PathBuf,
+    },
+    #[error("Commit-graph files mismatch: '{}' uses hash {hash1:?}, but '{}' uses hash {hash2:?}", .path1.display(), .path2.display())]
+    HashVersionMismatch {
+        path1: PathBuf,
+        hash1: HashKind,
+        path2: PathBuf,
+        hash2: HashKind,
+    },
+    #[error("Could not open commit-graph file at '{}'", path.display())]
+    Io {
+        #[source]
+        err: std::io::Error,
+        path: PathBuf,
+    },
+    #[error(
+        "Commit-graph files contain {0} commits altogether, but only {} commits are allowed",
+        MAX_COMMITS
+    )]
+    TooManyCommits(u64),
 }
 
 /// Instantiate a `Graph` from various sources
@@ -48,19 +45,31 @@ impl Graph {
 
     pub fn from_single_file(info_dir: impl AsRef<Path>) -> Result<Self, Error> {
         let single_graph_file = info_dir.as_ref().join("commit-graph");
-        let file = File::at(&single_graph_file).map_err(|e| Error::File(e, single_graph_file.clone()))?;
+        let file = File::at(&single_graph_file).map_err(|e| Error::File {
+            err: e,
+            path: single_graph_file.clone(),
+        })?;
         Self::new(vec![file])
     }
 
     pub fn from_split_chain(commit_graphs_dir: impl AsRef<Path>) -> Result<Self, Error> {
         let commit_graphs_dir = commit_graphs_dir.as_ref();
         let chain_file_path = commit_graphs_dir.join("commit-graph-chain");
-        let chain_file = std::fs::File::open(&chain_file_path).map_err(|e| Error::Io(e, chain_file_path.clone()))?;
+        let chain_file = std::fs::File::open(&chain_file_path).map_err(|e| Error::Io {
+            err: e,
+            path: chain_file_path.clone(),
+        })?;
         let mut files = Vec::new();
         for line in BufReader::new(chain_file).lines() {
-            let hash = line.map_err(|e| Error::Io(e, chain_file_path.clone()))?;
+            let hash = line.map_err(|e| Error::Io {
+                err: e,
+                path: chain_file_path.clone(),
+            })?;
             let graph_file_path = commit_graphs_dir.join(format!("graph-{}.graph", hash));
-            files.push(File::at(&graph_file_path).map_err(|e| Error::File(e, graph_file_path.clone()))?);
+            files.push(File::at(&graph_file_path).map_err(|e| Error::File {
+                err: e,
+                path: graph_file_path.clone(),
+            })?);
         }
         Self::new(files)
     }
@@ -75,12 +84,12 @@ impl Graph {
             let f1 = &window[0];
             let f2 = &window[1];
             if f1.hash_kind() != f2.hash_kind() {
-                return Err(Error::HashVersionMismatch(
-                    f1.path().to_owned(),
-                    f1.hash_kind(),
-                    f2.path().to_owned(),
-                    f2.hash_kind(),
-                ));
+                return Err(Error::HashVersionMismatch {
+                    path1: f1.path().to_owned(),
+                    hash1: f1.hash_kind(),
+                    path2: f2.path().to_owned(),
+                    hash2: f2.hash_kind(),
+                });
             }
         }
 

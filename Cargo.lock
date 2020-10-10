@@ -699,8 +699,8 @@ dependencies = [
  "byteorder",
  "filebuffer",
  "git-object",
- "quick-error 2.0.0",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]
