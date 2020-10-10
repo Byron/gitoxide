@@ -13,6 +13,9 @@ pub enum Error {
 }
 
 impl loose::Object {
+    /// Generate the git hash of this object, reading it in the process, and compare it with the given `desired` [Id][borrowed::Id].
+    ///
+    /// Returns an error with the actual id if the hashes don't match.
     pub fn verify_checksum(&mut self, desired: borrowed::Id<'_>) -> Result<(), Error> {
         let mut sink = HashWrite::new(io::sink(), desired.kind());
         let (kind, size) = (self.kind, self.size);

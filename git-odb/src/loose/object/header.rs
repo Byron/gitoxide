@@ -1,3 +1,4 @@
+//! loose object header encoding and decoding
 use byteorder::WriteBytesExt;
 use git_object as object;
 
@@ -15,6 +16,9 @@ pub enum Error {
     ObjectHeader(#[from] object::Error),
 }
 
+/// Decode a loose object header, being `<kind> <size>\0`, returns ([`Kind`][object::Kind], `size`, `consumed bytes`).
+///
+/// `size` is the uncompressed size of the payload in bytes.
 pub fn decode(input: &[u8]) -> Result<(object::Kind, u64, usize), Error> {
     let header_end = input
         .iter()
@@ -46,6 +50,7 @@ fn kind_to_bytes_with_space(object: object::Kind) -> &'static [u8] {
     }
 }
 
+/// Encode the objects `Kind` and `size` into a format suitable for use with [`decode()`].
 pub fn encode(object: object::Kind, size: u64, mut out: impl std::io::Write) -> Result<usize, std::io::Error> {
     let mut written = out.write(kind_to_bytes_with_space(object))?;
     written += itoa::write(&mut out, size)?;

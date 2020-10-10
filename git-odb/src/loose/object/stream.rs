@@ -6,6 +6,7 @@ pub enum Reader<'a> {
     Buffer(&'a [u8]),
 }
 
+/// A [`Read`][std::io::Read] implementation for reading from a file or from borrowed data.
 impl<'a> Reader<'a> {
     pub fn from_read(header_size: usize, file: std::fs::File) -> Reader<'a> {
         Reader::File(header_size, InflateReader::from_read(std::io::BufReader::new(file)))

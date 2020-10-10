@@ -20,8 +20,14 @@ pub enum Error {
     },
 }
 
+// Decoding and streaming
 impl loose::Object {
-    /// **Note**: Blobs are loaded into memory and are made available that way.
+    /// Decode the object to make it's fields accessible in case of Trees, Tags and Commits.
+    ///
+    /// This is a zero-copy operation with data read from disk if needed and stored in memory.
+    /// The returned [`borrowed::Object`] references this data where possible.
+    ///
+    /// **Note**: Blobs are also loaded into memory and are made available that way.
     /// Consider using `stream()` if large Blobs are expected.
     pub fn decode(&mut self) -> Result<borrowed::Object<'_>, Error> {
         self.decompress_all()?;
@@ -29,6 +35,10 @@ impl loose::Object {
         Ok(borrowed::Object::from_bytes(self.kind, bytes)?)
     }
 
+    /// Returns an implementation of [`std::io::Read`], which decompresses the objects data on the fly.
+    ///
+    /// **Note**: This is most useful for big blobs as these won't be read into memory in full. Use [`decode()`][loose::Object::decode()] for
+    /// Trees, Tags and Commits instead for convenient access to their payload.
     pub fn stream(&mut self) -> Result<stream::Reader<'_>, Error> {
         match &self.path {
             Some(path) => Ok(stream::Reader::from_read(
