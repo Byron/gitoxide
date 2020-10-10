@@ -1,4 +1,5 @@
 use anyhow::{Context as AnyhowContext, Result};
+use git_commitgraph::Graph;
 use std::{io, path::Path};
 
 /// A general purpose context for many operations provided here
@@ -31,6 +32,6 @@ where
 {
     // TODO: Handle `path` being objects/info, objects/info/commit-graph,
     //   or objects/info/commit-graphs/graph-xyz.graph.
-    let _g = git_commitgraph::Graph::from_info_dir(path).with_context(|| "Could not open commit graph")?;
+    let _g = Graph::at(path).with_context(|| "Could not open commit graph")?;
     Err(anyhow::Error::msg("not implemented"))
 }
