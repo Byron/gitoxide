@@ -82,8 +82,8 @@ impl Graph {
     }
 
     pub fn new(files: Vec<File>) -> Result<Self, Error> {
-        let num_commits: u64 = files.iter().map(|f| f.num_commits() as u64).sum();
-        if num_commits > MAX_COMMITS as u64 {
+        let num_commits: u64 = files.iter().map(|f| u64::from(f.num_commits())).sum();
+        if num_commits > u64::from(MAX_COMMITS) {
             return Err(Error::TooManyCommits(num_commits));
         }
 

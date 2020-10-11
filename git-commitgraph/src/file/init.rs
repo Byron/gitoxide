@@ -115,7 +115,7 @@ impl TryFrom<&Path> for File {
         let base_graph_count = data[ofs];
         ofs += 1;
 
-        let chunk_lookup_end = ofs + ((chunk_count as usize + 1) * CHUNK_LOOKUP_SIZE);
+        let chunk_lookup_end = ofs + ((usize::from(chunk_count) + 1) * CHUNK_LOOKUP_SIZE);
         if chunk_lookup_end > data_size {
             return Err(Error::Corrupt(format!(
                 "Commit-graph file is too small to hold {} chunks",
@@ -179,8 +179,10 @@ impl TryFrom<&Path> for File {
                             msg: format!("chunk size {} is not a multiple of {}", chunk_size, SHA1_SIZE),
                         });
                     }
-                    let chunk_base_graph_count = (chunk_size / SHA1_SIZE) as u32;
-                    if chunk_base_graph_count != base_graph_count as u32 {
+                    let chunk_base_graph_count: u32 = (chunk_size / SHA1_SIZE)
+                        .try_into()
+                        .expect("base graph count to fit in 32-bits");
+                    if chunk_base_graph_count != u32::from(base_graph_count) {
                         return Err(Error::BaseGraphMismatch {
                             from_chunk: chunk_base_graph_count,
                             from_header: base_graph_count,
@@ -202,7 +204,9 @@ impl TryFrom<&Path> for File {
                         });
                     }
                     commit_data_offset = Some(chunk_offset);
-                    commit_data_count = (chunk_size / COMMIT_DATA_ENTRY_SIZE) as u32;
+                    commit_data_count = (chunk_size / COMMIT_DATA_ENTRY_SIZE)
+                        .try_into()
+                        .expect("number of commits in CDAT chunk to fit in 32 bits");
                 }
                 EXTENDED_EDGES_LIST_CHUNK_ID => {
                     if extra_edges_list_range.is_some() {
@@ -241,7 +245,9 @@ impl TryFrom<&Path> for File {
                         });
                     }
                     oid_lookup_offset = Some(chunk_offset);
-                    oid_lookup_count = (chunk_size / OID_LOOKUP_ENTRY_SIZE) as u32;
+                    oid_lookup_count = (chunk_size / OID_LOOKUP_ENTRY_SIZE)
+                        .try_into()
+                        .expect("number of commits in OIDL chunk to fit in 32 bits");
                     // TODO(ST): Figure out how to handle this. Don't know what to do with the commented code.
                     // git allows extra garbage in the extra edges list chunk?
                     // if oid_lookup_count > 0 {
