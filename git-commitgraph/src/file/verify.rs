@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 use std::path::Path;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum Error<E: std::error::Error + 'static> {
     #[error(transparent)]
     Commit(#[from] file::commit::Error),
     #[error("commit at file position {pos} has invalid ID {id}")]
@@ -26,22 +26,11 @@ pub enum Error {
     #[error("commit {id} has invalid generation {generation}")]
     Generation { generation: u32, id: owned::Id },
     #[error("checksum mismatch: expected {expected}, got {actual}")]
-    Mismatch { expected: owned::Id, actual: owned::Id },
+    Mismatch { actual: owned::Id, expected: owned::Id },
+    #[error("{0}")]
+    Processor(#[source] E),
     #[error("commit {id} has invalid root tree ID {root_tree_id}")]
     RootTreeId { id: owned::Id, root_tree_id: owned::Id },
-}
-
-// This is a separate type to let `traverse`'s caller use the same error type for its result and its
-// processor error type while also letting that error type contain file::verify::Error values.
-// Is there a better way? Should the caller's error type just use boxes to avoid recursive type
-// errors?
-#[derive(thiserror::Error, Debug)]
-pub enum EitherError<E1: std::error::Error + 'static, E2: std::error::Error + 'static> {
-    #[error(transparent)]
-    Internal(#[from] E1),
-    // Why can't I use #[from] here? Boo!
-    #[error("{0}")]
-    Processor(#[source] E2),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -59,13 +48,14 @@ impl File {
         borrowed::Id::try_from(&self.data[self.data.len() - SHA1_SIZE..]).expect("file to be large enough for a hash")
     }
 
-    pub fn traverse<'a, E, Processor>(&'a self, mut processor: Processor) -> Result<Outcome, EitherError<Error, E>>
+    pub fn traverse<'a, E, Processor>(&'a self, mut processor: Processor) -> Result<Outcome, Error<E>>
     where
         E: std::error::Error + 'static,
         Processor: FnMut(&file::Commit<'a>) -> Result<(), E>,
     {
-        self.verify_checksum()?;
-        verify_split_chain_filename_hash(&self.path, self.checksum())?;
+        self.verify_checksum()
+            .map_err(|(actual, expected)| Error::Mismatch { actual, expected })?;
+        verify_split_chain_filename_hash(&self.path, self.checksum()).map_err(Error::Filename)?;
 
         // This probably belongs in borrowed::Id itself?
         let null_id = borrowed::Id::from(&[0u8; SHA1_SIZE]);
@@ -86,32 +76,28 @@ impl File {
                     return Err(Error::CommitId {
                         pos: commit.position(),
                         id: commit.id().into(),
-                    }
-                    .into());
+                    });
                 }
                 return Err(Error::CommitsOutOfOrder {
                     pos: commit.position(),
                     id: commit.id().into(),
                     predecessor_id: prev_id.into(),
-                }
-                .into());
+                });
             }
             if commit.root_tree_id() == null_id {
                 return Err(Error::RootTreeId {
                     id: commit.id().into(),
                     root_tree_id: commit.root_tree_id().into(),
-                }
-                .into());
+                });
             }
             if commit.generation() > GENERATION_NUMBER_MAX {
                 return Err(Error::Generation {
                     generation: commit.generation(),
                     id: commit.id().into(),
-                }
-                .into());
+                });
             }
 
-            processor(&commit).map_err(EitherError::Processor)?;
+            processor(&commit).map_err(Error::Processor)?;
 
             stats.max_generation = max(stats.max_generation, commit.generation());
             stats.min_generation = min(stats.min_generation, commit.generation());
@@ -130,7 +116,7 @@ impl File {
         Ok(stats)
     }
 
-    pub fn verify_checksum(&self) -> Result<owned::Id, Error> {
+    pub fn verify_checksum(&self) -> Result<owned::Id, (owned::Id, owned::Id)> {
         // TODO: Use/copy git_odb::hash::bytes_of_file.
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let mut hasher = git_features::hash::Sha1::default();
@@ -141,17 +127,14 @@ impl File {
         if actual.to_borrowed() == expected {
             Ok(actual)
         } else {
-            Err(Error::Mismatch {
-                actual,
-                expected: expected.into(),
-            })
+            Err((actual, expected.into()))
         }
     }
 }
 
 /// If the given path's filename matches "graph-{hash}.graph", check that `hash` matches the
 /// expected hash.
-fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: borrowed::Id<'_>) -> Result<(), Error> {
+fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: borrowed::Id<'_>) -> Result<(), String> {
     let path = path.as_ref();
     path.file_name()
         .and_then(|filename| filename.to_str())
@@ -159,9 +142,6 @@ fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: borrowed::
         .and_then(|stem| stem.strip_prefix("graph-"))
         .map_or(Ok(()), |hex| match owned::Id::from_40_bytes_in_hex(hex.as_bytes()) {
             Ok(actual) if actual.to_borrowed() == expected => Ok(()),
-            _ => Err(Error::Filename(format!(
-                "graph-{}.graph",
-                expected.to_sha1_hex().as_bstr()
-            ))),
+            _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
         })
 }

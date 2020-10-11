@@ -1,6 +1,6 @@
 use crate::{
     file::{self, commit},
-    graph, Graph, GENERATION_NUMBER_MAX,
+    graph, Graph, ImpossibleVariantError, GENERATION_NUMBER_MAX,
 };
 use git_object::owned;
 use std::cmp::{max, min};
@@ -22,7 +22,15 @@ pub enum Error<E: std::error::Error + 'static> {
     #[error(transparent)]
     Commit(#[from] commit::Error),
     #[error("{}: {err}", .path.display())]
-    File { err: file::verify::Error, path: PathBuf },
+    File {
+        // Use zero-size error type. We will never return
+        // `graph::verify::Error::File(file::verify::Error::Processor(...))`, because we are the
+        // file's processor, and we convert`file::verify::Error::Processor<graph::verify::Error>`
+        // variants into direct `graph::verify::Error` values.
+        // TODO: Use never type when it becomes available.
+        err: file::verify::Error<ImpossibleVariantError>,
+        path: PathBuf,
+    },
     #[error("Commit {id}'s generation should be {expected} but is {actual}")]
     Generation { actual: u32, expected: u32, id: owned::Id },
     #[error(
@@ -132,12 +140,32 @@ impl Graph {
 
                     Ok(())
                 })
-                .map_err(|e| match e {
-                    file::verify::EitherError::Internal(err) => Error::File {
-                        err,
-                        path: file.path().to_owned(),
+                .map_err(|err| Error::File {
+                    err: match err {
+                        file::verify::Error::Processor(e) => return e,
+                        file::verify::Error::RootTreeId { id, root_tree_id } => {
+                            file::verify::Error::RootTreeId { id, root_tree_id }
+                        }
+                        file::verify::Error::Mismatch { actual, expected } => {
+                            file::verify::Error::Mismatch { actual, expected }
+                        }
+                        file::verify::Error::Generation { generation, id } => {
+                            file::verify::Error::Generation { generation, id }
+                        }
+                        file::verify::Error::Filename(expected) => file::verify::Error::Filename(expected),
+                        file::verify::Error::Commit(err) => file::verify::Error::Commit(err),
+                        file::verify::Error::CommitId { id, pos } => file::verify::Error::CommitId { id, pos },
+                        file::verify::Error::CommitsOutOfOrder {
+                            id,
+                            pos,
+                            predecessor_id,
+                        } => file::verify::Error::CommitsOutOfOrder {
+                            id,
+                            pos,
+                            predecessor_id,
+                        },
                     },
-                    file::verify::EitherError::Processor(e) => e,
+                    path: file.path().to_owned(),
                 })?;
 
             max_generation = max(max_generation, file_stats.max_generation);
