@@ -77,7 +77,12 @@ impl<'a> Commit<'a> {
         }
     }
 
-    pub fn id(&self) -> borrowed::Id<'_> {
+    // Allow the return value to outlive this Commit object, as it only needs to be bound by the
+    // lifetime of the parent file.
+    pub fn id<'b>(&'b self) -> borrowed::Id<'a>
+    where
+        'a: 'b,
+    {
         self.file.id_at(self.pos)
     }
 
@@ -85,7 +90,12 @@ impl<'a> Commit<'a> {
         self.iter_parents().next().transpose()
     }
 
-    pub fn root_tree_id(&self) -> borrowed::Id<'_> {
+    // Allow the return value to outlive this Commit object, as it only needs to be bound by the
+    // lifetime of the parent file.
+    pub fn root_tree_id<'b>(&'b self) -> borrowed::Id<'a>
+    where
+        'a: 'b,
+    {
         self.root_tree_id
     }
 }
