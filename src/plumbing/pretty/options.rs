@@ -193,5 +193,8 @@ pub enum Subcommands {
         /// The 'objects/info/' dir, 'objects/info/commit-graphs' dir, or 'objects/info/commit-graph' file to validate.
         #[clap(parse(from_os_str))]
         path: PathBuf,
+        /// output statistical information about the pack
+        #[clap(long, short = 's')]
+        statistics: bool,
     },
 }

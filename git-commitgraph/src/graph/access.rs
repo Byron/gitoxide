@@ -42,7 +42,7 @@ impl Graph {
 
 /// Access fundamentals
 impl Graph {
-    fn lookup_by_id(&self, id: borrowed::Id<'_>) -> Option<LookupByIdResult<'_>> {
+    pub(crate) fn lookup_by_id(&self, id: borrowed::Id<'_>) -> Option<LookupByIdResult<'_>> {
         let mut current_file_start = 0;
         for file in &self.files {
             if let Some(lex_pos) = file.lookup(id) {
@@ -57,14 +57,15 @@ impl Graph {
         None
     }
 
-    fn lookup_by_pos(&self, pos: graph::Position) -> LookupByPositionResult<'_> {
+    pub(crate) fn lookup_by_pos(&self, pos: graph::Position) -> LookupByPositionResult<'_> {
         let mut remaining = pos.0;
-        for file in &self.files {
+        for (file_index, file) in self.files.iter().enumerate() {
             match remaining.checked_sub(file.num_commits()) {
                 Some(v) => remaining = v,
                 None => {
                     return LookupByPositionResult {
                         file,
+                        file_index,
                         pos: file::Position(remaining),
                     }
                 }
@@ -75,14 +76,15 @@ impl Graph {
 }
 
 #[derive(Clone)]
-struct LookupByIdResult<'a> {
+pub(crate) struct LookupByIdResult<'a> {
     pub file: &'a File,
     pub graph_pos: graph::Position,
     pub file_pos: file::Position,
 }
 
 #[derive(Clone)]
-struct LookupByPositionResult<'a> {
+pub(crate) struct LookupByPositionResult<'a> {
     pub file: &'a File,
+    pub file_index: usize,
     pub pos: file::Position,
 }

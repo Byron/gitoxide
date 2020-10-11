@@ -8,6 +8,10 @@ use std::{
 
 /// Access
 impl File {
+    pub fn base_graph_count(&self) -> u8 {
+        self.base_graph_count
+    }
+
     /// Returns the commit data for the commit located at the given lexigraphical position.
     ///
     /// `pos` must range from 0 to self.num_commits().

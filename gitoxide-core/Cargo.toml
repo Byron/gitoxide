@@ -12,7 +12,7 @@ doctest = false
 test = false
 
 [features]
-serde1 = ["git-object/serde1", "git-odb/serde1", "git-protocol/serde1", "serde_json", "serde"]
+serde1 = ["git-commitgraph/serde1", "git-object/serde1", "git-odb/serde1", "git-protocol/serde1", "serde_json", "serde"]
 
 [package.metadata.docs.rs]
 all-features = true

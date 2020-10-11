@@ -2,6 +2,8 @@
 mod access;
 pub mod commit;
 mod init;
+pub mod verify;
+
 pub use init::Error;
 
 pub use commit::Commit;

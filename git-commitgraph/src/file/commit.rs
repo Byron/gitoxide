@@ -90,6 +90,10 @@ impl<'a> Commit<'a> {
         self.iter_parents().next().transpose()
     }
 
+    pub fn position(&self) -> file::Position {
+        self.pos
+    }
+
     // Allow the return value to outlive this Commit object, as it only needs to be bound by the
     // lifetime of the parent file.
     pub fn root_tree_id<'b>(&'b self) -> borrowed::Id<'a>

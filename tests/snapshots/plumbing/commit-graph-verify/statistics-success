@@ -1,0 +1,6 @@
+number of commits with the given number of parents
+	 0: 1
+	 1: 2
+	->: 3
+
+longest path length between two commits: 2

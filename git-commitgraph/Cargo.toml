@@ -12,14 +12,17 @@ include = ["src/**/*"]
 [lib]
 doctest = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+serde1 = ["serde", "git-object/serde1"]
 
 [dependencies]
+git-features = { version = "^0.6.0", path = "../git-features" }
 git-object = { version = "^0.4.0", path = "../git-object" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 byteorder = "1.2.3"
 filebuffer = "0.4.0"
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 thiserror = "1.0.20"
 
 [dev-dependencies]

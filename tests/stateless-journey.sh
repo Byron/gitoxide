@@ -476,3 +476,25 @@ snapshot="$snapshot/plumbing"
     )
   )
 )
+(when "running 'commit-graph-verify'"
+  snapshot="$snapshot/commit-graph-verify"
+  (small-repo-in-sandbox
+    (with "a valid and complete commit-graph file"
+      git commit-graph write --reachable
+      (with "statistics"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/statistics-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" commit-graph-verify -s .git/objects/info
+        }
+      )
+      if test "$kind" = "max"; then
+      (with "statistics --format json"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/statistics-json-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json commit-graph-verify -s .git/objects/info
+        }
+      )
+      fi
+    )
+  )
+)

@@ -196,4 +196,8 @@ pub struct PackVerify {
 pub struct CommitGraphVerify {
     #[argh(positional)]
     pub path: PathBuf,
+
+    /// output statistical information about the pack
+    #[argh(switch, short = 's')]
+    pub statistics: bool,
 }

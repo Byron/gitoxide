@@ -698,7 +698,9 @@ dependencies = [
  "bstr",
  "byteorder",
  "filebuffer",
+ "git-features",
  "git-object",
+ "serde",
  "tempfile",
  "thiserror",
 ]
