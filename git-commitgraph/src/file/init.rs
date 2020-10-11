@@ -39,6 +39,8 @@ pub enum Error {
     },
     #[error("Missing required chunk {:?}", .0.as_bstr())]
     MissingChunk(ChunkId),
+    #[error("{0}")]
+    Trailer(String),
     #[error("Commit-graph file uses unsupported hash version: {0}")]
     UnsupportedHashVersion(u8),
     #[error("Unsupported commit-graph file version: {0}")]
@@ -47,7 +49,8 @@ pub enum Error {
 
 const CHUNK_LOOKUP_SIZE: usize = 12;
 const HEADER_LEN: usize = 8;
-const MIN_FILE_SIZE: usize = HEADER_LEN + ((MIN_CHUNKS + 1) * CHUNK_LOOKUP_SIZE);
+const TRAILER_LEN: usize = SHA1_SIZE;
+const MIN_FILE_SIZE: usize = HEADER_LEN + ((MIN_CHUNKS + 1) * CHUNK_LOOKUP_SIZE) + TRAILER_LEN;
 const OID_LOOKUP_ENTRY_SIZE: usize = SHA1_SIZE;
 
 // Required chunks: OIDF, OIDL, CDAT
@@ -259,6 +262,14 @@ impl TryFrom<&Path> for File {
             return Err(Error::Corrupt(format!(
                 "Commit-graph file has invalid last chunk ID: {:?}",
                 chunk_id.as_bstr()
+            )));
+        }
+
+        let actual_trailer_len = data_size.saturating_sub(chunk_offset);
+        if actual_trailer_len != TRAILER_LEN {
+            return Err(Error::Trailer(format!(
+                "Expected commit-graph trailer to contain {} bytes, got {}",
+                TRAILER_LEN, actual_trailer_len
             )));
         }
 
