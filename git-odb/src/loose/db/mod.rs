@@ -9,6 +9,8 @@ pub struct Db {
 impl Db {
     /// Initialize the Db with the `objects_directory` containing the hexadecimal first byte subdirectories, which in turn
     /// contain all loose objects.
+    ///
+    /// In a git repository, this would be `.git/objects`.
     pub fn at(objects_directory: impl Into<PathBuf>) -> Db {
         Db {
             path: objects_directory.into(),
