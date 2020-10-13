@@ -17,7 +17,7 @@ impl File {
     }
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let right_before_trailer = self.data.len() - SHA1_SIZE;
-        let actual = match crate::hash::bytes_of_file(&self.path, right_before_trailer, &mut progress) {
+        let actual = match git_features::hash::bytes_of_file(&self.path, right_before_trailer, &mut progress) {
             Ok(id) => id,
             Err(_io_err) => {
                 let start = std::time::Instant::now();

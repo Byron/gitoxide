@@ -722,6 +722,7 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "ctrlc",
+ "git-object",
  "jwalk",
  "num_cpus",
  "prodash",
