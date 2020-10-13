@@ -4,10 +4,12 @@ use crate::{
 };
 use bstr::ByteSlice;
 use git_object::{borrowed, owned, SHA1_SIZE};
-use std::cmp::{max, min};
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::path::Path;
+use std::{
+    cmp::{max, min},
+    collections::HashMap,
+    convert::TryFrom,
+    path::Path,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error<E: std::error::Error + 'static> {
@@ -57,8 +59,7 @@ impl File {
             .map_err(|(actual, expected)| Error::Mismatch { actual, expected })?;
         verify_split_chain_filename_hash(&self.path, self.checksum()).map_err(Error::Filename)?;
 
-        // This probably belongs in borrowed::Id itself?
-        let null_id = borrowed::Id::from(&[0u8; SHA1_SIZE]);
+        let null_id = borrowed::Id::null_sha1();
 
         let mut stats = Outcome {
             max_generation: 0,
