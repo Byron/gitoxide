@@ -3,10 +3,12 @@ use crate::{
     graph, Graph, GENERATION_NUMBER_MAX,
 };
 use git_object::owned;
-use std::cmp::{max, min};
-use std::collections::BTreeMap;
-use std::convert::TryInto;
-use std::path::PathBuf;
+use std::{
+    cmp::{max, min},
+    collections::BTreeMap,
+    convert::TryInto,
+    path::PathBuf,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error<E: std::error::Error + 'static> {
