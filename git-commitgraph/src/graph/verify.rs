@@ -1,6 +1,6 @@
 use crate::{
     file::{self, commit},
-    graph, Graph, ImpossibleVariantError, GENERATION_NUMBER_MAX,
+    graph, Graph, GENERATION_NUMBER_MAX,
 };
 use git_object::owned;
 use std::cmp::{max, min};
@@ -27,8 +27,7 @@ pub enum Error<E: std::error::Error + 'static> {
         // `graph::verify::Error::File(file::verify::Error::Processor(...))`, because we are the
         // file's processor, and we convert`file::verify::Error::Processor<graph::verify::Error>`
         // variants into direct `graph::verify::Error` values.
-        // TODO: Use never type when it becomes available.
-        err: file::verify::Error<ImpossibleVariantError>,
+        err: file::verify::Error<std::convert::Infallible>,
         path: PathBuf,
     },
     #[error("Commit {id}'s generation should be {expected} but is {actual}")]
