@@ -118,7 +118,10 @@ impl File {
     }
 
     pub fn verify_checksum(&self) -> Result<owned::Id, (owned::Id, owned::Id)> {
-        // TODO: Use/copy git_odb::hash::bytes_of_file.
+        // Even though we could use git_features::hash::bytes_of_file(…), this would require using our own
+        // Error type to support io::Error and Mismatch. As we only gain progress, there probably isn't much value
+        // as these files are usually small enough to process them in less than a second, even for the large ones.
+        // But it's possible, once a progress instance is passed.
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let mut hasher = git_features::hash::Sha1::default();
         hasher.update(&self.data[..data_len_without_trailer]);
