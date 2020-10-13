@@ -25,7 +25,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
 pub fn graph_or_file<W1, W2>(
     path: impl AsRef<Path>,
     Context {
-        err: mut _err,
+        err: _err,
         mut out,
         output_statistics,
     }: Context<W1, W2>,
@@ -36,11 +36,11 @@ where
 {
     let g = Graph::at(path).with_context(|| "Could not open commit graph")?;
 
-    fn dummy_processor(_commit: &git_commitgraph::file::Commit<'_>) -> std::result::Result<(), std::fmt::Error> {
+    fn noop_processor(_commit: &git_commitgraph::file::Commit<'_>) -> std::result::Result<(), std::fmt::Error> {
         Ok(())
     }
     let stats = g
-        .verify_integrity(dummy_processor)
+        .verify_integrity(noop_processor)
         .with_context(|| "Verification failure")?;
 
     match output_statistics {
