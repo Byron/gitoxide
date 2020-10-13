@@ -46,9 +46,12 @@ pub use crc::crc32::checksum_ieee as crc32;
 pub fn bytes_of_file(
     path: impl AsRef<std::path::Path>,
     num_bytes_from_start: usize,
+    kind: git_object::HashKind,
     progress: &mut impl crate::progress::Progress,
 ) -> std::io::Result<git_object::owned::Id> {
-    let mut hasher = crate::hash::Sha1::default();
+    let mut hasher = match kind {
+        git_object::HashKind::Sha1 => crate::hash::Sha1::default(),
+    };
     let start = std::time::Instant::now();
     // init progress before the possibility for failure, as convenience in case people want to recover
     progress.init(Some(num_bytes_from_start), crate::progress::bytes());
