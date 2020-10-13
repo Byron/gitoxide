@@ -27,7 +27,7 @@
   
 ### Commit-Graph
 
-* [ ] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
+* [x] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
 * [ ] Application of the command above in a stress test
 
 * **Questions**

@@ -38,6 +38,8 @@ become available.
     * **pack-index**
       * [x] [index from data](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [ ] support for thin packs (as needed for fetch/pull)
+    * **commit-graph**
+      * [ ] **verify** - assure that a commit-graph is consistent
     * [remote-ref-list](https://asciinema.org/a/359320)
       * [x] list all (or given) references from a remote at the given URL
           
