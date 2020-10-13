@@ -190,7 +190,7 @@ pub enum Subcommands {
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
     CommitGraphVerify {
-        /// The 'objects/info/' dir, 'objects/info/commit-graphs' dir, or 'objects/info/commit-graph' file to validate.
+        /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
         #[clap(parse(from_os_str))]
         path: PathBuf,
         /// output statistical information about the pack

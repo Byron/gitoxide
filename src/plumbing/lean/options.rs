@@ -194,6 +194,7 @@ pub struct PackVerify {
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "commit-graph-verify")]
 pub struct CommitGraphVerify {
+    /// the path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
     #[argh(positional)]
     pub path: PathBuf,
 
