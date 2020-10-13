@@ -27,6 +27,9 @@ impl<'a> Id<'a> {
     pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
         self.0
     }
+    pub fn null_sha1() -> Self {
+        Id(&[0u8; SHA1_SIZE])
+    }
 }
 
 impl<'a> From<&'a [u8; SHA1_SIZE]> for Id<'a> {

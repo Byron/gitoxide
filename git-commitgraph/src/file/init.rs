@@ -3,7 +3,6 @@ use bstr::ByteSlice;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
-use quick_error::quick_error;
 use std::{
     convert::{TryFrom, TryInto},
     ops::Range,
@@ -12,58 +11,46 @@ use std::{
 
 type ChunkId = [u8; 4];
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        BaseGraphMismatch(from_header: u8, from_chunk: u32) {
-            display(
-                "Commit-graph {} chunk contains {} base graphs, but commit-graph file header claims {} base graphs",
-                BASE_GRAPHS_LIST_CHUNK_ID.as_bstr(),
-                from_chunk,
-                from_header,
-            )
-        }
-        CommitCountMismatch(chunk1_id: ChunkId, chunk1_commits: u32, chunk2_id: ChunkId, chunk2_commits: u32) {
-            display(
-                "Commit-graph {:?} chunk contains {} commits, but {:?} chunk contains {} commits",
-                chunk1_id.as_bstr(),
-                chunk1_commits,
-                chunk2_id.as_bstr(),
-                chunk2_commits,
-            )
-        }
-        Corrupt(msg: String) {
-            display("{}", msg)
-        }
-        DuplicateChunk(id: ChunkId) {
-            display("Commit-graph file contains multiple {:?} chunks", id.as_bstr())
-        }
-        // This error case is disabled, as git allows extra garbage in the extra edges list.
-        // ExtraEdgesOverflow {
-        //     display("The last entry in commit-graph's extended edges list does is not marked as being terminal")
-        // }
-        InvalidChunkSize(id: ChunkId, msg: String) {
-            display("Commit-graph chunk {:?} has invalid size: {}", id.as_bstr(), msg)
-        }
-        Io(err: std::io::Error, path: std::path::PathBuf) {
-            display("Could not open commit-graph file at '{}'", path.display())
-            source(err)
-        }
-        MissingChunk(id: ChunkId) {
-            display("Missing required chunk {:?}", id.as_bstr())
-        }
-        UnsupportedHashVersion(version: u8) {
-            display("Commit-graph file uses unsupported hash version: {}", version)
-        }
-        UnsupportedVersion(version: u8) {
-            display("Unsupported commit-graph file version: {}", version)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Commit-graph {:?} chunk contains {from_chunk} base graphs, but commit-graph file header claims {from_header} base graphs", BASE_GRAPHS_LIST_CHUNK_ID.as_bstr())]
+    BaseGraphMismatch { from_header: u8, from_chunk: u32 },
+    #[error("Commit-graph {:?} chunk contains {chunk1_commits} commits, but {:?} chunk contains {chunk2_commits} commits", .chunk1_id.as_bstr(), .chunk2_id.as_bstr())]
+    CommitCountMismatch {
+        chunk1_id: ChunkId,
+        chunk1_commits: u32,
+        chunk2_id: ChunkId,
+        chunk2_commits: u32,
+    },
+    #[error("{0}")]
+    Corrupt(String),
+    #[error("Commit-graph file contains multiple {:?} chunks", .0.as_bstr())]
+    DuplicateChunk(ChunkId),
+    // This error case is disabled, as git allows extra garbage in the extra edges list?
+    // #[error("The last entry in commit-graph's extended edges list does is not marked as being terminal")]
+    // ExtraEdgesOverflow,
+    #[error("Commit-graph chunk {:?} has invalid size: {msg}", .id.as_bstr())]
+    InvalidChunkSize { id: ChunkId, msg: String },
+    #[error("Could not open commit-graph file at '{}'", .path.display())]
+    Io {
+        #[source]
+        err: std::io::Error,
+        path: std::path::PathBuf,
+    },
+    #[error("Missing required chunk {:?}", .0.as_bstr())]
+    MissingChunk(ChunkId),
+    #[error("{0}")]
+    Trailer(String),
+    #[error("Commit-graph file uses unsupported hash version: {0}")]
+    UnsupportedHashVersion(u8),
+    #[error("Unsupported commit-graph file version: {0}")]
+    UnsupportedVersion(u8),
 }
 
 const CHUNK_LOOKUP_SIZE: usize = 12;
 const HEADER_LEN: usize = 8;
-const MIN_FILE_SIZE: usize = HEADER_LEN + ((MIN_CHUNKS + 1) * CHUNK_LOOKUP_SIZE);
+const TRAILER_LEN: usize = SHA1_SIZE;
+const MIN_FILE_SIZE: usize = HEADER_LEN + ((MIN_CHUNKS + 1) * CHUNK_LOOKUP_SIZE) + TRAILER_LEN;
 const OID_LOOKUP_ENTRY_SIZE: usize = SHA1_SIZE;
 
 // Required chunks: OIDF, OIDL, CDAT
@@ -85,7 +72,10 @@ impl TryFrom<&Path> for File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = FileBuffer::open(path).map_err(|e| Error::Io(e, path.to_owned()))?;
+        let data = FileBuffer::open(path).map_err(|e| Error::Io {
+            err: e,
+            path: path.to_owned(),
+        })?;
         let data_size = data.len();
         if data_size < MIN_FILE_SIZE {
             return Err(Error::Corrupt(
@@ -125,7 +115,7 @@ impl TryFrom<&Path> for File {
         let base_graph_count = data[ofs];
         ofs += 1;
 
-        let chunk_lookup_end = ofs + ((chunk_count as usize + 1) * CHUNK_LOOKUP_SIZE);
+        let chunk_lookup_end = ofs + ((usize::from(chunk_count) + 1) * CHUNK_LOOKUP_SIZE);
         if chunk_lookup_end > data_size {
             return Err(Error::Corrupt(format!(
                 "Commit-graph file is too small to hold {} chunks",
@@ -164,14 +154,18 @@ impl TryFrom<&Path> for File {
                 .expect("an offset small enough to fit a usize");
             ofs += 8;
 
-            let chunk_size: usize = next_chunk_offset
-                .checked_sub(chunk_offset)
-                .ok_or_else(|| Error::InvalidChunkSize(chunk_id, "size is negative".to_string()))?;
+            let chunk_size: usize =
+                next_chunk_offset
+                    .checked_sub(chunk_offset)
+                    .ok_or_else(|| Error::InvalidChunkSize {
+                        id: chunk_id,
+                        msg: "size is negative".to_string(),
+                    })?;
             if next_chunk_offset >= data_size {
-                return Err(Error::InvalidChunkSize(
-                    chunk_id,
-                    "chunk extends beyond end of file".to_string(),
-                ));
+                return Err(Error::InvalidChunkSize {
+                    id: chunk_id,
+                    msg: "chunk extends beyond end of file".to_string(),
+                });
             }
 
             match chunk_id {
@@ -180,14 +174,19 @@ impl TryFrom<&Path> for File {
                         return Err(Error::DuplicateChunk(chunk_id));
                     }
                     if chunk_size % SHA1_SIZE != 0 {
-                        return Err(Error::InvalidChunkSize(
-                            chunk_id,
-                            format!("chunk size {} is not a multiple of {}", chunk_size, SHA1_SIZE),
-                        ));
+                        return Err(Error::InvalidChunkSize {
+                            id: chunk_id,
+                            msg: format!("chunk size {} is not a multiple of {}", chunk_size, SHA1_SIZE),
+                        });
                     }
-                    let chunk_base_graph_count = (chunk_size / SHA1_SIZE) as u32;
-                    if chunk_base_graph_count != base_graph_count as u32 {
-                        return Err(Error::BaseGraphMismatch(base_graph_count, chunk_base_graph_count));
+                    let chunk_base_graph_count: u32 = (chunk_size / SHA1_SIZE)
+                        .try_into()
+                        .expect("base graph count to fit in 32-bits");
+                    if chunk_base_graph_count != u32::from(base_graph_count) {
+                        return Err(Error::BaseGraphMismatch {
+                            from_chunk: chunk_base_graph_count,
+                            from_header: base_graph_count,
+                        });
                     }
                     base_graphs_list_offset = Some(chunk_offset);
                 }
@@ -196,16 +195,18 @@ impl TryFrom<&Path> for File {
                         return Err(Error::DuplicateChunk(chunk_id));
                     }
                     if chunk_size % COMMIT_DATA_ENTRY_SIZE != 0 {
-                        return Err(Error::InvalidChunkSize(
-                            chunk_id,
-                            format!(
+                        return Err(Error::InvalidChunkSize {
+                            id: chunk_id,
+                            msg: format!(
                                 "chunk size {} is not a multiple of {}",
                                 chunk_size, COMMIT_DATA_ENTRY_SIZE
                             ),
-                        ));
+                        });
                     }
                     commit_data_offset = Some(chunk_offset);
-                    commit_data_count = (chunk_size / COMMIT_DATA_ENTRY_SIZE) as u32;
+                    commit_data_count = (chunk_size / COMMIT_DATA_ENTRY_SIZE)
+                        .try_into()
+                        .expect("number of commits in CDAT chunk to fit in 32 bits");
                 }
                 EXTENDED_EDGES_LIST_CHUNK_ID => {
                     if extra_edges_list_range.is_some() {
@@ -223,10 +224,10 @@ impl TryFrom<&Path> for File {
                     }
                     let expected_size = 4 * FAN_LEN;
                     if chunk_size != expected_size {
-                        return Err(Error::InvalidChunkSize(
-                            chunk_id,
-                            format!("expected chunk length {}, got {}", expected_size, chunk_size),
-                        ));
+                        return Err(Error::InvalidChunkSize {
+                            id: chunk_id,
+                            msg: format!("expected chunk length {}, got {}", expected_size, chunk_size),
+                        });
                     }
                     fan_offset = Some(chunk_offset);
                 }
@@ -235,16 +236,18 @@ impl TryFrom<&Path> for File {
                         return Err(Error::DuplicateChunk(chunk_id));
                     }
                     if chunk_size % OID_LOOKUP_ENTRY_SIZE != 0 {
-                        return Err(Error::InvalidChunkSize(
-                            chunk_id,
-                            format!(
+                        return Err(Error::InvalidChunkSize {
+                            id: chunk_id,
+                            msg: format!(
                                 "chunk size {} is not a multiple of {}",
                                 chunk_size, OID_LOOKUP_ENTRY_SIZE
                             ),
-                        ));
+                        });
                     }
                     oid_lookup_offset = Some(chunk_offset);
-                    oid_lookup_count = (chunk_size / OID_LOOKUP_ENTRY_SIZE) as u32;
+                    oid_lookup_count = (chunk_size / OID_LOOKUP_ENTRY_SIZE)
+                        .try_into()
+                        .expect("number of commits in OIDL chunk to fit in 32 bits");
                     // TODO(ST): Figure out how to handle this. Don't know what to do with the commented code.
                     // git allows extra garbage in the extra edges list chunk?
                     // if oid_lookup_count > 0 {
@@ -268,6 +271,14 @@ impl TryFrom<&Path> for File {
             )));
         }
 
+        let actual_trailer_len = data_size.saturating_sub(chunk_offset);
+        if actual_trailer_len != TRAILER_LEN {
+            return Err(Error::Trailer(format!(
+                "Expected commit-graph trailer to contain {} bytes, got {}",
+                TRAILER_LEN, actual_trailer_len
+            )));
+        }
+
         let fan_offset = fan_offset.ok_or_else(|| Error::MissingChunk(OID_FAN_CHUNK_ID))?;
         let oid_lookup_offset = oid_lookup_offset.ok_or_else(|| Error::MissingChunk(OID_LOOKUP_CHUNK_ID))?;
         let commit_data_offset = commit_data_offset.ok_or_else(|| Error::MissingChunk(COMMIT_DATA_CHUNK_ID))?;
@@ -277,20 +288,20 @@ impl TryFrom<&Path> for File {
 
         let (fan, _) = read_fan(&data[fan_offset..]);
         if oid_lookup_count != fan[255] {
-            return Err(Error::CommitCountMismatch(
-                OID_FAN_CHUNK_ID,
-                fan[255],
-                OID_LOOKUP_CHUNK_ID,
-                oid_lookup_count,
-            ));
+            return Err(Error::CommitCountMismatch {
+                chunk1_id: OID_FAN_CHUNK_ID,
+                chunk1_commits: fan[255],
+                chunk2_id: OID_LOOKUP_CHUNK_ID,
+                chunk2_commits: oid_lookup_count,
+            });
         }
         if commit_data_count != fan[255] {
-            return Err(Error::CommitCountMismatch(
-                OID_FAN_CHUNK_ID,
-                fan[255],
-                COMMIT_DATA_CHUNK_ID,
-                commit_data_count,
-            ));
+            return Err(Error::CommitCountMismatch {
+                chunk1_id: OID_FAN_CHUNK_ID,
+                chunk1_commits: fan[255],
+                chunk2_id: COMMIT_DATA_CHUNK_ID,
+                chunk2_commits: commit_data_count,
+            });
         }
         Ok(File {
             base_graph_count,

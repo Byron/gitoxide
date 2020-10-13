@@ -1,0 +1,8 @@
+{
+  "longest_path_length": 2,
+  "num_commits": 3,
+  "parent_counts": {
+    "0": 1,
+    "1": 2
+  }
+}

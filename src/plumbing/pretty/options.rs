@@ -186,4 +186,15 @@ pub enum Subcommands {
         #[clap(parse(from_os_str))]
         path: PathBuf,
     },
+    /// Verify the integrity of a commit graph
+    #[clap(setting = AppSettings::ColoredHelp)]
+    #[clap(setting = AppSettings::DisableVersion)]
+    CommitGraphVerify {
+        /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
+        #[clap(parse(from_os_str))]
+        path: PathBuf,
+        /// output statistical information about the pack
+        #[clap(long, short = 's')]
+        statistics: bool,
+    },
 }

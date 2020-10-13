@@ -4,38 +4,22 @@ use crate::{
 };
 use byteorder::{BigEndian, ByteOrder};
 use git_object::{borrowed, owned, SHA1_SIZE};
-use quick_error::quick_error;
 use std::{
     convert::{TryFrom, TryInto},
     fmt::{Debug, Formatter},
     slice::Chunks,
 };
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        ExtraEdgesListOverflow(commit: owned::Id) {
-            display(
-                "commit {}'s extra edges overflows the commit-graph file's extra edges list",
-                commit,
-            )
-        }
-        FirstParentIsExtraEdgeIndex(commit: owned::Id) {
-            display(
-                "commit {}'s first parent is an extra edge index, which is invalid",
-                commit,
-            )
-        }
-        MissingExtraEdgesList(commit: owned::Id) {
-            display(
-                "commit {} has extra edges, but commit-graph file has no extra edges list",
-                commit,
-            )
-        }
-        SecondParentWithoutFirstParent(commit: owned::Id) {
-            display("commit {} has a second parent but not a first parent", commit)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("commit {0}'s extra edges overflows the commit-graph file's extra edges list")]
+    ExtraEdgesListOverflow(owned::Id),
+    #[error("commit {0}'s first parent is an extra edge index, which is invalid")]
+    FirstParentIsExtraEdgeIndex(owned::Id),
+    #[error("commit {0} has extra edges, but commit-graph file has no extra edges list")]
+    MissingExtraEdgesList(owned::Id),
+    #[error("commit {0} has a second parent but not a first parent")]
+    SecondParentWithoutFirstParent(owned::Id),
 }
 
 // Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for
@@ -93,7 +77,12 @@ impl<'a> Commit<'a> {
         }
     }
 
-    pub fn id(&self) -> borrowed::Id<'_> {
+    // Allow the return value to outlive this Commit object, as it only needs to be bound by the
+    // lifetime of the parent file.
+    pub fn id<'b>(&'b self) -> borrowed::Id<'a>
+    where
+        'a: 'b,
+    {
         self.file.id_at(self.pos)
     }
 
@@ -101,7 +90,16 @@ impl<'a> Commit<'a> {
         self.iter_parents().next().transpose()
     }
 
-    pub fn root_tree_id(&self) -> borrowed::Id<'_> {
+    pub fn position(&self) -> file::Position {
+        self.pos
+    }
+
+    // Allow the return value to outlive this Commit object, as it only needs to be bound by the
+    // lifetime of the parent file.
+    pub fn root_tree_id<'b>(&'b self) -> borrowed::Id<'a>
+    where
+        'a: 'b,
+    {
         self.root_tree_id
     }
 }

@@ -8,6 +8,10 @@ use std::{
 
 /// Access
 impl File {
+    pub fn base_graph_count(&self) -> u8 {
+        self.base_graph_count
+    }
+
     /// Returns the commit data for the commit located at the given lexigraphical position.
     ///
     /// `pos` must range from 0 to self.num_commits().
@@ -42,12 +46,10 @@ impl File {
     }
 
     pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
-        let base_graphs_list = match self.base_graphs_list_offset {
-            Some(v) => &self.data[v..v + (SHA1_SIZE * self.base_graph_count as usize)],
-            None => &[],
-        };
+        let start = self.base_graphs_list_offset.unwrap_or(0);
+        let base_graphs_list = &self.data[start..start + (SHA1_SIZE * usize::from(self.base_graph_count))];
         base_graphs_list
-            .chunks_exact(SHA1_SIZE)
+            .chunks(SHA1_SIZE)
             .map(|bytes| borrowed::Id::try_from(bytes).expect("20 bytes SHA1 to be alright"))
     }
 
@@ -61,7 +63,7 @@ impl File {
 
     // copied from git-odb/src/pack/index/access.rs
     pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<file::Position> {
-        let first_byte = id.first_byte() as usize;
+        let first_byte = usize::from(id.first_byte());
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
 

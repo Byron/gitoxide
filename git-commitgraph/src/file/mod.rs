@@ -1,8 +1,9 @@
 //! Operations on a single commit-graph file.
 mod access;
 pub mod commit;
-
 mod init;
+pub mod verify;
+
 pub use init::Error;
 
 pub use commit::Commit;

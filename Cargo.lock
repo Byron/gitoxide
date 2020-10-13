@@ -698,9 +698,11 @@ dependencies = [
  "bstr",
  "byteorder",
  "filebuffer",
+ "git-features",
  "git-object",
- "quick-error 2.0.0",
+ "serde",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]
@@ -720,6 +722,7 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "ctrlc",
+ "git-object",
  "jwalk",
  "num_cpus",
  "prodash",
@@ -868,6 +871,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "bytesize",
+ "git-commitgraph",
  "git-features",
  "git-object",
  "git-odb",

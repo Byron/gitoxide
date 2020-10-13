@@ -29,6 +29,8 @@ path = "tests/pipe.rs"
 required-features = ["pipe"]
 
 [dependencies]
+git-object = { version = "^0.4.0", path = "../git-object", optional = true }
+
 # 'parallel' feature
 crossbeam-utils = { version = "0.7.2", optional = true }
 crossbeam-channel = { version = "0.4.2", optional = true }
