@@ -24,6 +24,9 @@ pub enum Error {
 impl crate::Write for Db {
     type Error = Error;
 
+    /// Write the given buffer in `from` to disk in one syscall at best.
+    ///
+    /// This will cost at least 4 IO operations.
     fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
         match hash {
             HashKind::Sha1 => {
@@ -39,6 +42,9 @@ impl crate::Write for Db {
         }
     }
 
+    /// Write the given stream in `from` to disk with at least one syscall.
+    ///
+    /// This will cost at least 4 IO operations.
     fn write_stream(
         &self,
         kind: git_object::Kind,

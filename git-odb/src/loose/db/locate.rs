@@ -25,6 +25,9 @@ pub enum Error {
 impl Db {
     const OPEN_ACTION: &'static str = "open";
 
+    /// Return the object identified by the given [`id][borrowed::Id] if present in this database.
+    ///
+    /// Returns `None` if the object did not exist in the database.
     pub fn locate(&self, id: borrowed::Id<'_>) -> Option<Result<Object, Error>> {
         match self.locate_inner(id) {
             Ok(obj) => Some(Ok(obj)),
