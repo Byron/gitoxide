@@ -4,5 +4,6 @@
 # will have compiled files and executables
 target/
 
+/tests/fixtures/commit-graphs
 # repositories used for local testing
 /tests/fixtures/repos
