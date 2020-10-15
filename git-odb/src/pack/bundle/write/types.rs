@@ -2,6 +2,8 @@ use crate::pack;
 use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
+/// Returned by [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
+/// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {

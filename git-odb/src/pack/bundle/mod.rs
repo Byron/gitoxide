@@ -17,14 +17,17 @@ pub enum Error {
     Index(#[from] pack::index::init::Error),
 }
 
-/// A packfile with an index
+/// A bundle of pack data and the corresponding pack index
 pub struct Bundle {
     pub pack: pack::data::File,
     pub index: pack::index::File,
 }
 
+/// Initialization
 impl Bundle {
-    /// `path` is either a pack file or an index file
+    /// Create a `Bundle` from `path`, which is either a pack file _(*.pack)_ or an index file _(*.idx)_.
+    ///
+    /// The corresponding complementary file is expected to be present.
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())
     }

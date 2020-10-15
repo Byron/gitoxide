@@ -16,6 +16,8 @@ mod types;
 pub use types::Outcome;
 use types::PassThrough;
 
+/// Configuration for [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
+/// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {

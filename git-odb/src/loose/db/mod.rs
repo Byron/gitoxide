@@ -1,6 +1,7 @@
 use git_object::{borrowed, HashKind};
 use std::path::PathBuf;
 
+/// A database for reading and writing objects to disk, one file per object.
 pub struct Db {
     pub path: PathBuf,
 }

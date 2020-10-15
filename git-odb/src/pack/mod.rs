@@ -1,3 +1,4 @@
+//! Handle packs and pack indices
 pub mod bundle;
 pub mod cache;
 pub mod data;
