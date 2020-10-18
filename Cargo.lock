@@ -1123,9 +1123,9 @@ dependencies = [
 
 [[package]]
 name = "nom"
-version = "6.0.0-alpha3"
+version = "6.0.0-beta1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acfdb15f1bbe80f55976605acfd7ee58424bac92f04ba96361cc3c7cacafb045"
+checksum = "8b02fb408567819fa987428e8133d7c374f9c2c30bd9c1378abb45e9282cc259"
 dependencies = [
  "bitvec",
  "memchr",
@@ -1782,9 +1782,9 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "syn"
-version = "1.0.44"
+version = "1.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e03e57e4fcbfe7749842d53e24ccb9aa12b7252dbe5e91d2acad31834c8b8fdd"
+checksum = "ea9c5432ff16d6152371f808fb5a871cd67368171b09bb21b43df8e4a47a3556"
 dependencies = [
  "proc-macro2",
  "quote",
