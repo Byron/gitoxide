@@ -8,11 +8,12 @@ pub enum Error {
 }
 
 impl pack::Bundle {
-    /// `id` is a 20 byte SHA1 of the object to locate in the pack
+    /// Find an object with the given [`id`][borrowed::Id] and place its data into `out`.
     ///
-    /// Note that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
-    /// for thin packs.
-    /// For the latter, pack streams are required.
+    /// [`cache`][pack::cache::DecodeEntry] is used to accelerate the lookup.
+    ///
+    /// **Note** that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
+    /// for thin packs, which by now are expected to be resolved already.
     pub fn locate<'a>(
         &self,
         id: borrowed::Id<'_>,

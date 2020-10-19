@@ -28,6 +28,7 @@ impl Bundle {
     /// Create a `Bundle` from `path`, which is either a pack file _(*.pack)_ or an index file _(*.idx)_.
     ///
     /// The corresponding complementary file is expected to be present.
+    /// Also available via [`Bundle::try_from()`].
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())
     }
