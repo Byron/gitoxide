@@ -1,12 +1,6 @@
 use crate::pack;
 use git_object::borrowed;
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    Decode(pack::data::decode::Error),
-}
-
 impl pack::Bundle {
     /// Find an object with the given [`id`][borrowed::Id] and place its data into `out`.
     ///
@@ -19,7 +13,7 @@ impl pack::Bundle {
         id: borrowed::Id<'_>,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Option<Result<crate::borrowed::Object<'a>, Error>> {
+    ) -> Option<Result<crate::borrowed::Object<'a>, pack::data::decode::Error>> {
         let idx = self.index.lookup(id)?;
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
@@ -34,7 +28,6 @@ impl pack::Bundle {
                 },
                 cache,
             )
-            .map_err(Error::Decode)
             .map(move |r| crate::borrowed::Object {
                 kind: r.kind,
                 data: out.as_slice(),

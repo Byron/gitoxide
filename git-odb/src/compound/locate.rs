@@ -6,7 +6,7 @@ pub enum Error {
     #[error("An error occurred while obtaining an object from the loose object store")]
     Loose(#[from] loose::db::locate::Error),
     #[error("An error occurred while obtaining an object from the packed object store")]
-    Pack(#[from] pack::bundle::locate::Error),
+    Pack(#[from] pack::data::decode::Error),
 }
 
 impl compound::Db {
