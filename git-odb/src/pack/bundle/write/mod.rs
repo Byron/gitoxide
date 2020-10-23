@@ -13,20 +13,14 @@ mod error;
 use error::Error;
 
 mod types;
-pub use types::Outcome;
 use types::PassThrough;
-
-/// Configuration for [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
-/// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Options {
-    pub thread_limit: Option<usize>,
-    pub iteration_mode: pack::data::iter::Mode,
-    pub index_kind: pack::index::Kind,
-}
+pub use types::{Options, Outcome};
 
 impl pack::Bundle {
+    /// Given a `pack` data stream into the `directory` if `Some` or discard it entirely if `None`.
+    ///
+    /// `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
+    /// `options` further configure how the task is performed.
     pub fn write_stream_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
@@ -70,9 +64,8 @@ impl pack::Bundle {
             index_path,
         })
     }
-    /// If `directory` is `None`, the output will be written to a sink
-    /// In this case, `pack` will be read in its own thread to offset these costs.
-    /// If that's not possible, use `write_stream_to_directory` instead.
+
+    /// Equivalent to [`write_stream_to_directory()`][pack::Bundle::write_stream_to_directory()] but offloads reading of the pack into its own thread, hence the `Send + 'static'` bounds.
     pub fn write_to_directory_eagerly(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,

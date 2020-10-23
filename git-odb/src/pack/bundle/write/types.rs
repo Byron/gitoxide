@@ -2,6 +2,19 @@ use crate::pack;
 use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
+/// Configuration for [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
+/// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Options {
+    /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
+    pub thread_limit: Option<usize>,
+    /// Determine how much processing to spend on protecting against corruption or recovering from errors.
+    pub iteration_mode: pack::data::iter::Mode,
+    /// The version of pack index to write, should be [`pack::index::Kind::default()`]
+    pub index_kind: pack::index::Kind,
+}
+
 /// Returned by [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
 /// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
