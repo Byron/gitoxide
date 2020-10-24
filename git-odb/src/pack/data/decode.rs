@@ -24,25 +24,40 @@ struct Delta {
     data_offset: u64,
 }
 
+/// A return value of a resolve function, which given an [`Id`][borrowed::Id] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
+    /// Indicate an object is within this pack, at the given entry, and thus can be looked up locally.
     InPack(pack::data::Entry),
+    /// Indicates the object of `kind` was found outside of the pack, and its data was written into an output
+    /// vector which now has a length of `end`.
     OutOfPack { kind: object::Kind, end: usize },
 }
 
+/// Additional information and statistics about a successfully decoded object produced by [`File::decode_entry()`].
+///
+/// Useful to understand the effectiveness of the pack compression or the cost of decompression.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
+    /// The kind of resolved object
     pub kind: object::Kind,
+    /// The amount of deltas in the chain of objects that had to be resolved beforehand.
+    ///
+    /// This number is affected by the [`Cache`][cache::DecodeEntry] implementation, with cache hits shortening the
+    /// delta chain accordingly
     pub num_deltas: u32,
+    /// The total decompressed size of all pack entries in the delta chain
     pub decompressed_size: u64,
+    /// The total compressed size of all pack entries in the delta chain
     pub compressed_size: usize,
+    /// The total size of all objects decoded as part of the delta chain
     pub object_size: u64,
 }
 
 impl Outcome {
-    pub fn default_from_kind(kind: object::Kind) -> Self {
+    pub(crate) fn default_from_kind(kind: object::Kind) -> Self {
         Self {
             kind,
             num_deltas: 0,
@@ -62,10 +77,16 @@ impl Outcome {
     }
 }
 
-/// Reading of objects
+/// Decompression of objects
 impl File {
-    // Note that this method does not resolve deltified objects, but merely decompresses their content
-    // `out` is expected to be large enough to hold `entry.size` bytes.
+    /// Decompress the given `entry` into `out` and return the amount of bytes written into `out`.
+    ///
+    /// _Note_ that this method does not resolve deltified objects, but merely decompresses their content
+    /// `out` is expected to be large enough to hold `entry.size` bytes.
+    ///
+    /// # Panics
+    ///
+    /// If `out` isn't large enough to hold the decompressed `entry`
     pub fn decompress_entry(&self, entry: &pack::data::Entry, out: &mut [u8]) -> Result<usize, Error> {
         assert!(
             out.len() as u64 >= entry.decompressed_size,
@@ -84,6 +105,9 @@ impl File {
         );
     }
 
+    /// Obtain the [`Entry`][pack::data::Entry] at the given `offset` into the pack.
+    ///
+    /// The `offset` is typically obtained from the pack index file.
     pub fn entry(&self, offset: u64) -> pack::data::Entry {
         self.assure_v2();
         let pack_offset: usize = offset.try_into().expect("offset representable by machine");
@@ -108,10 +132,16 @@ impl File {
             .map(|(_, consumed_in, _)| consumed_in)
     }
 
-    /// Decode an entry, resolving delta's as needed, while growing the output vector if there is not enough
+    /// Decode an entry, resolving delta's as needed, while growing the `out` vector if there is not enough
     /// space to hold the result object.
-    /// Returns (object_kind, compressed_size), referring to the `entry` in-pack size for use with CRC32 checks
-    /// such as in `crc32(pack_data[entry.data_offset..entry.data_offset + compressed_size])`
+    ///
+    /// The `entry` determines which object to decode, and is commonly obtained with the help of a pack index file or through pack iteration.
+    ///
+    /// `resolve` is a function to lookup objects with the given [`id`][borrowed::Id], in case the full object id is used to refer to
+    /// a base object, instead of an in-pack offset.
+    ///
+    /// `delta_cache` is a mechanism to avoid looking up base objects multiple times when decompressing multiple objects in a row.
+    /// Use a [Noop-Cache][cache::DecodeEntryNoop] to disable caching alltogether at the cost of repeating work.
     pub fn decode_entry(
         &self,
         entry: pack::data::Entry,
