@@ -6,13 +6,14 @@ pub mod decode;
 mod header;
 pub use header::*;
 
-pub mod init;
+mod init;
 pub mod parse;
 pub mod verify;
 
 pub mod iter;
-use git_object::SHA1_SIZE;
 pub use iter::Iter;
+
+use git_object::SHA1_SIZE;
 
 pub type EntrySlice = std::ops::Range<u64>;
 

@@ -5,6 +5,7 @@ use std::{convert::TryFrom, convert::TryInto, path::Path};
 
 /// Instantiation
 impl data::File {
+    /// Try opening a data file at the given `path`.
     pub fn at(path: impl AsRef<Path>) -> Result<data::File, data::parse::Error> {
         data::File::try_from(path.as_ref())
     }
@@ -13,6 +14,7 @@ impl data::File {
 impl TryFrom<&Path> for data::File {
     type Error = data::parse::Error;
 
+    /// Try opening a data file at the given `path`.
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
         use data::parse::N32_SIZE;
 
