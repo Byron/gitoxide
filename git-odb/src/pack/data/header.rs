@@ -10,13 +10,14 @@ const _TYPE_EXT2: u8 = 5;
 const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
 
+/// An representing an full- or delta-object within a pack
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     pub header: Header,
     /// The decompressed size of the object in bytes
     pub decompressed_size: u64,
-    /// absolute offset to compressed object data in the pack, just behind the header
+    /// absolute offset to compressed object data in the pack, just behind the entry's header
     pub data_offset: u64,
 }
 
@@ -107,6 +108,7 @@ impl Entry {
     }
 }
 
+/// The header portion of a pack data entry, identifying the kind of stored object.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Header {
@@ -115,23 +117,26 @@ pub enum Header {
     Blob,
     Tag,
     /// An object within this pack if the LSB encoded offset would be larger than 20 bytes
-    /// Alternatively an object stored in the repository, if this is a thin pack
+    /// Alternatively an object stored in the repository, if this is a thin pack currently
+    /// being received from a server.
     RefDelta {
         base_id: owned::Id,
     },
-    /// The distance to the pack offset of the base object, measured from this objects pack offset, so that
-    /// base_pack_offset = pack_offset - distance
+    /// The distance in bytes to the pack offset of the base object, measured from this objects pack offset, so that
+    /// base_pack_offset = pack_offset - base_distance
     OfsDelta {
         base_distance: u64,
     },
 }
 impl Header {
+    /// Subtract `distance` from `pack_offset` safely without the chance for overflow or no-ops if `distance` is 0.
     pub fn verified_base_pack_offset(pack_offset: u64, distance: u64) -> Option<u64> {
         if distance == 0 {
             return None;
         }
         pack_offset.checked_sub(distance)
     }
+    /// Convert the header's object kind into [`git_object::Kind`] if possible
     pub fn to_kind(&self) -> Option<git_object::Kind> {
         use git_object::Kind::*;
         Some(match self {
@@ -142,6 +147,7 @@ impl Header {
             Header::RefDelta { .. } | Header::OfsDelta { .. } => return None,
         })
     }
+    /// Convert this header's object kind into the packs internal representation
     pub fn to_type_id(&self) -> u8 {
         use Header::*;
         match self {
@@ -153,15 +159,21 @@ impl Header {
             RefDelta { .. } => REF_DELTA,
         }
     }
+    /// Return's true if this is a delta object, i.e. not a full object.
     pub fn is_delta(&self) -> bool {
         matches!(self, Header::OfsDelta { .. } | Header::RefDelta { .. })
     }
+    /// Return's true if this is a base object, i.e. not a delta object.
     pub fn is_base(&self) -> bool {
         !self.is_delta()
     }
 }
 
 impl Header {
+    /// Encode this header along the given `decompressed_size_in_bytes` into the `out` write stream for use within a data pack.
+    ///
+    /// Returns the amount of bytes written to `out`.
+    /// `decompressed_size_in_bytes` is the full size in bytes of the object that this header represents
     pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<usize> {
         let mut size = decompressed_size_in_bytes;
         let mut written = 1;
