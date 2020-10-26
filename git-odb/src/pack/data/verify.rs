@@ -12,9 +12,19 @@ pub enum Error {
 
 /// Checksums and verify checksums
 impl File {
+    /// The checksum in the trailer of this pack data file
     pub fn checksum(&self) -> owned::Id {
         owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
+
+    /// Verifies that the checksum of the packfile over all bytes preceding it indeed matches the actual checksum,
+    /// returning the actual checksum equivalent to the return value of [`checksum()`][File::checksum()] if there
+    /// is no mismatch.
+    ///
+    /// Note that if no `progress` is desired, one can pass [`git_features::progress::Discard`].
+    ///
+    /// Have a look at [`index::File::verify_integrity(…)`][crate::pack::index::File::verify_integrity()] for an
+    /// even more thorough integrity check.
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let right_before_trailer = self.data.len() - SHA1_SIZE;
         let actual =

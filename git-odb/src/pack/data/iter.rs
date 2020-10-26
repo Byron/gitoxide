@@ -1,5 +1,7 @@
-use crate::zlib::stream::inflate::InflateReaderBoxed;
-use crate::{hash, pack, zlib::stream::inflate::Inflate};
+use crate::{
+    hash, pack,
+    zlib::stream::inflate::{Inflate, InflateReaderBoxed},
+};
 use git_features::hash::Sha1;
 use git_object::owned;
 use std::{fs, io};
@@ -43,6 +45,8 @@ pub struct Entry {
 }
 
 /// An iterator over [`Entries`][Entry] in a byte stream.
+///
+/// The iterator used as part of [Bundle::write_stream_to_directory(…)][pack::Bundle::write_stream_to_directory()].
 pub struct Iter<R> {
     read: R,
     decompressor: Option<Box<Inflate>>,

@@ -16,7 +16,7 @@ pub enum Error {
     UnsupportedVersion(u32),
 }
 
-// Return (data::Kind, num_objects_in_pack)
+/// Parses the first 12 bytes of a pack file, returning the pack version as well as the number of objects contained in the pack.
 pub fn header(data: &[u8; 12]) -> Result<(data::Kind, u32), Error> {
     let mut ofs = 0;
     if &data[ofs..ofs + b"PACK".len()] != b"PACK" {
