@@ -1,5 +1,7 @@
 ### Repository Clone
 
+* **git-odb**
+  * Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**

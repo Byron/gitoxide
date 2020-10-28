@@ -22,6 +22,7 @@ const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 
 /// Instantiation
 impl index::File {
+    /// Open the pack index file at the given `path`.
     pub fn at(path: impl AsRef<Path>) -> Result<index::File, Error> {
         Self::try_from(path.as_ref())
     }
@@ -41,7 +42,7 @@ impl TryFrom<&Path> for index::File {
                 message: format!("Pack index of size {} is too small for even an empty index", idx_len),
             });
         }
-        let (kind, version, fan, num_objects) = {
+        let (kind, fan, num_objects) = {
             let (kind, d) = {
                 let (sig, d) = data.split_at(V2_SIGNATURE.len());
                 if sig == V2_SIGNATURE {
@@ -50,30 +51,29 @@ impl TryFrom<&Path> for index::File {
                     (Kind::V1, &data[..])
                 }
             };
-            let (version, d) = {
-                let (mut version, mut d) = (1, d);
+            let d = {
                 if let Kind::V2 = kind {
                     let (vd, dr) = d.split_at(N32_SIZE);
-                    d = dr;
-                    version = BigEndian::read_u32(vd);
+                    let version = BigEndian::read_u32(vd);
                     if version != Kind::V2 as u32 {
                         return Err(Error::UnsupportedVersion { version });
                     }
+                    dr
+                } else {
+                    d
                 }
-                (version, d)
             };
             let (fan, bytes_read) = read_fan(d);
             let (_, _d) = d.split_at(bytes_read);
             let num_objects = fan[FAN_LEN - 1];
 
-            (kind, version, fan, num_objects)
+            (kind, fan, num_objects)
         };
         Ok(index::File {
             data,
             path: path.to_owned(),
             kind,
             num_objects,
-            version,
             fan,
         })
     }

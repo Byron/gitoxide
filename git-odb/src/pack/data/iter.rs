@@ -349,10 +349,7 @@ where
 }
 
 impl pack::data::File {
-    /// Returns an iterator over the pack file itself, without making use of the memory mapping.
-    ///
-    /// Note that this iterator is costly as no pack index is used, forcing each entry to be decompressed.
-    /// If an index is available, use the `traverse(…)` method instead for maximum performance.
+    /// Returns an iterator over [`Entries`][pack::data::iter::Entry], without making use of the memory mapping.
     pub fn streaming_iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
         Iter::new_from_header(reader, Mode::Verify, CompressedBytesMode::KeepAndCRC32)

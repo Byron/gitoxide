@@ -75,6 +75,7 @@ macro_rules! izip {
 
 use filebuffer::FileBuffer;
 
+/// The version of an index file
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
@@ -99,27 +100,27 @@ impl Kind {
 
 const FAN_LEN: usize = 256;
 
+/// A representation of a pack index file
 pub struct File {
     pub(crate) data: FileBuffer,
     path: std::path::PathBuf,
     kind: Kind,
-    version: u32,
     num_objects: u32,
     fan: [u32; FAN_LEN],
 }
 
 impl File {
+    /// The version of the pack index
     pub fn kind(&self) -> Kind {
         self.kind
     }
+    /// The path of the opened index file
     pub fn path(&self) -> &std::path::Path {
         &self.path
     }
+    /// The amount of objects stored in the pack and index
     pub fn num_objects(&self) -> u32 {
         self.num_objects
-    }
-    pub fn version(&self) -> u32 {
-        self.version
     }
 }
 

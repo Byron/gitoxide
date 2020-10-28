@@ -358,12 +358,11 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn iter() -> Result<(), Box<dyn std::error::Error>> {
-    for (path, kind, num_objects, version, index_checksum, pack_checksum) in &[
+    for (path, kind, num_objects, index_checksum, pack_checksum) in &[
         (
             INDEX_V1,
             index::Kind::V1,
             67,
-            1,
             "5a2b20ef73ffe911178532df86232b64830cb536",
             "7ebaef998897d903e6e6b6763d3a6ec4dc5b845b",
         ),
@@ -371,7 +370,6 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
             INDEX_V2,
             index::Kind::V2,
             30,
-            2,
             "560eba66e6b391eb83efc3ec9fc8a3087788911c",
             "f1cd3cc7bc63a4a2b357a475a58ad49b40355470",
         ),
@@ -379,14 +377,12 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
             SMALL_PACK_INDEX,
             index::Kind::V2,
             42,
-            2,
             "544a7204a55f6e9cacccf8f6e191ea8f83575de3",
             "0f3ea84cd1bba10c2a03d736a460635082833e59",
         ),
     ] {
         let idx = index::File::at(&fixture_path(path))?;
         assert_eq!(idx.kind(), *kind);
-        assert_eq!(idx.version(), *version);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
             idx.verify_integrity(None, None, Discard.into(), || { DecodeEntryNoop })
