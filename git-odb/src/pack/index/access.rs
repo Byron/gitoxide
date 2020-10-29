@@ -14,18 +14,24 @@ const N32_HIGH_BIT: u32 = 1 << 31;
 
 pub(crate) type PackOffset = u64;
 
+/// Represents an entry within a pack index file, effectively mapping object [`IDs`][owned::Id] to pack data file locations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
+    /// The ID of the object
     pub oid: owned::Id,
-    /// The offset to the object's header in the pack
+    /// The offset to the object's header in the pack data file
     pub pack_offset: PackOffset,
+    /// The CRC32 hash over all bytes of the pack data entry.
+    ///
+    /// This can be useful for direct copies of pack data entries from one pack to another with insurance there was no bit rot.
+    /// _Note_: Only available in index version 2 or newer
     pub crc32: Option<u32>,
 }
 
 /// Iteration and access
 impl index::File {
-    pub fn iter_v1<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
+    pub(crate) fn iter_v1<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         match self.kind {
             index::Kind::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
@@ -42,7 +48,7 @@ impl index::File {
         }
     }
 
-    pub fn iter_v2<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
+    pub(crate) fn iter_v2<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         let pack64_offset = self.offset_pack_offset64_v2();
         match self.kind {
             index::Kind::V2 => izip!(
@@ -62,6 +68,10 @@ impl index::File {
 
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The index ranges from 0 to self.num_objects()
+    ///
+    /// # Panics
+    ///
+    /// If `index` is out of bounds.
     pub fn oid_at_index(&self, index: u32) -> borrowed::Id<'_> {
         let index: usize = index
             .try_into()
@@ -73,6 +83,11 @@ impl index::File {
         borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
+    /// Returns the offset into our pack data file at which to start reading the object at `index`.
+    ///
+    /// # Panics
+    ///
+    /// If `index` is out of bounds.
     pub fn pack_offset_at_index(&self, index: u32) -> PackOffset {
         let index: usize = index
             .try_into()
@@ -89,6 +104,12 @@ impl index::File {
         }
     }
 
+    /// Returns the CRC32 of the object at the given `index`.
+    ///
+    /// _Note_: These are always present for index version 2 or higher.
+    /// # Panics
+    ///
+    /// If `index` is out of bounds.
     pub fn crc32_at_index(&self, index: u32) -> Option<u32> {
         let index: usize = index
             .try_into()
@@ -102,7 +123,8 @@ impl index::File {
         }
     }
 
-    /// Returns the offset of the given SHA1 for use with the `(oid|pack_offset|crc32)_at_index()`
+    /// Returns the `index` of the given SHA1 for use with the [`oid_at_index()`][index::File::oid_at_index()],
+    /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
     pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<u32> {
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
@@ -126,6 +148,7 @@ impl index::File {
         None
     }
 
+    /// An iterator over all [`Entries`][Entry] of this index file.
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
         match self.kind {
             index::Kind::V2 => Box::new(self.iter_v2()),
@@ -133,6 +156,9 @@ impl index::File {
         }
     }
 
+    /// Return a vector of ascending offsets into our respective pack data file.
+    ///
+    /// Useful to control an iteration over all pack entries in a cache-friendly way.
     pub fn sorted_offsets(&self) -> Vec<PackOffset> {
         let mut ofs: Vec<_> = match self.kind {
             index::Kind::V1 => self.iter().map(|e| e.pack_offset).collect(),
