@@ -92,6 +92,9 @@ impl index::File {
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
+    /// The last member of the Option is a function returning an implementation of [`pack::cache::DecodeEntry`] to be used if
+    /// the [`index::traverse::Algorithm`] is `Lookup`.
+    /// To set this to `None`, use `None::<(_, _, _, fn() -> packe::cache::Noop)>`.
     ///
     /// The `thread_limit` optionally specifies the amount of threads to be used for the [pack traversal][index::File::traverse()].
     /// `make_cache` is only used in case a `pack` is specified, use existing implementations in the [`pack::cache`] module.
@@ -100,14 +103,16 @@ impl index::File {
     ///
     /// The given `progress` is inevitably consumed if there is an error, which is a tradeoff chosen to easily allow using `?` in the
     /// error case.
-    ///
-    /// `make_cache` should rather be a part of the `pack` `Option`, however, if None is desired the signature gets unwieldy.
     pub fn verify_integrity<C, P>(
         &self,
-        pack: Option<(&pack::data::File, Mode, index::traverse::Algorithm)>,
+        pack: Option<(
+            &pack::data::File,
+            Mode,
+            index::traverse::Algorithm,
+            impl Fn() -> C + Send + Sync,
+        )>,
         thread_limit: Option<usize>,
         progress: Option<P>,
-        make_cache: impl Fn() -> C + Send + Sync,
     ) -> Result<
         (owned::Id, Option<index::traverse::Outcome>, Option<P>),
         index::traverse::Error<pack::index::verify::Error>,
@@ -118,7 +123,7 @@ impl index::File {
     {
         let mut root = progress::DoOrDiscard::from(progress);
         match pack {
-            Some((pack, mode, algorithm)) => self
+            Some((pack, mode, algorithm, make_cache)) => self
                 .traverse(
                     pack,
                     root.into_inner(),

@@ -4,6 +4,7 @@ pub trait DecodeEntry {
 }
 
 /// A cache that stores nothing and retrieves nothing.
+#[derive(Default)]
 pub struct Noop;
 
 impl DecodeEntry for Noop {

@@ -147,10 +147,9 @@ where
             };
 
             idx.verify_integrity(
-                pack.as_ref().map(|p| (p, mode, algorithm.into())),
+                pack.as_ref().map(|p| (p, mode, algorithm.into(), cache)),
                 thread_limit,
                 progress,
-                cache,
             )
             .map(|(a, b, _)| (a, b))
             .with_context(|| "Verification failure")?

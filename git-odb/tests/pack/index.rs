@@ -290,8 +290,12 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
         for algo in ALGORITHMS {
             for mode in MODES {
                 assert_eq!(
-                    idx.verify_integrity(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
-                        .map(|(a, b, _)| (a, b))?,
+                    idx.verify_integrity(
+                        Some((&pack, *mode, *algo, || cache::Noop)),
+                        None,
+                        progress::Discard.into()
+                    )
+                    .map(|(a, b, _)| (a, b))?,
                     (idx.index_checksum(), Some(stats.to_owned())),
                     "{:?} -> {:?}",
                     algo,
@@ -385,7 +389,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(idx.kind(), *kind);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_integrity(None, None, progress::Discard.into(), || { cache::Noop })
+            idx.verify_integrity(None::<(_, _, _, fn() -> cache::Noop)>, None, progress::Discard.into())
                 .map(|(a, b, _)| (a, b))?,
             (idx.index_checksum(), None)
         );
