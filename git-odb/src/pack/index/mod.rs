@@ -109,6 +109,7 @@ pub struct File {
     fan: [u32; FAN_LEN],
 }
 
+/// Basic file information
 impl File {
     /// The version of the pack index
     pub fn kind(&self) -> Kind {

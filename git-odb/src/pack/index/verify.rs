@@ -32,23 +32,33 @@ pub enum Error {
 pub enum Mode {
     /// Validate SHA1 and CRC32
     Sha1CRC32,
-    /// Validate SHA1 and CRC32, and decode each non-Blob object
+    /// Validate SHA1 and CRC32, and decode each non-Blob object.
+    /// Each object should be valid, i.e. be decodable.
     Sha1CRC32Decode,
-    /// Validate SHA1 and CRC32, and decode and encode each non-Blob object
+    /// Validate SHA1 and CRC32, and decode and encode each non-Blob object.
+    /// Each object should yield exactly the same hash when re-encoded.
     Sha1CRC32DecodeEncode,
 }
 
 /// Verify and validate the content of the index file
 impl index::File {
+    /// Returns the trailing hash stored at the end of this index file.
+    ///
+    /// It's a hash over all bytes of the index.
     pub fn index_checksum(&self) -> owned::Id {
         owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
 
+    /// Returns the hash of the pack data file that this index file corresponds to.
+    ///
+    /// It should [`pack::data::File::checksum()`] of the corresponding pack data file.
     pub fn pack_checksum(&self) -> owned::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
         owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
     }
 
+    /// Validate that our [`index_checksum()`][index::File::index_checksum()] matches the actual contents
+    /// of this index file, and return it if it does.
     pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let actual = match git_features::hash::bytes_of_file(
@@ -76,10 +86,22 @@ impl index::File {
         }
     }
 
+    /// The most thorough validation of integrity of both index file and the corresponding pack data file, if provided.
+    /// Returns the checksum of the index file, the traversal outcome and the given progress if the integrity check is successful.
+    ///
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    /// redoing a lot of work across multiple objects.
+    ///
+    /// The `thread_limit` optionally specifies the amount of threads to be used for the [pack traversal][index::File::traverse()].
+    /// `make_cache` is only used in case a `pack` is specified, use existing implementations in the [`pack::cache`] module.
+    ///
+    /// # Tradeoffs
+    ///
+    /// The given `progress` is inevitably consumed if there is an error, which is a tradeoff chosen to easily allow using `?` in the
+    /// error case.
+    ///
+    /// `make_cache` should rather be a part of the `pack` `Option`, however, if None is desired the signature gets unwieldy.
     pub fn verify_integrity<C, P>(
         &self,
         pack: Option<(&pack::data::File, Mode, index::traverse::Algorithm)>,
@@ -122,7 +144,7 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn verify_entry<P>(
+    pub(crate) fn verify_entry<P>(
         mode: Mode,
         encode_buf: &mut Vec<u8>,
         object_kind: git_object::Kind,
