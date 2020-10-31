@@ -31,8 +31,8 @@ impl compound::Db {
             // The underlying issue is described here https://github.com/rust-lang/rust/issues/45402,
             // Once Polonius becomes a thing AND is not too slow, we must remove this double-lookup to become something like this:
             // if let Some(object) = if pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop) {…}
-            if pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).is_some() {
-                let object = pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop).unwrap();
+            if pack.locate(id, buffer, &mut pack::cache::Noop).is_some() {
+                let object = pack.locate(id, buffer, &mut pack::cache::Noop).unwrap();
                 return Some(object.map(compound::Object::Borrowed).map_err(Into::into));
             }
         }

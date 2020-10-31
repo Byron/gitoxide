@@ -73,8 +73,8 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
 
 #[allow(clippy::large_enum_variant)]
 enum EitherCache {
-    Left(pack::cache::DecodeEntryNoop),
-    Right(pack::cache::DecodeEntryLRU),
+    Left(pack::cache::Noop),
+    Right(pack::cache::LRU),
 }
 
 impl pack::cache::DecodeEntry for EitherCache {
@@ -140,9 +140,9 @@ where
             let cache = || -> EitherCache {
                 if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time
-                    EitherCache::Left(pack::cache::DecodeEntryNoop)
+                    EitherCache::Left(pack::cache::Noop)
                 } else {
-                    EitherCache::Right(pack::cache::DecodeEntryLRU::default())
+                    EitherCache::Right(pack::cache::LRU::default())
                 }
             };
 

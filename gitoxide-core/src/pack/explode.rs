@@ -218,7 +218,7 @@ pub fn pack_or_pack_index(
                 }
             }
         },
-        pack::cache::DecodeEntryLRU::default,
+        pack::cache::LRU::default,
         pack::index::traverse::Options {
             algorithm,
             thread_limit,

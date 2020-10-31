@@ -183,10 +183,10 @@ mod method {
 
 use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};
 use common_macros::b_tree_map;
-use git_features::progress::Discard;
-use git_odb::pack::cache::DecodeEntryNoop;
+use git_features::progress;
+use git_odb::pack::cache;
 
-static ALGOS: &[index::traverse::Algorithm] = &[
+static ALGORITHMS: &[index::traverse::Algorithm] = &[
     index::traverse::Algorithm::Lookup,
     index::traverse::Algorithm::DeltaTreeLookup,
 ];
@@ -287,7 +287,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
 
         assert_eq!(pack.kind(), pack::data::Kind::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
-        for algo in ALGOS {
+        for algo in ALGORITHMS {
             for mode in MODES {
                 assert_eq!(
                     idx.verify_integrity(Some((&pack, *mode, *algo)), None, Discard.into(), || DecodeEntryNoop)
@@ -385,7 +385,7 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(idx.kind(), *kind);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
-            idx.verify_integrity(None, None, Discard.into(), || { DecodeEntryNoop })
+            idx.verify_integrity(None, None, progress::Discard.into(), || { cache::Noop })
                 .map(|(a, b, _)| (a, b))?,
             (idx.index_checksum(), None)
         );
