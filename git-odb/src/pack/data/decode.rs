@@ -141,7 +141,7 @@ impl File {
     /// a base object, instead of an in-pack offset.
     ///
     /// `delta_cache` is a mechanism to avoid looking up base objects multiple times when decompressing multiple objects in a row.
-    /// Use a [Noop-Cache][cache::DecodeEntryNoop] to disable caching alltogether at the cost of repeating work.
+    /// Use a [Noop-Cache][cache::Noop] to disable caching alltogether at the cost of repeating work.
     pub fn decode_entry(
         &self,
         entry: pack::data::Entry,

@@ -37,9 +37,22 @@ pub struct Outcome {
 
 /// Various ways of writing an index file from pack entries
 impl pack::index::File {
-    /// Note that neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
-    /// `make_resolver()`:  It will only be called after the iterator stopped returning elements and produces a function that
-    /// provides all bytes belonging to an entry.
+    /// Write information about `entries` as obtained from a pack data file into a pack index file via the `out` stream.
+    /// The resolver produced by `make_resolver` must resolve pack entries from the same pack data file that produced the
+    /// `entries` iterator.
+    ///
+    /// `kind` is the version of pack index to produce, use [`pack::index::Kind::default()`] if in doubt.
+    /// `tread_limit` is used for a parallel tree traversal for obtaining object hashes with optimal performance.
+    /// `root_progress` is the top-level progress to stay informed about the progress of this potentially long-running
+    /// computation.
+    ///
+    /// # Remarks
+    ///
+    /// * neither in-pack nor out-of-pack Ref Deltas are supported here, these must have been resolved beforehand.
+    /// * `make_resolver()` will only be called after the iterator stopped returning elements and produces a function that
+    /// provides all bytes belonging to a pack entry writing them to the given mutable output `Vec`.
+    /// It should return `None` if the entry cannot be resolved from the pack that produced the `entries` iterator, causing
+    /// the write operation to fail.
     pub fn write_data_iter_to_stream<F, F2>(
         kind: pack::index::Kind,
         make_resolver: F,
@@ -193,7 +206,7 @@ impl pack::index::File {
     }
 }
 
-pub fn modify_base(
+fn modify_base(
     entry: &mut pack::index::write::TreeEntry,
     pack_entry: &pack::data::Entry,
     decompressed: &[u8],
