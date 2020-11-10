@@ -10,7 +10,7 @@ mod encode;
 mod error;
 pub use error::Error;
 
-pub struct TreeEntry {
+pub(crate) struct TreeEntry {
     pub id: owned::Id,
     pub crc32: u32,
 }
@@ -24,6 +24,7 @@ impl Default for TreeEntry {
     }
 }
 
+/// Information gathered while executing [`write_data_iter_to_stream()`][pack::index::File::write_data_iter_to_stream]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
