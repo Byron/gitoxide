@@ -16,8 +16,13 @@ pub use error::Error;
 mod types;
 pub use types::{Algorithm, Options, Outcome, SafetyCheck};
 
-/// Verify and validate the content of the index file
+/// Traversal of pack data files using an index file
 impl index::File {
+    /// Iterate through all _decoded objects_ in the given `pack` and handle them with a `Processor`.
+    /// The return value is (pack-checksum, [`Outcome`], `progress`), thus the pack traversal will always verify
+    /// the whole packs checksum to assure it was correct. In case of bit-rod, the operation will abort early without
+    /// verifying all objects using the [interrupt mechanism][git_features::interrupt] mechanism.
+    ///
     pub fn traverse<P, C, Processor, E>(
         &self,
         pack: &pack::data::File,
