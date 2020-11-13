@@ -12,6 +12,10 @@ use git_features::{
 use git_object::owned;
 
 impl index::File {
+    /// Iterate through all _decoded objects_ in the given `pack` and handle them with a `Processor`, using an index to reduce waste
+    /// at the cost of memory.
+    ///
+    /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
     pub fn traverse_with_index<P, Processor, E>(
         &self,
         check: SafetyCheck,

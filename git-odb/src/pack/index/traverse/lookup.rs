@@ -9,6 +9,10 @@ use git_object::owned;
 
 /// Verify and validate the content of the index file
 impl index::File {
+    /// Iterate through all _decoded objects_ in the given `pack` and handle them with a `Processor` using a cache to reduce the amount of
+    /// waste while decoding objects.
+    ///
+    /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
     pub fn traverse_with_lookup<P, C, Processor, E>(
         &self,
         check: SafetyCheck,

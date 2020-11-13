@@ -23,6 +23,21 @@ impl index::File {
     /// the whole packs checksum to assure it was correct. In case of bit-rod, the operation will abort early without
     /// verifying all objects using the [interrupt mechanism][git_features::interrupt] mechanism.
     ///
+    /// # Algorithms
+    ///
+    /// Using the [`Options::algorithm`] field one can chose between two algorithms providing different tradeoffs. Both invoke
+    /// `new_processor()` to create functions receiving decoded objects, their object kind, index entry and a progress instance to provide
+    /// progress information.
+    ///
+    /// * [`Algorithm::DeltaTreeLookup`] builds an index to avoid any unnecessary computation while resolving objects, avoiding
+    ///   the need for a cache entirely, rendering `new_cache()` unused.
+    ///   One could also call [`traverse_with_index()`][index::File::traverse_with_index()] directly.
+    /// * [`Algorithm::Lookup`] uses a cache created by `new_cache()` to avoid having to re-compute all bases of a delta-chain while
+    ///   decoding objects.
+    ///   One could also call [`traverse_with_lookup()`][index::File::traverse_with_lookup()] directly.
+    ///
+    /// Use [`thread_limit`][Options::thread_limit] to further control parallelism and [`check`][SafetyCheck] to define how much the passed
+    /// objects shall be verified beforehand.
     pub fn traverse<P, C, Processor, E>(
         &self,
         pack: &pack::data::File,
