@@ -6,6 +6,7 @@ use object::borrowed;
 use smallvec::SmallVec;
 use std::{io::Read, path::PathBuf};
 
+/// Returned by [`loose::Object::decode()`] and [`loose::Object::stream()`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("decompression of object data failed")]

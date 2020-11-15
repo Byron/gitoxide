@@ -2,6 +2,7 @@ use crate::{hash::Write as HashWrite, loose};
 use git_object::{borrowed, owned};
 use std::io;
 
+/// Returned by [`loose::Object::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("reading of object failed")]

@@ -2,6 +2,7 @@ use crate::alternate::unquote;
 use git_object::bstr::ByteSlice;
 use std::{borrow::Cow, path::PathBuf};
 
+/// Returned as part of [`crate::alternate::Error::Parse`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(&.0))]

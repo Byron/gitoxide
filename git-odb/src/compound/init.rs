@@ -1,6 +1,7 @@
 use crate::{compound, loose, pack};
 use std::path::PathBuf;
 
+/// Returned by [`compound::Db::at()`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("The objects directory at '{0}' is not an accessible directory")]

@@ -1,6 +1,7 @@
 use crate::zlib::stream::InflateReader;
 use std::io::BufReader;
 
+/// Either a file-based reader, or a decompressed buffer as the result of a read operation from the filesystem
 pub enum Reader<'a> {
     File(usize, InflateReader<BufReader<std::fs::File>>),
     Buffer(&'a [u8]),

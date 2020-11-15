@@ -17,7 +17,11 @@ pub struct Object {
     pub(crate) decompression_complete: bool,
 }
 
+#[allow(missing_docs)]
 pub mod decode;
+#[allow(missing_docs)]
 pub mod header;
+#[allow(missing_docs)]
 pub mod stream;
+#[allow(missing_docs)]
 pub mod verify;

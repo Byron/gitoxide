@@ -19,10 +19,14 @@
 use crate::compound;
 use std::{fs, io, path::PathBuf};
 
+#[allow(missing_docs)]
 pub mod parse;
+#[allow(missing_docs)]
 pub mod unquote;
 
+/// Returned by [`resolve()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
     Io(#[from] io::Error),

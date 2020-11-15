@@ -2,6 +2,7 @@
 use byteorder::WriteBytesExt;
 use git_object as object;
 
+/// Returned by [`decode()`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{message}: {:?}", std::str::from_utf8(.number))]
