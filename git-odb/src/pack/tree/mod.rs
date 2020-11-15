@@ -1,14 +1,22 @@
 use std::cell::UnsafeCell;
 
+/// Returned when using various methods on a [`Tree`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Pack offsets must only increment. The previous pack offset was {last_pack_offset}, the current one is {pack_offset}")]
-    InvariantIncreasingPackOffset { last_pack_offset: u64, pack_offset: u64 },
+    InvariantIncreasingPackOffset {
+        /// The last seen pack offset
+        last_pack_offset: u64,
+        /// The invariant violating offset
+        pack_offset: u64,
+    },
     #[error("Is there ever a need to create empty indices? If so, please post a PR.")]
     InvariantNonEmpty,
     #[error("The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already")]
     InvariantBasesBeforeDeltasNeedThem {
+        /// The delta pack offset whose base we could not find
         delta_pack_offset: u64,
+        /// The base pack offset which was not yet added to the tree
         base_pack_offset: u64,
     },
 }

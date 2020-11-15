@@ -3,28 +3,31 @@ use crate::{
     pack::tree::{Item, Tree},
 };
 
-/// All the unsafe bits to support parallel iteration with write access
+/// All the **unsafe** bits to support parallel iteration with write access
 impl<T> Tree<T> {
     #[allow(unsafe_code)]
-    /// SAFETY: Called from node with is guaranteed to not be aliasing with any other node.
+    /// # SAFETY
+    /// Called from node with is guaranteed to not be aliasing with any other node.
     /// Note that we are iterating nodes that we are affecting here, but that only affects the
     /// 'is_root' field fo the item, not the data field that we are writing here.
     /// For all details see `from_node_take_entry()`.
-    unsafe fn from_node_put_data(&self, index: usize, data: T) {
+    unsafe fn put_data(&self, index: usize, data: T) {
         let items_mut: &mut Vec<Item<T>> = &mut *(self.items.get());
         items_mut.get_unchecked_mut(index).data = data;
     }
 
     #[allow(unsafe_code)]
-    /// SAFETY: Similar to `from_node_put_data(…)`
-    unsafe fn from_node_get_offset(&self, index: usize) -> u64 {
+    /// # SAFETY
+    /// Similar to `from_node_put_data(…)`
+    unsafe fn offset(&self, index: usize) -> u64 {
         let items: &Vec<Item<T>> = &*(self.items.get());
         items.get_unchecked(index).offset
     }
 
     #[allow(unsafe_code)]
-    /// SAFETY: Similar to `from_node_put_data(…)`
-    unsafe fn from_node_get_entry_slice(&self, index: usize) -> std::ops::Range<u64> {
+    /// # SAFETY
+    /// Similar to `from_node_put_data(…)`
+    unsafe fn entry_slice(&self, index: usize) -> std::ops::Range<u64> {
         let items: &Vec<Item<T>> = &*(self.items.get());
         let start = items.get_unchecked(index).offset;
         let end = items
@@ -36,7 +39,8 @@ impl<T> Tree<T> {
     }
 
     #[allow(unsafe_code)]
-    /// SAFETY: A tree is a data structure without cycles, and we assure of that by verifying all input.
+    /// # SAFETY
+    /// A tree is a data structure without cycles, and we assure of that by verifying all input.
     /// A node as identified by index can only be traversed once using the Chunks iterator.
     /// When the iterator is created, this instance cannot be mutated anymore nor can it be read.
     /// That iterator is only handed out once.
@@ -45,7 +49,7 @@ impl<T> Tree<T> {
     /// alias multiple nodes in the tree.
     /// It's safe for multiple threads to hold different chunks, as they are guaranteed to be non-overlapping and unique.
     /// If the tree is accessed after iteration, it will panic as no mutation is allowed anymore, nor is
-    unsafe fn from_node_take_entry(&self, index: usize) -> (T, Vec<usize>)
+    unsafe fn take_entry(&self, index: usize) -> (T, Vec<usize>)
     where
         T: Default,
     {
@@ -57,7 +61,8 @@ impl<T> Tree<T> {
     }
 
     #[allow(unsafe_code)]
-    /// SAFETY: As `take_entry(…)` - but this one only takes if the data of Node is a root
+    /// # SAFETY
+    /// As `take_entry(…)` - but this one only takes if the data of Node is a root
     unsafe fn from_iter_take_entry_if_root(&self, index: usize) -> Option<(T, Vec<usize>)>
     where
         T: Default,
@@ -86,10 +91,12 @@ impl<T> Tree<T> {
     }
 }
 
+/// An item returned by a [`Chunks`] iterator, allowing access to the `data` stored alongside nodes in a [`Tree`]
 pub struct Node<'a, T> {
     tree: &'a Tree<T>,
     index: usize,
     children: Vec<usize>,
+    /// The custom data attached to each node of the tree whose ownership was transferred into the iteration.
     pub data: T,
 }
 
@@ -97,33 +104,39 @@ impl<'a, T> Node<'a, T>
 where
     T: Default,
 {
+    /// Returns the offset into the pack at which the `Node`s data is located.
     pub fn offset(&self) -> u64 {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {
-            self.tree.from_node_get_offset(self.index)
+            self.tree.offset(self.index)
         }
     }
 
+    /// Returns the slice into the data pack at which the pack entry is located.
     pub fn entry_slice(&self) -> EntrySlice {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {
-            self.tree.from_node_get_entry_slice(self.index)
+            self.tree.entry_slice(self.index)
         }
     }
 
+    /// Write potentially changed `Node` data back into the [`Tree`] and transform this `Node` into an iterator
+    /// over its `Node`s children.
+    ///
+    /// Children are `Node`s referring to pack entries whose base object is this pack entry.
     pub fn store_changes_then_into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {
-            self.tree.from_node_put_data(self.index, self.data)
+            self.tree.put_data(self.index, self.data)
         };
         let Self { tree, children, .. } = self;
         children.into_iter().map(move |index| {
             // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
             #[allow(unsafe_code)]
-            let (data, children) = unsafe { tree.from_node_take_entry(index) };
+            let (data, children) = unsafe { tree.take_entry(index) };
             Node {
                 tree,
                 data,
@@ -134,6 +147,7 @@ where
     }
 }
 
+/// An iterator over chunks of [`Node`]s in a [`Tree`]
 pub struct Chunks<'a, T> {
     tree: &'a Tree<T>,
     size: usize,

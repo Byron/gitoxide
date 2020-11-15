@@ -1,5 +1,13 @@
+/// A trait to model putting objects at a given pack `offset` into a cache, and fetching them.
+///
+/// It is used to speed up [pack traversals][crate::pack::index::File::traverse()].
 pub trait DecodeEntry {
+    /// Store a fully decoded object at `offset` of `kind` with `compressed_size` and `data` in the cache.
+    ///
+    /// It is up to the cache implementation whether that actually happens or not.
     fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize);
+    /// Attempt to fetch the object at `offset` and store its decoded bytes in `out`, as previously stored with [`DecodeEntry::put()`], and return
+    /// its (object `kind`, `decompressed_size`)
     fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)>;
 }
 

@@ -78,6 +78,7 @@ use filebuffer::FileBuffer;
 /// The version of an index file
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
 pub enum Kind {
     V1 = 1,
     V2 = 2,

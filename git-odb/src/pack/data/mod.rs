@@ -15,11 +15,15 @@ pub use iter::Iter;
 
 use git_object::SHA1_SIZE;
 
+/// A slice into a pack file denoting a pack entry.
+///
+/// An entry can be decoded into an object.
 pub type EntrySlice = std::ops::Range<u64>;
 
 /// Supported versions of a pack data file
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
 pub enum Kind {
     V2,
     V3,

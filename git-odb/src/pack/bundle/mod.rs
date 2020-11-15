@@ -7,6 +7,7 @@ use std::{
 pub mod locate;
 pub mod write;
 
+/// Returned by [`Bundle::at()`]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("An 'idx' extension is expected of an index file: '{0}'")]
