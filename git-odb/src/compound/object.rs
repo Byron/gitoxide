@@ -2,6 +2,7 @@ use crate::loose;
 
 /// An object within an object database with loose or entirely borrowed objects.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[allow(missing_docs)]
 pub enum Object<'a> {
     Loose(loose::Object),
     Borrowed(crate::borrowed::Object<'a>),
@@ -51,11 +52,14 @@ pub mod decode {
     }
 }
 
+///
 pub mod verify {
     use crate::{compound::Object, loose};
     use git_object::borrowed;
 
+    /// Returned by [`Object::verify_checksum()`]
     #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Pack(#[from] crate::borrowed::verify::Error),
@@ -64,6 +68,7 @@ pub mod verify {
     }
 
     impl<'a> Object<'a> {
+        /// Assert whether the actual checksum of this object matches the `desired` one.
         pub fn verify_checksum(&mut self, desired: borrowed::Id<'_>) -> Result<(), Error> {
             match self {
                 Object::Borrowed(object) => object.verify_checksum(desired).map_err(Into::into),

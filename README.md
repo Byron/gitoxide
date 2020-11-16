@@ -89,7 +89,7 @@ become available.
     * **advanced**
       * [ ] Multi-Pack index file (MIDX)
       * [ ] 'bitmap' file
-  * [x] API documentation
+  * [ ] API documentation
     * [ ] Some examples
   * **sink**
     * [x] write objects and obtain id

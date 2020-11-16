@@ -1,7 +1,7 @@
 //! An object database delegating object access to multiple contained object databases
 use crate::{loose, pack};
 
-#[allow(missing_docs)]
+///
 pub mod object;
 pub use object::Object;
 
