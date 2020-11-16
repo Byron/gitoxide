@@ -4,7 +4,9 @@ use git_object::borrowed;
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Object<'a> {
+    /// kind of object
     pub kind: git_object::Kind,
+    /// decoded, decompressed data, owned by a backing store.
     pub data: &'a [u8],
 }
 
@@ -30,7 +32,9 @@ pub mod verify {
     use git_object::{borrowed, owned};
     use std::io;
 
+    /// Returned by [`crate::borrowed::Object::verify_checksum()`]
     #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Object expected to have id {desired}, but actual id was {actual}")]
         ChecksumMismatch { desired: owned::Id, actual: owned::Id },

@@ -1,5 +1,4 @@
-#![deny(unsafe_code, rust_2018_idioms)]
-#![warn(missing_docs, rust_2018_idioms)]
+#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
 //! Git stores all of its data as _Objects_, which are nothing more than data along with a hash over all data. Thus it's an
 //! object store indexed by data with inherent deduplication: the same data will have the same hash, and thus occupy the same

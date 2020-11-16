@@ -3,6 +3,9 @@ use std::io;
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {
+    /// The error type used for all trait methods.
+    ///
+    /// _Note_ the default implementations require the `From<io::Error>` bound.
     type Error: std::error::Error + From<io::Error>;
 
     /// Write [`object`][owned::Object] using the given kind of [`hash`][HashKind] into the database,
