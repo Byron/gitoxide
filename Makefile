@@ -157,7 +157,7 @@ tests/fixtures/commit-graphs/linux/single-file: $(linux_repo)
 tests/fixtures/commit-graphs/rust/single-file: $(rust_repo)
 	mkdir -p $@
 	rm -rf $(rust_repo)/objects/info/*graph*
-	cd $(rust_repo) && git show-ref -s 1.47.0 | git commit-graph write --stdin-commits
+	cd $(rust_repo) && git fetch --tags && git show-ref -s 1.47.0 | git commit-graph write --stdin-commits
 	mv -f $(rust_repo)/objects/info/*graph* $@
 
 tests/fixtures/commit-graphs/test-many-commits-1m/single-file: $(test_many_commits_1m_repo)
@@ -190,8 +190,7 @@ stress: ## Run various algorithms on big repositories
 
 	rm -Rf delme; mkdir delme && time ./target/release/gixp --verbose pack-explode .git/objects/pack/*.idx delme/
 
-	# deactivated while it fails - maybe the git version on CI changed behaviour?
-	# $(MAKE) stress-commitgraph
+	$(MAKE) stress-commitgraph
 
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
