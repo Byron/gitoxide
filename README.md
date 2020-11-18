@@ -323,7 +323,7 @@ Once installed, there are two binaries:
    * assure multiple concurrent writes don't cause trouble
  * **take shortcuts, but not in quality**
    * binaries may use `anyhow::Error` exhaustively, knowing these errors are solely user-facing.
-   * libraries use light-weight custom errors implemented using `quick-error`.
+   * libraries use light-weight custom errors implemented using `quick-error` or `thiserror`.
    * internationalization is nothing we are concerned with right now.
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
  * **Cross platform support, including Windows**
@@ -378,7 +378,7 @@ The top-level command-line interface.
   * support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) at the expense of compile times and binary size
 * _(mutually exclusive)_
   * **pretty-cli**
-    * Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of file size.
+    * Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
     * provides a terminal user interface for detailed and exhaustive progress.
     * provides a line renderer for leaner progress
   * **lean-cli**
@@ -426,8 +426,7 @@ All feature toggles are additive.
       leaking temporary files.
   * **disable-interrupts** (_takes precedence if **interrupt-handler** is set as well_)
     * If set, interrupts cannot be triggered programmatically and it's up to the user to inject means of supporting interrupts.
-    * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all,
-    * this facility is a global one.
+    * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all, this facility is a global one.
     * Probably useful for server implementations.
 * **pipe**
   * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
@@ -456,19 +455,19 @@ All feature toggles are additive.
 
 Both terms are coming from the `git` implementation itself, even though it won't necessarily point out which commands are plumbing and which
 are porcelain.
-The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or for certain use
+The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or by hand for certain use
 cases.
 The term *porcelain* refers to those with a decent user experience, they are primarily intended for use by humans.
 
 In any case, both types of programs must self-document their capabilities using through the `--help` flag.
 
-From there, we can derive a few rules to try adhere to:
+From there, we can derive a few rules to adhere to unless there are good reasons not to:
 
 ### Plumbing
 
 * does not show any progress or logging output by default
 * if supported and logging is enabled, it will show timestamps in UTC
-* it does not need a git repository, but instead takes all variables via the command-line 
+* it does not need a git repository, but instead takes all required information via the command-line 
 
 ### Porcelain
 
@@ -485,6 +484,8 @@ From there, we can derive a few rules to try adhere to:
 * **lean** and **light** and **small** builds don't support non-UTF-8 paths _in the CLI_
   * This is because they depend on `argh`, which [does not yet support parsing OsStrings](https://github.com/google/argh/issues/33). We however
     believe it eventually will do so and thus don't move on to [`pico-args`](https://github.com/RazrFalcon/pico-args/blob/master/examples/app.rs).
+  * Only one level of sub-commands are supported due to a limitation of `argh`, which forces porcelain to limit itself as well despite using `clap`.
+    We deem this acceptable for plumbing commands and think that porcelain will be high-level and smart enough to not ever require deeply nested sub-commands.
 * **Packfiles use memory maps**
   * Even though they are comfortable to use and fast, they squelch IO errors.
   * _potential remedy_: We could generalize the Pack to make it possible to work on in-memory buffers directly. That way, one
@@ -493,12 +494,16 @@ From there, we can derive a few rules to try adhere to:
 * **Packfiles cannot load files bigger than 2^31 or 2^32 on 32 bit systems**
   * As these systems cannot address more memory than that.
   * _potential remedy_: implement a sliding window to map and unmap portions of the file as needed.
-* **Objects larger than 32bits cannot be loaded on 32 bit systems**
+    * However, those who need to access big packs on these systems would rather resort to `git` itself, allowing
+      our implementation to be simpler and potentially more performant.
+* **Objects larger than 32 bits cannot be loaded on 32 bit systems**
   * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
   * This should not affect git LFS though.
 * **CRC32** implementation doesn't use SIMD
-  * Probably at no cost one could upgrade to the **crc32fast** crate, but it looks unmaintained and has more code.
+  * Probably at no cost one could upgrade to the **crc32fast** crate, but it looks unmaintained and builds more slowly.
 * **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
+  * Thus far there is no proof for this, and as _potential remedy_ we could certainly re-implement exactly what git does
+    to handle its URLs.
   
 ## Credits
 
