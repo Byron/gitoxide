@@ -3,7 +3,9 @@ use byteorder::{BigEndian, ByteOrder};
 
 pub(crate) const N32_SIZE: usize = std::mem::size_of::<u32>();
 
+/// Returned by [`header()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Could not open pack file at '{path}'")]
     Io {

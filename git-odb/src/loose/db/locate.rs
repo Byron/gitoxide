@@ -7,7 +7,9 @@ use object::borrowed;
 use smallvec::SmallVec;
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
+/// Returned by [`Db::locate()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("decompression of loose object at '{path}' failed")]
     DecompressFile { source: zlib::Error, path: PathBuf },

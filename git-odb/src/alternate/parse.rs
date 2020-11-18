@@ -4,6 +4,7 @@ use std::{borrow::Cow, path::PathBuf};
 
 /// Returned as part of [`crate::alternate::Error::Parse`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(&.0))]
     PathConversion(Vec<u8>),

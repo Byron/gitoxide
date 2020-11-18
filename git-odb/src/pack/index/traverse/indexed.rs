@@ -11,6 +11,7 @@ use git_features::{
 };
 use git_object::owned;
 
+/// Traversal with index
 impl index::File {
     /// Iterate through all _decoded objects_ in the given `pack` and handle them with a `Processor`, using an index to reduce waste
     /// at the cost of memory.
@@ -119,7 +120,7 @@ impl index::File {
     }
 }
 
-pub struct EntryWithDefault {
+struct EntryWithDefault {
     index_entry: pack::index::Entry,
     object_kind: git_object::Kind,
     object_size: u64,

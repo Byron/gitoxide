@@ -4,6 +4,7 @@ use std::io;
 
 /// Returned by [`loose::Object::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("reading of object failed")]
     Io(#[from] io::Error),

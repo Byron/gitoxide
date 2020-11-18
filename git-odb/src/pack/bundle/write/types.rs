@@ -20,14 +20,19 @@ pub struct Options {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
+    /// The successful result of the index write operation
     pub index: pack::index::write::Outcome,
+    /// The version of the pack
     pub pack_kind: pack::data::Kind,
 
+    /// The path to the pack index file
     pub index_path: Option<PathBuf>,
+    /// The path to the pack data file
     pub data_path: Option<PathBuf>,
 }
 
 impl Outcome {
+    /// Instantiate a bundle from the newly written index and data file that are represented by this `Outcome`
     pub fn to_bundle(&self) -> Option<Result<pack::Bundle, pack::bundle::Error>> {
         self.index_path.as_ref().map(pack::Bundle::at)
     }

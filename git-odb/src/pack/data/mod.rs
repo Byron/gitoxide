@@ -2,14 +2,18 @@
 use filebuffer::FileBuffer;
 use std::{convert::TryInto, path::Path};
 
+///
 pub mod decode;
 mod header;
 pub use header::*;
 
 mod init;
+///
 pub mod parse;
+///
 pub mod verify;
 
+///
 pub mod iter;
 pub use iter::Iter;
 

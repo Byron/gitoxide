@@ -2,7 +2,9 @@ use crate::pack::data::File;
 use git_features::progress::Progress;
 use git_object::{owned, HashKind, SHA1_SIZE};
 
+/// Returned by [`File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("pack checksum mismatch: expected {expected}, got {actual}")]
     Mismatch { expected: owned::Id, actual: owned::Id },

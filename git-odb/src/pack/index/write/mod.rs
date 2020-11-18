@@ -28,11 +28,14 @@ impl Default for TreeEntry {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
+    /// The version of the verified index
     pub index_kind: pack::index::Kind,
+    /// The verified checksum of the verified index
     pub index_hash: owned::Id,
 
     /// The hash of the '.pack' file, also found in its trailing bytes
     pub data_hash: owned::Id,
+    /// The amount of objects that were verified, always the amount of objects in the pack.
     pub num_objects: u32,
 }
 

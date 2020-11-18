@@ -3,15 +3,20 @@ use std::io::BufReader;
 
 /// Either a file-based reader, or a decompressed buffer as the result of a read operation from the filesystem
 pub enum Reader<'a> {
+    /// A file based reader with `(header size, decompressing reader)`
     File(usize, InflateReader<BufReader<std::fs::File>>),
+    /// A reader providing bytes from a slice.
     Buffer(&'a [u8]),
 }
 
 /// A [`Read`][std::io::Read] implementation for reading from a file or from borrowed data.
 impl<'a> Reader<'a> {
-    pub fn from_read(header_size: usize, file: std::fs::File) -> Reader<'a> {
+    /// Instantiate a `Reader` from a `file`, skipping `header_size` bytes when it's read.
+    pub fn from_file(header_size: usize, file: std::fs::File) -> Reader<'a> {
         Reader::File(header_size, InflateReader::from_read(std::io::BufReader::new(file)))
     }
+
+    /// Instantiate a `Reader` from decompressed `data`, ignoring the first `header_size` bytes of it.
     pub fn from_data(header_size: usize, data: &'a [u8]) -> Reader<'a> {
         Reader::Buffer(&data[header_size..])
     }

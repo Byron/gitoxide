@@ -127,12 +127,16 @@ impl File {
 }
 
 const V2_SIGNATURE: &[u8] = b"\xfftOc";
+///
 pub mod init;
 
 pub(crate) mod access;
 pub use access::Entry;
 
+///
 pub mod traverse;
 pub(crate) mod util;
+///
 pub mod verify;
+///
 pub mod write;

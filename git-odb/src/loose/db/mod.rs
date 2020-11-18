@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 /// A database for reading and writing objects to disk, one file per object.
 pub struct Db {
+    /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
     pub path: PathBuf,
 }
 
@@ -31,6 +32,9 @@ pub(crate) fn sha1_path(id: borrowed::Id<'_>, mut root: PathBuf) -> PathBuf {
     }
 }
 
+///
 pub mod iter;
+///
 pub mod locate;
+///
 pub mod write;

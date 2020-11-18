@@ -6,7 +6,9 @@ use git_object::{
     owned, HashKind, SHA1_SIZE,
 };
 
+/// Returned by [`index::File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("index checksum mismatch: expected {expected}, got {actual}")]
     Mismatch { expected: owned::Id, actual: owned::Id },

@@ -4,7 +4,9 @@ use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
+/// Returned by [`index::File::at()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Could not open pack index file at '{path}'")]
     Io {

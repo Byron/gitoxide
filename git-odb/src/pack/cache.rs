@@ -30,6 +30,7 @@ struct LRUEntry {
     compressed_size: usize,
 }
 
+/// A least-recently-used cache to accelerate pack traversal
 #[derive(Default)]
 pub struct LRU(uluru::LRUCache<[uluru::Entry<LRUEntry>; 64]>);
 

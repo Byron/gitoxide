@@ -27,12 +27,13 @@ impl<'a> Object<'a> {
     }
 }
 
-#[allow(missing_docs)]
+///
 pub mod decode {
     use crate::{compound::Object, loose};
 
     /// Returned by [`Object::decode()`]
     #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Decode(#[from] git_object::borrowed::Error),

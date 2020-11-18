@@ -4,11 +4,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
+///
 pub mod locate;
+///
 pub mod write;
 
 /// Returned by [`Bundle::at()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("An 'idx' extension is expected of an index file: '{0}'")]
     InvalidPath(PathBuf),
@@ -20,7 +23,9 @@ pub enum Error {
 
 /// A bundle of pack data and the corresponding pack index
 pub struct Bundle {
+    /// The pack file corresponding to `index`
     pub pack: pack::data::File,
+    /// The index file corresponding to `pack`
     pub index: pack::index::File,
 }
 

@@ -8,6 +8,7 @@ use std::{io::Read, path::PathBuf};
 
 /// Returned by [`loose::Object::decode()`] and [`loose::Object::stream()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("decompression of object data failed")]
     Decompress(#[from] zlib::Error),
@@ -42,7 +43,7 @@ impl loose::Object {
     /// Trees, Tags and Commits instead for convenient access to their payload.
     pub fn stream(&mut self) -> Result<stream::Reader<'_>, Error> {
         match &self.path {
-            Some(path) => Ok(stream::Reader::from_read(
+            Some(path) => Ok(stream::Reader::from_file(
                 self.header_size,
                 std::fs::File::open(path).map_err(|source| Error::Io {
                     source,

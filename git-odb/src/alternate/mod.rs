@@ -19,7 +19,7 @@
 use crate::compound;
 use std::{fs, io, path::PathBuf};
 
-#[allow(missing_docs)]
+///
 pub mod parse;
 #[allow(missing_docs)]
 pub mod unquote;

@@ -1,7 +1,9 @@
 use crate::{pack, pack::index};
 use git_object::owned;
 
+/// Returned by [`index::File::traverse_with_index()`] and [`index::File::traverse_with_lookup`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     #[error("One of the traversal processors failed")]
     Processor(#[source] E),

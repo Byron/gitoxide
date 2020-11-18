@@ -6,7 +6,9 @@ use git_object::{self as object, borrowed, owned};
 use smallvec::SmallVec;
 use std::{convert::TryInto, io, ops::Range};
 
+/// Returned by [`File::decompress_entry()`] and [`File::decode_entry()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Failed to decompress pack entry")]
     ZlibInflate(#[from] crate::zlib::Error),
@@ -32,6 +34,7 @@ pub enum ResolvedBase {
     InPack(pack::data::Entry),
     /// Indicates the object of `kind` was found outside of the pack, and its data was written into an output
     /// vector which now has a length of `end`.
+    #[allow(missing_docs)]
     OutOfPack { kind: object::Kind, end: usize },
 }
 

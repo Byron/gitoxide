@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 /// Returned by [`compound::Db::at()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("The objects directory at '{0}' is not an accessible directory")]
     Inaccessible(PathBuf),

@@ -5,9 +5,9 @@ use crate::{loose, pack};
 pub mod object;
 pub use object::Object;
 
-#[allow(missing_docs)]
+///
 pub mod init;
-#[allow(missing_docs)]
+///
 pub mod locate;
 mod write;
 

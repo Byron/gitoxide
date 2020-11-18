@@ -1,7 +1,9 @@
 use crate::{compound, loose, pack};
 use git_object::borrowed;
 
+/// Returned by [`compound::Db::locate()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("An error occurred while obtaining an object from the loose object store")]
     Loose(#[from] loose::db::locate::Error),

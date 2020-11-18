@@ -12,7 +12,9 @@ use git_features::{
 
 mod resolve;
 
+/// Returned by [`Tree::traverse()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("{message}")]
     ZlibInflate {
@@ -27,11 +29,18 @@ pub enum Error {
     Interrupted,
 }
 
+/// Additional context passed to a function to process the given object during traversal.
 pub struct Context<'a, S> {
+    /// The pack entry describing the object
     pub entry: &'a pack::data::Entry,
+    /// The offset at which `entry` ends in the pack, useful to learn about the exact range of `entry` within the pack.
     pub entry_end: u64,
+    /// The decompressed object itself, ready to be decoded.
     pub decompressed: &'a [u8],
+    /// Custom state known to the function
     pub state: &'a mut S,
+    /// The depth at which this object resides in the delta-tree. It represents the amount of base objects, with 0 indicating
+    /// an 'undeltified' object, and higher values indicating delta objects with the given amount of bases.
     pub level: u16,
 }
 
@@ -39,6 +48,26 @@ impl<T> Tree<T>
 where
     T: Default + Send,
 {
+    /// Traverse this tree of delta objects with a function `inspect_object` to process each object at will.
+    ///
+    /// * `should_run_in_parallel() -> bool` returns true if the underlying pack is big enough to warrant parallel traversal at all.
+    /// * `resolve(EntrySlice, &mut Vec<u8>) -> Option<()>` resolves the bytes in the pack for the given `EntrySlice` and stores them in the
+    ///   output vector. It returns `Some(())` if the object existed in the pack, or `None` to indicate a resolution error, which would abort the
+    ///   operation as well.
+    /// * `object_progress` is a progress instance to track progress for each object in the traversal.
+    /// * `size_progress` is a progress instance to track the overall progress.
+    /// * `tread_limit` is limits the amount of threads used if `Some` or otherwise defaults to all available logical cores.
+    /// * `pack_entries_end` marks one-past-the-last byte of the last entry in the pack, as the last entries size would otherwise
+    ///   be unknown as it's not part of the index file.
+    /// * `new_thread_state() -> State` is a function to create state to be used in each thread, invoked once per thread.
+    /// * `inspect_object(node_data: &mut T, progress: Progress, context: Context<ThreadLocal State>) -> Result<(), CustomError>` is a function
+    ///   running for each thread receiving fully decoded objects along with contextual information, which either succceeds with `Ok(())`
+    ///   or returns a `CustomError`.
+    ///   Note that `node_data` can be modified to allow storing maintaining computation results on a per-object basis.
+    ///
+    /// This method returns a vector of all tree items, along with their potentially modified custom node data.
+    ///
+    /// _Note_ that this method consumed the Tree to assure safe parallel traversal with mutation support.
     #[allow(clippy::too_many_arguments)]
     pub fn traverse<F, P, MBFN, S, E>(
         mut self,

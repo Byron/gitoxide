@@ -7,6 +7,10 @@ use std::collections::BTreeMap;
 pub struct Outcome {
     /// The average over all decoded objects
     pub average: pack::data::decode::Outcome,
+    /// A mapping of the length of the chain to the amount of objects at that length.
+    ///
+    /// A length of 0 indicates full objects, and everything above that involves the given amount
+    /// of delta objects.
     pub objects_per_chain_length: BTreeMap<u32, u32>,
     /// The amount of bytes in all compressed streams, one per entry
     pub total_compressed_entries_size: u64,
@@ -64,13 +68,13 @@ pub enum SafetyCheck {
 }
 
 impl SafetyCheck {
-    pub fn file_checksum(&self) -> bool {
+    pub(crate) fn file_checksum(&self) -> bool {
         matches!(self, SafetyCheck::All)
     }
-    pub fn object_checksum(&self) -> bool {
+    pub(crate) fn object_checksum(&self) -> bool {
         matches!(self, SafetyCheck::All | SafetyCheck::SkipFileChecksumVerification)
     }
-    pub fn fatal_decode_error(&self) -> bool {
+    pub(crate) fn fatal_decode_error(&self) -> bool {
         match self {
             SafetyCheck::All
             | SafetyCheck::SkipFileChecksumVerification

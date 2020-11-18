@@ -14,6 +14,7 @@ const REF_DELTA: u8 = 7;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
+    /// The entry's header
     pub header: Header,
     /// The decompressed size of the object in bytes
     pub decompressed_size: u64,
@@ -23,13 +24,16 @@ pub struct Entry {
 
 /// Access
 impl Entry {
+    /// Compute the pack offset to the base entry of the object represented by this entry.
     pub fn base_pack_offset(&self, distance: u64) -> u64 {
         let pack_offset = self.data_offset - self.header_size() as u64;
         pack_offset.checked_sub(distance).expect("in-bound distance of deltas")
     }
+    /// The pack offset at which this entry starts
     pub fn pack_offset(&self) -> u64 {
         self.data_offset - self.header_size() as u64
     }
+    /// The amount of bytes used to describe this entry in the pack. The header starts at [`Self::pack_offset()`]
     pub fn header_size(&self) -> usize {
         self.header
             .to_write(self.decompressed_size, io::sink())
@@ -39,6 +43,7 @@ impl Entry {
 
 /// Decoding
 impl Entry {
+    /// Decode an entry from the given entry data `d`, providing the `pack_offset` to allow tracking the start of the entry data section.
     pub fn from_bytes(d: &[u8], pack_offset: u64) -> Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
@@ -72,6 +77,7 @@ impl Entry {
         }
     }
 
+    /// Instantiate an `Entry` from the reader `r`, providing the `pack_offset` to allow tracking the start of the entry data section.
     pub fn from_read(mut r: impl io::Read, pack_offset: u64) -> Result<Entry, io::Error> {
         let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
 
@@ -111,23 +117,29 @@ impl Entry {
 /// The header portion of a pack data entry, identifying the kind of stored object.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
 pub enum Header {
+    /// The object is a commit
     Commit,
+    /// The object is a tree
     Tree,
+    /// The object is a blob
     Blob,
+    /// The object is a tag
     Tag,
-    /// An object within this pack if the LSB encoded offset would be larger than 20 bytes
-    /// Alternatively an object stored in the repository, if this is a thin pack currently
-    /// being received from a server.
-    RefDelta {
-        base_id: owned::Id,
-    },
-    /// The distance in bytes to the pack offset of the base object, measured from this objects pack offset, so that
-    /// base_pack_offset = pack_offset - base_distance
-    OfsDelta {
-        base_distance: u64,
-    },
+    /// Describes a delta-object which needs to be applied to a base. The base object is identified by the `base_id` field
+    /// which most commonly is found within the parent repository.
+    /// Most commonly used for thin-packs when receiving pack files from the server.
+    ///
+    /// # Note
+    /// This could also be an object within this pack if the LSB encoded offset would be larger than 20 bytes, which is unlikely to
+    /// happen.
+    RefDelta { base_id: owned::Id },
+    /// Describes a delta-object which needs to be applied to a base. The base object is measured as a distance from this object's
+    /// pack offset, so that `base_pack_offset = pack_offset - base_distance`
+    OfsDelta { base_distance: u64 },
 }
+
 impl Header {
     /// Subtract `distance` from `pack_offset` safely without the chance for overflow or no-ops if `distance` is 0.
     pub fn verified_base_pack_offset(pack_offset: u64, distance: u64) -> Option<u64> {

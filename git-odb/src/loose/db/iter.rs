@@ -2,7 +2,9 @@ use crate::loose::Db;
 use git_features::fs::WalkDir;
 use git_object::owned;
 
+/// Returned by [`Db::iter()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
     WalkDir(#[from] git_features::fs::walkdir::Error),

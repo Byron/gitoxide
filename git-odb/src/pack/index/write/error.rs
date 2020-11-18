@@ -1,7 +1,9 @@
 use crate::pack;
 use std::io;
 
+/// Returned by [`pack::index::File::write_data_iter_to_stream()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("An IO error occurred when reading the pack or creating a temporary file")]
     Io(#[from] io::Error),

@@ -6,7 +6,9 @@ use git_features::hash::Sha1;
 use git_object::owned;
 use std::{fs, io};
 
+/// Returned by [`Iter::new_from_header()`] and as part of `Item` of [`Iter`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("An IO operation failed while streaming an entry")]
     Io(#[from] io::Error),

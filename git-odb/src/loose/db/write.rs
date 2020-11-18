@@ -4,7 +4,9 @@ use git_object::{owned, HashKind};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
+/// Returned by the [`crate::Write`] trait implementation of [`Db`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Could not {message} '{path}'")]
     Io {

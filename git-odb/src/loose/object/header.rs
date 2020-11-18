@@ -4,6 +4,7 @@ use git_object as object;
 
 /// Returned by [`decode()`]
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("{message}: {:?}", std::str::from_utf8(.number))]
     ParseIntegerError {
