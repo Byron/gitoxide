@@ -16,7 +16,7 @@ doctest = false
 serde1 = ["serde", "git-object/serde1"]
 
 [dependencies]
-git-features = { version = "^0.6.0", path = "../git-features" }
+git-features = { version = "^0.7.0", path = "../git-features" }
 git-object = { version = "^0.4.0", path = "../git-object" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
