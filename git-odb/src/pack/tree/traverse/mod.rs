@@ -29,7 +29,7 @@ pub enum Error {
     Interrupted,
 }
 
-/// Additional context passed to a function to process the given object during traversal.
+/// Additional context passed to the `inspect_object(…)` function of the [`Tree::traverse()`] method.
 pub struct Context<'a, S> {
     /// The pack entry describing the object
     pub entry: &'a pack::data::Entry,
