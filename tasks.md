@@ -3,6 +3,15 @@
 * **git-odb**
   * [x] all docs, sans examples
   * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
+* **Documentation (with deny(missing_docs))**
+  * [ ] git-features
+  * [ ] git-object
+  * [ ] git-url
+  * [ ] git-ref
+  * [ ] git-packetline
+  * [ ] git-protocol
+  * [ ] git-transport
+  * [ ] git-commitgraph
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
 * **git-ref**
