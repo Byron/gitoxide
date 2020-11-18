@@ -79,22 +79,22 @@ use filebuffer::FileBuffer;
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
-pub enum Kind {
+pub enum Version {
     V1 = 1,
     V2 = 2,
 }
 
-impl Default for Kind {
+impl Default for Version {
     fn default() -> Self {
-        Kind::V2
+        Version::V2
     }
 }
 
-impl Kind {
+impl Version {
     /// The kind of hash to produce to be compatible to this kind of index
     pub fn hash(&self) -> git_object::HashKind {
         match self {
-            Kind::V1 | Kind::V2 => git_object::HashKind::Sha1,
+            Version::V1 | Version::V2 => git_object::HashKind::Sha1,
         }
     }
 }
@@ -105,7 +105,7 @@ const FAN_LEN: usize = 256;
 pub struct File {
     pub(crate) data: FileBuffer,
     path: std::path::PathBuf,
-    kind: Kind,
+    version: Version,
     num_objects: u32,
     fan: [u32; FAN_LEN],
 }
@@ -113,8 +113,8 @@ pub struct File {
 /// Basic file information
 impl File {
     /// The version of the pack index
-    pub fn kind(&self) -> Kind {
-        self.kind
+    pub fn version(&self) -> Version {
+        self.version
     }
     /// The path of the opened index file
     pub fn path(&self) -> &std::path::Path {

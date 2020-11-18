@@ -113,7 +113,7 @@ mod method {
             )?;
 
             let mut actual = Vec::<u8>::new();
-            let desired_kind = pack::index::Kind::default();
+            let desired_kind = pack::index::Version::default();
             let num_objects = pack_iter.len() as u32;
             let outcome = pack::index::File::write_data_iter_to_stream(
                 desired_kind,
@@ -285,7 +285,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
         let idx = index::File::at(&fixture_path(index_path))?;
         let pack = pack::data::File::at(&fixture_path(pack_path))?;
 
-        assert_eq!(pack.kind(), pack::data::Kind::V2);
+        assert_eq!(pack.version(), pack::data::Version::V2);
         assert_eq!(pack.num_objects(), idx.num_objects());
         for algo in ALGORITHMS {
             for mode in MODES {
@@ -365,28 +365,28 @@ fn iter() -> Result<(), Box<dyn std::error::Error>> {
     for (path, kind, num_objects, index_checksum, pack_checksum) in &[
         (
             INDEX_V1,
-            index::Kind::V1,
+            index::Version::V1,
             67,
             "5a2b20ef73ffe911178532df86232b64830cb536",
             "7ebaef998897d903e6e6b6763d3a6ec4dc5b845b",
         ),
         (
             INDEX_V2,
-            index::Kind::V2,
+            index::Version::V2,
             30,
             "560eba66e6b391eb83efc3ec9fc8a3087788911c",
             "f1cd3cc7bc63a4a2b357a475a58ad49b40355470",
         ),
         (
             SMALL_PACK_INDEX,
-            index::Kind::V2,
+            index::Version::V2,
             42,
             "544a7204a55f6e9cacccf8f6e191ea8f83575de3",
             "0f3ea84cd1bba10c2a03d736a460635082833e59",
         ),
     ] {
         let idx = index::File::at(&fixture_path(path))?;
-        assert_eq!(idx.kind(), *kind);
+        assert_eq!(idx.version(), *kind);
         assert_eq!(idx.num_objects(), *num_objects);
         assert_eq!(
             idx.verify_integrity(None::<(_, _, _, fn() -> cache::Noop)>, None, progress::Discard.into())

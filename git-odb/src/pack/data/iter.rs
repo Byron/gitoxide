@@ -54,7 +54,7 @@ pub struct Iter<R> {
     decompressor: Option<Box<Inflate>>,
     offset: u64,
     had_error: bool,
-    kind: pack::data::Kind,
+    kind: pack::data::Version,
     objects_left: u32,
     hash: Option<Sha1>,
     mode: Mode,
@@ -119,7 +119,7 @@ where
     R: io::BufRead,
 {
     /// The pack version currently being iterated
-    pub fn kind(&self) -> pack::data::Kind {
+    pub fn kind(&self) -> pack::data::Version {
         self.kind
     }
 
@@ -138,7 +138,7 @@ where
         let (kind, num_objects) = pack::data::parse::header(&header_data)?;
         assert_eq!(
             kind,
-            pack::data::Kind::V2,
+            pack::data::Version::V2,
             "let's stop here if we see undocumented pack formats"
         );
         Ok(Iter {

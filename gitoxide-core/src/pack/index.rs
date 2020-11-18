@@ -77,7 +77,7 @@ pub fn from_pack(
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
         iteration_mode: ctx.iteration_mode.into(),
-        index_kind: pack::index::Kind::default(),
+        index_kind: pack::index::Version::default(),
     };
     let out = ctx.out;
     let format = ctx.format;

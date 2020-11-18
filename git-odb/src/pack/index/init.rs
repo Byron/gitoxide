@@ -1,4 +1,4 @@
-use crate::pack::index::{self, Kind, FAN_LEN, V2_SIGNATURE};
+use crate::pack::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_object::SHA1_SIZE;
@@ -48,16 +48,16 @@ impl TryFrom<&Path> for index::File {
             let (kind, d) = {
                 let (sig, d) = data.split_at(V2_SIGNATURE.len());
                 if sig == V2_SIGNATURE {
-                    (Kind::V2, d)
+                    (Version::V2, d)
                 } else {
-                    (Kind::V1, &data[..])
+                    (Version::V1, &data[..])
                 }
             };
             let d = {
-                if let Kind::V2 = kind {
+                if let Version::V2 = kind {
                     let (vd, dr) = d.split_at(N32_SIZE);
                     let version = BigEndian::read_u32(vd);
-                    if version != Kind::V2 as u32 {
+                    if version != Version::V2 as u32 {
                         return Err(Error::UnsupportedVersion { version });
                     }
                     dr
@@ -74,7 +74,7 @@ impl TryFrom<&Path> for index::File {
         Ok(index::File {
             data,
             path: path.to_owned(),
-            kind,
+            version: kind,
             num_objects,
             fan,
         })

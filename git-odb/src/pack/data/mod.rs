@@ -28,7 +28,7 @@ pub type EntrySlice = std::ops::Range<u64>;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
-pub enum Kind {
+pub enum Version {
     V2,
     V3,
 }
@@ -37,15 +37,15 @@ pub enum Kind {
 pub struct File {
     data: FileBuffer,
     path: std::path::PathBuf,
-    kind: Kind,
+    version: Version,
     num_objects: u32,
 }
 
 /// Information about the pack data file itself
 impl File {
     /// The pack data version of this file
-    pub fn kind(&self) -> Kind {
-        self.kind
+    pub fn version(&self) -> Version {
+        self.version
     }
     /// The number of objects stored in this pack data file
     pub fn num_objects(&self) -> u32 {

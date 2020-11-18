@@ -63,7 +63,7 @@ mod new_from_header {
                 )?;
 
                 let num_objects = iter.len();
-                assert_eq!(iter.kind(), pack::data::Kind::V2);
+                assert_eq!(iter.kind(), pack::data::Version::V2);
                 assert_eq!(num_objects, 42);
                 assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
                 assert_eq!(iter.len(), 1);

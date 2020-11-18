@@ -79,7 +79,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
     ) -> io::Result<()> {
         let options = pack::bundle::write::Options {
             thread_limit: self.ctx.thread_limit,
-            index_kind: pack::index::Kind::V2,
+            index_kind: pack::index::Version::V2,
             iteration_mode: pack::data::iter::Mode::Verify,
         };
         let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
@@ -115,7 +115,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JSONBundleWriteOutcome {
-    pub index_kind: pack::index::Kind,
+    pub index_kind: pack::index::Version,
     pub index_hash: String,
 
     pub data_hash: String,
@@ -136,7 +136,7 @@ impl From<pack::index::write::Outcome> for JSONBundleWriteOutcome {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JSONOutcome {
     pub index: JSONBundleWriteOutcome,
-    pub pack_kind: pack::data::Kind,
+    pub pack_kind: pack::data::Version,
 
     pub index_path: Option<PathBuf>,
     pub data_path: Option<PathBuf>,

@@ -34,7 +34,7 @@ impl TryFrom<&Path> for data::File {
         Ok(data::File {
             data,
             path: path.to_owned(),
-            kind,
+            version: kind,
             num_objects,
         })
     }

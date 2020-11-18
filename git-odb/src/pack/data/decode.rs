@@ -103,7 +103,7 @@ impl File {
 
     fn assure_v2(&self) {
         assert!(
-            matches!(self.kind, crate::pack::data::Kind::V2),
+            matches!(self.version, crate::pack::data::Version::V2),
             "Only V2 is implemented"
         );
     }

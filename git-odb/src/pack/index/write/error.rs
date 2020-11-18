@@ -9,8 +9,8 @@ pub enum Error {
     Io(#[from] io::Error),
     #[error("A pack entry could not be extracted")]
     PackEntryDecode(#[from] pack::data::iter::Error),
-    #[error("Indices of type {} cannot be written, only {} are supported", *.0 as usize, pack::index::Kind::default() as usize)]
-    Unsupported(pack::index::Kind),
+    #[error("Indices of type {} cannot be written, only {} are supported", *.0 as usize, pack::index::Version::default() as usize)]
+    Unsupported(pack::index::Version),
     #[error("Ref delta objects are not supported as there is no way to look them up. Resolve them beforehand.")]
     IteratorInvariantNoRefDelta,
     #[error("The iterator failed to set a trailing hash over all prior pack entries in the last provided entry")]

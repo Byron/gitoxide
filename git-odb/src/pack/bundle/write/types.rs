@@ -12,7 +12,7 @@ pub struct Options {
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
     pub iteration_mode: pack::data::iter::Mode,
     /// The version of pack index to write, should be [`pack::index::Kind::default()`]
-    pub index_kind: pack::index::Kind,
+    pub index_kind: pack::index::Version,
 }
 
 /// Returned by [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
@@ -23,7 +23,7 @@ pub struct Outcome {
     /// The successful result of the index write operation
     pub index: pack::index::write::Outcome,
     /// The version of the pack
-    pub pack_kind: pack::data::Kind,
+    pub pack_kind: pack::data::Version,
 
     /// The path to the pack index file
     pub index_path: Option<PathBuf>,

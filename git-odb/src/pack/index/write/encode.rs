@@ -11,7 +11,7 @@ pub(crate) fn to_write(
     out: impl io::Write,
     entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::TreeEntry>>,
     pack_hash: &owned::Id,
-    kind: pack::index::Kind,
+    kind: pack::index::Version,
     mut progress: impl Progress,
 ) -> io::Result<owned::Id> {
     use io::Write;
@@ -19,7 +19,7 @@ pub(crate) fn to_write(
         !entries_sorted_by_oid.is_empty(),
         "Empty packs do not exists, or so I think"
     );
-    assert_eq!(kind, pack::index::Kind::V2, "Can only write V2 packs right now");
+    assert_eq!(kind, pack::index::Version::V2, "Can only write V2 packs right now");
     assert!(
         entries_sorted_by_oid.len() <= u32::MAX as usize,
         "a pack cannot have more than u32::MAX objects"

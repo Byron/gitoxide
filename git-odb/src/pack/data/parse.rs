@@ -19,15 +19,15 @@ pub enum Error {
 }
 
 /// Parses the first 12 bytes of a pack file, returning the pack version as well as the number of objects contained in the pack.
-pub fn header(data: &[u8; 12]) -> Result<(data::Kind, u32), Error> {
+pub fn header(data: &[u8; 12]) -> Result<(data::Version, u32), Error> {
     let mut ofs = 0;
     if &data[ofs..ofs + b"PACK".len()] != b"PACK" {
         return Err(Error::Corrupt("Pack data type not recognized".into()));
     }
     ofs += N32_SIZE;
     let kind = match BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]) {
-        2 => data::Kind::V2,
-        3 => data::Kind::V3,
+        2 => data::Version::V2,
+        3 => data::Version::V3,
         v => return Err(Error::UnsupportedVersion(v)),
     };
     ofs += N32_SIZE;

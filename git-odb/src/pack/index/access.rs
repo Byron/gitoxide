@@ -32,8 +32,8 @@ pub struct Entry {
 /// Iteration and access
 impl index::File {
     pub(crate) fn iter_v1<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
-        match self.kind {
-            index::Kind::V1 => self.data[V1_HEADER_SIZE..]
+        match self.version {
+            index::Version::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
                 .take(self.num_objects as usize)
                 .map(|c| {
@@ -44,14 +44,14 @@ impl index::File {
                         crc32: None,
                     }
                 }),
-            _ => panic!("Cannot use iter_v1() on index of type {:?}", self.kind),
+            _ => panic!("Cannot use iter_v1() on index of type {:?}", self.version),
         }
     }
 
     pub(crate) fn iter_v2<'a>(&'a self) -> impl Iterator<Item = Entry> + 'a {
         let pack64_offset = self.offset_pack_offset64_v2();
-        match self.kind {
-            index::Kind::V2 => izip!(
+        match self.version {
+            index::Version::V2 => izip!(
                 self.data[V2_HEADER_SIZE..].chunks(SHA1_SIZE),
                 self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
                 self.data[self.offset_pack_offset_v2()..].chunks(N32_SIZE)
@@ -62,7 +62,7 @@ impl index::File {
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
-            _ => panic!("Cannot use iter_v2() on index of type {:?}", self.kind),
+            _ => panic!("Cannot use iter_v2() on index of type {:?}", self.version),
         }
     }
 
@@ -76,9 +76,9 @@ impl index::File {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
-        let start = match self.kind {
-            index::Kind::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
-            index::Kind::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
+        let start = match self.version {
+            index::Version::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
+            index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
         borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
@@ -92,12 +92,12 @@ impl index::File {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
-        match self.kind {
-            index::Kind::V2 => {
+        match self.version {
+            index::Version::V2 => {
                 let start = self.offset_pack_offset_v2() + index * N32_SIZE;
                 self.pack_offset_from_offset_v2(&self.data[start..start + N32_SIZE], self.offset_pack_offset64_v2())
             }
-            index::Kind::V1 => {
+            index::Version::V1 => {
                 let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
                 BigEndian::read_u32(&self.data[start..start + N32_SIZE]) as u64
             }
@@ -114,12 +114,12 @@ impl index::File {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
-        match self.kind {
-            index::Kind::V2 => {
+        match self.version {
+            index::Version::V2 => {
                 let start = self.offset_crc32_v2() + index * N32_SIZE;
                 Some(BigEndian::read_u32(&self.data[start..start + N32_SIZE]))
             }
-            index::Kind::V1 => None,
+            index::Version::V1 => None,
         }
     }
 
@@ -150,9 +150,9 @@ impl index::File {
 
     /// An iterator over all [`Entries`][Entry] of this index file.
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = Entry> + 'a> {
-        match self.kind {
-            index::Kind::V2 => Box::new(self.iter_v2()),
-            index::Kind::V1 => Box::new(self.iter_v1()),
+        match self.version {
+            index::Version::V2 => Box::new(self.iter_v2()),
+            index::Version::V1 => Box::new(self.iter_v1()),
         }
     }
 
@@ -160,9 +160,9 @@ impl index::File {
     ///
     /// Useful to control an iteration over all pack entries in a cache-friendly way.
     pub fn sorted_offsets(&self) -> Vec<PackOffset> {
-        let mut ofs: Vec<_> = match self.kind {
-            index::Kind::V1 => self.iter().map(|e| e.pack_offset).collect(),
-            index::Kind::V2 => {
+        let mut ofs: Vec<_> = match self.version {
+            index::Version::V1 => self.iter().map(|e| e.pack_offset).collect(),
+            index::Version::V2 => {
                 let mut v = Vec::with_capacity(self.num_objects as usize);
                 let mut ofs32 = &self.data[self.offset_pack_offset_v2()..];
                 let pack_offset_64 = self.offset_pack_offset64_v2();
@@ -190,7 +190,7 @@ impl index::File {
     }
 
     fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> PackOffset {
-        debug_assert_eq!(self.kind, index::Kind::V2);
+        debug_assert_eq!(self.version, index::Version::V2);
         let ofs32 = BigEndian::read_u32(offset);
         if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
             let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;

@@ -29,7 +29,7 @@ impl Default for TreeEntry {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The version of the verified index
-    pub index_kind: pack::index::Kind,
+    pub index_kind: pack::index::Version,
     /// The verified checksum of the verified index
     pub index_hash: owned::Id,
 
@@ -58,7 +58,7 @@ impl pack::index::File {
     /// It should return `None` if the entry cannot be resolved from the pack that produced the `entries` iterator, causing
     /// the write operation to fail.
     pub fn write_data_iter_to_stream<F, F2>(
-        kind: pack::index::Kind,
+        kind: pack::index::Version,
         make_resolver: F,
         entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
         thread_limit: Option<usize>,
@@ -69,7 +69,7 @@ impl pack::index::File {
         F: FnOnce() -> io::Result<F2>,
         F2: for<'r> Fn(pack::data::EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     {
-        if kind != pack::index::Kind::default() {
+        if kind != pack::index::Version::default() {
             return Err(Error::Unsupported(kind));
         }
         let mut num_objects: usize = 0;
