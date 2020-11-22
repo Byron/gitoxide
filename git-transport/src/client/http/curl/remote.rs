@@ -25,7 +25,7 @@ impl Handler {
         let code = data
             .split(|b| *b == b' ')
             .nth(1)
-            .ok_or_else(|| "Expected HTTP/<VERSION> STATUS")?;
+            .ok_or("Expected HTTP/<VERSION> STATUS")?;
         let code = std::str::from_utf8(code)?;
         code.parse().map_err(Into::into)
     }
@@ -44,7 +44,7 @@ impl curl::easy::Handler for Handler {
     fn write(&mut self, data: &[u8]) -> Result<usize, curl::easy::WriteError> {
         drop(self.send_header.take()); // signal header readers to stop trying
         match self.send_data.as_mut() {
-            Some(writer) => writer.write_all(data).map(|_| data.len()).or_else(|_| Ok(0)),
+            Some(writer) => writer.write_all(data).map(|_| data.len()).or(Ok(0)),
             None => Ok(0), // nothing more to receive, reader is done
         }
     }

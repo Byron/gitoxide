@@ -25,7 +25,7 @@ pub fn decode(input: &[u8]) -> Result<(object::Kind, u64, usize), Error> {
     let header_end = input
         .iter()
         .position(|&b| b == 0)
-        .ok_or_else(|| Error::InvalidHeader("Did not find 0 byte in header"))?;
+        .ok_or(Error::InvalidHeader("Did not find 0 byte in header"))?;
     let header = &input[..header_end];
     let mut split = header.split(|&b| b == b' ');
     match (split.next(), split.next()) {

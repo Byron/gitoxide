@@ -122,7 +122,7 @@ impl pack::index::File {
                 RefDelta { .. } => return Err(Error::IteratorInvariantNoRefDelta),
                 OfsDelta { base_distance } => {
                     let base_pack_offset = pack::data::Header::verified_base_pack_offset(pack_offset, base_distance)
-                        .ok_or_else(|| Error::IteratorInvariantBaseOffset {
+                        .ok_or(Error::IteratorInvariantBaseOffset {
                             pack_offset,
                             distance: base_distance,
                         })?;

@@ -95,7 +95,7 @@ impl<T> Tree<T> {
                 }
                 RefDelta { base_id } => {
                     resolve_in_pack_id(base_id.to_borrowed())
-                        .ok_or_else(|| Error::UnresolvedRefDelta { id: base_id })
+                        .ok_or(Error::UnresolvedRefDelta { id: base_id })
                         .and_then(|base_pack_offset| {
                             tree.add_child(base_pack_offset, pack_offset, data).map_err(Into::into)
                         })?;

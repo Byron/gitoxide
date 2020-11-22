@@ -196,7 +196,7 @@ mod decode {
                         .as_entry()
                         .expect("entry")
                         .value
-                        .ok_or_else(|| Error::NoValue)?,
+                        .ok_or(Error::NoValue)?,
                 ),
             )
             .map_err(Into::into)

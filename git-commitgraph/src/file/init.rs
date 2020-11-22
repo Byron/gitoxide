@@ -279,9 +279,9 @@ impl TryFrom<&Path> for File {
             )));
         }
 
-        let fan_offset = fan_offset.ok_or_else(|| Error::MissingChunk(OID_FAN_CHUNK_ID))?;
-        let oid_lookup_offset = oid_lookup_offset.ok_or_else(|| Error::MissingChunk(OID_LOOKUP_CHUNK_ID))?;
-        let commit_data_offset = commit_data_offset.ok_or_else(|| Error::MissingChunk(COMMIT_DATA_CHUNK_ID))?;
+        let fan_offset = fan_offset.ok_or(Error::MissingChunk(OID_FAN_CHUNK_ID))?;
+        let oid_lookup_offset = oid_lookup_offset.ok_or(Error::MissingChunk(OID_LOOKUP_CHUNK_ID))?;
+        let commit_data_offset = commit_data_offset.ok_or(Error::MissingChunk(COMMIT_DATA_CHUNK_ID))?;
         if base_graph_count > 0 && base_graphs_list_offset == None {
             return Err(Error::MissingChunk(BASE_GRAPHS_LIST_CHUNK_ID));
         }

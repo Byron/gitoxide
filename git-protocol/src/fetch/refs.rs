@@ -213,41 +213,47 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
         if path.is_empty() {
             return Err(Error::MalformedV1RefLine(trimmed.to_owned()));
         }
-        if path.ends_with("^{}") {
-            let (previous_path, tag) = out_refs
-                .pop()
-                .and_then(InternalRef::unpack_direct)
-                .ok_or_else(|| Error::InvariantViolation("Expecting peeled refs to be preceeded by direct refs"))?;
-            if previous_path != path[..path.len() - "^{}".len()] {
-                return Err(Error::InvariantViolation(
-                    "Expecting peeled refs to have the same base path as the previous, unpeeled one",
-                ));
+        match path.strip_suffix("^{}") {
+            Some(stripped) => {
+                let (previous_path, tag) =
+                    out_refs
+                        .pop()
+                        .and_then(InternalRef::unpack_direct)
+                        .ok_or(Error::InvariantViolation(
+                            "Expecting peeled refs to be preceded by direct refs",
+                        ))?;
+                if previous_path != stripped {
+                    return Err(Error::InvariantViolation(
+                        "Expecting peeled refs to have the same base path as the previous, unpeeled one",
+                    ));
+                }
+                out_refs.push(InternalRef::Peeled {
+                    path: previous_path,
+                    tag,
+                    object: owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?,
+                });
             }
-            out_refs.push(InternalRef::Peeled {
-                path: previous_path,
-                tag,
-                object: owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?,
-            });
-        } else {
-            let object = owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
-            match out_refs
-                .iter()
-                .take(number_of_possible_symbolic_refs_for_lookup)
-                .position(|r| r.lookup_symbol_has_path(path))
-            {
-                Some(position) => match out_refs.swap_remove(position) {
-                    InternalRef::SymbolicForLookup { path: _, target } => out_refs.push(InternalRef::Symbolic {
-                        path: path.into(),
+            None => {
+                let object = owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
+                match out_refs
+                    .iter()
+                    .take(number_of_possible_symbolic_refs_for_lookup)
+                    .position(|r| r.lookup_symbol_has_path(path))
+                {
+                    Some(position) => match out_refs.swap_remove(position) {
+                        InternalRef::SymbolicForLookup { path: _, target } => out_refs.push(InternalRef::Symbolic {
+                            path: path.into(),
+                            object,
+                            target,
+                        }),
+                        _ => unreachable!("Bug in lookup_symbol_has_path - must return lookup symbols"),
+                    },
+                    None => out_refs.push(InternalRef::Direct {
                         object,
-                        target,
+                        path: path.into(),
                     }),
-                    _ => unreachable!("Bug in lookup_symbol_has_path - must return lookup symbols"),
-                },
-                None => out_refs.push(InternalRef::Direct {
-                    object,
-                    path: path.into(),
-                }),
-            };
+                };
+            }
         }
     }
     Ok(())

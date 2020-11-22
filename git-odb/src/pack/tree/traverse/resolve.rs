@@ -25,7 +25,7 @@ where
     let decompress_from_resolver = |slice: EntrySlice| -> Result<(pack::data::Entry, u64, Vec<u8>), Error> {
         let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize((slice.end - slice.start) as usize, 0);
-        resolve(slice.clone(), &mut bytes_buf).ok_or_else(|| Error::ResolveFailed {
+        resolve(slice.clone(), &mut bytes_buf).ok_or(Error::ResolveFailed {
             pack_offset: slice.start,
         })?;
         let entry = pack::data::Entry::from_bytes(&bytes_buf, slice.start);
