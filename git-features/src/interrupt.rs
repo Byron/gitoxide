@@ -1,3 +1,9 @@
+//! Process-global interrupt handling
+//!
+//! This module contains facilities to globally request an interrupt, which will cause supporting computations to
+//! abort once it is observed.
+//! Such checks for interrupts are provided in custom implementations of various traits to transparently add interrupt
+//! support even to methods who wouldn't otherwise.
 #[cfg(all(feature = "interrupt-handler", not(feature = "disable-interrupts")))]
 mod _impl {
     use std::{
@@ -80,6 +86,9 @@ pub fn trigger() {
     #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(true, Ordering::Relaxed);
 }
+/// Sets the interrupt request to false.
+///
+/// When in this state, there will be no interruption request.
 pub fn reset() {
     #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(false, Ordering::Relaxed);

@@ -2,7 +2,6 @@
 
 pub mod fs;
 pub mod hash;
-/// Process-global interrupt handling
 pub mod interrupt;
 pub mod parallel;
 #[cfg(feature = "pipe")]
