@@ -3,7 +3,8 @@
 //! This module contains facilities to globally request an interrupt, which will cause supporting computations to
 //! abort once it is observed.
 //! Such checks for interrupts are provided in custom implementations of various traits to transparently add interrupt
-//! support even to methods who wouldn't otherwise.
+//! support to methods who wouldn't otherwise by injecting it. see [`Read`].
+
 #[cfg(all(feature = "interrupt-handler", not(feature = "disable-interrupts")))]
 mod _impl {
     use std::{
@@ -11,6 +12,14 @@ mod _impl {
         sync::atomic::{AtomicUsize, Ordering},
     };
 
+    /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`interrupt()`][super::interrupt()] that way.
+    ///
+    /// When `Ctrl+C` is pressed, a message will be sent to `message_channel` to inform the user about it being registered, after all
+    /// actually responding to it is implementation dependent and might thus take some time (or not work at all)
+    ///
+    /// # Note
+    ///
+    /// This implementation is available only with the **interrupt-handler** feature toggle with the **disable-interrupts** feature disabled.
     pub fn init_handler(mut message_channel: impl io::Write + Send + 'static) {
         ctrlc::set_handler(move || {
             const MESSAGES: &[&str] = &[
@@ -23,7 +32,7 @@ mod _impl {
             if !super::is_triggered() {
                 CURRENT_MESSAGE.store(0, Ordering::Relaxed);
             }
-            let msg_idx =CURRENT_MESSAGE.fetch_add(1, Ordering::Relaxed);
+            let msg_idx = CURRENT_MESSAGE.fetch_add(1, Ordering::Relaxed);
             super::IS_INTERRUPTED.store(true, Ordering::Relaxed);
             writeln!(message_channel, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
         })
@@ -38,10 +47,14 @@ use std::sync::atomic::{AtomicBool, Ordering};
 mod _impl {
     use std::io;
 
+    /// Does nothing, as the **disable-interrupts** feature is enabled while the **interrupt-handler** feature is not present.
     pub fn init_handler(_message_channel: impl io::Write + Send + 'static) {}
 }
 pub use _impl::init_handler;
 
+/// A wrapper for implementors of [`std::io::Read`] or [`std::io::BufRead`] with interrupt support.
+///
+/// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {
     pub inner: R,
 }
@@ -74,21 +87,36 @@ where
 #[cfg(not(feature = "disable-interrupts"))]
 static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
+/// Returns true if an interrupt is requested.
+///
+/// Only implemented if the **disable-interrupts** feature toggle is not present.
 #[cfg(not(feature = "disable-interrupts"))]
 pub fn is_triggered() -> bool {
     IS_INTERRUPTED.load(Ordering::Relaxed)
 }
+
+/// Returns always false if the **disable-interrupts** feature is present.
 #[cfg(feature = "disable-interrupts")]
 pub fn is_triggered() -> bool {
     false
 }
+
+/// Trigger an interrupt, signalling to those checking for [`is_triggered()`] to stop what they are doing.
+///
+/// # Note
+/// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn trigger() {
     #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(true, Ordering::Relaxed);
 }
-/// Sets the interrupt request to false.
+/// Sets the interrupt request to false, thus allowing those checking for [`is_triggered()`] to proceed.
 ///
-/// When in this state, there will be no interruption request.
+/// Call this in code that is able to trigger an interrupt.
+/// This may also be performed by the [`ResetOnDrop`] helper to assure the trigger state is returned
+/// to its original state.
+///
+/// # Note
+/// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn reset() {
     #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(false, Ordering::Relaxed);
