@@ -16,7 +16,7 @@ parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus", "jwalk"]
 fast-sha1 = ["fastsha1"]
 interrupt-handler = ["ctrlc"]
 disable-interrupts = []
-pipe-io = ["bytes"]
+io-pipe = ["bytes"]
 
 [[test]]
 name = "parallel"

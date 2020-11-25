@@ -1,10 +1,10 @@
 mod io {
-    use git_features::pipe;
+    use git_features::io;
     use std::io::{BufRead, ErrorKind, Read, Write};
 
     #[test]
     fn threaded_read_to_end() {
-        let (mut writer, mut reader) = git_features::pipe::unidirectional(0);
+        let (mut writer, mut reader) = git_features::io::unidirectional(0);
 
         let message = "Hello, world!";
         std::thread::spawn(move || {
@@ -21,7 +21,7 @@ mod io {
 
     #[test]
     fn lack_of_reader_fails_with_broken_pipe() {
-        let (mut writer, _) = pipe::unidirectional(None);
+        let (mut writer, _) = io::unidirectional(None);
         assert_eq!(
             writer.write_all(b"must fail").unwrap_err().kind(),
             ErrorKind::BrokenPipe
@@ -29,7 +29,7 @@ mod io {
     }
     #[test]
     fn line_reading_one_by_one() {
-        let (mut writer, mut reader) = pipe::unidirectional(2);
+        let (mut writer, mut reader) = io::unidirectional(2);
         writer.write_all(b"a\n").expect("success");
         writer.write_all(b"b\nc").expect("success");
         drop(writer);
@@ -43,7 +43,7 @@ mod io {
 
     #[test]
     fn line_reading() {
-        let (mut writer, reader) = pipe::unidirectional(2);
+        let (mut writer, reader) = io::unidirectional(2);
         writer.write_all(b"a\n").expect("success");
         writer.write_all(b"b\nc\n").expect("success");
         drop(writer);
@@ -55,7 +55,7 @@ mod io {
 
     #[test]
     fn writer_can_inject_errors() {
-        let (writer, mut reader) = pipe::unidirectional(1);
+        let (writer, mut reader) = io::unidirectional(1);
         writer
             .channel
             .send(Err(std::io::Error::new(std::io::ErrorKind::Other, "the error")))
@@ -80,7 +80,7 @@ mod io {
 
     #[test]
     fn continue_on_empty_writes() {
-        let (mut writer, mut reader) = pipe::unidirectional(2);
+        let (mut writer, mut reader) = io::unidirectional(2);
         writer.write(&[]).expect("write successful and non-blocking");
         let input = b"hello";
         writer
@@ -95,7 +95,7 @@ mod io {
     fn small_reads() {
         const BLOCK_SIZE: usize = 20;
         let block_count = 20;
-        let (mut writer, mut reader) = pipe::unidirectional(Some(4));
+        let (mut writer, mut reader) = io::unidirectional(Some(4));
         std::thread::spawn(move || {
             for _ in 0..block_count {
                 let data = &[0; BLOCK_SIZE];

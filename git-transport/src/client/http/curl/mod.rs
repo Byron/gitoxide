@@ -1,5 +1,5 @@
 use crate::client::http;
-use git_features::pipe;
+use git_features::io;
 use std::{
     sync::mpsc::{Receiver, SyncSender},
     thread,
@@ -34,7 +34,7 @@ impl Curl {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
         upload: bool,
-    ) -> Result<http::PostResponse<pipe::io::Reader, pipe::io::Reader, pipe::io::Writer>, http::Error> {
+    ) -> Result<http::PostResponse<io::pipe::Reader, io::pipe::Reader, io::pipe::Writer>, http::Error> {
         let mut list = curl::easy::List::new();
         for header in headers {
             list.append(header.as_ref())?;
@@ -79,9 +79,9 @@ impl Default for Curl {
 
 #[allow(clippy::type_complexity)]
 impl crate::client::http::Http for Curl {
-    type Headers = pipe::io::Reader;
-    type ResponseBody = pipe::io::Reader;
-    type PostBody = pipe::io::Writer;
+    type Headers = io::pipe::Reader;
+    type ResponseBody = io::pipe::Reader;
+    type PostBody = io::pipe::Writer;
 
     fn get(
         &mut self,

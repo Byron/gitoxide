@@ -1,6 +1,6 @@
 use crate::client::http;
 use curl::easy::Easy2;
-use git_features::pipe;
+use git_features::io::pipe;
 use std::{
     io,
     io::{Read, Write},
@@ -11,9 +11,9 @@ use std::{
 
 #[derive(Default)]
 struct Handler {
-    send_header: Option<pipe::io::Writer>,
-    send_data: Option<pipe::io::Writer>,
-    receive_body: Option<pipe::io::Reader>,
+    send_header: Option<pipe::Writer>,
+    send_data: Option<pipe::Writer>,
+    receive_body: Option<pipe::Reader>,
     checked_status: bool,
 }
 
@@ -93,9 +93,9 @@ pub struct Request {
 }
 
 pub struct Response {
-    pub headers: pipe::io::Reader,
-    pub body: pipe::io::Reader,
-    pub upload_body: pipe::io::Writer,
+    pub headers: pipe::Reader,
+    pub body: pipe::Reader,
+    pub upload_body: pipe::Writer,
 }
 
 pub fn new() -> (
@@ -123,11 +123,11 @@ pub fn new() -> (
 
             let (receive_data, receive_headers, send_body) = {
                 let handler = handle.get_mut();
-                let (send, receive_data) = pipe::io::unidirectional(1);
+                let (send, receive_data) = pipe::unidirectional(1);
                 handler.send_data = Some(send);
-                let (send, receive_headers) = pipe::io::unidirectional(1);
+                let (send, receive_headers) = pipe::unidirectional(1);
                 handler.send_header = Some(send);
-                let (send_body, receive_body) = pipe::io::unidirectional(None);
+                let (send_body, receive_body) = pipe::unidirectional(None);
                 handler.receive_body = Some(receive_body);
                 (receive_data, receive_headers, send_body)
             };
