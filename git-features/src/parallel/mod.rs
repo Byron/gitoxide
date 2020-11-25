@@ -1,3 +1,4 @@
+//! Run computations in parallel, or not based on feature toggles.
 #[cfg(feature = "parallel")]
 mod in_parallel;
 mod serial;
