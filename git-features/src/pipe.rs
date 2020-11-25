@@ -1,6 +1,6 @@
-//! A unidirectional pipe for bytes, analogous to a unix pipe. Available with the `pipe` feature toggle.
-
-mod io {
+/// A unidirectional pipe for bytes, analogous to a unix pipe. Available with the `pipe` feature toggle.
+#[cfg(feature = "pipe-io")]
+pub mod io {
     use bytes::{Buf, BufMut, BytesMut};
     use std::io;
 
@@ -89,4 +89,3 @@ mod io {
         )
     }
 }
-pub use io::{unidirectional, Reader, Writer};

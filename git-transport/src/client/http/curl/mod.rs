@@ -34,7 +34,7 @@ impl Curl {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
         upload: bool,
-    ) -> Result<http::PostResponse<pipe::Reader, pipe::Reader, pipe::Writer>, http::Error> {
+    ) -> Result<http::PostResponse<pipe::io::Reader, pipe::io::Reader, pipe::io::Writer>, http::Error> {
         let mut list = curl::easy::List::new();
         for header in headers {
             list.append(header.as_ref())?;
@@ -79,9 +79,9 @@ impl Default for Curl {
 
 #[allow(clippy::type_complexity)]
 impl crate::client::http::Http for Curl {
-    type Headers = pipe::Reader;
-    type ResponseBody = pipe::Reader;
-    type PostBody = pipe::Writer;
+    type Headers = pipe::io::Reader;
+    type ResponseBody = pipe::io::Reader;
+    type PostBody = pipe::io::Writer;
 
     fn get(
         &mut self,
