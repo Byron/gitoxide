@@ -1,8 +1,10 @@
+//! Various `prodash` types along with various utilities for comfort.
 use std::io;
 
 pub use prodash::progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop};
 pub use prodash::{unit, Progress, Unit};
 
+/// A unit for displaying bytes with throughput and progress percentage
 pub fn bytes() -> Option<Unit> {
     Some(unit::dynamic_and_mode(
         unit::Bytes,
@@ -10,6 +12,7 @@ pub fn bytes() -> Option<Unit> {
     ))
 }
 
+/// A unit for displaying human readable numbers with throughput and progress percentage
 pub fn count(name: &'static str) -> Option<Unit> {
     Some(unit::dynamic_and_mode(
         unit::Human::new(
@@ -24,11 +27,12 @@ pub fn count(name: &'static str) -> Option<Unit> {
     ))
 }
 
+/// A predefined unit for displaying a multi-step progress
 pub fn steps() -> Option<Unit> {
     Some(unit::dynamic(unit::Range::new("steps")))
 }
 
-/// A structure passing every 'read' call through to the contained Progress instance using `inc_by(bytes_read)`.
+/// A structure passing every [`read`][std::io::Read::read()] call through to the contained Progress instance using [`inc_by(bytes_read)`][Progress::inc_by()].
 pub struct Read<R, P> {
     pub reader: R,
     pub progress: P,

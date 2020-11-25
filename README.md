@@ -239,11 +239,19 @@ become available.
   * [ ] API documentation with examples
   
 ### git-features
+  * **interrupt-handler** feature toggle
+    * Interruption for computations when receiving SIGTERM and SIGINT
+    * can be entirely didsabled with the **disable-interrupts** feature toggle
+  * **io-pipe** feature toggle
+    * a unix like pipeline for bytes
   * **parallel** feature toggle
     * _When on…_
       * `in_parallel`
       * `join`
     * _When off all functions execute serially_
+  * **fast-sha1**
+    * provides a faster SHA1 implementation using CPU intrinsics
+  * [x] API documentation
     
 ### git-tui
   * _a terminal user interface seeking to replace and improve on `tig`_
