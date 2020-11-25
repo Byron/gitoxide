@@ -1,12 +1,19 @@
+//! A unidirectional pipe for bytes, analogous to a unix pipe. Available with the `pipe` feature toggle.
+
 mod io {
     use bytes::{Buf, BufMut, BytesMut};
     use std::io;
 
+    /// The write-end of the pipe, receiving items to become available in the [`Reader`].
+    ///
+    /// It's commonly used with the [`std::io::Write`] trait it implements.
     pub struct Writer {
+        /// The channel through which bytes are transferred. Useful for sending [`std::io::Error`]s instead.
         pub channel: std::sync::mpsc::SyncSender<io::Result<BytesMut>>,
         buf: BytesMut,
     }
 
+    /// The read-end of the pipe, implementing the [`std::io::Read`] trait.
     pub struct Reader {
         channel: std::sync::mpsc::Receiver<io::Result<BytesMut>>,
         buf: BytesMut,
@@ -64,6 +71,10 @@ mod io {
         }
     }
 
+    /// Returns the _([`write`][Writer], [`read`][Reader])_ ends of a pipe for transferring bytes, analogous to a unix pipe.
+    ///
+    /// * `in_flight_writes` defines the amount of chunks of bytes to keep in memory until the `write` end will block when writing.
+    ///    If `None` or `0`, the `write` end will always block until the `read` end consumes the transferred bytes.
     pub fn unidirectional(in_flight_writes: impl Into<Option<usize>>) -> (Writer, Reader) {
         let (tx, rx) = std::sync::mpsc::sync_channel(in_flight_writes.into().unwrap_or(0));
         (
