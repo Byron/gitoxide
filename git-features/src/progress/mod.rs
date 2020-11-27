@@ -34,7 +34,9 @@ pub fn steps() -> Option<Unit> {
 
 /// A structure passing every [`read`][std::io::Read::read()] call through to the contained Progress instance using [`inc_by(bytes_read)`][Progress::inc_by()].
 pub struct Read<R, P> {
+    /// The implementor of [`std::io::Read`] to which progress is added
     pub reader: R,
+    /// The progress instance receiving progress information on each invocation of `reader`
     pub progress: P,
 }
 

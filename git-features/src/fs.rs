@@ -7,11 +7,13 @@
 //! * [`jwalk::WalkDir`](https://docs.rs/jwalk/0.5.1/jwalk/type.WalkDir.html) if `parallel` feature is enabled
 //! * [walkdir::WalkDir](https://docs.rs/walkdir/2.3.1/walkdir/struct.WalkDir.html) otherwise
 #[cfg(feature = "parallel")]
+///
 pub mod walkdir {
     pub use jwalk::{Error, WalkDir};
 }
 
 #[cfg(not(feature = "parallel"))]
+///
 pub mod walkdir {
     pub use walkdir::{Error, WalkDir};
 }

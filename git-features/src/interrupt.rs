@@ -56,6 +56,7 @@ pub use _impl::init_handler;
 ///
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {
+    /// The actual implementor of [`std::io::Read`] to which interrupt support will be added
     pub inner: R,
 }
 

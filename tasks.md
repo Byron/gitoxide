@@ -4,7 +4,7 @@
   * [x] all docs, sans examples
   * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
 * **Documentation (with deny(missing_docs))**
-  * [ ] git-features
+  * [x] git-features
   * [ ] git-object
   * [ ] git-url
   * [ ] git-ref
