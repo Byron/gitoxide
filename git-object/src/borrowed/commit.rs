@@ -13,21 +13,49 @@ use nom::{
 use smallvec::SmallVec;
 use std::borrow::Cow;
 
+/// A shared git commit, created using [`from_bytes()`].
+///
+/// A commit encapsulates information about a point in time at which the state of the repository is recorded, usually after a
+/// change which is documented in the commit `message`.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Commit<'a> {
-    // HEX SHA1 of tree object we point to
+    /// HEX hash of tree object we point to. Usually 40 bytes long.
+    ///
+    /// Use [`tree()`] to obtain a decoded version of it.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
-    /// HEX SHA1 of each parent commit. Empty for first commit in repository.
+    /// HEX hash of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 1]>,
+    /// Who wrote this commit.
     pub author: Signature<'a>,
+    /// Who committed this commit.
+    ///
+    /// This may be different from the `author` in case the author couldn't write to the repository themselves and
+    /// is commonly encountered with contributed commits.
     pub committer: Signature<'a>,
-    /// The name of the message encoding, otherwise UTF-8 should be assumed.
+    /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
     pub encoding: Option<&'a BStr>,
+    /// The commit message documenting the change.
     pub message: &'a BStr,
-    /// Extra header fields, either single line or multi-line.
+    /// Extra header fields, in order of them being encountered, made accessible with the iterator returned by [`extra_headers()`].
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
+}
+
+impl<'a> Commit<'a> {
+    /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
+    pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, Error> {
+        parse(data).map(|(_, t)| t).map_err(Error::from)
+    }
+    /// Return the `tree` fields hash.
+    pub fn tree(&self) -> owned::Id {
+        owned::Id::from_40_bytes_in_hex(self.tree).expect("prior validation")
+    }
+
+    /// Returns a convenient iterator over all extra headers.
+    pub fn extra_headers(&self) -> commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
+        commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
+    }
 }
 
 fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
@@ -70,16 +98,4 @@ fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, Error> {
             extra_headers,
         },
     ))
-}
-
-impl<'a> Commit<'a> {
-    pub fn tree(&self) -> owned::Id {
-        owned::Id::from_40_bytes_in_hex(self.tree).expect("prior validation")
-    }
-    pub fn from_bytes(d: &'a [u8]) -> Result<Commit<'a>, Error> {
-        parse(d).map(|(_, t)| t).map_err(Error::from)
-    }
-    pub fn extra_headers(&self) -> commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
-        commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
-    }
 }
