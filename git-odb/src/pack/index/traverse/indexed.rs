@@ -136,7 +136,7 @@ impl Default for EntryWithDefault {
             index_entry: pack::index::Entry {
                 pack_offset: 0,
                 crc32: None,
-                oid: git_object::owned::Id::null(),
+                oid: git_object::owned::Id::null_sha1(),
             },
             level: 0,
             object_kind: git_object::Kind::Tree,

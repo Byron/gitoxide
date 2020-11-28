@@ -18,7 +18,7 @@ pub(crate) struct TreeEntry {
 impl Default for TreeEntry {
     fn default() -> Self {
         TreeEntry {
-            id: owned::Id::null(),
+            id: owned::Id::null_sha1(),
             crc32: 0,
         }
     }
@@ -114,7 +114,7 @@ impl pack::index::File {
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
-                            id: owned::Id::null(),
+                            id: owned::Id::null_sha1(),
                             crc32,
                         },
                     )?;
@@ -130,7 +130,7 @@ impl pack::index::File {
                         base_pack_offset,
                         pack_offset,
                         TreeEntry {
-                            id: owned::Id::null(),
+                            id: owned::Id::null_sha1(),
                             crc32,
                         },
                     )?;

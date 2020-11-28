@@ -1,4 +1,4 @@
-//! Owned objects for use with serialization.
+//! Owned objects are Commits, Trees, Blobs and Tags that can be mutated and serialized.
 
 pub(crate) const NL: &[u8; 1] = b"\n";
 pub(crate) const SPACE: &[u8; 1] = b" ";

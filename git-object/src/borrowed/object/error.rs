@@ -1,6 +1,7 @@
 use nom::error::ParseError;
 use quick_error::quick_error;
 quick_error! {
+    /// An error returned by various [`Commit`][crate::borrowed::Commit] and [`Signature`][crate::borrowed::Signature] methods
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
