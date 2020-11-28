@@ -10,20 +10,33 @@ use nom::{
 };
 use std::convert::TryFrom;
 
+/// A directory recording contained files (blobs), directories (trees) and submodules (commits).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree<'a> {
+    /// The directories and files contained in this tree.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub entries: Vec<Entry<'a>>,
 }
 
+/// An element of a [`Tree`][Tree::entries]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
+    /// The kind of object to which `oid` is pointing
     pub mode: TreeMode,
+    /// The name of the file in the parent tree.
     pub filename: &'a BStr,
+    /// The id of the object representing the entry.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: borrowed::Id<'a>,
+}
+
+impl<'a> Tree<'a> {
+    /// Deserialize a Tree from `data`
+    pub fn from_bytes(data: &'a [u8]) -> Result<Tree<'a>, Error> {
+        parse(data).map(|(_, t)| t).map_err(Error::from)
+    }
 }
 
 impl TryFrom<&[u8]> for TreeMode {
@@ -63,10 +76,4 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, Error> {
 fn parse(i: &[u8]) -> IResult<&[u8], Tree<'_>, Error> {
     let (i, entries) = all_consuming(many1(parse_entry))(i)?;
     Ok((i, Tree { entries }))
-}
-
-impl<'a> Tree<'a> {
-    pub fn from_bytes(d: &'a [u8]) -> Result<Tree<'a>, Error> {
-        parse(d).map(|(_, t)| t).map_err(Error::from)
-    }
 }

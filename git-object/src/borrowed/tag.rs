@@ -12,18 +12,34 @@ use nom::{
     IResult,
 };
 
+/// Represents a git tag, commonly indicating a software release.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag<'a> {
-    // Target SHA1 in hex, always 40 lower case characters from 0-9 and a-f
+    /// The hash in hexadecimal being the object this tag points to. Use [`target()`][Tag::target()] to obtain a byte representation.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
-    // The name of the tag, e.g. "v1.0"
+    /// The name of the tag, e.g. "v1.0"
     pub name: &'a BStr,
+    /// The kind of object that `target` points to.
     pub target_kind: crate::Kind,
+    /// The message describing this release
     pub message: &'a BStr,
+    /// The author of the tag
     pub signature: Option<Signature<'a>>,
+    /// A cryptographic signature over the entire content of the serialized tag object thus far.
     pub pgp_signature: Option<&'a BStr>,
+}
+
+impl<'a> Tag<'a> {
+    /// Deserialize a tag from `data`
+    pub fn from_bytes(data: &'a [u8]) -> Result<Tag<'a>, Error> {
+        parse(data).map(|(_, t)| t).map_err(Error::from)
+    }
+    /// The object this tag points to as `Id`
+    pub fn target(&self) -> owned::Id {
+        owned::Id::from_40_bytes_in_hex(self.target).expect("prior validation")
+    }
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tag<'_>, Error> {
@@ -96,13 +112,4 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), Error> {
             },
         ),
     ))
-}
-
-impl<'a> Tag<'a> {
-    pub fn target(&self) -> owned::Id {
-        owned::Id::from_40_bytes_in_hex(self.target).expect("prior validation")
-    }
-    pub fn from_bytes(d: &'a [u8]) -> Result<Tag<'a>, Error> {
-        parse(d).map(|(_, t)| t).map_err(Error::from)
-    }
 }

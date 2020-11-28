@@ -13,7 +13,7 @@ use nom::{
 use smallvec::SmallVec;
 use std::borrow::Cow;
 
-/// A shared git commit, created using [`from_bytes()`].
+/// A shared git commit, created using [`from_bytes()`][Commit::from_bytes()].
 ///
 /// A commit encapsulates information about a point in time at which the state of the repository is recorded, usually after a
 /// change which is documented in the commit `message`.
@@ -22,7 +22,7 @@ use std::borrow::Cow;
 pub struct Commit<'a> {
     /// HEX hash of tree object we point to. Usually 40 bytes long.
     ///
-    /// Use [`tree()`] to obtain a decoded version of it.
+    /// Use [`tree()`][Commit::tree()] to obtain a decoded version of it.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
@@ -38,7 +38,7 @@ pub struct Commit<'a> {
     pub encoding: Option<&'a BStr>,
     /// The commit message documenting the change.
     pub message: &'a BStr,
-    /// Extra header fields, in order of them being encountered, made accessible with the iterator returned by [`extra_headers()`].
+    /// Extra header fields, in order of them being encountered, made accessible with the iterator returned by [`extra_headers()`][Commit::extra_headers()].
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 

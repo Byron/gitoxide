@@ -2,6 +2,7 @@ use nom::error::ParseError;
 use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         ParseIntegerError(msg: &'static str, number: crate::BString, err: btoi::ParseIntegerError) {
             display("{}: {:?}", msg, number)

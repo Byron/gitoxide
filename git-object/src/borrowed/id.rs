@@ -3,15 +3,18 @@ use bstr::ByteSlice;
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
 
-/// A reference to a SHA1 identifying objects
+/// A borrowed reference to a hash identifying objects
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub struct Id<'a>(&'a [u8; SHA1_SIZE]);
 
+/// Access
 impl<'a> Id<'a> {
+    /// The kind of hash used for this Id
     pub fn kind(&self) -> crate::HashKind {
         crate::HashKind::Sha1
     }
+    /// The first byte of the hash, commonly used to partition a set of `Id`s
     pub fn first_byte(&self) -> u8 {
         self.0[0]
     }
@@ -19,14 +22,23 @@ impl<'a> Id<'a> {
 
 /// Sha1 specific methods
 impl<'a> Id<'a> {
+    /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Id` represents.
+    ///
+    /// **Panics** if this is not a Sha1 hash, as identifiable by [`Id::kind()`].
     pub fn to_sha1_hex(&self) -> [u8; SHA1_SIZE * 2] {
         let mut buf = [0u8; SHA1_SIZE * 2];
         hex::encode_to_slice(self.0, &mut buf).expect("to count correctly");
         buf
     }
+
+    /// Returns the bytes making up the Sha1.
+    ///
+    /// **Panics** if this is not a Sha1 hash, as identifiable by [`Id::kind()`].
     pub fn sha1(&self) -> &[u8; SHA1_SIZE] {
         self.0
     }
+
+    /// Returns a Sha1 Id with all bytes being initialized to zero.
     pub fn null_sha1() -> Self {
         Id(&[0u8; SHA1_SIZE])
     }
