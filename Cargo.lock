@@ -130,9 +130,9 @@ checksum = "a4521f3e3d031370679b3b140beb36dfe4801b09ac77e30c61941f97df3ef28b"
 
 [[package]]
 name = "base64"
-version = "0.12.3"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3441f0f7b02788e948e47f457ca01f1d7e6d92c693bc132c22b087d3141c03ff"
+checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
 name = "bitflags"
@@ -200,9 +200,9 @@ checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "bytes"
-version = "0.5.6"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
+checksum = "e0dcbc35f504eb6fc275a6d20e4ebcda18cf50d40ba6fabff8c711fa16cb3b16"
 
 [[package]]
 name = "bytesize"
@@ -596,12 +596,12 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
 name = "env_logger"
-version = "0.7.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
+checksum = "f26ecb66b4bdca6c1409b40fb255eefc2bd4f6d135dab3c3124f80ffa2a9661e"
 dependencies = [
  "atty",
- "humantime 1.3.0",
+ "humantime",
  "log",
  "termcolor",
 ]
@@ -747,7 +747,7 @@ name = "git-config"
 version = "0.0.0"
 dependencies = [
  "bstr",
- "quick-error 2.0.0",
+ "quick-error",
 ]
 
 [[package]]
@@ -756,8 +756,8 @@ version = "0.8.0"
 dependencies = [
  "bytes",
  "crc",
- "crossbeam-channel 0.4.4",
- "crossbeam-utils 0.7.2",
+ "crossbeam-channel 0.5.0",
+ "crossbeam-utils 0.8.1",
  "ctrlc",
  "git-object",
  "jwalk",
@@ -783,7 +783,7 @@ dependencies = [
  "itoa",
  "nom",
  "pretty_assertions",
- "quick-error 2.0.0",
+ "quick-error",
  "serde",
  "smallvec",
 ]
@@ -821,7 +821,7 @@ dependencies = [
  "bstr",
  "git-odb",
  "hex",
- "quick-error 2.0.0",
+ "quick-error",
  "serde",
 ]
 
@@ -836,7 +836,7 @@ dependencies = [
  "git-packetline",
  "git-transport",
  "nom",
- "quick-error 2.0.0",
+ "quick-error",
  "serde",
 ]
 
@@ -845,14 +845,14 @@ name = "git-ref"
 version = "0.4.0"
 dependencies = [
  "bstr",
- "quick-error 2.0.0",
+ "quick-error",
 ]
 
 [[package]]
 name = "git-repository"
 version = "0.4.0"
 dependencies = [
- "quick-error 2.0.0",
+ "quick-error",
 ]
 
 [[package]]
@@ -865,7 +865,7 @@ dependencies = [
  "git-features",
  "git-packetline",
  "git-url",
- "quick-error 2.0.0",
+ "quick-error",
  "serde",
  "thiserror",
 ]
@@ -880,7 +880,7 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "home",
- "quick-error 2.0.0",
+ "quick-error",
  "serde",
  "url",
 ]
@@ -914,7 +914,7 @@ dependencies = [
  "git-odb",
  "git-protocol",
  "git-repository",
- "quick-error 2.0.0",
+ "quick-error",
  "serde",
  "serde_json",
 ]
@@ -963,15 +963,6 @@ name = "human_format"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86cce260d758a9aa3d7c4b99d55c815a540f8a37514ba6046ab6be402a157cb0"
-
-[[package]]
-name = "humantime"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df004cfca50ef23c36850aaaa59ad52cc70d0e90243c3c7737a4dd32dc7a3c4f"
-dependencies = [
- "quick-error 1.2.3",
-]
 
 [[package]]
 name = "humantime"
@@ -1392,7 +1383,7 @@ dependencies = [
  "futures-core",
  "futures-lite",
  "human_format",
- "humantime 2.0.1",
+ "humantime",
  "log",
  "parking_lot",
  "time",
@@ -1401,12 +1392,6 @@ dependencies = [
  "unicode-segmentation",
  "unicode-width",
 ]
-
-[[package]]
-name = "quick-error"
-version = "1.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quick-error"
