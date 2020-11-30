@@ -17,6 +17,9 @@
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
+* **git-index**
+  * [ ] Create an index from tree
+  * [ ] Checkout index to worktree
 * **git-repository**
   * [ ] instance for a valid looking repository
     * [ ] support shallow repos/references
