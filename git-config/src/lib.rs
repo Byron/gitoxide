@@ -4,6 +4,10 @@
 
 use std::ops::Range;
 
+/// A span is a range into a set of bytes - see it as a selection into a Git config file.
+///
+/// Similar to [`std::ops::RangeInclusive`], but tailor made to work for us.
+/// There are various issues with std ranges, which we don't have to opt into for the simple Range-like item we need.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 struct Span {
     pub start: usize,
@@ -28,7 +32,8 @@ impl Span {
 pub mod file;
 pub use file::File;
 
-mod value {
+/// A module with specialized value types as they exist within git config files.
+pub mod value {
     pub enum Color {
         Red,
         BrightRed,
@@ -48,39 +53,68 @@ mod value {
                 }
             }
         }
+        /// Git-config paths can contain `~` and more, see [the git documentation](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/Documentation/config.txt#L295:L295)
+        /// on what needs to be supported.
         pub fn path(_value: &BStr) -> Result<PathBuf, Error> {
-            unimplemented!("path_resolve")
+            unimplemented!("resolve::path")
         }
     }
 }
 
+/// Spanned items refer to their content using [`Span`]s, thus they act like a pointer into a byte buffer representing the config file.
+///
+/// These are inherently read-only, as they do not own any data but rather point to a buffer they don't even know.
 mod spanned {
     use crate::Span;
     // we parse leading and trailing whitespace into comments, avoiding the notion of whitespace.
     // This means we auto-trim whitespace otherwise, which I consider a feature
     pub(crate) type Comment = Span;
 
+    /// A section or sub-section (in case `sub_name` is `Some()`), i.e.
+    ///
+    /// ```text
+    /// [hello]
+    ///
+    /// [hello.world]
+    /// ```
     pub(crate) struct Section {
         pub(crate) name: Span,
         pub(crate) sub_name: Option<Span>,
     }
 
+    /// A key-value entry of a git-config file, like `name = value`
     pub(crate) struct Entry {
         pub(crate) name: Span,
         pub(crate) value: Option<Span>,
     }
 }
 
+/// Owned versions of what can be found in `spanned`, which allows these items to be altered.
+///
+/// All of these will *may* remember their originating `span` as `Some(…)`, which is the entire region in the config file they point to. This is important
+/// in case of updates. New owned items thus don't have a `span`, represented by `None`.
 mod owned {
     use crate::Span;
     use bstr::BString;
 
+    /// A key-value entry of a git-config file, like `name = value`
     pub struct Entry {
         pub name: BString,
         pub value: Option<BString>,
         pub(crate) span: Option<Span>,
     }
 
+    /// A section or sub-section (in case `sub_name` is `Some()`), with all their entries.
+    ///
+    /// For example
+    /// ```text
+    /// [hello]
+    /// a = 2
+    ///
+    /// [hello.world]
+    /// b = c
+    /// x = y
+    /// ```
     pub struct Section {
         pub name: BString,
         pub sub_name: Option<BString>,
@@ -128,6 +162,7 @@ mod owned {
     }
 }
 
+/// Borrowed items are nothing more than a fancy 'handle' to an item stored in a file, which can be made editable to make updates.
 mod borrowed {
     use crate::{file::File, owned};
 
@@ -183,6 +218,7 @@ mod decode {
         }
     }
 
+    /// Decode an entry value - it can be [encoded as described in the git config documentation](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/Documentation/config.txt#L74:L80)
     pub fn value(_input: &BStr) -> Result<Cow<'_, BStr>, Error> {
         unimplemented!("decode value from bstr")
     }

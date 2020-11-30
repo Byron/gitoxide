@@ -22,8 +22,10 @@ impl Token {
     }
 }
 
+/// The entry point into reading and writing git config files.
 pub struct File {
     buf: Vec<u8>,
+    /// A config file as parsed into tokens, where each [`Token`] is one of the three relevant items in git config files.
     tokens: Vec<Token>, // but how do we get fast lookups and proper value lookup based on decoded values?
                         // On the fly is easier, otherwise we have to deal with a lookup cache of sorts and
                         // many more allocations up front (which might be worth it). Cow<'a, _> would bind to
