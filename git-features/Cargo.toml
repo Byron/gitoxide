@@ -26,7 +26,7 @@ required-features = ["parallel"]
 [[test]]
 name = "pipe"
 path = "tests/pipe.rs"
-required-features = ["pipe"]
+required-features = ["io-pipe"]
 
 [dependencies]
 git-object = { version = "^0.4.0", path = "../git-object", optional = true }
