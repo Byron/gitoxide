@@ -1,6 +1,7 @@
 use crate::{borrowed, spanned, Span};
 use bstr::{BStr, ByteSlice};
 
+#[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
 pub(crate) enum Token {
     Section(spanned::Section),
     Entry(spanned::Entry),
@@ -23,13 +24,18 @@ impl Token {
 }
 
 /// The entry point into reading and writing git config files.
+///
+/// After reading a configuration file its contents is stored verbatim and indexed to allow retrieval
+/// of sections and entry values on demand. These are returned as [`borrowed`] items, which are read-only but
+/// can be transformed into editable items.
+#[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
 pub struct File {
     buf: Vec<u8>,
     /// A config file as parsed into tokens, where each [`Token`] is one of the three relevant items in git config files.
     tokens: Vec<Token>, // but how do we get fast lookups and proper value lookup based on decoded values?
                         // On the fly is easier, otherwise we have to deal with a lookup cache of sorts and
-                        // many more allocations up front (which might be worth it). Cow<'a, _> would bind to
-                        // our buffer so the cache can't be in this type.
+                        // many more allocations up front (which might be worth it only once we have measurements).
+                        // Cow<'a, _> would bind to our buffer so the cache can't be in this type.
                         // Probably it could be the 'Config' type which handles multiple files and treats them as one,
                         // and only if there is any need.
 }
@@ -45,6 +51,9 @@ impl File {
 }
 
 impl File {
+    /// Returns an iterator over all sections and sub-sections of the configuration file.
+    ///
+    /// Note that every entry must be part of a section, that is global entries/key-value pairs are not allowed.
     pub fn sections(&self) -> impl Iterator<Item = borrowed::Section<'_>> {
         self.tokens
             .iter()
@@ -54,6 +63,7 @@ impl File {
 }
 
 impl<'a> borrowed::Section<'a> {
+    /// Returns an iterator over all entries in a section.
     pub fn entries(&self) -> impl Iterator<Item = borrowed::Entry<'_>> {
         struct Iter<'a> {
             inner: Option<&'a [Token]>,
@@ -97,72 +107,5 @@ impl<'a> borrowed::Section<'a> {
     }
 }
 
-mod edit {
-    use crate::{borrowed, file::File, owned, Span};
-    use std::io;
-
-    impl Into<Edit> for owned::Section {
-        fn into(self) -> Edit {
-            Edit::SetSection(self)
-        }
-    }
-
-    impl Into<Edit> for owned::Entry {
-        fn into(self) -> Edit {
-            Edit::SetEntry(self)
-        }
-    }
-
-    enum Edit {
-        Delete(Span), // section or entry
-        SetSection(owned::Section),
-        SetEntry(owned::Entry),
-    }
-
-    /// Collects edits to be applied to a [`File`], to be written out eventually.
-    pub struct Edits<'a> {
-        parent: &'a File,
-        edits: Vec<Edit>,
-    }
-
-    impl<'a> Edits<'a> {
-        pub fn delete_section(&mut self, section: &borrowed::Section<'_>) -> &mut Self {
-            self.edits.push(Edit::Delete(
-                self.parent.token(section.index).as_section().expect("section").name,
-            ));
-            self
-        }
-        pub fn delete_entry(&mut self, entry: &borrowed::Entry<'_>) -> &mut Self {
-            self.edits.push(Edit::Delete(
-                self.parent.token(entry.index).as_entry().expect("entry").name,
-            ));
-            self
-        }
-        // Use with [`owned::Section`].
-        //
-        // Newly [instantiated][owned::Section::new()] sections will be appended, and existing ones can be edited
-        // by calling [`borrowed::Section::to_editable()`].
-        pub fn create_or_update_section(&mut self, section: owned::Section) -> &mut Self {
-            self.edits.push(Edit::SetSection(section));
-            self
-        }
-        pub fn create_or_update_entry(&mut self, entry: owned::Entry) -> &mut Self {
-            self.edits.push(Edit::SetEntry(entry));
-            self
-        }
-
-        pub fn to_write(&self, _out: impl io::Write) -> io::Result<()> {
-            unimplemented!("to write")
-        }
-    }
-
-    impl File {
-        pub fn edit(&self) -> Edits {
-            Edits {
-                parent: self,
-                edits: Vec::new(),
-            }
-        }
-    }
-}
+mod edit;
 pub use edit::Edits;

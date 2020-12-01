@@ -14,6 +14,7 @@
   * [ ] git-commitgraph
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
+  * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
