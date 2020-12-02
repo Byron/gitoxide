@@ -22,6 +22,14 @@ pub fn value(_input: &BStr) -> Result<Cow<'_, BStr>, Error> {
 
 /// Conversion methods for the value of an entry
 impl<'a> borrowed::Entry<'a> {
+    pub fn name(&self) -> Result<Cow<'a, BStr>, Error> {
+        value(
+            self.parent
+                .bytes_at(self.parent.token(self.index).as_entry().expect("entry").name),
+        )
+        .map_err(Into::into)
+    }
+
     pub fn as_string(&self) -> Result<Cow<'a, BStr>, Error> {
         value(
             self.parent.bytes_at(

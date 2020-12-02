@@ -47,6 +47,6 @@ mod spanned;
 mod owned;
 
 /// Borrowed items are nothing more than a fancy 'handle' to an item stored in a file, which can be made editable to make updates.
-mod borrowed;
+pub mod borrowed;
 
 mod decode;
