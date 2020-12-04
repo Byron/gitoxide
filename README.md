@@ -207,7 +207,6 @@ become available.
   * [ ] execute hooks
   * [ ] .gitignore handling
   * [ ] checkout/stage conversions clean + smudge as in .gitattributes
-  * [ ] read and write all data types
   * [ ] rev-parsing and ref history
   * [ ] worktree
   * [ ] remotes with push and pull
