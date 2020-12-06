@@ -4,6 +4,7 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
+    /// The Error used in [`Tree::write_to()`]
     #[derive(Debug)]
     pub enum Error {
         NewlineInFilename(name: BString) {

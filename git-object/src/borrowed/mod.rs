@@ -14,7 +14,6 @@ pub use tag::Tag;
 
 ///
 pub mod tree;
-#[doc(inline)]
 pub use tree::Tree;
 
 mod blob;

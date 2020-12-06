@@ -12,8 +12,8 @@ pub use id::{Error, Id};
 mod tag;
 pub use tag::Tag;
 
+///
 pub mod tree;
-#[doc(inline)]
 pub use tree::Tree;
 
 mod commit;
