@@ -95,13 +95,16 @@ impl fmt::Display for Kind {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
-#[repr(u16)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum TreeMode {
-    Tree = 0o040000u16,
-    Blob = 0o100644,
-    BlobExecutable = 0o100755,
-    Link = 0o120000,
-    Commit = 0o160000,
+///
+pub mod tree {
+    #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
+    #[repr(u16)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum Mode {
+        Tree = 0o040000u16,
+        Blob = 0o100644,
+        BlobExecutable = 0o100755,
+        Link = 0o120000,
+        Commit = 0o160000,
+    }
 }

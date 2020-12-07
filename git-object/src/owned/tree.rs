@@ -1,4 +1,4 @@
-use crate::{owned, owned::SPACE, TreeMode};
+use crate::{owned, owned::SPACE, tree::Mode};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;
@@ -19,23 +19,29 @@ impl From<Error> for io::Error {
     }
 }
 
+/// A mutable Tree, containing other trees, blobs or commits.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
     pub entries: Vec<Entry>,
 }
 
+/// An entry in a [`Tree`], similar to an entry in a directory.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
-    pub mode: TreeMode,
+    /// The kind of object to which `oid` is pointing
+    pub mode: Mode,
+    /// The name of the file in the parent tree.
     pub filename: BString,
+    /// The id of the object representing the entry.
     pub oid: owned::Id,
 }
 
-impl TreeMode {
+impl Mode {
+    /// Return the representation as used in the git serialization format.
     pub fn as_bytes(&self) -> &'static [u8] {
-        use TreeMode::*;
+        use Mode::*;
         match self {
             Tree => b"40000",
             Blob => b"100644",
@@ -47,6 +53,7 @@ impl TreeMode {
 }
 
 impl Tree {
+    /// Serialize this tree to `out` in the git serialization format.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         for Entry { mode, filename, oid } in &self.entries {
             out.write_all(mode.as_bytes())?;
