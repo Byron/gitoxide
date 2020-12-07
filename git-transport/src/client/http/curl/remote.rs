@@ -31,7 +31,7 @@ impl Handler {
     }
     fn parse_status(data: &[u8]) -> Option<(usize, Box<dyn std::error::Error + Send + Sync>)> {
         match Self::parse_status_inner(data) {
-            Ok(status) if status < 200 || status > 299 => {
+            Ok(status) if !(200..=299).contains(&status) => {
                 Some((status, format!("Received HTTP status {}", status).into()))
             }
             Ok(_) => None,

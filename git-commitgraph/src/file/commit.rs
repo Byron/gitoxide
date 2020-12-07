@@ -123,7 +123,7 @@ impl<'a> Eq for Commit<'a> {}
 
 impl<'a> PartialEq for Commit<'a> {
     fn eq(&self, other: &Self) -> bool {
-        self.file as *const File == other.file as *const File && self.pos == other.pos
+        std::ptr::eq(self.file, other.file) && self.pos == other.pos
     }
 }
 

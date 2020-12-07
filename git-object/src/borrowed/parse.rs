@@ -18,7 +18,7 @@ pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 pub(crate) const SPACE_OR_NL: &[u8] = b" \n";
 
-pub(crate) fn any_header_field_multi_line<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], BString), Error> {
+pub(crate) fn any_header_field_multi_line(i: &[u8]) -> IResult<&[u8], (&[u8], BString), Error> {
     let (i, (k, o)) = peek(tuple((
         terminated(is_not(SPACE_OR_NL), tag(SPACE)),
         recognize(tuple((
@@ -61,11 +61,7 @@ pub(crate) fn any_header_field<'a, T>(
 }
 
 fn is_hex_digit_lc(b: u8) -> bool {
-    match b {
-        b'0'..=b'9' => true,
-        b'a'..=b'f' => true,
-        _ => false,
-    }
+    matches!(b, b'0'..=b'9' | b'a'..=b'f')
 }
 
 pub(crate) fn hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {

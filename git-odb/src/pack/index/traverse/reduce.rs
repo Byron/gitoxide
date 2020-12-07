@@ -36,8 +36,10 @@ where
         pack_data_len_in_bytes: usize,
         check: traverse::SafetyCheck,
     ) -> Self {
-        let mut stats = traverse::Outcome::default();
-        stats.pack_size = pack_data_len_in_bytes as u64;
+        let stats = traverse::Outcome {
+            pack_size: pack_data_len_in_bytes as u64,
+            ..Default::default()
+        };
         Reducer {
             progress: &progress,
             check,

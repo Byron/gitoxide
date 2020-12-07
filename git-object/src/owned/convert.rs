@@ -1,6 +1,4 @@
 use crate::{borrowed, owned};
-use smallvec::SmallVec;
-use std::iter::FromIterator;
 
 impl Into<owned::Signature> for borrowed::Signature<'_> {
     fn into(self) -> owned::Signature {
@@ -47,11 +45,10 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
         } = self;
         owned::Commit {
             tree: owned::Id::from_40_bytes_in_hex(&tree).expect("40 bytes hex sha1"),
-            parents: SmallVec::from_iter(
-                parents
-                    .iter()
-                    .map(|parent| owned::Id::from_40_bytes_in_hex(parent).expect("40 bytes hex sha1")),
-            ),
+            parents: parents
+                .iter()
+                .map(|parent| owned::Id::from_40_bytes_in_hex(parent).expect("40 bytes hex sha1"))
+                .collect(),
             author: author.into(),
             committer: committer.into(),
             encoding: encoding.map(ToOwned::to_owned),
