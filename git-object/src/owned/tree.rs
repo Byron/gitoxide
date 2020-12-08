@@ -38,8 +38,9 @@ pub struct Entry {
     pub oid: owned::Id,
 }
 
+/// Serialization
 impl Mode {
-    /// Return the representation as used in the git serialization format.
+    /// Return the representation as used in the git internal format.
     pub fn as_bytes(&self) -> &'static [u8] {
         use Mode::*;
         match self {
@@ -52,8 +53,9 @@ impl Mode {
     }
 }
 
+/// Serialization
 impl Tree {
-    /// Serialize this tree to `out` in the git serialization format.
+    /// Serialize this tree to `out` in the git internal format.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         for Entry { mode, filename, oid } in &self.entries {
             out.write_all(mode.as_bytes())?;

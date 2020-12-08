@@ -97,6 +97,7 @@ impl fmt::Display for Kind {
 
 ///
 pub mod tree {
+    /// The mode of items storable in a tree, similar to the file mode on a unix file system.
     #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
     #[repr(u16)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
