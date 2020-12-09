@@ -19,7 +19,7 @@ indent cargo diet -n --package-size-limit 25KB
 (enter git-features && indent cargo diet -n --package-size-limit 15KB)
 (enter git-ref && indent cargo diet -n --package-size-limit 4KB)
 (enter git-url && indent cargo diet -n --package-size-limit 6KB)
-(enter git-object && indent cargo diet -n --package-size-limit 15KB)
+(enter git-object && indent cargo diet -n --package-size-limit 20KB)
 (enter git-commitgraph && indent cargo diet -n --package-size-limit 15KB)
 (enter git-odb && indent cargo diet -n --package-size-limit 65KB)
 (enter git-protocol && indent cargo diet -n --package-size-limit 20KB)

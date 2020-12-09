@@ -20,7 +20,7 @@ pub struct Signature<'a> {
     pub name: &'a BStr,
     /// The actor's email
     pub email: &'a BStr,
-    // The time stamp at which the signature was performed
+    /// The time stamp at which the signature was performed
     pub time: Time,
 }
 

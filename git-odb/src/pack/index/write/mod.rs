@@ -45,7 +45,7 @@ impl pack::index::File {
     /// The resolver produced by `make_resolver` must resolve pack entries from the same pack data file that produced the
     /// `entries` iterator.
     ///
-    /// `kind` is the version of pack index to produce, use [`pack::index::Kind::default()`] if in doubt.
+    /// `kind` is the version of pack index to produce, use [`pack::index::Version::default()`] if in doubt.
     /// `tread_limit` is used for a parallel tree traversal for obtaining object hashes with optimal performance.
     /// `root_progress` is the top-level progress to stay informed about the progress of this potentially long-running
     /// computation.

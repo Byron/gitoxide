@@ -6,6 +6,7 @@ use std::io;
 quick_error! {
     /// The Error used in [`Tree::write_to()`]
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         NewlineInFilename(name: BString) {
             display("Newlines are invalid in file paths: {:?}", name)
@@ -23,6 +24,7 @@ impl From<Error> for io::Error {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
+    /// The directories and files contained in this tree.
     pub entries: Vec<Entry>,
 }
 

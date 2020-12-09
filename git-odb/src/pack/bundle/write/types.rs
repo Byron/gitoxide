@@ -11,7 +11,7 @@ pub struct Options {
     pub thread_limit: Option<usize>,
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
     pub iteration_mode: pack::data::iter::Mode,
-    /// The version of pack index to write, should be [`pack::index::Kind::default()`]
+    /// The version of pack index to write, should be [`pack::index::Version::default()`]
     pub index_kind: pack::index::Version,
 }
 

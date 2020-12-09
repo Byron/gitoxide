@@ -12,7 +12,7 @@ mod _impl {
         sync::atomic::{AtomicUsize, Ordering},
     };
 
-    /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`interrupt()`][super::interrupt()] that way.
+    /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
     ///
     /// When `Ctrl+C` is pressed, a message will be sent to `message_channel` to inform the user about it being registered, after all
     /// actually responding to it is implementation dependent and might thus take some time (or not work at all)

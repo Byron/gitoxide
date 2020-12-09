@@ -1,6 +1,7 @@
 use crate::owned;
 use std::io;
 
+/// A mutable object representing [`Trees`][owned::Tree], [`Blobs`][owned::Blob], [`Commits`][owned::Commit] or [`Tags`][owned::Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(clippy::large_enum_variant)]
@@ -13,30 +14,35 @@ pub enum Object {
 
 /// Convenient extraction of typed object
 impl Object {
+    /// Returns a [`Blob`][owned::Blob] if it is one.
     pub fn as_blob(&self) -> Option<&owned::Blob> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
         }
     }
+    /// Returns a [`Commit`][owned::Commit] if it is one.
     pub fn as_commit(&self) -> Option<&owned::Commit> {
         match self {
             Object::Commit(v) => Some(v),
             _ => None,
         }
     }
+    /// Returns a [`Tree`][owned::Tree] if it is one.
     pub fn as_tree(&self) -> Option<&owned::Tree> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
+    /// Returns a [`Tag`][owned::Tag] if it is one.
     pub fn as_tag(&self) -> Option<&owned::Tag> {
         match self {
             Object::Tag(v) => Some(v),
             _ => None,
         }
     }
+    /// Returns the kind of object stored in this instance
     pub fn kind(&self) -> crate::Kind {
         match self {
             Object::Tree(_) => crate::Kind::Tree,
@@ -49,6 +55,7 @@ impl Object {
 
 /// Serialization
 impl Object {
+    /// Write the contained object to `out` in the git serialization format
     pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
         use Object::*;
         match self {

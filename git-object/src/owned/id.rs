@@ -4,7 +4,7 @@ use quick_error::quick_error;
 use std::{fmt, io, ops::Deref};
 
 quick_error! {
-    /// An error returned by [`Id::from_40_bytes_in_hex()]]
+    /// An error returned by [`Id::from_40_bytes_in_hex()`]
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
