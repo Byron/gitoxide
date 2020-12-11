@@ -2,6 +2,7 @@ use crate::{borrowed, file::File, owned, Span};
 use std::io;
 
 /// Represents a possible edit to the git configuration file
+#[must_use = "An edit must be added to an `Edits` instance to be effective"]
 enum Edit {
     Delete(Span), // section or entry
     SetSection(owned::Section),
@@ -58,6 +59,7 @@ impl<'a> Edits<'a> {
 }
 
 impl File {
+    #[must_use = "Edits must be written using the `write_to(…)` method to be effective."]
     pub fn edit(&self) -> Edits {
         Edits {
             parent: self,
