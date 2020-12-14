@@ -2,13 +2,16 @@ use crate::owned::SPACE;
 use quick_error::quick_error;
 use std::{fmt, io};
 
+/// Indicates if a number is positive or negative
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
 pub enum Sign {
     Plus,
     Minus,
 }
 
+/// A timestamp with timezone support
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
@@ -21,6 +24,7 @@ pub struct Time {
 }
 
 impl Time {
+    /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         itoa::write(&mut out, self.time)?;
         out.write_all(SPACE)?;
@@ -49,10 +53,13 @@ impl Time {
     }
 }
 
+/// The size of a SHA1 hash digest in bytes
 pub const SHA1_SIZE: usize = 20;
 
+/// The four types of objects that git differentiates
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
 pub enum Kind {
     Tree,
     Blob,
@@ -60,7 +67,9 @@ pub enum Kind {
     Tag,
 }
 quick_error! {
+    /// The Error used in [`Kind::from_bytes()`]
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         InvalidObjectKind(kind: crate::BString) {
             display("Unknown object kind: {:?}", std::str::from_utf8(&kind))
@@ -69,6 +78,7 @@ quick_error! {
 }
 
 impl Kind {
+    /// Parse a `Kind` from its serialized loose git objects.
     pub fn from_bytes(s: &[u8]) -> Result<Kind, Error> {
         Ok(match s {
             b"tree" => Kind::Tree,
@@ -79,6 +89,7 @@ impl Kind {
         })
     }
 
+    /// Return the name of `self` for use in serialized loose git objects.
     pub fn to_bytes(&self) -> &[u8] {
         match self {
             Kind::Tree => b"tree",
@@ -101,6 +112,7 @@ pub mod tree {
     #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
     #[repr(u16)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    #[allow(missing_docs)]
     pub enum Mode {
         Tree = 0o040000u16,
         Blob = 0o100644,

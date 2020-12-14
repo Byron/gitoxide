@@ -1,5 +1,7 @@
+//! This crate provides types for [read-only git objects][borrowed::Object] backed by bytes provided in gits serialization format
+//! as well as [mutable versions][owned::Object] of these. The latter can be serialized into gits serialization format for objects.
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, missing_docs)]
 
 use bstr::{BStr, BString, ByteSlice};
 
@@ -14,6 +16,7 @@ pub mod owned;
 mod types;
 pub use types::*;
 
+///
 pub mod commit;
 
 /// Denotes the kind of hash used to identify objects.

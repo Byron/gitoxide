@@ -13,13 +13,14 @@ pub struct Signature {
     pub name: BString,
     /// The actor's email
     pub email: BString,
-    // The time stamp at which the signature is performed
+    /// The time stamp at which the signature is performed
     pub time: Time,
 }
 
 quick_error! {
     /// The Error produced in by [`Signature::write_to()`]
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         IllegalCharacter {
             display("Signature name or email must not contain '<', '>' or \\n")

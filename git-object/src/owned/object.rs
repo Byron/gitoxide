@@ -4,7 +4,7 @@ use std::io;
 /// A mutable object representing [`Trees`][owned::Tree], [`Blobs`][owned::Blob], [`Commits`][owned::Commit] or [`Tags`][owned::Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(clippy::large_enum_variant)]
+#[allow(clippy::large_enum_variant, missing_docs)]
 pub enum Object {
     Tree(owned::Tree),
     Blob(owned::Blob),
