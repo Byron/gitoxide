@@ -28,4 +28,4 @@ anyhow = "1.0.31"
 quick-error = "2.0.0"
 bytesize = "1.0.1"
 serde_json = { version = "1.0.56", optional = true }
-git-commitgraph = { version = "^0.1.2", path = "../git-commitgraph" }
+git-commitgraph = { version = "^0.2.0", path = "../git-commitgraph" }
