@@ -31,6 +31,8 @@ jobs:
 
       - name: Get the release version from the tag
         if: env.ARTIFACT_VERSION == ''
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         run: |
           # Apparently, this is the right way to get a tag name. Really?
           #
@@ -118,6 +120,8 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Use Cross
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         run: |
           cargo install --git https://github.com/rust-embedded/cross
           echo "::set-env name=CARGO::cross"
@@ -137,6 +141,8 @@ jobs:
           path: artifacts
 
       - name: Set release upload URL and release version
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         shell: bash
         run: |
           release_upload_url="$(cat artifacts/release-upload-url)"
@@ -165,6 +171,8 @@ jobs:
 
       - name: Build archive
         shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         run: |
           staging="${{ env.BIN_NAME }}-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
@@ -233,6 +241,8 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Use Cross
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         run: |
           cargo install --git https://github.com/rust-embedded/cross
           echo "::set-env name=CARGO::cross"
@@ -253,6 +263,8 @@ jobs:
 
       - name: Set release upload URL and release version
         shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         run: |
           release_upload_url="$(cat artifacts/release-upload-url)"
           echo "::set-env name=RELEASE_UPLOAD_URL::$release_upload_url"
@@ -266,6 +278,8 @@ jobs:
 
       - name: Build archive
         shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true # this is the quick fix because we don't actually log anything secret.
         run: |
           staging="${{ env.BIN_NAME }}-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
