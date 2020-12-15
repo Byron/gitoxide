@@ -20,7 +20,7 @@ all-features = true
 [dependencies]
 git-repository = { version = "^0.4.0", path = "../git-repository" }
 git-object = { version = "^0.4.0", path = "../git-object" }
-git-odb = { version = "^0.4.0", path = "../git-odb" }
+git-odb = { version = "^0.5.0", path = "../git-odb" }
 git-protocol = { version = "0.1.0", path = "../git-protocol" }
 git-features = { version = "^0.8.0", path = "../git-features" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
