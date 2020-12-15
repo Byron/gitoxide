@@ -807,7 +807,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "git-odb",
