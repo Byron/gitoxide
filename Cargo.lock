@@ -848,7 +848,7 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "base64",
  "bstr",
