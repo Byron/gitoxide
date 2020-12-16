@@ -27,12 +27,12 @@ mod blob {
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Blob {
-        /// The data itself
+        /// The data itself.
         pub data: Vec<u8>,
     }
 
     impl Blob {
-        /// Write the blobs data to `out` verbatim
+        /// Write the blobs data to `out` verbatim.
         pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
             out.write_all(&self.data)
         }

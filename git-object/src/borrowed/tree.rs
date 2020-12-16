@@ -19,11 +19,11 @@ pub struct Tree<'a> {
     pub entries: Vec<Entry<'a>>,
 }
 
-/// An element of a [`Tree`][Tree::entries]
+/// An element of a [`Tree`][Tree::entries].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
-    /// The kind of object to which `oid` is pointing
+    /// The kind of object to which `oid` is pointing.
     pub mode: tree::Mode,
     /// The name of the file in the parent tree.
     pub filename: &'a BStr,
@@ -33,7 +33,7 @@ pub struct Entry<'a> {
 }
 
 impl<'a> Tree<'a> {
-    /// Deserialize a Tree from `data`
+    /// Deserialize a Tree from `data`.
     pub fn from_bytes(data: &'a [u8]) -> Result<Tree<'a>, Error> {
         parse(data).map(|(_, t)| t).map_err(Error::from)
     }

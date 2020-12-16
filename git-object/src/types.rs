@@ -11,20 +11,20 @@ pub enum Sign {
     Minus,
 }
 
-/// A timestamp with timezone support
+/// A timestamp with timezone support.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
-    /// time in seconds from epoch
+    /// time in seconds from epoch.
     pub time: u32,
-    /// time offset in seconds, may be negative to match the sign
+    /// time offset in seconds, may be negative to match the sign.
     pub offset: i32,
-    /// the sign seen in front of -0000
+    /// the sign seen in front of -0000.
     pub sign: Sign,
 }
 
 impl Time {
-    /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags
+    /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         itoa::write(&mut out, self.time)?;
         out.write_all(SPACE)?;
@@ -64,7 +64,7 @@ pub enum Kind {
     Tag,
 }
 quick_error! {
-    /// The Error used in [`Kind::from_bytes()`]
+    /// The Error used in [`Kind::from_bytes()`].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {

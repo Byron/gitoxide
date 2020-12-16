@@ -17,7 +17,7 @@ pub(crate) struct Section {
     pub(crate) sub_name: Option<Span>,
 }
 
-/// A key-value entry of a git-config file, like `name = value`
+/// A key-value entry of a git-config file, like `name = value`.
 #[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
 pub(crate) struct Entry {
     pub(crate) name: Span,

@@ -4,7 +4,7 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
-    /// The Error used in [`Tree::write_to()`]
+    /// The Error used in [`Tree::write_to()`].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -32,7 +32,7 @@ pub struct Tree {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
-    /// The kind of object to which `oid` is pointing
+    /// The kind of object to which `oid` is pointing to.
     pub mode: Mode,
     /// The name of the file in the parent tree.
     pub filename: BString,

@@ -4,7 +4,7 @@ use std::convert::Infallible;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Blob<'a> {
-    /// The bytes themselves
+    /// The bytes themselves.
     pub data: &'a [u8],
 }
 

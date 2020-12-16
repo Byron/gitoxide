@@ -24,7 +24,7 @@ mod _impl {
     }
 }
 
-/// A 20 bytes digest produced by a [`Sha1`] hash implementation
+/// A 20 bytes digest produced by a [`Sha1`] hash implementation.
 pub type Sha1Digest = [u8; 20];
 
 #[cfg(feature = "fast-sha1")]

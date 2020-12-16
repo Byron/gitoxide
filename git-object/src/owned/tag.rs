@@ -4,7 +4,7 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
-    /// An Error used in [`Tag::write_to()`]
+    /// An Error used in [`Tag::write_to()`].
     #[derive(Debug)]
     pub enum Error {
         StartsWithDash {
@@ -24,26 +24,26 @@ impl From<Error> for io::Error {
     }
 }
 
-/// A mutable git tag
+/// A mutable git tag.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
-    /// The hash this tag is pointint to
+    /// The hash this tag is pointing to.
     pub target: owned::Id,
-    /// The kind of object this tag is pointing to
+    /// The kind of object this tag is pointing to.
     pub target_kind: crate::Kind,
-    /// The name of the tag, e.g. "v1.0"
+    /// The name of the tag, e.g. "v1.0".
     pub name: BString,
-    /// The message describing the tag
+    /// The message describing the tag.
     pub message: BString,
-    /// The tags author
+    /// The tags author.
     pub signature: Option<owned::Signature>,
-    /// A pgp signature over all bytes of the encoded tag, excluding the pgp signature itself
+    /// A pgp signature over all bytes of the encoded tag, excluding the pgp signature itself.
     pub pgp_signature: Option<BString>,
 }
 
 impl Tag {
-    /// Writes the encoded tag to `out`
+    /// Writes the encoded tag to `out`.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         ser::trusted_header_id(b"object", &self.target, &mut out)?;
         ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;

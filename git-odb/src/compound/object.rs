@@ -10,7 +10,7 @@ pub enum Object<'a> {
 
 /// Access
 impl<'a> Object<'a> {
-    /// Returns the object [`kind`][`git_object::Kind`]
+    /// Returns the object [`kind`][`git_object::Kind`].
     pub fn kind(&self) -> git_object::Kind {
         match self {
             Object::Borrowed(object) => object.kind,
@@ -18,7 +18,7 @@ impl<'a> Object<'a> {
         }
     }
 
-    /// Returns the uncompressed size of the uncompressed object data in bytes
+    /// Returns the uncompressed size of the uncompressed object data in bytes.
     pub fn size(&self) -> usize {
         match self {
             Object::Borrowed(object) => object.data.len(),
@@ -31,7 +31,7 @@ impl<'a> Object<'a> {
 pub mod decode {
     use crate::{compound::Object, loose};
 
-    /// Returned by [`Object::decode()`]
+    /// Returned by [`Object::decode()`].
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -58,7 +58,7 @@ pub mod verify {
     use crate::{compound::Object, loose};
     use git_object::borrowed;
 
-    /// Returned by [`Object::verify_checksum()`]
+    /// Returned by [`Object::verify_checksum()`].
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {

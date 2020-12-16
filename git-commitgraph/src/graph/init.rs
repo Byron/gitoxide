@@ -39,7 +39,7 @@ pub enum Error {
     TooManyCommits(u64),
 }
 
-/// Instantiate a `Graph` from various sources
+/// Instantiate a `Graph` from various sources.
 impl Graph {
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())

@@ -9,16 +9,16 @@ use std::io;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature {
-    /// The actors name
+    /// The actors name.
     pub name: BString,
-    /// The actor's email
+    /// The actor's email.
     pub email: BString,
-    /// The time stamp at which the signature is performed
+    /// The time stamp at which the signature is performed.
     pub time: Time,
 }
 
 quick_error! {
-    /// The Error produced in by [`Signature::write_to()`]
+    /// The Error produced in by [`Signature::write_to()`].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -35,7 +35,7 @@ impl From<Error> for io::Error {
 }
 
 impl Signature {
-    /// Serialize this instance to `out` in the git serialization format for actors
+    /// Serialize this instance to `out` in the git serialization format for actors.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         out.write_all(validated_token(self.name.as_bstr())?)?;
         out.write_all(SPACE)?;

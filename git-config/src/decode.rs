@@ -20,7 +20,7 @@ pub fn value(_input: &BStr) -> Result<Cow<'_, BStr>, Error> {
     unimplemented!("decode value from bstr")
 }
 
-/// Conversion methods for the value of an entry
+/// Conversion methods for the value of an entry.
 impl<'a> borrowed::Entry<'a> {
     pub fn name(&self) -> Result<Cow<'a, BStr>, Error> {
         value(

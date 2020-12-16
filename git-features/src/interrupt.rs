@@ -15,7 +15,7 @@ mod _impl {
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
     ///
     /// When `Ctrl+C` is pressed, a message will be sent to `message_channel` to inform the user about it being registered, after all
-    /// actually responding to it is implementation dependent and might thus take some time (or not work at all)
+    /// actually responding to it is implementation dependent and might thus take some time (or not work at all).
     ///
     /// # Note
     ///
@@ -56,7 +56,7 @@ pub use _impl::init_handler;
 ///
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {
-    /// The actual implementor of [`std::io::Read`] to which interrupt support will be added
+    /// The actual implementor of [`std::io::Read`] to which interrupt support will be added.
     pub inner: R,
 }
 

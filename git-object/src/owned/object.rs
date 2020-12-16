@@ -12,7 +12,7 @@ pub enum Object {
     Tag(owned::Tag),
 }
 
-/// Convenient extraction of typed object
+/// Convenient extraction of typed object.
 impl Object {
     /// Returns a [`Blob`][owned::Blob] if it is one.
     pub fn as_blob(&self) -> Option<&owned::Blob> {
@@ -42,7 +42,7 @@ impl Object {
             _ => None,
         }
     }
-    /// Returns the kind of object stored in this instance
+    /// Returns the kind of object stored in this instance.
     pub fn kind(&self) -> crate::Kind {
         match self {
             Object::Tree(_) => crate::Kind::Tree,
@@ -55,7 +55,7 @@ impl Object {
 
 /// Serialization
 impl Object {
-    /// Write the contained object to `out` in the git serialization format
+    /// Write the contained object to `out` in the git serialization format.
     pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
         use Object::*;
         match self {

@@ -6,7 +6,7 @@ pub struct ExtraHeaders<I> {
     inner: I,
 }
 
-/// Instantiation and convenience
+/// Instantiation and convenience.
 impl<'a, I> ExtraHeaders<I>
 where
     I: Iterator<Item = (&'a BStr, &'a BStr)>,
@@ -33,7 +33,7 @@ where
         self.find_all("mergetag").map(|b| borrowed::Tag::from_bytes(b))
     }
 
-    /// Return the cryptographic signature provided by gpg/pgp verbatim
+    /// Return the cryptographic signature provided by gpg/pgp verbatim.
     pub fn pgp_signature(self) -> Option<&'a BStr> {
         self.find("gpgsig")
     }

@@ -19,24 +19,24 @@ pub struct Tag<'a> {
     /// The hash in hexadecimal being the object this tag points to. Use [`target()`][Tag::target()] to obtain a byte representation.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
-    /// The name of the tag, e.g. "v1.0"
+    /// The name of the tag, e.g. "v1.0".
     pub name: &'a BStr,
     /// The kind of object that `target` points to.
     pub target_kind: crate::Kind,
-    /// The message describing this release
+    /// The message describing this release.
     pub message: &'a BStr,
-    /// The author of the tag
+    /// The author of the tag.
     pub signature: Option<Signature<'a>>,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
     pub pgp_signature: Option<&'a BStr>,
 }
 
 impl<'a> Tag<'a> {
-    /// Deserialize a tag from `data`
+    /// Deserialize a tag from `data`.
     pub fn from_bytes(data: &'a [u8]) -> Result<Tag<'a>, Error> {
         parse(data).map(|(_, t)| t).map_err(Error::from)
     }
-    /// The object this tag points to as `Id`
+    /// The object this tag points to as `Id`.
     pub fn target(&self) -> owned::Id {
         owned::Id::from_40_bytes_in_hex(self.target).expect("prior validation")
     }

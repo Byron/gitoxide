@@ -4,7 +4,7 @@ use std::io;
 pub use prodash::progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop};
 pub use prodash::{unit, Progress, Unit};
 
-/// A unit for displaying bytes with throughput and progress percentage
+/// A unit for displaying bytes with throughput and progress percentage.
 pub fn bytes() -> Option<Unit> {
     Some(unit::dynamic_and_mode(
         unit::Bytes,
@@ -12,7 +12,7 @@ pub fn bytes() -> Option<Unit> {
     ))
 }
 
-/// A unit for displaying human readable numbers with throughput and progress percentage
+/// A unit for displaying human readable numbers with throughput and progress percentage.
 pub fn count(name: &'static str) -> Option<Unit> {
     Some(unit::dynamic_and_mode(
         unit::Human::new(

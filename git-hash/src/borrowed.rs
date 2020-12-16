@@ -12,11 +12,11 @@ pub struct Digest<'a>(&'a [u8; SIZE_OF_SHA1_DIGEST]);
 
 /// Access
 impl<'a> Digest<'a> {
-    /// The kind of hash used for this Id
+    /// The kind of hash used for this Digest
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::Sha1
     }
-    /// The first byte of the hash, commonly used to partition a set of `Id`s
+    /// The first byte of the hash, commonly used to partition a set of `Digest`s
     pub fn first_byte(&self) -> u8 {
         self.0[0]
     }
@@ -24,7 +24,7 @@ impl<'a> Digest<'a> {
 
 /// Sha1 specific methods
 impl<'a> Digest<'a> {
-    /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Id` represents.
+    /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Digest` represents.
     ///
     /// **Panics** if this is not a Sha1 hash, as identifiable by [`Digest::kind()`].
     pub fn to_sha1_hex(&self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
@@ -40,7 +40,7 @@ impl<'a> Digest<'a> {
         self.0
     }
 
-    /// Returns a Sha1 Id with all bytes being initialized to zero.
+    /// Returns a Sha1 digest with all bytes being initialized to zero.
     pub fn null_sha1() -> Self {
         Digest(&[0u8; SIZE_OF_SHA1_DIGEST])
     }
@@ -82,7 +82,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for Digest<'a> {
         impl<'de: 'a, 'a> serde::de::Visitor<'de> for __Visitor<'de, 'a> {
             type Value = Digest<'a>;
             fn expecting(&self, __formatter: &mut serde::export::Formatter<'_>) -> serde::export::fmt::Result {
-                serde::export::Formatter::write_str(__formatter, "tuple struct Id")
+                serde::export::Formatter::write_str(__formatter, "tuple struct Digest")
             }
             #[inline]
             fn visit_newtype_struct<__E>(self, __e: __E) -> serde::export::Result<Self::Value, __E::Error>
@@ -112,7 +112,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for Digest<'a> {
                     serde::export::None => {
                         return serde::export::Err(serde::de::Error::invalid_length(
                             0usize,
-                            &"tuple struct Id with 1 element",
+                            &"tuple struct Digest with 1 element",
                         ));
                     }
                 };
@@ -121,7 +121,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for Digest<'a> {
         }
         serde::Deserializer::deserialize_newtype_struct(
             deserializer,
-            "Id",
+            "Digest",
             __Visitor {
                 marker: serde::export::PhantomData::<Digest<'a>>,
                 lifetime: serde::export::PhantomData,
