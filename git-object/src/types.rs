@@ -11,15 +11,15 @@ pub enum Sign {
     Minus,
 }
 
-/// A timestamp with timezone support.
+/// A timestamp with timezone.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
     /// time in seconds from epoch.
     pub time: u32,
-    /// time offset in seconds, may be negative to match the sign.
+    /// time offset in seconds, may be negative to match the `sign` field.
     pub offset: i32,
-    /// the sign seen in front of -0000.
+    /// the sign of `offset`, used to encode `-0000` which would otherwise loose sign information.
     pub sign: Sign,
 }
 
@@ -106,6 +106,8 @@ impl fmt::Display for Kind {
 ///
 pub mod tree {
     /// The mode of items storable in a tree, similar to the file mode on a unix file system.
+    ///
+    /// Used in [owned::Entry][crate::owned::tree::Entry] and [borrowed::Entry][crate::borrowed::tree::Entry].
     #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
     #[repr(u16)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

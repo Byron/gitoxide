@@ -8,7 +8,7 @@
   * [x] use `git-id` inside of `git-features`, remove cycle
 * **Documentation (with deny(missing_docs))**
   * [x] git-features
-  * [ ] git-object
+  * [x] git-object
   * [ ] git-url
   * [ ] git-ref
   * [ ] git-packetline
