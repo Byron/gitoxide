@@ -13,7 +13,7 @@ use nom::{
 use smallvec::SmallVec;
 use std::borrow::Cow;
 
-/// A shared git commit, created using [`from_bytes()`][Commit::from_bytes()].
+/// A git commit parsed using [`from_bytes()`][Commit::from_bytes()].
 ///
 /// A commit encapsulates information about a point in time at which the state of the repository is recorded, usually after a
 /// change which is documented in the commit `message`.
@@ -47,7 +47,7 @@ impl<'a> Commit<'a> {
     pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, Error> {
         parse(data).map(|(_, t)| t).map_err(Error::from)
     }
-    /// Return the `tree` fields hash.
+    /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> owned::Id {
         owned::Id::from_40_bytes_in_hex(self.tree).expect("prior validation")
     }

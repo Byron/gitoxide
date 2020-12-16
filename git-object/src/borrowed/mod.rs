@@ -1,7 +1,7 @@
-//! Borrowed objects are read-only structures referencing most data in a byte based backing store.
+//! Borrowed objects are read-only structures referencing most data from a byte slice.
 //!
 //! Borrowed objects are expected to be deserialized from bytes that acts as backing store, and they
-//! cannot mutated or serialized. Instead, one will convert them into their `owned` counterparts,
+//! cannot be mutated or serialized. Instead, one will convert them into their [`owned`][crate::owned] counterparts
 //! which support mutation and serialization.
 mod commit;
 pub use commit::Commit;

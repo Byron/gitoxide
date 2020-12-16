@@ -10,7 +10,7 @@ use nom::{
 };
 use std::convert::TryFrom;
 
-/// A directory recording contained files (blobs), directories (trees) and submodules (commits).
+/// A directory snapshot containing files (blobs), directories (trees) and submodules (commits).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree<'a> {

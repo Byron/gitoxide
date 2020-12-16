@@ -9,7 +9,7 @@ pub struct Blob<'a> {
 }
 
 impl<'a> Blob<'a> {
-    /// Instantiate a `Blob` from the given `data`
+    /// Instantiate a `Blob` from the given `data`, which is used as-is.
     pub fn from_bytes(data: &[u8]) -> Result<Blob<'_>, Infallible> {
         Ok(Blob { data })
     }

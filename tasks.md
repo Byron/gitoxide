@@ -3,6 +3,9 @@
 * **git-odb**
   * [x] all docs, sans examples
   * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
+* **git-object** refactor     
+  * [ ] split `Id` and everything hash related into `git-id`
+  * [ ] use `git-id` inside of `git-features`, remove cycle
 * **Documentation (with deny(missing_docs))**
   * [x] git-features
   * [ ] git-object

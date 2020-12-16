@@ -3,7 +3,7 @@ use bstr::ByteSlice;
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
 
-/// A borrowed reference to a hash identifying objects
+/// A borrowed reference to a hash identifying objects.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub struct Id<'a>(&'a [u8; SHA1_SIZE]);
