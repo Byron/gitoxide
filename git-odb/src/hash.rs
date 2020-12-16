@@ -25,7 +25,7 @@ impl<T> Write<T>
 where
     T: io::Write,
 {
-    pub fn new(inner: T, kind: HashKind) -> Self {
+    pub fn new(inner: T, kind: git_hash::Kind) -> Self {
         match kind {
             HashKind::Sha1 => Write {
                 inner,

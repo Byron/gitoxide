@@ -1,6 +1,7 @@
 use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
-use git_object::{borrowed, owned, SHA1_SIZE};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+use git_object::{borrowed, owned};
 use std::{
     convert::{TryFrom, TryInto},
     mem::size_of,

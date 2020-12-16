@@ -28,3 +28,13 @@ impl Default for Kind {
         Kind::Sha1
     }
 }
+
+mod convert {
+    use crate::{borrowed, owned};
+
+    impl<'a> From<borrowed::Digest<'a>> for owned::Digest {
+        fn from(v: borrowed::Digest<'a>) -> Self {
+            owned::Digest::from_borrowed_sha1(v.sha1())
+        }
+    }
+}

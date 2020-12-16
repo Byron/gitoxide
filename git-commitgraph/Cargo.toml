@@ -1,6 +1,6 @@
 [package]
 name = "git-commitgraph"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/Byron/gitoxide"
 documentation = "https://git-scm.com/docs/commit-graph#:~:text=The%20commit-graph%20file%20is%20a%20supplemental%20data%20structure,or%20in%20the%20info%20directory%20of%20an%20alternate."
 license = "MIT/Apache-2.0"
@@ -17,7 +17,8 @@ serde1 = ["serde", "git-object/serde1"]
 
 [dependencies]
 git-features = { version = "^0.10.0", path = "../git-features" }
-git-object = { version = "^0.5.0", path = "../git-object" }
+git-object = { version = "^0.6.0", path = "../git-object" }
+git-hash = { version = "^0.1.0", path = "../git-hash" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 byteorder = "1.2.3"

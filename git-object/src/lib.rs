@@ -12,21 +12,9 @@ pub mod borrowed;
 pub mod owned;
 
 mod types;
-pub use types::{tree, Error, Kind, Sign, Time, SHA1_SIZE};
+pub use types::{tree, Error, Kind, Sign, Time};
 
 ///
 pub mod commit;
 
-/// Denotes the kind of hash used to identify objects.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum HashKind {
-    /// The Sha1 hash with 160 bits.
-    Sha1,
-}
-
-impl Default for HashKind {
-    fn default() -> Self {
-        HashKind::Sha1
-    }
-}
+pub use git_hash::Kind as HashKind;

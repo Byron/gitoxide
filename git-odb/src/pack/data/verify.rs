@@ -1,6 +1,7 @@
 use crate::pack::data::File;
 use git_features::progress::Progress;
-use git_object::{owned, HashKind, SHA1_SIZE};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+use git_object::{owned, HashKind};
 
 /// Returned by [`File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]

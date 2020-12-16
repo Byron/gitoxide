@@ -1,7 +1,7 @@
 use crate::pack::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_object::SHA1_SIZE;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{convert::TryFrom, mem::size_of, path::Path};
 
 /// Returned by [`index::File::at()`]

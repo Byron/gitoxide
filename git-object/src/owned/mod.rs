@@ -8,8 +8,7 @@ pub(crate) const SPACE: &[u8; 1] = b" ";
 mod convert;
 mod ser;
 
-mod id;
-pub use id::{Error, Id};
+pub use git_hash::owned::Digest as Id;
 
 mod tag;
 pub use tag::Tag;

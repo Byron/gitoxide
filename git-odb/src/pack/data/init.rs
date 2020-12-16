@@ -1,6 +1,6 @@
 use crate::pack::data;
 use filebuffer::FileBuffer;
-use git_object::SHA1_SIZE;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{convert::TryFrom, convert::TryInto, path::Path};
 
 /// Instantiation

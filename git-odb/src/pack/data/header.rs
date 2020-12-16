@@ -1,4 +1,5 @@
-use git_object::{owned, SHA1_SIZE};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+use git_object::owned;
 use std::io;
 
 const _TYPE_EXT1: u8 = 0;

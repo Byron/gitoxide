@@ -17,7 +17,7 @@ pub mod verify;
 pub mod iter;
 pub use iter::Iter;
 
-use git_object::SHA1_SIZE;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 /// A slice into a pack file denoting a pack entry.
 ///

@@ -8,7 +8,7 @@ pub use init::Error;
 
 pub use commit::Commit;
 use filebuffer::FileBuffer;
-use git_object::SHA1_SIZE;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     fmt::{Display, Formatter},
     ops::Range,

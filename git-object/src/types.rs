@@ -53,9 +53,6 @@ impl Time {
     }
 }
 
-/// The size of a SHA1 hash digest in bytes
-pub const SHA1_SIZE: usize = 20;
-
 /// The four types of objects that git differentiates.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

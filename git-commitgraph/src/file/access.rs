@@ -1,5 +1,6 @@
 use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
-use git_object::{borrowed, HashKind, SHA1_SIZE};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+use git_object::{borrowed, HashKind};
 use std::{
     convert::{TryFrom, TryInto},
     fmt::{Debug, Formatter},

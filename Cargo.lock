@@ -721,12 +721,13 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "byteorder",
  "filebuffer",
  "git-features",
+ "git-hash",
  "git-object",
  "serde",
  "tempfile",
@@ -775,10 +776,11 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr",
  "btoi",
+ "git-hash",
  "git-ref",
  "hex",
  "itoa",
@@ -791,7 +793,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -800,6 +802,7 @@ dependencies = [
  "common_macros",
  "filebuffer",
  "git-features",
+ "git-hash",
  "git-object",
  "hex",
  "itoa",
@@ -828,11 +831,12 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bstr",
  "btoi",
  "git-features",
+ "git-hash",
  "git-object",
  "git-packetline",
  "git-transport",
@@ -905,7 +909,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "bytesize",

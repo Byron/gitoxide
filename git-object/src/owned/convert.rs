@@ -78,12 +78,6 @@ impl Into<owned::Tree> for borrowed::Tree<'_> {
     }
 }
 
-impl<'a> From<borrowed::Id<'a>> for owned::Id {
-    fn from(v: borrowed::Id<'a>) -> Self {
-        owned::Id::from_borrowed_sha1(v.sha1())
-    }
-}
-
 impl Into<owned::tree::Entry> for borrowed::tree::Entry<'_> {
     fn into(self) -> owned::tree::Entry {
         let borrowed::tree::Entry { mode, filename, oid } = self;

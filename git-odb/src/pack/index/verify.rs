@@ -1,9 +1,10 @@
 use crate::pack::{self, index};
 use git_features::progress::{self, Progress};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use git_object::{
     borrowed,
     bstr::{BString, ByteSlice},
-    owned, HashKind, SHA1_SIZE,
+    owned, HashKind,
 };
 
 /// Returned by [`index::File::verify_checksum()`]

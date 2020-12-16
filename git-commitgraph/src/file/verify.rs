@@ -3,7 +3,8 @@ use crate::{
     GENERATION_NUMBER_INFINITY, GENERATION_NUMBER_MAX,
 };
 use bstr::ByteSlice;
-use git_object::{borrowed, owned, SHA1_SIZE};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+use git_object::{borrowed, owned};
 use std::{
     cmp::{max, min},
     collections::HashMap,

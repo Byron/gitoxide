@@ -1,6 +1,6 @@
 [package]
 name = "git-odb"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
@@ -18,7 +18,8 @@ serde1 = ["serde", "git-object/serde1"]
 all-features = true
 
 [dependencies]
-git-object = { version = "^0.5.0", path = "../git-object" }
+git-object = { version = "^0.6.0", path = "../git-object" }
+git-hash = { version = "^0.1.0", path = "../git-hash" }
 git-features = { version = "^0.10.0", path = "../git-features" }
 
 walkdir = "2.1.4"
