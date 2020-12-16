@@ -19,7 +19,7 @@ all-features = true
 
 [dependencies]
 git-object = { version = "^0.5.0", path = "../git-object" }
-git-features = { version = "^0.9.0", path = "../git-features", features = ["git-object"] }
+git-features = { version = "^0.10.0", path = "../git-features" }
 
 walkdir = "2.1.4"
 miniz_oxide = "0.4.1"

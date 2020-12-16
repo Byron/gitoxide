@@ -71,18 +71,17 @@ pub use crc::crc32::checksum_ieee as crc32;
 ///
 /// # Note
 ///
-/// * Only available with the `git-object` feature enabled due to usage of the [`git_object::HashKind`] enum and the
-///   [`git_object::owned::Id`] return value.
+/// * Only available with the `git-object` feature enabled due to usage of the [`git_hash::Kind`] enum and the
+///   [`git_hash::owned::Digest`] return value.
 /// * [Interrupts][crate::interrupt] are supported.
-#[cfg(feature = "git-object")]
 pub fn bytes_of_file(
     path: impl AsRef<std::path::Path>,
     num_bytes_from_start: usize,
-    kind: git_object::HashKind,
+    kind: git_hash::Kind,
     progress: &mut impl crate::progress::Progress,
-) -> std::io::Result<git_object::owned::Id> {
+) -> std::io::Result<git_hash::owned::Digest> {
     let mut hasher = match kind {
-        git_object::HashKind::Sha1 => crate::hash::Sha1::default(),
+        git_hash::Kind::Sha1 => crate::hash::Sha1::default(),
     };
     let start = std::time::Instant::now();
     // init progress before the possibility for failure, as convenience in case people want to recover
@@ -105,7 +104,7 @@ pub fn bytes_of_file(
         }
     }
 
-    let id = git_object::owned::Id::new_sha1(hasher.digest());
+    let id = git_hash::owned::Digest::new_sha1(hasher.digest());
     progress.show_throughput(start);
     Ok(id)
 }
