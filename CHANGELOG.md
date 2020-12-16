@@ -1,3 +1,16 @@
+### v0.5.0 and v0.6.0
+
+Maintenance release without any new features.
+
+These are created to account for breaking changes within the dependency graph of
+`gitoxide` crates. Due to some blunders in the past the version on crates.io
+could not be installed anymore.
+This was eventually fixed with new minor releases across the ecosystem.
+
+Finally, yet another breaking change due to the introduction of the `git-hash`
+crate to break a dependency cycle between `git-object` and `git-features` caused
+yet another maintenance release.
+
 ### v0.4.1
 
 * fix installation via `cargo install`
