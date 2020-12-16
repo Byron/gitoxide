@@ -3,7 +3,8 @@ use crate::{
     pack::{INDEX_V1, PACK_FOR_INDEX_V1},
     pack::{SMALL_PACK, SMALL_PACK_INDEX},
 };
-use git_object::{self as object, SHA1_SIZE};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+use git_object::{self as object};
 use git_odb::pack::{self, data::decode::Outcome, index};
 
 mod method {
