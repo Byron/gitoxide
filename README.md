@@ -42,6 +42,10 @@ become available.
       * [x] **verify** - assure that a commit-graph is consistent
     * [remote-ref-list](https://asciinema.org/a/359320)
       * [x] list all (or given) references from a remote at the given URL
+    
+### git-hash
+ * types to represent hash digests to identify git objects.
+ * used to abstract over different kinds of hashes, like SHA1 and the upcoming SHA256
           
 ### git-object
   * *decode (zero-copy)* borrowed objects

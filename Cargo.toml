@@ -82,18 +82,19 @@ build-override = { opt-level = 0 }
 
 [workspace]
 members = [
-    "gitoxide-core",
+    "git-url",
+    "git-hash",
+    "git-ref",
     "git-config",
     "git-features",
-    "git-index",
+    "git-commitgraph",
     "git-object",
-    "git-ref",
+    "git-index",
+    "git-packetline",
+    "git-transport",
+    "git-protocol",
     "git-odb",
     "git-repository",
-    "git-protocol",
-    "git-url",
-    "git-transport",
-    "git-packetline",
-    "git-commitgraph",
+    "gitoxide-core",
     "git-tui",
 ]

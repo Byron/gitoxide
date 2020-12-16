@@ -760,6 +760,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-hash"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "hex",
+ "quick-error",
+ "serde",
+]
+
+[[package]]
 name = "git-index"
 version = "0.0.0"
 
