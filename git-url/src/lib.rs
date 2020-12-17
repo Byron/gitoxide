@@ -1,8 +1,10 @@
+//! A library implementing a URL for use in git with access to its special capabilities.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 
 use std::{convert::TryFrom, fmt};
 
+/// A scheme for use in a [`Url`]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Scheme {
@@ -26,13 +28,22 @@ impl fmt::Display for Scheme {
     }
 }
 
+/// A URL with support for specialized git related capabilities.
+///
+/// Additionally there is support for [deserialization][Url::from_bytes()] and serialization
+/// (_see the `Display::fmt()` implementation_).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
+    /// The URL scheme.
     pub scheme: Scheme,
+    /// The user to impersonate on the remote.
     pub user: Option<String>,
+    /// The host to which to connect. Localhost is implied if `None`.
     pub host: Option<String>,
+    /// The port to use when connecting to a host. If `None`, standard ports depending on `scheme` will be used.
     pub port: Option<u16>,
+    /// The path portion of the URL, usually the location of the git repository.
     pub path: bstr::BString,
 }
 
