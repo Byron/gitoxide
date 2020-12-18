@@ -4,7 +4,9 @@ use quick_error::quick_error;
 use std::borrow::Cow;
 
 quick_error! {
+    /// The Error returned by [`parse()`]
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Utf8(err: std::str::Utf8Error) {
             display("Could not decode URL as UTF8")
@@ -83,19 +85,23 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
     })
 }
 
-/// Note: We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
+/// Parse the given `bytes` as git url.
+///
+/// # Note
+///
+/// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
-pub fn parse(url: &[u8]) -> Result<crate::Url, Error> {
-    let guessed_protocol = guess_protocol(url);
-    if possibly_strip_file_protocol(url) != url || (has_no_explicit_protocol(url) && guessed_protocol == "file") {
+pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
+    let guessed_protocol = guess_protocol(bytes);
+    if possibly_strip_file_protocol(bytes) != bytes || (has_no_explicit_protocol(bytes) && guessed_protocol == "file") {
         return Ok(crate::Url {
             scheme: Scheme::File,
-            path: possibly_strip_file_protocol(url).into(),
+            path: possibly_strip_file_protocol(bytes).into(),
             ..Default::default()
         });
     }
 
-    let url_str = std::str::from_utf8(url)?;
+    let url_str = std::str::from_utf8(bytes)?;
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
         Err(::url::ParseError::RelativeUrlWithoutBase) => {

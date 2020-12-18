@@ -2,7 +2,21 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 
-use std::{convert::TryFrom, fmt};
+use bstr::ByteSlice;
+use std::{
+    convert::TryFrom,
+    fmt::{self, Write},
+};
+
+///
+pub mod parse;
+#[doc(inline)]
+pub use parse::parse;
+
+///
+pub mod expand_path;
+#[doc(inline)]
+pub use expand_path::expand_path;
 
 /// A scheme for use in a [`Url`]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -78,8 +92,9 @@ impl fmt::Display for Url {
 }
 
 impl Url {
-    pub fn from_bytes(url: &[u8]) -> Result<Self, parse::Error> {
-        parse(url)
+    /// Parse a URL from `bytes`
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, parse::Error> {
+        parse(bytes)
     }
 }
 
@@ -90,13 +105,3 @@ impl TryFrom<&[u8]> for Url {
         Self::from_bytes(value)
     }
 }
-
-pub mod expand_path;
-#[doc(inline)]
-pub use expand_path::expand_path;
-
-pub mod parse;
-use bstr::ByteSlice;
-#[doc(inline)]
-pub use parse::parse;
-use std::fmt::Write;

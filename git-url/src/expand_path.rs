@@ -1,11 +1,15 @@
+//! Functions for expanding repository paths.
 use bstr::{BStr, BString, ByteSlice};
 use quick_error::quick_error;
 use std::path::{Path, PathBuf};
 
+/// Whether a repository is resolving for the current user, or the given one.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ForUser {
+    /// The currently logged in user.
     Current,
+    /// The user with the given name.
     Name(BString),
 }
 
@@ -19,6 +23,7 @@ impl From<ForUser> for Option<BString> {
 }
 
 quick_error! {
+    /// The error used by [`parse()`], [`with()`] and [`expand_path()`].
     #[derive(Debug)]
     pub enum Error {
         Utf8(err: bstr::Utf8Error) {
@@ -40,6 +45,11 @@ fn path_segments(path: &BStr) -> Option<impl Iterator<Item = &[u8]>> {
     }
 }
 
+/// Parse user information from the given `path`, returning `(possible user information, adjusted input path)`.
+///
+/// Supported formats for user extraction are…
+/// * `~/repopath` - the currently logged in user's home.
+/// * `~user/repopath` - the repository in the given user's home.
 pub fn parse(path: &BStr) -> Result<(Option<ForUser>, BString), Error> {
     Ok(path_segments(path)
         .and_then(|mut iter| {
@@ -66,6 +76,7 @@ pub fn parse(path: &BStr) -> Result<(Option<ForUser>, BString), Error> {
         .unwrap_or_else(|| (None, path.into())))
 }
 
+/// Expand `path` for use in a shell and return the expanded path.
 pub fn for_shell(path: BString) -> BString {
     use bstr::ByteVec;
     match parse(path.as_slice().as_bstr()) {
@@ -85,6 +96,9 @@ pub fn for_shell(path: BString) -> BString {
     }
 }
 
+/// Expand `path` for the given `user`, which can be obtained by [`parse()`], resolving them with `home_for_user(&user)`.
+///
+/// For the common case consider using [`expand_path()]` instead.
 pub fn with(
     user: Option<&ForUser>,
     path: &BStr,
@@ -102,6 +116,10 @@ pub fn with(
     })
 }
 
+/// Expand `path` for the given `user`, which can be obtained by [`parse()`], resolving the home directories
+/// of `user` automatically.
+///
+/// If more precise control of the resolution mechanism is needed, then use the [`with()`] function.
 pub fn expand_path(user: Option<&ForUser>, path: &BStr) -> Result<PathBuf, Error> {
     with(user, path, |user| match user {
         ForUser::Current => home::home_dir(),

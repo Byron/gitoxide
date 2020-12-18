@@ -9,7 +9,7 @@
 * **Documentation (with deny(missing_docs))**
   * [x] git-features
   * [x] git-object
-  * [ ] git-url
+  * [x] git-url
   * [ ] git-ref
   * [ ] git-packetline
   * [ ] git-protocol
