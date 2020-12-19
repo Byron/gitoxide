@@ -10,7 +10,7 @@
   * [x] git-features
   * [x] git-object
   * [x] git-url
-  * [ ] git-ref
+  * [x] git-ref
   * [ ] git-packetline
   * [ ] git-protocol
   * [ ] git-transport
