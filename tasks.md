@@ -57,6 +57,9 @@
 
 To be picked in any order….
 
+* **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
+  * [ ] when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.
+  * [ ] alternatively, use an INTEL mac for now.
 * **prodash**
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
