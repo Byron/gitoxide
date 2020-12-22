@@ -12,6 +12,7 @@
   * [x] git-url
   * [x] git-ref
   * [ ] git-packetline
+    * [ ] rename `to_write()` to `write_to()` to match what's done in git-object.
   * [ ] git-protocol
   * [ ] git-transport
   * [ ] git-commitgraph

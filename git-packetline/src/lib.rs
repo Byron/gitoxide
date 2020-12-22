@@ -1,3 +1,6 @@
+//! Read and write the git packet line wire format without copying it.
+//!
+//! For reading the packet line format use the [`Provider`], and for writing the `Writer`.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 
@@ -9,14 +12,19 @@ pub(crate) const DELIMITER_LINE: &[u8] = b"0001";
 pub(crate) const RESPONSE_END_LINE: &[u8] = b"0002";
 pub(crate) const ERR_PREFIX: &[u8] = b"ERR ";
 
+/// One of three side-band types allowing to multiplex information over a single connection.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Channel {
+    /// The usable data itself in any format.
     Data = 1,
+    /// Progress information in a user-readable format.
     Progress = 2,
+    /// Error information in a user readable format. Receiving it usually terminates the connection.
     Error = 3,
 }
 
+///
 pub mod borrowed;
 pub use borrowed::Borrowed as PacketLine;
 
