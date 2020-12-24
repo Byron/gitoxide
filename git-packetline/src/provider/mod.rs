@@ -1,5 +1,4 @@
-use crate::PacketLine;
-use crate::{decode, MAX_LINE_LEN, U16_HEX_BYTES};
+use crate::{decode, PacketLine, MAX_LINE_LEN, U16_HEX_BYTES};
 use bstr::ByteSlice;
 use std::io;
 
@@ -7,8 +6,8 @@ mod read;
 pub use read::ReadWithSidebands;
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
-/// `Read`. `Flush` lines cause the reader to stop producing lines forever, leaving `Read` at the
-/// start of whatever comes next.
+/// [`Read`][io::Read]. [`Flush`][PacketLine::Flush] lines cause the reader to stop producing lines forever,
+/// leaving [`Read`][io::Read] at the start of whatever comes next.
 pub struct Provider<T> {
     inner: T,
     peek_buf: Vec<u8>,
@@ -23,9 +22,10 @@ impl<T> Provider<T>
 where
     T: io::Read,
 {
-    pub fn new(inner: T, delimiters: &'static [PacketLine<'static>]) -> Self {
+    /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
+    pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
         Provider {
-            inner,
+            inner: read,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
             delimiters,
@@ -35,12 +35,13 @@ where
         }
     }
 
-    /// Returns None if the end wasn't reached yet, on EOF, or if fail_on_err_lines was true.
-    /// Otherwise it returns the packet line that stopped the iteration.
+    /// Returns the packet line that stopped the iteration, or
+    /// `None` if the end wasn't reached yet, on EOF, or if [`fail_on_err_lines()`][Provider::fail_on_err_lines()] was true.
     pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
         self.stopped_at
     }
 
+    /// Replace the reader used with the given `read`, resetting all other iteration state as well.
     pub fn replace(&mut self, read: T) -> T {
         let prev = std::mem::replace(&mut self.inner, read);
         self.reset();
@@ -48,17 +49,24 @@ where
         prev
     }
 
+    /// Reset all iteration state allowing to continue a stopped iteration that is not yet at EOF.
+    ///
+    /// This can happen once a delimiter is reached.
     pub fn reset(&mut self) {
         let delimiters = std::mem::take(&mut self.delimiters);
         self.reset_with(delimiters);
     }
 
+    /// Similar to [`reset()`][Provider::reset()] with support to changing the `delimiters`.
     pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
         self.delimiters = delimiters;
         self.is_done = false;
         self.stopped_at = None;
     }
 
+    /// If `value` is `true` the provider will check for special `ERR` packet lines and stop iteration when one is encountered.
+    ///
+    /// Use [`stopped_at()]`[Provider::stopped_at()] to inspect the cause of the end of the iteration.
     pub fn fail_on_err_lines(&mut self, value: bool) {
         self.fail_on_err_lines = value;
     }
@@ -80,6 +88,13 @@ where
         }
     }
 
+    /// Read a packet line into the internal buffer and return it.
+    ///
+    /// Returns `None` if the end of iteration is reached because of one of the following:
+    ///
+    ///  * EOF
+    ///  * ERR packet line encountered if [`fail_on_err_lines()`][Provider::fail_on_err_lines()] is true.
+    ///  * A `delimiter` packet line encountered
     pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
         if self.is_done {
             return None;
@@ -113,7 +128,9 @@ where
         }
     }
 
-    /// position does not include the 4 bytes prefix (they are invisible outside the reader)
+    /// Modify the peek buffer, overwriting the byte at `position` with the given byte to `replace_with`.
+    ///
+    /// **Note** that `position` does not include the 4 bytes prefix (they are invisible outside the reader)
     pub fn peek_buffer_replace_and_truncate(&mut self, position: usize, replace_with: u8) {
         let position = position + U16_HEX_BYTES;
         self.peek_buf[position] = replace_with;
@@ -123,6 +140,9 @@ where
         self.peek_buf[..4].copy_from_slice(&crate::encode::u16_to_hex((new_len) as u16));
     }
 
+    /// Peek the next packet line without consuming it.
+    ///
+    /// Multiple calls to peek will return the same packet line, if there is one.
     pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
         if self.is_done {
             return None;
