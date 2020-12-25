@@ -186,7 +186,7 @@ where
     }
 
     /// Return this instance as implementor of [`Read`][io::Read] assuming side bands to be used in all received packet lines.
-    /// Each invocation of [`read_line()`][io::Read::read_line()] returns a packet line.
+    /// Each invocation of [`read_line()`][io::BufRead::read_line()] returns a packet line.
     ///
     /// Progress or error information will be passed to the given `handle_progress(is_error, text)` function, with `is_error: bool`
     /// being true in case the `text` is to be interpreted as error.

@@ -4,8 +4,14 @@ use crate::{
 };
 use std::io;
 
-/// Note: Reading from this intermediary copies bytes 3 times:
+/// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
+/// It's also possible to hide the underlying packet lines using the [`Read`][io::Read] implementation which is useful
+/// if they represent binary data, like the one of a pack file.
+///
+/// # Performance Notice
+/// Reading from this intermediary copies bytes 3 times:
 /// OS -> (parent) line provider buffer -> our buffer -> caller's output buffer
+/// which won't make this very efficient for huge bandwidths.
 pub struct ReadWithSidebands<'a, T, F>
 where
     T: io::Read,
@@ -46,6 +52,10 @@ where
     T: io::Read,
     F: FnMut(bool, &[u8]),
 {
+    /// Create a new instance with the given `parent` provider and the `handle_progress` function.
+    ///
+    /// Progress or error information will be passed to the given `handle_progress(is_error, text)` function, with `is_error: bool`
+    /// being true in case the `text` is to be interpreted as error.
     pub fn with_progress_handler(parent: &'a mut Provider<T>, handle_progress: F) -> Self {
         ReadWithSidebands {
             parent,
@@ -56,6 +66,7 @@ where
         }
     }
 
+    /// Create a new instance without a progress handler.
     pub fn without_progress_handler(parent: &'a mut Provider<T>) -> Self {
         ReadWithSidebands {
             parent,
@@ -66,18 +77,23 @@ where
         }
     }
 
+    /// Forwards to the parent [Provider::reset_with()]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
         self.parent.reset_with(delimiters)
     }
 
+    /// Forwards to the parent [Provider::stopped_at()]
     pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
         self.parent.stopped_at
     }
 
+    /// Set or unset the progress handler.
     pub fn set_progress_handler(&mut self, handle_progress: Option<F>) {
         self.handle_progress = handle_progress;
     }
 
+    /// Effectively forwards to the parent [Provider::peek_line()], allowing to see what would be returned
+    /// next on a call to [`read_line()`][io::BufRead::read_line()].
     pub fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.parent.peek_line() {
             Some(Ok(Ok(line))) => match line {
