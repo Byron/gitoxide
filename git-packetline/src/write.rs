@@ -1,27 +1,37 @@
 use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
 use std::io;
 
-/// An implementor of `Write` which passes all input to an inner `Write` in packet line data encoding, one line per `write(…)`
-/// call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
+/// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,
+/// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
 pub struct Writer<T> {
+    /// the `Write` implementation to which to propagate packet lines
     pub inner: T,
     binary: bool,
 }
 
 impl<T: io::Write> Writer<T> {
-    pub fn new(inner: T) -> Self {
-        Writer { inner, binary: true }
+    /// Create a new instance from the given `write`
+    pub fn new(write: T) -> Self {
+        Writer {
+            inner: write,
+            binary: true,
+        }
     }
+    /// If called, each call to [`write()`][io::Write::write()] will write bytes as is.
     pub fn enable_binary_mode(&mut self) {
         self.binary = true;
     }
+    /// If called, each call to [`write()`][io::Write::write()] will write the input as text, appending a trailing newline
+    /// if needed before writing.
     pub fn enable_text_mode(&mut self) {
         self.binary = false;
     }
+    /// As [`enable_text_mode()`][Writer::enable_text_mode()], but suitable for chaining.
     pub fn text_mode(mut self) -> Self {
         self.binary = false;
         self
     }
+    /// As [`enable_binary_mode()`][Writer::enable_binary_mode()], but suitable for chaining.
     pub fn binary_mode(mut self) -> Self {
         self.binary = true;
         self
