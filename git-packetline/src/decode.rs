@@ -5,7 +5,9 @@ use bstr::BString;
 use quick_error::quick_error;
 
 quick_error! {
+    /// The error used in the [`decode`][crate::decode] module
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         HexDecode(err: String) {
             display("Failed to decode the first four hex bytes indicating the line length: {}", err)
@@ -28,23 +30,32 @@ quick_error! {
     }
 }
 
+/// A utility return type to support incremental parsing of packet lines.
 #[derive(Debug, Clone)]
 pub enum Stream<'a> {
+    /// Indicate a single packet line was parsed completely
     Complete {
+        /// The parsed packet line
         line: PacketLine<'a>,
+        /// The amount of bytes consumed from input
         bytes_consumed: usize,
     },
+    /// A packet line could not yet be parsed to to missing bytes
     Incomplete {
         /// The amount of additional bytes needed for the parsing to complete
         bytes_needed: usize,
     },
 }
 
+/// The result of [`hex_prefix()`] indicating either a special packet line or the amount of wanted bytes
 pub enum PacketLineOrWantedSize<'a> {
+    /// The special kind of packet line decoded from the hex prefix. It never contains actual data.
     Line(PacketLine<'a>),
+    /// The amount of bytes indicated by the hex prefix of the packet line.
     Wanted(u16),
 }
 
+/// Decode the `four_bytes` packet line prefix provided in hexadecimal form and check it for validity.
 pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize<'_>, Error> {
     debug_assert_eq!(four_bytes.len(), 4, "need four hex bytes");
     for (line_bytes, line_type) in &[
@@ -60,6 +71,7 @@ pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize<'_>, Error
     let mut buf = [0u8; U16_HEX_BYTES / 2];
     hex::decode_to_slice(four_bytes, &mut buf).map_err(|err| Error::HexDecode(err.to_string()))?;
     let wanted_bytes = u16::from_be_bytes(buf);
+
     if wanted_bytes == 3 {
         return Err(Error::InvalidLineLength);
     }
@@ -73,6 +85,7 @@ pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize<'_>, Error
     Ok(PacketLineOrWantedSize::Wanted(wanted_bytes - U16_HEX_BYTES as u16))
 }
 
+/// Obtain a `PacketLine` from `data` after assuring `data` is small enough to fit.
 pub fn to_data_line(data: &[u8]) -> Result<PacketLine<'_>, Error> {
     if data.len() > MAX_LINE_LEN {
         return Err(Error::DataLengthLimitExceeded(data.len()));
