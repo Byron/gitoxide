@@ -7,7 +7,7 @@ use git_features::progress::{self, Progress};
 use git_object::owned;
 use std::{cmp::Ordering, io};
 
-pub(crate) fn to_write(
+pub(crate) fn write_to(
     out: impl io::Write,
     entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::TreeEntry>>,
     pack_hash: &owned::Id,

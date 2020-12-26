@@ -11,8 +11,8 @@
   * [x] git-object
   * [x] git-url
   * [x] git-ref
-  * [ ] git-packetline
-    * [ ] rename `to_write()` to `write_to()` to match what's done in git-object.
+  * [x] git-packetline
+    * [x] rename `to_write()` to `write_to()` to ~~match what's done in git-object~~. Consistency is good, but lets not break it again
   * [ ] git-protocol
   * [ ] git-transport
   * [ ] git-commitgraph

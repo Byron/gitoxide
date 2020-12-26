@@ -189,7 +189,7 @@ impl pack::index::File {
         };
 
         let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
-        let index_hash = encode::to_write(
+        let index_hash = encode::write_to(
             out,
             sorted_pack_offsets_by_oid,
             &pack_hash,
