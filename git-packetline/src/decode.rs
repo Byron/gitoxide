@@ -94,6 +94,7 @@ pub fn to_data_line(data: &[u8]) -> Result<PacketLine<'_>, Error> {
     Ok(PacketLine::Data(data))
 }
 
+/// Decode `data` as packet line while reporting whether the data is complete or not using a [`Stream`].
 pub fn streaming(data: &[u8]) -> Result<Stream<'_>, Error> {
     let data_len = data.len();
     if data_len < U16_HEX_BYTES {
@@ -125,6 +126,10 @@ pub fn streaming(data: &[u8]) -> Result<Stream<'_>, Error> {
     })
 }
 
+/// Decode an entire packet line from data or fail.
+///
+/// Note that failure also happens if there is not enough data to parse a complete packet line, as opposed to [`streaming()`] decoding
+/// succeeds in that case, stating how much more bytes are required.
 pub fn all_at_once(data: &[u8]) -> Result<PacketLine<'_>, Error> {
     match streaming(data)? {
         Stream::Complete { line, .. } => Ok(line),

@@ -38,7 +38,7 @@ pub mod write;
 #[doc(inline)]
 pub use write::Writer;
 
-///
+/// Utilities to help decoding packet lines
 pub mod decode;
 #[doc(inline)]
 pub use decode::all_at_once as decode;
