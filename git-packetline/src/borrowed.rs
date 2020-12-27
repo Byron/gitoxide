@@ -92,6 +92,7 @@ use quick_error::quick_error;
 quick_error! {
     /// The error used in [`decode_band()`][Borrowed::decode_band()].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum DecodeBandError {
         InvalidSideBand(band: u8) {
             display("attempt to decode a non-side channel line or input was malformed: {}", band)

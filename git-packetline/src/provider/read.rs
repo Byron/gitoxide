@@ -36,6 +36,7 @@ impl<'a, T> ReadWithSidebands<'a, T, fn(bool, &[u8])>
 where
     T: io::Read,
 {
+    /// Create a new instance with the given provider as `parent`.
     pub fn new(parent: &'a mut Provider<T>) -> Self {
         ReadWithSidebands {
             parent,
