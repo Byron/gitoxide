@@ -27,7 +27,9 @@ type HttpError = http::Error;
 #[cfg(not(feature = "http-client-curl"))]
 type HttpError = std::convert::Infallible;
 
+/// The error used in most methods of the [`client`][crate::client] module
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("An IO error occurred when talking to the server")]
     Io {
@@ -56,6 +58,7 @@ pub enum Error {
     Http(#[from] HttpError),
 }
 
+/// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {
     /// The protocol the service can provide. May be different from the requested one
     pub actual_protocol: Protocol,
@@ -64,10 +67,13 @@ pub struct SetServiceResponse<'a> {
     pub refs: Option<Box<dyn io::BufRead + 'a>>,
 }
 
+/// Configure how the [`RequestWriter`] behaves when writing bytes.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum WriteMode {
+    /// Each [write()][Write::write()] call writes the bytes verbatim as one or more packet lines.
     Binary,
+    /// Each [write()][Write::write()] call assumes text in the input, assures a trailing newline and writes it as single packet line.
     OneLFTerminatedLinePerWriteCall,
 }
 
@@ -77,13 +83,17 @@ impl Default for WriteMode {
     }
 }
 
+/// The kind of packet line to write when transforming a [`RequestWriter`] into an [`ExtendedBufRead`].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum MessageKind {
+    /// A `flush` packet.
     Flush,
-    /// A V2 delimiter
+    /// A V2 delimiter.
     Delimiter,
+    /// The end of a response.
     ResponseEnd,
+    /// The given text.
     Text(&'static [u8]),
 }
 
@@ -91,10 +101,18 @@ pub enum MessageKind {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 /// An identity for use when authenticating the transport layer.
 pub enum Identity {
-    Account { username: String, password: String },
+    /// An account based identity
+    Account {
+        /// The user's name
+        username: String,
+        /// The user's password
+        password: String,
+    },
 }
 
-/// A type implementing `Write`, which when done can be transformed into a `Read` for obtaining the response.
+/// A [`Write`] implementation optimized for writing packet lines.
+/// A type implementing `Write` for packet lines, which when done can be transformed into a `Read` for
+/// obtaining the response.
 pub struct RequestWriter<'a> {
     on_into_read: MessageKind,
     pub(crate) writer: git_packetline::Writer<Box<dyn io::Write + 'a>>,
@@ -112,6 +130,9 @@ impl<'a> io::Write for RequestWriter<'a> {
 }
 
 impl<'a> RequestWriter<'a> {
+    /// Create a new instance from a `writer` (commonly a socket), a `reader` into which to transform once the
+    /// writes are finished, along with configuration for the `write_mode` and information about which message to write
+    /// when this instance is converted into a `reader` to read the request's response.
     pub fn new_from_bufread<W: io::Write + 'a>(
         writer: W,
         reader: Box<dyn ExtendedBufRead + 'a>,
@@ -129,11 +150,14 @@ impl<'a> RequestWriter<'a> {
             reader,
         }
     }
+
+    /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
     pub fn into_read(mut self) -> io::Result<Box<dyn ExtendedBufRead + 'a>> {
         self.write_message(self.on_into_read)?;
         Ok(self.reader)
     }
 
+    /// Write the given message as packet line.
     pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
         match message {
             MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.writer.inner),
@@ -146,15 +170,20 @@ impl<'a> RequestWriter<'a> {
     }
 }
 
-/// This trait exists to get a version of a git_packetline::Provider without type parameters.
-/// For the sake of usability, it also implements std::io::BufRead making it trivial to (eventually)
-/// read pack files while keeping the possibility to read individual lines with  low overhead.
+/// This trait exists to get a version of a `git_packetline::Provider` without type parameters.
+/// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to (eventually)
+/// read pack files while keeping the possibility to read individual lines with low overhead.
 pub trait ExtendedBufRead: io::BufRead {
+    /// Set the handler to which progress will be delivered.
+    ///
+    /// Note that this is only possible if packet lines are sent in side band mode.
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
+    /// Peek the next data packet line.
     fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>>;
     /// Resets the reader to allow reading past a previous stop, and sets delimiters according to the
     /// given protocol.
     fn reset(&mut self, version: Protocol);
+    /// Return the kind of message at which the reader stopped.
     fn stopped_at(&self) -> Option<MessageKind>;
 }
 
@@ -206,35 +235,36 @@ impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSide
     }
 }
 
+/// A function `f(is_error, text)` receiving progress or error information.
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
-/// All methods provided here must be called in the correct order according to the communication protocol used to connect to them.
+/// All methods provided here must be called in the correct order according to the [communication protocol][Protocol]
+/// used to connect to them.
 /// It does, however, know just enough to be able to provide a higher-level interface than would otherwise be possible.
 /// Thus the consumer of this trait will not have to deal with packet lines at all.
-/// Generally, whenever a `Read` trait or `Write` trait is produced, it must be exhausted..
+/// **Note that**  whenever a `Read` trait or `Write` trait is produced, it must be exhausted.
 pub trait Transport {
     /// Initiate connection to the given service.
-    /// Returns the service capabilities according according to the actual Protocol it supports,
+    /// Returns the service capabilities according according to the actual [Protocol] it supports,
     /// and possibly a list of refs to be obtained.
     /// This means that asking for an unsupported protocol will result in a protocol downgrade to the given one.
-    /// using the `read_line(…)` function of the given BufReader. It must be exhausted, that is, read to the end,
-    /// before the next method can be invoked.
+    /// using the `read_line(…)` function of the given [BufReader][SetServiceResponse::refs].
+    /// It must be exhausted, that is, read to the end before the next method can be invoked.
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error>;
 
-    /// If the handshake or subsequent reads failed with io::ErrorKind::PermissionDenied, use this method to
+    /// If the handshake or subsequent reads failed with [io::ErrorKind::PermissionDenied], use this method to
     /// inform the transport layer about the identity to use for subsequent calls.
     /// If authentication continues to fail even with an identity set, consider communicating this to the provider
     /// of the identity in order to mark it as invalid. Otherwise the user might have difficulty updating obsolete
     /// credentials.
-    /// Please note that most transport layers are unauthenticated and thus return an error here.
+    /// Please note that most transport layers are unauthenticated and thus return [an error][Error::AuthenticationUnsupported] here.
     fn set_identity(&mut self, _identity: Identity) -> Result<(), Error> {
         Err(Error::AuthenticationUnsupported)
     }
-    /// Obtain a writer for sending data and obtaining the response. It can be configured in various ways,
-    /// and should to support with the task at hand.
-    /// `send_mode` determines how calls to the `write(…)` method are interpreted, and `on_into_read` determines
-    /// which message to write when the writer is turned into the response reader using `into_read()`.
-    /// If `handle_progress` is not None, it's function passed a text line without trailing LF from which progress information can be parsed.
+    /// Get a writer for sending data and obtaining the response. It can be configured in various ways
+    /// to support the task at hand.
+    /// `write_mode` determines how calls to the `write(…)` method are interpreted, and `on_into_read` determines
+    /// which message to write when the writer is turned into the response reader using [`into_read()`][RequestWriter::into_read()].
     fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
@@ -247,21 +277,24 @@ pub trait Transport {
 
     /// Returns the protocol version that was initially desired upon connection
     /// Please note that the actual protocol might differ after the handshake was conducted in case the server
-    /// does not support it.
+    /// did not support it.
     fn desired_protocol_version(&self) -> Protocol;
 
     /// Returns true if the transport is inherently stateful, or false otherwise.
     /// Not being stateful implies that certain information has to be resent on each 'turn'
     /// of the fetch negotiation.
-    /// This answer should not be based on the Protocol itself, which might enforce stateless
-    /// interactions despite the connections staying intact.
+    ///
+    /// # Implementation Details
+    ///
+    /// This answer should not be based on the [Protocol] itself, which might enforce stateless
+    /// interactions despite the connections staying intact which might imply statefulness.
     fn is_stateful(&self) -> bool;
 }
 
 pub trait TransportV2Ext {
     /// Invoke a protocol V2 style `command` with given `capabilities` and optional command specific `arguments`.
     /// The `capabilities` were communicated during the handshake.
-    /// _Note:_ panics if handshake wasn't performed beforehand.
+    /// _Note:_ panics if [handshake][Transport::handshake()] wasn't performed beforehand.
     fn invoke<'a>(
         &mut self,
         command: &str,

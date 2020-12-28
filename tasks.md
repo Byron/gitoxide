@@ -13,8 +13,8 @@
   * [x] git-ref
   * [x] git-packetline
     * [x] rename `to_write()` to `write_to()` to ~~match what's done in git-object~~. Consistency is good, but lets not break it again
-  * [ ] git-protocol
   * [ ] git-transport
+  * [ ] git-protocol
   * [ ] git-commitgraph
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
