@@ -1,7 +1,10 @@
 use quick_error::quick_error;
 use std::io;
+
 quick_error! {
+    /// The error used by the [Http] trait.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Detail(description: String) {
             display("{}", description)
@@ -14,15 +17,23 @@ quick_error! {
     }
 }
 
+/// The return value of [Http::get()].
 pub struct GetResponse<H, B> {
+    /// The response headers.
     pub headers: H,
+    /// The response body.
     pub body: B,
 }
 
+/// The return value of [Http::post()].
 pub struct PostResponse<H, B, PB> {
-    /// **Note**: Implementations should drop the handle to avoid deadlocks
+    /// The body to post to the server as part of the request.
+    ///
+    /// **Note**: Implementations should drop the handle to avoid deadlocks.
     pub post_body: PB,
+    /// The headers of the post response.
     pub headers: H,
+    /// The body of the post response.
     pub body: B,
 }
 
@@ -35,17 +46,28 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
     }
 }
 
+/// A trait to abstract the HTTP operations needed to power all git interactions: read via GET and write via POST.
 #[allow(clippy::type_complexity)]
 pub trait Http {
     type Headers: io::BufRead;
     type ResponseBody: io::BufRead;
     type PostBody: io::Write;
 
+    /// Initiate a `GET` request to `url` provided the given `headers`.
+    ///
+    /// The `headers` are provided verbatim and include both the key as well as the value.
     fn get(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<GetResponse<Self::Headers, Self::ResponseBody>, Error>;
+
+    /// Initiate a `POST` request to `url` providing with the given `headers`.
+    ///
+    /// The `headers` are provided verbatim and include both the key as well as the value.
+    /// Note that the [`PostResponse`] contains the [`post_body`][PostResponse::post_body] field which implements [`std::io::Write`]
+    /// and is expected to receive the body to post to the server. **It must be dropped** before reading the response
+    /// to prevent deadlocks.
     fn post(
         &mut self,
         url: &str,

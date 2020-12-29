@@ -24,6 +24,9 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
     "GIT_COMMON_DIR",
 ];
 
+/// A utility to spawn a helper process to actually transmit data, possibly over `ssh`.
+///
+/// It can only be instantiated using the local [`connect()`] or [ssh connect][crate::client::ssh::connect()].
 pub struct SpawnProcessOnDemand {
     desired_version: Protocol,
     url: git_url::Url,
@@ -151,6 +154,12 @@ impl client::Transport for SpawnProcessOnDemand {
     }
 }
 
-pub fn connect(path: impl Into<BString>, version: Protocol) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
-    Ok(SpawnProcessOnDemand::new_local(path.into(), version))
+/// Connect to a locally readable repository at `path` using the given `desired_version`.
+///
+/// This will spawn a `git` process locally.
+pub fn connect(
+    path: impl Into<BString>,
+    desired_version: Protocol,
+) -> Result<SpawnProcessOnDemand, std::convert::Infallible> {
+    Ok(SpawnProcessOnDemand::new_local(path.into(), desired_version))
 }

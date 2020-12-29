@@ -9,15 +9,21 @@ use std::{
 #[cfg(test)]
 mod tests;
 
+///
 pub mod connect;
+///
 pub mod file;
+///
 pub mod git;
+///
 #[cfg(feature = "http-client-curl")]
 pub mod http;
+///
 pub mod ssh;
 #[doc(inline)]
 pub use connect::connect;
 
+///
 pub mod capabilities;
 #[doc(inline)]
 pub use capabilities::Capabilities;

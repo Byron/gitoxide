@@ -1,7 +1,9 @@
 use crate::client::Transport;
 use quick_error::quick_error;
 quick_error! {
+    /// The error used in [`connect()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Url(err: git_url::parse::Error) {
             display("The URL could not be parsed")
@@ -23,12 +25,11 @@ quick_error! {
         }
         #[cfg(not(feature = "http-client-curl"))]
         CompiledWithoutHttp(scheme: git_url::Scheme) {
-            display("'{}' is not compiled in. Compile with the 'http' cargo feature", scheme)
+            display("'{}' is not compiled in. Compile with the 'http-client-curl' cargo feature", scheme)
         }
     }
 }
 
-/// Would be so nice if this wasn't necessary
 mod box_impl {
     use crate::{
         client::{self, Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
@@ -36,6 +37,7 @@ mod box_impl {
     };
     use std::ops::{Deref, DerefMut};
 
+    // Would be nice if the box implementation could auto-forward to all implemented traits.
     impl<T: client::Transport + ?Sized> client::Transport for Box<T> {
         fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
             self.deref_mut().handshake(service)
@@ -67,8 +69,16 @@ mod box_impl {
     }
 }
 
-/// A general purpose connector with just the default configuration.
-pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport>, Error> {
+/// A general purpose connector connecting to a repository identified by the given `url`.
+///
+/// This includes connections to
+/// [local repositories][crate::client::file::connect()],
+/// [repositories over ssh][crate::client::ssh::connect()],
+/// [git daemons][crate::client::git::connect()],
+/// and if compiled in connections to [git repositories over https][crate::client::http::connect()].
+///
+/// Use `desired_version` to set the desired protocol version to use when connecting, but not that the server may downgrade it.
+pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn Transport>, Error> {
     let urlb = url;
     let url = git_url::parse(urlb)?;
     Ok(match url.scheme {
@@ -77,7 +87,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
             Box::new(
-                crate::client::file::connect(url.path, version)
+                crate::client::file::connect(url.path, desired_version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }
@@ -85,7 +95,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
             crate::client::ssh::connect(
                 &url.host.as_ref().expect("host is present in url"),
                 url.path,
-                version,
+                desired_version,
                 url.user.as_deref(),
                 url.port,
             )
@@ -99,7 +109,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
                 crate::client::git::connect(
                     &url.host.as_ref().expect("host is present in url"),
                     url.path,
-                    version,
+                    desired_version,
                     url.port,
                 )
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
@@ -111,7 +121,7 @@ pub fn connect(url: &[u8], version: crate::Protocol) -> Result<Box<dyn Transport
         git_url::Scheme::Https | git_url::Scheme::Http => {
             use bstr::ByteSlice;
             Box::new(
-                crate::client::http::connect(urlb.to_str()?, version)
+                crate::client::http::connect(urlb.to_str()?, desired_version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }

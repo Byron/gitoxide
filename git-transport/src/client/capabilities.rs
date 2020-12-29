@@ -4,7 +4,9 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
+    /// The error used in [`Capabilities::from_bytes()`] and [`Capabilities::from_lines()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         MissingDelimitingNullByte {
             display("Capabilities were missing entirely as there was no 0 byte")

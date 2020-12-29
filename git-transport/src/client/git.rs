@@ -46,12 +46,20 @@ pub(crate) mod message {
         out
     }
 }
+
+/// The way to connect to a process speaking the `git` protocol.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum ConnectMode {
+    /// A git daemon.
     Daemon,
+    /// A spawned `git` process to upload a pack to the client.
     Process,
 }
 
+/// A TCP connection to either a `git` daemon or a spawned `git` process.
+///
+/// When connecting to a daemon, additional context information is sent with the first line of the handshake. Otherwise that
+/// context is passed using command line arguments to a [spawned `git` process][crate::client::file::SpawnProcessOnDemand].
 pub struct Connection<R, W> {
     writer: W,
     line_provider: git_packetline::Provider<R>,
@@ -170,7 +178,9 @@ where
 
 use quick_error::quick_error;
 quick_error! {
+    /// The error used in [`connect()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Io(err: io::Error){
             display("An IO error occurred when connecting to the server")
@@ -195,10 +205,13 @@ fn parse_host(input: String) -> Result<(String, Option<u16>), Error> {
     })
 }
 
+/// Connect to a git daemon running on `host` and optionally `port` and a repository at `path`.
+///
+/// Use `desired_version` to specify a preferred protocol to use, knowing that it can be downgraded by a server not supporting it.
 pub fn connect(
     host: &str,
     path: BString,
-    version: crate::Protocol,
+    desired_version: crate::Protocol,
     port: Option<u16>,
 ) -> Result<Connection<TcpStream, TcpStream>, Error> {
     let read = TcpStream::connect_timeout(
@@ -213,5 +226,12 @@ pub fn connect(
         .ok()
         .map(parse_host)
         .transpose()?;
-    Ok(Connection::new(read, write, version, path, vhost, ConnectMode::Daemon))
+    Ok(Connection::new(
+        read,
+        write,
+        desired_version,
+        path,
+        vhost,
+        ConnectMode::Daemon,
+    ))
 }

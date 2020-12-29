@@ -4,7 +4,9 @@ use quick_error::quick_error;
 use std::borrow::Cow;
 
 quick_error! {
+    /// The error used in [`connect()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         UnsupportedSshCommand(command: String) {
             display("The ssh command '{}' is not currently supported", command)
@@ -12,10 +14,22 @@ quick_error! {
     }
 }
 
+/// Connect to `host` using the ssh program to obtain data from the repository at `path` on the remote.
+///
+/// The optional `user` identifies the user's account to which to connect, while `port` allows to specify non-standard
+/// ssh ports.
+///
+/// The `desired_version` is the preferred protocol version when establishing the connection, but note that it can be
+/// downgraded by servers not supporting it.
+///
+/// # Environment Variables
+///
+/// Use `GIT_SSH_COMMAND` to override the `ssh` program to execute. This can be a script dealing with using the correct
+/// ssh key, for example.
 pub fn connect(
     host: &str,
     path: BString,
-    version: crate::Protocol,
+    desired_version: crate::Protocol,
     user: Option<&str>,
     port: Option<u16>,
 ) -> Result<client::file::SpawnProcessOnDemand, Error> {
@@ -26,12 +40,15 @@ pub fn connect(
     type EnvVar = (&'static str, String);
     let args_and_env: Option<(Vec<Cow<'_, str>>, Vec<EnvVar>)> = match ssh_cmd {
         "ssh" | "ssh.exe" => {
-            if version != Protocol::V1 {
+            if desired_version != Protocol::V1 {
                 let mut args = vec![Cow::from("-o"), "SendEnv=GIT_PROTOCOL".into()];
                 if let Some(port) = port {
                     args.push(format!("-p={}", port).into());
                 }
-                Some((args, vec![("GIT_PROTOCOL", format!("version={}", version as usize))]))
+                Some((
+                    args,
+                    vec![("GIT_PROTOCOL", format!("version={}", desired_version as usize))],
+                ))
             } else {
                 None
             }
@@ -59,7 +76,7 @@ pub fn connect(
             ssh_cmd_line.map(Cow::from).chain(args).chain(Some(host.into())),
             envs,
             path,
-            version,
+            desired_version,
         ),
         None => client::file::SpawnProcessOnDemand::new_ssh(
             url,
@@ -67,7 +84,7 @@ pub fn connect(
             ssh_cmd_line.chain(Some(host.as_str())),
             None::<(&str, String)>,
             path,
-            version,
+            desired_version,
         ),
     })
 }

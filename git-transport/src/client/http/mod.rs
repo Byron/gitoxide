@@ -12,13 +12,16 @@ use std::{
 #[cfg(feature = "http-client-curl")]
 pub(crate) mod curl;
 
+///
 mod traits;
 use crate::client::MessageKind;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
+/// The actual http client implementation.
 #[cfg(feature = "http-client-curl")]
 pub type Impl = curl::Curl;
 
+/// A transport for supporting arbitrary http clients by abstracting interactions with them into the [Http] trait.
 pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
@@ -31,12 +34,13 @@ pub struct Transport<H: Http> {
 }
 
 impl Transport<Impl> {
-    pub fn new(url: &str, version: crate::Protocol) -> Self {
+    /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
+    pub fn new(url: &str, desired_version: crate::Protocol) -> Self {
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
-            desired_version: version,
-            actual_version: version,
+            desired_version,
+            actual_version: desired_version,
             service: None,
             http: Impl::default(),
             line_provider: None,
@@ -256,6 +260,7 @@ impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
     }
 }
 
-pub fn connect(url: &str, version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {
-    Ok(Transport::new(url, version))
+/// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
+pub fn connect(url: &str, desired_version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {
+    Ok(Transport::new(url, desired_version))
 }
