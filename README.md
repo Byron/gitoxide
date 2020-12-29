@@ -46,7 +46,9 @@ become available.
 ### git-hash
  * types to represent hash digests to identify git objects.
  * used to abstract over different kinds of hashes, like SHA1 and the upcoming SHA256
-          
+ * [x] API documentation
+   * [ ] Some examples
+
 ### git-object
   * *decode (zero-copy)* borrowed objects
     * [x] commit
@@ -57,7 +59,8 @@ become available.
     * [x] tree
     * [x] tag
   * [x] transform borrowed to owned objects
-  * [ ] API documentation with examples
+  * [x] API documentation
+    * [ ] Some examples
   
 ### git-odb
   * **loose objects**
@@ -114,7 +117,8 @@ become available.
     * [x] paths (OS paths, without need for UTF-8)
   * [x] username expansion for ssh and git urls
   * [x] convert URL to string
-  * [ ] API documentation with examples
+  * [x] API documentation
+    * [ ] Some examples
   
 ### git-protocol
   * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
@@ -145,6 +149,8 @@ become available.
   * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
   * [x] `Read` from packet line with (optional) progress support via sidebands
   * [x] `Write` with built-in packet line encoding
+  * [x] API documentation
+    * [ ] Some examples
 
 ### git-transport
   * No matter what we do here, timeouts must be supported to prevent hanging forever and to make interrupts destructor-safe.
@@ -175,8 +181,11 @@ become available.
   * [ ] API documentation with examples
 
 ### git-index
-  * handle git index files for primary use by the git-repository while crafting new commits
-  * [ ] API documentation with examples
+  * read and write a git-index file
+  * add and remove entries
+  * [x] API documentation
+    * [ ] Some examples
+    * [ ] API documentation with examples
   
 ### git-commitgraph
   * [x] read-only access
@@ -184,7 +193,8 @@ become available.
      * [ ] Bloom filter index
      * [ ] Bloom filter data
   * [ ] create and update graphs and graph files
-  * [ ] API documentation with examples
+  * [ ] API documentation
+    * [ ] Some examples
 
 ### git-config
   * [ ] read
@@ -198,8 +208,9 @@ become available.
       * [ ] includeIf
   * [ ] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
-  * [ ] API documentation with examples
-  
+  * [ ] API documentation
+    * [ ] Some examples
+
 ### git-repository
   * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
@@ -218,23 +229,22 @@ become available.
   * [ ] merging
   * [ ] stashing
   * [ ] Use _Commit Graph_ to speed up certain queries
-  * [ ] API documentation with examples
-  
+  * [ ] API documentation
+    * [ ] Some examples
+
 ### git-bundle
   * [ ] create a bundle from an archive
   * [ ] extract a branch from a bundle into a repository
-  
+  * [ ] API documentation
+    * [ ] Some examples
+
 ### git-ref
   * Handle symbolic references and packed references
   * discover them in typical folder structures
   * [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
-  * [ ] API documentation with examples
-  
-### git-index
-  * read and write a git-index file
-  * add and remove entries
-  * [ ] API documentation with examples
-  
+  * [x] API documentation
+    * [ ] Some examples
+
 ### git-diff
   * diffing of git-object::Tree structures
   * diffing, merging, working with hunks of data
