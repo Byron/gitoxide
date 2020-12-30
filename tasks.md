@@ -13,7 +13,7 @@
   * [x] git-ref
   * [x] git-packetline
     * [x] rename `to_write()` to `write_to()` to ~~match what's done in git-object~~. Consistency is good, but lets not break it again
-  * [ ] git-transport
+  * [x] git-transport
   * [ ] git-protocol
   * [ ] git-commitgraph
 * **git-config**

@@ -178,14 +178,14 @@ become available.
     * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry with authentication
   * **server**
       * [ ] general purpose `accept(…)` for servers
-  * [ ] API documentation with examples
+  * [x] API documentation
+    * [ ] Some examples
 
 ### git-index
   * read and write a git-index file
   * add and remove entries
   * [x] API documentation
     * [ ] Some examples
-    * [ ] API documentation with examples
   
 ### git-commitgraph
   * [x] read-only access
