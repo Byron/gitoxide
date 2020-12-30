@@ -49,8 +49,11 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
 /// A trait to abstract the HTTP operations needed to power all git interactions: read via GET and write via POST.
 #[allow(clippy::type_complexity)]
 pub trait Http {
+    /// A type providing headers line by line.
     type Headers: io::BufRead;
+    /// A type providing the response.
     type ResponseBody: io::BufRead;
+    /// A type allowing to write the content to post.
     type PostBody: io::Write;
 
     /// Initiate a `GET` request to `url` provided the given `headers`.

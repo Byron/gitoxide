@@ -68,6 +68,7 @@ pub enum Error {
 pub struct SetServiceResponse<'a> {
     /// The protocol the service can provide. May be different from the requested one
     pub actual_protocol: Protocol,
+    /// The capabilities parsed from the server response.
     pub capabilities: Capabilities,
     /// In protocol version one, this is set to a list of refs and their peeled counterparts.
     pub refs: Option<Box<dyn io::BufRead + 'a>>,
@@ -297,6 +298,7 @@ pub trait Transport {
     fn is_stateful(&self) -> bool;
 }
 
+/// An extension trait to add more methods to everything implementing [`Transport`].
 pub trait TransportV2Ext {
     /// Invoke a protocol V2 style `command` with given `capabilities` and optional command specific `arguments`.
     /// The `capabilities` were communicated during the handshake.

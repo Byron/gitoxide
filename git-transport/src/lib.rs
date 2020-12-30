@@ -1,5 +1,9 @@
+//! An implementation of the `git` transport layer, abstracting over all of its [versions][Protocol], providing
+//! [`connect()`] to establish a connection given a repository URL.
+//!
+//! All git transports are supported, including `ssh`, `git`, `http` and `https`, as well as local repository paths.
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, missing_docs)]
 
 /// The version of the way client and server communicate.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

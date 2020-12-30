@@ -142,6 +142,10 @@ where
     R: io::Read,
     W: io::Write,
 {
+    /// Create a connection from the given `read` and `write`, asking for `desired_version` as preferred protocol
+    /// and the transfer of the repository at `repository_path`.
+    ///
+    /// `virtual_host` along with a port to which to connect to, while `mode` determines the kind of endpoint to connect to.
     pub fn new(
         read: R,
         write: W,
