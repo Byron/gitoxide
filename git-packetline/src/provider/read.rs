@@ -97,13 +97,10 @@ where
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     pub fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.parent.peek_line() {
-            Some(Ok(Ok(line))) => match line {
-                crate::PacketLine::Data(line) => Some(Ok(Ok(line))),
-                _ => None,
-            },
+            Some(Ok(Ok(crate::PacketLine::Data(line)))) => Some(Ok(Ok(line))),
             Some(Ok(Err(err))) => Some(Ok(Err(err))),
             Some(Err(err)) => Some(Err(err)),
-            None => None,
+            _ => None,
         }
     }
 }

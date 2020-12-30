@@ -1,4 +1,4 @@
-use crate::fetch::{self, command::Feature, Command};
+use crate::fetch::{command::Feature, Command};
 use bstr::{BStr, BString, ByteSlice};
 use git_object::borrowed;
 use git_transport::{
@@ -82,7 +82,7 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
-    pub(crate) fn new(version: Protocol, features: Vec<Feature>) -> Result<Self, fetch::Error> {
+    pub(crate) fn new(version: Protocol, features: Vec<Feature>) -> Self {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");
@@ -106,7 +106,7 @@ impl Arguments {
             Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
-        Ok(Arguments {
+        Arguments {
             features,
             version,
             args: initial_arguments,
@@ -117,7 +117,7 @@ impl Arguments {
             deepen_relative,
             deepen_since,
             features_for_first_want,
-        })
+        }
     }
     pub(crate) fn send<'a, T: client::Transport + 'a>(
         &mut self,

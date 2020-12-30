@@ -9,12 +9,10 @@ use std::io;
 
 fn arguments_v1(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect())
-        .expect("all required features")
 }
 
 fn arguments_v2(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(Protocol::V2, features.into_iter().map(|n| (n, None)).collect())
-        .expect("all required features")
 }
 
 struct Transport<T: client::Transport> {
