@@ -1,5 +1,6 @@
 mod options {
     use argh::FromArgs;
+    use std::path::PathBuf;
 
     #[derive(FromArgs)]
     /// The lean git
@@ -16,12 +17,24 @@ mod options {
     #[argh(subcommand)]
     pub enum SubCommands {
         Init(Init),
+        Organize(Organize),
     }
 
     /// Initialize the repository in the current directory.
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "init")]
     pub struct Init {}
+
+    /// Move all repositories found in a given root directory into a structure matching their clone URLs.
+    #[derive(FromArgs, PartialEq, Debug)]
+    #[argh(subcommand, name = "organize")]
+    pub struct Organize {
+        #[argh(positional)]
+        /// the root directory to use when finding input repositories to move into position.
+        ///
+        /// Defaults to the current working directory.
+        pub root: Option<PathBuf>,
+    }
 }
 
 use anyhow::Result;
@@ -34,5 +47,6 @@ pub fn main() -> Result<()> {
 
     match cli.subcommand {
         SubCommands::Init(_) => core::repository::init(),
+        SubCommands::Organize(_cmd) => unimplemented!("organize"),
     }
 }
