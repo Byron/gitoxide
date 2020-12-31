@@ -66,7 +66,7 @@ impl<H: Http> Transport<H> {
         Ok(())
     }
 
-    #[allow(clippy::unnecessary_wraps)]
+    #[allow(clippy::unnecessary_wraps, clippy::unknown_clippy_lints)]
     fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<'_, str>>) -> Result<(), client::Error> {
         if let Some(identity) = &self.identity {
             match identity {
