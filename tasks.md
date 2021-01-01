@@ -58,6 +58,7 @@
 
 To be picked in any order….
 
+* [ ] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [ ] when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.
   * [ ] alternatively, use an INTEL mac for now.
