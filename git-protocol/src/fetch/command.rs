@@ -2,15 +2,20 @@ use crate::fetch::agent;
 use bstr::{BString, ByteSlice};
 use git_transport::client::Capabilities;
 
+/// The kind of command to invoke on the server side.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum Command {
+    /// List references.
     LsRefs,
+    /// Fetch a pack.
     Fetch,
 }
 
+/// A key value pair of values known at compile time.
 pub type Feature = (&'static str, Option<&'static str>);
 
 impl Command {
+    /// Produce the name of the command as known by the server side.
     pub fn as_str(&self) -> &'static str {
         match self {
             Command::LsRefs => "ls-refs",

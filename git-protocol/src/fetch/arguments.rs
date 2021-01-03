@@ -7,6 +7,7 @@ use git_transport::{
 };
 use std::{fmt, io::Write};
 
+/// The arguments passed to a server command.
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
     features: Vec<Feature>,
@@ -25,56 +26,85 @@ pub struct Arguments {
 }
 
 impl Arguments {
+    /// Return true if ref filters is supported.
     pub fn can_use_filter(&self) -> bool {
         self.filter
     }
+    /// Return true if shallow refs are supported.
+    ///
+    /// This is relevant for partial clones when using `--depth X`.
     pub fn can_use_shallow(&self) -> bool {
         self.shallow
     }
+    /// Return true if the 'deepen' capability is supported.
+    ///
+    /// This is relevant for partial clones when using `--depth X` and retrieving additional history.
     pub fn can_use_deepen(&self) -> bool {
         self.shallow
     }
+    /// Return true if the 'deepen_since' capability is supported.
+    ///
+    /// This is relevant for partial clones when using `--depth X` and retrieving additional history
+    /// based on a date beyond which all history should be present.
     pub fn can_use_deepen_since(&self) -> bool {
         self.deepen_since
     }
+    /// Return true if the 'deepen_not' capability is supported.
+    ///
+    /// This is relevant for partial clones when using `--depth X`.
     pub fn can_use_deepen_not(&self) -> bool {
         self.deepen_not
     }
+    /// Return true if the 'deepen_relative' capability is supported.
+    ///
+    /// This is relevant for partial clones when using `--depth X`.
     pub fn can_use_deepen_relative(&self) -> bool {
         self.deepen_relative
     }
 
+    /// Add the given `id` pointing to a commit to the 'want' list.
+    ///
+    /// As such it should be included in the server response as it's not present on the client.
     pub fn want(&mut self, id: borrowed::Id<'_>) {
         match self.features_for_first_want.take() {
             Some(features) => self.prefixed("want ", format!("{} {}", id, features.join(" "))),
             None => self.prefixed("want ", id),
         }
     }
+    /// Add the given `id` pointing to a commit to the 'have' list.
+    ///
+    /// As such it should _not_ be included in the server response as it's already present on the client.
     pub fn have(&mut self, id: borrowed::Id<'_>) {
         self.haves.push(format!("have {}", id).into());
     }
+    /// Add the given `id` pointing to a commit to the 'shallow' list.
     pub fn shallow(&mut self, id: borrowed::Id<'_>) {
         assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
         self.prefixed("shallow ", id);
     }
+    /// Deepen the commit history by `depth` amount of commits.
     pub fn deepen(&mut self, depth: usize) {
         assert!(self.shallow, "'shallow' feature required for deepen");
         self.prefixed("deepen ", depth);
     }
+    /// Deepen the commit history to include all commits from now to `seconds_since_unix_epoch`.
     pub fn deepen_since(&mut self, seconds_since_unix_epoch: usize) {
         assert!(self.deepen_since, "'deepen-since' feature required");
         self.prefixed("deepen-since ", seconds_since_unix_epoch);
     }
+    /// Deepen the commit history in a relative instead of absolute fashion.
     pub fn deepen_relative(&mut self) {
         assert!(self.deepen_relative, "'deepen-relative' feature required");
         self.args.push("deepen-relative".into());
     }
+    /// Do not include commits reachable by the given `ref_path` when deepening the history.
     pub fn deepen_not(&mut self, ref_path: &BStr) {
         assert!(self.deepen_not, "'deepen-not' feature required");
         let mut line = BString::from("deepen-not ");
         line.extend_from_slice(&ref_path);
         self.args.push(line);
     }
+    /// Set the given filter `spec` when listing references.
     pub fn filter(&mut self, spec: &str) {
         assert!(self.filter, "'filter' feature required");
         self.prefixed("filter ", spec);
