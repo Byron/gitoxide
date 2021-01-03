@@ -5,9 +5,11 @@ use std::{
     process::{Command, Stdio},
 };
 
+/// The result used in [`helper()`].
 pub type Result = std::result::Result<Option<Outcome>, Error>;
 
 quick_error! {
+    /// The error used in the [credentials helper][helper()].
     #[derive(Debug)]
     pub enum Error {
         Io(err: io::Error) {
@@ -24,19 +26,22 @@ quick_error! {
     }
 }
 
+/// The action to perform by the credentials [`helper()`].
 #[derive(Clone, Debug)]
 pub enum Action<'a> {
-    /// Provide credentials using the given URL (as &str) as context
+    /// Provide credentials using the given repository URL (as &str) as context.
     Fill(&'a str),
+    /// Approve the credentials as identified by the previous input as `Vec<u8>`.
     Approve(Vec<u8>),
+    /// Reject the credentials as identified by the previous input as `Vec<u8>`.
     Reject(Vec<u8>),
 }
 
 impl<'a> Action<'a> {
-    pub fn is_fill(&self) -> bool {
+    fn is_fill(&self) -> bool {
         matches!(self, Action::Fill(_))
     }
-    pub fn as_str(&self) -> &str {
+    fn as_str(&self) -> &str {
         match self {
             Action::Approve(_) => "approve",
             Action::Fill(_) => "fill",
@@ -45,22 +50,28 @@ impl<'a> Action<'a> {
     }
 }
 
+/// A handle to [approve][NextAction::approve()] or [reject][NextAction::reject()] the outcome of the initial action.
 #[derive(Clone, Debug)]
 pub struct NextAction {
     previous_output: Vec<u8>,
 }
 
 impl NextAction {
+    /// Approve the result of the previous [Action].
     pub fn approve(self) -> Action<'static> {
         Action::Approve(self.previous_output)
     }
+    /// Reject the result of the previous [Action].
     pub fn reject(self) -> Action<'static> {
         Action::Reject(self.previous_output)
     }
 }
 
+/// The outcome of [`helper()`].
 pub struct Outcome {
+    /// The obtained identity.
     pub identity: client::Identity,
+    /// A handle to the action to perform next using another call to [`helper()`].
     pub next: NextAction,
 }
 
@@ -74,6 +85,10 @@ fn git_program() -> &'static str {
     "git"
 }
 
+/// Call the `git` credentials helper program performing the given `action`.
+///
+/// Usually the first call is performed with [`Action::fill`] to obtain an identity, which subsequently can be used.
+/// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
 pub fn helper(action: Action<'_>) -> Result {
     let mut cmd = Command::new(git_program());
     cmd.arg("credential")
@@ -122,6 +137,7 @@ pub fn helper(action: Action<'_>) -> Result {
     }
 }
 
+/// Encode `url` to `out` for consumption by a `git credentials` helper program.
 pub fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {
     validate(url)?;
     writeln!(out, "url={}\n", url)
@@ -137,6 +153,7 @@ fn validate(url: &str) -> io::Result<()> {
     Ok(())
 }
 
+/// Decode all lines in `input` as key-value pairs produced by a `git credentials` helper program.
 pub fn decode_message(mut input: impl io::Read) -> io::Result<Vec<(String, String)>> {
     let mut buf = String::new();
     input.read_to_string(&mut buf)?;
