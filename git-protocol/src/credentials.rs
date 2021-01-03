@@ -87,7 +87,7 @@ fn git_program() -> &'static str {
 
 /// Call the `git` credentials helper program performing the given `action`.
 ///
-/// Usually the first call is performed with [`Action::fill`] to obtain an identity, which subsequently can be used.
+/// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
 /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
 pub fn helper(action: Action<'_>) -> Result {
     let mut cmd = Command::new(git_program());

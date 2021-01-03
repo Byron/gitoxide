@@ -34,28 +34,40 @@ quick_error! {
     }
 }
 
+/// A git reference, commonly referred to as 'ref', as returned by a git server before sending a pack.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Ref {
     /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
     Peeled {
+        /// The path at which the ref is located, like `/refs/heads/main`.
         path: BString,
+        /// The hash of the tag the ref points to.
         tag: owned::Id,
+        /// The hash of the object the `tag` points to.
         object: owned::Id,
     },
     /// A ref pointing to a commit object
-    Direct { path: BString, object: owned::Id },
+    Direct {
+        /// The path at which the ref is located, like `/refs/heads/main`.
+        path: BString,
+        /// The hash of the object the ref points to.
+        object: owned::Id,
+    },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
+        /// The path at which the symbolic ref is located, like `/refs/heads/main`.
         path: BString,
+        /// The path of the ref the symbolic ref points to.
         target: BString,
+        /// The hash of the object the `target` ref points to.
         object: owned::Id,
     },
 }
 
 impl Ref {
-    /// Provide shared fields referring to the ref itself. In case of peeled refs, the tag object itself is returned as it is what
-    /// the path refers to.
+    /// Provide shared fields referring to the ref itself, namely `(path, object id)`.
+    /// In case of peeled refs, the tag object itself is returned as it is what the path refers to.
     pub fn unpack(&self) -> (&BString, &owned::Id) {
         match self {
             Ref::Direct { path, object, .. }
