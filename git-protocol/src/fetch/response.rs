@@ -5,7 +5,9 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
+    /// The error used in the [response module][crate::fetch::response].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Io(err: io::Error) {
             display("Failed to read from line reader")
@@ -29,22 +31,30 @@ quick_error! {
     }
 }
 
+/// An 'ACK' line received from the server.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Acknowledgement {
+    /// The contained `id` is in common.
     Common(owned::Id),
+    /// The server is ready to receive more lines.
     Ready,
+    /// The server isn't ready yet.
     NAK,
 }
 
+/// A shallow line received from the server.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ShallowUpdate {
+    /// Shallow the given `id`.
     Shallow(owned::Id),
+    /// Don't shallow the given `id` anymore.
     Unshallow(owned::Id),
 }
 
 impl ShallowUpdate {
+    /// Parse a `ShallowUpdate` from a `line` as received to the server.
     fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
         let mut tokens = line.trim_end().splitn(2, ' ');
         match (tokens.next(), tokens.next()) {
@@ -63,6 +73,7 @@ impl ShallowUpdate {
 }
 
 impl Acknowledgement {
+    /// Parse an `Acknowledgement` from a `line` as received to the server.
     fn from_line(line: &str) -> Result<Acknowledgement, Error> {
         let mut tokens = line.trim_end().splitn(3, ' ');
         Ok(match (tokens.next(), tokens.next(), tokens.next()) {
@@ -105,9 +116,15 @@ pub struct Response {
 }
 
 impl Response {
+    /// Return true if the response has a pack which can be read next.
     pub fn has_pack(&self) -> bool {
         self.has_pack
     }
+
+    /// Return an error if the given `features` don't contain the required ones for the given `version` of the protocol.
+    ///
+    /// Even though technically any set of features supported by the server could work, we only implement the ones that
+    /// make it easy to maintain all versions with a single code base that aims to be and remain maintainable.
     pub fn check_required_features(version: Protocol, features: &[Feature]) -> Result<(), Error> {
         match version {
             Protocol::V1 => {
@@ -128,6 +145,7 @@ impl Response {
         }
         Ok(())
     }
+    /// Parse a response of the given `version` of the protocol from `reader`.
     pub fn from_line_reader(version: Protocol, reader: &mut impl client::ExtendedBufRead) -> Result<Response, Error> {
         match version {
             Protocol::V1 => {
@@ -228,10 +246,12 @@ impl Response {
         }
     }
 
+    /// Return all acknowledgements [parsed previously][Response::from_line_reader()].
     pub fn acknowledgements(&self) -> &[Acknowledgement] {
         &self.acks
     }
 
+    /// Return all shallow update lines [parsed previously][Response::from_line_reader()].
     pub fn shallow_updates(&self) -> &[ShallowUpdate] {
         &self.shallows
     }
