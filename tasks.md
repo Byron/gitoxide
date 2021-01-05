@@ -14,7 +14,7 @@
   * [x] git-packetline
     * [x] rename `to_write()` to `write_to()` to ~~match what's done in git-object~~. Consistency is good, but lets not break it again
   * [x] git-transport
-  * [ ] git-protocol
+  * [x] git-protocol
   * [ ] git-commitgraph
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
@@ -58,7 +58,6 @@
 
 To be picked in any order….
 
-* [ ] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [ ] when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.
   * [ ] alternatively, use an INTEL mac for now.
@@ -68,5 +67,6 @@ To be picked in any order….
   * [x] upgrade to prodash 11.0
   * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
+* [x] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602

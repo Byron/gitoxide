@@ -138,8 +138,9 @@ become available.
       * [x] delegate can support for all fetch features, including shallow, deepen, etc.
       * [x] receive parsed shallow refs
   * [ ] push
-  * [ ] API documentation with examples
-  
+  * [x] API documentation
+    * [ ] Some examples
+
 ### git-packetline
   * [PKT-Line](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L52:L52)
   * [x] encode
