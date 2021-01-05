@@ -28,7 +28,7 @@ pub use delegate::{Action, Delegate};
 mod tests;
 
 quick_error! {
-    /// The error used in [`fetch()].
+    /// The error used in [`fetch()`].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -63,11 +63,18 @@ quick_error! {
     }
 }
 
+/// Returns the name of the agent as key-value pair, commonly used in HTTP headers.
 pub fn agent() -> (&'static str, Option<&'static str>) {
     ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
 }
 
-/// Note that depending on the `delegate`, the actual action peformed can be `ls-refs`, `clone` or `fetch`.
+/// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
+///
+/// * `authenticate(operation_to_perform)` is used to receive credentials for the connection and potentially store it
+///   if the server indicates 'permission denied'. Note that not all transport support authentication or authorization.
+/// * `progress` is used to emit progress messages.
+///
+/// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 pub fn fetch<F>(
     mut transport: impl client::Transport,
     delegate: &mut impl Delegate,

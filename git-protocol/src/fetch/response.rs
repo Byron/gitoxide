@@ -100,6 +100,7 @@ impl Acknowledgement {
             (None, _, _) => unreachable!("cannot have an entirely empty line"),
         })
     }
+    /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
     pub fn id(&self) -> Option<&owned::Id> {
         match self {
             Acknowledgement::Common(id) => Some(id),

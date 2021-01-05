@@ -11,6 +11,7 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 quick_error! {
     /// The error used in the [credentials helper][helper()].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Io(err: io::Error) {
             display("An IO error occurred while communicating to the credentials helper")
