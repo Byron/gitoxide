@@ -21,11 +21,16 @@ pub use arguments::Arguments;
 pub mod response;
 pub use response::Response;
 
+mod delegate;
+pub use delegate::{Action, Delegate};
+
 #[cfg(test)]
 mod tests;
 
 quick_error! {
+    /// The error used in [`fetch()].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         PackIo(err: io::Error) {
             display("Could not read streaming pack file")
@@ -57,9 +62,6 @@ quick_error! {
         }
     }
 }
-
-mod delegate;
-pub use delegate::{Action, Delegate};
 
 pub fn agent() -> (&'static str, Option<&'static str>) {
     ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
