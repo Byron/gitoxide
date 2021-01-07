@@ -11,7 +11,9 @@ use std::{
     slice::Chunks,
 };
 
+/// The error used in the [`file::commit`][self] module.
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("commit {0}'s extra edges overflows the commit-graph file's extra edges list")]
     ExtraEdgesListOverflow(owned::Id),
@@ -28,6 +30,7 @@ pub enum Error {
 const NO_PARENT: u32 = 0x7000_0000;
 const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
 
+/// A commit as stored in a [`File`].
 pub struct Commit<'a> {
     file: &'a File,
     pos: file::Position,
@@ -68,6 +71,7 @@ impl<'a> Commit<'a> {
         self.generation
     }
 
+    /// Returns an iterator over the parent positions for lookup in the owning [Graph][crate::Graph].
     pub fn iter_parents(&'a self) -> impl Iterator<Item = Result<graph::Position, Error>> + 'a {
         // I didn't find a combinator approach that a) was as strict as ParentIterator, b) supported
         // fuse-after-first-error behavior, and b) was significantly shorter or more understandable
@@ -78,29 +82,23 @@ impl<'a> Commit<'a> {
         }
     }
 
-    // Allow the return value to outlive this Commit object, as it only needs to be bound by the
-    // lifetime of the parent file.
-    pub fn id<'b>(&'b self) -> borrowed::Id<'a>
-    where
-        'a: 'b,
-    {
+    /// Returns the hash of this commit.
+    pub fn id(&self) -> borrowed::Id<'a> {
         self.file.id_at(self.pos)
     }
 
+    /// Returns the first parent of this commit.
     pub fn parent1(&self) -> Result<Option<graph::Position>, Error> {
         self.iter_parents().next().transpose()
     }
 
+    /// Returns the position at which this commit is stored in the parent [File].
     pub fn position(&self) -> file::Position {
         self.pos
     }
 
-    // Allow the return value to outlive this Commit object, as it only needs to be bound by the
-    // lifetime of the parent file.
-    pub fn root_tree_id<'b>(&'b self) -> borrowed::Id<'a>
-    where
-        'a: 'b,
-    {
+    /// Return the hash of the tree this commit points to.
+    pub fn root_tree_id(&self) -> borrowed::Id<'a> {
         self.root_tree_id
     }
 }
@@ -128,6 +126,7 @@ impl<'a> PartialEq for Commit<'a> {
     }
 }
 
+/// An iterator over parents of a [`Commit`].
 pub struct ParentIterator<'a> {
     commit_data: &'a Commit<'a>,
     state: ParentIteratorState<'a>,

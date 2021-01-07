@@ -11,7 +11,9 @@ use std::{
 
 type ChunkId = [u8; 4];
 
+/// The error used in [`File::at()`].
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Commit-graph {:?} chunk contains {from_chunk} base graphs, but commit-graph file header claims {from_header} base graphs", BASE_GRAPHS_LIST_CHUNK_ID.as_bstr())]
     BaseGraphMismatch { from_header: u8, from_chunk: u32 },
@@ -63,6 +65,7 @@ const OID_LOOKUP_CHUNK_ID: ChunkId = *b"OIDL";
 const SENTINEL_CHUNK_ID: ChunkId = [0u8; 4];
 
 impl File {
+    /// Try to parse the commit graph file at `path`.
     pub fn at(path: impl AsRef<Path>) -> Result<File, Error> {
         Self::try_from(path.as_ref())
     }

@@ -1,12 +1,17 @@
 //! Operations on a single commit-graph file.
+
 mod access;
+
+///
 pub mod commit;
+pub use commit::Commit;
+
 mod init;
+///
 pub mod verify;
 
 pub use init::Error;
 
-pub use commit::Commit;
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
@@ -22,7 +27,7 @@ const SIGNATURE: &[u8] = b"CGPH";
 /// A single commit-graph file.
 ///
 /// All operations on a `File` are local to that graph file. Since a commit graph can span multiple
-/// files, all interesting graph operations belong on `Graph`.
+/// files, all interesting graph operations belong on [`Graph`][crate::Graph].
 pub struct File {
     base_graph_count: u8,
     base_graphs_list_offset: Option<usize>,
@@ -39,8 +44,8 @@ pub struct File {
 /// Commits within a graph file are sorted in lexicographical order by OID; a commit's lexigraphical position
 /// is its position in this ordering. If a commit graph spans multiple files, each file's commits
 /// start at lexigraphical position 0, so it is unique across a single file but is not unique across
-/// the whole commit graph. Each commit also has a graph position (`graph::Position`), which is unique
-/// across the whole commit graph. In order to avoid accidentally mixing lexigraphical positions with graph
+/// the whole commit graph. Each commit also has a graph position ([`graph::Position`][crate::graph::Position]),
+/// which is unique /// across the whole commit graph. In order to avoid accidentally mixing lexigraphical positions with graph
 /// positions, distinct types are used for each.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Position(pub u32);

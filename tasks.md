@@ -59,12 +59,13 @@
 To be picked in any order….
 
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
-  * [ ] when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.
-  * [ ] alternatively, use an INTEL mac for now.
+  * [ ] ~~when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.~~
+  * [ ] ~~alternatively, use an INTEL mac for now.~~
 * **prodash**
+  * [ ] upgrade to latest `smol` in the hopes to get a single-threaded runtime.
   * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
-  * [x] upgrade to prodash 11.0
+  * [x] upgrade to prodash ~~11.0~~ 12.0
   * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
     seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 * [x] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.

@@ -12,7 +12,9 @@ use std::{
     path::Path,
 };
 
+/// The error used in [`File::traverse()`].
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error<E: std::error::Error + 'static> {
     #[error(transparent)]
     Commit(#[from] file::commit::Error),
@@ -36,21 +38,32 @@ pub enum Error<E: std::error::Error + 'static> {
     RootTreeId { id: owned::Id, root_tree_id: owned::Id },
 }
 
+/// The positive result of [`File::traverse()`] providing some statistical information.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize, serde::Serialize))]
 pub struct Outcome {
+    /// The highest encountered [`file::Commit`] generation number.
     pub max_generation: u32,
-    pub max_parents: u32,
+    /// The smallest encountered [`file::Commit`] generation number.
     pub min_generation: u32,
+    /// The highest amount parents in a single [`file::Commit`].
+    pub max_parents: u32,
+    /// The total amount of [`commits`][file::Commit] seen in the iteration.
     pub num_commits: u32,
+    /// A mapping of `parent-count -> amount of [commits][file::Commit] with that count`.
     pub parent_counts: HashMap<u32, u32>,
 }
 
+/// Verification
 impl File {
+    /// Returns the trailing checksum over the entire content of this file.
     pub fn checksum(&self) -> borrowed::Id<'_> {
         borrowed::Id::try_from(&self.data[self.data.len() - SHA1_SIZE..]).expect("file to be large enough for a hash")
     }
 
+    /// Traverse all [commits][file::Commit] stored in this file and call `processor(commit) -> Result<(), Error>` on it.
+    ///
+    /// If the `processor` fails, the iteration will be stopped and the entire call results in the respective error.
     pub fn traverse<'a, E, Processor>(&'a self, mut processor: Processor) -> Result<Outcome, Error<E>>
     where
         E: std::error::Error + 'static,
@@ -118,6 +131,10 @@ impl File {
         Ok(stats)
     }
 
+    /// Assure the [`checksum`][File::checksum()] matches the actual checksum over all content of this file, excluding the trailing
+    /// checksum itself.
+    ///
+    /// Return the actual checksum on success or `(actual checksum, expected checksum)` if there is a mismatch.
     pub fn verify_checksum(&self) -> Result<owned::Id, (owned::Id, owned::Id)> {
         // Even though we could use git_features::hash::bytes_of_file(…), this would require using our own
         // Error type to support io::Error and Mismatch. As we only gain progress, there probably isn't much value

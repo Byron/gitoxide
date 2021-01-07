@@ -9,6 +9,7 @@ use std::{
 
 /// Access
 impl File {
+    /// The amount of base graphs that this file depends on.
     pub fn base_graph_count(&self) -> u8 {
         self.base_graph_count
     }
@@ -24,6 +25,9 @@ impl File {
         Commit::new(self, pos)
     }
 
+    /// The kind of hash used in this File.
+    ///
+    /// Note that it is always conforming to the hash used in the owning repository.
     pub fn hash_kind(&self) -> HashKind {
         HashKind::Sha1
     }
@@ -46,6 +50,7 @@ impl File {
         borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
+    /// Return an iterator over all object hashes stored in the base graph.
     pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
         let start = self.base_graphs_list_offset.unwrap_or(0);
         let base_graphs_list = &self.data[start..start + (SHA1_SIZE * usize::from(self.base_graph_count))];
@@ -54,14 +59,17 @@ impl File {
             .map(|bytes| borrowed::Id::try_from(bytes).expect("20 bytes SHA1 to be alright"))
     }
 
+    /// return an iterator over all commits in this file.
     pub fn iter_commits(&self) -> impl Iterator<Item = Commit<'_>> {
         (0..self.num_commits()).map(move |i| self.commit_at(file::Position(i)))
     }
 
+    /// Return an iterator over all object hashes stored in this file.
     pub fn iter_ids(&self) -> impl Iterator<Item = borrowed::Id<'_>> {
         (0..self.num_commits()).map(move |i| self.id_at(file::Position(i)))
     }
 
+    /// Translate the given object hash to its position within this file, if present.
     // copied from git-odb/src/pack/index/access.rs
     pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<file::Position> {
         let first_byte = usize::from(id.first_byte());
@@ -94,6 +102,7 @@ impl File {
         self.fan[255]
     }
 
+    /// Returns the path to this file.
     pub fn path(&self) -> &Path {
         &self.path
     }
