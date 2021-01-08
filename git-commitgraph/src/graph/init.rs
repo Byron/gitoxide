@@ -9,7 +9,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// The error used in the [`graph`][crate::graph] module.
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("{}", .path.display())]
     File {
@@ -41,10 +43,12 @@ pub enum Error {
 
 /// Instantiate a `Graph` from various sources.
 impl Graph {
+    /// Instantiate a commit graph from `path` which may be a directory containing graph files or the graph file itself.
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())
     }
 
+    /// Instantiate a commit graph from the directory containing all of its files.
     pub fn from_commit_graphs_dir(path: impl AsRef<Path>) -> Result<Self, Error> {
         let commit_graphs_dir = path.as_ref();
         let chain_file_path = commit_graphs_dir.join("commit-graph-chain");
@@ -67,6 +71,8 @@ impl Graph {
         Self::new(files)
     }
 
+    /// Instantiate a commit graph from a `.git/objects/info/commit-graph` or
+    /// `.git/objects/info/commit-graphs/graph-*.graph` file.
     pub fn from_file(path: impl AsRef<Path>) -> Result<Self, Error> {
         let path = path.as_ref();
         let file = File::at(path).map_err(|e| Error::File {
@@ -76,11 +82,13 @@ impl Graph {
         Self::new(vec![file])
     }
 
+    /// Instantiate a commit graph from an `.git/objects/info` directory.
     pub fn from_info_dir(info_dir: impl AsRef<Path>) -> Result<Self, Error> {
         Self::from_file(info_dir.as_ref().join("commit-graph"))
             .or_else(|_| Self::from_commit_graphs_dir(info_dir.as_ref().join("commit-graphs")))
     }
 
+    /// Create a new commit graph from a list of `files`.
     pub fn new(files: Vec<File>) -> Result<Self, Error> {
         let num_commits: u64 = files.iter().map(|f| u64::from(f.num_commits())).sum();
         if num_commits > u64::from(MAX_COMMITS) {

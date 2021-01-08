@@ -10,7 +10,9 @@ use std::{
     path::PathBuf,
 };
 
+/// The error used in [`verify_integrity()`][Graph::verify_integrity].
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error<E: std::error::Error + 'static> {
     #[error("'{}' should have {expected} base graphs, but claims {actual} base graphs", .path.display())]
     BaseGraphCount { actual: u8, expected: u8, path: PathBuf },

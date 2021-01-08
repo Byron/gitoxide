@@ -6,16 +6,25 @@ use git_object::borrowed;
 
 /// Access
 impl Graph {
+    /// Returns the commit at the given position `pos`.
+    ///
+    /// # Panics
+    /// If `pos` is greater or equal to [`num_commits()`][Graph::num_commits()].
     pub fn commit_at(&self, pos: graph::Position) -> Commit<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.commit_at(r.pos)
     }
 
+    /// Returns the commit matching the given `id`.
     pub fn commit_by_id(&self, id: borrowed::Id<'_>) -> Option<Commit<'_>> {
         let r = self.lookup_by_id(id)?;
         Some(r.file.commit_at(r.file_pos))
     }
 
+    /// Returns the `hash` at the given position `pos`.
+    ///
+    /// # Panics
+    /// If `pos` is greater or equal to [`num_commits()`][Graph::num_commits()].
     pub fn id_at(&self, pos: graph::Position) -> borrowed::Id<'_> {
         let r = self.lookup_by_pos(pos);
         r.file.id_at(r.pos)
@@ -31,10 +40,12 @@ impl Graph {
         self.files.iter().flat_map(|file| file.iter_ids())
     }
 
+    /// Translate the given `id` to its position in the file.
     pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<graph::Position> {
         Some(self.lookup_by_id(id)?.graph_pos)
     }
 
+    /// Returns the amount of commits stored in this file.
     pub fn num_commits(&self) -> u32 {
         self.files.iter().map(|f| f.num_commits()).sum()
     }

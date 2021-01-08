@@ -58,12 +58,14 @@
 
 To be picked in any order….
 
+* **prodash**
+  * [x] upgrade to latest `smol` in the hopes to get a single-threaded runtime.
+  * [x] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
+* **gix organize**
+  * [ ] a sub-command to move local repository clones into a structure mimicking their URL.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [ ] ~~when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.~~
   * [ ] ~~alternatively, use an INTEL mac for now.~~
-* **prodash**
-  * [ ] upgrade to latest `smol` in the hopes to get a single-threaded runtime.
-  * [ ] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **criner**
   * [x] upgrade to prodash ~~11.0~~ 12.0
   * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
