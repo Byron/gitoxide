@@ -1,6 +1,7 @@
 //! Operations on a complete commit graph.
 mod access;
 mod init;
+///
 pub mod verify;
 
 use crate::file::File;
@@ -15,6 +16,7 @@ pub struct Graph {
     files: Vec<File>,
 }
 
+/// A generalized position for use in [`Graph`].
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct Position(pub u32);
 

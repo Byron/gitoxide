@@ -50,15 +50,24 @@ pub enum Error<E: std::error::Error + 'static> {
     TooManyFiles(usize),
 }
 
+/// Statistics gathered while verifying the integrity of the graph as returned by [`Graph::verify_integrity()]`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize, serde::Serialize))]
 pub struct Outcome {
+    /// The longest consecutive amount of commits in a chain of commits.
+    ///
+    /// For example, a repository with 10 commits would have 10 as value.
     pub longest_path_length: Option<u32>,
+    /// The total amount traversed commits.
     pub num_commits: u32,
+    /// A mapping of `parent-count -> amount of [commits][file::Commit] with that count`.
     pub parent_counts: BTreeMap<u32, u32>,
 }
 
 impl Graph {
+    /// Traverse all commits in the graph and call `processor(&commit) -> Result<(), E>` on it while verifying checksums.
+    ///
+    /// When `processor` returns an error, the entire verification is stopped and the error returned.
     pub fn verify_integrity<E>(
         &self,
         mut processor: impl FnMut(&file::Commit<'_>) -> Result<(), E>,
