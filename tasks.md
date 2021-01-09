@@ -15,7 +15,7 @@
     * [x] rename `to_write()` to `write_to()` to ~~match what's done in git-object~~. Consistency is good, but lets not break it again
   * [x] git-transport
   * [x] git-protocol
-  * [ ] git-commitgraph
+  * [x] git-commitgraph
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`

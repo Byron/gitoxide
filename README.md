@@ -194,7 +194,7 @@ become available.
      * [ ] Bloom filter index
      * [ ] Bloom filter data
   * [ ] create and update graphs and graph files
-  * [ ] API documentation
+  * [x] API documentation
     * [ ] Some examples
 
 ### git-config
