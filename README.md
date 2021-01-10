@@ -273,6 +273,7 @@ become available.
 ### Stress Testing
   * [x] Verify huge packs
   * [x] Explode a pack to disk 
+  * [x] Generate and verify large commit graphs
   * [ ] Generate huge pack from a lot of loose objects
   
 ### Ideas for Demos

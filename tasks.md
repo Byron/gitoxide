@@ -31,7 +31,7 @@
   * [ ] create-update refs as received from clone/git-receive-pack
 * **gix clone**
   * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
-    * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates.
+    * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates_.
   * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
 * **receive pack**
   * [ ] resolve thin pack with Bundle
@@ -48,7 +48,7 @@
 ### Commit-Graph
 
 * [x] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
-* [ ] Application of the command above in a stress test
+* [x] Application of the command above in a stress test
 
 * **Questions**
   * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248), 
@@ -58,18 +58,17 @@
 
 To be picked in any order….
 
-* **prodash**
-  * [x] upgrade to latest `smol` in the hopes to get a single-threaded runtime.
-  * [x] finish transitioning to futures-lite to get rid of futures-util dependency to reduce compile times
 * **gix organize**
   * [ ] a sub-command to move local repository clones into a structure mimicking their URL.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
+  * [x] upgrade toolchain
+  * [ ] Upgrade to latest hyper/tokio to get everything to compile again
   * [ ] ~~when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.~~
   * [ ] ~~alternatively, use an INTEL mac for now.~~
 * **criner**
   * [x] upgrade to prodash ~~11.0~~ 12.0
   * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
-    seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
+        seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 * [x] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.
 
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602
