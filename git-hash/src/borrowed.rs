@@ -76,55 +76,55 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for Digest<'a> {
         D: serde::Deserializer<'de>,
     {
         struct __Visitor<'de: 'a, 'a> {
-            marker: serde::export::PhantomData<Digest<'a>>,
-            lifetime: serde::export::PhantomData<&'de ()>,
+            marker: std::marker::PhantomData<Digest<'a>>,
+            lifetime: std::marker::PhantomData<&'de ()>,
         }
         impl<'de: 'a, 'a> serde::de::Visitor<'de> for __Visitor<'de, 'a> {
             type Value = Digest<'a>;
-            fn expecting(&self, __formatter: &mut serde::export::Formatter<'_>) -> serde::export::fmt::Result {
-                serde::export::Formatter::write_str(__formatter, "tuple struct Digest")
+            fn expecting(&self, __formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                std::fmt::Formatter::write_str(__formatter, "tuple struct Digest")
             }
             #[inline]
-            fn visit_newtype_struct<__E>(self, __e: __E) -> serde::export::Result<Self::Value, __E::Error>
+            fn visit_newtype_struct<__E>(self, __e: __E) -> std::result::Result<Self::Value, __E::Error>
             where
                 __E: serde::Deserializer<'de>,
             {
                 let __field0: &'a [u8] = match <&'a [u8] as serde::Deserialize>::deserialize(__e) {
-                    serde::export::Ok(__val) => __val,
-                    serde::export::Err(__err) => {
-                        return serde::export::Err(__err);
+                    Ok(__val) => __val,
+                    Err(__err) => {
+                        return Err(__err);
                     }
                 };
-                serde::export::Ok(Digest(__field0.try_into().expect("exactly 20 bytes")))
+                Ok(Digest(__field0.try_into().expect("exactly 20 bytes")))
             }
             #[inline]
-            fn visit_seq<__A>(self, mut __seq: __A) -> serde::export::Result<Self::Value, __A::Error>
+            fn visit_seq<__A>(self, mut __seq: __A) -> std::result::Result<Self::Value, __A::Error>
             where
                 __A: serde::de::SeqAccess<'de>,
             {
                 let __field0 = match match serde::de::SeqAccess::next_element::<&'a [u8]>(&mut __seq) {
-                    serde::export::Ok(__val) => __val,
-                    serde::export::Err(__err) => {
-                        return serde::export::Err(__err);
+                    Ok(__val) => __val,
+                    Err(__err) => {
+                        return Err(__err);
                     }
                 } {
-                    serde::export::Some(__value) => __value,
-                    serde::export::None => {
-                        return serde::export::Err(serde::de::Error::invalid_length(
+                    Some(__value) => __value,
+                    None => {
+                        return Err(serde::de::Error::invalid_length(
                             0usize,
                             &"tuple struct Digest with 1 element",
                         ));
                     }
                 };
-                serde::export::Ok(Digest(__field0.try_into().expect("exactly 20 bytes")))
+                Ok(Digest(__field0.try_into().expect("exactly 20 bytes")))
             }
         }
         serde::Deserializer::deserialize_newtype_struct(
             deserializer,
             "Digest",
             __Visitor {
-                marker: serde::export::PhantomData::<Digest<'a>>,
-                lifetime: serde::export::PhantomData,
+                marker: std::marker::PhantomData::<Digest<'a>>,
+                lifetime: std::marker::PhantomData,
             },
         )
     }

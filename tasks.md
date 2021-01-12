@@ -58,15 +58,14 @@
 
 To be picked in any order….
 
+* **prodash**
+  * [x] Add remaining docs for all exposed API.
 * **gix organize**
   * [ ] a sub-command to move local repository clones into a structure mimicking their URL.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [x] upgrade toolchain
   * [ ] Upgrade to latest hyper/tokio to get everything to compile again
-  * [ ] ~~when docker for ARM is available, use it to run x64 images and see if this works for running the toolchain locally as before.~~
-  * [ ] ~~alternatively, use an INTEL mac for now.~~
 * **criner**
-  * [x] upgrade to prodash ~~11.0~~ 12.0
   * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
         seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
 * [x] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.
