@@ -1,6 +1,6 @@
 [package]
 name = "git-hash"
-version = "0.1.1"
+version = "0.1.2"
 description = "Borrowed and owned git hash digests used to identify git objects"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
