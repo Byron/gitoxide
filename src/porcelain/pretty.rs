@@ -1,5 +1,7 @@
+use crate::shared::pretty::prepare_and_run;
 use anyhow::Result;
 use clap::Clap;
+use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
 
 mod options {
@@ -49,9 +51,41 @@ pub fn main() -> Result<()> {
     use options::*;
     let args = Args::parse();
     git_features::interrupt::init_handler(std::io::stderr());
+    let verbose = true;
+
     match args.cmd {
         Subcommands::Init => core::repository::init(),
-        Subcommands::Organize { .. } => unimplemented!("organize"),
+        Subcommands::Organize {
+            execute,
+            repository_source,
+            destination_directory,
+        } => {
+            use gitoxide_core::util::organize;
+            // force verbose only, being the line renderer.
+            let progress = false;
+            let progress_keep_open = false;
+
+            prepare_and_run(
+                "organize",
+                verbose,
+                progress,
+                progress_keep_open,
+                crate::shared::STANDARD_RANGE,
+                move |progress, _out, _err| {
+                    core::util::organize(
+                        if execute {
+                            organize::Mode::Execute
+                        } else {
+                            organize::Mode::Simulate
+                        },
+                        repository_source.unwrap_or_else(|| std::env::current_dir().expect("CWD as default source")),
+                        destination_directory
+                            .unwrap_or_else(|| std::env::current_dir().expect("CWD as default destination")),
+                        DoOrDiscard::from(progress),
+                    )
+                },
+            )
+        }
     }?;
     Ok(())
 }
