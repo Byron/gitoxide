@@ -70,7 +70,7 @@ fn prepare_and_run<T: Send + 'static>(
                 progress,
                 prodash::render::tui::Options {
                     title: "gitoxide".into(),
-                    frames_per_second: crate::shared::DEFAULT_FRAME_RATE,
+                    frames_per_second: shared::DEFAULT_FRAME_RATE,
                     stop_if_empty_progress: !progress_keep_open,
                     throughput: true,
                     ..Default::default()
