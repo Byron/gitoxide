@@ -1,117 +1,12 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use clap::Clap;
 use gitoxide_core as core;
-use std::io::{stderr, stdout, Write};
 
-use crate::plumbing::pretty::options::*;
+use crate::{
+    plumbing::pretty::options::{Args, Subcommands},
+    shared::pretty::prepare_and_run,
+};
 use gitoxide_core::pack::verify;
-
-use crate::shared::ProgressRange;
-
-fn prepare_and_run<T: Send + 'static>(
-    name: &str,
-    verbose: bool,
-    progress: bool,
-    progress_keep_open: bool,
-    range: impl Into<Option<ProgressRange>>,
-    run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>
-        + Send
-        + 'static,
-) -> Result<T> {
-    use crate::shared::{self, STANDARD_RANGE};
-    crate::shared::init_env_logger(false);
-    use git_features::interrupt;
-
-    match (verbose, progress) {
-        (false, false) => run(None, &mut stdout(), &mut stderr()),
-        (true, false) => {
-            enum Event<T> {
-                UIDone,
-                ComputationDone(Result<T>),
-            };
-            let progress = prodash::Tree::new();
-            let sub_progress = progress.add_child(name);
-            let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
-            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
-            std::thread::spawn({
-                let tx = tx.clone();
-                move || loop {
-                    std::thread::sleep(std::time::Duration::from_millis(500));
-                    if interrupt::is_triggered() {
-                        tx.send(Event::UIDone).ok();
-                        break;
-                    }
-                }
-            });
-            std::thread::spawn(move || {
-                let res = run(Some(sub_progress), &mut stdout(), &mut stderr());
-                tx.send(Event::ComputationDone(res)).ok();
-            });
-            match rx.recv()? {
-                Event::UIDone => {
-                    ui_handle.shutdown_and_wait();
-                    Err(anyhow!("Operation cancelled by user"))
-                }
-                Event::ComputationDone(res) => {
-                    ui_handle.shutdown_and_wait();
-                    res
-                }
-            }
-        }
-        (true, true) | (false, true) => {
-            enum Event<T> {
-                UIDone,
-                ComputationDone(Result<T>, Vec<u8>, Vec<u8>),
-            };
-            let progress = prodash::Tree::new();
-            let sub_progress = progress.add_child(name);
-            let render_tui = prodash::render::tui(
-                stdout(),
-                progress,
-                prodash::render::tui::Options {
-                    title: "gitoxide".into(),
-                    frames_per_second: shared::DEFAULT_FRAME_RATE,
-                    stop_if_empty_progress: !progress_keep_open,
-                    throughput: true,
-                    ..Default::default()
-                },
-            )
-            .expect("tui to come up without io error");
-            let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
-            let ui_handle = std::thread::spawn({
-                let tx = tx.clone();
-                move || {
-                    futures_lite::future::block_on(render_tui);
-                    tx.send(Event::UIDone).ok();
-                }
-            });
-            std::thread::spawn(move || {
-                // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
-                // We know that the printing happens at the end, so this is fine.
-                let mut out = Vec::new();
-                let mut err = Vec::new();
-                let res = run(Some(sub_progress), &mut out, &mut err);
-                tx.send(Event::ComputationDone(res, out, err)).ok();
-            });
-            loop {
-                match rx.recv()? {
-                    Event::UIDone => {
-                        // We don't know why the UI is done, usually it's the user aborting.
-                        // We need the computation to stop as well so let's wait for that to happen
-                        interrupt::trigger();
-                        continue;
-                    }
-                    Event::ComputationDone(res, out, err) => {
-                        ui_handle.join().ok();
-                        stdout().write_all(&out)?;
-                        stderr().write_all(&err)?;
-                        break res;
-                    }
-                }
-            }
-        }
-    }
-}
 
 pub fn main() -> Result<()> {
     let Args {

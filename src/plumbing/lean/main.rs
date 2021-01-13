@@ -1,18 +1,19 @@
+use crate::{
+    plumbing::lean::options::{self, Args, SubCommands},
+    shared::lean::prepare,
+};
 use anyhow::Result;
 use git_features::progress::DoOrDiscard;
 use gitoxide_core::{self as core, OutputFormat};
 use std::io::{self, stderr, stdout};
 
-use crate::shared::lean::prepare;
-
 pub fn main() -> Result<()> {
-    pub use crate::plumbing::lean::options::*;
     let cli: Args = crate::shared::from_env();
     git_features::interrupt::init_handler(std::io::stderr());
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {
-        SubCommands::RemoteRefList(RemoteRefList { protocol, url }) => {
+        SubCommands::RemoteRefList(options::RemoteRefList { protocol, url }) => {
             let (_handle, progress) = prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
             core::remote::refs::list(
                 protocol,
@@ -25,7 +26,7 @@ pub fn main() -> Result<()> {
                 },
             )
         }
-        SubCommands::PackReceive(PackReceive {
+        SubCommands::PackReceive(options::PackReceive {
             protocol,
             url,
             directory,
@@ -45,7 +46,7 @@ pub fn main() -> Result<()> {
                 },
             )
         }
-        SubCommands::IndexFromPack(IndexFromPack {
+        SubCommands::IndexFromPack(options::IndexFromPack {
             iteration_mode,
             pack_path,
             directory,
@@ -63,7 +64,7 @@ pub fn main() -> Result<()> {
                 },
             )
         }
-        SubCommands::PackExplode(PackExplode {
+        SubCommands::PackExplode(options::PackExplode {
             pack_path,
             sink_compress,
             object_path,
@@ -85,7 +86,7 @@ pub fn main() -> Result<()> {
                 },
             )
         }
-        SubCommands::PackVerify(PackVerify {
+        SubCommands::PackVerify(options::PackVerify {
             path,
             statistics,
             algorithm,
@@ -116,7 +117,7 @@ pub fn main() -> Result<()> {
             )
             .map(|_| ())
         }
-        SubCommands::CommitGraphVerify(CommitGraphVerify { path, statistics }) => {
+        SubCommands::CommitGraphVerify(options::CommitGraphVerify { path, statistics }) => {
             use self::core::commitgraph::verify;
 
             verify::graph_or_file(

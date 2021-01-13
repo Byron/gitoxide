@@ -51,11 +51,7 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
     match args.cmd {
         Subcommands::Init => core::repository::init(),
-        Subcommands::Organize {
-            execute,
-            repository_source,
-            destination_directory,
-        } => unimplemented!("organize"),
+        Subcommands::Organize { .. } => unimplemented!("organize"),
     }?;
     Ok(())
 }
