@@ -60,6 +60,11 @@ To be picked in any order….
 
 * **prodash**
   * [x] Add remaining docs for all exposed API.
+  
+* **gix plumbing (pretty)**
+  * [x] Is [manual ~](https://github.com/Byron/gitoxide/blob/2571113fea516737acedac08d66632ead499b474/src/plumbing/pretty/main.rs#L39) handling truly required?
+        Doesn't seem to be needed in the lean version of it.
+        **Yes, the difference is that one doesn't support graceful shutdown**
 * **gix organize**
   * [ ] a sub-command to move local repository clones into a structure mimicking their URL.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**

@@ -22,8 +22,8 @@ fn prepare(
     if verbose {
         let progress = prodash::Tree::new();
         let sub_progress = progress.add_child(name);
-        let handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
-        (Some(handle), Some(sub_progress))
+        let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
+        (Some(ui_handle), Some(sub_progress))
     } else {
         (None, None)
     }

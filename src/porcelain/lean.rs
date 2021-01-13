@@ -25,15 +25,25 @@ mod options {
     #[argh(subcommand, name = "init")]
     pub struct Init {}
 
-    /// Move all repositories found in a given root directory into a structure matching their clone URLs.
+    /// Move all repositories found in a directory into a structure matching their clone URLs.
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "organize")]
     pub struct Organize {
-        #[argh(positional)]
-        /// the root directory to use when finding input repositories to move into position.
+        #[argh(switch)]
+        /// the operation will be in dry-run mode unless this flag is set.
+        pub execute: bool,
+
+        #[argh(option, short = 'f')]
+        /// the directory to use when finding input repositories to move into position.
         ///
         /// Defaults to the current working directory.
-        pub root: Option<PathBuf>,
+        pub repository_source: Option<PathBuf>,
+
+        #[argh(option, short = 't')]
+        /// the directory to which to move repositories found in the repository-source.
+        ///
+        /// Defaults to the current working directory.
+        pub destination_directory: Option<PathBuf>,
     }
 }
 
@@ -47,6 +57,22 @@ pub fn main() -> Result<()> {
 
     match cli.subcommand {
         SubCommands::Init(_) => core::repository::init(),
-        SubCommands::Organize(_cmd) => unimplemented!("organize"),
+        SubCommands::Organize(Organize {
+            execute,
+            repository_source,
+            destination_directory,
+        }) => {
+            use gitoxide_core::util::organize;
+            core::util::organize(
+                if execute {
+                    organize::Mode::Execute
+                } else {
+                    organize::Mode::Simulate
+                },
+                repository_source.unwrap_or_else(|| std::env::current_dir().expect("CWD as default source")),
+                destination_directory.unwrap_or_else(|| std::env::current_dir().expect("CWD as default destination")),
+                git_features::progress::Discard,
+            )
+        }
     }
 }

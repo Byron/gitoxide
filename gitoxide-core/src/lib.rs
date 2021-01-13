@@ -41,3 +41,4 @@ pub mod commitgraph;
 pub mod pack;
 pub mod remote;
 pub mod repository;
+pub mod util;
