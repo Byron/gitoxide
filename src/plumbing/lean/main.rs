@@ -1,33 +1,9 @@
-use crate::shared::ProgressRange;
 use anyhow::Result;
-use git_features::progress;
+use git_features::progress::DoOrDiscard;
 use gitoxide_core::{self as core, OutputFormat};
 use std::io::{self, stderr, stdout};
 
-#[cfg(not(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion")))]
-fn prepare(verbose: bool, name: &str, _: impl Into<Option<ProgressRange>>) -> ((), Option<prodash::progress::Log>) {
-    crate::plumbing::init_env_logger(verbose);
-    ((), Some(prodash::progress::Log::new(name, Some(1))))
-}
-
-#[cfg(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion"))]
-fn prepare(
-    verbose: bool,
-    name: &str,
-    range: impl Into<Option<ProgressRange>>,
-) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
-    use crate::shared::{self, STANDARD_RANGE};
-    crate::plumbing::init_env_logger(false);
-
-    if verbose {
-        let progress = prodash::Tree::new();
-        let sub_progress = progress.add_child(name);
-        let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
-        (Some(ui_handle), Some(sub_progress))
-    } else {
-        (None, None)
-    }
-}
+use crate::shared::lean::prepare;
 
 pub fn main() -> Result<()> {
     pub use crate::plumbing::lean::options::*;
@@ -41,7 +17,7 @@ pub fn main() -> Result<()> {
             core::remote::refs::list(
                 protocol,
                 &url,
-                progress::DoOrDiscard::from(progress),
+                DoOrDiscard::from(progress),
                 core::remote::refs::Context {
                     thread_limit,
                     format: OutputFormat::Human,
@@ -61,7 +37,7 @@ pub fn main() -> Result<()> {
                 &url,
                 directory,
                 refs_directory,
-                progress::DoOrDiscard::from(progress),
+                DoOrDiscard::from(progress),
                 core::pack::receive::Context {
                     thread_limit,
                     format: OutputFormat::Human,
@@ -78,7 +54,7 @@ pub fn main() -> Result<()> {
             core::pack::index::from_pack(
                 pack_path,
                 directory,
-                progress::DoOrDiscard::from(progress),
+                DoOrDiscard::from(progress),
                 core::pack::index::Context {
                     thread_limit,
                     iteration_mode: iteration_mode.unwrap_or_default(),

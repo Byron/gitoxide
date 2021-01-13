@@ -19,7 +19,7 @@ fn prepare_and_run<T: Send + 'static>(
         + 'static,
 ) -> Result<T> {
     use crate::shared::{self, STANDARD_RANGE};
-    crate::plumbing::init_env_logger(false);
+    crate::shared::init_env_logger(false);
     use git_features::interrupt;
 
     match (verbose, progress) {

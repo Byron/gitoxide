@@ -47,13 +47,16 @@ mod options {
     }
 }
 
+use crate::shared::lean::prepare;
 use anyhow::Result;
+use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
 
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
     git_features::interrupt::init_handler(std::io::stderr());
+    let verbose = true;
 
     match cli.subcommand {
         SubCommands::Init(_) => core::repository::init(),
@@ -63,6 +66,7 @@ pub fn main() -> Result<()> {
             destination_directory,
         }) => {
             use gitoxide_core::util::organize;
+            let (_handle, progress) = prepare(verbose, "organize", None);
             core::util::organize(
                 if execute {
                     organize::Mode::Execute
@@ -71,7 +75,7 @@ pub fn main() -> Result<()> {
                 },
                 repository_source.unwrap_or_else(|| std::env::current_dir().expect("CWD as default source")),
                 destination_directory.unwrap_or_else(|| std::env::current_dir().expect("CWD as default destination")),
-                git_features::progress::Discard,
+                DoOrDiscard::from(progress),
             )
         }
     }

@@ -2,7 +2,6 @@
 #![deny(rust_2018_idioms)]
 
 mod porcelain;
-
 mod shared;
 
 use anyhow::Result;

@@ -6,6 +6,53 @@ pub type ProgressRange = std::ops::RangeInclusive<prodash::progress::key::Level>
 #[allow(unused)]
 pub const STANDARD_RANGE: ProgressRange = 2..=2;
 
+/// If verbose is true, the env logger will be forcibly set to 'info' logging level. Otherwise env logging facilities
+/// will just be initialized.
+#[cfg(feature = "env_logger")]
+pub fn init_env_logger(verbose: bool) {
+    if verbose {
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .format_module_path(false)
+            .init();
+    } else {
+        env_logger::init();
+    }
+}
+
+#[cfg(all(feature = "lean-cli", not(feature = "pretty-cli")))]
+pub mod lean {
+    use crate::shared::ProgressRange;
+
+    #[cfg(not(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion")))]
+    pub fn prepare(
+        verbose: bool,
+        name: &str,
+        _: impl Into<Option<ProgressRange>>,
+    ) -> ((), Option<prodash::progress::Log>) {
+        super::init_env_logger(verbose);
+        ((), Some(prodash::progress::Log::new(name, Some(1))))
+    }
+
+    #[cfg(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion"))]
+    pub fn prepare(
+        verbose: bool,
+        name: &str,
+        range: impl Into<Option<ProgressRange>>,
+    ) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
+        use crate::shared::{self, STANDARD_RANGE};
+        super::init_env_logger(false);
+
+        if verbose {
+            let progress = prodash::Tree::new();
+            let sub_progress = progress.add_child(name);
+            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
+            (Some(ui_handle), Some(sub_progress))
+        } else {
+            (None, None)
+        }
+    }
+}
+
 #[allow(unused)]
 #[cfg(feature = "prodash-render-line")]
 pub fn setup_line_renderer_range(
