@@ -103,6 +103,7 @@ unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
 	cd git-features && cargo test && cargo test --features fast-sha1
 	cd git-transport && cargo test && cargo test --features http-client-curl
+	cd gitoxide-core && cargo test --lib
 
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests

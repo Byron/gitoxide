@@ -22,7 +22,7 @@ mod parse {
     use bstr::{BStr, ByteSlice};
 
     #[allow(unused)]
-    fn verbose_remotes(input: &[u8]) -> anyhow::Result<Vec<(&BStr, git_url::Url)>> {
+    fn remotes_from_git_remote_verbose(input: &[u8]) -> anyhow::Result<Vec<(&BStr, git_url::Url)>> {
         fn parse_line(line: &BStr) -> anyhow::Result<(&BStr, git_url::Url)> {
             let mut tokens = line.splitn(2, |b| *b == b'\t');
             Ok(match (tokens.next(), tokens.next(), tokens.next()) {
@@ -54,6 +54,8 @@ mod parse {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use bstr::ByteSlice;
+
         static GITOXIDE_REMOTES: &[u8] = br#"commitgraph	https://github.com/avoidscorn/gitoxide (fetch)
 commitgraph	https://github.com/avoidscorn/gitoxide (push)
 origin	https://github.com/Byron/gitoxide (fetch)
@@ -61,9 +63,29 @@ origin	https://github.com/Byron/gitoxide (push)
 rad	rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git (fetch)
 rad	rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git (push)
 "#;
+        fn url(input: &str) -> git_url::Url {
+            git_url::Url::from_bytes(input.as_bytes()).expect("valid url")
+        }
+
         #[test]
         fn valid_verbose_remotes() -> anyhow::Result<()> {
-            assert_eq!(verbose_remotes(GITOXIDE_REMOTES)?, vec![]);
+            assert_eq!(
+                remotes_from_git_remote_verbose(GITOXIDE_REMOTES)?,
+                vec![
+                    (b"commitgraph".as_bstr(), url("https://github.com/avoidscorn/gitoxide")),
+                    (b"commitgraph".as_bstr(), url("https://github.com/avoidscorn/gitoxide")),
+                    (b"origin".as_bstr(), url("https://github.com/Byron/gitoxide")),
+                    (b"origin".as_bstr(), url("https://github.com/Byron/gitoxide")),
+                    (
+                        b"rad".as_bstr(),
+                        url("rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git")
+                    ),
+                    (
+                        b"rad".as_bstr(),
+                        url("rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git")
+                    )
+                ]
+            );
             Ok(())
         }
     }
