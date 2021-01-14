@@ -27,6 +27,7 @@ pub enum Scheme {
     Ssh,
     Http,
     Https,
+    Radicle,
 }
 
 impl fmt::Display for Scheme {
@@ -38,6 +39,7 @@ impl fmt::Display for Scheme {
             Ssh => "ssh",
             Http => "http",
             Https => "https",
+            Radicle => "rad",
         })
     }
 }

@@ -23,6 +23,9 @@ quick_error! {
         UnsupportedUrlTokens(url: bstr::BString, scheme: git_url::Scheme) {
             display("The url '{}' contains information that would not be used by the '{}' protocol", url, scheme)
         }
+        UnsupportedScheme(scheme: git_url::Scheme) {
+            display("The '{}' protocol is currently unsupported", scheme)
+        }
         #[cfg(not(feature = "http-client-curl"))]
         CompiledWithoutHttp(scheme: git_url::Scheme) {
             display("'{}' is not compiled in. Compile with the 'http-client-curl' cargo feature", scheme)
@@ -82,6 +85,7 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
     let urlb = url;
     let url = git_url::parse(urlb)?;
     Ok(match url.scheme {
+        git_url::Scheme::Radicle => return Err(Error::UnsupportedScheme(url.scheme)),
         git_url::Scheme::File => {
             if url.user.is_some() || url.host.is_some() || url.port.is_some() {
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));

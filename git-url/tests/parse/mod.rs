@@ -33,6 +33,17 @@ fn url(
 mod file;
 mod invalid;
 mod ssh;
+
+mod radicle {
+    use crate::parse::{assert_url_roundtrip, url};
+    use git_url::Scheme;
+
+    #[test]
+    fn basic() -> crate::Result {
+        assert_url_roundtrip("rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git", url(Scheme::Radicle, "hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81", "hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git", None, b""))
+    }
+}
+
 mod http {
     use crate::parse::{assert_url_roundtrip, url};
     use git_url::Scheme;

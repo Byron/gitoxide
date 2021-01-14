@@ -35,6 +35,7 @@ fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
         "git" => Scheme::Git,
         "http" => Scheme::Http,
         "https" => Scheme::Https,
+        "rad" => Scheme::Radicle,
         _ => return Err(Error::UnsupportedProtocol(s.into())),
     })
 }
@@ -122,7 +123,7 @@ pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))
             .map_err(|err| Error::Url(err.to_string()))?;
     }
-    if url.path().is_empty() {
+    if url.scheme() != "rad" && url.path().is_empty() {
         return Err(Error::EmptyPath);
     }
     if url.cannot_be_a_base() {
