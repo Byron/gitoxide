@@ -158,7 +158,9 @@ version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "473fc6b38233f9af7baa94fb5852dca389e3d95b8e21c8e3719301462c5d9faf"
 dependencies = [
+ "lazy_static",
  "memchr",
+ "regex-automata",
  "serde",
 ]
 
@@ -815,6 +817,7 @@ name = "gitoxide-core"
 version = "0.7.0"
 dependencies = [
  "anyhow",
+ "bstr",
  "bytesize",
  "git-commitgraph",
  "git-features",
@@ -822,6 +825,7 @@ dependencies = [
  "git-odb",
  "git-protocol",
  "git-repository",
+ "git-url",
  "quick-error",
  "serde",
  "serde_json",
@@ -1430,6 +1434,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e891cfe48e9100a70a3b6eb652fef28920c117d366339687bd5576160db0f76"
 dependencies = [
  "redox_syscall 0.1.57",
+]
+
+[[package]]
+name = "regex-automata"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae1ded71d66a4a97f5e961fd0cb25a5f366a42a41570d16a763a69c092c26ae4"
+dependencies = [
+ "byteorder",
 ]
 
 [[package]]
