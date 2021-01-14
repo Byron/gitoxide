@@ -21,6 +21,7 @@ mod parse {
     use anyhow::{bail, Context};
     use bstr::{BStr, ByteSlice};
 
+    #[allow(unused)]
     fn verbose_remotes(input: &[u8]) -> anyhow::Result<Vec<(&BStr, git_url::Url)>> {
         fn parse_line(line: &BStr) -> anyhow::Result<(&BStr, git_url::Url)> {
             let mut tokens = line.splitn(2, |b| *b == b'\t');
@@ -39,7 +40,7 @@ mod parse {
         let mut out = Vec::new();
         for line in input.split(|b| *b == b'\n') {
             let line = line.as_bstr();
-            if line.trim().len() == 0 {
+            if line.trim().is_empty() {
                 continue;
             }
             out.push(
