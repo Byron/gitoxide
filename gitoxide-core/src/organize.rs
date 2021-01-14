@@ -14,5 +14,5 @@ impl Default for Mode {
 }
 
 pub fn run(_mode: Mode, _source_dir: PathBuf, _destination: PathBuf, _progress: impl Progress) -> anyhow::Result<()> {
-    unimplemented!("organize")
+    Ok(())
 }

@@ -1,0 +1,8 @@
+.
+├── dir
+│   └── one-origin
+├── no-origin
+├── origin-and-fork
+└── special-origin
+
+5 directories, 0 files

@@ -24,8 +24,49 @@ function remove-paths() {
   sed -E 's#/.*#"#g'
 }
 
-title "CLI ${kind}"
-(when "initializing a repository"
+function repo-with-remotes() {
+  if [[ $((($# - 1) % 2)) != 0 ]] || [[ $# = 0 ]]; then
+    echo "need <path> (<remote> <url>)[,...] tuples"
+    exit 42
+  fi
+
+  mkdir -p "$1"
+  (
+      cd "$1"
+      shift
+    while [[ $# != 0 ]]; do
+        git init
+        git remote add "$1" "$2"
+        shift 2
+    done &> /dev/null
+  )
+}
+
+title "Porcelain ${kind}"
+(when "running 'organize'"
+  snapshot="$snapshot/organize"
+  (with "a mix of repositories"
+    (sandbox
+      repo-with-remotes dir/one-origin origin https://example.com/one-origin
+      repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
+      repo-with-remotes special-origin special-name https://example.com/special-origin
+      repo-with-remotes no-origin
+      (when "running without arguments"
+        it "succeeds and informs about the operations that it WOULD do" && {
+          WITH_SNAPSHOT="$snapshot/no-args-success" \
+          expect_run_sh $SUCCESSFULLY "$exe organize 2>/dev/null"
+        }
+
+        it "does not change the directory structure at all" && {
+          WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
+          expect_run $SUCCESSFULLY tree -L 2
+        }
+      )
+    )
+  )
+)
+
+(when "running 'init'"
   snapshot="$snapshot/init"
   (with "an empty directory"
     (sandbox
@@ -83,7 +124,7 @@ function launch_git_daemon() {
     trap 'kill $daemon_pid' EXIT
 }
 
-title plumbing
+title plumbing "${kind}"
 snapshot="$snapshot/plumbing"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"
