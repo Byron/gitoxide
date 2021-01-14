@@ -31,5 +31,5 @@ bytesize = "1.0.1"
 serde_json = { version = "1.0.56", optional = true }
 
 # for 'organize' functionality
-git-url = { version = "^0.1.1", path = "../git-url" }
+git-url = { version = "^0.2.0", path = "../git-url" }
 bstr = { version = "0.2.14", features = ["unicode"] }

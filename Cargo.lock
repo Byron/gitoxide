@@ -786,7 +786,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "bstr",
  "home",
