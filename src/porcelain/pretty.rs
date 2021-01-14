@@ -60,7 +60,7 @@ pub fn main() -> Result<()> {
             repository_source,
             destination_directory,
         } => {
-            use gitoxide_core::util::organize;
+            use gitoxide_core::organize;
             // force verbose only, being the line renderer.
             let progress = false;
             let progress_keep_open = false;
@@ -72,7 +72,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 crate::shared::STANDARD_RANGE,
                 move |progress, _out, _err| {
-                    core::util::organize(
+                    organize::run(
                         if execute {
                             organize::Mode::Execute
                         } else {

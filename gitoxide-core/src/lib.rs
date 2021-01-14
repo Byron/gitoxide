@@ -38,7 +38,7 @@ mod protocol;
 pub use protocol::Protocol;
 
 pub mod commitgraph;
+pub mod organize;
 pub mod pack;
 pub mod remote;
 pub mod repository;
-pub mod util;

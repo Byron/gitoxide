@@ -65,9 +65,9 @@ pub fn main() -> Result<()> {
             repository_source,
             destination_directory,
         }) => {
-            use gitoxide_core::util::organize;
+            use gitoxide_core::organize;
             let (_handle, progress) = prepare(verbose, "organize", None);
-            core::util::organize(
+            organize::run(
                 if execute {
                     organize::Mode::Execute
                 } else {
