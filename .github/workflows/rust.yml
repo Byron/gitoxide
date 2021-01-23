@@ -20,7 +20,7 @@ jobs:
       env:
         CI: true
       run: |
-        apt-get install tree
+        sudo apt-get install tree
         make tests
     - name: doc
       run: cargo doc
