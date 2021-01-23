@@ -66,7 +66,10 @@ To be picked in any order….
         Doesn't seem to be needed in the lean version of it.
         **Yes, the difference is that one doesn't support graceful shutdown**
 * **gix organize**
-  * [ ] a sub-command to move local repository clones into a structure mimicking their URL.
+  * [x] a sub-command to move local repository clones into a structure mimicking their URL.
+  * [ ] figure out if the jwalk/walkdir abstraction is really worth it, or how to unify both interfaces.
+        Need filtering and skipping with high performance. Probably better to use jwalk directly and disable
+        it via features.
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [x] upgrade toolchain
   * [ ] Upgrade to latest hyper/tokio to get everything to compile again

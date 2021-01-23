@@ -720,7 +720,6 @@ dependencies = [
  "tempfile",
  "thiserror",
  "uluru",
- "walkdir",
 ]
 
 [[package]]

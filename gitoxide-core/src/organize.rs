@@ -86,7 +86,7 @@ fn handle(
     let url = match find_origin_remote(git_workdir)? {
         None => {
             progress.info(format!(
-                "Skipping repository {:?} as it does not have any remote",
+                "Skipping repository {:?} without 'origin' remote",
                 git_workdir.display()
             ));
             return Ok(());
@@ -155,7 +155,7 @@ pub fn run(mode: Mode, source_dir: PathBuf, destination: PathBuf, mut progress: 
 }
 
 mod parse {
-    use anyhow::{bail, Context};
+    use anyhow::Context;
     use bstr::{BStr, ByteSlice};
 
     #[allow(unused)]
@@ -167,10 +167,10 @@ mod parse {
                     let mut tokens = url_and_type.splitn(2, |b| *b == b' ');
                     match (tokens.next(), tokens.next(), tokens.next()) {
                         (Some(url), Some(_type), None) => (remote.as_bstr(), git_url::parse(url)?),
-                        _ => bail!("None or more than one 'space' as separator"),
+                        _ => anyhow::bail!("None or more than one 'space' as separator"),
                     }
                 }
-                _ => bail!("None or more than one tab as separator"),
+                _ => anyhow::bail!("None or more than one tab as separator"),
             })
         }
 
