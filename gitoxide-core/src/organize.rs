@@ -1,5 +1,5 @@
-use git_features::progress::Progress;
-use std::path::PathBuf;
+use git_features::{fs, progress::Progress};
+use std::path::{Path, PathBuf};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
@@ -13,7 +13,21 @@ impl Default for Mode {
     }
 }
 
-pub fn run(_mode: Mode, _source_dir: PathBuf, _destination: PathBuf, _progress: impl Progress) -> anyhow::Result<()> {
+// TODO: handle nested repos, skip everything inside a parent directory.
+fn find_git_repositories(root: impl AsRef<Path>) -> impl Iterator<Item = PathBuf> {
+    fn is_repository(path: &PathBuf) -> bool {
+        path.is_dir() && path.ends_with(".git")
+    }
+
+    let walk = fs::sorted(fs::WalkDir::new(root).follow_links(false));
+    walk.into_iter()
+        .filter_map(Result::ok)
+        .map(|entry: fs::DirEntry| fs::direntry_path(&entry))
+        .filter(is_repository)
+}
+
+pub fn run(_mode: Mode, source_dir: PathBuf, _destination: PathBuf, _progress: impl Progress) -> anyhow::Result<()> {
+    let _repo_paths = find_git_repositories(source_dir);
     Ok(())
 }
 

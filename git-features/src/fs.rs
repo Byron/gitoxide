@@ -9,13 +9,38 @@
 #[cfg(feature = "parallel")]
 ///
 pub mod walkdir {
-    pub use jwalk::{Error, WalkDir};
+    pub use jwalk::{DirEntry as DirEntryGeneric, Error, WalkDir};
+    use std::path::PathBuf;
+
+    /// An alias for an uncustomized directory entry to match the one of the non-parallel version offered by `walkdir`.
+    pub type DirEntry = DirEntryGeneric<((), ())>;
+
+    /// Enable sorting by filename
+    pub fn sorted(w: WalkDir) -> WalkDir {
+        w.sort(true)
+    }
+
+    /// Obtain the owned, full path the `entry` points to
+    pub fn direntry_path(entry: &DirEntry) -> PathBuf {
+        entry.path()
+    }
 }
 
 #[cfg(not(feature = "parallel"))]
 ///
 pub mod walkdir {
-    pub use walkdir::{Error, WalkDir};
+    use std::path::PathBuf;
+    pub use walkdir::{DirEntry, Error, WalkDir};
+
+    /// Enable sorting by filename
+    pub fn sorted(w: WalkDir) -> WalkDir {
+        w.sort_by(|lhs, rhs| lhs.file_name().cmp(rhs.file_name()))
+    }
+
+    /// Obtain the owned, full path the `entry` points to
+    pub fn direntry_path(entry: &DirEntry) -> PathBuf {
+        entry.path().to_owned()
+    }
 }
 
-pub use self::walkdir::WalkDir;
+pub use self::walkdir::{direntry_path, sorted, DirEntry, WalkDir};
