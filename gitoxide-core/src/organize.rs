@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use git_features::{fs, progress::Progress};
 use std::path::{Path, PathBuf};
 
@@ -13,22 +14,122 @@ impl Default for Mode {
     }
 }
 
-// TODO: handle nested repos, skip everything inside a parent directory.
-fn find_git_repositories(root: impl AsRef<Path>) -> impl Iterator<Item = PathBuf> {
+// TODO: handle nested repos, skip everything inside a parent directory, stop recursing into git workdirs
+fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progress) -> impl Iterator<Item = PathBuf> {
+    progress.init(None, git_features::progress::count("filesystem items"));
     fn is_repository(path: &PathBuf) -> bool {
-        path.is_dir() && path.ends_with(".git")
+        if !(path.is_dir() && path.ends_with(".git")) {
+            return false;
+        }
+        path.join("HEAD").is_file() && path.join("config").is_file()
+    }
+    fn into_workdir(path: PathBuf) -> PathBuf {
+        fn is_bare(path: &Path) -> bool {
+            !path.join("index").exists()
+        }
+        if is_bare(&path) {
+            path
+        } else {
+            path.parent().expect("git is never in the root").to_owned()
+        }
     }
 
     let walk = fs::sorted(fs::WalkDir::new(root).follow_links(false));
     walk.into_iter()
-        .filter_map(Result::ok)
+        .filter_map(move |entry| {
+            progress.step();
+            match entry {
+                Ok(entry) => Some(entry),
+                Err(err) => {
+                    progress.fail(format!("Ignored: {}", err.to_string()));
+                    None
+                }
+            }
+        })
         .map(|entry: fs::DirEntry| fs::direntry_path(&entry))
         .filter(is_repository)
+        .map(into_workdir)
 }
 
-pub fn run(_mode: Mode, source_dir: PathBuf, _destination: PathBuf, _progress: impl Progress) -> anyhow::Result<()> {
-    let _repo_paths = find_git_repositories(source_dir);
+fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
+    let out = std::process::Command::new("git")
+        .args(&["remote", "--verbose"])
+        .current_dir(repo)
+        .output()?;
+    if out.status.success() {
+        Ok(parse::remotes_from_git_remote_verbose(&out.stdout)?
+            .into_iter()
+            .find_map(|(origin, url)| if origin == "origin" { Some(url) } else { None }))
+    } else {
+        anyhow::bail!(
+            "git invocation failed with code {:?}: {}",
+            out.status.code(),
+            out.stderr.as_bstr()
+        )
+    }
+}
+
+fn handle(mode: Mode, git_workdir: &Path, destination: &Path, progress: &mut impl Progress) -> anyhow::Result<()> {
+    fn to_relative(path: PathBuf) -> PathBuf {
+        std::iter::once(std::path::Component::CurDir)
+            .chain(path.components())
+            .collect()
+    }
+
+    let url = match find_origin_remote(git_workdir)? {
+        None => {
+            progress.info(format!(
+                "Skipping repository {:?} as it does not have any remote",
+                git_workdir.display()
+            ));
+            return Ok(());
+        }
+        Some(url) => url,
+    };
+    if url.path.is_empty() {
+        progress.info(format!(
+            "Skipping repository at {:?} whose remote does not have a path: {:?}",
+            git_workdir.display(),
+            url.to_string()
+        ));
+        return Ok(());
+    }
+
+    let destination = destination.join(to_relative(git_url::expand_path(None, url.path.as_bstr())?));
+    match mode {
+        Mode::Simulate => progress.info(format!(
+            "WOULD move {} to {}",
+            git_workdir.display(),
+            destination.display()
+        )),
+        Mode::Execute => {
+            std::fs::rename(git_workdir, &destination)?;
+            progress.info(format!("Moved {} to {}", git_workdir.display(), destination.display()))
+        }
+    }
     Ok(())
+}
+
+pub fn run(mode: Mode, source_dir: PathBuf, destination: PathBuf, mut progress: impl Progress) -> anyhow::Result<()> {
+    let search_progress = progress.add_child("Searching repositories");
+
+    let mut num_errors = 0usize;
+    for path_to_move in find_git_repository_workdirs(source_dir, search_progress) {
+        if let Err(err) = handle(mode, &path_to_move, &destination, &mut progress) {
+            progress.fail(format!(
+                "Error when handling directory {:?}: {}",
+                path_to_move.display(),
+                err.to_string()
+            ));
+            num_errors += 1;
+        }
+    }
+
+    if num_errors > 0 {
+        anyhow::bail!("Failed to handle {} repositories", num_errors)
+    } else {
+        Ok(())
+    }
 }
 
 mod parse {
@@ -36,7 +137,7 @@ mod parse {
     use bstr::{BStr, ByteSlice};
 
     #[allow(unused)]
-    fn remotes_from_git_remote_verbose(input: &[u8]) -> anyhow::Result<Vec<(&BStr, git_url::Url)>> {
+    pub fn remotes_from_git_remote_verbose(input: &[u8]) -> anyhow::Result<Vec<(&BStr, git_url::Url)>> {
         fn parse_line(line: &BStr) -> anyhow::Result<(&BStr, git_url::Url)> {
             let mut tokens = line.splitn(2, |b| *b == b'\t');
             Ok(match (tokens.next(), tokens.next(), tokens.next()) {
