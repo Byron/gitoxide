@@ -34,14 +34,15 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
         }
     }
 
-    let walk = fs::sorted(fs::WalkDir::new(root).follow_links(false));
+    let walk = fs::sorted(fs::walkdir_new(root).follow_links(false));
     walk.into_iter()
         .filter_map(move |entry| {
             progress.step();
             match entry {
                 Ok(entry) => Some(entry),
-                Err(err) => {
-                    progress.fail(format!("Ignored: {}", err.to_string()));
+                Err(_err) => {
+                    // TODO: remove this line once we properly ignore git repository - they get moved
+                    // progress.fail(format!("Ignored: {}", _err.to_string()));
                     None
                 }
             }
@@ -69,10 +70,15 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     }
 }
 
-fn handle(mode: Mode, git_workdir: &Path, destination: &Path, progress: &mut impl Progress) -> anyhow::Result<()> {
+fn handle(
+    mode: Mode,
+    git_workdir: &Path,
+    canonicalized_destination: &Path,
+    progress: &mut impl Progress,
+) -> anyhow::Result<()> {
     fn to_relative(path: PathBuf) -> PathBuf {
-        std::iter::once(std::path::Component::CurDir)
-            .chain(path.components())
+        path.components()
+            .skip_while(|c| c == &std::path::Component::RootDir)
             .collect()
     }
 
@@ -95,7 +101,13 @@ fn handle(mode: Mode, git_workdir: &Path, destination: &Path, progress: &mut imp
         return Ok(());
     }
 
-    let destination = destination.join(to_relative(git_url::expand_path(None, url.path.as_bstr())?));
+    let destination = canonicalized_destination
+        .join(
+            url.host
+                .as_ref()
+                .ok_or_else(|| anyhow::Error::msg(format!("Remote URLs must have host names: {}", url)))?,
+        )
+        .join(to_relative(git_url::expand_path(None, url.path.as_bstr())?));
     match mode {
         Mode::Simulate => progress.info(format!(
             "WOULD move {} to {}",
@@ -103,8 +115,16 @@ fn handle(mode: Mode, git_workdir: &Path, destination: &Path, progress: &mut imp
             destination.display()
         )),
         Mode::Execute => {
-            std::fs::rename(git_workdir, &destination)?;
-            progress.info(format!("Moved {} to {}", git_workdir.display(), destination.display()))
+            if git_workdir.canonicalize()? == destination {
+                progress.info(format!(
+                    "Skipping {:?} as it is in the correct spot",
+                    git_workdir.display()
+                ));
+            } else {
+                std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
+                progress.info(format!("Moving {} to {}", git_workdir.display(), destination.display()));
+                std::fs::rename(git_workdir, &destination)?;
+            }
         }
     }
     Ok(())
@@ -114,6 +134,7 @@ pub fn run(mode: Mode, source_dir: PathBuf, destination: PathBuf, mut progress: 
     let search_progress = progress.add_child("Searching repositories");
 
     let mut num_errors = 0usize;
+    let destination = destination.canonicalize()?;
     for path_to_move in find_git_repository_workdirs(source_dir, search_progress) {
         if let Err(err) = handle(mode, &path_to_move, &destination, &mut progress) {
             progress.fail(format!(

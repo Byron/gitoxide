@@ -78,9 +78,8 @@ pub fn main() -> Result<()> {
                         } else {
                             organize::Mode::Simulate
                         },
-                        repository_source.unwrap_or_else(|| std::env::current_dir().expect("CWD as default source")),
-                        destination_directory
-                            .unwrap_or_else(|| std::env::current_dir().expect("CWD as default destination")),
+                        repository_source.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
+                        destination_directory.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                         DoOrDiscard::from(progress),
                     )
                 },

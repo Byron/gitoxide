@@ -62,6 +62,30 @@ title "Porcelain ${kind}"
           expect_run $SUCCESSFULLY tree -L 2
         }
       )
+
+      (when "running with --execute"
+        it "succeeds" && {
+          WITH_SNAPSHOT="$snapshot/execute-success" \
+          expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
+        }
+
+        it "changes the directory structure" && {
+          WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+          expect_run $SUCCESSFULLY tree -L 2
+        }
+      )
+
+      (when "running with --execute again"
+        it "succeeds" && {
+          WITH_SNAPSHOT="$snapshot/execute-success" \
+          expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
+        }
+
+        it "does not alter the directory structure as these are already in place" && {
+          WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+          expect_run $SUCCESSFULLY tree -L 2
+        }
+      )
     )
   )
 )

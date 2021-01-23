@@ -1,0 +1,11 @@
+.
+├── dir
+│   └── one-origin
+├── example.com
+│   ├── one-origin
+│   └── origin-and-fork
+├── no-origin
+├── origin-and-fork
+└── special-origin
+
+8 directories, 0 files
