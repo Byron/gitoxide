@@ -19,7 +19,9 @@ jobs:
     - name: test
       env:
         CI: true
-      run: make tests
+      run: |
+        apt-get install tree
+        make tests
     - name: doc
       run: cargo doc
     - name: stress

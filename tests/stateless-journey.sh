@@ -43,48 +43,50 @@ function repo-with-remotes() {
 }
 
 title "Porcelain ${kind}"
-(when "running 'organize'"
-  snapshot="$snapshot/organize"
-  (with "a mix of repositories"
-    (sandbox
-      repo-with-remotes dir/one-origin origin https://example.com/one-origin
-      repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
-      repo-with-remotes special-origin special-name https://example.com/special-origin
-      repo-with-remotes no-origin
-      (when "running without arguments"
-        it "succeeds and informs about the operations that it WOULD do" && {
-          WITH_SNAPSHOT="$snapshot/no-args-success" \
-          expect_run_sh $SUCCESSFULLY "$exe organize 2>/dev/null"
-        }
+(with_program tree
+  (when "running 'organize'"
+    snapshot="$snapshot/organize"
+    (with "a mix of repositories"
+      (sandbox
+        repo-with-remotes dir/one-origin origin https://example.com/one-origin
+        repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
+        repo-with-remotes special-origin special-name https://example.com/special-origin
+        repo-with-remotes no-origin
+        (when "running without arguments"
+          it "succeeds and informs about the operations that it WOULD do" && {
+            WITH_SNAPSHOT="$snapshot/no-args-success" \
+            expect_run_sh $SUCCESSFULLY "$exe organize 2>/dev/null"
+          }
 
-        it "does not change the directory structure at all" && {
-          WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
-          expect_run $SUCCESSFULLY tree -L 2
-        }
-      )
+          it "does not change the directory structure at all" && {
+            WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
+            expect_run $SUCCESSFULLY tree -L 2
+          }
+        )
 
-      (when "running with --execute"
-        it "succeeds" && {
-          WITH_SNAPSHOT="$snapshot/execute-success" \
-          expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
-        }
+        (when "running with --execute"
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/execute-success" \
+            expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
+          }
 
-        it "changes the directory structure" && {
-          WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-          expect_run $SUCCESSFULLY tree -L 2
-        }
-      )
+          it "changes the directory structure" && {
+            WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+            expect_run $SUCCESSFULLY tree -L 2
+          }
+        )
 
-      (when "running with --execute again"
-        it "succeeds" && {
-          WITH_SNAPSHOT="$snapshot/execute-success" \
-          expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
-        }
+        (when "running with --execute again"
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/execute-success" \
+            expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
+          }
 
-        it "does not alter the directory structure as these are already in place" && {
-          WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-          expect_run $SUCCESSFULLY tree -L 2
-        }
+          it "does not alter the directory structure as these are already in place" && {
+            WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+            expect_run $SUCCESSFULLY tree -L 2
+          }
+        )
       )
     )
   )
