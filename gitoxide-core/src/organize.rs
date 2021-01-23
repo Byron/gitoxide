@@ -37,11 +37,12 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
     let walk = fs::sorted(fs::walkdir_new(root).follow_links(false));
     walk.into_iter()
         .filter_map(move |entry| {
-            progress.step();
+            progress.inc();
             match entry {
                 Ok(entry) => Some(entry),
                 Err(_err) => {
-                    // TODO: remove this line once we properly ignore git repository - they get moved
+                    // TODO: re-add this line once we properly ignore git repository - they get moved.
+                    // Otherwise this is a legitimate possibly rare error.
                     // progress.fail(format!("Ignored: {}", _err.to_string()));
                     None
                 }
