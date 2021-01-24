@@ -15,7 +15,10 @@ impl Default for Mode {
 }
 
 // TODO: handle nested repos, skip everything inside a parent directory, stop recursing into git workdirs
-fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progress) -> impl Iterator<Item = PathBuf> {
+fn find_git_repository_workdirs<P: Progress>(root: impl AsRef<Path>, mut progress: P) -> impl Iterator<Item = PathBuf>
+where
+    <P as Progress>::SubProgress: Sync,
+{
     progress.init(None, git_features::progress::count("filesystem items"));
     fn is_repository(path: &PathBuf) -> bool {
         if !(path.is_dir() && path.ends_with(".git")) {
@@ -34,7 +37,7 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
         }
     }
 
-    let walk = jwalk::WalkDir::new(root)
+    let walk = jwalk::WalkDirGeneric::<((), bool)>::new(root)
         .follow_links(false)
         .sort(false)
         .skip_hidden(false);
@@ -43,25 +46,24 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
     // Thus using more threads just burns energy unnecessarily.
     // It's notable that `du` is very fast even on a single core and more power efficient than dua with a single core.
     // The default of '4' seems related to the amount of performance cores present in the system.
-    #[cfg_attr(all(target_os = "macos", target_arch = "aarch64"))]
-    walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    let walk = walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
 
-    walk.into_iter()
-        .filter_map(move |entry| {
-            progress.inc();
-            match entry {
-                Ok(entry) => Some(entry),
-                Err(_err) => {
-                    // TODO: re-add this line once we properly ignore git repository - they get moved.
-                    // Otherwise this is a legitimate possibly rare error.
-                    // progress.fail(format!("Ignored: {}", _err.to_string()));
-                    None
+    walk.process_read_dir(move |_depth, _path, _read_dir_state, children| {
+        for entry in children.iter_mut() {
+            if let Ok(e) = entry {
+                if is_repository(&e.path()) {
+                    e.client_state = true;
+                    e.read_children_path = None;
                 }
             }
-        })
-        .map(|entry: jwalk::DirEntry<((), ())>| entry.path())
-        .filter(is_repository)
-        .map(into_workdir)
+        }
+    })
+    .into_iter()
+    .inspect(move |_| progress.inc())
+    .filter_map(Result::ok)
+    .filter(|e| e.client_state)
+    .map(|e| into_workdir(e.path()))
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
@@ -142,7 +144,10 @@ fn handle(
     Ok(())
 }
 
-pub fn run(mode: Mode, source_dir: PathBuf, destination: PathBuf, mut progress: impl Progress) -> anyhow::Result<()> {
+pub fn run<P: Progress>(mode: Mode, source_dir: PathBuf, destination: PathBuf, mut progress: P) -> anyhow::Result<()>
+where
+    <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+{
     let search_progress = progress.add_child("Searching repositories");
 
     let mut num_errors = 0usize;

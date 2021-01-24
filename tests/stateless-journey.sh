@@ -44,6 +44,7 @@ function repo-with-remotes() {
 
 title "Porcelain ${kind}"
 (with_program tree
+  if test "$kind" = "max"; then
   (when "running 'organize'"
     snapshot="$snapshot/organize"
     (with "a mix of repositories"
@@ -90,6 +91,7 @@ title "Porcelain ${kind}"
       )
     )
   )
+  fi
 )
 
 (when "running 'init'"
