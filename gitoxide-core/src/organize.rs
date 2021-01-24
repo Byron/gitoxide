@@ -50,13 +50,19 @@ where
     let walk = walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
 
     walk.process_read_dir(move |_depth, _path, _read_dir_state, children| {
+        let mut found_repo = false;
         for entry in children.iter_mut() {
             if let Ok(e) = entry {
                 if is_repository(&e.path()) {
                     e.client_state = true;
                     e.read_children_path = None;
+                    found_repo = true;
+                    break;
                 }
             }
+        }
+        if found_repo {
+            children.retain(|e| e.as_ref().map(|e| e.client_state).unwrap_or(false));
         }
     })
     .into_iter()
