@@ -38,6 +38,14 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
         .follow_links(false)
         .sort(false)
         .skip_hidden(false);
+
+    // On macos with apple silicon, the IO subsystem is entirely different and one thread can mostly max it out.
+    // Thus using more threads just burns energy unnecessarily.
+    // It's notable that `du` is very fast even on a single core and more power efficient than dua with a single core.
+    // The default of '4' seems related to the amount of performance cores present in the system.
+    #[cfg_attr(all(target_os = "macos", target_arch = "aarch64"))]
+    walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
+
     walk.into_iter()
         .filter_map(move |entry| {
             progress.inc();
