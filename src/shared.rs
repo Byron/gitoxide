@@ -25,6 +25,7 @@ pub mod lean {
     use crate::shared::ProgressRange;
 
     #[cfg(not(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion")))]
+    #[allow(unused)]
     pub fn prepare(
         verbose: bool,
         name: &str,

@@ -825,6 +825,7 @@ dependencies = [
  "git-protocol",
  "git-repository",
  "git-url",
+ "jwalk",
  "quick-error",
  "serde",
  "serde_json",

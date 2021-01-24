@@ -25,13 +25,15 @@ doctest = false
 [features]
 default = ["max"]
 
-max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "http-client-curl"]
-max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "http-client-curl"]
+gitoxide-core-organize = ["gitoxide-core/organize"]
 
-lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl"]
-lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl"]
+max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "http-client-curl", "gitoxide-core-organize"]
+max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "http-client-curl", "gitoxide-core-organize"]
 
-light = ["fast", "lean-cli", "git-features/interrupt-handler"]
+lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-organize"]
+lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-organize"]
+
+light = ["fast", "lean-cli", "git-features/interrupt-handler", "gitoxide-core-organize"]
 small = ["lean-cli"]
 http-client-curl = ["git-transport/http-client-curl"]
 

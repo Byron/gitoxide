@@ -38,6 +38,7 @@ mod protocol;
 pub use protocol::Protocol;
 
 pub mod commitgraph;
+#[cfg(feature = "organize")]
 pub mod organize;
 pub mod pack;
 pub mod remote;

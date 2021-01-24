@@ -414,18 +414,25 @@ The top-level command-line interface.
   
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core/organize*
   * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core/organize*
   * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm*
+* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core/organize*
   * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core/organize*
   * for unix only, faster compile times, a little smaller
-* **light** = *lean-cli* + *fast*
+* **light** = *lean-cli* + *fast* + *gitoxide-core/organize*
   * crossplatform by nature as this comes with simplified log based progress
 * **small** = *lean-cli*
   * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt
+    
+### gitoxide-core
+
+The library powering the command-line interface.
+
+* **organize**
+  * Includes `jwalk` to find repositories quickly in order to move into a directory structure automatically.
     
 ### git-features
 

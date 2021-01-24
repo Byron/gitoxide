@@ -1,5 +1,6 @@
 mod options {
     use argh::FromArgs;
+    #[cfg(feature = "gitoxide-core-organize")]
     use std::path::PathBuf;
 
     #[derive(FromArgs)]
@@ -17,6 +18,7 @@ mod options {
     #[argh(subcommand)]
     pub enum SubCommands {
         Init(Init),
+        #[cfg(feature = "gitoxide-core-organize")]
         Organize(Organize),
     }
 
@@ -28,6 +30,7 @@ mod options {
     /// Move all repositories found in a directory into a structure matching their clone URLs.
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "organize")]
+    #[cfg(feature = "gitoxide-core-organize")]
     pub struct Organize {
         #[argh(switch)]
         /// the operation will be in dry-run mode unless this flag is set.
@@ -47,25 +50,26 @@ mod options {
     }
 }
 
-use crate::shared::lean::prepare;
 use anyhow::Result;
-use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
 
 pub fn main() -> Result<()> {
     pub use options::*;
     let cli: Args = crate::shared::from_env();
     git_features::interrupt::init_handler(std::io::stderr());
-    let verbose = true;
 
     match cli.subcommand {
         SubCommands::Init(_) => core::repository::init(),
+        #[cfg(feature = "gitoxide-core-organize")]
         SubCommands::Organize(Organize {
             execute,
             repository_source,
             destination_directory,
         }) => {
+            use crate::shared::lean::prepare;
+            use git_features::progress::DoOrDiscard;
             use gitoxide_core::organize;
+            let verbose = true;
             let (_handle, progress) = prepare(verbose, "organize", None);
             organize::run(
                 if execute {
