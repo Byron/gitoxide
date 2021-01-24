@@ -103,11 +103,12 @@ fn handle(
 
     fn find_parent_repo(mut git_workdir: &Path) -> Option<PathBuf> {
         while let Some(parent) = git_workdir.parent() {
-            if std::fs::read_dir(parent).ok()?.any(|e| {
+            let has_contained_git_folder_or_file = std::fs::read_dir(parent).ok()?.any(|e| {
                 e.ok()
                     .and_then(|e| e.file_name().to_str().map(|name| name == ".git"))
                     .unwrap_or(false)
-            }) {
+            });
+            if has_contained_git_folder_or_file {
                 return Some(parent.to_owned());
             }
             git_workdir = parent;
