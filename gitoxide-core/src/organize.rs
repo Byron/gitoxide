@@ -105,7 +105,11 @@ fn handle(
         while let Some(parent) = git_workdir.parent() {
             let has_contained_git_folder_or_file = std::fs::read_dir(parent).ok()?.any(|e| {
                 e.ok()
-                    .and_then(|e| e.file_name().to_str().map(|name| name == ".git"))
+                    .and_then(|e| {
+                        e.file_name()
+                            .to_str()
+                            .map(|name| name == ".git" && e.path() != git_workdir)
+                    })
                     .unwrap_or(false)
             });
             if has_contained_git_folder_or_file {
