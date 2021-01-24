@@ -25,6 +25,7 @@ become available.
   * choose between 'human' and 'json' output formats
   * **the `gix` program** - convenient and for humans
     * [x] **init** - initialize a new non-bare repository with a `main` branch
+    * [x] **organize** - find all git repositories and place them in directories according to their remote paths
     * [ ] **clone** - initialize a local copy of a remote repository
   * **the `gixp` program** _(plumbing)_ - lower level commands for use in automation
     * **pack**
@@ -411,18 +412,20 @@ The top-level command-line interface.
 * **prodash-render-line-crossterm** or **prodash-render-line-termion** _(mutually exclusive)_
   * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
     that appears after a short duration.
+* **gitoxide-core-organize**
+    * An alias for `gitoxide-core/organize`.
   
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core/organize*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-organize*
   * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core/organize*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-organize*
   * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core/organize*
+* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-organize*
   * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core/organize*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-organize*
   * for unix only, faster compile times, a little smaller
-* **light** = *lean-cli* + *fast* + *gitoxide-core/organize*
+* **light** = *lean-cli* + *fast* + *gitoxide-core-organize*
   * crossplatform by nature as this comes with simplified log based progress
 * **small** = *lean-cli*
   * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt
