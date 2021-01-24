@@ -154,6 +154,14 @@ fn handle(
                 .ok_or_else(|| anyhow::Error::msg(format!("Remote URLs must have host names: {}", url)))?,
         )
         .join(to_relative(git_url::expand_path(None, url.path.as_bstr())?));
+
+    if git_workdir.canonicalize()? == destination.canonicalize()? {
+        progress.info(format!(
+            "Skipping {:?} as it is in the correct spot",
+            git_workdir.display()
+        ));
+        return Ok(());
+    }
     match mode {
         Mode::Simulate => progress.info(format!(
             "WOULD move {} to {}",
@@ -161,16 +169,9 @@ fn handle(
             destination.display()
         )),
         Mode::Execute => {
-            if git_workdir.canonicalize()? == destination {
-                progress.info(format!(
-                    "Skipping {:?} as it is in the correct spot",
-                    git_workdir.display()
-                ));
-            } else {
-                std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
-                progress.done(format!("Moving {} to {}", git_workdir.display(), destination.display()));
-                std::fs::rename(git_workdir, &destination)?;
-            }
+            std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
+            progress.done(format!("Moving {} to {}", git_workdir.display(), destination.display()));
+            std::fs::rename(git_workdir, &destination)?;
         }
     }
     Ok(())
