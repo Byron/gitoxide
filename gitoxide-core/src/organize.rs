@@ -155,12 +155,14 @@ fn handle(
         )
         .join(to_relative(git_url::expand_path(None, url.path.as_bstr())?));
 
-    if git_workdir.canonicalize()? == destination.canonicalize()? {
-        progress.info(format!(
-            "Skipping {:?} as it is in the correct spot",
-            git_workdir.display()
-        ));
-        return Ok(());
+    if let Ok(destination) = destination.canonicalize() {
+        if git_workdir.canonicalize()? == destination {
+            progress.info(format!(
+                "Skipping {:?} as it is in the correct spot",
+                git_workdir.display()
+            ));
+            return Ok(());
+        }
     }
     match mode {
         Mode::Simulate => progress.info(format!(
