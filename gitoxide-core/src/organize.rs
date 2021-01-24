@@ -38,7 +38,7 @@ where
 
     let walk = jwalk::WalkDirGeneric::<((), bool)>::new(root)
         .follow_links(false)
-        .sort(false)
+        .sort(true)
         .skip_hidden(false);
 
     // On macos with apple silicon, the IO subsystem is entirely different and one thread can mostly max it out.

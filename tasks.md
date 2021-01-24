@@ -6,16 +6,6 @@
 * **git-object** refactor     
   * [x] split `Id` and everything hash related into `git-id`
   * [x] use `git-id` inside of `git-features`, remove cycle
-* **Documentation (with deny(missing_docs))**
-  * [x] git-features
-  * [x] git-object
-  * [x] git-url
-  * [x] git-ref
-  * [x] git-packetline
-    * [x] rename `to_write()` to `write_to()` to ~~match what's done in git-object~~. Consistency is good, but lets not break it again
-  * [x] git-transport
-  * [x] git-protocol
-  * [x] git-commitgraph
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
@@ -58,20 +48,6 @@
 
 To be picked in any order….
 
-* **prodash**
-  * [x] Add remaining docs for all exposed API.
-  
-* **gix plumbing (pretty)**
-  * [x] Is [manual ~](https://github.com/Byron/gitoxide/blob/2571113fea516737acedac08d66632ead499b474/src/plumbing/pretty/main.rs#L39) handling truly required?
-        Doesn't seem to be needed in the lean version of it.
-        **Yes, the difference is that one doesn't support graceful shutdown**
-* **gix organize**
-  * [x] a sub-command to move local repository clones into a structure mimicking their URL.
-  * [x] figure out if the jwalk/walkdir abstraction is really worth it, or how to unify both interfaces.
-        Need filtering and skipping with high performance. Probably better to use jwalk directly and disable
-        it via features.
-  * [x] Filtering and skipping
-  * [x] Finding git working dirs
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [x] upgrade toolchain
   * [ ] Upgrade to latest hyper/tokio to get everything to compile again
