@@ -248,7 +248,7 @@ become available.
   * [x] API documentation
     * [ ] Some examples
 
-### git-diff
+### git-diff / git-status
   * diffing of git-object::Tree structures
   * diffing, merging, working with hunks of data
   * find differences between various states, i.e. index, working tree, commit-tree
