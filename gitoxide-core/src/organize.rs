@@ -120,6 +120,15 @@ fn handle(
         None
     }
 
+    if let Some(parent_repo_path) = find_parent_repo(git_workdir) {
+        progress.fail(format!(
+            "Skipping repository at {:?} as it is nested within repository {:?}",
+            git_workdir.display(),
+            parent_repo_path
+        ));
+        return Ok(());
+    }
+
     let url = match find_origin_remote(git_workdir)? {
         None => {
             progress.info(format!(
@@ -139,14 +148,6 @@ fn handle(
         return Ok(());
     }
 
-    if let Some(parent_repo_path) = find_parent_repo(git_workdir) {
-        progress.fail(format!(
-            "Skipping repository at {:?} as it is nested within repository {:?}",
-            git_workdir.display(),
-            parent_repo_path
-        ));
-        return Ok(());
-    }
     let destination = canonicalized_destination
         .join(
             url.host
