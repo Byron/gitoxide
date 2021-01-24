@@ -19,6 +19,8 @@ mod options {
     pub enum SubCommands {
         Init(Init),
         #[cfg(feature = "gitoxide-core-organize")]
+        Find(Find),
+        #[cfg(feature = "gitoxide-core-organize")]
         Organize(Organize),
     }
 
@@ -26,6 +28,18 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "init")]
     pub struct Init {}
+
+    /// find all repositories in a given directory.
+    #[derive(FromArgs, PartialEq, Debug)]
+    #[argh(subcommand, name = "find")]
+    #[cfg(feature = "gitoxide-core-organize")]
+    pub struct Find {
+        /// the directory in which to find all git repositories.
+        ///
+        /// Defaults to the current working directory.
+        #[argh(positional)]
+        pub root: Option<PathBuf>,
+    }
 
     /// Move all repositories found in a directory into a structure matching their clone URLs.
     #[derive(FromArgs, PartialEq, Debug)]
@@ -60,6 +74,19 @@ pub fn main() -> Result<()> {
 
     match cli.subcommand {
         SubCommands::Init(_) => core::repository::init(),
+        #[cfg(feature = "gitoxide-core-organize")]
+        SubCommands::Find(Find { root }) => {
+            use crate::shared::lean::prepare;
+            use git_features::progress::DoOrDiscard;
+            use gitoxide_core::organize;
+            let verbose = true;
+            let (_handle, progress) = prepare(verbose, "find", None);
+            organize::discover(
+                root.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
+                std::io::stdout(),
+                DoOrDiscard::from(progress),
+            )
+        }
         #[cfg(feature = "gitoxide-core-organize")]
         SubCommands::Organize(Organize {
             execute,

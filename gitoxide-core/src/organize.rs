@@ -176,15 +176,33 @@ fn handle(
     Ok(())
 }
 
-pub fn run<P: Progress>(mode: Mode, source_dir: PathBuf, destination: PathBuf, mut progress: P) -> anyhow::Result<()>
+/// Find all working directories in the given `source_dir` and print them to `out` while providing `progress`.
+pub fn discover<P: Progress>(
+    source_dir: impl AsRef<Path>,
+    mut out: impl std::io::Write,
+    mut progress: P,
+) -> anyhow::Result<()>
 where
     <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
 {
-    let search_progress = progress.add_child("Searching repositories");
+    for git_workdir in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
+        writeln!(&mut out, "{}", git_workdir.display())?;
+    }
+    Ok(())
+}
 
+pub fn run<P: Progress>(
+    mode: Mode,
+    source_dir: impl AsRef<Path>,
+    destination: impl AsRef<Path>,
+    mut progress: P,
+) -> anyhow::Result<()>
+where
+    <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+{
     let mut num_errors = 0usize;
-    let destination = destination.canonicalize()?;
-    for path_to_move in find_git_repository_workdirs(source_dir, search_progress) {
+    let destination = destination.as_ref().canonicalize()?;
+    for path_to_move in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
         if let Err(err) = handle(mode, &path_to_move, &destination, &mut progress) {
             progress.fail(format!(
                 "Error when handling directory {:?}: {}",

@@ -24,6 +24,15 @@ mod options {
         #[clap(setting = AppSettings::ColoredHelp)]
         #[clap(setting = AppSettings::DisableVersion)]
         Init,
+        /// Find all repositories in a given directory.
+        #[clap(setting = AppSettings::ColoredHelp)]
+        #[clap(setting = AppSettings::DisableVersion)]
+        Find {
+            /// The directory in which to find all git repositories.
+            ///
+            /// Defaults to the current working directory.
+            root: Option<PathBuf>,
+        },
         /// Move all repositories found in a directory into a structure matching their clone URLs.
         #[clap(setting = AppSettings::ColoredHelp)]
         #[clap(setting = AppSettings::DisableVersion)]
@@ -55,6 +64,26 @@ pub fn main() -> Result<()> {
 
     match args.cmd {
         Subcommands::Init => core::repository::init(),
+        Subcommands::Find { root } => {
+            use gitoxide_core::organize;
+            // force verbose only, being the line renderer.
+            let progress = false;
+            let progress_keep_open = false;
+            prepare_and_run(
+                "find",
+                verbose,
+                progress,
+                progress_keep_open,
+                crate::shared::STANDARD_RANGE,
+                move |progress, out, _err| {
+                    organize::discover(
+                        root.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
+                        out,
+                        DoOrDiscard::from(progress),
+                    )
+                },
+            )
+        }
         Subcommands::Organize {
             execute,
             repository_source,

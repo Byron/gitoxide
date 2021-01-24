@@ -71,6 +71,7 @@ To be picked in any order….
         Need filtering and skipping with high performance. Probably better to use jwalk directly and disable
         it via features.
   * [x] Filtering and skipping
+  * [x] Finding git working dirs
 * **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
   * [x] upgrade toolchain
   * [ ] Upgrade to latest hyper/tokio to get everything to compile again

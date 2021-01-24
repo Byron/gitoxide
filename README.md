@@ -26,6 +26,7 @@ become available.
   * **the `gix` program** - convenient and for humans
     * [x] **init** - initialize a new non-bare repository with a `main` branch
     * [x] **organize** - find all git repositories and place them in directories according to their remote paths
+    * [x] **find** - find all git repositories in a given directory - useful for tools like [skim][skim]
     * [ ] **clone** - initialize a local copy of a remote repository
   * **the `gixp` program** _(plumbing)_ - lower level commands for use in automation
     * **pack**
@@ -435,7 +436,12 @@ There are **convenience features**, which combine common choices of the above in
 The library powering the command-line interface.
 
 * **organize**
-  * Includes `jwalk` to find repositories quickly in order to move into a directory structure automatically.
+  * **provides the 'organize' subcommand**
+    * Includes `jwalk` to find repositories quickly in order to move into a directory structure automatically.
+  * **provides the 'find' subcommand**
+    * discover all git repositories within a directory. Particularly useful with [skim][skim].
+    
+[skim]: https://github.com/lotabout/skim
     
 ### git-features
 

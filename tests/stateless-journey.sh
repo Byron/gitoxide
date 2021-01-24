@@ -45,15 +45,24 @@ function repo-with-remotes() {
 title "Porcelain ${kind}"
 (with_program tree
   if test "$kind" = "max"; then
-  (when "running 'organize'"
-    snapshot="$snapshot/organize"
-    (with "a mix of repositories"
-      (sandbox
-        repo-with-remotes dir/one-origin origin https://example.com/one-origin
-        repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
-        repo-with-remotes special-origin special-name https://example.com/special-origin
-        repo-with-remotes no-origin
-        (when "running without arguments"
+  (with "a mix of repositories"
+    (sandbox
+      repo-with-remotes dir/one-origin origin https://example.com/one-origin
+      repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
+      repo-with-remotes special-origin special-name https://example.com/special-origin
+      repo-with-remotes no-origin
+      (when "running 'find'"
+        snapshot="$snapshot/find"
+        (with "no arguments"
+          it "succeeds and prints a list of repository work directories" && {
+            WITH_SNAPSHOT="$snapshot/no-args-success" \
+            expect_run_sh $SUCCESSFULLY "$exe find 2>/dev/null"
+          }
+        )
+      )
+      (when "running 'organize'"
+        snapshot="$snapshot/organize"
+        (with "no arguments"
           it "succeeds and informs about the operations that it WOULD do" && {
             WITH_SNAPSHOT="$snapshot/no-args-success" \
             expect_run_sh $SUCCESSFULLY "$exe organize 2>/dev/null"
@@ -65,7 +74,7 @@ title "Porcelain ${kind}"
           }
         )
 
-        (when "running with --execute"
+        (with "--execute"
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/execute-success" \
             expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
@@ -77,7 +86,7 @@ title "Porcelain ${kind}"
           }
         )
 
-        (when "running with --execute again"
+        (with "--execute again"
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/execute-success" \
             expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
