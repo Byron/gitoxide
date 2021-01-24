@@ -14,7 +14,6 @@ impl Default for Mode {
     }
 }
 
-// TODO: handle nested repos, skip everything inside a parent directory, stop recursing into git workdirs
 fn find_git_repository_workdirs<P: Progress>(root: impl AsRef<Path>, mut progress: P) -> impl Iterator<Item = PathBuf>
 where
     <P as Progress>::SubProgress: Sync,
@@ -102,6 +101,20 @@ fn handle(
             .collect()
     }
 
+    fn find_parent_repo(mut git_workdir: &Path) -> Option<PathBuf> {
+        while let Some(parent) = git_workdir.parent() {
+            if std::fs::read_dir(parent).ok()?.any(|e| {
+                e.ok()
+                    .and_then(|e| e.file_name().to_str().map(|name| name == ".git"))
+                    .unwrap_or(false)
+            }) {
+                return Some(parent.to_owned());
+            }
+            git_workdir = parent;
+        }
+        None
+    }
+
     let url = match find_origin_remote(git_workdir)? {
         None => {
             progress.info(format!(
@@ -121,6 +134,14 @@ fn handle(
         return Ok(());
     }
 
+    if let Some(parent_repo_path) = find_parent_repo(git_workdir) {
+        progress.fail(format!(
+            "Skipping repository at {:?} as it is nested within repository {:?}",
+            git_workdir.display(),
+            parent_repo_path
+        ));
+        return Ok(());
+    }
     let destination = canonicalized_destination
         .join(
             url.host
@@ -142,7 +163,7 @@ fn handle(
                 ));
             } else {
                 std::fs::create_dir_all(destination.parent().expect("repo destination is not the root"))?;
-                progress.info(format!("Moving {} to {}", git_workdir.display(), destination.display()));
+                progress.done(format!("Moving {} to {}", git_workdir.display(), destination.display()));
                 std::fs::rename(git_workdir, &destination)?;
             }
         }
