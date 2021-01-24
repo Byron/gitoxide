@@ -10,20 +10,10 @@
 ///
 pub mod walkdir {
     pub use jwalk::{DirEntry as DirEntryGeneric, Error, WalkDir};
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
     /// An alias for an uncustomized directory entry to match the one of the non-parallel version offered by `walkdir`.
     pub type DirEntry = DirEntryGeneric<((), ())>;
-
-    /// Enable sorting by filename
-    pub fn sorted(w: WalkDir) -> WalkDir {
-        w.sort(true)
-    }
-
-    /// Obtain the owned, full path the `entry` points to
-    pub fn direntry_path(entry: &DirEntry) -> PathBuf {
-        entry.path()
-    }
 
     /// Instantiate a new directory iterator which will not skip hidden files.
     pub fn walkdir_new(root: impl AsRef<Path>) -> WalkDir {
@@ -34,18 +24,8 @@ pub mod walkdir {
 #[cfg(not(feature = "parallel"))]
 ///
 pub mod walkdir {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
     pub use walkdir::{DirEntry, Error, WalkDir};
-
-    /// Enable sorting by filename
-    pub fn sorted(w: WalkDir) -> WalkDir {
-        w.sort_by(|lhs, rhs| lhs.file_name().cmp(rhs.file_name()))
-    }
-
-    /// Obtain the owned, full path the `entry` points to
-    pub fn direntry_path(entry: &DirEntry) -> PathBuf {
-        entry.path().to_owned()
-    }
 
     /// Instantiate a new directory iterator which will not skip hidden files.
     pub fn walkdir_new(root: impl AsRef<Path>) -> WalkDir {
@@ -53,4 +33,4 @@ pub mod walkdir {
     }
 }
 
-pub use self::walkdir::{direntry_path, sorted, walkdir_new, DirEntry, WalkDir};
+pub use self::walkdir::{walkdir_new, DirEntry, WalkDir};

@@ -1,5 +1,5 @@
 use crate::loose::Db;
-use git_features::fs::WalkDir;
+use git_features::fs;
 use git_object::owned;
 
 /// Returned by [`Db::iter()`]
@@ -18,7 +18,7 @@ impl Db {
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     pub fn iter(&self) -> impl Iterator<Item = Result<owned::Id, Error>> {
         use std::path::Component::Normal;
-        WalkDir::new(&self.path)
+        fs::walkdir_new(&self.path)
             .min_depth(2)
             .max_depth(3)
             .follow_links(false)

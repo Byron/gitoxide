@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_features::{fs, progress::Progress};
+use git_features::progress::Progress;
 use std::path::{Path, PathBuf};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -34,7 +34,10 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
         }
     }
 
-    let walk = fs::sorted(fs::walkdir_new(root).follow_links(false));
+    let walk = jwalk::WalkDir::new(root)
+        .follow_links(false)
+        .sort(false)
+        .skip_hidden(false);
     walk.into_iter()
         .filter_map(move |entry| {
             progress.inc();
@@ -48,7 +51,7 @@ fn find_git_repository_workdirs(root: impl AsRef<Path>, mut progress: impl Progr
                 }
             }
         })
-        .map(|entry: fs::DirEntry| fs::direntry_path(&entry))
+        .map(|entry: jwalk::DirEntry<((), ())>| entry.path())
         .filter(is_repository)
         .map(into_workdir)
 }
