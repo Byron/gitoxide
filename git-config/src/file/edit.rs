@@ -53,6 +53,7 @@ impl<'a> Edits<'a> {
         self
     }
 
+    /// Assure new values are matching [these rules](https://github.com/git/git/blob/66e871b6647ffea61a77a0f82c7ef3415f1ee79c/Documentation/config.txt#L17:L20)
     pub fn to_write(&self, _out: impl io::Write) -> io::Result<()> {
         unimplemented!("to write")
     }

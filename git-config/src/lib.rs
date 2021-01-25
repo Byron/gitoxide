@@ -1,6 +1,13 @@
 #![forbid(unsafe_code)]
 // #![forbid(rust_2018_idioms)]
 #![allow(dead_code)]
+//! This crate aims to parse all `git` configuration files found in the wild and apply the same restrictions by default.
+//! It will do so while providing helpful error messages in case of syntax errors.
+//!
+//! Editing is fully supported and non-destructive.
+//!
+//! Additionally it's a stated goal as well to apply such restrictions only when values are read and optionally allow
+//! a less limited character set. This opens up the git configuration format to other languages than English.
 
 use std::ops::Range;
 

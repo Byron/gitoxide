@@ -1,15 +1,19 @@
 use crate::Span;
 
 // we parse leading and trailing whitespace into comments, avoiding the notion of whitespace.
-// This means we auto-trim whitespace otherwise, which I consider a feature
-pub(crate) type Comment = Span;
+// This means we auto-trim whitespace otherwise, which we a feature.
+// All whitespace is automatically an empty comment.
+#[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
+pub(crate) struct Comment(Span);
 
 /// A section or sub-section (in case `sub_name` is `Some()`), i.e.
 ///
 /// ```text
-/// [hello]
+/// [section]
 ///
-/// [hello.world]
+/// [section.sub-section]
+///
+/// [section "Sub-Section"]
 /// ```
 #[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
 pub(crate) struct Section {

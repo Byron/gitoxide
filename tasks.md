@@ -8,6 +8,19 @@
   * [x] use `git-id` inside of `git-features`, remove cycle
 * **git-config**
   * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
+  * **API round trip** - read - edit - write - read 
+    * [ ] parse sections (not sub-sections) and whitespace/comments
+      * [ ] write all
+    * [ ] Add section
+      * [ ] write all
+    * [ ] rename section
+      * [ ] write all
+    * [ ] delete section
+      * [ ] write all
+  * [ ] Sections lookup
+    * [ ] case-insensitive section
+    * [ ] case-sensitive subsection
+    * [ ] case sensitive 'legacy section.subsection' lookup
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
 * **git-ref**
   * [ ] create ref pointing to ID
