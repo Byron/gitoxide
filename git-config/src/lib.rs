@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 // #![forbid(rust_2018_idioms)]
+#![deny(missing_docs)]
 #![allow(dead_code)]
 //! This crate aims to parse all `git` configuration files found in the wild and apply the same restrictions by default.
 //! It will do so while providing helpful error messages in case of syntax errors.
@@ -31,11 +32,13 @@ impl From<Span> for Range<usize> {
 }
 
 impl Span {
+    /// Convert a span into the standard library range type.
     fn to_range(&self) -> Range<usize> {
         self.clone().into()
     }
 }
 
+///
 pub mod file;
 pub use file::File;
 
@@ -51,7 +54,7 @@ mod spanned;
 ///
 /// All of these will *may* remember their originating `span` as `Some(…)`, which is the entire region in the config file they point to. This is important
 /// in case of updates. New owned items thus don't have a `span`, represented by `None`.
-mod owned;
+pub mod owned;
 
 /// Borrowed items are nothing more than a fancy 'handle' to an item stored in a file, which can be made editable to make updates.
 pub mod borrowed;

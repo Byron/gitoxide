@@ -1,15 +1,25 @@
+/// A color and its representations within a git config file
+#[allow(missing_docs)]
 pub enum Color {
     Red,
     BrightRed,
-    Ansi { r: u8, g: u8, c: u8 },
+    /// Any color as indicated by 8 bit red, green and blue channels.
+    Ansi {
+        r: u8,
+        g: u8,
+        c: u8,
+    },
 }
 
-mod resolve {
+///
+pub mod resolve {
     use bstr::BStr;
     use quick_error::quick_error;
     use std::path::PathBuf;
 
     quick_error! {
+        /// An error returned by [`path()`].
+        #[allow(missing_docs)]
         #[derive(Debug)]
         pub enum Error {
             Tbd {

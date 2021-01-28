@@ -3,7 +3,9 @@ use bstr::BStr;
 use quick_error::quick_error;
 use std::{borrow::Cow, path::PathBuf};
 
+#[allow(missing_docs)]
 quick_error! {
+    /// The error returned by [`value()`] or any conversion method within the [decode][crate::decode] module.
     #[derive(Debug)]
     pub enum Error {
         Tbd {
@@ -22,6 +24,7 @@ pub fn value(_input: &BStr) -> Result<Cow<'_, BStr>, Error> {
 
 /// Conversion methods for the value of an entry.
 impl<'a> borrowed::Entry<'a> {
+    /// Returns the name of this entry.
     pub fn name(&self) -> Result<Cow<'a, BStr>, Error> {
         value(
             self.parent
@@ -30,6 +33,7 @@ impl<'a> borrowed::Entry<'a> {
         .map_err(Into::into)
     }
 
+    /// Returns the entry's value as byte string.
     pub fn as_string(&self) -> Result<Cow<'a, BStr>, Error> {
         value(
             self.parent.bytes_at(
@@ -43,15 +47,19 @@ impl<'a> borrowed::Entry<'a> {
         )
         .map_err(Into::into)
     }
+    /// Returns the entry's value and interpret it as integer.
     pub fn as_int(&self) -> Result<i64, Error> {
         unimplemented!("as int")
     }
+    /// Returns the entry's value and interpret it as boolean.
     pub fn as_bool(&self) -> Result<bool, Error> {
         unimplemented!("as bool")
     }
+    /// Returns the entry's value and interpret it as path after applying [path expansion][crate::value::resolve::path()].
     pub fn as_path(&self) -> Result<PathBuf, Error> {
         unimplemented!("as bool")
     }
+    /// Returns the entry's value and interpret it as color.
     pub fn as_color(&self) -> Result<value::Color, Error> {
         unimplemented!("as bool")
     }
