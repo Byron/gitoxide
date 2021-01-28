@@ -20,6 +20,15 @@ pub fn init_env_logger(verbose: bool) {
     }
 }
 
+#[cfg(any(feature = "prodash-render-line-crossterm", feature = "prodash-render-line-termion"))]
+fn progress_tree() -> prodash::Tree {
+    prodash::TreeOptions {
+        message_buffer_capacity: 200,
+        ..Default::default()
+    }
+    .into()
+}
+
 #[cfg(all(feature = "lean-cli", not(feature = "pretty-cli")))]
 pub mod lean {
     use crate::shared::ProgressRange;
@@ -45,7 +54,7 @@ pub mod lean {
         super::init_env_logger(false);
 
         if verbose {
-            let progress = prodash::Tree::new();
+            let progress = crate::shared::progress_tree();
             let sub_progress = progress.add_child(name);
             let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
             (Some(ui_handle), Some(sub_progress))
@@ -82,7 +91,7 @@ pub mod pretty {
                     UIDone,
                     ComputationDone(Result<T>),
                 };
-                let progress = prodash::Tree::new();
+                let progress = crate::shared::progress_tree();
                 let sub_progress = progress.add_child(name);
                 let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
                 let ui_handle =
