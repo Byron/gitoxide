@@ -1,5 +1,4 @@
 use crate::file;
-use bstr::{BStr, ByteSlice};
 use dangerous::{BytesReader, Error};
 
 fn read_config<'i, E>(r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
@@ -15,7 +14,7 @@ enum ConsumeTo {
     EndOfLine,
 }
 
-fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: ConsumeTo) -> Option<&'a BStr> {
+fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: ConsumeTo) -> Option<&'a [u8]> {
     fn skip_whitespace_or_comment<E>(r: &mut BytesReader<'_, E>, to_where: ConsumeTo) {
         fn skip_comment<E>(r: &mut BytesReader<'_, E>) -> usize {
             if r.peek_eq(b'#') {
@@ -49,7 +48,7 @@ fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: Consu
     if parsed.is_empty() {
         None
     } else {
-        Some(parsed.as_bstr())
+        Some(parsed)
     }
 }
 
@@ -57,16 +56,19 @@ fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: Consu
 mod tests {
     mod comments {
         use crate::parse::{skip_whitespace_or_comment, ConsumeTo};
-        use bstr::ByteSlice;
         use dangerous::Input;
 
         #[test]
-        fn whitespace_skipping_whitespace() {
-            let i = b"     \n     \t ";
+        fn whitespace_only() {
+            let bytes = b"     \n     \t ";
             let (res, remaining) =
-                dangerous::input(i).read_infallible(|r| skip_whitespace_or_comment(r, ConsumeTo::NextToken));
+                dangerous::input(bytes).read_infallible(|r| skip_whitespace_or_comment(r, ConsumeTo::NextToken));
             assert!(remaining.is_empty());
-            assert_eq!(res, Some(i.as_bstr()));
+            assert_eq!(
+                res.map(dangerous::input)
+                    .and_then(|s| s.span_of(&dangerous::input(bytes))),
+                Some(0..bytes.len())
+            );
         }
     }
 }
