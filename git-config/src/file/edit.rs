@@ -69,7 +69,7 @@ impl<'a> Edits<'a> {
 impl File {
     /// Return an empty collection of edits to be applied none-destructively to the parent file.
     #[must_use = "Edits must be written using the `write_to(…)` method to be effective."]
-    pub fn edit(&self) -> Edits {
+    pub fn edit(&self) -> Edits<'_> {
         Edits {
             parent: self,
             edits: Vec::new(),

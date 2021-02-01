@@ -1,6 +1,5 @@
 #![forbid(unsafe_code)]
-// #![forbid(rust_2018_idioms)]
-#![deny(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
 #![allow(dead_code)]
 //! This crate aims to parse all `git` configuration files found in the wild and apply the same restrictions by default.
 //! It will do so while providing helpful error messages in case of syntax errors.
