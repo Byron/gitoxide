@@ -58,17 +58,29 @@ mod tests {
         use crate::parse::{skip_whitespace_or_comment, ConsumeTo};
         use dangerous::Input;
 
-        #[test]
-        fn whitespace_only() {
-            let bytes = b"     \n     \t ";
-            let (res, remaining) =
-                dangerous::input(bytes).read_infallible(|r| skip_whitespace_or_comment(r, ConsumeTo::NextToken));
-            assert!(remaining.is_empty());
-            assert_eq!(
-                res.map(dangerous::input)
-                    .and_then(|s| s.span_of(&dangerous::input(bytes))),
-                Some(0..bytes.len())
-            );
+        macro_rules! decode_span {
+            ($name:ident, $input:literal, $range:expr, $explain:literal) => {
+                #[test]
+                fn $name() {
+                    let bytes = $input;
+                    let (res, remaining) = dangerous::input(bytes)
+                        .read_infallible(|r| skip_whitespace_or_comment(r, ConsumeTo::NextToken));
+                    assert!(remaining.is_empty(), $explain);
+                    assert_eq!(
+                        res.map(dangerous::input)
+                            .and_then(|s| s.span_of(&dangerous::input(bytes))),
+                        Some($range),
+                        $explain
+                    );
+                }
+            };
         }
+
+        decode_span!(
+            whitespace_only,
+            b"     \n     \t ",
+            0..13,
+            "it consumes newlines as well, taking everything"
+        );
     }
 }
