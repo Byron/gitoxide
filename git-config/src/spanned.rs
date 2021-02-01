@@ -4,7 +4,7 @@ use crate::Span;
 // This means we auto-trim whitespace otherwise, which we a feature.
 // All whitespace is automatically an empty comment.
 #[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
-pub(crate) struct Comment(Span);
+pub(crate) struct Comment(pub(crate) Span);
 
 /// A section or sub-section (in case `sub_name` is `Some()`), i.e.
 ///

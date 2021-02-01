@@ -30,6 +30,15 @@ impl From<Span> for Range<usize> {
     }
 }
 
+impl From<Range<usize>> for Span {
+    fn from(Range { start, end }: Range<usize>) -> Self {
+        Span {
+            start,
+            end_inclusive: end - 1,
+        }
+    }
+}
+
 impl Span {
     /// Convert a span into the standard library range type.
     fn to_range(&self) -> Range<usize> {

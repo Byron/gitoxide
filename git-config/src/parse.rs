@@ -1,12 +1,24 @@
-use crate::file;
-use dangerous::{BytesReader, Error};
+use crate::{file, spanned};
+use dangerous::{Bytes, BytesReader, Error, Expected, Input};
 
-fn config<'i, E>(r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
-where
-    E: Error<'i>,
-{
-    skip_whitespace_or_comment(r, ConsumeTo::NextToken);
-    unimplemented!("sections and values");
+fn config(bytes: &[u8]) -> Result<Vec<file::Token>, Expected<'_>> {
+    fn config<'i, E>(input: Bytes<'i>, r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
+    where
+        E: Error<'i>,
+    {
+        let mut tokens = Vec::new();
+        skip_whitespace_or_comment(r, ConsumeTo::NextToken).map(|section| {
+            tokens.push(spanned::Comment(
+                dangerous::input(section)
+                    .span_of(&input)
+                    .expect("range contained")
+                    .into(),
+            ))
+        });
+        unimplemented!("sections and values");
+    }
+    let input = dangerous::input(bytes);
+    input.read_all(|r| config(dangerous::input(bytes), r))
 }
 
 enum ConsumeTo {
@@ -14,6 +26,7 @@ enum ConsumeTo {
     EndOfLine,
 }
 
+#[must_use]
 fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: ConsumeTo) -> Option<&'a [u8]> {
     fn skip_whitespace_or_comment<E>(r: &mut BytesReader<'_, E>, to_where: ConsumeTo) {
         fn skip_comment<E>(r: &mut BytesReader<'_, E>) -> usize {
