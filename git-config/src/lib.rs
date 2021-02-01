@@ -41,6 +41,8 @@ impl Span {
 pub mod file;
 pub use file::File;
 
+pub(crate) mod parse;
+
 /// A module with specialized value types as they exist within git config files.
 pub mod value;
 

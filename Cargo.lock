@@ -465,6 +465,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dangerous"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5718d28e9ff3fbcc721e2bfbfe1be4501cce62a06488b999b52a16fefafc24d7"
+
+[[package]]
 name = "dashmap"
 version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -644,6 +650,7 @@ name = "git-config"
 version = "0.0.0"
 dependencies = [
  "bstr",
+ "dangerous",
  "quick-error",
 ]
 

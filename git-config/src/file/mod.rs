@@ -32,12 +32,7 @@ impl Token {
 pub struct File {
     buf: Vec<u8>,
     /// A config file as parsed into tokens, where each [`Token`] is one of the three relevant items in git config files.
-    tokens: Vec<Token>, // but how do we get fast lookups and proper value lookup based on decoded values?
-                        // On the fly is easier, otherwise we have to deal with a lookup cache of sorts and
-                        // many more allocations up front (which might be worth it only once we have measurements).
-                        // Cow<'a, _> would bind to our buffer so the cache can't be in this type.
-                        // Probably it could be the 'Config' type which handles multiple files and treats them as one,
-                        // and only if there is any need.
+    tokens: Vec<Token>,
 }
 
 impl File {
