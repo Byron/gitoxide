@@ -1,7 +1,7 @@
 use crate::file;
 use dangerous::{BytesReader, Error};
 
-fn read_config<'i, E>(r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
+fn config<'i, E>(r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
 where
     E: Error<'i>,
 {
@@ -59,13 +59,12 @@ mod tests {
         use dangerous::Input;
 
         macro_rules! decode_span {
-            ($name:ident, $input:literal, $range:expr, $explain:literal) => {
+            ($name:ident, $input:literal, $option:path, $range:expr, $explain:literal) => {
                 #[test]
                 fn $name() {
                     let bytes = $input;
-                    let (res, remaining) = dangerous::input(bytes)
-                        .read_infallible(|r| skip_whitespace_or_comment(r, ConsumeTo::NextToken));
-                    assert!(remaining.is_empty(), $explain);
+                    let (res, _remaining) =
+                        dangerous::input(bytes).read_infallible(|r| skip_whitespace_or_comment(r, $option));
                     assert_eq!(
                         res.map(dangerous::input)
                             .and_then(|s| s.span_of(&dangerous::input(bytes))),
@@ -77,10 +76,51 @@ mod tests {
         }
 
         decode_span!(
-            whitespace_only,
-            b"     \n     \t ",
+            no_comment_till_next_token,
+            b"     \n     \t\n",
+            ConsumeTo::NextToken,
             0..13,
             "it consumes newlines as well, taking everything"
+        );
+
+        decode_span!(
+            no_comment_to_end_of_line,
+            b"     \n     \t ",
+            ConsumeTo::EndOfLine,
+            0..5,
+            "it consumes only a single line, EXCLUDING the EOF marker"
+        );
+
+        decode_span!(
+            comment_to_next_token,
+            b" #ho \n     \t ",
+            ConsumeTo::NextToken,
+            0..13,
+            "comments are the same as whitespace"
+        );
+
+        decode_span!(
+            comment_to_end_of_line,
+            b"# hi \n     \t ",
+            ConsumeTo::EndOfLine,
+            0..5,
+            "comments are the same as whitespace"
+        );
+
+        decode_span!(
+            whitespace_to_token,
+            b"   a=2   \n     \t ",
+            ConsumeTo::NextToken,
+            0..3,
+            "it does not consume tokens"
+        );
+
+        decode_span!(
+            whitespace_to_token_on_next_line,
+            b"    \n  b=2\t ",
+            ConsumeTo::NextToken,
+            0..7,
+            "it does not consume tokens while skipping lines"
         );
     }
 }
