@@ -7,14 +7,14 @@ fn config(bytes: &[u8]) -> Result<Vec<file::Token>, Expected<'_>> {
         E: Error<'i>,
     {
         let mut tokens = Vec::new();
-        skip_whitespace_or_comment(r, ConsumeTo::NextToken).map(|section| {
+        if let Some(section) = skip_whitespace_or_comment(r, ConsumeTo::NextToken) {
             tokens.push(spanned::Comment(
                 dangerous::input(section)
                     .span_of(&input)
                     .expect("range contained")
                     .into(),
             ))
-        });
+        };
         unimplemented!("sections and values");
     }
     let input = dangerous::input(bytes);
