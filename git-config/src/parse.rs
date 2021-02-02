@@ -50,6 +50,9 @@ fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: Consu
                 })
                 .len();
             if last == current {
+                if let ConsumeTo::EndOfLine = to_where {
+                    r.consume_opt(b'\n');
+                }
                 break;
             }
             last = current;
@@ -100,8 +103,8 @@ mod tests {
             no_comment_to_end_of_line,
             b"     \n     \t ",
             ConsumeTo::EndOfLine,
-            0..5,
-            "it consumes only a single line, EXCLUDING the EOF marker"
+            0..6,
+            "it consumes only a single line, including the EOF marker"
         );
 
         decode_span!(
@@ -116,7 +119,7 @@ mod tests {
             comment_to_end_of_line,
             b"# hi \n     \t ",
             ConsumeTo::EndOfLine,
-            0..5,
+            0..6,
             "comments are the same as whitespace"
         );
 
