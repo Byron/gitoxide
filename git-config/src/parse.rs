@@ -31,7 +31,7 @@ fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: Consu
     fn skip_whitespace_or_comment<E>(r: &mut BytesReader<'_, E>, to_where: ConsumeTo) {
         fn skip_comment<E>(r: &mut BytesReader<'_, E>) -> usize {
             if r.peek_eq(b'#') {
-                r.take_while(|c| c != b'\n').len()
+                r.take_until_opt(b'\n').len()
             } else {
                 0
             }
