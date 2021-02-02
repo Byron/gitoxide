@@ -41,7 +41,7 @@ fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: Consu
         loop {
             current += skip_comment(r);
             current += r
-                .take_while(|c| {
+                .take_while(|c: u8| {
                     let iwb = c.is_ascii_whitespace();
                     iwb && match to_where {
                         ConsumeTo::NextToken => true,
