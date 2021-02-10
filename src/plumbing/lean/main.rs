@@ -46,6 +46,11 @@ pub fn main() -> Result<()> {
                 },
             )
         }
+        SubCommands::PackSend(options::PackSend { protocol, url }) => {
+            todo!();
+            // get a handle on some progress
+            // call core progress
+        }
         SubCommands::IndexFromPack(options::IndexFromPack {
             iteration_mode,
             pack_path,

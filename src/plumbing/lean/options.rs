@@ -32,6 +32,7 @@ pub enum SubCommands {
     IndexFromPack(IndexFromPack),
     RemoteRefList(RemoteRefList),
     PackReceive(PackReceive),
+    PackSend(PackSend),
     CommitGraphVerify(CommitGraphVerify),
 }
 
@@ -110,6 +111,22 @@ pub struct PackReceive {
     /// If unset, they will be discarded.
     #[argh(positional)]
     pub directory: Option<PathBuf>,
+}
+
+/// Send a pack from client to a remote server
+/// This is the plumbing equivalent of git push
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "pack-send")]
+pub struct PackSend {
+    /// the protocol version to use. Valid values are 1 and 2
+    #[argh(option, short = 'p')]
+    pub protocol: Option<core::Protocol>,
+
+    /// the URLs or path to which to send the pack.
+    ///
+    /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+    #[argh(positional)]
+    pub url: String,
 }
 
 /// Explode a pack into loose objects.
