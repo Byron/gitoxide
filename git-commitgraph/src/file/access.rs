@@ -9,7 +9,7 @@ use std::{
 
 /// Access
 impl File {
-    /// The amount of base graphs that this file depends on.
+    /// The number of base graphs that this file depends on.
     pub fn base_graph_count(&self) -> u8 {
         self.base_graph_count
     }

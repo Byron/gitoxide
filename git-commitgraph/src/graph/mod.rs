@@ -1,7 +1,6 @@
 //! Operations on a complete commit graph.
 mod access;
 mod init;
-///
 pub mod verify;
 
 use crate::file::File;

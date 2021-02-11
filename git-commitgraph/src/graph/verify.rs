@@ -1,3 +1,4 @@
+//! Auxiliary types used by graph verification methods.
 use crate::{
     file::{self, commit},
     graph, Graph, GENERATION_NUMBER_MAX,
@@ -50,17 +51,19 @@ pub enum Error<E: std::error::Error + 'static> {
     TooManyFiles(usize),
 }
 
-/// Statistics gathered while verifying the integrity of the graph as returned by [`Graph::verify_integrity()]`.
+/// Statistics gathered while verifying the integrity of the graph as returned by [`Graph::verify_integrity()`].
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize, serde::Serialize))]
 pub struct Outcome {
-    /// The longest consecutive amount of commits in a chain of commits.
+    /// The length of the longest path between any two commits in this graph.
     ///
-    /// For example, a repository with 10 commits would have 10 as value.
+    /// For example, this will be `Some(9)` for a commit graph containing 10 linear commits.
+    /// This will be `Some(0)` for a commit graph containing 0 or 1 commits.
+    /// If the longest path length is too large to fit in a [u32], then this will be [None].
     pub longest_path_length: Option<u32>,
-    /// The total amount traversed commits.
+    /// The total number of commits traversed.
     pub num_commits: u32,
-    /// A mapping of `parent-count -> amount of [commits][file::Commit] with that count`.
+    /// A mapping of `N -> number of commits with N parents`.
     pub parent_counts: BTreeMap<u32, u32>,
 }
 
