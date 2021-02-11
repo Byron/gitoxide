@@ -1,3 +1,4 @@
+//! Low-level operations on individual commits.
 use crate::{
     file::{self, File},
     graph,

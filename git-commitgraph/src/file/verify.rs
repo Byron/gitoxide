@@ -1,3 +1,4 @@
+//! Auxiliary types used in commit graph file verification methods.
 use crate::{
     file::{self, File},
     GENERATION_NUMBER_INFINITY, GENERATION_NUMBER_MAX,
@@ -42,15 +43,15 @@ pub enum Error<E: std::error::Error + 'static> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Deserialize, serde::Serialize))]
 pub struct Outcome {
-    /// The highest encountered [`file::Commit`] generation number.
+    /// The largest encountered [`file::Commit`] generation number.
     pub max_generation: u32,
     /// The smallest encountered [`file::Commit`] generation number.
     pub min_generation: u32,
-    /// The highest amount parents in a single [`file::Commit`].
+    /// The largest number of parents in a single [`file::Commit`].
     pub max_parents: u32,
-    /// The total amount of [`commits`][file::Commit] seen in the iteration.
+    /// The total number of [`commits`][file::Commit]s seen in the iteration.
     pub num_commits: u32,
-    /// A mapping of `parent-count -> amount of [commits][file::Commit] with that count`.
+    /// A mapping of `N -> number of commits with N parents`.
     pub parent_counts: HashMap<u32, u32>,
 }
 

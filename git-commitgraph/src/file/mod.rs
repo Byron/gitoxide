@@ -2,12 +2,10 @@
 
 mod access;
 
-///
 pub mod commit;
 pub use commit::Commit;
 
 mod init;
-///
 pub mod verify;
 
 pub use init::Error;

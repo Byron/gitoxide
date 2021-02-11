@@ -45,7 +45,7 @@ impl Graph {
         Some(self.lookup_by_id(id)?.graph_pos)
     }
 
-    /// Returns the amount of commits stored in this file.
+    /// Returns the number of commits stored in this file.
     pub fn num_commits(&self) -> u32 {
         self.files.iter().map(|f| f.num_commits()).sum()
     }
