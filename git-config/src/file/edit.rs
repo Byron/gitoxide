@@ -1,4 +1,5 @@
-use crate::{borrowed, file::File, owned, Span};
+use crate::{borrowed, file::File, owned};
+use dangerous::Span;
 use std::io;
 
 /// Represents a possible edit to the git configuration file

@@ -466,8 +466,9 @@ dependencies = [
 
 [[package]]
 name = "dangerous"
-version = "0.7.0"
-source = "git+https://github.com/avitex/rust-dangerous#3b6863117353d3ee17113a99c1db19f6460f1731"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e95a55c47c2c5ce469fd39840be3ec8554765184a119cbcd20149dafaa3d75b4"
 
 [[package]]
 name = "dashmap"

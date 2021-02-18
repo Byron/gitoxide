@@ -14,5 +14,5 @@ doctest = false
 
 [dependencies]
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
-dangerous = { version = "0.7.0", default-features = false, features = ["full-context", "retry"], git = "https://github.com/avitex/rust-dangerous" }
+dangerous = { version = "0.9.0", default-features = false, features = ["full-backtrace"] }
 quick-error = "2.0.0"

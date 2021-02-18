@@ -9,43 +9,6 @@
 //! Additionally it's a stated goal as well to apply such restrictions only when values are read and optionally allow
 //! a less limited character set. This opens up the git configuration format to other languages than English.
 
-use std::ops::Range;
-
-/// A span is a range into a set of bytes - see it as a selection into a Git config file.
-///
-/// Similar to [`std::ops::RangeInclusive`], but tailor made to work for us.
-/// There are various issues with std ranges, which we don't have to opt into for the simple Range-like item we need.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-struct Span {
-    pub start: usize,
-    pub end_inclusive: usize,
-}
-
-impl From<Span> for Range<usize> {
-    fn from(Span { start, end_inclusive }: Span) -> Self {
-        Range {
-            start,
-            end: end_inclusive + 1,
-        }
-    }
-}
-
-impl From<Range<usize>> for Span {
-    fn from(Range { start, end }: Range<usize>) -> Self {
-        Span {
-            start,
-            end_inclusive: end - 1,
-        }
-    }
-}
-
-impl Span {
-    /// Convert a span into the standard library range type.
-    fn to_range(&self) -> Range<usize> {
-        self.clone().into()
-    }
-}
-
 ///
 pub mod file;
 pub use file::File;

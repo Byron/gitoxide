@@ -1,7 +1,8 @@
-use crate::{borrowed, spanned, Span};
+use crate::{borrowed, spanned};
 use bstr::{BStr, ByteSlice};
+use dangerous::Span;
 
-#[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Token {
     Section(spanned::Section),
     Entry(spanned::Entry),
@@ -28,7 +29,7 @@ impl Token {
 /// After reading a configuration file its contents is stored verbatim and indexed to allow retrieval
 /// of sections and entry values on demand. These are returned as [`borrowed`] items, which are read-only but
 /// can be transformed into editable items.
-#[derive(Clone, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct File {
     buf: Vec<u8>,
     /// A config file as parsed into tokens, where each [`Token`] is one of the three relevant items in git config files.
@@ -37,7 +38,7 @@ pub struct File {
 
 impl File {
     pub(crate) fn bytes_at(&self, span: Span) -> &BStr {
-        &self.buf[span.to_range()].as_bstr()
+        span.of(self.buf.as_slice()).unwrap().as_bstr()
     }
 
     pub(crate) fn token(&self, index: usize) -> &Token {

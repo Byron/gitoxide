@@ -1,5 +1,5 @@
-use crate::Span;
 use bstr::BString;
+use dangerous::Span;
 
 /// A key-value entry of a git-config file, like `name = value`
 pub struct Entry {

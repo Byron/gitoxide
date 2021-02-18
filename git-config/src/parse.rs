@@ -1,24 +1,18 @@
 use crate::{file, spanned};
-use dangerous::{Bytes, BytesReader, Error, Expected, Input};
+use dangerous::{BytesReader, Error, Expected, Input, Span};
 
 fn config(bytes: &[u8]) -> Result<Vec<file::Token>, Expected<'_>> {
-    fn config<'i, E>(input: Bytes<'i>, r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
+    fn config<'i, E>(r: &mut BytesReader<'i, E>) -> Result<Vec<file::Token>, E>
     where
         E: Error<'i>,
     {
         let mut tokens = Vec::new();
         if let Some(section) = skip_whitespace_or_comment(r, ConsumeTo::NextToken) {
-            tokens.push(spanned::Comment(
-                dangerous::input(section)
-                    .span_of(&input)
-                    .expect("range contained")
-                    .into(),
-            ))
+            tokens.push(spanned::Comment(Span::from(section)))
         };
         unimplemented!("sections and values");
     }
-    let input = dangerous::input(bytes);
-    input.read_all(|r| config(dangerous::input(bytes), r))
+    dangerous::input(bytes).read_all(|r| config(r))
 }
 
 enum ConsumeTo {
@@ -72,7 +66,7 @@ fn skip_whitespace_or_comment<'a, E>(r: &mut BytesReader<'a, E>, to_where: Consu
 mod tests {
     mod comments {
         use crate::parse::{skip_whitespace_or_comment, ConsumeTo};
-        use dangerous::Input;
+        use dangerous::{Input, Span};
 
         macro_rules! decode_span {
             ($name:ident, $input:literal, $option:path, $range:expr, $explain:literal) => {
@@ -82,9 +76,8 @@ mod tests {
                     let (res, _remaining) =
                         dangerous::input(bytes).read_infallible(|r| skip_whitespace_or_comment(r, $option));
                     assert_eq!(
-                        res.map(dangerous::input)
-                            .and_then(|s| s.span_of(&dangerous::input(bytes))),
-                        Some($range),
+                        res.map(Span::from),
+                        Some(Span::from(&$input[$range])),
                         $explain
                     );
                 }
