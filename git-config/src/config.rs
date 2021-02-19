@@ -8,7 +8,7 @@ type SectionConfig<'a> = HashMap<&'a str, Value<'a>>;
 /// This struct provides a high level wrapper to access `git-config` file. This
 /// struct exists primarily for reading a config rather than modifying it, as
 /// it discards comments and unnecessary whitespace.
-#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize)]
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct GitConfig<'a>(HashMap<&'a str, HashMap<&'a str, SectionConfig<'a>>>);
 
 const EMPTY_MARKER: &str = "@"; // Guaranteed to not be a {sub,}section or name.

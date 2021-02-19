@@ -1,3 +1,12 @@
+//! This module handles parsing a `git-config`. Generally speaking, you want to
+//! use a higher abstraction unless you have some explicit reason to work with
+//! events instead.
+//!
+//! The general workflow for interacting with this is to use one of the
+//! `parse_from_*` function variants. These will return a [`Parser`] on success,
+//! which can be converted into an [`Event`] iterator. The [`Parser`] also has
+//! additional methods for accessing leading comments or events by section.
+
 use crate::values::{Boolean, TrueVariant, Value};
 use nom::bytes::complete::{escaped, tag, take_till, take_while};
 use nom::character::complete::{char, none_of, one_of};
@@ -10,7 +19,7 @@ use nom::IResult;
 use nom::{branch::alt, multi::many0};
 use std::iter::FusedIterator;
 
-/// Syntactic event that occurs in the config.
+/// Syntactic events that occurs in the config.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
     Comment(ParsedComment<'a>),
@@ -32,34 +41,22 @@ pub enum Event<'a> {
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSection<'a> {
-    section_header: ParsedSectionHeader<'a>,
-    items: Vec<Event<'a>>,
+    pub section_header: ParsedSectionHeader<'a>,
+    pub events: Vec<Event<'a>>,
 }
 
-impl ParsedSection<'_> {
-    pub fn header(&self) -> &ParsedSectionHeader<'_> {
-        &self.section_header
-    }
-
-    pub fn take_header(&mut self) -> ParsedSectionHeader<'_> {
-        self.section_header
-    }
-
-    pub fn events(&self) -> &[Event<'_>] {
-        &self.items
-    }
-}
-
+/// A parsed section header, containing a name and optionally a subsection name.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSectionHeader<'a> {
     pub name: &'a str,
     pub subsection_name: Option<&'a str>,
 }
 
+/// A parsed comment event containing the comment marker and comment.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedComment<'a> {
-    comment_tag: char,
-    comment: &'a str,
+    pub comment_tag: char,
+    pub comment: &'a str,
 }
 
 #[derive(PartialEq, Debug)]
@@ -116,7 +113,12 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// Note that that things such as case-sensitivity or duplicate sections are
 /// _not_ handled. This parser is a low level _syntactic_ interpreter (as a
 /// parser should be), and higher level wrappers around this parser (which may
-/// or may not be zero-copy) should handle _semantic_ values.
+/// or may not be zero-copy) should handle _semantic_ values. This also means
+/// that string-like values are not interpreted. For example, `hello"world"`
+/// would be read at a high level as `helloworld` but this parser will return
+/// the former instead, with the extra quotes. This is because it is not the
+/// responsibility of the parser to interpret these values, and doing so would
+/// necessarily require a copy, which this parser avoids.
 ///
 /// # Trait Implementations
 ///
@@ -139,7 +141,7 @@ impl<'a> Parser<'a> {
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     ///
-    /// This function is identical to [`parse`].
+    /// This function is identical to [`parse_from_str`].
     ///
     /// # Errors
     ///
@@ -186,7 +188,7 @@ impl<'a> Parser<'a> {
             .map(|section| {
                 vec![Event::SectionHeader(section.section_header)]
                     .into_iter()
-                    .chain(section.items)
+                    .chain(section.events)
             })
             .flatten();
         self.init_comments
@@ -247,7 +249,7 @@ fn section<'a>(i: &'a str) -> IResult<&'a str, ParsedSection<'a>> {
         i,
         ParsedSection {
             section_header,
-            items: items.into_iter().flatten().collect(),
+            events: items.into_iter().flatten().collect(),
         },
     ))
 }
@@ -738,7 +740,7 @@ mod parse {
                         name: "hello",
                         subsection_name: None,
                     },
-                    items: vec![
+                    events: vec![
                         Event::Key("a"),
                         Event::Value(Value::from_str("b")),
                         Event::Key("c"),
@@ -759,7 +761,7 @@ mod parse {
                         name: "hello",
                         subsection_name: None,
                     },
-                    items: vec![
+                    events: vec![
                         Event::Key("c"),
                         Event::Value(Value::Boolean(Boolean::True(TrueVariant::Implicit)))
                     ]
@@ -781,7 +783,7 @@ mod parse {
                         name: "hello",
                         subsection_name: None,
                     },
-                    items: vec![
+                    events: vec![
                         Event::Comment(ParsedComment {
                             comment_tag: ';',
                             comment: " commentA",
@@ -817,7 +819,7 @@ mod parse {
                         name: "section",
                         subsection_name: None,
                     },
-                    items: vec![
+                    events: vec![
                         Event::Key("a"),
                         Event::ValueNotDone(r#"1    "\""#),
                         Event::Newline("\n"),
@@ -842,7 +844,7 @@ mod parse {
                         name: "section",
                         subsection_name: Some("a")
                     },
-                    items: vec![
+                    events: vec![
                         Event::Key("b"),
                         Event::ValueNotDone("\""),
                         Event::Newline("\n"),
