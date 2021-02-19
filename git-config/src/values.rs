@@ -80,7 +80,9 @@ pub enum TrueVariant {
     True,
     One,
     /// For variables defined without a `= <value>`. This can never be created
-    /// from the FromStr trait, as an empty string is false without context.
+    /// from the [`FromStr`] trait, as an empty string is false without context.
+    /// If directly serializing this struct (instead of using a higher level
+    /// wrapper), then this variant is serialized as if it was [`Self::True`].
     Implicit,
 }
 
