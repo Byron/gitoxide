@@ -1,8 +1,9 @@
 // mod de;
+pub mod config;
 mod error;
 // mod ser;
 pub mod parser;
-mod values;
+pub mod values;
 
 // pub use de::{from_str, Deserializer};
 pub use error::{Error, Result};

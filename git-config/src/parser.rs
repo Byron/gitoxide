@@ -8,18 +8,20 @@ use nom::multi::many1;
 use nom::sequence::delimited;
 use nom::IResult;
 use nom::{branch::alt, multi::many0};
+use std::iter::FusedIterator;
 
-/// An event is any syntactic event that occurs in the config.
-#[derive(PartialEq, Debug)]
+/// Syntactic event that occurs in the config.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
-    Comment(Comment<'a>),
+    Comment(ParsedComment<'a>),
+    SectionHeader(ParsedSectionHeader<'a>),
     Key(&'a str),
+    ///
+    Value(Value<'a>),
     /// Represents any token used to signify a new line character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
     /// sequence.
     Newline(&'a str),
-    ///
-    Value(Value<'a>),
     /// Any value that isn't completed. This occurs when the value is continued
     /// onto the next line. A Newline event is guaranteed after, followed by
     /// either another ValueNotDone or a ValueDone.
@@ -28,32 +30,188 @@ pub enum Event<'a> {
     ValueDone(&'a str),
 }
 
-#[derive(PartialEq, Debug)]
-pub struct Section<'a> {
-    section_header: SectionHeader<'a>,
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct ParsedSection<'a> {
+    section_header: ParsedSectionHeader<'a>,
     items: Vec<Event<'a>>,
 }
 
-#[derive(PartialEq, Debug)]
-pub struct SectionHeader<'a> {
-    name: &'a str,
-    subsection_name: Option<&'a str>,
+impl ParsedSection<'_> {
+    pub fn header(&self) -> &ParsedSectionHeader<'_> {
+        &self.section_header
+    }
+
+    pub fn take_header(&mut self) -> ParsedSectionHeader<'_> {
+        self.section_header
+    }
+
+    pub fn events(&self) -> &[Event<'_>] {
+        &self.items
+    }
 }
 
-#[derive(PartialEq, Debug)]
-pub struct Comment<'a> {
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct ParsedSectionHeader<'a> {
+    pub name: &'a str,
+    pub subsection_name: Option<&'a str>,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct ParsedComment<'a> {
     comment_tag: char,
     comment: &'a str,
 }
 
-pub struct Parser<'a> {
-    init_comments: Vec<Comment<'a>>,
-    sections: Vec<Section<'a>>,
+#[derive(PartialEq, Debug)]
+pub enum ParserError<'a> {
+    InvalidInput(nom::Err<NomError<&'a str>>),
+    ConfigHasExtraData(&'a str),
 }
 
-pub fn parse(input: &str) -> Result<Parser<'_>, ()> {
-    let (i, comments) = many0(comment)(input).unwrap();
-    let (i, sections) = many1(section)(i).unwrap();
+#[doc(hidden)]
+impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
+    fn from(e: nom::Err<NomError<&'a str>>) -> Self {
+        Self::InvalidInput(e)
+    }
+}
+
+/// A zero-copy `git-config` file parser.
+///
+/// # Non-perfect parser
+///
+/// This parser should successfully parse all sections and comments. However,
+/// It will not parse whitespace. This attempts to closely follow the
+/// non-normative specification found in [`git`'s documentation].
+///
+/// # Differences between a `.ini` parser
+///
+/// While the `git-config` format closely resembles the [`.ini` file format],
+/// there are subtle differences that make them incompatible. For one, the file
+/// format is not well defined, and there exists no formal specification to
+/// adhere to. Thus, attempting to use an `.ini` parser on a `git-config` file
+/// may successfully parse invalid configuration files.
+///
+/// For concrete examples, some notable differences are:
+/// - `git-config` sections permit subsections via either a quoted string
+/// (`[some-section "subsection"]`) or via the deprecated dot notation
+/// (`[some-section.subsection]`). Successful parsing these section names is not
+/// well defined in typical `.ini` parsers. This parser will handle these cases
+/// perfectly.
+/// - Comment markers are not strictly defined either. This parser will always
+/// and only handle a semicolon or octothorpe (also known as a hash or number
+/// sign).
+/// - Global properties may be allowed in `.ini` parsers, but is strictly
+/// disallowed by this parser.
+/// - Only `\t`, `\n`, `\b` `\\` are valid escape characters.
+/// - Quoted and semi-quoted values will be parsed (but quotes will be included
+/// in event outputs). An example of a semi-quoted value is `5"hello world"`,
+/// which should be interpreted as `5hello world`.
+/// - Line continuations via a `\` character is supported.
+/// - Whitespace handling similarly follows the `git-config` specification as
+/// closely as possible, where excess whitespace after a non-quoted value are
+/// trimmed, and line continuations onto a new line with excess spaces are kept.
+/// - Only equal signs (optionally padded by spaces) are valid name/value
+/// delimiters.
+///
+/// Note that that things such as case-sensitivity or duplicate sections are
+/// _not_ handled. This parser is a low level _syntactic_ interpreter (as a
+/// parser should be), and higher level wrappers around this parser (which may
+/// or may not be zero-copy) should handle _semantic_ values.
+///
+/// # Trait Implementations
+///
+/// - This struct does _not_ implement [`FromStr`] due to lifetime
+/// constraints implied on the required `from_str` method, but instead provides
+/// [`Parser::from_str`].
+///
+/// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
+/// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
+/// [`FromStr`]: std::str::FromStr
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct Parser<'a> {
+    init_comments: Vec<ParsedComment<'a>>,
+    sections: Vec<ParsedSection<'a>>,
+}
+
+impl<'a> Parser<'a> {
+    /// Attempt to zero-copy parse the provided `&str`. On success, returns a
+    /// [`Parser`] that provides methods to accessing leading comments and sections
+    /// of a `git-config` file and can be converted into an iterator of [`Event`]
+    /// for higher level processing.
+    ///
+    /// This function is identical to [`parse`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the string provided is not a valid file, or we have
+    /// non-section data.
+    pub fn from_str(s: &'a str) -> Result<Self, ParserError> {
+        parse_from_str(s)
+    }
+
+    /// Returns the leading comments (any comments before a section) from the
+    /// parser. Consider [`Parser::take_leading_comments`] if you need an owned
+    /// copy only once.
+    pub fn leading_comments(&self) -> &[ParsedComment<'a>] {
+        &self.init_comments
+    }
+
+    /// Takes the leading comments (any comments before a section) from the
+    /// parser. Subsequent calls will return an empty vec. Consider
+    /// [`Parser::leading_comments`] if you only need a reference to the comments.
+    pub fn take_leading_comments(&mut self) -> Vec<ParsedComment<'a>> {
+        let mut to_return = vec![];
+        std::mem::swap(&mut self.init_comments, &mut to_return);
+        to_return
+    }
+
+    pub fn sections(&self) -> &[ParsedSection<'a>] {
+        &self.sections
+    }
+
+    pub fn take_sections(&mut self) -> Vec<ParsedSection<'a>> {
+        let mut to_return = vec![];
+        std::mem::swap(&mut self.sections, &mut to_return);
+        to_return
+    }
+
+    pub fn into_vec(self) -> Vec<Event<'a>> {
+        self.into_iter().collect()
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + FusedIterator {
+        let section_iter = self
+            .sections
+            .into_iter()
+            .map(|section| {
+                vec![Event::SectionHeader(section.section_header)]
+                    .into_iter()
+                    .chain(section.items)
+            })
+            .flatten();
+        self.init_comments
+            .into_iter()
+            .map(Event::Comment)
+            .chain(section_iter)
+    }
+}
+
+/// Attempt to zero-copy parse the provided `&str`. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid file, or we have
+/// non-section data.
+pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
+    let (i, comments) = many0(comment)(input)?;
+    let (i, sections) = many1(section)(i)?;
+
+    if !i.is_empty() {
+        return Err(ParserError::ConfigHasExtraData(i));
+    }
 
     Ok(Parser {
         init_comments: comments,
@@ -61,22 +219,22 @@ pub fn parse(input: &str) -> Result<Parser<'_>, ()> {
     })
 }
 
-fn comment<'a>(i: &'a str) -> IResult<&'a str, Comment<'a>> {
+fn comment<'a>(i: &'a str) -> IResult<&'a str, ParsedComment<'a>> {
     let i = i.trim_start();
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(is_char_newline)(i)?;
     Ok((
         i,
-        Comment {
+        ParsedComment {
             comment_tag,
             comment,
         },
     ))
 }
 
-fn section<'a>(i: &'a str) -> IResult<&'a str, Section<'a>> {
+fn section<'a>(i: &'a str) -> IResult<&'a str, ParsedSection<'a>> {
+    let i = i.trim_start();
     let (i, section_header) = section_header(i)?;
-    // need alt here for eof?
     let (i, items) = many1(alt((
         map(section_body, |(key, values)| {
             let mut vec = vec![Event::Key(key)];
@@ -87,14 +245,14 @@ fn section<'a>(i: &'a str) -> IResult<&'a str, Section<'a>> {
     )))(i)?;
     Ok((
         i,
-        Section {
+        ParsedSection {
             section_header,
             items: items.into_iter().flatten().collect(),
         },
     ))
 }
 
-fn section_header<'a>(i: &'a str) -> IResult<&'a str, SectionHeader<'a>> {
+fn section_header<'a>(i: &'a str) -> IResult<&'a str, ParsedSectionHeader<'a>> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: char| c.is_ascii_alphanumeric() || c == '-' || c == '.')(i)?;
@@ -103,11 +261,11 @@ fn section_header<'a>(i: &'a str) -> IResult<&'a str, SectionHeader<'a>> {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match name.rfind('.') {
-            Some(index) => SectionHeader {
+            Some(index) => ParsedSectionHeader {
                 name: &name[..index],
                 subsection_name: Some(&name[index + 1..]),
             },
-            None => SectionHeader {
+            None => ParsedSectionHeader {
                 name: name,
                 subsection_name: None,
             },
@@ -128,7 +286,7 @@ fn section_header<'a>(i: &'a str) -> IResult<&'a str, SectionHeader<'a>> {
 
     Ok((
         i,
-        SectionHeader {
+        ParsedSectionHeader {
             name: name,
             // We know that there's some section name here, so if we get an
             // empty vec here then we actually parsed an empty section name.
@@ -288,7 +446,7 @@ mod parse {
         fn semicolon() {
             assert_eq!(
                 comment("; this is a semicolon comment").unwrap(),
-                fully_consumed(Comment {
+                fully_consumed(ParsedComment {
                     comment_tag: ';',
                     comment: " this is a semicolon comment",
                 })
@@ -299,7 +457,7 @@ mod parse {
         fn octothorpe() {
             assert_eq!(
                 comment("# this is an octothorpe comment").unwrap(),
-                fully_consumed(Comment {
+                fully_consumed(ParsedComment {
                     comment_tag: '#',
                     comment: " this is an octothorpe comment",
                 })
@@ -310,7 +468,7 @@ mod parse {
         fn multiple_markers() {
             assert_eq!(
                 comment("###### this is an octothorpe comment").unwrap(),
-                fully_consumed(Comment {
+                fully_consumed(ParsedComment {
                     comment_tag: '#',
                     comment: "##### this is an octothorpe comment",
                 })
@@ -326,7 +484,7 @@ mod parse {
         fn no_subsection() {
             assert_eq!(
                 section_header("[hello]").unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: None
                 })
@@ -337,7 +495,7 @@ mod parse {
         fn modern_subsection() {
             assert_eq!(
                 section_header(r#"[hello "world"]"#).unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: Some("world")
                 })
@@ -348,7 +506,7 @@ mod parse {
         fn escaped_subsection() {
             assert_eq!(
                 section_header(r#"[hello "foo\\bar\""]"#).unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: Some(r#"foo\\bar\""#)
                 })
@@ -359,7 +517,7 @@ mod parse {
         fn deprecated_subsection() {
             assert_eq!(
                 section_header(r#"[hello.world]"#).unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: Some("world")
                 })
@@ -370,7 +528,7 @@ mod parse {
         fn empty_legacy_subsection_name() {
             assert_eq!(
                 section_header(r#"[hello.]"#).unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: Some("")
                 })
@@ -381,7 +539,7 @@ mod parse {
         fn empty_modern_subsection_name() {
             assert_eq!(
                 section_header(r#"[hello ""]"#).unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: Some("")
                 })
@@ -402,7 +560,7 @@ mod parse {
         fn right_brace_in_subsection_name() {
             assert_eq!(
                 section_header(r#"[hello "]"]"#).unwrap(),
-                fully_consumed(SectionHeader {
+                fully_consumed(ParsedSectionHeader {
                     name: "hello",
                     subsection_name: Some("]")
                 })
@@ -439,7 +597,7 @@ mod parse {
         fn no_comment() {
             assert_eq!(
                 value_impl("hello").unwrap(),
-                fully_consumed(vec![Event::Value(Value::Other("hello"))])
+                fully_consumed(vec![Event::Value(Value::from_str("hello"))])
             );
         }
 
@@ -447,7 +605,7 @@ mod parse {
         fn no_comment_newline() {
             assert_eq!(
                 value_impl("hello\na").unwrap(),
-                ("\na", vec![Event::Value(Value::Other("hello"))])
+                ("\na", vec![Event::Value(Value::from_str("hello"))])
             )
         }
 
@@ -463,7 +621,7 @@ mod parse {
         fn semicolon_comment_not_consumed() {
             assert_eq!(
                 value_impl("hello;world").unwrap(),
-                (";world", vec![Event::Value(Value::Other("hello")),])
+                (";world", vec![Event::Value(Value::from_str("hello")),])
             );
         }
 
@@ -471,7 +629,7 @@ mod parse {
         fn octothorpe_comment_not_consumed() {
             assert_eq!(
                 value_impl("hello#world").unwrap(),
-                ("#world", vec![Event::Value(Value::Other("hello")),])
+                ("#world", vec![Event::Value(Value::from_str("hello")),])
             );
         }
 
@@ -493,7 +651,7 @@ mod parse {
                 value_impl(r##"hello"#"world; a"##).unwrap(),
                 (
                     "; a",
-                    vec![Event::Value(Value::Other(r##"hello"#"world"##)),]
+                    vec![Event::Value(Value::from_str(r##"hello"#"world"##)),]
                 )
             );
         }
@@ -502,7 +660,10 @@ mod parse {
         fn complex_test() {
             assert_eq!(
                 value_impl(r#"value";";ahhhh"#).unwrap(),
-                (";ahhhh", vec![Event::Value(Value::Other(r#"value";""#)),])
+                (
+                    ";ahhhh",
+                    vec![Event::Value(Value::from_str(r#"value";""#)),]
+                )
             );
         }
 
@@ -572,8 +733,8 @@ mod parse {
             d = "lol""#;
             assert_eq!(
                 section(section_data).unwrap(),
-                fully_consumed(Section {
-                    section_header: SectionHeader {
+                fully_consumed(ParsedSection {
+                    section_header: ParsedSectionHeader {
                         name: "hello",
                         subsection_name: None,
                     },
@@ -593,8 +754,8 @@ mod parse {
         fn section_single_line() {
             assert_eq!(
                 section("[hello] c").unwrap(),
-                fully_consumed(Section {
-                    section_header: SectionHeader {
+                fully_consumed(ParsedSection {
+                    section_header: ParsedSectionHeader {
                         name: "hello",
                         subsection_name: None,
                     },
@@ -615,27 +776,27 @@ mod parse {
             c = d"#;
             assert_eq!(
                 section(section_data).unwrap(),
-                fully_consumed(Section {
-                    section_header: SectionHeader {
+                fully_consumed(ParsedSection {
+                    section_header: ParsedSectionHeader {
                         name: "hello",
                         subsection_name: None,
                     },
                     items: vec![
-                        Event::Comment(Comment {
+                        Event::Comment(ParsedComment {
                             comment_tag: ';',
                             comment: " commentA",
                         }),
                         Event::Key("a"),
                         Event::Value(Value::from_str("b")),
-                        Event::Comment(Comment {
+                        Event::Comment(ParsedComment {
                             comment_tag: '#',
                             comment: " commentB",
                         }),
-                        Event::Comment(Comment {
+                        Event::Comment(ParsedComment {
                             comment_tag: ';',
                             comment: " commentC",
                         }),
-                        Event::Comment(Comment {
+                        Event::Comment(ParsedComment {
                             comment_tag: ';',
                             comment: " commentD",
                         }),
@@ -651,8 +812,8 @@ mod parse {
             // This test is absolute hell. Good luck if this fails.
             assert_eq!(
                 section("[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
-                fully_consumed(Section {
-                    section_header: SectionHeader {
+                fully_consumed(ParsedSection {
+                    section_header: ParsedSectionHeader {
                         name: "section",
                         subsection_name: None,
                     },
@@ -663,7 +824,7 @@ mod parse {
                         Event::ValueNotDone(r#"a ; e "\""#),
                         Event::Newline("\n"),
                         Event::ValueDone("d"),
-                        Event::Comment(Comment {
+                        Event::Comment(ParsedComment {
                             comment_tag: '#',
                             comment: " \"b\t ; c"
                         })
@@ -676,8 +837,8 @@ mod parse {
         fn quote_split_over_two_lines() {
             assert_eq!(
                 section("[section \"a\"] b =\"\\\n;\";a").unwrap(),
-                fully_consumed(Section {
-                    section_header: SectionHeader {
+                fully_consumed(ParsedSection {
+                    section_header: ParsedSectionHeader {
                         name: "section",
                         subsection_name: Some("a")
                     },
@@ -686,7 +847,7 @@ mod parse {
                         Event::ValueNotDone("\""),
                         Event::Newline("\n"),
                         Event::ValueDone(";\""),
-                        Event::Comment(Comment {
+                        Event::Comment(ParsedComment {
                             comment: "a",
                             comment_tag: ';'
                         })
