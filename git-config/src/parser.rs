@@ -12,7 +12,6 @@ use nom::character::complete::{char, none_of, one_of};
 use nom::character::{is_newline, is_space};
 use nom::combinator::{map, opt};
 use nom::error::{Error as NomError, ErrorKind};
-use nom::multi::many1;
 use nom::sequence::delimited;
 use nom::IResult;
 use nom::{branch::alt, multi::many0};
@@ -360,7 +359,7 @@ impl<'a> Parser<'a> {
 /// data succeeding valid `git-config` data.
 pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
     let (i, comments) = many0(comment)(input)?;
-    let (i, sections) = many1(section)(i)?;
+    let (i, sections) = many0(section)(i)?;
 
     if !i.is_empty() {
         return Err(ParserError::ConfigHasExtraData(i));

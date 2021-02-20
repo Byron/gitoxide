@@ -62,8 +62,7 @@ fn personal_config() {
     assert_eq!(
         parse_from_str(config)
             .unwrap()
-            .into_iter()
-            .collect::<Vec<_>>(),
+            .into_vec(),
         vec![
             gen_section_header("user", None),
             newline(),
@@ -162,4 +161,9 @@ fn personal_config() {
             value("master"),
         ]
     );
+}
+
+#[test]
+fn parse_empty() {
+    assert_eq!(parse_from_str("").unwrap().into_vec(), vec![]);
 }
