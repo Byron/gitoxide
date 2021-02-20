@@ -50,15 +50,19 @@ pub enum Event<'a> {
     Whitespace(&'a str),
 }
 
+/// A parsed section containing the header and the section events.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSection<'a> {
+    /// The section name and subsection name, if any.
     pub section_header: ParsedSectionHeader<'a>,
+    /// The syntactic events found in this section.
     pub events: Vec<Event<'a>>,
 }
 
 /// A parsed section header, containing a name and optionally a subsection name.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSectionHeader<'a> {
+    /// The name of the header.
     pub name: &'a str,
     /// The separator used to determine if the section contains a subsection.
     /// This is either a period `.` or a string of whitespace. Note that
@@ -73,13 +77,19 @@ pub struct ParsedSectionHeader<'a> {
 /// A parsed comment event containing the comment marker and comment.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedComment<'a> {
+    /// The comment marker used. This is either a semicolon or octothorpe.
     pub comment_tag: char,
+    /// The parsed comment.
     pub comment: &'a str,
 }
 
+/// The various parsing failure reasons.
 #[derive(PartialEq, Debug)]
 pub enum ParserError<'a> {
+    /// A parsing error occurred.
     InvalidInput(nom::Err<NomError<&'a str>>),
+    /// The config was successfully parsed, but we had extraneous data after the
+    /// config file.
     ConfigHasExtraData(&'a str),
 }
 
@@ -92,10 +102,13 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 
 /// A zero-copy `git-config` file parser.
 ///
-/// This is parser is considered a perfect parser, where a `git-config` file
-/// can be identically reconstructed from the events emitted from this parser.
-/// Events emitted from this parser are bound to the lifetime of the provided
-/// `str` as this parser performs no copies from the input.
+/// This is parser exposes low-level syntactic events from a `git-config` file.
+/// Generally speaking, you'll want to use [`GitConfig`] as it wraps
+/// around the parser to provide a higher-level abstraction to a `git-config`
+/// file, including querying, modifying, and updating values.
+///
+/// This parser guarantees that the events emitted are sufficient to
+/// reconstruct a `git-config` file identical to the source `git-config`.
 ///
 /// # Differences between a `.ini` parser
 ///
@@ -140,9 +153,119 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// # Trait Implementations
 ///
 /// - This struct does _not_ implement [`FromStr`] due to lifetime
-/// constraints implied on the required `from_str` method, but instead provides
+/// constraints implied on the required `from_str` method. Instead, it provides
 /// [`Parser::from_str`].
 ///
+/// # Idioms
+///
+/// If you do want to use this parser, there are some idioms that may help you
+/// with interpreting sequences of events.
+///
+/// ## `Value` events do not immediately follow `Key` events
+///
+/// Consider the following `git-config` example:
+///
+/// ```text
+/// [core]
+///   autocrlf = input
+/// ```
+///
+/// Because this parser guarantees perfect reconstruction, there are many
+/// non-significant events that occur in addition to the ones you may expect:
+///
+/// ```
+/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # let section_header = ParsedSectionHeader {
+/// #   name: "core",
+/// #   separator: None,
+/// #   subsection_name: None,
+/// # };
+/// # let section_data = "[core]\n  autocrlf = input";
+/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// Event::SectionHeader(section_header),
+/// Event::Newline("\n"),
+/// Event::Whitespace("  "),
+/// Event::Key("autocrlf"),
+/// Event::Whitespace(" "),
+/// Event::Whitespace(" "),
+/// Event::Value("input"),
+/// # ]);
+/// ```
+///
+/// Note the two whitespace events between the key and value pair! Those two
+/// events actually refer to the whitespace between the name and value and the
+/// equal sign. So if the config instead had `autocrlf=input`, those whitespace
+/// events would no longer be present.
+///
+/// ## Quoted values are not unquoted
+///
+/// Consider the following `git-config` example:
+///
+/// ```text
+/// [core]
+/// autocrlf=true""
+/// filemode=fa"lse"
+/// ```
+///
+/// Both these events, when fully processed, should normally be `true` and
+/// `false`. However, because this parser is zero-copy, we cannot process
+/// partially quoted values, such as the `false` example. As a result, to
+/// maintain consistency, the parser will just take all values as literals. The
+/// relevant event stream emitted is thus emitted as:
+///
+/// ```
+/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # let section_header = ParsedSectionHeader {
+/// #   name: "core",
+/// #   separator: None,
+/// #   subsection_name: None,
+/// # };
+/// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
+/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// Event::SectionHeader(section_header),
+/// Event::Newline("\n"),
+/// Event::Key("autocrlf"),
+/// Event::Value(r#"true"""#),
+/// Event::Newline("\n"),
+/// Event::Key("filemode"),
+/// Event::Value(r#"fa"lse""#),
+/// # ]);
+/// ```
+///
+/// ## Whitespace after line continuations are part of the value
+///
+/// Consider the following `git-config` example:
+///
+/// ```text
+/// [some-section]
+/// file=a\
+///     c
+/// ```
+///
+/// Because how `git-config` treats continuations, the whitespace preceding `c`
+/// are in fact part of the value of `file`. The fully interpreted key/value
+/// pair is actually `file=a    c`. As a result, the parser will provide this
+/// split value accordingly:
+///
+/// ```
+/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # let section_header = ParsedSectionHeader {
+/// #   name: "some-section",
+/// #   separator: None,
+/// #   subsection_name: None,
+/// # };
+/// # let section_data = "[some-section]\nfile=a\\\n    c";
+/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// Event::SectionHeader(section_header),
+/// Event::Newline("\n"),
+/// Event::Key("file"),
+/// Event::ValueNotDone("a"),
+/// Event::Newline("\n"),
+/// Event::ValueDone("    c"),
+/// # ]);
+/// ```
+///
+/// [`GitConfig`]: crate::config::GitConfig
 /// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
 /// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
 /// [`FromStr`]: std::str::FromStr
@@ -162,15 +285,17 @@ impl<'a> Parser<'a> {
     ///
     /// # Errors
     ///
-    /// Returns an error if the string provided is not a valid file, or we have
-    /// non-section data.
+    /// Returns an error if the string provided is not a valid `git-config`.
+    /// This generally is due to either invalid names or if there's extraneous
+    /// data succeeding valid `git-config` data.
     pub fn from_str(s: &'a str) -> Result<Self, ParserError> {
         parse_from_str(s)
     }
 
     /// Returns the leading comments (any comments before a section) from the
     /// parser. Consider [`Parser::take_leading_comments`] if you need an owned
-    /// copy only once.
+    /// copy only once. If that function was called, then this will always
+    /// return an empty slice.
     pub fn leading_comments(&self) -> &[ParsedComment<'a>] {
         &self.init_comments
     }
@@ -184,20 +309,28 @@ impl<'a> Parser<'a> {
         to_return
     }
 
+    /// Returns the parsed sections from the parser. Consider
+    /// [`Parser::take_sections`] if you need an owned copy only once. If that
+    /// function was called, then this will always return an empty slice.
     pub fn sections(&self) -> &[ParsedSection<'a>] {
         &self.sections
     }
 
+    /// Takes the parsed sections from the parser. Subsequent calls will return
+    /// an empty vec. Consider [`Parser::sections`] if you only need a reference
+    /// to the comments.
     pub fn take_sections(&mut self) -> Vec<ParsedSection<'a>> {
         let mut to_return = vec![];
         std::mem::swap(&mut self.sections, &mut to_return);
         to_return
     }
 
+    /// Consumes the parser to produce a Vec of Events.
     pub fn into_vec(self) -> Vec<Event<'a>> {
         self.into_iter().collect()
     }
 
+    /// Consumes the parser to produce an iterator of Events.
     pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + FusedIterator {
         let section_iter = self
             .sections
@@ -222,8 +355,9 @@ impl<'a> Parser<'a> {
 ///
 /// # Errors
 ///
-/// Returns an error if the string provided is not a valid file, or we have
-/// non-section data.
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
 pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
     let (i, comments) = many0(comment)(input)?;
     let (i, sections) = many1(section)(i)?;
@@ -733,6 +867,19 @@ mod parse {
                 ])
             );
         }
+
+        #[test]
+        fn continuation_with_whitespace() {
+            assert_eq!(
+                value_impl("hello\\\n        world").unwrap(),
+                fully_consumed(vec![
+                    Event::ValueNotDone("hello"),
+                    Event::Newline("\n"),
+                    Event::ValueDone("        world")
+                ])
+            )
+        }
+
         #[test]
         fn complex_continuation_with_leftover_comment() {
             assert_eq!(
