@@ -1,17 +1,30 @@
-use serde_git_config::parser::{parse_from_str, Event, ParsedSectionHeader, Parser};
+use serde_git_config::parser::{parse_from_str, Event, ParsedSectionHeader};
 use serde_git_config::values::Value;
 
 fn fully_consumed<T>(t: T) -> (&'static str, T) {
     ("", t)
 }
 
-fn section_header(name: &'static str, subname: impl Into<Option<&'static str>>) -> Event<'static> {
-    Event::SectionHeader(ParsedSectionHeader {
-        name,
-        subsection_name: subname.into(),
-    })
+fn gen_section_header(
+    name: &str,
+    subsection: impl Into<Option<(&'static str, &'static str)>>,
+) -> Event<'_> {
+    Event::SectionHeader(
+        if let Some((separator, subsection_name)) = subsection.into() {
+            ParsedSectionHeader {
+                name,
+                separator: Some(separator),
+                subsection_name: Some(subsection_name),
+            }
+        } else {
+            ParsedSectionHeader {
+                name,
+                separator: None,
+                subsection_name: None,
+            }
+        },
+    )
 }
-
 fn name(name: &'static str) -> Event<'static> {
     Event::Key(name)
 }
@@ -20,7 +33,16 @@ fn value(value: &'static str) -> Event<'static> {
     Event::Value(Value::from_str(value))
 }
 
+fn newline() -> Event<'static> {
+    Event::Newline("\n")
+}
+
+fn whitespace(value: &'static str) -> Event<'static> {
+    Event::Whitespace(value)
+}
+
 #[test]
+#[rustfmt::skip]
 fn personal_config() {
     let config = r#"[user]
         email = code@eddie.sh
@@ -48,34 +70,100 @@ fn personal_config() {
             .into_iter()
             .collect::<Vec<_>>(),
         vec![
-            section_header("user", None),
+            gen_section_header("user", None),
+            newline(),
+
+            whitespace("        "),
             name("email"),
+            whitespace(" "),
+            whitespace(" "),
             value("code@eddie.sh"),
+            newline(),
+
+            whitespace("        "),
             name("name"),
+            whitespace(" "),
+            whitespace(" "),
             value("Edward Shen"),
-            section_header("core", None),
+            newline(),
+
+            gen_section_header("core", None),
+            newline(),
+
+            whitespace("        "),
             name("autocrlf"),
+            whitespace(" "),
+            whitespace(" "),
             value("input"),
-            section_header("push", None),
+            newline(),
+
+            gen_section_header("push", None),
+            newline(),
+
+            whitespace("        "),
             name("default"),
+            whitespace(" "),
+            whitespace(" "),
             value("simple"),
-            section_header("commit", None),
+            newline(),
+
+            gen_section_header("commit", None),
+            newline(),
+
+            whitespace("        "),
             name("gpgsign"),
+            whitespace(" "),
+            whitespace(" "),
             value("true"),
-            section_header("gpg", None),
+            newline(),
+
+            gen_section_header("gpg", None),
+            newline(),
+
+            whitespace("        "),
             name("program"),
+            whitespace(" "),
+            whitespace(" "),
             value("gpg"),
-            section_header("url", "ssh://git@github.com/"),
+            newline(),
+
+            gen_section_header("url", (" ", "ssh://git@github.com/")),
+            newline(),
+
+            whitespace("        "),
             name("insteadOf"),
+            whitespace(" "),
+            whitespace(" "),
             value("\"github://\""),
-            section_header("url", "ssh://git@git.eddie.sh/edward/"),
+            newline(),
+
+            gen_section_header("url", (" ", "ssh://git@git.eddie.sh/edward/")),
+            newline(),
+
+            whitespace("        "),
             name("insteadOf"),
+            whitespace(" "),
+            whitespace(" "),
             value("\"gitea://\""),
-            section_header("pull", None),
+            newline(),
+
+            gen_section_header("pull", None),
+            newline(),
+
+            whitespace("        "),
             name("ff"),
+            whitespace(" "),
+            whitespace(" "),
             value("only"),
-            section_header("init", None),
+            newline(),
+
+            gen_section_header("init", None),
+            newline(),
+
+            whitespace("        "),
             name("defaultBranch"),
+            whitespace(" "),
+            whitespace(" "),
             value("master"),
         ]
     );
