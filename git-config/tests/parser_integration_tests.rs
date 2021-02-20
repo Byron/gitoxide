@@ -1,9 +1,4 @@
 use serde_git_config::parser::{parse_from_str, Event, ParsedSectionHeader};
-use serde_git_config::values::Value;
-
-fn fully_consumed<T>(t: T) -> (&'static str, T) {
-    ("", t)
-}
 
 fn gen_section_header(
     name: &str,
@@ -30,7 +25,7 @@ fn name(name: &'static str) -> Event<'static> {
 }
 
 fn value(value: &'static str) -> Event<'static> {
-    Event::Value(Value::from_str(value))
+    Event::Value(value)
 }
 
 fn newline() -> Event<'static> {
