@@ -42,6 +42,7 @@ impl<'a> GitConfig<'a> {
                 Event::Comment(_) => (),
                 Event::SectionHeader(ParsedSectionHeader {
                     name,
+                    separator: _,
                     subsection_name,
                 }) => {
                     current_section_name = name;
@@ -112,6 +113,7 @@ impl<'a> GitConfig<'a> {
                         options.on_duplicate_name,
                     )?;
                 }
+                Event::Whitespace(_) => (),
             }
         }
 
