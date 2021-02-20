@@ -1,11 +1,13 @@
 //! This module handles parsing a `git-config`. Generally speaking, you want to
-//! use a higher abstraction unless you have some explicit reason to work with
-//! events instead.
+//! use a higher abstraction such as [`GitConfig`] unless you have some explicit
+//! reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
 //! `parse_from_*` function variants. These will return a [`Parser`] on success,
 //! which can be converted into an [`Event`] iterator. The [`Parser`] also has
 //! additional methods for accessing leading comments or events by section.
+//!
+//! [`GitConfig`]: crate::config::GitConfig
 
 use nom::bytes::complete::{escaped, tag, take_till, take_while};
 use nom::character::complete::{char, none_of, one_of};
@@ -616,477 +618,475 @@ fn take_common<'a, F: Fn(char) -> bool>(i: &'a str, f: F) -> IResult<&'a str, &'
         Ok((i, v))
     }
 }
+
 #[cfg(test)]
-mod parse {
+fn fully_consumed<T>(t: T) -> (&'static str, T) {
+    ("", t)
+}
+
+#[cfg(test)]
+fn gen_section_header(
+    name: &str,
+    subsection: impl Into<Option<(&'static str, &'static str)>>,
+) -> ParsedSectionHeader<'_> {
+    if let Some((separator, subsection_name)) = subsection.into() {
+        ParsedSectionHeader {
+            name,
+            separator: Some(separator),
+            subsection_name: Some(subsection_name),
+        }
+    } else {
+        ParsedSectionHeader {
+            name,
+            separator: None,
+            subsection_name: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod comments {
     use super::*;
 
-    fn fully_consumed<T>(t: T) -> (&'static str, T) {
-        ("", t)
+    #[test]
+    fn semicolon() {
+        assert_eq!(
+            comment("; this is a semicolon comment").unwrap(),
+            fully_consumed(ParsedComment {
+                comment_tag: ';',
+                comment: " this is a semicolon comment",
+            })
+        );
     }
 
-    fn gen_section_header(
-        name: &str,
-        subsection: impl Into<Option<(&'static str, &'static str)>>,
-    ) -> ParsedSectionHeader<'_> {
-        if let Some((separator, subsection_name)) = subsection.into() {
-            ParsedSectionHeader {
-                name,
-                separator: Some(separator),
-                subsection_name: Some(subsection_name),
-            }
-        } else {
-            ParsedSectionHeader {
-                name,
-                separator: None,
-                subsection_name: None,
-            }
-        }
+    #[test]
+    fn octothorpe() {
+        assert_eq!(
+            comment("# this is an octothorpe comment").unwrap(),
+            fully_consumed(ParsedComment {
+                comment_tag: '#',
+                comment: " this is an octothorpe comment",
+            })
+        );
     }
 
-    mod comments {
-        use super::super::*;
-        use super::*;
+    #[test]
+    fn multiple_markers() {
+        assert_eq!(
+            comment("###### this is an octothorpe comment").unwrap(),
+            fully_consumed(ParsedComment {
+                comment_tag: '#',
+                comment: "##### this is an octothorpe comment",
+            })
+        );
+    }
+}
 
-        #[test]
-        fn semicolon() {
-            assert_eq!(
-                comment("; this is a semicolon comment").unwrap(),
-                fully_consumed(ParsedComment {
-                    comment_tag: ';',
-                    comment: " this is a semicolon comment",
-                })
-            );
-        }
+#[cfg(test)]
+mod section_headers {
+    use super::*;
 
-        #[test]
-        fn octothorpe() {
-            assert_eq!(
-                comment("# this is an octothorpe comment").unwrap(),
-                fully_consumed(ParsedComment {
-                    comment_tag: '#',
-                    comment: " this is an octothorpe comment",
-                })
-            );
-        }
-
-        #[test]
-        fn multiple_markers() {
-            assert_eq!(
-                comment("###### this is an octothorpe comment").unwrap(),
-                fully_consumed(ParsedComment {
-                    comment_tag: '#',
-                    comment: "##### this is an octothorpe comment",
-                })
-            );
-        }
+    #[test]
+    fn no_subsection() {
+        assert_eq!(
+            section_header("[hello]").unwrap(),
+            fully_consumed(gen_section_header("hello", None)),
+        );
     }
 
-    mod section_headers {
-        use super::super::*;
-        use super::*;
-
-        #[test]
-        fn no_subsection() {
-            assert_eq!(
-                section_header("[hello]").unwrap(),
-                fully_consumed(gen_section_header("hello", None)),
-            );
-        }
-
-        #[test]
-        fn modern_subsection() {
-            assert_eq!(
-                section_header(r#"[hello "world"]"#).unwrap(),
-                fully_consumed(gen_section_header("hello", (" ", "world"))),
-            );
-        }
-
-        #[test]
-        fn escaped_subsection() {
-            assert_eq!(
-                section_header(r#"[hello "foo\\bar\""]"#).unwrap(),
-                fully_consumed(gen_section_header("hello", (" ", r#"foo\\bar\""#))),
-            );
-        }
-
-        #[test]
-        fn deprecated_subsection() {
-            assert_eq!(
-                section_header(r#"[hello.world]"#).unwrap(),
-                fully_consumed(gen_section_header("hello", (".", "world")))
-            );
-        }
-
-        #[test]
-        fn empty_legacy_subsection_name() {
-            assert_eq!(
-                section_header(r#"[hello.]"#).unwrap(),
-                fully_consumed(gen_section_header("hello", (".", "")))
-            );
-        }
-
-        #[test]
-        fn empty_modern_subsection_name() {
-            assert_eq!(
-                section_header(r#"[hello ""]"#).unwrap(),
-                fully_consumed(gen_section_header("hello", (" ", "")))
-            );
-        }
-
-        #[test]
-        fn newline_in_header() {
-            assert!(section_header("[hello\n]").is_err())
-        }
-
-        #[test]
-        fn null_byte_in_header() {
-            assert!(section_header("[hello\0]").is_err())
-        }
-
-        #[test]
-        fn right_brace_in_subsection_name() {
-            assert_eq!(
-                section_header(r#"[hello "]"]"#).unwrap(),
-                fully_consumed(gen_section_header("hello", (" ", "]")))
-            );
-        }
+    #[test]
+    fn modern_subsection() {
+        assert_eq!(
+            section_header(r#"[hello "world"]"#).unwrap(),
+            fully_consumed(gen_section_header("hello", (" ", "world"))),
+        );
     }
 
-    mod config_name {
-        use super::super::*;
-        use super::*;
-
-        #[test]
-        fn just_name() {
-            assert_eq!(config_name("name").unwrap(), fully_consumed("name"));
-        }
-
-        #[test]
-        fn must_start_with_alphabetic() {
-            assert!(config_name("4aaa").is_err());
-            assert!(config_name("-aaa").is_err());
-        }
-
-        #[test]
-        fn cannot_be_empty() {
-            assert!(config_name("").is_err())
-        }
+    #[test]
+    fn escaped_subsection() {
+        assert_eq!(
+            section_header(r#"[hello "foo\\bar\""]"#).unwrap(),
+            fully_consumed(gen_section_header("hello", (" ", r#"foo\\bar\""#))),
+        );
     }
 
-    mod value_no_continuation {
-        use super::super::*;
-        use super::*;
-
-        #[test]
-        fn no_comment() {
-            assert_eq!(
-                value_impl("hello").unwrap(),
-                fully_consumed(vec![Event::Value("hello")])
-            );
-        }
-
-        #[test]
-        fn no_comment_newline() {
-            assert_eq!(
-                value_impl("hello\na").unwrap(),
-                ("\na", vec![Event::Value("hello")])
-            )
-        }
-
-        #[test]
-        fn semicolon_comment_not_consumed() {
-            assert_eq!(
-                value_impl("hello;world").unwrap(),
-                (";world", vec![Event::Value("hello"),])
-            );
-        }
-
-        #[test]
-        fn octothorpe_comment_not_consumed() {
-            assert_eq!(
-                value_impl("hello#world").unwrap(),
-                ("#world", vec![Event::Value("hello"),])
-            );
-        }
-
-        #[test]
-        fn values_with_extraneous_whitespace_without_comment() {
-            assert_eq!(
-                value_impl("hello               ").unwrap(),
-                ("               ", vec![Event::Value("hello")])
-            );
-        }
-
-        #[test]
-        fn values_with_extraneous_whitespace_before_comment() {
-            assert_eq!(
-                value_impl("hello             #world").unwrap(),
-                ("             #world", vec![Event::Value("hello"),])
-            );
-            assert_eq!(
-                value_impl("hello             ;world").unwrap(),
-                ("             ;world", vec![Event::Value("hello"),])
-            );
-        }
-
-        #[test]
-        fn trans_escaped_comment_marker_not_consumed() {
-            assert_eq!(
-                value_impl(r##"hello"#"world; a"##).unwrap(),
-                ("; a", vec![Event::Value(r##"hello"#"world"##)])
-            );
-        }
-
-        #[test]
-        fn complex_test() {
-            assert_eq!(
-                value_impl(r#"value";";ahhhh"#).unwrap(),
-                (";ahhhh", vec![Event::Value(r#"value";""#)])
-            );
-        }
-
-        #[test]
-        fn garbage_after_continution_is_err() {
-            assert!(value_impl("hello \\afwjdls").is_err());
-        }
+    #[test]
+    fn deprecated_subsection() {
+        assert_eq!(
+            section_header(r#"[hello.world]"#).unwrap(),
+            fully_consumed(gen_section_header("hello", (".", "world")))
+        );
     }
 
-    mod value_continuation {
-        use super::super::*;
-        use super::*;
+    #[test]
+    fn empty_legacy_subsection_name() {
+        assert_eq!(
+            section_header(r#"[hello.]"#).unwrap(),
+            fully_consumed(gen_section_header("hello", (".", "")))
+        );
+    }
 
-        #[test]
-        fn simple_continuation() {
-            assert_eq!(
-                value_impl("hello\\\nworld").unwrap(),
-                fully_consumed(vec![
-                    Event::ValueNotDone("hello"),
+    #[test]
+    fn empty_modern_subsection_name() {
+        assert_eq!(
+            section_header(r#"[hello ""]"#).unwrap(),
+            fully_consumed(gen_section_header("hello", (" ", "")))
+        );
+    }
+
+    #[test]
+    fn newline_in_header() {
+        assert!(section_header("[hello\n]").is_err())
+    }
+
+    #[test]
+    fn null_byte_in_header() {
+        assert!(section_header("[hello\0]").is_err())
+    }
+
+    #[test]
+    fn right_brace_in_subsection_name() {
+        assert_eq!(
+            section_header(r#"[hello "]"]"#).unwrap(),
+            fully_consumed(gen_section_header("hello", (" ", "]")))
+        );
+    }
+}
+
+#[cfg(test)]
+mod config_name {
+    use super::*;
+
+    #[test]
+    fn just_name() {
+        assert_eq!(config_name("name").unwrap(), fully_consumed("name"));
+    }
+
+    #[test]
+    fn must_start_with_alphabetic() {
+        assert!(config_name("4aaa").is_err());
+        assert!(config_name("-aaa").is_err());
+    }
+
+    #[test]
+    fn cannot_be_empty() {
+        assert!(config_name("").is_err())
+    }
+}
+
+#[cfg(test)]
+mod value_no_continuation {
+    use super::*;
+
+    #[test]
+    fn no_comment() {
+        assert_eq!(
+            value_impl("hello").unwrap(),
+            fully_consumed(vec![Event::Value("hello")])
+        );
+    }
+
+    #[test]
+    fn no_comment_newline() {
+        assert_eq!(
+            value_impl("hello\na").unwrap(),
+            ("\na", vec![Event::Value("hello")])
+        )
+    }
+
+    #[test]
+    fn semicolon_comment_not_consumed() {
+        assert_eq!(
+            value_impl("hello;world").unwrap(),
+            (";world", vec![Event::Value("hello"),])
+        );
+    }
+
+    #[test]
+    fn octothorpe_comment_not_consumed() {
+        assert_eq!(
+            value_impl("hello#world").unwrap(),
+            ("#world", vec![Event::Value("hello"),])
+        );
+    }
+
+    #[test]
+    fn values_with_extraneous_whitespace_without_comment() {
+        assert_eq!(
+            value_impl("hello               ").unwrap(),
+            ("               ", vec![Event::Value("hello")])
+        );
+    }
+
+    #[test]
+    fn values_with_extraneous_whitespace_before_comment() {
+        assert_eq!(
+            value_impl("hello             #world").unwrap(),
+            ("             #world", vec![Event::Value("hello"),])
+        );
+        assert_eq!(
+            value_impl("hello             ;world").unwrap(),
+            ("             ;world", vec![Event::Value("hello"),])
+        );
+    }
+
+    #[test]
+    fn trans_escaped_comment_marker_not_consumed() {
+        assert_eq!(
+            value_impl(r##"hello"#"world; a"##).unwrap(),
+            ("; a", vec![Event::Value(r##"hello"#"world"##)])
+        );
+    }
+
+    #[test]
+    fn complex_test() {
+        assert_eq!(
+            value_impl(r#"value";";ahhhh"#).unwrap(),
+            (";ahhhh", vec![Event::Value(r#"value";""#)])
+        );
+    }
+
+    #[test]
+    fn garbage_after_continution_is_err() {
+        assert!(value_impl("hello \\afwjdls").is_err());
+    }
+}
+
+#[cfg(test)]
+mod value_continuation {
+    use super::*;
+
+    #[test]
+    fn simple_continuation() {
+        assert_eq!(
+            value_impl("hello\\\nworld").unwrap(),
+            fully_consumed(vec![
+                Event::ValueNotDone("hello"),
+                Event::Newline("\n"),
+                Event::ValueDone("world")
+            ])
+        );
+    }
+
+    #[test]
+    fn continuation_with_whitespace() {
+        assert_eq!(
+            value_impl("hello\\\n        world").unwrap(),
+            fully_consumed(vec![
+                Event::ValueNotDone("hello"),
+                Event::Newline("\n"),
+                Event::ValueDone("        world")
+            ])
+        )
+    }
+
+    #[test]
+    fn complex_continuation_with_leftover_comment() {
+        assert_eq!(
+            value_impl("1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
+            (
+                " # \"b\t ; c",
+                vec![
+                    Event::ValueNotDone(r#"1    "\""#),
                     Event::Newline("\n"),
-                    Event::ValueDone("world")
-                ])
-            );
-        }
-
-        #[test]
-        fn continuation_with_whitespace() {
-            assert_eq!(
-                value_impl("hello\\\n        world").unwrap(),
-                fully_consumed(vec![
-                    Event::ValueNotDone("hello"),
+                    Event::ValueNotDone(r#"a ; e "\""#),
                     Event::Newline("\n"),
-                    Event::ValueDone("        world")
-                ])
+                    Event::ValueDone("d"),
+                ]
             )
-        }
-
-        #[test]
-        fn complex_continuation_with_leftover_comment() {
-            assert_eq!(
-                value_impl("1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
-                (
-                    " # \"b\t ; c",
-                    vec![
-                        Event::ValueNotDone(r#"1    "\""#),
-                        Event::Newline("\n"),
-                        Event::ValueNotDone(r#"a ; e "\""#),
-                        Event::Newline("\n"),
-                        Event::ValueDone("d"),
-                    ]
-                )
-            );
-        }
-
-        #[test]
-        fn quote_split_over_two_lines_with_leftover_comment() {
-            assert_eq!(
-                value_impl("\"\\\n;\";a").unwrap(),
-                (
-                    ";a",
-                    vec![
-                        Event::ValueNotDone("\""),
-                        Event::Newline("\n"),
-                        Event::ValueDone(";\""),
-                    ]
-                )
-            )
-        }
+        );
     }
 
-    mod section {
-        use super::super::*;
-        use super::*;
+    #[test]
+    fn quote_split_over_two_lines_with_leftover_comment() {
+        assert_eq!(
+            value_impl("\"\\\n;\";a").unwrap(),
+            (
+                ";a",
+                vec![
+                    Event::ValueNotDone("\""),
+                    Event::Newline("\n"),
+                    Event::ValueDone(";\""),
+                ]
+            )
+        )
+    }
+}
 
-        #[test]
-        fn empty_section() {
-            assert_eq!(
-                section("[test]").unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("test", None),
-                    events: vec![]
-                })
-            );
-        }
+#[cfg(test)]
+mod section {
+    use super::*;
 
-        #[test]
-        fn simple_section() {
-            let section_data = r#"[hello]
+    #[test]
+    fn empty_section() {
+        assert_eq!(
+            section("[test]").unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("test", None),
+                events: vec![]
+            })
+        );
+    }
+
+    #[test]
+    fn simple_section() {
+        let section_data = r#"[hello]
             a = b
             c
             d = "lol""#;
-            assert_eq!(
-                section(section_data).unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("hello", None),
-                    events: vec![
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Key("a"),
-                        Event::Whitespace(" "),
-                        Event::Whitespace(" "),
-                        Event::Value("b"),
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Key("c"),
-                        Event::Value(""),
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Key("d"),
-                        Event::Whitespace(" "),
-                        Event::Whitespace(" "),
-                        Event::Value("\"lol\"")
-                    ]
-                })
-            )
-        }
+        assert_eq!(
+            section(section_data).unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("hello", None),
+                events: vec![
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Key("a"),
+                    Event::Whitespace(" "),
+                    Event::Whitespace(" "),
+                    Event::Value("b"),
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Key("c"),
+                    Event::Value(""),
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Key("d"),
+                    Event::Whitespace(" "),
+                    Event::Whitespace(" "),
+                    Event::Value("\"lol\"")
+                ]
+            })
+        )
+    }
 
-        #[test]
-        fn section_single_line() {
-            assert_eq!(
-                section("[hello] c").unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("hello", None),
-                    events: vec![Event::Whitespace(" "), Event::Key("c"), Event::Value("")]
-                })
-            );
-        }
+    #[test]
+    fn section_single_line() {
+        assert_eq!(
+            section("[hello] c").unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("hello", None),
+                events: vec![Event::Whitespace(" "), Event::Key("c"), Event::Value("")]
+            })
+        );
+    }
 
-        #[test]
-        fn section_very_commented() {
-            let section_data = r#"[hello] ; commentA
+    #[test]
+    fn section_very_commented() {
+        let section_data = r#"[hello] ; commentA
             a = b # commentB
             ; commentC
             ; commentD
             c = d"#;
-            assert_eq!(
-                section(section_data).unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("hello", None),
-                    events: vec![
-                        Event::Whitespace(" "),
-                        Event::Comment(ParsedComment {
-                            comment_tag: ';',
-                            comment: " commentA",
-                        }),
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Key("a"),
-                        Event::Whitespace(" "),
-                        Event::Whitespace(" "),
-                        Event::Value("b"),
-                        Event::Whitespace(" "),
-                        Event::Comment(ParsedComment {
-                            comment_tag: '#',
-                            comment: " commentB",
-                        }),
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Comment(ParsedComment {
-                            comment_tag: ';',
-                            comment: " commentC",
-                        }),
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Comment(ParsedComment {
-                            comment_tag: ';',
-                            comment: " commentD",
-                        }),
-                        Event::Newline("\n"),
-                        Event::Whitespace("            "),
-                        Event::Key("c"),
-                        Event::Whitespace(" "),
-                        Event::Whitespace(" "),
-                        Event::Value("d"),
-                    ]
-                })
-            );
-        }
+        assert_eq!(
+            section(section_data).unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("hello", None),
+                events: vec![
+                    Event::Whitespace(" "),
+                    Event::Comment(ParsedComment {
+                        comment_tag: ';',
+                        comment: " commentA",
+                    }),
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Key("a"),
+                    Event::Whitespace(" "),
+                    Event::Whitespace(" "),
+                    Event::Value("b"),
+                    Event::Whitespace(" "),
+                    Event::Comment(ParsedComment {
+                        comment_tag: '#',
+                        comment: " commentB",
+                    }),
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Comment(ParsedComment {
+                        comment_tag: ';',
+                        comment: " commentC",
+                    }),
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Comment(ParsedComment {
+                        comment_tag: ';',
+                        comment: " commentD",
+                    }),
+                    Event::Newline("\n"),
+                    Event::Whitespace("            "),
+                    Event::Key("c"),
+                    Event::Whitespace(" "),
+                    Event::Whitespace(" "),
+                    Event::Value("d"),
+                ]
+            })
+        );
+    }
 
-        #[test]
-        fn complex_continuation() {
-            // This test is absolute hell. Good luck if this fails.
-            assert_eq!(
-                section("[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("section", None),
-                    events: vec![
-                        Event::Whitespace(" "),
-                        Event::Key("a"),
-                        Event::Whitespace(" "),
-                        Event::Whitespace(" "),
-                        Event::ValueNotDone(r#"1    "\""#),
-                        Event::Newline("\n"),
-                        Event::ValueNotDone(r#"a ; e "\""#),
-                        Event::Newline("\n"),
-                        Event::ValueDone("d"),
-                        Event::Whitespace(" "),
-                        Event::Comment(ParsedComment {
-                            comment_tag: '#',
-                            comment: " \"b\t ; c"
-                        })
-                    ]
-                })
-            );
-        }
+    #[test]
+    fn complex_continuation() {
+        // This test is absolute hell. Good luck if this fails.
+        assert_eq!(
+            section("[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("section", None),
+                events: vec![
+                    Event::Whitespace(" "),
+                    Event::Key("a"),
+                    Event::Whitespace(" "),
+                    Event::Whitespace(" "),
+                    Event::ValueNotDone(r#"1    "\""#),
+                    Event::Newline("\n"),
+                    Event::ValueNotDone(r#"a ; e "\""#),
+                    Event::Newline("\n"),
+                    Event::ValueDone("d"),
+                    Event::Whitespace(" "),
+                    Event::Comment(ParsedComment {
+                        comment_tag: '#',
+                        comment: " \"b\t ; c"
+                    })
+                ]
+            })
+        );
+    }
 
-        #[test]
-        fn quote_split_over_two_lines() {
-            assert_eq!(
-                section("[section \"a\"] b =\"\\\n;\";a").unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("section", (" ", "a")),
-                    events: vec![
-                        Event::Whitespace(" "),
-                        Event::Key("b"),
-                        Event::Whitespace(" "),
-                        Event::ValueNotDone("\""),
-                        Event::Newline("\n"),
-                        Event::ValueDone(";\""),
-                        Event::Comment(ParsedComment {
-                            comment_tag: ';',
-                            comment: "a",
-                        })
-                    ]
-                })
-            )
-        }
+    #[test]
+    fn quote_split_over_two_lines() {
+        assert_eq!(
+            section("[section \"a\"] b =\"\\\n;\";a").unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("section", (" ", "a")),
+                events: vec![
+                    Event::Whitespace(" "),
+                    Event::Key("b"),
+                    Event::Whitespace(" "),
+                    Event::ValueNotDone("\""),
+                    Event::Newline("\n"),
+                    Event::ValueDone(";\""),
+                    Event::Comment(ParsedComment {
+                        comment_tag: ';',
+                        comment: "a",
+                    })
+                ]
+            })
+        )
+    }
 
-        #[test]
-        fn section_handles_extranous_whitespace_before_comment() {
-            assert_eq!(
-                section("[s]hello             #world").unwrap(),
-                fully_consumed(ParsedSection {
-                    section_header: gen_section_header("s", None),
-                    events: vec![
-                        Event::Key("hello"),
-                        Event::Whitespace("             "),
-                        Event::Value(""),
-                        Event::Comment(ParsedComment {
-                            comment_tag: '#',
-                            comment: "world",
-                        }),
-                    ]
-                })
-            );
-        }
+    #[test]
+    fn section_handles_extranous_whitespace_before_comment() {
+        assert_eq!(
+            section("[s]hello             #world").unwrap(),
+            fully_consumed(ParsedSection {
+                section_header: gen_section_header("s", None),
+                events: vec![
+                    Event::Key("hello"),
+                    Event::Whitespace("             "),
+                    Event::Value(""),
+                    Event::Comment(ParsedComment {
+                        comment_tag: '#',
+                        comment: "world",
+                    }),
+                ]
+            })
+        );
     }
 }

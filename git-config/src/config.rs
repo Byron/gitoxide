@@ -13,8 +13,11 @@ enum LookupTreeNode<'a> {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum GitConfigError<'a> {
+    /// The requested section does not exist.
     SectionDoesNotExist(&'a str),
+    /// The requested subsection does not exist.
     SubSectionDoesNotExist(Option<&'a str>),
+    /// The key does not exist in the requested section.
     KeyDoesNotExist(&'a str),
 }
 
@@ -50,10 +53,6 @@ impl<'a> GitConfig<'a> {
 
         for event in parser.into_iter() {
             match event {
-                e @ Event::Comment(_) => match maybe_section {
-                    Some(ref mut section) => section.push(e),
-                    None => new_self.front_matter_events.push(e),
-                },
                 Event::SectionHeader(header) => {
                     new_self.push_section(
                         &mut current_section_name,
@@ -73,33 +72,24 @@ impl<'a> GitConfig<'a> {
                         .section_header_separators
                         .insert(SectionId(new_self.section_id_counter), header.separator);
                 }
-                e @ Event::Key(_) => maybe_section
+                e @ Event::Key(_)
+                | e @ Event::Value(_)
+                | e @ Event::ValueNotDone(_)
+                | e @ Event::ValueDone(_) => maybe_section
                     .as_mut()
                     .expect("Got a section-only event before a section")
                     .push(e),
-                e @ Event::Value(_) => maybe_section
-                    .as_mut()
-                    .expect("Got a section-only event before a section")
-                    .push(e),
-                e @ Event::Newline(_) => match maybe_section {
-                    Some(ref mut section) => section.push(e),
-                    None => new_self.front_matter_events.push(e),
-                },
-                e @ Event::ValueNotDone(_) => maybe_section
-                    .as_mut()
-                    .expect("Got a section-only event before a section")
-                    .push(e),
-                e @ Event::ValueDone(_) => maybe_section
-                    .as_mut()
-                    .expect("Got a section-only event before a section")
-                    .push(e),
-                e @ Event::Whitespace(_) => match maybe_section {
-                    Some(ref mut section) => section.push(e),
-                    None => new_self.front_matter_events.push(e),
-                },
+                e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
+                    match maybe_section {
+                        Some(ref mut section) => section.push(e),
+                        None => new_self.front_matter_events.push(e),
+                    }
+                }
             }
         }
 
+        // The last section doesn't get pushed since we only push if there's a
+        // new section header, so we need to call push one more time.
         new_self.push_section(
             &mut current_section_name,
             &mut current_subsection_name,
@@ -178,11 +168,14 @@ impl<'a> GitConfig<'a> {
     /// ```
     /// # use serde_git_config::config::GitConfig;
     /// # let git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// assert_eq!(git_config.get_raw_single_value("core", None, "a"), Ok("d"));
+    /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok("d"));
     /// ```
     ///
-    /// The the resolution is as follows
-    pub fn get_raw_single_value<'b>(
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in the requested
+    /// section and subsection.
+    pub fn get_raw_value<'b>(
         &self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
@@ -191,16 +184,13 @@ impl<'a> GitConfig<'a> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let section_id = self
-            .get_section_id_by_name_and_subname(section_name, subsection_name)
-            .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))?;
+        let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
 
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
         let events = self.sections.get(&section_id).unwrap();
         let mut found_key = false;
         let mut latest_value = None;
-        // logic needs fixing for last one wins rule
         for event in events {
             match event {
                 Event::Key(event_key) if *event_key == key => found_key = true,
@@ -219,10 +209,13 @@ impl<'a> GitConfig<'a> {
         &'a self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
-    ) -> Option<SectionId> {
+    ) -> Result<SectionId, GitConfigError<'b>> {
         self.get_section_ids_by_name_and_subname(section_name, subsection_name)
-            .map(|vec| vec.into_iter().max())
-            .flatten()
+            .map(|vec| {
+                // get_section_ids_by_name_and_subname is guaranteed to return
+                // a non-empty vec, so max can never return empty.
+                *vec.into_iter().max().unwrap()
+            })
     }
 
     pub fn get_raw_multi_value<'b>(
@@ -232,26 +225,33 @@ impl<'a> GitConfig<'a> {
         key: &'b str,
     ) -> Result<Vec<&'a str>, GitConfigError<'b>> {
         let values = self
-            .get_section_ids_by_name_and_subname(section_name, subsection_name)
-            .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))?
+            .get_section_ids_by_name_and_subname(section_name, subsection_name)?
             .iter()
             .map(|section_id| {
                 let mut found_key = false;
+                let mut events = vec![];
                 // section_id is guaranteed to exist in self.sections, else we have a
                 // violated invariant.
                 for event in self.sections.get(section_id).unwrap() {
                     match event {
                         Event::Key(event_key) if *event_key == key => found_key = true,
-                        Event::Value(v) if found_key => return Ok(*v),
+                        Event::Value(v) if found_key => {
+                            events.push(*v);
+                            found_key = false;
+                        }
                         _ => (),
                     }
                 }
 
-                Err(GitConfigError::KeyDoesNotExist(key))
+                if events.is_empty() {
+                    Err(GitConfigError::KeyDoesNotExist(key))
+                } else {
+                    Ok(events)
+                }
             })
             .filter_map(Result::ok)
+            .flatten()
             .collect::<Vec<_>>();
-
         if values.is_empty() {
             Err(GitConfigError::KeyDoesNotExist(key))
         } else {
@@ -263,85 +263,324 @@ impl<'a> GitConfig<'a> {
         &'a self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
-    ) -> Option<Vec<SectionId>> {
-        let section_ids = self.section_lookup_tree.get(section_name)?;
+    ) -> Result<&[SectionId], GitConfigError<'b>> {
+        let section_ids = self
+            .section_lookup_tree
+            .get(section_name)
+            .ok_or(GitConfigError::SectionDoesNotExist(section_name))?;
+        let mut maybe_ids = None;
+        // Don't simplify if and matches here -- the for loop currently needs
+        // `n + 1` checks, while the if and matches will result in the for loop
+        // needing `2n` checks.
         if let Some(subsect_name) = subsection_name {
-            let mut maybe_ids = None;
             for node in section_ids {
                 if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
                     maybe_ids = subsection_lookup.get(subsect_name);
                     break;
                 }
             }
-            maybe_ids.map(|vec| vec.clone())
         } else {
-            let mut maybe_ids = None;
             for node in section_ids {
                 if let LookupTreeNode::Terminal(subsection_lookup) = node {
-                    maybe_ids = subsection_lookup.iter().max();
+                    maybe_ids = Some(subsection_lookup);
                     break;
                 }
             }
-            maybe_ids.map(|v| vec![*v])
         }
+        maybe_ids
+            .map(Vec::as_slice)
+            .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
 }
 
 #[cfg(test)]
-mod git_config {
-    mod from_parser {
-        use super::super::*;
+mod from_parser {
+    use super::*;
 
-        #[test]
-        fn parse_empty() {
-            let config = GitConfig::from_str("").unwrap();
-            assert!(config.section_header_separators.is_empty());
-            assert_eq!(config.section_id_counter, 0);
-            assert!(config.section_lookup_tree.is_empty());
-            assert!(config.sections.is_empty());
-        }
+    #[test]
+    fn parse_empty() {
+        let config = GitConfig::from_str("").unwrap();
+        assert!(config.section_header_separators.is_empty());
+        assert_eq!(config.section_id_counter, 0);
+        assert!(config.section_lookup_tree.is_empty());
+        assert!(config.sections.is_empty());
+    }
 
-        #[test]
-        fn parse_single_section() {
-            let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
-            let expected_separators = {
-                let mut map = HashMap::new();
-                map.insert(SectionId(0), None);
-                map
-            };
-            assert_eq!(config.section_header_separators, expected_separators);
-            assert_eq!(config.section_id_counter, 1);
-            let expected_lookup_tree = {
-                let mut tree = HashMap::new();
-                tree.insert("core", vec![LookupTreeNode::Terminal(vec![SectionId(0)])]);
-                tree
-            };
-            assert_eq!(config.section_lookup_tree, expected_lookup_tree);
-            let expected_sections = {
-                let mut sections = HashMap::new();
-                sections.insert(
-                    SectionId(0),
-                    vec![
-                        Event::Newline("\n"),
-                        Event::Key("a"),
-                        Event::Value("b"),
-                        Event::Newline("\n"),
-                        Event::Key("c"),
-                        Event::Value("d"),
-                    ],
-                );
-                sections
-            };
-            assert_eq!(config.sections, expected_sections);
-        }
+    #[test]
+    fn parse_single_section() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let expected_separators = {
+            let mut map = HashMap::new();
+            map.insert(SectionId(0), None);
+            map
+        };
+        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_id_counter, 1);
+        let expected_lookup_tree = {
+            let mut tree = HashMap::new();
+            tree.insert("core", vec![LookupTreeNode::Terminal(vec![SectionId(0)])]);
+            tree
+        };
+        assert_eq!(config.section_lookup_tree, expected_lookup_tree);
+        let expected_sections = {
+            let mut sections = HashMap::new();
+            sections.insert(
+                SectionId(0),
+                vec![
+                    Event::Newline("\n"),
+                    Event::Key("a"),
+                    Event::Value("b"),
+                    Event::Newline("\n"),
+                    Event::Key("c"),
+                    Event::Value("d"),
+                ],
+            );
+            sections
+        };
+        assert_eq!(config.sections, expected_sections);
+    }
 
-        #[test]
-        fn parse_single_subsection() {}
+    #[test]
+    fn parse_single_subsection() {
+        let config = GitConfig::from_str("[core.subsec]\na=b\nc=d").unwrap();
+        let expected_separators = {
+            let mut map = HashMap::new();
+            map.insert(SectionId(0), Some("."));
+            map
+        };
+        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_id_counter, 1);
+        let expected_lookup_tree = {
+            let mut tree = HashMap::new();
+            let mut inner_tree = HashMap::new();
+            inner_tree.insert("subsec", vec![SectionId(0)]);
+            tree.insert("core", vec![LookupTreeNode::NonTerminal(inner_tree)]);
+            tree
+        };
+        assert_eq!(config.section_lookup_tree, expected_lookup_tree);
+        let expected_sections = {
+            let mut sections = HashMap::new();
+            sections.insert(
+                SectionId(0),
+                vec![
+                    Event::Newline("\n"),
+                    Event::Key("a"),
+                    Event::Value("b"),
+                    Event::Newline("\n"),
+                    Event::Key("c"),
+                    Event::Value("d"),
+                ],
+            );
+            sections
+        };
+        assert_eq!(config.sections, expected_sections);
+    }
 
-        #[test]
-        fn parse_multiple_sections() {}
+    #[test]
+    fn parse_multiple_sections() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d\n[other]e=f").unwrap();
+        let expected_separators = {
+            let mut map = HashMap::new();
+            map.insert(SectionId(0), None);
+            map.insert(SectionId(1), None);
+            map
+        };
+        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_id_counter, 2);
+        let expected_lookup_tree = {
+            let mut tree = HashMap::new();
+            tree.insert("core", vec![LookupTreeNode::Terminal(vec![SectionId(0)])]);
+            tree.insert("other", vec![LookupTreeNode::Terminal(vec![SectionId(1)])]);
+            tree
+        };
+        assert_eq!(config.section_lookup_tree, expected_lookup_tree);
+        let expected_sections = {
+            let mut sections = HashMap::new();
+            sections.insert(
+                SectionId(0),
+                vec![
+                    Event::Newline("\n"),
+                    Event::Key("a"),
+                    Event::Value("b"),
+                    Event::Newline("\n"),
+                    Event::Key("c"),
+                    Event::Value("d"),
+                    Event::Newline("\n"),
+                ],
+            );
+            sections.insert(SectionId(1), vec![Event::Key("e"), Event::Value("f")]);
+            sections
+        };
+        assert_eq!(config.sections, expected_sections);
+    }
 
-        #[test]
-        fn parse_multiple_duplicate_sections() {}
+    #[test]
+    fn parse_multiple_duplicate_sections() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d\n[core]e=f").unwrap();
+        let expected_separators = {
+            let mut map = HashMap::new();
+            map.insert(SectionId(0), None);
+            map.insert(SectionId(1), None);
+            map
+        };
+        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_id_counter, 2);
+        let expected_lookup_tree = {
+            let mut tree = HashMap::new();
+            tree.insert(
+                "core",
+                vec![LookupTreeNode::Terminal(vec![SectionId(0), SectionId(1)])],
+            );
+            tree
+        };
+        assert_eq!(config.section_lookup_tree, expected_lookup_tree);
+        let expected_sections = {
+            let mut sections = HashMap::new();
+            sections.insert(
+                SectionId(0),
+                vec![
+                    Event::Newline("\n"),
+                    Event::Key("a"),
+                    Event::Value("b"),
+                    Event::Newline("\n"),
+                    Event::Key("c"),
+                    Event::Value("d"),
+                    Event::Newline("\n"),
+                ],
+            );
+            sections.insert(SectionId(1), vec![Event::Key("e"), Event::Value("f")]);
+            sections
+        };
+        assert_eq!(config.sections, expected_sections);
+    }
+}
+
+#[cfg(test)]
+mod get_raw_value {
+    use super::*;
+
+    #[test]
+    fn single_section() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(config.get_raw_value("core", None, "a"), Ok("b"));
+        assert_eq!(config.get_raw_value("core", None, "c"), Ok("d"));
+    }
+
+    #[test]
+    fn last_one_wins_respected_in_section() {
+        let config = GitConfig::from_str("[core]\na=b\na=d").unwrap();
+        assert_eq!(config.get_raw_value("core", None, "a"), Ok("d"));
+    }
+
+    #[test]
+    fn last_one_wins_respected_across_section() {
+        let config = GitConfig::from_str("[core]\na=b\n[core]\na=d").unwrap();
+        assert_eq!(config.get_raw_value("core", None, "a"), Ok("d"));
+    }
+
+    #[test]
+    fn section_not_found() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            config.get_raw_value("foo", None, "a"),
+            Err(GitConfigError::SectionDoesNotExist("foo"))
+        );
+    }
+
+    #[test]
+    fn subsection_not_found() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            config.get_raw_value("core", Some("a"), "a"),
+            Err(GitConfigError::SubSectionDoesNotExist(Some("a")))
+        );
+    }
+
+    #[test]
+    fn key_not_found() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            config.get_raw_value("core", None, "aaaaaa"),
+            Err(GitConfigError::KeyDoesNotExist("aaaaaa"))
+        );
+    }
+
+    #[test]
+    fn subsection_must_be_respected() {
+        let config = GitConfig::from_str("[core]a=b\n[core.a]a=c").unwrap();
+        assert_eq!(config.get_raw_value("core", None, "a"), Ok("b"));
+        assert_eq!(config.get_raw_value("core", Some("a"), "a"), Ok("c"));
+    }
+}
+
+#[cfg(test)]
+mod get_raw_multi_value {
+    use super::*;
+
+    #[test]
+    fn single_value_is_identical_to_single_value_query() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            vec![config.get_raw_value("core", None, "a").unwrap()],
+            config.get_raw_multi_value("core", None, "a").unwrap()
+        );
+    }
+
+    #[test]
+    fn multi_value_in_section() {
+        let config = GitConfig::from_str("[core]\na=b\na=c").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "a").unwrap(),
+            vec!["b", "c"]
+        );
+    }
+
+    #[test]
+    fn multi_value_across_sections() {
+        let config = GitConfig::from_str("[core]\na=b\na=c\n[core]a=d").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "a").unwrap(),
+            vec!["b", "c", "d"]
+        );
+    }
+
+    #[test]
+    fn section_not_found() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("foo", None, "a"),
+            Err(GitConfigError::SectionDoesNotExist("foo"))
+        );
+    }
+
+    #[test]
+    fn subsection_not_found() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", Some("a"), "a"),
+            Err(GitConfigError::SubSectionDoesNotExist(Some("a")))
+        );
+    }
+
+    #[test]
+    fn key_not_found() {
+        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "aaaaaa"),
+            Err(GitConfigError::KeyDoesNotExist("aaaaaa"))
+        );
+    }
+
+    #[test]
+    fn subsection_must_be_respected() {
+        let config = GitConfig::from_str("[core]a=b\n[core.a]a=c").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "a").unwrap(),
+            vec!["b"]
+        );
+        assert_eq!(
+            config.get_raw_multi_value("core", Some("a"), "a").unwrap(),
+            vec!["c"]
+        );
     }
 }
