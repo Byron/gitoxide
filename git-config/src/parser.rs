@@ -503,10 +503,6 @@ fn config_value<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
 }
 
 fn value_impl<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
-    // I wrote this code and don't know how it works.
-    //
-    // Even after sleeping on it I still don't know how it works.
-
     let mut events = vec![];
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
