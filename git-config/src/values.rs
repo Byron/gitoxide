@@ -4,7 +4,7 @@ use serde::{Serialize, Serializer};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Value<'a> {
-    Boolean(Boolean),
+    Boolean(Boolean<'a>),
     Integer(Integer),
     Color(Color),
     Other(Cow<'a, str>),
@@ -38,29 +38,13 @@ impl Serialize for Value<'_> {
 // todo display for value
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum Boolean {
-    True(TrueVariant),
-    False(FalseVariant),
+pub enum Boolean<'a> {
+    True(TrueVariant<'a>),
+    False(FalseVariant<'a>),
 }
 
-// todo: Display for boolean
-
-impl Serialize for Boolean {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Boolean::True(_) => serializer.serialize_bool(true),
-            Boolean::False(_) => serializer.serialize_bool(false),
-        }
-    }
-}
-
-impl FromStr for Boolean {
-    type Err = ();
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
+impl<'a> Boolean<'a> {
+    pub fn from_str(value: &'a str) -> Result<Self, ()> {
         if let Ok(v) = TrueVariant::from_str(value) {
             return Ok(Self::True(v));
         }
@@ -73,12 +57,23 @@ impl FromStr for Boolean {
     }
 }
 
+// todo: Display for boolean
+
+impl Serialize for Boolean<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Boolean::True(_) => serializer.serialize_bool(true),
+            Boolean::False(_) => serializer.serialize_bool(false),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum TrueVariant {
-    Yes,
-    On,
-    True,
-    One,
+pub enum TrueVariant<'a> {
+    Explicit(&'a str),
     /// For variables defined without a `= <value>`. This can never be created
     /// from the [`FromStr`] trait, as an empty string is false without context.
     /// If directly serializing this struct (instead of using a higher level
@@ -86,19 +81,30 @@ pub enum TrueVariant {
     Implicit,
 }
 
-impl Display for TrueVariant {
+impl<'a> TrueVariant<'a> {
+    pub fn from_str(value: &'a str) -> Result<TrueVariant<'a>, ()> {
+        if value.eq_ignore_ascii_case("yes")
+            || value.eq_ignore_ascii_case("on")
+            || value.eq_ignore_ascii_case("true")
+            || value.eq_ignore_ascii_case("one")
+        {
+            Ok(Self::Explicit(value))
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl Display for TrueVariant<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Yes => write!(f, "yes"),
-            Self::On => write!(f, "on"),
-            Self::True => write!(f, "true"),
-            Self::One => write!(f, "one"),
+            Self::Explicit(v) => write!(f, "{}", v),
             Self::Implicit => write!(f, "(implicit)"),
         }
     }
 }
 
-impl Serialize for TrueVariant {
+impl Serialize for TrueVariant<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -107,71 +113,36 @@ impl Serialize for TrueVariant {
     }
 }
 
-impl FromStr for TrueVariant {
-    type Err = ();
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct FalseVariant<'a>(&'a str);
 
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        if value.eq_ignore_ascii_case("yes") {
-            Ok(Self::Yes)
-        } else if value.eq_ignore_ascii_case("on") {
-            Ok(Self::On)
-        } else if value.eq_ignore_ascii_case("true") {
-            Ok(Self::True)
-        } else if value.eq_ignore_ascii_case("one") {
-            Ok(Self::One)
+impl<'a> FalseVariant<'a> {
+    pub fn from_str(value: &'a str) -> Result<FalseVariant<'a>, ()> {
+        if value.eq_ignore_ascii_case("no")
+            || value.eq_ignore_ascii_case("off")
+            || value.eq_ignore_ascii_case("false")
+            || value.eq_ignore_ascii_case("zero")
+            || value == "\"\""
+        {
+            Ok(Self(value))
         } else {
             Err(())
         }
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum FalseVariant {
-    No,
-    Off,
-    False,
-    Zero,
-    EmptyString,
-}
-
-impl Display for FalseVariant {
+impl Display for FalseVariant<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::No => write!(f, "no"),
-            Self::Off => write!(f, "off"),
-            Self::False => write!(f, "false"),
-            Self::Zero => write!(f, "0"),
-            Self::EmptyString => write!(f, "\"\""),
-        }
+        write!(f, "{}", self.0)
     }
 }
 
-impl Serialize for FalseVariant {
+impl Serialize for FalseVariant<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         serializer.serialize_bool(false)
-    }
-}
-
-impl FromStr for FalseVariant {
-    type Err = ();
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        if value.eq_ignore_ascii_case("no") {
-            Ok(Self::No)
-        } else if value.eq_ignore_ascii_case("off") {
-            Ok(Self::Off)
-        } else if value.eq_ignore_ascii_case("false") {
-            Ok(Self::False)
-        } else if value.eq_ignore_ascii_case("zero") {
-            Ok(Self::Zero)
-        } else if value.is_empty() {
-            Ok(Self::EmptyString)
-        } else {
-            Err(())
-        }
     }
 }
 
@@ -297,13 +268,7 @@ impl Serialize for Color {
     }
 }
 
-impl FromStr for Color {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
-    }
-}
+// impl fromstr for color
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 enum ColorValue {
