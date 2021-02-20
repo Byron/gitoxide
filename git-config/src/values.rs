@@ -12,7 +12,18 @@ pub enum Value<'a> {
 
 impl<'a> Value<'a> {
     pub fn from_str(s: &'a str) -> Self {
-        // if s.
+        if let Ok(bool) = Boolean::from_str(s) {
+            return Self::Boolean(bool);
+        }
+
+        // if let Ok(int) = Integer::from_str(s) {
+        //     return Self::Integer(int);
+        // }
+
+        // if let Ok(color) = Color::from_str(s) {
+        //     return Self::Color(color);
+        // }
+
         Self::Other(Cow::Borrowed(s))
     }
 
@@ -152,7 +163,11 @@ pub struct Integer {
     suffix: Option<IntegerSuffix>,
 }
 
-impl Integer {}
+impl Integer {
+    pub fn from_str(s: &str) -> Result<Self, ()> {
+        todo!()
+    }
+}
 
 impl Display for Integer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

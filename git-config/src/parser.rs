@@ -7,7 +7,6 @@
 //! which can be converted into an [`Event`] iterator. The [`Parser`] also has
 //! additional methods for accessing leading comments or events by section.
 
-use crate::values::{Boolean, TrueVariant, Value};
 use nom::bytes::complete::{escaped, tag, take_till, take_while};
 use nom::character::complete::{char, none_of, one_of};
 use nom::character::{is_newline, is_space};
@@ -22,21 +21,32 @@ use std::iter::FusedIterator;
 /// Syntactic events that occurs in the config.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
+    /// A comment with a comment tag and the comment itself. Note that the
+    /// comment itself may contain additional whitespace and comment markers
+    /// at the beginning.
     Comment(ParsedComment<'a>),
+    /// A section header containing the section name and a subsection, if it
+    /// exists.
     SectionHeader(ParsedSectionHeader<'a>),
+    /// A name to a value in a section.
     Key(&'a str),
-    ///
-    Value(Value<'a>),
+    /// A completed value. This may be any string, including the empty string,
+    /// if an implicit boolean value is used. Note that these values may contain
+    /// spaces and any special character. This value is also unprocessed, so it
+    /// it may contain double quotes that should be replaced.
+    Value(&'a str),
     /// Represents any token used to signify a new line character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
     /// sequence.
     Newline(&'a str),
     /// Any value that isn't completed. This occurs when the value is continued
     /// onto the next line. A Newline event is guaranteed after, followed by
-    /// either another ValueNotDone or a ValueDone.
+    /// either a ValueDone, a Whitespace, or another ValueNotDone.
     ValueNotDone(&'a str),
     /// The last line of a value which was continued onto another line.
     ValueDone(&'a str),
+    /// A continuous section of insignificant whitespace. Values with internal
+    /// spaces will not be separated by this event.
     Whitespace(&'a str),
 }
 
@@ -353,12 +363,7 @@ fn config_value<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
             Ok((i, values))
         }
     } else {
-        Ok((
-            i,
-            vec![Event::Value(Value::Boolean(Boolean::True(
-                TrueVariant::Implicit,
-            )))],
-        ))
+        Ok((i, vec![Event::Value("")]))
     }
 }
 
@@ -449,7 +454,7 @@ fn value_impl<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
     if partial_value_found {
         events.push(Event::ValueDone(remainder_value));
     } else {
-        events.push(Event::Value(Value::from_str(remainder_value)));
+        events.push(Event::Value(remainder_value));
     }
 
     Ok((i, events))
@@ -643,7 +648,7 @@ mod parse {
         fn no_comment() {
             assert_eq!(
                 value_impl("hello").unwrap(),
-                fully_consumed(vec![Event::Value(Value::from_str("hello"))])
+                fully_consumed(vec![Event::Value("hello")])
             );
         }
 
@@ -651,7 +656,7 @@ mod parse {
         fn no_comment_newline() {
             assert_eq!(
                 value_impl("hello\na").unwrap(),
-                ("\na", vec![Event::Value(Value::from_str("hello"))])
+                ("\na", vec![Event::Value("hello")])
             )
         }
 
@@ -659,7 +664,7 @@ mod parse {
         fn semicolon_comment_not_consumed() {
             assert_eq!(
                 value_impl("hello;world").unwrap(),
-                (";world", vec![Event::Value(Value::from_str("hello")),])
+                (";world", vec![Event::Value("hello"),])
             );
         }
 
@@ -667,7 +672,7 @@ mod parse {
         fn octothorpe_comment_not_consumed() {
             assert_eq!(
                 value_impl("hello#world").unwrap(),
-                ("#world", vec![Event::Value(Value::from_str("hello")),])
+                ("#world", vec![Event::Value("hello"),])
             );
         }
 
@@ -675,10 +680,7 @@ mod parse {
         fn values_with_extraneous_whitespace_without_comment() {
             assert_eq!(
                 value_impl("hello               ").unwrap(),
-                (
-                    "               ",
-                    vec![Event::Value(Value::from_str("hello"))]
-                )
+                ("               ", vec![Event::Value("hello")])
             );
         }
 
@@ -686,17 +688,11 @@ mod parse {
         fn values_with_extraneous_whitespace_before_comment() {
             assert_eq!(
                 value_impl("hello             #world").unwrap(),
-                (
-                    "             #world",
-                    vec![Event::Value(Value::from_str("hello")),]
-                )
+                ("             #world", vec![Event::Value("hello"),])
             );
             assert_eq!(
                 value_impl("hello             ;world").unwrap(),
-                (
-                    "             ;world",
-                    vec![Event::Value(Value::from_str("hello")),]
-                )
+                ("             ;world", vec![Event::Value("hello"),])
             );
         }
 
@@ -704,10 +700,7 @@ mod parse {
         fn trans_escaped_comment_marker_not_consumed() {
             assert_eq!(
                 value_impl(r##"hello"#"world; a"##).unwrap(),
-                (
-                    "; a",
-                    vec![Event::Value(Value::from_str(r##"hello"#"world"##)),]
-                )
+                ("; a", vec![Event::Value(r##"hello"#"world"##)])
             );
         }
 
@@ -715,10 +708,7 @@ mod parse {
         fn complex_test() {
             assert_eq!(
                 value_impl(r#"value";";ahhhh"#).unwrap(),
-                (
-                    ";ahhhh",
-                    vec![Event::Value(Value::from_str(r#"value";""#)),]
-                )
+                (";ahhhh", vec![Event::Value(r#"value";""#)])
             );
         }
 
@@ -807,17 +797,17 @@ mod parse {
                         Event::Key("a"),
                         Event::Whitespace(" "),
                         Event::Whitespace(" "),
-                        Event::Value(Value::from_str("b")),
+                        Event::Value("b"),
                         Event::Newline("\n"),
                         Event::Whitespace("            "),
                         Event::Key("c"),
-                        Event::Value(Value::Boolean(Boolean::True(TrueVariant::Implicit))),
+                        Event::Value(""),
                         Event::Newline("\n"),
                         Event::Whitespace("            "),
                         Event::Key("d"),
                         Event::Whitespace(" "),
                         Event::Whitespace(" "),
-                        Event::Value(Value::from_str("\"lol\""))
+                        Event::Value("\"lol\"")
                     ]
                 })
             )
@@ -829,11 +819,7 @@ mod parse {
                 section("[hello] c").unwrap(),
                 fully_consumed(ParsedSection {
                     section_header: gen_section_header("hello", None),
-                    events: vec![
-                        Event::Whitespace(" "),
-                        Event::Key("c"),
-                        Event::Value(Value::Boolean(Boolean::True(TrueVariant::Implicit)))
-                    ]
+                    events: vec![Event::Whitespace(" "), Event::Key("c"), Event::Value("")]
                 })
             );
         }
@@ -860,7 +846,7 @@ mod parse {
                         Event::Key("a"),
                         Event::Whitespace(" "),
                         Event::Whitespace(" "),
-                        Event::Value(Value::from_str("b")),
+                        Event::Value("b"),
                         Event::Whitespace(" "),
                         Event::Comment(ParsedComment {
                             comment_tag: '#',
@@ -883,7 +869,7 @@ mod parse {
                         Event::Key("c"),
                         Event::Whitespace(" "),
                         Event::Whitespace(" "),
-                        Event::Value(Value::from_str("d")),
+                        Event::Value("d"),
                     ]
                 })
             );
@@ -947,7 +933,7 @@ mod parse {
                     events: vec![
                         Event::Key("hello"),
                         Event::Whitespace("             "),
-                        Event::Value(Value::Boolean(Boolean::True(TrueVariant::Implicit))),
+                        Event::Value(""),
                         Event::Comment(ParsedComment {
                             comment_tag: '#',
                             comment: "world",
