@@ -8,7 +8,7 @@
 //! additional methods for accessing leading comments or events by section.
 
 use crate::values::{Boolean, TrueVariant, Value};
-use nom::bytes::complete::{escaped, tag, take_till, take_until, take_while};
+use nom::bytes::complete::{escaped, tag, take_till, take_while};
 use nom::character::complete::{char, none_of, one_of};
 use nom::character::{is_newline, is_space};
 use nom::combinator::{map, opt};
