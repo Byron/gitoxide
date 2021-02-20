@@ -146,7 +146,7 @@ impl<'a> GitConfig<'a> {
         }
     }
 
-    /// Returns an uninterpreted value given a section and optional subsection
+    /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
     /// Note that `git-config` follows a "last-one-wins" rule for single values.
@@ -163,7 +163,8 @@ impl<'a> GitConfig<'a> {
     ///     a = d
     /// ```
     ///
-    /// Then this function will return `d`:
+    /// Then this function will return `d`, since the last valid config value is
+    /// `a = d`, so this entry "wins":
     ///
     /// ```
     /// # use serde_git_config::config::GitConfig;
@@ -171,10 +172,13 @@ impl<'a> GitConfig<'a> {
     /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok("d"));
     /// ```
     ///
+    /// Consider [`Self::get_raw_multi_value`] if you want to get all values for
+    /// a given key.
+    ///
     /// # Errors
     ///
     /// This function will return an error if the key is not in the requested
-    /// section and subsection.
+    /// section and subsection, or if the section and subsection do not exist.
     pub fn get_raw_value<'b>(
         &self,
         section_name: &'b str,
@@ -218,6 +222,33 @@ impl<'a> GitConfig<'a> {
             })
     }
 
+    /// Returns all uninterpreted values given a section, an optional subsection
+    /// and key. If you have the following config:
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// [core]
+    ///     a = c
+    ///     a = d
+    /// ```
+    ///
+    /// Attempting to get all values of `a` yields the following:
+    ///
+    /// ```
+    /// # use serde_git_config::config::GitConfig;
+    /// # let git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// assert_eq!(git_config.get_raw_multi_value("core", None, "a"), Ok(vec!["b", "c", "d"]));
+    /// ```
+    ///
+    /// Consider [`Self::get_raw_value`] if you want to get the resolved single
+    /// value for a given key, if your key does not support multi-valued values.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in any requested
+    /// section and subsection, or if no instance of the section and subsections
+    /// exist.
     pub fn get_raw_multi_value<'b>(
         &'a self,
         section_name: &'b str,
@@ -581,6 +612,15 @@ mod get_raw_multi_value {
         assert_eq!(
             config.get_raw_multi_value("core", Some("a"), "a").unwrap(),
             vec!["c"]
+        );
+    }
+
+    #[test]
+    fn non_relevant_subsection_is_ignored() {
+        let config = GitConfig::from_str("[core]\na=b\na=c\n[core]a=d\n[core]g=g").unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "a").unwrap(),
+            vec!["b", "c", "d"]
         );
     }
 }
