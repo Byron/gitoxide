@@ -17,7 +17,7 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::sequence::delimited;
 use nom::IResult;
 use nom::{branch::alt, multi::many0};
-use std::iter::FusedIterator;
+use std::{borrow::Cow, iter::FusedIterator};
 
 /// Syntactic events that occurs in the config.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -30,25 +30,25 @@ pub enum Event<'a> {
     /// exists.
     SectionHeader(ParsedSectionHeader<'a>),
     /// A name to a value in a section.
-    Key(&'a str),
+    Key(Cow<'a, str>),
     /// A completed value. This may be any string, including the empty string,
     /// if an implicit boolean value is used. Note that these values may contain
     /// spaces and any special character. This value is also unprocessed, so it
     /// it may contain double quotes that should be replaced.
-    Value(&'a str),
+    Value(Cow<'a, str>),
     /// Represents any token used to signify a new line character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
     /// sequence.
-    Newline(&'a str),
+    Newline(Cow<'a, str>),
     /// Any value that isn't completed. This occurs when the value is continued
     /// onto the next line. A Newline event is guaranteed after, followed by
     /// either a ValueDone, a Whitespace, or another ValueNotDone.
-    ValueNotDone(&'a str),
+    ValueNotDone(Cow<'a, str>),
     /// The last line of a value which was continued onto another line.
-    ValueDone(&'a str),
+    ValueDone(Cow<'a, str>),
     /// A continuous section of insignificant whitespace. Values with internal
     /// spaces will not be separated by this event.
-    Whitespace(&'a str),
+    Whitespace(Cow<'a, str>),
 }
 
 /// A parsed section containing the header and the section events.
@@ -61,27 +61,27 @@ pub struct ParsedSection<'a> {
 }
 
 /// A parsed section header, containing a name and optionally a subsection name.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSectionHeader<'a> {
     /// The name of the header.
-    pub name: &'a str,
+    pub name: Cow<'a, str>,
     /// The separator used to determine if the section contains a subsection.
     /// This is either a period `.` or a string of whitespace. Note that
     /// reconstruction of subsection format is dependent on this value. If this
     /// is all whitespace, then the subsection name needs to be surrounded by
     /// quotes to have perfect reconstruction.
-    pub separator: Option<&'a str>,
+    pub separator: Option<Cow<'a, str>>,
     /// The subsection name without quotes if any exist.
-    pub subsection_name: Option<&'a str>,
+    pub subsection_name: Option<Cow<'a, str>>,
 }
 
 /// A parsed comment event containing the comment marker and comment.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedComment<'a> {
     /// The comment marker used. This is either a semicolon or octothorpe.
     pub comment_tag: char,
     /// The parsed comment.
-    pub comment: &'a str,
+    pub comment: Cow<'a, str>,
 }
 
 /// The various parsing failure reasons.
@@ -176,20 +176,21 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 ///
 /// ```
 /// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: "core",
+/// #   name: Cow::Borrowed("core"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline("\n"),
-/// Event::Whitespace("  "),
-/// Event::Key("autocrlf"),
-/// Event::Whitespace(" "),
-/// Event::Whitespace(" "),
-/// Event::Value("input"),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Whitespace(Cow::Borrowed("  ")),
+/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Whitespace(Cow::Borrowed(" ")),
+/// Event::Whitespace(Cow::Borrowed(" ")),
+/// Event::Value(Cow::Borrowed("input")),
 /// # ]);
 /// ```
 ///
@@ -216,20 +217,21 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 ///
 /// ```
 /// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: "core",
+/// #   name: Cow::Borrowed("core"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline("\n"),
-/// Event::Key("autocrlf"),
-/// Event::Value(r#"true"""#),
-/// Event::Newline("\n"),
-/// Event::Key("filemode"),
-/// Event::Value(r#"fa"lse""#),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Value(Cow::Borrowed(r#"true"""#)),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Key(Cow::Borrowed("filemode")),
+/// Event::Value(Cow::Borrowed(r#"fa"lse""#)),
 /// # ]);
 /// ```
 ///
@@ -250,19 +252,20 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 ///
 /// ```
 /// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: "some-section",
+/// #   name: Cow::Borrowed("some-section"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline("\n"),
-/// Event::Key("file"),
-/// Event::ValueNotDone("a"),
-/// Event::Newline("\n"),
-/// Event::ValueDone("    c"),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Key(Cow::Borrowed("file")),
+/// Event::ValueNotDone(Cow::Borrowed("a")),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::ValueDone(Cow::Borrowed("    c")),
 /// # ]);
 /// ```
 ///
@@ -380,7 +383,7 @@ fn comment<'a>(i: &'a str) -> IResult<&'a str, ParsedComment<'a>> {
         i,
         ParsedComment {
             comment_tag,
-            comment,
+            comment: Cow::Borrowed(comment),
         },
     ))
 }
@@ -388,10 +391,14 @@ fn comment<'a>(i: &'a str) -> IResult<&'a str, ParsedComment<'a>> {
 fn section<'a>(i: &'a str) -> IResult<&'a str, ParsedSection<'a>> {
     let (i, section_header) = section_header(i)?;
     let (i, items) = many0(alt((
-        map(take_spaces, |space| vec![Event::Whitespace(space)]),
-        map(take_newline, |newline| vec![Event::Newline(newline)]),
+        map(take_spaces, |space| {
+            vec![Event::Whitespace(Cow::Borrowed(space))]
+        }),
+        map(take_newline, |newline| {
+            vec![Event::Newline(Cow::Borrowed(newline))]
+        }),
         map(section_body, |(key, values)| {
-            let mut vec = vec![Event::Key(key)];
+            let mut vec = vec![Event::Key(Cow::Borrowed(key))];
             vec.extend(values);
             vec
         }),
@@ -416,12 +423,12 @@ fn section_header<'a>(i: &'a str) -> IResult<&'a str, ParsedSectionHeader<'a>> {
         // subsection syntax at this point.
         let header = match name.rfind('.') {
             Some(index) => ParsedSectionHeader {
-                name: &name[..index],
-                separator: name.get(index..index + 1),
-                subsection_name: name.get(index + 1..),
+                name: Cow::Borrowed(&name[..index]),
+                separator: name.get(index..index + 1).map(Cow::Borrowed),
+                subsection_name: name.get(index + 1..).map(Cow::Borrowed),
             },
             None => ParsedSectionHeader {
-                name: name,
+                name: Cow::Borrowed(name),
                 separator: None,
                 subsection_name: None,
             },
@@ -443,11 +450,11 @@ fn section_header<'a>(i: &'a str) -> IResult<&'a str, ParsedSectionHeader<'a>> {
     Ok((
         i,
         ParsedSectionHeader {
-            name: name,
-            separator: Some(whitespace),
+            name: Cow::Borrowed(name),
+            separator: Some(Cow::Borrowed(whitespace)),
             // We know that there's some section name here, so if we get an
             // empty vec here then we actually parsed an empty section name.
-            subsection_name: subsection_name.or(Some("")),
+            subsection_name: subsection_name.or(Some("")).map(Cow::Borrowed),
         },
     ))
 }
@@ -458,7 +465,7 @@ fn section_body<'a>(i: &'a str) -> IResult<&'a str, (&'a str, Vec<Event<'a>>)> {
     let (i, whitespace) = opt(take_spaces)(i)?;
     let (i, value) = config_value(i)?;
     if let Some(whitespace) = whitespace {
-        let mut events = vec![Event::Whitespace(whitespace)];
+        let mut events = vec![Event::Whitespace(Cow::Borrowed(whitespace))];
         events.extend(value);
         Ok((i, (name, events)))
     } else {
@@ -491,14 +498,14 @@ fn config_value<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
         let (i, whitespace) = opt(take_spaces)(i)?;
         let (i, values) = value_impl(i)?;
         if let Some(whitespace) = whitespace {
-            let mut events = vec![Event::Whitespace(whitespace)];
+            let mut events = vec![Event::Whitespace(Cow::Borrowed(whitespace))];
             events.extend(values);
             Ok((i, events))
         } else {
             Ok((i, values))
         }
     } else {
-        Ok((i, vec![Event::Value("")]))
+        Ok((i, vec![Event::Value(Cow::Borrowed(""))]))
     }
 }
 
@@ -521,8 +528,8 @@ fn value_impl<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
                 // continuation.
                 b'\n' => {
                     partial_value_found = true;
-                    events.push(Event::ValueNotDone(&i[offset..index - 1]));
-                    events.push(Event::Newline(&i[index..index + 1]));
+                    events.push(Event::ValueNotDone(Cow::Borrowed(&i[offset..index - 1])));
+                    events.push(Event::Newline(Cow::Borrowed(&i[index..index + 1])));
                     offset = index + 1;
                     parsed_index = 0;
                 }
@@ -583,9 +590,9 @@ fn value_impl<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
     };
 
     if partial_value_found {
-        events.push(Event::ValueDone(remainder_value));
+        events.push(Event::ValueDone(Cow::Borrowed(remainder_value)));
     } else {
-        events.push(Event::Value(remainder_value));
+        events.push(Event::Value(Cow::Borrowed(remainder_value)));
     }
 
     Ok((i, events))
@@ -625,11 +632,12 @@ fn gen_section_header(
     name: &str,
     subsection: impl Into<Option<(&'static str, &'static str)>>,
 ) -> ParsedSectionHeader<'_> {
+    let name = Cow::Borrowed(name);
     if let Some((separator, subsection_name)) = subsection.into() {
         ParsedSectionHeader {
             name,
-            separator: Some(separator),
-            subsection_name: Some(subsection_name),
+            separator: Some(separator).map(Cow::Borrowed),
+            subsection_name: Some(subsection_name).map(Cow::Borrowed),
         }
     } else {
         ParsedSectionHeader {
@@ -650,7 +658,7 @@ mod comments {
             comment("; this is a semicolon comment").unwrap(),
             fully_consumed(ParsedComment {
                 comment_tag: ';',
-                comment: " this is a semicolon comment",
+                comment: Cow::Borrowed(" this is a semicolon comment"),
             })
         );
     }
@@ -661,7 +669,7 @@ mod comments {
             comment("# this is an octothorpe comment").unwrap(),
             fully_consumed(ParsedComment {
                 comment_tag: '#',
-                comment: " this is an octothorpe comment",
+                comment: Cow::Borrowed(" this is an octothorpe comment"),
             })
         );
     }
@@ -672,7 +680,7 @@ mod comments {
             comment("###### this is an octothorpe comment").unwrap(),
             fully_consumed(ParsedComment {
                 comment_tag: '#',
-                comment: "##### this is an octothorpe comment",
+                comment: Cow::Borrowed("##### this is an octothorpe comment"),
             })
         );
     }
@@ -778,7 +786,7 @@ mod value_no_continuation {
     fn no_comment() {
         assert_eq!(
             value_impl("hello").unwrap(),
-            fully_consumed(vec![Event::Value("hello")])
+            fully_consumed(vec![Event::Value(Cow::Borrowed("hello"))])
         );
     }
 
@@ -786,7 +794,7 @@ mod value_no_continuation {
     fn no_comment_newline() {
         assert_eq!(
             value_impl("hello\na").unwrap(),
-            ("\na", vec![Event::Value("hello")])
+            ("\na", vec![Event::Value(Cow::Borrowed("hello"))])
         )
     }
 
@@ -794,7 +802,7 @@ mod value_no_continuation {
     fn semicolon_comment_not_consumed() {
         assert_eq!(
             value_impl("hello;world").unwrap(),
-            (";world", vec![Event::Value("hello"),])
+            (";world", vec![Event::Value(Cow::Borrowed("hello")),])
         );
     }
 
@@ -802,7 +810,7 @@ mod value_no_continuation {
     fn octothorpe_comment_not_consumed() {
         assert_eq!(
             value_impl("hello#world").unwrap(),
-            ("#world", vec![Event::Value("hello"),])
+            ("#world", vec![Event::Value(Cow::Borrowed("hello")),])
         );
     }
 
@@ -810,7 +818,10 @@ mod value_no_continuation {
     fn values_with_extraneous_whitespace_without_comment() {
         assert_eq!(
             value_impl("hello               ").unwrap(),
-            ("               ", vec![Event::Value("hello")])
+            (
+                "               ",
+                vec![Event::Value(Cow::Borrowed("hello"))]
+            )
         );
     }
 
@@ -818,11 +829,17 @@ mod value_no_continuation {
     fn values_with_extraneous_whitespace_before_comment() {
         assert_eq!(
             value_impl("hello             #world").unwrap(),
-            ("             #world", vec![Event::Value("hello"),])
+            (
+                "             #world",
+                vec![Event::Value(Cow::Borrowed("hello"))]
+            )
         );
         assert_eq!(
             value_impl("hello             ;world").unwrap(),
-            ("             ;world", vec![Event::Value("hello"),])
+            (
+                "             ;world",
+                vec![Event::Value(Cow::Borrowed("hello"))]
+            )
         );
     }
 
@@ -830,7 +847,10 @@ mod value_no_continuation {
     fn trans_escaped_comment_marker_not_consumed() {
         assert_eq!(
             value_impl(r##"hello"#"world; a"##).unwrap(),
-            ("; a", vec![Event::Value(r##"hello"#"world"##)])
+            (
+                "; a",
+                vec![Event::Value(Cow::Borrowed(r##"hello"#"world"##))]
+            )
         );
     }
 
@@ -838,7 +858,7 @@ mod value_no_continuation {
     fn complex_test() {
         assert_eq!(
             value_impl(r#"value";";ahhhh"#).unwrap(),
-            (";ahhhh", vec![Event::Value(r#"value";""#)])
+            (";ahhhh", vec![Event::Value(Cow::Borrowed(r#"value";""#))])
         );
     }
 
@@ -857,9 +877,9 @@ mod value_continuation {
         assert_eq!(
             value_impl("hello\\\nworld").unwrap(),
             fully_consumed(vec![
-                Event::ValueNotDone("hello"),
-                Event::Newline("\n"),
-                Event::ValueDone("world")
+                Event::ValueNotDone(Cow::Borrowed("hello")),
+                Event::Newline(Cow::Borrowed("\n")),
+                Event::ValueDone(Cow::Borrowed("world"))
             ])
         );
     }
@@ -869,9 +889,9 @@ mod value_continuation {
         assert_eq!(
             value_impl("hello\\\n        world").unwrap(),
             fully_consumed(vec![
-                Event::ValueNotDone("hello"),
-                Event::Newline("\n"),
-                Event::ValueDone("        world")
+                Event::ValueNotDone(Cow::Borrowed("hello")),
+                Event::Newline(Cow::Borrowed("\n")),
+                Event::ValueDone(Cow::Borrowed("        world"))
             ])
         )
     }
@@ -883,11 +903,11 @@ mod value_continuation {
             (
                 " # \"b\t ; c",
                 vec![
-                    Event::ValueNotDone(r#"1    "\""#),
-                    Event::Newline("\n"),
-                    Event::ValueNotDone(r#"a ; e "\""#),
-                    Event::Newline("\n"),
-                    Event::ValueDone("d"),
+                    Event::ValueNotDone(Cow::Borrowed(r#"1    "\""#)),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::ValueNotDone(Cow::Borrowed(r#"a ; e "\""#)),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::ValueDone(Cow::Borrowed("d")),
                 ]
             )
         );
@@ -900,9 +920,9 @@ mod value_continuation {
             (
                 ";a",
                 vec![
-                    Event::ValueNotDone("\""),
-                    Event::Newline("\n"),
-                    Event::ValueDone(";\""),
+                    Event::ValueNotDone(Cow::Borrowed("\"")),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::ValueDone(Cow::Borrowed(";\"")),
                 ]
             )
         )
@@ -935,22 +955,22 @@ mod section {
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("hello", None),
                 events: vec![
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
-                    Event::Key("a"),
-                    Event::Whitespace(" "),
-                    Event::Whitespace(" "),
-                    Event::Value("b"),
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
-                    Event::Key("c"),
-                    Event::Value(""),
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
-                    Event::Key("d"),
-                    Event::Whitespace(" "),
-                    Event::Whitespace(" "),
-                    Event::Value("\"lol\"")
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
+                    Event::Key(Cow::Borrowed("a")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Value(Cow::Borrowed("b")),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
+                    Event::Key(Cow::Borrowed("c")),
+                    Event::Value(Cow::Borrowed("")),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
+                    Event::Key(Cow::Borrowed("d")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Value(Cow::Borrowed("\"lol\""))
                 ]
             })
         )
@@ -962,7 +982,11 @@ mod section {
             section("[hello] c").unwrap(),
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("hello", None),
-                events: vec![Event::Whitespace(" "), Event::Key("c"), Event::Value("")]
+                events: vec![
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Key(Cow::Borrowed("c")),
+                    Event::Value(Cow::Borrowed(""))
+                ]
             })
         );
     }
@@ -979,40 +1003,40 @@ mod section {
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("hello", None),
                 events: vec![
-                    Event::Whitespace(" "),
+                    Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Comment(ParsedComment {
                         comment_tag: ';',
-                        comment: " commentA",
+                        comment: Cow::Borrowed(" commentA"),
                     }),
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
-                    Event::Key("a"),
-                    Event::Whitespace(" "),
-                    Event::Whitespace(" "),
-                    Event::Value("b"),
-                    Event::Whitespace(" "),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
+                    Event::Key(Cow::Borrowed("a")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Value(Cow::Borrowed("b")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Comment(ParsedComment {
                         comment_tag: '#',
-                        comment: " commentB",
+                        comment: Cow::Borrowed(" commentB"),
                     }),
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
                     Event::Comment(ParsedComment {
                         comment_tag: ';',
-                        comment: " commentC",
+                        comment: Cow::Borrowed(" commentC"),
                     }),
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
                     Event::Comment(ParsedComment {
                         comment_tag: ';',
-                        comment: " commentD",
+                        comment: Cow::Borrowed(" commentD"),
                     }),
-                    Event::Newline("\n"),
-                    Event::Whitespace("            "),
-                    Event::Key("c"),
-                    Event::Whitespace(" "),
-                    Event::Whitespace(" "),
-                    Event::Value("d"),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::Whitespace(Cow::Borrowed("            ")),
+                    Event::Key(Cow::Borrowed("c")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Value(Cow::Borrowed("d")),
                 ]
             })
         );
@@ -1026,19 +1050,19 @@ mod section {
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("section", None),
                 events: vec![
-                    Event::Whitespace(" "),
-                    Event::Key("a"),
-                    Event::Whitespace(" "),
-                    Event::Whitespace(" "),
-                    Event::ValueNotDone(r#"1    "\""#),
-                    Event::Newline("\n"),
-                    Event::ValueNotDone(r#"a ; e "\""#),
-                    Event::Newline("\n"),
-                    Event::ValueDone("d"),
-                    Event::Whitespace(" "),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Key(Cow::Borrowed("a")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::ValueNotDone(Cow::Borrowed(r#"1    "\""#)),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::ValueNotDone(Cow::Borrowed(r#"a ; e "\""#)),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::ValueDone(Cow::Borrowed("d")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Comment(ParsedComment {
                         comment_tag: '#',
-                        comment: " \"b\t ; c"
+                        comment: Cow::Borrowed(" \"b\t ; c")
                     })
                 ]
             })
@@ -1052,15 +1076,15 @@ mod section {
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("section", (" ", "a")),
                 events: vec![
-                    Event::Whitespace(" "),
-                    Event::Key("b"),
-                    Event::Whitespace(" "),
-                    Event::ValueNotDone("\""),
-                    Event::Newline("\n"),
-                    Event::ValueDone(";\""),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Key(Cow::Borrowed("b")),
+                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::ValueNotDone(Cow::Borrowed("\"")),
+                    Event::Newline(Cow::Borrowed("\n")),
+                    Event::ValueDone(Cow::Borrowed(";\"")),
                     Event::Comment(ParsedComment {
                         comment_tag: ';',
-                        comment: "a",
+                        comment: Cow::Borrowed("a"),
                     })
                 ]
             })
@@ -1074,12 +1098,12 @@ mod section {
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("s", None),
                 events: vec![
-                    Event::Key("hello"),
-                    Event::Whitespace("             "),
-                    Event::Value(""),
+                    Event::Key(Cow::Borrowed("hello")),
+                    Event::Whitespace(Cow::Borrowed("             ")),
+                    Event::Value(Cow::Borrowed("")),
                     Event::Comment(ParsedComment {
                         comment_tag: '#',
-                        comment: "world",
+                        comment: Cow::Borrowed("world"),
                     }),
                 ]
             })
