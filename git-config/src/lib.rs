@@ -1,5 +1,3 @@
-#![forbid(unsafe_code)]
-
 // mod de;
 pub mod config;
 mod error;

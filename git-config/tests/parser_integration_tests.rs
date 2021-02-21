@@ -1,15 +1,18 @@
+use std::borrow::Cow;
+
 use serde_git_config::parser::{parse_from_str, Event, ParsedSectionHeader};
 
 fn gen_section_header(
     name: &str,
     subsection: impl Into<Option<(&'static str, &'static str)>>,
 ) -> Event<'_> {
+    let name = Cow::Borrowed(name);
     Event::SectionHeader(
         if let Some((separator, subsection_name)) = subsection.into() {
             ParsedSectionHeader {
                 name,
-                separator: Some(separator),
-                subsection_name: Some(subsection_name),
+                separator: Some(Cow::Borrowed(separator)),
+                subsection_name: Some(Cow::Borrowed(subsection_name)),
             }
         } else {
             ParsedSectionHeader {
@@ -21,19 +24,19 @@ fn gen_section_header(
     )
 }
 fn name(name: &'static str) -> Event<'static> {
-    Event::Key(name)
+    Event::Key(Cow::Borrowed(name))
 }
 
 fn value(value: &'static str) -> Event<'static> {
-    Event::Value(value)
+    Event::Value(Cow::Borrowed(value))
 }
 
 fn newline() -> Event<'static> {
-    Event::Newline("\n")
+    Event::Newline(Cow::Borrowed("\n"))
 }
 
 fn whitespace(value: &'static str) -> Event<'static> {
-    Event::Whitespace(value)
+    Event::Whitespace(Cow::Borrowed(value))
 }
 
 #[test]
