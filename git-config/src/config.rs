@@ -2,15 +2,6 @@ use std::collections::HashMap;
 
 use crate::parser::{parse_from_str, Event, Parser, ParserError};
 
-#[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-struct SectionId(usize);
-
-#[derive(Debug, PartialEq, Eq)]
-enum LookupTreeNode<'a> {
-    Terminal(Vec<SectionId>),
-    NonTerminal(HashMap<&'a str, Vec<SectionId>>),
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum GitConfigError<'a> {
     /// The requested section does not exist.
@@ -21,13 +12,40 @@ pub enum GitConfigError<'a> {
     KeyDoesNotExist(&'a str),
 }
 
+// TODO: Use linked list for section ordering?
+
 /// High level `git-config` reader and writer.
 pub struct GitConfig<'a> {
+    /// The list of events that occur before an actual section. Since a
+    /// `git-config` file prohibits global values, this vec is limited to only
+    /// comment, newline, and whitespace events.
     front_matter_events: Vec<Event<'a>>,
     section_lookup_tree: HashMap<&'a str, Vec<LookupTreeNode<'a>>>,
+    /// SectionId to section mapping. The value of this HashMap contains actual
+    /// events
     sections: HashMap<SectionId, Vec<Event<'a>>>,
     section_header_separators: HashMap<SectionId, Option<&'a str>>,
     section_id_counter: usize,
+}
+
+/// The section ID is a monotonically increasing ID used to refer to sections,
+/// and implies ordering between sections in the original `git-config` file,
+/// such that a section with id 0 always is before a section with id 1.
+///
+/// We need to use a section id because `git-config` permits sections with
+/// identical names. As a result, we can't simply use the section name as a key
+/// in a map.
+///
+/// This id guaranteed to be unique, but not guaranteed to be compact. In other
+/// words, it's possible that a section may have an ID of 3 but the next section
+/// has an ID of 5.
+#[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
+struct SectionId(usize);
+
+#[derive(Debug, PartialEq, Eq)]
+enum LookupTreeNode<'a> {
+    Terminal(Vec<SectionId>),
+    NonTerminal(HashMap<&'a str, Vec<SectionId>>),
 }
 
 impl<'a> GitConfig<'a> {
@@ -209,6 +227,73 @@ impl<'a> GitConfig<'a> {
         latest_value.ok_or(GitConfigError::KeyDoesNotExist(key))
     }
 
+    /// Returns a mutable reference to an uninterpreted value given a section,
+    /// an optional subsection and key.
+    ///
+    /// Note that `git-config` follows a "last-one-wins" rule for single values.
+    /// If multiple sections contain the same key, then the last section's last
+    /// key's value will be returned.
+    ///
+    /// Concretely, if you have the following config:
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// [core]
+    ///     a = c
+    ///     a = d
+    /// ```
+    ///
+    /// Then this function will return `d`, since the last valid config value is
+    /// `a = d`, so this entry "wins":
+    ///
+    /// ```
+    /// # use serde_git_config::config::{GitConfig, GitConfigError};
+    /// # let mut git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// let mut mut_value = git_config.get_raw_value_mut("core", None, "a")?;
+    /// assert_eq!(mut_value, &mut "d");
+    /// *mut_value = "hello";
+    /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok("hello"));
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// Consider [`Self::get_raw_multi_value`] if you want to get all values for
+    /// a given key.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in the requested
+    /// section and subsection, or if the section and subsection do not exist.
+    pub fn get_raw_value_mut<'b>(
+        &mut self,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<&mut &'a str, GitConfigError<'b>> {
+        // Note: cannot wrap around the raw_multi_value method because we need
+        // to guarantee that the highest section id is used (so that we follow
+        // the "last one wins" resolution strategy by `git-config`).
+        let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
+
+        // section_id is guaranteed to exist in self.sections, else we have a
+        // violated invariant.
+        let events = self.sections.get_mut(&section_id).unwrap();
+        let mut found_key = false;
+        let mut latest_value = None;
+        for event in events {
+            match event {
+                Event::Key(event_key) if *event_key == key => found_key = true,
+                Event::Value(v) if found_key => {
+                    found_key = false;
+                    latest_value = Some(v);
+                }
+                _ => (),
+            }
+        }
+
+        latest_value.ok_or(GitConfigError::KeyDoesNotExist(key))
+    }
+
     fn get_section_id_by_name_and_subname<'b>(
         &'a self,
         section_name: &'b str,
@@ -255,34 +340,96 @@ impl<'a> GitConfig<'a> {
         subsection_name: Option<&'b str>,
         key: &'b str,
     ) -> Result<Vec<&'a str>, GitConfigError<'b>> {
-        let values = self
-            .get_section_ids_by_name_and_subname(section_name, subsection_name)?
-            .iter()
-            .map(|section_id| {
-                let mut found_key = false;
-                let mut events = vec![];
-                // section_id is guaranteed to exist in self.sections, else we have a
-                // violated invariant.
-                for event in self.sections.get(section_id).unwrap() {
-                    match event {
-                        Event::Key(event_key) if *event_key == key => found_key = true,
-                        Event::Value(v) if found_key => {
-                            events.push(*v);
-                            found_key = false;
-                        }
-                        _ => (),
+        let mut values = vec![];
+        for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
+            let mut found_key = false;
+            // section_id is guaranteed to exist in self.sections, else we
+            // have a violated invariant.
+            for event in self.sections.get(section_id).unwrap() {
+                match event {
+                    Event::Key(event_key) if *event_key == key => found_key = true,
+                    Event::Value(v) if found_key => {
+                        values.push(*v);
+                        found_key = false;
                     }
+                    _ => (),
                 }
+            }
+        }
 
-                if events.is_empty() {
-                    Err(GitConfigError::KeyDoesNotExist(key))
+        if values.is_empty() {
+            Err(GitConfigError::KeyDoesNotExist(key))
+        } else {
+            Ok(values)
+        }
+    }
+
+    /// Returns mutable references to all uninterpreted values given a section,
+    /// an optional subsection and key. If you have the following config:
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// [core]
+    ///     a = c
+    ///     a = d
+    /// ```
+    ///
+    /// Attempting to get all values of `a` yields the following:
+    ///
+    /// ```
+    /// # use serde_git_config::config::{GitConfig, GitConfigError};
+    /// # let mut git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// assert_eq!(git_config.get_raw_multi_value("core", None, "a")?, vec!["b", "c", "d"]);
+    /// for value in git_config.get_raw_multi_value_mut("core", None, "a")? {
+    ///     *value = "g";
+    ///}
+    /// assert_eq!(git_config.get_raw_multi_value("core", None, "a")?, vec!["g", "g", "g"]);
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// Consider [`Self::get_raw_value`] if you want to get the resolved single
+    /// value for a given key, if your key does not support multi-valued values.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in any requested
+    /// section and subsection, or if no instance of the section and subsections
+    /// exist.
+    pub fn get_raw_multi_value_mut<'b>(
+        &mut self,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<Vec<&mut &'a str>, GitConfigError<'b>> {
+        let section_ids = self
+            .get_section_ids_by_name_and_subname(section_name, subsection_name)?
+            .to_vec();
+        let mut found_key = false;
+        let values: Vec<&mut &'a str> = self
+            .sections
+            .iter_mut()
+            .filter_map(|(k, v)| {
+                if section_ids.contains(k) {
+                    let mut values = vec![];
+                    for event in v {
+                        match event {
+                            Event::Key(event_key) if *event_key == key => found_key = true,
+                            Event::Value(v) if found_key => {
+                                values.push(v);
+                                found_key = false;
+                            }
+                            _ => (),
+                        }
+                    }
+                    Some(values)
                 } else {
-                    Ok(events)
+                    None
                 }
             })
-            .filter_map(Result::ok)
             .flatten()
-            .collect::<Vec<_>>();
+            .collect();
+
         if values.is_empty() {
             Err(GitConfigError::KeyDoesNotExist(key))
         } else {

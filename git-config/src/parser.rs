@@ -1,6 +1,6 @@
-//! This module handles parsing a `git-config`. Generally speaking, you want to
-//! use a higher abstraction such as [`GitConfig`] unless you have some explicit
-//! reason to work with events instead.
+//! This module handles parsing a `git-config` file. Generally speaking, you
+//! want to use a higher abstraction such as [`GitConfig`] unless you have some
+//! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
 //! `parse_from_*` function variants. These will return a [`Parser`] on success,
