@@ -1,7 +1,7 @@
-use crate::parser::{parse_from_str, Event, Parser, ParserError};
+use crate::parser::{parse_from_str, Event, ParsedSectionHeader, Parser, ParserError};
 use serde::Serialize;
-use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
+use std::{borrow::Cow, fmt::Display};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum GitConfigError<'a> {
@@ -23,7 +23,7 @@ pub struct GitConfig<'a> {
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events
     sections: HashMap<SectionId, Vec<Event<'a>>>,
-    section_header_separators: HashMap<SectionId, Option<Cow<'a, str>>>,
+    section_headers: HashMap<SectionId, ParsedSectionHeader<'a>>,
     section_id_counter: usize,
     section_order: VecDeque<SectionId>,
 }
@@ -60,7 +60,7 @@ impl<'a> GitConfig<'a> {
             front_matter_events: vec![],
             sections: HashMap::new(),
             section_lookup_tree: HashMap::new(),
-            section_header_separators: HashMap::new(),
+            section_headers: HashMap::new(),
             section_id_counter: 0,
             section_order: VecDeque::new(),
         };
@@ -80,16 +80,16 @@ impl<'a> GitConfig<'a> {
                     );
 
                     // Initialize new section
-                    let (name, subname) = (header.name, header.subsection_name);
-                    maybe_section = Some(vec![]);
-                    current_section_name = Some(name);
-                    current_subsection_name = subname;
                     // We need to store the new, current id counter, so don't
                     // use new_section_id here and use the already incremented
                     // section id value.
                     new_self
-                        .section_header_separators
-                        .insert(SectionId(new_self.section_id_counter), header.separator);
+                        .section_headers
+                        .insert(SectionId(new_self.section_id_counter), header.clone());
+                    let (name, subname) = (header.name, header.subsection_name);
+                    maybe_section = Some(vec![]);
+                    current_section_name = Some(name);
+                    current_subsection_name = subname;
                 }
                 e @ Event::Key(_)
                 | e @ Event::Value(_)
@@ -513,6 +513,62 @@ impl<'a> GitConfig<'a> {
         *value = new_value.into();
         Ok(())
     }
+
+    /// Sets a multivar in a given section, optional subsection, and key value.
+    ///
+    /// This internally zips together the new values and the existing values.
+    /// As a result, if more new values are provided than the current amount of
+    /// multivars, then the latter values are not applied. If there are less
+    /// new values than old ones then the remaining old values are unmodified.
+    ///
+    /// If you need finer control over which values of the multivar are set,
+    /// consider using [`get_raw_multi_value_mut`].
+    ///
+    /// todo: examples and errors
+    ///
+    /// [`get_raw_multi_value_mut`]: Self::get_raw_multi_value_mut
+    pub fn set_raw_multi_value<'b>(
+        &mut self,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+        new_values: Vec<Cow<'a, str>>,
+    ) -> Result<(), GitConfigError<'b>> {
+        let values = self.get_raw_multi_value_mut(section_name, subsection_name, key)?;
+        for (old, new) in values.into_iter().zip(new_values) {
+            *old = new;
+        }
+        Ok(())
+    }
+}
+
+impl Display for GitConfig<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for front_matter in &self.front_matter_events {
+            front_matter.fmt(f)?;
+        }
+
+        for section_id in &self.section_order {
+            self.section_headers.get(section_id).unwrap().fmt(f)?;
+            let mut found_key = false;
+            for event in self.sections.get(section_id).unwrap() {
+                match event {
+                    Event::Key(k) => {
+                        found_key = true;
+                        k.fmt(f)?;
+                    }
+                    Event::Whitespace(w) if found_key => {
+                        found_key = false;
+                        w.fmt(f)?;
+                        write!(f, "=")?;
+                    }
+                    e => e.fmt(f)?,
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -522,7 +578,7 @@ mod from_parser {
     #[test]
     fn parse_empty() {
         let config = GitConfig::from_str("").unwrap();
-        assert!(config.section_header_separators.is_empty());
+        assert!(config.section_headers.is_empty());
         assert_eq!(config.section_id_counter, 0);
         assert!(config.section_lookup_tree.is_empty());
         assert!(config.sections.is_empty());
@@ -534,10 +590,17 @@ mod from_parser {
         let mut config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
-            map.insert(SectionId(0), None);
+            map.insert(
+                SectionId(0),
+                ParsedSectionHeader {
+                    name: "core".into(),
+                    separator: None,
+                    subsection_name: None,
+                },
+            );
             map
         };
-        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_headers, expected_separators);
         assert_eq!(config.section_id_counter, 1);
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
@@ -572,10 +635,17 @@ mod from_parser {
         let mut config = GitConfig::from_str("[core.subsec]\na=b\nc=d").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
-            map.insert(SectionId(0), Some(Cow::Borrowed(".")));
+            map.insert(
+                SectionId(0),
+                ParsedSectionHeader {
+                    name: "core".into(),
+                    separator: Some(".".into()),
+                    subsection_name: Some("subsec".into()),
+                },
+            );
             map
         };
-        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_headers, expected_separators);
         assert_eq!(config.section_id_counter, 1);
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
@@ -612,11 +682,25 @@ mod from_parser {
         let mut config = GitConfig::from_str("[core]\na=b\nc=d\n[other]e=f").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
-            map.insert(SectionId(0), None);
-            map.insert(SectionId(1), None);
+            map.insert(
+                SectionId(0),
+                ParsedSectionHeader {
+                    name: "core".into(),
+                    separator: None,
+                    subsection_name: None,
+                },
+            );
+            map.insert(
+                SectionId(1),
+                ParsedSectionHeader {
+                    name: "other".into(),
+                    separator: None,
+                    subsection_name: None,
+                },
+            );
             map
         };
-        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_headers, expected_separators);
         assert_eq!(config.section_id_counter, 2);
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
@@ -666,11 +750,25 @@ mod from_parser {
         let mut config = GitConfig::from_str("[core]\na=b\nc=d\n[core]e=f").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
-            map.insert(SectionId(0), None);
-            map.insert(SectionId(1), None);
+            map.insert(
+                SectionId(0),
+                ParsedSectionHeader {
+                    name: "core".into(),
+                    separator: None,
+                    subsection_name: None,
+                },
+            );
+            map.insert(
+                SectionId(1),
+                ParsedSectionHeader {
+                    name: "core".into(),
+                    separator: None,
+                    subsection_name: None,
+                },
+            );
             map
         };
-        assert_eq!(config.section_header_separators, expected_separators);
+        assert_eq!(config.section_headers, expected_separators);
         assert_eq!(config.section_id_counter, 2);
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
@@ -866,5 +964,43 @@ mod get_raw_multi_value {
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec!["b", "c", "d"]
         );
+    }
+}
+
+#[cfg(test)]
+mod display {
+    use super::*;
+
+    #[test]
+    fn can_reconstruct_empty_config() {
+        let config = r#"
+
+        "#;
+        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+    }
+
+    #[test]
+    fn can_reconstruct_non_empty_config() {
+        let config = r#"[user]
+        email = code@eddie.sh
+        name = Edward Shen
+[core]
+        autocrlf = input
+[push]
+        default = simple
+[commit]
+        gpgsign = true
+[gpg]
+        program = gpg
+[url "ssh://git@github.com/"]
+        insteadOf = "github://"
+[url "ssh://git@git.eddie.sh/edward/"]
+        insteadOf = "gitea://"
+[pull]
+        ff = only
+[init]
+        defaultBranch = master"#;
+
+        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
     }
 }

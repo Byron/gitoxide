@@ -17,7 +17,9 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::sequence::delimited;
 use nom::IResult;
 use nom::{branch::alt, multi::many0};
-use std::{borrow::Cow, iter::FusedIterator};
+use std::borrow::{Borrow, Cow};
+use std::fmt::Display;
+use std::iter::FusedIterator;
 
 /// Syntactic events that occurs in the config.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -38,7 +40,8 @@ pub enum Event<'a> {
     Value(Cow<'a, str>),
     /// Represents any token used to signify a new line character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
-    /// sequence.
+    /// sequence. Multiple newlines (such as `\n\n`) will be merged as a single
+    /// newline event.
     Newline(Cow<'a, str>),
     /// Any value that isn't completed. This occurs when the value is continued
     /// onto the next line. A Newline event is guaranteed after, followed by
@@ -51,6 +54,21 @@ pub enum Event<'a> {
     Whitespace(Cow<'a, str>),
 }
 
+impl Display for Event<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Comment(e) => e.fmt(f),
+            Self::SectionHeader(e) => e.fmt(f),
+            Self::Key(e) => e.fmt(f),
+            Self::Value(e) => e.fmt(f),
+            Self::Newline(e) => e.fmt(f),
+            Self::ValueNotDone(e) => e.fmt(f),
+            Self::ValueDone(e) => e.fmt(f),
+            Self::Whitespace(e) => e.fmt(f),
+        }
+    }
+}
+
 /// A parsed section containing the header and the section events.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSection<'a> {
@@ -58,6 +76,15 @@ pub struct ParsedSection<'a> {
     pub section_header: ParsedSectionHeader<'a>,
     /// The syntactic events found in this section.
     pub events: Vec<Event<'a>>,
+}
+impl Display for ParsedSection<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.section_header)?;
+        for event in &self.events {
+            event.fmt(f)?;
+        }
+        Ok(())
+    }
 }
 
 /// A parsed section header, containing a name and optionally a subsection name.
@@ -75,6 +102,23 @@ pub struct ParsedSectionHeader<'a> {
     pub subsection_name: Option<Cow<'a, str>>,
 }
 
+impl Display for ParsedSectionHeader<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}", self.name)?;
+
+        if let Some(v) = &self.separator {
+            v.fmt(f)?;
+            let subsection_name = self.subsection_name.as_ref().unwrap();
+            match v.borrow() {
+                "." => subsection_name.fmt(f)?,
+                _ => write!(f, "\"{}\"", subsection_name)?,
+            }
+        }
+
+        write!(f, "]")
+    }
+}
+
 /// A parsed comment event containing the comment marker and comment.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedComment<'a> {
@@ -82,6 +126,13 @@ pub struct ParsedComment<'a> {
     pub comment_tag: char,
     /// The parsed comment.
     pub comment: Cow<'a, str>,
+}
+
+impl Display for ParsedComment<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.comment_tag.fmt(f)?;
+        self.comment.fmt(f)
+    }
 }
 
 /// The various parsing failure reasons.
@@ -275,7 +326,7 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// [`FromStr`]: std::str::FromStr
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Parser<'a> {
-    init_comments: Vec<ParsedComment<'a>>,
+    frontmatter: Vec<Event<'a>>,
     sections: Vec<ParsedSection<'a>>,
 }
 
@@ -296,20 +347,21 @@ impl<'a> Parser<'a> {
         parse_from_str(s)
     }
 
-    /// Returns the leading comments (any comments before a section) from the
-    /// parser. Consider [`Parser::take_leading_comments`] if you need an owned
-    /// copy only once. If that function was called, then this will always
-    /// return an empty slice.
-    pub fn leading_comments(&self) -> &[ParsedComment<'a>] {
-        &self.init_comments
+    /// Returns the leading events (any comments, whitespace, or newlines before
+    /// a section) from the parser. Consider [`Parser::take_frontmatter`] if
+    /// you need an owned copy only once. If that function was called, then this
+    /// will always return an empty slice.
+    pub fn frontmatter(&self) -> &[Event<'a>] {
+        &self.frontmatter
     }
 
-    /// Takes the leading comments (any comments before a section) from the
-    /// parser. Subsequent calls will return an empty vec. Consider
-    /// [`Parser::leading_comments`] if you only need a reference to the comments.
-    pub fn take_leading_comments(&mut self) -> Vec<ParsedComment<'a>> {
+    /// Takes the leading events (any comments, whitespace, or newlines before
+    /// a section) from the parser. Subsequent calls will return an empty vec.
+    /// Consider [`Parser::frontmatter`] if you only need a reference to the
+    /// frontmatter
+    pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
         let mut to_return = vec![];
-        std::mem::swap(&mut self.init_comments, &mut to_return);
+        std::mem::swap(&mut self.frontmatter, &mut to_return);
         to_return
     }
 
@@ -345,10 +397,7 @@ impl<'a> Parser<'a> {
                     .chain(section.events)
             })
             .flatten();
-        self.init_comments
-            .into_iter()
-            .map(Event::Comment)
-            .chain(section_iter)
+        self.frontmatter.into_iter().chain(section_iter)
     }
 }
 
@@ -363,7 +412,13 @@ impl<'a> Parser<'a> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
-    let (i, comments) = many0(comment)(input)?;
+    let (i, frontmatter) = many0(alt((
+        map(comment, |comment| Event::Comment(comment)),
+        map(take_spaces, |whitespace| {
+            Event::Whitespace(whitespace.into())
+        }),
+        map(take_newline, |newline| Event::Newline(newline.into())),
+    )))(input)?;
     let (i, sections) = many0(section)(i)?;
 
     if !i.is_empty() {
@@ -371,7 +426,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
     }
 
     Ok(Parser {
-        init_comments: comments,
+        frontmatter,
         sections,
     })
 }
