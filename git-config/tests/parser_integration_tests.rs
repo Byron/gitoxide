@@ -170,3 +170,25 @@ fn personal_config() {
 fn parse_empty() {
     assert_eq!(parse_from_str("").unwrap().into_vec(), vec![]);
 }
+
+#[test]
+fn parse_whitespace() {
+    assert_eq!(
+        parse_from_str("\n   \n \n").unwrap().into_vec(),
+        vec![
+            newline(),
+            whitespace("   "),
+            newline(),
+            whitespace(" "),
+            newline(),
+        ]
+    )
+}
+
+#[test]
+fn newline_events_are_merged() {
+    assert_eq!(
+        parse_from_str("\n\n\n\n\n").unwrap().into_vec(),
+        vec![Event::Newline("\n\n\n\n\n".into())]
+    );
+}
