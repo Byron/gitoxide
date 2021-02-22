@@ -172,22 +172,29 @@ impl<'a> GitConfig<'a> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
-    /// Note that `git-config` follows a "last-one-wins" rule for single values.
-    /// If multiple sections contain the same key, then the last section's last
-    /// key's value will be returned.
+    /// # Multivar behavior
     ///
-    /// Concretely, if you have the following config:
+    /// `git` is flexible enough to allow users to set a key multiple times in
+    /// any number of identically named sections. When this is the case, the key
+    /// is known as a "multivar". In this case, `get_raw_value` follows the
+    /// "last one wins" approach that `git-config` internally uses for multivar
+    /// resolution.
+    ///
+    /// Concretely, the following config has a multivar, `a`, with the values
+    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
+    /// `f g h`.
     ///
     /// ```text
     /// [core]
     ///     a = b
-    /// [core]
     ///     a = c
+    /// [core]
     ///     a = d
+    ///     e = f g h
     /// ```
     ///
-    /// Then this function will return `d`, since the last valid config value is
-    /// `a = d`, so this entry "wins":
+    /// Calling this function to fetch `a` with the above config will return
+    /// `d`, since the last valid config value is `a = d`:
     ///
     /// ```
     /// # use serde_git_config::config::GitConfig;
@@ -196,8 +203,8 @@ impl<'a> GitConfig<'a> {
     /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::from("d")));
     /// ```
     ///
-    /// Consider [`Self::get_raw_multi_value`] if you want to get all values for
-    /// a given key.
+    /// Consider [`Self::get_raw_multi_value`] if you want to get all values of
+    /// a multivar instead.
     ///
     /// # Errors
     ///
@@ -236,22 +243,29 @@ impl<'a> GitConfig<'a> {
     /// Returns a mutable reference to an uninterpreted value given a section,
     /// an optional subsection and key.
     ///
-    /// Note that `git-config` follows a "last-one-wins" rule for single values.
-    /// If multiple sections contain the same key, then the last section's last
-    /// key's value will be returned.
+    /// # Multivar behavior
     ///
-    /// Concretely, if you have the following config:
+    /// `git` is flexible enough to allow users to set a key multiple times in
+    /// any number of identically named sections. When this is the case, the key
+    /// is known as a "multivar". In this case, `get_raw_value` follows the
+    /// "last one wins" approach that `git-config` internally uses for multivar
+    /// resolution.
+    ///
+    /// Concretely, the following config has a multivar, `a`, with the values
+    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
+    /// `f g h`.
     ///
     /// ```text
     /// [core]
     ///     a = b
-    /// [core]
     ///     a = c
+    /// [core]
     ///     a = d
+    ///     e = f g h
     /// ```
     ///
-    /// Then this function will return `d`, since the last valid config value is
-    /// `a = d`, so this entry "wins":
+    /// Calling this function to fetch `a` with the above config will return
+    /// `d`, since the last valid config value is `a = d`:
     ///
     /// ```
     /// # use serde_git_config::config::{GitConfig, GitConfigError};
@@ -264,8 +278,8 @@ impl<'a> GitConfig<'a> {
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
-    /// Consider [`Self::get_raw_multi_value`] if you want to get all values for
-    /// a given key.
+    /// Consider [`Self::get_raw_multi_value_mut`] if you want to get mutable
+    /// references to all values of a multivar instead.
     ///
     /// # Errors
     ///
