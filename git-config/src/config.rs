@@ -1,5 +1,5 @@
 use crate::parser::{parse_from_str, Event, ParsedSectionHeader, Parser, ParserError};
-use serde::Serialize;
+use serde::{ser::SerializeMap, Serialize, Serializer};
 use std::collections::{HashMap, VecDeque};
 use std::{borrow::Cow, fmt::Display};
 
@@ -50,7 +50,9 @@ enum LookupTreeNode<'a> {
 
 impl<'a> GitConfig<'a> {
     /// Convenience constructor. Attempts to parse the provided string into a
-    /// [`GitConfig`].
+    /// [`GitConfig`]. See [`parse_from_str`] for more information.
+    ///
+    /// [`parse_from_str`]: crate::parser::parse_from_str
     pub fn from_str(str: &'a str) -> Result<Self, ParserError> {
         Ok(Self::from_parser(parse_from_str(str)?))
     }
@@ -94,7 +96,8 @@ impl<'a> GitConfig<'a> {
                 e @ Event::Key(_)
                 | e @ Event::Value(_)
                 | e @ Event::ValueNotDone(_)
-                | e @ Event::ValueDone(_) => maybe_section
+                | e @ Event::ValueDone(_)
+                | e @ Event::KeyValueSeparator => maybe_section
                     .as_mut()
                     .expect("Got a section-only event before a section")
                     .push(e),
@@ -542,6 +545,12 @@ impl<'a> GitConfig<'a> {
     }
 }
 
+impl<'a> From<Parser<'a>> for GitConfig<'a> {
+    fn from(p: Parser<'a>) -> Self {
+        Self::from_parser(p)
+    }
+}
+
 impl Display for GitConfig<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for front_matter in &self.front_matter_events {
@@ -550,26 +559,16 @@ impl Display for GitConfig<'_> {
 
         for section_id in &self.section_order {
             self.section_headers.get(section_id).unwrap().fmt(f)?;
-            let mut found_key = false;
             for event in self.sections.get(section_id).unwrap() {
-                match event {
-                    Event::Key(k) => {
-                        found_key = true;
-                        k.fmt(f)?;
-                    }
-                    Event::Whitespace(w) if found_key => {
-                        found_key = false;
-                        w.fmt(f)?;
-                        write!(f, "=")?;
-                    }
-                    e => e.fmt(f)?,
-                }
+                event.fmt(f)?;
             }
         }
 
         Ok(())
     }
 }
+
+// todo impl serialize
 
 #[cfg(test)]
 mod from_parser {
@@ -618,9 +617,11 @@ mod from_parser {
                 vec![
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("a")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("b")),
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("c")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("d")),
                 ],
             );
@@ -665,9 +666,11 @@ mod from_parser {
                 vec![
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("a")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("b")),
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("c")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("d")),
                 ],
             );
@@ -722,9 +725,11 @@ mod from_parser {
                 vec![
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("a")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("b")),
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("c")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("d")),
                     Event::Newline(Cow::Borrowed("\n")),
                 ],
@@ -733,6 +738,7 @@ mod from_parser {
                 SectionId(1),
                 vec![
                     Event::Key(Cow::Borrowed("e")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("f")),
                 ],
             );
@@ -786,9 +792,11 @@ mod from_parser {
                 vec![
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("a")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("b")),
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::Key(Cow::Borrowed("c")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("d")),
                     Event::Newline(Cow::Borrowed("\n")),
                 ],
@@ -797,6 +805,7 @@ mod from_parser {
                 SectionId(1),
                 vec![
                     Event::Key(Cow::Borrowed("e")),
+                    Event::KeyValueSeparator,
                     Event::Value(Cow::Borrowed("f")),
                 ],
             );
@@ -983,7 +992,6 @@ mod display {
     fn can_reconstruct_non_empty_config() {
         let config = r#"[user]
         email = code@eddie.sh
-        name = Edward Shen
 [core]
         autocrlf = input
 [push]
@@ -996,6 +1004,37 @@ mod display {
         insteadOf = "github://"
 [url "ssh://git@git.eddie.sh/edward/"]
         insteadOf = "gitea://"
+[pull]
+        ff = only
+[init]
+        defaultBranch = master"#;
+
+        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+    }
+
+    #[test]
+    fn can_reconstruct_configs_with_implicits() {
+        let config = r#"[user]
+        email
+        name
+[core]
+        autocrlf
+[push]
+        default
+[commit]
+        gpgsign"#;
+
+        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+    }
+
+    #[test]
+    fn can_reconstruct_configs_without_whitespace_in_middle() {
+        let config = r#"[core]
+        autocrlf=input
+[push]
+        default=simple
+[commit]
+        gpgsign=true
 [pull]
         ff = only
 [init]

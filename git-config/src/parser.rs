@@ -21,7 +21,17 @@ use std::borrow::{Borrow, Cow};
 use std::fmt::Display;
 use std::iter::FusedIterator;
 
-/// Syntactic events that occurs in the config.
+/// Syntactic events that occurs in the config. Despite all these variants
+/// holding a [`Cow`] instead over a [`&str`], the parser will only emit
+/// borrowed `Cow` variants.
+///
+/// The `Cow` smart pointer is used here for ease of inserting events in a
+/// middle of an Event iterator. This is used, for example, in the [`GitConfig`]
+/// struct when adding values.
+///
+/// [`Cow`]: std::borrow::Cow
+/// [`&str`]: std::str
+/// [`GitConfig`]: crate::config::GitConfig
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
     /// A comment with a comment tag and the comment itself. Note that the
@@ -52,6 +62,10 @@ pub enum Event<'a> {
     /// A continuous section of insignificant whitespace. Values with internal
     /// spaces will not be separated by this event.
     Whitespace(Cow<'a, str>),
+    /// This event is emitted when the parser counters a valid `=` character
+    /// separating the key and value. This event is necessary as it eliminates
+    /// the ambiguity for whitespace events between a key and value event.
+    KeyValueSeparator,
 }
 
 impl Display for Event<'_> {
@@ -65,6 +79,7 @@ impl Display for Event<'_> {
             Self::ValueNotDone(e) => e.fmt(f),
             Self::ValueDone(e) => e.fmt(f),
             Self::Whitespace(e) => e.fmt(f),
+            Self::KeyValueSeparator => write!(f, "="),
         }
     }
 }
@@ -77,6 +92,7 @@ pub struct ParsedSection<'a> {
     /// The syntactic events found in this section.
     pub events: Vec<Event<'a>>,
 }
+
 impl Display for ParsedSection<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.section_header)?;
@@ -240,6 +256,7 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// Event::Whitespace(Cow::Borrowed("  ")),
 /// Event::Key(Cow::Borrowed("autocrlf")),
 /// Event::Whitespace(Cow::Borrowed(" ")),
+/// Event::KeyValueSeparator,
 /// Event::Whitespace(Cow::Borrowed(" ")),
 /// Event::Value(Cow::Borrowed("input")),
 /// # ]);
@@ -249,6 +266,37 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// events actually refer to the whitespace between the name and value and the
 /// equal sign. So if the config instead had `autocrlf=input`, those whitespace
 /// events would no longer be present.
+///
+/// ## `KeyValueSeparator` event is not guaranteed to emit
+///
+/// Consider the following `git-config` example:
+///
+/// ```text
+/// [core]
+///   autocrlf
+/// ```
+///
+/// This is a valid config with a `autocrlf` key having an implicit `true`
+/// value. This means that there is not a `=` separating the key and value,
+/// which means that the corresponding event won't appear either:
+///
+/// ```
+/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use std::borrow::Cow;
+/// # let section_header = ParsedSectionHeader {
+/// #   name: Cow::Borrowed("core"),
+/// #   separator: None,
+/// #   subsection_name: None,
+/// # };
+/// # let section_data = "[core]\n  autocrlf";
+/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// Event::SectionHeader(section_header),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Whitespace(Cow::Borrowed("  ")),
+/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Value(Cow::Borrowed("")),
+/// # ]);
+/// ```
 ///
 /// ## Quoted values are not unquoted
 ///
@@ -279,9 +327,11 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n")),
 /// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"true"""#)),
 /// Event::Newline(Cow::Borrowed("\n")),
 /// Event::Key(Cow::Borrowed("filemode")),
+/// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"fa"lse""#)),
 /// # ]);
 /// ```
@@ -314,6 +364,7 @@ impl<'a> From<nom::Err<NomError<&'a str>>> for ParserError<'a> {
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n")),
 /// Event::Key(Cow::Borrowed("file")),
+/// Event::KeyValueSeparator,
 /// Event::ValueNotDone(Cow::Borrowed("a")),
 /// Event::Newline(Cow::Borrowed("\n")),
 /// Event::ValueDone(Cow::Borrowed("    c")),
@@ -550,15 +601,15 @@ fn config_name<'a>(i: &'a str) -> IResult<&'a str, &'a str> {
 
 fn config_value<'a>(i: &'a str) -> IResult<&'a str, Vec<Event<'a>>> {
     if let (i, Some(_)) = opt(char('='))(i)? {
+        let mut events = vec![];
+        events.push(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
         let (i, values) = value_impl(i)?;
         if let Some(whitespace) = whitespace {
-            let mut events = vec![Event::Whitespace(Cow::Borrowed(whitespace))];
-            events.extend(values);
-            Ok((i, events))
-        } else {
-            Ok((i, values))
+            events.push(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
+        events.extend(values);
+        Ok((i, events))
     } else {
         Ok((i, vec![Event::Value(Cow::Borrowed(""))]))
     }
@@ -834,6 +885,37 @@ mod config_name {
 }
 
 #[cfg(test)]
+mod section_body {
+    use super::*;
+
+    #[test]
+    fn whitespace_is_not_ambigious() {
+        assert_eq!(
+            section_body("a =b").unwrap().1,
+            (
+                "a",
+                vec![
+                    Event::Whitespace(Cow::from(" ")),
+                    Event::KeyValueSeparator,
+                    Event::Value(Cow::from("b"))
+                ]
+            )
+        );
+        assert_eq!(
+            section_body("a= b").unwrap().1,
+            (
+                "a",
+                vec![
+                    Event::KeyValueSeparator,
+                    Event::Whitespace(Cow::from(" ")),
+                    Event::Value(Cow::from("b"))
+                ]
+            )
+        );
+    }
+}
+
+#[cfg(test)]
 mod value_no_continuation {
     use super::*;
 
@@ -841,7 +923,7 @@ mod value_no_continuation {
     fn no_comment() {
         assert_eq!(
             value_impl("hello").unwrap(),
-            fully_consumed(vec![Event::Value(Cow::Borrowed("hello"))])
+            fully_consumed(vec![Event::Value(Cow::from("hello"))])
         );
     }
 
@@ -849,7 +931,7 @@ mod value_no_continuation {
     fn no_comment_newline() {
         assert_eq!(
             value_impl("hello\na").unwrap(),
-            ("\na", vec![Event::Value(Cow::Borrowed("hello"))])
+            ("\na", vec![Event::Value(Cow::from("hello"))])
         )
     }
 
@@ -857,7 +939,7 @@ mod value_no_continuation {
     fn semicolon_comment_not_consumed() {
         assert_eq!(
             value_impl("hello;world").unwrap(),
-            (";world", vec![Event::Value(Cow::Borrowed("hello")),])
+            (";world", vec![Event::Value(Cow::from("hello")),])
         );
     }
 
@@ -865,7 +947,7 @@ mod value_no_continuation {
     fn octothorpe_comment_not_consumed() {
         assert_eq!(
             value_impl("hello#world").unwrap(),
-            ("#world", vec![Event::Value(Cow::Borrowed("hello")),])
+            ("#world", vec![Event::Value(Cow::from("hello")),])
         );
     }
 
@@ -873,10 +955,7 @@ mod value_no_continuation {
     fn values_with_extraneous_whitespace_without_comment() {
         assert_eq!(
             value_impl("hello               ").unwrap(),
-            (
-                "               ",
-                vec![Event::Value(Cow::Borrowed("hello"))]
-            )
+            ("               ", vec![Event::Value(Cow::from("hello"))])
         );
     }
 
@@ -886,14 +965,14 @@ mod value_no_continuation {
             value_impl("hello             #world").unwrap(),
             (
                 "             #world",
-                vec![Event::Value(Cow::Borrowed("hello"))]
+                vec![Event::Value(Cow::from("hello"))]
             )
         );
         assert_eq!(
             value_impl("hello             ;world").unwrap(),
             (
                 "             ;world",
-                vec![Event::Value(Cow::Borrowed("hello"))]
+                vec![Event::Value(Cow::from("hello"))]
             )
         );
     }
@@ -902,10 +981,7 @@ mod value_no_continuation {
     fn trans_escaped_comment_marker_not_consumed() {
         assert_eq!(
             value_impl(r##"hello"#"world; a"##).unwrap(),
-            (
-                "; a",
-                vec![Event::Value(Cow::Borrowed(r##"hello"#"world"##))]
-            )
+            ("; a", vec![Event::Value(Cow::from(r##"hello"#"world"##))])
         );
     }
 
@@ -913,7 +989,7 @@ mod value_no_continuation {
     fn complex_test() {
         assert_eq!(
             value_impl(r#"value";";ahhhh"#).unwrap(),
-            (";ahhhh", vec![Event::Value(Cow::Borrowed(r#"value";""#))])
+            (";ahhhh", vec![Event::Value(Cow::from(r#"value";""#))])
         );
     }
 
@@ -932,9 +1008,9 @@ mod value_continuation {
         assert_eq!(
             value_impl("hello\\\nworld").unwrap(),
             fully_consumed(vec![
-                Event::ValueNotDone(Cow::Borrowed("hello")),
-                Event::Newline(Cow::Borrowed("\n")),
-                Event::ValueDone(Cow::Borrowed("world"))
+                Event::ValueNotDone(Cow::from("hello")),
+                Event::Newline(Cow::from("\n")),
+                Event::ValueDone(Cow::from("world"))
             ])
         );
     }
@@ -944,9 +1020,9 @@ mod value_continuation {
         assert_eq!(
             value_impl("hello\\\n        world").unwrap(),
             fully_consumed(vec![
-                Event::ValueNotDone(Cow::Borrowed("hello")),
-                Event::Newline(Cow::Borrowed("\n")),
-                Event::ValueDone(Cow::Borrowed("        world"))
+                Event::ValueNotDone(Cow::from("hello")),
+                Event::Newline(Cow::from("\n")),
+                Event::ValueDone(Cow::from("        world"))
             ])
         )
     }
@@ -958,11 +1034,11 @@ mod value_continuation {
             (
                 " # \"b\t ; c",
                 vec![
-                    Event::ValueNotDone(Cow::Borrowed(r#"1    "\""#)),
-                    Event::Newline(Cow::Borrowed("\n")),
-                    Event::ValueNotDone(Cow::Borrowed(r#"a ; e "\""#)),
-                    Event::Newline(Cow::Borrowed("\n")),
-                    Event::ValueDone(Cow::Borrowed("d")),
+                    Event::ValueNotDone(Cow::from(r#"1    "\""#)),
+                    Event::Newline(Cow::from("\n")),
+                    Event::ValueNotDone(Cow::from(r#"a ; e "\""#)),
+                    Event::Newline(Cow::from("\n")),
+                    Event::ValueDone(Cow::from("d")),
                 ]
             )
         );
@@ -975,9 +1051,9 @@ mod value_continuation {
             (
                 ";a",
                 vec![
-                    Event::ValueNotDone(Cow::Borrowed("\"")),
-                    Event::Newline(Cow::Borrowed("\n")),
-                    Event::ValueDone(Cow::Borrowed(";\"")),
+                    Event::ValueNotDone(Cow::from("\"")),
+                    Event::Newline(Cow::from("\n")),
+                    Event::ValueDone(Cow::from(";\"")),
                 ]
             )
         )
@@ -1010,10 +1086,11 @@ mod section {
             fully_consumed(ParsedSection {
                 section_header: gen_section_header("hello", None),
                 events: vec![
-                    Event::Newline(Cow::Borrowed("\n")),
-                    Event::Whitespace(Cow::Borrowed("            ")),
-                    Event::Key(Cow::Borrowed("a")),
-                    Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::Newline(Cow::from("\n")),
+                    Event::Whitespace(Cow::from("            ")),
+                    Event::Key(Cow::from("a")),
+                    Event::Whitespace(Cow::from(" ")),
+                    Event::KeyValueSeparator,
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Value(Cow::Borrowed("b")),
                     Event::Newline(Cow::Borrowed("\n")),
@@ -1024,6 +1101,7 @@ mod section {
                     Event::Whitespace(Cow::Borrowed("            ")),
                     Event::Key(Cow::Borrowed("d")),
                     Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::KeyValueSeparator,
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Value(Cow::Borrowed("\"lol\""))
                 ]
@@ -1067,6 +1145,7 @@ mod section {
                     Event::Whitespace(Cow::Borrowed("            ")),
                     Event::Key(Cow::Borrowed("a")),
                     Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::KeyValueSeparator,
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Value(Cow::Borrowed("b")),
                     Event::Whitespace(Cow::Borrowed(" ")),
@@ -1090,6 +1169,7 @@ mod section {
                     Event::Whitespace(Cow::Borrowed("            ")),
                     Event::Key(Cow::Borrowed("c")),
                     Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::KeyValueSeparator,
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Value(Cow::Borrowed("d")),
                 ]
@@ -1108,6 +1188,7 @@ mod section {
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Key(Cow::Borrowed("a")),
                     Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::KeyValueSeparator,
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::ValueNotDone(Cow::Borrowed(r#"1    "\""#)),
                     Event::Newline(Cow::Borrowed("\n")),
@@ -1134,6 +1215,7 @@ mod section {
                     Event::Whitespace(Cow::Borrowed(" ")),
                     Event::Key(Cow::Borrowed("b")),
                     Event::Whitespace(Cow::Borrowed(" ")),
+                    Event::KeyValueSeparator,
                     Event::ValueNotDone(Cow::Borrowed("\"")),
                     Event::Newline(Cow::Borrowed("\n")),
                     Event::ValueDone(Cow::Borrowed(";\"")),
