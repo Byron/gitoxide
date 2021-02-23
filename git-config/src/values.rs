@@ -16,9 +16,9 @@ impl<'a> Value<'a> {
             return Self::Boolean(bool);
         }
 
-        // if let Ok(int) = Integer::from_str(s) {
-        //     return Self::Integer(int);
-        // }
+        if let Ok(int) = Integer::from_str(s) {
+            return Self::Integer(int);
+        }
 
         // if let Ok(color) = Color::from_str(s) {
         //     return Self::Color(color);
@@ -31,6 +31,8 @@ impl<'a> Value<'a> {
         Self::Other(Cow::Owned(s))
     }
 }
+
+// todo display for value
 
 impl Serialize for Value<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -45,8 +47,6 @@ impl Serialize for Value<'_> {
         }
     }
 }
-
-// todo display for value
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Boolean<'a> {
@@ -108,9 +108,10 @@ impl<'a> TrueVariant<'a> {
 
 impl Display for TrueVariant<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Explicit(v) => write!(f, "{}", v),
-            Self::Implicit => write!(f, "(implicit)"),
+        if let Self::Explicit(v) = self {
+            write!(f, "{}", v)
+        } else {
+            Ok(())
         }
     }
 }
@@ -163,12 +164,6 @@ pub struct Integer {
     suffix: Option<IntegerSuffix>,
 }
 
-impl Integer {
-    pub fn from_str(s: &str) -> Result<Self, ()> {
-        todo!()
-    }
-}
-
 impl Display for Integer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)?;
@@ -193,7 +188,34 @@ impl Serialize for Integer {
     }
 }
 
-// todo from str for integer
+impl FromStr for Integer {
+    type Err = String;
+
+    fn from_str<'a>(s: &'a str) -> Result<Self, Self::Err> {
+        if let Ok(value) = s.parse() {
+            return Ok(Self {
+                value,
+                suffix: None,
+            });
+        }
+
+        // Assume we have a prefix at this point.
+
+        if s.len() <= 1 {
+            return Err(s.to_string());
+        }
+
+        let (number, suffix) = s.split_at(s.len() - 1);
+        if let (Ok(value), Ok(suffix)) = (number.parse(), suffix.parse()) {
+            Ok(Self {
+                value,
+                suffix: Some(suffix),
+            })
+        } else {
+            Err(s.to_string())
+        }
+    }
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 enum IntegerSuffix {
@@ -248,7 +270,7 @@ impl FromStr for IntegerSuffix {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Color {
     foreground: Option<ColorValue>,
     background: Option<ColorValue>,
@@ -283,7 +305,54 @@ impl Serialize for Color {
     }
 }
 
-// impl fromstr for color
+pub enum FromColorErr {
+    TooManyColorValues,
+    InvalidColorOption,
+}
+
+impl FromStr for Color {
+    type Err = FromColorErr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        enum ColorItem {
+            Value(ColorValue),
+            Attr(ColorAttribute),
+        }
+
+        let items = s.split_whitespace().filter_map(|s| {
+            if s.is_empty() {
+                return None;
+            }
+
+            Some(
+                ColorValue::from_str(s)
+                    .map(ColorItem::Value)
+                    .or_else(|_| ColorAttribute::from_str(s).map(ColorItem::Attr)),
+            )
+        });
+
+        let mut new_self = Self::default();
+        for item in items {
+            match item {
+                Ok(item) => match item {
+                    ColorItem::Value(v) => {
+                        if new_self.foreground.is_none() {
+                            new_self.foreground = Some(v);
+                        } else if new_self.background.is_none() {
+                            new_self.background = Some(v);
+                        } else {
+                            return Err(FromColorErr::TooManyColorValues);
+                        }
+                    }
+                    ColorItem::Attr(a) => new_self.attributes.push(a),
+                },
+                Err(_) => return Err(FromColorErr::InvalidColorOption),
+            }
+        }
+
+        Ok(new_self)
+    }
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 enum ColorValue {
@@ -482,5 +551,67 @@ impl FromStr for ColorAttribute {
             "strike" if inverted => Ok(Self::NoStrike),
             _ => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod integer {
+    use super::*;
+
+    #[test]
+    fn from_str_no_suffix() {
+        assert_eq!(
+            Integer::from_str("1").unwrap(),
+            Integer {
+                value: 1,
+                suffix: None
+            }
+        );
+
+        assert_eq!(
+            Integer::from_str("-1").unwrap(),
+            Integer {
+                value: -1,
+                suffix: None
+            }
+        );
+    }
+
+    #[test]
+    fn from_str_with_suffix() {
+        assert_eq!(
+            Integer::from_str("1k").unwrap(),
+            Integer {
+                value: 1,
+                suffix: Some(IntegerSuffix::Kilo),
+            }
+        );
+
+        assert_eq!(
+            Integer::from_str("1m").unwrap(),
+            Integer {
+                value: 1,
+                suffix: Some(IntegerSuffix::Mega),
+            }
+        );
+
+        assert_eq!(
+            Integer::from_str("1g").unwrap(),
+            Integer {
+                value: 1,
+                suffix: Some(IntegerSuffix::Giga),
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_from_str() {
+        assert!(Integer::from_str("").is_err());
+        assert!(Integer::from_str("-").is_err());
+        assert!(Integer::from_str("k").is_err());
+        assert!(Integer::from_str("m").is_err());
+        assert!(Integer::from_str("g").is_err());
+        assert!(Integer::from_str("123123123123123123123123").is_err());
+        assert!(Integer::from_str("gg").is_err());
     }
 }

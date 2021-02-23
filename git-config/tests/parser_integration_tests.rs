@@ -39,12 +39,16 @@ fn whitespace(value: &'static str) -> Event<'static> {
     Event::Whitespace(Cow::Borrowed(value))
 }
 
+fn separator() -> Event<'static> {
+    Event::KeyValueSeparator
+}
+
 #[test]
 #[rustfmt::skip]
 fn personal_config() {
     let config = r#"[user]
         email = code@eddie.sh
-        name = Edward Shen
+        name = Foo Bar
 [core]
         autocrlf = input
 [push]
@@ -73,6 +77,7 @@ fn personal_config() {
             whitespace("        "),
             name("email"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("code@eddie.sh"),
             newline(),
@@ -80,8 +85,9 @@ fn personal_config() {
             whitespace("        "),
             name("name"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
-            value("Edward Shen"),
+            value("Foo Bar"),
             newline(),
 
             gen_section_header("core", None),
@@ -90,6 +96,7 @@ fn personal_config() {
             whitespace("        "),
             name("autocrlf"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("input"),
             newline(),
@@ -100,6 +107,7 @@ fn personal_config() {
             whitespace("        "),
             name("default"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("simple"),
             newline(),
@@ -110,6 +118,7 @@ fn personal_config() {
             whitespace("        "),
             name("gpgsign"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("true"),
             newline(),
@@ -120,6 +129,7 @@ fn personal_config() {
             whitespace("        "),
             name("program"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("gpg"),
             newline(),
@@ -130,6 +140,7 @@ fn personal_config() {
             whitespace("        "),
             name("insteadOf"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("\"github://\""),
             newline(),
@@ -140,6 +151,7 @@ fn personal_config() {
             whitespace("        "),
             name("insteadOf"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("\"gitea://\""),
             newline(),
@@ -150,6 +162,7 @@ fn personal_config() {
             whitespace("        "),
             name("ff"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("only"),
             newline(),
@@ -160,6 +173,7 @@ fn personal_config() {
             whitespace("        "),
             name("defaultBranch"),
             whitespace(" "),
+            separator(),
             whitespace(" "),
             value("master"),
         ]
