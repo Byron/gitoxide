@@ -416,9 +416,17 @@ impl FromStr for ColorValue {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bright = s.starts_with("bright");
+        let mut s = s;
+        let bright = if s.starts_with("bright") {
+            s = &s[6..];
+            true
+        } else {
+            false
+        };
+
         match s {
-            "normal" => return Ok(Self::Normal),
+            "normal" if !bright => return Ok(Self::Normal),
+            "normal" if bright => return Err(()),
             "black" if !bright => return Ok(Self::Black),
             "black" if bright => return Ok(Self::BrightBlack),
             "red" if !bright => return Ok(Self::Red),
@@ -450,9 +458,9 @@ impl FromStr for ColorValue {
                     u8::from_str_radix(&s[2..4], 16),
                     u8::from_str_radix(&s[4..], 16),
                 );
-                match rgb {
-                    (Ok(r), Ok(g), Ok(b)) => return Ok(Self::Rgb(r, g, b)),
-                    _ => (),
+
+                if let (Ok(r), Ok(g), Ok(b)) = rgb {
+                    return Ok(Self::Rgb(r, g, b));
                 }
             }
         }
@@ -618,6 +626,91 @@ mod integer {
         assert!(Integer::from_str("g").is_err());
         assert!(Integer::from_str("123123123123123123123123").is_err());
         assert!(Integer::from_str("gg").is_err());
+    }
+}
+
+#[cfg(test)]
+mod color_value {
+    use super::ColorValue;
+    use std::str::FromStr;
+
+    #[test]
+    fn non_bright() {
+        assert_eq!(ColorValue::from_str("normal"), Ok(ColorValue::Normal));
+        assert_eq!(ColorValue::from_str("black"), Ok(ColorValue::Black));
+        assert_eq!(ColorValue::from_str("red"), Ok(ColorValue::Red));
+        assert_eq!(ColorValue::from_str("green"), Ok(ColorValue::Green));
+        assert_eq!(ColorValue::from_str("yellow"), Ok(ColorValue::Yellow));
+        assert_eq!(ColorValue::from_str("blue"), Ok(ColorValue::Blue));
+        assert_eq!(ColorValue::from_str("magenta"), Ok(ColorValue::Magenta));
+        assert_eq!(ColorValue::from_str("cyan"), Ok(ColorValue::Cyan));
+        assert_eq!(ColorValue::from_str("white"), Ok(ColorValue::White));
+    }
+
+    #[test]
+    fn bright() {
+        assert_eq!(
+            ColorValue::from_str("brightblack"),
+            Ok(ColorValue::BrightBlack)
+        );
+        assert_eq!(ColorValue::from_str("brightred"), Ok(ColorValue::BrightRed));
+        assert_eq!(
+            ColorValue::from_str("brightgreen"),
+            Ok(ColorValue::BrightGreen)
+        );
+        assert_eq!(
+            ColorValue::from_str("brightyellow"),
+            Ok(ColorValue::BrightYellow)
+        );
+        assert_eq!(
+            ColorValue::from_str("brightblue"),
+            Ok(ColorValue::BrightBlue)
+        );
+        assert_eq!(
+            ColorValue::from_str("brightmagenta"),
+            Ok(ColorValue::BrightMagenta)
+        );
+        assert_eq!(
+            ColorValue::from_str("brightcyan"),
+            Ok(ColorValue::BrightCyan)
+        );
+        assert_eq!(
+            ColorValue::from_str("brightwhite"),
+            Ok(ColorValue::BrightWhite)
+        );
+    }
+
+    #[test]
+    fn ansi() {
+        assert_eq!(ColorValue::from_str("255"), Ok(ColorValue::Ansi(255)));
+        assert_eq!(ColorValue::from_str("0"), Ok(ColorValue::Ansi(0)));
+    }
+
+    #[test]
+    fn hex() {
+        assert_eq!(
+            ColorValue::from_str("#ff0010"),
+            Ok(ColorValue::Rgb(255, 0, 16))
+        );
+        assert_eq!(
+            ColorValue::from_str("#ffffff"),
+            Ok(ColorValue::Rgb(255, 255, 255))
+        );
+        assert_eq!(
+            ColorValue::from_str("#000000"),
+            Ok(ColorValue::Rgb(0, 0, 0))
+        );
+    }
+
+    #[test]
+    fn invalid() {
+        assert!(ColorValue::from_str("brightnormal").is_err());
+        assert!(ColorValue::from_str("").is_err());
+        assert!(ColorValue::from_str("bright").is_err());
+        assert!(ColorValue::from_str("256").is_err());
+        assert!(ColorValue::from_str("#").is_err());
+        assert!(ColorValue::from_str("#fff").is_err());
+        assert!(ColorValue::from_str("#gggggg").is_err());
     }
 }
 
