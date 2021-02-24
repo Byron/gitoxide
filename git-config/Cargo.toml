@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 serde = "1.0"
 nom = "6"
+bstr = "0.2.15"
 
 [dev-dependencies]
 serde_derive = "1.0"
