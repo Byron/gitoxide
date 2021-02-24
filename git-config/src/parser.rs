@@ -472,7 +472,7 @@ impl<'a> Parser<'a> {
 /// data succeeding valid `git-config` data.
 pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
     let (i, frontmatter) = many0(alt((
-        map(comment, |comment| Event::Comment(comment)),
+        map(comment, Event::Comment),
         map(take_spaces, |whitespace| {
             Event::Whitespace(Cow::Borrowed(whitespace.into()))
         }),
@@ -492,7 +492,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
     })
 }
 
-fn comment<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedComment<'a>> {
+fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(|c| c == b'\n')(i)?;
     Ok((
@@ -504,7 +504,7 @@ fn comment<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedComment<'a>> {
     ))
 }
 
-fn section<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSection<'a>> {
+fn section(i: &[u8]) -> IResult<&[u8], ParsedSection> {
     let (i, section_header) = section_header(i)?;
     let (i, items) = many0(alt((
         map(take_spaces, |space| {
@@ -529,7 +529,7 @@ fn section<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSection<'a>> {
     ))
 }
 
-fn section_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSectionHeader<'a>> {
+fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
@@ -581,7 +581,7 @@ fn section_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSectionHeader<'a>>
     ))
 }
 
-fn section_body<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], Vec<Event<'a>>)> {
+fn section_body(i: &[u8]) -> IResult<&[u8], (&[u8], Vec<Event>)> {
     // maybe need to check for [ here
     let (i, name) = config_name(i)?;
     let (i, whitespace) = opt(take_spaces)(i)?;
@@ -597,7 +597,7 @@ fn section_body<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], Vec<Event<'a>>)
 
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
-fn config_name<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
+fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
     if i.is_empty() {
         return Err(nom::Err::Error(NomError {
             input: i,
@@ -615,7 +615,7 @@ fn config_name<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
     take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)
 }
 
-fn config_value<'a>(i: &'a [u8]) -> IResult<&'a [u8], Vec<Event<'a>>> {
+fn config_value(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
     if let (i, Some(_)) = opt(char('='))(i)? {
         let mut events = vec![];
         events.push(Event::KeyValueSeparator);
@@ -631,7 +631,7 @@ fn config_value<'a>(i: &'a [u8]) -> IResult<&'a [u8], Vec<Event<'a>>> {
     }
 }
 
-fn value_impl<'a>(i: &'a [u8]) -> IResult<&'a [u8], Vec<Event<'a>>> {
+fn value_impl(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
     let mut events = vec![];
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
@@ -722,11 +722,11 @@ fn value_impl<'a>(i: &'a [u8]) -> IResult<&'a [u8], Vec<Event<'a>>> {
     Ok((i, events))
 }
 
-fn take_spaces<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
+fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
     take_common(i, |c| (c as char).is_ascii() && is_space(c))
 }
 
-fn take_newline<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
+fn take_newline(i: &[u8]) -> IResult<&[u8], &[u8]> {
     take_common(i, is_char_newline)
 }
 
@@ -734,7 +734,7 @@ fn is_char_newline(c: u8) -> bool {
     (c as char).is_ascii() && is_newline(c)
 }
 
-fn take_common<'a, F: Fn(u8) -> bool>(i: &'a [u8], f: F) -> IResult<&'a [u8], &'a [u8]> {
+fn take_common<F: Fn(u8) -> bool>(i: &[u8], f: F) -> IResult<&[u8], &[u8]> {
     let (i, v) = take_while(f)(i)?;
     if v.is_empty() {
         Err(nom::Err::Error(NomError {

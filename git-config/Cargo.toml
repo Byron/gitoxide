@@ -1,5 +1,5 @@
 [package]
-name = "serde-git-config"
+name = "git-config"
 version = "0.1.0"
 authors = ["Edward Shen <code@eddie.sh>"]
 edition = "2018"
@@ -7,9 +7,16 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = "1.0"
 nom = "6"
 bstr = "0.2.15"
 
+[dependencies.serde_crate]
+package = "serde"
+optional = true
+version = " 1"
+
 [dev-dependencies]
 serde_derive = "1.0"
+
+[features]
+serde = ["serde_crate"]

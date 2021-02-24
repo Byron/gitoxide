@@ -336,7 +336,7 @@ impl<'a> GitConfig<'a> {
             .map(|vec| {
                 // get_section_ids_by_name_and_subname is guaranteed to return
                 // a non-empty vec, so max can never return empty.
-                *vec.into_iter().max().unwrap()
+                *vec.iter().max().unwrap()
             })
     }
 
@@ -517,7 +517,7 @@ impl<'a> GitConfig<'a> {
         if let Some(subsect_name) = subsection_name {
             for node in section_ids {
                 if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
-                    maybe_ids = subsection_lookup.get(subsect_name.into());
+                    maybe_ids = subsection_lookup.get(subsect_name);
                     break;
                 }
             }
