@@ -391,9 +391,9 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     /// Attempt to zero-copy parse the provided `&str`. On success, returns a
-    /// [`Parser`] that provides methods to accessing leading comments and sections
-    /// of a `git-config` file and can be converted into an iterator of [`Event`]
-    /// for higher level processing.
+    /// [`Parser`] that provides methods to accessing leading comments and
+    /// sections of a `git-config` file and can be converted into an iterator of
+    /// [`Event`] for higher level processing.
     ///
     /// This function is identical to [`parse_from_str`].
     ///
@@ -404,6 +404,20 @@ impl<'a> Parser<'a> {
     /// data succeeding valid `git-config` data.
     pub fn from_str(s: &'a str) -> Result<Self, ParserError> {
         parse_from_str(s)
+    }
+
+    /// Attempt to zero-copy parse the provided bytes. On success, returns a
+    /// [`Parser`] that provides methods to accessing leading comments and
+    /// sections of a `git-config` file and can be converted into an iterator of
+    /// [`Event`] for higher level processing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the string provided is not a valid `git-config`.
+    /// This generally is due to either invalid names or if there's extraneous
+    /// data succeeding valid `git-config` data.
+    pub fn from_bytes(s: impl Into<&'a BStr>) -> Result<Self, ParserError<'a>> {
+        parse_from_bytes(s.into())
     }
 
     /// Returns the leading events (any comments, whitespace, or newlines before
@@ -471,6 +485,20 @@ impl<'a> Parser<'a> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
+    parse_from_bytes(input.as_bytes())
+}
+
+/// Attempt to zero-copy parse the provided bytes. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
+pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
         map(take_spaces, |whitespace| {
