@@ -67,3 +67,7 @@ pub(crate) fn comment(comment_tag: char, comment: &'static str) -> ParsedComment
         comment: Cow::Borrowed(comment.into()),
     }
 }
+
+pub(crate) fn fully_consumed<T>(t: T) -> (&'static [u8], T) {
+    (&[], t)
+}

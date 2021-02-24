@@ -775,14 +775,9 @@ fn take_common<F: Fn(u8) -> bool>(i: &[u8], f: F) -> IResult<&[u8], &[u8]> {
 }
 
 #[cfg(test)]
-fn fully_consumed<T>(t: T) -> (&'static [u8], T) {
-    (&[], t)
-}
-
-#[cfg(test)]
 mod comments {
     use super::*;
-    use crate::test_util::comment as parsed_comment;
+    use crate::test_util::{comment as parsed_comment, fully_consumed};
 
     #[test]
     fn semicolon() {
@@ -812,7 +807,7 @@ mod comments {
 #[cfg(test)]
 mod section_headers {
     use super::*;
-    use crate::test_util::section_header as parsed_section_header;
+    use crate::test_util::{fully_consumed, section_header as parsed_section_header};
 
     #[test]
     fn no_subsection() {
@@ -884,6 +879,7 @@ mod section_headers {
 #[cfg(test)]
 mod config_name {
     use super::*;
+    use crate::test_util::fully_consumed;
 
     #[test]
     fn just_name() {
@@ -940,7 +936,7 @@ mod section_body {
 #[cfg(test)]
 mod value_no_continuation {
     use super::*;
-    use crate::test_util::value_event;
+    use crate::test_util::{fully_consumed, value_event};
 
     #[test]
     fn no_comment() {
@@ -1019,7 +1015,7 @@ mod value_no_continuation {
 #[cfg(test)]
 mod value_continuation {
     use super::*;
-    use crate::test_util::{newline_event, value_done_event, value_not_done_event};
+    use crate::test_util::{fully_consumed, newline_event, value_done_event, value_not_done_event};
 
     #[test]
     fn simple_continuation() {
@@ -1082,8 +1078,9 @@ mod value_continuation {
 mod section {
     use super::*;
     use crate::test_util::{
-        comment_event, name_event, newline_event, section_header as parsed_section_header,
-        value_done_event, value_event, value_not_done_event, whitespace_event,
+        comment_event, fully_consumed, name_event, newline_event,
+        section_header as parsed_section_header, value_done_event, value_event,
+        value_not_done_event, whitespace_event,
     };
 
     #[test]
