@@ -2,41 +2,51 @@ use std::borrow::Cow;
 
 use serde_git_config::parser::{parse_from_str, Event, ParsedSectionHeader};
 
-fn gen_section_header(
+pub fn section_header_event(
     name: &str,
     subsection: impl Into<Option<(&'static str, &'static str)>>,
 ) -> Event<'_> {
-    let name = Cow::Borrowed(name);
-    Event::SectionHeader(
-        if let Some((separator, subsection_name)) = subsection.into() {
-            ParsedSectionHeader {
-                name,
-                separator: Some(Cow::Borrowed(separator)),
-                subsection_name: Some(Cow::Borrowed(subsection_name)),
-            }
-        } else {
-            ParsedSectionHeader {
-                name,
-                separator: None,
-                subsection_name: None,
-            }
-        },
-    )
+    Event::SectionHeader(section_header(name, subsection))
 }
+
+pub fn section_header(
+    name: &str,
+    subsection: impl Into<Option<(&'static str, &'static str)>>,
+) -> ParsedSectionHeader<'_> {
+    let name = Cow::Borrowed(name.into());
+    if let Some((separator, subsection_name)) = subsection.into() {
+        ParsedSectionHeader {
+            name,
+            separator: Some(Cow::Borrowed(separator.into())),
+            subsection_name: Some(Cow::Borrowed(subsection_name.into())),
+        }
+    } else {
+        ParsedSectionHeader {
+            name,
+            separator: None,
+            subsection_name: None,
+        }
+    }
+}
+
 fn name(name: &'static str) -> Event<'static> {
-    Event::Key(Cow::Borrowed(name))
+    Event::Key(Cow::Borrowed(name.into()))
 }
 
 fn value(value: &'static str) -> Event<'static> {
-    Event::Value(Cow::Borrowed(value))
+    Event::Value(Cow::Borrowed(value.into()))
 }
 
 fn newline() -> Event<'static> {
-    Event::Newline(Cow::Borrowed("\n"))
+    newline_custom("\n")
+}
+
+fn newline_custom(value: &'static str) -> Event<'static> {
+    Event::Newline(Cow::Borrowed(value.into()))
 }
 
 fn whitespace(value: &'static str) -> Event<'static> {
-    Event::Whitespace(Cow::Borrowed(value))
+    Event::Whitespace(Cow::Borrowed(value.into()))
 }
 
 fn separator() -> Event<'static> {
@@ -71,7 +81,7 @@ fn personal_config() {
             .unwrap()
             .into_vec(),
         vec![
-            gen_section_header("user", None),
+            section_header_event("user", None),
             newline(),
 
             whitespace("        "),
@@ -90,7 +100,7 @@ fn personal_config() {
             value("Foo Bar"),
             newline(),
 
-            gen_section_header("core", None),
+            section_header_event("core", None),
             newline(),
 
             whitespace("        "),
@@ -101,7 +111,7 @@ fn personal_config() {
             value("input"),
             newline(),
 
-            gen_section_header("push", None),
+            section_header_event("push", None),
             newline(),
 
             whitespace("        "),
@@ -112,7 +122,7 @@ fn personal_config() {
             value("simple"),
             newline(),
 
-            gen_section_header("commit", None),
+            section_header_event("commit", None),
             newline(),
 
             whitespace("        "),
@@ -123,7 +133,7 @@ fn personal_config() {
             value("true"),
             newline(),
 
-            gen_section_header("gpg", None),
+            section_header_event("gpg", None),
             newline(),
 
             whitespace("        "),
@@ -134,7 +144,7 @@ fn personal_config() {
             value("gpg"),
             newline(),
 
-            gen_section_header("url", (" ", "ssh://git@github.com/")),
+            section_header_event("url", (" ", "ssh://git@github.com/")),
             newline(),
 
             whitespace("        "),
@@ -145,7 +155,7 @@ fn personal_config() {
             value("\"github://\""),
             newline(),
 
-            gen_section_header("url", (" ", "ssh://git@git.eddie.sh/edward/")),
+            section_header_event("url", (" ", "ssh://git@git.eddie.sh/edward/")),
             newline(),
 
             whitespace("        "),
@@ -156,7 +166,7 @@ fn personal_config() {
             value("\"gitea://\""),
             newline(),
 
-            gen_section_header("pull", None),
+            section_header_event("pull", None),
             newline(),
 
             whitespace("        "),
@@ -167,7 +177,7 @@ fn personal_config() {
             value("only"),
             newline(),
 
-            gen_section_header("init", None),
+            section_header_event("init", None),
             newline(),
 
             whitespace("        "),
@@ -203,6 +213,6 @@ fn parse_whitespace() {
 fn newline_events_are_merged() {
     assert_eq!(
         parse_from_str("\n\n\n\n\n").unwrap().into_vec(),
-        vec![Event::Newline("\n\n\n\n\n".into())]
+        vec![newline_custom("\n\n\n\n\n")]
     );
 }

@@ -10,3 +10,6 @@ pub mod values;
 // pub use de::{from_str, Deserializer};
 pub use error::{Error, Result};
 // pub use ser::{to_string, Serializer};
+
+#[cfg(test)]
+pub mod test_util;
