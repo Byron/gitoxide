@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nom = "6"
+nom = { version = "6", default_features = false, features = ["std"] }
 bstr = "0.2.15"
 
 [dependencies.serde_crate]
