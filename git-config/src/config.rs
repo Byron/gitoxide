@@ -200,7 +200,7 @@ impl<'a> GitConfig<'a> {
     /// `d`, since the last valid config value is `a = d`:
     ///
     /// ```
-    /// # use serde_git_config::config::GitConfig;
+    /// # use git_config::config::GitConfig;
     /// # use std::borrow::Cow;
     /// # let git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".into())));
@@ -275,7 +275,7 @@ impl<'a> GitConfig<'a> {
     /// `d`, since the last valid config value is `a = d`:
     ///
     /// ```
-    /// # use serde_git_config::config::{GitConfig, GitConfigError};
+    /// # use git_config::config::{GitConfig, GitConfigError};
     /// # use std::borrow::Cow;
     /// # use bstr::BStr;
     /// # let mut git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -354,7 +354,7 @@ impl<'a> GitConfig<'a> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use serde_git_config::config::GitConfig;
+    /// # use git_config::config::GitConfig;
     /// # use std::borrow::Cow;
     /// # let git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
@@ -419,7 +419,7 @@ impl<'a> GitConfig<'a> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use serde_git_config::config::{GitConfig, GitConfigError};
+    /// # use git_config::config::{GitConfig, GitConfigError};
     /// # use std::borrow::Cow;
     /// # use bstr::BStr;
     /// # let mut git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();

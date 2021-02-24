@@ -8,9 +8,9 @@
 extern crate serde_crate as serde;
 
 // mod de;
+// mod ser;
 pub mod config;
 mod error;
-// mod ser;
 pub mod parser;
 pub mod values;
 
