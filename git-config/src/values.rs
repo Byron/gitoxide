@@ -529,9 +529,14 @@ impl FromStr for ColorAttribute {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inverted = s.starts_with("no");
-        let mut parsed = &s[2..];
-        if parsed.starts_with("-") {
-            parsed = &parsed[1..];
+        let mut parsed = s;
+
+        if inverted {
+            parsed = &parsed[2..];
+
+            if parsed.starts_with("-") {
+                parsed = &parsed[1..];
+            }
         }
 
         match parsed {
@@ -613,5 +618,95 @@ mod integer {
         assert!(Integer::from_str("g").is_err());
         assert!(Integer::from_str("123123123123123123123123").is_err());
         assert!(Integer::from_str("gg").is_err());
+    }
+}
+
+#[cfg(test)]
+mod color_attribute {
+    use super::ColorAttribute;
+    use std::str::FromStr;
+
+    #[test]
+    fn non_inverted() {
+        assert_eq!(ColorAttribute::from_str("bold"), Ok(ColorAttribute::Bold));
+        assert_eq!(ColorAttribute::from_str("dim"), Ok(ColorAttribute::Dim));
+        assert_eq!(ColorAttribute::from_str("ul"), Ok(ColorAttribute::Ul));
+        assert_eq!(ColorAttribute::from_str("blink"), Ok(ColorAttribute::Blink));
+        assert_eq!(
+            ColorAttribute::from_str("reverse"),
+            Ok(ColorAttribute::Reverse)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("italic"),
+            Ok(ColorAttribute::Italic)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("strike"),
+            Ok(ColorAttribute::Strike)
+        );
+    }
+
+    #[test]
+    fn inverted_no_dash() {
+        assert_eq!(
+            ColorAttribute::from_str("nobold"),
+            Ok(ColorAttribute::NoBold)
+        );
+        assert_eq!(ColorAttribute::from_str("nodim"), Ok(ColorAttribute::NoDim));
+        assert_eq!(ColorAttribute::from_str("noul"), Ok(ColorAttribute::NoUl));
+        assert_eq!(
+            ColorAttribute::from_str("noblink"),
+            Ok(ColorAttribute::NoBlink)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("noreverse"),
+            Ok(ColorAttribute::NoReverse)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("noitalic"),
+            Ok(ColorAttribute::NoItalic)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("nostrike"),
+            Ok(ColorAttribute::NoStrike)
+        );
+    }
+
+    #[test]
+    fn inverted_dashed() {
+        assert_eq!(
+            ColorAttribute::from_str("no-bold"),
+            Ok(ColorAttribute::NoBold)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("no-dim"),
+            Ok(ColorAttribute::NoDim)
+        );
+        assert_eq!(ColorAttribute::from_str("no-ul"), Ok(ColorAttribute::NoUl));
+        assert_eq!(
+            ColorAttribute::from_str("no-blink"),
+            Ok(ColorAttribute::NoBlink)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("no-reverse"),
+            Ok(ColorAttribute::NoReverse)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("no-italic"),
+            Ok(ColorAttribute::NoItalic)
+        );
+        assert_eq!(
+            ColorAttribute::from_str("no-strike"),
+            Ok(ColorAttribute::NoStrike)
+        );
+    }
+
+    #[test]
+    fn invalid() {
+        assert!(ColorAttribute::from_str("a").is_err());
+        assert!(ColorAttribute::from_str("no bold").is_err());
+        assert!(ColorAttribute::from_str("").is_err());
+        assert!(ColorAttribute::from_str("no").is_err());
+        assert!(ColorAttribute::from_str("no-").is_err());
     }
 }
