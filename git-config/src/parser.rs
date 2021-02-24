@@ -249,7 +249,7 @@ impl<'a> From<nom::Err<NomError<&'a [u8]>>> for ParserError<'a> {
 /// non-significant events that occur in addition to the ones you may expect:
 ///
 /// ```
-/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: Cow::Borrowed("core".into()),
@@ -288,7 +288,7 @@ impl<'a> From<nom::Err<NomError<&'a [u8]>>> for ParserError<'a> {
 /// which means that the corresponding event won't appear either:
 ///
 /// ```
-/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # use bstr::BStr;
 /// # let section_header = ParsedSectionHeader {
@@ -323,7 +323,7 @@ impl<'a> From<nom::Err<NomError<&'a [u8]>>> for ParserError<'a> {
 /// relevant event stream emitted is thus emitted as:
 ///
 /// ```
-/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: Cow::Borrowed("core".into()),
@@ -360,7 +360,7 @@ impl<'a> From<nom::Err<NomError<&'a [u8]>>> for ParserError<'a> {
 /// split value accordingly:
 ///
 /// ```
-/// # use serde_git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: Cow::Borrowed("some-section".into()),

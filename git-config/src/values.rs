@@ -79,6 +79,15 @@ impl Display for Boolean<'_> {
     }
 }
 
+impl Into<bool> for Boolean<'_> {
+    fn into(self) -> bool {
+        match self {
+            Boolean::True(_) => true,
+            Boolean::False(_) => false,
+        }
+    }
+}
+
 #[cfg(feature = "serde")]
 impl Serialize for Boolean<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -580,6 +589,72 @@ impl FromStr for ColorAttribute {
             "strike" if inverted => Ok(Self::NoStrike),
             _ => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod boolean {
+    use super::*;
+
+    #[test]
+    fn from_str_false() {
+        assert_eq!(
+            Boolean::from_str("no"),
+            Ok(Boolean::False(FalseVariant("no")))
+        );
+        assert_eq!(
+            Boolean::from_str("off"),
+            Ok(Boolean::False(FalseVariant("off")))
+        );
+        assert_eq!(
+            Boolean::from_str("false"),
+            Ok(Boolean::False(FalseVariant("false")))
+        );
+        assert_eq!(
+            Boolean::from_str("zero"),
+            Ok(Boolean::False(FalseVariant("zero")))
+        );
+        assert_eq!(
+            Boolean::from_str("\"\""),
+            Ok(Boolean::False(FalseVariant("\"\"")))
+        );
+    }
+
+    #[test]
+    fn from_str_true() {
+        assert_eq!(
+            Boolean::from_str("yes"),
+            Ok(Boolean::True(TrueVariant::Explicit("yes")))
+        );
+        assert_eq!(
+            Boolean::from_str("on"),
+            Ok(Boolean::True(TrueVariant::Explicit("on")))
+        );
+        assert_eq!(
+            Boolean::from_str("true"),
+            Ok(Boolean::True(TrueVariant::Explicit("true")))
+        );
+        assert_eq!(
+            Boolean::from_str("one"),
+            Ok(Boolean::True(TrueVariant::Explicit("one")))
+        );
+    }
+
+    #[test]
+    fn ignores_case() {
+        // Random subset
+        for word in &["no", "yes", "off", "true", "zero"] {
+            let first: bool = Boolean::from_str(word).unwrap().into();
+            let second: bool = Boolean::from_str(&word.to_uppercase()).unwrap().into();
+            assert_eq!(first, second);
+        }
+    }
+
+    #[test]
+    fn from_str_err() {
+        assert!(Boolean::from_str("yesn't").is_err());
+        assert!(Boolean::from_str("yesno").is_err());
+        assert!(Boolean::from_str("").is_err());
     }
 }
 
