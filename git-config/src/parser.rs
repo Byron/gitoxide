@@ -23,7 +23,7 @@ use std::fmt::Display;
 use std::iter::FusedIterator;
 
 /// Syntactic events that occurs in the config. Despite all these variants
-/// holding a [`Cow`] instead over a [`&str`], the parser will only emit
+/// holding a [`Cow`] instead over a simple reference, the parser will only emit
 /// borrowed `Cow` variants.
 ///
 /// The `Cow` smart pointer is used here for ease of inserting events in a
@@ -31,7 +31,6 @@ use std::iter::FusedIterator;
 /// struct when adding values.
 ///
 /// [`Cow`]: std::borrow::Cow
-/// [`&str`]: std::str
 /// [`GitConfig`]: crate::config::GitConfig
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
