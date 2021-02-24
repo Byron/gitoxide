@@ -1,6 +1,9 @@
 [package]
 name = "git-config"
 version = "0.1.0"
+repository = "https://github.com/Byron/gitoxide"
+description = "A git-config file parser and editor from the gitoxide project"
+license = "MIT OR Apache-2.0"
 authors = ["Edward Shen <code@eddie.sh>"]
 edition = "2018"
 exclude = ["fuzz/**/*", ".vscode/**/*"]
