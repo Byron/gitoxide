@@ -1,5 +1,6 @@
 use std::{borrow::Cow, fmt::Display, str::FromStr};
 
+#[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -20,9 +21,9 @@ impl<'a> Value<'a> {
             return Self::Integer(int);
         }
 
-        // if let Ok(color) = Color::from_str(s) {
-        //     return Self::Color(color);
-        // }
+        if let Ok(color) = Color::from_str(s) {
+            return Self::Color(color);
+        }
 
         Self::Other(Cow::Borrowed(s))
     }
@@ -34,6 +35,7 @@ impl<'a> Value<'a> {
 
 // todo display for value
 
+#[cfg(feature = "serde")]
 impl Serialize for Value<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -68,8 +70,16 @@ impl<'a> Boolean<'a> {
     }
 }
 
-// todo: Display for boolean
+impl Display for Boolean<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Boolean::True(v) => v.fmt(f),
+            Boolean::False(v) => v.fmt(f),
+        }
+    }
+}
 
+#[cfg(feature = "serde")]
 impl Serialize for Boolean<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -116,6 +126,7 @@ impl Display for TrueVariant<'_> {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for TrueVariant<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -149,6 +160,7 @@ impl Display for FalseVariant<'_> {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for FalseVariant<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -175,6 +187,7 @@ impl Display for Integer {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for Integer {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -191,7 +204,7 @@ impl Serialize for Integer {
 impl FromStr for Integer {
     type Err = String;
 
-    fn from_str<'a>(s: &'a str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Ok(value) = s.parse() {
             return Ok(Self {
                 value,
@@ -244,6 +257,7 @@ impl Display for IntegerSuffix {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for IntegerSuffix {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -291,16 +305,17 @@ impl Display for Color {
 
         self.attributes
             .iter()
-            .map(|attr| write!(f, " ").and_then(|_| attr.fmt(f)))
-            .collect::<Result<_, _>>()
+            .try_for_each(|attr| write!(f, " ").and_then(|_| attr.fmt(f)))
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for Color {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
+        // todo: maybe not?
         serializer.serialize_str(&self.to_string())
     }
 }
@@ -403,6 +418,7 @@ impl Display for ColorValue {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for ColorValue {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -450,8 +466,7 @@ impl FromStr for ColorValue {
             return Ok(Self::Ansi(v));
         }
 
-        if s.starts_with("#") {
-            let s = &s[1..];
+        if let Some(s) = s.strip_prefix('#') {
             if s.len() == 6 {
                 let rgb = (
                     u8::from_str_radix(&s[..2], 16),
@@ -508,6 +523,7 @@ impl Display for ColorAttribute {
     }
 }
 
+#[cfg(feature = "serde")]
 impl Serialize for ColorAttribute {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -542,7 +558,7 @@ impl FromStr for ColorAttribute {
         if inverted {
             parsed = &parsed[2..];
 
-            if parsed.starts_with("-") {
+            if parsed.starts_with('-') {
                 parsed = &parsed[1..];
             }
         }

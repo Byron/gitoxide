@@ -1,5 +1,8 @@
 #![forbid(unsafe_code)]
 
+#[cfg(feature = "serde")]
+extern crate serde_crate as serde;
+
 // mod de;
 pub mod config;
 mod error;

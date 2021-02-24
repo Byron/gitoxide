@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use serde_git_config::parser::{parse_from_str, Event, ParsedSectionHeader};
+use git_config::parser::{parse_from_str, Event, ParsedSectionHeader};
 
 pub fn section_header_event(
     name: &str,

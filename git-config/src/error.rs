@@ -1,5 +1,6 @@
 use std::fmt::{self, Display};
 
+#[cfg(feature = "serde")]
 use serde::{de, ser};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -16,12 +17,14 @@ pub enum Error {
     InvalidBoolean(String),
 }
 
+#[cfg(feature = "serde")]
 impl ser::Error for Error {
     fn custom<T: Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
     }
 }
 
+#[cfg(feature = "serde")]
 impl de::Error for Error {
     fn custom<T: Display>(msg: T) -> Self {
         Error::Message(msg.to_string())

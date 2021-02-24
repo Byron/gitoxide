@@ -57,10 +57,6 @@ pub(crate) fn whitespace_event(value: &'static str) -> Event<'static> {
     Event::Whitespace(Cow::Borrowed(value.into()))
 }
 
-pub(crate) fn separator_event() -> Event<'static> {
-    Event::KeyValueSeparator
-}
-
 pub(crate) fn comment_event(tag: char, msg: &'static str) -> Event<'static> {
     Event::Comment(comment(tag, msg))
 }
