@@ -6,17 +6,17 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-nom = { version = "6", default_features = false, features = ["std"] }
-bstr = "0.2.15"
+[features]
+serde = ["serde_crate"]
 
-[dependencies.serde_crate]
-package = "serde"
-optional = true
-version = " 1"
+[dependencies]
+bstr = "0.2.15"
+nom = { version = "6", default_features = false, features = ["std"] }
+serde_crate = { version = "1", package = "serde", optional = true}
 
 [dev-dependencies]
 serde_derive = "1.0"
 
-[features]
-serde = ["serde_crate"]
+[profile.release]
+lto = true
+codegen-units = 1
