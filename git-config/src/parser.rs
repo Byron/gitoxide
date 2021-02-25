@@ -19,9 +19,9 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::multi::{many0, many1};
 use nom::sequence::delimited;
 use nom::IResult;
-use std::borrow::Cow;
 use std::fmt::Display;
 use std::iter::FusedIterator;
+use std::{borrow::Cow, error::Error};
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -204,6 +204,8 @@ impl Display for ParserError<'_> {
         }
     }
 }
+
+impl Error for ParserError<'_> {}
 
 /// A zero-copy `git-config` file parser.
 ///
