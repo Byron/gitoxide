@@ -221,4 +221,8 @@ fn newline_events_are_merged() {
 fn error() {
     let input = "[core] a=b\n 4a=3";
     println!("{}", parse_from_str(input).unwrap_err());
+    let input = "[core] a=b\n =3";
+    println!("{}", parse_from_str(input).unwrap_err());
+    let input = "[core";
+    println!("{}", parse_from_str(input).unwrap_err());
 }
