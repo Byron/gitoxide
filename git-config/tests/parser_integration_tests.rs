@@ -216,3 +216,9 @@ fn newline_events_are_merged() {
         vec![newline_custom("\n\n\n\n\n")]
     );
 }
+
+#[test]
+fn error() {
+    let input = "[core] a=b\n 4a=3";
+    println!("{}", parse_from_str(input).unwrap_err());
+}

@@ -10,14 +10,15 @@
 //! [`GitConfig`]: crate::config::GitConfig
 
 use bstr::{BStr, ByteSlice};
+use nom::branch::alt;
 use nom::bytes::complete::{escaped, tag, take_till, take_while};
 use nom::character::complete::{char, none_of, one_of};
 use nom::character::{is_newline, is_space};
 use nom::combinator::{map, opt};
 use nom::error::{Error as NomError, ErrorKind};
+use nom::multi::{many0, many1};
 use nom::sequence::delimited;
 use nom::IResult;
-use nom::{branch::alt, multi::many0};
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::iter::FusedIterator;
@@ -160,18 +161,47 @@ impl Display for ParsedComment<'_> {
 
 /// The various parsing failure reasons.
 #[derive(PartialEq, Debug)]
-pub enum ParserError<'a> {
-    /// A parsing error occurred.
-    InvalidInput(nom::Err<NomError<&'a [u8]>>),
-    /// The config was successfully parsed, but we had extraneous data after the
-    /// config file.
-    ConfigHasExtraData(&'a BStr),
+pub struct ParserError<'a> {
+    line_number: usize,
+    last_attempted_parser: ParserNode,
+    parsed_until: &'a [u8],
 }
 
-#[doc(hidden)]
-impl<'a> From<nom::Err<NomError<&'a [u8]>>> for ParserError<'a> {
-    fn from(e: nom::Err<NomError<&'a [u8]>>) -> Self {
-        Self::InvalidInput(e)
+#[derive(PartialEq, Debug)]
+enum ParserNode {
+    Section,
+    SectionBody,
+    Comment,
+    Eof,
+}
+
+impl Display for ParserError<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let data_size = self.parsed_until.len();
+        let data = std::str::from_utf8(self.parsed_until);
+
+        write!(
+            f,
+            "Got an unexpected token on line {} while trying to parse a {:?}: ",
+            self.line_number, self.last_attempted_parser
+        )?;
+
+        match (data, data_size) {
+            (Ok(data), _) if data_size > 10 => write!(
+                f,
+                "'{}' ... ({} characters omitted)",
+                &data[..10],
+                data_size - 10
+            ),
+            (Ok(data), _) => write!(f, "'{}'", data),
+            (Err(_), _) if data_size > 10 => write!(
+                f,
+                "'{:02x?}' ... ({} characters omitted)",
+                &self.parsed_until[..10],
+                data_size - 10
+            ),
+            (Err(_), _) => write!(f, "'{:02x?}'", self.parsed_until),
+        }
     }
 }
 
@@ -499,19 +529,53 @@ pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
+    let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
         map(take_spaces, |whitespace| {
             Event::Whitespace(Cow::Borrowed(whitespace.into()))
         }),
-        map(take_newline, |newline| {
+        map(take_newline, |(newline, counter)| {
+            newlines += counter;
             Event::Newline(Cow::Borrowed(newline.into()))
         }),
-    )))(input.as_bytes())?;
-    let (i, sections) = many0(section)(i)?;
+    )))(input.as_bytes())
+    // I don't think this can panic. many0 errors if the child parser returns
+    // a success where the input was not consumed, but alt will only return Ok
+    // if one of its children succeed. However, all of it's children are
+    // guaranteed to consume something if they succeed, so the Ok(i) == i case
+    // can never occur.
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parser.");
+
+    if i.is_empty() {
+        return Ok(Parser {
+            frontmatter,
+            sections: vec![],
+        });
+    }
+
+    let mut node = ParserNode::Eof;
+
+    let (i, sections) = many1(|i| section(i, &mut node))(i).map_err(|_| ParserError {
+        line_number: newlines,
+        last_attempted_parser: ParserNode::Section,
+        parsed_until: i,
+    })?;
+
+    let sections = sections
+        .into_iter()
+        .map(|(s, c)| {
+            newlines += c;
+            s
+        })
+        .collect();
 
     if !i.is_empty() {
-        return Err(ParserError::ConfigHasExtraData(i.into()));
+        return Err(ParserError {
+            line_number: newlines,
+            last_attempted_parser: node,
+            parsed_until: i,
+        });
     }
 
     Ok(Parser {
@@ -520,7 +584,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     })
 }
 
-fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
+fn comment<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedComment> {
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(|c| c == b'\n')(i)?;
     Ok((
@@ -532,32 +596,46 @@ fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
     ))
 }
 
-fn section(i: &[u8]) -> IResult<&[u8], ParsedSection> {
+fn section<'a, 'b>(
+    i: &'a [u8],
+    node: &'b mut ParserNode,
+) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
     let (i, section_header) = section_header(i)?;
+    let mut newlines = 0;
+    // todo: unhack this (manually implement many0 and alt to avoid closure moves)
+    let node = std::sync::Mutex::new(node);
     let (i, items) = many0(alt((
         map(take_spaces, |space| {
             vec![Event::Whitespace(Cow::Borrowed(space.into()))]
         }),
-        map(take_newline, |newline| {
+        map(take_newline, |(newline, counter)| {
+            newlines += counter;
             vec![Event::Newline(Cow::Borrowed(newline.into()))]
         }),
         map(section_body, |(key, values)| {
+            **node.lock().unwrap() = ParserNode::SectionBody;
             let mut vec = vec![Event::Key(Cow::Borrowed(key.into()))];
             vec.extend(values);
             vec
         }),
-        map(comment, |comment| vec![Event::Comment(comment)]),
+        map(comment, |comment| {
+            **node.lock().unwrap() = ParserNode::Comment;
+            vec![Event::Comment(comment)]
+        }),
     )))(i)?;
     Ok((
         i,
-        ParsedSection {
-            section_header,
-            events: items.into_iter().flatten().collect(),
-        },
+        (
+            ParsedSection {
+                section_header,
+                events: items.into_iter().flatten().collect(),
+            },
+            newlines,
+        ),
     ))
 }
 
-fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
+fn section_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSectionHeader> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
@@ -588,7 +666,6 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     // Section header must be using modern subsection syntax at this point.
 
     let (i, whitespace) = take_spaces(i)?;
-
     let (i, subsection_name) = delimited(
         char('"'),
         opt(escaped(none_of("\"\\\n\0"), '\\', one_of(r#""\"#))),
@@ -609,7 +686,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     ))
 }
 
-fn section_body(i: &[u8]) -> IResult<&[u8], (&[u8], Vec<Event>)> {
+fn section_body<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], Vec<Event>)> {
     // maybe need to check for [ here
     let (i, name) = config_name(i)?;
     let (i, whitespace) = opt(take_spaces)(i)?;
@@ -625,7 +702,7 @@ fn section_body(i: &[u8]) -> IResult<&[u8], (&[u8], Vec<Event>)> {
 
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
-fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
+fn config_name<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
     if i.is_empty() {
         return Err(nom::Err::Error(NomError {
             input: i,
@@ -639,11 +716,10 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
             code: ErrorKind::Alpha,
         }));
     }
-
     take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)
 }
 
-fn config_value(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
+fn config_value<'a>(i: &'a [u8]) -> IResult<&'a [u8], Vec<Event>> {
     if let (i, Some(_)) = opt(char('='))(i)? {
         let mut events = vec![];
         events.push(Event::KeyValueSeparator);
@@ -751,19 +827,7 @@ fn value_impl(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
-    take_common(i, |c| (c as char).is_ascii() && is_space(c))
-}
-
-fn take_newline(i: &[u8]) -> IResult<&[u8], &[u8]> {
-    take_common(i, is_char_newline)
-}
-
-fn is_char_newline(c: u8) -> bool {
-    (c as char).is_ascii() && is_newline(c)
-}
-
-fn take_common<F: Fn(u8) -> bool>(i: &[u8], f: F) -> IResult<&[u8], &[u8]> {
-    let (i, v) = take_while(f)(i)?;
+    let (i, v) = take_while(|c| (c as char).is_ascii() && is_space(c))(i)?;
     if v.is_empty() {
         Err(nom::Err::Error(NomError {
             input: i,
@@ -772,6 +836,24 @@ fn take_common<F: Fn(u8) -> bool>(i: &[u8], f: F) -> IResult<&[u8], &[u8]> {
     } else {
         Ok((i, v))
     }
+}
+
+fn take_newline<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], usize)> {
+    let mut counter = 0;
+    let (i, v) = take_while(is_char_newline)(i)?;
+    counter += v.len();
+    if v.is_empty() {
+        Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::Eof,
+        }))
+    } else {
+        Ok((i, (v, counter)))
+    }
+}
+
+fn is_char_newline(c: u8) -> bool {
+    (c as char).is_ascii() && is_newline(c)
 }
 
 #[cfg(test)]
@@ -1085,159 +1167,191 @@ mod section {
 
     #[test]
     fn empty_section() {
+        let mut node = ParserNode::Eof;
         assert_eq!(
-            section(b"[test]").unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("test", None),
-                events: vec![]
-            })
+            section(b"[test]", &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("test", None),
+                    events: vec![]
+                },
+                0
+            )),
         );
     }
 
     #[test]
     fn simple_section() {
+        let mut node = ParserNode::Eof;
         let section_data = br#"[hello]
             a = b
             c
             d = "lol""#;
         assert_eq!(
-            section(section_data).unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("hello", None),
-                events: vec![
-                    newline_event(),
-                    whitespace_event("            "),
-                    name_event("a"),
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    whitespace_event(" "),
-                    value_event("b"),
-                    newline_event(),
-                    whitespace_event("            "),
-                    name_event("c"),
-                    value_event(""),
-                    newline_event(),
-                    whitespace_event("            "),
-                    name_event("d"),
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    whitespace_event(" "),
-                    value_event("\"lol\"")
-                ]
-            })
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("hello", None),
+                    events: vec![
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("a"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("b"),
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("c"),
+                        value_event(""),
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("d"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("\"lol\"")
+                    ]
+                },
+                3
+            ))
         )
     }
 
     #[test]
     fn section_single_line() {
+        let mut node = ParserNode::Eof;
         assert_eq!(
-            section(b"[hello] c").unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("hello", None),
-                events: vec![whitespace_event(" "), name_event("c"), value_event("")]
-            })
+            section(b"[hello] c", &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("hello", None),
+                    events: vec![whitespace_event(" "), name_event("c"), value_event("")]
+                },
+                0
+            ))
         );
     }
 
     #[test]
     fn section_very_commented() {
+        let mut node = ParserNode::Eof;
         let section_data = br#"[hello] ; commentA
             a = b # commentB
             ; commentC
             ; commentD
             c = d"#;
         assert_eq!(
-            section(section_data).unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("hello", None),
-                events: vec![
-                    whitespace_event(" "),
-                    comment_event(';', " commentA"),
-                    newline_event(),
-                    whitespace_event("            "),
-                    name_event("a"),
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    whitespace_event(" "),
-                    value_event("b"),
-                    whitespace_event(" "),
-                    comment_event('#', " commentB"),
-                    newline_event(),
-                    whitespace_event("            "),
-                    comment_event(';', " commentC"),
-                    newline_event(),
-                    whitespace_event("            "),
-                    comment_event(';', " commentD"),
-                    newline_event(),
-                    whitespace_event("            "),
-                    name_event("c"),
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    whitespace_event(" "),
-                    value_event("d"),
-                ]
-            })
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("hello", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        comment_event(';', " commentA"),
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("a"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("b"),
+                        whitespace_event(" "),
+                        comment_event('#', " commentB"),
+                        newline_event(),
+                        whitespace_event("            "),
+                        comment_event(';', " commentC"),
+                        newline_event(),
+                        whitespace_event("            "),
+                        comment_event(';', " commentD"),
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("c"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("d"),
+                    ]
+                },
+                4
+            ))
         );
     }
 
     #[test]
     fn complex_continuation() {
+        let mut node = ParserNode::Eof;
         // This test is absolute hell. Good luck if this fails.
         assert_eq!(
-            section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("section", None),
-                events: vec![
-                    whitespace_event(" "),
-                    name_event("a"),
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    whitespace_event(" "),
-                    value_not_done_event(r#"1    "\""#),
-                    newline_event(),
-                    value_not_done_event(r#"a ; e "\""#),
-                    newline_event(),
-                    value_done_event("d"),
-                    whitespace_event(" "),
-                    comment_event('#', " \"b\t ; c"),
-                ]
-            })
+            section(
+                b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c",
+                &mut node
+            )
+            .unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("section", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("a"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_not_done_event(r#"1    "\""#),
+                        newline_event(),
+                        value_not_done_event(r#"a ; e "\""#),
+                        newline_event(),
+                        value_done_event("d"),
+                        whitespace_event(" "),
+                        comment_event('#', " \"b\t ; c"),
+                    ]
+                },
+                0
+            ))
         );
     }
 
     #[test]
     fn quote_split_over_two_lines() {
+        let mut node = ParserNode::Eof;
         assert_eq!(
-            section(b"[section \"a\"] b =\"\\\n;\";a").unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("section", (" ", "a")),
-                events: vec![
-                    whitespace_event(" "),
-                    name_event("b"),
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    value_not_done_event("\""),
-                    newline_event(),
-                    value_done_event(";\""),
-                    comment_event(';', "a"),
-                ]
-            })
+            section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("section", (" ", "a")),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("b"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        value_not_done_event("\""),
+                        newline_event(),
+                        value_done_event(";\""),
+                        comment_event(';', "a"),
+                    ]
+                },
+                0
+            ))
         )
     }
 
     #[test]
     fn section_handles_extranous_whitespace_before_comment() {
+        let mut node = ParserNode::Eof;
         assert_eq!(
-            section(b"[s]hello             #world").unwrap(),
-            fully_consumed(ParsedSection {
-                section_header: parsed_section_header("s", None),
-                events: vec![
-                    name_event("hello"),
-                    whitespace_event("             "),
-                    value_event(""),
-                    comment_event('#', "world"),
-                ]
-            })
+            section(b"[s]hello             #world", &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("s", None),
+                    events: vec![
+                        name_event("hello"),
+                        whitespace_event("             "),
+                        value_event(""),
+                        comment_event('#', "world"),
+                    ]
+                },
+                0
+            ))
         );
     }
 }
