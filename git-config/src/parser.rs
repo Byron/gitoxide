@@ -598,7 +598,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     })
 }
 
-fn comment<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedComment> {
+fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(|c| c == b'\n')(i)?;
     Ok((
@@ -650,7 +650,7 @@ fn section<'a, 'b>(
     ))
 }
 
-fn section_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSectionHeader> {
+fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
@@ -725,7 +725,7 @@ fn section_body<'a, 'b>(
 
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
-fn config_name<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
+fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
     if i.is_empty() {
         return Err(nom::Err::Error(NomError {
             input: i,
@@ -742,7 +742,7 @@ fn config_name<'a>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
     take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)
 }
 
-fn config_value<'a>(i: &'a [u8]) -> IResult<&'a [u8], Vec<Event>> {
+fn config_value(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
     if let (i, Some(_)) = opt(char('='))(i)? {
         let mut events = vec![];
         events.push(Event::KeyValueSeparator);
@@ -861,7 +861,7 @@ fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
     }
 }
 
-fn take_newline<'a>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], usize)> {
+fn take_newline(i: &[u8]) -> IResult<&[u8], (&[u8], usize)> {
     let mut counter = 0;
     let (i, v) = take_while(is_char_newline)(i)?;
     counter += v.len();
