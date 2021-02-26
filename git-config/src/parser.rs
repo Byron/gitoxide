@@ -163,7 +163,7 @@ impl Display for ParsedComment<'_> {
 #[derive(PartialEq, Debug)]
 pub struct ParserError<'a> {
     line_number: usize,
-    last_attempted_parser: Vec<ParserNode>,
+    last_attempted_parser: ParserNode,
     parsed_until: &'a [u8],
 }
 
@@ -190,12 +190,11 @@ impl Display for ParserError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let data_size = self.parsed_until.len();
         let data = std::str::from_utf8(self.parsed_until);
-        let failed_parser = self.last_attempted_parser[self.last_attempted_parser.len() - 2];
         write!(
             f,
             "Got an unexpected token on line {} while trying to parse a {}: ",
             self.line_number + 1,
-            failed_parser
+            self.last_attempted_parser,
         )?;
 
         match (data, data_size) {
@@ -568,7 +567,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
         });
     }
 
-    let mut node = vec![ParserNode::SectionHeader];
+    let mut node = ParserNode::SectionHeader;
 
     let maybe_sections = many1(|i| section(i, &mut node))(i);
     let (i, sections) = maybe_sections.map_err(|_| ParserError {
@@ -613,11 +612,9 @@ fn comment<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedComment> {
 
 fn section<'a, 'b>(
     i: &'a [u8],
-    node: &'b mut Vec<ParserNode>,
+    node: &'b mut ParserNode,
 ) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
-    node.push(ParserNode::SectionHeader);
     let (i, section_header) = section_header(i)?;
-    node.pop();
 
     let mut newlines = 0;
     // todo: unhack this (manually implement many0 and alt to avoid closure moves)
@@ -638,19 +635,9 @@ fn section<'a, 'b>(
                 vec
             },
         ),
-        map(
-            |i| {
-                node.lock().unwrap().push(ParserNode::Comment);
-                comment(i)
-            },
-            |comment| {
-                node.lock().unwrap().pop();
-                vec![Event::Comment(comment)]
-            },
-        ),
+        map(comment, |comment| vec![Event::Comment(comment)]),
     )))(i)?;
 
-    node.lock().unwrap().pop();
     Ok((
         i,
         (
@@ -716,18 +703,16 @@ fn section_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ParsedSectionHeader> {
 
 fn section_body<'a, 'b>(
     i: &'a [u8],
-    node: &'b mut Vec<ParserNode>,
+    node: &'b mut ParserNode,
 ) -> IResult<&'a [u8], (&'a [u8], Vec<Event<'a>>)> {
     // maybe need to check for [ here
-    node.push(ParserNode::ConfigName);
+    *node = ParserNode::ConfigName;
     let (i, name) = config_name(i)?;
-    node.pop();
 
     let (i, whitespace) = opt(take_spaces)(i)?;
 
-    node.push(ParserNode::ConfigValue);
+    *node = ParserNode::ConfigValue;
     let (i, value) = config_value(i)?;
-    node.pop();
 
     if let Some(whitespace) = whitespace {
         let mut events = vec![Event::Whitespace(Cow::Borrowed(whitespace.into()))];
@@ -1028,7 +1013,7 @@ mod section_body {
 
     #[test]
     fn whitespace_is_not_ambigious() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         assert_eq!(
             section_body(b"a =b", &mut node).unwrap().1,
             (
@@ -1206,7 +1191,7 @@ mod section {
 
     #[test]
     fn empty_section() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         assert_eq!(
             section(b"[test]", &mut node).unwrap(),
             fully_consumed((
@@ -1221,7 +1206,7 @@ mod section {
 
     #[test]
     fn simple_section() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         let section_data = br#"[hello]
             a = b
             c
@@ -1259,7 +1244,7 @@ mod section {
 
     #[test]
     fn section_single_line() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         assert_eq!(
             section(b"[hello] c", &mut node).unwrap(),
             fully_consumed((
@@ -1274,7 +1259,7 @@ mod section {
 
     #[test]
     fn section_very_commented() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         let section_data = br#"[hello] ; commentA
             a = b # commentB
             ; commentC
@@ -1319,7 +1304,7 @@ mod section {
 
     #[test]
     fn complex_continuation() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         // This test is absolute hell. Good luck if this fails.
         assert_eq!(
             section(
@@ -1352,7 +1337,7 @@ mod section {
 
     #[test]
     fn quote_split_over_two_lines() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         assert_eq!(
             section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
             fully_consumed((
@@ -1376,7 +1361,7 @@ mod section {
 
     #[test]
     fn section_handles_extranous_whitespace_before_comment() {
-        let mut node = vec![ParserNode::SectionHeader];
+        let mut node = ParserNode::SectionHeader;
         assert_eq!(
             section(b"[s]hello             #world", &mut node).unwrap(),
             fully_consumed((
