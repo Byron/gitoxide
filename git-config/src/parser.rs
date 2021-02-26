@@ -159,7 +159,9 @@ impl Display for ParsedComment<'_> {
     }
 }
 
-/// The various parsing failure reasons.
+/// A parser error reports the one-indexed line number where the parsing error
+/// occurred, as well as the last parser node and the remaining data to be
+/// parsed.
 #[derive(PartialEq, Debug)]
 pub struct ParserError<'a> {
     line_number: usize,
@@ -167,22 +169,16 @@ pub struct ParserError<'a> {
     parsed_until: &'a [u8],
 }
 
-#[derive(PartialEq, Debug, Clone, Copy)]
-enum ParserNode {
-    SectionHeader,
-    ConfigName,
-    ConfigValue,
-    Comment,
-}
+impl ParserError<'_> {
+    /// The one-indexed line number where the error occurred. This is determined
+    /// by the number of newlines that were successfully parsed.
+    pub fn line_number(&self) -> usize {
+        self.line_number + 1
+    }
 
-impl Display for ParserNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::SectionHeader => write!(f, "section header"),
-            Self::ConfigName => write!(f, "config name"),
-            Self::ConfigValue => write!(f, "config value"),
-            Self::Comment => write!(f, "comment"),
-        }
+    /// The remaining data that was left unparsed.
+    pub fn remaining_data(&self) -> &[u8] {
+        self.parsed_until
     }
 }
 
@@ -217,6 +213,25 @@ impl Display for ParserError<'_> {
 }
 
 impl Error for ParserError<'_> {}
+
+#[derive(PartialEq, Debug, Clone, Copy)]
+enum ParserNode {
+    SectionHeader,
+    ConfigName,
+    ConfigValue,
+    Comment,
+}
+
+impl Display for ParserNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SectionHeader => write!(f, "section header"),
+            Self::ConfigName => write!(f, "config name"),
+            Self::ConfigValue => write!(f, "config value"),
+            Self::Comment => write!(f, "comment"),
+        }
+    }
+}
 
 /// A zero-copy `git-config` file parser.
 ///
@@ -572,18 +587,20 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     let maybe_sections = many1(|i| section(i, &mut node))(i);
     let (i, sections) = maybe_sections.map_err(|_| ParserError {
         line_number: newlines,
-        last_attempted_parser: node.clone(),
+        last_attempted_parser: node,
         parsed_until: i,
     })?;
 
     let sections = sections
         .into_iter()
-        .map(|(s, c)| {
-            newlines += c;
-            s
+        .map(|(section, additional_newlines)| {
+            newlines += additional_newlines;
+            section
         })
         .collect();
 
+    // This needs to happen after we collect sections, otherwise the line number
+    // will be off.
     if !i.is_empty() {
         return Err(ParserError {
             line_number: newlines,
@@ -863,7 +880,7 @@ fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
 
 fn take_newline(i: &[u8]) -> IResult<&[u8], (&[u8], usize)> {
     let mut counter = 0;
-    let (i, v) = take_while(is_char_newline)(i)?;
+    let (i, v) = take_while(|c| (c as char).is_ascii() && is_newline(c))(i)?;
     counter += v.len();
     if v.is_empty() {
         Err(nom::Err::Error(NomError {
@@ -873,10 +890,6 @@ fn take_newline(i: &[u8]) -> IResult<&[u8], (&[u8], usize)> {
     } else {
         Ok((i, (v, counter)))
     }
-}
-
-fn is_char_newline(c: u8) -> bool {
-    (c as char).is_ascii() && is_newline(c)
 }
 
 #[cfg(test)]
