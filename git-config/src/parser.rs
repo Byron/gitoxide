@@ -634,8 +634,6 @@ fn section<'a, 'b>(
     let (i, section_header) = section_header(i)?;
 
     let mut newlines = 0;
-    // todo: unhack this (manually implement many0 and alt to avoid closure moves)
-    let node = std::sync::Mutex::new(node);
     let (i, items) = many0(alt((
         map(take_spaces, |space| {
             vec![Event::Whitespace(Cow::Borrowed(space.into()))]
@@ -645,7 +643,7 @@ fn section<'a, 'b>(
             vec![Event::Newline(Cow::Borrowed(newline.into()))]
         }),
         map(
-            |i| section_body(i, *node.lock().unwrap()),
+            |i| section_body(i, node),
             |(key, values)| {
                 let mut vec = vec![Event::Key(Cow::Borrowed(key.into()))];
                 vec.extend(values);
