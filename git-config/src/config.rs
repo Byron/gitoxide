@@ -1,9 +1,10 @@
-use crate::parser::{parse_from_str, Event, ParsedSectionHeader, Parser, ParserError};
+use crate::parser::{parse_from_bytes, Event, ParsedSectionHeader, Parser, ParserError};
 use bstr::BStr;
 use std::collections::{HashMap, VecDeque};
+use std::convert::TryFrom;
 use std::{borrow::Cow, fmt::Display};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigError<'a> {
     /// The requested section does not exist.
     SectionDoesNotExist(&'a BStr),
@@ -11,21 +12,6 @@ pub enum GitConfigError<'a> {
     SubSectionDoesNotExist(Option<&'a BStr>),
     /// The key does not exist in the requested section.
     KeyDoesNotExist(&'a BStr),
-}
-
-/// High level `git-config` reader and writer.
-pub struct GitConfig<'a> {
-    /// The list of events that occur before an actual section. Since a
-    /// `git-config` file prohibits global values, this vec is limited to only
-    /// comment, newline, and whitespace events.
-    front_matter_events: Vec<Event<'a>>,
-    section_lookup_tree: HashMap<Cow<'a, BStr>, Vec<LookupTreeNode<'a>>>,
-    /// SectionId to section mapping. The value of this HashMap contains actual
-    /// events
-    sections: HashMap<SectionId, Vec<Event<'a>>>,
-    section_headers: HashMap<SectionId, ParsedSectionHeader<'a>>,
-    section_id_counter: usize,
-    section_order: VecDeque<SectionId>,
 }
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
@@ -42,85 +28,28 @@ pub struct GitConfig<'a> {
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 struct SectionId(usize);
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
 }
+/// High level `git-config` reader and writer.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct GitConfig<'a> {
+    /// The list of events that occur before an actual section. Since a
+    /// `git-config` file prohibits global values, this vec is limited to only
+    /// comment, newline, and whitespace events.
+    front_matter_events: Vec<Event<'a>>,
+    section_lookup_tree: HashMap<Cow<'a, BStr>, Vec<LookupTreeNode<'a>>>,
+    /// SectionId to section mapping. The value of this HashMap contains actual
+    /// events
+    sections: HashMap<SectionId, Vec<Event<'a>>>,
+    section_headers: HashMap<SectionId, ParsedSectionHeader<'a>>,
+    section_id_counter: usize,
+    section_order: VecDeque<SectionId>,
+}
 
 impl<'a> GitConfig<'a> {
-    /// Convenience constructor. Attempts to parse the provided string into a
-    /// [`GitConfig`]. See [`parse_from_str`] for more information.
-    ///
-    /// [`parse_from_str`]: crate::parser::parse_from_str
-    pub fn from_str(str: &'a str) -> Result<Self, ParserError> {
-        Ok(Self::from_parser(parse_from_str(str)?))
-    }
-
-    pub fn from_parser(parser: Parser<'a>) -> Self {
-        let mut new_self = Self {
-            front_matter_events: vec![],
-            sections: HashMap::new(),
-            section_lookup_tree: HashMap::new(),
-            section_headers: HashMap::new(),
-            section_id_counter: 0,
-            section_order: VecDeque::new(),
-        };
-
-        // Current section that we're building
-        let mut current_section_name: Option<Cow<'a, BStr>> = None;
-        let mut current_subsection_name: Option<Cow<'a, BStr>> = None;
-        let mut maybe_section: Option<Vec<Event<'a>>> = None;
-
-        for event in parser.into_iter() {
-            match event {
-                Event::SectionHeader(header) => {
-                    new_self.push_section(
-                        current_section_name,
-                        current_subsection_name,
-                        &mut maybe_section,
-                    );
-
-                    // Initialize new section
-                    // We need to store the new, current id counter, so don't
-                    // use new_section_id here and use the already incremented
-                    // section id value.
-                    new_self
-                        .section_headers
-                        .insert(SectionId(new_self.section_id_counter), header.clone());
-                    let (name, subname) = (header.name, header.subsection_name);
-                    maybe_section = Some(vec![]);
-                    current_section_name = Some(name);
-                    current_subsection_name = subname;
-                }
-                e @ Event::Key(_)
-                | e @ Event::Value(_)
-                | e @ Event::ValueNotDone(_)
-                | e @ Event::ValueDone(_)
-                | e @ Event::KeyValueSeparator => maybe_section
-                    .as_mut()
-                    .expect("Got a section-only event before a section")
-                    .push(e),
-                e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
-                    match maybe_section {
-                        Some(ref mut section) => section.push(e),
-                        None => new_self.front_matter_events.push(e),
-                    }
-                }
-            }
-        }
-
-        // The last section doesn't get pushed since we only push if there's a
-        // new section header, so we need to call push one more time.
-        new_self.push_section(
-            current_section_name,
-            current_subsection_name,
-            &mut maybe_section,
-        );
-
-        new_self
-    }
-
     fn push_section(
         &mut self,
         current_section_name: Option<Cow<'a, BStr>>,
@@ -574,9 +503,93 @@ impl<'a> GitConfig<'a> {
     }
 }
 
+impl<'a> TryFrom<&'a str> for GitConfig<'a> {
+    type Error = ParserError<'a>;
+
+    /// Convenience constructor. Attempts to parse the provided string into a
+    /// [`GitConfig`]. See [`parse_from_str`] for more information.
+    ///
+    /// [`parse_from_str`]: crate::parser::parse_from_str
+    fn try_from(s: &'a str) -> Result<Self, Self::Error> {
+        parse_from_bytes(s.as_bytes()).map(Self::from)
+    }
+}
+
+impl<'a> TryFrom<&'a BStr> for GitConfig<'a> {
+    type Error = ParserError<'a>;
+
+    /// Convenience constructor. Attempts to parse the provided byte string into
+    //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
+    ///
+    /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
+    fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
+        parse_from_bytes(value).map(Self::from)
+    }
+}
+
 impl<'a> From<Parser<'a>> for GitConfig<'a> {
-    fn from(p: Parser<'a>) -> Self {
-        Self::from_parser(p)
+    fn from(parser: Parser<'a>) -> Self {
+        let mut new_self = Self {
+            front_matter_events: vec![],
+            sections: HashMap::new(),
+            section_lookup_tree: HashMap::new(),
+            section_headers: HashMap::new(),
+            section_id_counter: 0,
+            section_order: VecDeque::new(),
+        };
+
+        // Current section that we're building
+        let mut current_section_name: Option<Cow<'a, BStr>> = None;
+        let mut current_subsection_name: Option<Cow<'a, BStr>> = None;
+        let mut maybe_section: Option<Vec<Event<'a>>> = None;
+
+        for event in parser.into_iter() {
+            match event {
+                Event::SectionHeader(header) => {
+                    new_self.push_section(
+                        current_section_name,
+                        current_subsection_name,
+                        &mut maybe_section,
+                    );
+
+                    // Initialize new section
+                    // We need to store the new, current id counter, so don't
+                    // use new_section_id here and use the already incremented
+                    // section id value.
+                    new_self
+                        .section_headers
+                        .insert(SectionId(new_self.section_id_counter), header.clone());
+                    let (name, subname) = (header.name, header.subsection_name);
+                    maybe_section = Some(vec![]);
+                    current_section_name = Some(name);
+                    current_subsection_name = subname;
+                }
+                e @ Event::Key(_)
+                | e @ Event::Value(_)
+                | e @ Event::ValueNotDone(_)
+                | e @ Event::ValueDone(_)
+                | e @ Event::KeyValueSeparator => maybe_section
+                    .as_mut()
+                    .expect("Got a section-only event before a section")
+                    .push(e),
+                e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
+                    match maybe_section {
+                        Some(ref mut section) => section.push(e),
+                        None => new_self.front_matter_events.push(e),
+                    }
+                }
+            }
+        }
+
+        // The last section doesn't get pushed since we only push if there's a
+        // new section header, so we need to call push one more time.
+        new_self.push_section(
+            current_section_name,
+            current_subsection_name,
+            &mut maybe_section,
+        );
+
+        new_self
     }
 }
 
@@ -606,7 +619,7 @@ mod from_parser {
 
     #[test]
     fn parse_empty() {
-        let config = GitConfig::from_str("").unwrap();
+        let config = GitConfig::try_from("").unwrap();
         assert!(config.section_headers.is_empty());
         assert_eq!(config.section_id_counter, 0);
         assert!(config.section_lookup_tree.is_empty());
@@ -616,7 +629,7 @@ mod from_parser {
 
     #[test]
     fn parse_single_section() {
-        let mut config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let mut config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", None));
@@ -656,7 +669,7 @@ mod from_parser {
 
     #[test]
     fn parse_single_subsection() {
-        let mut config = GitConfig::from_str("[core.subsec]\na=b\nc=d").unwrap();
+        let mut config = GitConfig::try_from("[core.subsec]\na=b\nc=d").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", (".", "subsec")));
@@ -698,7 +711,7 @@ mod from_parser {
 
     #[test]
     fn parse_multiple_sections() {
-        let mut config = GitConfig::from_str("[core]\na=b\nc=d\n[other]e=f").unwrap();
+        let mut config = GitConfig::try_from("[core]\na=b\nc=d\n[other]e=f").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", None));
@@ -751,7 +764,7 @@ mod from_parser {
 
     #[test]
     fn parse_multiple_duplicate_sections() {
-        let mut config = GitConfig::from_str("[core]\na=b\nc=d\n[core]e=f").unwrap();
+        let mut config = GitConfig::try_from("[core]\na=b\nc=d\n[core]e=f").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", None));
@@ -805,7 +818,7 @@ mod get_raw_value {
 
     #[test]
     fn single_section() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
             Ok(&Cow::Borrowed("b".into()))
@@ -818,7 +831,7 @@ mod get_raw_value {
 
     #[test]
     fn last_one_wins_respected_in_section() {
-        let config = GitConfig::from_str("[core]\na=b\na=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\na=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
             Ok(&Cow::Borrowed("d".into()))
@@ -827,7 +840,7 @@ mod get_raw_value {
 
     #[test]
     fn last_one_wins_respected_across_section() {
-        let config = GitConfig::from_str("[core]\na=b\n[core]\na=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\n[core]\na=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
             Ok(&Cow::Borrowed("d".into()))
@@ -836,7 +849,7 @@ mod get_raw_value {
 
     #[test]
     fn section_not_found() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("foo", None, "a"),
             Err(GitConfigError::SectionDoesNotExist("foo".into()))
@@ -845,7 +858,7 @@ mod get_raw_value {
 
     #[test]
     fn subsection_not_found() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", Some("a"), "a"),
             Err(GitConfigError::SubSectionDoesNotExist(Some("a".into())))
@@ -854,7 +867,7 @@ mod get_raw_value {
 
     #[test]
     fn key_not_found() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "aaaaaa"),
             Err(GitConfigError::KeyDoesNotExist("aaaaaa".into()))
@@ -863,7 +876,7 @@ mod get_raw_value {
 
     #[test]
     fn subsection_must_be_respected() {
-        let config = GitConfig::from_str("[core]a=b\n[core.a]a=c").unwrap();
+        let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
             Ok(&Cow::Borrowed("b".into()))
@@ -881,7 +894,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn single_value_is_identical_to_single_value_query() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             vec![config.get_raw_value("core", None, "a").unwrap()],
             config.get_raw_multi_value("core", None, "a").unwrap()
@@ -890,7 +903,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn multi_value_in_section() {
-        let config = GitConfig::from_str("[core]\na=b\na=c").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\na=c").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![&Cow::Borrowed("b"), &Cow::Borrowed("c")]
@@ -899,7 +912,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn multi_value_across_sections() {
-        let config = GitConfig::from_str("[core]\na=b\na=c\n[core]a=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\na=c\n[core]a=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![
@@ -912,7 +925,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn section_not_found() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("foo", None, "a"),
             Err(GitConfigError::SectionDoesNotExist("foo".into()))
@@ -921,7 +934,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn subsection_not_found() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", Some("a"), "a"),
             Err(GitConfigError::SubSectionDoesNotExist(Some("a".into())))
@@ -930,7 +943,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn key_not_found() {
-        let config = GitConfig::from_str("[core]\na=b\nc=d").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "aaaaaa"),
             Err(GitConfigError::KeyDoesNotExist("aaaaaa".into()))
@@ -939,7 +952,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn subsection_must_be_respected() {
-        let config = GitConfig::from_str("[core]a=b\n[core.a]a=c").unwrap();
+        let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![&Cow::Borrowed("b")]
@@ -952,7 +965,7 @@ mod get_raw_multi_value {
 
     #[test]
     fn non_relevant_subsection_is_ignored() {
-        let config = GitConfig::from_str("[core]\na=b\na=c\n[core]a=d\n[core]g=g").unwrap();
+        let config = GitConfig::try_from("[core]\na=b\na=c\n[core]a=d\n[core]g=g").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![
@@ -973,7 +986,7 @@ mod display {
         let config = r#"
 
         "#;
-        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+        assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
     }
 
     #[test]
@@ -997,7 +1010,7 @@ mod display {
 [init]
         defaultBranch = master"#;
 
-        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+        assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
     }
 
     #[test]
@@ -1012,7 +1025,7 @@ mod display {
 [commit]
         gpgsign"#;
 
-        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+        assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
     }
 
     #[test]
@@ -1028,6 +1041,6 @@ mod display {
 [init]
         defaultBranch = master"#;
 
-        assert_eq!(GitConfig::from_str(config).unwrap().to_string(), config);
+        assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
     }
 }

@@ -19,9 +19,9 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::multi::{many0, many1};
 use nom::sequence::delimited;
 use nom::IResult;
-use std::fmt::Display;
 use std::iter::FusedIterator;
 use std::{borrow::Cow, error::Error};
+use std::{convert::TryFrom, fmt::Display};
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -446,36 +446,6 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    /// Attempt to zero-copy parse the provided `&str`. On success, returns a
-    /// [`Parser`] that provides methods to accessing leading comments and
-    /// sections of a `git-config` file and can be converted into an iterator of
-    /// [`Event`] for higher level processing.
-    ///
-    /// This function is identical to [`parse_from_str`].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string provided is not a valid `git-config`.
-    /// This generally is due to either invalid names or if there's extraneous
-    /// data succeeding valid `git-config` data.
-    pub fn from_str(s: &'a str) -> Result<Self, ParserError> {
-        parse_from_str(s)
-    }
-
-    /// Attempt to zero-copy parse the provided bytes. On success, returns a
-    /// [`Parser`] that provides methods to accessing leading comments and
-    /// sections of a `git-config` file and can be converted into an iterator of
-    /// [`Event`] for higher level processing.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string provided is not a valid `git-config`.
-    /// This generally is due to either invalid names or if there's extraneous
-    /// data succeeding valid `git-config` data.
-    pub fn from_bytes(s: impl Into<&'a BStr>) -> Result<Self, ParserError<'a>> {
-        parse_from_bytes(s.into())
-    }
-
     /// Returns the leading events (any comments, whitespace, or newlines before
     /// a section) from the parser. Consider [`Parser::take_frontmatter`] if
     /// you need an owned copy only once. If that function was called, then this
@@ -527,6 +497,22 @@ impl<'a> Parser<'a> {
             })
             .flatten();
         self.frontmatter.into_iter().chain(section_iter)
+    }
+}
+
+impl<'a> TryFrom<&'a str> for Parser<'a> {
+    type Error = ParserError<'a>;
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        parse_from_str(value)
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
+    type Error = ParserError<'a>;
+
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+        parse_from_bytes(value)
     }
 }
 
