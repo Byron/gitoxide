@@ -10,8 +10,47 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
-/// contains a even number of unescaped quotes.
-fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
+/// contains a even number of unescaped quotes, and will unescape escaped quotes.
+/// The return values should be safe for value interpretation.
+///
+/// This has optimizations for fully-quoted values, where the returned value
+/// will be a borrowed reference if the only mutation necessary is to unquote
+/// the value.
+///
+/// # Examples
+///
+/// Values don't need modification are returned borrowed, without allocation.
+///
+/// ```
+/// # use std::borrow::Cow;
+/// # use git_config::values::normalize;
+/// assert_eq!(normalize(b"hello world"), Cow::Borrowed(b"hello world".into()));
+/// ```
+///
+/// Fully quoted values are optimized to not need allocations.
+///
+/// ```
+/// # use std::borrow::Cow;
+/// # use git_config::values::normalize;
+/// assert_eq!(normalize(b"\"hello world\""), Cow::Borrowed(b"hello world".into()));
+/// ```
+///
+/// Quoted values are unwrapped as an owned variant.
+///
+/// ```
+/// # use std::borrow::Cow;
+/// # use git_config::values::normalize;
+/// assert_eq!(normalize(b"hello \"world\""), Cow::<[u8]>::Owned(b"hello world".to_vec()));
+/// ```
+///
+/// Escaped quotes are ignored.
+///
+/// ```
+/// # use std::borrow::Cow;
+/// # use git_config::values::normalize;
+/// assert_eq!(normalize(br#"hello "world\"""#), Cow::<[u8]>::Owned(br#"hello world""#.to_vec()));
+/// ```
+pub fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
     let mut first_index = 0;
     let mut last_index = 0;
 
@@ -33,24 +72,33 @@ fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
     for (i, c) in input.iter().enumerate() {
         if was_escaped {
             was_escaped = false;
+            if *c == b'"' {
+                if first_index == 0 {
+                    owned.extend(dbg!(&input[last_index..i - 1]));
+                    last_index = i;
+                } else {
+                    owned.extend(dbg!(&input[first_index..i - 1]));
+                    first_index = i;
+                }
+            }
             continue;
         }
 
-        if *c as char == '\\' {
+        if *c == b'\\' {
             was_escaped = true;
-        } else if *c as char == '"' {
+        } else if *c == b'"' {
             if first_index == 0 {
-                owned.extend(&input[last_index..i]);
+                owned.extend(dbg!(&input[last_index..i]));
                 first_index = i + 1;
             } else {
-                owned.extend(&input[first_index..i]);
+                owned.extend(dbg!(&input[first_index..i]));
                 first_index = 0;
                 last_index = i + 1;
             }
         }
     }
 
-    owned.extend(&input[last_index..]);
+    owned.extend(dbg!(&input[last_index..]));
     if owned.is_empty() {
         Cow::Borrowed(input)
     } else {
@@ -763,8 +811,8 @@ mod normalize {
     #[test]
     fn all_quote_optimization_is_correct() {
         assert_eq!(
-            normalize(b"\"hello\" world\\\""),
-            Cow::Borrowed(b"hello world\\\"")
+            normalize(br#""hello" world\""#),
+            Cow::Borrowed(b"hello world\"")
         );
     }
 
@@ -780,7 +828,7 @@ mod normalize {
     fn escaped_quotes_are_kept() {
         assert_eq!(
             normalize(br#""hello \"\" world""#),
-            Cow::<[u8]>::Owned(b"hello \\\"\\\" world".to_vec())
+            Cow::<[u8]>::Owned(b"hello \"\" world".to_vec())
         );
     }
 
@@ -790,7 +838,7 @@ mod normalize {
     }
 
     #[test]
-    fn empty_normalized_string() {
+    fn empty_normalized_string_is_optimized() {
         assert_eq!(normalize(b"\"\""), Cow::Borrowed(b""));
     }
 }
