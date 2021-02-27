@@ -790,6 +790,13 @@ fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<
     }
 }
 
+/// Handles parsing of known-to-be values. This function handles both single
+/// line values as well as values that are continuations.
+///
+/// # Errors
+///
+/// Returns an error if an invalid escape was used, if there was an unfinished
+/// quote, or there was an escape but there is nothing left to escape.
 fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
