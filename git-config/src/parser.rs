@@ -488,6 +488,8 @@ impl<'a> Parser<'a> {
 
     /// Consumes the parser to produce an iterator of Events.
     pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + FusedIterator {
+        // Can't impl IntoIter without allocating.and using a generic associated type
+        // TODO: try harder?
         let section_iter = self
             .sections
             .into_iter()
