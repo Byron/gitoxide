@@ -1,18 +1,32 @@
+//! Rust containers for valid `git-config` types.
+
 use std::{borrow::Cow, fmt::Display, str::FromStr};
 
+use bstr::BStr;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
+/// Fully enumerated valid types that a `git-config` value can be.
+#[allow(missing_docs)]
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Value<'a> {
     Boolean(Boolean<'a>),
     Integer(Integer),
     Color(Color),
-    Other(Cow<'a, str>),
+    /// If a value does not match from any of the other variants, then this
+    /// variant will be matched. As a result, conversion from a `str`-like item
+    /// will never fail.
+    Other(Cow<'a, BStr>),
 }
 
 impl<'a> Value<'a> {
-    pub fn from_str(s: &'a str) -> Self {
+    pub fn from_string(s: String) -> Self {
+        Self::Other(Cow::Owned(s.into()))
+    }
+}
+
+impl<'a> From<&'a str> for Value<'a> {
+    fn from(s: &'a str) -> Self {
         if let Ok(bool) = Boolean::from_str(s) {
             return Self::Boolean(bool);
         }
@@ -25,11 +39,7 @@ impl<'a> Value<'a> {
             return Self::Color(color);
         }
 
-        Self::Other(Cow::Borrowed(s))
-    }
-
-    pub fn from_string(s: String) -> Self {
-        Self::Other(Cow::Owned(s))
+        Self::Other(Cow::Borrowed(s.into()))
     }
 }
 
@@ -53,7 +63,7 @@ impl Serialize for Value<'_> {
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
-    False(FalseVariant<'a>),
+    False(&'a str),
 }
 
 impl<'a> Boolean<'a> {
@@ -62,8 +72,13 @@ impl<'a> Boolean<'a> {
             return Ok(Self::True(v));
         }
 
-        if let Ok(v) = FalseVariant::from_str(value) {
-            return Ok(Self::False(v));
+        if value.eq_ignore_ascii_case("no")
+            || value.eq_ignore_ascii_case("off")
+            || value.eq_ignore_ascii_case("false")
+            || value.eq_ignore_ascii_case("zero")
+            || value == "\"\""
+        {
+            return Ok(Self::False(value));
         }
 
         Err(())
@@ -142,40 +157,6 @@ impl Serialize for TrueVariant<'_> {
         S: serde::Serializer,
     {
         serializer.serialize_bool(true)
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct FalseVariant<'a>(&'a str);
-
-impl<'a> FalseVariant<'a> {
-    pub fn from_str(value: &'a str) -> Result<FalseVariant<'a>, ()> {
-        if value.eq_ignore_ascii_case("no")
-            || value.eq_ignore_ascii_case("off")
-            || value.eq_ignore_ascii_case("false")
-            || value.eq_ignore_ascii_case("zero")
-            || value == "\"\""
-        {
-            Ok(Self(value))
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl Display for FalseVariant<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for FalseVariant<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_bool(false)
     }
 }
 
@@ -598,26 +579,11 @@ mod boolean {
 
     #[test]
     fn from_str_false() {
-        assert_eq!(
-            Boolean::from_str("no"),
-            Ok(Boolean::False(FalseVariant("no")))
-        );
-        assert_eq!(
-            Boolean::from_str("off"),
-            Ok(Boolean::False(FalseVariant("off")))
-        );
-        assert_eq!(
-            Boolean::from_str("false"),
-            Ok(Boolean::False(FalseVariant("false")))
-        );
-        assert_eq!(
-            Boolean::from_str("zero"),
-            Ok(Boolean::False(FalseVariant("zero")))
-        );
-        assert_eq!(
-            Boolean::from_str("\"\""),
-            Ok(Boolean::False(FalseVariant("\"\"")))
-        );
+        assert_eq!(Boolean::from_str("no"), Ok(Boolean::False("no")));
+        assert_eq!(Boolean::from_str("off"), Ok(Boolean::False("off")));
+        assert_eq!(Boolean::from_str("false"), Ok(Boolean::False("false")));
+        assert_eq!(Boolean::from_str("zero"), Ok(Boolean::False("zero")));
+        assert_eq!(Boolean::from_str("\"\""), Ok(Boolean::False("\"\"")));
     }
 
     #[test]
