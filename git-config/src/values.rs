@@ -1,9 +1,62 @@
 //! Rust containers for valid `git-config` types.
 
+use crate::parser::Event;
 use bstr::{BStr, ByteSlice};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
-use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
+use std::borrow::Cow;
+use std::convert::TryFrom;
+use std::fmt::Display;
+use std::str::FromStr;
+
+/// Removes quotes, if any, from the provided inputs. This assumes the input
+/// contains a even number of unescaped quotes.
+fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
+    let mut first_index = 0;
+    let mut last_index = 0;
+
+    let size = input.len();
+
+    if input == b"\"\"" {
+        return Cow::Borrowed(&[]);
+    }
+
+    if size >= 3 {
+        if input[0] == b'=' && input[size - 1] == b'=' && input[size - 2] != b'\\' {
+            return normalize(&input[1..size]);
+        }
+    }
+
+    let mut owned = vec![];
+
+    let mut was_escaped = false;
+    for (i, c) in input.iter().enumerate() {
+        if was_escaped {
+            was_escaped = false;
+            continue;
+        }
+
+        if *c as char == '\\' {
+            was_escaped = true;
+        } else if *c as char == '"' {
+            if first_index == 0 {
+                owned.extend(&input[last_index..i]);
+                first_index = i + 1;
+            } else {
+                owned.extend(&input[first_index..i]);
+                first_index = 0;
+                last_index = i + 1;
+            }
+        }
+    }
+
+    owned.extend(&input[last_index..]);
+    if owned.is_empty() {
+        Cow::Borrowed(input)
+    } else {
+        Cow::Owned(owned)
+    }
+}
 
 /// Fully enumerated valid types that a `git-config` value can be.
 #[allow(missing_docs)]
@@ -23,6 +76,38 @@ impl<'a> Value<'a> {
         Self::Other(Cow::Owned(s.into()))
     }
 }
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum ValueEventConversionError {
+    ValueNotDone,
+    NoValue,
+}
+
+// impl<'a, 'b> TryFrom<&'b [Event<'a>]> for Value<'a> {
+//     type Error = ValueEventConversionError;
+
+//     fn try_from(events: &'b [Event<'a>]) -> Result<Self, Self::Error> {
+//         let mut v = vec![];
+
+//         for event in events {
+//             match event {
+//                 Event::Value(v) => return Ok(Self::from(v.borrow())),
+//                 Event::ValueNotDone(value) => v.extend(value.borrow()),
+//                 Event::ValueDone(value) => {
+//                     v.extend(value.borrow());
+//                     // return Ok(Self::from(v));
+//                 }
+//                 _ => (),
+//             }
+//         }
+
+//         if v.is_empty() {
+//             Err(Self::Error::NoValue)
+//         } else {
+//             Err(Self::Error::ValueNotDone)
+//         }
+//     }
+// }
 
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
@@ -46,22 +131,18 @@ impl<'a> From<&'a [u8]> for Value<'a> {
     fn from(s: &'a [u8]) -> Self {
         // All parsable values must be utf-8 valid
         if let Ok(s) = std::str::from_utf8(s) {
-            if let Ok(bool) = Boolean::try_from(s) {
-                return Self::Boolean(bool);
-            }
-
-            if let Ok(int) = Integer::from_str(s) {
-                return Self::Integer(int);
-            }
-
-            if let Ok(color) = Color::from_str(s) {
-                return Self::Color(color);
-            }
+            Self::from(s)
+        } else {
+            Self::Other(Cow::Borrowed(s.as_bstr()))
         }
-
-        Self::Other(Cow::Borrowed(s.as_bstr()))
     }
 }
+
+// impl From<Vec<u8>> for Value<'_> {
+//     fn from(_: Vec<u8>) -> Self {
+//         todo!()
+//     }
+// }
 
 // todo display for value
 
@@ -653,6 +734,64 @@ impl TryFrom<&[u8]> for ColorAttribute {
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+    }
+}
+
+#[cfg(test)]
+mod normalize {
+    use super::normalize;
+    use std::borrow::Cow;
+
+    #[test]
+    fn not_modified_is_borrowed() {
+        assert_eq!(normalize(b"hello world"), Cow::Borrowed(b"hello world"));
+    }
+
+    #[test]
+    fn modified_is_owned() {
+        assert_eq!(
+            normalize(b"hello \"world\""),
+            Cow::<[u8]>::Owned(b"hello world".to_vec())
+        );
+    }
+
+    #[test]
+    fn all_quoted_is_optimized() {
+        assert_eq!(normalize(b"\"hello world\""), Cow::Borrowed(b"hello world"));
+    }
+
+    #[test]
+    fn all_quote_optimization_is_correct() {
+        assert_eq!(
+            normalize(b"\"hello\" world\\\""),
+            Cow::Borrowed(b"hello world\\\"")
+        );
+    }
+
+    #[test]
+    fn quotes_right_next_to_each_other() {
+        assert_eq!(
+            normalize(b"\"hello\"\" world\""),
+            Cow::<[u8]>::Owned(b"hello world".to_vec())
+        );
+    }
+
+    #[test]
+    fn escaped_quotes_are_kept() {
+        assert_eq!(
+            normalize(br#""hello \"\" world""#),
+            Cow::<[u8]>::Owned(b"hello \\\"\\\" world".to_vec())
+        );
+    }
+
+    #[test]
+    fn empty_string() {
+        assert_eq!(normalize(b""), Cow::Borrowed(b""));
+    }
+
+    #[test]
+    fn empty_normalized_string() {
+        assert_eq!(normalize(b"\"\""), Cow::Borrowed(b""));
     }
 }
 
