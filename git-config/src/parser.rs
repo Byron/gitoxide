@@ -631,34 +631,56 @@ fn section<'a, 'b>(
     i: &'a [u8],
     node: &'b mut ParserNode,
 ) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
-    let (i, section_header) = section_header(i)?;
+    let (mut i, section_header) = section_header(i)?;
 
     let mut newlines = 0;
-    let (i, items) = many0(alt((
-        map(take_spaces, |space| {
-            vec![Event::Whitespace(Cow::Borrowed(space.into()))]
-        }),
-        map(take_newline, |(newline, counter)| {
-            newlines += counter;
-            vec![Event::Newline(Cow::Borrowed(newline.into()))]
-        }),
-        map(
-            |i| section_body(i, node),
-            |(key, values)| {
-                let mut vec = vec![Event::Key(Cow::Borrowed(key.into()))];
-                vec.extend(values);
-                vec
-            },
-        ),
-        map(comment, |comment| vec![Event::Comment(comment)]),
-    )))(i)?;
+    let mut items = vec![];
+
+    // This would usually be a many0(alt(...)), the manual loop allows us to
+    // optimize vec insertions
+    loop {
+        let old_i = i;
+
+        if let Ok((new_i, v)) = take_spaces(i) {
+            if old_i != new_i {
+                i = new_i;
+                items.push(Event::Whitespace(Cow::Borrowed(v.into())));
+            }
+        }
+
+        if let Ok((new_i, (v, new_newlines))) = take_newline(i) {
+            if old_i != new_i {
+                i = new_i;
+                newlines += new_newlines;
+                items.push(Event::Newline(Cow::Borrowed(v.into())));
+            }
+        }
+
+        if let Ok((new_i, _)) = section_body(i, node, &mut items) {
+            if old_i != new_i {
+                i = new_i;
+                // items.push(Event::Key(Cow::Borrowed(key.into())));
+            }
+        }
+
+        if let Ok((new_i, comment)) = comment(i) {
+            if old_i != new_i {
+                i = new_i;
+                items.push(Event::Comment(comment));
+            }
+        }
+
+        if old_i == i {
+            break;
+        }
+    }
 
     Ok((
         i,
         (
             ParsedSection {
                 section_header,
-                events: items.into_iter().flatten().collect(),
+                events: items,
             },
             newlines,
         ),
@@ -716,26 +738,26 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     ))
 }
 
-fn section_body<'a, 'b>(
+fn section_body<'a, 'b, 'c>(
     i: &'a [u8],
     node: &'b mut ParserNode,
-) -> IResult<&'a [u8], (&'a [u8], Vec<Event<'a>>)> {
+    items: &'c mut Vec<Event<'a>>,
+) -> IResult<&'a [u8], ()> {
     // maybe need to check for [ here
     *node = ParserNode::ConfigName;
     let (i, name) = config_name(i)?;
 
+    items.push(Event::Key(Cow::Borrowed(name.into())));
+
     let (i, whitespace) = opt(take_spaces)(i)?;
 
-    *node = ParserNode::ConfigValue;
-    let (i, value) = config_value(i)?;
-
     if let Some(whitespace) = whitespace {
-        let mut events = vec![Event::Whitespace(Cow::Borrowed(whitespace.into()))];
-        events.extend(value);
-        Ok((i, (name, events)))
-    } else {
-        Ok((i, (name, value)))
+        items.push(Event::Whitespace(Cow::Borrowed(whitespace.into())));
     }
+
+    *node = ParserNode::ConfigValue;
+    let (i, _) = config_value(i, items)?;
+    Ok((i, ()))
 }
 
 /// Parses the config name of a config pair. Assumes the input has already been
@@ -757,24 +779,22 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
     take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)
 }
 
-fn config_value(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
+fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
     if let (i, Some(_)) = opt(char('='))(i)? {
-        let mut events = vec![];
         events.push(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
-        let (i, values) = value_impl(i)?;
         if let Some(whitespace) = whitespace {
             events.push(Event::Whitespace(Cow::Borrowed(whitespace.into())));
         }
-        events.extend(values);
-        Ok((i, events))
+        let (i, _) = value_impl(i, events)?;
+        Ok((i, ()))
     } else {
-        Ok((i, vec![Event::Value(Cow::Borrowed("".into()))]))
+        events.push(Event::Value(Cow::Borrowed("".into())));
+        Ok((i, ()))
     }
 }
 
-fn value_impl(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
-    let mut events = vec![];
+fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
 
@@ -861,7 +881,7 @@ fn value_impl(i: &[u8]) -> IResult<&[u8], Vec<Event>> {
         events.push(Event::Value(Cow::Borrowed(remainder_value.into())));
     }
 
-    Ok((i, events))
+    Ok((i, ()))
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
@@ -1020,32 +1040,33 @@ mod config_name {
 #[cfg(test)]
 mod section_body {
     use super::*;
-    use crate::test_util::{value_event, whitespace_event};
+    use crate::test_util::{name_event, value_event, whitespace_event};
 
     #[test]
     fn whitespace_is_not_ambigious() {
         let mut node = ParserNode::SectionHeader;
+        let mut vec = vec![];
+        assert!(section_body(b"a =b", &mut node, &mut vec).is_ok());
         assert_eq!(
-            section_body(b"a =b", &mut node).unwrap().1,
-            (
-                "a".as_bytes(),
-                vec![
-                    whitespace_event(" "),
-                    Event::KeyValueSeparator,
-                    value_event("b")
-                ]
-            )
+            vec,
+            vec![
+                name_event("a"),
+                whitespace_event(" "),
+                Event::KeyValueSeparator,
+                value_event("b")
+            ]
         );
+
+        let mut vec = vec![];
+        assert!(section_body(b"a= b", &mut node, &mut vec).is_ok());
         assert_eq!(
-            section_body(b"a= b", &mut node).unwrap().1,
-            (
-                "a".as_bytes(),
-                vec![
-                    Event::KeyValueSeparator,
-                    whitespace_event(" "),
-                    value_event("b")
-                ]
-            )
+            vec,
+            vec![
+                name_event("a"),
+                Event::KeyValueSeparator,
+                whitespace_event(" "),
+                value_event("b")
+            ]
         );
     }
 }
@@ -1053,141 +1074,173 @@ mod section_body {
 #[cfg(test)]
 mod value_no_continuation {
     use super::*;
-    use crate::test_util::{fully_consumed, value_event};
+    use crate::test_util::value_event;
 
     #[test]
     fn no_comment() {
-        assert_eq!(
-            value_impl(b"hello").unwrap(),
-            fully_consumed(vec![value_event("hello")])
-        );
+        let mut events = vec![];
+        assert_eq!(value_impl(b"hello", &mut events).unwrap().0, b"");
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn no_comment_newline() {
-        assert_eq!(
-            value_impl(b"hello\na").unwrap(),
-            ("\na".as_bytes(), vec![value_event("hello")])
-        )
+        let mut events = vec![];
+        assert_eq!(value_impl(b"hello\na", &mut events).unwrap().0, b"\na");
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn semicolon_comment_not_consumed() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello;world").unwrap(),
-            (";world".as_bytes(), vec![value_event("hello"),])
+            value_impl(b"hello;world", &mut events).unwrap().0,
+            b";world"
         );
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn octothorpe_comment_not_consumed() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello#world").unwrap(),
-            ("#world".as_bytes(), vec![value_event("hello"),])
+            value_impl(b"hello#world", &mut events).unwrap().0,
+            b"#world"
         );
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn values_with_extraneous_whitespace_without_comment() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello               ").unwrap(),
-            ("               ".as_bytes(), vec![value_event("hello")])
+            value_impl(b"hello               ", &mut events).unwrap().0,
+            b"               "
         );
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn values_with_extraneous_whitespace_before_comment() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello             #world").unwrap(),
-            ("             #world".as_bytes(), vec![value_event("hello")])
+            value_impl(b"hello             #world", &mut events)
+                .unwrap()
+                .0,
+            b"             #world"
         );
+        assert_eq!(events, vec![value_event("hello")]);
+
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello             ;world").unwrap(),
-            ("             ;world".as_bytes(), vec![value_event("hello")])
+            value_impl(b"hello             ;world", &mut events)
+                .unwrap()
+                .0,
+            b"             ;world"
         );
+        assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn trans_escaped_comment_marker_not_consumed() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(br##"hello"#"world; a"##).unwrap(),
-            ("; a".as_bytes(), vec![value_event(r##"hello"#"world"##)])
+            value_impl(br##"hello"#"world; a"##, &mut events).unwrap().0,
+            b"; a"
         );
+        assert_eq!(events, vec![value_event(r##"hello"#"world"##)]);
     }
 
     #[test]
     fn complex_test() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(br#"value";";ahhhh"#).unwrap(),
-            (";ahhhh".as_bytes(), vec![value_event(r#"value";""#)])
+            value_impl(br#"value";";ahhhh"#, &mut events).unwrap().0,
+            b";ahhhh"
         );
+        assert_eq!(events, vec![value_event(r#"value";""#)]);
     }
 
     #[test]
     fn garbage_after_continution_is_err() {
-        assert!(value_impl(b"hello \\afwjdls").is_err());
+        assert!(value_impl(b"hello \\afwjdls", &mut vec![]).is_err());
     }
 }
 
 #[cfg(test)]
 mod value_continuation {
     use super::*;
-    use crate::test_util::{fully_consumed, newline_event, value_done_event, value_not_done_event};
+    use crate::test_util::{newline_event, value_done_event, value_not_done_event};
 
     #[test]
     fn simple_continuation() {
+        let mut events = vec![];
+        assert_eq!(value_impl(b"hello\\\nworld", &mut events).unwrap().0, b"");
         assert_eq!(
-            value_impl(b"hello\\\nworld").unwrap(),
-            fully_consumed(vec![
+            events,
+            vec![
                 value_not_done_event("hello"),
                 newline_event(),
                 value_done_event("world")
-            ])
+            ]
         );
     }
 
     #[test]
     fn continuation_with_whitespace() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello\\\n        world").unwrap(),
-            fully_consumed(vec![
+            value_impl(b"hello\\\n        world", &mut events)
+                .unwrap()
+                .0,
+            b""
+        );
+        assert_eq!(
+            events,
+            vec![
                 value_not_done_event("hello"),
                 newline_event(),
                 value_done_event("        world")
-            ])
-        )
+            ]
+        );
     }
 
     #[test]
     fn complex_continuation_with_leftover_comment() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c").unwrap(),
-            (
-                " # \"b\t ; c".as_bytes(),
-                vec![
-                    value_not_done_event(r#"1    "\""#),
-                    newline_event(),
-                    value_not_done_event(r#"a ; e "\""#),
-                    newline_event(),
-                    value_done_event("d")
-                ]
-            )
+            value_impl(b"1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut events)
+                .unwrap()
+                .0,
+            b" # \"b\t ; c"
+        );
+        assert_eq!(
+            events,
+            vec![
+                value_not_done_event(r#"1    "\""#),
+                newline_event(),
+                value_not_done_event(r#"a ; e "\""#),
+                newline_event(),
+                value_done_event("d")
+            ]
         );
     }
 
     #[test]
     fn quote_split_over_two_lines_with_leftover_comment() {
+        let mut events = vec![];
         assert_eq!(
-            value_impl(b"\"\\\n;\";a").unwrap(),
-            (
-                ";a".as_bytes(),
-                vec![
-                    value_not_done_event("\""),
-                    newline_event(),
-                    value_done_event(";\"")
-                ]
-            )
-        )
+            value_impl(b"\"\\\n;\";a", &mut events).unwrap().0,
+            ";a".as_bytes()
+        );
+        assert_eq!(
+            events,
+            vec![
+                value_not_done_event("\""),
+                newline_event(),
+                value_done_event(";\"")
+            ]
+        );
     }
 }
 
