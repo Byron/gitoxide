@@ -1161,6 +1161,16 @@ mod value_no_continuation {
     fn garbage_after_continution_is_err() {
         assert!(value_impl(b"hello \\afwjdls", &mut vec![]).is_err());
     }
+
+    #[test]
+    fn incomplete_quote() {
+        assert!(value_impl(br#"hello "world"#, &mut vec![]).is_err());
+    }
+
+    #[test]
+    fn incomplete_escape() {
+        assert!(value_impl(br#"hello world\"#, &mut vec![]).is_err());
+    }
 }
 
 #[cfg(test)]
@@ -1436,6 +1446,32 @@ mod section {
                 },
                 0
             ))
+        );
+    }
+}
+
+#[cfg(test)]
+mod error {
+    use super::*;
+
+    #[test]
+    fn line_no_is_one_indexed() {
+        assert_eq!(parse_from_str("[hello").unwrap_err().line_number(), 1);
+    }
+
+    #[test]
+    fn remaining_data_contains_bad_tokens() {
+        assert_eq!(
+            parse_from_str("[hello").unwrap_err().remaining_data(),
+            b"[hello"
+        );
+    }
+
+    #[test]
+    fn to_string_truncates_extra_values() {
+        assert_eq!(
+            parse_from_str("[1234567890").unwrap_err().to_string(),
+            "Got an unexpected token on line 1 while trying to parse a section header: '[123456789' ... (1 characters omitted)"
         );
     }
 }
