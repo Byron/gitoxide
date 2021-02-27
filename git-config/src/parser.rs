@@ -214,12 +214,12 @@ impl Display for ParserError<'_> {
 
 impl Error for ParserError<'_> {}
 
+/// A list of parsers that parsing can fail on. This is used for pretty-printing
+/// errors
 #[derive(PartialEq, Debug, Clone, Copy)]
 enum ParserNode {
     SectionHeader,
     ConfigName,
-    ConfigValue,
-    Comment,
 }
 
 impl Display for ParserNode {
@@ -227,8 +227,6 @@ impl Display for ParserNode {
         match self {
             Self::SectionHeader => write!(f, "section header"),
             Self::ConfigName => write!(f, "config name"),
-            Self::ConfigValue => write!(f, "config value"),
-            Self::Comment => write!(f, "comment"),
         }
     }
 }
@@ -659,7 +657,6 @@ fn section<'a, 'b>(
         if let Ok((new_i, _)) = section_body(i, node, &mut items) {
             if old_i != new_i {
                 i = new_i;
-                // items.push(Event::Key(Cow::Borrowed(key.into())));
             }
         }
 
@@ -755,7 +752,6 @@ fn section_body<'a, 'b, 'c>(
         items.push(Event::Whitespace(Cow::Borrowed(whitespace.into())));
     }
 
-    *node = ParserNode::ConfigValue;
     let (i, _) = config_value(i, items)?;
     Ok((i, ()))
 }
