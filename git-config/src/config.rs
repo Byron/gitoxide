@@ -1,8 +1,11 @@
 use crate::parser::{parse_from_bytes, Event, ParsedSectionHeader, Parser, ParserError};
 use bstr::BStr;
-use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::{borrow::Cow, fmt::Display};
+use std::{
+    collections::{HashMap, VecDeque},
+    error::Error,
+};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigError<'a> {
@@ -12,7 +15,22 @@ pub enum GitConfigError<'a> {
     SubSectionDoesNotExist(Option<&'a BStr>),
     /// The key does not exist in the requested section.
     KeyDoesNotExist(&'a BStr),
+    FailedConversion,
 }
+
+impl Display for GitConfigError<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            // Todo, try parse as utf8 first for better looking errors
+            Self::SectionDoesNotExist(s) => write!(f, "Subsection '{}' does not exist.", s),
+            Self::SubSectionDoesNotExist(s) => write!(f, "Subsection '{:?}' does not exist.", s),
+            Self::KeyDoesNotExist(k) => write!(f, "Name '{}' does not exist.", k),
+            Self::FailedConversion => write!(f, "Failed to convert to specified type."),
+        }
+    }
+}
+
+impl Error for GitConfigError<'_> {}
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
 /// This value does not imply any ordering between sections, as new sections
@@ -101,8 +119,12 @@ impl<'a> GitConfig<'a> {
         }
     }
 
-    /// Returns an uninterpreted value given a section, an optional subsection
-    /// and key.
+    /// Returns an interpreted value given a section, an optional subsection and
+    /// key.
+    ///
+    /// It's recommended to use one of the values in the [`values`] module as
+    /// the conversion is already implemented, but this function is flexible and
+    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
     /// # Multivar behavior
     ///
@@ -131,8 +153,105 @@ impl<'a> GitConfig<'a> {
     /// ```
     /// # use git_config::config::GitConfig;
     /// # use std::borrow::Cow;
-    /// # let git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # use std::convert::TryFrom;
+    /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".into())));
+    /// ```
+    ///
+    /// Consider [`Self::get_raw_multi_value`] if you want to get all values of
+    /// a multivar instead.
+    ///
+    /// # Examples
+    ///
+    ///
+    /// Fetching a config value
+    /// ```
+    /// # use git_config::config::{GitConfig, GitConfigError};
+    /// # use git_config::values::{Integer, Value, Boolean};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// let config = r#"
+    ///     [core]
+    ///         a = 10k
+    ///         c
+    /// "#;
+    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// // You can either use the turbofish to determine the type...
+    /// let a_value = git_config.get_value::<Integer, _>("core", None, "a")?;
+    /// // ... or explicitly declare the type to avoid the turbofish
+    /// let c_value: Boolean = git_config.get_value("core", None, "c")?;
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in the requested
+    /// section and subsection, if the section and subsection do not exist, or
+    /// if there was an issue converting the type into the requested variant.
+    ///
+    /// [`values`]: crate::values
+    /// [`TryFrom`]: std::convert::TryFrom
+    pub fn get_value<'b, 'c, T: TryFrom<&'c [u8]>, S: Into<&'b BStr>>(
+        &'c self,
+        section_name: S,
+        subsection_name: Option<S>,
+        key: S,
+    ) -> Result<T, GitConfigError<'b>> {
+        T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
+            .map_err(|_| GitConfigError::FailedConversion)
+    }
+
+    fn get_section_id_by_name_and_subname<'b>(
+        &'a self,
+        section_name: &'b BStr,
+        subsection_name: Option<&'b BStr>,
+    ) -> Result<SectionId, GitConfigError<'b>> {
+        self.get_section_ids_by_name_and_subname(section_name, subsection_name)
+            .map(|vec| {
+                // get_section_ids_by_name_and_subname is guaranteed to return
+                // a non-empty vec, so max can never return empty.
+                *vec.iter().max().unwrap()
+            })
+    }
+
+    /// Returns an uninterpreted value given a section, an optional subsection
+    /// and key.
+    ///
+    /// # Multivar behavior
+    ///
+    /// `git` is flexible enough to allow users to set a key multiple times in
+    /// any number of identically named sections. When this is the case, the key
+    /// is known as a "multivar". In this case, `get_raw_value` follows the
+    /// "last one wins" approach that `git-config` internally uses for multivar
+    /// resolution.
+    ///
+    /// Concretely, the following config has a multivar, `a`, with the values
+    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
+    /// `f g h`.
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    ///     a = c
+    /// [core]
+    ///     a = d
+    ///     e = f g h
+    /// ```
+    ///
+    /// Calling this function to fetch `a` with the above config will return
+    /// `d`, since the last valid config value is `a = d`:
+    ///
+    /// ```
+    /// # use git_config::config::{GitConfig, GitConfigError};
+    /// # use git_config::values::Value;
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// assert_eq!(
+    ///     git_config.get_value::<Value, _>("core", None, "a")?,
+    ///     Value::Other(Cow::Borrowed("d".into()))
+    /// );
+    /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
     /// Consider [`Self::get_raw_multi_value`] if you want to get all values of
@@ -207,7 +326,8 @@ impl<'a> GitConfig<'a> {
     /// # use git_config::config::{GitConfig, GitConfigError};
     /// # use std::borrow::Cow;
     /// # use bstr::BStr;
-    /// # let mut git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let mut mut_value = git_config.get_raw_value_mut("core", None, "a")?;
     /// assert_eq!(mut_value, &mut Cow::<BStr>::Borrowed("d".into()));
     /// *mut_value = Cow::Borrowed("hello".into());
@@ -256,19 +376,6 @@ impl<'a> GitConfig<'a> {
         latest_value.ok_or(GitConfigError::KeyDoesNotExist(key))
     }
 
-    fn get_section_id_by_name_and_subname<'b>(
-        &'a self,
-        section_name: &'b BStr,
-        subsection_name: Option<&'b BStr>,
-    ) -> Result<SectionId, GitConfigError<'b>> {
-        self.get_section_ids_by_name_and_subname(section_name, subsection_name)
-            .map(|vec| {
-                // get_section_ids_by_name_and_subname is guaranteed to return
-                // a non-empty vec, so max can never return empty.
-                *vec.iter().max().unwrap()
-            })
-    }
-
     /// Returns all uninterpreted values given a section, an optional subsection
     /// and key. If you have the following config:
     ///
@@ -285,7 +392,8 @@ impl<'a> GitConfig<'a> {
     /// ```
     /// # use git_config::config::GitConfig;
     /// # use std::borrow::Cow;
-    /// # let git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # use std::convert::TryFrom;
+    /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a"),
     ///     Ok(vec![&Cow::Borrowed("b".into()), &Cow::Borrowed("c".into()), &Cow::Borrowed("d".into())]),
@@ -351,7 +459,8 @@ impl<'a> GitConfig<'a> {
     /// # use git_config::config::{GitConfig, GitConfigError};
     /// # use std::borrow::Cow;
     /// # use bstr::BStr;
-    /// # let mut git_config = GitConfig::from_str("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
     ///     vec![
@@ -885,6 +994,25 @@ mod get_raw_value {
             config.get_raw_value("core", Some("a"), "a"),
             Ok(&Cow::Borrowed("c".into()))
         );
+    }
+}
+
+#[cfg(test)]
+mod get_value {
+    use super::*;
+    use crate::values::{Boolean, TrueVariant, Value};
+    use std::error::Error;
+
+    #[test]
+    fn single_section() -> Result<(), Box<dyn Error>> {
+        let config = GitConfig::try_from("[core]\na=b\nc").unwrap();
+        let first_value: Value = config.get_value("core", None, "a")?;
+        let second_value: Boolean = config.get_value("core", None, "c")?;
+
+        assert_eq!(first_value, Value::Other(Cow::Borrowed("b".into())));
+        assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
+
+        Ok(())
     }
 }
 

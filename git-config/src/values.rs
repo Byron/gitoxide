@@ -1,10 +1,9 @@
 //! Rust containers for valid `git-config` types.
 
-use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
-
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
+use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 /// Fully enumerated valid types that a `git-config` value can be.
 #[allow(missing_docs)]
@@ -43,6 +42,27 @@ impl<'a> From<&'a str> for Value<'a> {
     }
 }
 
+impl<'a> From<&'a [u8]> for Value<'a> {
+    fn from(s: &'a [u8]) -> Self {
+        // All parsable values must be utf-8 valid
+        if let Ok(s) = std::str::from_utf8(s) {
+            if let Ok(bool) = Boolean::try_from(s) {
+                return Self::Boolean(bool);
+            }
+
+            if let Ok(int) = Integer::from_str(s) {
+                return Self::Integer(int);
+            }
+
+            if let Ok(color) = Color::from_str(s) {
+                return Self::Color(color);
+            }
+        }
+
+        Self::Other(Cow::Borrowed(s.as_bstr()))
+    }
+}
+
 // todo display for value
 
 #[cfg(feature = "serde")]
@@ -70,17 +90,25 @@ impl<'a> TryFrom<&'a str> for Boolean<'a> {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        Self::try_from(value.as_bytes())
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
+    type Error = ();
+
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         if let Ok(v) = TrueVariant::try_from(value) {
             return Ok(Self::True(v));
         }
 
-        if value.eq_ignore_ascii_case("no")
-            || value.eq_ignore_ascii_case("off")
-            || value.eq_ignore_ascii_case("false")
-            || value.eq_ignore_ascii_case("zero")
-            || value == "\"\""
+        if value.eq_ignore_ascii_case(b"no")
+            || value.eq_ignore_ascii_case(b"off")
+            || value.eq_ignore_ascii_case(b"false")
+            || value.eq_ignore_ascii_case(b"zero")
+            || value == b"\"\""
         {
-            return Ok(Self::False(value));
+            return Ok(Self::False(std::str::from_utf8(value).unwrap()));
         }
 
         Err(())
@@ -132,12 +160,22 @@ impl<'a> TryFrom<&'a str> for TrueVariant<'a> {
     type Error = ();
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        if value.eq_ignore_ascii_case("yes")
-            || value.eq_ignore_ascii_case("on")
-            || value.eq_ignore_ascii_case("true")
-            || value.eq_ignore_ascii_case("one")
+        Self::try_from(value.as_bytes())
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
+    type Error = ();
+
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+        if value.eq_ignore_ascii_case(b"yes")
+            || value.eq_ignore_ascii_case(b"on")
+            || value.eq_ignore_ascii_case(b"true")
+            || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(value))
+            Ok(Self::Explicit(std::str::from_utf8(value).unwrap()))
+        } else if value.is_empty() {
+            Ok(Self::Implicit)
         } else {
             Err(())
         }
@@ -224,6 +262,14 @@ impl FromStr for Integer {
     }
 }
 
+impl TryFrom<&[u8]> for Integer {
+    type Error = ();
+
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum IntegerSuffix {
     Kilo,
@@ -276,6 +322,14 @@ impl FromStr for IntegerSuffix {
             "g" => Ok(Self::Giga),
             _ => Err(()),
         }
+    }
+}
+
+impl TryFrom<&[u8]> for IntegerSuffix {
+    type Error = ();
+
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }
 }
 
@@ -361,6 +415,14 @@ impl FromStr for Color {
         }
 
         Ok(new_self)
+    }
+}
+
+impl TryFrom<&[u8]> for Color {
+    type Error = ();
+
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }
 }
 
@@ -479,6 +541,14 @@ impl FromStr for ColorValue {
     }
 }
 
+impl TryFrom<&[u8]> for ColorValue {
+    type Error = ();
+
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum ColorAttribute {
     Bold,
@@ -578,6 +648,14 @@ impl FromStr for ColorAttribute {
     }
 }
 
+impl TryFrom<&[u8]> for ColorAttribute {
+    type Error = ();
+
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+    }
+}
+
 #[cfg(test)]
 mod boolean {
     use super::*;
@@ -625,7 +703,6 @@ mod boolean {
     fn from_str_err() {
         assert!(Boolean::try_from("yesn't").is_err());
         assert!(Boolean::try_from("yesno").is_err());
-        assert!(Boolean::try_from("").is_err());
     }
 }
 

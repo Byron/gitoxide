@@ -285,7 +285,7 @@ impl Display for ParserNode {
 ///
 /// - This struct does _not_ implement [`FromStr`] due to lifetime
 /// constraints implied on the required `from_str` method. Instead, it provides
-/// [`Parser::from_str`].
+/// [`From<&'_ str>`].
 ///
 /// # Idioms
 ///
@@ -439,6 +439,7 @@ impl Display for ParserNode {
 /// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
 /// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
 /// [`FromStr`]: std::str::FromStr
+/// [`From<&'_ str>`]: std::convert::From
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Parser<'a> {
     frontmatter: Vec<Event<'a>>,
