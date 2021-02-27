@@ -3,6 +3,7 @@
     "Multivar",
     "autocrlf",
     "bstr",
+    "combinator",
     "gitea",
     "gpgsign",
     "implicits",

@@ -1,6 +1,6 @@
 //! Rust containers for valid `git-config` types.
 
-use std::{borrow::Cow, fmt::Display, str::FromStr};
+use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::BStr;
 #[cfg(feature = "serde")]
@@ -27,7 +27,7 @@ impl<'a> Value<'a> {
 
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
-        if let Ok(bool) = Boolean::from_str(s) {
+        if let Ok(bool) = Boolean::try_from(s) {
             return Self::Boolean(bool);
         }
 
@@ -66,9 +66,11 @@ pub enum Boolean<'a> {
     False(&'a str),
 }
 
-impl<'a> Boolean<'a> {
-    pub fn from_str(value: &'a str) -> Result<Self, ()> {
-        if let Ok(v) = TrueVariant::from_str(value) {
+impl<'a> TryFrom<&'a str> for Boolean<'a> {
+    type Error = ();
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        if let Ok(v) = TrueVariant::try_from(value) {
             return Ok(Self::True(v));
         }
 
@@ -89,7 +91,7 @@ impl Display for Boolean<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Boolean::True(v) => v.fmt(f),
-            Boolean::False(v) => v.fmt(f),
+            Boolean::False(v) => write!(f, "{}", v),
         }
     }
 }
@@ -126,8 +128,10 @@ pub enum TrueVariant<'a> {
     Implicit,
 }
 
-impl<'a> TrueVariant<'a> {
-    pub fn from_str(value: &'a str) -> Result<TrueVariant<'a>, ()> {
+impl<'a> TryFrom<&'a str> for TrueVariant<'a> {
+    type Error = ();
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case("yes")
             || value.eq_ignore_ascii_case("on")
             || value.eq_ignore_ascii_case("true")
@@ -221,14 +225,15 @@ impl FromStr for Integer {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-enum IntegerSuffix {
+pub enum IntegerSuffix {
     Kilo,
     Mega,
     Giga,
 }
 
 impl IntegerSuffix {
-    fn bitwise_offset(&self) -> usize {
+    /// Returns the number of bits that the suffix shifts left by.
+    pub fn bitwise_offset(&self) -> usize {
         match self {
             Self::Kilo => 10,
             Self::Mega => 20,
@@ -579,29 +584,29 @@ mod boolean {
 
     #[test]
     fn from_str_false() {
-        assert_eq!(Boolean::from_str("no"), Ok(Boolean::False("no")));
-        assert_eq!(Boolean::from_str("off"), Ok(Boolean::False("off")));
-        assert_eq!(Boolean::from_str("false"), Ok(Boolean::False("false")));
-        assert_eq!(Boolean::from_str("zero"), Ok(Boolean::False("zero")));
-        assert_eq!(Boolean::from_str("\"\""), Ok(Boolean::False("\"\"")));
+        assert_eq!(Boolean::try_from("no"), Ok(Boolean::False("no")));
+        assert_eq!(Boolean::try_from("off"), Ok(Boolean::False("off")));
+        assert_eq!(Boolean::try_from("false"), Ok(Boolean::False("false")));
+        assert_eq!(Boolean::try_from("zero"), Ok(Boolean::False("zero")));
+        assert_eq!(Boolean::try_from("\"\""), Ok(Boolean::False("\"\"")));
     }
 
     #[test]
     fn from_str_true() {
         assert_eq!(
-            Boolean::from_str("yes"),
+            Boolean::try_from("yes"),
             Ok(Boolean::True(TrueVariant::Explicit("yes")))
         );
         assert_eq!(
-            Boolean::from_str("on"),
+            Boolean::try_from("on"),
             Ok(Boolean::True(TrueVariant::Explicit("on")))
         );
         assert_eq!(
-            Boolean::from_str("true"),
+            Boolean::try_from("true"),
             Ok(Boolean::True(TrueVariant::Explicit("true")))
         );
         assert_eq!(
-            Boolean::from_str("one"),
+            Boolean::try_from("one"),
             Ok(Boolean::True(TrueVariant::Explicit("one")))
         );
     }
@@ -610,17 +615,17 @@ mod boolean {
     fn ignores_case() {
         // Random subset
         for word in &["no", "yes", "off", "true", "zero"] {
-            let first: bool = Boolean::from_str(word).unwrap().into();
-            let second: bool = Boolean::from_str(&word.to_uppercase()).unwrap().into();
+            let first: bool = Boolean::try_from(*word).unwrap().into();
+            let second: bool = Boolean::try_from(&*word.to_uppercase()).unwrap().into();
             assert_eq!(first, second);
         }
     }
 
     #[test]
     fn from_str_err() {
-        assert!(Boolean::from_str("yesn't").is_err());
-        assert!(Boolean::from_str("yesno").is_err());
-        assert!(Boolean::from_str("").is_err());
+        assert!(Boolean::try_from("yesn't").is_err());
+        assert!(Boolean::try_from("yesno").is_err());
+        assert!(Boolean::try_from("").is_err());
     }
 }
 
