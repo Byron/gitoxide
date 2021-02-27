@@ -52,6 +52,47 @@ enum LookupTreeNode<'a> {
     NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
 }
 /// High level `git-config` reader and writer.
+///
+/// Internally, this uses various acceleration data structures to improve
+/// performance.
+///
+/// # Multivar behavior
+///
+/// `git` is flexible enough to allow users to set a key multiple times in
+/// any number of identically named sections. When this is the case, the key
+/// is known as a "multivar". In this case, `get_raw_value` follows the
+/// "last one wins" approach that `git-config` internally uses for multivar
+/// resolution.
+///
+/// Concretely, the following config has a multivar, `a`, with the values
+/// of `b`, `c`, and `d`, while `e` is a single variable with the value
+/// `f g h`.
+///
+/// ```text
+/// [core]
+///     a = b
+///     a = c
+/// [core]
+///     a = d
+///     e = f g h
+/// ```
+///
+/// Calling methods that only one fetch value (such as [`get_raw_value`]) to
+/// fetch `a` with the above config will return `d`, since the last valid config
+/// value is `a = d`:
+///
+/// ```
+/// # use git_config::config::GitConfig;
+/// # use std::borrow::Cow;
+/// # use std::convert::TryFrom;
+/// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".into())));
+/// ```
+///
+/// Consider the `multi` variants of the methods instead, if you want to work
+/// with all values instead.
+///
+/// [`get_value`]: Self::get_value
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GitConfig<'a> {
     /// The list of events that occur before an actual section. Since a
@@ -126,45 +167,11 @@ impl<'a> GitConfig<'a> {
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
-    /// # Multivar behavior
-    ///
-    /// `git` is flexible enough to allow users to set a key multiple times in
-    /// any number of identically named sections. When this is the case, the key
-    /// is known as a "multivar". In this case, `get_raw_value` follows the
-    /// "last one wins" approach that `git-config` internally uses for multivar
-    /// resolution.
-    ///
-    /// Concretely, the following config has a multivar, `a`, with the values
-    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
-    /// `f g h`.
-    ///
-    /// ```text
-    /// [core]
-    ///     a = b
-    ///     a = c
-    /// [core]
-    ///     a = d
-    ///     e = f g h
-    /// ```
-    ///
-    /// Calling this function to fetch `a` with the above config will return
-    /// `d`, since the last valid config value is `a = d`:
-    ///
-    /// ```
-    /// # use git_config::config::GitConfig;
-    /// # use std::borrow::Cow;
-    /// # use std::convert::TryFrom;
-    /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".into())));
-    /// ```
-    ///
-    /// Consider [`Self::get_raw_multi_value`] if you want to get all values of
-    /// a multivar instead.
+    /// Consider [`Self::get_multi_value`] if you want to get all values of a
+    /// multivar instead.
     ///
     /// # Examples
     ///
-    ///
-    /// Fetching a config value
     /// ```
     /// # use git_config::config::{GitConfig, GitConfigError};
     /// # use git_config::values::{Integer, Value, Boolean};
@@ -217,43 +224,6 @@ impl<'a> GitConfig<'a> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
-    /// # Multivar behavior
-    ///
-    /// `git` is flexible enough to allow users to set a key multiple times in
-    /// any number of identically named sections. When this is the case, the key
-    /// is known as a "multivar". In this case, `get_raw_value` follows the
-    /// "last one wins" approach that `git-config` internally uses for multivar
-    /// resolution.
-    ///
-    /// Concretely, the following config has a multivar, `a`, with the values
-    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
-    /// `f g h`.
-    ///
-    /// ```text
-    /// [core]
-    ///     a = b
-    ///     a = c
-    /// [core]
-    ///     a = d
-    ///     e = f g h
-    /// ```
-    ///
-    /// Calling this function to fetch `a` with the above config will return
-    /// `d`, since the last valid config value is `a = d`:
-    ///
-    /// ```
-    /// # use git_config::config::{GitConfig, GitConfigError};
-    /// # use git_config::values::Value;
-    /// # use std::borrow::Cow;
-    /// # use std::convert::TryFrom;
-    /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// assert_eq!(
-    ///     git_config.get_value::<Value, _>("core", None, "a")?,
-    ///     Value::Other(Cow::Borrowed("d".into()))
-    /// );
-    /// # Ok::<(), GitConfigError>(())
-    /// ```
-    ///
     /// Consider [`Self::get_raw_multi_value`] if you want to get all values of
     /// a multivar instead.
     ///
@@ -297,43 +267,6 @@ impl<'a> GitConfig<'a> {
 
     /// Returns a mutable reference to an uninterpreted value given a section,
     /// an optional subsection and key.
-    ///
-    /// # Multivar behavior
-    ///
-    /// `git` is flexible enough to allow users to set a key multiple times in
-    /// any number of identically named sections. When this is the case, the key
-    /// is known as a "multivar". In this case, `get_raw_value` follows the
-    /// "last one wins" approach that `git-config` internally uses for multivar
-    /// resolution.
-    ///
-    /// Concretely, the following config has a multivar, `a`, with the values
-    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
-    /// `f g h`.
-    ///
-    /// ```text
-    /// [core]
-    ///     a = b
-    ///     a = c
-    /// [core]
-    ///     a = d
-    ///     e = f g h
-    /// ```
-    ///
-    /// Calling this function to fetch `a` with the above config will return
-    /// `d`, since the last valid config value is `a = d`:
-    ///
-    /// ```
-    /// # use git_config::config::{GitConfig, GitConfigError};
-    /// # use std::borrow::Cow;
-    /// # use bstr::BStr;
-    /// # use std::convert::TryFrom;
-    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let mut mut_value = git_config.get_raw_value_mut("core", None, "a")?;
-    /// assert_eq!(mut_value, &mut Cow::<BStr>::Borrowed("d".into()));
-    /// *mut_value = Cow::Borrowed("hello".into());
-    /// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("hello".into())));
-    /// # Ok::<(), GitConfigError>(())
-    /// ```
     ///
     /// Consider [`Self::get_raw_multi_value_mut`] if you want to get mutable
     /// references to all values of a multivar instead.
