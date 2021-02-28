@@ -340,11 +340,11 @@ impl<'a> GitConfig<'a> {
     /// section and subsection, or if no instance of the section and subsections
     /// exist.
     pub fn get_raw_multi_value<'b>(
-        &'a self,
+        &self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
         key: &'b str,
-    ) -> Result<Vec<&Cow<'a, [u8]>>, GitConfigError<'b>> {
+    ) -> Result<Vec<&Cow<'_, [u8]>>, GitConfigError<'b>> {
         let key = key;
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
@@ -464,7 +464,7 @@ impl<'a> GitConfig<'a> {
     }
 
     fn get_section_ids_by_name_and_subname<'b>(
-        &'a self,
+        &self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
     ) -> Result<&[SectionId], GitConfigError<'b>> {
