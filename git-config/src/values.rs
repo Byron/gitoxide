@@ -124,18 +124,6 @@ pub enum Value<'a> {
     Other(Cow<'a, BStr>),
 }
 
-impl<'a> Value<'a> {
-    pub fn from_string(s: String) -> Self {
-        Self::Other(Cow::Owned(s.into()))
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum ValueEventConversionError {
-    ValueNotDone,
-    NoValue,
-}
-
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
         if let Ok(bool) = Boolean::try_from(s) {
@@ -165,12 +153,6 @@ impl<'a> From<&'a [u8]> for Value<'a> {
     }
 }
 
-// impl From<Vec<u8>> for Value<'_> {
-//     fn from(_: Vec<u8>) -> Self {
-//         todo!()
-//     }
-// }
-
 // todo display for value
 
 #[cfg(feature = "serde")]
@@ -188,7 +170,16 @@ impl Serialize for Value<'_> {
     }
 }
 
+/// Any value that can be interpreted as a boolean.
+///
+/// Note that while values can effectively be any byte string, the `git-config`
+/// documentation has a strict subset of values that may be interpreted as a
+/// boolean value, all of which are ASCII and thus UTF-8 representable.
+/// Consequently, variants hold [`str`]s rather than [`BStr`]s.
+///
+/// [`BStr`]: bstr::BStr
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[allow(missing_docs)]
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
     False(&'a str),
@@ -254,13 +245,14 @@ impl Serialize for Boolean<'_> {
     }
 }
 
+/// Discriminating enum between implicit and explicit truthy values.
+///
+/// This enum is part of the [`Boolean`] struct.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[allow(missing_docs)]
 pub enum TrueVariant<'a> {
     Explicit(&'a str),
-    /// For variables defined without a `= <value>`. This can never be created
-    /// from the [`FromStr`] trait, as an empty string is false without context.
-    /// If directly serializing this struct (instead of using a higher level
-    /// wrapper), then this variant is serialized as if it was `true`.
+    /// For values defined without a `= <value>`.
     Implicit,
 }
 
@@ -310,6 +302,17 @@ impl Serialize for TrueVariant<'_> {
     }
 }
 
+/// Any value that can be interpreted as an integer.
+///
+/// This supports any numeric value that can fit in a [`i64`], excluding the
+/// suffix. The suffix is parsed separately from the value itself, so if you
+/// wish to obtain the true value of the integer, you must account for the
+/// suffix after fetching the value. [`IntegerSuffix`] provides
+/// [`bitwise_offset`] to help with the math, but do be warned that if the value
+/// is very large, you may run into overflows.
+///
+/// [`BStr`]: bstr::BStr
+/// [`bitwise_offset`]: IntegerSuffix::bitwise_offset
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Integer {
     value: i64,
@@ -378,20 +381,24 @@ impl TryFrom<&[u8]> for Integer {
     }
 }
 
+/// Integer prefixes that are supported by `git-config`.
+///
+/// These values are base-2 unit of measurements, not the base-10 variants.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[allow(missing_docs)]
 pub enum IntegerSuffix {
-    Kilo,
-    Mega,
-    Giga,
+    Kibi,
+    Mebi,
+    Gibi,
 }
 
 impl IntegerSuffix {
     /// Returns the number of bits that the suffix shifts left by.
     pub fn bitwise_offset(&self) -> usize {
         match self {
-            Self::Kilo => 10,
-            Self::Mega => 20,
-            Self::Giga => 30,
+            Self::Kibi => 10,
+            Self::Mebi => 20,
+            Self::Gibi => 30,
         }
     }
 }
@@ -399,9 +406,9 @@ impl IntegerSuffix {
 impl Display for IntegerSuffix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Kilo => write!(f, "k"),
-            Self::Mega => write!(f, "m"),
-            Self::Giga => write!(f, "g"),
+            Self::Kibi => write!(f, "k"),
+            Self::Mebi => write!(f, "m"),
+            Self::Gibi => write!(f, "g"),
         }
     }
 }
@@ -413,9 +420,9 @@ impl Serialize for IntegerSuffix {
         S: Serializer,
     {
         serializer.serialize_str(match self {
-            Self::Kilo => "k",
-            Self::Mega => "m",
-            Self::Giga => "g",
+            Self::Kibi => "k",
+            Self::Mebi => "m",
+            Self::Gibi => "g",
         })
     }
 }
@@ -425,9 +432,9 @@ impl FromStr for IntegerSuffix {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "k" => Ok(Self::Kilo),
-            "m" => Ok(Self::Mega),
-            "g" => Ok(Self::Giga),
+            "k" => Ok(Self::Kibi),
+            "m" => Ok(Self::Mebi),
+            "g" => Ok(Self::Gibi),
             _ => Err(()),
         }
     }
@@ -441,11 +448,35 @@ impl TryFrom<&[u8]> for IntegerSuffix {
     }
 }
 
+/// Any value that may contain a foreground color, background color, a
+/// collection of color (text) modifiers, or a combination of any of the
+/// aforementioned values.
+///
+/// Note that `git-config` allows color values to simply be a collection of
+/// [`ColorAttribute`]s, and does not require a [`ColorValue`] for either the
+/// foreground or background color.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Color {
     foreground: Option<ColorValue>,
     background: Option<ColorValue>,
     attributes: Vec<ColorAttribute>,
+}
+
+impl Color {
+    /// Returns the foreground color, if any.
+    pub fn foreground(&self) -> Option<ColorValue> {
+        self.foreground
+    }
+
+    /// Returns the background color, if any.
+    pub fn background(&self) -> Option<ColorValue> {
+        self.background
+    }
+
+    /// Returns the list of text modifiers, if any.
+    pub fn attributes(&self) -> &[ColorAttribute] {
+        &self.attributes
+    }
 }
 
 impl Display for Color {
@@ -477,13 +508,16 @@ impl Serialize for Color {
     }
 }
 
-pub enum FromColorErr {
+/// Discriminating enum for [`Color`] parsing.
+pub enum ColorParseError {
+    /// Too many primary colors were provided.
     TooManyColorValues,
+    /// An invalid color value or attribute was provided.
     InvalidColorOption,
 }
 
 impl FromStr for Color {
-    type Err = FromColorErr;
+    type Err = ColorParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         enum ColorItem {
@@ -513,12 +547,12 @@ impl FromStr for Color {
                         } else if new_self.background.is_none() {
                             new_self.background = Some(v);
                         } else {
-                            return Err(FromColorErr::TooManyColorValues);
+                            return Err(ColorParseError::TooManyColorValues);
                         }
                     }
                     ColorItem::Attr(a) => new_self.attributes.push(a),
                 },
-                Err(_) => return Err(FromColorErr::InvalidColorOption),
+                Err(_) => return Err(ColorParseError::InvalidColorOption),
             }
         }
 
@@ -534,8 +568,13 @@ impl TryFrom<&[u8]> for Color {
     }
 }
 
+/// Discriminating enum for [`Color`] values.
+///
+/// `git-config` supports the eight standard colors, their bright variants, an
+/// ANSI color code, or a 24-bit hex value prefixed with an octothorpe.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-enum ColorValue {
+#[allow(missing_docs)]
+pub enum ColorValue {
     Normal,
     Black,
     BrightBlack,
@@ -657,7 +696,13 @@ impl TryFrom<&[u8]> for ColorValue {
     }
 }
 
+/// Discriminating enum for [`Color`] attributes.
+///
+/// `git-config` supports modifiers and their negators. The negating color
+/// attributes are equivalent to having a `no` or `no-` prefix to the normal
+/// variant.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[allow(missing_docs)]
 pub enum ColorAttribute {
     Bold,
     NoBold,
@@ -901,7 +946,7 @@ mod integer {
             Integer::from_str("1k").unwrap(),
             Integer {
                 value: 1,
-                suffix: Some(IntegerSuffix::Kilo),
+                suffix: Some(IntegerSuffix::Kibi),
             }
         );
 
@@ -909,7 +954,7 @@ mod integer {
             Integer::from_str("1m").unwrap(),
             Integer {
                 value: 1,
-                suffix: Some(IntegerSuffix::Mega),
+                suffix: Some(IntegerSuffix::Mebi),
             }
         );
 
@@ -917,7 +962,7 @@ mod integer {
             Integer::from_str("1g").unwrap(),
             Integer {
                 value: 1,
-                suffix: Some(IntegerSuffix::Giga),
+                suffix: Some(IntegerSuffix::Gibi),
             }
         );
     }
