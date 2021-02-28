@@ -9,12 +9,18 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
-/// contains a even number of unescaped quotes, and will unescape escaped quotes.
-/// The return values should be safe for value interpretation.
+/// contains a even number of unescaped quotes, and will unescape escaped
+/// quotes. The return values should be safe for value interpretation.
 ///
 /// This has optimizations for fully-quoted values, where the returned value
 /// will be a borrowed reference if the only mutation necessary is to unquote
 /// the value.
+///
+/// This is the function used to normalize raw values from higher level
+/// abstractions over the [`parser`] implementation. Generally speaking these
+/// high level abstractions will handle normalization for you, and you do not
+/// need to call this yourself. However, if you're directly handling events
+/// from the parser, you may want to use this to help with value interpretation.
 ///
 /// # Examples
 ///
@@ -49,6 +55,8 @@ use std::str::FromStr;
 /// # use git_config::values::normalize;
 /// assert_eq!(normalize(br#"hello "world\"""#), Cow::<[u8]>::Owned(br#"hello world""#.to_vec()));
 /// ```
+///
+/// [`parser`]: crate::parser::Parser
 pub fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
     let mut first_index = 0;
     let mut last_index = 0;
