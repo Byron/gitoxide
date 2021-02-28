@@ -6,6 +6,8 @@ description = "A git-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
 authors = ["Edward Shen <code@eddie.sh>"]
 edition = "2018"
+keywords = ["git-config", "git", "config", "gitoxide"]
+categories = ["config", "parser-implementations"]
 exclude = ["fuzz/**/*", ".vscode/**/*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

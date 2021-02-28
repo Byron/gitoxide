@@ -391,7 +391,7 @@ pub enum IntegerSuffix {
 
 impl IntegerSuffix {
     /// Returns the number of bits that the suffix shifts left by.
-    pub fn bitwise_offset(&self) -> usize {
+    pub const fn bitwise_offset(self) -> usize {
         match self {
             Self::Kibi => 10,
             Self::Mebi => 20,
@@ -461,12 +461,12 @@ pub struct Color {
 
 impl Color {
     /// Returns the foreground color, if any.
-    pub fn foreground(&self) -> Option<ColorValue> {
+    pub const fn foreground(&self) -> Option<ColorValue> {
         self.foreground
     }
 
     /// Returns the background color, if any.
-    pub fn background(&self) -> Option<ColorValue> {
+    pub const fn background(&self) -> Option<ColorValue> {
         self.background
     }
 
