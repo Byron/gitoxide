@@ -1,7 +1,6 @@
-use crate::parser::{parse_from_bytes, Event, ParsedSectionHeader, Parser, ParserError};
+use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
-use std::error::Error;
 use std::{borrow::Cow, fmt::Display};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
@@ -30,7 +29,7 @@ impl Display for GitConfigError<'_> {
     }
 }
 
-impl Error for GitConfigError<'_> {}
+impl std::error::Error for GitConfigError<'_> {}
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
 /// This value does not imply any ordering between sections, as new sections
@@ -51,6 +50,7 @@ enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
+
 /// High level `git-config` reader and writer.
 ///
 /// Internally, this uses various acceleration data structures to improve
@@ -537,7 +537,7 @@ impl<'a> GitConfig<'a> {
 }
 
 impl<'a> TryFrom<&'a str> for GitConfig<'a> {
-    type Error = ParserError<'a>;
+    type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`GitConfig`]. See [`parse_from_str`] for more information.
@@ -549,7 +549,7 @@ impl<'a> TryFrom<&'a str> for GitConfig<'a> {
 }
 
 impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
-    type Error = ParserError<'a>;
+    type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.

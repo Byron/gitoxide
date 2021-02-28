@@ -1,6 +1,9 @@
 #![forbid(unsafe_code)]
+// #![deny(missing_docs)]
+#![warn(clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(clippy::must_use_candidate, clippy::shadow_unrelated)]
 
-//! # git_config
+//! # `git_config`
 //!
 //! This crate is a high performance `git-config` file reader and writer. It
 //! exposes a high level API to parse, read, and write [`git-config` files],

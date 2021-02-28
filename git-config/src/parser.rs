@@ -18,8 +18,8 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::multi::{many0, many1};
 use nom::sequence::delimited;
 use nom::IResult;
+use std::borrow::Cow;
 use std::iter::FusedIterator;
-use std::{borrow::Cow, error::Error};
 use std::{convert::TryFrom, fmt::Display};
 
 /// Syntactic events that occurs in the config. Despite all these variants
@@ -74,23 +74,15 @@ impl Display for Event<'_> {
     /// as read. Consider [`Event::as_bytes`] for one-to-one reading.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => {
+                match std::str::from_utf8(e) {
+                    Ok(e) => e.fmt(f),
+                    Err(_) => write!(f, "{:02x?}", e),
+                }
+            }
             Self::Comment(e) => e.fmt(f),
             Self::SectionHeader(e) => e.fmt(f),
-            Self::Key(e) => e.fmt(f),
-            Self::Value(e) => match std::str::from_utf8(e) {
-                Ok(e) => e.fmt(f),
-                Err(_) => write!(f, "{:02x?}", e),
-            },
-            Self::Newline(e) => e.fmt(f),
-            Self::ValueNotDone(e) => match std::str::from_utf8(e) {
-                Ok(e) => e.fmt(f),
-                Err(_) => write!(f, "{:02x?}", e),
-            },
-            Self::ValueDone(e) => match std::str::from_utf8(e) {
-                Ok(e) => e.fmt(f),
-                Err(_) => write!(f, "{:02x?}", e),
-            },
-            Self::Whitespace(e) => e.fmt(f),
+            Self::Key(e) | Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
             Self::KeyValueSeparator => write!(f, "="),
         }
     }
@@ -186,26 +178,26 @@ impl Display for ParsedComment<'_> {
 /// occurred, as well as the last parser node and the remaining data to be
 /// parsed.
 #[derive(PartialEq, Debug)]
-pub struct ParserError<'a> {
+pub struct Error<'a> {
     line_number: usize,
     last_attempted_parser: ParserNode,
     parsed_until: &'a [u8],
 }
 
-impl ParserError<'_> {
+impl Error<'_> {
     /// The one-indexed line number where the error occurred. This is determined
     /// by the number of newlines that were successfully parsed.
-    pub fn line_number(&self) -> usize {
+    pub const fn line_number(&self) -> usize {
         self.line_number + 1
     }
 
     /// The remaining data that was left unparsed.
-    pub fn remaining_data(&self) -> &[u8] {
+    pub const fn remaining_data(&self) -> &[u8] {
         self.parsed_until
     }
 }
 
-impl Display for ParserError<'_> {
+impl Display for Error<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let data_size = self.parsed_until.len();
         let data = std::str::from_utf8(self.parsed_until);
@@ -235,7 +227,7 @@ impl Display for ParserError<'_> {
     }
 }
 
-impl Error for ParserError<'_> {}
+impl std::error::Error for Error<'_> {}
 
 /// A list of parsers that parsing can fail on. This is used for pretty-printing
 /// errors
@@ -510,24 +502,21 @@ impl<'a> Parser<'a> {
 
     /// Consumes the parser to produce an iterator of Events.
     #[must_use = "iterators are lazy and do nothing unless consumed"]
+    #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + FusedIterator {
         // Can't impl IntoIter without allocating.and using a generic associated type
         // TODO: try harder?
-        let section_iter = self
-            .sections
-            .into_iter()
-            .map(|section| {
-                vec![Event::SectionHeader(section.section_header)]
-                    .into_iter()
-                    .chain(section.events)
-            })
-            .flatten();
+        let section_iter = self.sections.into_iter().flat_map(|section| {
+            vec![Event::SectionHeader(section.section_header)]
+                .into_iter()
+                .chain(section.events)
+        });
         self.frontmatter.into_iter().chain(section_iter)
     }
 }
 
 impl<'a> TryFrom<&'a str> for Parser<'a> {
-    type Error = ParserError<'a>;
+    type Error = Error<'a>;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         parse_from_str(value)
@@ -535,7 +524,7 @@ impl<'a> TryFrom<&'a str> for Parser<'a> {
 }
 
 impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
-    type Error = ParserError<'a>;
+    type Error = Error<'a>;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         parse_from_bytes(value)
@@ -552,7 +541,7 @@ impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
+pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error> {
     parse_from_bytes(input.as_bytes())
 }
 
@@ -566,7 +555,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser<'_>, ParserError> {
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
+pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error> {
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
@@ -595,7 +584,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     let mut node = ParserNode::SectionHeader;
 
     let maybe_sections = many1(|i| section(i, &mut node))(i);
-    let (i, sections) = maybe_sections.map_err(|_| ParserError {
+    let (i, sections) = maybe_sections.map_err(|_| Error {
         line_number: newlines,
         last_attempted_parser: node,
         parsed_until: i,
@@ -612,7 +601,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     // This needs to happen after we collect sections, otherwise the line number
     // will be off.
     if !i.is_empty() {
-        return Err(ParserError {
+        return Err(Error {
             line_number: newlines,
             last_attempted_parser: node,
             parsed_until: i,
@@ -714,7 +703,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
         let header = match find_legacy_subsection_separator(name) {
             Some(index) => ParsedSectionHeader {
                 name: Cow::Borrowed(&name[..index]),
-                separator: name.get(index..index + 1).map(|slice| Cow::Borrowed(slice)),
+                separator: name.get(index..=index).map(|slice| Cow::Borrowed(slice)),
                 subsection_name: name.get(index + 1..).map(|slice| Cow::Borrowed(slice)),
             },
             None => ParsedSectionHeader {
@@ -859,7 +848,7 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
                     partial_value_found = true;
                     events.push(Event::ValueNotDone(Cow::Borrowed(&i[offset..index - 1])));
                     events.push(Event::Newline(Cow::Borrowed(
-                        std::str::from_utf8(&i[index..index + 1]).unwrap(),
+                        std::str::from_utf8(&i[index..=index]).unwrap(),
                     )));
                     offset = index + 1;
                     parsed_index = 0;
