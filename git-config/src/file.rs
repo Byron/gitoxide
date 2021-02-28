@@ -167,8 +167,6 @@ impl<'a> GitConfig<'a> {
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
-    /// # Examples
-    ///
     /// Consider [`Self::get_multi_value`] if you want to get all values of a
     /// multivar instead.
     ///
@@ -554,8 +552,8 @@ impl<'a> GitConfig<'a> {
     /// multivars, then the latter values are not applied. If there are less
     /// new values than old ones then the remaining old values are unmodified.
     ///
-    /// *Note*: Mutation order is _not_ guaranteed and is non-deterministic. If
-    /// you need finer control over which values of the multivar are set,
+    /// **Note**: Mutation order is _not_ guaranteed and is non-deterministic.
+    /// If you need finer control over which values of the multivar are set,
     /// consider using [`get_raw_multi_value_mut`], which will let you iterate
     /// and check over the values instead. This is best used as a convenience
     /// function for setting multivars whose values should be treated as an
