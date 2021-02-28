@@ -22,7 +22,7 @@ extern crate serde_crate as serde;
 // mod de;
 // mod ser;
 // mod error;
-pub mod config;
+pub mod file;
 pub mod parser;
 pub mod values;
 
