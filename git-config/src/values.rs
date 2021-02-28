@@ -1,6 +1,5 @@
 //! Rust containers for valid `git-config` types.
 
-use crate::parser::Event;
 use bstr::{BStr, ByteSlice};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
@@ -43,7 +42,7 @@ use std::str::FromStr;
 /// assert_eq!(normalize(b"hello \"world\""), Cow::<[u8]>::Owned(b"hello world".to_vec()));
 /// ```
 ///
-/// Escaped quotes are ignored.
+/// Escaped quotes are unescaped.
 ///
 /// ```
 /// # use std::borrow::Cow;
@@ -130,32 +129,6 @@ pub enum ValueEventConversionError {
     ValueNotDone,
     NoValue,
 }
-
-// impl<'a, 'b> TryFrom<&'b [Event<'a>]> for Value<'a> {
-//     type Error = ValueEventConversionError;
-
-//     fn try_from(events: &'b [Event<'a>]) -> Result<Self, Self::Error> {
-//         let mut v = vec![];
-
-//         for event in events {
-//             match event {
-//                 Event::Value(v) => return Ok(Self::from(v.borrow())),
-//                 Event::ValueNotDone(value) => v.extend(value.borrow()),
-//                 Event::ValueDone(value) => {
-//                     v.extend(value.borrow());
-//                     // return Ok(Self::from(v));
-//                 }
-//                 _ => (),
-//             }
-//         }
-
-//         if v.is_empty() {
-//             Err(Self::Error::NoValue)
-//         } else {
-//             Err(Self::Error::ValueNotDone)
-//         }
-//     }
-// }
 
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
