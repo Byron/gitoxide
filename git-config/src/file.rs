@@ -82,7 +82,7 @@ enum LookupTreeNode<'a> {
 /// value is `a = d`:
 ///
 /// ```
-/// # use git_config::config::GitConfig;
+/// # use git_config::file::GitConfig;
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
 /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -173,7 +173,7 @@ impl<'a> GitConfig<'a> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::config::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig, GitConfigError};
     /// # use git_config::values::{Integer, Value, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -317,7 +317,7 @@ impl<'a> GitConfig<'a> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use git_config::config::GitConfig;
+    /// # use git_config::file::GitConfig;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -384,7 +384,7 @@ impl<'a> GitConfig<'a> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use git_config::config::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig, GitConfigError};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
