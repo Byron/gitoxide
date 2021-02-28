@@ -1,6 +1,5 @@
 //! Rust containers for valid `git-config` types.
 
-use bstr::{BStr, ByteSlice};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 use std::borrow::Cow;
@@ -121,7 +120,7 @@ pub enum Value<'a> {
     /// If a value does not match from any of the other variants, then this
     /// variant will be matched. As a result, conversion from a `str`-like item
     /// will never fail.
-    Other(Cow<'a, BStr>),
+    Other(Cow<'a, [u8]>),
 }
 
 impl<'a> From<&'a str> for Value<'a> {
@@ -138,7 +137,7 @@ impl<'a> From<&'a str> for Value<'a> {
             return Self::Color(color);
         }
 
-        Self::Other(Cow::Borrowed(s.into()))
+        Self::Other(Cow::Borrowed(s.as_bytes()))
     }
 }
 
@@ -148,7 +147,7 @@ impl<'a> From<&'a [u8]> for Value<'a> {
         if let Ok(s) = std::str::from_utf8(s) {
             Self::from(s)
         } else {
-            Self::Other(Cow::Borrowed(s.as_bstr()))
+            Self::Other(Cow::Borrowed(s))
         }
     }
 }
@@ -175,9 +174,7 @@ impl Serialize for Value<'_> {
 /// Note that while values can effectively be any byte string, the `git-config`
 /// documentation has a strict subset of values that may be interpreted as a
 /// boolean value, all of which are ASCII and thus UTF-8 representable.
-/// Consequently, variants hold [`str`]s rather than [`BStr`]s.
-///
-/// [`BStr`]: bstr::BStr
+/// Consequently, variants hold [`str`]s rather than [`[u8]`]s.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum Boolean<'a> {
