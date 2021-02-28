@@ -7,7 +7,7 @@
 //! which can be converted into an [`Event`] iterator. The [`Parser`] also has
 //! additional methods for accessing leading comments or events by section.
 //!
-//! [`GitConfig`]: crate::config::GitConfig
+//! [`GitConfig`]: crate::file::GitConfig
 
 use nom::branch::alt;
 use nom::bytes::complete::{escaped, tag, take_till, take_while};
@@ -31,7 +31,7 @@ use std::{convert::TryFrom, fmt::Display};
 /// struct when adding values.
 ///
 /// [`Cow`]: std::borrow::Cow
-/// [`GitConfig`]: crate::config::GitConfig
+/// [`GitConfig`]: crate::file::GitConfig
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
     /// A comment with a comment tag and the comment itself. Note that the
@@ -71,7 +71,7 @@ pub enum Event<'a> {
 impl Display for Event<'_> {
     /// Note that this is a best-effort attempt at printing an `Event`. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
-    /// as read. Consider [`Event::as_bytes`] for one-to-one reading.
+    /// as read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => {
@@ -163,7 +163,7 @@ pub struct ParsedComment<'a> {
 impl Display for ParsedComment<'_> {
     /// Note that this is a best-effort attempt at printing an comment. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
-    /// as read. Consider [`Event::as_bytes`] for one-to-one reading.
+    /// as read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.comment_tag.fmt(f)?;
         if let Ok(s) = std::str::from_utf8(&self.comment) {
@@ -449,7 +449,7 @@ impl Display for ParserNode {
 /// # ]);
 /// ```
 ///
-/// [`GitConfig`]: crate::config::GitConfig
+/// [`GitConfig`]: crate::file::GitConfig
 /// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
 /// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
 /// [`FromStr`]: std::str::FromStr
