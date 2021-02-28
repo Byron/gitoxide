@@ -59,10 +59,8 @@ pub fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
         return Cow::Borrowed(&[]);
     }
 
-    if size >= 3 {
-        if input[0] == b'=' && input[size - 1] == b'=' && input[size - 2] != b'\\' {
-            return normalize(&input[1..size]);
-        }
+    if size >= 3 && input[0] == b'=' && input[size - 1] == b'=' && input[size - 2] != b'\\' {
+        return normalize(&input[1..size]);
     }
 
     let mut owned = vec![];
