@@ -34,7 +34,7 @@ fn name(name: &'static str) -> Event<'static> {
 }
 
 fn value(value: &'static str) -> Event<'static> {
-    Event::Value(Cow::Borrowed(value.into()))
+    Event::Value(Cow::Borrowed(value.as_bytes()))
 }
 
 fn newline() -> Event<'static> {

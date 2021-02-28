@@ -13,12 +13,12 @@ pub fn section_header(
     name: &str,
     subsection: impl Into<Option<(&'static str, &'static str)>>,
 ) -> ParsedSectionHeader<'_> {
-    let name = Cow::Borrowed(name.into());
+    let name = name.into();
     if let Some((separator, subsection_name)) = subsection.into() {
         ParsedSectionHeader {
             name,
-            separator: Some(Cow::Borrowed(separator.into())),
-            subsection_name: Some(Cow::Borrowed(subsection_name.into())),
+            separator: Some(Cow::Borrowed(separator)),
+            subsection_name: Some(Cow::Borrowed(subsection_name)),
         }
     } else {
         ParsedSectionHeader {
@@ -30,19 +30,19 @@ pub fn section_header(
 }
 
 pub(crate) fn name_event(name: &'static str) -> Event<'static> {
-    Event::Key(Cow::Borrowed(name.into()))
+    Event::Key(Cow::Borrowed(name))
 }
 
 pub(crate) fn value_event(value: &'static str) -> Event<'static> {
-    Event::Value(Cow::Borrowed(value.into()))
+    Event::Value(Cow::Borrowed(value.as_bytes()))
 }
 
 pub(crate) fn value_not_done_event(value: &'static str) -> Event<'static> {
-    Event::ValueNotDone(Cow::Borrowed(value.into()))
+    Event::ValueNotDone(Cow::Borrowed(value.as_bytes()))
 }
 
 pub(crate) fn value_done_event(value: &'static str) -> Event<'static> {
-    Event::ValueDone(Cow::Borrowed(value.into()))
+    Event::ValueDone(Cow::Borrowed(value.as_bytes()))
 }
 
 pub(crate) fn newline_event() -> Event<'static> {
@@ -50,11 +50,11 @@ pub(crate) fn newline_event() -> Event<'static> {
 }
 
 pub(crate) fn newline_custom_event(value: &'static str) -> Event<'static> {
-    Event::Newline(Cow::Borrowed(value.into()))
+    Event::Newline(Cow::Borrowed(value))
 }
 
 pub(crate) fn whitespace_event(value: &'static str) -> Event<'static> {
-    Event::Whitespace(Cow::Borrowed(value.into()))
+    Event::Whitespace(Cow::Borrowed(value))
 }
 
 pub(crate) fn comment_event(tag: char, msg: &'static str) -> Event<'static> {
@@ -64,7 +64,7 @@ pub(crate) fn comment_event(tag: char, msg: &'static str) -> Event<'static> {
 pub(crate) fn comment(comment_tag: char, comment: &'static str) -> ParsedComment<'static> {
     ParsedComment {
         comment_tag,
-        comment: Cow::Borrowed(comment.into()),
+        comment: Cow::Borrowed(comment.as_bytes()),
     }
 }
 

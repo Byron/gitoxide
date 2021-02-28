@@ -18,13 +18,13 @@ extern crate serde_crate as serde;
 
 // mod de;
 // mod ser;
+// mod error;
 pub mod config;
-mod error;
 pub mod parser;
 pub mod values;
 
 // pub use de::{from_str, Deserializer};
-pub use error::{Error, Result};
+// pub use error::{Error, Result};
 // pub use ser::{to_string, Serializer};
 
 #[cfg(test)]

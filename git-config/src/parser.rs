@@ -1,5 +1,5 @@
 //! This module handles parsing a `git-config` file. Generally speaking, you
-//! want to use a higher abstraction such as [`GitConfig`] unless you have some
+//! want to use a higher a[u8]action such as [`GitConfig`] unless you have some
 //! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
@@ -9,7 +9,6 @@
 //!
 //! [`GitConfig`]: crate::config::GitConfig
 
-use bstr::{BStr, ByteSlice};
 use nom::branch::alt;
 use nom::bytes::complete::{escaped, tag, take_till, take_while};
 use nom::character::complete::{char, none_of, one_of};
@@ -43,26 +42,26 @@ pub enum Event<'a> {
     /// exists.
     SectionHeader(ParsedSectionHeader<'a>),
     /// A name to a value in a section.
-    Key(Cow<'a, BStr>),
+    Key(Cow<'a, str>),
     /// A completed value. This may be any string, including the empty string,
     /// if an implicit boolean value is used. Note that these values may contain
     /// spaces and any special character. This value is also unprocessed, so it
     /// it may contain double quotes that should be replaced.
-    Value(Cow<'a, BStr>),
+    Value(Cow<'a, [u8]>),
     /// Represents any token used to signify a new line character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
     /// sequence. Multiple newlines (such as `\n\n`) will be merged as a single
     /// newline event.
-    Newline(Cow<'a, BStr>),
+    Newline(Cow<'a, str>),
     /// Any value that isn't completed. This occurs when the value is continued
     /// onto the next line. A Newline event is guaranteed after, followed by
     /// either a ValueDone, a Whitespace, or another ValueNotDone.
-    ValueNotDone(Cow<'a, BStr>),
+    ValueNotDone(Cow<'a, [u8]>),
     /// The last line of a value which was continued onto another line.
-    ValueDone(Cow<'a, BStr>),
+    ValueDone(Cow<'a, [u8]>),
     /// A continuous section of insignificant whitespace. Values with internal
     /// spaces will not be separated by this event.
-    Whitespace(Cow<'a, BStr>),
+    Whitespace(Cow<'a, str>),
     /// This event is emitted when the parser counters a valid `=` character
     /// separating the key and value. This event is necessary as it eliminates
     /// the ambiguity for whitespace events between a key and value event.
@@ -70,15 +69,27 @@ pub enum Event<'a> {
 }
 
 impl Display for Event<'_> {
+    /// Note that this is a best-effort attempt at printing an `Event`. If
+    /// there are non UTF-8 values in your config, this will _NOT_ render
+    /// as read. Consider [`Event::as_bytes`] for one-to-one reading.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Comment(e) => e.fmt(f),
             Self::SectionHeader(e) => e.fmt(f),
             Self::Key(e) => e.fmt(f),
-            Self::Value(e) => e.fmt(f),
+            Self::Value(e) => match std::str::from_utf8(e) {
+                Ok(e) => e.fmt(f),
+                Err(_) => write!(f, "{:02x?}", e),
+            },
             Self::Newline(e) => e.fmt(f),
-            Self::ValueNotDone(e) => e.fmt(f),
-            Self::ValueDone(e) => e.fmt(f),
+            Self::ValueNotDone(e) => match std::str::from_utf8(e) {
+                Ok(e) => e.fmt(f),
+                Err(_) => write!(f, "{:02x?}", e),
+            },
+            Self::ValueDone(e) => match std::str::from_utf8(e) {
+                Ok(e) => e.fmt(f),
+                Err(_) => write!(f, "{:02x?}", e),
+            },
             Self::Whitespace(e) => e.fmt(f),
             Self::KeyValueSeparator => write!(f, "="),
         }
@@ -111,18 +122,22 @@ impl<'a> Into<Event<'a>> for ParsedSectionHeader<'a> {
 }
 
 /// A parsed section header, containing a name and optionally a subsection name.
+///
+/// Note that section headers must be parsed as valid ASCII, and thus all valid
+/// instances must also necessarily be valid UTF-8, which is why we use a
+/// [`str`] instead of [`[u8]`].
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSectionHeader<'a> {
     /// The name of the header.
-    pub name: Cow<'a, BStr>,
+    pub name: Cow<'a, str>,
     /// The separator used to determine if the section contains a subsection.
     /// This is either a period `.` or a string of whitespace. Note that
     /// reconstruction of subsection format is dependent on this value. If this
     /// is all whitespace, then the subsection name needs to be surrounded by
     /// quotes to have perfect reconstruction.
-    pub separator: Option<Cow<'a, BStr>>,
+    pub separator: Option<Cow<'a, str>>,
     /// The subsection name without quotes if any exist.
-    pub subsection_name: Option<Cow<'a, BStr>>,
+    pub subsection_name: Option<Cow<'a, str>>,
 }
 
 impl Display for ParsedSectionHeader<'_> {
@@ -130,9 +145,10 @@ impl Display for ParsedSectionHeader<'_> {
         write!(f, "[{}", self.name)?;
 
         if let Some(v) = &self.separator {
+            // Separator must be utf-8
             v.fmt(f)?;
             let subsection_name = self.subsection_name.as_ref().unwrap();
-            if *v == b".".as_bstr() {
+            if v == "." {
                 subsection_name.fmt(f)?;
             } else {
                 write!(f, "\"{}\"", subsection_name)?;
@@ -149,13 +165,20 @@ pub struct ParsedComment<'a> {
     /// The comment marker used. This is either a semicolon or octothorpe.
     pub comment_tag: char,
     /// The parsed comment.
-    pub comment: Cow<'a, BStr>,
+    pub comment: Cow<'a, [u8]>,
 }
 
 impl Display for ParsedComment<'_> {
+    /// Note that this is a best-effort attempt at printing an comment. If
+    /// there are non UTF-8 values in your config, this will _NOT_ render
+    /// as read. Consider [`Event::as_bytes`] for one-to-one reading.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.comment_tag.fmt(f)?;
-        self.comment.fmt(f)
+        if let Ok(s) = std::str::from_utf8(&self.comment) {
+            s.fmt(f)
+        } else {
+            write!(f, "{:02x?}", self.comment)
+        }
     }
 }
 
@@ -235,7 +258,7 @@ impl Display for ParserNode {
 ///
 /// This is parser exposes low-level syntactic events from a `git-config` file.
 /// Generally speaking, you'll want to use [`GitConfig`] as it wraps
-/// around the parser to provide a higher-level abstraction to a `git-config`
+/// around the parser to provide a higher-level a[u8]action to a `git-config`
 /// file, including querying, modifying, and updating values.
 ///
 /// This parser guarantees that the events emitted are sufficient to
@@ -308,20 +331,20 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("core".into()),
+/// #   name: Cow::Borrowed("core"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::Key(Cow::Borrowed("autocrlf".into())),
-/// Event::Whitespace(Cow::Borrowed(" ".into())),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Whitespace(Cow::Borrowed("  ")),
+/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Whitespace(Cow::Borrowed(" ")),
 /// Event::KeyValueSeparator,
-/// Event::Whitespace(Cow::Borrowed(" ".into())),
-/// Event::Value(Cow::Borrowed("input".into())),
+/// Event::Whitespace(Cow::Borrowed(" ")),
+/// Event::Value(Cow::Borrowed(b"input")),
 /// # ]);
 /// ```
 ///
@@ -346,19 +369,18 @@ impl Display for ParserNode {
 /// ```
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
-/// # use bstr::BStr;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("core".into()),
+/// #   name: Cow::Borrowed("core"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::Key(Cow::Borrowed("autocrlf".into())),
-/// Event::Value(Cow::Borrowed("".into())),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Whitespace(Cow::Borrowed("  ")),
+/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Value(Cow::Borrowed(b"")),
 /// # ]);
 /// ```
 ///
@@ -382,21 +404,21 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("core".into()),
+/// #   name: Cow::Borrowed("core"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Key(Cow::Borrowed("autocrlf".into())),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Key(Cow::Borrowed("autocrlf")),
 /// Event::KeyValueSeparator,
-/// Event::Value(Cow::Borrowed(r#"true"""#.into())),
-/// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Key(Cow::Borrowed("filemode".into())),
+/// Event::Value(Cow::Borrowed(br#"true"""#)),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Key(Cow::Borrowed("filemode")),
 /// Event::KeyValueSeparator,
-/// Event::Value(Cow::Borrowed(r#"fa"lse""#.into())),
+/// Event::Value(Cow::Borrowed(br#"fa"lse""#)),
 /// # ]);
 /// ```
 ///
@@ -419,19 +441,19 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("some-section".into()),
+/// #   name: Cow::Borrowed("some-section"),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Key(Cow::Borrowed("file".into())),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::Key(Cow::Borrowed("file")),
 /// Event::KeyValueSeparator,
-/// Event::ValueNotDone(Cow::Borrowed("a".into())),
-/// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::ValueDone(Cow::Borrowed("    c".into())),
+/// Event::ValueNotDone(Cow::Borrowed(b"a")),
+/// Event::Newline(Cow::Borrowed("\n")),
+/// Event::ValueDone(Cow::Borrowed(b"    c")),
 /// # ]);
 /// ```
 ///
@@ -487,6 +509,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Consumes the parser to produce an iterator of Events.
+    #[must_use = "iterators are lazy and do nothing unless consumed"]
     pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + FusedIterator {
         // Can't impl IntoIter without allocating.and using a generic associated type
         // TODO: try harder?
@@ -548,13 +571,13 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, ParserError> {
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
         map(take_spaces, |whitespace| {
-            Event::Whitespace(Cow::Borrowed(whitespace.into()))
+            Event::Whitespace(Cow::Borrowed(whitespace))
         }),
         map(take_newline, |(newline, counter)| {
             newlines += counter;
-            Event::Newline(Cow::Borrowed(newline.into()))
+            Event::Newline(Cow::Borrowed(newline))
         }),
-    )))(input.as_bytes())
+    )))(input)
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
     // if one of its children succeed. However, all of it's children are
@@ -609,7 +632,7 @@ fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
         i,
         ParsedComment {
             comment_tag,
-            comment: Cow::Borrowed(comment.into()),
+            comment: Cow::Borrowed(comment),
         },
     ))
 }
@@ -631,7 +654,7 @@ fn section<'a, 'b>(
         if let Ok((new_i, v)) = take_spaces(i) {
             if old_i != new_i {
                 i = new_i;
-                items.push(Event::Whitespace(Cow::Borrowed(v.into())));
+                items.push(Event::Whitespace(Cow::Borrowed(v)));
             }
         }
 
@@ -639,7 +662,7 @@ fn section<'a, 'b>(
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
-                items.push(Event::Newline(Cow::Borrowed(v.into())));
+                items.push(Event::Newline(Cow::Borrowed(v)));
             }
         }
 
@@ -678,21 +701,24 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
 
+    let name = std::str::from_utf8(name).map_err(|_| {
+        nom::Err::Error(NomError::<&[u8]> {
+            input: i,
+            code: ErrorKind::AlphaNumeric,
+        })
+    })?;
+
     if let Ok((i, _)) = char::<_, NomError<&[u8]>>(']')(i) {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
-        let header = match name.rfind(&[b'.']) {
+        let header = match find_legacy_subsection_separator(name) {
             Some(index) => ParsedSectionHeader {
-                name: Cow::Borrowed(name[..index].into()),
-                separator: name
-                    .get(index..index + 1)
-                    .map(|slice| Cow::Borrowed(slice.into())),
-                subsection_name: name
-                    .get(index + 1..)
-                    .map(|slice| Cow::Borrowed(slice.into())),
+                name: Cow::Borrowed(&name[..index]),
+                separator: name.get(index..index + 1).map(|slice| Cow::Borrowed(slice)),
+                subsection_name: name.get(index + 1..).map(|slice| Cow::Borrowed(slice)),
             },
             None => ParsedSectionHeader {
-                name: Cow::Borrowed(name.into()),
+                name: Cow::Borrowed(name),
                 separator: None,
                 subsection_name: None,
             },
@@ -710,18 +736,36 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
         tag("\"]"),
     )(i)?;
 
+    let subsection_name = subsection_name
+        .map(std::str::from_utf8)
+        .transpose()
+        .map_err(|_| {
+            nom::Err::Error(NomError::<&[u8]> {
+                input: i,
+                code: ErrorKind::AlphaNumeric,
+            })
+        })?;
+
     Ok((
         i,
         ParsedSectionHeader {
-            name: Cow::Borrowed(name.into()),
-            separator: Some(Cow::Borrowed(whitespace.into())),
+            name: Cow::Borrowed(name),
+            separator: Some(Cow::Borrowed(whitespace)),
             // We know that there's some section name here, so if we get an
             // empty vec here then we actually parsed an empty section name.
-            subsection_name: subsection_name
-                .or(Some(b""))
-                .map(|slice| Cow::Borrowed(slice.into())),
+            subsection_name: subsection_name.or(Some("")).map(Cow::Borrowed),
         },
     ))
+}
+
+fn find_legacy_subsection_separator(input: &str) -> Option<usize> {
+    let input = input.as_bytes();
+    for i in (0..input.len()).into_iter().rev() {
+        if input[i] == b'.' {
+            return Some(i);
+        }
+    }
+    None
 }
 
 fn section_body<'a, 'b, 'c>(
@@ -733,12 +777,12 @@ fn section_body<'a, 'b, 'c>(
     *node = ParserNode::ConfigName;
     let (i, name) = config_name(i)?;
 
-    items.push(Event::Key(Cow::Borrowed(name.into())));
+    items.push(Event::Key(Cow::Borrowed(name)));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
 
     if let Some(whitespace) = whitespace {
-        items.push(Event::Whitespace(Cow::Borrowed(whitespace.into())));
+        items.push(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
 
     let (i, _) = config_value(i, items)?;
@@ -747,7 +791,7 @@ fn section_body<'a, 'b, 'c>(
 
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
-fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
+fn config_name(i: &[u8]) -> IResult<&[u8], &str> {
     if i.is_empty() {
         return Err(nom::Err::Error(NomError {
             input: i,
@@ -761,7 +805,16 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &[u8]> {
             code: ErrorKind::Alpha,
         }));
     }
-    take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)
+
+    let (i, v) = take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)?;
+    let v = std::str::from_utf8(v).map_err(|_| {
+        nom::Err::Error(NomError::<&[u8]> {
+            input: i,
+            code: ErrorKind::AlphaNumeric,
+        })
+    })?;
+
+    Ok((i, v))
 }
 
 fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
@@ -769,12 +822,12 @@ fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<
         events.push(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
         if let Some(whitespace) = whitespace {
-            events.push(Event::Whitespace(Cow::Borrowed(whitespace.into())));
+            events.push(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
         let (i, _) = value_impl(i, events)?;
         Ok((i, ()))
     } else {
-        events.push(Event::Value(Cow::Borrowed("".into())));
+        events.push(Event::Value(Cow::Borrowed(b"")));
         Ok((i, ()))
     }
 }
@@ -804,10 +857,10 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
                 // continuation.
                 b'\n' => {
                     partial_value_found = true;
-                    events.push(Event::ValueNotDone(Cow::Borrowed(
-                        i[offset..index - 1].into(),
+                    events.push(Event::ValueNotDone(Cow::Borrowed(&i[offset..index - 1])));
+                    events.push(Event::Newline(Cow::Borrowed(
+                        std::str::from_utf8(&i[index..index + 1]).unwrap(),
                     )));
-                    events.push(Event::Newline(Cow::Borrowed(i[index..index + 1].into())));
                     offset = index + 1;
                     parsed_index = 0;
                 }
@@ -868,15 +921,15 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
     };
 
     if partial_value_found {
-        events.push(Event::ValueDone(Cow::Borrowed(remainder_value.into())));
+        events.push(Event::ValueDone(Cow::Borrowed(remainder_value)));
     } else {
-        events.push(Event::Value(Cow::Borrowed(remainder_value.into())));
+        events.push(Event::Value(Cow::Borrowed(remainder_value)));
     }
 
     Ok((i, ()))
 }
 
-fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
+fn take_spaces(i: &[u8]) -> IResult<&[u8], &str> {
     let (i, v) = take_while(|c| (c as char).is_ascii() && is_space(c))(i)?;
     if v.is_empty() {
         Err(nom::Err::Error(NomError {
@@ -884,11 +937,12 @@ fn take_spaces(i: &[u8]) -> IResult<&[u8], &[u8]> {
             code: ErrorKind::Eof,
         }))
     } else {
-        Ok((i, v))
+        // v is guaranteed to be utf-8
+        Ok((i, std::str::from_utf8(v).unwrap()))
     }
 }
 
-fn take_newline(i: &[u8]) -> IResult<&[u8], (&[u8], usize)> {
+fn take_newline(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
     let mut counter = 0;
     let (i, v) = take_while(|c| (c as char).is_ascii() && is_newline(c))(i)?;
     counter += v.len();
@@ -898,7 +952,8 @@ fn take_newline(i: &[u8]) -> IResult<&[u8], (&[u8], usize)> {
             code: ErrorKind::Eof,
         }))
     } else {
-        Ok((i, (v, counter)))
+        // v is guaranteed to be utf-8
+        Ok((i, (std::str::from_utf8(v).unwrap(), counter)))
     }
 }
 
@@ -1011,10 +1066,7 @@ mod config_name {
 
     #[test]
     fn just_name() {
-        assert_eq!(
-            config_name(b"name").unwrap(),
-            fully_consumed("name".as_bytes())
-        );
+        assert_eq!(config_name(b"name").unwrap(), fully_consumed("name"));
     }
 
     #[test]

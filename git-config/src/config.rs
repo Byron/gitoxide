@@ -1,20 +1,17 @@
 use crate::parser::{parse_from_bytes, Event, ParsedSectionHeader, Parser, ParserError};
-use bstr::BStr;
+use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
+use std::error::Error;
 use std::{borrow::Cow, fmt::Display};
-use std::{
-    collections::{HashMap, VecDeque},
-    error::Error,
-};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigError<'a> {
     /// The requested section does not exist.
-    SectionDoesNotExist(&'a BStr),
+    SectionDoesNotExist(&'a str),
     /// The requested subsection does not exist.
-    SubSectionDoesNotExist(Option<&'a BStr>),
+    SubSectionDoesNotExist(Option<&'a str>),
     /// The key does not exist in the requested section.
-    KeyDoesNotExist(&'a BStr),
+    KeyDoesNotExist(&'a str),
     FailedConversion,
 }
 
@@ -22,8 +19,11 @@ impl Display for GitConfigError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             // Todo, try parse as utf8 first for better looking errors
-            Self::SectionDoesNotExist(s) => write!(f, "Subsection '{}' does not exist.", s),
-            Self::SubSectionDoesNotExist(s) => write!(f, "Subsection '{:?}' does not exist.", s),
+            Self::SectionDoesNotExist(s) => write!(f, "Section '{}' does not exist.", s),
+            Self::SubSectionDoesNotExist(s) => match s {
+                Some(s) => write!(f, "Subsection '{}' does not exist.", s),
+                None => write!(f, "Top level section does not exist."),
+            },
             Self::KeyDoesNotExist(k) => write!(f, "Name '{}' does not exist.", k),
             Self::FailedConversion => write!(f, "Failed to convert to specified type."),
         }
@@ -49,7 +49,7 @@ struct SectionId(usize);
 #[derive(PartialEq, Eq, Clone, Debug)]
 enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
-    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
+    NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
 /// High level `git-config` reader and writer.
 ///
@@ -86,20 +86,20 @@ enum LookupTreeNode<'a> {
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
 /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".into())));
+/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".as_bytes())));
 /// ```
 ///
 /// Consider the `multi` variants of the methods instead, if you want to work
 /// with all values instead.
 ///
-/// [`get_value`]: Self::get_value
+/// [`get_raw_value`]: Self::get_raw_value
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GitConfig<'a> {
     /// The list of events that occur before an actual section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
     front_matter_events: Vec<Event<'a>>,
-    section_lookup_tree: HashMap<Cow<'a, BStr>, Vec<LookupTreeNode<'a>>>,
+    section_lookup_tree: HashMap<Cow<'a, str>, Vec<LookupTreeNode<'a>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events
     sections: HashMap<SectionId, Vec<Event<'a>>>,
@@ -111,8 +111,8 @@ pub struct GitConfig<'a> {
 impl<'a> GitConfig<'a> {
     fn push_section(
         &mut self,
-        current_section_name: Option<Cow<'a, BStr>>,
-        current_subsection_name: Option<Cow<'a, BStr>>,
+        current_section_name: Option<Cow<'a, str>>,
+        current_subsection_name: Option<Cow<'a, str>>,
         maybe_section: &mut Option<Vec<Event<'a>>>,
     ) {
         if let Some(section) = maybe_section.take() {
@@ -184,7 +184,7 @@ impl<'a> GitConfig<'a> {
     /// "#;
     /// let git_config = GitConfig::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.get_value::<Integer, _>("core", None, "a")?;
+    /// let a_value = git_config.get_value::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Boolean = git_config.get_value("core", None, "c")?;
     /// # Ok::<(), GitConfigError>(())
@@ -198,11 +198,11 @@ impl<'a> GitConfig<'a> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_value<'b, 'c, T: TryFrom<&'c [u8]>, S: Into<&'b BStr>>(
+    pub fn get_value<'b, 'c, T: TryFrom<&'c [u8]>>(
         &'c self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
     ) -> Result<T, GitConfigError<'b>> {
         T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
             .map_err(|_| GitConfigError::FailedConversion)
@@ -210,8 +210,8 @@ impl<'a> GitConfig<'a> {
 
     fn get_section_id_by_name_and_subname<'b>(
         &'a self,
-        section_name: &'b BStr,
-        subsection_name: Option<&'b BStr>,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
     ) -> Result<SectionId, GitConfigError<'b>> {
         self.get_section_ids_by_name_and_subname(section_name, subsection_name)
             .map(|vec| {
@@ -231,20 +231,17 @@ impl<'a> GitConfig<'a> {
     ///
     /// This function will return an error if the key is not in the requested
     /// section and subsection, or if the section and subsection do not exist.
-    pub fn get_raw_value<'b, S: Into<&'b BStr>>(
+    pub fn get_raw_value<'b>(
         &self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
-    ) -> Result<&Cow<'a, BStr>, GitConfigError<'b>> {
-        let key = key.into();
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<&Cow<'a, [u8]>, GitConfigError<'b>> {
+        let key = key;
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let section_id = self.get_section_id_by_name_and_subname(
-            section_name.into(),
-            subsection_name.map(Into::into),
-        )?;
+        let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
 
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
@@ -275,20 +272,17 @@ impl<'a> GitConfig<'a> {
     ///
     /// This function will return an error if the key is not in the requested
     /// section and subsection, or if the section and subsection do not exist.
-    pub fn get_raw_value_mut<'b, S: Into<&'b BStr>>(
+    pub fn get_raw_value_mut<'b>(
         &mut self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
-    ) -> Result<&mut Cow<'a, BStr>, GitConfigError<'b>> {
-        let key = key.into();
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<&mut Cow<'a, [u8]>, GitConfigError<'b>> {
+        let key = key;
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let section_id = self.get_section_id_by_name_and_subname(
-            section_name.into(),
-            subsection_name.map(Into::into),
-        )?;
+        let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
 
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
@@ -329,7 +323,11 @@ impl<'a> GitConfig<'a> {
     /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a"),
-    ///     Ok(vec![&Cow::Borrowed("b".into()), &Cow::Borrowed("c".into()), &Cow::Borrowed("d".into())]),
+    ///     Ok(vec![
+    ///         &Cow::<[u8]>::Borrowed(b"b"),
+    ///         &Cow::<[u8]>::Borrowed(b"c"),
+    ///         &Cow::<[u8]>::Borrowed(b"d"),
+    ///     ]),
     /// );
     /// ```
     ///
@@ -341,18 +339,15 @@ impl<'a> GitConfig<'a> {
     /// This function will return an error if the key is not in any requested
     /// section and subsection, or if no instance of the section and subsections
     /// exist.
-    pub fn get_raw_multi_value<'b, S: Into<&'b BStr>>(
+    pub fn get_raw_multi_value<'b>(
         &'a self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
-    ) -> Result<Vec<&Cow<'a, BStr>>, GitConfigError<'b>> {
-        let key = key.into();
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<Vec<&Cow<'a, [u8]>>, GitConfigError<'b>> {
+        let key = key;
         let mut values = vec![];
-        for section_id in self.get_section_ids_by_name_and_subname(
-            section_name.into(),
-            subsection_name.map(Into::into),
-        )? {
+        for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
             let mut found_key = false;
             // section_id is guaranteed to exist in self.sections, else we
             // have a violated invariant.
@@ -391,26 +386,25 @@ impl<'a> GitConfig<'a> {
     /// ```
     /// # use git_config::config::{GitConfig, GitConfigError};
     /// # use std::borrow::Cow;
-    /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
     ///     vec![
-    ///         &Cow::<BStr>::Borrowed("b".into()),
-    ///         &Cow::<BStr>::Borrowed("c".into()),
-    ///         &Cow::<BStr>::Borrowed("d".into())
+    ///         &Cow::Borrowed(b"b"),
+    ///         &Cow::Borrowed(b"c"),
+    ///         &Cow::Borrowed(b"d")
     ///     ]
     /// );
     /// for value in git_config.get_raw_multi_value_mut("core", None, "a")? {
-    ///     *value = Cow::Borrowed("g".into());
+    ///     *value = Cow::Borrowed(b"g");
     ///}
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
     ///     vec![
-    ///         &Cow::<BStr>::Borrowed("g".into()),
-    ///         &Cow::<BStr>::Borrowed("g".into()),
-    ///         &Cow::<BStr>::Borrowed("g".into())
+    ///         &Cow::Borrowed(b"g"),
+    ///         &Cow::Borrowed(b"g"),
+    ///         &Cow::Borrowed(b"g")
     ///     ],
     /// );
     /// # Ok::<(), GitConfigError>(())
@@ -427,21 +421,18 @@ impl<'a> GitConfig<'a> {
     /// This function will return an error if the key is not in any requested
     /// section and subsection, or if no instance of the section and subsections
     /// exist.
-    pub fn get_raw_multi_value_mut<'b, S: Into<&'b BStr>>(
+    pub fn get_raw_multi_value_mut<'b>(
         &mut self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
-    ) -> Result<Vec<&mut Cow<'a, BStr>>, GitConfigError<'b>> {
-        let key = key.into();
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<Vec<&mut Cow<'a, [u8]>>, GitConfigError<'b>> {
+        let key = key;
         let section_ids = self
-            .get_section_ids_by_name_and_subname(
-                section_name.into(),
-                subsection_name.map(Into::into),
-            )?
+            .get_section_ids_by_name_and_subname(section_name, subsection_name)?
             .to_vec();
         let mut found_key = false;
-        let values: Vec<&mut Cow<'a, BStr>> = self
+        let values: Vec<&mut Cow<'a, [u8]>> = self
             .sections
             .iter_mut()
             .filter_map(|(k, v)| {
@@ -474,8 +465,8 @@ impl<'a> GitConfig<'a> {
 
     fn get_section_ids_by_name_and_subname<'b>(
         &'a self,
-        section_name: &'b BStr,
-        subsection_name: Option<&'b BStr>,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
     ) -> Result<&[SectionId], GitConfigError<'b>> {
         let section_ids = self
             .section_lookup_tree
@@ -505,12 +496,12 @@ impl<'a> GitConfig<'a> {
             .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
 
-    pub fn set_raw_value<'b, S: Into<&'b BStr>>(
+    pub fn set_raw_value<'b>(
         &mut self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
-        new_value: impl Into<Cow<'a, BStr>>,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+        new_value: impl Into<Cow<'a, [u8]>>,
     ) -> Result<(), GitConfigError<'b>> {
         let value = self.get_raw_value_mut(section_name, subsection_name, key)?;
         *value = new_value.into();
@@ -530,12 +521,12 @@ impl<'a> GitConfig<'a> {
     /// todo: examples and errors
     ///
     /// [`get_raw_multi_value_mut`]: Self::get_raw_multi_value_mut
-    pub fn set_raw_multi_value<'b, S: Into<&'b BStr>>(
+    pub fn set_raw_multi_value<'b>(
         &mut self,
-        section_name: S,
-        subsection_name: Option<S>,
-        key: S,
-        new_values: Vec<Cow<'a, BStr>>,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+        new_values: Vec<Cow<'a, [u8]>>,
     ) -> Result<(), GitConfigError<'b>> {
         let values = self.get_raw_multi_value_mut(section_name, subsection_name, key)?;
         for (old, new) in values.into_iter().zip(new_values) {
@@ -557,14 +548,14 @@ impl<'a> TryFrom<&'a str> for GitConfig<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a BStr> for GitConfig<'a> {
+impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
     type Error = ParserError<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         parse_from_bytes(value).map(Self::from)
     }
 }
@@ -581,8 +572,8 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
         };
 
         // Current section that we're building
-        let mut current_section_name: Option<Cow<'a, BStr>> = None;
-        let mut current_subsection_name: Option<Cow<'a, BStr>> = None;
+        let mut current_section_name: Option<Cow<'a, str>> = None;
+        let mut current_subsection_name: Option<Cow<'a, str>> = None;
         let mut maybe_section: Option<Vec<Event<'a>>> = None;
 
         for event in parser.into_iter() {
@@ -636,6 +627,9 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
 }
 
 impl Display for GitConfig<'_> {
+    /// Note that this is a best-effort attempt at printing a `GitConfig`. If
+    /// there are non UTF-8 values in your config, this will _NOT_ render as
+    /// read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for front_matter in &self.front_matter_events {
             front_matter.fmt(f)?;
@@ -682,7 +676,7 @@ mod from_parser {
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
             tree.insert(
-                Cow::Borrowed("core".into()),
+                Cow::Borrowed("core"),
                 vec![LookupTreeNode::Terminal(vec![SectionId(0)])],
             );
             tree
@@ -722,9 +716,9 @@ mod from_parser {
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
             let mut inner_tree = HashMap::new();
-            inner_tree.insert(Cow::Borrowed("subsec".into()), vec![SectionId(0)]);
+            inner_tree.insert(Cow::Borrowed("subsec"), vec![SectionId(0)]);
             tree.insert(
-                Cow::Borrowed("core".into()),
+                Cow::Borrowed("core"),
                 vec![LookupTreeNode::NonTerminal(inner_tree)],
             );
             tree
@@ -765,11 +759,11 @@ mod from_parser {
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
             tree.insert(
-                Cow::Borrowed("core".into()),
+                Cow::Borrowed("core"),
                 vec![LookupTreeNode::Terminal(vec![SectionId(0)])],
             );
             tree.insert(
-                Cow::Borrowed("other".into()),
+                Cow::Borrowed("other"),
                 vec![LookupTreeNode::Terminal(vec![SectionId(1)])],
             );
             tree
@@ -818,7 +812,7 @@ mod from_parser {
         let expected_lookup_tree = {
             let mut tree = HashMap::new();
             tree.insert(
-                Cow::Borrowed("core".into()),
+                Cow::Borrowed("core"),
                 vec![LookupTreeNode::Terminal(vec![SectionId(0), SectionId(1)])],
             );
             tree
@@ -863,11 +857,11 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::Borrowed("b".into()))
+            Ok(&Cow::<[u8]>::Borrowed(b"b"))
         );
         assert_eq!(
             config.get_raw_value("core", None, "c"),
-            Ok(&Cow::Borrowed("d".into()))
+            Ok(&Cow::<[u8]>::Borrowed(b"d"))
         );
     }
 
@@ -876,7 +870,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\na=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::Borrowed("d".into()))
+            Ok(&Cow::<[u8]>::Borrowed(b"d"))
         );
     }
 
@@ -885,7 +879,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\n[core]\na=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::Borrowed("d".into()))
+            Ok(&Cow::<[u8]>::Borrowed(b"d"))
         );
     }
 
@@ -894,7 +888,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("foo", None, "a"),
-            Err(GitConfigError::SectionDoesNotExist("foo".into()))
+            Err(GitConfigError::SectionDoesNotExist("foo"))
         );
     }
 
@@ -903,7 +897,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", Some("a"), "a"),
-            Err(GitConfigError::SubSectionDoesNotExist(Some("a".into())))
+            Err(GitConfigError::SubSectionDoesNotExist(Some("a")))
         );
     }
 
@@ -912,7 +906,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "aaaaaa"),
-            Err(GitConfigError::KeyDoesNotExist("aaaaaa".into()))
+            Err(GitConfigError::KeyDoesNotExist("aaaaaa"))
         );
     }
 
@@ -921,11 +915,11 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::Borrowed("b".into()))
+            Ok(&Cow::<[u8]>::Borrowed(b"b"))
         );
         assert_eq!(
             config.get_raw_value("core", Some("a"), "a"),
-            Ok(&Cow::Borrowed("c".into()))
+            Ok(&Cow::<[u8]>::Borrowed(b"c"))
         );
     }
 }
@@ -942,7 +936,7 @@ mod get_value {
         let first_value: Value = config.get_value("core", None, "a")?;
         let second_value: Boolean = config.get_value("core", None, "c")?;
 
-        assert_eq!(first_value, Value::Other(Cow::Borrowed("b".into())));
+        assert_eq!(first_value, Value::Other(Cow::Borrowed(b"b")));
         assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
 
         Ok(())
@@ -967,7 +961,7 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]\na=b\na=c").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
-            vec![&Cow::Borrowed("b"), &Cow::Borrowed("c")]
+            vec![&Cow::Borrowed(b"b"), &Cow::Borrowed(b"c")]
         );
     }
 
@@ -977,9 +971,9 @@ mod get_raw_multi_value {
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![
-                &Cow::Borrowed("b"),
-                &Cow::Borrowed("c"),
-                &Cow::Borrowed("d")
+                &Cow::Borrowed(b"b"),
+                &Cow::Borrowed(b"c"),
+                &Cow::Borrowed(b"d")
             ]
         );
     }
@@ -989,7 +983,7 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("foo", None, "a"),
-            Err(GitConfigError::SectionDoesNotExist("foo".into()))
+            Err(GitConfigError::SectionDoesNotExist("foo"))
         );
     }
 
@@ -998,7 +992,7 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", Some("a"), "a"),
-            Err(GitConfigError::SubSectionDoesNotExist(Some("a".into())))
+            Err(GitConfigError::SubSectionDoesNotExist(Some("a")))
         );
     }
 
@@ -1007,7 +1001,7 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "aaaaaa"),
-            Err(GitConfigError::KeyDoesNotExist("aaaaaa".into()))
+            Err(GitConfigError::KeyDoesNotExist("aaaaaa"))
         );
     }
 
@@ -1016,11 +1010,11 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
-            vec![&Cow::Borrowed("b")]
+            vec![&Cow::Borrowed(b"b")]
         );
         assert_eq!(
             config.get_raw_multi_value("core", Some("a"), "a").unwrap(),
-            vec![&Cow::Borrowed("c")]
+            vec![&Cow::Borrowed(b"c")]
         );
     }
 
@@ -1030,9 +1024,9 @@ mod get_raw_multi_value {
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![
-                &Cow::Borrowed("b"),
-                &Cow::Borrowed("c"),
-                &Cow::Borrowed("d")
+                &Cow::Borrowed(b"b"),
+                &Cow::Borrowed(b"c"),
+                &Cow::Borrowed(b"d")
             ]
         );
     }
