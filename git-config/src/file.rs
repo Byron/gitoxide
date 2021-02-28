@@ -77,9 +77,9 @@ enum LookupTreeNode<'a> {
 ///     e = f g h
 /// ```
 ///
-/// Calling methods that only one fetch value (such as [`get_raw_value`]) to
-/// fetch `a` with the above config will return `d`, since the last valid config
-/// value is `a = d`:
+/// Calling methods that fetch or set only one value (such as [`get_raw_value`])
+/// key `a` with the above config will fetch `d` or replace `d`, since the last
+/// valid config key/value pair is `a = d`:
 ///
 /// ```
 /// # use git_config::file::GitConfig;
@@ -166,6 +166,8 @@ impl<'a> GitConfig<'a> {
     /// It's recommended to use one of the values in the [`values`] module as
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
+    ///
+    /// # Examples
     ///
     /// Consider [`Self::get_multi_value`] if you want to get all values of a
     /// multivar instead.
@@ -304,7 +306,11 @@ impl<'a> GitConfig<'a> {
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
-    /// and key. If you have the following config:
+    /// and key.
+    ///
+    /// # Examples
+    ///
+    /// If you have the following config:
     ///
     /// ```text
     /// [core]
@@ -371,7 +377,11 @@ impl<'a> GitConfig<'a> {
     }
 
     /// Returns mutable references to all uninterpreted values given a section,
-    /// an optional subsection and key. If you have the following config:
+    /// an optional subsection and key.
+    ///
+    /// # Examples
+    ///
+    /// If you have the following config:
     ///
     /// ```text
     /// [core]
@@ -496,6 +506,35 @@ impl<'a> GitConfig<'a> {
             .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
 
+    /// Sets a value in a given section, optional subsection, and key value.
+    ///
+    /// # Examples
+    ///
+    /// Given the config,
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// [core]
+    ///     a = c
+    ///     a = d
+    /// ```
+    ///
+    /// Setting a new value to the key `core.a` will yield the following:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// git_config.set_raw_value("core", None, "a", "e".as_bytes())?;
+    /// assert_eq!(git_config.get_raw_value("core", None, "a")?, &Cow::Borrowed(b"e"));
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This errors if any lookup input (section, subsection, and key value) fails.
     pub fn set_raw_value<'b>(
         &mut self,
         section_name: &'b str,
@@ -515,10 +554,84 @@ impl<'a> GitConfig<'a> {
     /// multivars, then the latter values are not applied. If there are less
     /// new values than old ones then the remaining old values are unmodified.
     ///
-    /// If you need finer control over which values of the multivar are set,
-    /// consider using [`get_raw_multi_value_mut`].
+    /// *Note*: Mutation order is _not_ guaranteed and is non-deterministic. If
+    /// you need finer control over which values of the multivar are set,
+    /// consider using [`get_raw_multi_value_mut`], which will let you iterate
+    /// and check over the values instead. This is best used as a convenience
+    /// function for setting multivars whose values should be treated as an
+    /// unordered set.
     ///
-    /// todo: examples and errors
+    /// # Examples
+    ///
+    /// Let us use the follow config for all examples:
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// [core]
+    ///     a = c
+    ///     a = d
+    /// ```
+    ///
+    /// Setting an equal number of values:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
+    ///     Cow::Borrowed(b"x"),
+    ///     Cow::Borrowed(b"y"),
+    ///     Cow::Borrowed(b"z"),
+    /// ];
+    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// let fetched_config = git_config.get_raw_multi_value("core", None, "a")?;
+    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"x")));
+    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"y")));
+    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"z")));
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// Setting less than the number of present values sets the first ones found:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
+    ///     Cow::Borrowed(b"x"),
+    ///     Cow::Borrowed(b"y"),
+    /// ];
+    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// let fetched_config = git_config.get_raw_multi_value("core", None, "a")?;
+    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"x")));
+    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"y")));
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// Setting more than the number of present values discards the rest:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
+    ///     Cow::Borrowed(b"x"),
+    ///     Cow::Borrowed(b"y"),
+    ///     Cow::Borrowed(b"z"),
+    ///     Cow::Borrowed(b"discarded"),
+    /// ];
+    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// assert!(!git_config.get_raw_multi_value("core", None, "a")?.contains(&&Cow::Borrowed(b"discarded")));
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This errors if any lookup input (section, subsection, and key value) fails.
     ///
     /// [`get_raw_multi_value_mut`]: Self::get_raw_multi_value_mut
     pub fn set_raw_multi_value<'b>(
@@ -526,7 +639,7 @@ impl<'a> GitConfig<'a> {
         section_name: &'b str,
         subsection_name: Option<&'b str>,
         key: &'b str,
-        new_values: Vec<Cow<'a, [u8]>>,
+        new_values: impl Iterator<Item = Cow<'a, [u8]>>,
     ) -> Result<(), GitConfigError<'b>> {
         let values = self.get_raw_multi_value_mut(section_name, subsection_name, key)?;
         for (old, new) in values.into_iter().zip(new_values) {
