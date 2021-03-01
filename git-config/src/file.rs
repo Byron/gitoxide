@@ -1,4 +1,7 @@
-use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
+use crate::{
+    parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser},
+    values::normalize_vec,
+};
 use std::collections::{HashMap, VecDeque};
 use std::{borrow::Borrow, convert::TryFrom};
 use std::{borrow::Cow, fmt::Display};
@@ -50,6 +53,15 @@ enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
+
+struct MutableValue<'a> {
+    section: &'a mut Vec<Event<'a>>,
+    value: Cow<'a, [u8]>,
+    index: usize,
+    size: usize,
+}
+
+impl MutableValue<'_> {}
 
 /// High level `git-config` reader and writer.
 ///
@@ -270,7 +282,7 @@ impl<'a> GitConfig<'a> {
         }
 
         latest_value
-            .or_else(|| partial_value.map(Cow::Owned))
+            .or_else(|| partial_value.map(|v| normalize_vec(v)))
             .ok_or(GitConfigError::KeyDoesNotExist(key))
     }
 

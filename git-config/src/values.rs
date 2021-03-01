@@ -21,53 +21,62 @@ use std::str::FromStr;
 /// need to call this yourself. However, if you're directly handling events
 /// from the parser, you may want to use this to help with value interpretation.
 ///
+/// Generally speaking, you'll want to use one of the variants of this function,
+/// such as [`normalize_str`] or [`normalize_vec`].
+///
 /// # Examples
 ///
 /// Values don't need modification are returned borrowed, without allocation.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize;
-/// assert_eq!(normalize(b"hello world"), Cow::Borrowed(b"hello world".into()));
+/// # use git_config::values::normalize_str;
+/// assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world".into()));
 /// ```
 ///
 /// Fully quoted values are optimized to not need allocations.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize;
-/// assert_eq!(normalize(b"\"hello world\""), Cow::Borrowed(b"hello world".into()));
+/// # use git_config::values::normalize_str;
+/// assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world".into()));
 /// ```
 ///
 /// Quoted values are unwrapped as an owned variant.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize;
-/// assert_eq!(normalize(b"hello \"world\""), Cow::<[u8]>::Owned(b"hello world".to_vec()));
+/// # use git_config::values::normalize_str;
+/// assert_eq!(normalize_str("hello \"world\""), Cow::<[u8]>::Owned(b"hello world".to_vec()));
 /// ```
 ///
 /// Escaped quotes are unescaped.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize;
-/// assert_eq!(normalize(br#"hello "world\"""#), Cow::<[u8]>::Owned(br#"hello world""#.to_vec()));
+/// # use git_config::values::normalize_str;
+/// assert_eq!(normalize_str(r#"hello "world\"""#), Cow::<[u8]>::Owned(br#"hello world""#.to_vec()));
 /// ```
 ///
 /// [`parser`]: crate::parser::Parser
-pub fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
+pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
     let mut first_index = 0;
     let mut last_index = 0;
 
     let size = input.len();
-
-    if input == b"\"\"" {
+    if &*input == b"\"\"" {
         return Cow::Borrowed(&[]);
     }
 
     if size >= 3 && input[0] == b'=' && input[size - 1] == b'=' && input[size - 2] != b'\\' {
-        return normalize(&input[1..size]);
+        match input {
+            Cow::Borrowed(input) => return normalize_bytes(&input[1..size]),
+            Cow::Owned(mut input) => {
+                input.pop();
+                input.remove(0);
+                return normalize_vec(input);
+            }
+        }
     }
 
     let mut owned = vec![];
@@ -104,10 +113,25 @@ pub fn normalize(input: &[u8]) -> Cow<'_, [u8]> {
 
     owned.extend(dbg!(&input[last_index..]));
     if owned.is_empty() {
-        Cow::Borrowed(input)
+        input
     } else {
         Cow::Owned(owned)
     }
+}
+
+#[inline]
+pub fn normalize_bytes(input: &[u8]) -> Cow<'_, [u8]> {
+    normalize_cow(Cow::Borrowed(input))
+}
+
+#[inline]
+pub fn normalize_vec(input: Vec<u8>) -> Cow<'static, [u8]> {
+    normalize_cow(Cow::Owned(input))
+}
+
+#[inline]
+pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
+    normalize_bytes(input.as_bytes())
 }
 
 /// Fully enumerated valid types that a `git-config` value can be.
@@ -944,31 +968,34 @@ impl TryFrom<&[u8]> for ColorAttribute {
 
 #[cfg(test)]
 mod normalize {
-    use super::normalize;
+    use super::normalize_str;
     use std::borrow::Cow;
 
     #[test]
     fn not_modified_is_borrowed() {
-        assert_eq!(normalize(b"hello world"), Cow::Borrowed(b"hello world"));
+        assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world"));
     }
 
     #[test]
     fn modified_is_owned() {
         assert_eq!(
-            normalize(b"hello \"world\""),
+            normalize_str("hello \"world\""),
             Cow::<[u8]>::Owned(b"hello world".to_vec())
         );
     }
 
     #[test]
     fn all_quoted_is_optimized() {
-        assert_eq!(normalize(b"\"hello world\""), Cow::Borrowed(b"hello world"));
+        assert_eq!(
+            normalize_str("\"hello world\""),
+            Cow::Borrowed(b"hello world")
+        );
     }
 
     #[test]
     fn all_quote_optimization_is_correct() {
         assert_eq!(
-            normalize(br#""hello" world\""#),
+            normalize_str(r#""hello" world\""#),
             Cow::Borrowed(b"hello world\"")
         );
     }
@@ -976,7 +1003,7 @@ mod normalize {
     #[test]
     fn quotes_right_next_to_each_other() {
         assert_eq!(
-            normalize(b"\"hello\"\" world\""),
+            normalize_str("\"hello\"\" world\""),
             Cow::<[u8]>::Owned(b"hello world".to_vec())
         );
     }
@@ -984,19 +1011,19 @@ mod normalize {
     #[test]
     fn escaped_quotes_are_kept() {
         assert_eq!(
-            normalize(br#""hello \"\" world""#),
+            normalize_str(r#""hello \"\" world""#),
             Cow::<[u8]>::Owned(b"hello \"\" world".to_vec())
         );
     }
 
     #[test]
     fn empty_string() {
-        assert_eq!(normalize(b""), Cow::Borrowed(b""));
+        assert_eq!(normalize_str(""), Cow::Borrowed(b""));
     }
 
     #[test]
     fn empty_normalized_string_is_optimized() {
-        assert_eq!(normalize(b"\"\""), Cow::Borrowed(b""));
+        assert_eq!(normalize_str("\"\""), Cow::Borrowed(b""));
     }
 }
 
