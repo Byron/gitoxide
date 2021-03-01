@@ -111,7 +111,7 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
         }
     }
 
-    owned.extend(dbg!(&input[last_index..]));
+    owned.extend(&input[last_index..]);
     if owned.is_empty() {
         input
     } else {
@@ -431,8 +431,8 @@ impl Serialize for TrueVariant<'_> {
 /// [`bitwise_offset`]: IntegerSuffix::bitwise_offset
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Integer {
-    value: i64,
-    suffix: Option<IntegerSuffix>,
+    pub value: i64,
+    pub suffix: Option<IntegerSuffix>,
 }
 
 impl Display for Integer {
@@ -599,26 +599,9 @@ impl TryFrom<Vec<u8>> for IntegerSuffix {
 /// foreground or background color.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Color {
-    foreground: Option<ColorValue>,
-    background: Option<ColorValue>,
-    attributes: Vec<ColorAttribute>,
-}
-
-impl Color {
-    /// Returns the foreground color, if any.
-    pub const fn foreground(&self) -> Option<ColorValue> {
-        self.foreground
-    }
-
-    /// Returns the background color, if any.
-    pub const fn background(&self) -> Option<ColorValue> {
-        self.background
-    }
-
-    /// Returns the list of text modifiers, if any.
-    pub fn attributes(&self) -> &[ColorAttribute] {
-        &self.attributes
-    }
+    pub foreground: Option<ColorValue>,
+    pub background: Option<ColorValue>,
+    pub attributes: Vec<ColorAttribute>,
 }
 
 impl Display for Color {
