@@ -152,6 +152,35 @@ impl<'a> From<&'a [u8]> for Value<'a> {
     }
 }
 
+impl From<String> for Value<'_> {
+    fn from(s: String) -> Self {
+        Self::from(s.into_bytes())
+    }
+}
+
+impl From<Vec<u8>> for Value<'_> {
+    fn from(s: Vec<u8>) -> Self {
+        if let Ok(int) = Integer::try_from(s.as_ref()) {
+            return Self::Integer(int);
+        }
+
+        if let Ok(color) = Color::try_from(s.as_ref()) {
+            return Self::Color(color);
+        }
+
+        Boolean::try_from(s).map_or_else(|v| Self::Other(Cow::Owned(v)), Self::Boolean)
+    }
+}
+
+impl<'a> From<Cow<'a, [u8]>> for Value<'a> {
+    fn from(c: Cow<'a, [u8]>) -> Self {
+        match c {
+            Cow::Borrowed(c) => Self::from(c),
+            Cow::Owned(c) => Self::from(c),
+        }
+    }
+}
+
 // todo display for value
 
 #[cfg(feature = "serde")]
@@ -175,11 +204,11 @@ impl Serialize for Value<'_> {
 /// documentation has a strict subset of values that may be interpreted as a
 /// boolean value, all of which are ASCII and thus UTF-8 representable.
 /// Consequently, variants hold [`str`]s rather than [`[u8]`]s.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
-    False(&'a str),
+    False(Cow<'a, str>),
 }
 
 impl<'a> TryFrom<&'a str> for Boolean<'a> {
@@ -204,10 +233,45 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(std::str::from_utf8(value).unwrap()));
+            return Ok(Self::False(std::str::from_utf8(value).unwrap().into()));
         }
 
         Err(())
+    }
+}
+
+impl TryFrom<String> for Boolean<'_> {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::try_from(value.into_bytes()).map_err(|v| String::from_utf8(v).unwrap())
+    }
+}
+
+impl TryFrom<Vec<u8>> for Boolean<'_> {
+    type Error = Vec<u8>;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        if value.eq_ignore_ascii_case(b"no")
+            || value.eq_ignore_ascii_case(b"off")
+            || value.eq_ignore_ascii_case(b"false")
+            || value.eq_ignore_ascii_case(b"zero")
+            || value == b"\"\""
+        {
+            return Ok(Self::False(Cow::Owned(String::from_utf8(value).unwrap())));
+        }
+
+        TrueVariant::try_from(value).map(Self::True)
+    }
+}
+
+impl<'a> TryFrom<Cow<'a, [u8]>> for Boolean<'a> {
+    type Error = ();
+    fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
+        match c {
+            Cow::Borrowed(c) => Self::try_from(c),
+            Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
+        }
     }
 }
 
@@ -245,10 +309,10 @@ impl Serialize for Boolean<'_> {
 /// Discriminating enum between implicit and explicit truthy values.
 ///
 /// This enum is part of the [`Boolean`] struct.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum TrueVariant<'a> {
-    Explicit(&'a str),
+    Explicit(Cow<'a, str>),
     /// For values defined without a `= <value>`.
     Implicit,
 }
@@ -270,11 +334,39 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(std::str::from_utf8(value).unwrap()))
+            Ok(Self::Explicit(std::str::from_utf8(value).unwrap().into()))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
             Err(())
+        }
+    }
+}
+
+impl TryFrom<String> for TrueVariant<'_> {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::try_from(value.into_bytes()).map_err(|v| String::from_utf8(v).unwrap())
+    }
+}
+
+impl TryFrom<Vec<u8>> for TrueVariant<'_> {
+    type Error = Vec<u8>;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        if value.eq_ignore_ascii_case(b"yes")
+            || value.eq_ignore_ascii_case(b"on")
+            || value.eq_ignore_ascii_case(b"true")
+            || value.eq_ignore_ascii_case(b"one")
+        {
+            Ok(Self::Explicit(Cow::Owned(
+                String::from_utf8(value).unwrap(),
+            )))
+        } else if value.is_empty() {
+            Ok(Self::Implicit)
+        } else {
+            Err(value)
         }
     }
 }
@@ -378,6 +470,24 @@ impl TryFrom<&[u8]> for Integer {
     }
 }
 
+impl TryFrom<Vec<u8>> for Integer {
+    type Error = ();
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Self::try_from(value.as_ref())
+    }
+}
+
+impl TryFrom<Cow<'_, [u8]>> for Integer {
+    type Error = ();
+    fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
+        match c {
+            Cow::Borrowed(c) => Self::try_from(c),
+            Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
+        }
+    }
+}
+
 /// Integer prefixes that are supported by `git-config`.
 ///
 /// These values are base-2 unit of measurements, not the base-10 variants.
@@ -442,6 +552,14 @@ impl TryFrom<&[u8]> for IntegerSuffix {
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+    }
+}
+
+impl TryFrom<Vec<u8>> for IntegerSuffix {
+    type Error = ();
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Self::try_from(value.as_ref())
     }
 }
 
@@ -562,6 +680,24 @@ impl TryFrom<&[u8]> for Color {
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+    }
+}
+
+impl TryFrom<Vec<u8>> for Color {
+    type Error = ();
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Self::try_from(value.as_ref())
+    }
+}
+
+impl TryFrom<Cow<'_, [u8]>> for Color {
+    type Error = ();
+    fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
+        match c {
+            Cow::Borrowed(c) => Self::try_from(c),
+            Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
+        }
     }
 }
 
@@ -870,30 +1006,33 @@ mod boolean {
 
     #[test]
     fn from_str_false() {
-        assert_eq!(Boolean::try_from("no"), Ok(Boolean::False("no")));
-        assert_eq!(Boolean::try_from("off"), Ok(Boolean::False("off")));
-        assert_eq!(Boolean::try_from("false"), Ok(Boolean::False("false")));
-        assert_eq!(Boolean::try_from("zero"), Ok(Boolean::False("zero")));
-        assert_eq!(Boolean::try_from("\"\""), Ok(Boolean::False("\"\"")));
+        assert_eq!(Boolean::try_from("no"), Ok(Boolean::False("no".into())));
+        assert_eq!(Boolean::try_from("off"), Ok(Boolean::False("off".into())));
+        assert_eq!(
+            Boolean::try_from("false"),
+            Ok(Boolean::False("false".into()))
+        );
+        assert_eq!(Boolean::try_from("zero"), Ok(Boolean::False("zero".into())));
+        assert_eq!(Boolean::try_from("\"\""), Ok(Boolean::False("\"\"".into())));
     }
 
     #[test]
     fn from_str_true() {
         assert_eq!(
             Boolean::try_from("yes"),
-            Ok(Boolean::True(TrueVariant::Explicit("yes")))
+            Ok(Boolean::True(TrueVariant::Explicit("yes".into())))
         );
         assert_eq!(
             Boolean::try_from("on"),
-            Ok(Boolean::True(TrueVariant::Explicit("on")))
+            Ok(Boolean::True(TrueVariant::Explicit("on".into())))
         );
         assert_eq!(
             Boolean::try_from("true"),
-            Ok(Boolean::True(TrueVariant::Explicit("true")))
+            Ok(Boolean::True(TrueVariant::Explicit("true".into())))
         );
         assert_eq!(
             Boolean::try_from("one"),
-            Ok(Boolean::True(TrueVariant::Explicit("one")))
+            Ok(Boolean::True(TrueVariant::Explicit("one".into())))
         );
     }
 

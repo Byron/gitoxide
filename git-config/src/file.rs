@@ -1,6 +1,6 @@
 use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
 use std::collections::{HashMap, VecDeque};
-use std::convert::TryFrom;
+use std::{borrow::Borrow, convert::TryFrom};
 use std::{borrow::Cow, fmt::Display};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
@@ -86,7 +86,7 @@ enum LookupTreeNode<'a> {
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
 /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(&Cow::Borrowed("d".as_bytes())));
+/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(Cow::Borrowed("d".as_bytes())));
 /// ```
 ///
 /// Consider the `multi` variants of the methods instead, if you want to work
@@ -198,8 +198,8 @@ impl<'a> GitConfig<'a> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_value<'b, 'c, T: TryFrom<&'c [u8]>>(
-        &'c self,
+    pub fn get_value<'b, T: TryFrom<Cow<'a, [u8]>>>(
+        &'a self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
         key: &'b str,
@@ -232,34 +232,46 @@ impl<'a> GitConfig<'a> {
     /// This function will return an error if the key is not in the requested
     /// section and subsection, or if the section and subsection do not exist.
     pub fn get_raw_value<'b>(
-        &self,
+        &'a self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
         key: &'b str,
-    ) -> Result<&Cow<'a, [u8]>, GitConfigError<'b>> {
+    ) -> Result<Cow<'a, [u8]>, GitConfigError<'b>> {
         let key = key;
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
         let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
 
-        // section_id is guaranteed to exist in self.sections, else we have a
-        // violated invariant.
-        let events = self.sections.get(&section_id).unwrap();
         let mut found_key = false;
         let mut latest_value = None;
-        for event in events {
+        let mut partial_value = None;
+
+        // section_id is guaranteed to exist in self.sections, else we have a
+        // violated invariant.
+        for event in self.sections.get(&section_id).unwrap() {
             match event {
                 Event::Key(event_key) if *event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
-                    latest_value = Some(v);
+                    latest_value = Some(Cow::Borrowed(v.borrow()));
+                    partial_value = None;
+                }
+                Event::ValueNotDone(v) if found_key => {
+                    latest_value = None;
+                    partial_value = Some((*v).to_vec());
+                }
+                Event::ValueDone(v) if found_key => {
+                    found_key = false;
+                    partial_value.as_mut().unwrap().extend(&**v);
                 }
                 _ => (),
             }
         }
 
-        latest_value.ok_or(GitConfigError::KeyDoesNotExist(key))
+        latest_value
+            .or_else(|| partial_value.map(Cow::Owned))
+            .ok_or(GitConfigError::KeyDoesNotExist(key))
     }
 
     /// Returns a mutable reference to an uninterpreted value given a section,
@@ -328,9 +340,9 @@ impl<'a> GitConfig<'a> {
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a"),
     ///     Ok(vec![
-    ///         &Cow::<[u8]>::Borrowed(b"b"),
-    ///         &Cow::<[u8]>::Borrowed(b"c"),
-    ///         &Cow::<[u8]>::Borrowed(b"d"),
+    ///         Cow::<[u8]>::Borrowed(b"b"),
+    ///         Cow::<[u8]>::Borrowed(b"c"),
+    ///         Cow::<[u8]>::Borrowed(b"d"),
     ///     ]),
     /// );
     /// ```
@@ -348,7 +360,7 @@ impl<'a> GitConfig<'a> {
         section_name: &'b str,
         subsection_name: Option<&'b str>,
         key: &'b str,
-    ) -> Result<Vec<&Cow<'_, [u8]>>, GitConfigError<'b>> {
+    ) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError<'b>> {
         let key = key;
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
@@ -359,7 +371,7 @@ impl<'a> GitConfig<'a> {
                 match event {
                     Event::Key(event_key) if *event_key == key => found_key = true,
                     Event::Value(v) if found_key => {
-                        values.push(v);
+                        values.push(Cow::Borrowed(v.borrow()));
                         found_key = false;
                     }
                     _ => (),
@@ -399,9 +411,9 @@ impl<'a> GitConfig<'a> {
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
     ///     vec![
-    ///         &Cow::Borrowed(b"b"),
-    ///         &Cow::Borrowed(b"c"),
-    ///         &Cow::Borrowed(b"d")
+    ///         Cow::Borrowed(b"b"),
+    ///         Cow::Borrowed(b"c"),
+    ///         Cow::Borrowed(b"d")
     ///     ]
     /// );
     /// for value in git_config.get_raw_multi_value_mut("core", None, "a")? {
@@ -410,9 +422,9 @@ impl<'a> GitConfig<'a> {
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
     ///     vec![
-    ///         &Cow::Borrowed(b"g"),
-    ///         &Cow::Borrowed(b"g"),
-    ///         &Cow::Borrowed(b"g")
+    ///         Cow::Borrowed(b"g"),
+    ///         Cow::Borrowed(b"g"),
+    ///         Cow::Borrowed(b"g")
     ///     ],
     /// );
     /// # Ok::<(), GitConfigError>(())
@@ -526,7 +538,7 @@ impl<'a> GitConfig<'a> {
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// git_config.set_raw_value("core", None, "a", "e".as_bytes())?;
-    /// assert_eq!(git_config.get_raw_value("core", None, "a")?, &Cow::Borrowed(b"e"));
+    /// assert_eq!(git_config.get_raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -585,9 +597,9 @@ impl<'a> GitConfig<'a> {
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.get_raw_multi_value("core", None, "a")?;
-    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"x")));
-    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"y")));
-    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"z")));
+    /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
+    /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
+    /// assert!(fetched_config.contains(&Cow::Borrowed(b"z")));
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -604,8 +616,8 @@ impl<'a> GitConfig<'a> {
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.get_raw_multi_value("core", None, "a")?;
-    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"x")));
-    /// assert!(fetched_config.contains(&&Cow::Borrowed(b"y")));
+    /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
+    /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -623,7 +635,7 @@ impl<'a> GitConfig<'a> {
     ///     Cow::Borrowed(b"discarded"),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// assert!(!git_config.get_raw_multi_value("core", None, "a")?.contains(&&Cow::Borrowed(b"discarded")));
+    /// assert!(!git_config.get_raw_multi_value("core", None, "a")?.contains(&Cow::Borrowed(b"discarded")));
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -968,11 +980,11 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::<[u8]>::Borrowed(b"b"))
+            Ok(Cow::<[u8]>::Borrowed(b"b"))
         );
         assert_eq!(
             config.get_raw_value("core", None, "c"),
-            Ok(&Cow::<[u8]>::Borrowed(b"d"))
+            Ok(Cow::<[u8]>::Borrowed(b"d"))
         );
     }
 
@@ -981,7 +993,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\na=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::<[u8]>::Borrowed(b"d"))
+            Ok(Cow::<[u8]>::Borrowed(b"d"))
         );
     }
 
@@ -990,7 +1002,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\n[core]\na=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::<[u8]>::Borrowed(b"d"))
+            Ok(Cow::<[u8]>::Borrowed(b"d"))
         );
     }
 
@@ -1026,11 +1038,11 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(&Cow::<[u8]>::Borrowed(b"b"))
+            Ok(Cow::<[u8]>::Borrowed(b"b"))
         );
         assert_eq!(
             config.get_raw_value("core", Some("a"), "a"),
-            Ok(&Cow::<[u8]>::Borrowed(b"c"))
+            Ok(Cow::<[u8]>::Borrowed(b"c"))
         );
     }
 }
@@ -1072,7 +1084,7 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]\na=b\na=c").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
-            vec![&Cow::Borrowed(b"b"), &Cow::Borrowed(b"c")]
+            vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
         );
     }
 
@@ -1082,9 +1094,9 @@ mod get_raw_multi_value {
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![
-                &Cow::Borrowed(b"b"),
-                &Cow::Borrowed(b"c"),
-                &Cow::Borrowed(b"d")
+                Cow::Borrowed(b"b"),
+                Cow::Borrowed(b"c"),
+                Cow::Borrowed(b"d")
             ]
         );
     }
@@ -1121,11 +1133,11 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
-            vec![&Cow::Borrowed(b"b")]
+            vec![Cow::Borrowed(b"b")]
         );
         assert_eq!(
             config.get_raw_multi_value("core", Some("a"), "a").unwrap(),
-            vec![&Cow::Borrowed(b"c")]
+            vec![Cow::Borrowed(b"c")]
         );
     }
 
@@ -1135,9 +1147,9 @@ mod get_raw_multi_value {
         assert_eq!(
             config.get_raw_multi_value("core", None, "a").unwrap(),
             vec![
-                &Cow::Borrowed(b"b"),
-                &Cow::Borrowed(b"c"),
-                &Cow::Borrowed(b"d")
+                Cow::Borrowed(b"b"),
+                Cow::Borrowed(b"c"),
+                Cow::Borrowed(b"d")
             ]
         );
     }
