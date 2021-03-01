@@ -97,9 +97,7 @@ impl MutableValue<'_, '_, '_> {
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
     pub fn set_bytes(&mut self, input: Vec<u8>) {
-        for _ in 0..self.size {
-            self.section.remove(self.index);
-        }
+        self.section.drain(self.index..self.size);
 
         self.size = 1;
         self.section
