@@ -700,7 +700,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     if let Ok((i, _)) = char::<_, NomError<&[u8]>>(']')(i) {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
-        let header = match find_legacy_subsection_separator(name) {
+        let header = match memchr::memrchr(b'.', name.as_bytes()) {
             Some(index) => ParsedSectionHeader {
                 name: Cow::Borrowed(&name[..index]),
                 separator: name.get(index..=index).map(|slice| Cow::Borrowed(slice)),
@@ -745,16 +745,6 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
             subsection_name: subsection_name.or(Some("")).map(Cow::Borrowed),
         },
     ))
-}
-
-fn find_legacy_subsection_separator(input: &str) -> Option<usize> {
-    let input = input.as_bytes();
-    for i in (0..input.len()).into_iter().rev() {
-        if input[i] == b'.' {
-            return Some(i);
-        }
-    }
-    None
 }
 
 fn section_body<'a, 'b, 'c>(
