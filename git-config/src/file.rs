@@ -1,7 +1,5 @@
-use crate::{
-    parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser},
-    values::normalize_vec,
-};
+use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
+use crate::values::{normalize_bytes, normalize_vec};
 use std::collections::{HashMap, VecDeque};
 use std::{borrow::Borrow, convert::TryFrom};
 use std::{borrow::Cow, fmt::Display};
@@ -54,14 +52,73 @@ enum LookupTreeNode<'a> {
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
 
-struct MutableValue<'a> {
-    section: &'a mut Vec<Event<'a>>,
-    value: Cow<'a, [u8]>,
+pub struct MutableValue<'borrow, 'lookup, 'event> {
+    section: &'borrow mut Vec<Event<'event>>,
+    key: &'lookup str,
     index: usize,
     size: usize,
 }
 
-impl MutableValue<'_> {}
+impl MutableValue<'_, '_, '_> {
+    /// Returns the actual value. This is computed each time this is called, so
+    /// it's best to reuse this value or own it if an allocation is acceptable.
+    pub fn value(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
+        let mut found_key = false;
+        let mut latest_value = None;
+        let mut partial_value = None;
+        // section_id is guaranteed to exist in self.sections, else we have a
+        // violated invariant.
+
+        for event in &self.section[self.index..self.size] {
+            match event {
+                Event::Key(event_key) if *event_key == self.key => found_key = true,
+                Event::Value(v) if found_key => {
+                    found_key = false;
+                    latest_value = Some(Cow::Borrowed(v.borrow()));
+                }
+                Event::ValueNotDone(v) if found_key => {
+                    latest_value = None;
+                    partial_value = Some((*v).to_vec());
+                }
+                Event::ValueDone(v) if found_key => {
+                    found_key = false;
+                    partial_value.as_mut().unwrap().extend(&**v);
+                }
+                _ => (),
+            }
+        }
+
+        latest_value
+            .or_else(|| partial_value.map(normalize_vec))
+            .ok_or(GitConfigError::KeyDoesNotExist(self.key))
+    }
+
+    /// Update the value to the provided one. This modifies the value such that
+    /// the Value event(s) are replaced with a single new event containing the
+    /// new value.
+    pub fn set_bytes(&mut self, input: Vec<u8>) {
+        for _ in 0..self.size {
+            self.section.remove(self.index);
+        }
+
+        self.size = 1;
+        self.section
+            .insert(self.index, Event::Value(Cow::Owned(input)));
+    }
+
+    /// Update the value to the provided one. This modifies the value such that
+    /// the Value event(s) are replaced with a single new event containing the
+    /// new value.
+    pub fn set_string(&mut self, input: String) {
+        self.set_bytes(input.into_bytes());
+    }
+}
+
+// pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
+//     section: &'borrow mut Vec<Event<'event>>,
+//     key: &'lookup str,
+//     indices_and_sizes: Vec<(usize, usize)>,
+// }
 
 /// High level `git-config` reader and writer.
 ///
@@ -113,65 +170,17 @@ pub struct GitConfig<'a> {
     front_matter_events: Vec<Event<'a>>,
     section_lookup_tree: HashMap<Cow<'a, str>, Vec<LookupTreeNode<'a>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
-    /// events
+    /// events.
+    ///
+    /// This indirection with the SectionId as the key is critical to flexibly
+    /// supporting `git-config` sections, as duplicated keys are permitted.
     sections: HashMap<SectionId, Vec<Event<'a>>>,
     section_headers: HashMap<SectionId, ParsedSectionHeader<'a>>,
     section_id_counter: usize,
     section_order: VecDeque<SectionId>,
 }
 
-impl<'a> GitConfig<'a> {
-    fn push_section(
-        &mut self,
-        current_section_name: Option<Cow<'a, str>>,
-        current_subsection_name: Option<Cow<'a, str>>,
-        maybe_section: &mut Option<Vec<Event<'a>>>,
-    ) {
-        if let Some(section) = maybe_section.take() {
-            let new_section_id = SectionId(self.section_id_counter);
-            self.sections.insert(new_section_id, section);
-            let lookup = self
-                .section_lookup_tree
-                .entry(current_section_name.unwrap())
-                .or_default();
-
-            let mut found_node = false;
-            if let Some(subsection_name) = current_subsection_name {
-                for node in lookup.iter_mut() {
-                    if let LookupTreeNode::NonTerminal(subsection) = node {
-                        found_node = true;
-                        subsection
-                            // Despite the clone `push_section` is always called
-                            // with a Cow::Borrowed, so this is effectively a
-                            // copy.
-                            .entry(subsection_name.clone())
-                            .or_default()
-                            .push(new_section_id);
-                        break;
-                    }
-                }
-                if !found_node {
-                    let mut map = HashMap::new();
-                    map.insert(subsection_name, vec![new_section_id]);
-                    lookup.push(LookupTreeNode::NonTerminal(map));
-                }
-            } else {
-                for node in lookup.iter_mut() {
-                    if let LookupTreeNode::Terminal(vec) = node {
-                        found_node = true;
-                        vec.push(new_section_id);
-                        break;
-                    }
-                }
-                if !found_node {
-                    lookup.push(LookupTreeNode::Terminal(vec![new_section_id]))
-                }
-            }
-            self.section_order.push_back(new_section_id);
-            self.section_id_counter += 1;
-        }
-    }
-
+impl<'event> GitConfig<'event> {
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
@@ -210,27 +219,14 @@ impl<'a> GitConfig<'a> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_value<'b, T: TryFrom<Cow<'a, [u8]>>>(
-        &'a self,
+    pub fn get_value<'b, T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
         section_name: &'b str,
         subsection_name: Option<&'b str>,
         key: &'b str,
     ) -> Result<T, GitConfigError<'b>> {
         T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
             .map_err(|_| GitConfigError::FailedConversion)
-    }
-
-    fn get_section_id_by_name_and_subname<'b>(
-        &'a self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-    ) -> Result<SectionId, GitConfigError<'b>> {
-        self.get_section_ids_by_name_and_subname(section_name, subsection_name)
-            .map(|vec| {
-                // get_section_ids_by_name_and_subname is guaranteed to return
-                // a non-empty vec, so max can never return empty.
-                *vec.iter().max().unwrap()
-            })
     }
 
     /// Returns an uninterpreted value given a section, an optional subsection
@@ -243,13 +239,12 @@ impl<'a> GitConfig<'a> {
     ///
     /// This function will return an error if the key is not in the requested
     /// section and subsection, or if the section and subsection do not exist.
-    pub fn get_raw_value<'b>(
-        &'a self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-    ) -> Result<Cow<'a, [u8]>, GitConfigError<'b>> {
-        let key = key;
+    pub fn get_raw_value<'lookup>(
+        &'event self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<Cow<'event, [u8]>, GitConfigError<'lookup>> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
@@ -282,7 +277,7 @@ impl<'a> GitConfig<'a> {
         }
 
         latest_value
-            .or_else(|| partial_value.map(|v| normalize_vec(v)))
+            .or_else(|| partial_value.map(normalize_vec))
             .ok_or(GitConfigError::KeyDoesNotExist(key))
     }
 
@@ -296,35 +291,50 @@ impl<'a> GitConfig<'a> {
     ///
     /// This function will return an error if the key is not in the requested
     /// section and subsection, or if the section and subsection do not exist.
-    pub fn get_raw_value_mut<'b>(
+    pub fn get_raw_value_mut<'lookup>(
         &mut self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-    ) -> Result<&mut Cow<'a, [u8]>, GitConfigError<'b>> {
-        let key = key;
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<MutableValue<'_, 'lookup, 'event>, GitConfigError<'lookup>> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
         let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
 
-        // section_id is guaranteed to exist in self.sections, else we have a
-        // violated invariant.
-        let events = self.sections.get_mut(&section_id).unwrap();
+        let mut size = 0;
+        let mut index = 0;
         let mut found_key = false;
-        let mut latest_value = None;
-        for event in events {
+        for (i, event) in self.sections.get(&section_id).unwrap().iter().enumerate() {
             match event {
                 Event::Key(event_key) if *event_key == key => found_key = true,
-                Event::Value(v) if found_key => {
+                Event::Value(_) if found_key => {
                     found_key = false;
-                    latest_value = Some(v);
+                    size = 1;
+                    index = i;
+                }
+                Event::ValueNotDone(_) if found_key => {
+                    size = 1;
+                    index = i;
+                }
+                Event::ValueDone(_) if found_key => {
+                    found_key = false;
+                    size += 1;
                 }
                 _ => (),
             }
         }
 
-        latest_value.ok_or(GitConfigError::KeyDoesNotExist(key))
+        if size == 0 {
+            return Err(GitConfigError::KeyDoesNotExist(key));
+        }
+
+        Ok(MutableValue {
+            section: self.sections.get_mut(&section_id).unwrap(),
+            key,
+            size,
+            index,
+        })
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
@@ -367,24 +377,33 @@ impl<'a> GitConfig<'a> {
     /// This function will return an error if the key is not in any requested
     /// section and subsection, or if no instance of the section and subsections
     /// exist.
-    pub fn get_raw_multi_value<'b>(
+    pub fn get_raw_multi_value<'lookup>(
         &self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-    ) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError<'b>> {
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError<'lookup>> {
         let key = key;
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
             let mut found_key = false;
+            let mut partial_value = None;
             // section_id is guaranteed to exist in self.sections, else we
             // have a violated invariant.
             for event in self.sections.get(section_id).unwrap() {
                 match event {
                     Event::Key(event_key) if *event_key == key => found_key = true,
                     Event::Value(v) if found_key => {
-                        values.push(Cow::Borrowed(v.borrow()));
+                        values.push(normalize_bytes(v));
                         found_key = false;
+                    }
+                    Event::ValueNotDone(v) if found_key => {
+                        partial_value = Some((*v).to_vec());
+                    }
+                    Event::ValueDone(v) if found_key => {
+                        found_key = false;
+                        partial_value.as_mut().unwrap().extend(&**v);
+                        values.push(normalize_vec(partial_value.take().unwrap()));
                     }
                     _ => (),
                 }
@@ -453,18 +472,18 @@ impl<'a> GitConfig<'a> {
     /// This function will return an error if the key is not in any requested
     /// section and subsection, or if no instance of the section and subsections
     /// exist.
-    pub fn get_raw_multi_value_mut<'b>(
+    pub fn get_raw_multi_value_mut<'lookup>(
         &mut self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-    ) -> Result<Vec<&mut Cow<'a, [u8]>>, GitConfigError<'b>> {
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<Vec<&mut Cow<'event, [u8]>>, GitConfigError<'lookup>> {
         let key = key;
         let section_ids = self
             .get_section_ids_by_name_and_subname(section_name, subsection_name)?
             .to_vec();
         let mut found_key = false;
-        let values: Vec<&mut Cow<'a, [u8]>> = self
+        let values: Vec<&mut Cow<'event, [u8]>> = self
             .sections
             .iter_mut()
             .filter_map(|(k, v)| {
@@ -488,44 +507,13 @@ impl<'a> GitConfig<'a> {
             .flatten()
             .collect();
 
+        // TODO: return mutable entry instead
+        // TODO: support partial values
         if values.is_empty() {
             Err(GitConfigError::KeyDoesNotExist(key))
         } else {
             Ok(values)
         }
-    }
-
-    fn get_section_ids_by_name_and_subname<'b>(
-        &self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-    ) -> Result<&[SectionId], GitConfigError<'b>> {
-        let section_ids = self
-            .section_lookup_tree
-            .get(section_name)
-            .ok_or(GitConfigError::SectionDoesNotExist(section_name))?;
-        let mut maybe_ids = None;
-        // Don't simplify if and matches here -- the for loop currently needs
-        // `n + 1` checks, while the if and matches will result in the for loop
-        // needing `2n` checks.
-        if let Some(subsect_name) = subsection_name {
-            for node in section_ids {
-                if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
-                    maybe_ids = subsection_lookup.get(subsect_name);
-                    break;
-                }
-            }
-        } else {
-            for node in section_ids {
-                if let LookupTreeNode::Terminal(subsection_lookup) = node {
-                    maybe_ids = Some(subsection_lookup);
-                    break;
-                }
-            }
-        }
-        maybe_ids
-            .map(Vec::as_slice)
-            .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
 
     /// Sets a value in a given section, optional subsection, and key value.
@@ -549,7 +537,7 @@ impl<'a> GitConfig<'a> {
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// git_config.set_raw_value("core", None, "a", "e".as_bytes())?;
+    /// git_config.set_raw_value("core", None, "a", vec![b'e'])?;
     /// assert_eq!(git_config.get_raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
     /// # Ok::<(), GitConfigError>(())
     /// ```
@@ -557,16 +545,15 @@ impl<'a> GitConfig<'a> {
     /// # Errors
     ///
     /// This errors if any lookup input (section, subsection, and key value) fails.
-    pub fn set_raw_value<'b>(
+    pub fn set_raw_value<'lookup>(
         &mut self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-        new_value: impl Into<Cow<'a, [u8]>>,
-    ) -> Result<(), GitConfigError<'b>> {
-        let value = self.get_raw_value_mut(section_name, subsection_name, key)?;
-        *value = new_value.into();
-        Ok(())
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+        new_value: Vec<u8>,
+    ) -> Result<(), GitConfigError<'lookup>> {
+        self.get_raw_value_mut(section_name, subsection_name, key)
+            .map(|mut entry| entry.set_bytes(new_value))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.
@@ -656,18 +643,118 @@ impl<'a> GitConfig<'a> {
     /// This errors if any lookup input (section, subsection, and key value) fails.
     ///
     /// [`get_raw_multi_value_mut`]: Self::get_raw_multi_value_mut
-    pub fn set_raw_multi_value<'b>(
+    pub fn set_raw_multi_value<'lookup>(
         &mut self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-        new_values: impl Iterator<Item = Cow<'a, [u8]>>,
-    ) -> Result<(), GitConfigError<'b>> {
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+        new_values: impl Iterator<Item = Cow<'event, [u8]>>,
+    ) -> Result<(), GitConfigError<'lookup>> {
         let values = self.get_raw_multi_value_mut(section_name, subsection_name, key)?;
         for (old, new) in values.into_iter().zip(new_values) {
             *old = new;
         }
         Ok(())
+    }
+}
+
+// Private helper functions
+impl<'event> GitConfig<'event> {
+    fn push_section(
+        &mut self,
+        current_section_name: Option<Cow<'event, str>>,
+        current_subsection_name: Option<Cow<'event, str>>,
+        maybe_section: &mut Option<Vec<Event<'event>>>,
+    ) {
+        if let Some(section) = maybe_section.take() {
+            let new_section_id = SectionId(self.section_id_counter);
+            self.sections.insert(new_section_id, section);
+            let lookup = self
+                .section_lookup_tree
+                .entry(current_section_name.unwrap())
+                .or_default();
+
+            let mut found_node = false;
+            if let Some(subsection_name) = current_subsection_name {
+                for node in lookup.iter_mut() {
+                    if let LookupTreeNode::NonTerminal(subsection) = node {
+                        found_node = true;
+                        subsection
+                            // Despite the clone `push_section` is always called
+                            // with a Cow::Borrowed, so this is effectively a
+                            // copy.
+                            .entry(subsection_name.clone())
+                            .or_default()
+                            .push(new_section_id);
+                        break;
+                    }
+                }
+                if !found_node {
+                    let mut map = HashMap::new();
+                    map.insert(subsection_name, vec![new_section_id]);
+                    lookup.push(LookupTreeNode::NonTerminal(map));
+                }
+            } else {
+                for node in lookup.iter_mut() {
+                    if let LookupTreeNode::Terminal(vec) = node {
+                        found_node = true;
+                        vec.push(new_section_id);
+                        break;
+                    }
+                }
+                if !found_node {
+                    lookup.push(LookupTreeNode::Terminal(vec![new_section_id]))
+                }
+            }
+            self.section_order.push_back(new_section_id);
+            self.section_id_counter += 1;
+        }
+    }
+
+    fn get_section_id_by_name_and_subname<'lookup>(
+        &'event self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+    ) -> Result<SectionId, GitConfigError<'lookup>> {
+        self.get_section_ids_by_name_and_subname(section_name, subsection_name)
+            .map(|vec| {
+                // get_section_ids_by_name_and_subname is guaranteed to return
+                // a non-empty vec, so max can never return empty.
+                *vec.iter().max().unwrap()
+            })
+    }
+
+    fn get_section_ids_by_name_and_subname<'lookup>(
+        &self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+    ) -> Result<&[SectionId], GitConfigError<'lookup>> {
+        let section_ids = self
+            .section_lookup_tree
+            .get(section_name)
+            .ok_or(GitConfigError::SectionDoesNotExist(section_name))?;
+        let mut maybe_ids = None;
+        // Don't simplify if and matches here -- the for loop currently needs
+        // `n + 1` checks, while the if and matches will result in the for loop
+        // needing `2n` checks.
+        if let Some(subsect_name) = subsection_name {
+            for node in section_ids {
+                if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
+                    maybe_ids = subsection_lookup.get(subsect_name);
+                    break;
+                }
+            }
+        } else {
+            for node in section_ids {
+                if let LookupTreeNode::Terminal(subsection_lookup) = node {
+                    maybe_ids = Some(subsection_lookup);
+                    break;
+                }
+            }
+        }
+        maybe_ids
+            .map(Vec::as_slice)
+            .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
 }
 
