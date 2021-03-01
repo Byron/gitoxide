@@ -119,16 +119,19 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
     }
 }
 
+/// `&[u8]` variant of [`normalize_cow`].
 #[inline]
 pub fn normalize_bytes(input: &[u8]) -> Cow<'_, [u8]> {
     normalize_cow(Cow::Borrowed(input))
 }
 
+/// `Vec[u8]` variant of [`normalize_cow`].
 #[inline]
 pub fn normalize_vec(input: Vec<u8>) -> Cow<'static, [u8]> {
     normalize_cow(Cow::Owned(input))
 }
 
+/// [`str`] variant of [`normalize_cow`].
 #[inline]
 pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
     normalize_bytes(input.as_bytes())
