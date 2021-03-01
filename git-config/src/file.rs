@@ -237,11 +237,11 @@ impl<'event> GitConfig<'event> {
     /// This function will return an error if the key is not in the requested
     /// section and subsection, or if the section and subsection do not exist.
     pub fn get_raw_value<'lookup>(
-        &'event self,
+        &self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Cow<'event, [u8]>, GitConfigError<'lookup>> {
+    ) -> Result<Cow<'_, [u8]>, GitConfigError<'lookup>> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
