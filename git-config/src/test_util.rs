@@ -1,6 +1,8 @@
-use std::borrow::Cow;
+//! This module is only included for tests, and contains common unit test helper
+//! functions.
 
 use crate::parser::{Event, ParsedComment, ParsedSectionHeader};
+use std::borrow::Cow;
 
 pub fn section_header_event(
     name: &str,

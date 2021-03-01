@@ -1,5 +1,5 @@
 //! This module handles parsing a `git-config` file. Generally speaking, you
-//! want to use a higher a[u8]action such as [`GitConfig`] unless you have some
+//! want to use a higher abstraction such as [`GitConfig`] unless you have some
 //! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the

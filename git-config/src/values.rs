@@ -60,9 +60,6 @@ use std::str::FromStr;
 ///
 /// [`parser`]: crate::parser::Parser
 pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
-    let mut first_index = 0;
-    let mut last_index = 0;
-
     let size = input.len();
     if &*input == b"\"\"" {
         return Cow::Borrowed(&[]);
@@ -81,6 +78,8 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
 
     let mut owned = vec![];
 
+    let mut first_index = 0;
+    let mut last_index = 0;
     let mut was_escaped = false;
     for (i, c) in input.iter().enumerate() {
         if was_escaped {
@@ -111,10 +110,10 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
         }
     }
 
-    owned.extend(&input[last_index..]);
-    if owned.is_empty() {
+    if last_index == 0 {
         input
     } else {
+        owned.extend(&input[last_index..]);
         Cow::Owned(owned)
     }
 }
