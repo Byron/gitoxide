@@ -97,8 +97,7 @@ impl MutableValue<'_, '_, '_> {
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
     pub fn set_bytes(&mut self, input: Vec<u8>) {
-        self.section.drain(self.index..self.size);
-
+        self.section.drain(self.index..self.index + self.size);
         self.size = 1;
         self.section
             .insert(self.index, Event::Value(Cow::Owned(input)));
