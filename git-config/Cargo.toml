@@ -16,6 +16,7 @@ exclude = ["fuzz/**/*", ".vscode/**/*"]
 serde = ["serde_crate"]
 
 [dependencies]
+memchr = "2"
 nom = { version = "6", default_features = false, features = ["std"] }
 serde_crate = { version = "1", package = "serde", optional = true }
 
