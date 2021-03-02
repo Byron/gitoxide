@@ -69,3 +69,31 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
 
     Ok(())
 }
+
+/// There was a regression where lookup would fail because we only checked the
+/// last section entry for any given section and subsection
+#[test]
+fn get_value_looks_up_all_sections_before_failing() -> Result<(), Box<dyn std::error::Error>> {
+    let config = r#"
+        [core]
+            bool-explicit = false
+            bool-implicit = false
+        [core]
+            bool-implicit
+    "#;
+
+    let file = GitConfig::try_from(config)?;
+
+    // Checks that we check the last entry first still
+    assert_eq!(
+        file.get_value::<Boolean>("core", None, "bool-implicit")?,
+        Boolean::True(TrueVariant::Implicit)
+    );
+
+    assert_eq!(
+        file.get_value::<Boolean>("core", None, "bool-explicit")?,
+        Boolean::False(Cow::Borrowed("false"))
+    );
+
+    Ok(())
+}

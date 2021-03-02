@@ -245,37 +245,43 @@ impl<'event> GitConfig<'event> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
 
-        let mut found_key = false;
-        let mut latest_value = None;
-        let mut partial_value = None;
+        for section_id in section_ids.iter().rev() {
+            let mut found_key = false;
+            let mut latest_value = None;
+            let mut partial_value = None;
 
-        // section_id is guaranteed to exist in self.sections, else we have a
-        // violated invariant.
-        for event in self.sections.get(&section_id).unwrap() {
-            match event {
-                Event::Key(event_key) if *event_key == key => found_key = true,
-                Event::Value(v) if found_key => {
-                    found_key = false;
-                    latest_value = Some(Cow::Borrowed(v.borrow()));
-                    partial_value = None;
+            // section_id is guaranteed to exist in self.sections, else we have a
+            // violated invariant.
+            for event in self.sections.get(&section_id).unwrap() {
+                match event {
+                    Event::Key(event_key) if *event_key == key => found_key = true,
+                    Event::Value(v) if found_key => {
+                        found_key = false;
+                        latest_value = Some(Cow::Borrowed(v.borrow()));
+                        partial_value = None;
+                    }
+                    Event::ValueNotDone(v) if found_key => {
+                        latest_value = None;
+                        partial_value = Some((*v).to_vec());
+                    }
+                    Event::ValueDone(v) if found_key => {
+                        found_key = false;
+                        partial_value.as_mut().unwrap().extend(&**v);
+                    }
+                    _ => (),
                 }
-                Event::ValueNotDone(v) if found_key => {
-                    latest_value = None;
-                    partial_value = Some((*v).to_vec());
-                }
-                Event::ValueDone(v) if found_key => {
-                    found_key = false;
-                    partial_value.as_mut().unwrap().extend(&**v);
-                }
-                _ => (),
+            }
+
+            match latest_value.or_else(|| partial_value.map(normalize_vec)) {
+                Some(v) => return Ok(v),
+                None => (),
             }
         }
 
-        latest_value
-            .or_else(|| partial_value.map(normalize_vec))
-            .ok_or(GitConfigError::KeyDoesNotExist(key))
+        Err(GitConfigError::KeyDoesNotExist(key))
     }
 
     /// Returns a mutable reference to an uninterpreted value given a section,
@@ -297,41 +303,46 @@ impl<'event> GitConfig<'event> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let section_id = self.get_section_id_by_name_and_subname(section_name, subsection_name)?;
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
 
-        let mut size = 0;
-        let mut index = 0;
-        let mut found_key = false;
-        for (i, event) in self.sections.get(&section_id).unwrap().iter().enumerate() {
-            match event {
-                Event::Key(event_key) if *event_key == key => found_key = true,
-                Event::Value(_) if found_key => {
-                    found_key = false;
-                    size = 1;
-                    index = i;
+        for section_id in section_ids.iter().rev() {
+            let mut size = 0;
+            let mut index = 0;
+            let mut found_key = false;
+            for (i, event) in self.sections.get(&section_id).unwrap().iter().enumerate() {
+                match event {
+                    Event::Key(event_key) if *event_key == key => found_key = true,
+                    Event::Value(_) if found_key => {
+                        found_key = false;
+                        size = 1;
+                        index = i;
+                    }
+                    Event::ValueNotDone(_) if found_key => {
+                        size = 1;
+                        index = i;
+                    }
+                    Event::ValueDone(_) if found_key => {
+                        found_key = false;
+                        size += 1;
+                    }
+                    _ => (),
                 }
-                Event::ValueNotDone(_) if found_key => {
-                    size = 1;
-                    index = i;
-                }
-                Event::ValueDone(_) if found_key => {
-                    found_key = false;
-                    size += 1;
-                }
-                _ => (),
             }
+
+            if size == 0 {
+                continue;
+            }
+
+            return Ok(MutableValue {
+                section: self.sections.get_mut(&section_id).unwrap(),
+                key,
+                size,
+                index,
+            });
         }
 
-        if size == 0 {
-            return Err(GitConfigError::KeyDoesNotExist(key));
-        }
-
-        Ok(MutableValue {
-            section: self.sections.get_mut(&section_id).unwrap(),
-            key,
-            size,
-            index,
-        })
+        Err(GitConfigError::KeyDoesNotExist(key))
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
@@ -387,7 +398,7 @@ impl<'event> GitConfig<'event> {
             let mut partial_value = None;
             // section_id is guaranteed to exist in self.sections, else we
             // have a violated invariant.
-            for event in self.sections.get(section_id).unwrap() {
+            for event in self.sections.get(&section_id).unwrap() {
                 match event {
                     Event::Key(event_key) if *event_key == key => found_key = true,
                     Event::Value(v) if found_key => {
@@ -708,24 +719,11 @@ impl<'event> GitConfig<'event> {
         }
     }
 
-    fn get_section_id_by_name_and_subname<'lookup>(
-        &'event self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-    ) -> Result<SectionId, GitConfigError<'lookup>> {
-        self.get_section_ids_by_name_and_subname(section_name, subsection_name)
-            .map(|vec| {
-                // get_section_ids_by_name_and_subname is guaranteed to return
-                // a non-empty vec, so max can never return empty.
-                *vec.iter().max().unwrap()
-            })
-    }
-
     fn get_section_ids_by_name_and_subname<'lookup>(
         &self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
-    ) -> Result<&[SectionId], GitConfigError<'lookup>> {
+    ) -> Result<Vec<SectionId>, GitConfigError<'lookup>> {
         let section_ids = self
             .section_lookup_tree
             .get(section_name)
@@ -750,7 +748,7 @@ impl<'event> GitConfig<'event> {
             }
         }
         maybe_ids
-            .map(Vec::as_slice)
+            .map(Vec::to_owned)
             .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
 }
