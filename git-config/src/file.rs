@@ -18,7 +18,6 @@ pub enum GitConfigError<'a> {
 impl Display for GitConfigError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            // Todo, try parse as utf8 first for better looking errors
             Self::SectionDoesNotExist(s) => write!(f, "Section '{}' does not exist.", s),
             Self::SubSectionDoesNotExist(s) => match s {
                 Some(s) => write!(f, "Subsection '{}' does not exist.", s),
@@ -226,6 +225,69 @@ impl<'event> GitConfig<'event> {
             .map_err(|_| GitConfigError::FailedConversion)
     }
 
+    /// Returns all interpreted values given a section, an optional subsection
+    /// and key.
+    ///
+    /// It's recommended to use one of the values in the [`values`] module as
+    /// the conversion is already implemented, but this function is flexible and
+    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
+    ///
+    /// Consider [`Self::get_value`] if you want to get a single value
+    /// (following last-one-wins resolution) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// let config = r#"
+    ///     [core]
+    ///         a = true
+    ///         c = g
+    ///     [core]
+    ///         a
+    ///         a = false
+    /// "#;
+    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// // You can either use the turbofish to determine the type...
+    /// let a_value = git_config.get_multi_value::<Boolean>("core", None, "a")?;
+    /// assert_eq!(
+    ///     a_value,
+    ///     vec![
+    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true"))),
+    ///         Boolean::True(TrueVariant::Implicit),
+    ///         Boolean::False(Cow::Borrowed("false")),
+    ///     ]
+    /// );
+    /// // ... or explicitly declare the type to avoid the turbofish
+    /// let c_value: Vec<Value> = git_config.get_multi_value("core", None, "c")?;
+    /// assert_eq!(c_value, vec![Value::Other(Cow::Borrowed(b"g"))]);
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in the requested
+    /// section and subsection, if the section and subsection do not exist, or
+    /// if there was an issue converting the type into the requested variant.
+    ///
+    /// [`values`]: crate::values
+    /// [`TryFrom`]: std::convert::TryFrom
+    pub fn get_multi_value<'b, T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
+        section_name: &'b str,
+        subsection_name: Option<&'b str>,
+        key: &'b str,
+    ) -> Result<Vec<T>, GitConfigError<'b>> {
+        self.get_raw_multi_value(section_name, subsection_name, key)?
+            .into_iter()
+            .map(T::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| GitConfigError::FailedConversion)
+    }
+
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
@@ -300,9 +362,6 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<MutableValue<'_, 'lookup, 'event>, GitConfigError<'lookup>> {
-        // Note: cannot wrap around the raw_multi_value method because we need
-        // to guarantee that the highest section id is used (so that we follow
-        // the "last one wins" resolution strategy by `git-config`).
         let section_ids =
             self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
 
@@ -666,8 +725,9 @@ impl<'event> GitConfig<'event> {
     }
 }
 
-// Private helper functions
+/// Private helper functions
 impl<'event> GitConfig<'event> {
+    /// Used during initialization.
     fn push_section(
         &mut self,
         current_section_name: Option<Cow<'event, str>>,
@@ -690,7 +750,8 @@ impl<'event> GitConfig<'event> {
                         subsection
                             // Despite the clone `push_section` is always called
                             // with a Cow::Borrowed, so this is effectively a
-                            // copy.
+                            // copy. This copy might not be necessary, but need
+                            // to work around borrowck to figure it out.
                             .entry(subsection_name.clone())
                             .or_default()
                             .push(new_section_id);
@@ -719,6 +780,7 @@ impl<'event> GitConfig<'event> {
         }
     }
 
+    /// Returns the mapping between section and subsection name to section ids.
     fn get_section_ids_by_name_and_subname<'lookup>(
         &self,
         section_name: &'lookup str,
