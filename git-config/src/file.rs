@@ -95,26 +95,129 @@ impl MutableValue<'_, '_, '_> {
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
+    pub fn set_string(&mut self, input: String) {
+        self.set_bytes(input.into_bytes());
+    }
+
+    /// Update the value to the provided one. This modifies the value such that
+    /// the Value event(s) are replaced with a single new event containing the
+    /// new value.
     pub fn set_bytes(&mut self, input: Vec<u8>) {
         self.section.drain(self.index..self.index + self.size);
         self.size = 1;
         self.section
             .insert(self.index, Event::Value(Cow::Owned(input)));
     }
-
-    /// Update the value to the provided one. This modifies the value such that
-    /// the Value event(s) are replaced with a single new event containing the
-    /// new value.
-    pub fn set_string(&mut self, input: String) {
-        self.set_bytes(input.into_bytes());
-    }
 }
 
-// pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
-//     section: &'borrow mut Vec<Event<'event>>,
-//     key: &'lookup str,
-//     indices_and_sizes: Vec<(usize, usize)>,
-// }
+pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
+    section: &'borrow mut HashMap<SectionId, Vec<Event<'event>>>,
+    key: &'lookup str,
+    indices_and_sizes: Vec<(SectionId, usize, usize)>,
+}
+
+impl<'event> MutableMultiValue<'_, '_, 'event> {
+    /// Returns the actual value. This is computed each time this is called, so
+    /// it's best to reuse this value or own it if an allocation is acceptable.
+    pub fn value(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
+        let mut found_key = false;
+        let mut values = vec![];
+        let mut partial_value = None;
+        // section_id is guaranteed to exist in self.sections, else we have a
+        // violated invariant.
+        for (section_id, index, size) in &self.indices_and_sizes {
+            for event in &self.section.get(section_id).unwrap()[*index..*size] {
+                match event {
+                    Event::Key(event_key) if *event_key == self.key => found_key = true,
+                    Event::Value(v) if found_key => {
+                        found_key = false;
+                        values.push(normalize_bytes(v.borrow()));
+                    }
+                    Event::ValueNotDone(v) if found_key => {
+                        partial_value = Some((*v).to_vec());
+                    }
+                    Event::ValueDone(v) if found_key => {
+                        found_key = false;
+                        partial_value.as_mut().unwrap().extend(&**v);
+                        values.push(normalize_vec(partial_value.take().unwrap()));
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        if values.is_empty() {
+            return Err(GitConfigError::KeyDoesNotExist(self.key));
+        }
+
+        Ok(values)
+    }
+
+    pub fn len(&self) -> usize {
+        self.indices_and_sizes.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.indices_and_sizes.is_empty()
+    }
+
+    pub fn set_string(&mut self, index: usize, input: String) {
+        self.set_bytes(index, input.into_bytes())
+    }
+
+    pub fn set_bytes(&mut self, index: usize, input: Vec<u8>) {
+        self.set_value(index, Cow::Owned(input))
+    }
+
+    pub fn set_value(&mut self, index: usize, input: Cow<'event, [u8]>) {
+        let (section_id, index, size) = &mut self.indices_and_sizes[index];
+        self.section
+            .get_mut(section_id)
+            .unwrap()
+            .drain(*index..*index + *size);
+        *size = 1;
+        self.section
+            .get_mut(section_id)
+            .unwrap()
+            .insert(*index, Event::Value(input));
+    }
+
+    pub fn set_values(&mut self, input: impl Iterator<Item = Cow<'event, [u8]>>) {
+        for ((section_id, index, size), value) in self.indices_and_sizes.iter_mut().zip(input) {
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .drain(*index..*index + *size);
+            *size = 1;
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .insert(*index, Event::Value(value));
+        }
+    }
+
+    pub fn set_string_all(&mut self, input: String) {
+        self.set_bytes_all(input.into_bytes())
+    }
+
+    pub fn set_bytes_all(&mut self, input: Vec<u8>) {
+        self.set_values_all(Cow::Owned(input))
+    }
+
+    pub fn set_values_all(&mut self, input: Cow<'event, [u8]>) {
+        for (section_id, index, size) in &mut self.indices_and_sizes {
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .drain(*index..*index + *size);
+            *size = 1;
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .insert(*index, Event::Value(input.clone()));
+        }
+    }
+}
 
 /// High level `git-config` reader and writer.
 ///
@@ -317,7 +420,7 @@ impl<'event> GitConfig<'event> {
 
             // section_id is guaranteed to exist in self.sections, else we have a
             // violated invariant.
-            for event in self.sections.get(&section_id).unwrap() {
+            for event in self.sections.get(section_id).unwrap() {
                 match event {
                     Event::Key(event_key) if *event_key == key => found_key = true,
                     Event::Value(v) if found_key => {
@@ -336,10 +439,8 @@ impl<'event> GitConfig<'event> {
                     _ => (),
                 }
             }
-
-            match latest_value.or_else(|| partial_value.map(normalize_vec)) {
-                Some(v) => return Ok(v),
-                None => (),
+            if let Some(v) = latest_value.or_else(|| partial_value.map(normalize_vec)) {
+                return Ok(v);
             }
         }
 
@@ -369,7 +470,7 @@ impl<'event> GitConfig<'event> {
             let mut size = 0;
             let mut index = 0;
             let mut found_key = false;
-            for (i, event) in self.sections.get(&section_id).unwrap().iter().enumerate() {
+            for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
                 match event {
                     Event::Key(event_key) if *event_key == key => found_key = true,
                     Event::Value(_) if found_key => {
@@ -394,7 +495,7 @@ impl<'event> GitConfig<'event> {
             }
 
             return Ok(MutableValue {
-                section: self.sections.get_mut(&section_id).unwrap(),
+                section: self.sections.get_mut(section_id).unwrap(),
                 key,
                 size,
                 index,
@@ -514,9 +615,9 @@ impl<'event> GitConfig<'event> {
     ///         Cow::Borrowed(b"d")
     ///     ]
     /// );
-    /// for value in git_config.get_raw_multi_value_mut("core", None, "a")? {
-    ///     *value = Cow::Borrowed(b"g");
-    ///}
+    ///
+    /// git_config.get_raw_multi_value_mut("core", None, "a")?.set_string_all("g".to_string());
+    ///
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
     ///     vec![
@@ -544,42 +645,45 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Vec<&mut Cow<'event, [u8]>>, GitConfigError<'lookup>> {
-        let key = key;
+    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, GitConfigError<'lookup>> {
         let section_ids = self
             .get_section_ids_by_name_and_subname(section_name, subsection_name)?
             .to_vec();
-        let mut found_key = false;
-        let values: Vec<&mut Cow<'event, [u8]>> = self
-            .sections
-            .iter_mut()
-            .filter_map(|(k, v)| {
-                if section_ids.contains(k) {
-                    let mut values = vec![];
-                    for event in v {
-                        match event {
-                            Event::Key(event_key) if *event_key == key => found_key = true,
-                            Event::Value(v) if found_key => {
-                                values.push(v);
-                                found_key = false;
-                            }
-                            _ => (),
-                        }
-                    }
-                    Some(values)
-                } else {
-                    None
-                }
-            })
-            .flatten()
-            .collect();
 
-        // TODO: return mutable entry instead
-        // TODO: support partial values
-        if values.is_empty() {
-            Err(GitConfigError::KeyDoesNotExist(key))
+        let mut indices = vec![];
+        for section_id in section_ids.iter().rev() {
+            let mut size = 0;
+            let mut index = 0;
+            let mut found_key = false;
+            for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
+                match event {
+                    Event::Key(event_key) if *event_key == key => found_key = true,
+                    Event::Value(_) if found_key => {
+                        indices.push((*section_id, i, 1));
+                        found_key = false;
+                    }
+                    Event::ValueNotDone(_) if found_key => {
+                        size = 1;
+                        index = i;
+                    }
+                    Event::ValueDone(_) if found_key => {
+                        found_key = false;
+                        size += 1;
+                        indices.push((*section_id, index, size));
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        if !indices.is_empty() {
+            Ok(MutableMultiValue {
+                section: &mut self.sections,
+                key,
+                indices_and_sizes: indices,
+            })
         } else {
-            Ok(values)
+            Err(GitConfigError::KeyDoesNotExist(key))
         }
     }
 
@@ -717,11 +821,8 @@ impl<'event> GitConfig<'event> {
         key: &'lookup str,
         new_values: impl Iterator<Item = Cow<'event, [u8]>>,
     ) -> Result<(), GitConfigError<'lookup>> {
-        let values = self.get_raw_multi_value_mut(section_name, subsection_name, key)?;
-        for (old, new) in values.into_iter().zip(new_values) {
-            *old = new;
-        }
-        Ok(())
+        self.get_raw_multi_value_mut(section_name, subsection_name, key)
+            .map(|mut v| v.set_values(new_values))
     }
 }
 
