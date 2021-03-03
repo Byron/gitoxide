@@ -13,7 +13,7 @@ exclude = ["fuzz/**/*", ".vscode/**/*", "benches/**/*"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-serde = ["serde_crate"]
+# serde = ["serde_crate"]
 
 [dependencies]
 memchr = "2"
