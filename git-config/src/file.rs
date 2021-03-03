@@ -4,6 +4,7 @@ use std::collections::{HashMap, VecDeque};
 use std::{borrow::Borrow, convert::TryFrom};
 use std::{borrow::Cow, fmt::Display};
 
+/// All possible error types that may occur from interacting with [`GitConfig`].
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigError<'a> {
     /// The requested section does not exist.
@@ -12,6 +13,8 @@ pub enum GitConfigError<'a> {
     SubSectionDoesNotExist(Option<&'a str>),
     /// The key does not exist in the requested section.
     KeyDoesNotExist(&'a str),
+    /// The conversion into the provided type for methods such as
+    /// [`GitConfig::get_value`] failed.
     FailedConversion,
 }
 
@@ -51,6 +54,8 @@ enum LookupTreeNode<'a> {
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
 
+/// An intermediate representation of a mutable value obtained from
+/// [`GitConfig`].
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut Vec<Event<'event>>,
     key: &'lookup str,
@@ -117,6 +122,8 @@ impl MutableValue<'_, '_, '_> {
     }
 }
 
+/// An imtermediate representation of a mutable multivar obtained from
+/// [`GitConfig`].
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, Vec<Event<'event>>>,
     key: &'lookup str,
@@ -160,11 +167,14 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         Ok(values)
     }
 
+    /// Returns the size of values the multivar has.
     #[inline]
     pub fn len(&self) -> usize {
         self.indices_and_sizes.len()
     }
 
+    /// Returns if the multivar has any values. This might occur if the value
+    /// was deleted but not set with a new value.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.indices_and_sizes.is_empty()
@@ -258,7 +268,8 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
 /// High level `git-config` reader and writer.
 ///
 /// Internally, this uses various acceleration data structures to improve
-/// performance.
+/// performance of the typical usage behavior of many lookups and relatively
+/// fewer insertions.
 ///
 /// # Multivar behavior
 ///

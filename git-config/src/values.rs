@@ -430,7 +430,9 @@ impl Serialize for TrueVariant<'_> {
 /// [`bitwise_offset`]: IntegerSuffix::bitwise_offset
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Integer {
+    /// The value, without any suffix modification
     pub value: i64,
+    /// A provided suffix, if any.
     pub suffix: Option<IntegerSuffix>,
 }
 
@@ -598,8 +600,11 @@ impl TryFrom<Vec<u8>> for IntegerSuffix {
 /// foreground or background color.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Color {
+    /// A provided foreground color
     pub foreground: Option<ColorValue>,
+    /// A provided background color
     pub background: Option<ColorValue>,
+    /// A potentially empty list of text attributes
     pub attributes: Vec<ColorAttribute>,
 }
 
