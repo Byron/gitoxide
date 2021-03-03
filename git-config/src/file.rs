@@ -95,6 +95,7 @@ impl MutableValue<'_, '_, '_> {
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
+    #[inline]
     pub fn set_string(&mut self, input: String) {
         self.set_bytes(input.into_bytes());
     }
@@ -107,6 +108,12 @@ impl MutableValue<'_, '_, '_> {
         self.size = 1;
         self.section
             .insert(self.index, Event::Value(Cow::Owned(input)));
+    }
+
+    /// Removes the value.
+    pub fn delete_value(&mut self) {
+        self.section.drain(self.index..self.index + self.size);
+        self.size = 0;
     }
 }
 
@@ -153,23 +160,27 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         Ok(values)
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.indices_and_sizes.len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.indices_and_sizes.is_empty()
     }
 
+    #[inline]
     pub fn set_string(&mut self, index: usize, input: String) {
         self.set_bytes(index, input.into_bytes())
     }
 
+    #[inline]
     pub fn set_bytes(&mut self, index: usize, input: Vec<u8>) {
         self.set_value(index, Cow::Owned(input))
     }
 
-    pub fn set_value(&mut self, index: usize, input: Cow<'event, [u8]>) {
+    pub fn set_value<'a: 'event>(&mut self, index: usize, input: Cow<'a, [u8]>) {
         let (section_id, index, size) = &mut self.indices_and_sizes[index];
         self.section
             .get_mut(section_id)
@@ -182,7 +193,7 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
             .insert(*index, Event::Value(input));
     }
 
-    pub fn set_values(&mut self, input: impl Iterator<Item = Cow<'event, [u8]>>) {
+    pub fn set_values<'a: 'event>(&mut self, input: impl Iterator<Item = Cow<'a, [u8]>>) {
         for ((section_id, index, size), value) in self.indices_and_sizes.iter_mut().zip(input) {
             self.section
                 .get_mut(section_id)
@@ -196,15 +207,17 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         }
     }
 
+    #[inline]
     pub fn set_string_all(&mut self, input: String) {
         self.set_bytes_all(input.into_bytes())
     }
 
+    #[inline]
     pub fn set_bytes_all(&mut self, input: Vec<u8>) {
         self.set_values_all(Cow::Owned(input))
     }
 
-    pub fn set_values_all(&mut self, input: Cow<'event, [u8]>) {
+    pub fn set_values_all<'a: 'event>(&mut self, input: Cow<'a, [u8]>) {
         for (section_id, index, size) in &mut self.indices_and_sizes {
             self.section
                 .get_mut(section_id)
@@ -216,6 +229,29 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
                 .unwrap()
                 .insert(*index, Event::Value(input.clone()));
         }
+    }
+
+    /// Removes the value at the given index
+    pub fn delete(&mut self, index: usize) {
+        let (section_id, section_index, size) = &mut self.indices_and_sizes[index];
+        self.section
+            .get_mut(section_id)
+            .unwrap()
+            .drain(*section_index..*section_index + *size);
+        *size = 0;
+        self.indices_and_sizes.remove(index);
+    }
+
+    /// Removes all values.
+    pub fn delete_all(&mut self) {
+        for (section_id, index, size) in &mut self.indices_and_sizes {
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .drain(*index..*index + *size);
+            *size = 0;
+        }
+        self.indices_and_sizes.clear();
     }
 }
 
@@ -676,14 +712,14 @@ impl<'event> GitConfig<'event> {
             }
         }
 
-        if !indices.is_empty() {
+        if indices.is_empty() {
+            Err(GitConfigError::KeyDoesNotExist(key))
+        } else {
             Ok(MutableMultiValue {
                 section: &mut self.sections,
                 key,
                 indices_and_sizes: indices,
             })
-        } else {
-            Err(GitConfigError::KeyDoesNotExist(key))
         }
     }
 

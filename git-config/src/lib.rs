@@ -9,13 +9,12 @@
 //! exposes a high level API to parse, read, and write [`git-config` files],
 //! which are loosely based on the [INI file format].
 //!
-//! This crate has four primary offerings and various accessory functions. The
+//! This crate has a few primary offerings and various accessory functions. The
 //! table below gives a brief explanation of all offerings, loosely in order
 //! from the highest to lowest abstraction.
 //!
 //! | Offering      | Description                                         | Zero-copy?        |
 //! | ------------- | --------------------------------------------------- | ----------------- |
-//! | [`Edits`]     | Batch edit API for generic multi-file editing.      | Yes               |
 //! | [`GitConfig`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
 //! | [`Parser`]    | Syntactic event emitter for `git-config` files.     | Yes               |
 //! | [`Value`]     | Wrappers for `git-config` value types.              | Yes               |
