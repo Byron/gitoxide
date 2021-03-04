@@ -313,7 +313,7 @@ pub struct GitConfig<'a> {
     /// The list of events that occur before an actual section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
-    front_matter_events: Vec<Event<'a>>,
+    frontmatter_events: Vec<Event<'a>>,
     section_lookup_tree: HashMap<Cow<'a, str>, Vec<LookupTreeNode<'a>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events.
@@ -365,12 +365,12 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_value<'b, T: TryFrom<Cow<'event, [u8]>>>(
+    pub fn get_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-    ) -> Result<T, GitConfigError<'b>> {
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<T, GitConfigError<'lookup>> {
         T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
             .map_err(|_| GitConfigError::FailedConversion)
     }
@@ -425,12 +425,12 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_multi_value<'b, T: TryFrom<Cow<'event, [u8]>>>(
+    pub fn get_multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
-        section_name: &'b str,
-        subsection_name: Option<&'b str>,
-        key: &'b str,
-    ) -> Result<Vec<T>, GitConfigError<'b>> {
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<Vec<T>, GitConfigError<'lookup>> {
         self.get_raw_multi_value(section_name, subsection_name, key)?
             .into_iter()
             .map(T::try_from)
@@ -871,6 +871,35 @@ impl<'event> GitConfig<'event> {
         self.get_raw_multi_value_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))
     }
+
+    /// Adds a new section to config. This cannot fail.
+    pub fn new_empty_section(
+        &mut self,
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) {
+        self.push_section(
+            Some(section_name.into()),
+            subsection_name.into(),
+            &mut Some(vec![]),
+        )
+    }
+
+    /// Removes the section, returning the events it had, if any.
+    pub fn remove_section(
+        &mut self,
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) -> Option<Vec<Event>> {
+        let mut section_ids = self
+            .get_section_ids_by_name_and_subname(
+                &section_name.into(),
+                subsection_name.into().as_deref(),
+            )
+            .ok()?;
+
+        self.sections.remove(&section_ids.pop()?)
+    }
 }
 
 /// Private helper functions
@@ -990,7 +1019,7 @@ impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
 impl<'a> From<Parser<'a>> for GitConfig<'a> {
     fn from(parser: Parser<'a>) -> Self {
         let mut new_self = Self {
-            front_matter_events: vec![],
+            frontmatter_events: vec![],
             sections: HashMap::new(),
             section_lookup_tree: HashMap::new(),
             section_headers: HashMap::new(),
@@ -1035,7 +1064,7 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
                 e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
                     match maybe_section {
                         Some(ref mut section) => section.push(e),
-                        None => new_self.front_matter_events.push(e),
+                        None => new_self.frontmatter_events.push(e),
                     }
                 }
             }
@@ -1053,12 +1082,37 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
     }
 }
 
+impl<'a> Into<Vec<u8>> for GitConfig<'a> {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl<'a> Into<Vec<u8>> for &GitConfig<'a> {
+    fn into(self) -> Vec<u8> {
+        let mut value = vec![];
+
+        for events in &self.frontmatter_events {
+            value.extend(events.to_vec());
+        }
+
+        for section_id in &self.section_order {
+            value.extend(self.section_headers.get(section_id).unwrap().to_vec());
+            for event in self.sections.get(section_id).unwrap() {
+                value.extend(event.to_vec());
+            }
+        }
+
+        value
+    }
+}
+
 impl Display for GitConfig<'_> {
     /// Note that this is a best-effort attempt at printing a `GitConfig`. If
     /// there are non UTF-8 values in your config, this will _NOT_ render as
     /// read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for front_matter in &self.front_matter_events {
+        for front_matter in &self.frontmatter_events {
             front_matter.fmt(f)?;
         }
 

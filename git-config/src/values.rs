@@ -149,6 +149,12 @@ pub enum Value<'a> {
     Other(Cow<'a, [u8]>),
 }
 
+impl Value<'_> {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
+}
+
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
         if let Ok(bool) = Boolean::try_from(s) {
@@ -207,6 +213,23 @@ impl<'a> From<Cow<'a, [u8]>> for Value<'a> {
     }
 }
 
+impl Into<Vec<u8>> for Value<'_> {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl Into<Vec<u8>> for &Value<'_> {
+    fn into(self) -> Vec<u8> {
+        match self {
+            Value::Boolean(b) => b.into(),
+            Value::Integer(i) => i.into(),
+            Value::Color(c) => c.into(),
+            Value::Other(o) => o.to_vec(),
+        }
+    }
+}
+
 // todo display for value
 
 #[cfg(feature = "serde")]
@@ -235,6 +258,16 @@ impl Serialize for Value<'_> {
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
     False(Cow<'a, str>),
+}
+
+impl Boolean<'_> {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        self.into()
+    }
 }
 
 impl<'a> TryFrom<&'a str> for Boolean<'a> {
@@ -316,6 +349,27 @@ impl Into<bool> for Boolean<'_> {
             Boolean::True(_) => true,
             Boolean::False(_) => false,
         }
+    }
+}
+
+impl<'a, 'b: 'a> Into<&'a [u8]> for &'b Boolean<'a> {
+    fn into(self) -> &'a [u8] {
+        match self {
+            Boolean::True(t) => t.into(),
+            Boolean::False(f) => f.as_bytes(),
+        }
+    }
+}
+
+impl Into<Vec<u8>> for Boolean<'_> {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl Into<Vec<u8>> for &Boolean<'_> {
+    fn into(self) -> Vec<u8> {
+        self.to_string().into_bytes()
     }
 }
 
@@ -407,6 +461,15 @@ impl Display for TrueVariant<'_> {
     }
 }
 
+impl<'a, 'b: 'a> Into<&'a [u8]> for &'b TrueVariant<'a> {
+    fn into(self) -> &'a [u8] {
+        match self {
+            TrueVariant::Explicit(e) => e.as_bytes(),
+            TrueVariant::Implicit => &[],
+        }
+    }
+}
+
 #[cfg(feature = "serde")]
 impl Serialize for TrueVariant<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -434,6 +497,12 @@ pub struct Integer {
     pub value: i64,
     /// A provided suffix, if any.
     pub suffix: Option<IntegerSuffix>,
+}
+
+impl Integer {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
 }
 
 impl Display for Integer {
@@ -513,6 +582,18 @@ impl TryFrom<Cow<'_, [u8]>> for Integer {
             Cow::Borrowed(c) => Self::try_from(c),
             Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
         }
+    }
+}
+
+impl Into<Vec<u8>> for Integer {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl Into<Vec<u8>> for &Integer {
+    fn into(self) -> Vec<u8> {
+        self.to_string().into_bytes()
     }
 }
 
@@ -606,6 +687,12 @@ pub struct Color {
     pub background: Option<ColorValue>,
     /// A potentially empty list of text attributes
     pub attributes: Vec<ColorAttribute>,
+}
+
+impl Color {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
 }
 
 impl Display for Color {
@@ -712,6 +799,18 @@ impl TryFrom<Cow<'_, [u8]>> for Color {
             Cow::Borrowed(c) => Self::try_from(c),
             Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
         }
+    }
+}
+
+impl Into<Vec<u8>> for Color {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl Into<Vec<u8>> for &Color {
+    fn into(self) -> Vec<u8> {
+        self.to_string().into_bytes()
     }
 }
 
