@@ -169,6 +169,7 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
 
     /// Returns the size of values the multivar has.
     #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.indices_and_sizes.len()
     }
@@ -176,6 +177,7 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// Returns if the multivar has any values. This might occur if the value
     /// was deleted but not set with a new value.
     #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.indices_and_sizes.is_empty()
     }
@@ -1131,8 +1133,8 @@ impl Display for GitConfig<'_> {
 
 #[cfg(test)]
 mod from_parser {
-    use super::*;
-    use crate::test_util::*;
+    use super::{Cow, Event, GitConfig, HashMap, LookupTreeNode, SectionId, TryFrom};
+    use crate::test_util::{name_event, newline_event, section_header, value_event};
 
     #[test]
     fn parse_empty() {
@@ -1331,7 +1333,7 @@ mod from_parser {
 
 #[cfg(test)]
 mod get_raw_value {
-    use super::*;
+    use super::{Cow, GitConfig, GitConfigError, TryFrom};
 
     #[test]
     fn single_section() {
@@ -1407,7 +1409,7 @@ mod get_raw_value {
 
 #[cfg(test)]
 mod get_value {
-    use super::*;
+    use super::{Cow, GitConfig, TryFrom};
     use crate::values::{Boolean, TrueVariant, Value};
     use std::error::Error;
 
@@ -1426,7 +1428,7 @@ mod get_value {
 
 #[cfg(test)]
 mod get_raw_multi_value {
-    use super::*;
+    use super::{Cow, GitConfig, GitConfigError, TryFrom};
 
     #[test]
     fn single_value_is_identical_to_single_value_query() {
@@ -1515,7 +1517,7 @@ mod get_raw_multi_value {
 
 #[cfg(test)]
 mod display {
-    use super::*;
+    use super::{GitConfig, TryFrom};
 
     #[test]
     fn can_reconstruct_empty_config() {

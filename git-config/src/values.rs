@@ -59,6 +59,7 @@ use std::str::FromStr;
 /// ```
 ///
 /// [`parser`]: crate::parser::Parser
+#[must_use]
 pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
     let size = input.len();
     if &*input == b"\"\"" {
@@ -120,18 +121,21 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
 
 /// `&[u8]` variant of [`normalize_cow`].
 #[inline]
+#[must_use]
 pub fn normalize_bytes(input: &[u8]) -> Cow<'_, [u8]> {
     normalize_cow(Cow::Borrowed(input))
 }
 
 /// `Vec[u8]` variant of [`normalize_cow`].
 #[inline]
+#[must_use]
 pub fn normalize_vec(input: Vec<u8>) -> Cow<'static, [u8]> {
     normalize_cow(Cow::Owned(input))
 }
 
 /// [`str`] variant of [`normalize_cow`].
 #[inline]
+#[must_use]
 pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
     normalize_bytes(input.as_bytes())
 }
@@ -150,6 +154,7 @@ pub enum Value<'a> {
 }
 
 impl Value<'_> {
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -261,10 +266,12 @@ pub enum Boolean<'a> {
 }
 
 impl Boolean<'_> {
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
 
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         self.into()
     }
@@ -500,6 +507,7 @@ pub struct Integer {
 }
 
 impl Integer {
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -610,6 +618,7 @@ pub enum IntegerSuffix {
 
 impl IntegerSuffix {
     /// Returns the number of bits that the suffix shifts left by.
+    #[must_use]
     pub const fn bitwise_offset(self) -> usize {
         match self {
             Self::Kibi => 10,
@@ -690,6 +699,7 @@ pub struct Color {
 }
 
 impl Color {
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -1118,7 +1128,7 @@ mod normalize {
 
 #[cfg(test)]
 mod boolean {
-    use super::*;
+    use super::{Boolean, TrueVariant, TryFrom};
 
     #[test]
     fn from_str_false() {
@@ -1171,7 +1181,7 @@ mod boolean {
 
 #[cfg(test)]
 mod integer {
-    use super::*;
+    use super::{FromStr, Integer, IntegerSuffix};
 
     #[test]
     fn from_str_no_suffix() {
