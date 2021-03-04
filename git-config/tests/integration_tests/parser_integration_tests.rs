@@ -13,12 +13,12 @@ pub fn section_header(
     name: &str,
     subsection: impl Into<Option<(&'static str, &'static str)>>,
 ) -> ParsedSectionHeader<'_> {
-    let name = Cow::Borrowed(name.into());
+    let name = Cow::Borrowed(name);
     if let Some((separator, subsection_name)) = subsection.into() {
         ParsedSectionHeader {
             name,
-            separator: Some(Cow::Borrowed(separator.into())),
-            subsection_name: Some(Cow::Borrowed(subsection_name.into())),
+            separator: Some(Cow::Borrowed(separator)),
+            subsection_name: Some(Cow::Borrowed(subsection_name)),
         }
     } else {
         ParsedSectionHeader {
@@ -30,7 +30,7 @@ pub fn section_header(
 }
 
 fn name(name: &'static str) -> Event<'static> {
-    Event::Key(Cow::Borrowed(name.into()))
+    Event::Key(Cow::Borrowed(name))
 }
 
 fn value(value: &'static str) -> Event<'static> {
@@ -42,11 +42,11 @@ fn newline() -> Event<'static> {
 }
 
 fn newline_custom(value: &'static str) -> Event<'static> {
-    Event::Newline(Cow::Borrowed(value.into()))
+    Event::Newline(Cow::Borrowed(value))
 }
 
 fn whitespace(value: &'static str) -> Event<'static> {
-    Event::Whitespace(Cow::Borrowed(value.into()))
+    Event::Whitespace(Cow::Borrowed(value))
 }
 
 fn separator() -> Event<'static> {

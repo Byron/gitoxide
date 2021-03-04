@@ -69,6 +69,7 @@ pub enum Event<'a> {
 }
 
 impl Event<'_> {
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -151,6 +152,7 @@ pub struct ParsedSectionHeader<'a> {
 }
 
 impl ParsedSectionHeader<'_> {
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -243,11 +245,13 @@ pub struct Error<'a> {
 impl Error<'_> {
     /// The one-indexed line number where the error occurred. This is determined
     /// by the number of newlines that were successfully parsed.
+    #[must_use]
     pub const fn line_number(&self) -> usize {
         self.line_number + 1
     }
 
     /// The remaining data that was left unparsed.
+    #[must_use]
     pub const fn remaining_data(&self) -> &[u8] {
         self.parsed_until
     }
@@ -521,6 +525,7 @@ impl<'a> Parser<'a> {
     /// a section) from the parser. Consider [`Parser::take_frontmatter`] if
     /// you need an owned copy only once. If that function was called, then this
     /// will always return an empty slice.
+    #[must_use]
     pub fn frontmatter(&self) -> &[Event<'a>] {
         &self.frontmatter
     }
@@ -538,6 +543,7 @@ impl<'a> Parser<'a> {
     /// Returns the parsed sections from the parser. Consider
     /// [`Parser::take_sections`] if you need an owned copy only once. If that
     /// function was called, then this will always return an empty slice.
+    #[must_use]
     pub fn sections(&self) -> &[ParsedSection<'a>] {
         &self.sections
     }
@@ -552,6 +558,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Consumes the parser to produce a Vec of Events.
+    #[must_use]
     pub fn into_vec(self) -> Vec<Event<'a>> {
         self.into_iter().collect()
     }
@@ -994,7 +1001,7 @@ fn take_newline(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
 
 #[cfg(test)]
 mod comments {
-    use super::*;
+    use super::comment;
     use crate::test_util::{comment as parsed_comment, fully_consumed};
 
     #[test]
@@ -1024,7 +1031,7 @@ mod comments {
 
 #[cfg(test)]
 mod section_headers {
-    use super::*;
+    use super::section_header;
     use crate::test_util::{fully_consumed, section_header as parsed_section_header};
 
     #[test]
@@ -1096,7 +1103,7 @@ mod section_headers {
 
 #[cfg(test)]
 mod config_name {
-    use super::*;
+    use super::config_name;
     use crate::test_util::fully_consumed;
 
     #[test]
@@ -1118,7 +1125,7 @@ mod config_name {
 
 #[cfg(test)]
 mod section_body {
-    use super::*;
+    use super::{section_body, Event, ParserNode};
     use crate::test_util::{name_event, value_event, whitespace_event};
 
     #[test]
@@ -1152,7 +1159,7 @@ mod section_body {
 
 #[cfg(test)]
 mod value_no_continuation {
-    use super::*;
+    use super::value_impl;
     use crate::test_util::value_event;
 
     #[test]
@@ -1258,7 +1265,7 @@ mod value_no_continuation {
 
 #[cfg(test)]
 mod value_continuation {
-    use super::*;
+    use super::value_impl;
     use crate::test_util::{newline_event, value_done_event, value_not_done_event};
 
     #[test]
@@ -1318,10 +1325,7 @@ mod value_continuation {
     #[test]
     fn quote_split_over_two_lines_with_leftover_comment() {
         let mut events = vec![];
-        assert_eq!(
-            value_impl(b"\"\\\n;\";a", &mut events).unwrap().0,
-            ";a".as_bytes()
-        );
+        assert_eq!(value_impl(b"\"\\\n;\";a", &mut events).unwrap().0, b";a");
         assert_eq!(
             events,
             vec![
@@ -1335,7 +1339,7 @@ mod value_continuation {
 
 #[cfg(test)]
 mod section {
-    use super::*;
+    use super::{section, Event, ParsedSection, ParserNode};
     use crate::test_util::{
         comment_event, fully_consumed, name_event, newline_event,
         section_header as parsed_section_header, value_done_event, value_event,
@@ -1535,7 +1539,7 @@ mod section {
 
 #[cfg(test)]
 mod error {
-    use super::*;
+    use super::parse_from_str;
 
     #[test]
     fn line_no_is_one_indexed() {
