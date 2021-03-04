@@ -68,6 +68,12 @@ pub enum Event<'a> {
     KeyValueSeparator,
 }
 
+impl Event<'_> {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
+}
+
 impl Display for Event<'_> {
     /// Note that this is a best-effort attempt at printing an `Event`. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
@@ -84,6 +90,30 @@ impl Display for Event<'_> {
             Self::SectionHeader(e) => e.fmt(f),
             Self::Key(e) | Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
             Self::KeyValueSeparator => write!(f, "="),
+        }
+    }
+}
+
+impl Into<Vec<u8>> for Event<'_> {
+    fn into(self) -> Vec<u8> {
+        match self {
+            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => e.to_vec(),
+            Self::Comment(e) => e.into(),
+            Self::SectionHeader(e) => e.into(),
+            Self::Key(e) | Self::Newline(e) | Self::Whitespace(e) => e.as_bytes().to_vec(),
+            Self::KeyValueSeparator => vec![b'='],
+        }
+    }
+}
+
+impl Into<Vec<u8>> for &Event<'_> {
+    fn into(self) -> Vec<u8> {
+        match self {
+            Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
+            Event::Comment(e) => e.into(),
+            Event::SectionHeader(e) => e.into(),
+            Event::Key(e) | Event::Newline(e) | Event::Whitespace(e) => e.as_bytes().to_vec(),
+            Event::KeyValueSeparator => vec![b'='],
         }
     }
 }
@@ -107,12 +137,6 @@ impl Display for ParsedSection<'_> {
     }
 }
 
-impl<'a> Into<Event<'a>> for ParsedSectionHeader<'a> {
-    fn into(self) -> Event<'a> {
-        Event::SectionHeader(self)
-    }
-}
-
 /// A parsed section header, containing a name and optionally a subsection name.
 ///
 /// Note that section headers must be parsed as valid ASCII, and thus all valid
@@ -132,6 +156,12 @@ pub struct ParsedSectionHeader<'a> {
     pub subsection_name: Option<Cow<'a, str>>,
 }
 
+impl ParsedSectionHeader<'_> {
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.into()
+    }
+}
+
 impl Display for ParsedSectionHeader<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[{}", self.name)?;
@@ -148,6 +178,24 @@ impl Display for ParsedSectionHeader<'_> {
         }
 
         write!(f, "]")
+    }
+}
+
+impl Into<Vec<u8>> for ParsedSectionHeader<'_> {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl Into<Vec<u8>> for &ParsedSectionHeader<'_> {
+    fn into(self) -> Vec<u8> {
+        self.to_string().into_bytes()
+    }
+}
+
+impl<'a> Into<Event<'a>> for ParsedSectionHeader<'a> {
+    fn into(self) -> Event<'a> {
+        Event::SectionHeader(self)
     }
 }
 
@@ -171,6 +219,20 @@ impl Display for ParsedComment<'_> {
         } else {
             write!(f, "{:02x?}", self.comment)
         }
+    }
+}
+
+impl Into<Vec<u8>> for ParsedComment<'_> {
+    fn into(self) -> Vec<u8> {
+        (&self).into()
+    }
+}
+
+impl Into<Vec<u8>> for &ParsedComment<'_> {
+    fn into(self) -> Vec<u8> {
+        let mut values = vec![self.comment_tag as u8];
+        values.extend(self.comment.iter());
+        values
     }
 }
 
@@ -250,7 +312,7 @@ impl Display for ParserNode {
 ///
 /// This is parser exposes low-level syntactic events from a `git-config` file.
 /// Generally speaking, you'll want to use [`GitConfig`] as it wraps
-/// around the parser to provide a higher-level a[u8]action to a `git-config`
+/// around the parser to provide a higher-level abstraction to a `git-config`
 /// file, including querying, modifying, and updating values.
 ///
 /// This parser guarantees that the events emitted are sufficient to
