@@ -1,7 +1,9 @@
 #![forbid(unsafe_code)]
 // #![deny(missing_docs)]
 #![warn(clippy::pedantic, clippy::nursery, clippy::cargo)]
-#![allow(clippy::must_use_candidate, clippy::shadow_unrelated)]
+#![allow(
+    // clippy::must_use_candidate,
+    clippy::shadow_unrelated)]
 
 //! # `git_config`
 //!

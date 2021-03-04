@@ -122,7 +122,7 @@ impl MutableValue<'_, '_, '_> {
     }
 }
 
-/// An imtermediate representation of a mutable multivar obtained from
+/// An intermediate representation of a mutable multivar obtained from
 /// [`GitConfig`].
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, Vec<Event<'event>>>,

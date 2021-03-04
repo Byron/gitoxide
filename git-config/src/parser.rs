@@ -96,13 +96,7 @@ impl Display for Event<'_> {
 
 impl Into<Vec<u8>> for Event<'_> {
     fn into(self) -> Vec<u8> {
-        match self {
-            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => e.to_vec(),
-            Self::Comment(e) => e.into(),
-            Self::SectionHeader(e) => e.into(),
-            Self::Key(e) | Self::Newline(e) | Self::Whitespace(e) => e.as_bytes().to_vec(),
-            Self::KeyValueSeparator => vec![b'='],
-        }
+        (&self).into()
     }
 }
 
