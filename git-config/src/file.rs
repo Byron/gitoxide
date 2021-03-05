@@ -1,7 +1,7 @@
 //! This module provides a high level wrapper around a single `git-config` file.
 
 use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
-use crate::values::{normalize_bytes, normalize_vec};
+use crate::values::{normalize_bytes, normalize_cow, normalize_vec};
 use std::collections::{HashMap, VecDeque};
 use std::{borrow::Borrow, convert::TryFrom};
 use std::{borrow::Cow, fmt::Display};
@@ -77,14 +77,14 @@ impl MutableValue<'_, '_, '_> {
     /// # Errors
     ///
     /// Returns an error if the lookup failed.
-    pub fn value(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
+    pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
         let mut found_key = false;
         let mut latest_value = None;
         let mut partial_value = None;
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
 
-        for event in &self.section[self.index..self.size] {
+        for event in &self.section[self.index..=self.index + self.size] {
             match event {
                 Event::Key(event_key) if *event_key == self.key => found_key = true,
                 Event::Value(v) if found_key => {
@@ -103,7 +103,10 @@ impl MutableValue<'_, '_, '_> {
             }
         }
 
+        dbg!(&latest_value);
+        dbg!(&partial_value);
         latest_value
+            .map(normalize_cow)
             .or_else(|| partial_value.map(normalize_vec))
             .ok_or(GitConfigError::KeyDoesNotExist(self.key))
     }
@@ -120,16 +123,24 @@ impl MutableValue<'_, '_, '_> {
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
     pub fn set_bytes(&mut self, input: Vec<u8>) {
-        self.section.drain(self.index..self.index + self.size);
-        self.size = 1;
+        if self.size > 0 {
+            self.section.drain(self.index..=self.index + self.size);
+        }
+        self.size = 3;
         self.section
             .insert(self.index, Event::Value(Cow::Owned(input)));
+        self.section.insert(self.index, Event::KeyValueSeparator);
+        self.section
+            .insert(self.index, Event::Key(Cow::Owned(self.key.into())));
     }
 
-    /// Removes the value.
-    pub fn delete_value(&mut self) {
-        self.section.drain(self.index..self.index + self.size);
-        self.size = 0;
+    /// Removes the value. Does nothing when called multiple times in
+    /// succession.
+    pub fn delete(&mut self) {
+        if self.size > 0 {
+            self.section.drain(self.index..=self.index + self.size);
+            self.size = 0;
+        }
     }
 }
 
@@ -152,14 +163,14 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// # Errors
     ///
     /// Returns an error if the lookup failed.
-    pub fn value(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
+    pub fn get(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
         let mut found_key = false;
         let mut values = vec![];
         let mut partial_value = None;
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
         for (section_id, index, size) in &self.indices_and_sizes {
-            for event in &self.section.get(section_id).unwrap()[*index..*size] {
+            for event in &self.section.get(section_id).unwrap()[*index..=*index + *size] {
                 match event {
                     Event::Key(event_key) if *event_key == self.key => found_key = true,
                     Event::Value(v) if found_key => {
@@ -228,15 +239,13 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// This will panic if the index is out of range.
     pub fn set_value<'a: 'event>(&mut self, index: usize, input: Cow<'a, [u8]>) {
         let (section_id, index, size) = &mut self.indices_and_sizes[index];
-        self.section
-            .get_mut(section_id)
-            .unwrap()
-            .drain(*index..*index + *size);
-        *size = 1;
-        self.section
-            .get_mut(section_id)
-            .unwrap()
-            .insert(*index, Event::Value(input));
+        let section = self.section.get_mut(section_id).unwrap();
+        dbg!(&section);
+        section.drain(*index..=*index + *size);
+        *size = 3;
+        section.insert(*index, Event::Value(input));
+        section.insert(*index, Event::KeyValueSeparator);
+        section.insert(*index, Event::Key(Cow::Owned(self.key.into())));
     }
 
     /// Sets all values to the provided values. Note that this follows [`zip`]
@@ -248,22 +257,19 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// [`zip`]: std::iter::Iterator::zip
     pub fn set_values<'a: 'event>(&mut self, input: impl Iterator<Item = Cow<'a, [u8]>>) {
         for ((section_id, index, size), value) in self.indices_and_sizes.iter_mut().zip(input) {
-            self.section
-                .get_mut(section_id)
-                .unwrap()
-                .drain(*index..*index + *size);
-            *size = 1;
-            self.section
-                .get_mut(section_id)
-                .unwrap()
-                .insert(*index, Event::Value(value));
+            let section = self.section.get_mut(section_id).unwrap();
+            section.drain(*index..=*index + *size);
+            *size = 3;
+            section.insert(*index, Event::Value(value));
+            section.insert(*index, Event::KeyValueSeparator);
+            section.insert(*index, Event::Key(Cow::Owned(self.key.into())));
         }
     }
 
     /// Sets all values in this multivar to the provided one by copying the
     /// input for all values.
     #[inline]
-    pub fn set_string_all(&mut self, input: &str) {
+    pub fn set_str_all(&mut self, input: &str) {
         self.set_owned_values_all(input.as_bytes())
     }
 
@@ -287,7 +293,7 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// Sets all values in this multivar to the provided one without owning the
     /// provided input. Note that this requires `input` to last longer than
     /// [`GitConfig`]. Consider using [`Self::set_owned_values_all`] or
-    /// [`Self::set_string_all`] unless you have a strict performance or memory
+    /// [`Self::set_str_all`] unless you have a strict performance or memory
     /// need for a more ergonomic interface.
     pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
         for (section_id, index, size) in &mut self.indices_and_sizes {
@@ -303,29 +309,35 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         }
     }
 
-    /// Removes the value at the given index.
+    /// Removes the value at the given index. Does nothing when called multiple
+    /// times in succession.
     ///
     /// # Safety
     ///
     /// This will panic if the index is out of range.
     pub fn delete(&mut self, index: usize) {
         let (section_id, section_index, size) = &mut self.indices_and_sizes[index];
-        self.section
-            .get_mut(section_id)
-            .unwrap()
-            .drain(*section_index..*section_index + *size);
-        *size = 0;
-        self.indices_and_sizes.remove(index);
-    }
-
-    /// Removes all values.
-    pub fn delete_all(&mut self) {
-        for (section_id, index, size) in &mut self.indices_and_sizes {
+        if *size > 0 {
             self.section
                 .get_mut(section_id)
                 .unwrap()
-                .drain(*index..*index + *size);
+                .drain(*section_index..=*section_index + *size);
             *size = 0;
+            self.indices_and_sizes.remove(index);
+        }
+    }
+
+    /// Removes all values. Does nothing when called multiple times in
+    /// succession.
+    pub fn delete_all(&mut self) {
+        for (section_id, index, size) in &mut self.indices_and_sizes {
+            if *size > 0 {
+                self.section
+                    .get_mut(section_id)
+                    .unwrap()
+                    .drain(*index..=*index + *size);
+                *size = 0;
+            }
         }
         self.indices_and_sizes.clear();
     }
@@ -585,17 +597,17 @@ impl<'event> GitConfig<'event> {
             let mut found_key = false;
             for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
                 match event {
-                    Event::Key(event_key) if *event_key == key => found_key = true,
-                    Event::Value(_) if found_key => {
-                        found_key = false;
+                    Event::Key(event_key) if *event_key == key => {
+                        found_key = true;
                         size = 1;
                         index = i;
                     }
-                    Event::ValueNotDone(_) if found_key => {
-                        size = 1;
-                        index = i;
+                    Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_)
+                        if found_key =>
+                    {
+                        size += 1;
                     }
-                    Event::ValueDone(_) if found_key => {
+                    Event::ValueDone(_) | Event::Value(_) if found_key => {
                         found_key = false;
                         size += 1;
                     }
@@ -729,7 +741,7 @@ impl<'event> GitConfig<'event> {
     ///     ]
     /// );
     ///
-    /// git_config.get_raw_multi_value_mut("core", None, "a")?.set_string_all("g".to_string());
+    /// git_config.get_raw_multi_value_mut("core", None, "a")?.set_str_all("g");
     ///
     /// assert_eq!(
     ///     git_config.get_raw_multi_value("core", None, "a")?,
@@ -770,16 +782,17 @@ impl<'event> GitConfig<'event> {
             let mut found_key = false;
             for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
                 match event {
-                    Event::Key(event_key) if *event_key == key => found_key = true,
-                    Event::Value(_) if found_key => {
-                        indices.push((*section_id, i, 1));
-                        found_key = false;
-                    }
-                    Event::ValueNotDone(_) if found_key => {
-                        size = 1;
+                    Event::Key(event_key) if *event_key == key => {
                         index = i;
+                        size = 1;
+                        found_key = true;
                     }
-                    Event::ValueDone(_) if found_key => {
+                    Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_)
+                        if found_key =>
+                    {
+                        size += 1;
+                    }
+                    Event::Value(_) | Event::ValueDone(_) if found_key => {
                         found_key = false;
                         size += 1;
                         indices.push((*section_id, index, size));
@@ -1194,6 +1207,210 @@ impl Display for GitConfig<'_> {
 }
 
 // todo impl serialize
+
+#[cfg(test)]
+mod mutable_value {
+    use super::GitConfig;
+    use std::convert::TryFrom;
+
+    fn init_config() -> GitConfig<'static> {
+        GitConfig::try_from(
+            r#"[core]
+                a=b"100"
+            [core]
+                c=d
+                e=f"#,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn value_is_correct() {
+        let mut git_config = init_config();
+
+        let value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        assert_eq!(&*value.get().unwrap(), b"b100");
+    }
+
+    #[test]
+    fn set_string_cleanly_updates() {
+        let mut git_config = init_config();
+
+        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        value.set_string("hello world".to_string());
+        assert_eq!(
+            git_config.to_string(),
+            r#"[core]
+                a=hello world
+            [core]
+                c=d
+                e=f"#,
+        );
+
+        let mut value = git_config.get_raw_value_mut("core", None, "e").unwrap();
+        value.set_string(String::new());
+        assert_eq!(
+            git_config.to_string(),
+            r#"[core]
+                a=hello world
+            [core]
+                c=d
+                e="#,
+        );
+    }
+
+    #[test]
+    fn delete_value() {
+        let mut git_config = init_config();
+
+        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        value.delete();
+        assert_eq!(
+            git_config.to_string(),
+            "[core]\n                \n            [core]
+                c=d
+                e=f",
+        );
+
+        let mut value = git_config.get_raw_value_mut("core", None, "c").unwrap();
+        value.delete();
+        assert_eq!(
+            git_config.to_string(),
+            "[core]\n                \n            [core]\n                \n                e=f",
+        );
+    }
+
+    #[test]
+    fn get_value_after_deleted() {
+        let mut git_config = init_config();
+
+        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        value.delete();
+        assert!(value.get().is_err());
+    }
+
+    #[test]
+    fn set_string_after_deleted() {
+        let mut git_config = init_config();
+
+        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        value.delete();
+        value.set_string("hello world".to_string());
+        assert_eq!(
+            git_config.to_string(),
+            r#"[core]
+                a=hello world
+            [core]
+                c=d
+                e=f"#,
+        );
+    }
+
+    #[test]
+    fn subsequent_delete_calls_are_noop() {
+        let mut git_config = init_config();
+
+        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        for _ in 0..10 {
+            value.delete();
+        }
+        assert_eq!(
+            git_config.to_string(),
+            "[core]\n                \n            [core]
+                c=d
+                e=f",
+        );
+    }
+
+    #[test]
+    fn partial_values_are_supported() {
+        let mut git_config = GitConfig::try_from(
+            r#"[core]
+                a=b"100"\
+b
+            [core]
+                c=d
+                e=f"#,
+        )
+        .unwrap();
+        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        assert_eq!(&*value.get().unwrap(), b"b100b");
+        value.delete();
+        assert_eq!(
+            git_config.to_string(),
+            "[core]\n                \n            [core]
+                c=d
+                e=f",
+        );
+    }
+}
+
+#[cfg(test)]
+mod mutable_multi_value {
+    use super::GitConfig;
+    use std::{borrow::Cow, convert::TryFrom};
+
+    fn init_config() -> GitConfig<'static> {
+        GitConfig::try_from(
+            r#"[core]
+                a=b"100"
+            [core]
+                a=d
+                a=f"#,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn value_is_correct() {
+        let mut git_config = init_config();
+
+        let value = git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap();
+        assert_eq!(
+            &*value.get().unwrap(),
+            vec![
+                Cow::<[u8]>::Borrowed(b"d"),
+                Cow::<[u8]>::Borrowed(b"f"),
+                Cow::<[u8]>::Owned(b"b100".to_vec())
+            ]
+        );
+    }
+
+    #[test]
+    fn non_empty_sizes_are_correct() {
+        let mut git_config = init_config();
+        assert_eq!(
+            git_config
+                .get_raw_multi_value_mut("core", None, "a")
+                .unwrap()
+                .len(),
+            3
+        );
+        assert!(!git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn set_value_at_start() {
+        let mut git_config = init_config();
+        let mut values = git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap();
+        values.set_string(0, "Hello".to_string());
+        assert_eq!(
+            git_config.to_string(),
+            r#"[core]
+                a=Hello
+            [core]
+                a=Hello
+                a=Hello"#,
+        );
+    }
+}
 
 #[cfg(test)]
 mod from_parser {
