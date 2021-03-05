@@ -73,6 +73,10 @@ pub struct MutableValue<'borrow, 'lookup, 'event> {
 impl MutableValue<'_, '_, '_> {
     /// Returns the actual value. This is computed each time this is called, so
     /// it's best to reuse this value or own it if an allocation is acceptable.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the lookup failed.
     pub fn value(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
         let mut found_key = false;
         let mut latest_value = None;
@@ -144,6 +148,10 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
 
 impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// Returns the actual values. This is computed each time this is called.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the lookup failed.
     pub fn value(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
         let mut found_key = false;
         let mut values = vec![];
@@ -255,7 +263,7 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// Sets all values in this multivar to the provided one by copying the
     /// input for all values.
     #[inline]
-    pub fn set_string_all(&mut self, input: String) {
+    pub fn set_string_all(&mut self, input: &str) {
         self.set_owned_values_all(input.as_bytes())
     }
 
