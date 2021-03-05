@@ -87,10 +87,10 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
             was_escaped = false;
             if *c == b'"' {
                 if first_index == 0 {
-                    owned.extend(dbg!(&input[last_index..i - 1]));
+                    owned.extend(&input[last_index..i - 1]);
                     last_index = i;
                 } else {
-                    owned.extend(dbg!(&input[first_index..i - 1]));
+                    owned.extend(&input[first_index..i - 1]);
                     first_index = i;
                 }
             }
@@ -101,10 +101,10 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
             was_escaped = true;
         } else if *c == b'"' {
             if first_index == 0 {
-                owned.extend(dbg!(&input[last_index..i]));
+                owned.extend(&input[last_index..i]);
                 first_index = i + 1;
             } else {
-                owned.extend(dbg!(&input[first_index..i]));
+                owned.extend(&input[first_index..i]);
                 first_index = 0;
                 last_index = i + 1;
             }
@@ -238,7 +238,21 @@ impl Into<Vec<u8>> for &Value<'_> {
     }
 }
 
-// todo display for value
+impl Display for Value<'_> {
+    /// Note that this is a best-effort attempt at printing a `Value`. If there
+    /// are non UTF-8 values in your config, this will _NOT_ render as read.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::Boolean(b) => b.fmt(f),
+            Value::Integer(i) => i.fmt(f),
+            Value::Color(c) => c.fmt(f),
+            Value::Other(o) => match std::str::from_utf8(o) {
+                Ok(v) => v.fmt(f),
+                Err(_) => write!(f, "{:?}", o),
+            },
+        }
+    }
+}
 
 #[cfg(feature = "serde")]
 impl Serialize for Value<'_> {
