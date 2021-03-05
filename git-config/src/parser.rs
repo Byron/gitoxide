@@ -69,6 +69,9 @@ pub enum Event<'a> {
 }
 
 impl Event<'_> {
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -152,6 +155,9 @@ pub struct ParsedSectionHeader<'a> {
 }
 
 impl ParsedSectionHeader<'_> {
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()

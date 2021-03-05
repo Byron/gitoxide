@@ -154,6 +154,9 @@ pub enum Value<'a> {
 }
 
 impl Value<'_> {
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -266,11 +269,17 @@ pub enum Boolean<'a> {
 }
 
 impl Boolean<'_> {
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
 
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         self.into()
@@ -507,6 +516,9 @@ pub struct Integer {
 }
 
 impl Integer {
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -699,6 +711,9 @@ pub struct Color {
 }
 
 impl Color {
+    /// Generates a byte representation of the value. This should be used when
+    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
+    /// guaranteed.
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()

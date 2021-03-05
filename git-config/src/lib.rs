@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 #![warn(clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(clippy::shadow_unrelated)]
 

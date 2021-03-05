@@ -1,3 +1,5 @@
+//! This module provides a high level wrapper around a single `git-config` file.
+
 use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
 use crate::values::{normalize_bytes, normalize_vec};
 use std::collections::{HashMap, VecDeque};
@@ -56,6 +58,11 @@ enum LookupTreeNode<'a> {
 
 /// An intermediate representation of a mutable value obtained from
 /// [`GitConfig`].
+///
+/// This holds a mutable reference to the underlying data structure of
+/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
+/// multiple mutable references to [`GitConfig`] cannot be owned  at the same
+/// time.
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut Vec<Event<'event>>,
     key: &'lookup str,
@@ -124,6 +131,11 @@ impl MutableValue<'_, '_, '_> {
 
 /// An intermediate representation of a mutable multivar obtained from
 /// [`GitConfig`].
+///
+/// This holds a mutable reference to the underlying data structure of
+/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
+/// multiple mutable references to [`GitConfig`] cannot be owned at the same
+/// time.
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, Vec<Event<'event>>>,
     key: &'lookup str,
@@ -131,8 +143,7 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
 }
 
 impl<'event> MutableMultiValue<'_, '_, 'event> {
-    /// Returns the actual value. This is computed each time this is called, so
-    /// it's best to reuse this value or own it if an allocation is acceptable.
+    /// Returns the actual values. This is computed each time this is called.
     pub fn value(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
         let mut found_key = false;
         let mut values = vec![];
@@ -182,16 +193,31 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         self.indices_and_sizes.is_empty()
     }
 
+    /// Sets the value at the given index.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the index is out of range.
     #[inline]
     pub fn set_string(&mut self, index: usize, input: String) {
         self.set_bytes(index, input.into_bytes())
     }
 
+    /// Sets the value at the given index.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the index is out of range.
     #[inline]
     pub fn set_bytes(&mut self, index: usize, input: Vec<u8>) {
         self.set_value(index, Cow::Owned(input))
     }
 
+    /// Sets the value at the given index.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the index is out of range.
     pub fn set_value<'a: 'event>(&mut self, index: usize, input: Cow<'a, [u8]>) {
         let (section_id, index, size) = &mut self.indices_and_sizes[index];
         self.section
@@ -205,6 +231,13 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
             .insert(*index, Event::Value(input));
     }
 
+    /// Sets all values to the provided values. Note that this follows [`zip`]
+    /// logic: if the number of values in the input is less than the number of
+    /// values currently existing, then only the first `n` values are modified.
+    /// If more values are provided than there currently are, then the
+    /// remaining values are ignored.
+    ///
+    /// [`zip`]: std::iter::Iterator::zip
     pub fn set_values<'a: 'event>(&mut self, input: impl Iterator<Item = Cow<'a, [u8]>>) {
         for ((section_id, index, size), value) in self.indices_and_sizes.iter_mut().zip(input) {
             self.section
@@ -219,17 +252,17 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         }
     }
 
+    /// Sets all values in this multivar to the provided one by copying the
+    /// input for all values.
     #[inline]
     pub fn set_string_all(&mut self, input: String) {
-        self.set_bytes_all(input.into_bytes())
+        self.set_owned_values_all(input.as_bytes())
     }
 
+    /// Sets all values in this multivar to the provided one by copying the
+    /// input bytes for all values.
     #[inline]
-    pub fn set_bytes_all(&mut self, input: Vec<u8>) {
-        self.set_values_all(Cow::Owned(input))
-    }
-
-    pub fn set_values_all<'a: 'event>(&mut self, input: Cow<'a, [u8]>) {
+    pub fn set_owned_values_all(&mut self, input: &[u8]) {
         for (section_id, index, size) in &mut self.indices_and_sizes {
             self.section
                 .get_mut(section_id)
@@ -239,11 +272,34 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
             self.section
                 .get_mut(section_id)
                 .unwrap()
-                .insert(*index, Event::Value(input.clone()));
+                .insert(*index, Event::Value(Cow::Owned(input.to_vec())));
         }
     }
 
-    /// Removes the value at the given index
+    /// Sets all values in this multivar to the provided one without owning the
+    /// provided input. Note that this requires `input` to last longer than
+    /// [`GitConfig`]. Consider using [`Self::set_owned_values_all`] or
+    /// [`Self::set_string_all`] unless you have a strict performance or memory
+    /// need for a more ergonomic interface.
+    pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
+        for (section_id, index, size) in &mut self.indices_and_sizes {
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .drain(*index..*index + *size);
+            *size = 1;
+            self.section
+                .get_mut(section_id)
+                .unwrap()
+                .insert(*index, Event::Value(Cow::Borrowed(input)));
+        }
+    }
+
+    /// Removes the value at the given index.
+    ///
+    /// # Safety
+    ///
+    /// This will panic if the index is out of range.
     pub fn delete(&mut self, index: usize) {
         let (section_id, section_index, size) = &mut self.indices_and_sizes[index];
         self.section
