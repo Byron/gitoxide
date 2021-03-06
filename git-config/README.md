@@ -24,13 +24,13 @@ use git_config::file::GitConfig;
 use git_config::values::Boolean;
 use std::fs::read_to_string;
 
-let input = read_to_string(r#"
+let input = r#"
 [core]
   some-bool = true
 
 [other "internal"]
   hello = world
-"#)?;
+"#;
 let mut config = GitConfig::from(input)?;
 let boolean = config.get_config::<Boolean>("core", None, "some-bool");
 config.set_value("other", Some("internal"), "hello", "clippy!");
