@@ -159,7 +159,7 @@ pub struct ParsedSectionHeader<'a> {
 
 macro_rules! generate_case_insensitive {
     ($name:ident, $inner_type:ty, $comment:literal) => {
-        /// Wrapper struct for $comment, since $comment are case-insensitive.
+        #[doc = $comment]
         #[derive(Clone, Eq, Ord, Debug, Default)]
         pub struct $name<'a>(pub $inner_type);
 
@@ -217,8 +217,16 @@ macro_rules! generate_case_insensitive {
     };
 }
 
-generate_case_insensitive!(SectionHeaderName, Cow<'a, str>, "section names");
-generate_case_insensitive!(Key, Cow<'a, str>, "keys");
+generate_case_insensitive!(
+    SectionHeaderName,
+    Cow<'a, str>,
+    "Wrapper struct for section header names, since section headers are case-insensitive."
+);
+generate_case_insensitive!(
+    Key,
+    Cow<'a, str>,
+    "Wrapper struct for key names, since keys are case-insensitive."
+);
 
 impl ParsedSectionHeader<'_> {
     /// Generates a byte representation of the value. This should be used when
