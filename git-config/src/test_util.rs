@@ -1,7 +1,7 @@
 //! This module is only included for tests, and contains common unit test helper
 //! functions.
 
-use crate::parser::{Event, ParsedComment, ParsedSectionHeader};
+use crate::parser::{Event, Key, ParsedComment, ParsedSectionHeader};
 use std::borrow::Cow;
 
 pub fn section_header_event(
@@ -32,7 +32,7 @@ pub fn section_header(
 }
 
 pub(crate) fn name_event(name: &'static str) -> Event<'static> {
-    Event::Key(Cow::Borrowed(name))
+    Event::Key(Key(Cow::Borrowed(name)))
 }
 
 pub(crate) fn value_event(value: &'static str) -> Event<'static> {
