@@ -2,9 +2,12 @@
 
 use crate::parser::{parse_from_bytes, Error, Event, ParsedSectionHeader, Parser};
 use crate::values::{normalize_bytes, normalize_cow, normalize_vec};
-use std::collections::{HashMap, VecDeque};
-use std::{borrow::Borrow, convert::TryFrom};
+use std::{borrow::Borrow, convert::TryFrom, ops::Deref};
 use std::{borrow::Cow, fmt::Display};
+use std::{
+    collections::{HashMap, VecDeque},
+    ops::DerefMut,
+};
 
 /// All possible error types that may occur from interacting with [`GitConfig`].
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
@@ -103,8 +106,6 @@ impl MutableValue<'_, '_, '_> {
             }
         }
 
-        dbg!(&latest_value);
-        dbg!(&partial_value);
         latest_value
             .map(normalize_cow)
             .or_else(|| partial_value.map(normalize_vec))
@@ -144,6 +145,44 @@ impl MutableValue<'_, '_, '_> {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+struct EntryData {
+    section_id: SectionId,
+    offset_index: usize,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+enum Offset {
+    NonSignificant(usize),
+    Significant(usize),
+}
+
+impl Offset {
+    const fn len(&self) -> usize {
+        match self {
+            Self::NonSignificant(v) | Self::Significant(v) => *v,
+        }
+    }
+}
+
+impl Deref for Offset {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::NonSignificant(v) | Self::Significant(v) => v,
+        }
+    }
+}
+
+impl DerefMut for Offset {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Self::NonSignificant(v) | Self::Significant(v) => v,
+        }
+    }
+}
+
 /// An intermediate representation of a mutable multivar obtained from
 /// [`GitConfig`].
 ///
@@ -151,13 +190,21 @@ impl MutableValue<'_, '_, '_> {
 /// [`GitConfig`], and thus guarantees through Rust's borrower checker that
 /// multiple mutable references to [`GitConfig`] cannot be owned at the same
 /// time.
+#[derive(Eq, PartialEq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, Vec<Event<'event>>>,
     key: &'lookup str,
-    indices_and_sizes: Vec<(SectionId, usize, usize)>,
+    /// Each entry data struct provides sufficient information to index into
+    /// [`Self::offsets`]. This layer of indirection is used for users to index
+    /// into the offsets rather than leaking the internal data structures.
+    indices_and_sizes: Vec<EntryData>,
+    /// Each offset represents the size of a event slice and whether or not the
+    /// event slice is significant or not. This is used to index into the
+    /// actual section.
+    offsets: HashMap<SectionId, Vec<Offset>>,
 }
 
-impl<'event> MutableMultiValue<'_, '_, 'event> {
+impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     /// Returns the actual values. This is computed each time this is called.
     ///
     /// # Errors
@@ -169,8 +216,14 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
         let mut partial_value = None;
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
-        for (section_id, index, size) in &self.indices_and_sizes {
-            for event in &self.section.get(section_id).unwrap()[*index..=*index + *size] {
+        for EntryData {
+            section_id,
+            offset_index,
+        } in &self.indices_and_sizes
+        {
+            let (offset, size) =
+                MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+            for event in &self.section.get(section_id).unwrap()[offset..offset + size] {
                 match event {
                     Event::Key(event_key) if *event_key == self.key => found_key = true,
                     Event::Value(v) if found_key => {
@@ -238,14 +291,18 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     ///
     /// This will panic if the index is out of range.
     pub fn set_value<'a: 'event>(&mut self, index: usize, input: Cow<'a, [u8]>) {
-        let (section_id, index, size) = &mut self.indices_and_sizes[index];
-        let section = self.section.get_mut(section_id).unwrap();
-        dbg!(&section);
-        section.drain(*index..=*index + *size);
-        *size = 3;
-        section.insert(*index, Event::Value(input));
-        section.insert(*index, Event::KeyValueSeparator);
-        section.insert(*index, Event::Key(Cow::Owned(self.key.into())));
+        let EntryData {
+            section_id,
+            offset_index,
+        } = self.indices_and_sizes[index];
+        MutableMultiValue::set_value_inner(
+            self.key,
+            &mut self.offsets,
+            self.section.get_mut(&section_id).unwrap(),
+            section_id,
+            offset_index,
+            input,
+        );
     }
 
     /// Sets all values to the provided values. Note that this follows [`zip`]
@@ -255,14 +312,24 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// remaining values are ignored.
     ///
     /// [`zip`]: std::iter::Iterator::zip
+    #[inline]
     pub fn set_values<'a: 'event>(&mut self, input: impl Iterator<Item = Cow<'a, [u8]>>) {
-        for ((section_id, index, size), value) in self.indices_and_sizes.iter_mut().zip(input) {
-            let section = self.section.get_mut(section_id).unwrap();
-            section.drain(*index..=*index + *size);
-            *size = 3;
-            section.insert(*index, Event::Value(value));
-            section.insert(*index, Event::KeyValueSeparator);
-            section.insert(*index, Event::Key(Cow::Owned(self.key.into())));
+        for (
+            EntryData {
+                section_id,
+                offset_index,
+            },
+            value,
+        ) in self.indices_and_sizes.iter().zip(input)
+        {
+            Self::set_value_inner(
+                self.key,
+                &mut self.offsets,
+                self.section.get_mut(section_id).unwrap(),
+                *section_id,
+                *offset_index,
+                value,
+            );
         }
     }
 
@@ -277,16 +344,19 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// input bytes for all values.
     #[inline]
     pub fn set_owned_values_all(&mut self, input: &[u8]) {
-        for (section_id, index, size) in &mut self.indices_and_sizes {
-            self.section
-                .get_mut(section_id)
-                .unwrap()
-                .drain(*index..*index + *size);
-            *size = 1;
-            self.section
-                .get_mut(section_id)
-                .unwrap()
-                .insert(*index, Event::Value(Cow::Owned(input.to_vec())));
+        for EntryData {
+            section_id,
+            offset_index,
+        } in &self.indices_and_sizes
+        {
+            Self::set_value_inner(
+                self.key,
+                &mut self.offsets,
+                self.section.get_mut(section_id).unwrap(),
+                *section_id,
+                *offset_index,
+                Cow::Owned(input.to_vec()),
+            );
         }
     }
 
@@ -295,18 +365,40 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// [`GitConfig`]. Consider using [`Self::set_owned_values_all`] or
     /// [`Self::set_str_all`] unless you have a strict performance or memory
     /// need for a more ergonomic interface.
+    #[inline]
     pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
-        for (section_id, index, size) in &mut self.indices_and_sizes {
-            self.section
-                .get_mut(section_id)
-                .unwrap()
-                .drain(*index..*index + *size);
-            *size = 1;
-            self.section
-                .get_mut(section_id)
-                .unwrap()
-                .insert(*index, Event::Value(Cow::Borrowed(input)));
+        for EntryData {
+            section_id,
+            offset_index,
+        } in &self.indices_and_sizes
+        {
+            Self::set_value_inner(
+                self.key,
+                &mut self.offsets,
+                self.section.get_mut(section_id).unwrap(),
+                *section_id,
+                *offset_index,
+                Cow::Borrowed(input),
+            );
         }
+    }
+
+    fn set_value_inner<'a: 'event>(
+        key: &'lookup str,
+        offsets: &mut HashMap<SectionId, Vec<Offset>>,
+        section: &mut Vec<Event<'event>>,
+        section_id: SectionId,
+        offset_index: usize,
+        input: Cow<'a, [u8]>,
+    ) {
+        let (offset, size) =
+            MutableMultiValue::get_index_and_size(offsets, section_id, offset_index);
+        section.drain(offset..offset + size);
+
+        MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
+        section.insert(offset, Event::Value(input));
+        section.insert(offset, Event::KeyValueSeparator);
+        section.insert(offset, Event::Key(Cow::Owned(key.into())));
     }
 
     /// Removes the value at the given index. Does nothing when called multiple
@@ -316,13 +408,19 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     ///
     /// This will panic if the index is out of range.
     pub fn delete(&mut self, index: usize) {
-        let (section_id, section_index, size) = &mut self.indices_and_sizes[index];
-        if *size > 0 {
+        let EntryData {
+            section_id,
+            offset_index,
+        } = &self.indices_and_sizes[index];
+        let (offset, size) =
+            MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+        if size > 0 {
             self.section
                 .get_mut(section_id)
                 .unwrap()
-                .drain(*section_index..=*section_index + *size);
-            *size = 0;
+                .drain(offset..offset + size);
+
+            Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
             self.indices_and_sizes.remove(index);
         }
     }
@@ -330,16 +428,56 @@ impl<'event> MutableMultiValue<'_, '_, 'event> {
     /// Removes all values. Does nothing when called multiple times in
     /// succession.
     pub fn delete_all(&mut self) {
-        for (section_id, index, size) in &mut self.indices_and_sizes {
-            if *size > 0 {
+        for EntryData {
+            section_id,
+            offset_index,
+        } in &self.indices_and_sizes
+        {
+            let (offset, size) =
+                MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+            if size > 0 {
                 self.section
                     .get_mut(section_id)
                     .unwrap()
-                    .drain(*index..=*index + *size);
-                *size = 0;
+                    .drain(offset..offset + size);
+                Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
             }
         }
         self.indices_and_sizes.clear();
+    }
+
+    // SectionId is the same size as a reference, which means it's just as
+    // efficient passing in a value instead of a reference.
+    fn get_index_and_size(
+        offsets: &'lookup HashMap<SectionId, Vec<Offset>>,
+        section_id: SectionId,
+        offset_index: usize,
+    ) -> (usize, usize) {
+        offsets
+            .get(&section_id)
+            .unwrap()
+            .iter()
+            .take(offset_index + 1)
+            .fold((0, 0), |(old, new), offset| (old + new, offset.len()))
+    }
+
+    // This must be an associated function rather than a method to allow Rust
+    // to split mutable borrows.
+    //
+    // SectionId is the same size as a reference, which means it's just as
+    // efficient passing in a value instead of a reference.
+    fn set_offset(
+        offsets: &mut HashMap<SectionId, Vec<Offset>>,
+        section_id: SectionId,
+        offset_index: usize,
+        value: usize,
+    ) {
+        *offsets
+            .get_mut(&section_id)
+            .unwrap()
+            .get_mut(offset_index)
+            .unwrap()
+            .deref_mut() = value;
     }
 }
 
@@ -775,40 +913,47 @@ impl<'event> GitConfig<'event> {
             .get_section_ids_by_name_and_subname(section_name, subsection_name)?
             .to_vec();
 
-        let mut indices = vec![];
+        let mut offsets = HashMap::new();
+        let mut entries = vec![];
         for section_id in section_ids.iter().rev() {
-            let mut size = 0;
-            let mut index = 0;
+            let mut last_boundary = 0;
             let mut found_key = false;
+            let mut offset_list = vec![];
+            let mut offset_index = 0;
             for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
-                        index = i;
-                        size = 1;
                         found_key = true;
-                    }
-                    Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_)
-                        if found_key =>
-                    {
-                        size += 1;
+                        offset_list.push(Offset::NonSignificant(i - last_boundary));
+                        offset_index += 1;
+                        last_boundary = i;
                     }
                     Event::Value(_) | Event::ValueDone(_) if found_key => {
                         found_key = false;
-                        size += 1;
-                        indices.push((*section_id, index, size));
+                        entries.push(EntryData {
+                            section_id: *section_id,
+                            offset_index,
+                        });
+                        offset_list.push(Offset::Significant(i - last_boundary + 1));
+                        offset_index += 1;
+                        last_boundary = i + 1;
                     }
                     _ => (),
                 }
             }
+            offsets.insert(*section_id, offset_list);
         }
 
-        if indices.is_empty() {
+        entries.sort();
+
+        if entries.is_empty() {
             Err(GitConfigError::KeyDoesNotExist(key))
         } else {
             Ok(MutableMultiValue {
                 section: &mut self.sections,
                 key,
-                indices_and_sizes: indices,
+                indices_and_sizes: entries,
+                offsets,
             })
         }
     }
@@ -1371,9 +1516,9 @@ mod mutable_multi_value {
         assert_eq!(
             &*value.get().unwrap(),
             vec![
+                Cow::<[u8]>::Owned(b"b100".to_vec()),
                 Cow::<[u8]>::Borrowed(b"d"),
                 Cow::<[u8]>::Borrowed(b"f"),
-                Cow::<[u8]>::Owned(b"b100".to_vec())
             ]
         );
     }
@@ -1401,6 +1546,41 @@ mod mutable_multi_value {
             .get_raw_multi_value_mut("core", None, "a")
             .unwrap();
         values.set_string(0, "Hello".to_string());
+        dbg!(values);
+        assert_eq!(
+            git_config.to_string(),
+            r#"[core]
+                a=Hello
+            [core]
+                a=d
+                a=f"#,
+        );
+    }
+
+    #[test]
+    fn set_value_at_end() {
+        let mut git_config = init_config();
+        let mut values = git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap();
+        values.set_string(2, "Hello".to_string());
+        assert_eq!(
+            git_config.to_string(),
+            r#"[core]
+                a=b"100"
+            [core]
+                a=d
+                a=Hello"#,
+        );
+    }
+
+    #[test]
+    fn set_values_all() {
+        let mut git_config = init_config();
+        let mut values = git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap();
+        values.set_owned_values_all(b"Hello");
         assert_eq!(
             git_config.to_string(),
             r#"[core]
@@ -1408,6 +1588,34 @@ mod mutable_multi_value {
             [core]
                 a=Hello
                 a=Hello"#,
+        );
+    }
+
+    #[test]
+    fn delete() {
+        let mut git_config = init_config();
+        let mut values = git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap();
+        values.delete(0);
+        assert_eq!(
+            git_config.to_string(),
+            "[core]\n                \n            [core]
+                a=d
+                a=f",
+        );
+    }
+
+    #[test]
+    fn delete_all() {
+        let mut git_config = init_config();
+        let mut values = git_config
+            .get_raw_multi_value_mut("core", None, "a")
+            .unwrap();
+        values.delete_all();
+        assert_eq!(
+            git_config.to_string(),
+            "[core]\n                \n            [core]\n                \n                ",
         );
     }
 }
