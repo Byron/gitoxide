@@ -18,9 +18,10 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::multi::{many0, many1};
 use nom::sequence::delimited;
 use nom::IResult;
-use std::borrow::Cow;
+use std::convert::TryFrom;
+use std::fmt::Display;
 use std::iter::FusedIterator;
-use std::{convert::TryFrom, fmt::Display};
+use std::{borrow::Cow, hash::Hash};
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -42,7 +43,7 @@ pub enum Event<'a> {
     /// exists.
     SectionHeader(ParsedSectionHeader<'a>),
     /// A name to a value in a section.
-    Key(Cow<'a, str>),
+    Key(Key<'a>),
     /// A completed value. This may be any string, including the empty string,
     /// if an implicit boolean value is used. Note that these values may contain
     /// spaces and any special character. This value is also unprocessed, so it
@@ -92,7 +93,8 @@ impl Display for Event<'_> {
             }
             Self::Comment(e) => e.fmt(f),
             Self::SectionHeader(e) => e.fmt(f),
-            Self::Key(e) | Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
+            Self::Key(e) => e.fmt(f),
+            Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
             Self::KeyValueSeparator => write!(f, "="),
         }
     }
@@ -110,7 +112,8 @@ impl Into<Vec<u8>> for &Event<'_> {
             Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
             Event::Comment(e) => e.into(),
             Event::SectionHeader(e) => e.into(),
-            Event::Key(e) | Event::Newline(e) | Event::Whitespace(e) => e.as_bytes().to_vec(),
+            Event::Key(e) => e.0.as_bytes().to_vec(),
+            Event::Newline(e) | Event::Whitespace(e) => e.as_bytes().to_vec(),
             Event::KeyValueSeparator => vec![b'='],
         }
     }
@@ -143,7 +146,7 @@ impl Display for ParsedSection<'_> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedSectionHeader<'a> {
     /// The name of the header.
-    pub name: Cow<'a, str>,
+    pub name: SectionHeaderName<'a>,
     /// The separator used to determine if the section contains a subsection.
     /// This is either a period `.` or a string of whitespace. Note that
     /// reconstruction of subsection format is dependent on this value. If this
@@ -153,6 +156,69 @@ pub struct ParsedSectionHeader<'a> {
     /// The subsection name without quotes if any exist.
     pub subsection_name: Option<Cow<'a, str>>,
 }
+
+macro_rules! generate_case_insensitive {
+    ($name:ident, $inner_type:ty, $comment:literal) => {
+        /// Wrapper struct for $comment, since $comment are case-insensitive.
+        #[derive(Clone, Eq, Ord, Debug, Default)]
+        pub struct $name<'a>(pub $inner_type);
+
+        impl PartialEq for $name<'_> {
+            fn eq(&self, other: &Self) -> bool {
+                self.0.eq_ignore_ascii_case(&other.0)
+            }
+        }
+
+        impl Display for $name<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        impl PartialOrd for $name<'_> {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                self.0
+                    .to_ascii_lowercase()
+                    .partial_cmp(&other.0.to_ascii_lowercase())
+            }
+        }
+
+        impl std::hash::Hash for $name<'_> {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.0.to_ascii_lowercase().hash(state)
+            }
+        }
+
+        impl<'a> From<&'a str> for $name<'a> {
+            fn from(s: &'a str) -> Self {
+                Self(Cow::Borrowed(s))
+            }
+        }
+
+        impl<'a> From<Cow<'a, str>> for $name<'a> {
+            fn from(s: Cow<'a, str>) -> Self {
+                Self(s)
+            }
+        }
+
+        impl<'a> std::ops::Deref for $name<'a> {
+            type Target = $inner_type;
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl<'a> std::ops::DerefMut for $name<'a> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
+            }
+        }
+    };
+}
+
+generate_case_insensitive!(SectionHeaderName, Cow<'a, str>, "section names");
+generate_case_insensitive!(Key, Cow<'a, str>, "keys");
 
 impl ParsedSectionHeader<'_> {
     /// Generates a byte representation of the value. This should be used when
@@ -386,10 +452,10 @@ impl Display for ParserNode {
 /// non-significant events that occur in addition to the ones you may expect:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("core"),
+/// #   name: SectionHeaderName(Cow::Borrowed("core")),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -398,7 +464,7 @@ impl Display for ParserNode {
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n")),
 /// Event::Whitespace(Cow::Borrowed("  ")),
-/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Key(Key(Cow::Borrowed("autocrlf"))),
 /// Event::Whitespace(Cow::Borrowed(" ")),
 /// Event::KeyValueSeparator,
 /// Event::Whitespace(Cow::Borrowed(" ")),
@@ -425,10 +491,10 @@ impl Display for ParserNode {
 /// which means that the corresponding event won't appear either:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("core"),
+/// #   name: SectionHeaderName(Cow::Borrowed("core")),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -437,7 +503,7 @@ impl Display for ParserNode {
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n")),
 /// Event::Whitespace(Cow::Borrowed("  ")),
-/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Key(Key(Cow::Borrowed("autocrlf"))),
 /// Event::Value(Cow::Borrowed(b"")),
 /// # ]);
 /// ```
@@ -459,10 +525,10 @@ impl Display for ParserNode {
 /// relevant event stream emitted is thus emitted as:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("core"),
+/// #   name: SectionHeaderName(Cow::Borrowed("core")),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -470,11 +536,11 @@ impl Display for ParserNode {
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Key(Cow::Borrowed("autocrlf")),
+/// Event::Key(Key(Cow::Borrowed("autocrlf"))),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(br#"true"""#)),
 /// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Key(Cow::Borrowed("filemode")),
+/// Event::Key(Key(Cow::Borrowed("filemode"))),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(br#"fa"lse""#)),
 /// # ]);
@@ -496,10 +562,10 @@ impl Display for ParserNode {
 /// split value accordingly:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str};
+/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: Cow::Borrowed("some-section"),
+/// #   name: SectionHeaderName(Cow::Borrowed("some-section")),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -507,7 +573,7 @@ impl Display for ParserNode {
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Key(Cow::Borrowed("file")),
+/// Event::Key(Key(Cow::Borrowed("file"))),
 /// Event::KeyValueSeparator,
 /// Event::ValueNotDone(Cow::Borrowed(b"a")),
 /// Event::Newline(Cow::Borrowed("\n")),
@@ -772,12 +838,12 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
             Some(index) => ParsedSectionHeader {
-                name: Cow::Borrowed(&name[..index]),
+                name: SectionHeaderName(Cow::Borrowed(&name[..index])),
                 separator: name.get(index..=index).map(|slice| Cow::Borrowed(slice)),
                 subsection_name: name.get(index + 1..).map(|slice| Cow::Borrowed(slice)),
             },
             None => ParsedSectionHeader {
-                name: Cow::Borrowed(name),
+                name: SectionHeaderName(Cow::Borrowed(name)),
                 separator: None,
                 subsection_name: None,
             },
@@ -808,7 +874,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     Ok((
         i,
         ParsedSectionHeader {
-            name: Cow::Borrowed(name),
+            name: SectionHeaderName(Cow::Borrowed(name)),
             separator: Some(Cow::Borrowed(whitespace)),
             // We know that there's some section name here, so if we get an
             // empty vec here then we actually parsed an empty section name.
@@ -826,7 +892,7 @@ fn section_body<'a, 'b, 'c>(
     *node = ParserNode::ConfigName;
     let (i, name) = config_name(i)?;
 
-    items.push(Event::Key(Cow::Borrowed(name)));
+    items.push(Event::Key(Key(Cow::Borrowed(name))));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
 

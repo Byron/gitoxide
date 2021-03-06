@@ -97,3 +97,33 @@ fn get_value_looks_up_all_sections_before_failing() -> Result<(), Box<dyn std::e
 
     Ok(())
 }
+
+#[test]
+fn section_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>> {
+    let config = "[core] bool-implicit";
+    let file = GitConfig::try_from(config)?;
+    assert!(file
+        .get_value::<Boolean>("core", None, "bool-implicit")
+        .is_ok());
+    assert_eq!(
+        file.get_value::<Boolean>("core", None, "bool-implicit"),
+        file.get_value::<Boolean>("CORE", None, "bool-implicit")
+    );
+
+    Ok(())
+}
+
+#[test]
+fn value_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>> {
+    let config = "[core]
+        a = true
+        A = false";
+    let file = GitConfig::try_from(config)?;
+    assert_eq!(file.get_multi_value::<Boolean>("core", None, "a")?.len(), 2);
+    assert_eq!(
+        file.get_value::<Boolean>("core", None, "a"),
+        file.get_value::<Boolean>("core", None, "A")
+    );
+
+    Ok(())
+}
