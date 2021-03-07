@@ -20,17 +20,17 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
     let file = GitConfig::try_from(config)?;
 
     assert_eq!(
-        file.get_value::<Boolean>("core", None, "bool-explicit")?,
+        file.value::<Boolean>("core", None, "bool-explicit")?,
         Boolean::False(Cow::Borrowed("false"))
     );
 
     assert_eq!(
-        file.get_value::<Boolean>("core", None, "bool-implicit")?,
+        file.value::<Boolean>("core", None, "bool-implicit")?,
         Boolean::True(TrueVariant::Implicit)
     );
 
     assert_eq!(
-        file.get_value::<Integer>("core", None, "integer-no-prefix")?,
+        file.value::<Integer>("core", None, "integer-no-prefix")?,
         Integer {
             value: 10,
             suffix: None
@@ -38,7 +38,7 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
     );
 
     assert_eq!(
-        file.get_value::<Integer>("core", None, "integer-no-prefix")?,
+        file.value::<Integer>("core", None, "integer-no-prefix")?,
         Integer {
             value: 10,
             suffix: None
@@ -46,7 +46,7 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
     );
 
     assert_eq!(
-        file.get_value::<Integer>("core", None, "integer-prefix")?,
+        file.value::<Integer>("core", None, "integer-prefix")?,
         Integer {
             value: 10,
             suffix: Some(IntegerSuffix::Gibi),
@@ -54,7 +54,7 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
     );
 
     assert_eq!(
-        file.get_value::<Color>("core", None, "color")?,
+        file.value::<Color>("core", None, "color")?,
         Color {
             foreground: Some(ColorValue::BrightGreen),
             background: Some(ColorValue::Red),
@@ -63,7 +63,7 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
     );
 
     assert_eq!(
-        file.get_value::<Value>("core", None, "other")?,
+        file.value::<Value>("core", None, "other")?,
         Value::Other(Cow::Borrowed(b"hello world"))
     );
 
@@ -86,12 +86,12 @@ fn get_value_looks_up_all_sections_before_failing() -> Result<(), Box<dyn std::e
 
     // Checks that we check the last entry first still
     assert_eq!(
-        file.get_value::<Boolean>("core", None, "bool-implicit")?,
+        file.value::<Boolean>("core", None, "bool-implicit")?,
         Boolean::True(TrueVariant::Implicit)
     );
 
     assert_eq!(
-        file.get_value::<Boolean>("core", None, "bool-explicit")?,
+        file.value::<Boolean>("core", None, "bool-explicit")?,
         Boolean::False(Cow::Borrowed("false"))
     );
 
@@ -102,12 +102,10 @@ fn get_value_looks_up_all_sections_before_failing() -> Result<(), Box<dyn std::e
 fn section_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>> {
     let config = "[core] bool-implicit";
     let file = GitConfig::try_from(config)?;
-    assert!(file
-        .get_value::<Boolean>("core", None, "bool-implicit")
-        .is_ok());
+    assert!(file.value::<Boolean>("core", None, "bool-implicit").is_ok());
     assert_eq!(
-        file.get_value::<Boolean>("core", None, "bool-implicit"),
-        file.get_value::<Boolean>("CORE", None, "bool-implicit")
+        file.value::<Boolean>("core", None, "bool-implicit"),
+        file.value::<Boolean>("CORE", None, "bool-implicit")
     );
 
     Ok(())
@@ -119,10 +117,10 @@ fn value_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>> 
         a = true
         A = false";
     let file = GitConfig::try_from(config)?;
-    assert_eq!(file.get_multi_value::<Boolean>("core", None, "a")?.len(), 2);
+    assert_eq!(file.multi_value::<Boolean>("core", None, "a")?.len(), 2);
     assert_eq!(
-        file.get_value::<Boolean>("core", None, "a"),
-        file.get_value::<Boolean>("core", None, "A")
+        file.value::<Boolean>("core", None, "a"),
+        file.value::<Boolean>("core", None, "A")
     );
 
     Ok(())

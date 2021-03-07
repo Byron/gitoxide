@@ -19,9 +19,9 @@ pub enum GitConfigError<'a> {
     /// The requested subsection does not exist.
     SubSectionDoesNotExist(Option<&'a str>),
     /// The key does not exist in the requested section.
-    KeyDoesNotExist(Key<'a>),
+    KeyDoesNotExist,
     /// The conversion into the provided type for methods such as
-    /// [`GitConfig::get_value`] failed.
+    /// [`GitConfig::value`] failed.
     FailedConversion,
 }
 
@@ -33,7 +33,7 @@ impl Display for GitConfigError<'_> {
                 Some(s) => write!(f, "Subsection '{}' does not exist.", s),
                 None => write!(f, "Top level section does not exist."),
             },
-            Self::KeyDoesNotExist(k) => write!(f, "Name '{}' does not exist.", k),
+            Self::KeyDoesNotExist => write!(f, "The name for a value provided does not exist."),
             Self::FailedConversion => write!(f, "Failed to convert to specified type."),
         }
     }
@@ -55,43 +55,48 @@ impl std::error::Error for GitConfigError<'_> {}
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 struct SectionId(usize);
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-enum LookupTreeNode<'a> {
-    Terminal(Vec<SectionId>),
-    NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
-}
+/// A opaque type that represents a mutable reference to a section.
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub struct MutableSection<'borrow, 'event>(&'borrow mut Vec<Event<'event>>);
 
-/// An intermediate representation of a mutable value obtained from
-/// [`GitConfig`].
-///
-/// This holds a mutable reference to the underlying data structure of
-/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
-/// multiple mutable references to [`GitConfig`] cannot be owned  at the same
-/// time.
-pub struct MutableValue<'borrow, 'lookup, 'event> {
-    section: &'borrow mut Vec<Event<'event>>,
-    key: Key<'lookup>,
-    index: usize,
-    size: usize,
-}
+impl<'event> MutableSection<'_, 'event> {
+    /// Retrieves the last matching value in a section with the given key.
+    /// Returns None if the key was not found.
+    pub fn value(&'event self, key: &Key) -> Option<Cow<'event, [u8]>> {
+        // Section(*self.0).value(key)
+        todo!()
+    }
 
-impl MutableValue<'_, '_, '_> {
-    /// Returns the actual value. This is computed each time this is called, so
-    /// it's best to reuse this value or own it if an allocation is acceptable.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the lookup failed.
-    pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
+    /// Adds an entry to the end of this section
+    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) {
+        self.0.push(Event::Key(key));
+        self.0.push(Event::KeyValueSeparator);
+        self.0.push(Event::Value(value));
+    }
+
+    /// Pops the last entry.
+    pub fn pop(&mut self) {
+        // let mut key;
+        // while let Some(e) = self.0.pop() {
+        //     key = e;
+        // }
+    }
+
+    fn get<'key>(
+        &self,
+        key: Key<'key>,
+        start: usize,
+        end: usize,
+    ) -> Result<Cow<'_, [u8]>, GitConfigError<'key>> {
         let mut found_key = false;
         let mut latest_value = None;
         let mut partial_value = None;
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
 
-        for event in &self.section[self.index..=self.index + self.size] {
+        for event in &self.0[start..=end] {
             match event {
-                Event::Key(event_key) if *event_key == self.key => found_key = true,
+                Event::Key(event_key) if *event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
                     latest_value = Some(Cow::Borrowed(v.borrow()));
@@ -111,7 +116,147 @@ impl MutableValue<'_, '_, '_> {
         latest_value
             .map(normalize_cow)
             .or_else(|| partial_value.map(normalize_vec))
-            .ok_or(GitConfigError::KeyDoesNotExist(self.key.to_owned()))
+            .ok_or(GitConfigError::KeyDoesNotExist)
+    }
+
+    fn delete(&mut self, start: usize, end: usize) {
+        self.0.drain(start..=end);
+    }
+
+    fn set_value(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
+        self.0.insert(index, Event::Value(Cow::Owned(value)));
+        self.0.insert(index, Event::KeyValueSeparator);
+        self.0.insert(index, Event::Key(key));
+    }
+}
+
+/// A opaque type that represents a reference to a section.
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub struct Section<'borrow, 'event>(&'borrow [Event<'event>]);
+
+impl<'event> Section<'_, 'event> {
+    /// Retrieves the last matching value in a section with the given key.
+    /// Returns None if the key was not found.
+    pub fn value(&'event self, key: &Key) -> Option<Cow<'event, [u8]>> {
+        let mut found_key = false;
+        let mut latest_value = None;
+        let mut partial_value = None;
+
+        for event in self.0 {
+            match event {
+                Event::Key(event_key) if *event_key == *key => found_key = true,
+                Event::Value(v) if found_key => {
+                    found_key = false;
+                    latest_value = Some(Cow::Borrowed(v.borrow()));
+                    partial_value = None;
+                }
+                Event::ValueNotDone(v) if found_key => {
+                    latest_value = None;
+                    partial_value = Some((*v).to_vec());
+                }
+                Event::ValueDone(v) if found_key => {
+                    found_key = false;
+                    partial_value.as_mut().unwrap().extend(&**v);
+                }
+                _ => (),
+            }
+        }
+
+        latest_value.or_else(|| partial_value.map(normalize_vec))
+    }
+
+    /// Retrieves the last matching value in a section with the given key, and
+    /// attempts to convert the value into the provided type.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the key was not found, or if the conversion failed.
+    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
+        key: &Key,
+    ) -> Result<T, GitConfigError<'event>> {
+        T::try_from(self.value(key).ok_or(GitConfigError::KeyDoesNotExist)?)
+            .map_err(|_| GitConfigError::FailedConversion)
+    }
+
+    /// Retrieves all values that have the provided key name. This may return
+    /// an empty vec, which implies there was values with the provided key.
+    pub fn values(&'event self, key: &Key) -> Vec<Cow<'event, [u8]>> {
+        let mut values = vec![];
+        let mut found_key = false;
+        let mut partial_value = None;
+        for event in self.0 {
+            match event {
+                Event::Key(event_key) if *event_key == *key => found_key = true,
+                Event::Value(v) if found_key => {
+                    found_key = false;
+                    values.push(normalize_cow(Cow::Borrowed(v.borrow())));
+                    partial_value = None;
+                }
+                Event::ValueNotDone(v) if found_key => {
+                    partial_value = Some((*v).to_vec());
+                }
+                Event::ValueDone(v) if found_key => {
+                    found_key = false;
+                    partial_value.as_mut().unwrap().extend(&**v);
+                    values.push(normalize_cow(Cow::Owned(partial_value.take().unwrap())));
+                }
+                _ => (),
+            }
+        }
+
+        values
+    }
+
+    /// Retrieves all values that have the provided key name. This may return
+    /// an empty vec, which implies there was values with the provided key.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the conversion failed.
+    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
+        key: &Key,
+    ) -> Result<Vec<T>, GitConfigError> {
+        self.values(key)
+            .into_iter()
+            .map(|v| T::try_from(v))
+            .collect::<Result<Vec<T>, _>>()
+            .map_err(|_| GitConfigError::FailedConversion)
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+enum LookupTreeNode<'a> {
+    Terminal(Vec<SectionId>),
+    NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
+}
+
+/// An intermediate representation of a mutable value obtained from
+/// [`GitConfig`].
+///
+/// This holds a mutable reference to the underlying data structure of
+/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
+/// multiple mutable references to [`GitConfig`] cannot be owned at the same
+/// time.
+pub struct MutableValue<'borrow, 'lookup, 'event> {
+    section: MutableSection<'borrow, 'event>,
+    key: Key<'lookup>,
+    index: usize,
+    size: usize,
+}
+
+impl MutableValue<'_, '_, '_> {
+    /// Returns the actual value. This is computed each time this is called, so
+    /// it's best to reuse this value or own it if an allocation is acceptable.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the lookup failed.
+    #[inline]
+    pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
+        self.section
+            .get(self.key.clone(), self.index, self.index + self.size)
     }
 
     /// Update the value to the provided one. This modifies the value such that
@@ -127,23 +272,18 @@ impl MutableValue<'_, '_, '_> {
     /// new value.
     pub fn set_bytes(&mut self, input: Vec<u8>) {
         if self.size > 0 {
-            self.section.drain(self.index..=self.index + self.size);
+            self.section.delete(self.index, self.index + self.size);
         }
         self.size = 3;
         self.section
-            .insert(self.index, Event::Value(Cow::Owned(input)));
-        self.section.insert(self.index, Event::KeyValueSeparator);
-        self.section.insert(
-            self.index,
-            Event::Key(Key(Cow::Owned(self.key.0.to_string()))),
-        );
+            .set_value(self.index, Key(Cow::Owned(self.key.to_string())), input);
     }
 
     /// Removes the value. Does nothing when called multiple times in
     /// succession.
     pub fn delete(&mut self) {
         if self.size > 0 {
-            self.section.drain(self.index..=self.index + self.size);
+            self.section.delete(self.index, self.index + self.size);
             self.size = 0;
         }
     }
@@ -248,7 +388,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         }
 
         if values.is_empty() {
-            return Err(GitConfigError::KeyDoesNotExist(self.key.to_owned()));
+            return Err(GitConfigError::KeyDoesNotExist);
         }
 
         Ok(values)
@@ -554,7 +694,7 @@ impl<'event> GitConfig<'event> {
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
-    /// Consider [`Self::get_multi_value`] if you want to get all values of a
+    /// Consider [`Self::multi_value`] if you want to get all values of a
     /// multivar instead.
     ///
     /// # Examples
@@ -571,9 +711,9 @@ impl<'event> GitConfig<'event> {
     /// "#;
     /// let git_config = GitConfig::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.get_value::<Integer>("core", None, "a")?;
+    /// let a_value = git_config.value::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Boolean = git_config.get_value("core", None, "c")?;
+    /// let c_value: Boolean = git_config.value("core", None, "c")?;
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -585,7 +725,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
+    pub fn value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
@@ -602,7 +742,7 @@ impl<'event> GitConfig<'event> {
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
-    /// Consider [`Self::get_value`] if you want to get a single value
+    /// Consider [`Self::value`] if you want to get a single value
     /// (following last-one-wins resolution) instead.
     ///
     /// # Examples
@@ -622,7 +762,7 @@ impl<'event> GitConfig<'event> {
     /// "#;
     /// let git_config = GitConfig::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.get_multi_value::<Boolean>("core", None, "a")?;
+    /// let a_value = git_config.multi_value::<Boolean>("core", None, "a")?;
     /// assert_eq!(
     ///     a_value,
     ///     vec![
@@ -632,7 +772,7 @@ impl<'event> GitConfig<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Value> = git_config.get_multi_value("core", None, "c")?;
+    /// let c_value: Vec<Value> = git_config.multi_value("core", None, "c")?;
     /// assert_eq!(c_value, vec![Value::Other(Cow::Borrowed(b"g"))]);
     /// # Ok::<(), GitConfigError>(())
     /// ```
@@ -645,7 +785,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn get_multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
+    pub fn multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
@@ -658,6 +798,59 @@ impl<'event> GitConfig<'event> {
             .map_err(|_| GitConfigError::FailedConversion)
     }
 
+    /// TODO
+    pub fn section(
+        &mut self,
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) {
+        // let section_ids =
+        //     self.get_section_ids_by_name_and_subname(section_name.into(), subsection_name.into());
+    }
+
+    /// TODO
+    pub fn section_mut(
+        &mut self,
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) {
+    }
+
+    /// Adds a new section to config. This cannot fail.
+    pub fn new_section(
+        &mut self,
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) {
+        // Return mutable section?
+        self.push_section(
+            Some(SectionHeaderName(section_name.into())),
+            subsection_name.into(),
+            &mut Some(vec![]),
+        )
+    }
+
+    /// Removes the section, returning the events it had, if any. If multiple
+    /// sections have the same name, then the last one is returned.
+    pub fn remove_section<'lookup>(
+        &mut self,
+        section_name: &'lookup str,
+        subsection_name: impl Into<Option<&'lookup str>>,
+    ) -> Option<Vec<Event>> {
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name.into());
+        let section_ids = section_ids.ok()?.pop()?;
+        self.sections.remove(&section_ids)
+    }
+}
+
+/// # Raw value API
+///
+/// These functions are the raw value API. Instead of returning Rust structures,
+/// these functions return bytes which may or may not be owned. Generally
+/// speaking, you shouldn't need to use these functions, but are exposed in case
+/// the higher level functions are deficient.
+impl<'event> GitConfig<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
@@ -677,42 +870,18 @@ impl<'event> GitConfig<'event> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let section_ids =
-            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = Key(key.into());
-
-        for section_id in section_ids.iter().rev() {
-            let mut found_key = false;
-            let mut latest_value = None;
-            let mut partial_value = None;
-
-            // section_id is guaranteed to exist in self.sections, else we have a
-            // violated invariant.
-            for event in self.sections.get(section_id).unwrap() {
-                match event {
-                    Event::Key(event_key) if *event_key == key => found_key = true,
-                    Event::Value(v) if found_key => {
-                        found_key = false;
-                        latest_value = Some(Cow::Borrowed(v.borrow()));
-                        partial_value = None;
-                    }
-                    Event::ValueNotDone(v) if found_key => {
-                        latest_value = None;
-                        partial_value = Some((*v).to_vec());
-                    }
-                    Event::ValueDone(v) if found_key => {
-                        found_key = false;
-                        partial_value.as_mut().unwrap().extend(&**v);
-                    }
-                    _ => (),
-                }
-            }
-            if let Some(v) = latest_value.or_else(|| partial_value.map(normalize_vec)) {
-                return Ok(v);
+        for section_id in self
+            .get_section_ids_by_name_and_subname(section_name, subsection_name)?
+            .iter()
+            .rev()
+        {
+            if let Some(v) = Section(self.sections.get(section_id).unwrap()).value(&key) {
+                return Ok(v.to_vec().into());
             }
         }
 
-        Err(GitConfigError::KeyDoesNotExist(key))
+        Err(GitConfigError::KeyDoesNotExist)
     }
 
     /// Returns a mutable reference to an uninterpreted value given a section,
@@ -764,14 +933,14 @@ impl<'event> GitConfig<'event> {
             }
 
             return Ok(MutableValue {
-                section: self.sections.get_mut(section_id).unwrap(),
+                section: MutableSection(self.sections.get_mut(section_id).unwrap()),
                 key,
                 size,
                 index,
             });
         }
 
-        Err(GitConfigError::KeyDoesNotExist(key))
+        Err(GitConfigError::KeyDoesNotExist)
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
@@ -823,32 +992,16 @@ impl<'event> GitConfig<'event> {
         let key = Key(key.into());
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
-            let mut found_key = false;
-            let mut partial_value = None;
-            // section_id is guaranteed to exist in self.sections, else we
-            // have a violated invariant.
-            for event in self.sections.get(&section_id).unwrap() {
-                match event {
-                    Event::Key(event_key) if *event_key == key => found_key = true,
-                    Event::Value(v) if found_key => {
-                        values.push(normalize_bytes(v));
-                        found_key = false;
-                    }
-                    Event::ValueNotDone(v) if found_key => {
-                        partial_value = Some((*v).to_vec());
-                    }
-                    Event::ValueDone(v) if found_key => {
-                        found_key = false;
-                        partial_value.as_mut().unwrap().extend(&**v);
-                        values.push(normalize_vec(partial_value.take().unwrap()));
-                    }
-                    _ => (),
-                }
-            }
+            values.extend(
+                Section(self.sections.get(&section_id).unwrap())
+                    .values(&key)
+                    .iter()
+                    .map(|v| Cow::Owned(v.to_vec())),
+            );
         }
 
         if values.is_empty() {
-            Err(GitConfigError::KeyDoesNotExist(key))
+            Err(GitConfigError::KeyDoesNotExist)
         } else {
             Ok(values)
         }
@@ -954,7 +1107,7 @@ impl<'event> GitConfig<'event> {
         entries.sort();
 
         if entries.is_empty() {
-            Err(GitConfigError::KeyDoesNotExist(key))
+            Err(GitConfigError::KeyDoesNotExist)
         } else {
             Ok(MutableMultiValue {
                 section: &mut self.sections,
@@ -1101,32 +1254,6 @@ impl<'event> GitConfig<'event> {
     ) -> Result<(), GitConfigError<'lookup>> {
         self.get_raw_multi_value_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))
-    }
-
-    /// Adds a new section to config. This cannot fail.
-    pub fn new_empty_section(
-        &mut self,
-        section_name: impl Into<Cow<'event, str>>,
-        subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) {
-        self.push_section(
-            Some(SectionHeaderName(section_name.into())),
-            subsection_name.into(),
-            &mut Some(vec![]),
-        )
-    }
-
-    /// Removes the section, returning the events it had, if any.
-    pub fn remove_section<'lookup>(
-        &mut self,
-        section_name: &'lookup str,
-        subsection_name: impl Into<Option<&'lookup str>>,
-    ) -> Option<Vec<Event>> {
-        let section_ids =
-            self.get_section_ids_by_name_and_subname(section_name, subsection_name.into());
-        let section_ids = section_ids.ok()?.pop()?;
-
-        self.sections.remove(&section_ids)
     }
 }
 
@@ -1918,7 +2045,7 @@ mod get_raw_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "aaaaaa"),
-            Err(GitConfigError::KeyDoesNotExist(Key("aaaaaa".into())))
+            Err(GitConfigError::KeyDoesNotExist)
         );
     }
 
@@ -1945,8 +2072,8 @@ mod get_value {
     #[test]
     fn single_section() -> Result<(), Box<dyn Error>> {
         let config = GitConfig::try_from("[core]\na=b\nc").unwrap();
-        let first_value: Value = config.get_value("core", None, "a")?;
-        let second_value: Boolean = config.get_value("core", None, "c")?;
+        let first_value: Value = config.value("core", None, "a")?;
+        let second_value: Boolean = config.value("core", None, "c")?;
 
         assert_eq!(first_value, Value::Other(Cow::Borrowed(b"b")));
         assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
@@ -1958,7 +2085,7 @@ mod get_value {
 #[cfg(test)]
 mod get_raw_multi_value {
     use super::{Cow, GitConfig, GitConfigError, TryFrom};
-    use crate::parser::{Key, SectionHeaderName};
+    use crate::parser::SectionHeaderName;
 
     #[test]
     fn single_value_is_identical_to_single_value_query() {
@@ -2016,7 +2143,7 @@ mod get_raw_multi_value {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "aaaaaa"),
-            Err(GitConfigError::KeyDoesNotExist(Key("aaaaaa".into())))
+            Err(GitConfigError::KeyDoesNotExist)
         );
     }
 
