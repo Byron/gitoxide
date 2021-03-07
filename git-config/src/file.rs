@@ -4,8 +4,7 @@ use crate::parser::{
     parse_from_bytes, Error, Event, Key, ParsedSectionHeader, Parser, SectionHeaderName,
 };
 use crate::values::{normalize_bytes, normalize_cow, normalize_vec};
-use std::borrow::Borrow;
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::fmt::Display;
@@ -59,14 +58,55 @@ struct SectionId(usize);
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableSection<'borrow, 'event>(&'borrow mut Vec<Event<'event>>);
 
-impl<'event> MutableSection<'_, 'event> {
+// Immutable methods, effectively a deref into Section
+impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Retrieves the last matching value in a section with the given key.
     /// Returns None if the key was not found.
-    pub fn value(&'event self, key: &Key) -> Option<Cow<'event, [u8]>> {
-        // Section(*self.0).value(key)
-        todo!()
+    #[inline]
+    #[must_use]
+    pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
+        Section(self.0).value(key)
     }
 
+    /// Retrieves the last matching value in a section with the given key, and
+    /// attempts to convert the value into the provided type.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the key was not found, or if the conversion failed.
+    #[inline]
+    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(
+        &self,
+        key: &Key,
+    ) -> Result<T, GitConfigError<'event>> {
+        Section(self.0).value_as(key)
+    }
+
+    /// Retrieves all values that have the provided key name. This may return
+    /// an empty vec, which implies there was values with the provided key.
+    #[inline]
+    #[must_use]
+    pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
+        Section(self.0).values(key)
+    }
+
+    /// Retrieves all values that have the provided key name. This may return
+    /// an empty vec, which implies there was values with the provided key.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the conversion failed.
+    #[inline]
+    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(
+        &self,
+        key: &Key,
+    ) -> Result<Vec<T>, GitConfigError<'event>> {
+        Section(self.0).values_as(key)
+    }
+}
+
+// Mutable methods on a mutable section
+impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Adds an entry to the end of this section
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) {
         self.0.push(Event::Key(key));
@@ -74,17 +114,46 @@ impl<'event> MutableSection<'_, 'event> {
         self.0.push(Event::Value(value));
     }
 
-    /// Pops the last entry.
-    pub fn pop(&mut self) {
-        // let mut key;
-        // while let Some(e) = self.0.pop() {
-        //     key = e;
-        // }
-    }
+    /// Removes all events until a key value pair is removed. This will also
+    /// remove the whitespace preceding the key value pair, if any is found.
+    pub fn pop(&mut self) -> Option<(Key, Cow<'event, [u8]>)> {
+        let mut values = vec![];
+        // events are popped in reverse order
+        while let Some(e) = self.0.pop() {
+            match e {
+                Event::Key(k) => {
+                    // pop leading whitespace
+                    if let Some(Event::Whitespace(_)) = self.0.last() {
+                        self.0.pop();
+                    }
 
+                    if values.len() == 1 {
+                        return Some((k, normalize_cow(values.pop().unwrap())));
+                    }
+                    return Some((
+                        k,
+                        normalize_vec(
+                            values
+                                .into_iter()
+                                .rev()
+                                .flat_map(|v: Cow<[u8]>| v.to_vec())
+                                .collect(),
+                        ),
+                    ));
+                }
+                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => values.push(v),
+                _ => (),
+            }
+        }
+        None
+    }
+}
+
+// Internal methods that require exact indices for faster operations.
+impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     fn get<'key>(
         &self,
-        key: Key<'key>,
+        key: &Key<'key>,
         start: usize,
         end: usize,
     ) -> Result<Cow<'_, [u8]>, GitConfigError<'key>> {
@@ -96,10 +165,11 @@ impl<'event> MutableSection<'_, 'event> {
 
         for event in &self.0[start..=end] {
             match event {
-                Event::Key(event_key) if *event_key == key => found_key = true,
+                Event::Key(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
-                    latest_value = Some(Cow::Borrowed(v.borrow()));
+                    // Clones the Cow, doesn't copy underlying value if borrowed
+                    latest_value = Some(v.clone());
                 }
                 Event::ValueNotDone(v) if found_key => {
                     latest_value = None;
@@ -134,20 +204,23 @@ impl<'event> MutableSection<'_, 'event> {
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct Section<'borrow, 'event>(&'borrow [Event<'event>]);
 
-impl<'event> Section<'_, 'event> {
+impl<'borrow, 'event> Section<'borrow, 'event> {
     /// Retrieves the last matching value in a section with the given key.
     /// Returns None if the key was not found.
-    pub fn value(&'event self, key: &Key) -> Option<Cow<'event, [u8]>> {
+    #[must_use]
+    pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
         let mut found_key = false;
         let mut latest_value = None;
         let mut partial_value = None;
 
+        // todo: iterate backwards instead
         for event in self.0 {
             match event {
                 Event::Key(event_key) if *event_key == *key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
-                    latest_value = Some(Cow::Borrowed(v.borrow()));
+                    // Clones the Cow, doesn't copy underlying value if borrowed
+                    latest_value = Some(v.clone());
                     partial_value = None;
                 }
                 Event::ValueNotDone(v) if found_key => {
@@ -172,7 +245,7 @@ impl<'event> Section<'_, 'event> {
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
     pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(
-        &'event self,
+        &self,
         key: &Key,
     ) -> Result<T, GitConfigError<'event>> {
         T::try_from(self.value(key).ok_or(GitConfigError::KeyDoesNotExist)?)
@@ -181,16 +254,21 @@ impl<'event> Section<'_, 'event> {
 
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there was values with the provided key.
-    pub fn values(&'event self, key: &Key) -> Vec<Cow<'event, [u8]>> {
+    #[must_use]
+    pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
         let mut values = vec![];
         let mut found_key = false;
         let mut partial_value = None;
+
+        // This can iterate forwards because we need to iterate over the whole
+        // section anyways.
         for event in self.0 {
             match event {
-                Event::Key(event_key) if *event_key == *key => found_key = true,
+                Event::Key(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
-                    values.push(normalize_cow(Cow::Borrowed(v.borrow())));
+                    // Clones the Cow, doesn't copy underlying value if borrowed
+                    values.push(normalize_cow(v.clone()));
                     partial_value = None;
                 }
                 Event::ValueNotDone(v) if found_key => {
@@ -215,12 +293,12 @@ impl<'event> Section<'_, 'event> {
     ///
     /// Returns an error if the conversion failed.
     pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(
-        &'event self,
+        &self,
         key: &Key,
-    ) -> Result<Vec<T>, GitConfigError> {
+    ) -> Result<Vec<T>, GitConfigError<'event>> {
         self.values(key)
             .into_iter()
-            .map(|v| T::try_from(v))
+            .map(T::try_from)
             .collect::<Result<Vec<T>, _>>()
             .map_err(|_| GitConfigError::FailedConversion)
     }
@@ -256,7 +334,7 @@ impl MutableValue<'_, '_, '_> {
     #[inline]
     pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
         self.section
-            .get(self.key.clone(), self.index, self.index + self.size)
+            .get(&self.key, self.index, self.index + self.size)
     }
 
     /// Update the value to the provided one. This modifies the value such that
@@ -440,7 +518,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
             offset_index,
         } = self.indices_and_sizes[index];
         MutableMultiValue::set_value_inner(
-            self.key.to_owned(),
+            &self.key,
             &mut self.offsets,
             self.section.get_mut(&section_id).unwrap(),
             section_id,
@@ -467,7 +545,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         ) in self.indices_and_sizes.iter().zip(input)
         {
             Self::set_value_inner(
-                self.key.to_owned(),
+                &self.key,
                 &mut self.offsets,
                 self.section.get_mut(section_id).unwrap(),
                 *section_id,
@@ -494,7 +572,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         } in &self.indices_and_sizes
         {
             Self::set_value_inner(
-                self.key.to_owned(),
+                &self.key,
                 &mut self.offsets,
                 self.section.get_mut(section_id).unwrap(),
                 *section_id,
@@ -517,7 +595,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         } in &self.indices_and_sizes
         {
             Self::set_value_inner(
-                self.key.to_owned(),
+                &self.key,
                 &mut self.offsets,
                 self.section.get_mut(section_id).unwrap(),
                 *section_id,
@@ -528,7 +606,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     }
 
     fn set_value_inner<'a: 'event>(
-        key: Key<'lookup>,
+        key: &Key<'lookup>,
         offsets: &mut HashMap<SectionId, Vec<Offset>>,
         section: &mut Vec<Event<'event>>,
         section_id: SectionId,
@@ -798,22 +876,31 @@ impl<'event> GitConfig<'event> {
             .map_err(|_| GitConfigError::FailedConversion)
     }
 
-    /// TODO
-    pub fn section(
+    /// Returns an immutable section reference.
+    pub fn section<'lookup>(
         &mut self,
-        section_name: impl Into<Cow<'event, str>>,
-        subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) {
-        // let section_ids =
-        //     self.get_section_ids_by_name_and_subname(section_name.into(), subsection_name.into());
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+    ) -> Result<Section, GitConfigError<'lookup>> {
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
+        Ok(Section(
+            self.sections.get(section_ids.last().unwrap()).unwrap(),
+        ))
     }
 
-    /// TODO
-    pub fn section_mut(
+    /// Returns an mutable section reference.
+    pub fn section_mut<'lookup>(
         &mut self,
-        section_name: impl Into<Cow<'event, str>>,
-        subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) {
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+    ) -> Result<MutableSection<'_, 'event>, GitConfigError<'lookup>> {
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
+
+        Ok(MutableSection(
+            self.sections.get_mut(section_ids.last().unwrap()).unwrap(),
+        ))
     }
 
     /// Adds a new section to config. This cannot fail.
@@ -821,13 +908,13 @@ impl<'event> GitConfig<'event> {
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) {
-        // Return mutable section?
+    ) -> MutableSection<'_, 'event> {
         self.push_section(
             Some(SectionHeaderName(section_name.into())),
             subsection_name.into(),
             &mut Some(vec![]),
         )
+        .unwrap()
     }
 
     /// Removes the section, returning the events it had, if any. If multiple
@@ -1259,13 +1346,13 @@ impl<'event> GitConfig<'event> {
 
 /// Private helper functions
 impl<'event> GitConfig<'event> {
-    /// Used during initialization.
+    /// Adds a new section to the config file.
     fn push_section(
         &mut self,
         current_section_name: Option<SectionHeaderName<'event>>,
         current_subsection_name: Option<Cow<'event, str>>,
         maybe_section: &mut Option<Vec<Event<'event>>>,
-    ) {
+    ) -> Option<MutableSection<'_, 'event>> {
         if let Some(section) = maybe_section.take() {
             let new_section_id = SectionId(self.section_id_counter);
             self.sections.insert(new_section_id, section);
@@ -1280,10 +1367,7 @@ impl<'event> GitConfig<'event> {
                     if let LookupTreeNode::NonTerminal(subsection) = node {
                         found_node = true;
                         subsection
-                            // Despite the clone `push_section` is always called
-                            // with a Cow::Borrowed, so this is effectively a
-                            // copy. This copy might not be necessary, but need
-                            // to work around borrowck to figure it out.
+                            // Clones the cow, not the inner borrowed str.
                             .entry(subsection_name.clone())
                             .or_default()
                             .push(new_section_id);
@@ -1309,6 +1393,9 @@ impl<'event> GitConfig<'event> {
             }
             self.section_order.push_back(new_section_id);
             self.section_id_counter += 1;
+            self.sections.get_mut(&new_section_id).map(MutableSection)
+        } else {
+            None
         }
     }
 
