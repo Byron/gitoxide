@@ -746,7 +746,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
 /// with all values instead.
 ///
 /// [`get_raw_value`]: Self::get_raw_value
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct GitConfig<'a> {
     /// The list of events that occur before an actual section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
@@ -765,6 +765,11 @@ pub struct GitConfig<'a> {
 }
 
 impl<'event> GitConfig<'event> {
+    /// Constructs an empty `git-config` file.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
@@ -903,18 +908,44 @@ impl<'event> GitConfig<'event> {
         ))
     }
 
-    /// Adds a new section to config. This cannot fail.
+    /// Adds a new section to config. This cannot fail. Returns a reference to
+    /// the new section for immediate editing.
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::convert::TryFrom;
+    /// let mut git_config = GitConfig::new();
+    /// let mut section = git_config.new_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), r#"[hello "world"]"#);
+    /// ```
     pub fn new_section(
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> MutableSection<'_, 'event> {
-        self.push_section(
-            Some(SectionHeaderName(section_name.into())),
-            subsection_name.into(),
-            &mut Some(vec![]),
-        )
-        .unwrap()
+        let subsection_name = subsection_name.into();
+        if subsection_name.is_some() {
+            self.push_section(
+                ParsedSectionHeader {
+                    name: SectionHeaderName(section_name.into()),
+                    separator: Some(" ".into()),
+                    subsection_name,
+                },
+                vec![],
+            )
+        } else {
+            self.push_section(
+                ParsedSectionHeader {
+                    name: SectionHeaderName(section_name.into()),
+                    separator: None,
+                    subsection_name: None,
+                },
+                vec![],
+            )
+        }
     }
 
     /// Removes the section, returning the events it had, if any. If multiple
@@ -1349,54 +1380,52 @@ impl<'event> GitConfig<'event> {
     /// Adds a new section to the config file.
     fn push_section(
         &mut self,
-        current_section_name: Option<SectionHeaderName<'event>>,
-        current_subsection_name: Option<Cow<'event, str>>,
-        maybe_section: &mut Option<Vec<Event<'event>>>,
-    ) -> Option<MutableSection<'_, 'event>> {
-        if let Some(section) = maybe_section.take() {
-            let new_section_id = SectionId(self.section_id_counter);
-            self.sections.insert(new_section_id, section);
-            let lookup = self
-                .section_lookup_tree
-                .entry(current_section_name.unwrap())
-                .or_default();
+        // current_section_name: Option<SectionHeaderName<'event>>,
+        // current_subsection_name: Option<Cow<'event, str>>,
+        header: ParsedSectionHeader<'event>,
+        maybe_section: Vec<Event<'event>>,
+    ) -> MutableSection<'_, 'event> {
+        let new_section_id = SectionId(self.section_id_counter);
+        self.section_headers.insert(new_section_id, header.clone());
+        self.sections.insert(new_section_id, maybe_section);
+        let lookup = self.section_lookup_tree.entry(header.name).or_default();
 
-            let mut found_node = false;
-            if let Some(subsection_name) = current_subsection_name {
-                for node in lookup.iter_mut() {
-                    if let LookupTreeNode::NonTerminal(subsection) = node {
-                        found_node = true;
-                        subsection
-                            // Clones the cow, not the inner borrowed str.
-                            .entry(subsection_name.clone())
-                            .or_default()
-                            .push(new_section_id);
-                        break;
-                    }
-                }
-                if !found_node {
-                    let mut map = HashMap::new();
-                    map.insert(subsection_name, vec![new_section_id]);
-                    lookup.push(LookupTreeNode::NonTerminal(map));
-                }
-            } else {
-                for node in lookup.iter_mut() {
-                    if let LookupTreeNode::Terminal(vec) = node {
-                        found_node = true;
-                        vec.push(new_section_id);
-                        break;
-                    }
-                }
-                if !found_node {
-                    lookup.push(LookupTreeNode::Terminal(vec![new_section_id]))
+        let mut found_node = false;
+        if let Some(subsection_name) = header.subsection_name {
+            for node in lookup.iter_mut() {
+                if let LookupTreeNode::NonTerminal(subsection) = node {
+                    found_node = true;
+                    subsection
+                        // Clones the cow, not the inner borrowed str.
+                        .entry(subsection_name.clone())
+                        .or_default()
+                        .push(new_section_id);
+                    break;
                 }
             }
-            self.section_order.push_back(new_section_id);
-            self.section_id_counter += 1;
-            self.sections.get_mut(&new_section_id).map(MutableSection)
+            if !found_node {
+                let mut map = HashMap::new();
+                map.insert(subsection_name, vec![new_section_id]);
+                lookup.push(LookupTreeNode::NonTerminal(map));
+            }
         } else {
-            None
+            for node in lookup.iter_mut() {
+                if let LookupTreeNode::Terminal(vec) = node {
+                    found_node = true;
+                    vec.push(new_section_id);
+                    break;
+                }
+            }
+            if !found_node {
+                lookup.push(LookupTreeNode::Terminal(vec![new_section_id]))
+            }
         }
+        self.section_order.push_back(new_section_id);
+        self.section_id_counter += 1;
+        self.sections
+            .get_mut(&new_section_id)
+            .map(MutableSection)
+            .unwrap()
     }
 
     /// Returns the mapping between section and subsection name to section ids.
@@ -1471,57 +1500,40 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
         };
 
         // Current section that we're building
-        let mut current_section_name: Option<SectionHeaderName<'_>> = None;
-        let mut current_subsection_name: Option<Cow<'a, str>> = None;
-        let mut maybe_section: Option<Vec<Event<'a>>> = None;
+        let mut prev_section_header = None;
+        let mut section_events: Vec<Event<'a>> = vec![];
 
         for event in parser.into_iter() {
             match event {
                 Event::SectionHeader(header) => {
-                    new_self.push_section(
-                        current_section_name,
-                        current_subsection_name,
-                        &mut maybe_section,
-                    );
-
-                    // Initialize new section
-                    // We need to store the new, current id counter, so don't
-                    // use new_section_id here and use the already incremented
-                    // section id value.
-                    new_self
-                        .section_headers
-                        .insert(SectionId(new_self.section_id_counter), header.clone());
-                    let (name, subname) = (header.name, header.subsection_name);
-                    maybe_section = Some(vec![]);
-                    current_section_name = Some(name);
-                    current_subsection_name = subname;
+                    if let Some(prev_header) = prev_section_header.take() {
+                        new_self.push_section(prev_header, section_events);
+                    } else {
+                        new_self.frontmatter_events = section_events;
+                    }
+                    prev_section_header = Some(header);
+                    section_events = vec![];
                 }
                 e @ Event::Key(_)
                 | e @ Event::Value(_)
                 | e @ Event::ValueNotDone(_)
                 | e @ Event::ValueDone(_)
-                | e @ Event::KeyValueSeparator => maybe_section
-                    .as_mut()
-                    .expect("Got a section-only event before a section")
-                    .push(e),
+                | e @ Event::KeyValueSeparator => section_events.push(e),
                 e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
-                    match maybe_section {
-                        Some(ref mut section) => section.push(e),
-                        None => new_self.frontmatter_events.push(e),
-                    }
+                    section_events.push(e);
                 }
             }
         }
 
         // The last section doesn't get pushed since we only push if there's a
         // new section header, so we need to call push one more time.
-        new_self.push_section(
-            current_section_name,
-            current_subsection_name,
-            &mut maybe_section,
-        );
+        if let Some(header) = prev_section_header {
+            new_self.push_section(header, section_events);
+        } else {
+            new_self.frontmatter_events = section_events;
+        }
 
-        new_self
+        dbg!(new_self)
     }
 }
 
@@ -1765,7 +1777,6 @@ mod mutable_multi_value {
             .get_raw_multi_value_mut("core", None, "a")
             .unwrap();
         values.set_string(0, "Hello".to_string());
-        dbg!(values);
         assert_eq!(
             git_config.to_string(),
             r#"[core]
@@ -2074,7 +2085,7 @@ mod from_parser {
 #[cfg(test)]
 mod get_raw_value {
     use super::{Cow, GitConfig, GitConfigError, TryFrom};
-    use crate::parser::{Key, SectionHeaderName};
+    use crate::parser::SectionHeaderName;
 
     #[test]
     fn single_section() {
