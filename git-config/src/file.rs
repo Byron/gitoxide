@@ -391,38 +391,6 @@ struct EntryData {
     offset_index: usize,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-enum Offset {
-    NonSignificant(usize),
-    Significant(usize),
-}
-
-impl Offset {
-    const fn len(&self) -> usize {
-        match self {
-            Self::NonSignificant(v) | Self::Significant(v) => *v,
-        }
-    }
-}
-
-impl Deref for Offset {
-    type Target = usize;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Self::NonSignificant(v) | Self::Significant(v) => v,
-        }
-    }
-}
-
-impl DerefMut for Offset {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            Self::NonSignificant(v) | Self::Significant(v) => v,
-        }
-    }
-}
-
 /// An intermediate representation of a mutable multivar obtained from
 /// [`GitConfig`].
 ///
@@ -441,7 +409,7 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     /// Each offset represents the size of a event slice and whether or not the
     /// event slice is significant or not. This is used to index into the
     /// actual section.
-    offsets: HashMap<SectionId, Vec<Offset>>,
+    offsets: HashMap<SectionId, Vec<usize>>,
 }
 
 impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
@@ -625,7 +593,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
 
     fn set_value_inner<'a: 'event>(
         key: &Key<'lookup>,
-        offsets: &mut HashMap<SectionId, Vec<Offset>>,
+        offsets: &mut HashMap<SectionId, Vec<usize>>,
         section: &mut OwnedSection<'event>,
         section_id: SectionId,
         offset_index: usize,
@@ -693,7 +661,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
     fn get_index_and_size(
-        offsets: &'lookup HashMap<SectionId, Vec<Offset>>,
+        offsets: &'lookup HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,
         offset_index: usize,
     ) -> (usize, usize) {
@@ -702,7 +670,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
             .unwrap()
             .iter()
             .take(offset_index + 1)
-            .fold((0, 0), |(old, new), offset| (old + new, offset.len()))
+            .fold((0, 0), |(old, new), offset| (old + new, *offset))
     }
 
     // This must be an associated function rather than a method to allow Rust
@@ -711,7 +679,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
     fn set_offset(
-        offsets: &mut HashMap<SectionId, Vec<Offset>>,
+        offsets: &mut HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,
         offset_index: usize,
         value: usize,
@@ -1252,7 +1220,7 @@ impl<'event> GitConfig<'event> {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
                         found_key = true;
-                        offset_list.push(Offset::NonSignificant(i - last_boundary));
+                        offset_list.push(i - last_boundary);
                         offset_index += 1;
                         last_boundary = i;
                     }
@@ -1262,7 +1230,7 @@ impl<'event> GitConfig<'event> {
                             section_id: *section_id,
                             offset_index,
                         });
-                        offset_list.push(Offset::Significant(i - last_boundary + 1));
+                        offset_list.push(i - last_boundary + 1);
                         offset_index += 1;
                         last_boundary = i + 1;
                     }
