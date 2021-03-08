@@ -57,58 +57,9 @@ struct SectionId(usize);
 /// A opaque type that represents a mutable reference to a section.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableSection<'borrow, 'event> {
-    section: &'borrow mut Vec<Event<'event>>,
+    section: &'borrow mut OwnedSection<'event>,
     implicit_newline: bool,
     whitespace: usize,
-}
-
-// Immutable methods, effectively a deref into Section. Can't use Deref trait
-// as there's some lifetime shenanigans that prevent us from matching the trait
-// parameters.
-impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    /// Retrieves the last matching value in a section with the given key.
-    /// Returns None if the key was not found.
-    #[inline]
-    #[must_use]
-    pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
-        Section(self.section).value(key)
-    }
-
-    /// Retrieves the last matching value in a section with the given key, and
-    /// attempts to convert the value into the provided type.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the key was not found, or if the conversion failed.
-    #[inline]
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(
-        &self,
-        key: &Key,
-    ) -> Result<T, GitConfigError<'event>> {
-        Section(self.section).value_as(key)
-    }
-
-    /// Retrieves all values that have the provided key name. This may return
-    /// an empty vec, which implies there was values with the provided key.
-    #[inline]
-    #[must_use]
-    pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
-        Section(self.section).values(key)
-    }
-
-    /// Retrieves all values that have the provided key name. This may return
-    /// an empty vec, which implies there was values with the provided key.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the conversion failed.
-    #[inline]
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(
-        &self,
-        key: &Key,
-    ) -> Result<Vec<T>, GitConfigError<'event>> {
-        Section(self.section).values_as(key)
-    }
 }
 
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
@@ -116,14 +67,15 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) {
         if self.whitespace > 0 {
             self.section
+                .0
                 .push(Event::Whitespace(" ".repeat(self.whitespace).into()));
         }
 
-        self.section.push(Event::Key(key));
-        self.section.push(Event::KeyValueSeparator);
-        self.section.push(Event::Value(value));
+        self.section.0.push(Event::Key(key));
+        self.section.0.push(Event::KeyValueSeparator);
+        self.section.0.push(Event::Value(value));
         if self.implicit_newline {
-            self.section.push(Event::Newline("\n".into()));
+            self.section.0.push(Event::Newline("\n".into()));
         }
     }
 
@@ -132,12 +84,12 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     pub fn pop(&mut self) -> Option<(Key, Cow<'event, [u8]>)> {
         let mut values = vec![];
         // events are popped in reverse order
-        while let Some(e) = self.section.pop() {
+        while let Some(e) = self.section.0.pop() {
             match e {
                 Event::Key(k) => {
                     // pop leading whitespace
-                    if let Some(Event::Whitespace(_)) = self.section.last() {
-                        self.section.pop();
+                    if let Some(Event::Whitespace(_)) = self.section.0.last() {
+                        self.section.0.pop();
                     }
 
                     if values.len() == 1 {
@@ -164,7 +116,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
     pub fn push_newline(&mut self) {
-        self.section.push(Event::Newline("\n".into()));
+        self.section.0.push(Event::Newline("\n".into()));
     }
 
     /// Enables or disables automatically adding newline events after adding
@@ -189,7 +141,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
 // Internal methods that may require exact indices for faster operations.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    fn new(section: &'borrow mut Vec<Event<'event>>) -> Self {
+    fn new(section: &'borrow mut OwnedSection<'event>) -> Self {
         Self {
             section,
             implicit_newline: true,
@@ -209,7 +161,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
 
-        for event in &self.section[start..=end] {
+        for event in &self.section.0[start..=end] {
             match event {
                 Event::Key(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
@@ -236,21 +188,35 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     }
 
     fn delete(&mut self, start: usize, end: usize) {
-        self.section.drain(start..=end);
+        self.section.0.drain(start..=end);
     }
 
     fn set_value(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
-        self.section.insert(index, Event::Value(Cow::Owned(value)));
-        self.section.insert(index, Event::KeyValueSeparator);
-        self.section.insert(index, Event::Key(key));
+        self.section
+            .0
+            .insert(index, Event::Value(Cow::Owned(value)));
+        self.section.0.insert(index, Event::KeyValueSeparator);
+        self.section.0.insert(index, Event::Key(key));
     }
 }
 
-/// A opaque type that represents a reference to a section.
-#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct Section<'borrow, 'event>(&'borrow [Event<'event>]);
+impl<'event> Deref for MutableSection<'_, 'event> {
+    type Target = OwnedSection<'event>;
 
-impl<'borrow, 'event> Section<'borrow, 'event> {
+    fn deref(&self) -> &Self::Target {
+        self.section
+    }
+}
+
+/// A opaque type that represents a section.
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
+pub struct OwnedSection<'event>(Vec<Event<'event>>);
+
+impl<'event> OwnedSection<'event> {
+    fn new() -> Self {
+        Self::default()
+    }
+
     /// Retrieves the last matching value in a section with the given key.
     /// Returns None if the key was not found.
     #[must_use]
@@ -260,7 +226,7 @@ impl<'borrow, 'event> Section<'borrow, 'event> {
         let mut partial_value = None;
 
         // todo: iterate backwards instead
-        for event in self.0 {
+        for event in &self.0 {
             match event {
                 Event::Key(event_key) if *event_key == *key => found_key = true,
                 Event::Value(v) if found_key => {
@@ -308,7 +274,7 @@ impl<'borrow, 'event> Section<'borrow, 'event> {
 
         // This can iterate forwards because we need to iterate over the whole
         // section anyways.
-        for event in self.0 {
+        for event in &self.0 {
             match event {
                 Event::Key(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
@@ -347,6 +313,12 @@ impl<'borrow, 'event> Section<'borrow, 'event> {
             .map(T::try_from)
             .collect::<Result<Vec<T>, _>>()
             .map_err(|_| GitConfigError::FailedConversion)
+    }
+}
+
+impl<'event> From<Vec<Event<'event>>> for OwnedSection<'event> {
+    fn from(e: Vec<Event<'event>>) -> Self {
+        Self(e)
     }
 }
 
@@ -460,7 +432,7 @@ impl DerefMut for Offset {
 /// time.
 #[derive(Eq, PartialEq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
-    section: &'borrow mut HashMap<SectionId, Vec<Event<'event>>>,
+    section: &'borrow mut HashMap<SectionId, OwnedSection<'event>>,
     key: Key<'lookup>,
     /// Each entry data struct provides sufficient information to index into
     /// [`Self::offsets`]. This layer of indirection is used for users to index
@@ -491,7 +463,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         {
             let (offset, size) =
                 MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
-            for event in &self.section.get(section_id).unwrap()[offset..offset + size] {
+            for event in &self.section.get(section_id).unwrap().0[offset..offset + size] {
                 match event {
                     Event::Key(event_key) if *event_key == self.key => found_key = true,
                     Event::Value(v) if found_key => {
@@ -654,19 +626,21 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     fn set_value_inner<'a: 'event>(
         key: &Key<'lookup>,
         offsets: &mut HashMap<SectionId, Vec<Offset>>,
-        section: &mut Vec<Event<'event>>,
+        section: &mut OwnedSection<'event>,
         section_id: SectionId,
         offset_index: usize,
         input: Cow<'a, [u8]>,
     ) {
         let (offset, size) =
             MutableMultiValue::get_index_and_size(offsets, section_id, offset_index);
-        section.drain(offset..offset + size);
+        section.0.drain(offset..offset + size);
 
         MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
-        section.insert(offset, Event::Value(input));
-        section.insert(offset, Event::KeyValueSeparator);
-        section.insert(offset, Event::Key(Key(Cow::Owned(key.0.to_string()))));
+        section.0.insert(offset, Event::Value(input));
+        section.0.insert(offset, Event::KeyValueSeparator);
+        section
+            .0
+            .insert(offset, Event::Key(Key(Cow::Owned(key.0.to_string()))));
     }
 
     /// Removes the value at the given index. Does nothing when called multiple
@@ -686,6 +660,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
             self.section
                 .get_mut(section_id)
                 .unwrap()
+                .0
                 .drain(offset..offset + size);
 
             Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
@@ -707,6 +682,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
                 self.section
                     .get_mut(section_id)
                     .unwrap()
+                    .0
                     .drain(offset..offset + size);
                 Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
             }
@@ -793,19 +769,19 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
 ///
 /// [`get_raw_value`]: Self::get_raw_value
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
-pub struct GitConfig<'a> {
+pub struct GitConfig<'event> {
     /// The list of events that occur before an actual section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
-    frontmatter_events: Vec<Event<'a>>,
-    section_lookup_tree: HashMap<SectionHeaderName<'a>, Vec<LookupTreeNode<'a>>>,
+    frontmatter_events: OwnedSection<'event>,
+    section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events.
     ///
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
-    sections: HashMap<SectionId, Vec<Event<'a>>>,
-    section_headers: HashMap<SectionId, ParsedSectionHeader<'a>>,
+    sections: HashMap<SectionId, OwnedSection<'event>>,
+    section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
     section_id_counter: usize,
     section_order: VecDeque<SectionId>,
 }
@@ -938,12 +914,10 @@ impl<'event> GitConfig<'event> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
-    ) -> Result<Section, GitConfigError<'lookup>> {
+    ) -> Result<&OwnedSection<'event>, GitConfigError<'lookup>> {
         let section_ids =
             self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-        Ok(Section(
-            self.sections.get(section_ids.last().unwrap()).unwrap(),
-        ))
+        Ok(self.sections.get(section_ids.last().unwrap()).unwrap())
     }
 
     /// Returns an mutable section reference.
@@ -1006,7 +980,7 @@ impl<'event> GitConfig<'event> {
                     separator: Some(" ".into()),
                     subsection_name,
                 },
-                vec![],
+                OwnedSection::new(),
             )
         } else {
             self.push_section(
@@ -1015,7 +989,7 @@ impl<'event> GitConfig<'event> {
                     separator: None,
                     subsection_name: None,
                 },
-                vec![],
+                OwnedSection::new(),
             )
         };
         section.push_newline();
@@ -1028,7 +1002,7 @@ impl<'event> GitConfig<'event> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: impl Into<Option<&'lookup str>>,
-    ) -> Option<Vec<Event>> {
+    ) -> Option<OwnedSection> {
         let section_ids =
             self.get_section_ids_by_name_and_subname(section_name, subsection_name.into());
         let section_ids = section_ids.ok()?.pop()?;
@@ -1068,7 +1042,7 @@ impl<'event> GitConfig<'event> {
             .iter()
             .rev()
         {
-            if let Some(v) = Section(self.sections.get(section_id).unwrap()).value(&key) {
+            if let Some(v) = self.sections.get(section_id).unwrap().value(&key) {
                 return Ok(v.to_vec().into());
             }
         }
@@ -1100,7 +1074,7 @@ impl<'event> GitConfig<'event> {
             let mut size = 0;
             let mut index = 0;
             let mut found_key = false;
-            for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
+            for (i, event) in self.sections.get(section_id).unwrap().0.iter().enumerate() {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
                         found_key = true;
@@ -1185,7 +1159,9 @@ impl<'event> GitConfig<'event> {
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
             values.extend(
-                Section(self.sections.get(&section_id).unwrap())
+                self.sections
+                    .get(&section_id)
+                    .unwrap()
                     .values(&key)
                     .iter()
                     .map(|v| Cow::Owned(v.to_vec())),
@@ -1272,7 +1248,7 @@ impl<'event> GitConfig<'event> {
             let mut found_key = false;
             let mut offset_list = vec![];
             let mut offset_index = 0;
-            for (i, event) in self.sections.get(section_id).unwrap().iter().enumerate() {
+            for (i, event) in self.sections.get(section_id).unwrap().0.iter().enumerate() {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
                         found_key = true;
@@ -1457,11 +1433,11 @@ impl<'event> GitConfig<'event> {
         // current_section_name: Option<SectionHeaderName<'event>>,
         // current_subsection_name: Option<Cow<'event, str>>,
         header: ParsedSectionHeader<'event>,
-        maybe_section: Vec<Event<'event>>,
+        section: OwnedSection<'event>,
     ) -> MutableSection<'_, 'event> {
         let new_section_id = SectionId(self.section_id_counter);
         self.section_headers.insert(new_section_id, header.clone());
-        self.sections.insert(new_section_id, maybe_section);
+        self.sections.insert(new_section_id, section);
         let lookup = self.section_lookup_tree.entry(header.name).or_default();
 
         let mut found_node = false;
@@ -1564,18 +1540,11 @@ impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
 
 impl<'a> From<Parser<'a>> for GitConfig<'a> {
     fn from(parser: Parser<'a>) -> Self {
-        let mut new_self = Self {
-            frontmatter_events: vec![],
-            sections: HashMap::new(),
-            section_lookup_tree: HashMap::new(),
-            section_headers: HashMap::new(),
-            section_id_counter: 0,
-            section_order: VecDeque::new(),
-        };
+        let mut new_self = Self::default();
 
         // Current section that we're building
         let mut prev_section_header = None;
-        let mut section_events: Vec<Event<'a>> = vec![];
+        let mut section_events = OwnedSection::new();
 
         for event in parser.into_iter() {
             match event {
@@ -1586,15 +1555,15 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
                         new_self.frontmatter_events = section_events;
                     }
                     prev_section_header = Some(header);
-                    section_events = vec![];
+                    section_events = OwnedSection::new();
                 }
                 e @ Event::Key(_)
                 | e @ Event::Value(_)
                 | e @ Event::ValueNotDone(_)
                 | e @ Event::ValueDone(_)
-                | e @ Event::KeyValueSeparator => section_events.push(e),
+                | e @ Event::KeyValueSeparator => section_events.0.push(e),
                 e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
-                    section_events.push(e);
+                    section_events.0.push(e);
                 }
             }
         }
@@ -1621,13 +1590,13 @@ impl<'a> Into<Vec<u8>> for &GitConfig<'a> {
     fn into(self) -> Vec<u8> {
         let mut value = vec![];
 
-        for events in &self.frontmatter_events {
+        for events in &self.frontmatter_events.0 {
             value.extend(events.to_vec());
         }
 
         for section_id in &self.section_order {
             value.extend(self.section_headers.get(section_id).unwrap().to_vec());
-            for event in self.sections.get(section_id).unwrap() {
+            for event in &self.sections.get(section_id).unwrap().0 {
                 value.extend(event.to_vec());
             }
         }
@@ -1641,13 +1610,13 @@ impl Display for GitConfig<'_> {
     /// there are non UTF-8 values in your config, this will _NOT_ render as
     /// read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for front_matter in &self.frontmatter_events {
+        for front_matter in &self.frontmatter_events.0 {
             front_matter.fmt(f)?;
         }
 
         for section_id in &self.section_order {
             self.section_headers.get(section_id).unwrap().fmt(f)?;
-            for event in self.sections.get(section_id).unwrap() {
+            for event in &self.sections.get(section_id).unwrap().0 {
                 event.fmt(f)?;
             }
         }
@@ -1957,7 +1926,7 @@ a"#,
 
 #[cfg(test)]
 mod from_parser {
-    use super::{Cow, Event, GitConfig, HashMap, LookupTreeNode, SectionId, TryFrom};
+    use super::{Cow, Event, GitConfig, HashMap, LookupTreeNode, OwnedSection, SectionId, TryFrom};
     use crate::parser::SectionHeaderName;
     use crate::test_util::{name_event, newline_event, section_header, value_event};
 
@@ -1994,7 +1963,7 @@ mod from_parser {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                vec![
+                OwnedSection::from(vec![
                     newline_event(),
                     name_event("a"),
                     Event::KeyValueSeparator,
@@ -2003,7 +1972,7 @@ mod from_parser {
                     name_event("c"),
                     Event::KeyValueSeparator,
                     value_event("d"),
-                ],
+                ]),
             );
             sections
         };
@@ -2036,7 +2005,7 @@ mod from_parser {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                vec![
+                OwnedSection::from(vec![
                     newline_event(),
                     name_event("a"),
                     Event::KeyValueSeparator,
@@ -2045,7 +2014,7 @@ mod from_parser {
                     name_event("c"),
                     Event::KeyValueSeparator,
                     value_event("d"),
-                ],
+                ]),
             );
             sections
         };
@@ -2081,7 +2050,7 @@ mod from_parser {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                vec![
+                OwnedSection::from(vec![
                     newline_event(),
                     name_event("a"),
                     Event::KeyValueSeparator,
@@ -2091,11 +2060,15 @@ mod from_parser {
                     Event::KeyValueSeparator,
                     value_event("d"),
                     newline_event(),
-                ],
+                ]),
             );
             sections.insert(
                 SectionId(1),
-                vec![name_event("e"), Event::KeyValueSeparator, value_event("f")],
+                OwnedSection::from(vec![
+                    name_event("e"),
+                    Event::KeyValueSeparator,
+                    value_event("f"),
+                ]),
             );
             sections
         };
@@ -2130,7 +2103,7 @@ mod from_parser {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                vec![
+                OwnedSection::from(vec![
                     newline_event(),
                     name_event("a"),
                     Event::KeyValueSeparator,
@@ -2140,11 +2113,15 @@ mod from_parser {
                     Event::KeyValueSeparator,
                     value_event("d"),
                     newline_event(),
-                ],
+                ]),
             );
             sections.insert(
                 SectionId(1),
-                vec![name_event("e"), Event::KeyValueSeparator, value_event("f")],
+                OwnedSection::from(vec![
+                    name_event("e"),
+                    Event::KeyValueSeparator,
+                    value_event("f"),
+                ]),
             );
             sections
         };
