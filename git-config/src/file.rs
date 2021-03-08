@@ -56,16 +56,22 @@ struct SectionId(usize);
 
 /// A opaque type that represents a mutable reference to a section.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableSection<'borrow, 'event>(&'borrow mut Vec<Event<'event>>);
+pub struct MutableSection<'borrow, 'event> {
+    section: &'borrow mut Vec<Event<'event>>,
+    implicit_newline: bool,
+    whitespace: usize,
+}
 
-// Immutable methods, effectively a deref into Section
+// Immutable methods, effectively a deref into Section. Can't use Deref trait
+// as there's some lifetime shenanigans that prevent us from matching the trait
+// parameters.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Retrieves the last matching value in a section with the given key.
     /// Returns None if the key was not found.
     #[inline]
     #[must_use]
     pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
-        Section(self.0).value(key)
+        Section(self.section).value(key)
     }
 
     /// Retrieves the last matching value in a section with the given key, and
@@ -79,7 +85,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         &self,
         key: &Key,
     ) -> Result<T, GitConfigError<'event>> {
-        Section(self.0).value_as(key)
+        Section(self.section).value_as(key)
     }
 
     /// Retrieves all values that have the provided key name. This may return
@@ -87,7 +93,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     #[inline]
     #[must_use]
     pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
-        Section(self.0).values(key)
+        Section(self.section).values(key)
     }
 
     /// Retrieves all values that have the provided key name. This may return
@@ -101,17 +107,24 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         &self,
         key: &Key,
     ) -> Result<Vec<T>, GitConfigError<'event>> {
-        Section(self.0).values_as(key)
+        Section(self.section).values_as(key)
     }
 }
 
-// Mutable methods on a mutable section
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    /// Adds an entry to the end of this section
+    /// Adds an entry to the end of this section.
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) {
-        self.0.push(Event::Key(key));
-        self.0.push(Event::KeyValueSeparator);
-        self.0.push(Event::Value(value));
+        if self.whitespace > 0 {
+            self.section
+                .push(Event::Whitespace(" ".repeat(self.whitespace).into()));
+        }
+
+        self.section.push(Event::Key(key));
+        self.section.push(Event::KeyValueSeparator);
+        self.section.push(Event::Value(value));
+        if self.implicit_newline {
+            self.section.push(Event::Newline("\n".into()));
+        }
     }
 
     /// Removes all events until a key value pair is removed. This will also
@@ -119,12 +132,12 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     pub fn pop(&mut self) -> Option<(Key, Cow<'event, [u8]>)> {
         let mut values = vec![];
         // events are popped in reverse order
-        while let Some(e) = self.0.pop() {
+        while let Some(e) = self.section.pop() {
             match e {
                 Event::Key(k) => {
                     // pop leading whitespace
-                    if let Some(Event::Whitespace(_)) = self.0.last() {
-                        self.0.pop();
+                    if let Some(Event::Whitespace(_)) = self.section.last() {
+                        self.section.pop();
                     }
 
                     if values.len() == 1 {
@@ -147,10 +160,43 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         }
         None
     }
+
+    /// Adds a new line event. Note that you don't need to call this unless
+    /// you've disabled implicit newlines.
+    pub fn push_newline(&mut self) {
+        self.section.push(Event::Newline("\n".into()));
+    }
+
+    /// Enables or disables automatically adding newline events after adding
+    /// a value. This is enabled by default.
+    pub fn implicit_newline(&mut self, on: bool) {
+        self.implicit_newline = on;
+    }
+
+    /// Sets the number of spaces before the start of a key value. By default,
+    /// this is set to two. Set to 0 to disable adding whitespace before a key
+    /// value.
+    pub fn set_whitespace(&mut self, num: usize) {
+        self.whitespace = num;
+    }
+
+    /// Returns the number of whitespace this section will insert before the
+    /// beginning of a key.
+    pub const fn whitespace(&self) -> usize {
+        self.whitespace
+    }
 }
 
-// Internal methods that require exact indices for faster operations.
+// Internal methods that may require exact indices for faster operations.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
+    fn new(section: &'borrow mut Vec<Event<'event>>) -> Self {
+        Self {
+            section,
+            implicit_newline: true,
+            whitespace: 2,
+        }
+    }
+
     fn get<'key>(
         &self,
         key: &Key<'key>,
@@ -163,7 +209,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
 
-        for event in &self.0[start..=end] {
+        for event in &self.section[start..=end] {
             match event {
                 Event::Key(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
@@ -190,13 +236,13 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     }
 
     fn delete(&mut self, start: usize, end: usize) {
-        self.0.drain(start..=end);
+        self.section.drain(start..=end);
     }
 
     fn set_value(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
-        self.0.insert(index, Event::Value(Cow::Owned(value)));
-        self.0.insert(index, Event::KeyValueSeparator);
-        self.0.insert(index, Event::Key(key));
+        self.section.insert(index, Event::Value(Cow::Owned(value)));
+        self.section.insert(index, Event::KeyValueSeparator);
+        self.section.insert(index, Event::Key(key));
     }
 }
 
@@ -766,6 +812,7 @@ pub struct GitConfig<'a> {
 
 impl<'event> GitConfig<'event> {
     /// Constructs an empty `git-config` file.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -792,12 +839,12 @@ impl<'event> GitConfig<'event> {
     ///         a = 10k
     ///         c
     /// "#;
-    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// let git_config = GitConfig::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
     /// let a_value = git_config.value::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Boolean = git_config.value("core", None, "c")?;
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// # Errors
@@ -882,6 +929,11 @@ impl<'event> GitConfig<'event> {
     }
 
     /// Returns an immutable section reference.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the section and optional
+    /// subsection do not exist.
     pub fn section<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -895,6 +947,11 @@ impl<'event> GitConfig<'event> {
     }
 
     /// Returns an mutable section reference.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the section and optional
+    /// subsection do not exist.
     pub fn section_mut<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -903,23 +960,38 @@ impl<'event> GitConfig<'event> {
         let section_ids =
             self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
 
-        Ok(MutableSection(
+        Ok(MutableSection::new(
             self.sections.get_mut(section_ids.last().unwrap()).unwrap(),
         ))
     }
 
-    /// Adds a new section to config. This cannot fail. Returns a reference to
-    /// the new section for immediate editing.
-    ///
+    /// Adds a new section to config. If a subsection name was provided, then
+    /// the generated header will use the modern subsection syntax. Returns a
+    /// reference to the new section for immediate editing.
     ///
     /// # Examples
+    ///
+    /// Creating a new empty section:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::convert::TryFrom;
+    /// let mut git_config = GitConfig::new();
+    /// let _section = git_config.new_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n");
+    /// ```
+    ///
+    /// Creating a new empty section and adding values to it:
     ///
     /// ```
     /// # use git_config::file::{GitConfig, GitConfigError};
     /// # use std::convert::TryFrom;
     /// let mut git_config = GitConfig::new();
     /// let mut section = git_config.new_section("hello", Some("world".into()));
-    /// assert_eq!(git_config.to_string(), r#"[hello "world"]"#);
+    /// section.push("a".into(), "b".as_bytes().into());
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
+    /// let _section = git_config.new_section("core", None);
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");
     /// ```
     pub fn new_section(
         &mut self,
@@ -927,7 +999,7 @@ impl<'event> GitConfig<'event> {
         subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> MutableSection<'_, 'event> {
         let subsection_name = subsection_name.into();
-        if subsection_name.is_some() {
+        let mut section = if subsection_name.is_some() {
             self.push_section(
                 ParsedSectionHeader {
                     name: SectionHeaderName(section_name.into()),
@@ -945,7 +1017,9 @@ impl<'event> GitConfig<'event> {
                 },
                 vec![],
             )
-        }
+        };
+        section.push_newline();
+        section
     }
 
     /// Removes the section, returning the events it had, if any. If multiple
@@ -1051,7 +1125,7 @@ impl<'event> GitConfig<'event> {
             }
 
             return Ok(MutableValue {
-                section: MutableSection(self.sections.get_mut(section_id).unwrap()),
+                section: MutableSection::new(self.sections.get_mut(section_id).unwrap()),
                 key,
                 size,
                 index,
@@ -1424,7 +1498,7 @@ impl<'event> GitConfig<'event> {
         self.section_id_counter += 1;
         self.sections
             .get_mut(&new_section_id)
-            .map(MutableSection)
+            .map(MutableSection::new)
             .unwrap()
     }
 
