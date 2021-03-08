@@ -222,6 +222,7 @@ generate_case_insensitive!(
     Cow<'a, str>,
     "Wrapper struct for section header names, since section headers are case-insensitive."
 );
+
 generate_case_insensitive!(
     Key,
     Cow<'a, str>,
