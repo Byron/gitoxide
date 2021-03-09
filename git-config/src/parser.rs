@@ -85,12 +85,10 @@ impl Display for Event<'_> {
     /// as read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => {
-                match std::str::from_utf8(e) {
-                    Ok(e) => e.fmt(f),
-                    Err(_) => write!(f, "{:02x?}", e),
-                }
-            }
+            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => match std::str::from_utf8(e) {
+                Ok(e) => e.fmt(f),
+                Err(_) => write!(f, "{:02x?}", e),
+            },
             Self::Comment(e) => e.fmt(f),
             Self::SectionHeader(e) => e.fmt(f),
             Self::Key(e) => e.fmt(f),
@@ -350,12 +348,9 @@ impl Display for Error<'_> {
         )?;
 
         match (data, data_size) {
-            (Ok(data), _) if data_size > 10 => write!(
-                f,
-                "'{}' ... ({} characters omitted)",
-                &data[..10],
-                data_size - 10
-            ),
+            (Ok(data), _) if data_size > 10 => {
+                write!(f, "'{}' ... ({} characters omitted)", &data[..10], data_size - 10)
+            }
             (Ok(data), _) => write!(f, "'{}'", data),
             (Err(_), _) if data_size > 10 => write!(
                 f,
@@ -704,9 +699,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error> {
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
-        map(take_spaces, |whitespace| {
-            Event::Whitespace(Cow::Borrowed(whitespace))
-        }),
+        map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
         map(take_newline, |(newline, counter)| {
             newlines += counter;
             Event::Newline(Cow::Borrowed(newline))
@@ -753,10 +746,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error> {
         });
     }
 
-    Ok(Parser {
-        frontmatter,
-        sections,
-    })
+    Ok(Parser { frontmatter, sections })
 }
 
 fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
@@ -771,10 +761,7 @@ fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
     ))
 }
 
-fn section<'a, 'b>(
-    i: &'a [u8],
-    node: &'b mut ParserNode,
-) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
+fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
     let (mut i, section_header) = section_header(i)?;
 
     let mut newlines = 0;
@@ -870,15 +857,12 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
         tag("\"]"),
     )(i)?;
 
-    let subsection_name = subsection_name
-        .map(std::str::from_utf8)
-        .transpose()
-        .map_err(|_| {
-            nom::Err::Error(NomError::<&[u8]> {
-                input: i,
-                code: ErrorKind::AlphaNumeric,
-            })
-        })?;
+    let subsection_name = subsection_name.map(std::str::from_utf8).transpose().map_err(|_| {
+        nom::Err::Error(NomError::<&[u8]> {
+            input: i,
+            code: ErrorKind::AlphaNumeric,
+        })
+    })?;
 
     Ok((
         i,
@@ -1261,20 +1245,14 @@ mod value_no_continuation {
     #[test]
     fn semicolon_comment_not_consumed() {
         let mut events = vec![];
-        assert_eq!(
-            value_impl(b"hello;world", &mut events).unwrap().0,
-            b";world"
-        );
+        assert_eq!(value_impl(b"hello;world", &mut events).unwrap().0, b";world");
         assert_eq!(events, vec![value_event("hello")]);
     }
 
     #[test]
     fn octothorpe_comment_not_consumed() {
         let mut events = vec![];
-        assert_eq!(
-            value_impl(b"hello#world", &mut events).unwrap().0,
-            b"#world"
-        );
+        assert_eq!(value_impl(b"hello#world", &mut events).unwrap().0, b"#world");
         assert_eq!(events, vec![value_event("hello")]);
     }
 
@@ -1292,18 +1270,14 @@ mod value_no_continuation {
     fn values_with_extraneous_whitespace_before_comment() {
         let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello             #world", &mut events)
-                .unwrap()
-                .0,
+            value_impl(b"hello             #world", &mut events).unwrap().0,
             b"             #world"
         );
         assert_eq!(events, vec![value_event("hello")]);
 
         let mut events = vec![];
         assert_eq!(
-            value_impl(b"hello             ;world", &mut events)
-                .unwrap()
-                .0,
+            value_impl(b"hello             ;world", &mut events).unwrap().0,
             b"             ;world"
         );
         assert_eq!(events, vec![value_event("hello")]);
@@ -1312,20 +1286,14 @@ mod value_no_continuation {
     #[test]
     fn trans_escaped_comment_marker_not_consumed() {
         let mut events = vec![];
-        assert_eq!(
-            value_impl(br##"hello"#"world; a"##, &mut events).unwrap().0,
-            b"; a"
-        );
+        assert_eq!(value_impl(br##"hello"#"world; a"##, &mut events).unwrap().0, b"; a");
         assert_eq!(events, vec![value_event(r##"hello"#"world"##)]);
     }
 
     #[test]
     fn complex_test() {
         let mut events = vec![];
-        assert_eq!(
-            value_impl(br#"value";";ahhhh"#, &mut events).unwrap().0,
-            b";ahhhh"
-        );
+        assert_eq!(value_impl(br#"value";";ahhhh"#, &mut events).unwrap().0, b";ahhhh");
         assert_eq!(events, vec![value_event(r#"value";""#)]);
     }
 
@@ -1367,12 +1335,7 @@ mod value_continuation {
     #[test]
     fn continuation_with_whitespace() {
         let mut events = vec![];
-        assert_eq!(
-            value_impl(b"hello\\\n        world", &mut events)
-                .unwrap()
-                .0,
-            b""
-        );
+        assert_eq!(value_impl(b"hello\\\n        world", &mut events).unwrap().0, b"");
         assert_eq!(
             events,
             vec![
@@ -1410,11 +1373,7 @@ mod value_continuation {
         assert_eq!(value_impl(b"\"\\\n;\";a", &mut events).unwrap().0, b";a");
         assert_eq!(
             events,
-            vec![
-                value_not_done_event("\""),
-                newline_event(),
-                value_done_event(";\"")
-            ]
+            vec![value_not_done_event("\""), newline_event(), value_done_event(";\"")]
         );
     }
 }
@@ -1423,9 +1382,8 @@ mod value_continuation {
 mod section {
     use super::{section, Event, ParsedSection, ParserNode};
     use crate::test_util::{
-        comment_event, fully_consumed, name_event, newline_event,
-        section_header as parsed_section_header, value_done_event, value_event,
-        value_not_done_event, whitespace_event,
+        comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
+        value_done_event, value_event, value_not_done_event, whitespace_event,
     };
 
     #[test]
@@ -1546,11 +1504,7 @@ mod section {
         let mut node = ParserNode::SectionHeader;
         // This test is absolute hell. Good luck if this fails.
         assert_eq!(
-            section(
-                b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c",
-                &mut node
-            )
-            .unwrap(),
+            section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut node).unwrap(),
             fully_consumed((
                 ParsedSection {
                     section_header: parsed_section_header("section", None),
@@ -1630,10 +1584,7 @@ mod error {
 
     #[test]
     fn remaining_data_contains_bad_tokens() {
-        assert_eq!(
-            parse_from_str("[hello").unwrap_err().remaining_data(),
-            b"[hello"
-        );
+        assert_eq!(parse_from_str("[hello").unwrap_err().remaining_data(), b"[hello");
     }
 
     #[test]
