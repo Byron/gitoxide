@@ -22,10 +22,6 @@ serde_crate = { version = "1", package = "serde", optional = true }
 serde_derive = "1.0"
 criterion = "0.3"
 
-[profile.release]
-lto = true
-codegen-units = 1
-
 [[bench]]
 name = "large_config_file"
 harness = false
