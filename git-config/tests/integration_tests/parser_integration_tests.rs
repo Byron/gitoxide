@@ -1,10 +1,7 @@
 use git_config::parser::{parse_from_str, Event, Key, ParsedSectionHeader, SectionHeaderName};
 use std::borrow::Cow;
 
-pub fn section_header_event(
-    name: &str,
-    subsection: impl Into<Option<(&'static str, &'static str)>>,
-) -> Event<'_> {
+pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))
 }
 
@@ -198,13 +195,7 @@ fn parse_empty() {
 fn parse_whitespace() {
     assert_eq!(
         parse_from_str("\n   \n \n").unwrap().into_vec(),
-        vec![
-            newline(),
-            whitespace("   "),
-            newline(),
-            whitespace(" "),
-            newline(),
-        ]
+        vec![newline(), whitespace("   "), newline(), whitespace(" "), newline()]
     )
 }
 

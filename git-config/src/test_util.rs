@@ -4,10 +4,7 @@
 use crate::parser::{Event, Key, ParsedComment, ParsedSectionHeader};
 use std::borrow::Cow;
 
-pub fn section_header_event(
-    name: &str,
-    subsection: impl Into<Option<(&'static str, &'static str)>>,
-) -> Event<'_> {
+pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))
 }
 

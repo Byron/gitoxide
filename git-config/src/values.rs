@@ -470,9 +470,7 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(
-                String::from_utf8(value).unwrap(),
-            )))
+            Ok(Self::Explicit(Cow::Owned(String::from_utf8(value).unwrap())))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -569,10 +567,7 @@ impl FromStr for Integer {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Ok(value) = s.parse() {
-            return Ok(Self {
-                value,
-                suffix: None,
-            });
+            return Ok(Self { value, suffix: None });
         }
 
         // Assume we have a prefix at this point.
@@ -1114,18 +1109,12 @@ mod normalize {
 
     #[test]
     fn all_quoted_is_optimized() {
-        assert_eq!(
-            normalize_str("\"hello world\""),
-            Cow::Borrowed(b"hello world")
-        );
+        assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world"));
     }
 
     #[test]
     fn all_quote_optimization_is_correct() {
-        assert_eq!(
-            normalize_str(r#""hello" world\""#),
-            Cow::Borrowed(b"hello world\"")
-        );
+        assert_eq!(normalize_str(r#""hello" world\""#), Cow::Borrowed(b"hello world\""));
     }
 
     #[test]
@@ -1163,10 +1152,7 @@ mod boolean {
     fn from_str_false() {
         assert_eq!(Boolean::try_from("no"), Ok(Boolean::False("no".into())));
         assert_eq!(Boolean::try_from("off"), Ok(Boolean::False("off".into())));
-        assert_eq!(
-            Boolean::try_from("false"),
-            Ok(Boolean::False("false".into()))
-        );
+        assert_eq!(Boolean::try_from("false"), Ok(Boolean::False("false".into())));
         assert_eq!(Boolean::try_from("zero"), Ok(Boolean::False("zero".into())));
         assert_eq!(Boolean::try_from("\"\""), Ok(Boolean::False("\"\"".into())));
     }
@@ -1214,13 +1200,7 @@ mod integer {
 
     #[test]
     fn from_str_no_suffix() {
-        assert_eq!(
-            Integer::from_str("1").unwrap(),
-            Integer {
-                value: 1,
-                suffix: None
-            }
-        );
+        assert_eq!(Integer::from_str("1").unwrap(), Integer { value: 1, suffix: None });
 
         assert_eq!(
             Integer::from_str("-1").unwrap(),
@@ -1290,35 +1270,14 @@ mod color_value {
 
     #[test]
     fn bright() {
-        assert_eq!(
-            ColorValue::from_str("brightblack"),
-            Ok(ColorValue::BrightBlack)
-        );
+        assert_eq!(ColorValue::from_str("brightblack"), Ok(ColorValue::BrightBlack));
         assert_eq!(ColorValue::from_str("brightred"), Ok(ColorValue::BrightRed));
-        assert_eq!(
-            ColorValue::from_str("brightgreen"),
-            Ok(ColorValue::BrightGreen)
-        );
-        assert_eq!(
-            ColorValue::from_str("brightyellow"),
-            Ok(ColorValue::BrightYellow)
-        );
-        assert_eq!(
-            ColorValue::from_str("brightblue"),
-            Ok(ColorValue::BrightBlue)
-        );
-        assert_eq!(
-            ColorValue::from_str("brightmagenta"),
-            Ok(ColorValue::BrightMagenta)
-        );
-        assert_eq!(
-            ColorValue::from_str("brightcyan"),
-            Ok(ColorValue::BrightCyan)
-        );
-        assert_eq!(
-            ColorValue::from_str("brightwhite"),
-            Ok(ColorValue::BrightWhite)
-        );
+        assert_eq!(ColorValue::from_str("brightgreen"), Ok(ColorValue::BrightGreen));
+        assert_eq!(ColorValue::from_str("brightyellow"), Ok(ColorValue::BrightYellow));
+        assert_eq!(ColorValue::from_str("brightblue"), Ok(ColorValue::BrightBlue));
+        assert_eq!(ColorValue::from_str("brightmagenta"), Ok(ColorValue::BrightMagenta));
+        assert_eq!(ColorValue::from_str("brightcyan"), Ok(ColorValue::BrightCyan));
+        assert_eq!(ColorValue::from_str("brightwhite"), Ok(ColorValue::BrightWhite));
     }
 
     #[test]
@@ -1329,18 +1288,9 @@ mod color_value {
 
     #[test]
     fn hex() {
-        assert_eq!(
-            ColorValue::from_str("#ff0010"),
-            Ok(ColorValue::Rgb(255, 0, 16))
-        );
-        assert_eq!(
-            ColorValue::from_str("#ffffff"),
-            Ok(ColorValue::Rgb(255, 255, 255))
-        );
-        assert_eq!(
-            ColorValue::from_str("#000000"),
-            Ok(ColorValue::Rgb(0, 0, 0))
-        );
+        assert_eq!(ColorValue::from_str("#ff0010"), Ok(ColorValue::Rgb(255, 0, 16)));
+        assert_eq!(ColorValue::from_str("#ffffff"), Ok(ColorValue::Rgb(255, 255, 255)));
+        assert_eq!(ColorValue::from_str("#000000"), Ok(ColorValue::Rgb(0, 0, 0)));
     }
 
     #[test]
@@ -1366,73 +1316,31 @@ mod color_attribute {
         assert_eq!(ColorAttribute::from_str("dim"), Ok(ColorAttribute::Dim));
         assert_eq!(ColorAttribute::from_str("ul"), Ok(ColorAttribute::Ul));
         assert_eq!(ColorAttribute::from_str("blink"), Ok(ColorAttribute::Blink));
-        assert_eq!(
-            ColorAttribute::from_str("reverse"),
-            Ok(ColorAttribute::Reverse)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("italic"),
-            Ok(ColorAttribute::Italic)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("strike"),
-            Ok(ColorAttribute::Strike)
-        );
+        assert_eq!(ColorAttribute::from_str("reverse"), Ok(ColorAttribute::Reverse));
+        assert_eq!(ColorAttribute::from_str("italic"), Ok(ColorAttribute::Italic));
+        assert_eq!(ColorAttribute::from_str("strike"), Ok(ColorAttribute::Strike));
     }
 
     #[test]
     fn inverted_no_dash() {
-        assert_eq!(
-            ColorAttribute::from_str("nobold"),
-            Ok(ColorAttribute::NoBold)
-        );
+        assert_eq!(ColorAttribute::from_str("nobold"), Ok(ColorAttribute::NoBold));
         assert_eq!(ColorAttribute::from_str("nodim"), Ok(ColorAttribute::NoDim));
         assert_eq!(ColorAttribute::from_str("noul"), Ok(ColorAttribute::NoUl));
-        assert_eq!(
-            ColorAttribute::from_str("noblink"),
-            Ok(ColorAttribute::NoBlink)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("noreverse"),
-            Ok(ColorAttribute::NoReverse)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("noitalic"),
-            Ok(ColorAttribute::NoItalic)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("nostrike"),
-            Ok(ColorAttribute::NoStrike)
-        );
+        assert_eq!(ColorAttribute::from_str("noblink"), Ok(ColorAttribute::NoBlink));
+        assert_eq!(ColorAttribute::from_str("noreverse"), Ok(ColorAttribute::NoReverse));
+        assert_eq!(ColorAttribute::from_str("noitalic"), Ok(ColorAttribute::NoItalic));
+        assert_eq!(ColorAttribute::from_str("nostrike"), Ok(ColorAttribute::NoStrike));
     }
 
     #[test]
     fn inverted_dashed() {
-        assert_eq!(
-            ColorAttribute::from_str("no-bold"),
-            Ok(ColorAttribute::NoBold)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("no-dim"),
-            Ok(ColorAttribute::NoDim)
-        );
+        assert_eq!(ColorAttribute::from_str("no-bold"), Ok(ColorAttribute::NoBold));
+        assert_eq!(ColorAttribute::from_str("no-dim"), Ok(ColorAttribute::NoDim));
         assert_eq!(ColorAttribute::from_str("no-ul"), Ok(ColorAttribute::NoUl));
-        assert_eq!(
-            ColorAttribute::from_str("no-blink"),
-            Ok(ColorAttribute::NoBlink)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("no-reverse"),
-            Ok(ColorAttribute::NoReverse)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("no-italic"),
-            Ok(ColorAttribute::NoItalic)
-        );
-        assert_eq!(
-            ColorAttribute::from_str("no-strike"),
-            Ok(ColorAttribute::NoStrike)
-        );
+        assert_eq!(ColorAttribute::from_str("no-blink"), Ok(ColorAttribute::NoBlink));
+        assert_eq!(ColorAttribute::from_str("no-reverse"), Ok(ColorAttribute::NoReverse));
+        assert_eq!(ColorAttribute::from_str("no-italic"), Ok(ColorAttribute::NoItalic));
+        assert_eq!(ColorAttribute::from_str("no-strike"), Ok(ColorAttribute::NoStrike));
     }
 
     #[test]
