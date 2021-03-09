@@ -4,11 +4,14 @@ use crate::parser::{
     parse_from_bytes, Error, Event, Key, ParsedSectionHeader, Parser, SectionHeaderName,
 };
 use crate::values::{normalize_bytes, normalize_cow, normalize_vec};
-use std::borrow::{Borrow, Cow};
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::fmt::Display;
 use std::ops::{Deref, DerefMut};
+use std::{
+    borrow::{Borrow, Cow},
+    ops::Range,
+};
 
 /// All possible error types that may occur from interacting with [`GitConfig`].
 #[derive(PartialEq, Eq, Hash, Clone, PartialOrd, Ord, Debug)]
@@ -39,20 +42,6 @@ impl Display for GitConfigError<'_> {
 }
 
 impl std::error::Error for GitConfigError<'_> {}
-
-/// The section ID is a monotonically increasing ID used to refer to sections.
-/// This value does not imply any ordering between sections, as new sections
-/// with higher section IDs may be in between lower ID sections.
-///
-/// We need to use a section id because `git-config` permits sections with
-/// identical names. As a result, we can't simply use the section name as a key
-/// in a map.
-///
-/// This id guaranteed to be unique, but not guaranteed to be compact. In other
-/// words, it's possible that a section may have an ID of 3 but the next section
-/// has an ID of 5.
-#[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-struct SectionId(usize);
 
 /// A opaque type that represents a mutable reference to a section.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
@@ -113,6 +102,50 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         None
     }
 
+    /// Sets the last key value pair if it exists, or adds the new value.
+    /// Returns the previous value if it replaced a value, or None if it adds
+    /// the value.
+    pub fn set(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) -> Option<Cow<'event, [u8]>> {
+        let range = self.get_value_range_by_key(&key);
+        if range.is_empty() {
+            self.push(key, value);
+            return None;
+        }
+        let range_start = range.start;
+        let ret = self.remove_internal(range);
+        self.section.0.insert(range_start, Event::Value(value));
+        Some(ret)
+    }
+
+    /// Removes the latest value by key and returns it, if it exists.
+    pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, [u8]>> {
+        let range = self.get_value_range_by_key(key);
+        if range.is_empty() {
+            return None;
+        }
+        Some(self.remove_internal(range))
+    }
+
+    /// Performs the removal, assuming the range is valid. This is used to
+    /// avoid duplicating searching for the range in [`Self::set`].
+    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, [u8]> {
+        self.section
+            .0
+            .drain(range)
+            // TODO: replace with Iterator::reduce once that hits stable
+            .fold(Cow::<[u8]>::Owned(vec![]), |acc, e| match e {
+                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
+                    // This is fine because we start out with an owned
+                    // variant, so we never actually clone the
+                    // accumulator.
+                    let mut acc = acc.into_owned();
+                    acc.extend(&*v);
+                    Cow::Owned(acc)
+                }
+                _ => acc,
+            })
+    }
+
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
     pub fn push_newline(&mut self) {
@@ -134,6 +167,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Returns the number of whitespace this section will insert before the
     /// beginning of a key.
+    #[must_use]
     pub const fn whitespace(&self) -> usize {
         self.whitespace
     }
@@ -221,33 +255,35 @@ impl<'event> OwnedSection<'event> {
     /// Returns None if the key was not found.
     #[must_use]
     pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
-        let mut found_key = false;
-        let mut latest_value = None;
-        let mut partial_value = None;
-
-        // todo: iterate backwards instead
-        for event in &self.0 {
-            match event {
-                Event::Key(event_key) if *event_key == *key => found_key = true,
-                Event::Value(v) if found_key => {
-                    found_key = false;
-                    // Clones the Cow, doesn't copy underlying value if borrowed
-                    latest_value = Some(v.clone());
-                    partial_value = None;
-                }
-                Event::ValueNotDone(v) if found_key => {
-                    latest_value = None;
-                    partial_value = Some((*v).to_vec());
-                }
-                Event::ValueDone(v) if found_key => {
-                    found_key = false;
-                    partial_value.as_mut().unwrap().extend(&**v);
-                }
-                _ => (),
-            }
+        let range = self.get_value_range_by_key(key);
+        if range.is_empty() {
+            return None;
         }
 
-        latest_value.or_else(|| partial_value.map(normalize_vec))
+        if range.end - range.start == 1 {
+            return self.0.get(range.start).map(|e| match e {
+                Event::Value(v) => v.clone(),
+                // range only has one element so we know it's a value event, so
+                // it's impossible to reach this code.
+                _ => unreachable!(),
+            });
+        }
+
+        Some(normalize_cow(self.0[range].iter().fold(
+            Cow::<[u8]>::Owned(vec![]),
+            // TODO: replace with Iterator::reduce once that hits stable
+            |acc, e| match e {
+                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
+                    // This is fine because we start out with an owned
+                    // variant, so we never actually clone the
+                    // accumulator.
+                    let mut acc = acc.into_owned();
+                    acc.extend(&**v);
+                    Cow::Owned(acc)
+                }
+                _ => acc,
+            },
+        )))
     }
 
     /// Retrieves the last matching value in a section with the given key, and
@@ -273,7 +309,7 @@ impl<'event> OwnedSection<'event> {
         let mut partial_value = None;
 
         // This can iterate forwards because we need to iterate over the whole
-        // section anyways.
+        // section anyways
         for event in &self.0 {
             match event {
                 Event::Key(event_key) if event_key == key => found_key = true,
@@ -314,6 +350,70 @@ impl<'event> OwnedSection<'event> {
             .collect::<Result<Vec<T>, _>>()
             .map_err(|_| GitConfigError::FailedConversion)
     }
+
+    /// Returns an iterator visiting all keys in order.
+    pub fn keys(&self) -> impl Iterator<Item = &Event<'event>> {
+        self.0.iter().filter(|e| matches!(e, Event::Key(_)))
+    }
+
+    /// Checks if the section contains the provided key.
+    #[must_use]
+    pub fn contains_key(&self, key: &Key) -> bool {
+        for e in &self.0 {
+            if let Event::Key(k) = e {
+                if k == key {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Returns the number of entries in the section.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
+    }
+
+    /// Returns if the section is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Returns the the range containing the value events for the section.
+    /// If the value is not found, then this returns an empty range.
+    fn get_value_range_by_key(&self, key: &Key<'event>) -> Range<usize> {
+        let mut values_start = 0;
+        // value end needs to be offset by one so that the last value's index
+        // is included in the range
+        let mut values_end = 0;
+        for (i, e) in self.0.iter().enumerate().rev() {
+            match e {
+                Event::Key(k) => {
+                    if k == key {
+                        break;
+                    }
+                    values_start = 0;
+                    values_end = 0;
+                }
+                Event::Value(_) => {
+                    values_end = i + 1;
+                    values_start = i;
+                }
+                Event::ValueNotDone(_) | Event::ValueDone(_) => {
+                    if values_end == 0 {
+                        values_end = i + 1;
+                    } else {
+                        values_start = i;
+                    }
+                }
+                _ => (),
+            }
+        }
+
+        values_start..values_end
+    }
 }
 
 impl<'event> From<Vec<Event<'event>>> for OwnedSection<'event> {
@@ -322,10 +422,353 @@ impl<'event> From<Vec<Event<'event>>> for OwnedSection<'event> {
     }
 }
 
+/// The section ID is a monotonically increasing ID used to refer to sections.
+/// This value does not imply any ordering between sections, as new sections
+/// with higher section IDs may be in between lower ID sections.
+///
+/// We need to use a section id because `git-config` permits sections with
+/// identical names. As a result, we can't simply use the section name as a key
+/// in a map.
+///
+/// This id guaranteed to be unique, but not guaranteed to be compact. In other
+/// words, it's possible that a section may have an ID of 3 but the next section
+/// has an ID of 5.
+#[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
+struct SectionId(usize);
+
+/// Internal data structure for the section id lookup tree used by
+/// [`GitConfig`]. Note that order in Vec matters as it represents the order
+/// of section ids with the matched section and name, and is used for precedence
+/// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
 enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
+}
+
+/// High level `git-config` reader and writer.
+///
+/// Internally, this uses various acceleration data structures to improve
+/// performance of the typical usage behavior of many lookups and relatively
+/// fewer insertions.
+///
+/// # Multivar behavior
+///
+/// `git` is flexible enough to allow users to set a key multiple times in
+/// any number of identically named sections. When this is the case, the key
+/// is known as a "multivar". In this case, `get_raw_value` follows the
+/// "last one wins" approach that `git-config` internally uses for multivar
+/// resolution.
+///
+/// Concretely, the following config has a multivar, `a`, with the values
+/// of `b`, `c`, and `d`, while `e` is a single variable with the value
+/// `f g h`.
+///
+/// ```text
+/// [core]
+///     a = b
+///     a = c
+/// [core]
+///     a = d
+///     e = f g h
+/// ```
+///
+/// Calling methods that fetch or set only one value (such as [`get_raw_value`])
+/// key `a` with the above config will fetch `d` or replace `d`, since the last
+/// valid config key/value pair is `a = d`:
+///
+/// ```
+/// # use git_config::file::GitConfig;
+/// # use std::borrow::Cow;
+/// # use std::convert::TryFrom;
+/// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(Cow::Borrowed("d".as_bytes())));
+/// ```
+///
+/// Consider the `multi` variants of the methods instead, if you want to work
+/// with all values instead.
+///
+/// [`get_raw_value`]: Self::get_raw_value
+#[derive(PartialEq, Eq, Clone, Debug, Default)]
+pub struct GitConfig<'event> {
+    /// The list of events that occur before an actual section. Since a
+    /// `git-config` file prohibits global values, this vec is limited to only
+    /// comment, newline, and whitespace events.
+    frontmatter_events: OwnedSection<'event>,
+    /// Section name and subsection name to section id lookup tree. This is
+    /// effectively a n-tree (opposed to a binary tree) that can have a height
+    /// of at most three (including an implicit root node).
+    section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
+    /// SectionId to section mapping. The value of this HashMap contains actual
+    /// events.
+    ///
+    /// This indirection with the SectionId as the key is critical to flexibly
+    /// supporting `git-config` sections, as duplicated keys are permitted.
+    sections: HashMap<SectionId, OwnedSection<'event>>,
+    section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
+    /// Internal monotonically increasing counter for section ids.
+    section_id_counter: usize,
+    /// Section order for output ordering.
+    section_order: VecDeque<SectionId>,
+}
+
+impl<'event> GitConfig<'event> {
+    /// Constructs an empty `git-config` file.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Returns an interpreted value given a section, an optional subsection and
+    /// key.
+    ///
+    /// It's recommended to use one of the values in the [`values`] module as
+    /// the conversion is already implemented, but this function is flexible and
+    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
+    ///
+    /// Consider [`Self::multi_value`] if you want to get all values of a
+    /// multivar instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::values::{Integer, Value, Boolean};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// let config = r#"
+    ///     [core]
+    ///         a = 10k
+    ///         c
+    /// "#;
+    /// let git_config = GitConfig::try_from(config)?;
+    /// // You can either use the turbofish to determine the type...
+    /// let a_value = git_config.value::<Integer>("core", None, "a")?;
+    /// // ... or explicitly declare the type to avoid the turbofish
+    /// let c_value: Boolean = git_config.value("core", None, "c")?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in the requested
+    /// section and subsection, if the section and subsection do not exist, or
+    /// if there was an issue converting the type into the requested variant.
+    ///
+    /// [`values`]: crate::values
+    /// [`TryFrom`]: std::convert::TryFrom
+    pub fn value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<T, GitConfigError<'lookup>> {
+        T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
+            .map_err(|_| GitConfigError::FailedConversion)
+    }
+
+    /// Returns all interpreted values given a section, an optional subsection
+    /// and key.
+    ///
+    /// It's recommended to use one of the values in the [`values`] module as
+    /// the conversion is already implemented, but this function is flexible and
+    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
+    ///
+    /// Consider [`Self::value`] if you want to get a single value
+    /// (following last-one-wins resolution) instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// let config = r#"
+    ///     [core]
+    ///         a = true
+    ///         c = g
+    ///     [core]
+    ///         a
+    ///         a = false
+    /// "#;
+    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// // You can either use the turbofish to determine the type...
+    /// let a_value = git_config.multi_value::<Boolean>("core", None, "a")?;
+    /// assert_eq!(
+    ///     a_value,
+    ///     vec![
+    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true"))),
+    ///         Boolean::True(TrueVariant::Implicit),
+    ///         Boolean::False(Cow::Borrowed("false")),
+    ///     ]
+    /// );
+    /// // ... or explicitly declare the type to avoid the turbofish
+    /// let c_value: Vec<Value> = git_config.multi_value("core", None, "c")?;
+    /// assert_eq!(c_value, vec![Value::Other(Cow::Borrowed(b"g"))]);
+    /// # Ok::<(), GitConfigError>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the key is not in the requested
+    /// section and subsection, if the section and subsection do not exist, or
+    /// if there was an issue converting the type into the requested variant.
+    ///
+    /// [`values`]: crate::values
+    /// [`TryFrom`]: std::convert::TryFrom
+    pub fn multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+    ) -> Result<Vec<T>, GitConfigError<'lookup>> {
+        self.get_raw_multi_value(section_name, subsection_name, key)?
+            .into_iter()
+            .map(T::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| GitConfigError::FailedConversion)
+    }
+
+    /// Returns an immutable section reference.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the section and optional
+    /// subsection do not exist.
+    pub fn section<'lookup>(
+        &mut self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+    ) -> Result<&OwnedSection<'event>, GitConfigError<'lookup>> {
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
+        Ok(self.sections.get(section_ids.last().unwrap()).unwrap())
+    }
+
+    /// Returns an mutable section reference.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the section and optional
+    /// subsection do not exist.
+    pub fn section_mut<'lookup>(
+        &mut self,
+        section_name: &'lookup str,
+        subsection_name: Option<&'lookup str>,
+    ) -> Result<MutableSection<'_, 'event>, GitConfigError<'lookup>> {
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
+
+        Ok(MutableSection::new(
+            self.sections.get_mut(section_ids.last().unwrap()).unwrap(),
+        ))
+    }
+
+    /// Adds a new section to config. If a subsection name was provided, then
+    /// the generated header will use the modern subsection syntax. Returns a
+    /// reference to the new section for immediate editing.
+    ///
+    /// # Examples
+    ///
+    /// Creating a new empty section:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::convert::TryFrom;
+    /// let mut git_config = GitConfig::new();
+    /// let _section = git_config.new_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n");
+    /// ```
+    ///
+    /// Creating a new empty section and adding values to it:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::convert::TryFrom;
+    /// let mut git_config = GitConfig::new();
+    /// let mut section = git_config.new_section("hello", Some("world".into()));
+    /// section.push("a".into(), "b".as_bytes().into());
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
+    /// let _section = git_config.new_section("core", None);
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");
+    /// ```
+    pub fn new_section(
+        &mut self,
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) -> MutableSection<'_, 'event> {
+        let subsection_name = subsection_name.into();
+        let mut section = if subsection_name.is_some() {
+            self.push_section(
+                ParsedSectionHeader {
+                    name: SectionHeaderName(section_name.into()),
+                    separator: Some(" ".into()),
+                    subsection_name,
+                },
+                OwnedSection::new(),
+            )
+        } else {
+            self.push_section(
+                ParsedSectionHeader {
+                    name: SectionHeaderName(section_name.into()),
+                    separator: None,
+                    subsection_name: None,
+                },
+                OwnedSection::new(),
+            )
+        };
+        section.push_newline();
+        section
+    }
+
+    /// Removes the section, returning the events it had, if any. If multiple
+    /// sections have the same name, then the last one is returned. Note that
+    /// later sections with the same name have precedent over earlier ones.
+    ///
+    /// # Examples
+    ///
+    /// Creating and removing a section:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::convert::TryFrom;
+    /// let mut git_config = GitConfig::try_from(
+    /// r#"[hello "world"]
+    ///     some-value = 4
+    /// "#).unwrap();
+    ///
+    /// let events = git_config.remove_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), "");
+    /// ```
+    ///
+    /// Precedence example for removing sections with the same name:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use std::convert::TryFrom;
+    /// let mut git_config = GitConfig::try_from(
+    /// r#"[hello "world"]
+    ///     some-value = 4
+    /// [hello "world"]
+    ///     some-value = 5
+    /// "#).unwrap();
+    ///
+    /// let events = git_config.remove_section("hello", Some("world".into()));
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n    some-value = 4\n");
+    /// ```
+    pub fn remove_section<'lookup>(
+        &mut self,
+        section_name: &'lookup str,
+        subsection_name: impl Into<Option<&'lookup str>>,
+    ) -> Option<OwnedSection> {
+        let section_ids =
+            self.get_section_ids_by_name_and_subname(section_name, subsection_name.into());
+        let id = section_ids.ok()?.pop()?;
+        self.section_order
+            .remove(self.section_order.iter().position(|v| *v == id).unwrap());
+        self.sections.remove(&id)
+    }
 }
 
 /// An intermediate representation of a mutable value obtained from
@@ -335,6 +778,7 @@ enum LookupTreeNode<'a> {
 /// [`GitConfig`], and thus guarantees through Rust's borrower checker that
 /// multiple mutable references to [`GitConfig`] cannot be owned at the same
 /// time.
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: MutableSection<'borrow, 'event>,
     key: Key<'lookup>,
@@ -385,6 +829,7 @@ impl MutableValue<'_, '_, '_> {
     }
 }
 
+/// Internal data structure for [`MutableMultiValue`]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 struct EntryData {
     section_id: SectionId,
@@ -398,7 +843,7 @@ struct EntryData {
 /// [`GitConfig`], and thus guarantees through Rust's borrower checker that
 /// multiple mutable references to [`GitConfig`] cannot be owned at the same
 /// time.
-#[derive(Eq, PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, OwnedSection<'event>>,
     key: Key<'lookup>,
@@ -693,297 +1138,10 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     }
 }
 
-/// High level `git-config` reader and writer.
-///
-/// Internally, this uses various acceleration data structures to improve
-/// performance of the typical usage behavior of many lookups and relatively
-/// fewer insertions.
-///
-/// # Multivar behavior
-///
-/// `git` is flexible enough to allow users to set a key multiple times in
-/// any number of identically named sections. When this is the case, the key
-/// is known as a "multivar". In this case, `get_raw_value` follows the
-/// "last one wins" approach that `git-config` internally uses for multivar
-/// resolution.
-///
-/// Concretely, the following config has a multivar, `a`, with the values
-/// of `b`, `c`, and `d`, while `e` is a single variable with the value
-/// `f g h`.
-///
-/// ```text
-/// [core]
-///     a = b
-///     a = c
-/// [core]
-///     a = d
-///     e = f g h
-/// ```
-///
-/// Calling methods that fetch or set only one value (such as [`get_raw_value`])
-/// key `a` with the above config will fetch `d` or replace `d`, since the last
-/// valid config key/value pair is `a = d`:
-///
-/// ```
-/// # use git_config::file::GitConfig;
-/// # use std::borrow::Cow;
-/// # use std::convert::TryFrom;
-/// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(Cow::Borrowed("d".as_bytes())));
-/// ```
-///
-/// Consider the `multi` variants of the methods instead, if you want to work
-/// with all values instead.
-///
-/// [`get_raw_value`]: Self::get_raw_value
-#[derive(PartialEq, Eq, Clone, Debug, Default)]
-pub struct GitConfig<'event> {
-    /// The list of events that occur before an actual section. Since a
-    /// `git-config` file prohibits global values, this vec is limited to only
-    /// comment, newline, and whitespace events.
-    frontmatter_events: OwnedSection<'event>,
-    section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
-    /// SectionId to section mapping. The value of this HashMap contains actual
-    /// events.
-    ///
-    /// This indirection with the SectionId as the key is critical to flexibly
-    /// supporting `git-config` sections, as duplicated keys are permitted.
-    sections: HashMap<SectionId, OwnedSection<'event>>,
-    section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
-    section_id_counter: usize,
-    section_order: VecDeque<SectionId>,
-}
-
-impl<'event> GitConfig<'event> {
-    /// Constructs an empty `git-config` file.
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Returns an interpreted value given a section, an optional subsection and
-    /// key.
-    ///
-    /// It's recommended to use one of the values in the [`values`] module as
-    /// the conversion is already implemented, but this function is flexible and
-    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
-    ///
-    /// Consider [`Self::multi_value`] if you want to get all values of a
-    /// multivar instead.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean};
-    /// # use std::borrow::Cow;
-    /// # use std::convert::TryFrom;
-    /// let config = r#"
-    ///     [core]
-    ///         a = 10k
-    ///         c
-    /// "#;
-    /// let git_config = GitConfig::try_from(config)?;
-    /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.value::<Integer>("core", None, "a")?;
-    /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Boolean = git_config.value("core", None, "c")?;
-    /// # Ok::<(), Box<dyn std::error::Error>>(())
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, if the section and subsection do not exist, or
-    /// if there was an issue converting the type into the requested variant.
-    ///
-    /// [`values`]: crate::values
-    /// [`TryFrom`]: std::convert::TryFrom
-    pub fn value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
-        &'event self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-    ) -> Result<T, GitConfigError<'lookup>> {
-        T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
-            .map_err(|_| GitConfigError::FailedConversion)
-    }
-
-    /// Returns all interpreted values given a section, an optional subsection
-    /// and key.
-    ///
-    /// It's recommended to use one of the values in the [`values`] module as
-    /// the conversion is already implemented, but this function is flexible and
-    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
-    ///
-    /// Consider [`Self::value`] if you want to get a single value
-    /// (following last-one-wins resolution) instead.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
-    /// # use std::borrow::Cow;
-    /// # use std::convert::TryFrom;
-    /// let config = r#"
-    ///     [core]
-    ///         a = true
-    ///         c = g
-    ///     [core]
-    ///         a
-    ///         a = false
-    /// "#;
-    /// let git_config = GitConfig::try_from(config).unwrap();
-    /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.multi_value::<Boolean>("core", None, "a")?;
-    /// assert_eq!(
-    ///     a_value,
-    ///     vec![
-    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true"))),
-    ///         Boolean::True(TrueVariant::Implicit),
-    ///         Boolean::False(Cow::Borrowed("false")),
-    ///     ]
-    /// );
-    /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Value> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![Value::Other(Cow::Borrowed(b"g"))]);
-    /// # Ok::<(), GitConfigError>(())
-    /// ```
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, if the section and subsection do not exist, or
-    /// if there was an issue converting the type into the requested variant.
-    ///
-    /// [`values`]: crate::values
-    /// [`TryFrom`]: std::convert::TryFrom
-    pub fn multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
-        &'event self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-    ) -> Result<Vec<T>, GitConfigError<'lookup>> {
-        self.get_raw_multi_value(section_name, subsection_name, key)?
-            .into_iter()
-            .map(T::try_from)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| GitConfigError::FailedConversion)
-    }
-
-    /// Returns an immutable section reference.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the section and optional
-    /// subsection do not exist.
-    pub fn section<'lookup>(
-        &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-    ) -> Result<&OwnedSection<'event>, GitConfigError<'lookup>> {
-        let section_ids =
-            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-        Ok(self.sections.get(section_ids.last().unwrap()).unwrap())
-    }
-
-    /// Returns an mutable section reference.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the section and optional
-    /// subsection do not exist.
-    pub fn section_mut<'lookup>(
-        &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-    ) -> Result<MutableSection<'_, 'event>, GitConfigError<'lookup>> {
-        let section_ids =
-            self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-
-        Ok(MutableSection::new(
-            self.sections.get_mut(section_ids.last().unwrap()).unwrap(),
-        ))
-    }
-
-    /// Adds a new section to config. If a subsection name was provided, then
-    /// the generated header will use the modern subsection syntax. Returns a
-    /// reference to the new section for immediate editing.
-    ///
-    /// # Examples
-    ///
-    /// Creating a new empty section:
-    ///
-    /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use std::convert::TryFrom;
-    /// let mut git_config = GitConfig::new();
-    /// let _section = git_config.new_section("hello", Some("world".into()));
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n");
-    /// ```
-    ///
-    /// Creating a new empty section and adding values to it:
-    ///
-    /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use std::convert::TryFrom;
-    /// let mut git_config = GitConfig::new();
-    /// let mut section = git_config.new_section("hello", Some("world".into()));
-    /// section.push("a".into(), "b".as_bytes().into());
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
-    /// let _section = git_config.new_section("core", None);
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");
-    /// ```
-    pub fn new_section(
-        &mut self,
-        section_name: impl Into<Cow<'event, str>>,
-        subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> MutableSection<'_, 'event> {
-        let subsection_name = subsection_name.into();
-        let mut section = if subsection_name.is_some() {
-            self.push_section(
-                ParsedSectionHeader {
-                    name: SectionHeaderName(section_name.into()),
-                    separator: Some(" ".into()),
-                    subsection_name,
-                },
-                OwnedSection::new(),
-            )
-        } else {
-            self.push_section(
-                ParsedSectionHeader {
-                    name: SectionHeaderName(section_name.into()),
-                    separator: None,
-                    subsection_name: None,
-                },
-                OwnedSection::new(),
-            )
-        };
-        section.push_newline();
-        section
-    }
-
-    /// Removes the section, returning the events it had, if any. If multiple
-    /// sections have the same name, then the last one is returned.
-    pub fn remove_section<'lookup>(
-        &mut self,
-        section_name: &'lookup str,
-        subsection_name: impl Into<Option<&'lookup str>>,
-    ) -> Option<OwnedSection> {
-        let section_ids =
-            self.get_section_ids_by_name_and_subname(section_name, subsection_name.into());
-        let section_ids = section_ids.ok()?.pop()?;
-        self.sections.remove(&section_ids)
-    }
-}
-
 /// # Raw value API
 ///
 /// These functions are the raw value API. Instead of returning Rust structures,
-/// these functions return bytes which may or may not be owned. Generally
-/// speaking, you shouldn't need to use these functions, but are exposed in case
-/// the higher level functions are deficient.
+/// these functions return bytes which may or may not be owned.
 impl<'event> GitConfig<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
@@ -1042,6 +1200,7 @@ impl<'event> GitConfig<'event> {
             let mut size = 0;
             let mut index = 0;
             let mut found_key = false;
+            // todo: iter backwards
             for (i, event) in self.sections.get(section_id).unwrap().0.iter().enumerate() {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
@@ -1123,14 +1282,13 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError<'lookup>> {
-        let key = Key(key.into());
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
             values.extend(
                 self.sections
                     .get(&section_id)
                     .unwrap()
-                    .values(&key)
+                    .values(&Key(key.into()))
                     .iter()
                     .map(|v| Cow::Owned(v.to_vec())),
             );
@@ -1544,7 +1702,7 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
             new_self.frontmatter_events = section_events;
         }
 
-        dbg!(new_self)
+        new_self
     }
 }
 
