@@ -222,7 +222,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         self.section.0.drain(start..=end);
     }
 
-    fn set(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
+    fn set_internal(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
         self.section
             .0
             .insert(index, Event::Value(Cow::Owned(value)));
@@ -350,8 +350,10 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns an iterator visiting all keys in order.
-    pub fn keys(&self) -> impl Iterator<Item = &Event<'event>> {
-        self.0.iter().filter(|e| matches!(e, Event::Key(_)))
+    pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
+        self.0
+            .iter()
+            .filter_map(|e| if let Event::Key(k) = e { Some(k) } else { None })
     }
 
     /// Checks if the section contains the provided key.
@@ -825,7 +827,7 @@ impl MutableValue<'_, '_, '_> {
         }
         self.size = 3;
         self.section
-            .set(self.index, Key(Cow::Owned(self.key.to_string())), input);
+            .set_internal(self.index, Key(Cow::Owned(self.key.to_string())), input);
     }
 
     /// Removes the value. Does nothing when called multiple times in
