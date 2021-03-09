@@ -743,9 +743,10 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: impl Into<Option<&'lookup str>>,
     ) -> Option<SectionBody> {
-        let section_ids =
-            self.get_section_ids_by_name_and_subname(section_name, subsection_name.into());
-        let id = section_ids.ok()?.pop()?;
+        let id = self
+            .get_section_ids_by_name_and_subname(section_name, subsection_name.into())
+            .ok()?
+            .pop()?;
         self.section_order
             .remove(self.section_order.iter().position(|v| *v == id).unwrap());
         self.sections.remove(&id)
@@ -779,6 +780,27 @@ impl<'event> GitConfig<'event> {
                 section,
             )
         }
+    }
+
+    /// Renames a section, modifying the last matching section.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the lookup
+    pub fn rename_section<'lookup>(
+        &mut self,
+        section_name: &'lookup str,
+        subsection_name: impl Into<Option<&'lookup str>>,
+        new_section_name: impl Into<SectionHeaderName<'event>>,
+        new_subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) -> Result<(), GitConfigError<'lookup>> {
+        let id = self.get_section_ids_by_name_and_subname(section_name, subsection_name.into())?;
+        let id = id.last().unwrap();
+        let header = self.section_headers.get_mut(id).unwrap();
+        header.name = new_section_name.into();
+        header.subsection_name = new_subsection_name.into();
+
+        Ok(())
     }
 }
 
