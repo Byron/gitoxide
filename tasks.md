@@ -3,12 +3,12 @@
 * **git-odb**
   * [x] all docs, sans examples
   * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
-* **git-object** refactor     
+* **git-object** refactor
   * [x] split `Id` and everything hash related into `git-id`
   * [x] use `git-id` inside of `git-features`, remove cycle
 * **git-config**
-  * A complete implementation, writing a the git remote configuration is needed for finalizing the clone
-  * **API round trip** - read - edit - write - read 
+  * A complete implementation, writing a git remote configuration is needed for finalizing the clone
+  * **API round trip** - read - edit - write - read
     * [ ] parse sections (not sub-sections) and whitespace/comments
       * [ ] write all
     * [ ] Add section
@@ -17,10 +17,10 @@
       * [ ] write all
     * [ ] delete section
       * [ ] write all
-  * [ ] Sections lookup
-    * [ ] case-insensitive section
-    * [ ] case-sensitive subsection
-    * [ ] case sensitive 'legacy section.subsection' lookup
+  * [x] Sections lookup
+    * [x] case-insensitive section
+    * [x] case-sensitive subsection
+    * [x] case sensitive 'legacy section.subsection' lookup
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
 * **git-ref**
   * [ ] create ref pointing to ID
@@ -40,23 +40,23 @@
   * [ ] resolve thin pack with Bundle
 * **git-repository**
   * [ ] clone from https remote
-  
+
 ### FSCK an entire repository
 
 * **multi-db** (incorporate object lookup for loose objects and packs)
   * [ ] single threaded
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
-  
+
 ### Commit-Graph
 
 * [x] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
 * [x] Application of the command above in a stress test
 
 * **Questions**
-  * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248), 
+  * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248),
     some code is commented out.
-  
+
 ### Other
 
 To be picked in any order….
