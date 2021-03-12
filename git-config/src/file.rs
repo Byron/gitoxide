@@ -2367,6 +2367,24 @@ mod get_value {
 
         Ok(())
     }
+
+    #[test]
+    fn sections_by_name() {
+        let config = r#"
+        [core]
+            repositoryformatversion = 0
+            filemode = true
+            bare = false
+            logallrefupdates = true
+        [remote "origin"]
+            url = git@github.com:Byron/gitoxide.git
+            fetch = +refs/heads/*:refs/remotes/origin/*
+        "#;
+
+        let config = GitConfig::try_from(config).unwrap();
+        let value = config.value::<Value>("remote", Some("origin"), "url").unwrap();
+        assert_eq!(value, Value::Other(Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")));
+    }
 }
 
 #[cfg(test)]
