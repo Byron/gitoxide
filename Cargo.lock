@@ -899,6 +899,7 @@ dependencies = [
  "bstr",
  "bytesize",
  "git-commitgraph",
+ "git-config",
  "git-features",
  "git-object",
  "git-odb",
