@@ -208,8 +208,8 @@ macro_rules! generate_case_insensitive {
             /// This can be most effectively seen by the differing lifetimes
             /// between the two. This method guarantees a `'static` lifetime,
             /// while `clone` does not.
-    ///
-    /// [`clone`]: Self::clone
+            ///
+            /// [`clone`]: Self::clone
             #[must_use]
             pub fn to_owned(&self) -> $name<'static> {
                 $name(Cow::Owned(self.0.clone().into_owned()))
@@ -448,6 +448,28 @@ impl Error<'_> {
     #[must_use]
     pub fn remaining_data(&self) -> &[u8] {
         &self.parsed_until
+    }
+
+    /// Coerces into an owned instance. This differs from the standard [`clone`]
+    /// implementation as calling clone will _not_ copy the borrowed variant,
+    /// while this method will. In other words:
+    ///
+    /// | Borrow type | `.clone()` | `to_owned()` |
+    /// | ----------- | ---------- | ------------ |
+    /// | Borrowed    | Borrowed   | Owned        |
+    /// | Owned       | Owned      | Owned        |
+    ///
+    /// This can be most effectively seen by the differing lifetimes between the
+    /// two. This method guarantees a `'static` lifetime, while `clone` does
+    /// not.
+    ///
+    /// [`clone`]: Self::clone
+    pub fn to_owned(&self) -> Error<'static> {
+        Error {
+            line_number: self.line_number,
+            last_attempted_parser: self.last_attempted_parser,
+            parsed_until: self.parsed_until.clone().into_owned().into(),
+        }
     }
 }
 
