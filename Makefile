@@ -189,12 +189,17 @@ stress: ## Run various algorithms on big repositories
 	rm -Rf delme; mkdir delme && time ./target/release/gixp --verbose pack-explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
+	$(MAKE) bench-git-config
 
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
 	set -x; for path in $(wordlist 2, 999, $^); do \
 		time ./target/release/gixp --verbose commit-graph-verify $$path; \
 	done
+
+.PHONY: bench-git-config
+bench-git-config:
+	cd git-config && cargo bench
 
 ##@ Maintenance
 
