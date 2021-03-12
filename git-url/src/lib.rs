@@ -107,3 +107,11 @@ impl TryFrom<&[u8]> for Url {
         Self::from_bytes(value)
     }
 }
+
+impl<'a> TryFrom<std::borrow::Cow<'a, [u8]>> for Url {
+    type Error = parse::Error;
+
+    fn try_from(value: std::borrow::Cow<'a, [u8]>) -> Result<Self, Self::Error> {
+        Self::try_from(&*value)
+    }
+}

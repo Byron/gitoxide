@@ -1,5 +1,8 @@
 use bstr::ByteSlice;
+use git_config::file::GitConfig;
 use git_features::progress::Progress;
+use std::convert::TryFrom;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -72,21 +75,13 @@ where
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
-    let out = std::process::Command::new("git")
-        .args(&["remote", "--verbose"])
-        .current_dir(repo)
-        .output()?;
-    if out.status.success() {
-        Ok(parse::remotes_from_git_remote_verbose(&out.stdout)?
-            .into_iter()
-            .find_map(|(origin, url)| if origin == "origin" { Some(url) } else { None }))
-    } else {
-        anyhow::bail!(
-            "git invocation failed with code {:?}: {}",
-            out.status.code(),
-            out.stderr.as_bstr()
-        )
-    }
+    let mut config_bytes = vec![];
+    let config = {
+        let mut file = std::fs::File::open(repo.join("./.git/config"))?;
+        file.read_to_end(&mut config_bytes)?;
+        GitConfig::try_from(&config_bytes).map_err(|e| e.to_owned())?
+    };
+    Ok(config.value::<git_url::Url>("remote", Some("origin"), "url").ok())
 }
 
 fn handle(
@@ -221,79 +216,5 @@ where
         anyhow::bail!("Failed to handle {} repositories", num_errors)
     } else {
         Ok(())
-    }
-}
-
-mod parse {
-    use anyhow::Context;
-    use bstr::{BStr, ByteSlice};
-
-    #[allow(unused)]
-    pub fn remotes_from_git_remote_verbose(input: &[u8]) -> anyhow::Result<Vec<(&BStr, git_url::Url)>> {
-        fn parse_line(line: &BStr) -> anyhow::Result<(&BStr, git_url::Url)> {
-            let mut tokens = line.splitn(2, |b| *b == b'\t');
-            Ok(match (tokens.next(), tokens.next(), tokens.next()) {
-                (Some(remote), Some(url_and_type), None) => {
-                    let mut tokens = url_and_type.splitn(2, |b| *b == b' ');
-                    match (tokens.next(), tokens.next(), tokens.next()) {
-                        (Some(url), Some(_type), None) => (remote.as_bstr(), git_url::parse(url)?),
-                        _ => anyhow::bail!("None or more than one 'space' as separator"),
-                    }
-                }
-                _ => anyhow::bail!("None or more than one tab as separator"),
-            })
-        }
-
-        let mut out = Vec::new();
-        for line in input.split(|b| *b == b'\n') {
-            let line = line.as_bstr();
-            if line.trim().is_empty() {
-                continue;
-            }
-            out.push(
-                parse_line(line).with_context(|| format!("Line {:?} should be <origin>TAB<URL>SPACE<TYPE>", line))?,
-            );
-        }
-
-        Ok(out)
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-        use bstr::ByteSlice;
-
-        static GITOXIDE_REMOTES: &[u8] = br#"commitgraph	https://github.com/avoidscorn/gitoxide (fetch)
-commitgraph	https://github.com/avoidscorn/gitoxide (push)
-origin	https://github.com/Byron/gitoxide (fetch)
-origin	https://github.com/Byron/gitoxide (push)
-rad	rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git (fetch)
-rad	rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git (push)
-"#;
-        fn url(input: &str) -> git_url::Url {
-            git_url::Url::from_bytes(input.as_bytes()).expect("valid url")
-        }
-
-        #[test]
-        fn valid_verbose_remotes() -> anyhow::Result<()> {
-            assert_eq!(
-                remotes_from_git_remote_verbose(GITOXIDE_REMOTES)?,
-                vec![
-                    (b"commitgraph".as_bstr(), url("https://github.com/avoidscorn/gitoxide")),
-                    (b"commitgraph".as_bstr(), url("https://github.com/avoidscorn/gitoxide")),
-                    (b"origin".as_bstr(), url("https://github.com/Byron/gitoxide")),
-                    (b"origin".as_bstr(), url("https://github.com/Byron/gitoxide")),
-                    (
-                        b"rad".as_bstr(),
-                        url("rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git")
-                    ),
-                    (
-                        b"rad".as_bstr(),
-                        url("rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git")
-                    )
-                ]
-            );
-            Ok(())
-        }
     }
 }
