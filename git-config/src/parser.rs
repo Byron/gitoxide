@@ -868,7 +868,7 @@ pub fn parse_from_path(path: &Path) -> Result<Parser<'static>, ParserOrIoError> 
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error> {
+pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
     parse_from_bytes(input.as_bytes())
 }
 
@@ -883,7 +883,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error> {
+pub fn parse_from_bytes(input: &[u8]) -> Result<Parser, Error> {
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),

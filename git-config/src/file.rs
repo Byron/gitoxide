@@ -644,6 +644,47 @@ impl<'event> GitConfig<'event> {
         ))
     }
 
+    /// Gets all sections that match the provided name, ignoring any subsections.
+    ///
+    /// # Examples
+    ///
+    /// Provided the following config:
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// [core ""]
+    ///     c = d
+    /// [core "apple"]
+    ///     e = f
+    /// ```
+    ///
+    /// Calling this method will yield all sections:
+    ///
+    /// ```
+    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// let config = r#"
+    ///     [core]
+    ///         a = b
+    ///     [core ""]
+    ///         c = d
+    ///     [core "apple"]
+    ///         e = f
+    /// "#;
+    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// assert_eq!(git_config.sections_by_name("core").len(), 3);
+    /// ```
+    pub fn sections_by_name<'lookup>(&self, section_name: &'lookup str) -> Vec<&SectionBody<'event>> {
+        self.get_section_ids_by_name(section_name)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|id| self.sections.get(&id).expect("internal invariant violated"))
+            .collect()
+    }
+
     /// Adds a new section to config. If a subsection name was provided, then
     /// the generated header will use the modern subsection syntax. Returns a
     /// reference to the new section for immediate editing.
@@ -1629,6 +1670,25 @@ impl<'event> GitConfig<'event> {
             .map(Vec::to_owned)
             .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
     }
+
+    fn get_section_ids_by_name<'lookup>(
+        &self,
+        section_name: impl Into<SectionHeaderName<'lookup>>,
+    ) -> Result<Vec<SectionId>, GitConfigError<'lookup>> {
+        let section_name = section_name.into();
+        self.section_lookup_tree
+            .get(&section_name)
+            .map(|lookup| {
+                lookup
+                    .iter()
+                    .flat_map(|node| match node {
+                        LookupTreeNode::Terminal(v) => v.clone(),
+                        LookupTreeNode::NonTerminal(v) => v.values().flatten().copied().collect(),
+                    })
+                    .collect()
+            })
+            .ok_or(GitConfigError::SectionDoesNotExist(section_name))
+    }
 }
 
 impl<'a> TryFrom<&'a str> for GitConfig<'a> {
@@ -1638,7 +1698,7 @@ impl<'a> TryFrom<&'a str> for GitConfig<'a> {
     /// [`GitConfig`]. See [`parse_from_str`] for more information.
     ///
     /// [`parse_from_str`]: crate::parser::parse_from_str
-    fn try_from(s: &'a str) -> Result<Self, Self::Error> {
+    fn try_from(s: &'a str) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_str(s).map(Self::from)
     }
 }
@@ -1650,8 +1710,20 @@ impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
-        parse_from_bytes(value).map(Self::from)
+    fn try_from(value: &'a [u8]) -> Result<GitConfig<'a>, Self::Error> {
+        parse_from_bytes(value).map(GitConfig::from)
+    }
+}
+
+impl<'a> TryFrom<&'a Vec<u8>> for GitConfig<'a> {
+    type Error = Error<'a>;
+
+    /// Convenience constructor. Attempts to parse the provided byte string into
+    //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
+    ///
+    /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
+    fn try_from(value: &'a Vec<u8>) -> Result<GitConfig<'a>, Self::Error> {
+        parse_from_bytes(value).map(GitConfig::from)
     }
 }
 
