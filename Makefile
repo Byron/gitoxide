@@ -98,6 +98,8 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features disable-interrupts
 	cd git-commitgraph && cargo check --all-features \
 			   && cargo check
+	cd git-config && cargo check --all-features \
+				 && cargo check
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
