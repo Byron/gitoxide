@@ -55,13 +55,6 @@ target/release/gix: always
 lint: ## Run lints with clippy
 	cargo clippy
 
-profile: target/release/gix ## run callgrind and annotate its output - linux only
-	valgrind --callgrind-out-file=callgrind.profile --tool=callgrind  $< >/dev/null
-	callgrind_annotate --auto=yes callgrind.profile
-
-benchmark: target/release/gix ## see how fast things are, powered by hyperfine
-	hyperfine '$<'
-
 ##@ Testing
 
 tests: clippy check unit-tests journey-tests-small journey-tests ## run all tests, including journey tests
