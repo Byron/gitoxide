@@ -7,21 +7,10 @@
   * [x] split `Id` and everything hash related into `git-id`
   * [x] use `git-id` inside of `git-features`, remove cycle
 * **git-config**
-  * A complete implementation, writing a git remote configuration is needed for finalizing the clone
-  * **API round trip** - read - edit - write - read
-    * [ ] parse sections (not sub-sections) and whitespace/comments
-      * [ ] write all
-    * [ ] Add section
-      * [ ] write all
-    * [ ] rename section
-      * [ ] write all
-    * [ ] delete section
-      * [ ] write all
-  * [x] Sections lookup
-    * [x] case-insensitive section
-    * [x] case-sensitive subsection
-    * [x] case sensitive 'legacy section.subsection' lookup
+  * [x] Thanks to a generous contribution it's mostly done and well on the way
+  * [ ] Push it towards 1.0
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
+  * [ ] Make `gix organize` use `git-config` on single files (the repository configuration)
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
