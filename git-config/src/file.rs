@@ -1,6 +1,8 @@
 //! This module provides a high level wrapper around a single `git-config` file.
 
-use crate::parser::{parse_from_bytes, Error, Event, Key, ParsedSectionHeader, Parser, SectionHeaderName};
+use crate::parser::{
+    parse_from_bytes, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser, SectionHeaderName,
+};
 use crate::values::{normalize_bytes, normalize_cow, normalize_vec};
 use std::borrow::{Borrow, Cow};
 use std::collections::{HashMap, VecDeque};
@@ -1637,7 +1639,7 @@ impl<'a> TryFrom<&'a str> for GitConfig<'a> {
     ///
     /// [`parse_from_str`]: crate::parser::parse_from_str
     fn try_from(s: &'a str) -> Result<Self, Self::Error> {
-        parse_from_bytes(s.as_bytes()).map(Self::from)
+        parse_from_str(s).map(Self::from)
     }
 }
 

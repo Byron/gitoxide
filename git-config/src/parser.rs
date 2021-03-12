@@ -18,10 +18,10 @@ use nom::error::{Error as NomError, ErrorKind};
 use nom::multi::{many0, many1};
 use nom::sequence::delimited;
 use nom::IResult;
-use std::convert::TryFrom;
-use std::fmt::Display;
 use std::iter::FusedIterator;
 use std::{borrow::Cow, hash::Hash};
+use std::{convert::TryFrom, path::Path};
+use std::{fmt::Display, io::Read};
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -77,6 +77,35 @@ impl Event<'_> {
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
+
+    /// Coerces into an owned instance. This differs from the standard [`clone`]
+    /// implementation as calling clone will _not_ copy the borrowed variant,
+    /// while this method will. In other words:
+    ///
+    /// | Borrow type | `.clone()` | `to_owned()` |
+    /// | ----------- | ---------- | ------------ |
+    /// | Borrowed    | Borrowed   | Owned        |
+    /// | Owned       | Owned      | Owned        |
+    ///
+    /// This can be most effectively seen by the differing lifetimes between the
+    /// two. This method guarantees a `'static` lifetime, while `clone` does
+    /// not.
+    ///
+    /// [`clone`]: Self::clone
+    #[must_use]
+    pub fn to_owned(&self) -> Event<'static> {
+        match self {
+            Event::Comment(e) => Event::Comment(e.to_owned()),
+            Event::SectionHeader(e) => Event::SectionHeader(e.to_owned()),
+            Event::Key(e) => Event::Key(e.to_owned()),
+            Event::Value(e) => Event::Value(Cow::Owned(e.clone().into_owned())),
+            Event::ValueNotDone(e) => Event::ValueNotDone(Cow::Owned(e.clone().into_owned())),
+            Event::ValueDone(e) => Event::ValueDone(Cow::Owned(e.clone().into_owned())),
+            Event::Newline(e) => Event::Newline(Cow::Owned(e.clone().into_owned())),
+            Event::Whitespace(e) => Event::Whitespace(Cow::Owned(e.clone().into_owned())),
+            Event::KeyValueSeparator => Event::KeyValueSeparator,
+        }
+    }
 }
 
 impl Display for Event<'_> {
@@ -126,6 +155,30 @@ pub struct ParsedSection<'a> {
     pub events: Vec<Event<'a>>,
 }
 
+impl ParsedSection<'_> {
+    /// Coerces into an owned instance. This differs from the standard [`clone`]
+    /// implementation as calling clone will _not_ copy the borrowed variant,
+    /// while this method will. In other words:
+    ///
+    /// | Borrow type | `.clone()` | `to_owned()` |
+    /// | ----------- | ---------- | ------------ |
+    /// | Borrowed    | Borrowed   | Owned        |
+    /// | Owned       | Owned      | Owned        |
+    ///
+    /// This can be most effectively seen by the differing lifetimes between the
+    /// two. This method guarantees a `'static` lifetime, while `clone` does
+    /// not.
+    ///
+    /// [`clone`]: Self::clone
+    #[must_use]
+    pub fn to_owned(&self) -> ParsedSection<'static> {
+        ParsedSection {
+            section_header: self.section_header.to_owned(),
+            events: self.events.iter().map(Event::to_owned).collect(),
+        }
+    }
+}
+
 impl Display for ParsedSection<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.section_header)?;
@@ -136,30 +189,32 @@ impl Display for ParsedSection<'_> {
     }
 }
 
-/// A parsed section header, containing a name and optionally a subsection name.
-///
-/// Note that section headers must be parsed as valid ASCII, and thus all valid
-/// instances must also necessarily be valid UTF-8, which is why we use a
-/// [`str`] instead of [`[u8]`].
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct ParsedSectionHeader<'a> {
-    /// The name of the header.
-    pub name: SectionHeaderName<'a>,
-    /// The separator used to determine if the section contains a subsection.
-    /// This is either a period `.` or a string of whitespace. Note that
-    /// reconstruction of subsection format is dependent on this value. If this
-    /// is all whitespace, then the subsection name needs to be surrounded by
-    /// quotes to have perfect reconstruction.
-    pub separator: Option<Cow<'a, str>>,
-    /// The subsection name without quotes if any exist.
-    pub subsection_name: Option<Cow<'a, str>>,
-}
-
 macro_rules! generate_case_insensitive {
-    ($name:ident, $inner_type:ty, $comment:literal) => {
+    ($name:ident, $cow_inner_type:ty, $comment:literal) => {
         #[doc = $comment]
         #[derive(Clone, Eq, Ord, Debug, Default)]
-        pub struct $name<'a>(pub $inner_type);
+        pub struct $name<'a>(pub Cow<'a, $cow_inner_type>);
+
+        impl $name<'_> {
+            /// Coerces into an owned instance. This differs from the standard
+            /// [`clone`] implementation as calling clone will _not_ copy the
+            /// borrowed variant, while this method will. In other words:
+            ///
+            /// | Borrow type | `.clone()` | `to_owned()` |
+            /// | ----------- | ---------- | ------------ |
+            /// | Borrowed    | Borrowed   | Owned        |
+            /// | Owned       | Owned      | Owned        |
+            ///
+            /// This can be most effectively seen by the differing lifetimes
+            /// between the two. This method guarantees a `'static` lifetime,
+            /// while `clone` does not.
+    ///
+    /// [`clone`]: Self::clone
+            #[must_use]
+            pub fn to_owned(&self) -> $name<'static> {
+                $name(Cow::Owned(self.0.clone().into_owned()))
+            }
+        }
 
         impl PartialEq for $name<'_> {
             fn eq(&self, other: &Self) -> bool {
@@ -200,16 +255,10 @@ macro_rules! generate_case_insensitive {
         }
 
         impl<'a> std::ops::Deref for $name<'a> {
-            type Target = $inner_type;
+            type Target = $cow_inner_type;
 
             fn deref(&self) -> &Self::Target {
                 &self.0
-            }
-        }
-
-        impl<'a> std::ops::DerefMut for $name<'a> {
-            fn deref_mut(&mut self) -> &mut Self::Target {
-                &mut self.0
             }
         }
     };
@@ -217,15 +266,34 @@ macro_rules! generate_case_insensitive {
 
 generate_case_insensitive!(
     SectionHeaderName,
-    Cow<'a, str>,
+    str,
     "Wrapper struct for section header names, since section headers are case-insensitive."
 );
 
 generate_case_insensitive!(
     Key,
-    Cow<'a, str>,
+    str,
     "Wrapper struct for key names, since keys are case-insensitive."
 );
+
+/// A parsed section header, containing a name and optionally a subsection name.
+///
+/// Note that section headers must be parsed as valid ASCII, and thus all valid
+/// instances must also necessarily be valid UTF-8, which is why we use a
+/// [`str`] instead of [`[u8]`].
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct ParsedSectionHeader<'a> {
+    /// The name of the header.
+    pub name: SectionHeaderName<'a>,
+    /// The separator used to determine if the section contains a subsection.
+    /// This is either a period `.` or a string of whitespace. Note that
+    /// reconstruction of subsection format is dependent on this value. If this
+    /// is all whitespace, then the subsection name needs to be surrounded by
+    /// quotes to have perfect reconstruction.
+    pub separator: Option<Cow<'a, str>>,
+    /// The subsection name without quotes if any exist.
+    pub subsection_name: Option<Cow<'a, str>>,
+}
 
 impl ParsedSectionHeader<'_> {
     /// Generates a byte representation of the value. This should be used when
@@ -234,6 +302,29 @@ impl ParsedSectionHeader<'_> {
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
+    }
+
+    /// Coerces into an owned instance. This differs from the standard [`clone`]
+    /// implementation as calling clone will _not_ copy the borrowed variant,
+    /// while this method will. In other words:
+    ///
+    /// | Borrow type | `.clone()` | `to_owned()` |
+    /// | ----------- | ---------- | ------------ |
+    /// | Borrowed    | Borrowed   | Owned        |
+    /// | Owned       | Owned      | Owned        |
+    ///
+    /// This can be most effectively seen by the differing lifetimes between the
+    /// two. This method guarantees a `'static` lifetime, while `clone` does
+    /// not.
+    ///
+    /// [`clone`]: Self::clone
+    #[must_use]
+    pub fn to_owned(&self) -> ParsedSectionHeader<'static> {
+        ParsedSectionHeader {
+            name: self.name.to_owned(),
+            separator: self.separator.clone().map(|v| Cow::Owned(v.into_owned())),
+            subsection_name: self.subsection_name.clone().map(|v| Cow::Owned(v.into_owned())),
+        }
     }
 }
 
@@ -283,6 +374,30 @@ pub struct ParsedComment<'a> {
     pub comment: Cow<'a, [u8]>,
 }
 
+impl ParsedComment<'_> {
+    /// Coerces into an owned instance. This differs from the standard [`clone`]
+    /// implementation as calling clone will _not_ copy the borrowed variant,
+    /// while this method will. In other words:
+    ///
+    /// | Borrow type | `.clone()` | `to_owned()` |
+    /// | ----------- | ---------- | ------------ |
+    /// | Borrowed    | Borrowed   | Owned        |
+    /// | Owned       | Owned      | Owned        |
+    ///
+    /// This can be most effectively seen by the differing lifetimes between the
+    /// two. This method guarantees a `'static` lifetime, while `clone` does
+    /// not.
+    ///
+    /// [`clone`]: Self::clone
+    #[must_use]
+    pub fn to_owned(&self) -> ParsedComment<'static> {
+        ParsedComment {
+            comment_tag: self.comment_tag,
+            comment: Cow::Owned(self.comment.to_vec()),
+        }
+    }
+}
+
 impl Display for ParsedComment<'_> {
     /// Note that this is a best-effort attempt at printing an comment. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
@@ -318,7 +433,7 @@ impl Into<Vec<u8>> for &ParsedComment<'_> {
 pub struct Error<'a> {
     line_number: usize,
     last_attempted_parser: ParserNode,
-    parsed_until: &'a [u8],
+    parsed_until: Cow<'a, [u8]>,
 }
 
 impl Error<'_> {
@@ -331,15 +446,15 @@ impl Error<'_> {
 
     /// The remaining data that was left unparsed.
     #[must_use]
-    pub const fn remaining_data(&self) -> &[u8] {
-        self.parsed_until
+    pub fn remaining_data(&self) -> &[u8] {
+        &self.parsed_until
     }
 }
 
 impl Display for Error<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let data_size = self.parsed_until.len();
-        let data = std::str::from_utf8(self.parsed_until);
+        let data = std::str::from_utf8(&self.parsed_until);
         write!(
             f,
             "Got an unexpected token on line {} while trying to parse a {}: ",
@@ -364,6 +479,35 @@ impl Display for Error<'_> {
 }
 
 impl std::error::Error for Error<'_> {}
+
+/// An error type representing a Parser [`Error`] or an [`IO error`]. This is
+/// returned from functions that will perform IO on top of standard parsing,
+/// such as reading from a file.
+///
+/// [`IO error`]: std::io::Error
+#[derive(Debug)]
+#[allow(missing_docs, clippy::module_name_repetitions)]
+pub enum ParserOrIoError<'a> {
+    Parser(Error<'a>),
+    Io(std::io::Error),
+}
+
+impl Display for ParserOrIoError<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParserOrIoError::Parser(e) => e.fmt(f),
+            ParserOrIoError::Io(e) => e.fmt(f),
+        }
+    }
+}
+
+impl From<std::io::Error> for ParserOrIoError<'_> {
+    fn from(e: std::io::Error) -> Self {
+        Self::Io(e)
+    }
+}
+
+impl std::error::Error for ParserOrIoError<'_> {}
 
 /// A list of parsers that parsing can fail on. This is used for pretty-printing
 /// errors
@@ -670,6 +814,28 @@ impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
     }
 }
 
+/// Parses a git config located at the provided path. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// Note that since we accept a path rather than a reference to the actual
+/// bytes, this function is _not_ zero-copy, as the Parser must own (and thus
+/// copy) the bytes that it reads from. Consider one of the other variants if
+/// performance is a concern.
+///
+/// # Errors
+///
+/// Returns an error if there was an IO error or the read file is not a valid
+/// `git-config` This generally is due to either invalid names or if there's
+/// extraneous data succeeding valid `git-config` data.
+pub fn parse_from_path(path: &Path) -> Result<Parser<'static>, ParserOrIoError> {
+    let mut bytes = vec![];
+    let mut file = std::fs::File::open(path)?;
+    file.read_to_end(&mut bytes)?;
+    parse_from_bytes_owned(&bytes).map_err(ParserOrIoError::Parser)
+}
+
 /// Attempt to zero-copy parse the provided `&str`. On success, returns a
 /// [`Parser`] that provides methods to accessing leading comments and sections
 /// of a `git-config` file and can be converted into an iterator of [`Event`]
@@ -725,7 +891,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error> {
     let (i, sections) = maybe_sections.map_err(|_| Error {
         line_number: newlines,
         last_attempted_parser: node,
-        parsed_until: i,
+        parsed_until: i.into(),
     })?;
 
     let sections = sections
@@ -742,7 +908,76 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error> {
         return Err(Error {
             line_number: newlines,
             last_attempted_parser: node,
-            parsed_until: i,
+            parsed_until: i.into(),
+        });
+    }
+
+    Ok(Parser { frontmatter, sections })
+}
+
+/// Parses the provided bytes, returning an [`Parser`] that contains allocated
+/// and owned events. This is similar to [`parse_from_bytes`], but performance
+/// is degraded as it requires allocation for every event. However, this permits
+/// the reference bytes to be dropped, allowing the parser to be passed around
+/// without lifetime worries.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
+#[allow(clippy::shadow_unrelated)]
+pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'static>> {
+    // FIXME: This is duplication is necessary until comment, take_spaces, and take_newlines
+    // accept cows instead, since we don't want to unnecessarily copy the frontmatter
+    // events in a hypothetical parse_from_cow function.
+    let mut newlines = 0;
+    let (i, frontmatter) = many0(alt((
+        map(comment, Event::Comment),
+        map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+        map(take_newline, |(newline, counter)| {
+            newlines += counter;
+            Event::Newline(Cow::Borrowed(newline))
+        }),
+    )))(input)
+    // I don't think this can panic. many0 errors if the child parser returns
+    // a success where the input was not consumed, but alt will only return Ok
+    // if one of its children succeed. However, all of it's children are
+    // guaranteed to consume something if they succeed, so the Ok(i) == i case
+    // can never occur.
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parser.");
+    let frontmatter = frontmatter.iter().map(Event::to_owned).collect();
+    if i.is_empty() {
+        return Ok(Parser {
+            frontmatter,
+            sections: vec![],
+        });
+    }
+
+    let mut node = ParserNode::SectionHeader;
+
+    let maybe_sections = many1(|i| section(i, &mut node))(i);
+    let (i, sections) = maybe_sections.map_err(|_| Error {
+        line_number: newlines,
+        last_attempted_parser: node,
+        parsed_until: Cow::Owned(i.into()),
+    })?;
+
+    let sections = sections
+        .into_iter()
+        .map(|(section, additional_newlines)| {
+            newlines += additional_newlines;
+            section.to_owned()
+        })
+        .collect();
+
+    // This needs to happen after we collect sections, otherwise the line number
+    // will be off.
+    if !i.is_empty() {
+        return Err(Error {
+            line_number: newlines,
+            last_attempted_parser: node,
+            parsed_until: Cow::Owned(i.into()),
         });
     }
 
