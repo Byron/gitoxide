@@ -39,7 +39,18 @@ where
         }
     }
 
-    let walk = jwalk::WalkDirGeneric::<((), bool)>::new(root)
+    #[derive(Debug)]
+    struct State {
+        is_repo: bool,
+    }
+
+    impl Default for State {
+        fn default() -> Self {
+            State { is_repo: false }
+        }
+    }
+
+    let walk = jwalk::WalkDirGeneric::<((), State)>::new(root)
         .follow_links(false)
         .sort(true)
         .skip_hidden(false);
@@ -56,7 +67,7 @@ where
         for entry in children.iter_mut() {
             if let Ok(e) = entry {
                 if is_repository(&e.path()) {
-                    e.client_state = true;
+                    e.client_state = State { is_repo: true };
                     e.read_children_path = None;
                     found_repo = true;
                     break;
@@ -64,13 +75,13 @@ where
             }
         }
         if found_repo {
-            children.retain(|e| e.as_ref().map(|e| e.client_state).unwrap_or(false));
+            children.retain(|e| e.as_ref().map(|e| e.client_state.is_repo).unwrap_or(false));
         }
     })
     .into_iter()
     .inspect(move |_| progress.inc())
     .filter_map(Result::ok)
-    .filter(|e| e.client_state)
+    .filter(|e| e.client_state.is_repo)
     .map(|e| into_workdir(e.path()))
 }
 
