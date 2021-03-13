@@ -1,6 +1,7 @@
 /// From Flate2
 /// Possible status results of compressing some data or successfully
 /// decompressing a block of data.
+#[cfg(not(feature = "zlib-ng"))]
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 enum Status {
     /// Indicates success.

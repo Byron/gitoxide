@@ -1,7 +1,12 @@
+#[cfg(not(feature = "zlib-ng"))]
 use super::Status;
+#[cfg(feature = "zlib-ng")]
+use flate2::{Decompress, FlushDecompress, Status};
+#[cfg(not(feature = "zlib-ng"))]
 use miniz_oxide::{inflate, inflate::stream::InflateState, DataFormat, MZError, MZFlush, MZStatus};
 use std::{io, io::BufRead};
 
+#[cfg(not(feature = "zlib-ng"))]
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("The decompression failed due to an unknown error")]
@@ -10,12 +15,14 @@ pub enum Error {
     ZLibNeedDict(u32),
 }
 
+#[cfg(not(feature = "zlib-ng"))]
 pub(crate) struct Inflate {
     state: InflateState,
-    pub(crate) total_in: u64,
+    total_in: u64,
     total_out: u64,
 }
 
+#[cfg(not(feature = "zlib-ng"))]
 impl Default for Inflate {
     fn default() -> Self {
         Inflate {
@@ -26,6 +33,7 @@ impl Default for Inflate {
     }
 }
 
+#[cfg(not(feature = "zlib-ng"))]
 impl Inflate {
     pub fn reset(&mut self) {
         self.state.reset_as(inflate::stream::MinReset);
@@ -50,13 +58,25 @@ impl Inflate {
             },
         }
     }
+
+    #[inline]
+    pub(crate) fn total_in(&self) -> u64 {
+        self.total_in
+    }
 }
 
 /// Provide streaming decompression using the `std::io::Read` trait.
 /// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
+#[cfg(not(feature = "zlib-ng"))]
 pub struct InflateReader<R> {
     pub(crate) inner: R,
     pub(crate) decompressor: Inflate,
+}
+
+#[cfg(feature = "zlib-ng")]
+pub struct InflateReader<R> {
+    pub(crate) inner: R,
+    pub(crate) decompressor: Decompress,
 }
 
 impl<R> InflateReader<R>
@@ -64,16 +84,26 @@ where
     R: io::BufRead,
 {
     pub fn from_read(read: R) -> InflateReader<R> {
+        #[cfg(not(feature = "zlib-ng"))]
         // TODO: Performance opportunity - a buf reader that doesn't allocate
-        InflateReader {
+        return InflateReader {
             decompressor: Inflate::default(),
             inner: read,
-        }
+        };
+
+        #[cfg(feature = "zlib-ng")]
+        return InflateReader {
+            decompressor: Decompress::new(true),
+            inner: read,
+        };
     }
 
     pub fn reset(&mut self, read: R) {
         self.inner = read;
+        #[cfg(not(feature = "zlib-ng"))]
         self.decompressor.reset();
+        #[cfg(feature = "zlib-ng")]
+        self.decompressor.reset(true);
     }
 }
 
@@ -87,9 +117,16 @@ where
 }
 
 /// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
+#[cfg(not(feature = "zlib-ng"))]
 pub struct InflateReaderBoxed<R> {
     pub(crate) inner: R,
     pub(crate) decompressor: Box<Inflate>,
+}
+
+#[cfg(feature = "zlib-ng")]
+pub struct InflateReaderBoxed<R> {
+    pub(crate) inner: R,
+    pub(crate) decompressor: Box<Decompress>,
 }
 
 impl<R> io::Read for InflateReaderBoxed<R>
@@ -102,6 +139,7 @@ where
 }
 
 /// Adapted from [flate2](https://github.com/alexcrichton/flate2-rs/blob/57972d77dab09acad4aa2fa3beedb1f69fa64b27/src/zio.rs#L118)
+#[cfg(not(feature = "zlib-ng"))]
 fn read<R>(obj: &mut R, data: &mut Inflate, dst: &mut [u8]) -> io::Result<usize>
 where
     R: BufRead,
@@ -117,6 +155,42 @@ where
             ret = data.decompress(input, dst, flush);
             read = (data.total_out - before_out) as usize;
             consumed = (data.total_in - before_in) as usize;
+        }
+        obj.consume(consumed);
+
+        match ret {
+            // If we haven't ready any data and we haven't hit EOF yet,
+            // then we need to keep asking for more data because if we
+            // return that 0 bytes of data have been read then it will
+            // be interpreted as EOF.
+            Ok(Status::Ok) | Ok(Status::BufError) if read == 0 && !eof && !dst.is_empty() => continue,
+            Ok(Status::Ok) | Ok(Status::BufError) | Ok(Status::StreamEnd) => return Ok(read),
+
+            Err(..) => return Err(io::Error::new(io::ErrorKind::InvalidInput, "corrupt deflate stream")),
+        }
+    }
+}
+
+#[cfg(feature = "zlib-ng")]
+fn read<R>(obj: &mut R, data: &mut Decompress, dst: &mut [u8]) -> io::Result<usize>
+where
+    R: BufRead,
+{
+    loop {
+        let (read, consumed, ret, eof);
+        {
+            let input = obj.fill_buf()?;
+            eof = input.is_empty();
+            let before_out = data.total_out();
+            let before_in = data.total_in();
+            let flush = if eof {
+                FlushDecompress::Finish
+            } else {
+                FlushDecompress::None
+            };
+            ret = data.decompress(input, dst, flush);
+            read = (data.total_out() - before_out) as usize;
+            consumed = (data.total_in() - before_in) as usize;
         }
         obj.consume(consumed);
 

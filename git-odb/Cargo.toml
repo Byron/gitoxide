@@ -12,6 +12,9 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
+default = ["miniz_oxide"]
+
+zlib-ng = ["flate2"]
 serde1 = ["serde", "git-object/serde1"]
 
 [package.metadata.docs.rs]
@@ -22,7 +25,8 @@ git-object = { version = "^0.6.0", path = "../git-object" }
 git-hash = { version = "^0.1.0", path = "../git-hash" }
 git-features = { version = "^0.11.0", path = "../git-features" }
 
-miniz_oxide = "0.4.1"
+miniz_oxide = { version = "0.4.1", optional = true }
+flate2 = { version = "1.0.17", features = ["zlib-ng-compat"], default-features = false, optional = true }
 smallvec = "1.3.0"
 filebuffer = "0.4.0"
 byteorder = "1.2.3"
