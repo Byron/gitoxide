@@ -200,19 +200,19 @@ become available.
     * [ ] Some examples
 
 ### git-config
-  * [ ] read
+  * [x] read
     * line-wise parsing with decent error messages
-    * [ ] decode value
-      * [ ] boolean
-      * [ ] integer
-      * [ ] color
+    * [x] decode value
+      * [x] boolean
+      * [x] integer
+      * [x] color
       * [ ] path (incl. resolution)
       * [ ] include
       * [ ] includeIf
-  * [ ] write
+  * [x] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
-  * [ ] API documentation
-    * [ ] Some examples
+  * [x] API documentation
+    * [x] Some examples
 
 ### git-repository
   * [x] initialize
