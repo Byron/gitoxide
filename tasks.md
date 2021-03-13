@@ -36,6 +36,10 @@
   * [ ] single threaded
   * [ ] optional object cache
   * [ ] fs-check - verify all object content of a git repository
+    
+### gix organize
+
+* [ ] Add journey test to cover case with non-bare repository. Try to only read `non-bare` git config files and see the journey test fail.
 
 ### Commit-Graph
 

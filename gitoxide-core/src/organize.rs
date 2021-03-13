@@ -2,7 +2,6 @@ use bstr::ByteSlice;
 use git_config::file::GitConfig;
 use git_features::progress::Progress;
 use std::convert::TryFrom;
-use std::io::Read;
 use std::path::{Path, PathBuf};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -86,13 +85,13 @@ where
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
-    let mut config_bytes = vec![];
+    let config_bytes;
     let config = {
-        let mut file = std::fs::File::open(repo.join("./config"))?;
-        file.read_to_end(&mut config_bytes)?;
+        let non_bare = repo.join(".git").join("config");
+        config_bytes = std::fs::read(non_bare).or_else(|_| std::fs::read(repo.join("config")))?;
         GitConfig::try_from(&config_bytes).map_err(|e| e.to_owned())?
     };
-    Ok(config.value::<git_url::Url>("remote", Some("origin"), "url").ok())
+    Ok(config.value("remote", Some("origin"), "url").ok())
 }
 
 fn handle(
