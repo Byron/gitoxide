@@ -77,7 +77,7 @@ where
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     let mut config_bytes = vec![];
     let config = {
-        let mut file = std::fs::File::open(repo.join("./.git/config"))?;
+        let mut file = std::fs::File::open(repo.join("./config"))?;
         file.read_to_end(&mut config_bytes)?;
         GitConfig::try_from(&config_bytes).map_err(|e| e.to_owned())?
     };
