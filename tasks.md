@@ -10,7 +10,7 @@
   * [x] Thanks to a generous contribution it's mostly done and well on the way
   * [ ] Push it towards 1.0
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
-  * [ ] Make `gix organize` use `git-config` on single files (the repository configuration)
+  * [x] Make `gix organize` use `git-config` on single files (the repository configuration)
 * **git-ref**
   * [ ] create ref pointing to ID
       * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
