@@ -54,9 +54,14 @@
 
 To be picked in any order….
 
-* **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/259#issuecomment-748513766)**
-  * [x] upgrade toolchain
-  * [ ] Upgrade to latest hyper/tokio to get everything to compile again
+* **dua-cli**
+  * Take a look at
+    [enhancements](https://github.com/Byron/dua-cli/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
+    for some improvements, particularly [this one](https://github.com/Byron/dua-cli/issues/82)
+* **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/264)** for async support and
+  latest tokio
+* **treediff**
+  * [ ] Fix [this issue](https://github.com/Byron/treediff-rs/pull/7)
 * **criner**
   * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
         seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
