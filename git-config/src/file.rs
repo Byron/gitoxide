@@ -677,6 +677,7 @@ impl<'event> GitConfig<'event> {
     /// let git_config = GitConfig::try_from(config).unwrap();
     /// assert_eq!(git_config.sections_by_name("core").len(), 3);
     /// ```
+    #[must_use]
     pub fn sections_by_name<'lookup>(&self, section_name: &'lookup str) -> Vec<&SectionBody<'event>> {
         self.get_section_ids_by_name(section_name)
             .unwrap_or_default()

@@ -464,6 +464,7 @@ impl Error<'_> {
     /// not.
     ///
     /// [`clone`]: Self::clone
+    #[must_use]
     pub fn to_owned(&self) -> Error<'static> {
         Error {
             line_number: self.line_number,
