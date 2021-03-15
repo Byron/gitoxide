@@ -13,8 +13,7 @@ doctest = false
 
 [features]
 default = ["miniz_oxide"]
-
-zlib-ng = ["flate2"]
+zlib-ng-compat = ["flate2"]
 serde1 = ["serde", "git-object/serde1"]
 
 [package.metadata.docs.rs]

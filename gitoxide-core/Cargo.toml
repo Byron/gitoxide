@@ -14,6 +14,7 @@ test = false
 [features]
 serde1 = ["git-commitgraph/serde1", "git-object/serde1", "git-odb/serde1", "git-protocol/serde1", "serde_json", "serde"]
 organize = ["git-url", "bstr", "jwalk"]
+zlib-ng-compat = ["git-odb/zlib-ng-compat"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -21,7 +22,7 @@ all-features = true
 [dependencies]
 git-repository = { version = "^0.4.0", path = "../git-repository" }
 git-object = { version = "^0.6.0", path = "../git-object" }
-git-odb = { version = "^0.8.0", path = "../git-odb" }
+git-odb = { version = "^0.8.0", path = "../git-odb", optional = true }
 git-protocol = { version = "^0.4.0", path = "../git-protocol" }
 git-features = { version = "^0.11.0", path = "../git-features" }
 git-commitgraph = { version = "^0.3.0", path = "../git-commitgraph" }
