@@ -200,7 +200,7 @@ become available.
     * [ ] Some examples
 
 ### git-config
-  * [x] read
+  * [ ] read
     * line-wise parsing with decent error messages
     * [x] decode value
       * [x] boolean
@@ -211,6 +211,7 @@ become available.
       * [ ] includeIf
   * [x] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
+  * [ ] `Config` type which integrates multiple files into one interface to support system, user and repository levels for config files
   * [x] API documentation
     * [x] Some examples
 
