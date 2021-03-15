@@ -53,8 +53,6 @@ lean-cli = ["argh", "prodash/progress-log", "env_logger"]
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
 prodash-render-line-termion = ["prodash-render-line", "prodash/render-line-termion", "atty", "crosstermion"]
 
-zlib-ng-compat = ["gitoxide-core/zlib-ng-compat"]
-
 # internal
 prodash-render-tui = ["prodash/render-tui"]
 prodash-render-line = ["prodash/render-line"]

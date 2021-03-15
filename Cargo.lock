@@ -823,7 +823,6 @@ dependencies = [
  "git-object",
  "hex",
  "itoa",
- "miniz_oxide",
  "parking_lot",
  "pretty_assertions",
  "serde",

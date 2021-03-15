@@ -1,8 +1,5 @@
-#[cfg(not(feature = "zlib-ng"))]
-use crate::zlib::stream::inflate::Inflate;
 use crate::zlib::stream::inflate::InflateReaderBoxed;
 use crate::{hash, pack};
-#[cfg(feature = "zlib-ng")]
 use flate2::Decompress;
 use git_features::hash::Sha1;
 use git_object::owned;
@@ -53,9 +50,6 @@ pub struct Entry {
 /// The iterator used as part of [Bundle::write_stream_to_directory(…)][pack::Bundle::write_stream_to_directory()].
 pub struct Iter<R> {
     read: R,
-    #[cfg(not(feature = "zlib-ng"))]
-    decompressor: Option<Box<Inflate>>,
-    #[cfg(feature = "zlib-ng")]
     decompressor: Option<Box<Decompress>>,
     offset: u64,
     had_error: bool,
@@ -188,17 +182,11 @@ where
         .map_err(Error::from)?;
 
         // Decompress object to learn it's compressed bytes
-        #[cfg(not(feature = "zlib-ng"))]
-        let mut decompressor = self.decompressor.take().unwrap_or_default();
-        #[cfg(feature = "zlib-ng")]
         let mut decompressor = self
             .decompressor
             .take()
             .unwrap_or_else(|| Box::new(Decompress::new(true)));
         let compressed_buf = self.compressed_buf.take().unwrap_or_else(|| Vec::with_capacity(4096));
-        #[cfg(not(feature = "zlib-ng"))]
-        decompressor.reset();
-        #[cfg(feature = "zlib-ng")]
         decompressor.reset(true);
         let mut decompressed_reader = InflateReaderBoxed {
             inner: read_and_pass_to(

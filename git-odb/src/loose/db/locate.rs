@@ -73,7 +73,7 @@ impl Db {
             })?;
             (
                 inflate
-                    .once(&compressed[..bytes_read], &mut decompressed[..], true)
+                    .once(&compressed[..bytes_read], &mut decompressed[..])
                     .map_err(|e| Error::DecompressFile {
                         source: e,
                         path: path.to_owned(),
