@@ -72,7 +72,6 @@ where
         }
         obj.consume(consumed);
 
-        dbg!(read, consumed, &ret, eof);
         match ret {
             // If we haven't ready any data and we haven't hit EOF yet,
             // then we need to keep asking for more data because if we

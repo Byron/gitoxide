@@ -26,8 +26,14 @@ impl Default for Inflate {
 impl Inflate {
     /// Run the decompressor exactly once. Cannot be run multiple times
     pub fn once(&mut self, input: &[u8], out: &mut [u8]) -> Result<(flate2::Status, usize, usize), Error> {
+        let before_in = self.state.total_in();
+        let before_out = self.state.total_out();
         let status = self.state.decompress(input, out, flate2::FlushDecompress::None)?;
-        Ok((status, self.state.total_in() as usize, self.state.total_out() as usize))
+        Ok((
+            status,
+            (self.state.total_in() - before_in) as usize,
+            (self.state.total_out() - before_out) as usize,
+        ))
     }
 }
 
