@@ -28,3 +28,5 @@
   
   ### Miniz Oxide
   * [x] Wait for release so we can use the new reset capability introduced by [this PR](https://github.com/Frommi/miniz_oxide/pull/91)
+
+[josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602

@@ -49,22 +49,3 @@
 * **Questions**
   * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248),
     some code is commented out.
-
-### Other
-
-To be picked in any order….
-
-* **dua-cli**
-  * Take a look at
-    [enhancements](https://github.com/Byron/dua-cli/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
-    for some improvements, particularly [this one](https://github.com/Byron/dua-cli/issues/82)
-* **[google-apis-rs PR](https://github.com/Byron/google-apis-rs/pull/264)** for async support and
-  latest tokio
-* **treediff**
-  * [ ] Fix [this issue](https://github.com/Byron/treediff-rs/pull/7)
-* **criner**
-  * [ ] switch to `isahc` or `ureq` (blocking, but could use unblock for that)
-        seems to allow async-reading of bodies, allowing to get rid of reqwest and tokio. Redirect is configurable.
-* [x] Upgrade to [TUI 0.14](https://github.com/fdehau/tui-rs/releases/tag/v0.14.0), which does come with a share of breaking changes.
-
-[josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602
