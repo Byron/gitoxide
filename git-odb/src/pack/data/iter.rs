@@ -15,8 +15,8 @@ pub enum Error {
     PackParse(#[from] pack::data::parse::Error),
     #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
     ChecksumMismatch { expected: owned::Id, actual: owned::Id },
-    #[error("pack is incomplete: was decompressed into {0} bytes but got {1} bytes instead.")]
-    IncompletePack(u64, u64),
+    #[error("pack is incomplete: it was decompressed into {actual} bytes but {expected} bytes where expected.")]
+    IncompletePack { actual: u64, expected: u64 },
 }
 
 /// An item of the iteration produced by [`Iter`]
@@ -204,7 +204,10 @@ where
 
         let bytes_copied = io::copy(&mut decompressed_reader, &mut io::sink())?;
         if bytes_copied != entry.decompressed_size {
-            return Err(Error::IncompletePack(bytes_copied, entry.decompressed_size));
+            return Err(Error::IncompletePack {
+                actual: bytes_copied,
+                expected: entry.decompressed_size,
+            });
         }
 
         let pack_offset = self.offset;
