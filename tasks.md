@@ -46,6 +46,11 @@
 * [x] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
 * [x] Application of the command above in a stress test
 
+### Feature Flags
+
+* [ ] configure the `small` feature set so that the flate2 backend is miniz-oxide instead of zlib-ng, allowing a 'pure' rust build. 
+      This might mean that the `fast` feature contains zlib-ng.
+
 * **Questions**
   * What to do with the ['extra-garbage'](https://github.com/Byron/gitoxide/blob/6f90beeb418480f9cd8bb7ae3b5db678b24103cb/git-commitgraph/src/file/init.rs#L248),
     some code is commented out.
