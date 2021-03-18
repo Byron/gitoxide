@@ -130,7 +130,7 @@ impl File {
         assert!(offset < self.data.len(), "entry offset out of bounds");
 
         zlib::Inflate::default()
-            .once(&self.data[offset..], out, true)
+            .once(&self.data[offset..], out)
             .map_err(Into::into)
             .map(|(_, consumed_in, _)| consumed_in)
     }

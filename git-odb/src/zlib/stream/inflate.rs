@@ -1,62 +1,11 @@
-use super::Status;
-use miniz_oxide::{inflate, inflate::stream::InflateState, DataFormat, MZError, MZFlush, MZStatus};
+use flate2::{Decompress, FlushDecompress, Status};
 use std::{io, io::BufRead};
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("The decompression failed due to an unknown error")]
-    Decompression,
-    #[error("Probably the stream is damaged, adler value is {0}")]
-    ZLibNeedDict(u32),
-}
-
-pub(crate) struct Inflate {
-    state: InflateState,
-    pub(crate) total_in: u64,
-    total_out: u64,
-}
-
-impl Default for Inflate {
-    fn default() -> Self {
-        Inflate {
-            state: InflateState::new(DataFormat::Zlib),
-            total_in: 0,
-            total_out: 0,
-        }
-    }
-}
-
-impl Inflate {
-    pub fn reset(&mut self) {
-        self.state.reset_as(inflate::stream::MinReset);
-        self.total_in = 0;
-        self.total_out = 0;
-    }
-
-    fn decompress(&mut self, input: &[u8], output: &mut [u8], flush: MZFlush) -> Result<Status, Error> {
-        let res = inflate::stream::inflate(&mut self.state, input, output, flush);
-        self.total_in += res.bytes_consumed as u64;
-        self.total_out += res.bytes_written as u64;
-
-        match res.status {
-            Ok(status) => match status {
-                MZStatus::Ok => Ok(Status::Ok),
-                MZStatus::StreamEnd => Ok(Status::StreamEnd),
-                MZStatus::NeedDict => Err(Error::ZLibNeedDict(self.state.decompressor().adler32().unwrap_or(0))),
-            },
-            Err(status) => match status {
-                MZError::Buf => Ok(Status::BufError),
-                _ => Err(Error::Decompression),
-            },
-        }
-    }
-}
 
 /// Provide streaming decompression using the `std::io::Read` trait.
 /// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
 pub struct InflateReader<R> {
     pub(crate) inner: R,
-    pub(crate) decompressor: Inflate,
+    pub(crate) decompressor: Decompress,
 }
 
 impl<R> InflateReader<R>
@@ -66,14 +15,14 @@ where
     pub fn from_read(read: R) -> InflateReader<R> {
         // TODO: Performance opportunity - a buf reader that doesn't allocate
         InflateReader {
-            decompressor: Inflate::default(),
+            decompressor: Decompress::new(true),
             inner: read,
         }
     }
 
     pub fn reset(&mut self, read: R) {
         self.inner = read;
-        self.decompressor.reset();
+        self.decompressor.reset(true);
     }
 }
 
@@ -89,7 +38,7 @@ where
 /// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
 pub struct InflateReaderBoxed<R> {
     pub(crate) inner: R,
-    pub(crate) decompressor: Box<Inflate>,
+    pub(crate) decompressor: Box<Decompress>,
 }
 
 impl<R> io::Read for InflateReaderBoxed<R>
@@ -101,8 +50,7 @@ where
     }
 }
 
-/// Adapted from [flate2](https://github.com/alexcrichton/flate2-rs/blob/57972d77dab09acad4aa2fa3beedb1f69fa64b27/src/zio.rs#L118)
-fn read<R>(obj: &mut R, data: &mut Inflate, dst: &mut [u8]) -> io::Result<usize>
+fn read<R>(obj: &mut R, data: &mut Decompress, dst: &mut [u8]) -> io::Result<usize>
 where
     R: BufRead,
 {
@@ -111,12 +59,16 @@ where
         {
             let input = obj.fill_buf()?;
             eof = input.is_empty();
-            let before_out = data.total_out;
-            let before_in = data.total_in;
-            let flush = if eof { MZFlush::Finish } else { MZFlush::None };
+            let before_out = data.total_out();
+            let before_in = data.total_in();
+            let flush = if eof {
+                FlushDecompress::Finish
+            } else {
+                FlushDecompress::None
+            };
             ret = data.decompress(input, dst, flush);
-            read = (data.total_out - before_out) as usize;
-            consumed = (data.total_in - before_in) as usize;
+            read = (data.total_out() - before_out) as usize;
+            consumed = (data.total_in() - before_in) as usize;
         }
         obj.consume(consumed);
 

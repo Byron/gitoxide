@@ -27,6 +27,7 @@ quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 # for http-client-curl
-curl = { version = "0.4", optional = true, features = ["static-ssl", "static-curl"] }
+# zlib-ng-compat doesn't force zlib-ng
+curl = { version = "0.4", optional = true, features = ["static-curl", "static-ssl", "zlib-ng-compat"] }
 thiserror = "1.0.20"
 base64 = { version = "0.13.0", optional = true }

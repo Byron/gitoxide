@@ -1,63 +1,39 @@
-use miniz_oxide::{
-    inflate::core::DecompressorOxide,
-    inflate::{
-        core::inflate_flags::{
-            TINFL_FLAG_HAS_MORE_INPUT, TINFL_FLAG_PARSE_ZLIB_HEADER, TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
-        },
-        TINFLStatus,
-    },
-};
+use flate2::Decompress;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Could not write all bytes when decompressing content")]
     WriteInflated(#[from] std::io::Error),
     #[error("Could not decode zip stream, status was '{0:?}'")]
-    Inflate(miniz_oxide::inflate::TINFLStatus),
+    Inflate(#[from] flate2::DecompressError),
 }
 
 /// Decompress a few bytes of a zlib stream without allocation
 pub struct Inflate {
-    state: DecompressorOxide,
+    state: Decompress,
     pub is_done: bool,
 }
 
 impl Default for Inflate {
     fn default() -> Self {
         Inflate {
-            state: DecompressorOxide::default(),
+            state: Decompress::new(true),
             is_done: false,
         }
     }
 }
 
 impl Inflate {
-    /// Run the decompressor exactly once. Cannot be run mutliple times
-    pub fn once(
-        &mut self,
-        input: &[u8],
-        out: &mut [u8],
-        parse_header: bool,
-    ) -> Result<(TINFLStatus, usize, usize), Error> {
-        let (status, in_consumed, out_consumed) = miniz_oxide::inflate::core::decompress(
-            &mut self.state,
-            input,
-            out,
-            0,
-            if parse_header { TINFL_FLAG_PARSE_ZLIB_HEADER } else { 0 }
-                | TINFL_FLAG_HAS_MORE_INPUT
-                | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF,
-        );
-
-        use miniz_oxide::inflate::TINFLStatus::*;
-        match status {
-            Failed | FailedCannotMakeProgress | BadParam | Adler32Mismatch => return Err(Error::Inflate(status)),
-            HasMoreOutput | NeedsMoreInput => {}
-            Done => {
-                self.is_done = true;
-            }
-        };
-        Ok((status, in_consumed, out_consumed))
+    /// Run the decompressor exactly once. Cannot be run multiple times
+    pub fn once(&mut self, input: &[u8], out: &mut [u8]) -> Result<(flate2::Status, usize, usize), Error> {
+        let before_in = self.state.total_in();
+        let before_out = self.state.total_out();
+        let status = self.state.decompress(input, out, flate2::FlushDecompress::None)?;
+        Ok((
+            status,
+            (self.state.total_in() - before_in) as usize,
+            (self.state.total_out() - before_out) as usize,
+        ))
     }
 }
 

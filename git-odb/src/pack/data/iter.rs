@@ -1,7 +1,5 @@
-use crate::{
-    hash, pack,
-    zlib::stream::inflate::{Inflate, InflateReaderBoxed},
-};
+use crate::{hash, pack, zlib::stream::inflate::InflateReaderBoxed};
+use flate2::Decompress;
 use git_features::hash::Sha1;
 use git_object::owned;
 use std::{fs, io};
@@ -16,6 +14,8 @@ pub enum Error {
     PackParse(#[from] pack::data::parse::Error),
     #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
     ChecksumMismatch { expected: owned::Id, actual: owned::Id },
+    #[error("pack is incomplete: it was decompressed into {actual} bytes but {expected} bytes where expected.")]
+    IncompletePack { actual: u64, expected: u64 },
 }
 
 /// An item of the iteration produced by [`Iter`]
@@ -51,7 +51,7 @@ pub struct Entry {
 /// The iterator used as part of [Bundle::write_stream_to_directory(…)][pack::Bundle::write_stream_to_directory()].
 pub struct Iter<R> {
     read: R,
-    decompressor: Option<Box<Inflate>>,
+    decompressor: Option<Box<Decompress>>,
     offset: u64,
     had_error: bool,
     kind: pack::data::Version,
@@ -183,9 +183,12 @@ where
         .map_err(Error::from)?;
 
         // Decompress object to learn it's compressed bytes
-        let mut decompressor = self.decompressor.take().unwrap_or_default();
+        let mut decompressor = self
+            .decompressor
+            .take()
+            .unwrap_or_else(|| Box::new(Decompress::new(true)));
         let compressed_buf = self.compressed_buf.take().unwrap_or_else(|| Vec::with_capacity(4096));
-        decompressor.reset();
+        decompressor.reset(true);
         let mut decompressed_reader = InflateReaderBoxed {
             inner: read_and_pass_to(
                 &mut self.read,
@@ -199,14 +202,15 @@ where
         };
 
         let bytes_copied = io::copy(&mut decompressed_reader, &mut io::sink())?;
-        debug_assert_eq!(
-            bytes_copied, entry.decompressed_size,
-            "We should have decompressed {} bytes, but got {} instead",
-            entry.decompressed_size, bytes_copied
-        );
+        if bytes_copied != entry.decompressed_size {
+            return Err(Error::IncompletePack {
+                actual: bytes_copied,
+                expected: entry.decompressed_size,
+            });
+        }
 
         let pack_offset = self.offset;
-        let compressed_size = decompressed_reader.decompressor.total_in;
+        let compressed_size = decompressed_reader.decompressor.total_in();
         self.offset += entry.header_size() as u64 + compressed_size;
         self.decompressor = Some(decompressed_reader.decompressor);
 

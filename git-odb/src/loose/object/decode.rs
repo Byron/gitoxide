@@ -1,7 +1,6 @@
-use super::stream;
-use crate::{loose, zlib};
+use crate::loose;
+use flate2::Decompress;
 use git_object as object;
-use miniz_oxide::inflate::decompress_to_vec_zlib;
 use object::borrowed;
 use smallvec::SmallVec;
 use std::{io::Read, path::PathBuf};
@@ -11,7 +10,7 @@ use std::{io::Read, path::PathBuf};
 #[allow(missing_docs)]
 pub enum Error {
     #[error("decompression of object data failed")]
-    Decompress(#[from] zlib::Error),
+    Decompress(#[from] flate2::DecompressError),
     #[error(transparent)]
     Parse(#[from] borrowed::Error),
     #[error("Could not {action} data at '{path}'")]
@@ -41,9 +40,9 @@ impl loose::Object {
     ///
     /// **Note**: This is most useful for big blobs as these won't be read into memory in full. Use [`decode()`][loose::Object::decode()] for
     /// Trees, Tags and Commits instead for convenient access to their payload.
-    pub fn stream(&mut self) -> Result<stream::Reader<'_>, Error> {
+    pub fn stream(&mut self) -> Result<loose::object::stream::Reader<'_>, Error> {
         match &self.path {
-            Some(path) => Ok(stream::Reader::from_file(
+            Some(path) => Ok(loose::object::stream::Reader::from_file(
                 self.header_size,
                 std::fs::File::open(path).map_err(|source| Error::Io {
                     source,
@@ -53,7 +52,7 @@ impl loose::Object {
             )),
             None => {
                 self.decompress_all()?;
-                Ok(stream::Reader::from_data(
+                Ok(loose::object::stream::Reader::from_data(
                     self.header_size,
                     &self.decompressed_data.as_slice(),
                 ))
@@ -94,7 +93,9 @@ impl loose::Object {
             })?;
             self.compressed_data = SmallVec::from(buf);
         }
-        self.decompressed_data = SmallVec::from(decompress_to_vec_zlib(&self.compressed_data[..]).unwrap());
+        let mut vec = Vec::with_capacity(std::cmp::min(self.compressed_data.len() * 2, usize::MAX));
+        Decompress::new(true).decompress_vec(&self.compressed_data[..], &mut vec, flate2::FlushDecompress::None)?;
+        self.decompressed_data = SmallVec::from(vec);
         self.compressed_data = Default::default();
         self.decompressed_data.shrink_to_fit();
         assert!(self.decompressed_data.len() == total_size);
