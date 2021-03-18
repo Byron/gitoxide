@@ -1,4 +1,3 @@
-use super::stream;
 use crate::loose;
 use flate2::Decompress;
 use git_object as object;
@@ -41,9 +40,9 @@ impl loose::Object {
     ///
     /// **Note**: This is most useful for big blobs as these won't be read into memory in full. Use [`decode()`][loose::Object::decode()] for
     /// Trees, Tags and Commits instead for convenient access to their payload.
-    pub fn stream(&mut self) -> Result<stream::Reader<'_>, Error> {
+    pub fn stream(&mut self) -> Result<loose::object::stream::Reader<'_>, Error> {
         match &self.path {
-            Some(path) => Ok(stream::Reader::from_file(
+            Some(path) => Ok(loose::object::stream::Reader::from_file(
                 self.header_size,
                 std::fs::File::open(path).map_err(|source| Error::Io {
                     source,
@@ -53,7 +52,7 @@ impl loose::Object {
             )),
             None => {
                 self.decompress_all()?;
-                Ok(stream::Reader::from_data(
+                Ok(loose::object::stream::Reader::from_data(
                     self.header_size,
                     &self.decompressed_data.as_slice(),
                 ))

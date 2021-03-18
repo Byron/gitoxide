@@ -1,5 +1,4 @@
-use crate::zlib::stream::inflate::InflateReaderBoxed;
-use crate::{hash, pack};
+use crate::{hash, pack, zlib::stream::inflate::InflateReaderBoxed};
 use flate2::Decompress;
 use git_features::hash::Sha1;
 use git_object::owned;
