@@ -1,3 +1,44 @@
+### Send Pack (client to server)
+
+* **git-odb**
+
+The below is a very early draft - it would be better to study existing implementations first to get a better overview on what (not) to do.
+This one starts with the fun part to allow writing tests early and experiment with different diff algorithms and potentially their performance.
+  
+* [ ] generate a pack from objects received by an iterator producing
+  * [ ] base objects only
+  * [ ] best-fit delta objects using the [similar][sim-crate]
+  * [ ] A mechanism to declare some bases to be 'out of pack' for thin pack support
+* [ ] **Traversal** (as building blocks to feed pack generation)
+  * [ ] Traverse a commit graph (look around to see what's common, if in doubt walk back the commit graph and see how to deal with branching)
+  * [ ] Traverse trees
+* [ ] **Iterator** to feed pack generation efficiently
+
+* **git-transport**
+
+Certainly needs more research, but roughly…
+  
+* [ ] Server side `accept()`
+  * [ ] http(s)
+  * [ ] ssh
+  * [ ] ~~daemon~~ probaby only used in testing, and we might implement it if it's useful for us as well
+  
+* **git-protocol**
+  
+  * [ ] Server side chatter to negotiate a pack for
+    * [ ] protocol V2
+    * [ ] protocol V1 (_probably not worth it, let's see_)
+  
+* **gixp serve**
+
+Probably more like a toy at first merely for testing operation against various git clients.
+  
+  * [ ] A server able to answer via
+    * [ ] http(s)
+    * [ ] file protocol (or remote invocation via SSH)
+  
+[sim-crate]: https://crates.io/crates/similar
+
 ### Repository Clone
 
 * **git-odb**
