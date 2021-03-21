@@ -90,7 +90,7 @@ pub mod pretty {
                 enum Event<T> {
                     UIDone,
                     ComputationDone(Result<T>),
-                };
+                }
                 let progress = crate::shared::progress_tree();
                 let sub_progress = progress.add_child(name);
                 let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
