@@ -30,4 +30,4 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 itoa = "0.4.6"
 
 [dev-dependencies]
-pretty_assertions = "0.6.1"
+pretty_assertions = "0.7.1"

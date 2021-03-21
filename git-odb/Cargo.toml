@@ -37,7 +37,7 @@ parking_lot = { version = "0.11.0", default-features = false }
 thiserror = "1.0.20"
 
 [dev-dependencies]
-pretty_assertions = "0.6.1"
+pretty_assertions = "0.7.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 hex = "0.4.2"
 common_macros = "0.1.1"
