@@ -34,6 +34,7 @@ pub mod from_offsets;
 pub struct Item<T> {
     /// The offset into the pack file at which the pack entry's data is located.
     pub offset: u64,
+    /// If true, this object may have children but is not a child itself. It's thus the root of a tree.
     is_root: bool,
     /// Data to store with each Item, effectively data associated with each entry in a pack.
     pub data: T,

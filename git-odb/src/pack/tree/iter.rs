@@ -1,5 +1,5 @@
 use crate::{
-    pack::data::EntrySlice,
+    pack,
     pack::tree::{Item, Tree},
 };
 
@@ -82,10 +82,10 @@ impl<T> Tree<T> {
 /// Iteration
 impl<T> Tree<T> {
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, size: usize) -> Chunks<'_, T> {
+    pub fn iter_root_chunks(&mut self, chunk_size: usize) -> Chunks<'_, T> {
         Chunks {
             tree: self,
-            size,
+            chunk_size,
             cursor: 0,
         }
     }
@@ -114,7 +114,7 @@ where
     }
 
     /// Returns the slice into the data pack at which the pack entry is located.
-    pub fn entry_slice(&self) -> EntrySlice {
+    pub fn entry_slice(&self) -> pack::data::EntrySlice {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {
@@ -150,7 +150,7 @@ where
 /// An iterator over chunks of [`Node`]s in a [`Tree`]
 pub struct Chunks<'a, T> {
     tree: &'a Tree<T>,
-    size: usize,
+    chunk_size: usize,
     cursor: usize,
 }
 
@@ -164,8 +164,8 @@ where
         if self.cursor == self.tree.one_past_last_seen_root {
             return None;
         }
-        let mut items_remaining = self.size;
-        let mut res = Vec::with_capacity(self.size);
+        let mut items_remaining = self.chunk_size;
+        let mut res = Vec::with_capacity(self.chunk_size);
 
         while items_remaining > 0 && self.cursor < self.tree.one_past_last_seen_root {
             // SAFETY: The index is valid as the cursor cannot surpass the amount of items. `one_past_last_seen_root`
