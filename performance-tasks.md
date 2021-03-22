@@ -8,6 +8,8 @@
 
 ### Pack Decoding
 
+* [ ] On **ARM64 on MacOS** the SHA1 implementation of the [`sha-1` crate](https://github.com/RustCrypto/hashes) is capped at about 550MB/s, half the speed of what I saw on Intel and about 50% slower than what's implemented in `libcorecrypto.dylib`. Get that fast and the decoding stage will be able
+      to beat git on fewer cores. [See this comment for more](https://github.com/Byron/gitoxide/discussions/46#discussioncomment-511268). Right now we only do when scaling beyond what `git` can do due to lock contention.
 * [ ] Add more control over the amount of memory used for the `less-memory` algorithm of `pack-verify` to increase cache hit rate at the cost of memory.
   Note that depending on this setting, it might not be needed anymore to iterated over sorted offsets, freeing 150MB of memory in the process
   that could be used for the improved cache. With the current cache and no sorted offsets, the time nearly triples.
