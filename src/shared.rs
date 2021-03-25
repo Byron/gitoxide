@@ -125,7 +125,7 @@ pub mod pretty {
                 enum Event<T> {
                     UIDone,
                     ComputationDone(Result<T>, Vec<u8>, Vec<u8>),
-                };
+                }
                 let progress = prodash::Tree::new();
                 let sub_progress = progress.add_child(name);
                 let render_tui = prodash::render::tui(

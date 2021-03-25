@@ -1,4 +1,4 @@
-### Send Pack (client to server)
+### Send Pack (server to client)
 
 * **git-odb**
 
