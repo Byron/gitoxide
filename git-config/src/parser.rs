@@ -112,6 +112,7 @@ impl Display for Event<'_> {
     /// Note that this is a best-effort attempt at printing an `Event`. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
     /// as read.
+    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => match std::str::from_utf8(e) {
@@ -127,15 +128,17 @@ impl Display for Event<'_> {
     }
 }
 
-impl Into<Vec<u8>> for Event<'_> {
-    fn into(self) -> Vec<u8> {
-        (&self).into()
+impl From<Event<'_>> for Vec<u8> {
+    #[inline]
+    fn from(event: Event) -> Self {
+        event.into()
     }
 }
 
-impl Into<Vec<u8>> for &Event<'_> {
-    fn into(self) -> Vec<u8> {
-        match self {
+impl From<&Event<'_>> for Vec<u8> {
+    #[inline]
+    fn from(event: &Event) -> Self {
+        match event {
             Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
             Event::Comment(e) => e.into(),
             Event::SectionHeader(e) => e.into(),
@@ -170,6 +173,7 @@ impl ParsedSection<'_> {
     /// not.
     ///
     /// [`clone`]: Self::clone
+    #[inline]
     #[must_use]
     pub fn to_owned(&self) -> ParsedSection<'static> {
         ParsedSection {
@@ -210,6 +214,7 @@ macro_rules! generate_case_insensitive {
             /// while `clone` does not.
             ///
             /// [`clone`]: Self::clone
+            #[inline]
             #[must_use]
             pub fn to_owned(&self) -> $name<'static> {
                 $name(Cow::Owned(self.0.clone().into_owned()))
@@ -217,18 +222,21 @@ macro_rules! generate_case_insensitive {
         }
 
         impl PartialEq for $name<'_> {
+            #[inline]
             fn eq(&self, other: &Self) -> bool {
                 self.0.eq_ignore_ascii_case(&other.0)
             }
         }
 
         impl Display for $name<'_> {
+            #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 self.0.fmt(f)
             }
         }
 
         impl PartialOrd for $name<'_> {
+            #[inline]
             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 self.0
                     .to_ascii_lowercase()
@@ -237,18 +245,21 @@ macro_rules! generate_case_insensitive {
         }
 
         impl std::hash::Hash for $name<'_> {
+            #[inline]
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
                 self.0.to_ascii_lowercase().hash(state)
             }
         }
 
         impl<'a> From<&'a str> for $name<'a> {
+            #[inline]
             fn from(s: &'a str) -> Self {
                 Self(Cow::Borrowed(s))
             }
         }
 
         impl<'a> From<Cow<'a, str>> for $name<'a> {
+            #[inline]
             fn from(s: Cow<'a, str>) -> Self {
                 Self(s)
             }
@@ -257,6 +268,7 @@ macro_rules! generate_case_insensitive {
         impl<'a> std::ops::Deref for $name<'a> {
             type Target = $cow_inner_type;
 
+            #[inline]
             fn deref(&self) -> &Self::Target {
                 &self.0
             }
@@ -300,6 +312,7 @@ impl ParsedSectionHeader<'_> {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
+    #[inline]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -347,21 +360,24 @@ impl Display for ParsedSectionHeader<'_> {
     }
 }
 
-impl Into<Vec<u8>> for ParsedSectionHeader<'_> {
-    fn into(self) -> Vec<u8> {
-        (&self).into()
+impl From<ParsedSectionHeader<'_>> for Vec<u8> {
+    #[inline]
+    fn from(header: ParsedSectionHeader) -> Self {
+        header.into()
     }
 }
 
-impl Into<Vec<u8>> for &ParsedSectionHeader<'_> {
-    fn into(self) -> Vec<u8> {
-        self.to_string().into_bytes()
+impl From<&ParsedSectionHeader<'_>> for Vec<u8> {
+    #[inline]
+    fn from(header: &ParsedSectionHeader) -> Self {
+        header.to_string().into_bytes()
     }
 }
 
-impl<'a> Into<Event<'a>> for ParsedSectionHeader<'a> {
-    fn into(self) -> Event<'a> {
-        Event::SectionHeader(self)
+impl<'a> From<ParsedSectionHeader<'a>> for Event<'a> {
+    #[inline]
+    fn from(header: ParsedSectionHeader) -> Event {
+        Event::SectionHeader(header)
     }
 }
 
@@ -412,16 +428,17 @@ impl Display for ParsedComment<'_> {
     }
 }
 
-impl Into<Vec<u8>> for ParsedComment<'_> {
-    fn into(self) -> Vec<u8> {
-        (&self).into()
+impl From<ParsedComment<'_>> for Vec<u8> {
+    #[inline]
+    fn from(c: ParsedComment) -> Self {
+        c.into()
     }
 }
 
-impl Into<Vec<u8>> for &ParsedComment<'_> {
-    fn into(self) -> Vec<u8> {
-        let mut values = vec![self.comment_tag as u8];
-        values.extend(self.comment.iter());
+impl From<&ParsedComment<'_>> for Vec<u8> {
+    fn from(c: &ParsedComment) -> Self {
+        let mut values = vec![c.comment_tag as u8];
+        values.extend(c.comment.iter());
         values
     }
 }

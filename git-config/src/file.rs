@@ -79,8 +79,10 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
                     }
 
                     if values.len() == 1 {
-                        return Some((k, normalize_cow(values.pop().unwrap())));
+                        let value = values.pop().expect("vec is non-empty but popped to empty value");
+                        return Some((k, normalize_cow(value)));
                     }
+
                     return Some((
                         k,
                         normalize_vec(values.into_iter().rev().flat_map(|v: Cow<[u8]>| v.to_vec()).collect()),
@@ -1770,23 +1772,36 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
     }
 }
 
-impl<'a> Into<Vec<u8>> for GitConfig<'a> {
-    fn into(self) -> Vec<u8> {
-        (&self).into()
+impl From<GitConfig<'_>> for Vec<u8> {
+    #[inline]
+    fn from(c: GitConfig) -> Self {
+        c.into()
     }
 }
 
-impl<'a> Into<Vec<u8>> for &GitConfig<'a> {
-    fn into(self) -> Vec<u8> {
-        let mut value = vec![];
+impl From<&GitConfig<'_>> for Vec<u8> {
+    fn from(config: &GitConfig) -> Self {
+        let mut value = Self::new();
 
-        for events in &self.frontmatter_events.0 {
+        for events in &config.frontmatter_events.0 {
             value.extend(events.to_vec());
         }
 
-        for section_id in &self.section_order {
-            value.extend(self.section_headers.get(section_id).unwrap().to_vec());
-            for event in &self.sections.get(section_id).unwrap().0 {
+        for section_id in &config.section_order {
+            value.extend(
+                config
+                    .section_headers
+                    .get(section_id)
+                    .expect("section_header does not contain section id from section_order")
+                    .to_vec(),
+            );
+
+            for event in &config
+                .sections
+                .get(section_id)
+                .expect("sections does not contain section id from section_order")
+                .0
+            {
                 value.extend(event.to_vec());
             }
         }
