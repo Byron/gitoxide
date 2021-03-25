@@ -240,6 +240,10 @@ impl<'event> SectionBody<'event> {
 
     /// Retrieves the last matching value in a section with the given key.
     /// Returns None if the key was not found.
+    // We hit this lint because of the unreachable!() call may panic, but this
+    // is a clippy bug (rust-clippy#6699), so we allow this lint for this
+    // function.
+    #[allow(clippy::clippy::missing_panics_doc)]
     #[must_use]
     pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
         let range = self.get_value_range_by_key(key);
@@ -308,8 +312,11 @@ impl<'event> SectionBody<'event> {
                 }
                 Event::ValueDone(v) if found_key => {
                     found_key = false;
-                    partial_value.as_mut().unwrap().extend(&**v);
-                    values.push(normalize_cow(Cow::Owned(partial_value.take().unwrap())));
+                    let mut value = partial_value
+                        .take()
+                        .expect("ValueDone event called before ValueNotDone");
+                    value.extend(&**v);
+                    values.push(normalize_cow(Cow::Owned(value)));
                 }
                 _ => (),
             }
@@ -625,7 +632,13 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
     ) -> Result<&SectionBody<'event>, GitConfigError<'lookup>> {
         let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-        Ok(self.sections.get(section_ids.last().unwrap()).unwrap())
+        let id = section_ids
+            .last()
+            .expect("Section lookup vec was empty, internal invariant violated");
+        Ok(self
+            .sections
+            .get(id)
+            .expect("Section did not have id from lookup, internal invariant violated"))
     }
 
     /// Returns an mutable section reference.
@@ -640,10 +653,12 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
     ) -> Result<MutableSection<'_, 'event>, GitConfigError<'lookup>> {
         let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-
-        Ok(MutableSection::new(
-            self.sections.get_mut(section_ids.last().unwrap()).unwrap(),
-        ))
+        let id = section_ids
+            .last()
+            .expect("Section lookup vec was empty, internal invariant violated");
+        Ok(MutableSection::new(self.sections.get_mut(id).expect(
+            "Section did not have id from lookup, internal invariant violated",
+        )))
     }
 
     /// Gets all sections that match the provided name, ignoring any subsections.
@@ -684,7 +699,11 @@ impl<'event> GitConfig<'event> {
         self.get_section_ids_by_name(section_name)
             .unwrap_or_default()
             .into_iter()
-            .map(|id| self.sections.get(&id).expect("internal invariant violated"))
+            .map(|id| {
+                self.sections
+                    .get(&id)
+                    .expect("section doesn't have id from from lookup")
+            })
             .collect()
     }
 
@@ -770,8 +789,12 @@ impl<'event> GitConfig<'event> {
             .get_section_ids_by_name_and_subname(section_name, subsection_name.into())
             .ok()?
             .pop()?;
-        self.section_order
-            .remove(self.section_order.iter().position(|v| *v == id).unwrap());
+        self.section_order.remove(
+            self.section_order
+                .iter()
+                .position(|v| *v == id)
+                .expect("Section order does not contain section that we were trying to remove"),
+        );
         self.sections.remove(&id)
     }
 
@@ -809,7 +832,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// # Errors
     ///
-    /// Returns an error if the lookup
+    /// Returns an error if the lookup doesn't exist
     pub fn rename_section<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -818,8 +841,13 @@ impl<'event> GitConfig<'event> {
         new_subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<(), GitConfigError<'lookup>> {
         let id = self.get_section_ids_by_name_and_subname(section_name, subsection_name.into())?;
-        let id = id.last().unwrap();
-        let header = self.section_headers.get_mut(id).unwrap();
+        let id = id
+            .last()
+            .expect("list of sections were empty, which violates invariant");
+        let header = self
+            .section_headers
+            .get_mut(id)
+            .expect("sections does not have section id from section ids");
         header.name = new_section_name.into();
         header.subsection_name = new_subsection_name.into();
 
@@ -930,7 +958,12 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         } in &self.indices_and_sizes
         {
             let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
-            for event in &self.section.get(section_id).unwrap().0[offset..offset + size] {
+            for event in &self
+                .section
+                .get(section_id)
+                .expect("sections does not have section id from section ids")
+                .0[offset..offset + size]
+            {
                 match event {
                     Event::Key(event_key) if *event_key == self.key => found_key = true,
                     Event::Value(v) if found_key => {
@@ -942,8 +975,11 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
                     }
                     Event::ValueDone(v) if found_key => {
                         found_key = false;
-                        partial_value.as_mut().unwrap().extend(&**v);
-                        values.push(normalize_vec(partial_value.take().unwrap()));
+                        let mut value = partial_value
+                            .take()
+                            .expect("Somehow got ValueDone before ValueNotDone event");
+                        value.extend(&**v);
+                        values.push(normalize_vec(value));
                     }
                     _ => (),
                 }
@@ -1005,7 +1041,9 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         MutableMultiValue::set_value_inner(
             &self.key,
             &mut self.offsets,
-            self.section.get_mut(&section_id).unwrap(),
+            self.section
+                .get_mut(&section_id)
+                .expect("sections does not have section id from section ids"),
             section_id,
             offset_index,
             input,
@@ -1032,7 +1070,9 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
             Self::set_value_inner(
                 &self.key,
                 &mut self.offsets,
-                self.section.get_mut(section_id).unwrap(),
+                self.section
+                    .get_mut(section_id)
+                    .expect("sections does not have section id from section ids"),
                 *section_id,
                 *offset_index,
                 value,
@@ -1059,7 +1099,9 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
             Self::set_value_inner(
                 &self.key,
                 &mut self.offsets,
-                self.section.get_mut(section_id).unwrap(),
+                self.section
+                    .get_mut(section_id)
+                    .expect("sections does not have section id from section ids"),
                 *section_id,
                 *offset_index,
                 Cow::Owned(input.to_vec()),
@@ -1082,7 +1124,9 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
             Self::set_value_inner(
                 &self.key,
                 &mut self.offsets,
-                self.section.get_mut(section_id).unwrap(),
+                self.section
+                    .get_mut(section_id)
+                    .expect("sections does not have section id from section ids"),
                 *section_id,
                 *offset_index,
                 Cow::Borrowed(input),
@@ -1120,7 +1164,11 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         } = &self.indices_and_sizes[index];
         let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
         if size > 0 {
-            self.section.get_mut(section_id).unwrap().0.drain(offset..offset + size);
+            self.section
+                .get_mut(section_id)
+                .expect("sections does not have section id from section ids")
+                .0
+                .drain(offset..offset + size);
 
             Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
             self.indices_and_sizes.remove(index);
@@ -1137,7 +1185,11 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
         {
             let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
             if size > 0 {
-                self.section.get_mut(section_id).unwrap().0.drain(offset..offset + size);
+                self.section
+                    .get_mut(section_id)
+                    .expect("sections does not have section id from section ids")
+                    .0
+                    .drain(offset..offset + size);
                 Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
             }
         }
@@ -1153,7 +1205,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     ) -> (usize, usize) {
         offsets
             .get(&section_id)
-            .unwrap()
+            .expect("sections does not have section id from section ids")
             .iter()
             .take(offset_index + 1)
             .fold((0, 0), |(old, new), offset| (old + new, *offset))
@@ -1172,7 +1224,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     ) {
         *offsets
             .get_mut(&section_id)
-            .unwrap()
+            .expect("sections does not have section id from section ids")
             .get_mut(offset_index)
             .unwrap()
             .deref_mut() = value;
@@ -1209,7 +1261,12 @@ impl<'event> GitConfig<'event> {
             .iter()
             .rev()
         {
-            if let Some(v) = self.sections.get(section_id).unwrap().value(&key) {
+            if let Some(v) = self
+                .sections
+                .get(section_id)
+                .expect("sections does not have section id from section ids")
+                .value(&key)
+            {
                 return Ok(v.to_vec().into());
             }
         }
@@ -1241,7 +1298,14 @@ impl<'event> GitConfig<'event> {
             let mut index = 0;
             let mut found_key = false;
             // todo: iter backwards
-            for (i, event) in self.sections.get(section_id).unwrap().0.iter().enumerate() {
+            for (i, event) in self
+                .sections
+                .get(section_id)
+                .expect("sections does not have section id from section ids")
+                .0
+                .iter()
+                .enumerate()
+            {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
                         found_key = true;
@@ -1264,7 +1328,11 @@ impl<'event> GitConfig<'event> {
             }
 
             return Ok(MutableValue {
-                section: MutableSection::new(self.sections.get_mut(section_id).unwrap()),
+                section: MutableSection::new(
+                    self.sections
+                        .get_mut(section_id)
+                        .expect("sections does not have section id from section ids"),
+                ),
                 key,
                 size,
                 index,
@@ -1325,7 +1393,7 @@ impl<'event> GitConfig<'event> {
             values.extend(
                 self.sections
                     .get(&section_id)
-                    .unwrap()
+                    .expect("sections does not have section id from section ids")
                     .values(&Key(key.into()))
                     .iter()
                     .map(|v| Cow::Owned(v.to_vec())),
@@ -1412,7 +1480,14 @@ impl<'event> GitConfig<'event> {
             let mut found_key = false;
             let mut offset_list = vec![];
             let mut offset_index = 0;
-            for (i, event) in self.sections.get(section_id).unwrap().0.iter().enumerate() {
+            for (i, event) in self
+                .sections
+                .get(section_id)
+                .expect("sections does not have section id from section ids")
+                .0
+                .iter()
+                .enumerate()
+            {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
                         found_key = true;
