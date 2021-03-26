@@ -81,12 +81,12 @@ pub enum WriteMode {
     /// Each [write()][Write::write()] call writes the bytes verbatim as one or more packet lines.
     Binary,
     /// Each [write()][Write::write()] call assumes text in the input, assures a trailing newline and writes it as single packet line.
-    OneLFTerminatedLinePerWriteCall,
+    OneLfTerminatedLinePerWriteCall,
 }
 
 impl Default for WriteMode {
     fn default() -> Self {
-        WriteMode::OneLFTerminatedLinePerWriteCall
+        WriteMode::OneLfTerminatedLinePerWriteCall
     }
 }
 
@@ -149,7 +149,7 @@ impl<'a> RequestWriter<'a> {
         let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn io::Write>);
         match write_mode {
             WriteMode::Binary => writer.enable_binary_mode(),
-            WriteMode::OneLFTerminatedLinePerWriteCall => writer.enable_text_mode(),
+            WriteMode::OneLfTerminatedLinePerWriteCall => writer.enable_text_mode(),
         }
         RequestWriter {
             on_into_read,
@@ -318,7 +318,7 @@ impl<T: Transport> TransportV2Ext for T {
         capabilities: impl IntoIterator<Item = (&'a str, Option<&'a str>)>,
         arguments: Option<impl IntoIterator<Item = BString>>,
     ) -> Result<Box<dyn ExtendedBufRead + '_>, Error> {
-        let mut writer = self.request(WriteMode::OneLFTerminatedLinePerWriteCall, MessageKind::Flush)?;
+        let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
         writer.write_all(format!("command={}", command).as_bytes())?;
         for (name, value) in capabilities {
             match value {

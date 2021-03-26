@@ -76,7 +76,7 @@ fn handshake_v1_and_request() -> crate::Result {
     assert_eq!(writer.into_read()?.lines().next().expect("exactly one line")?, "NAK");
 
     let mut writer = c.request(
-        client::WriteMode::OneLFTerminatedLinePerWriteCall,
+        client::WriteMode::OneLfTerminatedLinePerWriteCall,
         client::MessageKind::Text(b"done"),
     )?;
 

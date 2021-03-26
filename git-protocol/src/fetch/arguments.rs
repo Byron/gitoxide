@@ -170,7 +170,7 @@ impl Arguments {
                     Some(self.args.clone())
                 };
                 let mut line_writer =
-                    transport.request(client::WriteMode::OneLFTerminatedLinePerWriteCall, on_into_read)?;
+                    transport.request(client::WriteMode::OneLfTerminatedLinePerWriteCall, on_into_read)?;
 
                 if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
                     self.args.swap(first_arg_position, 0);

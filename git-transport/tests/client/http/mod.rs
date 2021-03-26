@@ -237,7 +237,7 @@ fn clone_v1() -> crate::Result {
 
     server.next_read_and_respond_with(fixture_bytes("v1/http-clone.response"));
     let mut writer = c.request(
-        client::WriteMode::OneLFTerminatedLinePerWriteCall,
+        client::WriteMode::OneLfTerminatedLinePerWriteCall,
         client::MessageKind::Text(b"done"),
     )?;
     writer.write_all(b"hello")?;
