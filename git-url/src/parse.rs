@@ -22,7 +22,7 @@ quick_error! {
         EmptyPath {
             display("Paths cannot be empty")
         }
-        RelativeURL(url: String) {
+        RelativeUrl(url: String) {
             display("Relative URLs are not permitted: '{}'", url)
         }
     }
@@ -127,7 +127,7 @@ pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
         return Err(Error::EmptyPath);
     }
     if url.cannot_be_a_base() {
-        return Err(Error::RelativeURL(url.into_string()));
+        return Err(Error::RelativeUrl(url.into_string()));
     }
 
     to_owned_url(url)
