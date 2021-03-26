@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 version = "0.6.0"
 default-run = "gix"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+# resolver = "2" # - enable once GitHub CI has caught up
 
 [[bin]]
 name = "gix"
