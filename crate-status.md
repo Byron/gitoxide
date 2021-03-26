@@ -171,6 +171,7 @@
 ### git-repository
 * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
+* [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
 * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
 * [ ] clone
     * [ ] shallow
@@ -199,8 +200,14 @@
 * Handle symbolic references and packed references
 * discover them in typical folder structures
 * [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
+* [ ] Support for the [reftable][reftable-spec], see [here for a Go/C implementation][reftable-impl]
+  * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2]
 * [x] API documentation
     * [ ] Some examples
+
+[reftable-spec]: https://github.com/eclipse/jgit/blob/master/Documentation/technical/reftable.md
+[reftable-impl]: https://github.com/google/reftable
+[reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
 
 ### git-diff / git-status
 * diffing of git-object::Tree structures
