@@ -22,7 +22,7 @@ all-features = true
 git-repository = { version = "^0.4.0", path = "../git-repository" }
 git-object = { version = "^0.6.0", path = "../git-object" }
 git-odb = { version = "^0.8.0", path = "../git-odb" }
-git-protocol = { version = "^0.4.0", path = "../git-protocol" }
+git-protocol = { version = "^0.5.0", path = "../git-protocol" }
 git-features = { version = "^0.11.0", path = "../git-features" }
 git-commitgraph = { version = "^0.3.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
