@@ -51,7 +51,7 @@ impl pack::Bundle {
         let pack_entries_iter = pack::data::Iter::new_from_header(
             buffered_pack,
             options.iteration_mode,
-            pack::data::iter::CompressedBytesMode::CRC32,
+            pack::data::iter::CompressedBytesMode::Crc32,
         )?;
         let pack_kind = pack_entries_iter.kind();
         let (outcome, data_path, index_path) =
@@ -94,7 +94,7 @@ impl pack::Bundle {
         let pack_entries_iter = pack::data::Iter::new_from_header(
             buffered_pack,
             options.iteration_mode,
-            pack::data::iter::CompressedBytesMode::CRC32,
+            pack::data::iter::CompressedBytesMode::Crc32,
         )?;
         let pack_kind = pack_entries_iter.kind();
         let num_objects = pack_entries_iter.size_hint().0;

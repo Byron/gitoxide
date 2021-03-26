@@ -90,26 +90,26 @@ pub enum CompressedBytesMode {
     /// Do nothing with the compressed bytes we read
     Ignore,
     /// Only create a CRC32 of the entry, otherwise similar to `Ignore`
-    CRC32,
+    Crc32,
     /// Keep them and pass them along in a newly allocated buffer
     Keep,
     /// As above, but also compute a CRC32
-    KeepAndCRC32,
+    KeepAndCrc32,
 }
 
 impl CompressedBytesMode {
     /// Returns true if a crc32 should be computed
     pub fn crc32(&self) -> bool {
         match self {
-            CompressedBytesMode::KeepAndCRC32 | CompressedBytesMode::CRC32 => true,
+            CompressedBytesMode::KeepAndCrc32 | CompressedBytesMode::Crc32 => true,
             CompressedBytesMode::Keep | CompressedBytesMode::Ignore => false,
         }
     }
     /// Returns true if compressed bytes should be kept
     pub fn keep(&self) -> bool {
         match self {
-            CompressedBytesMode::Keep | CompressedBytesMode::KeepAndCRC32 => true,
-            CompressedBytesMode::Ignore | CompressedBytesMode::CRC32 => false,
+            CompressedBytesMode::Keep | CompressedBytesMode::KeepAndCrc32 => true,
+            CompressedBytesMode::Ignore | CompressedBytesMode::Crc32 => false,
         }
     }
 }
@@ -358,6 +358,6 @@ impl pack::data::File {
     /// Returns an iterator over [`Entries`][pack::data::iter::Entry], without making use of the memory mapping.
     pub fn streaming_iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
-        Iter::new_from_header(reader, Mode::Verify, CompressedBytesMode::KeepAndCRC32)
+        Iter::new_from_header(reader, Mode::Verify, CompressedBytesMode::KeepAndCrc32)
     }
 }

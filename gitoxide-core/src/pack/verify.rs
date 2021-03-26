@@ -63,7 +63,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
         Context {
             output_statistics: None,
             thread_limit: None,
-            mode: index::verify::Mode::Sha1CRC32,
+            mode: index::verify::Mode::Sha1Crc32,
             algorithm: Algorithm::LessMemory,
             out: Vec::new(),
             err: Vec::new(),
@@ -74,7 +74,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
 #[allow(clippy::large_enum_variant)]
 enum EitherCache {
     Left(pack::cache::Noop),
-    Right(pack::cache::LRU),
+    Right(pack::cache::Lru),
 }
 
 impl pack::cache::DecodeEntry for EitherCache {
@@ -142,7 +142,7 @@ where
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::Noop)
                 } else {
-                    EitherCache::Right(pack::cache::LRU::default())
+                    EitherCache::Right(pack::cache::Lru::default())
                 }
             };
 

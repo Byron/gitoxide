@@ -40,7 +40,7 @@ pub enum Acknowledgement {
     /// The server is ready to receive more lines.
     Ready,
     /// The server isn't ready yet.
-    NAK,
+    Nak,
 }
 
 /// A shallow line received from the server.
@@ -79,7 +79,7 @@ impl Acknowledgement {
         Ok(match (tokens.next(), tokens.next(), tokens.next()) {
             (Some(first), id, description) => match first {
                 "ready" => Acknowledgement::Ready, // V2
-                "NAK" => Acknowledgement::NAK,     // V1
+                "NAK" => Acknowledgement::Nak,     // V1
                 "ACK" => {
                     let id = match id {
                         Some(id) => owned::Id::from_40_bytes_in_hex(id.as_bytes())

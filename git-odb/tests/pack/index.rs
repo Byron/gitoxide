@@ -79,8 +79,8 @@ mod method {
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
             for mode in &[iter::Mode::AsIs, iter::Mode::Verify, iter::Mode::Restore] {
                 for compressed in &[
-                    iter::CompressedBytesMode::CRC32,
-                    iter::CompressedBytesMode::KeepAndCRC32,
+                    iter::CompressedBytesMode::Crc32,
+                    iter::CompressedBytesMode::KeepAndCrc32,
                 ] {
                     for (index_path, data_path) in V2_PACKS_AND_INDICES {
                         let resolve = {
@@ -193,9 +193,9 @@ static ALGORITHMS: &[index::traverse::Algorithm] = &[
 ];
 
 static MODES: &[index::verify::Mode] = &[
-    index::verify::Mode::Sha1CRC32,
-    index::verify::Mode::Sha1CRC32Decode,
-    index::verify::Mode::Sha1CRC32DecodeEncode,
+    index::verify::Mode::Sha1Crc32,
+    index::verify::Mode::Sha1Crc32Decode,
+    index::verify::Mode::Sha1Crc32DecodeEncode,
 ];
 
 #[test]

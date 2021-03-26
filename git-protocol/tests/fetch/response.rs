@@ -25,7 +25,7 @@ mod v1 {
             let mut provider = mock_reader("v1/clone-only.response");
             let mut reader = provider.as_read_without_sidebands();
             let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
-            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
             let bytes_read = reader.read_to_end(&mut buf)?;
@@ -42,7 +42,7 @@ mod v1 {
                 r.shallow_updates(),
                 &[ShallowUpdate::Shallow(id("808e50d724f604f69ab93c6da2919c014667bedb"))]
             );
-            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
             let bytes_read = reader.read_to_end(&mut buf)?;
@@ -56,7 +56,7 @@ mod v1 {
             let mut reader = provider.as_read_without_sidebands();
             let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
             assert!(r.shallow_updates().is_empty());
-            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK]);
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
             let bytes_read = reader.read_to_end(&mut buf)?;
@@ -73,7 +73,7 @@ mod v1 {
                 &[
                     Acknowledgement::Common(id("47ee0b7fe4f3a7d776c78794873e6467e1c47e59")),
                     Acknowledgement::Common(id("3f02c0ad360d96e8dbba92f97b42ebbaa4319db1")),
-                    Acknowledgement::NAK,
+                    Acknowledgement::Nak,
                 ]
             );
             Ok(())
@@ -91,7 +91,7 @@ mod v1 {
                     Acknowledgement::Common(id("fe17165c392110d1305674c06e4aec35728bfab7")),
                     Acknowledgement::Common(id("f22743895a3024bb0c958335981439f1fa747d57")),
                     Acknowledgement::Ready,
-                    Acknowledgement::NAK,
+                    Acknowledgement::Nak,
                 ]
             );
             assert!(r.has_pack());
@@ -183,7 +183,7 @@ mod v2 {
         fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-no-pack.response");
             let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands())?;
-            assert_eq!(r.acknowledgements(), &[Acknowledgement::NAK,]);
+            assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak,]);
             Ok(())
         }
 

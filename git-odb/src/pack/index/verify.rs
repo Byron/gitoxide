@@ -34,13 +34,13 @@ pub enum Error {
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Mode {
     /// Validate SHA1 and CRC32
-    Sha1CRC32,
+    Sha1Crc32,
     /// Validate SHA1 and CRC32, and decode each non-Blob object.
     /// Each object should be valid, i.e. be decodable.
-    Sha1CRC32Decode,
+    Sha1Crc32Decode,
     /// Validate SHA1 and CRC32, and decode and encode each non-Blob object.
     /// Each object should yield exactly the same hash when re-encoded.
-    Sha1CRC32DecodeEncode,
+    Sha1Crc32DecodeEncode,
 }
 
 /// Verify and validate the content of the index file
@@ -163,7 +163,7 @@ impl index::File {
     where
         P: Progress,
     {
-        if let Mode::Sha1CRC32Decode | Mode::Sha1CRC32DecodeEncode = mode {
+        if let Mode::Sha1Crc32Decode | Mode::Sha1Crc32DecodeEncode = mode {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
@@ -173,7 +173,7 @@ impl index::File {
                             kind: object_kind,
                             id: index_entry.oid,
                         })?;
-                    if let Mode::Sha1CRC32DecodeEncode = mode {
+                    if let Mode::Sha1Crc32DecodeEncode = mode {
                         let object = owned::Object::from(borrowed_object);
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;

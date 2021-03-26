@@ -23,7 +23,7 @@ impl DecodeEntry for Noop {
 }
 
 /// A cache using a least-recently-used implementation capable of storing the 64 most recent objects.
-struct LRUEntry {
+struct LruEntry {
     offset: u64,
     data: Vec<u8>,
     kind: git_object::Kind,
@@ -32,11 +32,11 @@ struct LRUEntry {
 
 /// A least-recently-used cache to accelerate pack traversal
 #[derive(Default)]
-pub struct LRU(uluru::LRUCache<[uluru::Entry<LRUEntry>; 64]>);
+pub struct Lru(uluru::LRUCache<[uluru::Entry<LruEntry>; 64]>);
 
-impl DecodeEntry for LRU {
+impl DecodeEntry for Lru {
     fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
-        self.0.insert(LRUEntry {
+        self.0.insert(LruEntry {
             offset,
             data: Vec::from(data),
             kind,
@@ -45,7 +45,7 @@ impl DecodeEntry for LRU {
     }
 
     fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
-        self.0.lookup(|e: &mut LRUEntry| {
+        self.0.lookup(|e: &mut LruEntry| {
             if e.offset == offset {
                 out.resize(e.data.len(), 0);
                 out.copy_from_slice(&e.data);

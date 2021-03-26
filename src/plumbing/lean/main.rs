@@ -107,9 +107,9 @@ pub fn main() -> Result<()> {
                     algorithm: algorithm.unwrap_or(verify::Algorithm::LessTime),
                     thread_limit,
                     mode: match (decode, re_encode) {
-                        (true, false) => verify::Mode::Sha1CRC32Decode,
-                        (true, true) | (false, true) => verify::Mode::Sha1CRC32DecodeEncode,
-                        (false, false) => verify::Mode::Sha1CRC32,
+                        (true, false) => verify::Mode::Sha1Crc32Decode,
+                        (true, true) | (false, true) => verify::Mode::Sha1Crc32DecodeEncode,
+                        (false, false) => verify::Mode::Sha1Crc32,
                     },
                     out: stdout(),
                     err: stderr(),

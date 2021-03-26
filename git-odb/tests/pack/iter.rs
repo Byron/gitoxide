@@ -52,8 +52,8 @@ mod new_from_header {
         for compression_mode in &[
             CompressedBytesMode::Ignore,
             CompressedBytesMode::Keep,
-            CompressedBytesMode::CRC32,
-            CompressedBytesMode::KeepAndCRC32,
+            CompressedBytesMode::Crc32,
+            CompressedBytesMode::KeepAndCrc32,
         ] {
             for trailer_mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 let mut iter = pack::data::Iter::new_from_header(
