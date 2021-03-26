@@ -106,7 +106,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
             OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
-                serde_json::to_writer_pretty(&mut self.ctx.out, &JSONOutcome::from_outcome_and_refs(outcome, refs))?
+                serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
             }
         };
         Ok(())
@@ -114,7 +114,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
 }
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct JSONBundleWriteOutcome {
+pub struct JsonBundleWriteOutcome {
     pub index_kind: pack::index::Version,
     pub index_hash: String,
 
@@ -122,9 +122,9 @@ pub struct JSONBundleWriteOutcome {
     pub num_objects: u32,
 }
 
-impl From<pack::index::write::Outcome> for JSONBundleWriteOutcome {
+impl From<pack::index::write::Outcome> for JsonBundleWriteOutcome {
     fn from(v: pack::index::write::Outcome) -> Self {
-        JSONBundleWriteOutcome {
+        JsonBundleWriteOutcome {
             index_kind: v.index_kind,
             num_objects: v.num_objects,
             data_hash: v.data_hash.to_string(),
@@ -134,8 +134,8 @@ impl From<pack::index::write::Outcome> for JSONBundleWriteOutcome {
 }
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct JSONOutcome {
-    pub index: JSONBundleWriteOutcome,
+pub struct JsonOutcome {
+    pub index: JsonBundleWriteOutcome,
     pub pack_kind: pack::data::Version,
 
     pub index_path: Option<PathBuf>,
@@ -144,9 +144,9 @@ pub struct JSONOutcome {
     pub refs: Vec<JsonRef>,
 }
 
-impl JSONOutcome {
+impl JsonOutcome {
     pub fn from_outcome_and_refs(v: pack::bundle::write::Outcome, refs: &[Ref]) -> Self {
-        JSONOutcome {
+        JsonOutcome {
             index: v.index.into(),
             pack_kind: v.pack_kind,
             index_path: v.index_path,

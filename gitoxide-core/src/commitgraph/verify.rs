@@ -36,7 +36,7 @@ where
 {
     let g = Graph::at(path).with_context(|| "Could not open commit graph")?;
 
-    #[allow(clippy::unnecessary_wraps, clippy::unknown_clippy_lints)]
+    #[allow(clippy::unnecessary_wraps, unknown_lints)]
     fn noop_processor(_commit: &git_commitgraph::file::Commit<'_>) -> std::result::Result<(), std::fmt::Error> {
         Ok(())
     }

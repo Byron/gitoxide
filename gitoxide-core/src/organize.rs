@@ -1,8 +1,10 @@
 use bstr::ByteSlice;
 use git_config::file::GitConfig;
 use git_features::progress::Progress;
-use std::convert::TryFrom;
-use std::path::{Path, PathBuf};
+use std::{
+    convert::TryFrom,
+    path::{Path, PathBuf},
+};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
@@ -21,7 +23,7 @@ where
     <P as Progress>::SubProgress: Sync,
 {
     progress.init(None, git_features::progress::count("filesystem items"));
-    fn is_repository(path: &PathBuf) -> bool {
+    fn is_repository(path: &Path) -> bool {
         if !(path.is_dir() && path.ends_with(".git")) {
             return false;
         }

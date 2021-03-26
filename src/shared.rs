@@ -88,7 +88,7 @@ pub mod pretty {
             (false, false) => run(None, &mut stdout(), &mut stderr()),
             (true, false) => {
                 enum Event<T> {
-                    UIDone,
+                    UiDone,
                     ComputationDone(Result<T>),
                 }
                 let progress = crate::shared::progress_tree();
@@ -101,7 +101,7 @@ pub mod pretty {
                     move || loop {
                         std::thread::sleep(std::time::Duration::from_millis(500));
                         if interrupt::is_triggered() {
-                            tx.send(Event::UIDone).ok();
+                            tx.send(Event::UiDone).ok();
                             break;
                         }
                     }
@@ -111,7 +111,7 @@ pub mod pretty {
                     tx.send(Event::ComputationDone(res)).ok();
                 });
                 match rx.recv()? {
-                    Event::UIDone => {
+                    Event::UiDone => {
                         ui_handle.shutdown_and_wait();
                         Err(anyhow!("Operation cancelled by user"))
                     }
@@ -123,7 +123,7 @@ pub mod pretty {
             }
             (true, true) | (false, true) => {
                 enum Event<T> {
-                    UIDone,
+                    UiDone,
                     ComputationDone(Result<T>, Vec<u8>, Vec<u8>),
                 }
                 let progress = prodash::Tree::new();
@@ -145,7 +145,7 @@ pub mod pretty {
                     let tx = tx.clone();
                     move || {
                         futures_lite::future::block_on(render_tui);
-                        tx.send(Event::UIDone).ok();
+                        tx.send(Event::UiDone).ok();
                     }
                 });
                 std::thread::spawn(move || {
@@ -158,7 +158,7 @@ pub mod pretty {
                 });
                 loop {
                     match rx.recv()? {
-                        Event::UIDone => {
+                        Event::UiDone => {
                             // We don't know why the UI is done, usually it's the user aborting.
                             // We need the computation to stop as well so let's wait for that to happen
                             interrupt::trigger();
