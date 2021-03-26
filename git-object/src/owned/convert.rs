@@ -1,8 +1,8 @@
 use crate::{borrowed, owned};
 
-impl Into<owned::Signature> for borrowed::Signature<'_> {
-    fn into(self) -> owned::Signature {
-        let borrowed::Signature { name, email, time } = self;
+impl From<borrowed::Signature<'_>> for owned::Signature {
+    fn from(other: borrowed::Signature<'_>) -> owned::Signature {
+        let borrowed::Signature { name, email, time } = other;
         owned::Signature {
             name: name.to_owned(),
             email: email.to_owned(),
@@ -11,8 +11,8 @@ impl Into<owned::Signature> for borrowed::Signature<'_> {
     }
 }
 
-impl Into<owned::Tag> for borrowed::Tag<'_> {
-    fn into(self) -> owned::Tag {
+impl From<borrowed::Tag<'_>> for owned::Tag {
+    fn from(other: borrowed::Tag<'_>) -> owned::Tag {
         let borrowed::Tag {
             target,
             name,
@@ -20,7 +20,7 @@ impl Into<owned::Tag> for borrowed::Tag<'_> {
             message,
             signature,
             pgp_signature,
-        } = self;
+        } = other;
         owned::Tag {
             target: owned::Id::from_40_bytes_in_hex(&target).expect("40 bytes hex sha1"),
             name: name.to_owned(),
@@ -32,8 +32,8 @@ impl Into<owned::Tag> for borrowed::Tag<'_> {
     }
 }
 
-impl Into<owned::Commit> for borrowed::Commit<'_> {
-    fn into(self) -> owned::Commit {
+impl From<borrowed::Commit<'_>> for owned::Commit {
+    fn from(other: borrowed::Commit<'_>) -> owned::Commit {
         let borrowed::Commit {
             tree,
             parents,
@@ -42,7 +42,7 @@ impl Into<owned::Commit> for borrowed::Commit<'_> {
             encoding,
             message,
             extra_headers,
-        } = self;
+        } = other;
         owned::Commit {
             tree: owned::Id::from_40_bytes_in_hex(&tree).expect("40 bytes hex sha1"),
             parents: parents
@@ -69,18 +69,18 @@ impl<'a> From<borrowed::Blob<'a>> for owned::Blob {
     }
 }
 
-impl Into<owned::Tree> for borrowed::Tree<'_> {
-    fn into(self) -> owned::Tree {
-        let borrowed::Tree { entries } = self;
+impl From<borrowed::Tree<'_>> for owned::Tree {
+    fn from(other: borrowed::Tree<'_>) -> owned::Tree {
+        let borrowed::Tree { entries } = other;
         owned::Tree {
             entries: entries.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl Into<owned::tree::Entry> for borrowed::tree::Entry<'_> {
-    fn into(self) -> owned::tree::Entry {
-        let borrowed::tree::Entry { mode, filename, oid } = self;
+impl From<borrowed::tree::Entry<'_>> for owned::tree::Entry {
+    fn from(other: borrowed::tree::Entry<'_>) -> owned::tree::Entry {
+        let borrowed::tree::Entry { mode, filename, oid } = other;
         owned::tree::Entry {
             mode,
             filename: filename.to_owned(),

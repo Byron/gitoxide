@@ -15,9 +15,9 @@ quick_error! {
     }
 }
 
-impl Into<io::Error> for Error {
-    fn into(self) -> io::Error {
-        io::Error::new(io::ErrorKind::Other, self)
+impl From<Error> for io::Error {
+    fn from(other: Error) -> io::Error {
+        io::Error::new(io::ErrorKind::Other, other)
     }
 }
 
