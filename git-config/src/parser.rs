@@ -480,7 +480,7 @@ impl Error<'_> {
     /// two. This method guarantees a `'static` lifetime, while `clone` does
     /// not.
     ///
-    /// [`clone`]: Self::clone
+    /// [`clone`]: std::clone::Clone::clone
     #[must_use]
     pub fn to_owned(&self) -> Error<'static> {
         Error {
