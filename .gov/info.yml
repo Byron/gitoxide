@@ -1,0 +1,13 @@
+governance:
+  type: BDFL
+  BDFL: byron
+  open for alternatives: yes, as project matures
+
+maintainers:
+  privileges:
+    - push directly to 'main' branch
+    - reviews or suggestions by other maintainers if PRs are used
+    - co-ownership of contributed crates
+    - reveive sponsorship via GitHub from project page
+  
+
