@@ -82,10 +82,10 @@ Probably more like a toy at first merely for testing operation against various g
 
 * [ ] Add journey test to cover case with non-bare repository. Try to only read `non-bare` git config files and see the journey test fail.
 
-### Commit-Graph
+### gixp cat
 
-* [x] A plumbing command to extract some value from the current implementation, maybe statistics, or verification
-* [x] Application of the command above in a stress test
+* A program to cat objects and pretty-print them, similar to git cat-file. Useful to get a feel for
+  'locate(…)' performance and stress test it a little.
 
 ### Feature Flags
 
