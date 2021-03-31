@@ -127,6 +127,8 @@ Once installed, there are two binaries:
 
 ## Project Goals
 
+Project goals can change over time as we learn more, and they can be challenged.
+
  * **a pure-rust implementation of git**
    * including *transport*, *object database*, *references*, *cli* and *tui*
    * a simple command-line interface is provided for the most common git operations, optimized for
@@ -155,6 +157,8 @@ Once installed, there are two binaries:
      
 
 ## Non-Goals
+
+Project non-goals can change over time as we learn more, and they can be challenged.
 
  * **replicate `git` command functionality perfectly**
    * `git` is `git`, and there is no reason to not use it. Our path is the one of simplicity to make

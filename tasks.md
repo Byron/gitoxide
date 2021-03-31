@@ -86,6 +86,7 @@ Probably more like a toy at first merely for testing operation against various g
 
 * A program to cat objects and pretty-print them, similar to git cat-file. Useful to get a feel for
   'locate(…)' performance and stress test it a little.
+* Be sure to escape terminal escape codes  
 
 ### Feature Flags
 
