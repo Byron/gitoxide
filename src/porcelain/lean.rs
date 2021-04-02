@@ -28,7 +28,10 @@ mod options {
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "init")]
     pub struct Init {
-        #[argh(option)]
+        /// directory in which to initialize a new git repository.
+        ///
+        /// Defaults to the current working directory.
+        #[argh(positional)]
         pub directory: Option<PathBuf>,
     }
 
@@ -78,7 +81,7 @@ pub fn main() -> Result<()> {
     match cli.subcommand {
         SubCommands::Init(Init {
             directory
-        }) => core::repository::init(),
+        }) => core::repository::init(directory),
         #[cfg(feature = "gitoxide-core-organize")]
         SubCommands::Find(Find { root }) => {
             use crate::shared::lean::prepare;
