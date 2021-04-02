@@ -78,9 +78,7 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
 
     match cli.subcommand {
-        SubCommands::Init(Init {
-            directory
-        }) => core::repository::init(directory),
+        SubCommands::Init(Init { directory }) => core::repository::init(directory),
         #[cfg(feature = "gitoxide-core-organize")]
         SubCommands::Find(Find { root }) => {
             use crate::shared::lean::prepare;

@@ -95,7 +95,6 @@ fn create_dir(p: &Path) -> Result<(), Error> {
 }
 
 pub fn repository(directory: Option<PathBuf>) -> Result<(), Error> {
-
     let mut cursor = match directory {
         Some(dir) => PathBuf::from(dir),
         None => PathBuf::from(""),
