@@ -1,6 +1,5 @@
 mod options {
     use argh::FromArgs;
-    #[cfg(feature = "gitoxide-core-organize")]
     use std::path::PathBuf;
 
     #[derive(FromArgs)]
