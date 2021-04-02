@@ -27,7 +27,10 @@ mod options {
     /// Initialize the repository in the current directory.
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "init")]
-    pub struct Init {}
+    pub struct Init {
+        #[argh(option)]
+        pub directory: Option<PathBuf>,
+    }
 
     /// find all repositories in a given directory.
     #[derive(FromArgs, PartialEq, Debug)]
@@ -73,7 +76,9 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
 
     match cli.subcommand {
-        SubCommands::Init(_) => core::repository::init(),
+        SubCommands::Init(Init {
+            directory
+        }) => core::repository::init(),
         #[cfg(feature = "gitoxide-core-organize")]
         SubCommands::Find(Find { root }) => {
             use crate::shared::lean::prepare;

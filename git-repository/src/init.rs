@@ -91,11 +91,18 @@ fn write_file(data: &[u8], path: &Path) -> Result<(), Error> {
 }
 
 fn create_dir(p: &Path) -> Result<(), Error> {
-    fs::create_dir(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
+    fs::create_dir_all(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
 }
 
-pub fn repository() -> Result<(), Error> {
-    let mut cursor = PathBuf::from(GIT_DIR_NAME);
+pub fn repository(directory: Option<PathBuf>) -> Result<(), Error> {
+
+    let mut cursor = match directory {
+        Some(dir) => PathBuf::from(dir),
+        None => PathBuf::from("."),
+    };
+
+    cursor.push(GIT_DIR_NAME);
+
     if cursor.is_dir() {
         return Err(Error::DirectoryExists(cursor));
     }
