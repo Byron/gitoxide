@@ -23,7 +23,12 @@ mod options {
         #[clap(alias = "initialize")]
         #[clap(setting = AppSettings::ColoredHelp)]
         #[clap(setting = AppSettings::DisableVersion)]
-        Init,
+        Init {
+            /// The directory in which to initialize a new git repository.
+            ///
+            /// Defaults to the current working directory.
+            directory: Option<PathBuf>,
+        },
         /// Find all repositories in a given directory.
         #[clap(setting = AppSettings::ColoredHelp)]
         #[clap(setting = AppSettings::DisableVersion)]
@@ -63,7 +68,7 @@ pub fn main() -> Result<()> {
     let verbose = true;
 
     match args.cmd {
-        Subcommands::Init => core::repository::init(),
+        Subcommands::Init { directory } => core::repository::init(directory),
         Subcommands::Find { root } => {
             use gitoxide_core::organize;
             // force verbose only, being the line renderer.

@@ -105,22 +105,46 @@ title "Porcelain ${kind}"
 
 (when "running 'init'"
   snapshot="$snapshot/init"
-  (with "an empty directory"
-    (sandbox
-      it "succeeds" && {
-        WITH_SNAPSHOT="$snapshot/success" \
-        expect_run $SUCCESSFULLY "$exe" init
-      }
-
-      it "matches the output of baseline git init" && {
-        expect_snapshot "$fixtures/baseline-init" .git
-      }
-      
-      (when "trying to initialize the same directory again"
-        it "fails" && {
-          WITH_SNAPSHOT="$snapshot/fail" \
-          expect_run $WITH_FAILURE "$exe" init
+  (with "no argument"
+    (with "an empty directory"
+      (sandbox
+        it "succeeds" && {
+          WITH_SNAPSHOT="$snapshot/success" \
+          expect_run $SUCCESSFULLY "$exe" init
         }
+
+        it "matches the output of baseline git init" && {
+          expect_snapshot "$fixtures/baseline-init" .git
+        }
+
+        (when "trying to initialize the same directory again"
+          it "fails" && {
+            WITH_SNAPSHOT="$snapshot/fail" \
+            expect_run $WITH_FAILURE "$exe" init
+          }
+        )
+      )
+    )
+  )
+  (with "a single argument denoting the directory to initialize"
+    DIR=foo/bar
+    (with "a multi-element directory: $DIR"
+      (sandbox
+        it "succeeds" && {
+          WITH_SNAPSHOT="$snapshot/success-with-multi-element-directory" \
+          expect_run $SUCCESSFULLY "$exe" init $DIR
+        }
+
+        it "matches the output of baseline git init" && {
+          expect_snapshot "$fixtures/baseline-init" $DIR/.git
+        }
+
+        (when "trying to initialize the same directory again"
+          it "fails" && {
+            WITH_SNAPSHOT="$snapshot/fail-with-multi-element-directory" \
+            expect_run $WITH_FAILURE "$exe" init $DIR
+          }
+        )
       )
     )
   )

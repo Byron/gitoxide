@@ -1,6 +1,5 @@
 mod options {
     use argh::FromArgs;
-    #[cfg(feature = "gitoxide-core-organize")]
     use std::path::PathBuf;
 
     #[derive(FromArgs)]
@@ -27,7 +26,13 @@ mod options {
     /// Initialize the repository in the current directory.
     #[derive(FromArgs, PartialEq, Debug)]
     #[argh(subcommand, name = "init")]
-    pub struct Init {}
+    pub struct Init {
+        /// directory in which to initialize a new git repository.
+        ///
+        /// Defaults to the current working directory.
+        #[argh(positional)]
+        pub directory: Option<PathBuf>,
+    }
 
     /// find all repositories in a given directory.
     #[derive(FromArgs, PartialEq, Debug)]
@@ -73,7 +78,7 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
 
     match cli.subcommand {
-        SubCommands::Init(_) => core::repository::init(),
+        SubCommands::Init(Init { directory }) => core::repository::init(directory),
         #[cfg(feature = "gitoxide-core-organize")]
         SubCommands::Find(Find { root }) => {
             use crate::shared::lean::prepare;
