@@ -8,8 +8,8 @@
 //! [dependencies]
 //! atty = "0.2"
 //! anyhow = "1"
-//! git-odb = "0.9"
-//! git-hash = "0.1"
+//! git-odb = { version = "0.9", path = "../git-odb" }
+//! git-hash = { version = "0.1", path = "../git-hash" }
 //! git2 = "0.13"
 //! ```
 use std::io::BufRead;
@@ -57,7 +57,6 @@ fn do_gitoxide(hashes: &[String]) -> anyhow::Result<u64> {
     let mut buf = Vec::new();
     let mut bytes = 0u64;
     for hash in hashes {
-        dbg!(hash);
         let hash = git_hash::owned::Digest::from_40_bytes_in_hex(hash.as_bytes())?;
         let obj = odb.locate(hash.to_borrowed(), &mut buf).expect("object must exist")?;
         bytes += obj.size() as u64;
