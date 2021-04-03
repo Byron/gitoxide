@@ -95,11 +95,7 @@ fn create_dir(p: &Path) -> Result<(), Error> {
 }
 
 pub fn repository(directory: Option<PathBuf>) -> Result<(), Error> {
-    let mut cursor = match directory {
-        Some(dir) => PathBuf::from(dir),
-        None => PathBuf::from(""),
-    };
-
+    let mut cursor = directory.unwrap_or_default();
     cursor.push(GIT_DIR_NAME);
 
     if cursor.is_dir() {
