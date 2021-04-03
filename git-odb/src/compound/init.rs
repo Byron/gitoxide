@@ -21,18 +21,22 @@ impl compound::Db {
         if !loose_objects.is_dir() {
             return Err(Error::Inaccessible(loose_objects));
         }
-        let packs = if let Ok(entries) = std::fs::read_dir(loose_objects.join("packs")) {
-            let mut packs_and_sizes = entries
-                .filter_map(Result::ok)
-                .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
-                .filter(|(_, md)| md.file_type().is_file())
-                .filter(|(p, _)| p.extension().unwrap_or_default() == "idx" && p.starts_with("pack-"))
-                .map(|(p, md)| pack::Bundle::at(p).map(|b| (b, md.len())))
-                .collect::<Result<Vec<_>, _>>()?;
-            packs_and_sizes.sort_by_key(|e| e.1);
-            packs_and_sizes.into_iter().rev().map(|(b, _)| b).collect()
-        } else {
-            Vec::new()
+        let packs = match std::fs::read_dir(loose_objects.join("pack")) {
+            Ok(entries) => {
+                let mut packs_and_sizes = entries
+                    .filter_map(Result::ok)
+                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
+                    .filter(|(_, md)| md.file_type().is_file())
+                    .filter(|(p, _)| {
+                        p.extension().unwrap_or_default() == "idx"
+                            && p.file_name().unwrap_or_default().to_string_lossy().starts_with("pack-")
+                    })
+                    .map(|(p, md)| pack::Bundle::at(p).map(|b| (b, md.len())))
+                    .collect::<Result<Vec<_>, _>>()?;
+                packs_and_sizes.sort_by_key(|e| e.1);
+                packs_and_sizes.into_iter().rev().map(|(b, _)| b).collect()
+            }
+            Err(_) => Vec::new(),
         };
 
         Ok(compound::Db {
