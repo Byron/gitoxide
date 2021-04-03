@@ -25,8 +25,9 @@ mod deflate_stream {
     #[test]
     fn big_file_small_writes() -> Result<(), Box<dyn std::error::Error>> {
         let mut w = DeflateWriter::new(Vec::new());
-        let bytes =
-            include_bytes!("../../../../tests/fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack");
+        let bytes = include_bytes!(
+            "../../../../tests/fixtures/objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
+        );
         for chunk in bytes.chunks(2) {
             assert_eq!(w.write(chunk)?, chunk.len());
         }
@@ -38,8 +39,9 @@ mod deflate_stream {
     #[test]
     fn big_file_a_few_big_writes() -> Result<(), Box<dyn std::error::Error>> {
         let mut w = DeflateWriter::new(Vec::new());
-        let bytes =
-            include_bytes!("../../../../tests/fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack");
+        let bytes = include_bytes!(
+            "../../../../tests/fixtures/objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
+        );
         for chunk in bytes.chunks(4096 * 9) {
             assert_eq!(w.write(chunk)?, chunk.len());
         }
