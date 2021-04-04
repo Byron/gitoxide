@@ -202,16 +202,16 @@ pub fn pack_or_pack_index(
                         .write_buf(object_kind, buf, HashKind::Sha1)
                         .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))?;
                     if written_id != index_entry.oid {
-                       if let git_object::Kind::Tree = object_kind {
-                           progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
-                       } else {
-                           return Err(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id))
-                       }
+                        if let git_object::Kind::Tree = object_kind {
+                            progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
+                        } else {
+                            return Err(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id));
+                        }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
-                        let mut obj = verifier.locate(written_id.to_borrowed())
-                                            .ok_or(Error::WrittenFileMissing(written_id))?
-                                            .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?;
+                        let mut obj = verifier.locate2(written_id.to_borrowed())
+                            .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
+                            .ok_or(Error::WrittenFileMissing(written_id))?;
                         obj.verify_checksum(written_id.to_borrowed())?;
                     }
                     Ok(())
@@ -224,7 +224,7 @@ pub fn pack_or_pack_index(
             thread_limit,
             check: check.into(),
         },
-    ).map(|(_,_,c)|progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
+    ).map(|(_, _, c)| progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());
     drop(bundle);
