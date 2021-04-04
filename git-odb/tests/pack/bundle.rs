@@ -7,9 +7,9 @@ mod locate {
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_odb::borrowed::Object<'a> {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).expect("pack and idx");
         bundle
-            .locate(hex_to_id(hex_id).to_borrowed(), out, &mut pack::cache::Noop)
-            .expect("id present")
+            .locate2(hex_to_id(hex_id).to_borrowed(), out, &mut pack::cache::Noop)
             .expect("read success")
+            .expect("id present")
     }
 
     mod locate_and_verify {
@@ -26,8 +26,8 @@ mod locate {
                 let mut buf = Vec::new();
                 for entry in bundle.index.iter() {
                     let obj = bundle
-                        .locate(entry.oid.to_borrowed(), &mut buf, &mut pack::cache::Noop)
-                        .expect("id present")?;
+                        .locate2(entry.oid.to_borrowed(), &mut buf, &mut pack::cache::Noop)?
+                        .expect("id present");
                     obj.verify_checksum(entry.oid.to_borrowed())?;
                 }
             }
