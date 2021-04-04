@@ -19,10 +19,11 @@ fn main() -> anyhow::Result<()> {
         .next()
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
         .and_then(|p| {
-            if p.ends_with(".git") {
-                Ok(PathBuf::from(p))
+            let p = PathBuf::from(p).canonicalize()?;
+            if p.extension().unwrap_or_default() == "git" || p.file_name().unwrap_or_default() == ".git" {
+                Ok(p)
             } else {
-                Err(anyhow!("Path needs to be a .git directory"))
+                Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
             }
         })?;
 
