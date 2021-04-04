@@ -39,7 +39,7 @@ impl Db {
                     action,
                     path,
                 } => {
-                    if action == Self::OPEN_ACTION {
+                    if action == Self::OPEN_ACTION && err.kind() == std::io::ErrorKind::NotFound {
                         None
                     } else {
                         Some(Err(Error::Io {
