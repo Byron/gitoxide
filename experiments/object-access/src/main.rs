@@ -45,6 +45,11 @@ fn main() -> anyhow::Result<()> {
     let elapsed = start.elapsed();
     println!("gitoxide: confirmed {} bytes in {:?}", bytes, elapsed);
 
+    let start = Instant::now();
+    let bytes = do_parallel_gitoxide(hashes.as_slice(), &repo_git_dir)?;
+    let elapsed = start.elapsed();
+    println!("parallel gitoxide: confirmed {} bytes in {:?}", bytes, elapsed);
+
     Ok(())
 }
 
@@ -71,4 +76,20 @@ fn do_gitoxide(hashes: &[String], objects_dir: &Path) -> anyhow::Result<u64> {
         bytes += obj.size() as u64;
     }
     Ok(bytes)
+}
+
+fn do_parallel_gitoxide(hashes: &[String], objects_dir: &Path) -> anyhow::Result<u64> {
+    use rayon::prelude::*;
+    let odb = git_odb::compound::Db::at(objects_dir)?;
+    let bytes = std::sync::atomic::AtomicU64::default();
+    hashes
+        .par_iter()
+        .try_for_each_init::<_, _, _, anyhow::Result<_>>(Vec::new, |mut buf, hash| {
+            let hash = git_hash::owned::Digest::from_40_bytes_in_hex(hash.as_bytes())?;
+            let obj = odb.locate(hash.to_borrowed(), &mut buf)?.expect("object must exist");
+            bytes.fetch_add(obj.size() as u64, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        })?;
+
+    Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
