@@ -1,17 +1,8 @@
-#!/usr/bin/env -S cargo eval --
 //! Currently this experiment fails as `locate(…)` can't actually find objects. My guess is that
 //! it can't find objects in packs for some reason because it could find some objects there were
 //! probably loose, but failed right away after a `git gc`.
 //! Let's see if a unit test can reproduce this too, right now this functionality is entirely untested
 //! I think.
-//! ```cargo
-//! [dependencies]
-//! atty = "0.2"
-//! anyhow = "1"
-//! git-odb = { version = "0.9", path = "../git-odb" }
-//! git-hash = { version = "0.1", path = "../git-hash" }
-//! git2 = "0.13"
-//! ```
 use std::io::BufRead;
 use std::time::Instant;
 
