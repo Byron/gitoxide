@@ -3,36 +3,53 @@
 //! probably loose, but failed right away after a `git gc`.
 //! Let's see if a unit test can reproduce this too, right now this functionality is entirely untested
 //! I think.
-use std::io::BufRead;
-use std::time::Instant;
+use anyhow::anyhow;
+use std::{
+    io::BufRead,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 fn main() -> anyhow::Result<()> {
     if atty::is(atty::Stream::Stdin) {
         anyhow::bail!("Need object hashes on stdin, one per line");
     }
+    let mut repo_git_dir = std::env::args()
+        .skip(1)
+        .next()
+        .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
+        .and_then(|p| {
+            if p.ends_with(".git") {
+                Ok(PathBuf::from(p))
+            } else {
+                Err(anyhow!("Path needs to be a .git directory"))
+            }
+        })?;
 
+    let start = Instant::now();
     let stdin = std::io::stdin();
     let stdin = stdin.lock();
     let hashes = stdin.lines().collect::<Result<Vec<String>, _>>()?;
-
-    println!("{} objects", hashes.len());
+    let elapsed = start.elapsed();
+    println!("{} objects (collected in {:?}", hashes.len(), elapsed);
 
     let start = Instant::now();
-    let bytes = do_git2(hashes.as_slice())?;
+    let bytes = do_git2(hashes.as_slice(), &repo_git_dir)?;
     let elapsed = start.elapsed();
     println!("libgit2:  confirmed {} bytes in {:?}", bytes, elapsed);
 
     let start = Instant::now();
-    let bytes = do_gitoxide(hashes.as_slice())?;
+    repo_git_dir.push("objects");
+    let bytes = do_gitoxide(hashes.as_slice(), &repo_git_dir)?;
     let elapsed = start.elapsed();
     println!("gitoxide: confirmed {} bytes in {:?}", bytes, elapsed);
 
     Ok(())
 }
 
-fn do_git2(hashes: &[String]) -> anyhow::Result<u64> {
+fn do_git2(hashes: &[String], git_dir: &Path) -> anyhow::Result<u64> {
     git2::opts::strict_hash_verification(false);
-    let repo = git2::Repository::open("../../.git")?;
+    let repo = git2::Repository::open(git_dir)?;
     let odb = repo.odb()?;
     let mut bytes = 0u64;
     for hash in hashes {
@@ -43,8 +60,8 @@ fn do_git2(hashes: &[String]) -> anyhow::Result<u64> {
     Ok(bytes)
 }
 
-fn do_gitoxide(hashes: &[String]) -> anyhow::Result<u64> {
-    let odb = git_odb::compound::Db::at("../../.git/objects")?;
+fn do_gitoxide(hashes: &[String], objects_dir: &Path) -> anyhow::Result<u64> {
+    let odb = git_odb::compound::Db::at(objects_dir)?;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
     for hash in hashes {
