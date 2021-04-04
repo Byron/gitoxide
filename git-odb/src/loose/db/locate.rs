@@ -31,7 +31,7 @@ impl Db {
     ///
     /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
     /// there was no such object.
-    pub fn locate2(&self, id: borrowed::Id<'_>) -> Result<Option<Object>, Error> {
+    pub fn locate(&self, id: borrowed::Id<'_>) -> Result<Option<Object>, Error> {
         match self.locate_inner(id) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
@@ -51,32 +51,6 @@ impl Db {
                     }
                 }
                 err => Err(err),
-            },
-        }
-    }
-    /// Return the object identified by the given [`id][borrowed::Id] if present in this database.
-    ///
-    /// Returns `None` if the object did not exist in the database.
-    pub fn locate(&self, id: borrowed::Id<'_>) -> Option<Result<Object, Error>> {
-        match self.locate_inner(id) {
-            Ok(obj) => Some(Ok(obj)),
-            Err(err) => match err {
-                Error::Io {
-                    source: err,
-                    action,
-                    path,
-                } => {
-                    if action == Self::OPEN_ACTION && err.kind() == std::io::ErrorKind::NotFound {
-                        None
-                    } else {
-                        Some(Err(Error::Io {
-                            source: err,
-                            action,
-                            path,
-                        }))
-                    }
-                }
-                err => Some(Err(err)),
             },
         }
     }
