@@ -48,6 +48,6 @@ impl compound::Db {
                 return Ok(Some(compound::Object::Borrowed(object)));
             }
         }
-        Ok(self.loose.locate(id)?.map(|object| compound::Object::Loose(object)))
+        Ok(self.loose.locate(id)?.map(compound::Object::Loose))
     }
 }
