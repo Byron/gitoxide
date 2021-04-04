@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
 
 fn do_git2(hashes: &[String]) -> anyhow::Result<u64> {
     git2::opts::strict_hash_verification(false);
-    let repo = git2::Repository::open("../.git")?;
+    let repo = git2::Repository::open("../../.git")?;
     let odb = repo.odb()?;
     let mut bytes = 0u64;
     for hash in hashes {
@@ -44,7 +44,7 @@ fn do_git2(hashes: &[String]) -> anyhow::Result<u64> {
 }
 
 fn do_gitoxide(hashes: &[String]) -> anyhow::Result<u64> {
-    let odb = git_odb::compound::Db::at("../.git/objects")?;
+    let odb = git_odb::compound::Db::at("../../.git/objects")?;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
     for hash in hashes {

@@ -63,8 +63,8 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all
 
 check: ## Build all code in suitable configurations
+	if rustup toolchain list | grep nightly; then cd experiments/object-access && cargo +nightly check; fi
 	cargo check --all
-	cargo check --all --all-features
 	cargo check --no-default-features --features small
 	cargo check --no-default-features --features light
 	cargo check --no-default-features --features lean
@@ -76,7 +76,7 @@ check: ## Build all code in suitable configurations
 	cd git-hash && cargo check --all-features \
 				&& cargo check
 	cd git-object && cargo check --all-features
-	cd git-odb && cargo check --all-features \
+	cd git-odb && cargo check --features serde1 \
 			   && cargo check
 	cd git-packetline && cargo check --all-features \
 			   && cargo check

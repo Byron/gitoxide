@@ -243,6 +243,13 @@ The library powering the command-line interface.
     * discover all git repositories within a directory. Particularly useful with [skim][skim].
     
 [skim]: https://github.com/lotabout/skim
+
+### git-odb
+
+* **polonius**
+  * If set, a code path will be provided which as of 2021-04-04 only works when using polonius.
+    * _Activate_ using `mkdir -p .cargo && echo $'[build]\nrustflags = "-C target-cpu=native -Zpolonius"' > .cargo/config.toml`.
+
     
 ### git-features
 

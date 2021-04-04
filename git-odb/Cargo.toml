@@ -13,6 +13,7 @@ doctest = false
 
 [features]
 default = ["flate2/zlib-ng-compat"]
+polonius = []
 serde1 = ["serde", "git-object/serde1"]
 
 [package.metadata.docs.rs]
