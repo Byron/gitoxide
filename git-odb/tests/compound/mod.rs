@@ -20,7 +20,10 @@ mod locate {
 
     fn can_locate(db: &Db, hex_id: &str) {
         let mut buf = vec![];
-        assert!(db.locate(hex_to_id(hex_id).to_borrowed(), &mut buf).is_some());
+        assert!(db
+            .locate2(hex_to_id(hex_id).to_borrowed(), &mut buf)
+            .expect("no read error")
+            .is_some());
     }
 
     #[test]
