@@ -19,6 +19,15 @@ impl compound::Db {
         id: borrowed::Id<'_>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<compound::Object<'a>>, Error> {
+        for pack in &self.packs {
+            if let Some(idx) = pack.internal_locate_index(id) {
+                let object = pack.internal_get_object_by_index(idx, buffer, &mut pack::cache::Noop)?;
+                return Ok(Some(compound::Object::Borrowed(object)));
+            }
+        }
+        if let Some(object) = self.loose.locate(id)? {
+            return Ok(Some(compound::Object::Loose(object)));
+        }
         for alternate in &self.alternates {
             // See 8c5bd095539042d7db0e611460803cdbf172beb0 for a commit that adds polonius and makes the proper version compile.
             // See https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425
@@ -32,12 +41,6 @@ impl compound::Db {
                 return Ok(Some(object));
             }
         }
-        for pack in &self.packs {
-            if let Some(idx) = pack.internal_locate_index(id) {
-                let object = pack.internal_get_object_by_index(idx, buffer, &mut pack::cache::Noop)?;
-                return Ok(Some(compound::Object::Borrowed(object)));
-            }
-        }
-        Ok(self.loose.locate(id)?.map(compound::Object::Loose))
+        Ok(None)
     }
 }
