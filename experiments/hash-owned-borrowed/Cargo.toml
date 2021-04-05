@@ -13,6 +13,3 @@ criterion = "0.3.4"
 name = "usage"
 path = "benches/usage.rs"
 harness = false
-
-
-[workspace]

@@ -64,6 +64,7 @@ clippy: ## Run cargo clippy on all crates
 
 check: ## Build all code in suitable configurations
 	if rustup toolchain list | grep nightly; then cd experiments/object-access && cargo +nightly check; fi
+	cd experiments/hash-owned-borrowed && cargo check --all
 	cargo check --all
 	cargo check --no-default-features --features small
 	cargo check --no-default-features --features light

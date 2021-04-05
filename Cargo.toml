@@ -99,4 +99,7 @@ members = [
     "git-repository",
     "gitoxide-core",
     "git-tui",
+
+    # "experiments/object-access", // needs polonius, can't be in workspace for this to work on stable
+    "experiments/hash-owned-borrowed",
 ]
