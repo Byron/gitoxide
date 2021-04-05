@@ -18,6 +18,24 @@ impl pack::Bundle {
             Some(idx) => idx,
             None => return Ok(None),
         };
+        self.internal_get_object_by_index(idx, out, cache).map(Some)
+    }
+
+    /// Internal-use function to look up an object index. Used to avoid double-lookups in
+    /// compound::Db::locate. (The polonius borrow-checker would support this via the locate
+    /// function, so this can be simplified once polonius is stable.)
+    pub(crate) fn internal_locate_index(&self, id: borrowed::Id<'_>) -> Option<u32> {
+        self.index.lookup(id)
+    }
+
+    /// Internal-use function to get an object given an index previously returned from
+    /// internal_locate_index.
+    pub(crate) fn internal_get_object_by_index<'a>(
+        &self,
+        idx: u32,
+        out: &'a mut Vec<u8>,
+        cache: &mut impl pack::cache::DecodeEntry,
+    ) -> Result<crate::borrowed::Object<'a>, pack::data::decode::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
         self.pack
@@ -31,11 +49,9 @@ impl pack::Bundle {
                 },
                 cache,
             )
-            .map(move |r| {
-                Some(crate::borrowed::Object {
-                    kind: r.kind,
-                    data: out.as_slice(),
-                })
+            .map(move |r| crate::borrowed::Object {
+                kind: r.kind,
+                data: out.as_slice(),
             })
     }
 }

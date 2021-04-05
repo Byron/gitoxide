@@ -33,18 +33,8 @@ impl compound::Db {
             }
         }
         for pack in &self.packs {
-            // See 8c5bd095539042d7db0e611460803cdbf172beb0 for a commit that adds polonius and makes the proper version compile.
-            // See https://stackoverflow.com/questions/63906425/nll-limitation-how-to-work-around-cannot-borrow-buf-as-mutable-more-than?noredirect=1#comment113007288_63906425
-            // The underlying issue is described here https://github.com/rust-lang/rust/issues/45402,
-            // Once Polonius becomes a thing AND is not too slow, we must remove this double-lookup to become something like this:
-            // if let Some(object) = if pack.locate(id, buffer, &mut pack::cache::DecodeEntryNoop) {…}
-            #[cfg(not(feature = "polonius"))]
-            if pack.locate(id, buffer, &mut pack::cache::Noop)?.is_some() {
-                let object = pack.locate(id, buffer, &mut pack::cache::Noop)?;
-                return Ok(object.map(compound::Object::Borrowed));
-            }
-            #[cfg(feature = "polonius")]
-            if let Some(object) = pack.locate(id, buffer, &mut pack::cache::Noop)? {
+            if let Some(idx) = pack.internal_locate_index(id) {
+                let object = pack.internal_get_object_by_index(idx, buffer, &mut pack::cache::Noop)?;
                 return Ok(Some(compound::Object::Borrowed(object)));
             }
         }
