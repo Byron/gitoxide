@@ -37,18 +37,45 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let bytes = do_git2(hashes.as_slice(), &repo_git_dir)?;
     let elapsed = start.elapsed();
-    println!("libgit2:  confirmed {} bytes in {:?}", bytes, elapsed);
+    let objs_per_sec = |elapsed: std::time::Duration| hashes.len() as f32 / elapsed.as_secs_f32();
+
+    println!(
+        "libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_parallel_git2(hashes.as_slice(), &repo_git_dir)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
 
     let start = Instant::now();
     repo_git_dir.push("objects");
     let bytes = do_gitoxide(hashes.as_slice(), &repo_git_dir)?;
     let elapsed = start.elapsed();
-    println!("gitoxide: confirmed {} bytes in {:?}", bytes, elapsed);
+    println!(
+        "gitoxide: confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
 
     let start = Instant::now();
     let bytes = do_parallel_gitoxide(hashes.as_slice(), &repo_git_dir)?;
     let elapsed = start.elapsed();
-    println!("parallel gitoxide: confirmed {} bytes in {:?}", bytes, elapsed);
+    println!(
+        "parallel gitoxide: confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
 
     Ok(())
 }
@@ -64,6 +91,24 @@ fn do_git2(hashes: &[String], git_dir: &Path) -> anyhow::Result<u64> {
         bytes += obj.len() as u64;
     }
     Ok(bytes)
+}
+
+fn do_parallel_git2(hashes: &[String], git_dir: &Path) -> anyhow::Result<u64> {
+    use rayon::prelude::*;
+    git2::opts::strict_hash_verification(false);
+    let bytes = std::sync::atomic::AtomicU64::default();
+    hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
+        || git2::Repository::open(git_dir).expect("git directory is valid"),
+        |repo, hash| {
+            let odb = repo.odb()?;
+            let hash = git2::Oid::from_str(&hash)?;
+            let obj = odb.read(hash)?;
+            bytes.fetch_add(obj.len() as u64, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        },
+    )?;
+
+    Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
 
 fn do_gitoxide(hashes: &[String], objects_dir: &Path) -> anyhow::Result<u64> {
