@@ -23,7 +23,8 @@ impl pack::Bundle {
 
     /// Internal-use function to look up an object index. Used to avoid double-lookups in
     /// compound::Db::locate. (The polonius borrow-checker would support this via the locate
-    /// function, so this can be simplified once polonius is stable.)
+    /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
+    /// once polonius is stable.)
     pub(crate) fn internal_locate_index(&self, id: borrowed::Id<'_>) -> Option<u32> {
         self.index.lookup(id)
     }
