@@ -11,13 +11,14 @@ pub enum Error {
 }
 
 impl compound::Db {
-    /// Find an object as identified by [`id`][git_hash::borrowed::Id] and store its data in full in the provided `buffer`.
+    /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
     pub fn locate<'a>(
         &self,
-        id: git_hash::borrowed::Id<'_>,
+        id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<compound::Object<'a>>, Error> {
+        let id = id.as_ref();
         for pack in &self.packs {
             if let Some(idx) = pack.internal_locate_index(id) {
                 let object = pack.internal_get_object_by_index(idx, buffer, &mut pack::cache::Noop)?;

@@ -69,7 +69,7 @@ impl Tree {
             out.write_all(&filename)?;
             out.write_all(&[b'\0'])?;
 
-            out.write_all(&oid[..])?;
+            out.write_all(oid.as_bytes())?;
         }
         Ok(())
     }

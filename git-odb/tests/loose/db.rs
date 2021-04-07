@@ -25,10 +25,7 @@ fn iter() {
     assert_eq!(oids, object_ids())
 }
 pub fn locate_oid(id: git_hash::ObjectId) -> loose::Object {
-    ldb()
-        .locate(id.to_borrowed())
-        .expect("read success")
-        .expect("id present")
+    ldb().locate(id).expect("read success").expect("id present")
 }
 
 mod write {
@@ -45,18 +42,12 @@ mod write {
             let mut obj = locate_oid(oid.clone());
             let actual = db.write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
-            assert_eq!(
-                db.locate(oid.to_borrowed())?.expect("id present").decode()?,
-                obj.decode()?
-            );
+            assert_eq!(db.locate(oid)?.expect("id present").decode()?, obj.decode()?);
             let mut buf = Vec::new();
             obj.stream()?.read_to_end(&mut buf)?;
             let actual = db.write_buf(obj.kind, &buf, git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
-            assert_eq!(
-                db.locate(oid.to_borrowed())?.expect("id present").decode()?,
-                obj.decode()?
-            );
+            assert_eq!(db.locate(oid)?.expect("id present").decode()?, obj.decode()?);
         }
         Ok(())
     }
@@ -184,10 +175,10 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     fn try_locate(hex: &str) -> Option<loose::Object> {
-        ldb().locate(hex_to_id(hex).to_borrowed()).ok().flatten()
+        ldb().locate(hex_to_id(hex)).ok().flatten()
     }
 
-    pub fn as_id(id: &[u8; 20]) -> git_hash::borrowed::Id {
+    pub fn as_id(id: &[u8; 20]) -> &git_hash::oid {
         id.into()
     }
 

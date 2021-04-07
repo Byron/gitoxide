@@ -213,10 +213,10 @@ pub fn pack_or_pack_index(
                         }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
-                        let mut obj = verifier.locate(written_id.to_borrowed())
+                        let mut obj = verifier.locate(written_id)
                             .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
                             .ok_or(Error::WrittenFileMissing(written_id))?;
-                        obj.verify_checksum(written_id.to_borrowed())?;
+                        obj.verify_checksum(written_id)?;
                     }
                     Ok(())
                 }

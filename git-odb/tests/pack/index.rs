@@ -21,15 +21,15 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(git_hash::ObjectId::from_hex(*id)?.to_borrowed()),
+                    idx.lookup(git_hash::ObjectId::from_hex(*id)?),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup(entry.oid.to_borrowed()).expect("id present");
-                assert_eq!(entry.oid.to_borrowed(), idx.oid_at_index(index));
+                let index = idx.lookup(entry.oid).expect("id present");
+                assert_eq!(entry.oid.as_ref(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index));
             }
@@ -50,15 +50,15 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(git_hash::ObjectId::from_hex(*id)?.to_borrowed()),
+                    idx.lookup(git_hash::ObjectId::from_hex(*id)?),
                     *desired_index,
                     "{}",
                     assertion
                 );
             }
             for entry in idx.iter() {
-                let index = idx.lookup(entry.oid.to_borrowed()).expect("id present");
-                assert_eq!(entry.oid.to_borrowed(), idx.oid_at_index(index));
+                let index = idx.lookup(entry.oid).expect("id present");
+                assert_eq!(entry.oid.as_ref(), idx.oid_at_index(index));
                 assert_eq!(entry.pack_offset, idx.pack_offset_at_index(index));
                 assert_eq!(entry.crc32, idx.crc32_at_index(index), "{} {:?}", index, entry);
             }

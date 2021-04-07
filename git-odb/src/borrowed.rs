@@ -46,14 +46,15 @@ pub mod verify {
         /// Compute the checksum of `self` and compare it with the `desired` hash.
         /// If the hashes do not match, an [`Error`] is returned, containing the actual
         /// hash of `self`.
-        pub fn verify_checksum(&self, desired: git_hash::borrowed::Id<'_>) -> Result<(), Error> {
+        pub fn verify_checksum(&self, desired: impl AsRef<git_hash::oid>) -> Result<(), Error> {
+            let desired = desired.as_ref();
             let mut sink = hash::Write::new(io::sink(), desired.kind());
 
             loose::object::header::encode(self.kind, self.data.len() as u64, &mut sink).expect("hash to always work");
             sink.hash.update(&self.data);
 
             let actual_id = git_hash::ObjectId::from(sink.hash.digest());
-            if desired != actual_id.to_borrowed() {
+            if desired != actual_id.as_ref() {
                 return Err(Error::ChecksumMismatch {
                     desired: desired.into(),
                     actual: actual_id,

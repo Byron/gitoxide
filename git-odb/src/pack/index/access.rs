@@ -1,10 +1,7 @@
 use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::{
-    convert::{TryFrom, TryInto},
-    mem::size_of,
-};
+use std::{convert::TryInto, mem::size_of};
 
 const N32_SIZE: usize = size_of::<u32>();
 const N64_SIZE: usize = size_of::<u64>();
@@ -72,7 +69,7 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn oid_at_index(&self, index: u32) -> git_hash::borrowed::Id<'_> {
+    pub fn oid_at_index(&self, index: u32) -> &git_hash::oid {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
@@ -80,7 +77,7 @@ impl index::File {
             index::Version::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
             index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
-        git_hash::borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
+        git_hash::oid::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
     /// Returns the offset into our pack data file at which to start reading the object at `index`.
@@ -125,7 +122,8 @@ impl index::File {
 
     /// Returns the `index` of the given SHA1 for use with the [`oid_at_index()`][index::File::oid_at_index()],
     /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
-    pub fn lookup(&self, id: git_hash::borrowed::Id<'_>) -> Option<u32> {
+    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<u32> {
+        let id = id.as_ref();
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };

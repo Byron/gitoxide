@@ -93,12 +93,19 @@ impl From<[u8; SIZE_OF_SHA1_DIGEST]> for ObjectId {
     }
 }
 
-// TODO: remove this - what do we deref to if there are multiple hash sizes?
+impl From<&crate::borrowed::oid> for ObjectId {
+    fn from(v: &oid) -> Self {
+        match v.kind() {
+            crate::Kind::Sha1 => ObjectId::from_20_bytes(v.as_bytes()),
+        }
+    }
+}
+
 impl Deref for ObjectId {
-    type Target = [u8; SIZE_OF_SHA1_DIGEST];
+    type Target = oid;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.as_ref()
     }
 }
 

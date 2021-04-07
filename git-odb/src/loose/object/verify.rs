@@ -17,10 +17,11 @@ pub enum Error {
 }
 
 impl loose::Object {
-    /// Generate the git hash of this object, reading it in the process, and compare it with the given `desired` [Id][git_hash::borrowed::Id].
+    /// Generate the git hash of this object, reading it in the process, and compare it with the given `desired` [ObjectId][git_hash::ObjectId].
     ///
     /// Returns an error with the actual id if the hashes don't match.
-    pub fn verify_checksum(&mut self, desired: git_hash::borrowed::Id<'_>) -> Result<(), Error> {
+    pub fn verify_checksum(&mut self, desired: impl AsRef<git_hash::oid>) -> Result<(), Error> {
+        let desired = desired.as_ref();
         let mut sink = HashWrite::new(io::sink(), desired.kind());
         let (kind, size) = (self.kind, self.size);
         let mut reader = self.stream()?;
@@ -29,7 +30,7 @@ impl loose::Object {
         io::copy(&mut reader, &mut sink)?;
 
         let actual = git_hash::ObjectId::from(sink.hash.digest());
-        if desired != actual.to_borrowed() {
+        if desired != actual.as_ref() {
             return Err(Error::ChecksumMismatch {
                 desired: desired.into(),
                 actual,

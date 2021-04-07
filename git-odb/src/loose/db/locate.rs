@@ -26,12 +26,12 @@ pub enum Error {
 impl Db {
     const OPEN_ACTION: &'static str = "open";
 
-    /// Return the object identified by the given [`id][git_hash::borrowed::Id] if present in this database.
+    /// Return the object identified by the given [`ObjectId`][git_hash::ObjectId] if present in this database.
     ///
     /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
     /// there was no such object.
-    pub fn locate(&self, id: git_hash::borrowed::Id<'_>) -> Result<Option<Object>, Error> {
-        match self.locate_inner(id) {
+    pub fn locate(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<Object>, Error> {
+        match self.locate_inner(id.as_ref()) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
                 Error::Io {
@@ -54,7 +54,7 @@ impl Db {
         }
     }
 
-    fn locate_inner(&self, id: git_hash::borrowed::Id<'_>) -> Result<Object, Error> {
+    fn locate_inner(&self, id: &git_hash::oid) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();

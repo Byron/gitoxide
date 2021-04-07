@@ -29,7 +29,7 @@ pub struct Entry<'a> {
     pub filename: &'a BStr,
     /// The id of the object representing the entry.
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub oid: git_hash::borrowed::Id<'a>,
+    pub oid: &'a git_hash::oid,
 }
 
 impl<'a> Tree<'a> {
@@ -68,7 +68,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, Error> {
         Entry {
             mode,
             filename: filename.as_bstr(),
-            oid: git_hash::borrowed::Id::try_from(oid).expect("we counted exactly 20 bytes"),
+            oid: git_hash::oid::try_from(oid).expect("we counted exactly 20 bytes"),
         },
     ))
 }

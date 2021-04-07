@@ -104,7 +104,7 @@ impl Db {
         hash::Write { hash, inner: file }: hash::Write<HashAndTempFile>,
     ) -> Result<git_hash::ObjectId, Error> {
         let id = git_hash::ObjectId::from(hash.digest());
-        let object_path = loose::db::sha1_path(id.to_borrowed(), self.path.clone());
+        let object_path = loose::db::sha1_path(&id, self.path.clone());
         let object_dir = object_path
             .parent()
             .expect("each object path has a 1 hex-bytes directory");

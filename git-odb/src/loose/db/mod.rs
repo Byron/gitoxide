@@ -19,7 +19,7 @@ impl Db {
     }
 }
 
-pub(crate) fn sha1_path(id: git_hash::borrowed::Id<'_>, mut root: PathBuf) -> PathBuf {
+pub(crate) fn sha1_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
     match id.kind() {
         git_hash::Kind::Sha1 => {
             let hex = id.to_sha1_hex();

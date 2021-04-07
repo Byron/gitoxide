@@ -117,7 +117,7 @@ fn do_gitoxide(hashes: &[String], objects_dir: &Path) -> anyhow::Result<u64> {
     let mut bytes = 0u64;
     for hash in hashes {
         let hash: git_hash::ObjectId = hash.parse()?;
-        let obj = odb.locate(hash.to_borrowed(), &mut buf)?.expect("object must exist");
+        let obj = odb.locate(hash, &mut buf)?.expect("object must exist");
         bytes += obj.size() as u64;
     }
     Ok(bytes)
@@ -131,7 +131,7 @@ fn do_parallel_gitoxide(hashes: &[String], objects_dir: &Path) -> anyhow::Result
         .par_iter()
         .try_for_each_init::<_, _, _, anyhow::Result<_>>(Vec::new, |mut buf, hash| {
             let hash: git_hash::ObjectId = hash.parse()?;
-            let obj = odb.locate(hash.to_borrowed(), &mut buf)?.expect("object must exist");
+            let obj = odb.locate(hash, &mut buf)?.expect("object must exist");
             bytes.fetch_add(obj.size() as u64, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         })?;
