@@ -13,8 +13,8 @@ pub enum Error {
     PackParse(#[from] pack::data::parse::Error),
     #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
     ChecksumMismatch {
-        expected: git_hash::Id,
-        actual: git_hash::Id,
+        expected: git_hash::ObjectId,
+        actual: git_hash::ObjectId,
     },
     #[error("pack is incomplete: it was decompressed into {actual} bytes but {expected} bytes where expected.")]
     IncompletePack { actual: u64, expected: u64 },
@@ -45,7 +45,7 @@ pub struct Entry {
     pub decompressed_size: u64,
     /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
     /// for use as trailer in a pack or to verify it matches the trailer.
-    pub trailer: Option<git_hash::Id>,
+    pub trailer: Option<git_hash::ObjectId>,
 }
 
 /// An iterator over [`Entries`][Entry] in a byte stream.
@@ -245,7 +245,7 @@ where
 
         // Last objects gets trailer (which is potentially verified)
         let trailer = if self.objects_left == 0 {
-            let mut id = git_hash::Id::from([0; 20]);
+            let mut id = git_hash::ObjectId::from([0; 20]);
             if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
                 if self.mode != Mode::Restore {
                     return Err(err.into());
@@ -253,7 +253,7 @@ where
             }
 
             if let Some(hash) = self.hash.take() {
-                let actual_id = git_hash::Id::from(hash.digest());
+                let actual_id = git_hash::ObjectId::from(hash.digest());
                 if self.mode == Mode::Restore {
                     id = actual_id;
                 }
@@ -267,7 +267,7 @@ where
             Some(id)
         } else if self.mode == Mode::Restore {
             let hash = self.hash.clone().expect("in restore mode a hash is set");
-            Some(git_hash::Id::from(hash.digest()))
+            Some(git_hash::ObjectId::from(hash.digest()))
         } else {
             None
         };

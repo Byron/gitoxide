@@ -73,7 +73,7 @@ quick_error! {
             source(err)
             from()
         }
-        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: git_object::Kind, id: git_hash::Id) {
+        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: git_object::Kind, id: git_hash::ObjectId) {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
@@ -82,13 +82,13 @@ quick_error! {
             source(err)
             from()
         }
-        ObjectEncodeMismatch(kind: git_object::Kind, actual: git_hash::Id, expected: git_hash::Id) {
+        ObjectEncodeMismatch(kind: git_object::Kind, actual: git_hash::ObjectId, expected: git_hash::ObjectId) {
             display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
         }
-        WrittenFileMissing(id: git_hash::Id) {
+        WrittenFileMissing(id: git_hash::ObjectId) {
             display("The recently written file for loose object {} could not be found", id)
         }
-        WrittenFileCorrupt(err: loose::db::locate::Error, id: git_hash::Id) {
+        WrittenFileCorrupt(err: loose::db::locate::Error, id: git_hash::ObjectId) {
             display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
@@ -109,7 +109,7 @@ impl git_odb::Write for OutputWriter {
         kind: git_object::Kind,
         from: &[u8],
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         match self {
             OutputWriter::Loose(db) => db.write_buf(kind, from, hash).map_err(Into::into),
             OutputWriter::Sink(db) => db.write_buf(kind, from, hash).map_err(Into::into),
@@ -122,7 +122,7 @@ impl git_odb::Write for OutputWriter {
         size: u64,
         from: impl Read,
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         match self {
             OutputWriter::Loose(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
             OutputWriter::Sink(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),

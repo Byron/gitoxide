@@ -15,7 +15,7 @@ impl Db {
     ///
     /// The [`Id`][git_hash::Id]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
-    pub fn iter(&self) -> impl Iterator<Item = Result<git_hash::Id, Error>> {
+    pub fn iter(&self) -> impl Iterator<Item = Result<git_hash::ObjectId, Error>> {
         use std::path::Component::Normal;
         fs::walkdir_new(&self.path)
             .min_depth(2)
@@ -36,14 +36,14 @@ impl Db {
                                     first_byte.copy_from_slice(c1.as_bytes());
                                     rest.copy_from_slice(c2.as_bytes());
                                 }
-                                if let Ok(b) = git_hash::Id::from_40_bytes_in_hex(&buf[..]) {
+                                if let Ok(b) = git_hash::ObjectId::from_40_bytes_in_hex(&buf[..]) {
                                     is_valid_path = true;
                                     return b;
                                 }
                             }
                         }
                     }
-                    git_hash::Id::null_sha1()
+                    git_hash::ObjectId::null_sha1()
                 });
                 if is_valid_path {
                     Some(e)

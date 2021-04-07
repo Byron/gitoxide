@@ -13,7 +13,7 @@ pub enum Error {
     #[error("Failed to decompress pack entry")]
     ZlibInflate(#[from] crate::zlib::Error),
     #[error("A delta chain could not be applied as the ref base with id {0} could not be found")]
-    DeltaBaseUnresolved(git_hash::Id),
+    DeltaBaseUnresolved(git_hash::ObjectId),
 }
 
 #[derive(Debug)]

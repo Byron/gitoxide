@@ -23,7 +23,7 @@ impl index::File {
         new_processor: impl Fn() -> Processor + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(git_hash::Id, index::traverse::Outcome, P), Error<E>>
+    ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
         Processor: FnMut(
@@ -133,7 +133,7 @@ impl Default for EntryWithDefault {
             index_entry: pack::index::Entry {
                 pack_offset: 0,
                 crc32: None,
-                oid: git_hash::Id::null_sha1(),
+                oid: git_hash::ObjectId::null_sha1(),
             },
             level: 0,
             object_kind: git_object::Kind::Tree,

@@ -11,9 +11,9 @@ use std::io;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Commit {
     /// The hash of recorded working tree state.
-    pub tree: git_hash::Id,
+    pub tree: git_hash::ObjectId,
     /// Hash of each parent commit. Empty for the first commit in repository.
-    pub parents: SmallVec<[git_hash::Id; 1]>,
+    pub parents: SmallVec<[git_hash::ObjectId; 1]>,
     /// Who wrote this commit.
     pub author: owned::Signature,
     /// Who committed this commit.

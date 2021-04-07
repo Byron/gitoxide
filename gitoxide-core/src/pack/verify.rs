@@ -104,7 +104,7 @@ pub fn pack_or_pack_index<W1, W2>(
         thread_limit,
         algorithm,
     }: Context<W1, W2>,
-) -> Result<(git_hash::Id, Option<index::traverse::Outcome>)>
+) -> Result<(git_hash::ObjectId, Option<index::traverse::Outcome>)>
 where
     W1: io::Write,
     W2: io::Write,

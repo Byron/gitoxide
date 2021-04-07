@@ -39,7 +39,7 @@ struct TreeItem<D> {
 #[test]
 fn using_option_as_data_does_not_increase_size_in_memory() {
     struct Entry {
-        pub _id: Option<git_hash::Id>,
+        pub _id: Option<git_hash::ObjectId>,
         pub _crc32: u32,
     }
 

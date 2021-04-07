@@ -16,19 +16,19 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     PackChecksum(#[from] pack::data::verify::Error),
     #[error("Object {id} at offset {offset} could not be decoded")]
     PackDecode {
-        id: git_hash::Id,
+        id: git_hash::ObjectId,
         offset: u64,
         source: pack::data::decode::Error,
     },
     #[error("The packfiles checksum didn't match the index file checksum: expected {expected}, got {actual}")]
     PackMismatch {
-        expected: git_hash::Id,
-        actual: git_hash::Id,
+        expected: git_hash::ObjectId,
+        actual: git_hash::ObjectId,
     },
     #[error("The SHA1 of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}")]
     PackObjectMismatch {
-        expected: git_hash::Id,
-        actual: git_hash::Id,
+        expected: git_hash::ObjectId,
+        actual: git_hash::ObjectId,
         offset: u64,
         kind: git_object::Kind,
     },

@@ -18,7 +18,7 @@ pub enum Error {
     #[error(transparent)]
     Header(#[from] pack::data::parse::Error),
     #[error("Could find object with id {id} in this pack. Thin packs are not supported")]
-    UnresolvedRefDelta { id: git_hash::Id },
+    UnresolvedRefDelta { id: git_hash::ObjectId },
     #[error(transparent)]
     Tree(#[from] pack::tree::Error),
     #[error("Interrupted")]

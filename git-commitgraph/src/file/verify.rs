@@ -19,28 +19,31 @@ pub enum Error<E: std::error::Error + 'static> {
     #[error(transparent)]
     Commit(#[from] file::commit::Error),
     #[error("commit at file position {pos} has invalid ID {id}")]
-    CommitId { id: git_hash::Id, pos: file::Position },
+    CommitId {
+        id: git_hash::ObjectId,
+        pos: file::Position,
+    },
     #[error("commit at file position {pos} with ID {id} is out of order relative to its predecessor with ID {predecessor_id}")]
     CommitsOutOfOrder {
-        id: git_hash::Id,
+        id: git_hash::ObjectId,
         pos: file::Position,
-        predecessor_id: git_hash::Id,
+        predecessor_id: git_hash::ObjectId,
     },
     #[error("commit-graph filename should be {0}")]
     Filename(String),
     #[error("commit {id} has invalid generation {generation}")]
-    Generation { generation: u32, id: git_hash::Id },
+    Generation { generation: u32, id: git_hash::ObjectId },
     #[error("checksum mismatch: expected {expected}, got {actual}")]
     Mismatch {
-        actual: git_hash::Id,
-        expected: git_hash::Id,
+        actual: git_hash::ObjectId,
+        expected: git_hash::ObjectId,
     },
     #[error("{0}")]
     Processor(#[source] E),
     #[error("commit {id} has invalid root tree ID {root_tree_id}")]
     RootTreeId {
-        id: git_hash::Id,
-        root_tree_id: git_hash::Id,
+        id: git_hash::ObjectId,
+        root_tree_id: git_hash::ObjectId,
     },
 }
 
@@ -142,7 +145,7 @@ impl File {
     /// checksum itself.
     ///
     /// Return the actual checksum on success or `(actual checksum, expected checksum)` if there is a mismatch.
-    pub fn verify_checksum(&self) -> Result<git_hash::Id, (git_hash::Id, git_hash::Id)> {
+    pub fn verify_checksum(&self) -> Result<git_hash::ObjectId, (git_hash::ObjectId, git_hash::ObjectId)> {
         // Even though we could use git_features::hash::bytes_of_file(…), this would require using our own
         // Error type to support io::Error and Mismatch. As we only gain progress, there probably isn't much value
         // as these files are usually small enough to process them in less than a second, even for the large ones.
@@ -150,7 +153,7 @@ impl File {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let mut hasher = git_features::hash::Sha1::default();
         hasher.update(&self.data[..data_len_without_trailer]);
-        let actual = git_hash::Id::new_sha1(hasher.digest());
+        let actual = git_hash::ObjectId::new_sha1(hasher.digest());
 
         let expected = self.checksum();
         if actual.to_borrowed() == expected {
@@ -172,8 +175,10 @@ fn verify_split_chain_filename_hash(
         .and_then(|filename| filename.to_str())
         .and_then(|filename| filename.strip_suffix(".graph"))
         .and_then(|stem| stem.strip_prefix("graph-"))
-        .map_or(Ok(()), |hex| match git_hash::Id::from_40_bytes_in_hex(hex.as_bytes()) {
-            Ok(actual) if actual.to_borrowed() == expected => Ok(()),
-            _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
+        .map_or(Ok(()), |hex| {
+            match git_hash::ObjectId::from_40_bytes_in_hex(hex.as_bytes()) {
+                Ok(actual) if actual.to_borrowed() == expected => Ok(()),
+                _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
+            }
         })
 }

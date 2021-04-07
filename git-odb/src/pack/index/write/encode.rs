@@ -9,10 +9,10 @@ use std::{cmp::Ordering, io};
 pub(crate) fn write_to(
     out: impl io::Write,
     entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::TreeEntry>>,
-    pack_hash: &git_hash::Id,
+    pack_hash: &git_hash::ObjectId,
     kind: pack::index::Version,
     mut progress: impl Progress,
-) -> io::Result<git_hash::Id> {
+) -> io::Result<git_hash::ObjectId> {
     use io::Write;
     assert!(
         !entries_sorted_by_oid.is_empty(),
@@ -113,7 +113,7 @@ pub(crate) fn write_to(
 
     let bytes_written_without_trailer = out.bytes;
     let mut out = out.inner.into_inner()?;
-    let index_hash: git_hash::Id = out.hash.digest().into();
+    let index_hash: git_hash::ObjectId = out.hash.digest().into();
     out.inner.write_all(index_hash.as_slice())?;
     out.inner.flush()?;
 

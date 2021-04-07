@@ -49,7 +49,7 @@ impl index::File {
             thread_limit,
             check,
         }: Options,
-    ) -> Result<(git_hash::Id, Outcome, Option<P>), Error<E>>
+    ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
     where
         P: Progress,
         C: pack::cache::DecodeEntry,
@@ -77,7 +77,7 @@ impl index::File {
         check: SafetyCheck,
         pack_progress: impl Progress,
         index_progress: impl Progress,
-    ) -> Result<git_hash::Id, Error<E>>
+    ) -> Result<git_hash::ObjectId, Error<E>>
     where
         E: std::error::Error + Send + Sync + 'static,
     {
@@ -175,7 +175,7 @@ where
         hasher.update(&header_buf[..header_size]);
         hasher.update(decompressed);
 
-        let actual_oid = git_hash::Id::new_sha1(hasher.digest());
+        let actual_oid = git_hash::ObjectId::new_sha1(hasher.digest());
         if actual_oid != index_entry.oid {
             return Err(Error::PackObjectMismatch {
                 actual: actual_oid,

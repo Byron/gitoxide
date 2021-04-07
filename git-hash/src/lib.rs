@@ -9,14 +9,15 @@ pub use bstr;
 
 #[allow(missing_docs)]
 pub mod borrowed;
+pub use borrowed::oid;
 
 #[allow(missing_docs)]
 mod owned;
-pub use owned::Id;
+pub use owned::ObjectId;
 
 #[allow(missing_docs)]
 pub mod decode {
-    use crate::owned::Id;
+    use crate::owned::ObjectId;
     use quick_error::quick_error;
 
     quick_error! {
@@ -31,14 +32,14 @@ pub mod decode {
     }
 
     /// Hash decoding
-    impl Id {
+    impl ObjectId {
         /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
         ///
         /// Such a buffer can be obtained using [`write_hex_to(buffer)`][Id::write_hex_to()]
-        pub fn from_40_bytes_in_hex(buffer: &[u8]) -> Result<Id, Error> {
+        pub fn from_40_bytes_in_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
             use hex::FromHex;
-            Ok(Id(
-                <[u8; 20]>::from_hex(buffer).map_err(|err| Error::HexDecode(err.to_string()))?
+            Ok(ObjectId(
+                <[u8; 20]>::from_hex(buffer).map_err(|err| Error::HexDecode(err.to_string()))?,
             ))
         }
     }
@@ -64,9 +65,9 @@ impl Default for Kind {
 mod convert {
     use crate::{borrowed, owned};
 
-    impl<'a> From<borrowed::Id<'a>> for owned::Id {
+    impl<'a> From<borrowed::Id<'a>> for owned::ObjectId {
         fn from(v: borrowed::Id<'a>) -> Self {
-            owned::Id::from_borrowed_sha1(v.sha1())
+            owned::ObjectId::from_borrowed_sha1(v.sha1())
         }
     }
 }

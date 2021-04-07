@@ -10,7 +10,7 @@ pub trait Write {
 
     /// Write [`object`][owned::Object] using the given kind of [`hash`][git_hash::Kind] into the database,
     /// returning id to reference it in subsequent reads.
-    fn write(&self, object: &owned::Object, hash: git_hash::Kind) -> Result<git_hash::Id, Self::Error> {
+    fn write(&self, object: &owned::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         let mut buf = Vec::with_capacity(2048);
         object.write_to(&mut buf)?;
         self.write_stream(object.kind(), buf.len() as u64, buf.as_slice(), hash)
@@ -21,7 +21,7 @@ pub trait Write {
         object: git_object::Kind,
         from: &[u8],
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         self.write_stream(object, from.len() as u64, from, hash)
     }
     /// As [`write`][Write::write], but takes an input stream.
@@ -32,5 +32,5 @@ pub trait Write {
         size: u64,
         from: impl io::Read,
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error>;
+    ) -> Result<git_hash::ObjectId, Self::Error>;
 }

@@ -29,7 +29,7 @@ impl From<Error> for io::Error {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
     /// The hash this tag is pointing to.
-    pub target: git_hash::Id,
+    pub target: git_hash::ObjectId,
     /// The kind of object this tag is pointing to.
     pub target_kind: crate::Kind,
     /// The name of the tag, e.g. "v1.0".

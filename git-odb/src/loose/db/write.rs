@@ -33,7 +33,7 @@ impl crate::Write for Db {
         kind: git_object::Kind,
         from: &[u8],
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         match hash {
             git_hash::Kind::Sha1 => {
                 let mut to = self.write_header(kind, from.len() as u64, hash)?;
@@ -57,7 +57,7 @@ impl crate::Write for Db {
         size: u64,
         mut from: impl io::Read,
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         match hash {
             git_hash::Kind::Sha1 => {
                 let mut to = self.write_header(kind, size, hash)?;
@@ -102,8 +102,8 @@ impl Db {
     fn finalize_object(
         &self,
         hash::Write { hash, inner: file }: hash::Write<HashAndTempFile>,
-    ) -> Result<git_hash::Id, Error> {
-        let id = git_hash::Id::from(hash.digest());
+    ) -> Result<git_hash::ObjectId, Error> {
+        let id = git_hash::ObjectId::from(hash.digest());
         let object_path = loose::db::sha1_path(id.to_borrowed(), self.path.clone());
         let object_dir = object_path
             .parent()

@@ -10,14 +10,14 @@ mod error;
 pub use error::Error;
 
 pub(crate) struct TreeEntry {
-    pub id: git_hash::Id,
+    pub id: git_hash::ObjectId,
     pub crc32: u32,
 }
 
 impl Default for TreeEntry {
     fn default() -> Self {
         TreeEntry {
-            id: git_hash::Id::null_sha1(),
+            id: git_hash::ObjectId::null_sha1(),
             crc32: 0,
         }
     }
@@ -30,10 +30,10 @@ pub struct Outcome {
     /// The version of the verified index
     pub index_kind: pack::index::Version,
     /// The verified checksum of the verified index
-    pub index_hash: git_hash::Id,
+    pub index_hash: git_hash::ObjectId,
 
     /// The hash of the '.pack' file, also found in its trailing bytes
-    pub data_hash: git_hash::Id,
+    pub data_hash: git_hash::ObjectId,
     /// The amount of objects that were verified, always the amount of objects in the pack.
     pub num_objects: u32,
 }
@@ -113,7 +113,7 @@ impl pack::index::File {
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
-                            id: git_hash::Id::null_sha1(),
+                            id: git_hash::ObjectId::null_sha1(),
                             crc32,
                         },
                     )?;
@@ -129,7 +129,7 @@ impl pack::index::File {
                         base_pack_offset,
                         pack_offset,
                         TreeEntry {
-                            id: git_hash::Id::null_sha1(),
+                            id: git_hash::ObjectId::null_sha1(),
                             crc32,
                         },
                     )?;
@@ -218,12 +218,12 @@ fn modify_base(
     decompressed: &[u8],
     hash: git_hash::Kind,
 ) {
-    fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: git_hash::Kind) -> git_hash::Id {
+    fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: git_hash::Kind) -> git_hash::ObjectId {
         let mut write = crate::hash::Write::new(io::sink(), hash_kind);
         loose::object::header::encode(kind, bytes.len() as u64, &mut write)
             .expect("write to sink and hash cannot fail");
         write.hash.update(bytes);
-        git_hash::Id::from(write.hash.digest())
+        git_hash::ObjectId::from(write.hash.digest())
     }
 
     let object_kind = pack_entry.header.to_kind().expect("base object as source of iteration");

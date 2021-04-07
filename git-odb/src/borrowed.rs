@@ -37,8 +37,8 @@ pub mod verify {
     pub enum Error {
         #[error("Object expected to have id {desired}, but actual id was {actual}")]
         ChecksumMismatch {
-            desired: git_hash::Id,
-            actual: git_hash::Id,
+            desired: git_hash::ObjectId,
+            actual: git_hash::ObjectId,
         },
     }
 
@@ -52,7 +52,7 @@ pub mod verify {
             loose::object::header::encode(self.kind, self.data.len() as u64, &mut sink).expect("hash to always work");
             sink.hash.update(&self.data);
 
-            let actual_id = git_hash::Id::from(sink.hash.digest());
+            let actual_id = git_hash::ObjectId::from(sink.hash.digest());
             if desired != actual_id.to_borrowed() {
                 return Err(Error::ChecksumMismatch {
                     desired: desired.into(),

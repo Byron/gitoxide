@@ -16,13 +16,13 @@ use std::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("commit {0}'s extra edges overflows the commit-graph file's extra edges list")]
-    ExtraEdgesListOverflow(git_hash::Id),
+    ExtraEdgesListOverflow(git_hash::ObjectId),
     #[error("commit {0}'s first parent is an extra edge index, which is invalid")]
-    FirstParentIsExtraEdgeIndex(git_hash::Id),
+    FirstParentIsExtraEdgeIndex(git_hash::ObjectId),
     #[error("commit {0} has extra edges, but commit-graph file has no extra edges list")]
-    MissingExtraEdgesList(git_hash::Id),
+    MissingExtraEdgesList(git_hash::ObjectId),
     #[error("commit {0} has a second parent but not a first parent")]
-    SecondParentWithoutFirstParent(git_hash::Id),
+    SecondParentWithoutFirstParent(git_hash::ObjectId),
 }
 
 // Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for

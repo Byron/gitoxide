@@ -37,8 +37,8 @@ impl<'a> Tag<'a> {
         parse(data).map(|(_, t)| t).map_err(Error::from)
     }
     /// The object this tag points to as `Id`.
-    pub fn target(&self) -> git_hash::Id {
-        git_hash::Id::from_40_bytes_in_hex(self.target).expect("prior validation")
+    pub fn target(&self) -> git_hash::ObjectId {
+        git_hash::ObjectId::from_40_bytes_in_hex(self.target).expect("prior validation")
     }
 }
 

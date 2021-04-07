@@ -6,7 +6,7 @@ fn ldb() -> Db {
     Db::at(fixture_path("objects"))
 }
 
-pub fn object_ids() -> Vec<git_hash::Id> {
+pub fn object_ids() -> Vec<git_hash::ObjectId> {
     vec![
         hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), // blob
         hex_to_id("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"), // blob
@@ -24,7 +24,7 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids())
 }
-pub fn locate_oid(id: git_hash::Id) -> loose::Object {
+pub fn locate_oid(id: git_hash::ObjectId) -> loose::Object {
     ldb()
         .locate(id.to_borrowed())
         .expect("read success")

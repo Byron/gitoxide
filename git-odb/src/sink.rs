@@ -39,7 +39,7 @@ impl crate::Write for Sink {
         size: u64,
         mut from: impl io::Read,
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         use git_features::hash::Sha1;
         let mut buf = [0u8; 8096];
 

@@ -37,7 +37,7 @@ pub struct Entry {
     /// The name of the file in the parent tree.
     pub filename: BString,
     /// The id of the object representing the entry.
-    pub oid: git_hash::Id,
+    pub oid: git_hash::ObjectId,
 }
 
 /// Serialization

@@ -8,8 +8,8 @@ use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 pub enum Error {
     #[error("pack checksum mismatch: expected {expected}, got {actual}")]
     Mismatch {
-        expected: git_hash::Id,
-        actual: git_hash::Id,
+        expected: git_hash::ObjectId,
+        actual: git_hash::ObjectId,
     },
     #[error("could not read pack file")]
     Io(#[from] std::io::Error),
@@ -18,8 +18,8 @@ pub enum Error {
 /// Checksums and verify checksums
 impl File {
     /// The checksum in the trailer of this pack data file
-    pub fn checksum(&self) -> git_hash::Id {
-        git_hash::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    pub fn checksum(&self) -> git_hash::ObjectId {
+        git_hash::ObjectId::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
 
     /// Verifies that the checksum of the packfile over all bytes preceding it indeed matches the actual checksum,
@@ -30,7 +30,7 @@ impl File {
     ///
     /// Have a look at [`index::File::verify_integrity(…)`][crate::pack::index::File::verify_integrity()] for an
     /// even more thorough integrity check.
-    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<git_hash::Id, Error> {
+    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<git_hash::ObjectId, Error> {
         let right_before_trailer = self.data.len() - SHA1_SIZE;
         let actual = match git_features::hash::bytes_of_file(
             &self.path,
@@ -45,7 +45,7 @@ impl File {
                 hasher.update(&self.data[..right_before_trailer]);
                 progress.inc_by(right_before_trailer);
                 progress.show_throughput(start);
-                git_hash::Id::new_sha1(hasher.digest())
+                git_hash::ObjectId::new_sha1(hasher.digest())
             }
         };
 

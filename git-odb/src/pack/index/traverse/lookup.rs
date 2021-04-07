@@ -20,7 +20,7 @@ impl index::File {
         new_cache: impl Fn() -> C + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(git_hash::Id, index::traverse::Outcome, P), Error<E>>
+    ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
         C: pack::cache::DecodeEntry,

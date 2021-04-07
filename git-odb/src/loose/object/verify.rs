@@ -11,8 +11,8 @@ pub enum Error {
     Decode(#[from] super::decode::Error),
     #[error("Object expected to have id {desired}, but actual id was {actual}")]
     ChecksumMismatch {
-        desired: git_hash::Id,
-        actual: git_hash::Id,
+        desired: git_hash::ObjectId,
+        actual: git_hash::ObjectId,
     },
 }
 
@@ -28,7 +28,7 @@ impl loose::Object {
         loose::object::header::encode(kind, size as u64, &mut sink).expect("hash to always work");
         io::copy(&mut reader, &mut sink)?;
 
-        let actual = git_hash::Id::from(sink.hash.digest());
+        let actual = git_hash::ObjectId::from(sink.hash.digest());
         if desired != actual.to_borrowed() {
             return Err(Error::ChecksumMismatch {
                 desired: desired.into(),

@@ -21,7 +21,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(git_hash::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
+                    idx.lookup(git_hash::ObjectId::from_40_bytes_in_hex(*id)?.to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
@@ -50,7 +50,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(git_hash::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
+                    idx.lookup(git_hash::ObjectId::from_40_bytes_in_hex(*id)?.to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
@@ -173,7 +173,7 @@ mod method {
             assert_eq!(outcome.index_kind, desired_kind);
             assert_eq!(
                 outcome.index_hash,
-                git_hash::Id::from_20_bytes(&expected[end_of_pack_hash..end_of_index_hash])
+                git_hash::ObjectId::from_20_bytes(&expected[end_of_pack_hash..end_of_index_hash])
             );
             Ok(())
         }

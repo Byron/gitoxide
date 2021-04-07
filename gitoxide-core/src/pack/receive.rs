@@ -156,7 +156,7 @@ impl JsonOutcome {
 fn print_hash_and_path(
     out: &mut impl io::Write,
     name: &str,
-    id: git_hash::Id,
+    id: git_hash::ObjectId,
     path: Option<PathBuf>,
 ) -> io::Result<()> {
     match path {

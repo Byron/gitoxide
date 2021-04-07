@@ -1,4 +1,4 @@
-use crate::borrowed::Id2;
+use crate::borrowed::oid;
 use crate::{borrowed, SIZE_OF_SHA1_DIGEST};
 use bstr::ByteSlice;
 use std::borrow::Borrow;
@@ -7,10 +7,10 @@ use std::{fmt, io, ops::Deref};
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Id(pub(crate) [u8; SIZE_OF_SHA1_DIGEST]);
+pub struct ObjectId(pub(crate) [u8; SIZE_OF_SHA1_DIGEST]);
 
 /// Access and conversion
-impl Id {
+impl ObjectId {
     /// Returns the kind of hash used in this `Id`
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::Sha1
@@ -35,7 +35,7 @@ impl Id {
 }
 
 /// Sha1 hash specific methods
-impl Id {
+impl ObjectId {
     /// Returns ourselves as slice of 20 bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
@@ -62,39 +62,39 @@ impl Id {
 
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
     pub fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
-        Id(id)
+        ObjectId(id)
     }
 
     /// Instantiate an Digest from a slice 20 borrowed bytes of a Sha1 digest.
     ///
     /// Panics of the slice doesn't have a length of 20.
-    pub fn from_20_bytes(b: &[u8]) -> Id {
+    pub fn from_20_bytes(b: &[u8]) -> ObjectId {
         let mut id = [0; SIZE_OF_SHA1_DIGEST];
         id.copy_from_slice(b);
-        Id(id)
+        ObjectId(id)
     }
 
     /// Instantiate an Digest from a borrowed array of 20 bytes of a Sha1 digest.
-    pub fn from_borrowed_sha1(b: &[u8; SIZE_OF_SHA1_DIGEST]) -> Id {
+    pub fn from_borrowed_sha1(b: &[u8; SIZE_OF_SHA1_DIGEST]) -> ObjectId {
         let mut id = [0; SIZE_OF_SHA1_DIGEST];
         id.copy_from_slice(&b[..]);
-        Id(id)
+        ObjectId(id)
     }
 
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
-    pub fn null_sha1() -> Id {
-        Id([0u8; 20])
+    pub fn null_sha1() -> ObjectId {
+        ObjectId([0u8; 20])
     }
 }
 
-impl From<[u8; SIZE_OF_SHA1_DIGEST]> for Id {
+impl From<[u8; SIZE_OF_SHA1_DIGEST]> for ObjectId {
     fn from(v: [u8; 20]) -> Self {
         Self::new_sha1(v)
     }
 }
 
 // TODO: remove this - what do we deref to if there are multiple hash sizes?
-impl Deref for Id {
+impl Deref for ObjectId {
     type Target = [u8; SIZE_OF_SHA1_DIGEST];
 
     fn deref(&self) -> &Self::Target {
@@ -102,19 +102,19 @@ impl Deref for Id {
     }
 }
 
-impl AsRef<crate::borrowed::Id2> for Id {
-    fn as_ref(&self) -> &Id2 {
-        Id2::try_from(self.as_slice()).expect("sibling type always implements all hashes we support")
+impl AsRef<crate::borrowed::oid> for ObjectId {
+    fn as_ref(&self) -> &oid {
+        oid::try_from(self.as_slice()).expect("sibling type always implements all hashes we support")
     }
 }
 
-impl Borrow<crate::borrowed::Id2> for Id {
-    fn borrow(&self) -> &Id2 {
+impl Borrow<crate::borrowed::oid> for ObjectId {
+    fn borrow(&self) -> &oid {
         self.as_ref()
     }
 }
 
-impl fmt::Display for Id {
+impl fmt::Display for ObjectId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", &self.to_sha1_hex().as_bstr())
     }

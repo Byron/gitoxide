@@ -13,8 +13,9 @@ pub struct Id<'a>(&'a [u8; SIZE_OF_SHA1_DIGEST]);
 /// A borrowed reference to a hash identifying objects.
 #[derive(Hash)]
 #[repr(transparent)]
+#[allow(non_camel_case_types)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
-pub struct Id2 {
+pub struct oid {
     bytes: [u8],
 }
 
@@ -29,13 +30,13 @@ quick_error! {
     }
 }
 
-impl Id2 {
+impl oid {
     pub fn try_from(value: &[u8]) -> Result<&Self, Error> {
         match value.len() {
             20 => Ok(
                 #[allow(unsafe_code)]
                 unsafe {
-                    &*(value as *const [u8] as *const Id2)
+                    &*(value as *const [u8] as *const oid)
                 },
             ),
             len => Err(Error::UnknownDigestLength(len)),
@@ -44,7 +45,7 @@ impl Id2 {
 }
 
 /// Access
-impl Id2 {
+impl oid {
     /// The kind of hash used for this Digest
     pub fn kind(&self) -> crate::Kind {
         match self.bytes.len() {
@@ -59,18 +60,18 @@ impl Id2 {
     }
 }
 
-impl AsRef<Id2> for &Id2 {
-    fn as_ref(&self) -> &Id2 {
+impl AsRef<oid> for &oid {
+    fn as_ref(&self) -> &oid {
         self
     }
 }
 
-impl ToOwned for Id2 {
-    type Owned = crate::Id;
+impl ToOwned for oid {
+    type Owned = crate::ObjectId;
 
     fn to_owned(&self) -> Self::Owned {
         match self.kind() {
-            crate::Kind::Sha1 => crate::Id(self.bytes.try_into().expect("no bug in hash detection")),
+            crate::Kind::Sha1 => crate::ObjectId(self.bytes.try_into().expect("no bug in hash detection")),
         }
     }
 }
@@ -199,17 +200,17 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for Id<'a> {
 /// Could be improved by fitting this into serde
 /// Unfortunately the serde::Deserialize derive wouldn't work for borrowed arrays.
 #[cfg(feature = "serde1")]
-impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a Id2 {
+impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {
     fn deserialize<D>(deserializer: D) -> Result<Self, <D as serde::Deserializer<'de>>::Error>
     where
         D: serde::Deserializer<'de>,
     {
         struct __Visitor<'de: 'a, 'a> {
-            marker: std::marker::PhantomData<&'a Id2>,
+            marker: std::marker::PhantomData<&'a oid>,
             lifetime: std::marker::PhantomData<&'de ()>,
         }
         impl<'de: 'a, 'a> serde::de::Visitor<'de> for __Visitor<'de, 'a> {
-            type Value = &'a Id2;
+            type Value = &'a oid;
             fn expecting(&self, __formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Formatter::write_str(__formatter, "tuple struct Digest")
             }
@@ -224,7 +225,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a Id2 {
                         return Err(__err);
                     }
                 };
-                Ok(Id2::try_from(__field0).expect("exactly 20 bytes"))
+                Ok(oid::try_from(__field0).expect("exactly 20 bytes"))
             }
             #[inline]
             fn visit_seq<__A>(self, mut __seq: __A) -> std::result::Result<Self::Value, __A::Error>
@@ -245,14 +246,14 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a Id2 {
                         ));
                     }
                 };
-                Ok(Id2::try_from(__field0).expect("exactly 20 bytes"))
+                Ok(oid::try_from(__field0).expect("exactly 20 bytes"))
             }
         }
         serde::Deserializer::deserialize_newtype_struct(
             deserializer,
             "Digest",
             __Visitor {
-                marker: std::marker::PhantomData::<&'a Id2>,
+                marker: std::marker::PhantomData::<&'a oid>,
                 lifetime: std::marker::PhantomData,
             },
         )

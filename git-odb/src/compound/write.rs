@@ -5,11 +5,11 @@ use std::io::Read;
 impl crate::Write for compound::Db {
     type Error = loose::db::write::Error;
 
-    fn write(&self, object: &owned::Object, hash: git_hash::Kind) -> Result<git_hash::Id, Self::Error> {
+    fn write(&self, object: &owned::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         self.loose.write(object, hash)
     }
 
-    fn write_buf(&self, object: Kind, from: &[u8], hash: git_hash::Kind) -> Result<git_hash::Id, Self::Error> {
+    fn write_buf(&self, object: Kind, from: &[u8], hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         self.loose.write_buf(object, from, hash)
     }
 
@@ -19,7 +19,7 @@ impl crate::Write for compound::Db {
         size: u64,
         from: impl Read,
         hash: git_hash::Kind,
-    ) -> Result<git_hash::Id, Self::Error> {
+    ) -> Result<git_hash::ObjectId, Self::Error> {
         self.loose.write_stream(kind, size, from, hash)
     }
 }

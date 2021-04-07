@@ -48,8 +48,8 @@ impl<'a> Commit<'a> {
         parse(data).map(|(_, t)| t).map_err(Error::from)
     }
     /// Return the `tree` fields hash digest.
-    pub fn tree(&self) -> git_hash::Id {
-        git_hash::Id::from_40_bytes_in_hex(self.tree).expect("prior validation")
+    pub fn tree(&self) -> git_hash::ObjectId {
+        git_hash::ObjectId::from_40_bytes_in_hex(self.tree).expect("prior validation")
     }
 
     /// Returns a convenient iterator over all extra headers.
