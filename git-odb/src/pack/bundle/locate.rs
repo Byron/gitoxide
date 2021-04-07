@@ -1,5 +1,4 @@
 use crate::pack;
-use git_object::borrowed;
 
 impl pack::Bundle {
     /// Find an object with the given [`id`][git_hash::borrowed::Id] and place its data into `out`.

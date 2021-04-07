@@ -2,7 +2,7 @@ use crate::{
     pack::{self, cache, data::File},
     zlib,
 };
-use git_object::{self as object, borrowed, owned};
+use git_object::{self as object};
 use smallvec::SmallVec;
 use std::{convert::TryInto, io, ops::Range};
 
@@ -13,7 +13,7 @@ pub enum Error {
     #[error("Failed to decompress pack entry")]
     ZlibInflate(#[from] crate::zlib::Error),
     #[error("A delta chain could not be applied as the ref base with id {0} could not be found")]
-    DeltaBaseUnresolved(owned::Id),
+    DeltaBaseUnresolved(git_hash::Id),
 }
 
 #[derive(Debug)]

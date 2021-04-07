@@ -4,16 +4,15 @@ use crate::{
 };
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::progress::{self, Progress};
-use git_object::owned;
 use std::{cmp::Ordering, io};
 
 pub(crate) fn write_to(
     out: impl io::Write,
     entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::TreeEntry>>,
-    pack_hash: &owned::Id,
+    pack_hash: &git_hash::Id,
     kind: pack::index::Version,
     mut progress: impl Progress,
-) -> io::Result<owned::Id> {
+) -> io::Result<git_hash::Id> {
     use io::Write;
     assert!(
         !entries_sorted_by_oid.is_empty(),
@@ -114,7 +113,7 @@ pub(crate) fn write_to(
 
     let bytes_written_without_trailer = out.bytes;
     let mut out = out.inner.into_inner()?;
-    let index_hash: owned::Id = out.hash.digest().into();
+    let index_hash: git_hash::Id = out.hash.digest().into();
     out.inner.write_all(index_hash.as_slice())?;
     out.inner.flush()?;
 

@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use git_features::progress::{self, Progress};
-use git_object::{owned, HashKind};
 use git_odb::{loose, pack, Write};
 use std::{fs, io::Read, path::Path};
 
@@ -74,7 +73,7 @@ quick_error! {
             source(err)
             from()
         }
-        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: git_object::Kind, id: owned::Id) {
+        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: git_object::Kind, id: git_hash::Id) {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
@@ -83,13 +82,13 @@ quick_error! {
             source(err)
             from()
         }
-        ObjectEncodeMismatch(kind: git_object::Kind, actual: owned::Id, expected: owned::Id) {
+        ObjectEncodeMismatch(kind: git_object::Kind, actual: git_hash::Id, expected: git_hash::Id) {
             display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
         }
-        WrittenFileMissing(id: owned::Id) {
+        WrittenFileMissing(id: git_hash::Id) {
             display("The recently written file for loose object {} could not be found", id)
         }
-        WrittenFileCorrupt(err: loose::db::locate::Error, id: owned::Id) {
+        WrittenFileCorrupt(err: loose::db::locate::Error, id: git_hash::Id) {
             display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
@@ -105,7 +104,12 @@ enum OutputWriter {
 impl git_odb::Write for OutputWriter {
     type Error = Error;
 
-    fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
+    fn write_buf(
+        &self,
+        kind: git_object::Kind,
+        from: &[u8],
+        hash: git_hash::Kind,
+    ) -> Result<git_hash::Id, Self::Error> {
         match self {
             OutputWriter::Loose(db) => db.write_buf(kind, from, hash).map_err(Into::into),
             OutputWriter::Sink(db) => db.write_buf(kind, from, hash).map_err(Into::into),
@@ -117,8 +121,8 @@ impl git_odb::Write for OutputWriter {
         kind: git_object::Kind,
         size: u64,
         from: impl Read,
-        hash: HashKind,
-    ) -> Result<owned::Id, Self::Error> {
+        hash: git_hash::Kind,
+    ) -> Result<git_hash::Id, Self::Error> {
         match self {
             OutputWriter::Loose(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
             OutputWriter::Sink(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
@@ -199,7 +203,7 @@ pub fn pack_or_pack_index(
                 };
                 move |object_kind, buf, index_entry, progress| {
                     let written_id = out
-                        .write_buf(object_kind, buf, HashKind::Sha1)
+                        .write_buf(object_kind, buf, git_hash::Kind::Sha1)
                         .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))?;
                     if written_id != index_entry.oid {
                         if let git_object::Kind::Tree = object_kind {

@@ -1,4 +1,4 @@
-use crate::{owned, owned::SPACE, tree::Mode};
+use crate::{owned::SPACE, tree::Mode};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;
@@ -37,7 +37,7 @@ pub struct Entry {
     /// The name of the file in the parent tree.
     pub filename: BString,
     /// The id of the object representing the entry.
-    pub oid: owned::Id,
+    pub oid: git_hash::Id,
 }
 
 /// Serialization

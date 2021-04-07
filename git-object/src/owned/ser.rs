@@ -53,7 +53,7 @@ pub fn trusted_header_signature(name: &[u8], value: &owned::Signature, mut out: 
     out.write_all(NL)
 }
 
-pub fn trusted_header_id(name: &[u8], value: &owned::Id, mut out: impl io::Write) -> io::Result<()> {
+pub fn trusted_header_id(name: &[u8], value: &git_hash::Id, mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
     out.write_all(&SPACE[..])?;
     value.write_hex_to(&mut out)?;

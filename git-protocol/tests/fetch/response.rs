@@ -6,8 +6,8 @@ fn mock_reader(path: &str) -> git_packetline::Provider<std::io::Cursor<Vec<u8>>>
     git_packetline::Provider::new(io::Cursor::new(buf), &[git_packetline::PacketLine::Flush])
 }
 
-fn id(hex: &str) -> git_object::owned::Id {
-    git_object::owned::Id::from_40_bytes_in_hex(hex.as_bytes()).expect("expect valid hex id")
+fn id(hex: &str) -> git_hash::Id {
+    git_hash::Id::from_40_bytes_in_hex(hex.as_bytes()).expect("expect valid hex id")
 }
 
 mod v1 {
@@ -173,7 +173,7 @@ mod v2 {
             assert_eq!(bytes_read, 1643, "should be able to read the whole pack");
             assert_eq!(&buf[..4], b"PACK");
             assert_eq!(
-                git_object::owned::Id::from_20_bytes(&buf[buf.len() - 20..]).to_string(),
+                git_hash::Id::from_20_bytes(&buf[buf.len() - 20..]).to_string(),
                 "f34c9be7e0c3ef2c3ed7c62cc7791dbf6dc5ec9a"
             );
             Ok(())

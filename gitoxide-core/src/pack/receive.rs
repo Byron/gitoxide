@@ -1,9 +1,6 @@
 use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
 use git_features::progress::Progress;
-use git_object::{
-    bstr::{BString, ByteSlice},
-    owned,
-};
+use git_object::bstr::{BString, ByteSlice};
 use git_odb::pack;
 use git_protocol::{
     fetch::{Action, Arguments, Ref, Response},
@@ -156,7 +153,12 @@ impl JsonOutcome {
     }
 }
 
-fn print_hash_and_path(out: &mut impl io::Write, name: &str, id: owned::Id, path: Option<PathBuf>) -> io::Result<()> {
+fn print_hash_and_path(
+    out: &mut impl io::Write,
+    name: &str,
+    id: git_hash::Id,
+    path: Option<PathBuf>,
+) -> io::Result<()> {
     match path {
         Some(path) => writeln!(out, "{}: {} ({})", name, id, path.display()),
         None => writeln!(out, "{}: {}", name, id),

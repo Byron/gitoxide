@@ -1,5 +1,4 @@
 use crate::fetch::command::Feature;
-use git_object::owned;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
 use std::io;
@@ -36,7 +35,7 @@ quick_error! {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Acknowledgement {
     /// The contained `id` is in common.
-    Common(owned::Id),
+    Common(git_hash::Id),
     /// The server is ready to receive more lines.
     Ready,
     /// The server isn't ready yet.
@@ -48,9 +47,9 @@ pub enum Acknowledgement {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ShallowUpdate {
     /// Shallow the given `id`.
-    Shallow(owned::Id),
+    Shallow(git_hash::Id),
     /// Don't shallow the given `id` anymore.
-    Unshallow(owned::Id),
+    Unshallow(git_hash::Id),
 }
 
 impl ShallowUpdate {
@@ -59,7 +58,7 @@ impl ShallowUpdate {
         let mut tokens = line.trim_end().splitn(2, ' ');
         match (tokens.next(), tokens.next()) {
             (Some(prefix), Some(id)) => {
-                let id = owned::Id::from_40_bytes_in_hex(id.as_bytes())
+                let id = git_hash::Id::from_40_bytes_in_hex(id.as_bytes())
                     .map_err(|_| Error::UnknownLineType(line.to_owned()))?;
                 Ok(match prefix {
                     "shallow" => ShallowUpdate::Shallow(id),
@@ -82,7 +81,7 @@ impl Acknowledgement {
                 "NAK" => Acknowledgement::Nak,     // V1
                 "ACK" => {
                     let id = match id {
-                        Some(id) => owned::Id::from_40_bytes_in_hex(id.as_bytes())
+                        Some(id) => git_hash::Id::from_40_bytes_in_hex(id.as_bytes())
                             .map_err(|_| Error::UnknownLineType(line.to_owned()))?,
                         None => return Err(Error::UnknownLineType(line.to_owned())),
                     };
@@ -101,7 +100,7 @@ impl Acknowledgement {
         })
     }
     /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
-    pub fn id(&self) -> Option<&owned::Id> {
+    pub fn id(&self) -> Option<&git_hash::Id> {
         match self {
             Acknowledgement::Common(id) => Some(id),
             _ => None,

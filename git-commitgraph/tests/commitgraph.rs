@@ -1,5 +1,4 @@
 use git_commitgraph::{graph::Position as GraphPosition, Graph};
-use git_object::{borrowed, owned};
 use std::{
     collections::{HashMap, HashSet},
     convert::{TryFrom, TryInto},
@@ -76,15 +75,15 @@ pub fn fixture_path(path: &str) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path)
 }
 
-pub fn hex_to_id(hex: &[u8]) -> owned::Id {
-    owned::Id::from_40_bytes_in_hex(hex).expect("40 bytes hex")
+pub fn hex_to_id(hex: &[u8]) -> git_hash::Id {
+    git_hash::Id::from_40_bytes_in_hex(hex).expect("40 bytes hex")
 }
 
 pub struct RefInfo {
-    id: owned::Id,
-    parent_ids: Vec<owned::Id>,
+    id: git_hash::Id,
+    parent_ids: Vec<git_hash::Id>,
     pos: GraphPosition,
-    root_tree_id: owned::Id,
+    root_tree_id: git_hash::Id,
 }
 
 impl RefInfo {
@@ -125,11 +124,11 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
             let parts = x.trim_end().split(' ').collect::<Vec<_>>();
             (
                 parts[0].to_string(),
-                owned::Id::from_40_bytes_in_hex(parts[1].as_bytes()).expect("40 bytes hex"),
-                owned::Id::from_40_bytes_in_hex(parts[2].as_bytes()).expect("40 bytes hex"),
+                git_hash::Id::from_40_bytes_in_hex(parts[1].as_bytes()).expect("40 bytes hex"),
+                git_hash::Id::from_40_bytes_in_hex(parts[2].as_bytes()).expect("40 bytes hex"),
                 parts[3..]
                     .iter()
-                    .map(|x| owned::Id::from_40_bytes_in_hex(x.as_bytes()).expect("40 bytes hex"))
+                    .map(|x| git_hash::Id::from_40_bytes_in_hex(x.as_bytes()).expect("40 bytes hex"))
                     .collect(),
             )
         })

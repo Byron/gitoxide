@@ -1,5 +1,4 @@
 use bstr::{BString, ByteSlice};
-use git_object::owned;
 use quick_error::quick_error;
 use std::io;
 
@@ -43,16 +42,16 @@ pub enum Ref {
         /// The path at which the ref is located, like `/refs/heads/main`.
         path: BString,
         /// The hash of the tag the ref points to.
-        tag: owned::Id,
+        tag: git_hash::Id,
         /// The hash of the object the `tag` points to.
-        object: owned::Id,
+        object: git_hash::Id,
     },
     /// A ref pointing to a commit object
     Direct {
         /// The path at which the ref is located, like `/refs/heads/main`.
         path: BString,
         /// The hash of the object the ref points to.
-        object: owned::Id,
+        object: git_hash::Id,
     },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
@@ -61,14 +60,14 @@ pub enum Ref {
         /// The path of the ref the symbolic ref points to.
         target: BString,
         /// The hash of the object the `target` ref points to.
-        object: owned::Id,
+        object: git_hash::Id,
     },
 }
 
 impl Ref {
     /// Provide shared fields referring to the ref itself, namely `(path, object id)`.
     /// In case of peeled refs, the tag object itself is returned as it is what the path refers to.
-    pub fn unpack(&self) -> (&BString, &owned::Id) {
+    pub fn unpack(&self) -> (&BString, &git_hash::Id) {
         match self {
             Ref::Direct { path, object, .. }
             | Ref::Peeled { path, tag: object, .. } // the tag acts as reference
@@ -95,16 +94,16 @@ pub(crate) enum InternalRef {
     /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
     Peeled {
         path: BString,
-        tag: owned::Id,
-        object: owned::Id,
+        tag: git_hash::Id,
+        object: git_hash::Id,
     },
     /// A ref pointing to a commit object
-    Direct { path: BString, object: owned::Id },
+    Direct { path: BString, object: git_hash::Id },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
         path: BString,
         target: BString,
-        object: owned::Id,
+        object: git_hash::Id,
     },
     /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
     /// These don't contain the Id
@@ -112,7 +111,7 @@ pub(crate) enum InternalRef {
 }
 
 impl InternalRef {
-    fn unpack_direct(self) -> Option<(BString, owned::Id)> {
+    fn unpack_direct(self) -> Option<(BString, git_hash::Id)> {
         match self {
             InternalRef::Direct { path, object } => Some((path, object)),
             _ => None,
@@ -163,7 +162,7 @@ pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRea
         let mut tokens = trimmed.splitn(3, ' ');
         match (tokens.next(), tokens.next()) {
             (Some(hex_hash), Some(path)) => {
-                let id = owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
+                let id = git_hash::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
                 if path.is_empty() {
                     return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
                 }
@@ -177,7 +176,7 @@ pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRea
                             match attribute {
                                 "peeled" => Ref::Peeled {
                                     path: path.into(),
-                                    object: owned::Id::from_40_bytes_in_hex(value.as_bytes())?,
+                                    object: git_hash::Id::from_40_bytes_in_hex(value.as_bytes())?,
                                     tag: id,
                                 },
                                 "symref-target" => Ref::Symbolic {
@@ -242,11 +241,11 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
                 out_refs.push(InternalRef::Peeled {
                     path: previous_path,
                     tag,
-                    object: owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?,
+                    object: git_hash::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?,
                 });
             }
             None => {
-                let object = owned::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
+                let object = git_hash::Id::from_40_bytes_in_hex(hex_hash.as_bytes())?;
                 match out_refs
                     .iter()
                     .take(number_of_possible_symbolic_refs_for_lookup)

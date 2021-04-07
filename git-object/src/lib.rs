@@ -16,5 +16,3 @@ pub use types::{tree, Error, Kind, Sign, Time};
 
 ///
 pub mod commit;
-
-pub use git_hash::Kind as HashKind;

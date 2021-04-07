@@ -2,7 +2,6 @@ use crate::{
     file::{self, File},
     Graph, MAX_COMMITS,
 };
-use git_object::HashKind;
 use std::{
     convert::TryFrom,
     io::{BufRead, BufReader},
@@ -22,9 +21,9 @@ pub enum Error {
     #[error("Commit-graph files mismatch: '{}' uses hash {hash1:?}, but '{}' uses hash {hash2:?}", .path1.display(), .path2.display())]
     HashVersionMismatch {
         path1: PathBuf,
-        hash1: HashKind,
+        hash1: git_hash::Kind,
         path2: PathBuf,
-        hash2: HashKind,
+        hash2: git_hash::Kind,
     },
     #[error("Did not find any files that look like commit graphs at '{}'", .0.display())]
     InvalidPath(PathBuf),

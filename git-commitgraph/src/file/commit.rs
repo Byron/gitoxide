@@ -5,7 +5,6 @@ use crate::{
 };
 use byteorder::{BigEndian, ByteOrder};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::owned;
 use std::{
     convert::{TryFrom, TryInto},
     fmt::{Debug, Formatter},
@@ -17,13 +16,13 @@ use std::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("commit {0}'s extra edges overflows the commit-graph file's extra edges list")]
-    ExtraEdgesListOverflow(owned::Id),
+    ExtraEdgesListOverflow(git_hash::Id),
     #[error("commit {0}'s first parent is an extra edge index, which is invalid")]
-    FirstParentIsExtraEdgeIndex(owned::Id),
+    FirstParentIsExtraEdgeIndex(git_hash::Id),
     #[error("commit {0} has extra edges, but commit-graph file has no extra edges list")]
-    MissingExtraEdgesList(owned::Id),
+    MissingExtraEdgesList(git_hash::Id),
     #[error("commit {0} has a second parent but not a first parent")]
-    SecondParentWithoutFirstParent(owned::Id),
+    SecondParentWithoutFirstParent(git_hash::Id),
 }
 
 // Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for

@@ -1,10 +1,9 @@
 use super::super::{refs, InternalRef, Ref};
-use git_object::owned;
 use git_transport::client;
 use std::io;
 
-fn oid(hex_sha: &str) -> owned::Id {
-    owned::Id::from_40_bytes_in_hex(hex_sha.as_bytes()).expect("valid input")
+fn oid(hex_sha: &str) -> git_hash::Id {
+    git_hash::Id::from_40_bytes_in_hex(hex_sha.as_bytes()).expect("valid input")
 }
 
 #[test]

@@ -1,7 +1,6 @@
 use crate::pack::index::{self, FAN_LEN};
 use byteorder::{BigEndian, ByteOrder};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::{borrowed, owned};
 use std::{
     convert::{TryFrom, TryInto},
     mem::size_of,
@@ -15,12 +14,12 @@ const N32_HIGH_BIT: u32 = 1 << 31;
 
 pub(crate) type PackOffset = u64;
 
-/// Represents an entry within a pack index file, effectively mapping object [`IDs`][owned::Id] to pack data file locations.
+/// Represents an entry within a pack index file, effectively mapping object [`IDs`][git_hash::Id] to pack data file locations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The ID of the object
-    pub oid: owned::Id,
+    pub oid: git_hash::Id,
     /// The offset to the object's header in the pack data file
     pub pack_offset: PackOffset,
     /// The CRC32 hash over all bytes of the pack data entry.
@@ -40,7 +39,7 @@ impl index::File {
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
-                        oid: owned::Id::from_20_bytes(oid),
+                        oid: git_hash::Id::from_20_bytes(oid),
                         pack_offset: BigEndian::read_u32(ofs) as u64,
                         crc32: None,
                     }
@@ -59,7 +58,7 @@ impl index::File {
             )
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
-                oid: owned::Id::from_20_bytes(oid),
+                oid: git_hash::Id::from_20_bytes(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),

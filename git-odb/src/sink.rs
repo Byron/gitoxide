@@ -1,5 +1,4 @@
 use crate::{loose, zlib::stream::DeflateWriter};
-use git_object::{owned::Id, HashKind};
 use std::{
     cell::RefCell,
     convert::TryInto,
@@ -39,8 +38,8 @@ impl crate::Write for Sink {
         kind: git_object::Kind,
         size: u64,
         mut from: impl io::Read,
-        hash: HashKind,
-    ) -> Result<Id, Self::Error> {
+        hash: git_hash::Kind,
+    ) -> Result<git_hash::Id, Self::Error> {
         use git_features::hash::Sha1;
         let mut buf = [0u8; 8096];
 
@@ -51,7 +50,7 @@ impl crate::Write for Sink {
             Ok(())
         };
         match hash {
-            HashKind::Sha1 => {
+            git_hash::Kind::Sha1 => {
                 let mut hasher = Sha1::default();
                 let header_len = loose::object::header::encode(kind, size, &mut buf[..])?;
                 hasher.update(&buf[..header_len]);

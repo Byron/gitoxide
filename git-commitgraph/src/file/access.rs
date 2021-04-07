@@ -1,6 +1,5 @@
 use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::HashKind;
 use std::{
     convert::{TryFrom, TryInto},
     fmt::{Debug, Formatter},
@@ -28,8 +27,8 @@ impl File {
     /// The kind of hash used in this File.
     ///
     /// Note that it is always conforming to the hash used in the owning repository.
-    pub fn hash_kind(&self) -> HashKind {
-        HashKind::Sha1
+    pub fn hash_kind(&self) -> git_hash::Kind {
+        git_hash::Kind::Sha1
     }
 
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.

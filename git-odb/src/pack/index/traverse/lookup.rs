@@ -5,7 +5,6 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
-use git_object::owned;
 
 /// Verify and validate the content of the index file
 impl index::File {
@@ -21,7 +20,7 @@ impl index::File {
         new_cache: impl Fn() -> C + Send + Sync,
         mut root: P,
         pack: &pack::data::File,
-    ) -> Result<(owned::Id, index::traverse::Outcome, P), Error<E>>
+    ) -> Result<(git_hash::Id, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
         C: pack::cache::DecodeEntry,

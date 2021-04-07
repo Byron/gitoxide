@@ -1,6 +1,5 @@
 use crate::loose::Db;
 use git_features::fs;
-use git_object::owned;
 
 /// Returned by [`Db::iter()`]
 #[derive(thiserror::Error, Debug)]
@@ -14,9 +13,9 @@ pub enum Error {
 impl Db {
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][owned::Id]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
+    /// The [`Id`][git_hash::Id]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
-    pub fn iter(&self) -> impl Iterator<Item = Result<owned::Id, Error>> {
+    pub fn iter(&self) -> impl Iterator<Item = Result<git_hash::Id, Error>> {
         use std::path::Component::Normal;
         fs::walkdir_new(&self.path)
             .min_depth(2)
@@ -37,14 +36,14 @@ impl Db {
                                     first_byte.copy_from_slice(c1.as_bytes());
                                     rest.copy_from_slice(c2.as_bytes());
                                 }
-                                if let Ok(b) = owned::Id::from_40_bytes_in_hex(&buf[..]) {
+                                if let Ok(b) = git_hash::Id::from_40_bytes_in_hex(&buf[..]) {
                                     is_valid_path = true;
                                     return b;
                                 }
                             }
                         }
                     }
-                    owned::Id::null_sha1()
+                    git_hash::Id::null_sha1()
                 });
                 if is_valid_path {
                     Some(e)

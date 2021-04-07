@@ -73,21 +73,18 @@ mod locate {
 }
 
 mod write_to_directory {
-    use crate::pack::SMALL_PACK_INDEX;
-    use crate::{fixture_path, pack::SMALL_PACK};
+    use crate::{fixture_path, pack::SMALL_PACK, pack::SMALL_PACK_INDEX};
     use git_features::progress;
-    use git_object::owned;
     use git_odb::pack::{self, bundle};
-    use std::fs;
-    use std::path::Path;
+    use std::{fs, path::Path};
     use tempfile::TempDir;
 
     fn expected_outcome() -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
         Ok(pack::bundle::write::Outcome {
             index: pack::index::write::Outcome {
                 index_kind: pack::index::Version::V2,
-                index_hash: owned::Id::from_40_bytes_in_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
-                data_hash: owned::Id::from_40_bytes_in_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
+                index_hash: git_hash::Id::from_40_bytes_in_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
+                data_hash: git_hash::Id::from_40_bytes_in_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
                 num_objects: 42,
             },
             pack_kind: pack::data::Version::V2,

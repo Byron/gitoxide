@@ -1,5 +1,4 @@
 use crate::{fixture_path, hex_to_id};
-use git_object::owned;
 use git_odb::loose::{self, Db};
 use pretty_assertions::assert_eq;
 
@@ -7,7 +6,7 @@ fn ldb() -> Db {
     Db::at(fixture_path("objects"))
 }
 
-pub fn object_ids() -> Vec<owned::Id> {
+pub fn object_ids() -> Vec<git_hash::Id> {
     vec![
         hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), // blob
         hex_to_id("595dfd62fc1ad283d61bb47a24e7a1f66398f84d"), // blob
@@ -25,7 +24,7 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids())
 }
-pub fn locate_oid(id: owned::Id) -> loose::Object {
+pub fn locate_oid(id: git_hash::Id) -> loose::Object {
     ldb()
         .locate(id.to_borrowed())
         .expect("read success")
@@ -34,7 +33,6 @@ pub fn locate_oid(id: owned::Id) -> loose::Object {
 
 mod write {
     use crate::loose::db::{locate_oid, object_ids};
-    use git_object::HashKind;
     use git_odb::{loose, Write};
     use std::io::Read;
 
@@ -45,7 +43,7 @@ mod write {
 
         for oid in object_ids() {
             let mut obj = locate_oid(oid.clone());
-            let actual = db.write(&obj.decode()?.into(), HashKind::Sha1)?;
+            let actual = db.write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(
                 db.locate(oid.to_borrowed())?.expect("id present").decode()?,
@@ -53,7 +51,7 @@ mod write {
             );
             let mut buf = Vec::new();
             obj.stream()?.read_to_end(&mut buf)?;
-            let actual = db.write_buf(obj.kind, &buf, HashKind::Sha1)?;
+            let actual = db.write_buf(obj.kind, &buf, git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(
                 db.locate(oid.to_borrowed())?.expect("id present").decode()?,

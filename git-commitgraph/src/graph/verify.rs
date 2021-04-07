@@ -3,7 +3,6 @@ use crate::{
     file::{self, commit},
     graph, Graph, GENERATION_NUMBER_MAX,
 };
-use git_object::owned;
 use std::{
     cmp::{max, min},
     collections::BTreeMap,
@@ -19,8 +18,8 @@ pub enum Error<E: std::error::Error + 'static> {
     BaseGraphCount { actual: u8, expected: u8, path: PathBuf },
     #[error("'{}' base graph at index {index} should have ID {expected} but is {actual}", .path.display())]
     BaseGraphId {
-        actual: owned::Id,
-        expected: owned::Id,
+        actual: git_hash::Id,
+        expected: git_hash::Id,
         index: u8,
         path: PathBuf,
     },
@@ -36,12 +35,16 @@ pub enum Error<E: std::error::Error + 'static> {
         path: PathBuf,
     },
     #[error("Commit {id}'s generation should be {expected} but is {actual}")]
-    Generation { actual: u32, expected: u32, id: owned::Id },
+    Generation {
+        actual: u32,
+        expected: u32,
+        id: git_hash::Id,
+    },
     #[error(
         "Commit {id} has parent position {parent_pos} that is out of range (should be in range 0-{max_valid_pos})"
     )]
     ParentOutOfRange {
-        id: owned::Id,
+        id: git_hash::Id,
         max_valid_pos: graph::Position,
         parent_pos: graph::Position,
     },

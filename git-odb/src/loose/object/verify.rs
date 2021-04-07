@@ -1,5 +1,4 @@
 use crate::{hash::Write as HashWrite, loose};
-use git_object::owned;
 use std::io;
 
 /// Returned by [`loose::Object::verify_checksum()`]
@@ -11,7 +10,10 @@ pub enum Error {
     #[error("Decoding of object failed")]
     Decode(#[from] super::decode::Error),
     #[error("Object expected to have id {desired}, but actual id was {actual}")]
-    ChecksumMismatch { desired: owned::Id, actual: owned::Id },
+    ChecksumMismatch {
+        desired: git_hash::Id,
+        actual: git_hash::Id,
+    },
 }
 
 impl loose::Object {
@@ -26,7 +28,7 @@ impl loose::Object {
         loose::object::header::encode(kind, size as u64, &mut sink).expect("hash to always work");
         io::copy(&mut reader, &mut sink)?;
 
-        let actual = owned::Id::from(sink.hash.digest());
+        let actual = git_hash::Id::from(sink.hash.digest());
         if desired != actual.to_borrowed() {
             return Err(Error::ChecksumMismatch {
                 desired: desired.into(),

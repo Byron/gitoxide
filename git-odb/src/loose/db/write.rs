@@ -1,6 +1,5 @@
 use super::Db;
 use crate::{hash, loose, zlib::stream::DeflateWriter};
-use git_object::{owned, HashKind};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
@@ -29,9 +28,14 @@ impl crate::Write for Db {
     /// Write the given buffer in `from` to disk in one syscall at best.
     ///
     /// This will cost at least 4 IO operations.
-    fn write_buf(&self, kind: git_object::Kind, from: &[u8], hash: HashKind) -> Result<owned::Id, Self::Error> {
+    fn write_buf(
+        &self,
+        kind: git_object::Kind,
+        from: &[u8],
+        hash: git_hash::Kind,
+    ) -> Result<git_hash::Id, Self::Error> {
         match hash {
-            HashKind::Sha1 => {
+            git_hash::Kind::Sha1 => {
                 let mut to = self.write_header(kind, from.len() as u64, hash)?;
                 to.write_all(from).map_err(|err| Error::Io {
                     source: err,
@@ -52,10 +56,10 @@ impl crate::Write for Db {
         kind: git_object::Kind,
         size: u64,
         mut from: impl io::Read,
-        hash: HashKind,
-    ) -> Result<owned::Id, Self::Error> {
+        hash: git_hash::Kind,
+    ) -> Result<git_hash::Id, Self::Error> {
         match hash {
-            HashKind::Sha1 => {
+            git_hash::Kind::Sha1 => {
                 let mut to = self.write_header(kind, size, hash)?;
                 io::copy(&mut from, &mut to).map_err(|err| Error::Io {
                     source: err,
@@ -76,7 +80,7 @@ impl Db {
         &self,
         kind: git_object::Kind,
         size: u64,
-        hash: HashKind,
+        hash: git_hash::Kind,
     ) -> Result<hash::Write<HashAndTempFile>, Error> {
         let mut to = hash::Write::new(
             DeflateWriter::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
@@ -98,8 +102,8 @@ impl Db {
     fn finalize_object(
         &self,
         hash::Write { hash, inner: file }: hash::Write<HashAndTempFile>,
-    ) -> Result<owned::Id, Error> {
-        let id = owned::Id::from(hash.digest());
+    ) -> Result<git_hash::Id, Error> {
+        let id = git_hash::Id::from(hash.digest());
         let object_path = loose::db::sha1_path(id.to_borrowed(), self.path.clone());
         let object_dir = object_path
             .parent()

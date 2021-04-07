@@ -4,7 +4,7 @@ use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use git_object::{
     borrowed,
     bstr::{BString, ByteSlice},
-    owned, HashKind,
+    owned,
 };
 
 /// Returned by [`index::File::verify_checksum()`]
@@ -12,17 +12,20 @@ use git_object::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("index checksum mismatch: expected {expected}, got {actual}")]
-    Mismatch { expected: owned::Id, actual: owned::Id },
+    Mismatch {
+        expected: git_hash::Id,
+        actual: git_hash::Id,
+    },
     #[error("{kind} object {id} could not be decoded")]
     ObjectDecode {
         source: borrowed::Error,
         kind: git_object::Kind,
-        id: owned::Id,
+        id: git_hash::Id,
     },
     #[error("{kind} object {id} wasn't re-encoded without change, wanted\n{expected}\n\nGOT\n\n{actual}")]
     ObjectEncodeMismatch {
         kind: git_object::Kind,
-        id: owned::Id,
+        id: git_hash::Id,
         expected: BString,
         actual: BString,
     },
@@ -48,26 +51,26 @@ impl index::File {
     /// Returns the trailing hash stored at the end of this index file.
     ///
     /// It's a hash over all bytes of the index.
-    pub fn index_checksum(&self) -> owned::Id {
-        owned::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+    pub fn index_checksum(&self) -> git_hash::Id {
+        git_hash::Id::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
     }
 
     /// Returns the hash of the pack data file that this index file corresponds to.
     ///
     /// It should [`pack::data::File::checksum()`] of the corresponding pack data file.
-    pub fn pack_checksum(&self) -> owned::Id {
+    pub fn pack_checksum(&self) -> git_hash::Id {
         let from = self.data.len() - SHA1_SIZE * 2;
-        owned::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
+        git_hash::Id::from_20_bytes(&self.data[from..from + SHA1_SIZE])
     }
 
     /// Validate that our [`index_checksum()`][index::File::index_checksum()] matches the actual contents
     /// of this index file, and return it if it does.
-    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<owned::Id, Error> {
+    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<git_hash::Id, Error> {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let actual = match git_features::hash::bytes_of_file(
             &self.path,
             data_len_without_trailer,
-            HashKind::Sha1,
+            git_hash::Kind::Sha1,
             &mut progress,
         ) {
             Ok(id) => id,
@@ -77,7 +80,7 @@ impl index::File {
                 hasher.update(&self.data[..data_len_without_trailer]);
                 progress.inc_by(data_len_without_trailer);
                 progress.show_throughput(start);
-                owned::Id::new_sha1(hasher.digest())
+                git_hash::Id::new_sha1(hasher.digest())
             }
         };
 
@@ -117,7 +120,7 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
     ) -> Result<
-        (owned::Id, Option<index::traverse::Outcome>, Option<P>),
+        (git_hash::Id, Option<index::traverse::Outcome>, Option<P>),
         index::traverse::Error<pack::index::verify::Error>,
     >
     where

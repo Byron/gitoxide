@@ -29,7 +29,6 @@ impl<'a> Object<'a> {
 /// Types supporting object hash verification
 pub mod verify {
     use crate::{hash, loose};
-    use git_object::{borrowed, owned};
     use std::io;
 
     /// Returned by [`crate::borrowed::Object::verify_checksum()`]
@@ -37,7 +36,10 @@ pub mod verify {
     #[allow(missing_docs)]
     pub enum Error {
         #[error("Object expected to have id {desired}, but actual id was {actual}")]
-        ChecksumMismatch { desired: owned::Id, actual: owned::Id },
+        ChecksumMismatch {
+            desired: git_hash::Id,
+            actual: git_hash::Id,
+        },
     }
 
     impl crate::borrowed::Object<'_> {
@@ -50,7 +52,7 @@ pub mod verify {
             loose::object::header::encode(self.kind, self.data.len() as u64, &mut sink).expect("hash to always work");
             sink.hash.update(&self.data);
 
-            let actual_id = owned::Id::from(sink.hash.digest());
+            let actual_id = git_hash::Id::from(sink.hash.digest());
             if desired != actual_id.to_borrowed() {
                 return Err(Error::ChecksumMismatch {
                     desired: desired.into(),

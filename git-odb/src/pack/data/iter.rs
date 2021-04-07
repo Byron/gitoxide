@@ -1,7 +1,6 @@
 use crate::{hash, pack, zlib::stream::inflate::InflateReaderBoxed};
 use flate2::Decompress;
 use git_features::hash::Sha1;
-use git_object::owned;
 use std::{fs, io};
 
 /// Returned by [`Iter::new_from_header()`] and as part of `Item` of [`Iter`]
@@ -13,7 +12,10 @@ pub enum Error {
     #[error(transparent)]
     PackParse(#[from] pack::data::parse::Error),
     #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
-    ChecksumMismatch { expected: owned::Id, actual: owned::Id },
+    ChecksumMismatch {
+        expected: git_hash::Id,
+        actual: git_hash::Id,
+    },
     #[error("pack is incomplete: it was decompressed into {actual} bytes but {expected} bytes where expected.")]
     IncompletePack { actual: u64, expected: u64 },
 }
@@ -43,7 +45,7 @@ pub struct Entry {
     pub decompressed_size: u64,
     /// Set for the last object in the iteration, providing the hash over all bytes of the iteration
     /// for use as trailer in a pack or to verify it matches the trailer.
-    pub trailer: Option<owned::Id>,
+    pub trailer: Option<git_hash::Id>,
 }
 
 /// An iterator over [`Entries`][Entry] in a byte stream.
@@ -243,7 +245,7 @@ where
 
         // Last objects gets trailer (which is potentially verified)
         let trailer = if self.objects_left == 0 {
-            let mut id = owned::Id::from([0; 20]);
+            let mut id = git_hash::Id::from([0; 20]);
             if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
                 if self.mode != Mode::Restore {
                     return Err(err.into());
@@ -251,7 +253,7 @@ where
             }
 
             if let Some(hash) = self.hash.take() {
-                let actual_id = owned::Id::from(hash.digest());
+                let actual_id = git_hash::Id::from(hash.digest());
                 if self.mode == Mode::Restore {
                     id = actual_id;
                 }
@@ -265,7 +267,7 @@ where
             Some(id)
         } else if self.mode == Mode::Restore {
             let hash = self.hash.clone().expect("in restore mode a hash is set");
-            Some(owned::Id::from(hash.digest()))
+            Some(git_hash::Id::from(hash.digest()))
         } else {
             None
         };

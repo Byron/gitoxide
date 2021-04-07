@@ -39,7 +39,6 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
-    use git_object::borrowed;
     use git_odb::pack::{cache, data::decode::ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {

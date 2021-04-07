@@ -1,5 +1,4 @@
 use git_features::hash;
-use git_object::HashKind;
 use std::io;
 
 pub(crate) struct Write<T> {
@@ -27,7 +26,7 @@ where
 {
     pub fn new(inner: T, kind: git_hash::Kind) -> Self {
         match kind {
-            HashKind::Sha1 => Write {
+            git_hash::Kind::Sha1 => Write {
                 inner,
                 hash: hash::Sha1::default(),
             },

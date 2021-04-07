@@ -10,7 +10,6 @@ use git_odb::pack::{self, data::decode::Outcome, index};
 mod method {
     mod v1 {
         use crate::{fixture_path, pack::INDEX_V1};
-        use git_object::owned;
         use git_odb::pack::index;
 
         #[test]
@@ -22,7 +21,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
+                    idx.lookup(git_hash::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
@@ -40,7 +39,6 @@ mod method {
 
     mod v2 {
         use crate::{fixture_path, pack::INDEX_V2};
-        use git_object::owned;
         use git_odb::pack::index;
 
         #[test]
@@ -52,7 +50,7 @@ mod method {
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack"),
             ] {
                 assert_eq!(
-                    idx.lookup(owned::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
+                    idx.lookup(git_hash::Id::from_40_bytes_in_hex(*id)?.to_borrowed()),
                     *desired_index,
                     "{}",
                     assertion
@@ -175,7 +173,7 @@ mod method {
             assert_eq!(outcome.index_kind, desired_kind);
             assert_eq!(
                 outcome.index_hash,
-                git_object::owned::Id::from_20_bytes(&expected[end_of_pack_hash..end_of_index_hash])
+                git_hash::Id::from_20_bytes(&expected[end_of_pack_hash..end_of_index_hash])
             );
             Ok(())
         }

@@ -1,5 +1,4 @@
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::owned;
 use std::io;
 
 const _TYPE_EXT1: u8 = 0;
@@ -60,7 +59,7 @@ impl Entry {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    base_id: owned::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
+                    base_id: git_hash::Id::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
                 };
                 consumed += SHA1_SIZE;
                 delta
@@ -96,7 +95,7 @@ impl Entry {
                 let mut buf = [0u8; SHA1_SIZE];
                 r.read_exact(&mut buf)?;
                 let delta = RefDelta {
-                    base_id: owned::Id::new_sha1(buf),
+                    base_id: git_hash::Id::new_sha1(buf),
                 };
                 consumed += SHA1_SIZE;
                 delta
@@ -135,7 +134,7 @@ pub enum Header {
     /// # Note
     /// This could also be an object within this pack if the LSB encoded offset would be larger than 20 bytes, which is unlikely to
     /// happen.
-    RefDelta { base_id: owned::Id },
+    RefDelta { base_id: git_hash::Id },
     /// Describes a delta-object which needs to be applied to a base. The base object is measured as a distance from this object's
     /// pack offset, so that `base_pack_offset = pack_offset - base_distance`
     OfsDelta { base_distance: u64 },

@@ -92,9 +92,9 @@ impl Default for Version {
 
 impl Version {
     /// The kind of hash to produce to be compatible to this kind of index
-    pub fn hash(&self) -> git_object::HashKind {
+    pub fn hash(&self) -> git_hash::Kind {
         match self {
-            Version::V1 | Version::V2 => git_object::HashKind::Sha1,
+            Version::V1 | Version::V2 => git_hash::Kind::Sha1,
         }
     }
 }

@@ -10,8 +10,6 @@ pub(crate) const SPACE: &[u8; 1] = b" ";
 mod convert;
 mod ser;
 
-pub use git_hash::Id;
-
 mod tag;
 pub use tag::Tag;
 

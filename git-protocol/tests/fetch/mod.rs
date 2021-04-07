@@ -1,7 +1,6 @@
 use crate::fixture_bytes;
 use bstr::ByteSlice;
 use git_features::progress::Progress;
-use git_object::owned;
 use git_protocol::fetch::{self, Action, Arguments, Ref, Response};
 use git_transport::client::Capabilities;
 use std::io;
@@ -65,8 +64,8 @@ impl fetch::Delegate for LsRemoteDelegate {
     }
 }
 
-fn oid(hex_sha: &str) -> owned::Id {
-    owned::Id::from_40_bytes_in_hex(hex_sha.as_bytes()).expect("valid input")
+fn oid(hex_sha: &str) -> git_hash::Id {
+    git_hash::Id::from_40_bytes_in_hex(hex_sha.as_bytes()).expect("valid input")
 }
 
 fn transport<'a>(

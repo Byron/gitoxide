@@ -1,5 +1,4 @@
 use crate::{pack, pack::index};
-use git_object::owned;
 
 /// Returned by [`index::File::traverse_with_index()`] and [`index::File::traverse_with_lookup`]
 #[derive(thiserror::Error, Debug)]
@@ -17,16 +16,19 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     PackChecksum(#[from] pack::data::verify::Error),
     #[error("Object {id} at offset {offset} could not be decoded")]
     PackDecode {
-        id: owned::Id,
+        id: git_hash::Id,
         offset: u64,
         source: pack::data::decode::Error,
     },
     #[error("The packfiles checksum didn't match the index file checksum: expected {expected}, got {actual}")]
-    PackMismatch { expected: owned::Id, actual: owned::Id },
+    PackMismatch {
+        expected: git_hash::Id,
+        actual: git_hash::Id,
+    },
     #[error("The SHA1 of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}")]
     PackObjectMismatch {
-        expected: owned::Id,
-        actual: owned::Id,
+        expected: git_hash::Id,
+        actual: git_hash::Id,
         offset: u64,
         kind: git_object::Kind,
     },
