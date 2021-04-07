@@ -26,8 +26,8 @@ pub mod decode {
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
-            HexDecode(err: String) {
-                display("Failed to hex hash: {}", err)
+            InvalidHexEncodingLength(length: usize) {
+                display("A hash sized {} hexadecimal characters is invalid", length)
             }
         }
     }
@@ -37,11 +37,14 @@ pub mod decode {
         /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
         ///
         /// Such a buffer can be obtained using [`write_hex_to(buffer)`][Id::write_hex_to()]
-        pub fn from_40_bytes_in_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
+        pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
             use hex::FromHex;
-            Ok(ObjectId(
-                <[u8; 20]>::from_hex(buffer).map_err(|err| Error::HexDecode(err.to_string()))?,
-            ))
+            match buffer.len() {
+                40 => Ok(ObjectId(
+                    <[u8; 20]>::from_hex(buffer).expect("our length check is correct thus we can decode hex"),
+                )),
+                len => Err(Error::InvalidHexEncodingLength(len)),
+            }
         }
     }
 
@@ -50,9 +53,12 @@ pub mod decode {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             use hex::FromHex;
-            Ok(ObjectId(
-                <[u8; 20]>::from_hex(s).map_err(|err| Error::HexDecode(err.to_string()))?,
-            ))
+            match s.len() {
+                40 => Ok(ObjectId(
+                    <[u8; 20]>::from_hex(s).expect("our length check is correct thus we can decode hex"),
+                )),
+                len => Err(Error::InvalidHexEncodingLength(len)),
+            }
         }
     }
 }

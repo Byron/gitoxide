@@ -22,7 +22,7 @@ impl From<borrowed::Tag<'_>> for owned::Tag {
             pgp_signature,
         } = other;
         owned::Tag {
-            target: git_hash::ObjectId::from_40_bytes_in_hex(&target).expect("40 bytes hex sha1"),
+            target: git_hash::ObjectId::from_hex(&target).expect("40 bytes hex sha1"),
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
@@ -44,10 +44,10 @@ impl From<borrowed::Commit<'_>> for owned::Commit {
             extra_headers,
         } = other;
         owned::Commit {
-            tree: git_hash::ObjectId::from_40_bytes_in_hex(&tree).expect("40 bytes hex sha1"),
+            tree: git_hash::ObjectId::from_hex(&tree).expect("40 bytes hex sha1"),
             parents: parents
                 .iter()
-                .map(|parent| git_hash::ObjectId::from_40_bytes_in_hex(parent).expect("40 bytes hex sha1"))
+                .map(|parent| git_hash::ObjectId::from_hex(parent).expect("40 bytes hex sha1"))
                 .collect(),
             author: author.into(),
             committer: committer.into(),

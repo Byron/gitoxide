@@ -36,7 +36,7 @@ impl Db {
                                     first_byte.copy_from_slice(c1.as_bytes());
                                     rest.copy_from_slice(c2.as_bytes());
                                 }
-                                if let Ok(b) = git_hash::ObjectId::from_40_bytes_in_hex(&buf[..]) {
+                                if let Ok(b) = git_hash::ObjectId::from_hex(&buf[..]) {
                                     is_valid_path = true;
                                     return b;
                                 }

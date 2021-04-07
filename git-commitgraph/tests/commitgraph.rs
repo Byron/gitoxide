@@ -76,7 +76,7 @@ pub fn fixture_path(path: &str) -> PathBuf {
 }
 
 pub fn hex_to_id(hex: &[u8]) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_40_bytes_in_hex(hex).expect("40 bytes hex")
+    git_hash::ObjectId::from_hex(hex).expect("40 bytes hex")
 }
 
 pub struct RefInfo {
@@ -124,11 +124,11 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
             let parts = x.trim_end().split(' ').collect::<Vec<_>>();
             (
                 parts[0].to_string(),
-                git_hash::ObjectId::from_40_bytes_in_hex(parts[1].as_bytes()).expect("40 bytes hex"),
-                git_hash::ObjectId::from_40_bytes_in_hex(parts[2].as_bytes()).expect("40 bytes hex"),
+                git_hash::ObjectId::from_hex(parts[1].as_bytes()).expect("40 bytes hex"),
+                git_hash::ObjectId::from_hex(parts[2].as_bytes()).expect("40 bytes hex"),
                 parts[3..]
                     .iter()
-                    .map(|x| git_hash::ObjectId::from_40_bytes_in_hex(x.as_bytes()).expect("40 bytes hex"))
+                    .map(|x| git_hash::ObjectId::from_hex(x.as_bytes()).expect("40 bytes hex"))
                     .collect(),
             )
         })

@@ -7,7 +7,7 @@ fn mock_reader(path: &str) -> git_packetline::Provider<std::io::Cursor<Vec<u8>>>
 }
 
 fn id(hex: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_40_bytes_in_hex(hex.as_bytes()).expect("expect valid hex id")
+    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("expect valid hex id")
 }
 
 mod v1 {

@@ -175,10 +175,8 @@ fn verify_split_chain_filename_hash(
         .and_then(|filename| filename.to_str())
         .and_then(|filename| filename.strip_suffix(".graph"))
         .and_then(|stem| stem.strip_prefix("graph-"))
-        .map_or(Ok(()), |hex| {
-            match git_hash::ObjectId::from_40_bytes_in_hex(hex.as_bytes()) {
-                Ok(actual) if actual.to_borrowed() == expected => Ok(()),
-                _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
-            }
+        .map_or(Ok(()), |hex| match git_hash::ObjectId::from_hex(hex.as_bytes()) {
+            Ok(actual) if actual.to_borrowed() == expected => Ok(()),
+            _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
         })
 }

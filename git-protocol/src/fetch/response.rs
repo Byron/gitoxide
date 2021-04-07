@@ -58,8 +58,8 @@ impl ShallowUpdate {
         let mut tokens = line.trim_end().splitn(2, ' ');
         match (tokens.next(), tokens.next()) {
             (Some(prefix), Some(id)) => {
-                let id = git_hash::ObjectId::from_40_bytes_in_hex(id.as_bytes())
-                    .map_err(|_| Error::UnknownLineType(line.to_owned()))?;
+                let id =
+                    git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
                 Ok(match prefix {
                     "shallow" => ShallowUpdate::Shallow(id),
                     "unshallow" => ShallowUpdate::Unshallow(id),
@@ -81,7 +81,7 @@ impl Acknowledgement {
                 "NAK" => Acknowledgement::Nak,     // V1
                 "ACK" => {
                     let id = match id {
-                        Some(id) => git_hash::ObjectId::from_40_bytes_in_hex(id.as_bytes())
+                        Some(id) => git_hash::ObjectId::from_hex(id.as_bytes())
                             .map_err(|_| Error::UnknownLineType(line.to_owned()))?,
                         None => return Err(Error::UnknownLineType(line.to_owned())),
                     };

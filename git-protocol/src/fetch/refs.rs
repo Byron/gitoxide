@@ -162,7 +162,7 @@ pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRea
         let mut tokens = trimmed.splitn(3, ' ');
         match (tokens.next(), tokens.next()) {
             (Some(hex_hash), Some(path)) => {
-                let id = git_hash::ObjectId::from_40_bytes_in_hex(hex_hash.as_bytes())?;
+                let id = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
                 if path.is_empty() {
                     return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
                 }
@@ -176,7 +176,7 @@ pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRea
                             match attribute {
                                 "peeled" => Ref::Peeled {
                                     path: path.into(),
-                                    object: git_hash::ObjectId::from_40_bytes_in_hex(value.as_bytes())?,
+                                    object: git_hash::ObjectId::from_hex(value.as_bytes())?,
                                     tag: id,
                                 },
                                 "symref-target" => Ref::Symbolic {
@@ -241,11 +241,11 @@ pub(crate) fn from_v1_refs_received_as_part_of_handshake(
                 out_refs.push(InternalRef::Peeled {
                     path: previous_path,
                     tag,
-                    object: git_hash::ObjectId::from_40_bytes_in_hex(hex_hash.as_bytes())?,
+                    object: git_hash::ObjectId::from_hex(hex_hash.as_bytes())?,
                 });
             }
             None => {
-                let object = git_hash::ObjectId::from_40_bytes_in_hex(hex_hash.as_bytes())?;
+                let object = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
                 match out_refs
                     .iter()
                     .take(number_of_possible_symbolic_refs_for_lookup)

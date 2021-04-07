@@ -49,7 +49,7 @@ impl<'a> Commit<'a> {
     }
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> git_hash::ObjectId {
-        git_hash::ObjectId::from_40_bytes_in_hex(self.tree).expect("prior validation")
+        git_hash::ObjectId::from_hex(self.tree).expect("prior validation")
     }
 
     /// Returns a convenient iterator over all extra headers.

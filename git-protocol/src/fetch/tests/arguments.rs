@@ -68,7 +68,7 @@ fn transport(
 }
 
 fn id(hex: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_40_bytes_in_hex(hex.as_bytes()).expect("expect valid hex id")
+    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("expect valid hex id")
 }
 
 mod v1 {

@@ -24,7 +24,7 @@ use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        UnknownDigestLength(length: usize) {
+        InvalidDigestLength(length: usize) {
             display("Cannot instantiate git hash from a digest of length {}", length)
         }
     }
@@ -39,7 +39,7 @@ impl oid {
                     &*(value as *const [u8] as *const oid)
                 },
             ),
-            len => Err(Error::UnknownDigestLength(len)),
+            len => Err(Error::InvalidDigestLength(len)),
         }
     }
 }

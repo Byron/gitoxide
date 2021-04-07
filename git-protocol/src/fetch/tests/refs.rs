@@ -3,7 +3,7 @@ use git_transport::client;
 use std::io;
 
 fn oid(hex_sha: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_40_bytes_in_hex(hex_sha.as_bytes()).expect("valid input")
+    git_hash::ObjectId::from_hex(hex_sha.as_bytes()).expect("valid input")
 }
 
 #[test]
