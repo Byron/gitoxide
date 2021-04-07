@@ -16,6 +16,41 @@ impl Owned {
     }
 }
 
+#[repr(transparent)]
+pub struct Borrowed {
+    bytes: [u8],
+}
+
+impl Borrowed {
+    #[inline]
+    pub fn from_bytes(slice: &[u8]) -> &Borrowed {
+        unsafe { std::mem::transmute(slice) }
+    }
+}
+
+impl AsRef<Borrowed> for &Borrowed {
+    fn as_ref(&self) -> &Borrowed {
+        self
+    }
+}
+
+impl AsRef<Borrowed> for Owned {
+    fn as_ref(&self) -> &Borrowed {
+        match self {
+            Owned::Sha1(b) => Borrowed::from_bytes(b.as_ref()),
+            Owned::Sha256(b) => Borrowed::from_bytes(&b.as_ref()),
+        }
+    }
+}
+
+fn lookup(id: impl AsRef<Borrowed>) {}
+
+fn call_lookup() {
+    lookup(Owned::sha1());
+    lookup(&Owned::sha256());
+    lookup(Borrowed::from_bytes(b"hello"))
+}
+
 fn use_owned(_id: Owned) {}
 fn use_by_ref(_id: &Owned) {}
 
