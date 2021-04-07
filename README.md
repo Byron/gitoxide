@@ -11,13 +11,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ## Development Status
 
-**Please note** that from 2020-09-17, the development speed will be reduced greatly. I will do my best to create at least
-one commit per day ramp it up from there to eventually arrive at a new baseline velocity. It will be lower than what it was before, and
-I hope 1/2 to 2/3 of that will be realistic.
-
-This is entirely unrelated to the project and I still can't wait to use `gitoxide` on a daily basis once the first high-level commands
-become available.
-
 ### gitoxide _(CLI)_
   * please note that all functionality comes from the `gitoxide-core` library, which mirrors these capabilities
     and itself relies on all `git-*` crates.
@@ -172,6 +165,17 @@ Project non-goals can change over time as we learn more, and they can be challen
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though, but behind a feature flag.
+     
+## Contributions
+
+If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
+
+A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how 
+to pick a task. If it's empty or you have other questions, feel free to [start a discussion][discussions] or reach out to @Byron [privately][keybase].
+
+[project-board]: https://github.com/Byron/gitoxide/projects
+[discussions]: https://github.com/Byron/gitoxide/discussions
+[keybase]: https://keybase.io/byronbates
 
 ## Roadmap to Future
 
@@ -372,8 +376,8 @@ at your option.
 
 ## Fun facts
 
-* Originally I was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)
-  and believe that with `gitoxide` it will be possible to provide the fastest solution for it.
-* I have been absolutely blown away by `git` from the first time I experienced git more than 13 years ago, and 
+* Originally @Byron was really fascinated by [this problem](https://github.com/gitpython-developers/GitPython/issues/765#issuecomment-396072153)
+  and believes that with `gitoxide` it will be possible to provide the fastest solution for it.
+* @Byron has been absolutely blown away by `git` from the first time he experienced git more than 13 years ago, and 
   tried to implement it in [various shapes](https://github.com/gitpython-developers/GitPython/pull/1028) and [forms](https://github.com/byron/gogit)
-  multiple [times](https://github.com/Byron/gitplusplus). Now with Rust I finally feel to have found the right tool for the job!
+  multiple [times](https://github.com/Byron/gitplusplus). Now with Rust @Byron finally feels to have found the right tool for the job!
