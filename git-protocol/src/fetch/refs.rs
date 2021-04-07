@@ -11,7 +11,7 @@ quick_error! {
             from()
             source(err)
         }
-        Id(err: git_hash::owned::Error) {
+        Id(err: git_hash::decode::Error) {
             display("Failed to hex-decode object hash")
             from()
             source(err)

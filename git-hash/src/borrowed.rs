@@ -26,7 +26,7 @@ impl<'a> Id<'a> {
 impl<'a> Id<'a> {
     /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Digest` represents.
     ///
-    /// **Panics** if this is not a Sha1 hash, as identifiable by [`Digest::kind()`].
+    /// **Panics** if this is not a Sha1 hash, as identifiable by [`Id::kind()`].
     pub fn to_sha1_hex(&self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
         let mut buf = [0u8; SIZE_OF_SHA1_DIGEST * 2];
         hex::encode_to_slice(self.0, &mut buf).expect("to count correctly");
@@ -35,7 +35,7 @@ impl<'a> Id<'a> {
 
     /// Returns the bytes making up the Sha1.
     ///
-    /// **Panics** if this is not a Sha1 hash, as identifiable by [`Digest::kind()`].
+    /// **Panics** if this is not a Sha1 hash, as identifiable by [`Id::kind()`].
     pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
         self.0
     }

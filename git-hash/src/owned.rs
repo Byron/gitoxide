@@ -1,23 +1,11 @@
 use crate::{borrowed, SIZE_OF_SHA1_DIGEST};
 use bstr::ByteSlice;
-use quick_error::quick_error;
 use std::{fmt, io, ops::Deref};
-
-quick_error! {
-    /// An error returned by [`Digest::from_40_bytes_in_hex()`]
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        HexDecode(err: String) {
-            display("Failed to hex hash: {}", err)
-        }
-    }
-}
 
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Id([u8; SIZE_OF_SHA1_DIGEST]);
+pub struct Id(pub(crate) [u8; SIZE_OF_SHA1_DIGEST]);
 
 /// Access and conversion
 impl Id {
@@ -46,15 +34,6 @@ impl Id {
 
 /// Sha1 hash specific methods
 impl Id {
-    /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
-    ///
-    /// Such a buffer can be obtained using [`write_hex_to(buffer)`][Digest::write_hex_to()]
-    pub fn from_40_bytes_in_hex(buffer: &[u8]) -> Result<Id, Error> {
-        use hex::FromHex;
-        Ok(Id(
-            <[u8; 20]>::from_hex(buffer).map_err(|err| Error::HexDecode(err.to_string()))?
-        ))
-    }
     /// Returns ourselves as slice of 20 bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
