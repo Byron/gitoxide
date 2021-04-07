@@ -24,7 +24,7 @@ pub struct Borrowed {
 impl Borrowed {
     #[inline]
     pub fn from_bytes(slice: &[u8]) -> &Borrowed {
-        unsafe { std::mem::transmute(slice) }
+        unsafe { &*(slice as *const [u8] as *const Borrowed) }
     }
 }
 
