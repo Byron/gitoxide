@@ -24,12 +24,13 @@ use quick_error::quick_error;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        InvalidDigestLength(length: usize) {
+        InvalidByteSliceLength(length: usize) {
             display("Cannot instantiate git hash from a digest of length {}", length)
         }
     }
 }
 
+/// Conversion
 impl oid {
     pub fn try_from(value: &[u8]) -> Result<&Self, Error> {
         match value.len() {
@@ -39,7 +40,15 @@ impl oid {
                     &*(value as *const [u8] as *const oid)
                 },
             ),
-            len => Err(Error::InvalidDigestLength(len)),
+            len => Err(Error::InvalidByteSliceLength(len)),
+        }
+    }
+
+    /// Only from code that statically assures correct sizes using array conversions
+    fn from(value: &[u8]) -> &Self {
+        #[allow(unsafe_code)]
+        unsafe {
+            &*(value as *const [u8] as *const oid)
         }
     }
 }
@@ -57,6 +66,11 @@ impl oid {
     /// The first byte of the hash, commonly used to partition a set of `Id`s
     pub fn first_byte(&self) -> u8 {
         self.bytes[0]
+    }
+
+    #[inline]
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes
     }
 }
 
@@ -118,6 +132,12 @@ impl<'a> From<&'a [u8; SIZE_OF_SHA1_DIGEST]> for Id<'a> {
     }
 }
 
+impl<'a> From<&'a [u8; SIZE_OF_SHA1_DIGEST]> for &'a oid {
+    fn from(v: &'a [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
+        oid::from(v.as_ref())
+    }
+}
+
 impl<'a> TryFrom<&'a [u8]> for Id<'a> {
     type Error = std::array::TryFromSliceError;
 
@@ -129,6 +149,15 @@ impl<'a> TryFrom<&'a [u8]> for Id<'a> {
 impl fmt::Display for Id<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", &self.to_sha1_hex().as_bstr())
+    }
+}
+
+impl fmt::Display for &oid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for b in self.as_bytes() {
+            write!(f, "{:x}", b)?;
+        }
+        Ok(())
     }
 }
 
