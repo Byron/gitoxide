@@ -1,5 +1,7 @@
+use crate::borrowed::Id2;
 use crate::{borrowed, SIZE_OF_SHA1_DIGEST};
 use bstr::ByteSlice;
+use std::borrow::Borrow;
 use std::{fmt, io, ops::Deref};
 
 /// An owned hash identifying objects, most commonly Sha1
@@ -91,11 +93,24 @@ impl From<[u8; SIZE_OF_SHA1_DIGEST]> for Id {
     }
 }
 
+// TODO: remove this - what do we deref to if there are multiple hash sizes?
 impl Deref for Id {
     type Target = [u8; SIZE_OF_SHA1_DIGEST];
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl AsRef<crate::borrowed::Id2> for Id {
+    fn as_ref(&self) -> &Id2 {
+        Id2::try_from(self.as_slice()).expect("sibling type always implements all hashes we support")
+    }
+}
+
+impl Borrow<crate::borrowed::Id2> for Id {
+    fn borrow(&self) -> &Id2 {
+        self.as_ref()
     }
 }
 

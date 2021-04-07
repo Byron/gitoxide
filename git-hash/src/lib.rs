@@ -1,7 +1,7 @@
 //! This crate provides types for identifying git objects using a hash digest.
 //!
 //! These are provided in borrowed versions as well as owned ones.
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
 /// For convenience to allow using `bstr` without adding it to own cargo manifest
