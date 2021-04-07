@@ -9,8 +9,11 @@ pub use bstr;
 
 #[allow(missing_docs)]
 pub mod borrowed;
+
 #[allow(missing_docs)]
-pub mod owned;
+mod owned;
+pub use owned::Id;
+
 #[allow(missing_docs)]
 pub mod decode {
     use crate::owned::Id;

@@ -79,7 +79,7 @@ pub fn bytes_of_file(
     num_bytes_from_start: usize,
     kind: git_hash::Kind,
     progress: &mut impl crate::progress::Progress,
-) -> std::io::Result<git_hash::owned::Id> {
+) -> std::io::Result<git_hash::Id> {
     let mut hasher = match kind {
         git_hash::Kind::Sha1 => crate::hash::Sha1::default(),
     };
@@ -104,7 +104,7 @@ pub fn bytes_of_file(
         }
     }
 
-    let id = git_hash::owned::Id::new_sha1(hasher.digest());
+    let id = git_hash::Id::new_sha1(hasher.digest());
     progress.show_throughput(start);
     Ok(id)
 }
