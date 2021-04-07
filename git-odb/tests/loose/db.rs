@@ -189,7 +189,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         ldb().locate(hex_to_id(hex).to_borrowed()).ok().flatten()
     }
 
-    pub fn as_id(id: &[u8; 20]) -> borrowed::Id {
+    pub fn as_id(id: &[u8; 20]) -> git_hash::borrowed::Id {
         id.into()
     }
 

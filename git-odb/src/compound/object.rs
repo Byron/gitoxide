@@ -56,7 +56,6 @@ pub mod decode {
 ///
 pub mod verify {
     use crate::{compound::Object, loose};
-    use git_object::borrowed;
 
     /// Returned by [`Object::verify_checksum()`].
     #[derive(thiserror::Error, Debug)]
@@ -70,7 +69,7 @@ pub mod verify {
 
     impl<'a> Object<'a> {
         /// Assert whether the actual checksum of this object matches the `desired` one.
-        pub fn verify_checksum(&mut self, desired: borrowed::Id<'_>) -> Result<(), Error> {
+        pub fn verify_checksum(&mut self, desired: git_hash::borrowed::Id<'_>) -> Result<(), Error> {
             match self {
                 Object::Borrowed(object) => object.verify_checksum(desired).map_err(Into::into),
                 Object::Loose(object) => object.verify_checksum(desired).map_err(Into::into),

@@ -2,7 +2,7 @@ use crate::pack;
 use git_object::borrowed;
 
 impl pack::Bundle {
-    /// Find an object with the given [`id`][borrowed::Id] and place its data into `out`.
+    /// Find an object with the given [`id`][git_hash::borrowed::Id] and place its data into `out`.
     ///
     /// [`cache`][pack::cache::DecodeEntry] is used to accelerate the lookup.
     ///
@@ -10,7 +10,7 @@ impl pack::Bundle {
     /// for thin packs, which by now are expected to be resolved already.
     pub fn locate<'a>(
         &self,
-        id: borrowed::Id<'_>,
+        id: git_hash::borrowed::Id<'_>,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<crate::borrowed::Object<'a>>, pack::data::decode::Error> {
@@ -25,7 +25,7 @@ impl pack::Bundle {
     /// compound::Db::locate. (The polonius borrow-checker would support this via the locate
     /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
     /// once polonius is stable.)
-    pub(crate) fn internal_locate_index(&self, id: borrowed::Id<'_>) -> Option<u32> {
+    pub(crate) fn internal_locate_index(&self, id: git_hash::borrowed::Id<'_>) -> Option<u32> {
         self.index.lookup(id)
     }
 

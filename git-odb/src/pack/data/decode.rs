@@ -26,7 +26,7 @@ struct Delta {
     data_offset: u64,
 }
 
-/// A return value of a resolve function, which given an [`Id`][borrowed::Id] determines where an object can be found.
+/// A return value of a resolve function, which given an [`Id`][git_hash::borrowed::Id] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ResolvedBase {
@@ -140,7 +140,7 @@ impl File {
     ///
     /// The `entry` determines which object to decode, and is commonly obtained with the help of a pack index file or through pack iteration.
     ///
-    /// `resolve` is a function to lookup objects with the given [`id`][borrowed::Id], in case the full object id is used to refer to
+    /// `resolve` is a function to lookup objects with the given [`id`][git_hash::borrowed::Id], in case the full object id is used to refer to
     /// a base object, instead of an in-pack offset.
     ///
     /// `delta_cache` is a mechanism to avoid looking up base objects multiple times when decompressing multiple objects in a row.
@@ -149,7 +149,7 @@ impl File {
         &self,
         entry: pack::data::Entry,
         out: &mut Vec<u8>,
-        resolve: impl Fn(borrowed::Id<'_>, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(git_hash::borrowed::Id<'_>, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
         use crate::pack::data::header::Header::*;
@@ -180,7 +180,7 @@ impl File {
     fn resolve_deltas(
         &self,
         last: pack::data::Entry,
-        resolve: impl Fn(borrowed::Id<'_>, &mut Vec<u8>) -> Option<ResolvedBase>,
+        resolve: impl Fn(git_hash::borrowed::Id<'_>, &mut Vec<u8>) -> Option<ResolvedBase>,
         out: &mut Vec<u8>,
         cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {

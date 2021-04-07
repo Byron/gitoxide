@@ -6,8 +6,6 @@
 mod commit;
 pub use commit::Commit;
 
-pub use git_hash::borrowed::Id;
-
 mod tag;
 pub use tag::Tag;
 

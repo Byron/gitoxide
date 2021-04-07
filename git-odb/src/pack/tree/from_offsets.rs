@@ -35,7 +35,7 @@ impl<T> Tree<T> {
     /// * `pack_path` is the path to the pack file itself and from which to read the entry data, which is a pack file matching the offsets
     /// returned by `get_pack_offset(…)`.
     /// * `progress` is used to track progress when creating the tree.
-    /// * `resolve_in_pack_id(borrowed::Id) -> Option<PackOffset>` takes an object ID and tries to resolve it to an object within this pack if
+    /// * `resolve_in_pack_id(git_hash::borrowed::Id) -> Option<PackOffset>` takes an object ID and tries to resolve it to an object within this pack if
     /// possible. Failing to do so aborts the operation, and this function is not expected to be called in usual packs. It's a theoretical
     /// possibility though.
     ///
@@ -45,7 +45,7 @@ impl<T> Tree<T> {
         get_pack_offset: impl Fn(&T) -> PackOffset,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
-        resolve_in_pack_id: impl Fn(git_object::borrowed::Id<'_>) -> Option<PackOffset>,
+        resolve_in_pack_id: impl Fn(git_hash::borrowed::Id<'_>) -> Option<PackOffset>,
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(
             8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k

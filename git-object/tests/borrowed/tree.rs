@@ -1,7 +1,6 @@
 mod from_bytes {
     use crate::borrowed::fixture_bytes;
     use git_object::{
-        borrowed,
         borrowed::{tree::Entry, Tree},
         bstr::ByteSlice,
         tree,
@@ -12,7 +11,7 @@ mod from_bytes {
         <[u8; 20]>::from_hex(hex).expect("40 bytes hex sha")
     }
 
-    pub fn as_id(id: &[u8; 20]) -> borrowed::Id {
+    pub fn as_id(id: &[u8; 20]) -> git_hash::borrowed::Id {
         id.into()
     }
 

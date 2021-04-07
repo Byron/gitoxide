@@ -5,7 +5,7 @@ use crate::{
 };
 use byteorder::{BigEndian, ByteOrder};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::{borrowed, owned};
+use git_object::owned;
 use std::{
     convert::{TryFrom, TryInto},
     fmt::{Debug, Formatter},
@@ -40,7 +40,7 @@ pub struct Commit<'a> {
     generation: u32,
     parent1: ParentEdge,
     parent2: ParentEdge,
-    root_tree_id: borrowed::Id<'a>,
+    root_tree_id: git_hash::borrowed::Id<'a>,
 }
 
 impl<'a> Commit<'a> {
@@ -49,7 +49,7 @@ impl<'a> Commit<'a> {
         Commit {
             file,
             pos,
-            root_tree_id: borrowed::Id::try_from(&bytes[..SHA1_SIZE]).expect("20 bytes SHA1 to be alright"),
+            root_tree_id: git_hash::borrowed::Id::try_from(&bytes[..SHA1_SIZE]).expect("20 bytes SHA1 to be alright"),
             parent1: ParentEdge::from_raw(BigEndian::read_u32(&bytes[SHA1_SIZE..SHA1_SIZE + 4])),
             parent2: ParentEdge::from_raw(BigEndian::read_u32(&bytes[SHA1_SIZE + 4..SHA1_SIZE + 8])),
             generation: BigEndian::read_u32(&bytes[SHA1_SIZE + 8..SHA1_SIZE + 12]) >> 2,
@@ -84,7 +84,7 @@ impl<'a> Commit<'a> {
     }
 
     /// Returns the hash of this commit.
-    pub fn id(&self) -> borrowed::Id<'a> {
+    pub fn id(&self) -> git_hash::borrowed::Id<'a> {
         self.file.id_at(self.pos)
     }
 
@@ -99,7 +99,7 @@ impl<'a> Commit<'a> {
     }
 
     /// Return the hash of the tree this commit points to.
-    pub fn root_tree_id(&self) -> borrowed::Id<'a> {
+    pub fn root_tree_id(&self) -> git_hash::borrowed::Id<'a> {
         self.root_tree_id
     }
 }

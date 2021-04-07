@@ -1,5 +1,4 @@
 use crate::{compound, loose, pack};
-use git_object::borrowed;
 
 /// Returned by [`compound::Db::locate()`]
 #[derive(thiserror::Error, Debug)]
@@ -12,11 +11,11 @@ pub enum Error {
 }
 
 impl compound::Db {
-    /// Find an object as identified by [`id`][borrowed::Id] and store its data in full in the provided `buffer`.
+    /// Find an object as identified by [`id`][git_hash::borrowed::Id] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
     pub fn locate<'a>(
         &self,
-        id: borrowed::Id<'_>,
+        id: git_hash::borrowed::Id<'_>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<compound::Object<'a>>, Error> {
         for pack in &self.packs {

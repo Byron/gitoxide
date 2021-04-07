@@ -5,7 +5,7 @@ use crate::{
 };
 use bstr::ByteSlice;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::{borrowed, owned};
+use git_object::owned;
 use std::{
     cmp::{max, min},
     collections::HashMap,
@@ -58,8 +58,9 @@ pub struct Outcome {
 /// Verification
 impl File {
     /// Returns the trailing checksum over the entire content of this file.
-    pub fn checksum(&self) -> borrowed::Id<'_> {
-        borrowed::Id::try_from(&self.data[self.data.len() - SHA1_SIZE..]).expect("file to be large enough for a hash")
+    pub fn checksum(&self) -> git_hash::borrowed::Id<'_> {
+        git_hash::borrowed::Id::try_from(&self.data[self.data.len() - SHA1_SIZE..])
+            .expect("file to be large enough for a hash")
     }
 
     /// Traverse all [commits][file::Commit] stored in this file and call `processor(commit) -> Result<(), Error>` on it.
@@ -74,7 +75,7 @@ impl File {
             .map_err(|(actual, expected)| Error::Mismatch { actual, expected })?;
         verify_split_chain_filename_hash(&self.path, self.checksum()).map_err(Error::Filename)?;
 
-        let null_id = borrowed::Id::null_sha1();
+        let null_id = git_hash::borrowed::Id::null_sha1();
 
         let mut stats = Outcome {
             max_generation: 0,
@@ -85,7 +86,7 @@ impl File {
         };
 
         // TODO: Verify self.fan values as we go.
-        let mut prev_id: borrowed::Id<'a> = null_id;
+        let mut prev_id: git_hash::borrowed::Id<'a> = null_id;
         for commit in self.iter_commits() {
             if commit.id() <= prev_id {
                 if commit.id() == null_id {
@@ -157,7 +158,10 @@ impl File {
 
 /// If the given path's filename matches "graph-{hash}.graph", check that `hash` matches the
 /// expected hash.
-fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: borrowed::Id<'_>) -> Result<(), String> {
+fn verify_split_chain_filename_hash(
+    path: impl AsRef<Path>,
+    expected: git_hash::borrowed::Id<'_>,
+) -> Result<(), String> {
     let path = path.as_ref();
     path.file_name()
         .and_then(|filename| filename.to_str())

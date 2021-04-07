@@ -3,7 +3,6 @@ use crate::{
     zlib,
 };
 use git_object as object;
-use object::borrowed;
 use smallvec::SmallVec;
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
@@ -27,11 +26,11 @@ pub enum Error {
 impl Db {
     const OPEN_ACTION: &'static str = "open";
 
-    /// Return the object identified by the given [`id][borrowed::Id] if present in this database.
+    /// Return the object identified by the given [`id][git_hash::borrowed::Id] if present in this database.
     ///
     /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
     /// there was no such object.
-    pub fn locate(&self, id: borrowed::Id<'_>) -> Result<Option<Object>, Error> {
+    pub fn locate(&self, id: git_hash::borrowed::Id<'_>) -> Result<Option<Object>, Error> {
         match self.locate_inner(id) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
@@ -55,7 +54,7 @@ impl Db {
         }
     }
 
-    fn locate_inner(&self, id: borrowed::Id<'_>) -> Result<Object, Error> {
+    fn locate_inner(&self, id: git_hash::borrowed::Id<'_>) -> Result<Object, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();

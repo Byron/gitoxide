@@ -1,4 +1,3 @@
-use git_object::borrowed;
 use std::path::PathBuf;
 
 /// A database for reading and writing objects to disk, one file per object.
@@ -20,7 +19,7 @@ impl Db {
     }
 }
 
-pub(crate) fn sha1_path(id: borrowed::Id<'_>, mut root: PathBuf) -> PathBuf {
+pub(crate) fn sha1_path(id: git_hash::borrowed::Id<'_>, mut root: PathBuf) -> PathBuf {
     match id.kind() {
         git_hash::Kind::Sha1 => {
             let hex = id.to_sha1_hex();

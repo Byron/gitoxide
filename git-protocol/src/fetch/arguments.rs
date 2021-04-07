@@ -1,6 +1,5 @@
 use crate::fetch::{command::Feature, Command};
 use bstr::{BStr, BString, ByteSlice};
-use git_object::borrowed;
 use git_transport::{
     client::{self, TransportV2Ext},
     Protocol,
@@ -65,7 +64,7 @@ impl Arguments {
     /// Add the given `id` pointing to a commit to the 'want' list.
     ///
     /// As such it should be included in the server response as it's not present on the client.
-    pub fn want(&mut self, id: borrowed::Id<'_>) {
+    pub fn want(&mut self, id: git_hash::borrowed::Id<'_>) {
         match self.features_for_first_want.take() {
             Some(features) => self.prefixed("want ", format!("{} {}", id, features.join(" "))),
             None => self.prefixed("want ", id),
@@ -74,11 +73,11 @@ impl Arguments {
     /// Add the given `id` pointing to a commit to the 'have' list.
     ///
     /// As such it should _not_ be included in the server response as it's already present on the client.
-    pub fn have(&mut self, id: borrowed::Id<'_>) {
+    pub fn have(&mut self, id: git_hash::borrowed::Id<'_>) {
         self.haves.push(format!("have {}", id).into());
     }
     /// Add the given `id` pointing to a commit to the 'shallow' list.
-    pub fn shallow(&mut self, id: borrowed::Id<'_>) {
+    pub fn shallow(&mut self, id: git_hash::borrowed::Id<'_>) {
         assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
         self.prefixed("shallow ", id);
     }

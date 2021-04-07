@@ -73,7 +73,7 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn oid_at_index(&self, index: u32) -> borrowed::Id<'_> {
+    pub fn oid_at_index(&self, index: u32) -> git_hash::borrowed::Id<'_> {
         let index: usize = index
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
@@ -81,7 +81,7 @@ impl index::File {
             index::Version::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
             index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
         };
-        borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
+        git_hash::borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
     /// Returns the offset into our pack data file at which to start reading the object at `index`.
@@ -126,7 +126,7 @@ impl index::File {
 
     /// Returns the `index` of the given SHA1 for use with the [`oid_at_index()`][index::File::oid_at_index()],
     /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
-    pub fn lookup(&self, id: borrowed::Id<'_>) -> Option<u32> {
+    pub fn lookup(&self, id: git_hash::borrowed::Id<'_>) -> Option<u32> {
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
