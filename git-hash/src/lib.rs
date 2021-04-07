@@ -32,9 +32,9 @@ impl Default for Kind {
 mod convert {
     use crate::{borrowed, owned};
 
-    impl<'a> From<borrowed::Digest<'a>> for owned::Digest {
-        fn from(v: borrowed::Digest<'a>) -> Self {
-            owned::Digest::from_borrowed_sha1(v.sha1())
+    impl<'a> From<borrowed::Id<'a>> for owned::Id {
+        fn from(v: borrowed::Id<'a>) -> Self {
+            owned::Id::from_borrowed_sha1(v.sha1())
         }
     }
 }
