@@ -19,6 +19,7 @@ pub use owned::ObjectId;
 pub mod decode {
     use crate::owned::ObjectId;
     use quick_error::quick_error;
+    use std::str::FromStr;
 
     quick_error! {
         /// An error returned by [`Id::from_40_bytes_in_hex()`]
@@ -40,6 +41,17 @@ pub mod decode {
             use hex::FromHex;
             Ok(ObjectId(
                 <[u8; 20]>::from_hex(buffer).map_err(|err| Error::HexDecode(err.to_string()))?,
+            ))
+        }
+    }
+
+    impl FromStr for ObjectId {
+        type Err = Error;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            use hex::FromHex;
+            Ok(ObjectId(
+                <[u8; 20]>::from_hex(s).map_err(|err| Error::HexDecode(err.to_string()))?,
             ))
         }
     }
