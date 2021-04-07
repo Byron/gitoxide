@@ -9,7 +9,7 @@ pub struct Id(pub(crate) [u8; SIZE_OF_SHA1_DIGEST]);
 
 /// Access and conversion
 impl Id {
-    /// Returns the kind of hash used in this `Digest`
+    /// Returns the kind of hash used in this `Id`
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::Sha1
     }

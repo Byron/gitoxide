@@ -916,6 +916,7 @@ dependencies = [
  "git-config",
  "git-features",
  "git-hash",
+ "git-object",
  "git-odb",
  "git-protocol",
  "git-repository",

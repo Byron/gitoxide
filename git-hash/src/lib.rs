@@ -47,7 +47,7 @@ pub mod decode {
 /// The size of a SHA1 hash digest in bytes
 pub const SIZE_OF_SHA1_DIGEST: usize = 20;
 
-/// Denotes the kind of function to produce a `Digest`
+/// Denotes the kind of function to produce a `Id`
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {

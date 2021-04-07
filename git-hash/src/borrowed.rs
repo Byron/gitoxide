@@ -16,7 +16,7 @@ impl<'a> Id<'a> {
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::Sha1
     }
-    /// The first byte of the hash, commonly used to partition a set of `Digest`s
+    /// The first byte of the hash, commonly used to partition a set of `Id`s
     pub fn first_byte(&self) -> u8 {
         self.0[0]
     }
@@ -24,7 +24,7 @@ impl<'a> Id<'a> {
 
 /// Sha1 specific methods
 impl<'a> Id<'a> {
-    /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Digest` represents.
+    /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Id` represents.
     ///
     /// **Panics** if this is not a Sha1 hash, as identifiable by [`Id::kind()`].
     pub fn to_sha1_hex(&self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
