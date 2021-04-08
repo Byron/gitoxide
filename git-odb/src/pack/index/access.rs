@@ -11,7 +11,7 @@ const N32_HIGH_BIT: u32 = 1 << 31;
 
 pub(crate) type PackOffset = u64;
 
-/// Represents an entry within a pack index file, effectively mapping object [`IDs`][git_hash::Id] to pack data file locations.
+/// Represents an entry within a pack index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data file locations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {

@@ -81,8 +81,8 @@ mod v1 {
         let mut t = transport(&mut out, true);
         let mut arguments = arguments_v1(["feature-a", "feature-b"].iter().cloned());
 
-        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
-        arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
+        arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
@@ -101,14 +101,14 @@ mod v1 {
         let mut arguments = arguments_v1(["feature-a", "shallow", "deepen-since", "deepen-not"].iter().copied());
 
         arguments.deepen(1);
-        arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff").to_borrowed());
-        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+        arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff"));
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
         arguments.deepen_since(12345);
         arguments.deepen_not("refs/heads/main".into());
-        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+        arguments.have(id("0000000000000000000000000000000000000000"));
         arguments.send(&mut t, false).expect("sending to buffer to work");
 
-        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+        arguments.have(id("1111111111111111111111111111111111111111"));
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
@@ -137,11 +137,11 @@ mod v1 {
         let mut arguments = arguments_v1(["feature-a", "shallow"].iter().copied());
 
         arguments.deepen(1);
-        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
-        arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
+        arguments.have(id("0000000000000000000000000000000000000000"));
         arguments.send(&mut t, false).expect("sending to buffer to work");
 
-        arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+        arguments.have(id("1111111111111111111111111111111111111111"));
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
@@ -168,8 +168,8 @@ mod v2 {
 
         arguments.deepen(1);
         arguments.deepen_relative();
-        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
-        arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff").to_borrowed());
+        arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
+        arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
         arguments.send(&mut t, true).expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
@@ -196,13 +196,13 @@ mod v2 {
 
             arguments.deepen(1);
             arguments.deepen_since(12345);
-            arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff").to_borrowed());
-            arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907").to_borrowed());
+            arguments.shallow(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c9ff"));
+            arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
             arguments.deepen_not("refs/heads/main".into());
-            arguments.have(id("0000000000000000000000000000000000000000").to_borrowed());
+            arguments.have(id("0000000000000000000000000000000000000000"));
             arguments.send(&mut t, false).expect("sending to buffer to work");
 
-            arguments.have(id("1111111111111111111111111111111111111111").to_borrowed());
+            arguments.have(id("1111111111111111111111111111111111111111"));
             arguments.send(&mut t, true).expect("sending to buffer to work");
             assert_eq!(
                 out.as_bstr(),

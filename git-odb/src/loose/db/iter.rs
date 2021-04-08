@@ -13,7 +13,7 @@ pub enum Error {
 impl Db {
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][git_hash::Id]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
+    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     pub fn iter(&self) -> impl Iterator<Item = Result<git_hash::ObjectId, Error>> {
         use std::path::Component::Normal;

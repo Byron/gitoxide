@@ -64,22 +64,22 @@ impl Arguments {
     /// Add the given `id` pointing to a commit to the 'want' list.
     ///
     /// As such it should be included in the server response as it's not present on the client.
-    pub fn want(&mut self, id: git_hash::borrowed::Id<'_>) {
+    pub fn want(&mut self, id: impl AsRef<git_hash::oid>) {
         match self.features_for_first_want.take() {
-            Some(features) => self.prefixed("want ", format!("{} {}", id, features.join(" "))),
-            None => self.prefixed("want ", id),
+            Some(features) => self.prefixed("want ", format!("{} {}", id.as_ref(), features.join(" "))),
+            None => self.prefixed("want ", id.as_ref()),
         }
     }
     /// Add the given `id` pointing to a commit to the 'have' list.
     ///
     /// As such it should _not_ be included in the server response as it's already present on the client.
-    pub fn have(&mut self, id: git_hash::borrowed::Id<'_>) {
-        self.haves.push(format!("have {}", id).into());
+    pub fn have(&mut self, id: impl AsRef<git_hash::oid>) {
+        self.haves.push(format!("have {}", id.as_ref()).into());
     }
     /// Add the given `id` pointing to a commit to the 'shallow' list.
-    pub fn shallow(&mut self, id: git_hash::borrowed::Id<'_>) {
+    pub fn shallow(&mut self, id: impl AsRef<git_hash::oid>) {
         assert!(self.shallow, "'shallow' feature required for 'shallow <id>'");
-        self.prefixed("shallow ", id);
+        self.prefixed("shallow ", id.as_ref());
     }
     /// Deepen the commit history by `depth` amount of commits.
     pub fn deepen(&mut self, depth: usize) {

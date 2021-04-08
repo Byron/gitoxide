@@ -58,10 +58,10 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
             match self.ref_filter {
                 Some(ref_prefixes) => {
                     if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
-                        arguments.want(id.to_borrowed());
+                        arguments.want(id);
                     }
                 }
-                None => arguments.want(id.to_borrowed()),
+                None => arguments.want(id),
             }
         }
         Action::Close

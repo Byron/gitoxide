@@ -72,7 +72,7 @@ pub use crc::crc32::checksum_ieee as crc32;
 /// # Note
 ///
 /// * Only available with the `git-object` feature enabled due to usage of the [`git_hash::Kind`] enum and the
-///   [`git_hash::owned::Digest`] return value.
+///   [`git_hash::ObjectId`] return value.
 /// * [Interrupts][crate::interrupt] are supported.
 pub fn bytes_of_file(
     path: impl AsRef<std::path::Path>,
