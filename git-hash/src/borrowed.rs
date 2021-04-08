@@ -190,7 +190,7 @@ impl fmt::Display for Id<'_> {
 impl fmt::Display for &oid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for b in self.as_bytes() {
-            write!(f, "{:x}", b)?;
+            write!(f, "{:02x}", b)?;
         }
         Ok(())
     }
