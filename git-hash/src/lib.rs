@@ -40,7 +40,7 @@ pub mod decode {
         pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
             use hex::FromHex;
             match buffer.len() {
-                40 => Ok(ObjectId(
+                40 => Ok(ObjectId::Sha1(
                     <[u8; 20]>::from_hex(buffer).expect("our length check is correct thus we can decode hex"),
                 )),
                 len => Err(Error::InvalidHexEncodingLength(len)),
@@ -54,7 +54,7 @@ pub mod decode {
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             use hex::FromHex;
             match s.len() {
-                40 => Ok(ObjectId(
+                40 => Ok(ObjectId::Sha1(
                     <[u8; 20]>::from_hex(s).expect("our length check is correct thus we can decode hex"),
                 )),
                 len => Err(Error::InvalidHexEncodingLength(len)),

@@ -4,7 +4,9 @@ use std::{borrow::Borrow, fmt, io, ops::Deref};
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ObjectId(pub(crate) [u8; SIZE_OF_SHA1_DIGEST]);
+pub enum ObjectId {
+    Sha1([u8; SIZE_OF_SHA1_DIGEST]),
+}
 
 /// Access and conversion
 impl ObjectId {
@@ -14,11 +16,15 @@ impl ObjectId {
     }
     /// Return the raw byte slice representing this hash
     pub fn as_slice(&self) -> &[u8] {
-        self.0.as_ref()
+        match self {
+            Self::Sha1(b) => b.as_ref(),
+        }
     }
     /// Return the raw mutable byte slice representing this hash
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
-        self.0.as_mut()
+        match self {
+            Self::Sha1(b) => b.as_mut(),
+        }
     }
 
     /// Write ourselves to `out` in hexadecimal notation
@@ -33,16 +39,22 @@ impl ObjectId {
     ///
     /// Panics if this instance is not a sha1 hash.
     pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
-        &self.0
+        match self {
+            Self::Sha1(b) => &b,
+        }
     }
 
     /// Return ourselves as array of 40 hexadecimal bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
     pub fn to_sha1_hex(&self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
-        let mut hex_buf = [0u8; 40];
-        hex::encode_to_slice(self.0, &mut hex_buf).expect("we can count");
-        hex_buf
+        match self {
+            Self::Sha1(b) => {
+                let mut hex_buf = [0u8; 40];
+                hex::encode_to_slice(b, &mut hex_buf).expect("we can count");
+                hex_buf
+            }
+        }
     }
 
     /// Return ourselves as hexadecimal string with a length of 40 bytes.
@@ -55,7 +67,7 @@ impl ObjectId {
 
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
     pub fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
-        ObjectId(id)
+        ObjectId::Sha1(id)
     }
 
     /// Instantiate an Digest from a slice 20 borrowed bytes of a Sha1 digest.
@@ -64,19 +76,19 @@ impl ObjectId {
     pub fn from_20_bytes(b: &[u8]) -> ObjectId {
         let mut id = [0; SIZE_OF_SHA1_DIGEST];
         id.copy_from_slice(b);
-        ObjectId(id)
+        ObjectId::Sha1(id)
     }
 
     /// Instantiate an Digest from a borrowed array of 20 bytes of a Sha1 digest.
     pub fn from_borrowed_sha1(b: &[u8; SIZE_OF_SHA1_DIGEST]) -> ObjectId {
         let mut id = [0; SIZE_OF_SHA1_DIGEST];
         id.copy_from_slice(&b[..]);
-        ObjectId(id)
+        ObjectId::Sha1(id)
     }
 
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
     pub fn null_sha1() -> ObjectId {
-        ObjectId([0u8; 20])
+        ObjectId::Sha1([0u8; 20])
     }
 }
 

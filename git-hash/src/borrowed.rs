@@ -111,7 +111,7 @@ impl ToOwned for oid {
 
     fn to_owned(&self) -> Self::Owned {
         match self.kind() {
-            crate::Kind::Sha1 => crate::ObjectId(self.bytes.try_into().expect("no bug in hash detection")),
+            crate::Kind::Sha1 => crate::ObjectId::Sha1(self.bytes.try_into().expect("no bug in hash detection")),
         }
     }
 }
