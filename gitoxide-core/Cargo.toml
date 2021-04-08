@@ -19,7 +19,7 @@ organize = ["git-url", "bstr", "jwalk"]
 all-features = true
 
 [dependencies]
-git-repository = { version = "^0.4.0", path = "../git-repository" }
+git-repository = { version = "^0.5.0", path = "../git-repository" }
 git-object = { version = "^0.7.0", path = "../git-object" }
 git-hash = { version = "^0.2.0", path = "../git-hash" }
 git-odb = { version = "^0.10.0", path = "../git-odb" }
