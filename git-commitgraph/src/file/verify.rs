@@ -8,7 +8,6 @@ use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     cmp::{max, min},
     collections::HashMap,
-    convert::TryFrom,
     path::Path,
 };
 
@@ -66,9 +65,8 @@ pub struct Outcome {
 /// Verification
 impl File {
     /// Returns the trailing checksum over the entire content of this file.
-    pub fn checksum(&self) -> git_hash::borrowed::Id<'_> {
-        git_hash::borrowed::Id::try_from(&self.data[self.data.len() - SHA1_SIZE..])
-            .expect("file to be large enough for a hash")
+    pub fn checksum(&self) -> &git_hash::oid {
+        git_hash::oid::try_from(&self.data[self.data.len() - SHA1_SIZE..]).expect("file to be large enough for a hash")
     }
 
     /// Traverse all [commits][file::Commit] stored in this file and call `processor(commit) -> Result<(), Error>` on it.
@@ -83,7 +81,7 @@ impl File {
             .map_err(|(actual, expected)| Error::Mismatch { actual, expected })?;
         verify_split_chain_filename_hash(&self.path, self.checksum()).map_err(Error::Filename)?;
 
-        let null_id = git_hash::borrowed::Id::null_sha1();
+        let null_id = git_hash::oid::null_sha1();
 
         let mut stats = Outcome {
             max_generation: 0,
@@ -94,7 +92,7 @@ impl File {
         };
 
         // TODO: Verify self.fan values as we go.
-        let mut prev_id: git_hash::borrowed::Id<'a> = null_id;
+        let mut prev_id: &git_hash::oid = null_id;
         for commit in self.iter_commits() {
             if commit.id() <= prev_id {
                 if commit.id() == null_id {
@@ -156,7 +154,7 @@ impl File {
         let actual = git_hash::ObjectId::new_sha1(hasher.digest());
 
         let expected = self.checksum();
-        if actual.to_borrowed() == expected {
+        if actual.as_ref() == expected {
             Ok(actual)
         } else {
             Err((actual, expected.into()))
@@ -166,17 +164,14 @@ impl File {
 
 /// If the given path's filename matches "graph-{hash}.graph", check that `hash` matches the
 /// expected hash.
-fn verify_split_chain_filename_hash(
-    path: impl AsRef<Path>,
-    expected: git_hash::borrowed::Id<'_>,
-) -> Result<(), String> {
+fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: &git_hash::oid) -> Result<(), String> {
     let path = path.as_ref();
     path.file_name()
         .and_then(|filename| filename.to_str())
         .and_then(|filename| filename.strip_suffix(".graph"))
         .and_then(|stem| stem.strip_prefix("graph-"))
         .map_or(Ok(()), |hex| match git_hash::ObjectId::from_hex(hex.as_bytes()) {
-            Ok(actual) if actual.to_borrowed() == expected => Ok(()),
+            Ok(actual) if actual.as_ref() == expected => Ok(()),
             _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
         })
 }

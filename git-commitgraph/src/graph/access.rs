@@ -15,7 +15,7 @@ impl Graph {
     }
 
     /// Returns the commit matching the given `id`.
-    pub fn commit_by_id(&self, id: git_hash::borrowed::Id<'_>) -> Option<Commit<'_>> {
+    pub fn commit_by_id(&self, id: &git_hash::oid) -> Option<Commit<'_>> {
         let r = self.lookup_by_id(id)?;
         Some(r.file.commit_at(r.file_pos))
     }
@@ -24,7 +24,7 @@ impl Graph {
     ///
     /// # Panics
     /// If `pos` is greater or equal to [`num_commits()`][Graph::num_commits()].
-    pub fn id_at(&self, pos: graph::Position) -> git_hash::borrowed::Id<'_> {
+    pub fn id_at(&self, pos: graph::Position) -> &git_hash::oid {
         let r = self.lookup_by_pos(pos);
         r.file.id_at(r.pos)
     }
@@ -35,12 +35,12 @@ impl Graph {
     }
 
     /// Iterate over commit IDs in unsorted order.
-    pub fn iter_ids(&self) -> impl Iterator<Item = git_hash::borrowed::Id<'_>> {
+    pub fn iter_ids(&self) -> impl Iterator<Item = &git_hash::oid> {
         self.files.iter().flat_map(|file| file.iter_ids())
     }
 
     /// Translate the given `id` to its position in the file.
-    pub fn lookup(&self, id: git_hash::borrowed::Id<'_>) -> Option<graph::Position> {
+    pub fn lookup(&self, id: &git_hash::oid) -> Option<graph::Position> {
         Some(self.lookup_by_id(id)?.graph_pos)
     }
 
@@ -52,7 +52,7 @@ impl Graph {
 
 /// Access fundamentals
 impl Graph {
-    pub(crate) fn lookup_by_id(&self, id: git_hash::borrowed::Id<'_>) -> Option<LookupByIdResult<'_>> {
+    pub(crate) fn lookup_by_id(&self, id: &git_hash::oid) -> Option<LookupByIdResult<'_>> {
         let mut current_file_start = 0;
         for file in &self.files {
             if let Some(lex_pos) = file.lookup(id) {

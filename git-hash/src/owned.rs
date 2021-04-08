@@ -1,8 +1,6 @@
-use crate::borrowed::oid;
-use crate::{borrowed, SIZE_OF_SHA1_DIGEST};
+use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
 use bstr::ByteSlice;
-use std::borrow::Borrow;
-use std::{fmt, io, ops::Deref};
+use std::{borrow::Borrow, fmt, io, ops::Deref};
 
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -14,10 +12,6 @@ impl ObjectId {
     /// Returns the kind of hash used in this `Id`
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::Sha1
-    }
-    /// Return a borrowed version of this instance
-    pub fn to_borrowed(&self) -> borrowed::Id<'_> {
-        borrowed::Id::from(&self.0)
     }
     /// Return the raw byte slice representing this hash
     pub fn as_slice(&self) -> &[u8] {

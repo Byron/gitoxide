@@ -87,20 +87,20 @@ pub struct RefInfo {
 }
 
 impl RefInfo {
-    pub fn id(&self) -> git_hash::borrowed::Id {
-        self.id.to_borrowed()
+    pub fn id(&self) -> &git_hash::oid {
+        &self.id
     }
 
     pub fn pos(&self) -> GraphPosition {
         self.pos
     }
 
-    pub fn parent_ids(&self) -> impl IntoIterator<Item = git_hash::borrowed::Id> {
-        self.parent_ids.iter().map(|x| x.to_borrowed())
+    pub fn parent_ids(&self) -> impl IntoIterator<Item = &git_hash::oid> {
+        self.parent_ids.iter().map(|x| x.as_ref())
     }
 
-    pub fn root_tree_id(&self) -> git_hash::borrowed::Id {
-        self.root_tree_id.to_borrowed()
+    pub fn root_tree_id(&self) -> &git_hash::oid {
+        &self.root_tree_id
     }
 }
 
@@ -135,9 +135,9 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
         .collect();
     infos.sort_by_key(|x| x.1);
 
-    let get_pos = |id: git_hash::borrowed::Id| -> GraphPosition {
+    let get_pos = |id: &git_hash::oid| -> GraphPosition {
         let pos: u32 = infos
-            .binary_search_by_key(&id, |x| x.1.to_borrowed())
+            .binary_search_by_key(&id, |x| &x.1)
             .expect("sorted_ids to contain id")
             .try_into()
             .expect("graph position to fit in u32");
@@ -154,7 +154,7 @@ pub fn inspect_refs(repo_dir: impl AsRef<Path>, refs: &[&'static str]) -> HashMa
                     id,
                     parent_ids,
                     root_tree_id,
-                    pos: get_pos(id.to_borrowed()),
+                    pos: get_pos(&id),
                 },
             )
         })

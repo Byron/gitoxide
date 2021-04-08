@@ -1,7 +1,7 @@
 use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
-    convert::{TryFrom, TryInto},
+    convert::TryInto,
     fmt::{Debug, Formatter},
     path::Path,
 };
@@ -34,7 +34,7 @@ impl File {
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The position ranges from 0 to self.num_commits()
     // copied from git-odb/src/pack/index/access.rs
-    pub fn id_at(&self, pos: file::Position) -> git_hash::borrowed::Id<'_> {
+    pub fn id_at(&self, pos: file::Position) -> &git_hash::oid {
         assert!(
             pos.0 < self.num_commits(),
             "expected lexigraphical position less than {}, got {}",
@@ -46,16 +46,16 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         let start = self.oid_lookup_offset + (pos * SHA1_SIZE);
-        git_hash::borrowed::Id::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
+        git_hash::oid::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
     }
 
     /// Return an iterator over all object hashes stored in the base graph.
-    pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = git_hash::borrowed::Id<'_>> {
+    pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = &git_hash::oid> {
         let start = self.base_graphs_list_offset.unwrap_or(0);
         let base_graphs_list = &self.data[start..start + (SHA1_SIZE * usize::from(self.base_graph_count))];
         base_graphs_list
             .chunks(SHA1_SIZE)
-            .map(|bytes| git_hash::borrowed::Id::try_from(bytes).expect("20 bytes SHA1 to be alright"))
+            .map(|bytes| git_hash::oid::try_from(bytes).expect("20 bytes SHA1 to be alright"))
     }
 
     /// return an iterator over all commits in this file.
@@ -64,13 +64,13 @@ impl File {
     }
 
     /// Return an iterator over all object hashes stored in this file.
-    pub fn iter_ids(&self) -> impl Iterator<Item = git_hash::borrowed::Id<'_>> {
+    pub fn iter_ids(&self) -> impl Iterator<Item = &git_hash::oid> {
         (0..self.num_commits()).map(move |i| self.id_at(file::Position(i)))
     }
 
     /// Translate the given object hash to its position within this file, if present.
     // copied from git-odb/src/pack/index/access.rs
-    pub fn lookup(&self, id: git_hash::borrowed::Id<'_>) -> Option<file::Position> {
+    pub fn lookup(&self, id: &git_hash::oid) -> Option<file::Position> {
         let first_byte = usize::from(id.first_byte());
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
