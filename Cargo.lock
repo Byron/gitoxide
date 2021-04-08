@@ -776,7 +776,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "btoi",
