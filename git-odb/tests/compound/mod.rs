@@ -5,11 +5,6 @@ fn db() -> Db {
     Db::at(fixture_path("objects")).expect("valid object path")
 }
 
-#[test]
-fn size_of_compound_object() {
-    assert_eq!(std::mem::size_of::<git_odb::compound::Object>(), 856);
-}
-
 mod init {
     use crate::compound::db;
 

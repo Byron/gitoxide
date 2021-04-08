@@ -26,7 +26,7 @@ impl compound::Db {
             }
         }
         if let Some(object) = self.loose.locate(id)? {
-            return Ok(Some(compound::Object::Loose(object)));
+            return Ok(Some(compound::Object::Loose(Box::new(object))));
         }
         for alternate in &self.alternates {
             // See 8c5bd095539042d7db0e611460803cdbf172beb0 for a commit that adds polonius and makes the proper version compile.

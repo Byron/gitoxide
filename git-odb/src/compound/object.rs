@@ -4,7 +4,7 @@ use crate::loose;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[allow(missing_docs)]
 pub enum Object<'a> {
-    Loose(loose::Object),
+    Loose(Box<loose::Object>),
     Borrowed(crate::borrowed::Object<'a>),
 }
 
@@ -86,7 +86,7 @@ mod tests {
     fn size_in_memory() {
         assert_eq!(
             std::mem::size_of::<Object<'_>>(),
-            856,
+            32,
             "the object size should not grow unexpectedly"
         );
     }
