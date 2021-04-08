@@ -8,7 +8,7 @@
 pub use bstr;
 
 #[allow(missing_docs)]
-pub mod borrowed;
+mod borrowed;
 pub use borrowed::oid;
 
 #[allow(missing_docs)]
@@ -77,15 +77,5 @@ pub enum Kind {
 impl Default for Kind {
     fn default() -> Self {
         Kind::Sha1
-    }
-}
-
-mod convert {
-    use crate::{borrowed, owned};
-
-    impl<'a> From<borrowed::Id<'a>> for owned::ObjectId {
-        fn from(v: borrowed::Id<'a>) -> Self {
-            owned::ObjectId::from_borrowed_sha1(v.sha1())
-        }
     }
 }
