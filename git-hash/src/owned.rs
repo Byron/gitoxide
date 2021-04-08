@@ -1,5 +1,4 @@
 use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
-use bstr::ByteSlice;
 use std::{borrow::Borrow, fmt, io, ops::Deref};
 
 /// An owned hash identifying objects, most commonly Sha1
@@ -117,6 +116,9 @@ impl Borrow<crate::borrowed::oid> for ObjectId {
 
 impl fmt::Display for ObjectId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.to_sha1_hex().as_bstr())
+        for b in self.as_bytes() {
+            write!(f, "{:02x}", b)?;
+        }
+        Ok(())
     }
 }
