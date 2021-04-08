@@ -154,7 +154,7 @@ impl File {
         let actual = git_hash::ObjectId::new_sha1(hasher.digest());
 
         let expected = self.checksum();
-        if actual.as_ref() == expected {
+        if actual == expected {
             Ok(actual)
         } else {
             Err((actual, expected.into()))
@@ -171,7 +171,7 @@ fn verify_split_chain_filename_hash(path: impl AsRef<Path>, expected: &git_hash:
         .and_then(|filename| filename.strip_suffix(".graph"))
         .and_then(|stem| stem.strip_prefix("graph-"))
         .map_or(Ok(()), |hex| match git_hash::ObjectId::from_hex(hex.as_bytes()) {
-            Ok(actual) if actual.as_ref() == expected => Ok(()),
+            Ok(actual) if actual == expected => Ok(()),
             _ => Err(format!("graph-{}.graph", expected.to_sha1_hex().as_bstr())),
         })
 }

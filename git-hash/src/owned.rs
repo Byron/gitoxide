@@ -86,7 +86,7 @@ impl From<[u8; SIZE_OF_SHA1_DIGEST]> for ObjectId {
     }
 }
 
-impl From<&crate::borrowed::oid> for ObjectId {
+impl From<&crate::oid> for ObjectId {
     fn from(v: &oid) -> Self {
         match v.kind() {
             crate::Kind::Sha1 => ObjectId::from_20_bytes(v.as_bytes()),
@@ -102,13 +102,13 @@ impl Deref for ObjectId {
     }
 }
 
-impl AsRef<crate::borrowed::oid> for ObjectId {
+impl AsRef<crate::oid> for ObjectId {
     fn as_ref(&self) -> &oid {
         oid::try_from(self.as_slice()).expect("sibling type always implements all hashes we support")
     }
 }
 
-impl Borrow<crate::borrowed::oid> for ObjectId {
+impl Borrow<crate::oid> for ObjectId {
     fn borrow(&self) -> &oid {
         self.as_ref()
     }
@@ -120,5 +120,11 @@ impl fmt::Display for ObjectId {
             write!(f, "{:02x}", b)?;
         }
         Ok(())
+    }
+}
+
+impl PartialEq<&crate::oid> for ObjectId {
+    fn eq(&self, other: &&oid) -> bool {
+        self.as_ref() == *other
     }
 }

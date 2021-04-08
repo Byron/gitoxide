@@ -30,7 +30,7 @@ impl loose::Object {
         io::copy(&mut reader, &mut sink)?;
 
         let actual = git_hash::ObjectId::from(sink.hash.digest());
-        if desired != actual.as_ref() {
+        if desired != actual {
             return Err(Error::ChecksumMismatch {
                 desired: desired.into(),
                 actual,

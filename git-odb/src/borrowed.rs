@@ -54,7 +54,7 @@ pub mod verify {
             sink.hash.update(&self.data);
 
             let actual_id = git_hash::ObjectId::from(sink.hash.digest());
-            if desired != actual_id.as_ref() {
+            if desired != actual_id {
                 return Err(Error::ChecksumMismatch {
                     desired: desired.into(),
                     actual: actual_id,

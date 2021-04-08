@@ -1,4 +1,4 @@
-use crate::SIZE_OF_SHA1_DIGEST;
+use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 use std::{convert::TryInto, fmt};
 
 /// A borrowed reference to a hash identifying objects.
@@ -128,6 +128,12 @@ impl fmt::Display for &oid {
             write!(f, "{:02x}", b)?;
         }
         Ok(())
+    }
+}
+
+impl PartialEq<crate::ObjectId> for &oid {
+    fn eq(&self, other: &ObjectId) -> bool {
+        *self == other.as_ref()
     }
 }
 
