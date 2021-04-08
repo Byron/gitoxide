@@ -87,8 +87,8 @@ fn do_git2(hashes: &[String], git_dir: &Path) -> anyhow::Result<u64> {
     let mut bytes = 0u64;
     for hash in hashes {
         let hash = git2::Oid::from_str(&hash)?;
-        let (size, _) = odb.read_header(hash)?;
-        bytes += size as u64;
+        let obj = odb.read(hash)?;
+        bytes += obj.len() as u64;
     }
     Ok(bytes)
 }
@@ -102,8 +102,8 @@ fn do_parallel_git2(hashes: &[String], git_dir: &Path) -> anyhow::Result<u64> {
         |repo, hash| {
             let odb = repo.odb()?;
             let hash = git2::Oid::from_str(&hash)?;
-            let (size, _) = odb.read_header(hash)?;
-            bytes.fetch_add(size as u64, std::sync::atomic::Ordering::Relaxed);
+            let obj = odb.read(hash)?;
+            bytes.fetch_add(obj.len() as u64, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         },
     )?;
