@@ -70,7 +70,8 @@ impl File {
 
     /// Translate the given object hash to its position within this file, if present.
     // copied from git-odb/src/pack/index/access.rs
-    pub fn lookup(&self, id: &git_hash::oid) -> Option<file::Position> {
+    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<file::Position> {
+        let id = id.as_ref();
         let first_byte = usize::from(id.first_byte());
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };

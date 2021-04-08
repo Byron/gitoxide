@@ -15,8 +15,8 @@ impl Graph {
     }
 
     /// Returns the commit matching the given `id`.
-    pub fn commit_by_id(&self, id: &git_hash::oid) -> Option<Commit<'_>> {
-        let r = self.lookup_by_id(id)?;
+    pub fn commit_by_id(&self, id: impl AsRef<git_hash::oid>) -> Option<Commit<'_>> {
+        let r = self.lookup_by_id(id.as_ref())?;
         Some(r.file.commit_at(r.file_pos))
     }
 
@@ -40,8 +40,8 @@ impl Graph {
     }
 
     /// Translate the given `id` to its position in the file.
-    pub fn lookup(&self, id: &git_hash::oid) -> Option<graph::Position> {
-        Some(self.lookup_by_id(id)?.graph_pos)
+    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<graph::Position> {
+        Some(self.lookup_by_id(id.as_ref())?.graph_pos)
     }
 
     /// Returns the number of commits stored in this file.
