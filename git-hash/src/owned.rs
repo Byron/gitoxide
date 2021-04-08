@@ -1,4 +1,4 @@
-use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
+use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST, SIZE_OF_SHA256_DIGEST};
 use std::{borrow::Borrow, fmt, io, ops::Deref};
 
 /// An owned hash identifying objects, most commonly Sha1
@@ -6,44 +6,42 @@ use std::{borrow::Borrow, fmt, io, ops::Deref};
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectId {
     Sha1([u8; SIZE_OF_SHA1_DIGEST]),
+    Sha256([u8; SIZE_OF_SHA256_DIGEST]),
 }
 
 /// Access and conversion
 impl ObjectId {
     /// Returns the kind of hash used in this `Id`
     pub fn kind(&self) -> crate::Kind {
-        crate::Kind::Sha1
+        use crate::Kind;
+        match self {
+            Self::Sha1(_) => Kind::Sha1,
+            Self::Sha256(_) => unimplemented!(),
+        }
     }
     /// Return the raw byte slice representing this hash
     pub fn as_slice(&self) -> &[u8] {
         match self {
             Self::Sha1(b) => b.as_ref(),
+            Self::Sha256(b) => b.as_ref(),
         }
     }
     /// Return the raw mutable byte slice representing this hash
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         match self {
             Self::Sha1(b) => b.as_mut(),
+            Self::Sha256(b) => b.as_mut(),
         }
     }
 
     /// Write ourselves to `out` in hexadecimal notation
     pub fn write_hex_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        out.write_all(&self.to_sha1_hex())
+        write!(out, "{}", self)
     }
 }
 
 /// Sha1 hash specific methods
 impl ObjectId {
-    /// Returns ourselves as slice of 20 bytes.
-    ///
-    /// Panics if this instance is not a sha1 hash.
-    pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
-        match self {
-            Self::Sha1(b) => &b,
-        }
-    }
-
     /// Return ourselves as array of 40 hexadecimal bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
@@ -54,6 +52,7 @@ impl ObjectId {
                 hex::encode_to_slice(b, &mut hex_buf).expect("we can count");
                 hex_buf
             }
+            Self::Sha256(_) => unreachable!("This method is for sha1 specifically"),
         }
     }
 
