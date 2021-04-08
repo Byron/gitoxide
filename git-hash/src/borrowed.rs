@@ -36,7 +36,7 @@ quick_error! {
 impl oid {
     pub fn try_from(value: &[u8]) -> Result<&Self, Error> {
         match value.len() {
-            20 | 32 => Ok(
+            20 => Ok(
                 #[allow(unsafe_code)]
                 unsafe {
                     &*(value as *const [u8] as *const oid)
@@ -59,10 +59,8 @@ impl oid {
 impl oid {
     /// The kind of hash used for this Digest
     pub fn kind(&self) -> crate::Kind {
-        use crate::Kind;
         match self.bytes.len() {
-            20 => Kind::Sha1,
-            32 => unimplemented!(),
+            20 => crate::Kind::Sha1,
             _ => unreachable!("creating this instance is checked and fails on unknown lengths"),
         }
     }
@@ -168,7 +166,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {
                         return Err(__err);
                     }
                 };
-                Ok(oid::try_from(__field0).expect("exactly 20 or 32 bytes"))
+                Ok(oid::try_from(__field0).expect("exactly 20 bytes"))
             }
             #[inline]
             fn visit_seq<__A>(self, mut __seq: __A) -> std::result::Result<Self::Value, __A::Error>
@@ -189,7 +187,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {
                         ));
                     }
                 };
-                Ok(oid::try_from(__field0).expect("exactly 20 or 32 bytes"))
+                Ok(oid::try_from(__field0).expect("exactly 20 bytes"))
             }
         }
         serde::Deserializer::deserialize_newtype_struct(

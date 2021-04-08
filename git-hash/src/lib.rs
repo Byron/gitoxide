@@ -65,8 +65,6 @@ pub mod decode {
 
 /// The size of a SHA1 hash digest in bytes
 pub const SIZE_OF_SHA1_DIGEST: usize = 20;
-/// The size of a SHA256 hash digest in bytes
-pub const SIZE_OF_SHA256_DIGEST: usize = 32;
 
 /// Denotes the kind of function to produce a `Id`
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -79,15 +77,5 @@ pub enum Kind {
 impl Default for Kind {
     fn default() -> Self {
         Kind::Sha1
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn size_of_object_id() {
-        assert_eq!(std::mem::size_of::<ObjectId>(), 33);
     }
 }
