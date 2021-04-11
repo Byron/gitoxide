@@ -23,6 +23,7 @@ impl DecodeEntry for Noop {
 }
 
 /// Various implementations of [`DecodeEntry`] using least-recently-used algorithms.
+#[cfg(feature = "pack-cache-lru-static")]
 pub mod lru {
     use super::DecodeEntry;
 
