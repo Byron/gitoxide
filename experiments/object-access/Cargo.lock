@@ -236,7 +236,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "crc",
  "git-hash",
@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -271,7 +271,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "btoi",
  "byteorder",

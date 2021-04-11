@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 atty = "0.2"
 anyhow = "1"
-git-odb = { version = "0.9", path = "../../git-odb", features = ["polonius"]  }
+git-odb = { version = "0.10", path = "../../git-odb", features = ["polonius"]  }
 git-hash = { version = "0.2", path = "../../git-hash" }
 git2 = "0.13"
 rayon = "1.5.0"
