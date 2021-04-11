@@ -128,8 +128,8 @@ pub enum Header {
     /// The object is a tag
     Tag,
     /// Describes a delta-object which needs to be applied to a base. The base object is identified by the `base_id` field
-    /// which most commonly is found within the parent repository.
-    /// Most commonly used for thin-packs when receiving pack files from the server.
+    /// which is found within the parent repository.
+    /// Most commonly used for **thin-packs** when receiving pack files from the server.
     ///
     /// # Note
     /// This could also be an object within this pack if the LSB encoded offset would be larger than 20 bytes, which is unlikely to
