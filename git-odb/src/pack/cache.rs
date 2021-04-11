@@ -22,7 +22,7 @@ impl DecodeEntry for Noop {
     }
 }
 
-/// A cache using a least-recently-used implementation capable of storing the 64 most recent objects.
+/// The data stored in the [`Lru`] cache.
 struct LruEntry {
     offset: u64,
     data: Vec<u8>,
@@ -30,7 +30,9 @@ struct LruEntry {
     compressed_size: usize,
 }
 
-/// A least-recently-used cache to accelerate pack traversal
+/// A cache using a least-recently-used implementation capable of storing the `SIZE` most recent objects.
+/// The cache must be small as the search is 'naive' and the underlying data structure is a linked list.
+/// Values of 64 seem to improve performance.
 #[derive(Default)]
 pub struct Lru<const SIZE: usize>(uluru::LRUCache<LruEntry, SIZE>);
 

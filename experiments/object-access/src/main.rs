@@ -10,7 +10,7 @@ use std::{
     time::Instant,
 };
 
-const GITOXIDE_CACHE_SIZE: usize = 512;
+const GITOXIDE_CACHE_SIZE: usize = 64;
 
 fn main() -> anyhow::Result<()> {
     if atty::is(atty::Stream::Stdin) {
