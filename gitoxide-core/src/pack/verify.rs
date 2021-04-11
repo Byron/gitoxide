@@ -74,7 +74,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
 #[allow(clippy::large_enum_variant)]
 enum EitherCache<const SIZE: usize> {
     Left(pack::cache::Noop),
-    Right(pack::cache::Lru<SIZE>),
+    Right(pack::cache::lru::StaticLinkedList<SIZE>),
 }
 
 impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
@@ -142,7 +142,7 @@ where
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::Noop)
                 } else {
-                    EitherCache::Right(pack::cache::Lru::<64>::default())
+                    EitherCache::Right(pack::cache::lru::StaticLinkedList::<64>::default())
                 }
             };
 

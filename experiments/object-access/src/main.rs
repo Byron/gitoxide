@@ -153,7 +153,7 @@ fn do_gitoxide_with_cache(hashes: &[String], objects_dir: &Path) -> anyhow::Resu
     let odb = git_odb::compound::Db::at(objects_dir)?;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
-    let mut lru_cache = git_odb::pack::cache::Lru::<GITOXIDE_CACHE_SIZE>::default();
+    let mut lru_cache = git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_CACHE_SIZE>::default();
     for hash in hashes {
         let hash: git_hash::ObjectId = hash.parse()?;
         let obj = odb
@@ -185,7 +185,12 @@ fn do_parallel_gitoxide_with_cache(hashes: &[String], objects_dir: &Path) -> any
     let odb = git_odb::compound::Db::at(objects_dir)?;
     let bytes = std::sync::atomic::AtomicU64::default();
     hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
-        || (Vec::new(), git_odb::pack::cache::Lru::<GITOXIDE_CACHE_SIZE>::default()),
+        || {
+            (
+                Vec::new(),
+                git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_CACHE_SIZE>::default(),
+            )
+        },
         |(buf, cache), hash| {
             let hash: git_hash::ObjectId = hash.parse()?;
             let obj = odb.locate_with_cache(hash, buf, cache)?.expect("object must exist");
