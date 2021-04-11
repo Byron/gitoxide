@@ -78,6 +78,8 @@ check: ## Build all code in suitable configurations
 				&& cargo check
 	cd git-object && cargo check --all-features
 	cd git-odb && cargo check --features serde1 \
+			   && cargo check --features pack-cache-lru-static \
+			   && cargo check --features pack-cache-lru-dynamic \
 			   && cargo check
 	cd git-packetline && cargo check --all-features \
 			   && cargo check

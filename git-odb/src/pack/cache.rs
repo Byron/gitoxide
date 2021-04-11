@@ -23,44 +23,96 @@ impl DecodeEntry for Noop {
 }
 
 /// Various implementations of [`DecodeEntry`] using least-recently-used algorithms.
-#[cfg(feature = "pack-cache-lru-static")]
+#[cfg(any(feature = "pack-cache-lru-dynamic", feature = "pack-cache-lru-static"))]
 pub mod lru {
     use super::DecodeEntry;
 
     /// The data stored in the [`Lru`] cache.
     struct Entry {
+        #[cfg(feature = "pack-cache-lru-static")]
         offset: u64,
         data: Vec<u8>,
         kind: git_object::Kind,
         compressed_size: usize,
     }
 
-    /// A cache using a least-recently-used implementation capable of storing the `SIZE` most recent objects.
-    /// The cache must be small as the search is 'naive' and the underlying data structure is a linked list.
-    /// Values of 64 seem to improve performance.
-    #[derive(Default)]
-    pub struct StaticLinkedList<const SIZE: usize>(uluru::LRUCache<Entry, SIZE>);
+    #[cfg(feature = "pack-cache-lru-dynamic")]
+    mod memory {
+        use super::{DecodeEntry, Entry};
 
-    impl<const SIZE: usize> DecodeEntry for StaticLinkedList<SIZE> {
-        fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
-            self.0.insert(Entry {
-                offset,
-                data: Vec::from(data),
-                kind,
-                compressed_size,
-            })
+        impl memory_lru::ResidentSize for Entry {
+            fn resident_size(&self) -> usize {
+                self.data.len()
+            }
         }
 
-        fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
-            self.0.lookup(|e: &mut Entry| {
-                if e.offset == offset {
+        /// An LRU cache with hash map backing and an eviction rule based on the memory usage for object data in bytes.
+        pub struct MemoryCappedHashmap(memory_lru::MemoryLruCache<u64, Entry>);
+
+        impl MemoryCappedHashmap {
+            /// Return a new instance which evicts least recently used items if it uses more than `memory_cap_in_bytes`
+            /// object data.
+            pub fn new(memory_cap_in_bytes: usize) -> MemoryCappedHashmap {
+                MemoryCappedHashmap(memory_lru::MemoryLruCache::new(memory_cap_in_bytes))
+            }
+        }
+
+        impl DecodeEntry for MemoryCappedHashmap {
+            fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
+                self.0.insert(
+                    offset,
+                    Entry {
+                        data: Vec::from(data),
+                        kind,
+                        compressed_size,
+                    },
+                )
+            }
+
+            fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
+                self.0.get(&offset).map(|e| {
                     out.resize(e.data.len(), 0);
                     out.copy_from_slice(&e.data);
-                    Some((e.kind, e.compressed_size))
-                } else {
-                    None
-                }
-            })
+                    (e.kind, e.compressed_size)
+                })
+            }
         }
     }
+    #[cfg(feature = "pack-cache-lru-dynamic")]
+    pub use memory::MemoryCappedHashmap;
+
+    #[cfg(feature = "pack-cache-lru-static")]
+    mod _static {
+        use super::{DecodeEntry, Entry};
+        /// A cache using a least-recently-used implementation capable of storing the `SIZE` most recent objects.
+        /// The cache must be small as the search is 'naive' and the underlying data structure is a linked list.
+        /// Values of 64 seem to improve performance.
+        #[derive(Default)]
+        pub struct StaticLinkedList<const SIZE: usize>(uluru::LRUCache<Entry, SIZE>);
+
+        impl<const SIZE: usize> DecodeEntry for StaticLinkedList<SIZE> {
+            fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
+                self.0.insert(Entry {
+                    offset,
+                    data: Vec::from(data),
+                    kind,
+                    compressed_size,
+                })
+            }
+
+            fn get(&mut self, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
+                self.0.lookup(|e: &mut Entry| {
+                    if e.offset == offset {
+                        out.resize(e.data.len(), 0);
+                        out.copy_from_slice(&e.data);
+                        Some((e.kind, e.compressed_size))
+                    } else {
+                        None
+                    }
+                })
+            }
+        }
+    }
+    #[cfg(feature = "pack-cache-lru-static")]
+    pub use _static::StaticLinkedList;
 }

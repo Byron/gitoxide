@@ -254,7 +254,10 @@ The library powering the command-line interface.
   * If set, a code path will be provided which as of 2021-04-04 only works when using polonius.
     * _Activate_ using `mkdir -p .cargo && echo $'[build]\nrustflags = "-C target-cpu=native -Zpolonius"' > .cargo/config.toml`.
 * **pack-cache-lru-static**
-  * Provide an allocation-free LRU cache for packs
+  * Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
+    for the LRU-cache itself low.
+* **pack-cache-lru-dynamic**
+    * Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
     
 ### git-features
 
