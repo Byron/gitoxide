@@ -10,7 +10,8 @@ use std::{
     time::Instant,
 };
 
-const GITOXIDE_CACHE_SIZE: usize = 64;
+const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
+const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 50_000_000;
 
 fn main() -> anyhow::Result<()> {
     if atty::is(atty::Stream::Stdin) {
@@ -45,7 +46,7 @@ fn main() -> anyhow::Result<()> {
     let bytes = do_gitoxide(
         &hashes,
         &repo_objects_dir,
-        git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_CACHE_SIZE>::default,
+        git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
     )?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: std::time::Duration| hashes.len() as f32 / elapsed.as_secs_f32();
@@ -56,11 +57,24 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
+    let bytes = do_gitoxide(&hashes, &repo_objects_dir, || {
+        git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
+    })?;
+    let elapsed = start.elapsed();
+    let objs_per_sec = |elapsed: std::time::Duration| hashes.len() as f32 / elapsed.as_secs_f32();
+    println!(
+        "gitoxide (cache = {:.0}MB: confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
     let start = Instant::now();
     let bytes = do_gitoxide_in_parallel(
         &hashes,
         &repo_objects_dir,
-        git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_CACHE_SIZE>::default,
+        git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
     )?;
     let elapsed = start.elapsed();
     println!(

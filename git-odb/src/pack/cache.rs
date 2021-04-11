@@ -27,18 +27,14 @@ impl DecodeEntry for Noop {
 pub mod lru {
     use super::DecodeEntry;
 
-    /// The data stored in the [`Lru`] cache.
-    struct Entry {
-        #[cfg(feature = "pack-cache-lru-static")]
-        offset: u64,
-        data: Vec<u8>,
-        kind: git_object::Kind,
-        compressed_size: usize,
-    }
-
     #[cfg(feature = "pack-cache-lru-dynamic")]
     mod memory {
-        use super::{DecodeEntry, Entry};
+        use super::DecodeEntry;
+        struct Entry {
+            data: Vec<u8>,
+            kind: git_object::Kind,
+            compressed_size: usize,
+        }
 
         impl memory_lru::ResidentSize for Entry {
             fn resident_size(&self) -> usize {
@@ -83,7 +79,14 @@ pub mod lru {
 
     #[cfg(feature = "pack-cache-lru-static")]
     mod _static {
-        use super::{DecodeEntry, Entry};
+        use super::DecodeEntry;
+        struct Entry {
+            offset: u64,
+            data: Vec<u8>,
+            kind: git_object::Kind,
+            compressed_size: usize,
+        }
+
         /// A cache using a least-recently-used implementation capable of storing the `SIZE` most recent objects.
         /// The cache must be small as the search is 'naive' and the underlying data structure is a linked list.
         /// Values of 64 seem to improve performance.
