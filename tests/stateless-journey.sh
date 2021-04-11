@@ -544,6 +544,13 @@ snapshot="$snapshot/plumbing"
         WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
         expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify --statistics "$PACK_INDEX_FILE"
       }
+
+      (with "and the less-memory algorithm"
+        it "verifies the pack index successfully and with desired output" && {
+          WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify --algorithm less-memory --statistics "$PACK_INDEX_FILE"
+        }
+      )
     )
     (with "decode"
       it "verifies the pack index successfully and with desired output, and decodes all objects" && {

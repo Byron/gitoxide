@@ -71,7 +71,6 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 enum EitherCache<const SIZE: usize> {
     Left(pack::cache::Noop),
     Right(pack::cache::lru::StaticLinkedList<SIZE>),
@@ -137,12 +136,17 @@ where
                     e
                 })
                 .ok();
-            let cache = || -> EitherCache<64> {
-                if output_statistics.is_some() {
-                    // turn off acceleration as we need to see entire chains all the time
-                    EitherCache::Left(pack::cache::Noop)
+            const CACHE_SIZE: usize = 64;
+            let cache = || -> EitherCache<CACHE_SIZE> {
+                if matches!(algorithm, Algorithm::LessMemory) {
+                    if output_statistics.is_some() {
+                        // turn off acceleration as we need to see entire chains all the time
+                        EitherCache::Left(pack::cache::Noop)
+                    } else {
+                        EitherCache::Right(pack::cache::lru::StaticLinkedList::<CACHE_SIZE>::default())
+                    }
                 } else {
-                    EitherCache::Right(pack::cache::lru::StaticLinkedList::<64>::default())
+                    EitherCache::Left(pack::cache::Noop)
                 }
             };
 
