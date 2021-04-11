@@ -488,8 +488,6 @@ dependencies = [
 [[package]]
 name = "memory-lru"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beeb98b3d1ed2c0054bd81b5ba949a0243c3ccad751d45ea898fa8059fa2860a"
 dependencies = [
  "lru",
 ]
