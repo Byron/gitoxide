@@ -222,7 +222,7 @@ pub fn pack_or_pack_index(
                 }
             }
         },
-        pack::cache::Lru::default,
+        pack::cache::Lru::<64>::default,
         pack::index::traverse::Options {
             algorithm,
             thread_limit,

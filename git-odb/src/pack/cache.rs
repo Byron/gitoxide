@@ -32,9 +32,9 @@ struct LruEntry {
 
 /// A least-recently-used cache to accelerate pack traversal
 #[derive(Default)]
-pub struct Lru(uluru::LRUCache<[uluru::Entry<LruEntry>; 64]>);
+pub struct Lru<const SIZE: usize>(uluru::LRUCache<LruEntry, SIZE>);
 
-impl DecodeEntry for Lru {
+impl<const SIZE: usize> DecodeEntry for Lru<SIZE> {
     fn put(&mut self, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
         self.0.insert(LruEntry {
             offset,

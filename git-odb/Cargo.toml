@@ -30,7 +30,7 @@ filebuffer = "0.4.0"
 byteorder = "1.2.3"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 btoi = "0.4.2"
-uluru = "1.0.0"
+uluru = "2.0.0"
 itoa = "0.4.6"
 bytesize = "1.0.1"
 tempfile = "3.1.0"

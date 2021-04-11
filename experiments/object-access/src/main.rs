@@ -10,11 +10,13 @@ use std::{
     time::Instant,
 };
 
+const GITOXIDE_CACHE_SIZE: usize = 512;
+
 fn main() -> anyhow::Result<()> {
     if atty::is(atty::Stream::Stdin) {
         anyhow::bail!("Need object hashes on stdin, one per line");
     }
-    let mut repo_git_dir = std::env::args()
+    let repo_git_dir = std::env::args()
         .skip(1)
         .next()
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
@@ -35,12 +37,57 @@ fn main() -> anyhow::Result<()> {
     println!("{} objects (collected in {:?}", hashes.len(), elapsed);
 
     let start = Instant::now();
-    let bytes = do_git2(hashes.as_slice(), &repo_git_dir)?;
+    let repo_objects_dir = {
+        let mut d = repo_git_dir.clone();
+        d.push("objects");
+        d
+    };
+    let bytes = do_gitoxide_with_cache(hashes.as_slice(), &repo_objects_dir)?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: std::time::Duration| hashes.len() as f32 / elapsed.as_secs_f32();
+    println!(
+        "gitoxide: confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_parallel_gitoxide_with_cache(hashes.as_slice(), &repo_objects_dir)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide: confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_git2(hashes.as_slice(), &repo_git_dir)?;
+    let elapsed = start.elapsed();
 
     println!(
         "libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_gitoxide_uncached(hashes.as_slice(), &repo_objects_dir)?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_parallel_gitoxide_uncached(hashes.as_slice(), &repo_objects_dir)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
         bytes,
         elapsed,
         objs_per_sec(elapsed)
@@ -51,37 +98,6 @@ fn main() -> anyhow::Result<()> {
     let elapsed = start.elapsed();
     println!(
         "parallel libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    repo_git_dir.push("objects");
-    let bytes = do_gitoxide_uncached(hashes.as_slice(), &repo_git_dir)?;
-    let elapsed = start.elapsed();
-    println!(
-        "gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_gitoxide_with_cache(hashes.as_slice(), &repo_git_dir)?;
-    let elapsed = start.elapsed();
-    println!(
-        "gitoxide: confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_parallel_gitoxide_uncached(hashes.as_slice(), &repo_git_dir)?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
         bytes,
         elapsed,
         objs_per_sec(elapsed)
@@ -137,7 +153,7 @@ fn do_gitoxide_with_cache(hashes: &[String], objects_dir: &Path) -> anyhow::Resu
     let odb = git_odb::compound::Db::at(objects_dir)?;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
-    let mut lru_cache = git_odb::pack::cache::Lru::default();
+    let mut lru_cache = git_odb::pack::cache::Lru::<GITOXIDE_CACHE_SIZE>::default();
     for hash in hashes {
         let hash: git_hash::ObjectId = hash.parse()?;
         let obj = odb
@@ -160,6 +176,23 @@ fn do_parallel_gitoxide_uncached(hashes: &[String], objects_dir: &Path) -> anyho
             bytes.fetch_add(obj.size() as u64, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         })?;
+
+    Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
+}
+
+fn do_parallel_gitoxide_with_cache(hashes: &[String], objects_dir: &Path) -> anyhow::Result<u64> {
+    use rayon::prelude::*;
+    let odb = git_odb::compound::Db::at(objects_dir)?;
+    let bytes = std::sync::atomic::AtomicU64::default();
+    hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
+        || (Vec::new(), git_odb::pack::cache::Lru::<GITOXIDE_CACHE_SIZE>::default()),
+        |(buf, cache), hash| {
+            let hash: git_hash::ObjectId = hash.parse()?;
+            let obj = odb.locate_with_cache(hash, buf, cache)?.expect("object must exist");
+            bytes.fetch_add(obj.size() as u64, std::sync::atomic::Ordering::Relaxed);
+            Ok(())
+        },
+    )?;
 
     Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }

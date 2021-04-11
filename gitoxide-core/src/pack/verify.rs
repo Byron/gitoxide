@@ -72,12 +72,12 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
 }
 
 #[allow(clippy::large_enum_variant)]
-enum EitherCache {
+enum EitherCache<const SIZE: usize> {
     Left(pack::cache::Noop),
-    Right(pack::cache::Lru),
+    Right(pack::cache::Lru<SIZE>),
 }
 
-impl pack::cache::DecodeEntry for EitherCache {
+impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
     fn put(&mut self, offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
         match self {
             EitherCache::Left(v) => v.put(offset, data, kind, compressed_size),
@@ -137,12 +137,12 @@ where
                     e
                 })
                 .ok();
-            let cache = || -> EitherCache {
+            let cache = || -> EitherCache<64> {
                 if output_statistics.is_some() {
                     // turn off acceleration as we need to see entire chains all the time
                     EitherCache::Left(pack::cache::Noop)
                 } else {
-                    EitherCache::Right(pack::cache::Lru::default())
+                    EitherCache::Right(pack::cache::Lru::<64>::default())
                 }
             };
 
