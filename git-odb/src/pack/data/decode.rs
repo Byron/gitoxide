@@ -195,7 +195,7 @@ impl File {
         // Find the first full base, either an undeltified object in the pack or a reference to another object.
         let mut total_delta_data_size: u64 = 0;
         while cursor.header.is_delta() {
-            if let Some((kind, packed_size)) = cache.get(cursor.data_offset, out) {
+            if let Some((kind, packed_size)) = cache.get(self.id, cursor.data_offset, out) {
                 base_buffer_size = Some(out.len());
                 object_kind = Some(kind);
                 // If the input entry is a cache hit, keep the packed size as it must be returned.
@@ -327,6 +327,7 @@ impl File {
                 object_kind = base_entry.header.to_kind();
                 let packed_size = self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
                 cache.put(
+                    self.id,
                     base_entry.data_offset,
                     &out[..base_entry
                         .decompressed_size
@@ -385,7 +386,13 @@ impl File {
 
         let object_kind = object_kind.expect("a base object as root of any delta chain that we are here to resolve");
         let consumed_input = consumed_input.expect("at least one decompressed delta object");
-        cache.put(first_entry.data_offset, out.as_slice(), object_kind, consumed_input);
+        cache.put(
+            self.id,
+            first_entry.data_offset,
+            out.as_slice(),
+            object_kind,
+            consumed_input,
+        );
         Ok(Outcome {
             kind: object_kind,
             // technically depending on the cache, the chain size is not correct as it might

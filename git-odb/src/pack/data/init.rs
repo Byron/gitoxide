@@ -34,6 +34,7 @@ impl TryFrom<&Path> for data::File {
         Ok(data::File {
             data,
             path: path.to_owned(),
+            id: git_features::hash::crc32(path.as_os_str().to_string_lossy().as_bytes()),
             version: kind,
             num_objects,
         })
