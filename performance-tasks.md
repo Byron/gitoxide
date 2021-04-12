@@ -13,6 +13,9 @@
       * This should work once the `asm` feature can be enabled in the `sha-1` crate, which currently fails but is tracked [in this issue](https://github.com/RustCrypto/asm-hashes/issues/28).
         * If it's not fast enough, one might hope that ARM8 instructions can improve performance, but right now they [aren't available](https://github.com/rust-lang/stdarch/issues/1055#issuecomment-803737796).
         * Maybe the path forward for that crate is to [use system or openssl dylibs](https://github.com/RustCrypto/asm-hashes/issues/5).
+* [ ] ~~`pack::cache::lru::Memory` all copy input data in individual allocations. Could a pre-allocated arena or slab be faster?~~
+  * Probably not, as allocation performance might not be the issue here. Even though there definitely is a lot of effectively useless copying 
+    of data and deallocation happening if caches are not used after all.
 * [ ] Add more control over the amount of memory used for the `less-memory` algorithm of `pack-verify` to increase cache hit rate at the cost of memory.
   Note that depending on this setting, it might not be needed anymore to iterated over sorted offsets, freeing 150MB of memory in the process
   that could be used for the improved cache. With the current cache and no sorted offsets, the time nearly triples.
