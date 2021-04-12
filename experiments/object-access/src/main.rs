@@ -18,8 +18,7 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("Need object hashes on stdin, one per line");
     }
     let repo_git_dir = std::env::args()
-        .skip(1)
-        .next()
+        .nth(1)
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
         .and_then(|p| {
             let p = PathBuf::from(p).canonicalize()?;

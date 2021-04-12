@@ -13,7 +13,6 @@ doctest = false
 
 [features]
 default = ["flate2/zlib-ng-compat"]
-polonius = []
 pack-cache-lru-static = ["uluru"]
 pack-cache-lru-dynamic = ["memory-lru"]
 serde1 = ["serde", "git-object/serde1"]

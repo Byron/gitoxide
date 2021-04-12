@@ -1,11 +1,5 @@
 ## Potential for improving performance
 
-### NLL/Borrowcheck limitation git-odb::CompoundDb cause half-of-possible performance during object lookup
-
-* Once polonius is available with production-ready performance, we have to [make this code less wasteful](https://github.com/Byron/gitoxide/blob/b125c763c5d628c397dce9a5d085fbf123ce1f29/git-odb/src/compound.rs#L42)
- * See https://github.com/rust-lang/rust/issues/45402 for a discussion and more links
- * Here is [a commit](https://github.com/Byron/gitoxide/commit/8c5bd095539042d7db0e611460803cdbf172beb0) that sets up polonius, which greatly degrades borrow check times (as of 2020-09-15)
-
 ### Pack Decoding
 
 * [ ] On **ARM64 on MacOS** the SHA1 implementation of the [`sha-1` crate](https://github.com/RustCrypto/hashes) is capped at about 550MB/s, half the speed of what I saw on Intel and about 50% slower than what's implemented in `libcorecrypto.dylib`. Get that fast and the decoding stage will be able
