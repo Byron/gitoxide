@@ -176,7 +176,7 @@ fn do_gitoxide<C>(hashes: &[String], objects_dir: &Path, new_cache: impl FnOnce(
 where
     C: git_odb::pack::cache::DecodeEntry,
 {
-    let odb = git_odb::compound::Db::at(objects_dir)?;
+    let odb = git_odb::linked::Db::at(objects_dir)?;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
     let mut cache = new_cache();
@@ -197,7 +197,7 @@ where
     C: git_odb::pack::cache::DecodeEntry,
 {
     use rayon::prelude::*;
-    let odb = git_odb::compound::Db::at(objects_dir)?;
+    let odb = git_odb::linked::Db::at(objects_dir)?;
     let bytes = std::sync::atomic::AtomicU64::default();
     hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
         || (Vec::new(), new_cache()),
