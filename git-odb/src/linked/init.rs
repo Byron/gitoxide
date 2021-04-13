@@ -12,7 +12,9 @@ pub enum Error {
 }
 
 impl linked::Db {
-    #[allow(missing_docs)]
+    /// Instantiate an instance at the given `objects_directory`, commonly `.git/objects`.
+    ///
+    /// _git alternate_ files will be traversed to build a chain of [`compound::Db`] instances.
     pub fn at(objects_directory: impl Into<PathBuf>) -> Result<Self, Error> {
         let mut dbs = vec![compound::Db::at(objects_directory.into())?];
         for object_path in alternate::resolve(dbs[0].loose.path.clone())?.into_iter() {
