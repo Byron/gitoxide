@@ -1,5 +1,11 @@
 ## Potential for improving performance
 
+### NLL/Borrowcheck limitation git-odb::(compound|linked)::Db cause additional code complexity
+
+* Once polonius is available with production-ready performance, we should simplify the `locate(…)` code in `(compound|linked)::Db()` respectively.
+  Currently these first have to obtain an index, and when found, access the data to avoid having the borrowchecker fail to understand our buffer
+  usage within a loop correctly. Performance itself it probably not reasonably affected.
+
 ### Pack Decoding
 
 * [ ] On **ARM64 on MacOS** the SHA1 implementation of the [`sha-1` crate](https://github.com/RustCrypto/hashes) is capped at about 550MB/s, half the speed of what I saw on Intel and about 50% slower than what's implemented in `libcorecrypto.dylib`. Get that fast and the decoding stage will be able

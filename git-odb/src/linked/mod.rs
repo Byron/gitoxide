@@ -8,3 +8,6 @@ pub struct Db {
 
 ///
 pub mod init;
+
+///
+pub mod locate;

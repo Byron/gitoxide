@@ -10,6 +10,11 @@ pub enum Error {
     Pack(#[from] pack::data::decode::Error),
 }
 
+pub(crate) enum LooseOrPack {
+    Loose(Box<loose::Object>),
+    Packed(usize, u32),
+}
+
 impl compound::Db {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
@@ -31,5 +36,33 @@ impl compound::Db {
             return Ok(Some(compound::Object::Loose(Box::new(object))));
         }
         Ok(None)
+    }
+
+    /// Internal-use function to look up a packed object index or loose object.
+    /// Used to avoid double-lookups in linked::Db::locate.
+    /// (The polonius borrow-checker would support this via the locate
+    /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
+    /// once polonius is stable.)
+    pub(crate) fn internal_locate(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<LooseOrPack>, Error> {
+        let id = id.as_ref();
+        for (pack_idx, pack) in self.packs.iter().enumerate() {
+            if let Some(idx) = pack.internal_locate_index(id) {
+                return Ok(Some(LooseOrPack::Packed(pack_idx, idx)));
+            }
+        }
+        if let Some(object) = self.loose.locate(id)? {
+            return Ok(Some(LooseOrPack::Loose(Box::new(object))));
+        }
+        Ok(None)
+    }
+
+    pub(crate) fn internal_get_packed_object_by_index<'a>(
+        &self,
+        pack_index: usize,
+        object_index: u32,
+        buffer: &'a mut Vec<u8>,
+        pack_cache: &mut impl pack::cache::DecodeEntry,
+    ) -> Result<crate::borrowed::Object<'a>, pack::data::decode::Error> {
+        self.packs[pack_index].internal_get_object_by_index(object_index, buffer, pack_cache)
     }
 }
