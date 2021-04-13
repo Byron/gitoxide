@@ -42,7 +42,7 @@ pub enum Error {
 /// `./info/alternates` file.
 /// If no alternate object database was resolved, the reesulting `Vec` is empty, and it is not an error
 /// if there are no alternates, or if there is a cycle while there is at least one valid alternate.
-pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db>, Error> {
+pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Error> {
     let relative_base = objects_directory.into();
     let mut dirs = vec![(0, relative_base.clone())];
     let mut out = Vec::new();
@@ -60,15 +60,12 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<compound::Db
                     dirs.push((depth + 1, path));
                 }
             }
-            Err(err) if err.kind() == io::ErrorKind::NotFound => {
-                // Only resolve for repositories with at least one link, otherwise the line below causes infinite recursion
-                if depth != 0 {
-                    // The tail of a chain doesn't have alternates, and thus is the real deal
-                    out.push(compound::Db::at(dir)?);
-                }
-            }
+            Err(err) if err.kind() == io::ErrorKind::NotFound => {}
             Err(err) => return Err(err.into()),
         };
+        if depth != 0 {
+            out.push(dir);
+        }
     }
 
     if out.is_empty() && seen.len() > 1 {

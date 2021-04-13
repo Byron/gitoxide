@@ -60,7 +60,7 @@ fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
     let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n"))?;
     let alternates = alternate::resolve(from)?;
     assert_eq!(alternates.len(), 1);
-    assert_eq!(alternates[0].loose.path, to);
+    assert_eq!(alternates[0], to);
     Ok(())
 }
 
