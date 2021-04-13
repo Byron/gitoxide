@@ -182,9 +182,7 @@ where
     let mut cache = new_cache();
     for hash in hashes {
         let hash: git_hash::ObjectId = hash.parse()?;
-        let obj = odb
-            .locate_with_cache(hash, &mut buf, &mut cache)?
-            .expect("object must exist");
+        let obj = odb.locate(hash, &mut buf, &mut cache)?.expect("object must exist");
         bytes += obj.size() as u64;
     }
     Ok(bytes)
@@ -205,7 +203,7 @@ where
         || (Vec::new(), new_cache()),
         |(buf, cache), hash| {
             let hash: git_hash::ObjectId = hash.parse()?;
-            let obj = odb.locate_with_cache(hash, buf, cache)?.expect("object must exist");
+            let obj = odb.locate(hash, buf, cache)?.expect("object must exist");
             bytes.fetch_add(obj.size() as u64, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         },

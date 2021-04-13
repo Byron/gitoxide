@@ -14,7 +14,7 @@ impl compound::Db {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
     /// Use a cache to accelerate pack access, or [`pack::cache::Noop`] to disable any caching.
-    pub fn locate_with_cache<'a>(
+    pub fn locate<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
