@@ -40,8 +40,9 @@ pub enum Error {
 
 /// Given an objects directory, try to resolve alternate object directories possibly located in the
 /// `./info/alternates` file.
-/// If no alternate object database was resolved, the reesulting `Vec` is empty, and it is not an error
-/// if there are no alternates, or if there is a cycle while there is at least one valid alternate.
+/// If no alternate object database was resolved, the resulting `Vec` is empty, and it is not an error
+/// if there are no alternates.
+/// It is an error once a repository is seen again as it would lead to a cycle.
 pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Error> {
     let relative_base = objects_directory.into();
     let mut dirs = vec![(0, relative_base.clone())];
@@ -54,7 +55,7 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Er
                     let path = relative_base.join(path);
                     let path_canonicalized = path.canonicalize()?;
                     if seen.contains(&path_canonicalized) {
-                        continue;
+                        return Err(Error::Cycle(seen));
                     }
                     seen.push(path_canonicalized);
                     dirs.push((depth + 1, path));
@@ -66,10 +67,6 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Er
         if depth != 0 {
             out.push(dir);
         }
-    }
-
-    if out.is_empty() && seen.len() > 1 {
-        return Err(Error::Cycle(seen));
     }
     Ok(out)
 }

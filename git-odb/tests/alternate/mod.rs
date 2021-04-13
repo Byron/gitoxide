@@ -46,7 +46,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
                 vec!["a", "b"]
             );
         }
-        _ => unreachable!("should be a specific kind of error"),
+        res => unreachable!("should be a specific kind of error: {:?}", res),
     }
     Ok(())
 }
