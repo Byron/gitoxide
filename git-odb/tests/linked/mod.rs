@@ -7,11 +7,14 @@ fn db() -> Db {
 
 mod locate {
     use crate::{hex_to_id, linked::db};
-    use git_odb::linked::Db;
+    use git_odb::{linked::Db, pack};
 
     fn can_locate(db: &Db, hex_id: &str) {
         let mut buf = vec![];
-        assert!(db.locate(hex_to_id(hex_id), &mut buf).expect("no read error").is_some());
+        assert!(db
+            .locate(hex_to_id(hex_id), &mut buf, &mut pack::cache::Noop)
+            .expect("no read error")
+            .is_some());
     }
 
     #[test]
