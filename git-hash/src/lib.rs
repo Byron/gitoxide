@@ -22,7 +22,7 @@ pub mod decode {
     use std::str::FromStr;
 
     quick_error! {
-        /// An error returned by [`Id::from_40_bytes_in_hex()`]
+        /// An error returned by [`ObjectId::from_40_bytes_in_hex()`]
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -36,7 +36,7 @@ pub mod decode {
     impl ObjectId {
         /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
         ///
-        /// Such a buffer can be obtained using [`write_hex_to(buffer)`][Id::write_hex_to()]
+        /// Such a buffer can be obtained using [`write_hex_to(buffer)`][ObjectId::write_hex_to()]
         pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
             use hex::FromHex;
             match buffer.len() {
