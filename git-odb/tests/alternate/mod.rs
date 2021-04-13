@@ -4,7 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-fn alternate(objects_at: impl Into<PathBuf>, objects_to: impl Into<PathBuf>) -> Result<(PathBuf, PathBuf), io::Error> {
+pub fn alternate(
+    objects_at: impl Into<PathBuf>,
+    objects_to: impl Into<PathBuf>,
+) -> Result<(PathBuf, PathBuf), io::Error> {
     alternate_with(objects_at, objects_to, None)
 }
 

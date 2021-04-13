@@ -40,8 +40,8 @@ pub enum Error {
 
 /// Given an objects directory, try to resolve alternate object directories possibly located in the
 /// `./info/alternates` file.
-/// If no alternate object database was resolved, the resulting `Vec` is empty, and it is not an error
-/// if there are no alternates.
+/// If no alternate object database was resolved, the resulting `Vec` is empty (it is not an error
+/// if there are no alternates).
 /// It is an error once a repository is seen again as it would lead to a cycle.
 pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Error> {
     let relative_base = objects_directory.into();
