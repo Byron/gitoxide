@@ -25,6 +25,7 @@ pub fn fixture_path(path: &str) -> PathBuf {
 
 mod alternate;
 mod compound;
+mod linked;
 mod loose;
 mod pack;
 mod sink;
