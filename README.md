@@ -145,7 +145,7 @@ Project goals can change over time as we learn more, and they can be challenged.
    * IO errors due to insufficient amount of open file handles don't always lead to operation failure
  * **Cross platform support, including Windows**
    * With the tools and experience available here there is no reason not to support Windows.
-   * [Windows is testsed on CI](https://github.com/Byron/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
+   * [Windows is tested on CI](https://github.com/Byron/gitoxide/blob/df66d74aa2a8cb62d8a03383135f08c8e8c579a8/.github/workflows/rust.yml#L34)
      and failures do prevent releases.
      
 
