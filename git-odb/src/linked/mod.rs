@@ -14,3 +14,6 @@ pub mod init;
 
 ///
 pub mod locate;
+
+///
+mod write;

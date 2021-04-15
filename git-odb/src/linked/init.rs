@@ -20,6 +20,10 @@ impl linked::Db {
         for object_path in alternate::resolve(dbs[0].loose.path.clone())?.into_iter() {
             dbs.push(compound::Db::at(object_path)?);
         }
+        assert!(
+            !dbs.is_empty(),
+            "we can rely on at least one compound database to be present"
+        );
         Ok(linked::Db { dbs })
     }
 }
