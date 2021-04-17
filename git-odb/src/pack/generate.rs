@@ -35,20 +35,30 @@ pub struct ObjectHeader {
 /// * decompressed packed objects
 /// * entries in packs
 pub trait Object {
+    /// Provide basic information about the object
+    fn header(&self) -> ObjectHeader;
+
     /// Returns decompressed object data, or None if there is None.
     /// If that's the case, [`Object::read_all()`] is expected to deliver said data.
-    fn data(&self) -> Option<(ObjectHeader, &[u8])> {
+    fn data(&self) -> Option<&[u8]> {
         None
     }
 
     /// Read all decompressed data into the given buffer, resizing it as needed.
     /// Returns None if this mode of operation is not supported.
-    fn read_all(&mut self, buf: &mut Vec<u8>) -> Option<Result<ObjectHeader, std::io::Error>> {
-        self.data().map(|(h, d)| {
+    fn read_all(&mut self, buf: &mut Vec<u8>) -> Option<Result<(), std::io::Error>> {
+        self.data().map(|d| {
+            let h = self.header();
             buf.resize(h.size.try_into().expect("size to be representable"), 0);
             buf.copy_from_slice(d);
-            Ok(h)
+            Ok(())
         })
+    }
+
+    /// Returns the packed entry if this object is indeed a base object allowing to copy data from pack to pack
+    /// and avoiding a decompress/compress round-trip for some objects.
+    fn packed_base_data(&self) -> Option<&[u8]> {
+        None
     }
 }
 
@@ -73,14 +83,11 @@ pub trait Object {
 ///
 /// ### Advantages
 ///
-/// * Will always recompress and thus potentially allow for higher compression levels. It's probably a weak argument as
-///   an option can also force recompression.
 /// * Begins writing immediately and supports back-pressure.
 ///
 /// ### Disadvantages
 ///
-/// * cannot copy base objects directly from other packs (has to decompress first just to recompress).
-/// * needs the traversal to have happened before, probably producing a `Vec<ObjectId>` anyway. This implies
+/// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
 ///   plenty of objects have been decompressed and parsed already, and will now be parsed twice.
 /// * currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`).
