@@ -1,7 +1,6 @@
 use git_features::progress::Progress;
 use git_hash::{oid, ObjectId};
 use std::convert::TryInto;
-use std::io;
 
 /// The error returned the pack generation functions in [this module][crate::pack::generate].
 #[derive(Debug, thiserror::Error)]
@@ -62,45 +61,90 @@ pub trait Object {
     }
 }
 
-/// Write all `objects` into `out` without attempting to apply any delta compression.
-/// This allows objects to be written rather immediately.
-/// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
-/// objects being sent to the current thread for writing. No buffering of these objects is performed,
-/// allowing for natural back-pressure in case of slow writers.
-///
-/// * `objects`
-///   * the fully expanded list of objects, no expansion will be performed here.
-/// * `out`
-///   * where to write to
-/// * `progress`
-///   * a way to obtain progress information
-/// * `options`
-///   * more configuration
-///
-/// _Returns_ the checksum of the pack
-///
-/// ## Discussion
-///
-/// ### Advantages
-///
-/// * Begins writing immediately and supports back-pressure.
-///
-/// ### Disadvantages
-///
-/// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
-///   plenty of objects have been decompressed and parsed already, and will now be parsed twice.
-/// * currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
-///   so with minimal overhead (especially compared to `gixp index-from-pack`).
-///
-pub fn immediate<'a, Iter, Object>(
-    _objects: Iter,
-    _out: impl io::Write,
-    _progress: impl Progress,
-    _options: Options,
-) -> Result<ObjectId, Error>
-where
-    Iter: ExactSizeIterator<Item = (&'a oid, Object)> + 'a,
-    Object: AsMut<Object>,
-{
-    todo!()
+/// The kind of pack entry to be written
+pub enum EntryKind {
+    /// A complete base object
+    Base,
+    /// A delta against the object encountered `n` objects before (in this iteration)
+    DeltaRef {
+        /// Never 0, and 1 would mean the previous object acts as base object.
+        nth_before: usize,
+    },
+    /// A delta against the given object as identified by its `ObjectId`.
+    /// This is the case for thin packs only.
+    /// Note that there is the option of the `ObjectId` being used to refer to an object within
+    /// the same pack, but it's a discontinued practice which won't be encountered here.
+    DeltaOid {
+        /// The object serving as base for this delta
+        id: ObjectId,
+    },
+}
+
+/// An entry to be written to a file.
+pub struct Entry {
+    /// The hash of the object to write
+    pub id: ObjectId,
+    /// The kind of packed object
+    pub object_kind: git_object::Kind,
+    /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
+    /// at rest or in transit.
+    pub entry_kind: EntryKind,
+    /// The compressed data right behind the header
+    pub data: Vec<u8>,
+}
+
+/// TODO: This should be the 'Iterator' version of `git_features::in_parallel` in order to respect our feature toggles.
+/// Alternatively, it could just re-implement it's own thing which can then move to git_features once its more universal.
+/// Yes, probably that… :), or implement another feature toggle if needs be. It would probably be nice to avoid pulling
+/// in all these extra deps which is why the feature toggle exists in the first place.
+pub struct Immediate;
+
+impl Immediate {
+    /// Write all `objects` into `out` without attempting to apply any delta compression.
+    /// This allows objects to be written rather immediately.
+    /// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
+    /// objects being sent to the current thread for writing. No buffering of these objects is performed,
+    /// allowing for natural back-pressure in case of slow writers.
+    ///
+    /// * `objects`
+    ///   * the fully expanded list of objects, no expansion will be performed here.
+    /// * `progress`
+    ///   * a way to obtain progress information
+    /// * `options`
+    ///   * more configuration
+    ///
+    /// _Returns_ the checksum of the pack
+    ///
+    /// ## Discussion
+    ///
+    /// ### Advantages
+    ///
+    /// * Begins writing immediately and supports back-pressure.
+    ///
+    /// ### Disadvantages
+    ///
+    /// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
+    /// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
+    ///   plenty of objects have been decompressed and parsed already, and will potentially be parsed twice.
+    ///   * Live with the amount of objects being known in advance and get rid of the ExactIterator requirement OR
+    ///     allow all iterations to have a 'quick' mode to pre-determine how many objects there will be in advance.
+    /// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
+    ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
+    ///  or keeping enough state to write a pack and then generate an index with recorded data.
+    ///
+    pub fn new<'a, Iter, Object>(_objects: Iter, _progress: impl Progress, _options: Options) -> Self
+    where
+        Iter: ExactSizeIterator<Item = (&'a oid, Object)> + 'a,
+        Object: AsMut<Object>,
+    {
+        todo!()
+    }
+}
+
+impl Iterator for Immediate {
+    type Item = Result<Vec<Entry>, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
 }
