@@ -1,6 +1,6 @@
-use crate::linked;
 use git_features::progress::Progress;
 use git_hash::{oid, ObjectId};
+use std::convert::TryInto;
 use std::io;
 
 /// The error returned the pack generation functions in [this module][crate::pack::generate].
@@ -21,14 +21,43 @@ pub struct Options {
     pub version: crate::pack::data::Version,
 }
 
+/// Meta data of any object
+pub struct ObjectHeader {
+    /// The kind of object
+    pub kind: git_object::Kind,
+    /// The decompressed size of the objects raw data.
+    pub size: u64,
+}
+
+/// An object that can represent no less than three different kinds of data all to avoid unnecessary copies or allocations.
+///
+/// * loose objects
+/// * decompressed packed objects
+/// * entries in packs
+pub trait Object {
+    /// Returns decompressed object data, or None if there is None.
+    /// If that's the case, [`Object::read_all()`] is expected to deliver said data.
+    fn data(&self) -> Option<(ObjectHeader, &[u8])> {
+        None
+    }
+
+    /// Read all decompressed data into the given buffer, resizing it as needed.
+    /// Returns None if this mode of operation is not supported.
+    fn read_all(&mut self, buf: &mut Vec<u8>) -> Option<Result<ObjectHeader, std::io::Error>> {
+        self.data().map(|(h, d)| {
+            buf.resize(h.size.try_into().expect("size to be representable"), 0);
+            buf.copy_from_slice(d);
+            Ok(h)
+        })
+    }
+}
+
 /// Write all `objects` into `out` without attempting to apply any delta compression.
 /// This allows objects to be written rather immediately.
 /// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
 /// objects being sent to the current thread for writing. No buffering of these objects is performed,
 /// allowing for natural back-pressure in case of slow writers.
 ///
-/// * `odb`
-///   * a way to lookup all provided `objects`.
 /// * `objects`
 ///   * the fully expanded list of objects, no expansion will be performed here.
 /// * `out`
@@ -56,16 +85,15 @@ pub struct Options {
 /// * currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`).
 ///
-pub fn immediate<Iter, Object>(
-    _odb: &linked::Db,
+pub fn immediate<'a, Iter, Object>(
     _objects: Iter,
     _out: impl io::Write,
     _progress: impl Progress,
     _options: Options,
 ) -> Result<ObjectId, Error>
 where
-    Iter: ExactSizeIterator<Item = Object>,
-    Object: AsRef<oid>,
+    Iter: ExactSizeIterator<Item = (&'a oid, Object)> + 'a,
+    Object: AsMut<Object>,
 {
     todo!()
 }
