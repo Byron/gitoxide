@@ -70,3 +70,68 @@ where
     })
     .unwrap()
 }
+
+/// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
+/// for details.
+#[cfg(feature = "parallel")]
+pub struct SteppedReduce<Input, ConsumeFn, ThreadState, Reducer> {
+    input: Input,
+    consume: ConsumeFn,
+    thread_state: ThreadState,
+    reducer: Reducer,
+}
+
+#[cfg(feature = "parallel")]
+impl<Input, ConsumeFn, Reducer, I, O, S> SteppedReduce<Input, ConsumeFn, S, Reducer>
+where
+    Input: Iterator<Item = I> + Send,
+    ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
+    Reducer: crate::parallel::Reducer<Input = O>,
+    I: Send,
+    O: Send,
+{
+    /// Instantiate a new iterator.
+    pub fn new<ThreadStateFn>(
+        input: Input,
+        _thread_limit: Option<usize>,
+        new_thread_state: ThreadStateFn,
+        consume: ConsumeFn,
+        reducer: Reducer,
+    ) -> Self
+    where
+        ThreadStateFn: Fn(usize) -> S + Send + Sync,
+    {
+        SteppedReduce {
+            input,
+            consume,
+            thread_state: new_thread_state(0),
+            reducer,
+        }
+    }
+
+    /// Consume the iterator by finishing its iteration and calling [`Reducer::finalize()`][crate::parallel::Reducer::finalize()].
+    pub fn finalize(mut self) -> Result<Reducer::Output, Reducer::Error> {
+        for value in self.by_ref() {
+            drop(value?);
+        }
+        self.reducer.finalize()
+    }
+}
+
+#[cfg(feature = "parallel")]
+impl<Input, ConsumeFn, ThreadState, Reducer, I, O> Iterator for SteppedReduce<Input, ConsumeFn, ThreadState, Reducer>
+where
+    Input: Iterator<Item = I> + Send,
+    ConsumeFn: Fn(I, &mut ThreadState) -> O + Send + Sync,
+    Reducer: crate::parallel::Reducer<Input = O>,
+    I: Send,
+    O: Send,
+{
+    type Item = Result<Reducer::FeedProduce, Reducer::Error>;
+
+    fn next(&mut self) -> Option<<Self as Iterator>::Item> {
+        self.input
+            .next()
+            .map(|input| self.reducer.feed((self.consume)(input, &mut self.thread_state)))
+    }
+}
