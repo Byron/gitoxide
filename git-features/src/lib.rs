@@ -1,4 +1,5 @@
-#![forbid(missing_docs, unsafe_code, rust_2018_idioms)]
+#![forbid(missing_docs, rust_2018_idioms)]
+#![deny(unsafe_code)]
 //! A crate providing foundational capabilities to other `git-*` crates with trade-offs between compile time, binary size or speed
 //! selectable using cargo feature toggles.
 //!

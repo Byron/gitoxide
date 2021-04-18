@@ -1,9 +1,8 @@
 use crate::parallel::{num_threads, Reducer};
-use crossbeam_utils::thread;
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
-    thread::scope(|s| {
+    crossbeam_utils::thread::scope(|s| {
         let left = s.spawn(|_| left());
         let right = s.spawn(|_| right());
         (left.join().unwrap(), right.join().unwrap())
@@ -35,7 +34,7 @@ where
     let num_threads = num_threads(thread_limit);
     let new_thread_state = &new_thread_state;
     let consume = &consume;
-    thread::scope(move |s| {
+    crossbeam_utils::thread::scope(move |s| {
         let receive_result = {
             let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
             let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(num_threads);
@@ -74,37 +73,73 @@ where
 /// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
 /// for details.
 #[cfg(feature = "parallel")]
-pub struct SteppedReduce<Input, ConsumeFn, ThreadState, Reducer> {
-    input: Input,
-    consume: ConsumeFn,
-    thread_state: ThreadState,
+pub struct SteppedReduce<'a, Reducer: crate::parallel::Reducer> {
+    /// This field is first to assure it's dropped first and cause threads that are dropped next to stop their loops
+    /// as sending results fails.
+    receive_result: std::sync::mpsc::Receiver<Reducer::Input>,
+    _threads: Vec<thread_scoped::JoinGuard<'a, ()>>,
     reducer: Reducer,
 }
 
 #[cfg(feature = "parallel")]
-impl<Input, ConsumeFn, Reducer, I, O, S> SteppedReduce<Input, ConsumeFn, S, Reducer>
-where
-    Input: Iterator<Item = I> + Send,
-    ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
-    Reducer: crate::parallel::Reducer<Input = O>,
-    I: Send,
-    O: Send,
-{
-    /// Instantiate a new iterator.
-    pub fn new<ThreadStateFn>(
+impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
+    /// Instantiate a new iterator and start working in threads
+    /// TODO: make unsafe to have caller assure invariants will be met for safety
+    pub fn new<Input, ThreadStateFn, ConsumeFn, I, O, S>(
         input: Input,
-        _thread_limit: Option<usize>,
+        thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
         consume: ConsumeFn,
         reducer: Reducer,
     ) -> Self
     where
-        ThreadStateFn: Fn(usize) -> S + Send + Sync,
+        Input: Iterator<Item = I> + Send + 'a,
+        ThreadStateFn: Fn(usize) -> S + Send + Sync + Copy + 'a,
+        ConsumeFn: Fn(I, &mut S) -> O + Send + Sync + Copy + 'a,
+        Reducer: crate::parallel::Reducer<Input = O> + 'a,
+        I: Send + 'a,
+        O: Send + 'a,
     {
+        let num_threads = num_threads(thread_limit);
+        let mut threads = Vec::with_capacity(num_threads + 1);
+        let receive_result = {
+            let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
+            let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(num_threads);
+            for thread_id in 0..num_threads {
+                #[allow(unsafe_code)]
+                let handle = unsafe {
+                    thread_scoped::scoped({
+                        let send_result = send_result.clone();
+                        let receive_input = receive_input.clone();
+                        move || {
+                            let mut state = new_thread_state(thread_id);
+                            for item in receive_input {
+                                if send_result.send(consume(item, &mut state)).is_err() {
+                                    break;
+                                }
+                            }
+                        }
+                    })
+                };
+                threads.push(handle);
+            }
+            threads.push(
+                #[allow(unsafe_code)]
+                unsafe {
+                    thread_scoped::scoped(move || {
+                        for item in input {
+                            if send_input.send(item).is_err() {
+                                break;
+                            }
+                        }
+                    })
+                },
+            );
+            receive_result
+        };
         SteppedReduce {
-            input,
-            consume,
-            thread_state: new_thread_state(0),
+            _threads: threads,
+            receive_result,
             reducer,
         }
     }
@@ -119,19 +154,10 @@ where
 }
 
 #[cfg(feature = "parallel")]
-impl<Input, ConsumeFn, ThreadState, Reducer, I, O> Iterator for SteppedReduce<Input, ConsumeFn, ThreadState, Reducer>
-where
-    Input: Iterator<Item = I> + Send,
-    ConsumeFn: Fn(I, &mut ThreadState) -> O + Send + Sync,
-    Reducer: crate::parallel::Reducer<Input = O>,
-    I: Send,
-    O: Send,
-{
+impl<'a, Reducer: crate::parallel::Reducer> Iterator for SteppedReduce<'a, Reducer> {
     type Item = Result<Reducer::FeedProduce, Reducer::Error>;
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
-        self.input
-            .next()
-            .map(|input| self.reducer.feed((self.consume)(input, &mut self.thread_state)))
+        self.receive_result.recv().ok().map(|input| self.reducer.feed(input))
     }
 }

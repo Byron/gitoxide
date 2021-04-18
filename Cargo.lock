@@ -766,6 +766,7 @@ dependencies = [
  "prodash",
  "sha-1",
  "sha1",
+ "thread-scoped",
  "walkdir",
 ]
 
@@ -2057,6 +2058,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "thread-scoped"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcbb6aa301e5d3b0b5ef639c9a9c7e2f1c944f177b460c04dc24c69b1fa2bd99"
 
 [[package]]
 name = "time"

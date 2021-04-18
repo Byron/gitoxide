@@ -9,6 +9,9 @@
 //! Interruptions can be achieved by checking for [`is_interrupted()`][crate::interrupt::is_triggered()] in the input iterator
 //! or by letting the reducers [`feed(…)`][Reducer::feed()]` method fail.
 //!
+//! It gets a boost in usability as it allows threads to borrow variables from the stack, most commonly the repository itself
+//! or the data to work on.
+//!
 //! This mode of operation doesn't lend itself perfectly to being wrapped for `async` as it appears like a single long-running
 //! operation which runs as fast as possible, which is cancellable only by merit of stopping the input or stopping the output
 //! aggregation.
@@ -21,6 +24,9 @@
 //!
 //! Getting the final output of the [`Reducer`] is achieved through the consuming [`SteppedReduce::finalize()`] method, which
 //! is functionally equivalent to calling [`in_parallel()`].
+//!
+//! It also offers borrowing of stack-local variables which is safe only as long as the `SteppedReduce` instance isn't leaked which
+//! will cause threads to access data that by then is likely gone.
 //!
 //! In an `async` context this means that progress is only made each time `next()` is called on the iterator, while merely dropping
 //! the iterator will wind down the computation without any result.
@@ -113,10 +119,10 @@ pub(crate) fn num_threads(_thread_limit: Option<usize>) -> usize {
 /// Only available with the `parallel` feature toggle set.
 #[cfg(feature = "parallel")]
 pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
-    let logical_cores = num_cpus::get();
+    let logical_cores = || num_cpus::get();
     thread_limit
-        .map(|l| if l == 0 { logical_cores } else { l })
-        .unwrap_or(logical_cores)
+        .map(|l| if l == 0 { logical_cores() } else { l })
+        .unwrap_or_else(logical_cores)
 }
 
 /// An trait for aggregating items commonly produced in threads into a single result, without itself
