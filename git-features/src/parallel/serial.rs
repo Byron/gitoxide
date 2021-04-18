@@ -38,17 +38,17 @@ where
 /// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
 /// for details.
 #[cfg(not(feature = "parallel"))]
-pub struct SteppedReduce<Input, ConsumeFn, ThreadState, Reducer> {
-    input: Input,
+pub struct SteppedReduce<InputIter, ConsumeFn, ThreadState, Reducer> {
+    input: InputIter,
     consume: ConsumeFn,
     thread_state: ThreadState,
     reducer: Reducer,
 }
 
 #[cfg(not(feature = "parallel"))]
-impl<Input, ConsumeFn, Reducer, I, O, S> SteppedReduce<Input, ConsumeFn, S, Reducer>
+impl<InputIter, ConsumeFn, Reducer, I, O, S> SteppedReduce<InputIter, ConsumeFn, S, Reducer>
 where
-    Input: Iterator<Item = I> + Send,
+    InputIter: Iterator<Item = I> + Send,
     ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
     Reducer: crate::parallel::Reducer<Input = O>,
     I: Send,
@@ -62,7 +62,7 @@ where
     /// Read all about it in the [module documentation][crate::parallel].
     #[allow(unsafe_code)]
     pub unsafe fn new<ThreadStateFn>(
-        input: Input,
+        input: InputIter,
         _thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
         consume: ConsumeFn,
@@ -89,9 +89,10 @@ where
 }
 
 #[cfg(not(feature = "parallel"))]
-impl<Input, ConsumeFn, ThreadState, Reducer, I, O> Iterator for SteppedReduce<Input, ConsumeFn, ThreadState, Reducer>
+impl<InputIter, ConsumeFn, ThreadState, Reducer, I, O> Iterator
+    for SteppedReduce<InputIter, ConsumeFn, ThreadState, Reducer>
 where
-    Input: Iterator<Item = I> + Send,
+    InputIter: Iterator<Item = I> + Send,
     ConsumeFn: Fn(I, &mut ThreadState) -> O + Send + Sync,
     Reducer: crate::parallel::Reducer<Input = O>,
     I: Send,

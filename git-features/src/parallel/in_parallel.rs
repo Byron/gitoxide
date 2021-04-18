@@ -93,15 +93,15 @@ impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
     ///
     /// Read all about it in the [module documentation][crate::parallel].
     #[allow(unsafe_code)]
-    pub unsafe fn new<Input, ThreadStateFn, ConsumeFn, I, O, S>(
-        input: Input,
+    pub unsafe fn new<InputIter, ThreadStateFn, ConsumeFn, I, O, S>(
+        input: InputIter,
         thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
         consume: ConsumeFn,
         reducer: Reducer,
     ) -> Self
     where
-        Input: Iterator<Item = I> + Send + 'a,
+        InputIter: Iterator<Item = I> + Send + 'a,
         ThreadStateFn: Fn(usize) -> S + Send + Sync + Clone + 'a,
         ConsumeFn: Fn(I, &mut S) -> O + Send + Sync + Clone + 'a,
         Reducer: crate::parallel::Reducer<Input = O> + 'a,

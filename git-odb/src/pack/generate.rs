@@ -125,14 +125,46 @@ pub struct Entry {
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn entries<'a, Iter, Object>(
-    _objects: Iter,
+pub fn entries<'a, Iter, Object, Oid>(
+    objects: Iter,
     _progress: impl Progress,
-    _options: Options,
+    Options { version, thread_limit }: Options,
 ) -> impl Iterator<Item = Result<Vec<Entry>, Error>> + 'a
 where
-    Iter: ExactSizeIterator<Item = (&'a oid, Object)> + 'a,
-    Object: AsMut<Object>,
+    Iter: Iterator<Item = (Oid, Object)> + Send + 'a,
+    Object: AsMut<Object> + Send + 'a,
+    Oid: AsRef<oid> + Send + 'a,
 {
-    _objects.map(|(_oid, _obj)| Ok(Vec::new()))
+    use git_features::parallel::{Reducer, SteppedReduce};
+
+    struct Aggregator;
+    impl Reducer for Aggregator {
+        type Input = Vec<Entry>;
+        type FeedProduce = Vec<Entry>;
+        type Output = ();
+        type Error = Error;
+
+        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+            Ok(item)
+        }
+
+        fn finalize(self) -> Result<Self::Output, Self::Error> {
+            Ok(())
+        }
+    }
+
+    // SAFETY: For now we simply assme nobody will leak the returned iterator, for the sake of practicality.
+    #[allow(unsafe_code)]
+    unsafe {
+        SteppedReduce::new(
+            objects,
+            thread_limit,
+            |_n| (),
+            move |(_oid, _obj), _state| {
+                drop(version); // currently unused
+                Vec::new()
+            },
+            Aggregator,
+        )
+    }
 }
