@@ -22,11 +22,11 @@ io-pipe = ["bytes"]
 name = "parallel"
 path = "tests/parallel.rs"
 required-features = ["parallel"]
-
-[[test]]
-name = "parallel_shared"
-path = "tests/parallel_shared.rs"
-required-features = ["parallel"]
+#
+#[[test]]
+#name = "parallel_shared"
+#path = "tests/parallel_shared.rs"
+#required-features = ["parallel"]
 
 [[test]]
 name = "parallel_shared_in_serial"

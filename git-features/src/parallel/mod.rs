@@ -99,8 +99,14 @@ pub trait Reducer {
     /// The type fed to the reducer in the [`feed()`][Reducer::feed()] method.
     type Input;
     /// The type produced in Ok(…) by [`feed()`][Reducer::feed()].
+    /// Most reducers by nature use `()` here as the value is in the aggregation.
+    /// However, some may use it to collect statistics only and return their Input
+    /// in some form as a result here for [`SteppedReduce`] to be useful.
     type FeedProduce;
     /// The type produced once by the [`finalize()`][Reducer::finalize()] method.
+    ///
+    /// For traditional reducers, this is the value produced by the entire operation.
+    /// For those made for step-wise iteration this may be aggregated statistics.
     type Output;
     /// The error type to use for all methods of this trait.
     type Error;

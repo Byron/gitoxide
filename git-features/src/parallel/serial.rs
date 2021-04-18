@@ -35,4 +35,56 @@ where
     reducer.finalize()
 }
 
-// pub struct SteppedReduce
+/// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner.
+#[cfg(not(feature = "parallel"))]
+pub struct SteppedReduce<Input, ConsumeFn, ThreadStateFn, Reducer> {
+    input: Input,
+    consume: ConsumeFn,
+    new_thread_state: ThreadStateFn,
+    reducer: Reducer,
+}
+
+#[cfg(not(feature = "parallel"))]
+impl<Input, ConsumeFn, ThreadStateFn, Reducer, I, O, S> SteppedReduce<Input, ConsumeFn, ThreadStateFn, Reducer>
+where
+    Input: Iterator<Item = I> + Send,
+    ThreadStateFn: Fn(usize) -> S + Send + Sync,
+    ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
+    Reducer: crate::parallel::Reducer<Input = O>,
+    I: Send,
+    O: Send,
+{
+    /// Instantiate a new iterator.
+    pub fn new(
+        input: Input,
+        _thread_limit: Option<usize>,
+        new_thread_state: ThreadStateFn,
+        consume: ConsumeFn,
+        reducer: Reducer,
+    ) -> Self {
+        SteppedReduce {
+            input,
+            consume,
+            new_thread_state,
+            reducer,
+        }
+    }
+}
+
+#[cfg(not(feature = "parallel"))]
+impl<Input, ConsumeFn, ThreadStateFn, Reducer, I, O, S> Iterator
+    for SteppedReduce<Input, ConsumeFn, ThreadStateFn, Reducer>
+where
+    Input: Iterator<Item = I> + Send,
+    ThreadStateFn: Fn(usize) -> S + Send + Sync,
+    ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
+    Reducer: crate::parallel::Reducer<Input = O>,
+    I: Send,
+    O: Send,
+{
+    type Item = Result<Reducer::FeedProduce, Reducer::Error>;
+
+    fn next(&mut self) -> Option<<Self as Iterator>::Item> {
+        todo!()
+    }
+}

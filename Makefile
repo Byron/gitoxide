@@ -57,7 +57,11 @@ lint: ## Run lints with clippy
 
 ##@ Testing
 
-tests: clippy check unit-tests journey-tests-small journey-tests ## run all tests, including journey tests
+tests: clippy check doc unit-tests journey-tests-small journey-tests ## run all tests, including journey tests, try building docs
+
+doc: ## Run cargo doc on all crates
+	cargo doc
+	cargo doc --all-features
 
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all
@@ -97,7 +101,7 @@ check: ## Build all code in suitable configurations
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
-	cd git-features && cargo test && cargo test --features fast-sha1
+	cd git-features && cargo test && cargo test --all-features
 	cd git-transport && cargo test && cargo test --features http-client-curl
 	cd gitoxide-core && cargo test --lib
 

@@ -1,3 +1,4 @@
+//! Tests that are working similarly in parallel and serial mode
 use git_features::parallel;
 
 #[derive(Default)]
@@ -32,4 +33,21 @@ fn parallel_add() {
     )
     .expect("successful computation");
     assert_eq!(res, 100);
+}
+
+#[test]
+fn stepped_reduce() {
+    let mut iter = parallel::SteppedReduce::new(
+        std::iter::from_fn(|| Some(1)).take(100),
+        None,
+        |_n| (),
+        |input, _state| input,
+        Adder::default(),
+    );
+
+    let mut aggregate = 0;
+    for value in iter.by_ref() {
+        aggregate += value.expect("success");
+    }
+    assert_eq!(aggregate, 100);
 }
