@@ -1,4 +1,29 @@
 //! Run computations in parallel, or not based the `parallel` feature toggle.
+//!
+//! ### in_parallel(…)
+//!
+//! The [`in_parallel(…)`][in_parallel()] is the typical fan-out-fan-in mode of parallelism, with thread local storage
+//! made available to a `consume(…)` function to process input. The result is sent to the [`Reducer`] running in the calling
+//! thread to aggregate the results into a single output, which is returned by [`in_parallel()`].
+//!
+//! Interruptions can be achieved by checking for [`is_interrupted()`][crate::interrupt::is_triggered()] in the input iterator
+//! or by letting the reducers [`feed(…)`][Reducer::feed()]` method fail.
+//!
+//! This mode of operation doesn't lend itself perfectly to being wrapped for `async` as it appears like a single long-running
+//! operation which runs as fast as possible, which is cancellable only by merit of stopping the input or stopping the output
+//! aggregation.
+//!
+//! ### `SteppedReduce`
+//!
+//! The [`SteppedReduce`] iterator works exactly as [`in_parallel()`] except that the processing of the output produced by
+//! `consume(I, &mut State) -> O` is made accessible by the `Iterator` trait's `next()` method. As produced work is not
+//! buffered, the owner of the iterator controls the progress made.
+//!
+//! Getting the final output of the [`Reducer`] is achieved through the consuming [`SteppedReduce::finalize()`] method, which
+//! is functionally equivalent to calling [`in_parallel()`].
+//!
+//! In an `async` context this means that progress is only made each time `next()` is called on the iterator, while merely dropping
+//! the iterator will wind down the computation without any result.
 #[cfg(feature = "parallel")]
 mod in_parallel;
 mod serial;
@@ -21,7 +46,7 @@ pub fn optimize_chunk_size_and_thread_limit(
     thread_limit: Option<usize>,
     _available_threads: Option<usize>,
 ) -> (usize, Option<usize>, usize) {
-    return (desired_chunk_size, thread_limit, num_threads(thread_limit));
+    (desired_chunk_size, thread_limit, num_threads(thread_limit))
 }
 
 /// Return the 'optimal' _(`size of chunks`,  `amount of threads as Option`, `amount of threads`)_ to use in [`in_parallel()`] for the given
@@ -80,7 +105,7 @@ pub fn optimize_chunk_size_and_thread_limit(
 /// Always returns 1, available when the `parallel` feature toggle is unset.
 #[cfg(not(feature = "parallel"))]
 pub(crate) fn num_threads(_thread_limit: Option<usize>) -> usize {
-    return 1;
+    1
 }
 
 /// Returns the amount of threads the system can effectively use as the amount of its logical cores.

@@ -35,7 +35,8 @@ where
     reducer.finalize()
 }
 
-/// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner.
+/// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
+/// for details.
 #[cfg(not(feature = "parallel"))]
 pub struct SteppedReduce<Input, ConsumeFn, ThreadState, Reducer> {
     input: Input,
@@ -74,7 +75,9 @@ where
 
     /// Consume the iterator by finishing its iteration and calling [`Reducer::finalize()`][crate::parallel::Reducer::finalize()].
     pub fn finalize(mut self) -> Result<Reducer::Output, Reducer::Error> {
-        for _ in self.by_ref() {}
+        for value in self.by_ref() {
+            drop(value?);
+        }
         self.reducer.finalize()
     }
 }

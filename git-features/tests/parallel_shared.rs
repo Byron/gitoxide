@@ -23,7 +23,7 @@ impl parallel::Reducer for Adder {
 }
 
 #[test]
-fn parallel_add() {
+fn in_parallel() {
     let res = parallel::in_parallel(
         std::iter::from_fn(|| Some(1)).take(100),
         None,
