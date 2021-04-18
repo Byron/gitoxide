@@ -28,11 +28,13 @@
 //! In an `async` context this means that progress is only made each time `next()` is called on the iterator, while merely dropping
 //! the iterator will wind down the computation without any result.
 //!
-//! #### Unsafety
+//! #### Safety
 //!
-//! It also offers borrowing of stack-local variables which is safe only as long as the `SteppedReduce` instance isn't leaked.
-//! Otherwise threads would access data that by then is likely gone as it was stored on the stack.
-//! Hence the caller must assure that the iterator is ever leaked, it must be dropped as part of the standard program flow.
+//! It also offers borrowing of stack-local variables which is safe only as long as the `SteppedReduce` instance is *not* leaked
+//! (i.e. at least prevent the destructor from running).
+//! Otherwise threads would keep running while accessing data that by then is likely gone as it was stored on the stack. Normally this
+//! would be prevented by `join()` being called upon dropping the iterator, blocking the deallocation of data until it is not used anymore.
+//! Hence the caller must assure that the iterator is never leaked, it must be dropped as part of the standard program flow.
 #[cfg(feature = "parallel")]
 mod in_parallel;
 mod serial;

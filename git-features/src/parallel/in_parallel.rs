@@ -75,9 +75,12 @@ where
 #[cfg(feature = "parallel")]
 pub struct SteppedReduce<'a, Reducer: crate::parallel::Reducer> {
     /// This field is first to assure it's dropped first and cause threads that are dropped next to stop their loops
-    /// as sending results fails.
+    /// as sending results fails when the receiver is dropped.
     receive_result: std::sync::mpsc::Receiver<Reducer::Input>,
+    /// `join()` will be called on these guards to assure every thread tries to send through a closed channel. When
+    /// that happens, they break out of their loops.
     _threads: Vec<thread_scoped::JoinGuard<'a, ()>>,
+    /// The reducer is called only in the thread using the iterator, dropping it has no side effects.
     reducer: Reducer,
 }
 
