@@ -93,58 +93,46 @@ pub struct Entry {
     pub data: Vec<u8>,
 }
 
-/// TODO: This should be the 'Iterator' version of `git_features::in_parallel` in order to respect our feature toggles.
-/// Alternatively, it could just re-implement it's own thing which can then move to git_features once its more universal.
-/// Yes, probably that… :), or implement another feature toggle if needs be. It would probably be nice to avoid pulling
-/// in all these extra deps which is why the feature toggle exists in the first place.
-pub struct Immediate;
-
-impl Immediate {
-    /// Write all `objects` into `out` without attempting to apply any delta compression.
-    /// This allows objects to be written rather immediately.
-    /// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
-    /// objects being sent to the current thread for writing. No buffering of these objects is performed,
-    /// allowing for natural back-pressure in case of slow writers.
-    ///
-    /// * `objects`
-    ///   * the fully expanded list of objects, no expansion will be performed here.
-    /// * `progress`
-    ///   * a way to obtain progress information
-    /// * `options`
-    ///   * more configuration
-    ///
-    /// _Returns_ the checksum of the pack
-    ///
-    /// ## Discussion
-    ///
-    /// ### Advantages
-    ///
-    /// * Begins writing immediately and supports back-pressure.
-    ///
-    /// ### Disadvantages
-    ///
-    /// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
-    /// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
-    ///   plenty of objects have been decompressed and parsed already, and will potentially be parsed twice.
-    ///   * Live with the amount of objects being known in advance and get rid of the ExactIterator requirement OR
-    ///     allow all iterations to have a 'quick' mode to pre-determine how many objects there will be in advance.
-    /// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
-    ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
-    ///  or keeping enough state to write a pack and then generate an index with recorded data.
-    ///
-    pub fn new<'a, Iter, Object>(_objects: Iter, _progress: impl Progress, _options: Options) -> Self
-    where
-        Iter: ExactSizeIterator<Item = (&'a oid, Object)> + 'a,
-        Object: AsMut<Object>,
-    {
-        todo!()
-    }
-}
-
-impl Iterator for Immediate {
-    type Item = Result<Vec<Entry>, Error>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
+/// Write all `objects` into `out` without attempting to apply any delta compression.
+/// This allows objects to be written rather immediately.
+/// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
+/// objects being sent to the current thread for writing. No buffering of these objects is performed,
+/// allowing for natural back-pressure in case of slow writers.
+///
+/// * `objects`
+///   * the fully expanded list of objects, no expansion will be performed here.
+/// * `progress`
+///   * a way to obtain progress information
+/// * `options`
+///   * more configuration
+///
+/// _Returns_ the checksum of the pack
+///
+/// ## Discussion
+///
+/// ### Advantages
+///
+/// * Begins writing immediately and supports back-pressure.
+///
+/// ### Disadvantages
+///
+/// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
+/// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
+///   plenty of objects have been decompressed and parsed already, and will potentially be parsed twice.
+///   * Live with the amount of objects being known in advance and get rid of the ExactIterator requirement OR
+///     allow all iterations to have a 'quick' mode to pre-determine how many objects there will be in advance.
+/// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
+///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
+///  or keeping enough state to write a pack and then generate an index with recorded data.
+///
+pub fn entries<'a, Iter, Object>(
+    _objects: Iter,
+    _progress: impl Progress,
+    _options: Options,
+) -> impl Iterator<Item = Result<Vec<Entry>, Error>> + 'a
+where
+    Iter: ExactSizeIterator<Item = (&'a oid, Object)> + 'a,
+    Object: AsMut<Object>,
+{
+    _objects.map(|(_oid, _obj)| Ok(Vec::new()))
 }
