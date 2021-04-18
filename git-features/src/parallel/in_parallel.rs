@@ -63,7 +63,7 @@ where
         };
 
         for item in receive_result {
-            reducer.feed(item)?;
+            drop(reducer.feed(item)?);
         }
         reducer.finalize()
     })

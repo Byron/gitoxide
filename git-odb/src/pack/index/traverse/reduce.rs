@@ -57,6 +57,7 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     type Input = Result<Vec<decode::Outcome>, traverse::Error<E>>;
+    type FeedProduce = ();
     type Output = traverse::Outcome;
     type Error = traverse::Error<E>;
 

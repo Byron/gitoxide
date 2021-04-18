@@ -141,6 +141,7 @@ where
     P: Progress,
 {
     type Input = Result<(usize, u64), Error>;
+    type FeedProduce = ();
     type Output = ();
     type Error = Error;
 

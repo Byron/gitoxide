@@ -9,8 +9,8 @@ pub use serial::*;
 #[cfg(feature = "parallel")]
 pub use in_parallel::*;
 
-mod eager;
-pub use eager::{EagerIter, EagerIterIf};
+mod eager_iter;
+pub use eager_iter::{EagerIter, EagerIterIf};
 
 /// A no-op returning the input _(`desired_chunk_size`, `Some(thread_limit)`, `thread_limit)_ used
 /// when the `parallel` feature toggle is not set.
@@ -96,16 +96,18 @@ pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
 
 /// An trait for aggregating items into a single result.
 pub trait Reducer {
-    /// The type fed to the reducer in the [`feed()`][`Reducer::feed()`] method.
+    /// The type fed to the reducer in the [`feed()`][Reducer::feed()] method.
     type Input;
-    /// The type produced once by the [`finalize()`][`Reducer::finalize()`] method.
+    /// The type produced in Ok(…) by [`feed()`][Reducer::feed()].
+    type FeedProduce;
+    /// The type produced once by the [`finalize()`][Reducer::finalize()] method.
     type Output;
     /// The error type to use for all methods of this trait.
     type Error;
     /// Called each time a new `item` was produced in order to aggregate it into the final result.
     ///
     /// If an `Error` is returned, the entire operation will be stopped.
-    fn feed(&mut self, item: Self::Input) -> Result<(), Self::Error>;
+    fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error>;
     /// Called once once all items where passed to `feed()`, producing the final `Output` of the operation or an `Error`.
     fn finalize(self) -> Result<Self::Output, Self::Error>;
 }

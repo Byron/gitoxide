@@ -30,7 +30,7 @@ where
 {
     let mut state = new_thread_state(0);
     for item in input {
-        reducer.feed(consume(item, &mut state))?;
+        drop(reducer.feed(consume(item, &mut state))?);
     }
     reducer.finalize()
 }
