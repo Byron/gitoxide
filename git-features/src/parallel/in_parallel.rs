@@ -11,8 +11,9 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
     .unwrap()
 }
 
-/// Read items from `input` and `consume` them, producing an output to be collected by a `reducer`, whose task is to
-/// aggregate these outputs into the final result returned by this function.
+/// Read items from `input` and `consume` them in multiple threads,
+/// whose output output is collected by a `reducer`. Its task is to
+/// aggregate these outputs into the final result returned by this function with the benefit of not having to be thread-safe.
 ///
 /// * if `thread_limit` is `Some`, the given amount of threads will be used. If `None`, all logical cores will be used.
 /// * `new_thread_state(thread_number) -> State` produces thread-local state once per thread to be based to `consume`

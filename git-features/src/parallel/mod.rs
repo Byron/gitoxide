@@ -94,9 +94,12 @@ pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
         .unwrap_or(logical_cores)
 }
 
-/// An trait for aggregating items into a single result.
+/// An trait for aggregating items commonly produced in threads into a single result, without itself
+/// needing to be thread safe.
 pub trait Reducer {
     /// The type fed to the reducer in the [`feed()`][Reducer::feed()] method.
+    ///
+    /// It's produced by a function that may run on multiple threads.
     type Input;
     /// The type produced in Ok(…) by [`feed()`][Reducer::feed()].
     /// Most reducers by nature use `()` here as the value is in the aggregation.
