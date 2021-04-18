@@ -161,7 +161,7 @@ where
             thread_limit,
             |_n| (),
             move |(_oid, _obj), _state| {
-                drop(version); // currently unused
+                let _ = version; // currently unused
                 Vec::new()
             },
             Aggregator,
