@@ -34,3 +34,5 @@ where
     }
     reducer.finalize()
 }
+
+// pub struct SteppedReduce
