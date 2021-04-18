@@ -83,9 +83,14 @@ pub struct SteppedReduce<'a, Reducer: crate::parallel::Reducer> {
 
 #[cfg(feature = "parallel")]
 impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
-    /// Instantiate a new iterator and start working in threads
-    /// TODO: make unsafe to have caller assure invariants will be met for safety
-    pub fn new<Input, ThreadStateFn, ConsumeFn, I, O, S>(
+    /// Instantiate a new iterator and start working in threads.
+    /// For a description of parameters, see [`in_parallel()`].
+    ///
+    /// # Unsafety
+    ///
+    /// Read all about it in the [module documentation][crate::parallel].
+    #[allow(unsafe_code)]
+    pub unsafe fn new<Input, ThreadStateFn, ConsumeFn, I, O, S>(
         input: Input,
         thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
@@ -106,7 +111,7 @@ impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
             let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
             let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(num_threads);
             for thread_id in 0..num_threads {
-                #[allow(unsafe_code)]
+                #[allow(unsafe_code, unused_unsafe)]
                 let handle = unsafe {
                     thread_scoped::scoped({
                         let send_result = send_result.clone();
@@ -124,7 +129,7 @@ impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
                 threads.push(handle);
             }
             threads.push(
-                #[allow(unsafe_code)]
+                #[allow(unsafe_code, unused_unsafe)]
                 unsafe {
                     thread_scoped::scoped(move || {
                         for item in input {

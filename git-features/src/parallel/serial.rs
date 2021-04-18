@@ -55,7 +55,13 @@ where
     O: Send,
 {
     /// Instantiate a new iterator.
-    pub fn new<ThreadStateFn>(
+    /// For a description of parameters, see [`in_parallel()`].
+    ///
+    /// # Unsafety
+    ///
+    /// Read all about it in the [module documentation][crate::parallel].
+    #[allow(unsafe_code)]
+    pub unsafe fn new<ThreadStateFn>(
         input: Input,
         _thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,

@@ -37,13 +37,15 @@ fn in_parallel() {
 
 #[test]
 fn stepped_reduce_next() {
-    let mut iter = parallel::SteppedReduce::new(
-        std::iter::from_fn(|| Some(1)).take(100),
-        None,
-        |_n| (),
-        |input, _state| input,
-        Adder::default(),
-    );
+    let mut iter = unsafe {
+        parallel::SteppedReduce::new(
+            std::iter::from_fn(|| Some(1)).take(100),
+            None,
+            |_n| (),
+            |input, _state| input,
+            Adder::default(),
+        )
+    };
 
     let mut aggregate = 0;
     for value in iter.by_ref() {
@@ -54,13 +56,15 @@ fn stepped_reduce_next() {
 
 #[test]
 fn stepped_reduce_finalize() {
-    let iter = parallel::SteppedReduce::new(
-        std::iter::from_fn(|| Some(1)).take(100),
-        None,
-        |_n| (),
-        |input, _state| input,
-        Adder::default(),
-    );
+    let iter = unsafe {
+        parallel::SteppedReduce::new(
+            std::iter::from_fn(|| Some(1)).take(100),
+            None,
+            |_n| (),
+            |input, _state| input,
+            Adder::default(),
+        )
+    };
 
     assert_eq!(iter.finalize().expect("success"), 100);
 }

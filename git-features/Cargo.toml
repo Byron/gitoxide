@@ -12,7 +12,7 @@ doctest = false
 test = false
 
 [features]
-parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus", "jwalk"]
+parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus", "jwalk", "thread-scoped"]
 fast-sha1 = ["fastsha1"]
 interrupt-handler = ["ctrlc"]
 disable-interrupts = []
@@ -22,11 +22,11 @@ io-pipe = ["bytes"]
 name = "parallel"
 path = "tests/parallel.rs"
 required-features = ["parallel"]
-#
-#[[test]]
-#name = "parallel_shared"
-#path = "tests/parallel_shared.rs"
-#required-features = ["parallel"]
+
+[[test]]
+name = "parallel_shared"
+path = "tests/parallel_shared.rs"
+required-features = ["parallel"]
 
 [[test]]
 name = "parallel_shared_in_serial"
