@@ -102,8 +102,8 @@ impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
     ) -> Self
     where
         Input: Iterator<Item = I> + Send + 'a,
-        ThreadStateFn: Fn(usize) -> S + Send + Sync + Copy + 'a,
-        ConsumeFn: Fn(I, &mut S) -> O + Send + Sync + Copy + 'a,
+        ThreadStateFn: Fn(usize) -> S + Send + Sync + Clone + 'a,
+        ConsumeFn: Fn(I, &mut S) -> O + Send + Sync + Clone + 'a,
         Reducer: crate::parallel::Reducer<Input = O> + 'a,
         I: Send + 'a,
         O: Send + 'a,
@@ -119,6 +119,8 @@ impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
                     thread_scoped::scoped({
                         let send_result = send_result.clone();
                         let receive_input = receive_input.clone();
+                        let new_thread_state = new_thread_state.clone();
+                        let consume = consume.clone();
                         move || {
                             let mut state = new_thread_state(thread_id);
                             for item in receive_input {
