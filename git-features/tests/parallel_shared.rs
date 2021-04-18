@@ -55,6 +55,26 @@ fn stepped_reduce_next() {
 }
 
 #[test]
+fn stepped_reduce_ref_input_and_consume() {
+    let seq = vec![0usize, 1, 2];
+    let mut iter = unsafe {
+        parallel::SteppedReduce::new(
+            seq.iter().enumerate(),
+            None,
+            |_n| seq.len(),
+            |(idx, ref_val), _state| seq[idx] * *ref_val,
+            Adder::default(),
+        )
+    };
+
+    let mut aggregate = 0;
+    for value in iter.by_ref() {
+        aggregate += value.expect("success");
+    }
+    assert_eq!(aggregate, 5);
+}
+
+#[test]
 fn stepped_reduce_finalize() {
     let iter = unsafe {
         parallel::SteppedReduce::new(

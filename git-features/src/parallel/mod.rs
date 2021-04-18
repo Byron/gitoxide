@@ -25,13 +25,14 @@
 //! Getting the final output of the [`Reducer`] is achieved through the consuming [`SteppedReduce::finalize()`] method, which
 //! is functionally equivalent to calling [`in_parallel()`].
 //!
-//! It also offers borrowing of stack-local variables which is safe only as long as the `SteppedReduce` instance isn't leaked which
-//! will cause threads to access data that by then is likely gone.
-//! _Please note_ that doing so is **unsafe** because the caller must assure that the iterator will not be leaked. Doing so while
-//! it is on the stack will make data unavailable which can still be accessed by threads.
-//!
 //! In an `async` context this means that progress is only made each time `next()` is called on the iterator, while merely dropping
 //! the iterator will wind down the computation without any result.
+//!
+//! #### Unsafety
+//!
+//! It also offers borrowing of stack-local variables which is safe only as long as the `SteppedReduce` instance isn't leaked.
+//! Otherwise threads would access data that by then is likely gone as it was stored on the stack.
+//! Hence the caller must assure that the iterator is ever leaked, it must be dropped as part of the standard program flow.
 #[cfg(feature = "parallel")]
 mod in_parallel;
 mod serial;

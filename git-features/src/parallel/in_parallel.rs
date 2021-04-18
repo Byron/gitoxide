@@ -86,7 +86,7 @@ impl<'a, Reducer: crate::parallel::Reducer> SteppedReduce<'a, Reducer> {
     /// Instantiate a new iterator and start working in threads.
     /// For a description of parameters, see [`in_parallel()`].
     ///
-    /// # Unsafety
+    /// # Safety
     ///
     /// Read all about it in the [module documentation][crate::parallel].
     #[allow(unsafe_code)]
