@@ -14,7 +14,7 @@ impl parallel::Reducer for Adder {
 
     fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
         self.count += item;
-        Ok(self.count)
+        Ok(item)
     }
 
     fn finalize(self) -> Result<Self::Output, Self::Error> {
@@ -36,7 +36,7 @@ fn parallel_add() {
 }
 
 #[test]
-fn stepped_reduce() {
+fn stepped_reduce_next() {
     let mut iter = parallel::SteppedReduce::new(
         std::iter::from_fn(|| Some(1)).take(100),
         None,
@@ -50,4 +50,17 @@ fn stepped_reduce() {
         aggregate += value.expect("success");
     }
     assert_eq!(aggregate, 100);
+}
+
+#[test]
+fn stepped_reduce_finalize() {
+    let iter = parallel::SteppedReduce::new(
+        std::iter::from_fn(|| Some(1)).take(100),
+        None,
+        |_n| (),
+        |input, _state| input,
+        Adder::default(),
+    );
+
+    assert_eq!(iter.finalize().expect("success"), 100);
 }

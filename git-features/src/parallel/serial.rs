@@ -71,6 +71,12 @@ where
             reducer,
         }
     }
+
+    /// Consume the iterator by finishing its iteration and calling [`Reducer::finalize()`][crate::parallel::Reducer::finalize()].
+    pub fn finalize(mut self) -> Result<Reducer::Output, Reducer::Error> {
+        for _ in self.by_ref() {}
+        self.reducer.finalize()
+    }
 }
 
 #[cfg(not(feature = "parallel"))]
@@ -85,6 +91,8 @@ where
     type Item = Result<Reducer::FeedProduce, Reducer::Error>;
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
-        todo!()
+        self.input
+            .next()
+            .map(|input| self.reducer.feed((self.consume)(input, &mut self.thread_state)))
     }
 }
