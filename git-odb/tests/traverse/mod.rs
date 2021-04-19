@@ -18,6 +18,17 @@ mod ancestor {
     }
 
     #[test]
+    fn instantiate_with_arc() -> crate::Result {
+        let (_temp_dir, db) = db()?;
+        let _ = git_odb::traverse::ancestors::Iter::new(
+            std::sync::Arc::new(db),
+            vec![git_hash::ObjectId::null_sha1()],
+            &mut git_odb::pack::cache::Noop,
+        );
+        Ok(())
+    }
+
+    #[test]
     fn linear_history_no_branch() -> crate::Result {
         check_traversal(
             &["9556057aee5abb06912922e9f26c46386a816822"],
