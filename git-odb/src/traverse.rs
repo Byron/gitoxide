@@ -33,12 +33,20 @@ pub mod ancestors {
         Cache: pack::cache::DecodeEntry,
     {
         /// Create a new instance.
-        pub fn new(db: &'a linked::Db, tip: impl Into<ObjectId>, cache: &'a mut Cache) -> Self {
+        ///
+        /// * `db` - a way to lookup new object data during traversal
+        /// * `tips`
+        ///   * the starting points of the iteration, usually commits
+        ///   * each commit they lead to will only be returned once, including the tip that started it
+        /// * `cache` - a way to speedup object database access
+        pub fn new(db: &'a linked::Db, tips: impl Iterator<Item = impl Into<ObjectId>>, cache: &'a mut Cache) -> Self {
+            let next = VecDeque::from_iter(tips.map(Into::into));
+            let seen = BTreeSet::from_iter(next.iter().cloned());
             Iter {
                 db,
-                next: VecDeque::from_iter(std::iter::once(tip.into())),
+                next,
                 buf: Vec::with_capacity(4096),
-                seen: Default::default(),
+                seen,
                 cache,
             }
         }

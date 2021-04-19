@@ -3,12 +3,14 @@ mod ancestor {
     use git_odb::linked;
     use git_odb::linked::Db;
 
-    fn check_traversal(tip: &str, expected: &[&str]) -> crate::Result {
+    fn check_traversal(tips: &[&str], expected: &[&str]) -> crate::Result {
         let (_temp_dir, db) = db()?;
-        let head = hex_to_id(tip);
+        let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
         let oids: Result<Vec<_>, _> =
-            git_odb::traverse::ancestors::Iter::new(&db, head, &mut git_odb::pack::cache::Noop).collect();
-        let expected: Vec<_> = std::iter::once(head)
+            git_odb::traverse::ancestors::Iter::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Noop)
+                .collect();
+        let expected: Vec<_> = tips
+            .into_iter()
             .chain(expected.iter().map(|hex_id| hex_to_id(hex_id)))
             .collect();
         assert_eq!(oids?, expected);
@@ -18,7 +20,7 @@ mod ancestor {
     #[test]
     fn linear_history_no_branch() -> crate::Result {
         check_traversal(
-            "9556057aee5abb06912922e9f26c46386a816822",
+            &["9556057aee5abb06912922e9f26c46386a816822"],
             &[
                 "17d78c64cef6c33a10a604573fd2c429e477fd63",
                 "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7",
@@ -30,13 +32,31 @@ mod ancestor {
     #[test]
     fn simple_branch_with_merge() -> crate::Result {
         check_traversal(
-            "01ec18a3ebf2855708ad3c9d244306bc1fae3e9b",
+            &["01ec18a3ebf2855708ad3c9d244306bc1fae3e9b"],
             &[
                 "efd9a841189668f1bab5b8ebade9cd0a1b139a37",
                 "ce2e8ffaa9608a26f7b21afc1db89cadb54fd353",
                 "9556057aee5abb06912922e9f26c46386a816822",
                 "9152eeee2328073cf23dcf8e90c949170b711659",
                 "17d78c64cef6c33a10a604573fd2c429e477fd63",
+                "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7",
+                "134385f6d781b7e97062102c6a483440bfda2a03",
+            ],
+        )
+    }
+
+    #[test]
+    fn multiple_tips() -> crate::Result {
+        check_traversal(
+            &[
+                "01ec18a3ebf2855708ad3c9d244306bc1fae3e9b",
+                "9556057aee5abb06912922e9f26c46386a816822",
+            ],
+            &[
+                "efd9a841189668f1bab5b8ebade9cd0a1b139a37",
+                "ce2e8ffaa9608a26f7b21afc1db89cadb54fd353",
+                "17d78c64cef6c33a10a604573fd2c429e477fd63",
+                "9152eeee2328073cf23dcf8e90c949170b711659",
                 "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7",
                 "134385f6d781b7e97062102c6a483440bfda2a03",
             ],
