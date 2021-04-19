@@ -16,6 +16,8 @@
 //!   * A database using a [`loose::Db`] for writes and multiple [`pack::Bundle`]s for object reading. It can also refer to multiple
 //!     additional [`compound::Db`] instances using git-alternates.
 //!   * This is the database closely resembling the object database in a git repository, and probably what most people would want to use.
+//! * [`linked::Db`]
+//!   * A database containing various [`compound::Dbs`][compound::Db] as gathered from `alternates` files.
 
 mod zlib;
 
@@ -32,5 +34,6 @@ pub(crate) mod hash;
 mod traits;
 
 pub mod borrowed;
+pub mod traverse;
 
 pub use traits::*;
