@@ -14,6 +14,8 @@ pub mod ancestors {
         Compound(#[from] compound::locate::Error),
         #[error(transparent)]
         ObjectDecode(#[from] compound::object::decode::Error),
+        #[error("Object id {oid} wasn't found in object database")]
+        NotFound { oid: ObjectId },
     }
 
     /// An iterator over the ancestors of a single starting point
@@ -37,9 +39,6 @@ pub mod ancestors {
     impl<'a> Iterator for Iter<'a> {
         type Item = Result<ObjectId, Error>;
 
-        /// # Panics
-        ///
-        /// If an object id referred to in the iteration cannot be located
         fn next(&mut self) -> Option<Self::Item> {
             let res = self.next.pop_front();
             if let Some(oid) = res {
@@ -53,7 +52,7 @@ pub mod ancestors {
                         }
                         Err(err) => return Some(Err(err.into())),
                     },
-                    Ok(None) => panic!("Object id {} wasn't found in odb - inconsistency", oid),
+                    Ok(None) => return Some(Err(Error::NotFound { oid })),
                     Err(err) => return Some(Err(err.into())),
                 }
             }
