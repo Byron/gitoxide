@@ -89,7 +89,7 @@ impl<Reducer: crate::parallel::Reducer> Drop for SteppedReduce<Reducer> {
             drop(value);
         }
         let mut last_err = None;
-        for handle in std::mem::replace(&mut self._threads, Default::default()) {
+        for handle in std::mem::take(&mut self._threads) {
             if let Err(err) = handle.join() {
                 last_err = Some(err);
             };
