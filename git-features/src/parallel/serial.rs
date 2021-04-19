@@ -56,12 +56,7 @@ where
 {
     /// Instantiate a new iterator.
     /// For a description of parameters, see [`in_parallel()`].
-    ///
-    /// # Safety
-    ///
-    /// Read all about it in the [module documentation][crate::parallel].
-    #[allow(unsafe_code)]
-    pub unsafe fn new<ThreadStateFn>(
+    pub fn new<ThreadStateFn>(
         input: InputIter,
         _thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
