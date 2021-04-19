@@ -20,33 +20,40 @@ pub mod ancestors {
     }
 
     /// An iterator over the ancestors of a single starting point
-    pub struct Iter<'a> {
+    pub struct Iter<'a, Cache> {
         db: &'a linked::Db,
         next: VecDeque<ObjectId>,
         buf: Vec<u8>,
         seen: BTreeSet<ObjectId>,
+        cache: &'a mut Cache,
     }
 
-    impl<'a> Iter<'a> {
+    impl<'a, Cache> Iter<'a, Cache>
+    where
+        Cache: pack::cache::DecodeEntry,
+    {
         /// Create a new instance.
-        pub fn new(db: &'a linked::Db, tip: impl Into<ObjectId>) -> Self {
+        pub fn new(db: &'a linked::Db, tip: impl Into<ObjectId>, cache: &'a mut Cache) -> Self {
             Iter {
                 db,
                 next: VecDeque::from_iter(std::iter::once(tip.into())),
                 buf: Vec::with_capacity(4096),
                 seen: Default::default(),
+                cache,
             }
         }
     }
 
-    impl<'a> Iterator for Iter<'a> {
+    impl<'a, Cache> Iterator for Iter<'a, Cache>
+    where
+        Cache: pack::cache::DecodeEntry,
+    {
         type Item = Result<ObjectId, Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             let res = self.next.pop_front();
             if let Some(oid) = res {
-                // TODO: use an actual cache
-                match self.db.locate(oid, &mut self.buf, &mut pack::cache::Noop) {
+                match self.db.locate(oid, &mut self.buf, self.cache) {
                     Ok(Some(mut obj)) => match obj.decode().map_err(Error::from) {
                         Ok(obj) => {
                             if let Some(commit) = obj.as_commit() {

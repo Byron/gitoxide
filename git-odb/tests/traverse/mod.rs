@@ -6,7 +6,8 @@ mod ancestor {
     fn check_traversal(tip: &str, expected: &[&str]) -> crate::Result {
         let (_temp_dir, db) = db()?;
         let head = hex_to_id(tip);
-        let oids: Result<Vec<_>, _> = git_odb::traverse::ancestors::Iter::new(&db, head).collect();
+        let oids: Result<Vec<_>, _> =
+            git_odb::traverse::ancestors::Iter::new(&db, head, &mut git_odb::pack::cache::Noop).collect();
         let expected: Vec<_> = std::iter::once(head)
             .chain(expected.iter().map(|hex_id| hex_to_id(hex_id)))
             .collect();
