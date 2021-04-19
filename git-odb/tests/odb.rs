@@ -52,4 +52,4 @@ mod linked;
 mod loose;
 mod pack;
 mod sink;
-mod traversal;
+mod traverse;

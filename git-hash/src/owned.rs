@@ -2,10 +2,22 @@ use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
 use std::{borrow::Borrow, fmt, io, ops::Deref};
 
 /// An owned hash identifying objects, most commonly Sha1
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectId {
     Sha1([u8; SIZE_OF_SHA1_DIGEST]),
+}
+
+impl std::fmt::Debug for ObjectId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ObjectId::Sha1(_hash) => f.write_str("Sha1(")?,
+        }
+        for b in self.as_bytes() {
+            write!(f, "{:02x}", b)?;
+        }
+        f.write_str(")")
+    }
 }
 
 /// Access and conversion
