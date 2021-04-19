@@ -4,6 +4,7 @@
 pub mod ancestors {
     use crate::{compound, linked, pack};
     use git_hash::ObjectId;
+    use std::collections::BTreeSet;
     use std::{collections::VecDeque, iter::FromIterator};
 
     /// The error used in the iterator implementation of [Iter].
@@ -23,6 +24,7 @@ pub mod ancestors {
         db: &'a linked::Db,
         next: VecDeque<ObjectId>,
         buf: Vec<u8>,
+        seen: BTreeSet<ObjectId>,
     }
 
     impl<'a> Iter<'a> {
@@ -32,6 +34,7 @@ pub mod ancestors {
                 db,
                 next: VecDeque::from_iter(std::iter::once(tip.into())),
                 buf: Vec::with_capacity(4096),
+                seen: Default::default(),
             }
         }
     }
@@ -47,7 +50,12 @@ pub mod ancestors {
                     Ok(Some(mut obj)) => match obj.decode().map_err(Error::from) {
                         Ok(obj) => {
                             if let Some(commit) = obj.as_commit() {
-                                self.next.extend(commit.parents());
+                                for parent_id in commit.parents() {
+                                    let was_inserted = self.seen.insert(parent_id);
+                                    if was_inserted {
+                                        self.next.push_back(parent_id);
+                                    }
+                                }
                             }
                         }
                         Err(err) => return Some(Err(err.into())),

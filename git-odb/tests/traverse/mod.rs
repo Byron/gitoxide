@@ -27,8 +27,7 @@ mod ancestor {
     }
 
     #[test]
-    #[should_panic]
-    fn simple_branch_with_merge() {
+    fn simple_branch_with_merge() -> crate::Result {
         check_traversal(
             "01ec18a3ebf2855708ad3c9d244306bc1fae3e9b",
             &[
@@ -41,7 +40,6 @@ mod ancestor {
                 "134385f6d781b7e97062102c6a483440bfda2a03",
             ],
         )
-        .unwrap()
     }
 
     fn db() -> Result<(tempdir::TempDir, Db), Box<dyn std::error::Error>> {
