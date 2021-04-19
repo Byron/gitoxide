@@ -125,14 +125,15 @@ pub struct Entry {
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn entries<'a, Iter, Object, Oid>(
+pub fn entries<'a, Iter, Object, Oid, O>(
     objects: Iter,
     _progress: impl Progress,
     Options { version, thread_limit }: Options,
 ) -> impl Iterator<Item = Result<Vec<Entry>, Error>> + 'a
 where
     Iter: Iterator<Item = (Oid, Object)> + Send + 'a,
-    Object: AsMut<Object> + Send + 'a,
+    Object: AsMut<O> + Send + 'a,
+    O: self::Object,
     Oid: AsRef<oid> + Send + 'a,
 {
     use git_features::parallel::{Reducer, SteppedReduce};
