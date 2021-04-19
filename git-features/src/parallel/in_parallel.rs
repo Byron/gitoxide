@@ -85,9 +85,9 @@ pub struct SteppedReduce<Reducer: crate::parallel::Reducer> {
 
 impl<Reducer: crate::parallel::Reducer> Drop for SteppedReduce<Reducer> {
     fn drop(&mut self) {
-        for value in self.by_ref() {
-            drop(value);
-        }
+        let (_, sink) = std::sync::mpsc::channel();
+        drop(std::mem::replace(&mut self.receive_result, sink));
+
         let mut last_err = None;
         for handle in std::mem::take(&mut self._threads) {
             if let Err(err) = handle.join() {
