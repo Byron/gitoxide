@@ -4,8 +4,7 @@
 pub mod ancestors {
     use crate::{compound, linked, pack};
     use git_hash::ObjectId;
-    use std::collections::BTreeSet;
-    use std::{collections::VecDeque, iter::FromIterator};
+    use std::{collections::BTreeSet, collections::VecDeque};
 
     /// The error used in the iterator implementation of [Iter].
     #[derive(Debug, thiserror::Error)]
@@ -19,7 +18,7 @@ pub mod ancestors {
         NotFound { oid: ObjectId },
     }
 
-    /// An iterator over the ancestors of a single starting point
+    /// An iterator over the ancestors one or more starting commits
     pub struct Iter<'a, Cache> {
         db: &'a linked::Db,
         next: VecDeque<ObjectId>,
@@ -40,8 +39,8 @@ pub mod ancestors {
         ///   * each commit they lead to will only be returned once, including the tip that started it
         /// * `cache` - a way to speedup object database access
         pub fn new(db: &'a linked::Db, tips: impl Iterator<Item = impl Into<ObjectId>>, cache: &'a mut Cache) -> Self {
-            let next = VecDeque::from_iter(tips.map(Into::into));
-            let seen = BTreeSet::from_iter(next.iter().cloned());
+            let next: VecDeque<_> = tips.map(Into::into).collect();
+            let seen = next.iter().cloned().collect();
             Iter {
                 db,
                 next,
@@ -73,7 +72,7 @@ pub mod ancestors {
                                 }
                             }
                         }
-                        Err(err) => return Some(Err(err.into())),
+                        Err(err) => return Some(Err(err)),
                     },
                     Ok(None) => return Some(Err(Error::NotFound { oid })),
                     Err(err) => return Some(Err(err.into())),
