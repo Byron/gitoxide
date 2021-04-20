@@ -13,12 +13,24 @@ use std::{convert::TryInto, fmt};
 /// hash `[`kind()`][oid::kind()]`.
 /// We expect to have quite a few bits available for such 'conflict resolution' as most hashes aren't longer
 /// than 64 bytes.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[repr(transparent)]
 #[allow(non_camel_case_types)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub struct oid {
     bytes: [u8],
+}
+
+impl std::fmt::Debug for oid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind() {
+            crate::Kind::Sha1 => f.write_str("Sha1(")?,
+        }
+        for b in self.as_bytes() {
+            write!(f, "{:02x}", b)?;
+        }
+        f.write_str(")")
+    }
 }
 
 use quick_error::quick_error;
