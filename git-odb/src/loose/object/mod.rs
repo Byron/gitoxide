@@ -19,7 +19,6 @@ pub struct Object {
 
 ///
 pub mod access;
-
 ///
 pub mod decode;
 ///

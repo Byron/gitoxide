@@ -10,15 +10,13 @@ pub enum Error {
 
 /// Decompress a few bytes of a zlib stream without allocation
 pub struct Inflate {
-    state: Decompress,
-    pub is_done: bool,
+    pub(crate) state: Decompress,
 }
 
 impl Default for Inflate {
     fn default() -> Self {
         Inflate {
             state: Decompress::new(true),
-            is_done: false,
         }
     }
 }

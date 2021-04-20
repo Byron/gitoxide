@@ -1,7 +1,54 @@
 mod deflate_stream {
     use crate::zlib::stream::DeflateWriter;
-    use crate::zlib::stream::InflateReader;
-    use std::io::{Read, Write};
+    use bstr::ByteSlice;
+    use flate2::Decompress;
+    use std::{
+        io,
+        io::{Read, Write},
+    };
+
+    /// Provide streaming decompression using the `std::io::Read` trait.
+    /// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
+    struct InflateReader<R> {
+        pub(crate) inner: R,
+        pub(crate) decompressor: Decompress,
+    }
+
+    impl<R> InflateReader<R>
+    where
+        R: io::BufRead,
+    {
+        pub fn from_read(read: R) -> InflateReader<R> {
+            InflateReader {
+                decompressor: Decompress::new(true),
+                inner: read,
+            }
+        }
+    }
+
+    impl<R> io::Read for InflateReader<R>
+    where
+        R: io::BufRead,
+    {
+        fn read(&mut self, into: &mut [u8]) -> io::Result<usize> {
+            crate::zlib::stream::inflate::read(&mut self.inner, &mut self.decompressor, into)
+        }
+    }
+
+    #[test]
+    fn small_file_decompress() -> Result<(), Box<dyn std::error::Error>> {
+        fn fixture_path(path: &str) -> std::path::PathBuf {
+            std::path::PathBuf::from("tests/fixtures").join(path)
+        }
+        let r = InflateReader::from_read(io::BufReader::new(std::fs::File::open(fixture_path(
+            "objects/37/d4e6c5c48ba0d245164c4e10d5f41140cab980",
+        ))?));
+        let mut bytes = r.bytes();
+        let content = bytes.by_ref().take(16).collect::<Result<Vec<_>, _>>()?;
+        assert_eq!(content.as_slice().as_bstr(), b"blob 9\0hi there\n".as_bstr());
+        assert!(bytes.next().is_none());
+        Ok(())
+    }
 
     #[test]
     fn all_at_once() -> Result<(), Box<dyn std::error::Error>> {
