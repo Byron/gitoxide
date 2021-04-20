@@ -73,6 +73,7 @@ impl Db {
                 path: path.to_owned(),
             })?;
 
+            buf.resize(0, 0);
             let bytes_read = istream.read_to_end(buf).map_err(|e| Error::Io {
                 source: e,
                 action: "read",
@@ -110,7 +111,6 @@ impl Db {
             );
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
             buf.resize(size, 0);
-            // TODO: assure both branches run via tests
             Ok(crate::borrowed::Object { kind, data: buf })
         } else {
             buf.resize(bytes_read + size + header_size, 0);
