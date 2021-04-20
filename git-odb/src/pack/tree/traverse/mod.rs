@@ -136,7 +136,7 @@ where
     }
 }
 
-impl<'a, P> parallel::Reducer for Reducer<'a, P>
+impl<'a, P> parallel::Reduce for Reducer<'a, P>
 where
     P: Progress,
 {

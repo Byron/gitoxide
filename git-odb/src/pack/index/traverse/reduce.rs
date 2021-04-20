@@ -51,7 +51,7 @@ where
     }
 }
 
-impl<'a, P, E> parallel::Reducer for Reducer<'a, P, E>
+impl<'a, P, E> parallel::Reduce for Reducer<'a, P, E>
 where
     P: Progress,
     E: std::error::Error + Send + Sync + 'static,

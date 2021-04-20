@@ -136,10 +136,10 @@ where
     O: self::Object,
     Oid: AsRef<oid> + Send + 'static,
 {
-    use git_features::parallel::{Reducer, SteppedReduce};
+    use git_features::parallel::{Reduce, SteppedReduce};
 
     struct Aggregator;
-    impl Reducer for Aggregator {
+    impl Reduce for Aggregator {
         type Input = Vec<Entry>;
         type FeedProduce = Vec<Entry>;
         type Output = ();

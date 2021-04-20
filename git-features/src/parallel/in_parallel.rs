@@ -1,4 +1,4 @@
-use crate::parallel::{num_threads, Reducer};
+use crate::parallel::{num_threads, Reduce};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -18,16 +18,16 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 /// * `new_thread_state(thread_number) -> State` produces thread-local state once per thread to be based to `consume`
 /// * `consume(Item, &mut State) -> Output` produces an output given an input obtained by `input` along with mutable state initially
 ///   created by `new_thread_state(…)`.
-/// * For `reducer`, see the [`Reducer`] trait
+/// * For `reducer`, see the [`Reduce`] trait
 pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
     new_thread_state: impl Fn(usize) -> S + Send + Sync,
     consume: impl Fn(I, &mut S) -> O + Send + Sync,
     mut reducer: R,
-) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
-    R: Reducer<Input = O>,
+    R: Reduce<Input = O>,
     I: Send,
     O: Send,
 {
@@ -72,18 +72,18 @@ where
 
 /// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
 /// for details.
-pub struct SteppedReduce<Reducer: crate::parallel::Reducer> {
+pub struct SteppedReduce<Reduce: crate::parallel::Reduce> {
     /// This field is first to assure it's dropped first and cause threads that are dropped next to stop their loops
     /// as sending results fails when the receiver is dropped.
-    receive_result: std::sync::mpsc::Receiver<Reducer::Input>,
+    receive_result: std::sync::mpsc::Receiver<Reduce::Input>,
     /// `join()` will be called on these guards to assure every thread tries to send through a closed channel. When
     /// that happens, they break out of their loops.
     _threads: Vec<std::thread::JoinHandle<()>>,
     /// The reducer is called only in the thread using the iterator, dropping it has no side effects.
-    reducer: Option<Reducer>,
+    reducer: Option<Reduce>,
 }
 
-impl<Reducer: crate::parallel::Reducer> Drop for SteppedReduce<Reducer> {
+impl<Reduce: crate::parallel::Reduce> Drop for SteppedReduce<Reduce> {
     fn drop(&mut self) {
         let (_, sink) = std::sync::mpsc::channel();
         drop(std::mem::replace(&mut self.receive_result, sink));
@@ -100,7 +100,7 @@ impl<Reducer: crate::parallel::Reducer> Drop for SteppedReduce<Reducer> {
     }
 }
 
-impl<Reducer: crate::parallel::Reducer> SteppedReduce<Reducer> {
+impl<Reduce: crate::parallel::Reduce> SteppedReduce<Reduce> {
     /// Instantiate a new iterator and start working in threads.
     /// For a description of parameters, see [`in_parallel()`].
     pub fn new<InputIter, ThreadStateFn, ConsumeFn, I, O, S>(
@@ -108,13 +108,13 @@ impl<Reducer: crate::parallel::Reducer> SteppedReduce<Reducer> {
         thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
         consume: ConsumeFn,
-        reducer: Reducer,
+        reducer: Reduce,
     ) -> Self
     where
         InputIter: Iterator<Item = I> + Send + 'static,
         ThreadStateFn: Fn(usize) -> S + Send + Clone + 'static,
         ConsumeFn: Fn(I, &mut S) -> O + Send + Clone + 'static,
-        Reducer: crate::parallel::Reducer<Input = O> + 'static,
+        Reduce: crate::parallel::Reduce<Input = O> + 'static,
         I: Send + 'static,
         O: Send + 'static,
     {
@@ -156,8 +156,8 @@ impl<Reducer: crate::parallel::Reducer> SteppedReduce<Reducer> {
         }
     }
 
-    /// Consume the iterator by finishing its iteration and calling [`Reducer::finalize()`][crate::parallel::Reducer::finalize()].
-    pub fn finalize(mut self) -> Result<Reducer::Output, Reducer::Error> {
+    /// Consume the iterator by finishing its iteration and calling [`Reduce::finalize()`][crate::parallel::Reduce::finalize()].
+    pub fn finalize(mut self) -> Result<Reduce::Output, Reduce::Error> {
         for value in self.by_ref() {
             drop(value?);
         }
@@ -168,8 +168,8 @@ impl<Reducer: crate::parallel::Reducer> SteppedReduce<Reducer> {
     }
 }
 
-impl<Reducer: crate::parallel::Reducer> Iterator for SteppedReduce<Reducer> {
-    type Item = Result<Reducer::FeedProduce, Reducer::Error>;
+impl<Reduce: crate::parallel::Reduce> Iterator for SteppedReduce<Reduce> {
+    type Item = Result<Reduce::FeedProduce, Reduce::Error>;
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         self.receive_result

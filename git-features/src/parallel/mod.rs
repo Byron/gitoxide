@@ -128,32 +128,37 @@ pub(crate) fn num_threads(thread_limit: Option<usize>) -> usize {
         .unwrap_or_else(logical_cores)
 }
 
-/// An trait for aggregating items commonly produced in threads into a single result, without itself
-/// needing to be thread safe.
-pub trait Reducer {
-    /// The type fed to the reducer in the [`feed()`][Reducer::feed()] method.
-    ///
-    /// It's produced by a function that may run on multiple threads.
-    type Input;
-    /// The type produced in Ok(…) by [`feed()`][Reducer::feed()].
-    /// Most reducers by nature use `()` here as the value is in the aggregation.
-    /// However, some may use it to collect statistics only and return their Input
-    /// in some form as a result here for [`SteppedReduce`] to be useful.
-    type FeedProduce;
-    /// The type produced once by the [`finalize()`][Reducer::finalize()] method.
-    ///
-    /// For traditional reducers, this is the value produced by the entire operation.
-    /// For those made for step-wise iteration this may be aggregated statistics.
-    type Output;
-    /// The error type to use for all methods of this trait.
-    type Error;
-    /// Called each time a new `item` was produced in order to aggregate it into the final result.
-    ///
-    /// If an `Error` is returned, the entire operation will be stopped.
-    fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error>;
-    /// Called once once all items where passed to `feed()`, producing the final `Output` of the operation or an `Error`.
-    fn finalize(self) -> Result<Self::Output, Self::Error>;
+///
+pub mod reduce {
+    /// An trait for aggregating items commonly produced in threads into a single result, without itself
+    /// needing to be thread safe.
+    pub trait Reduce {
+        /// The type fed to the reducer in the [`feed()`][Reducer::feed()] method.
+        ///
+        /// It's produced by a function that may run on multiple threads.
+        type Input;
+        /// The type produced in Ok(…) by [`feed()`][Reducer::feed()].
+        /// Most reducers by nature use `()` here as the value is in the aggregation.
+        /// However, some may use it to collect statistics only and return their Input
+        /// in some form as a result here for [`SteppedReduce`] to be useful.
+        type FeedProduce;
+        /// The type produced once by the [`finalize()`][Reducer::finalize()] method.
+        ///
+        /// For traditional reducers, this is the value produced by the entire operation.
+        /// For those made for step-wise iteration this may be aggregated statistics.
+        type Output;
+        /// The error type to use for all methods of this trait.
+        type Error;
+        /// Called each time a new `item` was produced in order to aggregate it into the final result.
+        ///
+        /// If an `Error` is returned, the entire operation will be stopped.
+        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error>;
+        /// Called once once all items where passed to `feed()`, producing the final `Output` of the operation or an `Error`.
+        fn finalize(self) -> Result<Self::Output, Self::Error>;
+    }
 }
+
+pub use reduce::Reduce;
 
 /// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.
 ///
@@ -165,9 +170,9 @@ pub fn in_parallel_if<I, S, O, R>(
     new_thread_state: impl Fn(usize) -> S + Send + Sync,
     consume: impl Fn(I, &mut S) -> O + Send + Sync,
     reducer: R,
-) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
-    R: Reducer<Input = O>,
+    R: Reduce<Input = O>,
     I: Send,
     O: Send,
 {

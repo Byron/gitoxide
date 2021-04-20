@@ -6,7 +6,7 @@ struct Adder {
     count: usize,
 }
 
-impl parallel::Reducer for Adder {
+impl parallel::Reduce for Adder {
     type Input = usize;
     type FeedProduce = usize;
     type Output = usize;

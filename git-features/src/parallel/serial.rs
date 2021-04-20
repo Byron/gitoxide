@@ -1,4 +1,4 @@
-use crate::parallel::Reducer;
+use crate::parallel::Reduce;
 
 #[cfg(not(feature = "parallel"))]
 /// Runs `left` and then `right`, one after another, returning their output when both are done.
@@ -11,7 +11,7 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 ///
 /// * `new_thread_state(thread_number) -> State` produces thread-local state once per thread to be based to `consume`
 /// * `consume(Item, &mut State) -> Output` produces an output given an input along with mutable state.
-/// * For `reducer`, see the [`Reducer`] trait
+/// * For `reducer`, see the [`Reduce`] trait
 /// * if `thread_limit` has no effect as everything is run on the main thread, but is present to keep the signature
 ///   similar to the parallel version.
 ///
@@ -22,9 +22,9 @@ pub fn in_parallel<I, S, O, R>(
     new_thread_state: impl Fn(usize) -> S + Send + Sync,
     consume: impl Fn(I, &mut S) -> O + Send + Sync,
     mut reducer: R,
-) -> Result<<R as Reducer>::Output, <R as Reducer>::Error>
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
-    R: Reducer<Input = O>,
+    R: Reduce<Input = O>,
     I: Send,
     O: Send,
 {
@@ -38,19 +38,19 @@ where
 /// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
 /// for details.
 #[cfg(not(feature = "parallel"))]
-pub struct SteppedReduce<InputIter, ConsumeFn, ThreadState, Reducer> {
+pub struct SteppedReduce<InputIter, ConsumeFn, ThreadState, Reduce> {
     input: InputIter,
     consume: ConsumeFn,
     thread_state: ThreadState,
-    reducer: Reducer,
+    reducer: Reduce,
 }
 
 #[cfg(not(feature = "parallel"))]
-impl<InputIter, ConsumeFn, Reducer, I, O, S> SteppedReduce<InputIter, ConsumeFn, S, Reducer>
+impl<InputIter, ConsumeFn, Reduce, I, O, S> SteppedReduce<InputIter, ConsumeFn, S, Reduce>
 where
     InputIter: Iterator<Item = I> + Send,
     ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
-    Reducer: crate::parallel::Reducer<Input = O>,
+    Reduce: crate::parallel::Reduce<Input = O>,
     I: Send,
     O: Send,
 {
@@ -61,7 +61,7 @@ where
         _thread_limit: Option<usize>,
         new_thread_state: ThreadStateFn,
         consume: ConsumeFn,
-        reducer: Reducer,
+        reducer: Reduce,
     ) -> Self
     where
         ThreadStateFn: Fn(usize) -> S + Send + Sync,
@@ -74,8 +74,8 @@ where
         }
     }
 
-    /// Consume the iterator by finishing its iteration and calling [`Reducer::finalize()`][crate::parallel::Reducer::finalize()].
-    pub fn finalize(mut self) -> Result<Reducer::Output, Reducer::Error> {
+    /// Consume the iterator by finishing its iteration and calling [`Reduce::finalize()`][crate::parallel::Reduce::finalize()].
+    pub fn finalize(mut self) -> Result<Reduce::Output, Reduce::Error> {
         for value in self.by_ref() {
             drop(value?);
         }
@@ -84,16 +84,16 @@ where
 }
 
 #[cfg(not(feature = "parallel"))]
-impl<InputIter, ConsumeFn, ThreadState, Reducer, I, O> Iterator
-    for SteppedReduce<InputIter, ConsumeFn, ThreadState, Reducer>
+impl<InputIter, ConsumeFn, ThreadState, Reduce, I, O> Iterator
+    for SteppedReduce<InputIter, ConsumeFn, ThreadState, Reduce>
 where
     InputIter: Iterator<Item = I> + Send,
     ConsumeFn: Fn(I, &mut ThreadState) -> O + Send + Sync,
-    Reducer: crate::parallel::Reducer<Input = O>,
+    Reduce: crate::parallel::Reduce<Input = O>,
     I: Send,
     O: Send,
 {
-    type Item = Result<Reducer::FeedProduce, Reducer::Error>;
+    type Item = Result<Reduce::FeedProduce, Reduce::Error>;
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         self.input
