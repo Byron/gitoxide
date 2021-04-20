@@ -1,7 +1,6 @@
-use super::Error;
 use crate::{
     commit,
-    immutable::{parse, parse::NL, Signature},
+    immutable::{decode, parse, parse::NL, Signature},
     BStr, ByteSlice,
 };
 use nom::{
@@ -45,8 +44,8 @@ pub struct Commit<'a> {
 
 impl<'a> Commit<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, Error> {
-        parse(data).map(|(_, t)| t).map_err(Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, decode::Error> {
+        parse(data).map(|(_, t)| t).map_err(decode::Error::from)
     }
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> git_hash::ObjectId {
@@ -66,32 +65,35 @@ impl<'a> Commit<'a> {
     }
 }
 
-fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
     if i.is_empty() {
         // newline + [message]
-        return Err(nom::Err::Error(Error::NomDetail(i.into(), "commit message is missing")));
+        return Err(nom::Err::Error(decode::Error::NomDetail(
+            i.into(),
+            "commit message is missing",
+        )));
     }
-    let (i, _) = tag(NL)(i).map_err(Error::context("a newline separates headers from the message"))?;
+    let (i, _) = tag(NL)(i).map_err(decode::Error::context("a newline separates headers from the message"))?;
     debug_assert!(!i.is_empty());
     Ok((&[], &i.as_bstr()))
 }
 
-fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, Error> {
-    let (i, tree) =
-        parse::header_field(i, b"tree", parse::hex_sha1).map_err(Error::context("tree <40 lowercase hex char>"))?;
+fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, decode::Error> {
+    let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
+        .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
     let (i, parents) = many0(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
-        .map_err(Error::context("zero or more 'parent <40 lowercase hex char>'"))?;
+        .map_err(decode::Error::context("zero or more 'parent <40 lowercase hex char>'"))?;
     let (i, author) =
-        parse::header_field(i, b"author", parse::signature).map_err(Error::context("author <signature>"))?;
-    let (i, committer) =
-        parse::header_field(i, b"committer", parse::signature).map_err(Error::context("committer <signature>"))?;
-    let (i, encoding) =
-        opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i).map_err(Error::context("encoding <encoding>"))?;
+        parse::header_field(i, b"author", parse::signature).map_err(decode::Error::context("author <signature>"))?;
+    let (i, committer) = parse::header_field(i, b"committer", parse::signature)
+        .map_err(decode::Error::context("committer <signature>"))?;
+    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i)
+        .map_err(decode::Error::context("encoding <encoding>"))?;
     let (i, extra_headers) = many0(alt((
         |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
         |i| parse::any_header_field(i, is_not(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr())))),
     )))(i)
-    .map_err(Error::context("<field> <single-line|multi-line>"))?;
+    .map_err(decode::Error::context("<field> <single-line|multi-line>"))?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((

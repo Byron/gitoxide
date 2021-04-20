@@ -2,12 +2,9 @@ use bstr::BStr;
 
 use crate::{
     immutable,
-    immutable::{parse, Blob, Commit, Tag, Tree},
+    immutable::{decode, parse, Blob, Commit, Tag, Tree},
     Kind, Time,
 };
-
-mod error;
-pub use error::Error;
 
 /// A signature is created by an actor at a certain time.
 ///
@@ -26,8 +23,8 @@ pub struct Signature<'a> {
 
 impl<'a> Signature<'a> {
     /// Deserialize a signature from the given `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Signature<'a>, Error> {
-        parse::signature(data).map(|(_, t)| t).map_err(Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<Signature<'a>, decode::Error> {
+        parse::signature(data).map(|(_, t)| t).map_err(decode::Error::from)
     }
 }
 
@@ -45,7 +42,7 @@ pub enum Object<'a> {
 
 impl<'a> Object<'a> {
     /// Deserialize an object of `kind` from the given `data`.
-    pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<Object<'a>, Error> {
+    pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<Object<'a>, decode::Error> {
         Ok(match kind {
             Kind::Tree => Object::Tree(Tree::from_bytes(data)?),
             Kind::Blob => Object::Blob(Blob { data }),

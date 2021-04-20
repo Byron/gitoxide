@@ -1,5 +1,5 @@
 use crate::{
-    immutable::{Error, Signature},
+    immutable::{decode, Signature},
     ByteSlice, Sign, Time,
 };
 use bstr::{BStr, BString, ByteVec};
@@ -18,7 +18,7 @@ pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 pub(crate) const SPACE_OR_NL: &[u8] = b" \n";
 
-pub(crate) fn any_header_field_multi_line(i: &[u8]) -> IResult<&[u8], (&[u8], BString), Error> {
+pub(crate) fn any_header_field_multi_line(i: &[u8]) -> IResult<&[u8], (&[u8], BString), decode::Error> {
     let (i, (k, o)) = peek(tuple((
         terminated(is_not(SPACE_OR_NL), tag(SPACE)),
         recognize(tuple((
@@ -45,15 +45,15 @@ pub(crate) fn any_header_field_multi_line(i: &[u8]) -> IResult<&[u8], (&[u8], BS
 pub(crate) fn header_field<'a, T>(
     i: &'a [u8],
     name: &'static [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
-) -> IResult<&'a [u8], T, Error> {
+    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, decode::Error>,
+) -> IResult<&'a [u8], T, decode::Error> {
     terminated(preceded(terminated(tag(name), tag(SPACE)), parse_value), tag(NL))(i)
 }
 
 pub(crate) fn any_header_field<'a, T>(
     i: &'a [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, Error>,
-) -> IResult<&'a [u8], (&'a [u8], T), Error> {
+    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, decode::Error>,
+) -> IResult<&'a [u8], (&'a [u8], T), decode::Error> {
     terminated(
         tuple((terminated(is_not(SPACE_OR_NL), tag(SPACE)), parse_value)),
         tag(NL),
@@ -64,11 +64,11 @@ fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
 }
 
-pub(crate) fn hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, Error> {
+pub(crate) fn hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
     take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
 }
 
-pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, Error> {
+pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, decode::Error> {
     let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
         terminated(take_until(&b" <"[..]), take(2usize)),
         terminated(take_until(&b"> "[..]), take(2usize)),
@@ -77,15 +77,25 @@ pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, Error> {
         take_while_m_n(2usize, 2, is_digit),
         take_while_m_n(2usize, 2, is_digit),
     ))(i)
-    .map_err(Error::context(
+    .map_err(decode::Error::context(
         "tagger <name> <<email>> <time seconds since epoch> <+|-><HHMM>",
     ))?;
 
     let sign = if tzsign[0] == b'-' { Sign::Minus } else { Sign::Plus };
-    let hours = btoi::<i32>(&tzhour)
-        .map_err(|e| nom::Err::Error(Error::ParseIntegerError("invalid 'hours' string", tzhour.into(), e)))?;
-    let minutes = btoi::<i32>(&tzminute)
-        .map_err(|e| nom::Err::Error(Error::ParseIntegerError("invalid 'minutes' string", tzminute.into(), e)))?;
+    let hours = btoi::<i32>(&tzhour).map_err(|e| {
+        nom::Err::Error(decode::Error::ParseIntegerError(
+            "invalid 'hours' string",
+            tzhour.into(),
+            e,
+        ))
+    })?;
+    let minutes = btoi::<i32>(&tzminute).map_err(|e| {
+        nom::Err::Error(decode::Error::ParseIntegerError(
+            "invalid 'minutes' string",
+            tzminute.into(),
+            e,
+        ))
+    })?;
     let offset = (hours * 3600 + minutes * 60) * if sign == Sign::Minus { -1 } else { 1 };
 
     Ok((
@@ -95,7 +105,7 @@ pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, Error> {
             email: email.as_bstr(),
             time: Time {
                 time: btoi::<u32>(time_in_seconds).map_err(|e| {
-                    nom::Err::Error(Error::ParseIntegerError(
+                    nom::Err::Error(decode::Error::ParseIntegerError(
                         "Could parse to seconds",
                         time_in_seconds.into(),
                         e,

@@ -17,7 +17,7 @@ pub enum Error {
     },
     #[error("{kind} object {id} could not be decoded")]
     ObjectDecode {
-        source: immutable::Error,
+        source: immutable::decode::Error,
         kind: git_object::Kind,
         id: git_hash::ObjectId,
     },

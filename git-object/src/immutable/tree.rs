@@ -1,4 +1,7 @@
-use crate::{immutable::parse::SPACE, immutable::Error, tree};
+use crate::{
+    immutable::{decode, parse::SPACE},
+    tree,
+};
 use bstr::{BStr, ByteSlice};
 use nom::{
     bytes::complete::{tag, take, take_while1, take_while_m_n},
@@ -34,13 +37,13 @@ pub struct Entry<'a> {
 
 impl<'a> Tree<'a> {
     /// Deserialize a Tree from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Tree<'a>, Error> {
-        parse(data).map(|(_, t)| t).map_err(Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<Tree<'a>, decode::Error> {
+        parse(data).map(|(_, t)| t).map_err(decode::Error::from)
     }
 }
 
 impl TryFrom<&[u8]> for tree::Mode {
-    type Error = Error;
+    type Error = decode::Error;
 
     fn try_from(mode: &[u8]) -> Result<Self, Self::Error> {
         Ok(match mode {
@@ -51,13 +54,13 @@ impl TryFrom<&[u8]> for tree::Mode {
             b"100755" => tree::Mode::BlobExecutable,
             b"120000" => tree::Mode::Link,
             b"160000" => tree::Mode::Commit,
-            _ => return Err(Error::NomDetail(mode.into(), "unknown tree mode")),
+            _ => return Err(decode::Error::NomDetail(mode.into(), "unknown tree mode")),
         })
     }
 }
 
 const NULL: &[u8] = b"\0";
-fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, Error> {
+fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, decode::Error> {
     let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
     let mode = tree::Mode::try_from(mode).map_err(nom::Err::Error)?;
     let (i, filename) = terminated(take_while1(|b| b != NULL[0]), tag(NULL))(i)?;
@@ -73,7 +76,7 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, Error> {
     ))
 }
 
-fn parse(i: &[u8]) -> IResult<&[u8], Tree<'_>, Error> {
+fn parse(i: &[u8]) -> IResult<&[u8], Tree<'_>, decode::Error> {
     let (i, entries) = all_consuming(many1(parse_entry))(i)?;
     Ok((i, Tree { entries }))
 }
