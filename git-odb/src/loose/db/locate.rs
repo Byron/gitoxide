@@ -73,7 +73,7 @@ impl Db {
                 path: path.to_owned(),
             })?;
 
-            buf.resize(0, 0);
+            buf.clear();
             let bytes_read = istream.read_to_end(buf).map_err(|e| Error::Io {
                 source: e,
                 action: "read",
