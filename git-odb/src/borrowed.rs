@@ -1,5 +1,4 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
-use git_object::borrowed;
 
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -11,17 +10,25 @@ pub struct Object<'a> {
 }
 
 impl<'a> Object<'a> {
-    /// Decodes the data in the backing slice into a [`borrowed::Object`], allowing to access all of its data
+    /// Decodes the data in the backing slice into a [`crate::borrowed::Object`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
-    /// **Note** that [owned, decoded objects][git_object::owned::Object] can be created from a [`borrowed::Object`]
-    /// using [`borrowed::Object::into_owned()`].
-    pub fn decode(&self) -> Result<borrowed::Object<'_>, borrowed::Error> {
+    /// **Note** that [owned, decoded objects][git_object::owned::Object] can be created from a [`crate::borrowed::Object`]
+    /// using [`crate::borrowed::Object::into_owned()`].
+    pub fn decode(&self) -> Result<git_object::borrowed::Object<'_>, git_object::borrowed::Error> {
         Ok(match self.kind {
-            git_object::Kind::Tree => borrowed::Object::Tree(borrowed::Tree::from_bytes(self.data)?),
-            git_object::Kind::Blob => borrowed::Object::Blob(borrowed::Blob { data: self.data }),
-            git_object::Kind::Commit => borrowed::Object::Commit(borrowed::Commit::from_bytes(self.data)?),
-            git_object::Kind::Tag => borrowed::Object::Tag(borrowed::Tag::from_bytes(self.data)?),
+            git_object::Kind::Tree => {
+                git_object::borrowed::Object::Tree(git_object::borrowed::Tree::from_bytes(self.data)?)
+            }
+            git_object::Kind::Blob => {
+                git_object::borrowed::Object::Blob(git_object::borrowed::Blob { data: self.data })
+            }
+            git_object::Kind::Commit => {
+                git_object::borrowed::Object::Commit(git_object::borrowed::Commit::from_bytes(self.data)?)
+            }
+            git_object::Kind::Tag => {
+                git_object::borrowed::Object::Tag(git_object::borrowed::Tag::from_bytes(self.data)?)
+            }
         })
     }
 }

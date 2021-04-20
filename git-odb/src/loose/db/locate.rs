@@ -1,5 +1,4 @@
 use crate::{
-    borrowed,
     loose::{db::sha1_path, object::header, Db, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };
@@ -39,7 +38,7 @@ impl Db {
         &self,
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
-    ) -> Result<Option<borrowed::Object<'a>>, Error> {
+    ) -> Result<Option<crate::borrowed::Object<'a>>, Error> {
         match self.locate_inner(id.as_ref(), out) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
@@ -63,7 +62,7 @@ impl Db {
         }
     }
 
-    fn locate_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<borrowed::Object<'a>, Error> {
+    fn locate_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<crate::borrowed::Object<'a>, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
@@ -112,7 +111,7 @@ impl Db {
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
             buf.resize(size, 0);
             // TODO: assure both branches run via tests
-            Ok(borrowed::Object { kind, data: buf })
+            Ok(crate::borrowed::Object { kind, data: buf })
         } else {
             buf.resize(bytes_read + size + header_size, 0);
             {
@@ -135,7 +134,7 @@ impl Db {
             };
             buf.copy_within(decompressed_start + header_size.., 0);
             buf.resize(size, 0);
-            Ok(borrowed::Object { kind, data: buf })
+            Ok(crate::borrowed::Object { kind, data: buf })
         }
     }
 }

@@ -171,10 +171,12 @@ impl index::File {
             match object_kind {
                 Tree | Commit | Tag => {
                     let borrowed_object =
-                        borrowed::Object::from_bytes(object_kind, buf).map_err(|err| Error::ObjectDecode {
-                            source: err,
-                            kind: object_kind,
-                            id: index_entry.oid,
+                        git_object::borrowed::Object::from_bytes(object_kind, buf).map_err(|err| {
+                            Error::ObjectDecode {
+                                source: err,
+                                kind: object_kind,
+                                id: index_entry.oid,
+                            }
                         })?;
                     if let Mode::Sha1Crc32DecodeEncode = mode {
                         let object = owned::Object::from(borrowed_object);
