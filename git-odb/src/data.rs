@@ -51,7 +51,7 @@ pub mod verify {
         },
     }
 
-    impl crate::borrowed::Object<'_> {
+    impl crate::data::Object<'_> {
         /// Compute the checksum of `self` and compare it with the `desired` hash.
         /// If the hashes do not match, an [`Error`] is returned, containing the actual
         /// hash of `self`.

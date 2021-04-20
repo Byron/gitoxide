@@ -1,4 +1,4 @@
-use crate::pack;
+use crate::{data, pack};
 
 impl pack::Bundle {
     /// Find an object with the given [`ObjectId`][git_hash::ObjectId] and place its data into `out`.
@@ -12,7 +12,7 @@ impl pack::Bundle {
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<crate::borrowed::Object<'a>>, pack::data::decode::Error> {
+    ) -> Result<Option<data::Object<'a>>, pack::data::decode::Error> {
         let idx = match self.index.lookup(id) {
             Some(idx) => idx,
             None => return Ok(None),
@@ -35,7 +35,7 @@ impl pack::Bundle {
         idx: u32,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<crate::borrowed::Object<'a>, pack::data::decode::Error> {
+    ) -> Result<data::Object<'a>, pack::data::decode::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
         self.pack
@@ -49,7 +49,7 @@ impl pack::Bundle {
                 },
                 cache,
             )
-            .map(move |r| crate::borrowed::Object {
+            .map(move |r| crate::data::Object {
                 kind: r.kind,
                 data: out.as_slice(),
             })

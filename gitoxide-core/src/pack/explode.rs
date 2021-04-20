@@ -77,7 +77,7 @@ quick_error! {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
-        Verify(err: git_odb::borrowed::verify::Error) {
+        Verify(err: git_odb::data::verify::Error) {
             display("Object didn't verify after right after writing it")
             source(err)
             from()

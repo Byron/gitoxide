@@ -1,4 +1,4 @@
-use crate::{compound, loose, pack};
+use crate::{compound, data, loose, pack};
 
 /// Returned by [`compound::Db::locate()`]
 #[derive(thiserror::Error, Debug)]
@@ -24,7 +24,7 @@ impl compound::Db {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<crate::borrowed::Object<'a>>, Error> {
+    ) -> Result<Option<data::Object<'a>>, Error> {
         let id = id.as_ref();
         for pack in &self.packs {
             if let Some(idx) = pack.internal_locate_index(id) {
@@ -62,7 +62,7 @@ impl compound::Db {
         object_index: u32,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<crate::borrowed::Object<'a>, pack::data::decode::Error> {
+    ) -> Result<data::Object<'a>, pack::data::decode::Error> {
         self.packs[pack_index].internal_get_object_by_index(object_index, buffer, pack_cache)
     }
 }
