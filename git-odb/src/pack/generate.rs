@@ -136,23 +136,7 @@ where
     O: self::Object,
     Oid: AsRef<oid> + Send + 'static,
 {
-    use git_features::parallel::{reduce, Reduce};
-
-    struct Aggregator;
-    impl Reduce for Aggregator {
-        type Input = Vec<Entry>;
-        type FeedProduce = Vec<Entry>;
-        type Output = ();
-        type Error = Error;
-
-        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            Ok(item)
-        }
-
-        fn finalize(self) -> Result<Self::Output, Self::Error> {
-            Ok(())
-        }
-    }
+    use git_features::parallel::reduce;
 
     reduce::Stepwise::new(
         objects,
@@ -162,6 +146,6 @@ where
             let _ = version; // currently unused
             Vec::new()
         },
-        Aggregator,
+        reduce::Identity::default(),
     )
 }

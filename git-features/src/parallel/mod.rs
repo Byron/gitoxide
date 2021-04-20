@@ -309,6 +309,7 @@ pub mod reduce {
             }
         }
     }
+    use std::marker::PhantomData;
     pub use stepped::Stepwise;
 
     /// An trait for aggregating items commonly produced in threads into a single result, without itself
@@ -336,6 +337,37 @@ pub mod reduce {
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error>;
         /// Called once once all items where passed to `feed()`, producing the final `Output` of the operation or an `Error`.
         fn finalize(self) -> Result<Self::Output, Self::Error>;
+    }
+
+    /// An identity reducer for those who want to use [`Stepwise`] or [`in_parallel()`][crate::parallel::in_parallel()]
+    /// without the use of non-threaded reduction of products created in threads.
+    pub struct Identity<Input, Error> {
+        _input: PhantomData<Input>,
+        _error: PhantomData<Error>,
+    }
+
+    impl<Input, Error> Default for Identity<Input, Error> {
+        fn default() -> Self {
+            Identity {
+                _input: Default::default(),
+                _error: Default::default(),
+            }
+        }
+    }
+
+    impl<Input, Error> Reduce for Identity<Input, Error> {
+        type Input = Input;
+        type FeedProduce = Input;
+        type Output = ();
+        type Error = Error;
+
+        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+            Ok(item)
+        }
+
+        fn finalize(self) -> Result<Self::Output, Self::Error> {
+            Ok(())
+        }
     }
 }
 
