@@ -55,7 +55,16 @@ impl Db {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns true if the given id is contained in our repository.
+    pub fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
+        sha1_path(id.as_ref(), self.path.clone()).is_file()
+    }
+
+    /// Return the object identified by the given [`ObjectId`][git_hash::ObjectId] if present in this database,
+    /// writing its raw data into the given `out` buffer.
+    ///
+    /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
+    /// there was no such object.
     pub fn locate2<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,

@@ -10,9 +10,9 @@ pub enum Error {
     Pack(#[from] pack::data::decode::Error),
 }
 
-pub(crate) enum LooseOrPack {
-    Loose(Box<loose::Object>),
-    Packed(usize, u32),
+pub(crate) struct PackInfo {
+    pub pack_id: usize,
+    pub entry_index: u32,
 }
 
 impl compound::Db {
@@ -43,15 +43,15 @@ impl compound::Db {
     /// (The polonius borrow-checker would support this via the locate
     /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
     /// once polonius is stable.)
-    pub(crate) fn internal_locate(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<LooseOrPack>, Error> {
+    pub(crate) fn internal_locate(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<PackInfo>, Error> {
         let id = id.as_ref();
         for (pack_idx, pack) in self.packs.iter().enumerate() {
             if let Some(idx) = pack.internal_locate_index(id) {
-                return Ok(Some(LooseOrPack::Packed(pack_idx, idx)));
+                return Ok(Some(PackInfo {
+                    pack_id: pack_idx,
+                    entry_index: idx,
+                }));
             }
-        }
-        if let Some(object) = self.loose.locate(id)? {
-            return Ok(Some(LooseOrPack::Loose(Box::new(object))));
         }
         Ok(None)
     }
