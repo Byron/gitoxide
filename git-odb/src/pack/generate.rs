@@ -136,7 +136,7 @@ where
     O: self::Object,
     Oid: AsRef<oid> + Send + 'static,
 {
-    use git_features::parallel::{Reduce, SteppedReduce};
+    use git_features::parallel::{reduce, Reduce};
 
     struct Aggregator;
     impl Reduce for Aggregator {
@@ -154,7 +154,7 @@ where
         }
     }
 
-    SteppedReduce::new(
+    reduce::Stepwise::new(
         objects,
         thread_limit,
         |_n| (),

@@ -37,7 +37,7 @@ fn in_parallel() {
 
 #[test]
 fn stepped_reduce_next() {
-    let mut iter = parallel::SteppedReduce::new(
+    let mut iter = parallel::reduce::Stepwise::new(
         std::iter::from_fn(|| Some(1)).take(100),
         None,
         |_n| (),
@@ -66,7 +66,7 @@ fn stepped_reduce_ref_input_and_consume() {
         }
     }
 
-    let mut iter = parallel::SteppedReduce::new(
+    let mut iter = parallel::reduce::Stepwise::new(
         ArcIter(seq.clone(), 0).enumerate(),
         None,
         {
@@ -89,7 +89,7 @@ fn stepped_reduce_ref_input_and_consume() {
 
 #[test]
 fn stepped_reduce_finalize() {
-    let iter = parallel::SteppedReduce::new(
+    let iter = parallel::reduce::Stepwise::new(
         std::iter::from_fn(|| Some(1)).take(100),
         None,
         |_n| (),
