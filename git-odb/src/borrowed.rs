@@ -64,3 +64,13 @@ pub mod verify {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_object() {
+        assert_eq!(std::mem::size_of::<Object<'_>>(), 24, "this shouldn't change unnoticed");
+    }
+}
