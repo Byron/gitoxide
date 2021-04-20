@@ -31,7 +31,6 @@ pub fn locate_oid(id: git_hash::ObjectId) -> loose::Object {
 mod write {
     use crate::loose::db::{locate_oid, object_ids};
     use git_odb::{loose, Write};
-    use std::io::Read;
 
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,7 +43,7 @@ mod write {
             assert_eq!(actual, oid);
             assert_eq!(db.locate(oid)?.expect("id present").decode()?, obj.decode()?);
             let mut buf = Vec::new();
-            obj.stream()?.read_to_end(&mut buf)?;
+            obj.data(&mut buf)?;
             let actual = db.write_buf(obj.kind, &buf, git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(db.locate(oid)?.expect("id present").decode()?, obj.decode()?);

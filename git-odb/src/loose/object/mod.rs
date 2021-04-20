@@ -17,6 +17,16 @@ pub struct Object {
     pub(crate) decompression_complete: bool,
 }
 
+impl Object {
+    /// Writes all decompressed, raw data, into `buf`.
+    pub fn data(&mut self, buf: &mut Vec<u8>) -> Result<(), decode::Error> {
+        self.decompress_all()?;
+        buf.resize(self.decompressed_data.len() - self.header_size, 0);
+        buf.copy_from_slice(&self.decompressed_data[self.header_size..]);
+        Ok(())
+    }
+}
+
 ///
 pub mod decode;
 ///
