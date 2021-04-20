@@ -1,9 +1,9 @@
-use crate::{borrowed, owned};
+use crate::{immutable, mutable};
 
-impl From<borrowed::Signature<'_>> for owned::Signature {
-    fn from(other: borrowed::Signature<'_>) -> owned::Signature {
-        let borrowed::Signature { name, email, time } = other;
-        owned::Signature {
+impl From<immutable::Signature<'_>> for mutable::Signature {
+    fn from(other: immutable::Signature<'_>) -> mutable::Signature {
+        let immutable::Signature { name, email, time } = other;
+        mutable::Signature {
             name: name.to_owned(),
             email: email.to_owned(),
             time,
@@ -11,9 +11,9 @@ impl From<borrowed::Signature<'_>> for owned::Signature {
     }
 }
 
-impl From<borrowed::Tag<'_>> for owned::Tag {
-    fn from(other: borrowed::Tag<'_>) -> owned::Tag {
-        let borrowed::Tag {
+impl From<immutable::Tag<'_>> for mutable::Tag {
+    fn from(other: immutable::Tag<'_>) -> mutable::Tag {
+        let immutable::Tag {
             target,
             name,
             target_kind,
@@ -21,7 +21,7 @@ impl From<borrowed::Tag<'_>> for owned::Tag {
             signature,
             pgp_signature,
         } = other;
-        owned::Tag {
+        mutable::Tag {
             target: git_hash::ObjectId::from_hex(&target).expect("40 bytes hex sha1"),
             name: name.to_owned(),
             target_kind,
@@ -32,9 +32,9 @@ impl From<borrowed::Tag<'_>> for owned::Tag {
     }
 }
 
-impl From<borrowed::Commit<'_>> for owned::Commit {
-    fn from(other: borrowed::Commit<'_>) -> owned::Commit {
-        let borrowed::Commit {
+impl From<immutable::Commit<'_>> for mutable::Commit {
+    fn from(other: immutable::Commit<'_>) -> mutable::Commit {
+        let immutable::Commit {
             tree,
             parents,
             author,
@@ -43,7 +43,7 @@ impl From<borrowed::Commit<'_>> for owned::Commit {
             message,
             extra_headers,
         } = other;
-        owned::Commit {
+        mutable::Commit {
             tree: git_hash::ObjectId::from_hex(&tree).expect("40 bytes hex sha1"),
             parents: parents
                 .iter()
@@ -61,27 +61,27 @@ impl From<borrowed::Commit<'_>> for owned::Commit {
     }
 }
 
-impl<'a> From<borrowed::Blob<'a>> for owned::Blob {
-    fn from(v: borrowed::Blob<'a>) -> Self {
-        owned::Blob {
+impl<'a> From<immutable::Blob<'a>> for mutable::Blob {
+    fn from(v: immutable::Blob<'a>) -> Self {
+        mutable::Blob {
             data: v.data.to_owned(),
         }
     }
 }
 
-impl From<borrowed::Tree<'_>> for owned::Tree {
-    fn from(other: borrowed::Tree<'_>) -> owned::Tree {
-        let borrowed::Tree { entries } = other;
-        owned::Tree {
+impl From<immutable::Tree<'_>> for mutable::Tree {
+    fn from(other: immutable::Tree<'_>) -> mutable::Tree {
+        let immutable::Tree { entries } = other;
+        mutable::Tree {
             entries: entries.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl From<borrowed::tree::Entry<'_>> for owned::tree::Entry {
-    fn from(other: borrowed::tree::Entry<'_>) -> owned::tree::Entry {
-        let borrowed::tree::Entry { mode, filename, oid } = other;
-        owned::tree::Entry {
+impl From<immutable::tree::Entry<'_>> for mutable::tree::Entry {
+    fn from(other: immutable::tree::Entry<'_>) -> mutable::tree::Entry {
+        let immutable::tree::Entry { mode, filename, oid } = other;
+        mutable::tree::Entry {
             mode,
             filename: filename.to_owned(),
             oid: oid.into(),
@@ -89,13 +89,13 @@ impl From<borrowed::tree::Entry<'_>> for owned::tree::Entry {
     }
 }
 
-impl<'a> From<borrowed::Object<'a>> for owned::Object {
-    fn from(v: borrowed::Object<'_>) -> Self {
+impl<'a> From<immutable::Object<'a>> for mutable::Object {
+    fn from(v: immutable::Object<'_>) -> Self {
         match v {
-            borrowed::Object::Tree(v) => owned::Object::Tree(v.into()),
-            borrowed::Object::Blob(v) => owned::Object::Blob(v.into()),
-            borrowed::Object::Commit(v) => owned::Object::Commit(v.into()),
-            borrowed::Object::Tag(v) => owned::Object::Tag(v.into()),
+            immutable::Object::Tree(v) => mutable::Object::Tree(v.into()),
+            immutable::Object::Blob(v) => mutable::Object::Blob(v.into()),
+            immutable::Object::Commit(v) => mutable::Object::Commit(v.into()),
+            immutable::Object::Tag(v) => mutable::Object::Tag(v.into()),
         }
     }
 }

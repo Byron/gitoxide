@@ -1,9 +1,9 @@
-use git_object::{borrowed, bstr::ByteSlice, Sign, Time};
+use git_object::{bstr::ByteSlice, immutable, Sign, Time};
 
 pub mod db;
 
-fn signature(time: u32) -> borrowed::Signature<'static> {
-    borrowed::Signature {
+fn signature(time: u32) -> immutable::Signature<'static> {
+    immutable::Signature {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"byronimo@gmail.com".as_bstr(),
         time: Time {

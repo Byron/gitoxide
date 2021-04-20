@@ -10,25 +10,24 @@ pub struct Object<'a> {
 }
 
 impl<'a> Object<'a> {
-    /// Decodes the data in the backing slice into a [`git_object::borrowed::Object`], allowing to access all of its data
+    /// Decodes the data in the backing slice into a [`git_object::immutable::Object`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
-    /// **Note** that [owned, decoded objects][git_object::owned::Object] can be created from a [`crate::borrowed::Object`]
-    ///
-    /// using [`git_object::borrowed::Object::into_owned()`].
-    pub fn decode(&self) -> Result<git_object::borrowed::Object<'_>, git_object::borrowed::Error> {
+    /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::borrowed::Object`]
+    /// using [`git_object::immutable::Object::into_mutable()`].
+    pub fn decode(&self) -> Result<git_object::immutable::Object<'_>, git_object::immutable::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => {
-                git_object::borrowed::Object::Tree(git_object::borrowed::Tree::from_bytes(self.data)?)
+                git_object::immutable::Object::Tree(git_object::immutable::Tree::from_bytes(self.data)?)
             }
             git_object::Kind::Blob => {
-                git_object::borrowed::Object::Blob(git_object::borrowed::Blob { data: self.data })
+                git_object::immutable::Object::Blob(git_object::immutable::Blob { data: self.data })
             }
             git_object::Kind::Commit => {
-                git_object::borrowed::Object::Commit(git_object::borrowed::Commit::from_bytes(self.data)?)
+                git_object::immutable::Object::Commit(git_object::immutable::Commit::from_bytes(self.data)?)
             }
             git_object::Kind::Tag => {
-                git_object::borrowed::Object::Tag(git_object::borrowed::Tag::from_bytes(self.data)?)
+                git_object::immutable::Object::Tag(git_object::immutable::Tag::from_bytes(self.data)?)
             }
         })
     }

@@ -1,5 +1,5 @@
 use crate::{
-    borrowed::{parse, parse::NL, Error, Signature},
+    immutable::{parse, parse::NL, Error, Signature},
     BStr, ByteSlice,
 };
 use nom::bytes::complete::take_while;

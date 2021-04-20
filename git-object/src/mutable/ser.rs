@@ -1,4 +1,4 @@
-use crate::owned::{self, NL, SPACE};
+use crate::mutable::{self, NL, SPACE};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;
@@ -46,7 +46,7 @@ pub fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) 
     out.write_all(NL)
 }
 
-pub fn trusted_header_signature(name: &[u8], value: &owned::Signature, mut out: impl io::Write) -> io::Result<()> {
+pub fn trusted_header_signature(name: &[u8], value: &mutable::Signature, mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
     out.write_all(SPACE)?;
     value.write_to(&mut out)?;

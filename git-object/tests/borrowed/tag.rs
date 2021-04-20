@@ -1,12 +1,12 @@
 use git_object::{
-    borrowed::{Signature, Tag},
     bstr::ByteSlice,
+    immutable::{Signature, Tag},
     Kind, Sign, Time,
 };
 
 mod method {
     use crate::{borrowed::fixture_bytes, hex_to_id};
-    use git_object::borrowed::Tag;
+    use git_object::immutable::Tag;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -21,7 +21,7 @@ mod method {
 
 mod from_bytes {
     use crate::{borrowed::fixture_bytes, borrowed::signature, borrowed::tag::tag_fixture};
-    use git_object::{borrowed::Tag, bstr::ByteSlice, Kind};
+    use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
 
     #[test]
     fn signed() -> Result<(), Box<dyn std::error::Error>> {

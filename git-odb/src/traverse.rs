@@ -14,7 +14,7 @@ pub mod ancestors {
         #[error(transparent)]
         Compound(#[from] compound::locate::Error),
         #[error(transparent)]
-        ObjectDecode(#[from] git_object::borrowed::Error),
+        ObjectDecode(#[from] git_object::immutable::Error),
         #[error("Object id {oid} wasn't found in object database")]
         NotFound { oid: ObjectId },
     }

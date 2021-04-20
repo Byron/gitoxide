@@ -1,6 +1,6 @@
 mod method {
     use crate::{borrowed::fixture_bytes, hex_to_id};
-    use git_object::borrowed::Commit;
+    use git_object::immutable::Commit;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -16,7 +16,7 @@ mod method {
 mod from_bytes {
     use crate::borrowed::linus_signature;
     use crate::{borrowed::fixture_bytes, borrowed::signature};
-    use git_object::{borrowed::Commit, bstr::ByteSlice};
+    use git_object::{bstr::ByteSlice, immutable::Commit};
     use smallvec::SmallVec;
 
     #[test]

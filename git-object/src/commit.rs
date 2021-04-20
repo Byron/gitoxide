@@ -1,7 +1,7 @@
-use crate::borrowed;
+use crate::immutable;
 use bstr::{BStr, ByteSlice};
 
-/// An iterator over extra headers in [owned][crate::owned::Commit] and [borrowed][borrowed::Commit] commits.
+/// An iterator over extra headers in [owned][crate::mutable::Commit] and [borrowed][immutable::Commit] commits.
 pub struct ExtraHeaders<I> {
     inner: I,
 }
@@ -29,8 +29,8 @@ where
     ///
     /// A merge tag is a tag object embedded within the respective header field of a commit, making
     /// it a child object of sorts.
-    pub fn mergetags(self) -> impl Iterator<Item = Result<borrowed::Tag<'a>, borrowed::Error>> {
-        self.find_all("mergetag").map(|b| borrowed::Tag::from_bytes(b))
+    pub fn mergetags(self) -> impl Iterator<Item = Result<immutable::Tag<'a>, immutable::Error>> {
+        self.find_all("mergetag").map(|b| immutable::Tag::from_bytes(b))
     }
 
     /// Return the cryptographic signature provided by gpg/pgp verbatim.

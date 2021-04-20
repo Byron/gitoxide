@@ -1,4 +1,4 @@
-use crate::{owned::SPACE, tree::Mode};
+use crate::{mutable::SPACE, tree::Mode};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;

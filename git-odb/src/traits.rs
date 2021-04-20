@@ -1,4 +1,4 @@
-use git_object::owned;
+use git_object::mutable;
 use std::{convert::TryInto, io};
 
 /// Describe the capability to write git objects into an object store.
@@ -8,9 +8,9 @@ pub trait Write {
     /// _Note_ the default implementations require the `From<io::Error>` bound.
     type Error: std::error::Error + From<io::Error>;
 
-    /// Write [`object`][owned::Object] using the given kind of [`hash`][git_hash::Kind] into the database,
+    /// Write [`object`][mutable::Object] using the given kind of [`hash`][git_hash::Kind] into the database,
     /// returning id to reference it in subsequent reads.
-    fn write(&self, object: &owned::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write(&self, object: &mutable::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         let mut buf = Vec::with_capacity(2048);
         object.write_to(&mut buf)?;
         self.write_stream(object.kind(), buf.len() as u64, buf.as_slice(), hash)

@@ -1,5 +1,5 @@
 use crate::{
-    borrowed::{Error, Signature},
+    immutable::{Error, Signature},
     ByteSlice, Sign, Time,
 };
 use bstr::{BStr, BString, ByteVec};
@@ -112,7 +112,7 @@ pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, Error> {
 mod tests {
     mod parse_signature {
         use crate::{
-            borrowed::{parse, Signature},
+            immutable::{parse, Signature},
             ByteSlice, Sign, Time,
         };
 

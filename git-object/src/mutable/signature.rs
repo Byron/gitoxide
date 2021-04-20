@@ -1,4 +1,4 @@
-use crate::{owned::SPACE, Time};
+use crate::{mutable::SPACE, Time};
 use bstr::{BStr, BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;

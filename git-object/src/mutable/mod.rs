@@ -1,8 +1,8 @@
-//! Mutable objects with each field being separately allocated and mutable.
+//! Mutable objects with each field being separately allocated and changeable.
 //!
-//! Owned objects are Commits, Trees, Blobs and Tags that can be mutated and serialized.
-//! They either created using object [construction][Object] or by [deserializing existing objects][crate::borrowed::Object::from_bytes()]
-//! and converting these [into owned copies][crate::borrowed::Object::into_owned()] for mutation.
+//! Mutable objects are Commits, Trees, Blobs and Tags that can be changed and serialized.
+//! They either created using object [construction][Object] or by [deserializing existing objects][crate::immutable::Object::from_bytes()]
+//! and converting these [into mutable copies][crate::immutable::Object::into_mutable()] for adjustments.
 
 pub(crate) const NL: &[u8; 1] = b"\n";
 pub(crate) const SPACE: &[u8; 1] = b" ";

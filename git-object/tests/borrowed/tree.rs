@@ -1,8 +1,8 @@
 mod from_bytes {
     use crate::borrowed::fixture_bytes;
     use git_object::{
-        borrowed::{tree::Entry, Tree},
         bstr::ByteSlice,
+        immutable::{tree::Entry, Tree},
         tree,
     };
     use hex::FromHex;

@@ -1,4 +1,4 @@
-use git_object::{borrowed::Signature, Sign, Time};
+use git_object::{immutable::Signature, Sign, Time};
 use std::path::PathBuf;
 
 mod commit;
@@ -49,7 +49,7 @@ fn linus_signature(time: u32) -> Signature<'static> {
 }
 
 mod object {
-    use git_object::borrowed::Object;
+    use git_object::immutable::Object;
 
     #[test]
     fn size_in_memory() {

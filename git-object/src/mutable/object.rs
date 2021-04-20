@@ -1,42 +1,42 @@
-use crate::owned;
+use crate::mutable;
 use std::io;
 
-/// A mutable object representing [`Trees`][owned::Tree], [`Blobs`][owned::Blob], [`Commits`][owned::Commit] or [`Tags`][owned::Tag].
+/// A mutable object representing [`Trees`][mutable::Tree], [`Blobs`][mutable::Blob], [`Commits`][mutable::Commit] or [`Tags`][mutable::Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(clippy::large_enum_variant, missing_docs)]
 pub enum Object {
-    Tree(owned::Tree),
-    Blob(owned::Blob),
-    Commit(owned::Commit),
-    Tag(owned::Tag),
+    Tree(mutable::Tree),
+    Blob(mutable::Blob),
+    Commit(mutable::Commit),
+    Tag(mutable::Tag),
 }
 
 /// Convenient extraction of typed object.
 impl Object {
-    /// Returns a [`Blob`][owned::Blob] if it is one.
-    pub fn as_blob(&self) -> Option<&owned::Blob> {
+    /// Returns a [`Blob`][mutable::Blob] if it is one.
+    pub fn as_blob(&self) -> Option<&mutable::Blob> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Commit`][owned::Commit] if it is one.
-    pub fn as_commit(&self) -> Option<&owned::Commit> {
+    /// Returns a [`Commit`][mutable::Commit] if it is one.
+    pub fn as_commit(&self) -> Option<&mutable::Commit> {
         match self {
             Object::Commit(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Tree`][owned::Tree] if it is one.
-    pub fn as_tree(&self) -> Option<&owned::Tree> {
+    /// Returns a [`Tree`][mutable::Tree] if it is one.
+    pub fn as_tree(&self) -> Option<&mutable::Tree> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Tag`][owned::Tag] if it is one.
-    pub fn as_tag(&self) -> Option<&owned::Tag> {
+    /// Returns a [`Tag`][mutable::Tag] if it is one.
+    pub fn as_tag(&self) -> Option<&mutable::Tag> {
         match self {
             Object::Tag(v) => Some(v),
             _ => None,
@@ -68,7 +68,7 @@ impl Object {
 }
 
 mod convert {
-    use crate::owned::{Blob, Commit, Object, Tag, Tree};
+    use crate::mutable::{Blob, Commit, Object, Tag, Tree};
     use std::convert::TryFrom;
 
     impl From<Tag> for Object {

@@ -2,9 +2,8 @@ use crate::pack::{self, index};
 use git_features::progress::{self, Progress};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use git_object::{
-    borrowed,
     bstr::{BString, ByteSlice},
-    owned,
+    immutable, mutable,
 };
 
 /// Returned by [`index::File::verify_checksum()`]
@@ -18,7 +17,7 @@ pub enum Error {
     },
     #[error("{kind} object {id} could not be decoded")]
     ObjectDecode {
-        source: borrowed::Error,
+        source: immutable::Error,
         kind: git_object::Kind,
         id: git_hash::ObjectId,
     },
@@ -171,7 +170,7 @@ impl index::File {
             match object_kind {
                 Tree | Commit | Tag => {
                     let borrowed_object =
-                        git_object::borrowed::Object::from_bytes(object_kind, buf).map_err(|err| {
+                        git_object::immutable::Object::from_bytes(object_kind, buf).map_err(|err| {
                             Error::ObjectDecode {
                                 source: err,
                                 kind: object_kind,
@@ -179,7 +178,7 @@ impl index::File {
                             }
                         })?;
                     if let Mode::Sha1Crc32DecodeEncode = mode {
-                        let object = owned::Object::from(borrowed_object);
+                        let object = mutable::Object::from(borrowed_object);
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {

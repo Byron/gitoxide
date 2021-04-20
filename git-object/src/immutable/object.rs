@@ -1,8 +1,8 @@
 use bstr::BStr;
 
 use crate::{
-    borrowed,
-    borrowed::{parse, Blob, Commit, Tag, Tree},
+    immutable,
+    immutable::{parse, Blob, Commit, Tag, Tree},
     Kind, Time,
 };
 
@@ -31,7 +31,7 @@ impl<'a> Signature<'a> {
     }
 }
 
-/// A borrowed object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit], or [`Tags`][Tag].
+/// An immutable object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit], or [`Tags`][Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
@@ -54,37 +54,46 @@ impl<'a> Object<'a> {
         })
     }
 
-    /// Convert the borrowed object into an owned, mutable version, consuming the source in the process.
-    pub fn into_owned(self) -> crate::owned::Object {
+    /// Convert the immutable object into a mutable version, consuming the source in the process.
+    ///
+    /// Note that this is an expensive operation.
+    pub fn into_mutable(self) -> crate::mutable::Object {
         self.into()
+    }
+
+    /// Convert this immutable object into its mutable counterpart.
+    ///
+    /// Note that this is an expensive operation.
+    pub fn to_mutable(&self) -> crate::mutable::Object {
+        self.clone().into()
     }
 }
 
 /// Convenient access to contained objects.
 impl<'a> Object<'a> {
     /// Interpret this object as blob.
-    pub fn as_blob(&self) -> Option<&borrowed::Blob<'_>> {
+    pub fn as_blob(&self) -> Option<&immutable::Blob<'_>> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as commit.
-    pub fn as_commit(&self) -> Option<&borrowed::Commit<'a>> {
+    pub fn as_commit(&self) -> Option<&immutable::Commit<'a>> {
         match self {
             Object::Commit(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tree.
-    pub fn as_tree(&self) -> Option<&borrowed::Tree<'_>> {
+    pub fn as_tree(&self) -> Option<&immutable::Tree<'_>> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tag.
-    pub fn as_tag(&self) -> Option<&borrowed::Tag<'_>> {
+    pub fn as_tag(&self) -> Option<&immutable::Tag<'_>> {
         match self {
             Object::Tag(v) => Some(v),
             _ => None,
@@ -102,7 +111,7 @@ impl<'a> Object<'a> {
 }
 
 mod convert {
-    use crate::borrowed::{Blob, Commit, Object, Tag, Tree};
+    use crate::immutable::{Blob, Commit, Object, Tag, Tree};
     use std::convert::TryFrom;
 
     impl<'a> From<Tag<'a>> for Object<'a> {

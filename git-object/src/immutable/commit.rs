@@ -1,7 +1,8 @@
 use super::Error;
 use crate::{
-    borrowed::{parse, parse::NL, Signature},
-    commit, BStr, ByteSlice,
+    commit,
+    immutable::{parse, parse::NL, Signature},
+    BStr, ByteSlice,
 };
 use nom::{
     branch::alt,
