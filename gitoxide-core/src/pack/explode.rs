@@ -77,7 +77,7 @@ quick_error! {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
-        Verify(err: loose::object::verify::Error) {
+        Verify(err: git_odb::borrowed::verify::Error) {
             display("Object didn't verify after right after writing it")
             source(err)
             from()
@@ -201,6 +201,7 @@ pub fn pack_or_pack_index(
                 } else {
                     None
                 };
+                let mut read_buf = Vec::new();
                 move |object_kind, buf, index_entry, progress| {
                     let written_id = out
                         .write_buf(object_kind, buf, git_hash::Kind::Sha1)
@@ -213,7 +214,7 @@ pub fn pack_or_pack_index(
                         }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
-                        let mut obj = verifier.locate(written_id)
+                        let obj = verifier.locate(written_id, &mut read_buf)
                             .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
                             .ok_or(Error::WrittenFileMissing(written_id))?;
                         obj.verify_checksum(written_id)?;

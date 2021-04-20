@@ -2,10 +2,6 @@
 use crate::{loose, pack};
 
 ///
-pub mod object;
-pub use object::Object;
-
-///
 pub mod init;
 ///
 pub mod locate;

@@ -3,8 +3,9 @@ use git_odb::Write;
 
 #[test]
 fn write() -> Result<(), Box<dyn std::error::Error>> {
+    let mut buf = Vec::new();
     for oid in object_ids() {
-        let mut obj = locate_oid(oid);
+        let obj = locate_oid(oid, &mut buf);
         let actual = git_odb::sink().write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
         assert_eq!(actual, oid);
     }

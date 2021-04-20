@@ -1,4 +1,4 @@
-use crate::{compound, linked, pack};
+use crate::{borrowed, compound, linked, pack};
 
 impl linked::Db {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
@@ -9,7 +9,7 @@ impl linked::Db {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<compound::Object<'a>>, compound::locate::Error> {
+    ) -> Result<Option<borrowed::Object<'a>>, compound::locate::Error> {
         use compound::locate::PackInfo;
         let id = id.as_ref();
         for db in self.dbs.iter() {
@@ -17,16 +17,12 @@ impl linked::Db {
                 Some(PackInfo { pack_id, entry_index }) => {
                     return db
                         .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
-                        .map(|object| Some(compound::Object::Borrowed(object)))
+                        .map(Some)
                         .map_err(Into::into)
                 }
                 None => {
                     if db.loose.contains(id) {
-                        return db
-                            .loose
-                            .locate2(id, buffer)
-                            .map(|o| o.map(compound::Object::Borrowed))
-                            .map_err(Into::into);
+                        return db.loose.locate(id, buffer).map_err(Into::into);
                     }
                 }
             }

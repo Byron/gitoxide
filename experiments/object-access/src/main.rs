@@ -183,7 +183,7 @@ where
     for hash in hashes {
         let hash: git_hash::ObjectId = hash.parse()?;
         let obj = odb.locate(hash, &mut buf, &mut cache)?.expect("object must exist");
-        bytes += obj.size() as u64;
+        bytes += obj.data.len() as u64;
     }
     Ok(bytes)
 }
@@ -204,7 +204,7 @@ where
         |(buf, cache), hash| {
             let hash: git_hash::ObjectId = hash.parse()?;
             let obj = odb.locate(hash, buf, cache)?.expect("object must exist");
-            bytes.fetch_add(obj.size() as u64, std::sync::atomic::Ordering::Relaxed);
+            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         },
     )?;

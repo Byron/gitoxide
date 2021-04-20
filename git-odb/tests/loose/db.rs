@@ -1,5 +1,5 @@
 use crate::{fixture_path, hex_to_id};
-use git_odb::loose::{self, Db};
+use git_odb::loose::Db;
 use pretty_assertions::assert_eq;
 
 fn ldb() -> Db {
@@ -24,8 +24,8 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids())
 }
-pub fn locate_oid(id: git_hash::ObjectId) -> loose::Object {
-    ldb().locate(id).expect("read success").expect("id present")
+pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_odb::borrowed::Object<'_> {
+    ldb().locate(id, buf).expect("read success").expect("id present")
 }
 
 mod write {
@@ -36,17 +36,17 @@ mod write {
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
         let dir = tempfile::tempdir()?;
         let db = loose::Db::at(dir.path());
+        let mut buf = Vec::new();
+        let mut buf2 = Vec::new();
 
         for oid in object_ids() {
-            let mut obj = locate_oid(oid.clone());
+            let obj = locate_oid(oid.clone(), &mut buf);
             let actual = db.write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
-            assert_eq!(db.locate(oid)?.expect("id present").decode()?, obj.decode()?);
-            let mut buf = Vec::new();
-            obj.data(&mut buf)?;
-            let actual = db.write_buf(obj.kind, &buf, git_hash::Kind::Sha1)?;
+            assert_eq!(db.locate(oid, &mut buf2)?.expect("id present").decode()?, obj.decode()?);
+            let actual = db.write_buf(obj.kind, obj.data, git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
-            assert_eq!(db.locate(oid)?.expect("id present").decode()?, obj.decode()?);
+            assert_eq!(db.locate(oid, &mut buf2)?.expect("id present").decode()?, obj.decode()?);
         }
         Ok(())
     }
@@ -61,17 +61,17 @@ mod locate {
         },
     };
     use git_object::{borrowed, borrowed::tree, bstr::ByteSlice, tree::Mode, Kind};
-    use git_odb::loose;
 
-    fn locate(hex: &str) -> loose::Object {
-        locate_oid(hex_to_id(hex))
+    fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_odb::borrowed::Object<'a> {
+        locate_oid(hex_to_id(hex), buf)
     }
 
     #[test]
     fn tag() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9");
+        let mut buf = Vec::new();
+        let o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9", &mut buf);
         assert_eq!(o.kind, Kind::Tag);
-        assert_eq!(o.size, 1024);
+        assert_eq!(o.data.len(), 1024);
         let tag = o.decode()?;
         let expected = borrowed::Tag {
             target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
@@ -107,9 +107,10 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
     #[test]
     fn commit() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec");
+        let mut buf = Vec::new();
+        let o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec", &mut buf);
         assert_eq!(o.kind, Kind::Commit);
-        assert_eq!(o.size, 1084);
+        assert_eq!(o.data.len(), 1084);
         let expected = borrowed::Commit {
             tree: b"6ba2a0ded519f737fd5b8d5ccfb141125ef3176f".as_bstr(),
             parents: vec![].into(),
@@ -126,16 +127,16 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
     #[test]
     fn blob_data() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
         let mut buf = Vec::new();
-        o.data(&mut buf)?;
-        assert_eq!(buf.as_slice().as_bstr(), b"hi there\n".as_bstr());
+        let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
+        assert_eq!(o.data.as_bstr(), b"hi there\n".as_bstr());
         Ok(())
     }
 
     #[test]
     fn blob() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+        let mut buf = Vec::new();
+        let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
         assert_eq!(
             o.decode()?.as_blob().expect("blob"),
             &borrowed::Blob {
@@ -148,33 +149,24 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
     #[test]
     fn blob_not_existing() {
-        assert_eq!(try_locate("37d4e6c5c48ba0d245164c4e10d5f41140cab989"), None);
-    }
-
-    #[test]
-    fn blob_big_stream() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
-        let size = o.size;
         let mut buf = Vec::new();
-        o.data(&mut buf)?;
-        assert_eq!(buf.len(), size);
-        Ok(())
+        assert_eq!(try_locate("37d4e6c5c48ba0d245164c4e10d5f41140cab989", &mut buf), None);
     }
 
     #[test]
     fn blob_big() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
-        let size = o.size;
+        let mut buf = Vec::new();
+        let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193", &mut buf);
         assert_eq!(
             o.decode()?.as_blob().expect("blob").data.len(),
-            size,
-            "bigger blobs are not read completely when the header is parsed and thus need an extra step"
+            o.data.len(),
+            "erm, blobs are the same as raw data?"
         );
         Ok(())
     }
 
-    fn try_locate(hex: &str) -> Option<loose::Object> {
-        ldb().locate(hex_to_id(hex)).ok().flatten()
+    fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<git_odb::borrowed::Object<'a>> {
+        ldb().locate(hex_to_id(hex), buf).ok().flatten()
     }
 
     pub fn as_id(id: &[u8; 20]) -> &git_hash::oid {
@@ -183,9 +175,10 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
     #[test]
     fn tree() -> Result<(), Box<dyn std::error::Error>> {
-        let mut o = locate("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f");
+        let mut buf = Vec::new();
+        let o = locate("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f", &mut buf);
         assert_eq!(o.kind, Kind::Tree);
-        assert_eq!(o.size, 66);
+        assert_eq!(o.data.len(), 66);
 
         let expected = borrowed::Tree {
             entries: vec![

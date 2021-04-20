@@ -24,16 +24,16 @@ impl compound::Db {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<compound::Object<'a>>, Error> {
+    ) -> Result<Option<crate::borrowed::Object<'a>>, Error> {
         let id = id.as_ref();
         for pack in &self.packs {
             if let Some(idx) = pack.internal_locate_index(id) {
                 let object = pack.internal_get_object_by_index(idx, buffer, pack_cache)?;
-                return Ok(Some(compound::Object::Borrowed(object)));
+                return Ok(Some(object));
             }
         }
-        if let Some(object) = self.loose.locate(id)? {
-            return Ok(Some(compound::Object::Loose(Box::new(object))));
+        if self.loose.contains(id) {
+            return self.loose.locate(id, buffer).map_err(Into::into);
         }
         Ok(None)
     }

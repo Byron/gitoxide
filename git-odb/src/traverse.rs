@@ -14,7 +14,7 @@ pub mod ancestors {
         #[error(transparent)]
         Compound(#[from] compound::locate::Error),
         #[error(transparent)]
-        ObjectDecode(#[from] compound::object::decode::Error),
+        ObjectDecode(#[from] git_object::borrowed::Error),
         #[error("Object id {oid} wasn't found in object database")]
         NotFound { oid: ObjectId },
     }
@@ -64,7 +64,7 @@ pub mod ancestors {
             let res = self.next.pop_front();
             if let Some(oid) = res {
                 match self.db.borrow().locate(oid, &mut self.buf, self.cache) {
-                    Ok(Some(mut obj)) => match obj.decode().map_err(Error::from) {
+                    Ok(Some(obj)) => match obj.decode().map_err(Error::from) {
                         Ok(obj) => {
                             if let Some(commit) = obj.as_commit() {
                                 for parent_id in commit.parents() {
