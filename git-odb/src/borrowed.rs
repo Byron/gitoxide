@@ -10,11 +10,12 @@ pub struct Object<'a> {
 }
 
 impl<'a> Object<'a> {
-    /// Decodes the data in the backing slice into a [`crate::borrowed::Object`], allowing to access all of its data
+    /// Decodes the data in the backing slice into a [`git_object::borrowed::Object`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [owned, decoded objects][git_object::owned::Object] can be created from a [`crate::borrowed::Object`]
-    /// using [`crate::borrowed::Object::into_owned()`].
+    ///
+    /// using [`git_object::borrowed::Object::into_owned()`].
     pub fn decode(&self) -> Result<git_object::borrowed::Object<'_>, git_object::borrowed::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => {

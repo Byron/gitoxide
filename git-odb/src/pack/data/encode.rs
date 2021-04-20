@@ -2,7 +2,7 @@ use git_features::progress::Progress;
 use git_hash::{oid, ObjectId};
 use std::convert::TryInto;
 
-/// The error returned the pack generation functions in [this module][crate::pack::generate].
+/// The error returned the pack generation functions in [this module][crate::pack::data::encode].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -10,7 +10,7 @@ pub enum Error {
     Tbd,
 }
 
-/// Configuration options for the pack generation functions provied in [this module][crate::pack::generate].
+/// Configuration options for the pack generation functions provied in [this module][crate::pack::data::encode].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {

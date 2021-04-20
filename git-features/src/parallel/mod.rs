@@ -3,11 +3,11 @@
 //! ### in_parallel(…)
 //!
 //! The [`in_parallel(…)`][in_parallel()] is the typical fan-out-fan-in mode of parallelism, with thread local storage
-//! made available to a `consume(…)` function to process input. The result is sent to the [`Reducer`] running in the calling
+//! made available to a `consume(…)` function to process input. The result is sent to the [`Reduce`] running in the calling
 //! thread to aggregate the results into a single output, which is returned by [`in_parallel()`].
 //!
 //! Interruptions can be achieved by checking for [`is_interrupted()`][crate::interrupt::is_triggered()] in the input iterator
-//! or by letting the reducers [`feed(…)`][Reducer::feed()]` method fail.
+//! or by letting the reducers [`feed(…)`][Reduce::feed()]` method fail.
 //!
 //! It gets a boost in usability as it allows threads to borrow variables from the stack, most commonly the repository itself
 //! or the data to work on.
@@ -16,13 +16,13 @@
 //! operation which runs as fast as possible, which is cancellable only by merit of stopping the input or stopping the output
 //! aggregation.
 //!
-//! ### `SteppedReduce`
+//! ### `reduce::Stepwise`
 //!
-//! The [`SteppedReduce`] iterator works exactly as [`in_parallel()`] except that the processing of the output produced by
+//! The [`Stepwise`][reduce::Stepwise] iterator works exactly as [`in_parallel()`] except that the processing of the output produced by
 //! `consume(I, &mut State) -> O` is made accessible by the `Iterator` trait's `next()` method. As produced work is not
 //! buffered, the owner of the iterator controls the progress made.
 //!
-//! Getting the final output of the [`Reducer`] is achieved through the consuming [`SteppedReduce::finalize()`] method, which
+//! Getting the final output of the [`Reduce`] is achieved through the consuming [`Stepwise::finalize()`][reduce::Stepwise::finalize()] method, which
 //! is functionally equivalent to calling [`in_parallel()`].
 //!
 //! In an `async` context this means that progress is only made each time `next()` is called on the iterator, while merely dropping
@@ -135,7 +135,7 @@ pub mod reduce {
     mod stepped {
         use crate::parallel::num_threads;
 
-        /// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
+        /// An iterator adaptor to allow running computations using [`in_parallel()`][crate::parallel::in_parallel()] in a step-wise manner, see the [module docs][crate::parallel]
         /// for details.
         pub struct Stepwise<Reduce: super::Reduce> {
             /// This field is first to assure it's dropped first and cause threads that are dropped next to stop their loops
@@ -167,7 +167,7 @@ pub mod reduce {
 
         impl<Reduce: super::Reduce> Stepwise<Reduce> {
             /// Instantiate a new iterator and start working in threads.
-            /// For a description of parameters, see [`in_parallel()`].
+            /// For a description of parameters, see [`in_parallel()`][crate::parallel::in_parallel()].
             pub fn new<InputIter, ThreadStateFn, ConsumeFn, I, O, S>(
                 input: InputIter,
                 thread_limit: Option<usize>,
@@ -315,16 +315,16 @@ pub mod reduce {
     /// An trait for aggregating items commonly produced in threads into a single result, without itself
     /// needing to be thread safe.
     pub trait Reduce {
-        /// The type fed to the reducer in the [`feed()`][Reducer::feed()] method.
+        /// The type fed to the reducer in the [`feed()`][Reduce::feed()] method.
         ///
         /// It's produced by a function that may run on multiple threads.
         type Input;
-        /// The type produced in Ok(…) by [`feed()`][Reducer::feed()].
+        /// The type produced in Ok(…) by [`feed()`][Reduce::feed()].
         /// Most reducers by nature use `()` here as the value is in the aggregation.
         /// However, some may use it to collect statistics only and return their Input
-        /// in some form as a result here for [`SteppedReduce`] to be useful.
+        /// in some form as a result here for [`Stepwise`] to be useful.
         type FeedProduce;
-        /// The type produced once by the [`finalize()`][Reducer::finalize()] method.
+        /// The type produced once by the [`finalize()`][Reduce::finalize()] method.
         ///
         /// For traditional reducers, this is the value produced by the entire operation.
         /// For those made for step-wise iteration this may be aggregated statistics.
