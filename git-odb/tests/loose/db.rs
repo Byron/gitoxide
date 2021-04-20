@@ -62,7 +62,6 @@ mod locate {
     };
     use git_object::{borrowed, borrowed::tree, bstr::ByteSlice, tree::Mode, Kind};
     use git_odb::loose;
-    use std::io::Read;
 
     fn locate(hex: &str) -> loose::Object {
         locate_oid(hex_to_id(hex))
@@ -126,12 +125,11 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     #[test]
-    fn blob_stream() -> Result<(), Box<dyn std::error::Error>> {
+    fn blob_data() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-        assert_eq!(
-            o.stream()?.bytes().collect::<Result<Vec<_>, _>>()?.as_slice().as_bstr(),
-            b"hi there\n".as_bstr()
-        );
+        let mut buf = Vec::new();
+        o.data(&mut buf)?;
+        assert_eq!(buf.as_slice().as_bstr(), b"hi there\n".as_bstr());
         Ok(())
     }
 
@@ -157,7 +155,9 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     fn blob_big_stream() -> Result<(), Box<dyn std::error::Error>> {
         let mut o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193");
         let size = o.size;
-        assert_eq!(o.stream()?.bytes().filter_map(Result::ok).count(), size);
+        let mut buf = Vec::new();
+        o.data(&mut buf)?;
+        assert_eq!(buf.len(), size);
         Ok(())
     }
 

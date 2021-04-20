@@ -5,10 +5,8 @@ use std::io;
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("reading of object failed")]
-    Io(#[from] io::Error),
-    #[error("Decoding of object failed")]
-    Decode(#[from] super::decode::Error),
+    #[error(transparent)]
+    Access(#[from] loose::object::access::Error),
     #[error("Object expected to have id {desired}, but actual id was {actual}")]
     ChecksumMismatch {
         desired: git_hash::ObjectId,
@@ -23,11 +21,12 @@ impl loose::Object {
     pub fn verify_checksum(&mut self, desired: impl AsRef<git_hash::oid>) -> Result<(), Error> {
         let desired = desired.as_ref();
         let mut sink = HashWrite::new(io::sink(), desired.kind());
-        let (kind, size) = (self.kind, self.size);
-        let mut reader = self.stream()?;
+        let mut buf = Vec::with_capacity(self.size);
+        // TODO: performance note: use an inflate-read with skip-bytes support for header (similar to what the StreamReader did
+        self.data(&mut buf)?;
 
-        loose::object::header::encode(kind, size as u64, &mut sink).expect("hash to always work");
-        io::copy(&mut reader, &mut sink)?;
+        loose::object::header::encode(self.kind, self.size as u64, &mut sink).expect("hash to always work");
+        io::copy(&mut buf.as_slice(), &mut sink).expect("copy from memory to always work");
 
         let actual = git_hash::ObjectId::from(sink.hash.digest());
         if desired != actual {

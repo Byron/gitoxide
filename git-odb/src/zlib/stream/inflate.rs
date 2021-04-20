@@ -8,6 +8,7 @@ pub struct InflateReader<R> {
     pub(crate) decompressor: Decompress,
 }
 
+#[allow(dead_code)] // TODO: fix this
 impl<R> InflateReader<R>
 where
     R: io::BufRead,
