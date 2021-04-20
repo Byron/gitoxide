@@ -13,7 +13,7 @@ impl linked::Db {
         use compound::locate::PackInfo;
         let id = id.as_ref();
         for db in self.dbs.iter() {
-            match db.internal_locate(id)? {
+            match db.internal_locate(id) {
                 Some(PackInfo { pack_id, entry_index }) => {
                     return db
                         .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)

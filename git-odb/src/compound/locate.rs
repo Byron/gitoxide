@@ -43,17 +43,17 @@ impl compound::Db {
     /// (The polonius borrow-checker would support this via the locate
     /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
     /// once polonius is stable.)
-    pub(crate) fn internal_locate(&self, id: impl AsRef<git_hash::oid>) -> Result<Option<PackInfo>, Error> {
+    pub(crate) fn internal_locate(&self, id: impl AsRef<git_hash::oid>) -> Option<PackInfo> {
         let id = id.as_ref();
         for (pack_idx, pack) in self.packs.iter().enumerate() {
             if let Some(idx) = pack.internal_locate_index(id) {
-                return Ok(Some(PackInfo {
+                return Some(PackInfo {
                     pack_id: pack_idx,
                     entry_index: idx,
-                }));
+                });
             }
         }
-        Ok(None)
+        None
     }
 
     pub(crate) fn internal_get_packed_object_by_index<'a>(
