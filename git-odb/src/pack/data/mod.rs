@@ -1,12 +1,15 @@
 //! a pack data file
-use filebuffer::FileBuffer;
 use std::{convert::TryInto, path::Path};
+
+use filebuffer::FileBuffer;
+
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+pub use header::*;
+pub use iter::Iter;
 
 ///
 pub mod decode;
 mod header;
-pub use header::*;
-
 mod init;
 ///
 pub mod parse;
@@ -14,10 +17,9 @@ pub mod parse;
 pub mod verify;
 
 ///
+pub mod encode;
+///
 pub mod iter;
-pub use iter::Iter;
-
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 /// A slice into a pack file denoting a pack entry.
 ///
