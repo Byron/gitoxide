@@ -1,5 +1,7 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
+use git_object::immutable;
+
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Object<'a> {
@@ -15,7 +17,7 @@ impl<'a> Object<'a> {
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::borrowed::Object`]
     /// using [`git_object::immutable::Object::into_mutable()`].
-    pub fn decode(&self) -> Result<git_object::immutable::Object<'_>, git_object::immutable::decode::Error> {
+    pub fn decode(&self) -> Result<git_object::immutable::Object<'_>, immutable::object::decode::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => {
                 git_object::immutable::Object::Tree(git_object::immutable::Tree::from_bytes(self.data)?)

@@ -1,10 +1,12 @@
-use crate::pack::{self, index};
 use git_features::progress::{self, Progress};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use git_object::{
     bstr::{BString, ByteSlice},
-    immutable, mutable,
+    immutable::object,
+    mutable,
 };
+
+use crate::pack::{self, index};
 
 /// Returned by [`index::File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
@@ -17,7 +19,7 @@ pub enum Error {
     },
     #[error("{kind} object {id} could not be decoded")]
     ObjectDecode {
-        source: immutable::decode::Error,
+        source: object::decode::Error,
         kind: git_object::Kind,
         id: git_hash::ObjectId,
     },

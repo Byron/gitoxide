@@ -1,7 +1,3 @@
-use crate::{
-    immutable::{decode, Signature},
-    ByteSlice, Sign, Time,
-};
 use bstr::{BStr, BString, ByteVec};
 use btoi::btoi;
 use nom::{
@@ -12,6 +8,11 @@ use nom::{
     multi::many1_count,
     sequence::{preceded, terminated, tuple},
     IResult,
+};
+
+use crate::{
+    immutable::{object::decode, Signature},
+    ByteSlice, Sign, Time,
 };
 
 pub(crate) const NL: &[u8] = b"\n";

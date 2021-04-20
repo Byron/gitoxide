@@ -1,7 +1,3 @@
-use crate::{
-    immutable::{decode, parse, parse::NL, Signature},
-    BStr, ByteSlice,
-};
 use nom::bytes::complete::take_while;
 use nom::{
     branch::alt,
@@ -10,6 +6,11 @@ use nom::{
     combinator::{all_consuming, opt, recognize},
     sequence::{preceded, tuple},
     IResult,
+};
+
+use crate::{
+    immutable::{object::decode, parse, parse::NL, Signature},
+    BStr, ByteSlice,
 };
 
 /// Represents a git tag, commonly indicating a software release.

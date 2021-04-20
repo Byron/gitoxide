@@ -1,5 +1,7 @@
+use std::convert::TryFrom;
+
 use crate::{
-    immutable::{decode, parse::SPACE},
+    immutable::{object::decode, parse::SPACE},
     tree,
 };
 use bstr::{BStr, ByteSlice};
@@ -11,7 +13,6 @@ use nom::{
     sequence::terminated,
     IResult,
 };
-use std::convert::TryFrom;
 
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

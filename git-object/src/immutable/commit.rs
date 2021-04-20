@@ -1,8 +1,5 @@
-use crate::{
-    commit,
-    immutable::{decode, parse, parse::NL, Signature},
-    BStr, ByteSlice,
-};
+use std::borrow::Cow;
+
 use nom::{
     branch::alt,
     bytes::{complete::is_not, complete::tag},
@@ -11,7 +8,12 @@ use nom::{
     IResult,
 };
 use smallvec::SmallVec;
-use std::borrow::Cow;
+
+use crate::{
+    commit,
+    immutable::{object::decode, parse, parse::NL, Signature},
+    BStr, ByteSlice,
+};
 
 /// A git commit parsed using [`from_bytes()`][Commit::from_bytes()].
 ///

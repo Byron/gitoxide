@@ -4,8 +4,11 @@
 pub mod ancestors {
     use crate::{compound, linked, pack};
     use git_hash::ObjectId;
-    use std::borrow::Borrow;
-    use std::{collections::BTreeSet, collections::VecDeque};
+    use git_object::immutable;
+    use std::{
+        borrow::Borrow,
+        collections::{BTreeSet, VecDeque},
+    };
 
     /// The error used in the iterator implementation of [Iter].
     #[derive(Debug, thiserror::Error)]
@@ -14,7 +17,7 @@ pub mod ancestors {
         #[error(transparent)]
         Compound(#[from] compound::locate::Error),
         #[error(transparent)]
-        ObjectDecode(#[from] git_object::immutable::decode::Error),
+        ObjectDecode(#[from] immutable::object::decode::Error),
         #[error("Object id {oid} wasn't found in object database")]
         NotFound { oid: ObjectId },
     }
