@@ -117,6 +117,7 @@ pub struct Entry {
 /// ### Advantages
 ///
 /// * Begins writing immediately and supports back-pressure.
+/// * Abstract over object databases and how input is provided.
 ///
 /// ### Disadvantages
 ///
@@ -138,38 +139,12 @@ pub fn entries<Locate, Iter, Oid>(
     Options { version, thread_limit }: Options,
 ) -> impl Iterator<Item = Result<Vec<Entry>, Error<Locate::Error>>>
 where
-    Locate: crate::Locate + Clone + Send + 'static,
+    Locate: crate::Locate + Clone + Send + Sync + 'static,
     <Locate as crate::Locate>::Error: std::fmt::Debug + std::error::Error + Send,
     Iter: Iterator<Item = Oid> + Send + 'static,
     Oid: AsRef<oid> + Send + 'static,
 {
     use git_features::parallel::reduce;
-
-    struct Reducer<Error> {
-        _error: std::marker::PhantomData<Error>,
-    }
-    impl<Error> Default for Reducer<Error> {
-        fn default() -> Self {
-            Reducer {
-                _error: Default::default(),
-            }
-        }
-    }
-
-    impl<Error> parallel::Reduce for Reducer<Error> {
-        type Input = Result<Vec<Entry>, Error>;
-        type FeedProduce = Vec<Entry>;
-        type Output = ();
-        type Error = Error;
-
-        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item
-        }
-
-        fn finalize(self) -> Result<Self::Output, Self::Error> {
-            Ok(())
-        }
-    }
 
     reduce::Stepwise::new(
         objects,
@@ -183,6 +158,6 @@ where
                 Ok(Vec::new())
             }
         },
-        Reducer::default(),
+        parallel::reduce::IdentityWithResult::default(),
     )
 }

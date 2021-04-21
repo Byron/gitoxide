@@ -341,28 +341,28 @@ pub mod reduce {
 
     /// An identity reducer for those who want to use [`Stepwise`] or [`in_parallel()`][crate::parallel::in_parallel()]
     /// without the use of non-threaded reduction of products created in threads.
-    pub struct Identity<Input, Error> {
+    pub struct IdentityWithResult<Input, Error> {
         _input: PhantomData<Input>,
         _error: PhantomData<Error>,
     }
 
-    impl<Input, Error> Default for Identity<Input, Error> {
+    impl<Input, Error> Default for IdentityWithResult<Input, Error> {
         fn default() -> Self {
-            Identity {
+            IdentityWithResult {
                 _input: Default::default(),
                 _error: Default::default(),
             }
         }
     }
 
-    impl<Input, Error> Reduce for Identity<Input, Error> {
-        type Input = Input;
+    impl<Input, Error> Reduce for IdentityWithResult<Input, Error> {
+        type Input = Result<Input, Self::Error>;
         type FeedProduce = Input;
         type Output = ();
         type Error = Error;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            Ok(item)
+            item
         }
 
         fn finalize(self) -> Result<Self::Output, Self::Error> {

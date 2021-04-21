@@ -1,9 +1,8 @@
 mod ancestor {
     use crate::hex_to_id;
-    use git_odb::linked;
-    use git_odb::linked::Db;
+    use git_odb::{linked, linked::Db};
 
-    fn check_traversal(tips: &[&str], expected: &[&str]) -> crate::Result {
+    fn check_traversal_with_shared_reference(tips: &[&str], expected: &[&str]) -> crate::Result {
         let (_temp_dir, db) = db()?;
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
         let oids: Result<Vec<_>, _> =
@@ -20,8 +19,9 @@ mod ancestor {
     #[test]
     fn instantiate_with_arc() -> crate::Result {
         let (_temp_dir, db) = db()?;
+        let db = std::sync::Arc::new(db);
         let _ = git_odb::traverse::ancestors::Iter::new(
-            std::sync::Arc::new(db),
+            db.clone(),
             vec![git_hash::ObjectId::null_sha1()],
             &mut git_odb::pack::cache::Noop,
         );
@@ -41,7 +41,7 @@ mod ancestor {
 
     #[test]
     fn linear_history_no_branch() -> crate::Result {
-        check_traversal(
+        check_traversal_with_shared_reference(
             &["9556057aee5abb06912922e9f26c46386a816822"],
             &[
                 "17d78c64cef6c33a10a604573fd2c429e477fd63",
@@ -53,7 +53,7 @@ mod ancestor {
 
     #[test]
     fn simple_branch_with_merge() -> crate::Result {
-        check_traversal(
+        check_traversal_with_shared_reference(
             &["01ec18a3ebf2855708ad3c9d244306bc1fae3e9b"],
             &[
                 "efd9a841189668f1bab5b8ebade9cd0a1b139a37",
@@ -69,7 +69,7 @@ mod ancestor {
 
     #[test]
     fn multiple_tips() -> crate::Result {
-        check_traversal(
+        check_traversal_with_shared_reference(
             &[
                 "01ec18a3ebf2855708ad3c9d244306bc1fae3e9b",
                 "9556057aee5abb06912922e9f26c46386a816822",
