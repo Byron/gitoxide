@@ -122,6 +122,9 @@ journey-tests-small: always ## run stateless journey tests (lean-cli)
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
 
+clear-cache: ## Remove persisted results of test-repositories, they regenerate automatically
+	-find . -path "*fixtures/generated" -type d -exec rm -Rf \{\} \;
+
 rust_repo = tests/fixtures/repos/rust.git
 $(rust_repo):
 	mkdir -p $@
