@@ -2,7 +2,7 @@
 
 ///
 pub mod ancestors {
-    use crate::{compound, linked, pack};
+    use crate::pack;
     use git_hash::ObjectId;
     use git_object::immutable;
     use std::{
@@ -13,9 +13,12 @@ pub mod ancestors {
     /// The error used in the iterator implementation of [Iter].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error {
+    pub enum Error<LocateErr>
+    where
+        LocateErr: std::fmt::Debug + std::error::Error + 'static,
+    {
         #[error(transparent)]
-        Compound(#[from] compound::locate::Error),
+        Locate(LocateErr),
         #[error(transparent)]
         ObjectDecode(#[from] immutable::object::decode::Error),
         #[error("Object id {oid} wasn't found in object database")]
@@ -23,18 +26,20 @@ pub mod ancestors {
     }
 
     /// An iterator over the ancestors one or more starting commits
-    pub struct Iter<'a, Cache, DbRef> {
+    pub struct Iter<'a, Cache, DbRef, Locate> {
         db: DbRef,
         next: VecDeque<ObjectId>,
         buf: Vec<u8>,
         seen: BTreeSet<ObjectId>,
         cache: &'a mut Cache,
+        _locate: std::marker::PhantomData<Locate>,
     }
 
-    impl<'a, Cache, DbRef> Iter<'a, Cache, DbRef>
+    impl<'a, Cache, DbRef, Locate> Iter<'a, Cache, DbRef, Locate>
     where
         Cache: pack::cache::DecodeEntry,
-        DbRef: Borrow<linked::Db>,
+        DbRef: Borrow<Locate>,
+        Locate: crate::Locate,
     {
         /// Create a new instance.
         ///
@@ -52,16 +57,19 @@ pub mod ancestors {
                 buf: Vec::with_capacity(4096),
                 seen,
                 cache,
+                _locate: Default::default(),
             }
         }
     }
 
-    impl<'a, Cache, DbRef> Iterator for Iter<'a, Cache, DbRef>
+    impl<'a, Cache, DbRef, Locate> Iterator for Iter<'a, Cache, DbRef, Locate>
     where
         Cache: pack::cache::DecodeEntry,
-        DbRef: Borrow<linked::Db>,
+        DbRef: Borrow<Locate>,
+        Locate: crate::Locate,
+        <Locate as crate::Locate>::Error: std::error::Error + std::fmt::Debug + 'static,
     {
-        type Item = Result<ObjectId, Error>;
+        type Item = Result<ObjectId, Error<Locate::Error>>;
 
         fn next(&mut self) -> Option<Self::Item> {
             let res = self.next.pop_front();
@@ -81,7 +89,7 @@ pub mod ancestors {
                         Err(err) => return Some(Err(err)),
                     },
                     Ok(None) => return Some(Err(Error::NotFound { oid })),
-                    Err(err) => return Some(Err(err.into())),
+                    Err(err) => return Some(Err(Error::Locate(err))),
                 }
             }
             res.map(Ok)

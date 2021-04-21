@@ -30,3 +30,35 @@ impl linked::Db {
         Ok(None)
     }
 }
+
+mod traits {
+    use crate::data::Object;
+    use crate::pack::cache::DecodeEntry;
+    use crate::{compound, linked};
+    use git_hash::oid;
+
+    impl crate::Locate for linked::Db {
+        type Error = compound::locate::Error;
+
+        fn locate<'a>(
+            &self,
+            id: impl AsRef<oid>,
+            buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl DecodeEntry,
+        ) -> Result<Option<Object<'a>>, Self::Error> {
+            linked::Db::locate(self, id, buffer, pack_cache)
+        }
+    }
+    impl crate::Locate for &linked::Db {
+        type Error = compound::locate::Error;
+
+        fn locate<'a>(
+            &self,
+            id: impl AsRef<oid>,
+            buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl DecodeEntry,
+        ) -> Result<Option<Object<'a>>, Self::Error> {
+            linked::Db::locate(self, id, buffer, pack_cache)
+        }
+    }
+}
