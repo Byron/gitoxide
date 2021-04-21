@@ -21,7 +21,7 @@ pub mod walkdir {
     }
 
     /// The Iterator yielding directory items
-    pub type DirEntryIter = DirEntryIterGeneric<()>;
+    pub type DirEntryIter = DirEntryIterGeneric<((), ())>;
 }
 
 #[cfg(not(feature = "parallel"))]

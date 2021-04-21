@@ -9,6 +9,11 @@ pub enum Error {
     WalkDir(#[from] fs::walkdir::Error),
 }
 
+pub type IterType = std::iter::FilterMap<
+    fs::walkdir::DirEntryIter,
+    fn(Result<fs::walkdir::DirEntry, fs::walkdir::Error>) -> Option<Result<git_hash::ObjectId, Error>>,
+>;
+
 /// Iteration and traversal
 impl Db {
     fn iter_filter_map(
@@ -47,7 +52,12 @@ impl Db {
     ///
     /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
-    pub fn iter(&self) -> impl Iterator<Item = Result<git_hash::ObjectId, Error>> {
+    ///
+    /// # Notes
+    ///
+    /// [`IterType`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
+    /// needed if iterators need to be implemented by hand in the absence of generators.
+    pub fn iter(&self) -> IterType {
         fs::walkdir_new(&self.path)
             .min_depth(2)
             .max_depth(3)
