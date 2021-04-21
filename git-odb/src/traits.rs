@@ -46,7 +46,7 @@ pub trait Write {
 /// [issue]: https://github.com/rust-lang/rust/issues/44265
 pub trait Locate {
     /// The error returned by [`locate()`][Locate::locate()]
-    type Error;
+    type Error: std::error::Error + 'static;
 
     #[allow(missing_docs)] // TODO
     fn locate<'a>(

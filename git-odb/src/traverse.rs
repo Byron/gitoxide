@@ -15,7 +15,7 @@ pub mod ancestors {
     #[allow(missing_docs)]
     pub enum Error<LocateErr>
     where
-        LocateErr: std::fmt::Debug + std::error::Error + 'static,
+        LocateErr: std::error::Error + 'static,
     {
         #[error(transparent)]
         Locate(LocateErr),
@@ -63,7 +63,6 @@ pub mod ancestors {
     where
         Cache: pack::cache::DecodeEntry,
         Locate: crate::Locate,
-        <Locate as crate::Locate>::Error: std::error::Error + std::fmt::Debug + 'static,
     {
         type Item = Result<ObjectId, Error<Locate::Error>>;
 

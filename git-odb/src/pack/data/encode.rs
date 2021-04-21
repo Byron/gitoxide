@@ -8,7 +8,7 @@ use std::convert::TryInto;
 #[allow(missing_docs)]
 pub enum Error<LocateErr>
 where
-    LocateErr: std::fmt::Debug + std::error::Error + 'static,
+    LocateErr: std::error::Error + 'static,
 {
     #[error(transparent)]
     Locate(#[from] LocateErr),
@@ -140,7 +140,7 @@ pub fn entries<Locate, Iter, Oid>(
 ) -> impl Iterator<Item = Result<Vec<Entry>, Error<Locate::Error>>>
 where
     Locate: crate::Locate + Clone + Send + Sync + 'static,
-    <Locate as crate::Locate>::Error: std::fmt::Debug + std::error::Error + Send,
+    <Locate as crate::Locate>::Error: Send,
     Iter: Iterator<Item = Oid> + Send + 'static,
     Oid: AsRef<oid> + Send + 'static,
 {
