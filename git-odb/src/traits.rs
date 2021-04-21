@@ -56,33 +56,3 @@ pub trait Locate {
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
 }
-
-#[cfg(test)]
-mod tests {
-    mod locate {
-        use super::super::*;
-        use crate::pack::cache::DecodeEntry;
-        use git_hash::oid;
-
-        #[test]
-        fn can_return_self_contained_objects() {
-            struct Db;
-
-            impl Locate for Db {
-                type Error = ();
-
-                fn locate<'a>(
-                    &self,
-                    _id: impl AsRef<oid>,
-                    buffer: &'a mut Vec<u8>,
-                    _pack_cache: &mut impl DecodeEntry,
-                ) -> Result<Option<data::Object<'a>>, Self::Error> {
-                    Ok(Some(data::Object {
-                        data: buffer,
-                        kind: git_object::Kind::Blob,
-                    }))
-                }
-            }
-        }
-    }
-}

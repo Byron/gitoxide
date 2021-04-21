@@ -1,13 +1,17 @@
-use git_features::progress::Progress;
+use crate::pack;
+use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use std::convert::TryInto;
 
 /// The error returned the pack generation functions in [this module][crate::pack::data::encode].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
-pub enum Error {
-    #[error("TBD")]
-    Tbd,
+pub enum Error<LocateErr>
+where
+    LocateErr: std::fmt::Debug + std::error::Error + 'static,
+{
+    #[error(transparent)]
+    Locate(#[from] LocateErr),
 }
 
 /// Configuration options for the pack generation functions provied in [this module][crate::pack::data::encode].
@@ -116,6 +120,8 @@ pub struct Entry {
 ///
 /// ### Disadvantages
 ///
+/// * No support yet for pack-to-pack copies, but that can be added if `data::Objects` or whatever `locate()` returns
+///   keeps track of the owning pack. This should be quite trivial to do with the added cost of keeping track of packs.
 /// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
 /// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
 ///   plenty of objects have been decompressed and parsed already, and will potentially be parsed twice.
@@ -125,27 +131,58 @@ pub struct Entry {
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn entries<Iter, Object, Oid, O>(
+pub fn entries<Locate, Iter, Oid>(
+    db: Locate,
     objects: Iter,
     _progress: impl Progress,
     Options { version, thread_limit }: Options,
-) -> impl Iterator<Item = Result<Vec<Entry>, Error>>
+) -> impl Iterator<Item = Result<Vec<Entry>, Error<Locate::Error>>>
 where
-    Iter: Iterator<Item = (Oid, Object)> + Send + 'static,
-    Object: AsMut<O> + Send + 'static,
-    O: self::Object,
+    Locate: crate::Locate + Clone + Send + 'static,
+    <Locate as crate::Locate>::Error: std::fmt::Debug + std::error::Error + Send,
+    Iter: Iterator<Item = Oid> + Send + 'static,
     Oid: AsRef<oid> + Send + 'static,
 {
     use git_features::parallel::reduce;
 
+    struct Reducer<Error> {
+        _error: std::marker::PhantomData<Error>,
+    }
+    impl<Error> Default for Reducer<Error> {
+        fn default() -> Self {
+            Reducer {
+                _error: Default::default(),
+            }
+        }
+    }
+
+    impl<Error> parallel::Reduce for Reducer<Error> {
+        type Input = Result<Vec<Entry>, Error>;
+        type FeedProduce = Vec<Entry>;
+        type Output = ();
+        type Error = Error;
+
+        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+            item
+        }
+
+        fn finalize(self) -> Result<Self::Output, Self::Error> {
+            Ok(())
+        }
+    }
+
     reduce::Stepwise::new(
         objects,
         thread_limit,
-        |_n| (),
-        move |(_oid, _obj), _state| {
-            let _ = version; // currently unused
-            Vec::new()
+        |_n| (Vec::new(), pack::cache::Noop),
+        {
+            let db = db.clone();
+            move |oid, (buf, cache)| {
+                let _obj = db.locate(oid.as_ref(), buf, cache)?;
+                let _ = version; // currently unused
+                Ok(Vec::new())
+            }
         },
-        reduce::Identity::default(),
+        Reducer::default(),
     )
 }
