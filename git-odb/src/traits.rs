@@ -1,3 +1,4 @@
+use crate::data;
 use git_object::mutable;
 use std::io;
 
@@ -35,40 +36,15 @@ pub trait Write {
     ) -> Result<git_hash::ObjectId, Self::Error>;
 }
 
-/// Meta data of any object
-pub struct ObjectInfo {
-    /// The kind of object
-    pub kind: git_object::Kind,
-    /// The decompressed size of the objects raw data.
-    pub size: u64,
-}
-
-/// An object that can represent no less than three different kinds of data and helps to avoid unnecessary copies or allocations.
-///
-/// It can represent…
-///
-/// * loose objects
-/// * decompressed packed objects
-/// * entries in packs
-///
-pub trait Object {
-    /// Provide basic information about the object
-    fn info(&self) -> ObjectInfo;
-
-    /// Return the objects raw, undecoded data.
-    fn data(&self) -> &[u8];
-
-    /// Returns the packed entry if this object is indeed a base object allowing to copy data from pack to pack
-    /// and avoiding a decompress/compress round-trip for some objects.
-    fn packed_base_data(&self) -> Option<&[u8]> {
-        None
-    }
-}
-
 /// Describe how object can be located in an object store
+///
+/// ## Notes
+///
+/// Locate effectively needs [generic associated types][issue] to allow a trait for the returned object type.
+/// Until then, we will have to make due with explicit types and give them the potentially added features we want.
+///
+/// [issue]: https://github.com/rust-lang/rust/issues/44265
 pub trait Locate {
-    /// The object returned by [`locate()`][Locate::locate()]
-    type Object: self::Object;
     /// The error returned by [`locate()`][Locate::locate()]
     type Error;
 
@@ -78,7 +54,7 @@ pub trait Locate {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
-    ) -> Result<Option<Self::Object>, Self::Error>;
+    ) -> Result<Option<data::Object<'a>>, Self::Error>;
 }
 
 #[cfg(test)]
@@ -91,31 +67,20 @@ mod tests {
         #[test]
         fn can_return_self_contained_objects() {
             struct Db;
-            struct SelfContainedObject<'a> {
-                our_data: &'a [u8],
-            }
-
-            impl<'a> Object for SelfContainedObject<'a> {
-                fn info(&self) -> ObjectInfo {
-                    todo!()
-                }
-
-                fn data(&self) -> &[u8] {
-                    self.our_data
-                }
-            }
 
             impl Locate for Db {
-                type Object<'a> = SelfContainedObject<'a>;
                 type Error = ();
 
                 fn locate<'a>(
                     &self,
-                    id: impl AsRef<oid>,
+                    _id: impl AsRef<oid>,
                     buffer: &'a mut Vec<u8>,
-                    pack_cache: &mut impl DecodeEntry,
-                ) -> Result<Option<Self::Object>, Self::Error> {
-                    Ok(Some(SelfContainedObject { our_data: buffer }))
+                    _pack_cache: &mut impl DecodeEntry,
+                ) -> Result<Option<data::Object<'a>>, Self::Error> {
+                    Ok(Some(data::Object {
+                        data: buffer,
+                        kind: git_object::Kind::Blob,
+                    }))
                 }
             }
         }
