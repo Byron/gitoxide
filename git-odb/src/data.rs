@@ -15,7 +15,7 @@ impl<'a> Object<'a> {
     /// Decodes the data in the backing slice into a [`git_object::immutable::Object`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
-    /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::borrowed::Object`]
+    /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
     /// using [`git_object::immutable::Object::into_mutable()`].
     pub fn decode(&self) -> Result<git_object::immutable::Object<'_>, immutable::object::decode::Error> {
         Ok(match self.kind {
@@ -40,7 +40,7 @@ pub mod verify {
     use crate::{hash, loose};
     use std::io;
 
-    /// Returned by [`crate::borrowed::Object::verify_checksum()`]
+    /// Returned by [`crate::data::Object::verify_checksum()`]
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
