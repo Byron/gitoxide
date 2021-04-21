@@ -9,7 +9,7 @@
 #[cfg(feature = "parallel")]
 ///
 pub mod walkdir {
-    pub use jwalk::{DirEntry as DirEntryGeneric, Error, WalkDir};
+    pub use jwalk::{DirEntry as DirEntryGeneric, DirEntryIter as DirEntryIterGeneric, Error, WalkDir};
     use std::path::Path;
 
     /// An alias for an uncustomized directory entry to match the one of the non-parallel version offered by `walkdir`.
@@ -19,6 +19,9 @@ pub mod walkdir {
     pub fn walkdir_new(root: impl AsRef<Path>) -> WalkDir {
         WalkDir::new(root).skip_hidden(false)
     }
+
+    /// The Iterator yielding directory items
+    pub type DirEntryIter = DirEntryIterGeneric<()>;
 }
 
 #[cfg(not(feature = "parallel"))]
@@ -31,6 +34,9 @@ pub mod walkdir {
     pub fn walkdir_new(root: impl AsRef<Path>) -> WalkDir {
         WalkDir::new(root)
     }
+
+    /// The Iterator yielding directory items
+    pub type DirEntryIter = walkdir::IntoIter;
 }
 
-pub use self::walkdir::{walkdir_new, DirEntry, WalkDir};
+pub use self::walkdir::{walkdir_new, WalkDir};
