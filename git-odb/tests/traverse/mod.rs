@@ -6,7 +6,7 @@ mod ancestor {
         let (_temp_dir, db) = db()?;
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
         let oids: Result<Vec<_>, _> =
-            git_odb::traverse::ancestors::Iter::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Noop)
+            git_odb::traverse::ancestors::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Noop)
                 .collect();
         let expected: Vec<_> = tips
             .into_iter()
@@ -20,7 +20,7 @@ mod ancestor {
     fn instantiate_with_arc() -> crate::Result {
         let (_temp_dir, db) = db()?;
         let db = std::sync::Arc::new(db);
-        let _ = git_odb::traverse::ancestors::Iter::new(
+        let _ = git_odb::traverse::ancestors::Ancestors::new(
             db.clone(),
             vec![git_hash::ObjectId::null_sha1()],
             &mut git_odb::pack::cache::Noop,
@@ -31,7 +31,7 @@ mod ancestor {
     #[test]
     fn instantiate_with_box() -> crate::Result {
         let (_temp_dir, db) = db()?;
-        let _ = git_odb::traverse::ancestors::Iter::new(
+        let _ = git_odb::traverse::ancestors::Ancestors::new(
             Box::new(db),
             vec![git_hash::ObjectId::null_sha1()],
             &mut git_odb::pack::cache::Noop,
