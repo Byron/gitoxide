@@ -4,7 +4,7 @@ use std::{
     convert::{TryFrom, TryInto},
     hash::BuildHasher,
     io::{BufRead, Cursor},
-    path::{Path, PathBuf},
+    path::Path,
     process::Command,
 };
 
@@ -59,20 +59,9 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
     );
 }
 
-pub fn create_repo(script_path: &str) -> tempfile::TempDir {
-    let dir = tempfile::tempdir().expect("failed to create temp dir");
-    let status = Command::new("bash")
-        .arg(fixture_path(script_path))
-        .arg(dir.path())
-        .env_remove("GIT_DIR")
-        .status()
-        .expect("failed to run repo script");
-    assert!(status.success(), "repo script failed");
-    dir
-}
-
-pub fn fixture_path(path: &str) -> PathBuf {
-    PathBuf::from("tests").join("fixtures").join(path)
+use test_tools::assure_fixture_repo_present;
+pub fn create_repo(script_path: &str) -> test_tools::tempdir::TempDir {
+    assure_fixture_repo_present(script_path).expect("script succeeds all the time")
 }
 
 pub fn hex_to_id(hex: &[u8]) -> git_hash::ObjectId {

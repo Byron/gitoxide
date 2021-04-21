@@ -26,4 +26,4 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 thiserror = "1.0.20"
 
 [dev-dependencies]
-tempfile = "3.1.0"
+test-tools = { version = "0.1", path = "../tests/tools" }

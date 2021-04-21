@@ -736,7 +736,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "serde",
- "tempfile",
+ "test-tools",
  "thiserror",
 ]
 

@@ -8,8 +8,6 @@ export GIT_COMMITTER_DATE="2000-01-02 00:00:00 +0000"
 export GIT_COMMITTER_EMAIL=committer@example.com
 export GIT_COMMITTER_NAME=committer
 
-mkdir -p "$1"
-cd "$1"
 git init -q
 git config commit.gpgsign false
 
