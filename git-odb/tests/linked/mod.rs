@@ -5,6 +5,22 @@ fn db() -> Db {
     Db::at(fixture_path("objects")).expect("valid object path")
 }
 
+mod iter {
+    use crate::linked::db;
+
+    #[test]
+    fn arc_iter() {
+        let db = std::sync::Arc::new(db());
+        let _ = db.arc_iter();
+    }
+
+    #[test]
+    fn a_bunch_of_loose_and_packed_objects() {
+        let db = db();
+        assert_eq!(db.iter().count(), 42, "it sees the correct amount of objects");
+    }
+}
+
 mod locate {
     use crate::{hex_to_id, linked::db};
     use git_odb::{linked::Db, pack};

@@ -1,6 +1,6 @@
 pub use test_tools::{fixture_path, scripted_fixture_repo_read_only};
 
-type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[cfg(not(windows))]
 fn fixup(v: Vec<u8>) -> Vec<u8> {
