@@ -1306,7 +1306,6 @@ name = "object-access"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "atty",
  "git-hash",
  "git-odb",
  "git2",
