@@ -9,7 +9,8 @@ pub enum Error {
     WalkDir(#[from] fs::walkdir::Error),
 }
 
-pub type IterType = std::iter::FilterMap<
+/// The type for an iterator over `Result<git_hash::ObjectId, Error>)`
+pub type Type = std::iter::FilterMap<
     fs::walkdir::DirEntryIter,
     fn(Result<fs::walkdir::DirEntry, fs::walkdir::Error>) -> Option<Result<git_hash::ObjectId, Error>>,
 >;
@@ -57,7 +58,7 @@ impl Db {
     ///
     /// [`IterType`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
     /// needed if iterators need to be implemented by hand in the absence of generators.
-    pub fn iter(&self) -> IterType {
+    pub fn iter(&self) -> Type {
         fs::walkdir_new(&self.path)
             .min_depth(2)
             .max_depth(3)

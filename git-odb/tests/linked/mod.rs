@@ -17,7 +17,13 @@ mod iter {
     #[test]
     fn a_bunch_of_loose_and_packed_objects() {
         let db = db();
-        assert_eq!(db.iter().count(), 42, "it sees the correct amount of objects");
+        let iter = db.iter();
+        assert_eq!(
+            iter.size_hint(),
+            (139, None),
+            "we only count packs and have no upper bound"
+        );
+        assert_eq!(iter.count(), 140, "it sees the correct amount of objects");
     }
 }
 
