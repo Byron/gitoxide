@@ -26,19 +26,17 @@ pub mod ancestors {
     }
 
     /// An iterator over the ancestors one or more starting commits
-    pub struct Iter<'a, Cache, DbRef, Locate> {
-        db: DbRef,
+    pub struct Iter<'a, Cache, Locate> {
+        db: Locate,
         next: VecDeque<ObjectId>,
         buf: Vec<u8>,
         seen: BTreeSet<ObjectId>,
         cache: &'a mut Cache,
-        _locate: std::marker::PhantomData<Locate>,
     }
 
-    impl<'a, Cache, DbRef, Locate> Iter<'a, Cache, DbRef, Locate>
+    impl<'a, Cache, Locate> Iter<'a, Cache, Locate>
     where
         Cache: pack::cache::DecodeEntry,
-        DbRef: Borrow<Locate>,
         Locate: crate::Locate,
     {
         /// Create a new instance.
@@ -48,7 +46,7 @@ pub mod ancestors {
         ///   * the starting points of the iteration, usually commits
         ///   * each commit they lead to will only be returned once, including the tip that started it
         /// * `cache` - a way to speedup object database access
-        pub fn new(db: DbRef, tips: impl IntoIterator<Item = impl Into<ObjectId>>, cache: &'a mut Cache) -> Self {
+        pub fn new(db: Locate, tips: impl IntoIterator<Item = impl Into<ObjectId>>, cache: &'a mut Cache) -> Self {
             let next: VecDeque<_> = tips.into_iter().map(Into::into).collect();
             let seen = next.iter().cloned().collect();
             Iter {
@@ -57,15 +55,13 @@ pub mod ancestors {
                 buf: Vec::with_capacity(4096),
                 seen,
                 cache,
-                _locate: Default::default(),
             }
         }
     }
 
-    impl<'a, Cache, DbRef, Locate> Iterator for Iter<'a, Cache, DbRef, Locate>
+    impl<'a, Cache, Locate> Iterator for Iter<'a, Cache, Locate>
     where
         Cache: pack::cache::DecodeEntry,
-        DbRef: Borrow<Locate>,
         Locate: crate::Locate,
         <Locate as crate::Locate>::Error: std::error::Error + std::fmt::Debug + 'static,
     {

@@ -56,3 +56,41 @@ pub trait Locate {
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
 }
+
+mod locate_impls {
+    use crate::{data::Object, pack::cache::DecodeEntry};
+    use git_hash::oid;
+    use std::ops::Deref;
+
+    impl<T> super::Locate for std::sync::Arc<T>
+    where
+        T: super::Locate,
+    {
+        type Error = T::Error;
+
+        fn locate<'a>(
+            &self,
+            id: impl AsRef<oid>,
+            buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl DecodeEntry,
+        ) -> Result<Option<Object<'a>>, Self::Error> {
+            self.deref().locate(id, buffer, pack_cache)
+        }
+    }
+
+    impl<T> super::Locate for Box<T>
+    where
+        T: super::Locate,
+    {
+        type Error = T::Error;
+
+        fn locate<'a>(
+            &self,
+            id: impl AsRef<oid>,
+            buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl DecodeEntry,
+        ) -> Result<Option<Object<'a>>, Self::Error> {
+            self.deref().locate(id, buffer, pack_cache)
+        }
+    }
+}
