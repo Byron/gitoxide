@@ -84,7 +84,7 @@ where
                 }
             }
             DbState::Loose { iter } => match iter.next() {
-                Some(id) => return Some(id),
+                Some(id) => Some(id),
                 None => {
                     self.db_index += 1;
                     self.db_state = Default::default();
