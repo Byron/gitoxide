@@ -1,32 +1,47 @@
-// Re-exports for convenience
-use std::path::PathBuf;
-
 pub use bstr;
+use once_cell::sync::Lazy;
+use std::path::Path;
+use std::{collections::BTreeMap, path::PathBuf, sync::Mutex};
 pub use tempdir;
 
-pub fn fixture_path(path: &str) -> PathBuf {
-    PathBuf::from("tests").join("fixtures").join(path)
+static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
+
+pub fn fixture_path(path: impl AsRef<str>) -> PathBuf {
+    PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
 
 /// Returns the directory at which the data is present
-pub fn assure_fixture_repo_present(
-    script_name: &str,
-) -> std::result::Result<tempdir::TempDir, Box<dyn std::error::Error>> {
+pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
     use bstr::ByteSlice;
-    let dir = tempdir::TempDir::new(script_name)?;
-    let output = std::process::Command::new("bash")
-        .arg(std::env::current_dir()?.join(fixture_path(script_name)))
-        .arg(dir.path())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .current_dir(dir.path())
-        .env_remove("GIT_DIR")
-        .output()?;
-    assert!(
-        output.status.success(),
-        "repo script failed: stdout: {}\nstderr: {}",
-        output.stdout.as_bstr(),
-        output.stderr.as_bstr()
+    let script_path = fixture_path(script_name);
+
+    // keep this lock to assure we don't return unfinished directories for threaded callers
+    let mut map = SCRIPT_IDENTITY.lock().unwrap();
+    let script_identity = map
+        .entry(script_path.clone())
+        .or_insert_with(|| crc::crc32::checksum_ieee(&std::fs::read(&script_path).expect("file can be read entirely")))
+        .to_owned();
+    let script_result_directory = fixture_path(
+        Path::new("generated")
+            .join(format!("{}", script_identity))
+            .to_string_lossy(),
     );
-    Ok(dir)
+    if !script_result_directory.is_dir() {
+        std::fs::create_dir_all(&script_result_directory)?;
+        let script_absolute_path = std::env::current_dir()?.join(script_path);
+        let output = std::process::Command::new("bash")
+            .arg(script_absolute_path)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .current_dir(&script_result_directory)
+            .env_remove("GIT_DIR")
+            .output()?;
+        assert!(
+            output.status.success(),
+            "repo script failed: stdout: {}\nstderr: {}",
+            output.stdout.as_bstr(),
+            output.stderr.as_bstr()
+        );
+    }
+    Ok(script_result_directory)
 }

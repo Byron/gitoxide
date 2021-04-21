@@ -59,9 +59,9 @@ pub fn check_common(cg: &Graph, expected: &HashMap<String, RefInfo, impl BuildHa
     );
 }
 
-use test_tools::assure_fixture_repo_present;
-pub fn create_repo(script_path: &str) -> test_tools::tempdir::TempDir {
-    assure_fixture_repo_present(script_path).expect("script succeeds all the time")
+use test_tools::scripted_fixture_repo_read_only;
+pub fn make_readonly_repo(script_path: &str) -> std::path::PathBuf {
+    scripted_fixture_repo_read_only(script_path).expect("script succeeds all the time")
 }
 
 pub fn hex_to_id(hex: &[u8]) -> git_hash::ObjectId {

@@ -3,7 +3,7 @@ mod ancestor {
     use git_odb::{linked, linked::Db};
 
     fn check_traversal_with_shared_reference(tips: &[&str], expected: &[&str]) -> crate::Result {
-        let (_temp_dir, db) = db()?;
+        let db = db()?;
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
         let oids: Result<Vec<_>, _> =
             git_odb::traverse::ancestors::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Noop)
@@ -18,7 +18,7 @@ mod ancestor {
 
     #[test]
     fn instantiate_with_arc() -> crate::Result {
-        let (_temp_dir, db) = db()?;
+        let db = db()?;
         let db = std::sync::Arc::new(db);
         let _ = git_odb::traverse::ancestors::Ancestors::new(
             db.clone(),
@@ -30,7 +30,7 @@ mod ancestor {
 
     #[test]
     fn instantiate_with_box() -> crate::Result {
-        let (_temp_dir, db) = db()?;
+        let db = db()?;
         let _ = git_odb::traverse::ancestors::Ancestors::new(
             Box::new(db),
             vec![git_hash::ObjectId::null_sha1()],
@@ -85,9 +85,9 @@ mod ancestor {
         )
     }
 
-    fn db() -> Result<(test_tools::tempdir::TempDir, Db), Box<dyn std::error::Error>> {
-        let dir = crate::assure_fixture_repo_present("make_traversal_repo.sh")?;
-        let db = linked::Db::at(dir.path().join(".git").join("objects"))?;
-        Ok((dir, db))
+    fn db() -> Result<Db, Box<dyn std::error::Error>> {
+        let dir = crate::scripted_fixture_repo_read_only("make_traversal_repo.sh")?;
+        let db = linked::Db::at(dir.join(".git").join("objects"))?;
+        Ok(db)
     }
 }

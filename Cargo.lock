@@ -2004,6 +2004,8 @@ name = "test-tools"
 version = "0.1.0"
 dependencies = [
  "bstr",
+ "crc",
+ "once_cell",
  "tempdir",
 ]
 

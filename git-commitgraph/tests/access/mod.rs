@@ -1,11 +1,11 @@
-use crate::{check_common, create_repo, inspect_refs};
+use crate::{check_common, inspect_refs, make_readonly_repo};
 use git_commitgraph::Graph;
 
 #[test]
 fn single_parent() -> crate::Result {
-    let repo_dir = create_repo("single_parent.sh");
-    let refs = inspect_refs(repo_dir.path(), &["parent", "child"]);
-    let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
+    let repo_dir = make_readonly_repo("single_parent.sh");
+    let refs = inspect_refs(&repo_dir, &["parent", "child"]);
+    let cg = Graph::from_info_dir(repo_dir.join(".git").join("objects").join("info"))?;
     check_common(&cg, &refs);
 
     assert_eq!(cg.commit_at(refs["parent"].pos()).generation(), 1);
@@ -16,9 +16,9 @@ fn single_parent() -> crate::Result {
 
 #[test]
 fn octupus_merges() -> crate::Result {
-    let repo_dir = create_repo("octopus_merges.sh");
+    let repo_dir = make_readonly_repo("octopus_merges.sh");
     let refs = inspect_refs(
-        repo_dir.path(),
+        &repo_dir,
         &[
             "root",
             "parent1",
@@ -29,7 +29,7 @@ fn octupus_merges() -> crate::Result {
             "four_parents",
         ],
     );
-    let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
+    let cg = Graph::from_info_dir(repo_dir.join(".git").join("objects").join("info"))?;
     check_common(&cg, &refs);
 
     assert_eq!(cg.commit_at(refs["root"].pos()).generation(), 1);
@@ -45,9 +45,9 @@ fn octupus_merges() -> crate::Result {
 
 #[test]
 fn single_commit() -> crate::Result {
-    let repo_dir = create_repo("single_commit.sh");
-    let refs = inspect_refs(repo_dir.path(), &["commit"]);
-    let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
+    let repo_dir = make_readonly_repo("single_commit.sh");
+    let refs = inspect_refs(&repo_dir, &["commit"]);
+    let cg = Graph::from_info_dir(repo_dir.join(".git").join("objects").join("info"))?;
     check_common(&cg, &refs);
 
     assert_eq!(cg.commit_at(refs["commit"].pos()).generation(), 1);
@@ -57,9 +57,9 @@ fn single_commit() -> crate::Result {
 
 #[test]
 fn two_parents() -> crate::Result {
-    let repo_dir = create_repo("two_parents.sh");
-    let refs = inspect_refs(repo_dir.path(), &["parent1", "parent2", "child"]);
-    let cg = Graph::from_info_dir(repo_dir.path().join(".git").join("objects").join("info"))?;
+    let repo_dir = make_readonly_repo("two_parents.sh");
+    let refs = inspect_refs(&repo_dir, &["parent1", "parent2", "child"]);
+    let cg = Graph::from_info_dir(repo_dir.join(".git").join("objects").join("info"))?;
     check_common(&cg, &refs);
 
     assert_eq!(cg.commit_at(refs["parent1"].pos()).generation(), 1);

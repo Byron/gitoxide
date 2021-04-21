@@ -1,4 +1,4 @@
-pub use test_tools::{assure_fixture_repo_present, fixture_path};
+pub use test_tools::{fixture_path, scripted_fixture_repo_read_only};
 
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
