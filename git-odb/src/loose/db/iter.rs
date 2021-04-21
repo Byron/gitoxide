@@ -56,7 +56,7 @@ impl Db {
     ///
     /// # Notes
     ///
-    /// [`IterType`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
+    /// [`IterType`][Type] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
     /// needed if iterators need to be implemented by hand in the absence of generators.
     pub fn iter(&self) -> Type {
         fs::walkdir_new(&self.path)

@@ -1,8 +1,7 @@
 mod simple_compression {
     use crate::fixture_path;
     use git_odb::linked;
-    use std::path::PathBuf;
-    use std::sync::Arc;
+    use std::{path::PathBuf, sync::Arc};
 
     enum DbKind {
         AbunchOfRandomObjects,
