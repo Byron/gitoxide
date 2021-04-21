@@ -150,13 +150,10 @@ where
         objects,
         thread_limit,
         |_n| (Vec::new(), pack::cache::Noop),
-        {
-            let db = db.clone();
-            move |oid, (buf, cache)| {
-                let _obj = db.locate(oid.as_ref(), buf, cache)?;
-                let _ = version; // currently unused
-                Ok(Vec::new())
-            }
+        move |oid, (buf, cache)| {
+            let _obj = db.locate(oid.as_ref(), buf, cache)?;
+            let _ = version; // currently unused
+            Ok(Vec::new())
         },
         parallel::reduce::IdentityWithResult::default(),
     )
