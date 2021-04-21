@@ -23,7 +23,7 @@ mod iter {
             (139, None),
             "we only count packs and have no upper bound"
         );
-        assert_eq!(iter.count(), 140, "it sees the correct amount of objects");
+        assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
     }
 }
 
