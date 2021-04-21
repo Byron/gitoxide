@@ -85,7 +85,7 @@ mod ancestor {
         )
     }
 
-    fn db() -> Result<(tempdir::TempDir, Db), Box<dyn std::error::Error>> {
+    fn db() -> Result<(test_tools::tempdir::TempDir, Db), Box<dyn std::error::Error>> {
         let dir = crate::assure_fixture_repo_present("make_traversal_repo.sh")?;
         let db = linked::Db::at(dir.path().join(".git").join("objects"))?;
         Ok((dir, db))

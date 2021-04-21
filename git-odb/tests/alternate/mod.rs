@@ -35,7 +35,7 @@ fn alternate_with(
 
 #[test]
 fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
-    let tmp = tempdir::TempDir::new("alternates")?;
+    let tmp = test_tools::tempdir::TempDir::new("alternates")?;
     let (from, _) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
     alternate(tmp.path().join("b"), Path::new("..").join("a"))?;
 
@@ -56,7 +56,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
 
 #[test]
 fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
-    let tmp = tempdir::TempDir::new("alternates")?;
+    let tmp = test_tools::tempdir::TempDir::new("alternates")?;
     let non_alternate = tmp.path().join("actual");
 
     // let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n\"../a\"\n"))?;
@@ -69,7 +69,7 @@ fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
 
 #[test]
 fn no_alternate_in_first_objects_dir() -> crate::Result {
-    let tmp = tempdir::TempDir::new("alternates")?;
+    let tmp = test_tools::tempdir::TempDir::new("alternates")?;
     assert!(alternate::resolve(tmp.path())?.is_empty());
     Ok(())
 }

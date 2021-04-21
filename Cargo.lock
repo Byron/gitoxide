@@ -821,8 +821,8 @@ dependencies = [
  "pretty_assertions",
  "serde",
  "smallvec",
- "tempdir",
  "tempfile",
+ "test-tools",
  "thiserror",
  "uluru",
 ]
@@ -1997,6 +1997,14 @@ dependencies = [
  "numtoa",
  "redox_syscall",
  "redox_termios",
+]
+
+[[package]]
+name = "test-tools"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "tempdir",
 ]
 
 [[package]]

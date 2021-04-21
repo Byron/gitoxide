@@ -108,10 +108,10 @@ unit-tests: ## run all unit tests
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
-jtt = tests/tools/target/debug/jtt
+jtt = target/debug/jtt
 journey-tests: always  ## run stateless journey tests (max)
 	cargo build
-	cd tests/tools && cargo build
+	cargo build --package test-tools --bin jtt
 	./tests/stateless-journey.sh target/debug/gix target/debug/gixp $(jtt) max
 
 journey-tests-small: always ## run stateless journey tests (lean-cli)

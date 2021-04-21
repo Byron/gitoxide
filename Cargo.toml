@@ -99,6 +99,8 @@ members = [
     "gitoxide-core",
     "git-tui",
 
-     "experiments/object-access",
+    "experiments/object-access",
     "experiments/hash-owned-borrowed",
+
+    "tests/tools",
 ]

@@ -1,13 +1,17 @@
 [package]
-name = "jtt"
-description = "utilities specifically for our journey tests"
+name = "test-tools"
+description = "utilities specifically for our crate test suites and journey tests"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 publish = false
 
+[[bin]]
+name = "jtt"
+path = "src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-[workspace]
+bstr = "0.2.15"
+tempdir = "0.3.7"
