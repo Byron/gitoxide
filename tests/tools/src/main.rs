@@ -2,7 +2,7 @@ use std::{fs, io, io::prelude::*, path::PathBuf};
 fn mess_in_the_middle(path: PathBuf) -> io::Result<()> {
     let mut file = fs::OpenOptions::new().read(false).write(true).open(path)?;
     file.seek(io::SeekFrom::Start(file.metadata()?.len() / 2))?;
-    file.write(b"hello")?;
+    file.write_all(b"hello")?;
     Ok(())
 }
 
