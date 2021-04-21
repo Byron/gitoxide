@@ -1,6 +1,5 @@
-use crate::data;
 use git_object::mutable;
-use std::{borrow::Borrow, convert::TryInto, io};
+use std::io;
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {
@@ -56,22 +55,8 @@ pub trait Object {
     /// Provide basic information about the object
     fn info(&self) -> ObjectInfo;
 
-    /// Returns decompressed object data, or None if there is None.
-    /// If that's the case, [`Object::read_all()`] is expected to deliver said data.
-    fn data(&self) -> Option<&[u8]> {
-        None
-    }
-
-    /// Read all decompressed data into the given buffer, resizing it as needed.
-    /// Returns None if this mode of operation is not supported.
-    fn read_all(&mut self, buf: &mut Vec<u8>) -> Option<Result<(), std::io::Error>> {
-        self.data().map(|d| {
-            let h = self.info();
-            buf.resize(h.size.try_into().expect("size to be representable"), 0);
-            buf.copy_from_slice(d);
-            Ok(())
-        })
-    }
+    /// Return the objects raw, undecoded data.
+    fn data(&self) -> &[u8];
 
     /// Returns the packed entry if this object is indeed a base object allowing to copy data from pack to pack
     /// and avoiding a decompress/compress round-trip for some objects.
@@ -83,7 +68,7 @@ pub trait Object {
 /// Describe how object can be located in an object store
 pub trait Locate {
     /// The object returned by [`locate()`][Locate::locate()]
-    type Object: for<'d> Borrow<data::Object<'d>>;
+    type Object: self::Object;
     /// The error returned by [`locate()`][Locate::locate()]
     type Error;
 
@@ -106,15 +91,22 @@ mod tests {
         #[test]
         fn can_return_self_contained_objects() {
             struct Db;
-            struct SelfContainedObject;
-            impl Borrow<data::Object<'_>> for SelfContainedObject {
-                fn borrow(&self) -> &data::Object<'_> {
+            struct SelfContainedObject<'a> {
+                our_data: &'a [u8],
+            }
+
+            impl<'a> Object for SelfContainedObject<'a> {
+                fn info(&self) -> ObjectInfo {
                     todo!()
+                }
+
+                fn data(&self) -> &[u8] {
+                    self.our_data
                 }
             }
 
             impl Locate for Db {
-                type Object = SelfContainedObject;
+                type Object<'a> = SelfContainedObject<'a>;
                 type Error = ();
 
                 fn locate<'a>(
@@ -123,7 +115,7 @@ mod tests {
                     buffer: &'a mut Vec<u8>,
                     pack_cache: &mut impl DecodeEntry,
                 ) -> Result<Option<Self::Object>, Self::Error> {
-                    Ok(Some(SelfContainedObject))
+                    Ok(Some(SelfContainedObject { our_data: buffer }))
                 }
             }
         }
