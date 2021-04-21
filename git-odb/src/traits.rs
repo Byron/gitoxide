@@ -1,5 +1,6 @@
+use crate::data;
 use git_object::mutable;
-use std::{convert::TryInto, io};
+use std::{borrow::Borrow, convert::TryInto, io};
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {
@@ -82,7 +83,7 @@ pub trait Object {
 /// Describe how object can be located in an object store
 pub trait Locate {
     /// The object returned by [`locate()`][Locate::locate()]
-    type Object: self::Object;
+    type Object: for<'d> Borrow<data::Object<'d>>;
     /// The error returned by [`locate()`][Locate::locate()]
     type Error;
 
@@ -93,4 +94,38 @@ pub trait Locate {
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<Self::Object>, Self::Error>;
+}
+
+#[cfg(test)]
+mod tests {
+    mod locate {
+        use super::super::*;
+        use crate::pack::cache::DecodeEntry;
+        use git_hash::oid;
+
+        #[test]
+        fn can_return_self_contained_objects() {
+            struct Db;
+            struct SelfContainedObject;
+            impl Borrow<data::Object<'_>> for SelfContainedObject {
+                fn borrow(&self) -> &data::Object<'_> {
+                    todo!()
+                }
+            }
+
+            impl Locate for Db {
+                type Object = SelfContainedObject;
+                type Error = ();
+
+                fn locate<'a>(
+                    &self,
+                    id: impl AsRef<oid>,
+                    buffer: &'a mut Vec<u8>,
+                    pack_cache: &mut impl DecodeEntry,
+                ) -> Result<Option<Self::Object>, Self::Error> {
+                    Ok(Some(SelfContainedObject))
+                }
+            }
+        }
+    }
 }
