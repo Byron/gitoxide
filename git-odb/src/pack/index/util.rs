@@ -20,34 +20,6 @@ pub(crate) fn index_entries_sorted_by_offset_ascending(
     v
 }
 
-pub(crate) struct Chunks<I> {
-    pub size: usize,
-    pub iter: I,
-}
-impl<I, Item> Iterator for Chunks<I>
-where
-    I: Iterator<Item = Item>,
-{
-    type Item = Vec<Item>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut res = Vec::with_capacity(self.size);
-        let mut items_left = self.size;
-        while let Some(item) = self.iter.next() {
-            res.push(item);
-            items_left -= 1;
-            if items_left == 0 {
-                break;
-            }
-        }
-        if res.is_empty() {
-            None
-        } else {
-            Some(res)
-        }
-    }
-}
-
 pub(crate) struct Count<W> {
     pub bytes: u64,
     pub inner: W,

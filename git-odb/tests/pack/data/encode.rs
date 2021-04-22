@@ -26,6 +26,7 @@ mod simple_compression {
             let all_objects = db.arc_iter().flat_map(Result::ok);
             let entries: Vec<_> = pack::data::encode::entries(
                 db.clone(),
+                || pack::cache::Noop,
                 all_objects,
                 progress::Discard,
                 pack::data::encode::Options::default(),
