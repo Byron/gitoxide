@@ -7,4 +7,4 @@ target/
 # repositories used for local testing
 /tests/fixtures/repos
 
-fixtures/generated/
+*/generated/

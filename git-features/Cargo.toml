@@ -24,12 +24,12 @@ path = "tests/parallel_threaded.rs"
 required-features = ["parallel"]
 
 [[test]]
-name = "parallel-shared-multi-threaded"
+name = "multi-threaded"
 path = "tests/parallel_shared_threaded.rs"
 required-features = ["parallel"]
 
 [[test]]
-name = "parallel-shared-single-threaded"
+name = "single-threaded"
 path = "tests/parallel_shared.rs"
 required-features = []
 

@@ -19,13 +19,13 @@ serde1 = ["serde", "git-object/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"]
 
 [[test]]
-name = "multi-threaded-odb"
-path = "tests/odb.rs"
+name = "multi-threaded"
+path = "tests/odb-multi-threaded.rs"
 required-features = ["internal-testing-git-features-parallel"]
 
 [[test]]
-name = "single-threaded-odb"
-path = "tests/odb.rs"
+name = "single-threaded"
+path = "tests/odb-single-threaded.rs"
 required-features = []
 
 [package.metadata.docs.rs]
