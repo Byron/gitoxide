@@ -246,7 +246,7 @@ pub mod reduce {
     }
     #[cfg(not(feature = "parallel"))]
     mod stepped {
-        /// An iterator adaptor to allow running computations using [`in_parallel()`] in a step-wise manner, see the [module docs][crate::parallel]
+        /// An iterator adaptor to allow running computations using [`in_parallel()`][crate::parallel::in_parallel()] in a step-wise manner, see the [module docs][crate::parallel]
         /// for details.
         pub struct Stepwise<InputIter, ConsumeFn, ThreadState, Reduce> {
             input: InputIter,
@@ -264,7 +264,7 @@ pub mod reduce {
             O: Send,
         {
             /// Instantiate a new iterator.
-            /// For a description of parameters, see [`in_parallel()`].
+            /// For a description of parameters, see [`in_parallel()`][crate::parallel::in_parallel()].
             pub fn new<ThreadStateFn>(
                 input: InputIter,
                 _thread_limit: Option<usize>,
