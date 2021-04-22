@@ -27,15 +27,13 @@ pub(crate) struct Location {
     pub(crate) pack_id: u32,
     /// The index at which the object can be fonud in the index file
     pub(crate) index_file_id: u32,
-    /// The absolute offset into the pack file at which the entry header starts
-    pub(crate) pack_offset: u64,
     /// The size of the entry of disk
     pub(crate) entry_size: usize,
 }
 
 impl Location {
-    pub(crate) fn entry_slice(&self) -> pack::data::EntrySlice {
-        self.pack_offset..self.pack_offset + self.entry_size as u64
+    pub(crate) fn entry_slice(&self, pack_offset: u64) -> pack::data::EntrySlice {
+        pack_offset..pack_offset + self.entry_size as u64
     }
 }
 

@@ -41,11 +41,15 @@ impl crate::Locate for linked::Db {
             })
             .and_then(|(bundle, l)| {
                 let crc32 = bundle.index.crc32_at_index(l.index_file_id);
-                bundle.pack.entry_slice(l.entry_slice()).map(|data| PackEntry {
-                    data,
-                    crc32,
-                    version: bundle.pack.version(),
-                })
+                let pack_offset = bundle.index.pack_offset_at_index(l.index_file_id);
+                bundle
+                    .pack
+                    .entry_slice(l.entry_slice(pack_offset))
+                    .map(|data| PackEntry {
+                        data,
+                        crc32,
+                        version: bundle.pack.version(),
+                    })
             })
     }
 }

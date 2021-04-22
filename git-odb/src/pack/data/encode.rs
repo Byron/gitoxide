@@ -93,6 +93,8 @@ pub struct Entry {
     /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
     /// at rest or in transit.
     pub entry_kind: EntryKind,
+    /// The size in bytes needed once `data` gets decompressed
+    pub decompressed_size: usize,
     /// The compressed data right behind the header
     pub data: Vec<u8>,
 }
@@ -193,6 +195,7 @@ where
                                         id: id.as_ref().into(),
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
                                         entry_kind: EntryKind::Base,
+                                        decompressed_size: obj.data.len(),
                                         data: entry.data.into(),
                                     }
                                 } else {
