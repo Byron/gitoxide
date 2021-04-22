@@ -160,7 +160,7 @@ pub mod reduce {
                     };
                 }
                 if let Some(thread_err) = last_err {
-                    std::panic::panic_any(thread_err);
+                    std::panic::resume_unwind(thread_err);
                 }
             }
         }

@@ -115,6 +115,8 @@ where
         move |oid, (buf, cache)| {
             let _obj = db.locate(oid.as_ref(), buf, cache)?;
             let _ = version; // currently unused
+            todo!("entry generation");
+            #[allow(unreachable_code)]
             Ok(Vec::new())
         },
         parallel::reduce::IdentityWithResult::default(),

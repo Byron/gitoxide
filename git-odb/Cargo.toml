@@ -16,6 +16,17 @@ default = ["flate2/zlib-ng-compat"]
 pack-cache-lru-static = ["uluru"]
 pack-cache-lru-dynamic = ["memory-lru"]
 serde1 = ["serde", "git-object/serde1"]
+internal-testing-git-features-parallel = ["git-features/parallel"]
+
+[[test]]
+name = "multi-threaded-odb"
+path = "tests/odb.rs"
+required-features = ["internal-testing-git-features-parallel"]
+
+[[test]]
+name = "single-threaded-odb"
+path = "tests/odb.rs"
+required-features = []
 
 [package.metadata.docs.rs]
 all-features = true
