@@ -44,6 +44,10 @@ impl Entry {
 /// Decoding
 impl Entry {
     /// Decode an entry from the given entry data `d`, providing the `pack_offset` to allow tracking the start of the entry data section.
+    ///
+    /// # Panics
+    ///
+    /// If we cannot understand the header, garbage data is likely to trigger this.
     pub fn from_bytes(d: &[u8], pack_offset: u64) -> Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 

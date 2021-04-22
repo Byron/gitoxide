@@ -11,6 +11,8 @@ where
 {
     #[error(transparent)]
     Locate(#[from] LocateErr),
+    #[error("Object id {oid} wasn't found in object database")]
+    NotFound { oid: ObjectId },
 }
 
 /// The way input objects are handled
@@ -117,8 +119,6 @@ pub struct Entry {
 ///
 /// ### Disadvantages
 ///
-/// * No support yet for pack-to-pack copies, but that can be added if `data::Objects` or whatever `locate()` returns
-///   keeps track of the owning pack. This should be quite trivial to do with the added cost of keeping track of packs.
 /// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
 /// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
@@ -170,9 +170,18 @@ where
             match input_object_expansion {
                 AsIs => {
                     for id in oids.into_iter() {
-                        let _obj = db.locate(id.as_ref(), buf, cache)?;
-                        let _ = version;
-                        todo!("entry generation");
+                        let obj = db.locate(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
+                            oid: id.as_ref().to_owned(),
+                        })?;
+                        match db.pack_entry(&obj) {
+                            Some(entry) if entry.version == version => {
+                                let _entry_data = pack::data::header::Entry::from_bytes(entry.data, 0);
+                                todo!("pack to pack copy")
+                            }
+                            _ => {
+                                todo!("encode pack entry from object data")
+                            }
+                        }
                     }
                 }
             }
