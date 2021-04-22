@@ -29,13 +29,22 @@ impl linked::Db {
         Ok(None)
     }
 
-    pub fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+    /// Return the [`PackEntry`] for `object` if it is backed by a pack.
+    ///
+    /// Note that this is only in the interest of avoiding duplicate work during pack generation
+    /// as the input for this is an already decoded [`data::Object`] that is fully known.
+    ///
+    /// # Notes
+    ///
+    /// Custom implementations might be interested in providing their own meta-data with `object`,
+    /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
+    pub fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
         todo!("pack_entry()")
     }
 }
 
 mod traits {
-    use crate::{compound, data::Object, linked, pack, PackEntry};
+    use crate::{compound, data, data::Object, linked, pack, PackEntry};
     use git_hash::oid;
 
     impl crate::Locate for linked::Db {
@@ -50,8 +59,8 @@ mod traits {
             linked::Db::locate(self, id, buffer, pack_cache)
         }
 
-        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
-            linked::Db::pack_entry(self, location)
+        fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
+            linked::Db::pack_entry(self, object)
         }
     }
     impl crate::Locate for &linked::Db {
@@ -66,8 +75,8 @@ mod traits {
             linked::Db::locate(self, id, buffer, pack_cache)
         }
 
-        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
-            linked::Db::pack_entry(self, location)
+        fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
+            linked::Db::pack_entry(self, object)
         }
     }
 }
