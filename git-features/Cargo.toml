@@ -20,16 +20,16 @@ io-pipe = ["bytes"]
 
 [[test]]
 name = "parallel"
-path = "tests/parallel.rs"
+path = "tests/parallel_threaded.rs"
 required-features = ["parallel"]
 
 [[test]]
-name = "parallel_shared"
-path = "tests/parallel_shared.rs"
+name = "parallel-shared-multi-threaded"
+path = "tests/parallel_shared_threaded.rs"
 required-features = ["parallel"]
 
 [[test]]
-name = "parallel_shared_in_serial"
+name = "parallel-shared-single-threaded"
 path = "tests/parallel_shared.rs"
 required-features = []
 
