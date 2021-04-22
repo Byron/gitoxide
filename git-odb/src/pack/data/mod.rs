@@ -35,6 +35,12 @@ pub enum Version {
     V3,
 }
 
+impl Default for Version {
+    fn default() -> Self {
+        Version::V2
+    }
+}
+
 /// A pack data file
 pub struct File {
     data: FileBuffer,

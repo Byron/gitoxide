@@ -14,7 +14,7 @@ where
 }
 
 /// Configuration options for the pack generation functions provied in [this module][crate::pack::data::encode].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {
     /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
@@ -90,10 +90,6 @@ pub struct Entry {
 /// * No support yet for pack-to-pack copies, but that can be added if `data::Objects` or whatever `locate()` returns
 ///   keeps track of the owning pack. This should be quite trivial to do with the added cost of keeping track of packs.
 /// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
-/// * needs the traversal to have happened before, probably producing a `Vec<AsMut<Object>>` anyway. This implies
-///   plenty of objects have been decompressed and parsed already, and will potentially be parsed twice.
-///   * Live with the amount of objects being known in advance and get rid of the ExactIterator requirement OR
-///     allow all iterations to have a 'quick' mode to pre-determine how many objects there will be in advance.
 /// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
