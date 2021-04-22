@@ -25,17 +25,17 @@ pub enum Error {
 pub(crate) struct Location {
     /// The id of the pack containing the object
     pub(crate) pack_id: u32,
-    /// The absolute offset into the pack file at which the entry header starts
-    pub(crate) pack_offset: u64,
     /// The index at which the object can be fonud in the index file
     pub(crate) index_file_id: u32,
+    /// The absolute offset into the pack file at which the entry header starts
+    pub(crate) pack_offset: u64,
     /// The size of the entry of disk
-    pub(crate) compressed_size: usize,
+    pub(crate) entry_size: usize,
 }
 
 impl Location {
     pub(crate) fn entry_slice(&self) -> pack::data::EntrySlice {
-        self.pack_offset..self.pack_offset + self.compressed_size as u64
+        self.pack_offset..self.pack_offset + self.entry_size as u64
     }
 }
 

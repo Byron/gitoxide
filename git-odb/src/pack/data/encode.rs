@@ -1,5 +1,5 @@
 use crate::pack;
-use git_features::{parallel, progress::Progress};
+use git_features::{hash, parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 
 /// The error returned the pack generation functions in [this module][crate::pack::data::encode].
@@ -13,6 +13,8 @@ where
     Locate(#[from] LocateErr),
     #[error("Object id {oid} wasn't found in object database")]
     NotFound { oid: ObjectId },
+    #[error("Entry expected to have hash {expected}, but it had {actual}")]
+    PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
 }
 
 /// The way input objects are handled
@@ -143,6 +145,10 @@ where
     Oid: AsRef<oid> + Send + 'static,
     Cache: pack::cache::DecodeEntry,
 {
+    assert!(
+        matches!(version, pack::data::Version::V2),
+        "currently we can only write version 2"
+    );
     let lower_bound = objects.size_hint().0;
     let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
         chunk_size,
@@ -166,22 +172,37 @@ where
         },
         move |oids: Vec<Oid>, (buf, cache)| {
             use ObjectExpansion::*;
-            let out = Vec::new();
+            let mut out = Vec::new();
             match input_object_expansion {
                 AsIs => {
                     for id in oids.into_iter() {
                         let obj = db.locate(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
                             oid: id.as_ref().to_owned(),
                         })?;
-                        match db.pack_entry(&obj) {
+                        out.push(match db.pack_entry(&obj) {
                             Some(entry) if entry.version == version => {
-                                let _entry_data = pack::data::header::Entry::from_bytes(entry.data, 0);
-                                todo!("pack to pack copy")
+                                let pack_entry = pack::data::header::Entry::from_bytes(entry.data, 0);
+                                if let Some(expected) = entry.crc32 {
+                                    let actual = hash::crc32(entry.data);
+                                    if actual != expected {
+                                        return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
+                                    }
+                                }
+                                if pack_entry.header.is_base() {
+                                    Entry {
+                                        id: id.as_ref().into(),
+                                        object_kind: pack_entry.header.to_kind().expect("non-delta"),
+                                        entry_kind: EntryKind::Base,
+                                        data: entry.data.into(),
+                                    }
+                                } else {
+                                    todo!("encode new pack entry as this is a delta")
+                                }
                             }
                             _ => {
                                 todo!("encode pack entry from object data")
                             }
-                        }
+                        });
                     }
                 }
             }

@@ -38,6 +38,7 @@ impl pack::Bundle {
     ) -> Result<data::Object<'a>, pack::data::decode::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
+        let header_size = pack_entry.header_size();
         self.pack
             .decode_entry(
                 pack_entry,
@@ -54,9 +55,9 @@ impl pack::Bundle {
                 data: out.as_slice(),
                 pack_location: Some(pack::bundle::Location {
                     pack_id: self.pack.id,
-                    pack_offset: ofs,
                     index_file_id: idx,
-                    compressed_size: r.compressed_size,
+                    pack_offset: ofs, // TODO: just look this one up
+                    entry_size: r.compressed_size + header_size,
                 }),
             })
     }

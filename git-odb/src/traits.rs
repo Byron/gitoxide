@@ -73,6 +73,8 @@ pub trait Locate {
     fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>>;
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)] // TODO: docs
 pub struct PackEntry<'a> {
     /// The encoded data of the entry as present in the pack file

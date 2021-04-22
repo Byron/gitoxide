@@ -268,7 +268,8 @@ impl File {
                     delta.data_offset,
                     &mut instructions[..delta.decompressed_size],
                 )?;
-                if delta_idx + 1 == chain_len {
+                let is_last_delta_to_be_applied = delta_idx + 1 == chain_len;
+                if is_last_delta_to_be_applied {
                     consumed_input = Some(consumed_from_data_offset);
                 }
 
