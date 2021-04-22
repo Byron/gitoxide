@@ -73,7 +73,7 @@ pub trait Locate {
     fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>>;
 }
 
-///
+#[allow(missing_docs)] // TODO: docs
 pub struct PackEntry<'a> {
     data: &'a [u8],
 }

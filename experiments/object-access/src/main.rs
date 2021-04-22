@@ -5,6 +5,7 @@
 //! I think.
 use anyhow::anyhow;
 use git_hash::ObjectId;
+use git_odb::Locate;
 use std::{
     path::{Path, PathBuf},
     time::Instant,

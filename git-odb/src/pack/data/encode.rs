@@ -15,6 +15,7 @@ where
 
 /// The way input objects are handled
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectExpansion {
     /// Don't do anything with the input objects except for transforming them into pack entries
     AsIs,
