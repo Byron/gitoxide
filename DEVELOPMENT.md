@@ -42,6 +42,9 @@
     * Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
       needs a lot of resources and threads will do just fine.
       
+* **`Default` implementations**
+  * These can change only if the effect is contained within the callers process.
+    This means **changing the default of a file version** is a **breaking change**.
 * **Using the `Progress` trait**
   * When receiving a `Progress` implementation
      * without calling `add_child(…)` then use it directly to communicate progress, leaving

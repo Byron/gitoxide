@@ -34,8 +34,7 @@ mod simple_compression {
             .into_iter()
             .flatten()
             .collect();
-            // assert_eq!(entries.len(), obj_count, "each object gets one entry");
-            assert_eq!(entries.len(), 0, "each object gets one entry");
+            assert_eq!(entries.len(), obj_count, "each object gets one entry");
             Ok(())
         })()
         .unwrap();
