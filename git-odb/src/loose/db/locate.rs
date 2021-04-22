@@ -112,7 +112,11 @@ impl Db {
             );
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
             buf.resize(size, 0);
-            Ok(crate::data::Object { kind, data: buf })
+            Ok(crate::data::Object {
+                kind,
+                data: buf,
+                pack_location: None,
+            })
         } else {
             buf.resize(bytes_read + size + header_size, 0);
             {
@@ -135,7 +139,11 @@ impl Db {
             };
             buf.copy_within(decompressed_start + header_size.., 0);
             buf.resize(size, 0);
-            Ok(crate::data::Object { kind, data: buf })
+            Ok(crate::data::Object {
+                kind,
+                data: buf,
+                pack_location: None,
+            })
         }
     }
 }

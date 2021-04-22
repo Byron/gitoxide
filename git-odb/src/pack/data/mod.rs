@@ -46,7 +46,7 @@ pub struct File {
     data: FileBuffer,
     path: std::path::PathBuf,
     /// A portion of a hash to represent the `path` field when used with cache lookup
-    id: u32,
+    pub(crate) id: u32,
     version: Version,
     num_objects: u32,
 }

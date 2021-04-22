@@ -10,11 +10,10 @@ impl linked::Db {
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, compound::locate::Error> {
-        use compound::locate::PackInfo;
         let id = id.as_ref();
         for db in self.dbs.iter() {
             match db.internal_locate(id) {
-                Some(PackInfo { pack_id, entry_index }) => {
+                Some(compound::locate::PackLocation { pack_id, entry_index }) => {
                     return db
                         .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
                         .map(Some)

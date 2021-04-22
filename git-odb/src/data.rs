@@ -1,5 +1,6 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
+use crate::pack;
 use git_object::immutable;
 
 /// A borrowed object using a borrowed slice as backing buffer.
@@ -9,6 +10,8 @@ pub struct Object<'a> {
     pub kind: git_object::Kind,
     /// decoded, decompressed data, owned by a backing store.
     pub data: &'a [u8],
+    /// If `Some`, this object is from a pack whose pack location can be used to look up pack related information
+    pub pack_location: Option<pack::bundle::Location>,
 }
 
 impl<'a> Object<'a> {
@@ -80,6 +83,6 @@ mod tests {
 
     #[test]
     fn size_of_object() {
-        assert_eq!(std::mem::size_of::<Object<'_>>(), 24, "this shouldn't change unnoticed");
+        assert_eq!(std::mem::size_of::<Object<'_>>(), 48, "this shouldn't change unnoticed");
     }
 }

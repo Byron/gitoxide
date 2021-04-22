@@ -20,6 +20,13 @@ pub enum Error {
     Index(#[from] pack::index::init::Error),
 }
 
+/// A way to uniquely identify the location of an object within a pack bundle
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct Location {
+    pub(crate) pack_id: u32,
+    pub(crate) pack_offset: u64,
+}
+
 /// A bundle of pack data and the corresponding pack index
 pub struct Bundle {
     /// The pack file corresponding to `index`

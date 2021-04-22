@@ -125,7 +125,7 @@ pub struct Entry {
 ///
 pub fn entries<Locate, Iter, Oid, Cache>(
     db: Locate,
-    make_cache: impl Fn() -> Cache + Send + Sync + 'static,
+    make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,
     _progress: impl Progress,
     Options {
@@ -170,7 +170,7 @@ where
                 AsIs => {
                     for id in oids.into_iter() {
                         let _obj = db.locate(id.as_ref(), buf, cache)?;
-                        let _ = version; // currently unused
+                        let _ = version;
                         todo!("entry generation");
                     }
                 }

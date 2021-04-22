@@ -52,6 +52,10 @@ impl pack::Bundle {
             .map(move |r| crate::data::Object {
                 kind: r.kind,
                 data: out.as_slice(),
+                pack_location: Some(pack::bundle::Location {
+                    pack_id: self.pack.id,
+                    pack_offset: ofs,
+                }),
             })
     }
 }
