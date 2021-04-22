@@ -55,6 +55,8 @@ impl pack::Bundle {
                 pack_location: Some(pack::bundle::Location {
                     pack_id: self.pack.id,
                     pack_offset: ofs,
+                    index_file_id: idx,
+                    compressed_size: r.compressed_size,
                 }),
             })
     }

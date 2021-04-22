@@ -23,8 +23,20 @@ pub enum Error {
 /// A way to uniquely identify the location of an object within a pack bundle
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub(crate) struct Location {
+    /// The id of the pack containing the object
     pub(crate) pack_id: u32,
+    /// The absolute offset into the pack file at which the entry header starts
     pub(crate) pack_offset: u64,
+    /// The index at which the object can be fonud in the index file
+    pub(crate) index_file_id: u32,
+    /// The size of the entry of disk
+    pub(crate) compressed_size: usize,
+}
+
+impl Location {
+    pub(crate) fn entry_slice(&self) -> pack::data::EntrySlice {
+        self.pack_offset..self.pack_offset + self.compressed_size as u64
+    }
 }
 
 /// A bundle of pack data and the corresponding pack index

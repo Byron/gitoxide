@@ -1,4 +1,4 @@
-use crate::{compound, data, linked, pack};
+use crate::{compound, data, linked, pack, PackEntry};
 
 impl linked::Db {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
@@ -28,12 +28,14 @@ impl linked::Db {
         }
         Ok(None)
     }
+
+    pub fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+        todo!("pack_entry()")
+    }
 }
 
 mod traits {
-    use crate::data::Object;
-    use crate::pack::cache::DecodeEntry;
-    use crate::{compound, linked};
+    use crate::{compound, data::Object, linked, pack, PackEntry};
     use git_hash::oid;
 
     impl crate::Locate for linked::Db {
@@ -43,9 +45,13 @@ mod traits {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl DecodeEntry,
+            pack_cache: &mut impl pack::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
             linked::Db::locate(self, id, buffer, pack_cache)
+        }
+
+        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            linked::Db::pack_entry(self, location)
         }
     }
     impl crate::Locate for &linked::Db {
@@ -55,9 +61,13 @@ mod traits {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl DecodeEntry,
+            pack_cache: &mut impl pack::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
             linked::Db::locate(self, id, buffer, pack_cache)
+        }
+
+        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            linked::Db::pack_entry(self, location)
         }
     }
 }

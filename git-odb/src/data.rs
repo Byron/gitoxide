@@ -20,20 +20,12 @@ impl<'a> Object<'a> {
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
     /// using [`git_object::immutable::Object::into_mutable()`].
-    pub fn decode(&self) -> Result<git_object::immutable::Object<'_>, immutable::object::decode::Error> {
+    pub fn decode(&self) -> Result<immutable::Object<'_>, immutable::object::decode::Error> {
         Ok(match self.kind {
-            git_object::Kind::Tree => {
-                git_object::immutable::Object::Tree(git_object::immutable::Tree::from_bytes(self.data)?)
-            }
-            git_object::Kind::Blob => {
-                git_object::immutable::Object::Blob(git_object::immutable::Blob { data: self.data })
-            }
-            git_object::Kind::Commit => {
-                git_object::immutable::Object::Commit(git_object::immutable::Commit::from_bytes(self.data)?)
-            }
-            git_object::Kind::Tag => {
-                git_object::immutable::Object::Tag(git_object::immutable::Tag::from_bytes(self.data)?)
-            }
+            git_object::Kind::Tree => immutable::Object::Tree(immutable::Tree::from_bytes(self.data)?),
+            git_object::Kind::Blob => immutable::Object::Blob(immutable::Blob { data: self.data }),
+            git_object::Kind::Commit => immutable::Object::Commit(immutable::Commit::from_bytes(self.data)?),
+            git_object::Kind::Tag => immutable::Object::Tag(immutable::Tag::from_bytes(self.data)?),
         })
     }
 }
@@ -83,6 +75,6 @@ mod tests {
 
     #[test]
     fn size_of_object() {
-        assert_eq!(std::mem::size_of::<Object<'_>>(), 48, "this shouldn't change unnoticed");
+        assert_eq!(std::mem::size_of::<Object<'_>>(), 56, "this shouldn't change unnoticed");
     }
 }

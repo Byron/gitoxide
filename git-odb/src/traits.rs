@@ -1,4 +1,4 @@
-use crate::data;
+use crate::{data, pack};
 use git_object::mutable;
 use std::io;
 
@@ -48,17 +48,29 @@ pub trait Locate {
     /// The error returned by [`locate()`][Locate::locate()]
     type Error: std::error::Error + 'static;
 
-    #[allow(missing_docs)] // TODO
+    /// Find an object matching `id` in the database while placing its raw, undecoded data into `buffer`.
+    /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`pack::cache::Noop`] if the
+    /// workload isn't suitable for caching.
+    ///
+    /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
+    /// retrieval.
     fn locate<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
+
+    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>>;
+}
+
+///
+pub struct PackEntry<'a> {
+    data: &'a [u8],
 }
 
 mod locate_impls {
-    use crate::{data::Object, pack::cache::DecodeEntry};
+    use crate::{data::Object, pack, PackEntry};
     use git_hash::oid;
     use std::ops::Deref;
 
@@ -72,9 +84,13 @@ mod locate_impls {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl DecodeEntry,
+            pack_cache: &mut impl pack::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
             self.deref().locate(id, buffer, pack_cache)
+        }
+
+        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            self.deref().pack_entry(location)
         }
     }
 
@@ -88,9 +104,13 @@ mod locate_impls {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl DecodeEntry,
+            pack_cache: &mut impl pack::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
             self.deref().locate(id, buffer, pack_cache)
+        }
+
+        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            self.deref().pack_entry(location)
         }
     }
 }
