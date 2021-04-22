@@ -1,4 +1,4 @@
-use crate::data;
+use crate::{data, pack};
 use git_object::mutable;
 use std::io;
 
@@ -75,7 +75,12 @@ pub trait Locate {
 
 #[allow(missing_docs)] // TODO: docs
 pub struct PackEntry<'a> {
-    data: &'a [u8],
+    /// The encoded data of the entry as present in the pack file
+    pub data: &'a [u8],
+    /// The crc32 hash over the entirety of `data`, or None if the pack file format doesn't support it yet.
+    pub crc32: Option<u32>,
+    /// The version of the pack file containing `data`
+    pub version: pack::data::Version,
 }
 
 mod locate_impls {

@@ -30,7 +30,23 @@ impl crate::Locate for linked::Db {
     }
 
     fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
-        todo!("pack_entry()")
+        object
+            .pack_location
+            .as_ref()
+            .and_then(|l| {
+                self.dbs
+                    .iter()
+                    .find_map(|db| db.packs.iter().find(|p| p.pack.id == l.pack_id))
+                    .map(|b| (b, l))
+            })
+            .and_then(|(bundle, l)| {
+                let crc32 = bundle.index.crc32_at_index(l.index_file_id);
+                bundle.pack.entry_slice(l.entry_slice()).map(|data| PackEntry {
+                    data,
+                    crc32,
+                    version: bundle.pack.version(),
+                })
+            })
     }
 }
 
