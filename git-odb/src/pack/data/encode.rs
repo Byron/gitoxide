@@ -1,7 +1,6 @@
 use crate::pack;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
-use std::convert::TryInto;
 
 /// The error returned the pack generation functions in [this module][crate::pack::data::encode].
 #[derive(Debug, thiserror::Error)]
@@ -30,39 +29,6 @@ pub struct ObjectHeader {
     pub kind: git_object::Kind,
     /// The decompressed size of the objects raw data.
     pub size: u64,
-}
-
-/// An object that can represent no less than three different kinds of data all to avoid unnecessary copies or allocations.
-///
-/// * loose objects
-/// * decompressed packed objects
-/// * entries in packs
-pub trait Object {
-    /// Provide basic information about the object
-    fn header(&self) -> ObjectHeader;
-
-    /// Returns decompressed object data, or None if there is None.
-    /// If that's the case, [`Object::read_all()`] is expected to deliver said data.
-    fn data(&self) -> Option<&[u8]> {
-        None
-    }
-
-    /// Read all decompressed data into the given buffer, resizing it as needed.
-    /// Returns None if this mode of operation is not supported.
-    fn read_all(&mut self, buf: &mut Vec<u8>) -> Option<Result<(), std::io::Error>> {
-        self.data().map(|d| {
-            let h = self.header();
-            buf.resize(h.size.try_into().expect("size to be representable"), 0);
-            buf.copy_from_slice(d);
-            Ok(())
-        })
-    }
-
-    /// Returns the packed entry if this object is indeed a base object allowing to copy data from pack to pack
-    /// and avoiding a decompress/compress round-trip for some objects.
-    fn packed_base_data(&self) -> Option<&[u8]> {
-        None
-    }
 }
 
 /// The kind of pack entry to be written

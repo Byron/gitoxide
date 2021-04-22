@@ -21,7 +21,7 @@ impl index::File {
         check: SafetyCheck,
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
-        mut root: P,
+        mut progress: P,
         pack: &pack::data::File,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
@@ -37,8 +37,8 @@ impl index::File {
         let _reset_interrupt = ResetOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = root.add_child("SHA1 of pack");
-                let index_progress = root.add_child("SHA1 of index");
+                let pack_progress = progress.add_child("SHA1 of pack");
+                let index_progress = progress.add_child("SHA1 of index");
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress);
                     if res.is_err() {
@@ -49,20 +49,20 @@ impl index::File {
             },
             || -> Result<_, Error<_>> {
                 let sorted_entries =
-                    index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
+                    index_entries_sorted_by_offset_ascending(self, progress.add_child("collecting sorted index"));
                 let tree = pack::tree::Tree::from_offsets_in_pack(
                     sorted_entries.into_iter().map(EntryWithDefault::from),
                     |e| e.index_entry.pack_offset,
                     pack.path(),
-                    root.add_child("indexing"),
+                    progress.add_child("indexing"),
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
                 )?;
                 let there_are_enough_objects = || self.num_objects > 10_000;
                 let mut outcome = digest_statistics(tree.traverse(
                     there_are_enough_objects,
                     |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
-                    root.add_child("Resolving"),
-                    root.add_child("Decoding"),
+                    progress.add_child("Resolving"),
+                    progress.add_child("Decoding"),
                     thread_limit,
                     pack.pack_end() as u64,
                     || (new_processor(), [0u8; 64]),
@@ -114,7 +114,7 @@ impl index::File {
         );
         let id = verify_result?;
         let outcome = traversal_result?;
-        Ok((id, outcome, root))
+        Ok((id, outcome, progress))
     }
 }
 

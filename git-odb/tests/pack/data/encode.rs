@@ -12,7 +12,7 @@ mod simple_compression {
         let path: PathBuf = match kind {
             AbunchOfRandomObjects => fixture_path("objects"),
         };
-        linked::Db::at(path).map(Arc::new).map_err(Into::into)
+        linked::Db::at(path).map_err(Into::into).map(Into::into)
     }
 
     #[test]

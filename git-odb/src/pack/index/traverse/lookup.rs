@@ -18,7 +18,7 @@ impl index::File {
         thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         new_cache: impl Fn() -> C + Send + Sync,
-        mut root: P,
+        mut progress: P,
         pack: &pack::data::File,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
@@ -35,8 +35,8 @@ impl index::File {
         let _reset_interrupt = ResetOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = root.add_child("SHA1 of pack");
-                let index_progress = root.add_child("SHA1 of index");
+                let pack_progress = progress.add_child("SHA1 of pack");
+                let index_progress = progress.add_child("SHA1 of index");
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress);
                     if res.is_err() {
@@ -47,14 +47,14 @@ impl index::File {
             },
             || {
                 let index_entries =
-                    util::index_entries_sorted_by_offset_ascending(self, root.add_child("collecting sorted index"));
+                    util::index_entries_sorted_by_offset_ascending(self, progress.add_child("collecting sorted index"));
 
                 let (chunk_size, thread_limit, available_cores) =
                     parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
                 let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
                 let reduce_progress = parking_lot::Mutex::new({
-                    let mut p = root.add_child("Traversing");
+                    let mut p = progress.add_child("Traversing");
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));
                     p
                 });
@@ -113,6 +113,6 @@ impl index::File {
         );
         let id = verify_result?;
         let res = traversal_result?;
-        Ok((id, res, root))
+        Ok((id, res, progress))
     }
 }

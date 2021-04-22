@@ -3,15 +3,15 @@
 ### Practices 
 
  * **test-first development**
-   * protect against regression and make implementing features easy
+   * protect against regression and make implementing features easy.
    * user docker to test more elaborate user interactions
    * keep it practical, knowing the Rust compiler already has your back
      for the mundane things, like unhappy code paths.
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
-     appropriate
-   * *use libgit2* test fixtures and cases where appropriate
+     appropriate.
+   * *use libgit2* test fixtures and cases where appropriate.
  * **safety first**
-   * handle all errors, never unwrap.
+   * handle all errors, never `unwrap()`. If needed, `expect("why")`.
    * provide an error chain and make it easy to understand what went wrong.
  * **strive for an MVP and version 1.0 fast...**
    * ...even if that includes only the most common usecases.
@@ -42,12 +42,17 @@
     * Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
       needs a lot of resources and threads will do just fine.
       
+* **Using the `Progress` trait**
+  * When receiving a `Progress` implementation
+     * without calling `add_child(…)` then use it directly to communicate progress, leaving
+       control of the name to the caller. However, call `.init(…)` to configure the iteration.
+     * and when calling `add_child(…)` don't use the parent progress instance for anything else.  
 * **interruption of long-running operations**
   * Use `git-features::interrupt::*` for building support for interruptions of long-running operations only.
     * It's up to the author to decide how to best integrate it, generally we use a poll-based mechanism to check whether
       an interrupt flag is set.
     * **this is a must if…**
-      * …temporary resources like files might otherwise be leaked
+      * …temporary resources like files might otherwise be leaked.
     * **this is optional but desirable if…**
       * …there is no leakage otherwise to support user interfaces. They background long-running operations and need them to be cancellable.
       
