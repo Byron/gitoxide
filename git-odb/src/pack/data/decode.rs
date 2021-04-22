@@ -82,7 +82,7 @@ impl Outcome {
 
 /// Decompression of objects
 impl File {
-    /// Decompress the given `entry` into `out` and return the amount of bytes written into `out`.
+    /// Decompress the given `entry` into `out` and return the amount of bytes read from the pack data.
     ///
     /// _Note_ that this method does not resolve deltified objects, but merely decompresses their content
     /// `out` is expected to be large enough to hold `entry.size` bytes.
@@ -124,7 +124,7 @@ impl File {
     /// known after the pack header was parsed.
     /// Note that this method does not resolve deltified objects, but merely decompresses their content
     /// `out` is expected to be large enough to hold `entry.size` bytes.
-    /// Returns the amount of packed bytes there were decompressed into `out`
+    /// Returns the amount of packed bytes there read from the pack data file.
     fn decompress_entry_from_data_offset(&self, data_offset: u64, out: &mut [u8]) -> Result<usize, Error> {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
@@ -132,7 +132,7 @@ impl File {
         zlib::Inflate::default()
             .once(&self.data[offset..], out)
             .map_err(Into::into)
-            .map(|(_, consumed_in, _)| consumed_in)
+            .map(|(_status, consumed_in, _consumed_out)| consumed_in)
     }
 
     /// Decode an entry, resolving delta's as needed, while growing the `out` vector if there is not enough
@@ -473,4 +473,18 @@ pub(crate) fn delta_header_size_ofs(d: &[u8]) -> (u64, usize) {
         }
     }
     (size, consumed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_decode_entry_outcome() {
+        assert_eq!(
+            std::mem::size_of::<Outcome>(),
+            32,
+            "this shouldn't change without use noticing as it's returned a lot"
+        );
+    }
 }
