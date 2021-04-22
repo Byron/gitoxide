@@ -21,10 +21,12 @@ impl Db {
         res: Result<fs::walkdir::DirEntry, fs::walkdir::Error>,
     ) -> Option<Result<git_hash::ObjectId, Error>> {
         use std::path::Component::Normal;
+
         let mut is_valid_path = false;
         let e = res.map_err(Error::WalkDir).map(|e| {
             let p = e.path();
-            let (c1, c2) = p.components().fold((None, None), |(_c1, c2), cn| (c2, Some(cn)));
+            let mut ci = p.components();
+            let (c2, c1) = (ci.next_back(), ci.next_back());
             if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
                 if c1.len() == 2 && c2.len() == 38 {
                     if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
@@ -49,6 +51,7 @@ impl Db {
             None
         }
     }
+
     /// Return an iterator over all objects contained in the database.
     ///
     /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Db::locate()] method.
