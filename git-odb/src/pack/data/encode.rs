@@ -134,6 +134,9 @@ pub mod entries {
             chunk_size,
         }: Options,
     ) -> impl Iterator<Item = Result<Vec<encode::Entry>, Error<Locate::Error>>>
+           + parallel::reduce::Finalize<
+        Reduce = parallel::reduce::IdentityWithResult<Vec<encode::Entry>, Error<Locate::Error>>,
+    >
     where
         Locate: crate::Locate + Clone + Send + Sync + 'static,
         <Locate as crate::Locate>::Error: Send,

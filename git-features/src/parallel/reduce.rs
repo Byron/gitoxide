@@ -110,6 +110,19 @@ mod stepped {
                 .and_then(|input| self.reducer.as_mut().map(|r| r.feed(input)))
         }
     }
+
+    impl<R: super::Reduce> super::Finalize for Stepwise<R> {
+        type Reduce = R;
+
+        fn finalize(
+            self,
+        ) -> Result<
+            <<Self as super::Finalize>::Reduce as super::Reduce>::Output,
+            <<Self as super::Finalize>::Reduce as super::Reduce>::Error,
+        > {
+            Stepwise::finalize(self)
+        }
+    }
 }
 
 #[cfg(not(feature = "parallel"))]
@@ -176,6 +189,26 @@ mod stepped {
                 .map(|input| self.reducer.feed((self.consume)(input, &mut self.thread_state)))
         }
     }
+
+    impl<InputIter, ConsumeFn, R, I, O, S> super::Finalize for Stepwise<InputIter, ConsumeFn, S, R>
+    where
+        InputIter: Iterator<Item = I> + Send,
+        ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
+        R: super::Reduce<Input = O>,
+        I: Send,
+        O: Send,
+    {
+        type Reduce = R;
+
+        fn finalize(
+            self,
+        ) -> Result<
+            <<Self as super::Finalize>::Reduce as super::Reduce>::Output,
+            <<Self as super::Finalize>::Reduce as super::Reduce>::Error,
+        > {
+            Stepwise::finalize(self)
+        }
+    }
 }
 
 use std::marker::PhantomData;
@@ -237,4 +270,15 @@ impl<Input, Error> Reduce for IdentityWithResult<Input, Error> {
     fn finalize(self) -> Result<Self::Output, Self::Error> {
         Ok(())
     }
+}
+
+/// A trait reflecting the `finalize()` method of [`Reduce`] implementations
+pub trait Finalize {
+    /// An implementation of [`Reduce`]
+    type Reduce: self::Reduce;
+
+    /// Similar to the [`Reduce::finalize()`] method
+    fn finalize(
+        self,
+    ) -> Result<<<Self as Finalize>::Reduce as self::Reduce>::Output, <<Self as Finalize>::Reduce as self::Reduce>::Error>;
 }
