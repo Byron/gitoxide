@@ -29,7 +29,7 @@ mod simple_compression {
                 || pack::cache::Noop,
                 all_objects,
                 progress::Discard,
-                pack::data::encode::Options::default(),
+                pack::data::encode::entries::Options::default(),
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
