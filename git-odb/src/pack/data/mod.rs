@@ -16,7 +16,6 @@ pub mod parse;
 ///
 pub mod verify;
 
-///
 pub mod encode;
 ///
 pub mod iter;

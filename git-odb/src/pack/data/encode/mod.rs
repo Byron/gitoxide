@@ -1,8 +1,12 @@
+//! Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
 use git_hash::ObjectId;
 
 ///
 pub mod entries;
 pub use entries::entries;
+
+///
+pub mod write;
 
 /// An entry to be written to a file.
 pub struct Entry {
