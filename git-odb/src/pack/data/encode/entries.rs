@@ -170,7 +170,6 @@ where
                     }
                 }
             }
-            #[allow(unreachable_code)]
             Ok(out)
         },
         parallel::reduce::IdentityWithResult::default(),

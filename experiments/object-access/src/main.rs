@@ -23,7 +23,11 @@ fn main() -> anyhow::Result<()> {
             if p.extension().unwrap_or_default() == "git" || p.file_name().unwrap_or_default() == ".git" {
                 Ok(p)
             } else {
-                Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
+                if p.join("HEAD").is_file() {
+                    Ok(p)
+                } else {
+                    Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
+                }
             }
         })?;
     let repo_objects_dir = {
