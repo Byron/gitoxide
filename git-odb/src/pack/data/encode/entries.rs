@@ -157,15 +157,15 @@ where
                                     encode::Entry {
                                         id: id.as_ref().into(),
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                                        entry_kind: encode::EntryKind::Base,
+                                        entry_kind: encode::entry::Kind::Base,
                                         decompressed_size: obj.data.len(),
                                         compressed_data: entry.data.into(),
                                     }
                                 } else {
-                                    encode::Entry::from_data(id, &obj).map_err(Error::NewEntry)?
+                                    encode::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
                                 }
                             }
-                            _ => encode::Entry::from_data(id, &obj).map_err(Error::NewEntry)?,
+                            _ => encode::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
                         });
                     }
                 }
