@@ -31,7 +31,7 @@ pub struct Entry {
     /// The size in bytes needed once `data` gets decompressed
     pub decompressed_size: usize,
     /// The compressed data right behind the header
-    pub data: Vec<u8>,
+    pub compressed_data: Vec<u8>,
 }
 
 ///

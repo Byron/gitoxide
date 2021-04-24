@@ -1,4 +1,4 @@
-use crate::{pack, pack::data::encode};
+use crate::{data, pack, pack::data::encode};
 use git_features::{hash, parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 
@@ -157,15 +157,13 @@ where
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
                                         entry_kind: encode::EntryKind::Base,
                                         decompressed_size: obj.data.len(),
-                                        data: entry.data.into(),
+                                        compressed_data: entry.data.into(),
                                     }
                                 } else {
-                                    todo!("encode new pack entry as this is a delta")
+                                    new_pack_entry(&obj)
                                 }
                             }
-                            _ => {
-                                todo!("encode pack entry from object data")
-                            }
+                            _ => new_pack_entry(&obj),
                         });
                     }
                 }
@@ -175,6 +173,10 @@ where
         },
         parallel::reduce::IdentityWithResult::default(),
     )
+}
+
+fn new_pack_entry(_obj: &data::Object<'_>) -> encode::Entry {
+    todo!("pack entry")
 }
 
 mod util {
