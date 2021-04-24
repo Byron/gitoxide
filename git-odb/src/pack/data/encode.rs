@@ -57,7 +57,7 @@ pub mod entry {
                 decompressed_size: obj.data.len(),
                 compressed_data: {
                     let mut out = crate::zlib::stream::deflate::Write::new(Vec::new());
-                    if let Err(err) = std::io::copy(&mut &obj.data[..], &mut out) {
+                    if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
                         match err.kind() {
                             std::io::ErrorKind::Other => return Err(Error::ZlibDeflate(err.to_string())),
                             err => unreachable!("Should never see other errors than zlib, but got {:?}", err,),
