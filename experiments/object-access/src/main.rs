@@ -20,14 +20,13 @@ fn main() -> anyhow::Result<()> {
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
         .and_then(|p| {
             let p = PathBuf::from(p).canonicalize()?;
-            if p.extension().unwrap_or_default() == "git" || p.file_name().unwrap_or_default() == ".git" {
+            if p.extension().unwrap_or_default() == "git"
+                || p.file_name().unwrap_or_default() == ".git"
+                || p.join("HEAD").is_file()
+            {
                 Ok(p)
             } else {
-                if p.join("HEAD").is_file() {
-                    Ok(p)
-                } else {
-                    Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
-                }
+                Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
             }
         })?;
     let repo_objects_dir = {
