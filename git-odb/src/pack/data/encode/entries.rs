@@ -1,4 +1,4 @@
-use crate::{data, pack, pack::data::encode};
+use crate::{pack, pack::data::encode};
 use git_features::{hash, parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 
@@ -15,6 +15,8 @@ where
     NotFound { oid: ObjectId },
     #[error("Entry expected to have hash {expected}, but it had {actual}")]
     PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
+    #[error(transparent)]
+    NewEntry(encode::entry::Error),
 }
 
 /// The way input objects are handled
@@ -160,10 +162,10 @@ where
                                         compressed_data: entry.data.into(),
                                     }
                                 } else {
-                                    new_pack_entry(&obj)
+                                    encode::Entry::from_data(id, &obj).map_err(Error::NewEntry)?
                                 }
                             }
-                            _ => new_pack_entry(&obj),
+                            _ => encode::Entry::from_data(id, &obj).map_err(Error::NewEntry)?,
                         });
                     }
                 }
@@ -173,10 +175,6 @@ where
         },
         parallel::reduce::IdentityWithResult::default(),
     )
-}
-
-fn new_pack_entry(_obj: &data::Object<'_>) -> encode::Entry {
-    todo!("pack entry")
 }
 
 mod util {

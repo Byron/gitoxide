@@ -35,5 +35,26 @@ pub struct Entry {
 }
 
 ///
+pub mod entry {
+    use crate::{data, pack::data::encode};
+    use git_hash::oid;
+
+    /// The error returned by [`encode::Entry::new()`].
+    #[allow(missing_docs)]
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("TBD")]
+        Tbd,
+    }
+
+    impl encode::Entry {
+        /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
+        pub fn from_data(_oid: impl AsRef<oid>, _obj: &data::Object<'_>) -> Result<Self, Error> {
+            todo!("entry new")
+        }
+    }
+}
+
+///
 pub mod entries;
 pub use entries::entries;
