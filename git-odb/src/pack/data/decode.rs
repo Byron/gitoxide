@@ -11,7 +11,7 @@ use std::{convert::TryInto, io, ops::Range};
 #[allow(missing_docs)]
 pub enum Error {
     #[error("Failed to decompress pack entry")]
-    ZlibInflate(#[from] crate::zlib::Error),
+    ZlibInflate(#[from] crate::zlib::inflate::Error),
     #[error("A delta chain could not be applied as the ref base with id {0} could not be found")]
     DeltaBaseUnresolved(git_hash::ObjectId),
 }

@@ -10,7 +10,10 @@ use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 #[allow(missing_docs)]
 pub enum Error {
     #[error("decompression of loose object at '{path}' failed")]
-    DecompressFile { source: zlib::Error, path: PathBuf },
+    DecompressFile {
+        source: zlib::inflate::Error,
+        path: PathBuf,
+    },
     #[error(transparent)]
     Decode(#[from] header::Error),
     #[error("Could not {action} data at '{path}'")]
