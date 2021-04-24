@@ -1,5 +1,5 @@
 use super::Db;
-use crate::{hash, loose, zlib::stream::DeflateWriter};
+use crate::{hash, loose, zlib::stream::deflate};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
@@ -73,7 +73,7 @@ impl crate::Write for Db {
     }
 }
 
-type HashAndTempFile = DeflateWriter<NamedTempFile>;
+type CompressedTempfile = deflate::Writer<NamedTempFile>;
 
 impl Db {
     fn write_header(
@@ -81,9 +81,9 @@ impl Db {
         kind: git_object::Kind,
         size: u64,
         hash: git_hash::Kind,
-    ) -> Result<hash::Write<HashAndTempFile>, Error> {
+    ) -> Result<hash::Write<CompressedTempfile>, Error> {
         let mut to = hash::Write::new(
-            DeflateWriter::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
+            deflate::Writer::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
                 source: err,
                 message: "create named temp file in",
                 path: self.path.to_owned(),
@@ -101,7 +101,7 @@ impl Db {
 
     fn finalize_object(
         &self,
-        hash::Write { hash, inner: file }: hash::Write<HashAndTempFile>,
+        hash::Write { hash, inner: file }: hash::Write<CompressedTempfile>,
     ) -> Result<git_hash::ObjectId, Error> {
         let id = git_hash::ObjectId::from(hash.digest());
         let object_path = loose::db::sha1_path(&id, self.path.clone());

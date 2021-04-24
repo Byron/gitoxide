@@ -56,7 +56,7 @@ pub mod entry {
                 entry_kind: Kind::Base,
                 decompressed_size: obj.data.len(),
                 compressed_data: {
-                    let mut out = crate::zlib::stream::DeflateWriter::new(Vec::new());
+                    let mut out = crate::zlib::stream::deflate::Writer::new(Vec::new());
                     if let Err(err) = std::io::copy(&mut &obj.data[..], &mut out) {
                         match err.kind() {
                             std::io::ErrorKind::Other => return Err(Error::ZlibDeflate(err.to_string())),

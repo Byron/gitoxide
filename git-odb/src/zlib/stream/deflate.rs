@@ -3,18 +3,18 @@ use std::io;
 
 const BUF_SIZE: usize = 4096 * 8;
 
-pub struct DeflateWriter<W> {
+pub struct Writer<W> {
     compressor: Compress,
     inner: W,
     buf: [u8; BUF_SIZE],
 }
 
-impl<W> DeflateWriter<W>
+impl<W> Writer<W>
 where
     W: io::Write,
 {
-    pub fn new(inner: W) -> DeflateWriter<W> {
-        DeflateWriter {
+    pub fn new(inner: W) -> Writer<W> {
+        Writer {
             compressor: Compress::new(Compression::fast(), true),
             inner,
             buf: [0; BUF_SIZE],
@@ -67,7 +67,7 @@ where
     }
 }
 
-impl<W: io::Write> io::Write for DeflateWriter<W> {
+impl<W: io::Write> io::Write for Writer<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.write_inner(buf, FlushCompress::None)
     }
