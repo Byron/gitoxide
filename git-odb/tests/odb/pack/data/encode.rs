@@ -40,15 +40,22 @@ mod entries {
 
                 let mut pack_file = tempfile::tempfile()?;
                 let num_written_bytes = {
+                    let num_entries = entries.len();
                     let mut pack_writer = encode::write::Entries::new(
                         std::iter::once(Ok::<_, encode::entries::Error<compound::locate::Error>>(entries)),
                         &mut pack_file,
+                        num_entries as u32,
+                        pack::data::Version::V2,
+                        git_hash::Kind::Sha1,
                     );
                     let n = pack_writer.next().expect("one entries bundle was written")?;
                     assert!(
                         pack_writer.next().is_none(),
                         "there is nothing more to iterate this time"
                     );
+                    // verify we can still get the original parts back
+                    let _ = pack_writer.input;
+                    let _ = pack_writer.into_write();
                     n
                 };
                 assert_eq!(
