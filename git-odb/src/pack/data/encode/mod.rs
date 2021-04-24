@@ -1,5 +1,9 @@
 use git_hash::ObjectId;
 
+///
+pub mod entries;
+pub use entries::entries;
+
 /// An entry to be written to a file.
 pub struct Entry {
     /// The hash of the object to write
@@ -69,7 +73,3 @@ pub mod entry {
         }
     }
 }
-
-///
-pub mod entries;
-pub use entries::entries;
