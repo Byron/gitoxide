@@ -1,4 +1,4 @@
-use crate::{hash, pack, zlib::stream::inflate::InflateReaderBoxed};
+use crate::{hash, pack, zlib::stream::inflate::ReadBoxed};
 use flate2::Decompress;
 use git_features::hash::Sha1;
 use std::{fs, io};
@@ -191,7 +191,7 @@ where
             .unwrap_or_else(|| Box::new(Decompress::new(true)));
         let compressed_buf = self.compressed_buf.take().unwrap_or_else(|| Vec::with_capacity(4096));
         decompressor.reset(true);
-        let mut decompressed_reader = InflateReaderBoxed {
+        let mut decompressed_reader = ReadBoxed {
             inner: read_and_pass_to(
                 &mut self.read,
                 if self.compressed.keep() {

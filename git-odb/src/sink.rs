@@ -10,14 +10,14 @@ use std::{
 /// It can optionally compress the content, similarly to what would happen when using a [`loose::Db`].
 ///
 pub struct Sink {
-    compressor: Option<RefCell<deflate::Writer<io::Sink>>>,
+    compressor: Option<RefCell<deflate::Write<io::Sink>>>,
 }
 
 impl Sink {
     /// Enable or disable compression. Compression is disabled by default
     pub fn compress(mut self, enable: bool) -> Self {
         if enable {
-            self.compressor = Some(RefCell::new(deflate::Writer::new(io::sink())));
+            self.compressor = Some(RefCell::new(deflate::Write::new(io::sink())));
         } else {
             self.compressor = None;
         }

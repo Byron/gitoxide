@@ -52,7 +52,7 @@ mod deflate_stream {
 
     #[test]
     fn all_at_once() -> Result<(), Box<dyn std::error::Error>> {
-        let mut w = deflate::Writer::new(Vec::new());
+        let mut w = deflate::Write::new(Vec::new());
         assert_eq!(w.write(b"hello")?, 5);
         w.flush()?;
 
@@ -71,7 +71,7 @@ mod deflate_stream {
 
     #[test]
     fn big_file_small_writes() -> Result<(), Box<dyn std::error::Error>> {
-        let mut w = deflate::Writer::new(Vec::new());
+        let mut w = deflate::Write::new(Vec::new());
         let bytes = include_bytes!(
             "../../../../tests/fixtures/objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
         );
@@ -85,7 +85,7 @@ mod deflate_stream {
 
     #[test]
     fn big_file_a_few_big_writes() -> Result<(), Box<dyn std::error::Error>> {
-        let mut w = deflate::Writer::new(Vec::new());
+        let mut w = deflate::Write::new(Vec::new());
         let bytes = include_bytes!(
             "../../../../tests/fixtures/objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
         );

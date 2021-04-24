@@ -2,12 +2,12 @@ use flate2::{Decompress, FlushDecompress, Status};
 use std::{io, io::BufRead};
 
 /// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
-pub struct InflateReaderBoxed<R> {
+pub struct ReadBoxed<R> {
     pub(crate) inner: R,
     pub(crate) decompressor: Box<Decompress>,
 }
 
-impl<R> io::Read for InflateReaderBoxed<R>
+impl<R> io::Read for ReadBoxed<R>
 where
     R: BufRead,
 {

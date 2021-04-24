@@ -73,7 +73,7 @@ impl crate::Write for Db {
     }
 }
 
-type CompressedTempfile = deflate::Writer<NamedTempFile>;
+type CompressedTempfile = deflate::Write<NamedTempFile>;
 
 impl Db {
     fn write_header(
@@ -83,7 +83,7 @@ impl Db {
         hash: git_hash::Kind,
     ) -> Result<hash::Write<CompressedTempfile>, Error> {
         let mut to = hash::Write::new(
-            deflate::Writer::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
+            deflate::Write::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
                 source: err,
                 message: "create named temp file in",
                 path: self.path.to_owned(),
