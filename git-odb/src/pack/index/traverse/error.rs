@@ -13,7 +13,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     #[error("The tree traversal failed")]
     TreeTraversal(#[from] pack::tree::traverse::Error),
     #[error("The pack of this index file failed to verify its checksums")]
-    PackChecksum(#[from] pack::data::verify::Error),
+    PackChecksum(#[from] pack::data::file::verify::Error),
     #[error("Object {id} at offset {offset} could not be decoded")]
     PackDecode {
         id: git_hash::ObjectId,

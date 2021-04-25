@@ -9,9 +9,6 @@ use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 pub mod file;
 ///
 pub mod header;
-mod init;
-///
-pub mod verify;
 
 ///
 pub mod entry;
