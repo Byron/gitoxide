@@ -37,7 +37,12 @@ mod entries {
                 .collect();
                 assert_eq!(entries.len(), obj_count, "each object gets one entry");
 
-                let mut pack_file = tempfile::tempfile()?;
+                let tmp_dir = tempfile::TempDir::new()?;
+                let pack_file_path = tmp_dir.path().join("new.pack");
+                let mut pack_file = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&pack_file_path)?;
                 let num_written_bytes = {
                     let num_entries = entries.len();
                     let mut pack_writer = encode::write::Entries::new(
@@ -63,8 +68,9 @@ mod entries {
                     pack_file.metadata()?.len(),
                     "it reports the correct amount of written bytes"
                 );
-                // TODO: verify the new pack
-
+                let pack = pack::data::File::at(pack_file_path)?;
+                pack.verify_checksum(progress::Discard)?;
+                // TODO: verify the new pack with a generated index
                 Ok(())
             })()
             .unwrap();
