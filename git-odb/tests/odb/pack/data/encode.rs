@@ -23,12 +23,12 @@ mod entries {
             let obj_count = db.iter().count();
             assert_eq!(obj_count, 146);
             let all_objects = db.arc_iter().flat_map(Result::ok);
-            let entries: Vec<_> = output::to_entry_iter(
+            let entries: Vec<_> = output::objects_to_entries_iter(
                 db.clone(),
                 || pack::cache::Never,
                 all_objects,
                 progress::Discard,
-                output::objects::Options::default(),
+                output::Options::default(),
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()

@@ -48,7 +48,7 @@ impl pack::Bundle {
         // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
         // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
         let buffered_pack = io::BufReader::new(pack);
-        let pack_entries_iter = pack::data::EntriesFromBytesIter::new_from_header(
+        let pack_entries_iter = pack::data::BytesToEntriesIter::new_from_header(
             buffered_pack,
             options.iteration_mode,
             pack::data::input::EntryDataMode::Crc32,
@@ -91,7 +91,7 @@ impl pack::Bundle {
         };
         let eight_pages = 4096 * 8;
         let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
-        let pack_entries_iter = pack::data::EntriesFromBytesIter::new_from_header(
+        let pack_entries_iter = pack::data::BytesToEntriesIter::new_from_header(
             buffered_pack,
             options.iteration_mode,
             pack::data::input::EntryDataMode::Crc32,

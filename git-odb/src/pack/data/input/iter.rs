@@ -6,7 +6,7 @@ use std::{fs, io};
 /// An iterator over [`Entries`][input::Entry] in a byte stream.
 ///
 /// The iterator used as part of [Bundle::write_stream_to_directory(…)][pack::Bundle::write_stream_to_directory()].
-pub struct EntriesFromBytesIter<R> {
+pub struct BytesToEntriesIter<R> {
     read: R,
     decompressor: Option<Box<Decompress>>,
     offset: u64,
@@ -19,7 +19,7 @@ pub struct EntriesFromBytesIter<R> {
     compressed_buf: Option<Vec<u8>>,
 }
 
-impl<R> EntriesFromBytesIter<R>
+impl<R> BytesToEntriesIter<R>
 where
     R: io::BufRead,
 {
@@ -40,7 +40,7 @@ where
         mut read: R,
         mode: input::Mode,
         compressed: input::EntryDataMode,
-    ) -> Result<EntriesFromBytesIter<R>, input::Error> {
+    ) -> Result<BytesToEntriesIter<R>, input::Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
@@ -50,7 +50,7 @@ where
             pack::data::Version::V2,
             "let's stop here if we see undocumented pack formats"
         );
-        Ok(EntriesFromBytesIter {
+        Ok(BytesToEntriesIter {
             read,
             decompressor: None,
             compressed,
@@ -196,7 +196,7 @@ fn read_and_pass_to<R: io::Read, W: io::Write>(read: &mut R, to: W) -> PassThrou
     PassThrough { read, write: to }
 }
 
-impl<R> Iterator for EntriesFromBytesIter<R>
+impl<R> Iterator for BytesToEntriesIter<R>
 where
     R: io::BufRead,
 {
@@ -223,7 +223,7 @@ where
     }
 }
 
-impl<R> std::iter::ExactSizeIterator for EntriesFromBytesIter<R> where R: io::BufRead {}
+impl<R> std::iter::ExactSizeIterator for BytesToEntriesIter<R> where R: io::BufRead {}
 
 struct PassThrough<R, W> {
     read: R,
@@ -266,8 +266,8 @@ where
 
 impl pack::data::File {
     /// Returns an iterator over [`Entries`][pack::data::input::Entry], without making use of the memory mapping.
-    pub fn streaming_iter(&self) -> Result<EntriesFromBytesIter<impl io::BufRead>, input::Error> {
+    pub fn streaming_iter(&self) -> Result<BytesToEntriesIter<impl io::BufRead>, input::Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
-        EntriesFromBytesIter::new_from_header(reader, input::Mode::Verify, input::EntryDataMode::KeepAndCrc32)
+        BytesToEntriesIter::new_from_header(reader, input::Mode::Verify, input::EntryDataMode::KeepAndCrc32)
     }
 }

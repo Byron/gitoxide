@@ -1,4 +1,7 @@
-use crate::{data, pack, pack::data::output};
+use crate::{
+    data,
+    pack::{self, data::output},
+};
 use git_hash::ObjectId;
 use std::io::Write;
 

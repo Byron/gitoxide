@@ -103,7 +103,7 @@ mod file {
             where
                 F: Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync,
             {
-                let pack_iter = pack::data::EntriesFromBytesIter::new_from_header(
+                let pack_iter = pack::data::BytesToEntriesIter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
                     *compressed,

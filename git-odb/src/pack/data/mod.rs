@@ -12,11 +12,13 @@ pub mod header;
 
 ///
 pub mod entry;
+#[doc(inline)]
 pub use entry::Entry;
 
 ///
 pub mod input;
-pub use input::EntriesFromBytesIter;
+#[doc(inline)]
+pub use input::BytesToEntriesIter;
 
 /// Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
 pub mod output;

@@ -2,46 +2,6 @@ use crate::{pack, pack::data::output};
 use git_features::{hash, parallel, progress::Progress};
 use git_hash::oid;
 
-/// The way input objects are handled
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Expansion {
-    /// Don't do anything with the input objects except for transforming them into pack entries
-    AsIs,
-}
-
-impl Default for Expansion {
-    fn default() -> Self {
-        Expansion::AsIs
-    }
-}
-
-/// Configuration options for the pack generation functions provied in [this module][crate::pack::data::output].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Options {
-    /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
-    pub thread_limit: Option<usize>,
-    /// The amount of objects per chunk or unit of work to be sent to threads for processing
-    /// TODO: could this become the window size?
-    chunk_size: usize,
-    /// The pack data version to produce
-    pub version: crate::pack::data::Version,
-    /// The way input objects are handled
-    pub input_object_expansion: Expansion,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Options {
-            thread_limit: None,
-            chunk_size: 10,
-            version: Default::default(),
-            input_object_expansion: Default::default(),
-        }
-    }
-}
-
 /// Write all `objects` into `out` without attempting to apply any delta compression.
 /// This allows objects to be written rather immediately.
 /// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
@@ -71,17 +31,17 @@ impl Default for Options {
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn to_entry_iter<Locate, Iter, Oid, Cache>(
+pub fn objects_to_entries_iter<Locate, Iter, Oid, Cache>(
     db: Locate,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,
     _progress: impl Progress,
-    Options {
+    output::Options {
         version,
         thread_limit,
         input_object_expansion,
         chunk_size,
-    }: Options,
+    }: output::Options,
 ) -> impl Iterator<Item = Result<Vec<output::Entry>, output::Error<Locate::Error>>>
        + parallel::reduce::Finalize<
     Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, output::Error<Locate::Error>>,
@@ -119,7 +79,7 @@ where
             )
         },
         move |oids: Vec<Oid>, (buf, cache)| {
-            use Expansion::*;
+            use output::ObjectExpansion::*;
             let mut out = Vec::new();
             match input_object_expansion {
                 AsIs => {
