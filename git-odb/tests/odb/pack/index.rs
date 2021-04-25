@@ -6,7 +6,7 @@ mod file {
     };
     use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
     use git_object::{self as object};
-    use git_odb::pack::{self, data::decode::Outcome, index};
+    use git_odb::pack::{self, data::file::decode_entry::Outcome, index};
 
     mod method {
         mod v1 {

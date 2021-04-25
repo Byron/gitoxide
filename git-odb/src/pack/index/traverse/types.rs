@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The average over all decoded objects
-    pub average: pack::data::decode::Outcome,
+    pub average: pack::data::file::decode_entry::Outcome,
     /// A mapping of the length of the chain to the amount of objects at that length.
     ///
     /// A length of 0 indicates full objects, and everything above that involves the given amount
@@ -33,7 +33,7 @@ pub struct Outcome {
 impl Default for Outcome {
     fn default() -> Self {
         Outcome {
-            average: pack::data::decode::Outcome::default_from_kind(git_object::Kind::Tree),
+            average: pack::data::file::decode_entry::Outcome::default_from_kind(git_object::Kind::Tree),
             objects_per_chain_length: Default::default(),
             total_compressed_entries_size: 0,
             total_decompressed_entries_size: 0,

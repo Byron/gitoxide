@@ -182,7 +182,7 @@ fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Outcome) 
     }
     writeln!(out, "\t->: {}", total_object_count)?;
 
-    let pack::data::decode::Outcome {
+    let pack::data::file::decode_entry::Outcome {
         kind: _,
         num_deltas,
         decompressed_size,

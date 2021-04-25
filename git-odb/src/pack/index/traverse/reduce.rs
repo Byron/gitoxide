@@ -1,15 +1,15 @@
-use crate::pack::{data::decode, index::traverse};
+use crate::pack::{data::file, index::traverse};
 use git_features::{interrupt::is_triggered, parallel, progress::Progress};
 use std::time::Instant;
 
-fn add_decode_result(lhs: &mut decode::Outcome, rhs: decode::Outcome) {
+fn add_decode_result(lhs: &mut file::decode_entry::Outcome, rhs: file::decode_entry::Outcome) {
     lhs.num_deltas += rhs.num_deltas;
     lhs.decompressed_size += rhs.decompressed_size;
     lhs.compressed_size += rhs.compressed_size;
     lhs.object_size += rhs.object_size;
 }
 
-fn div_decode_result(lhs: &mut decode::Outcome, div: usize) {
+fn div_decode_result(lhs: &mut file::decode_entry::Outcome, div: usize) {
     if div != 0 {
         lhs.num_deltas = (lhs.num_deltas as f32 / div as f32) as u32;
         lhs.decompressed_size /= div as u64;
@@ -56,7 +56,7 @@ where
     P: Progress,
     E: std::error::Error + Send + Sync + 'static,
 {
-    type Input = Result<Vec<decode::Outcome>, traverse::Error<E>>;
+    type Input = Result<Vec<file::decode_entry::Outcome>, traverse::Error<E>>;
     type FeedProduce = ();
     type Output = traverse::Outcome;
     type Error = traverse::Error<E>;
@@ -72,7 +72,7 @@ where
         self.entries_seen += chunk_stats.len();
 
         let chunk_total = chunk_stats.into_iter().fold(
-            decode::Outcome::default_from_kind(git_object::Kind::Tree),
+            file::decode_entry::Outcome::default_from_kind(git_object::Kind::Tree),
             |mut total, stats| {
                 *self.stats.objects_per_chain_length.entry(stats.num_deltas).or_insert(0) += 1;
                 self.stats.total_decompressed_entries_size += stats.decompressed_size;

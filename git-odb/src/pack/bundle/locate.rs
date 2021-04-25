@@ -12,7 +12,7 @@ impl pack::Bundle {
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<data::Object<'a>>, pack::data::decode::Error> {
+    ) -> Result<Option<data::Object<'a>>, pack::data::file::decode_entry::Error> {
         let idx = match self.index.lookup(id) {
             Some(idx) => idx,
             None => return Ok(None),
@@ -35,7 +35,7 @@ impl pack::Bundle {
         idx: u32,
         out: &'a mut Vec<u8>,
         cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<data::Object<'a>, pack::data::decode::Error> {
+    ) -> Result<data::Object<'a>, pack::data::file::decode_entry::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
         let header_size = pack_entry.header_size();
@@ -45,7 +45,7 @@ impl pack::Bundle {
                 out,
                 |id, _out| {
                     self.index.lookup(id).map(|idx| {
-                        pack::data::decode::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
+                        pack::data::file::ResolvedBase::InPack(self.pack.entry(self.index.pack_offset_at_index(idx)))
                     })
                 },
                 cache,

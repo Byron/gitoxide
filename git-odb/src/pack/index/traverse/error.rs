@@ -18,7 +18,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     PackDecode {
         id: git_hash::ObjectId,
         offset: u64,
-        source: pack::data::decode::Error,
+        source: pack::data::file::decode_entry::Error,
     },
     #[error("The packfiles checksum didn't match the index file checksum: expected {expected}, got {actual}")]
     PackMismatch {

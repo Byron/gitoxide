@@ -110,7 +110,7 @@ impl index::File {
         header_buf: &mut [u8; 64],
         index_entry: &pack::index::Entry,
         processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
-    ) -> Result<pack::data::decode::Outcome, Error<E>>
+    ) -> Result<pack::data::file::decode_entry::Outcome, Error<E>>
     where
         C: pack::cache::DecodeEntry,
         P: Progress,
@@ -124,7 +124,7 @@ impl index::File {
                 buf,
                 |id, _| {
                     self.lookup(id).map(|index| {
-                        pack::data::decode::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
+                        pack::data::file::ResolvedBase::InPack(pack.entry(self.pack_offset_at_index(index)))
                     })
                 },
                 cache,
