@@ -76,7 +76,7 @@ fn read_pack_with_progress_extraction() -> crate::Result {
     let pack_entries = pack::data::EntriesFromBytesIter::new_from_header(
         pack_read,
         pack::data::input::Mode::Verify,
-        pack::data::input::CompressedBytesMode::Ignore,
+        pack::data::input::EntryDataMode::Ignore,
     )?;
     let size = pack_entries.size_hint().0 - 1;
     let last = pack_entries.skip(size).next().expect("last entry")?;

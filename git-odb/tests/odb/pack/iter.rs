@@ -13,7 +13,7 @@ mod new_from_header {
     use crate::{fixture_path, pack::SMALL_PACK, pack::V2_PACKS_AND_INDICES};
     use git_odb::{
         pack,
-        pack::data::input::{CompressedBytesMode, Mode},
+        pack::data::input::{EntryDataMode, Mode},
     };
     use std::fs;
 
@@ -24,7 +24,7 @@ mod new_from_header {
             for entry in pack::data::EntriesFromBytesIter::new_from_header(
                 std::io::BufReader::new(data.as_slice()),
                 Mode::AsIs,
-                CompressedBytesMode::Ignore,
+                EntryDataMode::Ignore,
             )? {
                 let entry = entry?;
 
@@ -50,10 +50,10 @@ mod new_from_header {
     #[test]
     fn generic_iteration() -> Result<(), Box<dyn std::error::Error>> {
         for compression_mode in &[
-            CompressedBytesMode::Ignore,
-            CompressedBytesMode::Keep,
-            CompressedBytesMode::Crc32,
-            CompressedBytesMode::KeepAndCrc32,
+            EntryDataMode::Ignore,
+            EntryDataMode::Keep,
+            EntryDataMode::Crc32,
+            EntryDataMode::KeepAndCrc32,
         ] {
             for trailer_mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
                 let mut iter = pack::data::EntriesFromBytesIter::new_from_header(
@@ -100,7 +100,7 @@ mod new_from_header {
         let mut iter = pack::data::EntriesFromBytesIter::new_from_header(
             std::io::BufReader::new(&pack[..pack.len() - 20]),
             Mode::Restore,
-            CompressedBytesMode::Ignore,
+            EntryDataMode::Ignore,
         )?;
         let num_objects = iter.len();
         assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
@@ -118,7 +118,7 @@ mod new_from_header {
         let mut iter = pack::data::EntriesFromBytesIter::new_from_header(
             std::io::BufReader::new(&pack[..pack.len() / 2]),
             Mode::Restore,
-            CompressedBytesMode::Ignore,
+            EntryDataMode::Ignore,
         )?;
         let mut num_objects = 0;
         while let Some(entry) = iter.next() {

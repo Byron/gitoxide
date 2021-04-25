@@ -77,10 +77,7 @@ mod file {
             #[test]
             fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
                 for mode in &[input::Mode::AsIs, input::Mode::Verify, input::Mode::Restore] {
-                    for compressed in &[
-                        input::CompressedBytesMode::Crc32,
-                        input::CompressedBytesMode::KeepAndCrc32,
-                    ] {
+                    for compressed in &[input::EntryDataMode::Crc32, input::EntryDataMode::KeepAndCrc32] {
                         for (index_path, data_path) in V2_PACKS_AND_INDICES {
                             let resolve = {
                                 let buf = FileBuffer::open(fixture_path(data_path))?;
@@ -98,7 +95,7 @@ mod file {
 
             fn assert_index_write<F>(
                 mode: &input::Mode,
-                compressed: &input::CompressedBytesMode,
+                compressed: &input::EntryDataMode,
                 index_path: &&str,
                 data_path: &&str,
                 resolve: F,
