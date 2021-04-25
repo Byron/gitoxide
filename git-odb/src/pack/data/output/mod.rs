@@ -20,12 +20,9 @@ pub struct Entry {
 ///
 pub mod entry;
 
-mod types;
-pub use types::{Error, ObjectExpansion, Options};
-
 ///
-mod iter;
-pub use iter::objects_to_entries_iter;
+pub mod objects_to_entries;
+pub use objects_to_entries::objects_to_entries_iter;
 
 ///
 pub mod entries_to_bytes;

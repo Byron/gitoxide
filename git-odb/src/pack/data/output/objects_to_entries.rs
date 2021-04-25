@@ -36,15 +36,15 @@ pub fn objects_to_entries_iter<Locate, Iter, Oid, Cache>(
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,
     _progress: impl Progress,
-    output::Options {
+    Options {
         version,
         thread_limit,
         input_object_expansion,
         chunk_size,
-    }: output::Options,
-) -> impl Iterator<Item = Result<Vec<output::Entry>, output::Error<Locate::Error>>>
+    }: Options,
+) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<Locate::Error>>>
        + parallel::reduce::Finalize<
-    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, output::Error<Locate::Error>>,
+    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<Locate::Error>>,
 >
 where
     Locate: crate::Locate + Clone + Send + Sync + 'static,
@@ -79,23 +79,21 @@ where
             )
         },
         move |oids: Vec<Oid>, (buf, cache)| {
-            use output::ObjectExpansion::*;
+            use ObjectExpansion::*;
             let mut out = Vec::new();
             match input_object_expansion {
                 AsIs => {
                     for id in oids.into_iter() {
-                        let obj = db
-                            .locate(id.as_ref(), buf, cache)?
-                            .ok_or_else(|| output::Error::NotFound {
-                                oid: id.as_ref().to_owned(),
-                            })?;
+                        let obj = db.locate(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
+                            oid: id.as_ref().to_owned(),
+                        })?;
                         out.push(match db.pack_entry(&obj) {
                             Some(entry) if entry.version == version => {
                                 let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
                                 if let Some(expected) = entry.crc32 {
                                     let actual = hash::crc32(entry.data);
                                     if actual != expected {
-                                        return Err(output::Error::PackToPackCopyCrc32Mismatch { actual, expected });
+                                        return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
                                     }
                                 }
                                 if pack_entry.header.is_base() {
@@ -107,10 +105,10 @@ where
                                         compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
                                     }
                                 } else {
-                                    output::Entry::from_data(id.as_ref(), &obj).map_err(output::Error::NewEntry)?
+                                    output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
                                 }
                             }
-                            _ => output::Entry::from_data(id.as_ref(), &obj).map_err(output::Error::NewEntry)?,
+                            _ => output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
                         });
                     }
                 }
@@ -151,3 +149,66 @@ mod util {
         }
     }
 }
+
+mod types {
+    use crate::pack::data::output::entry;
+    use git_hash::ObjectId;
+
+    /// The way input objects are handled
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum ObjectExpansion {
+        /// Don't do anything with the input objects except for transforming them into pack entries
+        AsIs,
+    }
+
+    impl Default for ObjectExpansion {
+        fn default() -> Self {
+            ObjectExpansion::AsIs
+        }
+    }
+
+    /// Configuration options for the pack generation functions provied in [this module][crate::pack::data::output].
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Options {
+        /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
+        pub thread_limit: Option<usize>,
+        /// The amount of objects per chunk or unit of work to be sent to threads for processing
+        /// TODO: could this become the window size?
+        pub chunk_size: usize,
+        /// The pack data version to produce
+        pub version: crate::pack::data::Version,
+        /// The way input objects are handled
+        pub input_object_expansion: ObjectExpansion,
+    }
+
+    impl Default for Options {
+        fn default() -> Self {
+            Options {
+                thread_limit: None,
+                chunk_size: 10,
+                version: Default::default(),
+                input_object_expansion: Default::default(),
+            }
+        }
+    }
+
+    /// The error returned by the pack generation function [`to_entry_iter()`][crate::pack::data::output::objects_to_entries_iter()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error<LocateErr>
+    where
+        LocateErr: std::error::Error + 'static,
+    {
+        #[error(transparent)]
+        Locate(#[from] LocateErr),
+        #[error("Object id {oid} wasn't found in object database")]
+        NotFound { oid: ObjectId },
+        #[error("Entry expected to have hash {expected}, but it had {actual}")]
+        PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
+        #[error(transparent)]
+        NewEntry(entry::Error),
+    }
+}
+pub use types::{Error, ObjectExpansion, Options};

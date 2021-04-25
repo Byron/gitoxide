@@ -28,7 +28,7 @@ mod entries {
                 || pack::cache::Never,
                 all_objects,
                 progress::Discard,
-                output::Options::default(),
+                output::objects_to_entries::Options::default(),
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
@@ -52,7 +52,9 @@ mod entries {
             let num_written_bytes = {
                 let num_entries = entries.len();
                 let mut pack_writer = output::entries_to_bytes::EntriesToBytesIter::new(
-                    std::iter::once(Ok::<_, output::Error<compound::locate::Error>>(entries)),
+                    std::iter::once(Ok::<_, output::objects_to_entries::Error<compound::locate::Error>>(
+                        entries,
+                    )),
                     &mut pack_file,
                     num_entries as u32,
                     pack::data::Version::V2,
