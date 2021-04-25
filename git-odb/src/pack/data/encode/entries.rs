@@ -146,7 +146,7 @@ where
                         })?;
                         out.push(match db.pack_entry(&obj) {
                             Some(entry) if entry.version == version => {
-                                let pack_entry = pack::data::header::Entry::from_bytes(entry.data, 0);
+                                let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
                                 if let Some(expected) = entry.crc32 {
                                     let actual = hash::crc32(entry.data);
                                     if actual != expected {

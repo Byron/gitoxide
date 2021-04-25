@@ -25,7 +25,7 @@ pub enum Error {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The header of a pack entry
-    pub header: pack::data::Header,
+    pub header: pack::data::entry::Header,
     /// The amount of bytes used to encode the `header`. `pack_offset + header_size` is the beginning of
     /// the compressed data in the pack.
     pub header_size: u16,

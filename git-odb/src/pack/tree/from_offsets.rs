@@ -88,7 +88,7 @@ impl<T> Tree<T> {
             })?;
             previous_cursor_position = Some(pack_offset + entry.header_size() as u64);
 
-            use pack::data::Header::*;
+            use pack::data::entry::Header::*;
             match entry.header {
                 Tree | Blob | Commit | Tag => {
                     tree.add_root(pack_offset, data)?;

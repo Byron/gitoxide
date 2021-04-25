@@ -152,7 +152,7 @@ impl File {
         resolve: impl Fn(&git_hash::oid, &mut Vec<u8>) -> Option<ResolvedBase>,
         delta_cache: &mut impl cache::DecodeEntry,
     ) -> Result<Outcome, Error> {
-        use crate::pack::data::header::Header::*;
+        use crate::pack::data::entry::Header::*;
         match entry.header {
             Tree | Blob | Commit | Tag => {
                 out.resize(
@@ -220,7 +220,7 @@ impl File {
                 decompressed_size,
                 data_offset: cursor.data_offset,
             });
-            use pack::data::Header;
+            use pack::data::entry::Header;
             cursor = match cursor.header {
                 Header::OfsDelta { base_distance } => self.entry(cursor.base_pack_offset(base_distance)),
                 Header::RefDelta { base_id } => match resolve(base_id.as_ref(), out) {
