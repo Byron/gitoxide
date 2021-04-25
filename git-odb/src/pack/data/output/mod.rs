@@ -1,8 +1,5 @@
 use git_hash::ObjectId;
 
-///
-pub mod write;
-
 /// An entry to be written to a file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -28,5 +25,8 @@ pub use types::{Error, ObjectExpansion, Options};
 
 ///
 mod iter;
-#[doc(inline)]
 pub use iter::objects_to_entries_iter;
+
+///
+pub mod entries_to_bytes;
+pub use entries_to_bytes::EntriesToBytesIter;

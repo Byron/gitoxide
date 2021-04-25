@@ -1,7 +1,8 @@
 use crate::pack;
 use std::io;
 
-/// Returned by [`BytesToEntriesIter::new_from_header()`] and as part of `Item` of [`BytesToEntriesIter`]
+/// Returned by [`BytesToEntriesIter::new_from_header()`][pack::data::BytesToEntriesIter::new_from_header()] and as part
+/// of `Item` of [`BytesToEntriesIter`][pack::data::BytesToEntriesIter].
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -39,7 +40,7 @@ pub enum Mode {
     Restore,
 }
 
-/// Define what to do with the compressed bytes portion of a pack [`Entry`]
+/// Define what to do with the compressed bytes portion of a pack [`Entry`][super::Entry]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum EntryDataMode {

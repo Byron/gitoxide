@@ -51,7 +51,7 @@ mod entries {
                 .open(&pack_file_path)?;
             let num_written_bytes = {
                 let num_entries = entries.len();
-                let mut pack_writer = output::write::Entries::new(
+                let mut pack_writer = output::entries_to_bytes::EntriesToBytesIter::new(
                     std::iter::once(Ok::<_, output::Error<compound::locate::Error>>(entries)),
                     &mut pack_file,
                     num_entries as u32,
