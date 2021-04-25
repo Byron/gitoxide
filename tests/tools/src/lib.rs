@@ -1,8 +1,8 @@
 pub use bstr;
 use once_cell::sync::Lazy;
-use std::path::Path;
-use std::{collections::BTreeMap, path::PathBuf, sync::Mutex};
-pub use tempdir;
+use std::{collections::BTreeMap, path::Path, path::PathBuf, sync::Mutex};
+
+pub use tempfile;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
