@@ -1,4 +1,5 @@
 //! Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
+use crate::pack::data;
 use git_hash::ObjectId;
 
 ///
@@ -9,6 +10,8 @@ pub use entries::entries;
 pub mod write;
 
 /// An entry to be written to a file.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The hash of the object to write
     pub id: ObjectId,
@@ -23,12 +26,48 @@ pub struct Entry {
     pub compressed_data: Vec<u8>,
 }
 
+impl Entry {
+    /// Transform ourselves into pack entry header of `version` which can be written into a pack.
+    ///
+    /// `index_to_pack(nth_before) -> pack_offset` is a function to convert the base object's offset as index into an
+    /// array to an offset into the pack. This information is known to the one calling the method.
+    pub fn to_entry_header(
+        &self,
+        version: data::Version,
+        index_to_pack: impl FnOnce(usize) -> u64,
+    ) -> data::entry::Header {
+        assert!(
+            matches!(version, data::Version::V2),
+            "we can only write V2 pack entries for now"
+        );
+
+        use entry::Kind::*;
+        match self.entry_kind {
+            Base => {
+                use git_object::Kind::*;
+                match self.object_kind {
+                    Tree => data::entry::Header::Tree,
+                    Blob => data::entry::Header::Blob,
+                    Commit => data::entry::Header::Commit,
+                    Tag => data::entry::Header::Tag,
+                }
+            }
+            DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
+            DeltaRef { nth_before } => data::entry::Header::OfsDelta {
+                base_distance: index_to_pack(nth_before),
+            },
+        }
+    }
+}
+
 ///
 pub mod entry {
     use crate::{data, pack::data::encode};
     use git_hash::ObjectId;
 
     /// The kind of pack entry to be written
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub enum Kind {
         /// A complete base object
         Base,

@@ -133,14 +133,22 @@ pub enum Header {
     Tag,
     /// Describes a delta-object which needs to be applied to a base. The base object is identified by the `base_id` field
     /// which is found within the parent repository.
-    /// Most commonly used for **thin-packs** when receiving pack files from the server.
+    /// Most commonly used for **thin-packs** when receiving pack files from the server to refer to objects that are not
+    /// part of the pack but expected to be present in the receivers repository.
     ///
     /// # Note
     /// This could also be an object within this pack if the LSB encoded offset would be larger than 20 bytes, which is unlikely to
     /// happen.
+    ///
+    /// **The naming** is exactly the same as the canonical implementation uses, namely **REF_DELTA**.
     RefDelta { base_id: git_hash::ObjectId },
-    /// Describes a delta-object which needs to be applied to a base. The base object is measured as a distance from this object's
-    /// pack offset, so that `base_pack_offset = pack_offset - base_distance`
+    /// Describes a delta-object present in this pack which acts as base for this object.
+    /// The base object is measured as a distance from this objects
+    /// pack offset, so that `base_pack_offset = this_objects_pack_offset - base_distance`
+    ///
+    /// # Note
+    ///
+    /// **The naming** is exactly the same as the canonical implementation uses, namely **OFS_DELTA**.
     OfsDelta { base_distance: u64 },
 }
 
