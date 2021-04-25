@@ -9,7 +9,7 @@ where
     E: std::error::Error + 'static,
 {
     #[error(transparent)]
-    Io(std::io::Error),
+    Io(#[from] std::io::Error),
     #[error(transparent)]
     Input(encode::entries::Error<E>),
 }
@@ -64,6 +64,20 @@ where
     pub fn into_write(self) -> W {
         self.output.inner
     }
+
+    fn next_inner(&mut self) -> Result<u64, Error<encode::entries::Error<E>>> {
+        let mut written = 0u64;
+        if let Some((version, num_entries)) = self.header_info.take() {
+            let header_bytes = pack::data::header::encode(version, num_entries);
+            self.output.write_all(&header_bytes[..])?;
+            written += header_bytes.len() as u64;
+        }
+        match self.input.next() {
+            Some(_entries) => todo!("serialize entries"),
+            None => todo!("write footer and set is_done = true"),
+        };
+        Ok(written)
+    }
 }
 
 impl<I, W, E> Iterator for Entries<I, W>
@@ -79,18 +93,12 @@ where
         if self.is_done {
             return None;
         }
-        let mut written = 0;
-        if let Some((version, num_entries)) = self.header_info.take() {
-            let header_bytes = pack::data::header::encode(version, num_entries);
-            if let Err(err) = self.output.write_all(&header_bytes[..]) {
+        Some(match self.next_inner() {
+            Err(err) => {
                 self.is_done = true;
-                return Some(Err(Error::Io(err)));
+                Err(err)
             }
-            written += header_bytes.len();
-        }
-        match self.input.next() {
-            Some(_entries) => todo!("serialize entries"),
-            None => todo!("write footer and set is_done = false"),
-        }
+            Ok(written) => Ok(written),
+        })
     }
 }
