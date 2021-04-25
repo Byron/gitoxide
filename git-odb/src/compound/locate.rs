@@ -7,7 +7,7 @@ pub enum Error {
     #[error("An error occurred while obtaining an object from the loose object store")]
     Loose(#[from] loose::db::locate::Error),
     #[error("An error occurred while obtaining an object from the packed object store")]
-    Pack(#[from] pack::data::file::decode_entry::Error),
+    Pack(#[from] pack::data::decode_entry::Error),
 }
 
 pub(crate) struct PackLocation {
@@ -62,7 +62,7 @@ impl compound::Db {
         object_index: u32,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<data::Object<'a>, pack::data::file::decode_entry::Error> {
+    ) -> Result<data::Object<'a>, pack::data::decode_entry::Error> {
         self.packs[pack_index].internal_get_object_by_index(object_index, buffer, pack_cache)
     }
 }

@@ -5,8 +5,8 @@ use filebuffer::FileBuffer;
 
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
-///
-pub mod file;
+mod file;
+pub use file::{decode_entry, verify, ResolvedBase};
 ///
 pub mod header;
 

@@ -1,5 +1,5 @@
 use super::{Error, Reducer, SafetyCheck};
-use crate::pack::{self, data::file, index, index::util};
+use crate::pack::{self, data, index, index::util};
 use git_features::{
     interrupt::ResetOnDrop,
     parallel::{self, in_parallel_if},
@@ -74,7 +74,7 @@ impl index::File {
                     state_per_thread,
                     |entries: &[index::Entry],
                      (cache, ref mut processor, buf, progress)|
-                     -> Result<Vec<file::decode_entry::Outcome>, Error<_>> {
+                     -> Result<Vec<data::decode_entry::Outcome>, Error<_>> {
                         progress.init(
                             Some(entries.len()),
                             Some(unit::dynamic(unit::Human::new(

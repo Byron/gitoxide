@@ -39,7 +39,7 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::data::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
-    use git_odb::pack::{cache, data::file::ResolvedBase};
+    use git_odb::pack::{cache, data::ResolvedBase};
 
     fn content_of(path: &str) -> Vec<u8> {
         fixup(std::fs::read(fixture_path(path)).expect("valid fixture"))
