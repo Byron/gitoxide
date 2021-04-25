@@ -101,7 +101,7 @@ impl index::File {
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
     /// The last member of the Option is a function returning an implementation of [`pack::cache::DecodeEntry`] to be used if
     /// the [`index::traverse::Algorithm`] is `Lookup`.
-    /// To set this to `None`, use `None::<(_, _, _, fn() -> pack::cache::Noop)>`.
+    /// To set this to `None`, use `None::<(_, _, _, fn() -> pack::cache::Never)>`.
     ///
     /// The `thread_limit` optionally specifies the amount of threads to be used for the [pack traversal][index::File::traverse()].
     /// `make_cache` is only used in case a `pack` is specified, use existing implementations in the [`pack::cache`] module.
