@@ -1,4 +1,3 @@
-use crate::pack::data;
 use git_hash::ObjectId;
 
 ///
@@ -10,6 +9,23 @@ pub mod write;
 
 ///
 pub mod entry;
+
+/// The error returned by the pack generation function [`to_entry_iter()`][crate::pack::data::to_entry_iter()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error<LocateErr>
+where
+    LocateErr: std::error::Error + 'static,
+{
+    #[error(transparent)]
+    Locate(#[from] LocateErr),
+    #[error("Object id {oid} wasn't found in object database")]
+    NotFound { oid: ObjectId },
+    #[error("Entry expected to have hash {expected}, but it had {actual}")]
+    PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
+    #[error(transparent)]
+    NewEntry(entry::Error),
+}
 
 /// An entry to be written to a file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -26,38 +42,4 @@ pub struct Entry {
     pub decompressed_size: usize,
     /// The compressed data right behind the header
     pub compressed_data: Vec<u8>,
-}
-
-impl Entry {
-    /// Transform ourselves into pack entry header of `version` which can be written into a pack.
-    ///
-    /// `index_to_pack(nth_before) -> pack_offset` is a function to convert the base object's offset as index into an
-    /// array to an offset into the pack. This information is known to the one calling the method.
-    pub fn to_entry_header(
-        &self,
-        version: data::Version,
-        index_to_pack: impl FnOnce(usize) -> u64,
-    ) -> data::entry::Header {
-        assert!(
-            matches!(version, data::Version::V2),
-            "we can only write V2 pack entries for now"
-        );
-
-        use entry::Kind::*;
-        match self.entry_kind {
-            Base => {
-                use git_object::Kind::*;
-                match self.object_kind {
-                    Tree => data::entry::Header::Tree,
-                    Blob => data::entry::Header::Blob,
-                    Commit => data::entry::Header::Commit,
-                    Tag => data::entry::Header::Tag,
-                }
-            }
-            DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
-            DeltaRef { nth_before } => data::entry::Header::OfsDelta {
-                base_distance: index_to_pack(nth_before),
-            },
-        }
-    }
 }

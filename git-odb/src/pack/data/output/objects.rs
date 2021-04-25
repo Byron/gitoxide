@@ -1,23 +1,6 @@
 use crate::{pack, pack::data::output};
 use git_features::{hash, parallel, progress::Progress};
-use git_hash::{oid, ObjectId};
-
-/// The error returned the pack generation functions in [this module][crate::pack::data::output].
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error<LocateErr>
-where
-    LocateErr: std::error::Error + 'static,
-{
-    #[error(transparent)]
-    Locate(#[from] LocateErr),
-    #[error("Object id {oid} wasn't found in object database")]
-    NotFound { oid: ObjectId },
-    #[error("Entry expected to have hash {expected}, but it had {actual}")]
-    PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
-    #[error(transparent)]
-    NewEntry(output::entry::Error),
-}
+use git_hash::oid;
 
 /// The way input objects are handled
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -99,9 +82,9 @@ pub fn to_entry_iter<Locate, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<Locate::Error>>>
+) -> impl Iterator<Item = Result<Vec<output::Entry>, output::Error<Locate::Error>>>
        + parallel::reduce::Finalize<
-    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<Locate::Error>>,
+    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, output::Error<Locate::Error>>,
 >
 where
     Locate: crate::Locate + Clone + Send + Sync + 'static,
@@ -141,31 +124,33 @@ where
             match input_object_expansion {
                 AsIs => {
                     for id in oids.into_iter() {
-                        let obj = db.locate(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
-                            oid: id.as_ref().to_owned(),
-                        })?;
+                        let obj = db
+                            .locate(id.as_ref(), buf, cache)?
+                            .ok_or_else(|| output::Error::NotFound {
+                                oid: id.as_ref().to_owned(),
+                            })?;
                         out.push(match db.pack_entry(&obj) {
                             Some(entry) if entry.version == version => {
                                 let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
                                 if let Some(expected) = entry.crc32 {
                                     let actual = hash::crc32(entry.data);
                                     if actual != expected {
-                                        return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
+                                        return Err(output::Error::PackToPackCopyCrc32Mismatch { actual, expected });
                                     }
                                 }
                                 if pack_entry.header.is_base() {
                                     output::Entry {
-                                        id: id.as_ref().into(),
+                                        id: id.as_ref().to_owned(),
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
                                         entry_kind: output::entry::Kind::Base,
                                         decompressed_size: obj.data.len(),
-                                        compressed_data: entry.data[pack_entry.data_offset as usize..].into(),
+                                        compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
                                     }
                                 } else {
-                                    output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
+                                    output::Entry::from_data(id.as_ref(), &obj).map_err(output::Error::NewEntry)?
                                 }
                             }
-                            _ => output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
+                            _ => output::Entry::from_data(id.as_ref(), &obj).map_err(output::Error::NewEntry)?,
                         });
                     }
                 }

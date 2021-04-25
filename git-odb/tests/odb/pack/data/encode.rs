@@ -52,7 +52,7 @@ mod entries {
             let num_written_bytes = {
                 let num_entries = entries.len();
                 let mut pack_writer = output::write::Entries::new(
-                    std::iter::once(Ok::<_, output::objects::Error<compound::locate::Error>>(entries)),
+                    std::iter::once(Ok::<_, output::Error<compound::locate::Error>>(entries)),
                     &mut pack_file,
                     num_entries as u32,
                     pack::data::Version::V2,

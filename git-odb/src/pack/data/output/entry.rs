@@ -1,4 +1,4 @@
-use crate::{data, pack::data::output};
+use crate::{data, pack, pack::data::output};
 use git_hash::ObjectId;
 use std::io::Write;
 
@@ -51,5 +51,38 @@ impl output::Entry {
                 out.into_inner()
             },
         })
+    }
+
+    /// Transform ourselves into pack entry header of `version` which can be written into a pack.
+    ///
+    /// `index_to_pack(nth_before) -> pack_offset` is a function to convert the base object's offset as index into an
+    /// array to an offset into the pack. This information is known to the one calling the method.
+    pub fn to_entry_header(
+        &self,
+        version: pack::data::Version,
+        index_to_pack: impl FnOnce(usize) -> u64,
+    ) -> pack::data::entry::Header {
+        use pack::data;
+        assert!(
+            matches!(version, data::Version::V2),
+            "we can only write V2 pack entries for now"
+        );
+
+        use Kind::*;
+        match self.entry_kind {
+            Base => {
+                use git_object::Kind::*;
+                match self.object_kind {
+                    Tree => data::entry::Header::Tree,
+                    Blob => data::entry::Header::Blob,
+                    Commit => data::entry::Header::Commit,
+                    Tag => data::entry::Header::Tag,
+                }
+            }
+            DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
+            DeltaRef { nth_before } => data::entry::Header::OfsDelta {
+                base_distance: index_to_pack(nth_before),
+            },
+        }
     }
 }
