@@ -15,7 +15,7 @@ pub enum Error {
     #[error("An 'idx' extension is expected of an index file: '{0}'")]
     InvalidPath(PathBuf),
     #[error(transparent)]
-    Pack(#[from] pack::data::parse::Error),
+    Pack(#[from] pack::data::header::decode::Error),
     #[error(transparent)]
     Index(#[from] pack::index::init::Error),
 }

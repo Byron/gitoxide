@@ -47,7 +47,7 @@ pub mod entry {
         },
     }
 
-    /// The error returned by [`encode::Entry::new()`].
+    /// The error returned by [`encode::Entry::from_data()`].
     #[allow(missing_docs)]
     #[derive(Debug, thiserror::Error)]
     pub enum Error {

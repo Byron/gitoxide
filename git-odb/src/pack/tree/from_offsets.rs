@@ -16,7 +16,7 @@ pub enum Error {
     #[error("{message}")]
     Io { source: io::Error, message: &'static str },
     #[error(transparent)]
-    Header(#[from] pack::data::parse::Error),
+    Header(#[from] pack::data::header::decode::Error),
     #[error("Could find object with id {id} in this pack. Thin packs are not supported")]
     UnresolvedRefDelta { id: git_hash::ObjectId },
     #[error(transparent)]
@@ -70,7 +70,7 @@ impl<T> Tree<T> {
                 source: err,
                 message: "reading header buffer with at least 12 bytes failed - pack file truncated?",
             })?;
-            pack::data::parse::header(&buf)?;
+            pack::data::header::decode(&buf)?;
         }
 
         let then = Instant::now();

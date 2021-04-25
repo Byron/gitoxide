@@ -10,7 +10,7 @@ pub enum Error {
     #[error("An IO operation failed while streaming an entry")]
     Io(#[from] io::Error),
     #[error(transparent)]
-    PackParse(#[from] pack::data::parse::Error),
+    PackParse(#[from] pack::data::header::decode::Error),
     #[error("pack checksum in trailer was {expected}, but actual checksum was {actual}")]
     ChecksumMismatch {
         expected: git_hash::ObjectId,
@@ -137,7 +137,7 @@ where
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
-        let (kind, num_objects) = pack::data::parse::header(&header_data)?;
+        let (kind, num_objects) = pack::data::header::decode(&header_data)?;
         assert_eq!(
             kind,
             pack::data::Version::V2,
