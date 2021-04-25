@@ -1,4 +1,5 @@
 use crate::{hash, pack, pack::data::encode};
+use std::io::Write;
 
 /// The error returned by `next()` in the [`Entries`] iterator.
 #[allow(missing_docs)]
@@ -8,9 +9,9 @@ where
     E: std::error::Error + 'static,
 {
     #[error(transparent)]
-    Io(#[from] std::io::Error),
+    Io(std::io::Error),
     #[error(transparent)]
-    Input(#[from] encode::entries::Error<E>),
+    Input(encode::entries::Error<E>),
 }
 
 /// An implementation of [`Iterator`] to write [encoded entries][encode::Entry] to an inner implementation each time
@@ -22,7 +23,7 @@ pub struct Entries<I, W> {
     output: hash::Write<W>,
     /// The amount of objects in the iteration and the version of the packfile to be written.
     /// Will be `None` to signal the header was written already.
-    header_info: Option<(u32, pack::data::Version)>,
+    header_info: Option<(pack::data::Version, u32)>,
     /// If we are done, no additional writes will occour
     is_done: bool,
 }
@@ -52,7 +53,7 @@ where
         Entries {
             input,
             output: hash::Write::new(output, hash_kind),
-            header_info: Some((num_entries, version)),
+            header_info: Some((version, num_entries)),
             is_done: false,
         }
     }
@@ -78,8 +79,14 @@ where
         if self.is_done {
             return None;
         }
-        if let Some((_num_entries, _version)) = self.header_info.take() {
-            todo!("write header");
+        let mut written = 0;
+        if let Some((version, num_entries)) = self.header_info.take() {
+            let header_bytes = pack::data::header::encode(version, num_entries);
+            if let Err(err) = self.output.write_all(&header_bytes[..]) {
+                self.is_done = true;
+                return Some(Err(Error::Io(err)));
+            }
+            written += header_bytes.len();
         }
         match self.input.next() {
             Some(_entries) => todo!("serialize entries"),
