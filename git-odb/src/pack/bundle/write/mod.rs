@@ -175,7 +175,7 @@ impl pack::Bundle {
 
 fn new_pack_file_resolver(
     data_path: PathBuf,
-) -> io::Result<impl Fn(pack::data::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync> {
+) -> io::Result<impl Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync> {
     let mapped_file = FileBuffer::open(data_path)?;
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file

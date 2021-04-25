@@ -25,7 +25,7 @@ pub use iter::Iter;
 /// A slice into a pack file denoting a pack entry.
 ///
 /// An entry can be decoded into an object.
-pub type EntrySlice = std::ops::Range<u64>;
+pub type EntryRange = std::ops::Range<u64>;
 
 /// Supported versions of a pack data file
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -78,7 +78,7 @@ impl File {
     }
 
     /// Returns the pack data at the given slice if its range is contained in the mapped pack data
-    pub fn entry_slice(&self, slice: EntrySlice) -> Option<&[u8]> {
+    pub fn entry_slice(&self, slice: EntryRange) -> Option<&[u8]> {
         let entry_end: usize = slice.end.try_into().expect("end of pack fits into usize");
         let entry_start = slice.start as usize;
         self.data.get(entry_start..entry_end)

@@ -114,7 +114,7 @@ where
     }
 
     /// Returns the slice into the data pack at which the pack entry is located.
-    pub fn entry_slice(&self) -> pack::data::EntrySlice {
+    pub fn entry_slice(&self) -> pack::data::EntryRange {
         #[allow(unsafe_code)]
         // SAFETY: The index is valid as it was controlled by `add_child(…)`, then see `take_entry(…)`
         unsafe {

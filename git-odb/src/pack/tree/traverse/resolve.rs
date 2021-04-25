@@ -1,5 +1,5 @@
 use crate::{
-    pack::{self, data::EntrySlice, tree::traverse::Context, tree::traverse::Error},
+    pack::{self, data::EntryRange, tree::traverse::Context, tree::traverse::Error},
     zlib,
 };
 use git_features::progress::{unit, Progress};
@@ -12,7 +12,7 @@ pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     modify_base: MBFN,
 ) -> Result<(usize, u64), Error>
 where
-    F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+    F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     P: Progress,
     MBFN: Fn(&mut T, &mut P, Context<'_, S>) -> Result<(), E>,
     T: Default,
@@ -22,7 +22,7 @@ where
     let bytes_buf = RefCell::new(bytes_buf);
     let mut num_objects = 0;
     let mut decompressed_bytes: u64 = 0;
-    let decompress_from_resolver = |slice: EntrySlice| -> Result<(pack::data::Entry, u64, Vec<u8>), Error> {
+    let decompress_from_resolver = |slice: EntryRange| -> Result<(pack::data::Entry, u64, Vec<u8>), Error> {
         let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize((slice.end - slice.start) as usize, 0);
         resolve(slice.clone(), &mut bytes_buf).ok_or(Error::ResolveFailed {

@@ -159,7 +159,7 @@ where
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
                                         entry_kind: encode::entry::Kind::Base,
                                         decompressed_size: obj.data.len(),
-                                        compressed_data: entry.data.into(),
+                                        compressed_data: entry.data[pack_entry.data_offset as usize..].into(),
                                     }
                                 } else {
                                     encode::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?

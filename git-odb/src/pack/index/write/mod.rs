@@ -66,7 +66,7 @@ impl pack::index::File {
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
-        F2: for<'r> Fn(pack::data::EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+        F2: for<'r> Fn(pack::data::EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
     {
         if kind != pack::index::Version::default() {
             return Err(Error::Unsupported(kind));

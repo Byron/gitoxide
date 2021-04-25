@@ -18,9 +18,8 @@ mod entries {
         }
 
         #[test]
-        #[should_panic]
-        fn all_input_objects() {
-            let db = db(DbKind::AbunchOfRandomObjects).unwrap();
+        fn all_input_objects() -> crate::Result {
+            let db = db(DbKind::AbunchOfRandomObjects)?;
             let obj_count = db.iter().count();
             assert_eq!(obj_count, 146);
             let all_objects = db.arc_iter().flat_map(Result::ok);
@@ -31,20 +30,25 @@ mod entries {
                 progress::Discard,
                 encode::entries::Options::default(),
             )
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap()
+            .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .flatten()
             .collect();
             assert_eq!(entries.len(), obj_count, "each object gets one entry");
+            assert!(
+                entries
+                    .iter()
+                    .find(|e| !matches!(e.entry_kind, encode::entry::Kind::Base))
+                    .is_none(),
+                "there should only be base entries"
+            );
 
-            let tmp_dir = tempfile::TempDir::new().unwrap();
+            let tmp_dir = tempfile::TempDir::new()?;
             let pack_file_path = tmp_dir.path().join("new.pack");
             let mut pack_file = std::fs::OpenOptions::new()
                 .write(true)
                 .create_new(true)
-                .open(&pack_file_path)
-                .unwrap();
+                .open(&pack_file_path)?;
             let num_written_bytes = {
                 let num_entries = entries.len();
                 let mut pack_writer = encode::write::Entries::new(
@@ -54,8 +58,8 @@ mod entries {
                     pack::data::Version::V2,
                     git_hash::Kind::Sha1,
                 );
-                let mut n = pack_writer.next().expect("one entries bundle was written").unwrap();
-                n += pack_writer.next().expect("the trailer was written").unwrap();
+                let mut n = pack_writer.next().expect("one entries bundle was written")?;
+                n += pack_writer.next().expect("the trailer was written")?;
                 assert!(
                     pack_writer.next().is_none(),
                     "there is nothing more to iterate this time"
@@ -67,34 +71,31 @@ mod entries {
             };
             assert_eq!(
                 num_written_bytes,
-                pack_file.metadata().unwrap().len(),
+                pack_file.metadata()?.len(),
                 "it reports the correct amount of written bytes"
             );
-            let pack = pack::data::File::at(&pack_file_path).unwrap();
-            pack.verify_checksum(progress::Discard).unwrap();
+            let pack = pack::data::File::at(&pack_file_path)?;
+            pack.verify_checksum(progress::Discard)?;
 
             // Re-generate the index from the pack for validation.
             let bundle = pack::Bundle::at(
                 pack::Bundle::write_stream_to_directory(
-                    std::io::BufReader::new(std::fs::File::open(pack_file_path).unwrap()),
+                    std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
                     Some(tmp_dir.path()),
                     progress::Discard,
                     pack::bundle::write::Options::default(),
-                )
-                .unwrap()
+                )?
                 .data_path
                 .expect("directory set"),
-            )
-            .unwrap();
-            bundle
-                .verify_integrity(
-                    pack::index::verify::Mode::Sha1Crc32DecodeEncode,
-                    pack::index::traverse::Algorithm::DeltaTreeLookup,
-                    || pack::cache::Never,
-                    None,
-                    progress::Discard.into(),
-                )
-                .unwrap();
+            )?;
+            bundle.verify_integrity(
+                pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+                pack::index::traverse::Algorithm::DeltaTreeLookup,
+                || pack::cache::Never,
+                None,
+                progress::Discard.into(),
+            )?;
+            Ok(())
         }
     }
 }

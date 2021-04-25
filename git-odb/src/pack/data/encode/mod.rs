@@ -64,6 +64,7 @@ impl Entry {
 pub mod entry {
     use crate::{data, pack::data::encode};
     use git_hash::ObjectId;
+    use std::io::Write;
 
     /// The kind of pack entry to be written
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -91,7 +92,7 @@ pub mod entry {
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error("{0}")]
-        ZlibDeflate(String),
+        ZlibDeflate(#[from] std::io::Error),
     }
 
     impl encode::Entry {
@@ -106,10 +107,11 @@ pub mod entry {
                     let mut out = crate::zlib::stream::deflate::Write::new(Vec::new());
                     if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
                         match err.kind() {
-                            std::io::ErrorKind::Other => return Err(Error::ZlibDeflate(err.to_string())),
+                            std::io::ErrorKind::Other => return Err(Error::ZlibDeflate(err)),
                             err => unreachable!("Should never see other errors than zlib, but got {:?}", err,),
                         }
                     };
+                    out.flush()?;
                     out.into_inner()
                 },
             })

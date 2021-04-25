@@ -77,7 +77,7 @@ pub trait Locate {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)] // TODO: docs
 pub struct PackEntry<'a> {
-    /// The encoded data of the entry as present in the pack file
+    /// The encoded data of the entry as present in the pack file, including the header followed by compressed data.
     pub data: &'a [u8],
     /// The crc32 hash over the entirety of `data`, or None if the pack file format doesn't support it yet.
     pub crc32: Option<u32>,

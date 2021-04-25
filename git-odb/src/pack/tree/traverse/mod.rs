@@ -1,6 +1,6 @@
 use crate::{
     pack,
-    pack::data::EntrySlice,
+    pack::data::EntryRange,
     pack::tree::{Item, Tree},
 };
 use git_features::{
@@ -81,7 +81,7 @@ where
         inspect_object: MBFN,
     ) -> Result<Vec<Item<T>>, Error>
     where
-        F: for<'r> Fn(EntrySlice, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+        F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
         MBFN: Fn(&mut T, &mut <P as Progress>::SubProgress, Context<'_, S>) -> Result<(), E> + Send + Sync,
         E: std::error::Error + Send + Sync + 'static,

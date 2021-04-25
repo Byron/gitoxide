@@ -44,7 +44,7 @@ impl crate::Locate for linked::Db {
                 let pack_offset = bundle.index.pack_offset_at_index(l.index_file_id);
                 bundle
                     .pack
-                    .entry_slice(l.entry_slice(pack_offset))
+                    .entry_slice(l.entry_range(pack_offset))
                     .map(|data| PackEntry {
                         data,
                         crc32,

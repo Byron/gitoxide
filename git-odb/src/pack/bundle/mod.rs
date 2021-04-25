@@ -63,7 +63,7 @@ pub(crate) struct Location {
 }
 
 impl Location {
-    pub(crate) fn entry_slice(&self, pack_offset: u64) -> pack::data::EntrySlice {
+    pub(crate) fn entry_range(&self, pack_offset: u64) -> pack::data::EntryRange {
         pack_offset..pack_offset + self.entry_size as u64
     }
 }

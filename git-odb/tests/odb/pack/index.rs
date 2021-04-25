@@ -71,7 +71,7 @@ mod file {
             use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
             use filebuffer::FileBuffer;
             use git_features::progress;
-            use git_odb::{pack, pack::data::iter, pack::data::EntrySlice};
+            use git_odb::{pack, pack::data::iter, pack::data::EntryRange};
             use std::{fs, io};
 
             #[test]
@@ -84,7 +84,7 @@ mod file {
                         for (index_path, data_path) in V2_PACKS_AND_INDICES {
                             let resolve = {
                                 let buf = FileBuffer::open(fixture_path(data_path))?;
-                                move |entry: EntrySlice, out: &mut Vec<u8>| {
+                                move |entry: EntryRange, out: &mut Vec<u8>| {
                                     buf.get(entry.start as usize..entry.end as usize)
                                         .map(|slice| out.copy_from_slice(slice))
                                 }
@@ -104,7 +104,7 @@ mod file {
                 resolve: F,
             ) -> Result<(), Box<dyn std::error::Error>>
             where
-                F: Fn(pack::data::EntrySlice, &mut Vec<u8>) -> Option<()> + Send + Sync,
+                F: Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync,
             {
                 let pack_iter = pack::data::Iter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
