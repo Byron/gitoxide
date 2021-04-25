@@ -1,10 +1,9 @@
-//! Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
 use crate::pack::data;
 use git_hash::ObjectId;
 
 ///
-pub mod entries;
-pub use entries::entries;
+pub mod objects;
+pub use objects::to_entry_iter;
 
 ///
 pub mod write;
@@ -62,7 +61,7 @@ impl Entry {
 
 ///
 pub mod entry {
-    use crate::{data, pack::data::encode};
+    use crate::{data, pack::data::output};
     use git_hash::ObjectId;
     use std::io::Write;
 
@@ -87,7 +86,7 @@ pub mod entry {
         },
     }
 
-    /// The error returned by [`encode::Entry::from_data()`].
+    /// The error returned by [`output::Entry::from_data()`].
     #[allow(missing_docs)]
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -95,10 +94,10 @@ pub mod entry {
         ZlibDeflate(#[from] std::io::Error),
     }
 
-    impl encode::Entry {
+    impl output::Entry {
         /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
         pub fn from_data(oid: impl Into<ObjectId>, obj: &data::Object<'_>) -> Result<Self, Error> {
-            Ok(encode::Entry {
+            Ok(output::Entry {
                 id: oid.into(),
                 object_kind: obj.kind,
                 entry_kind: Kind::Base,

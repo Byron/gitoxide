@@ -14,10 +14,12 @@ pub mod header;
 pub mod entry;
 pub use entry::Entry;
 
-pub mod encode;
 ///
-pub mod iter;
-pub use iter::Iter;
+pub mod input;
+pub use input::EntriesFromBytesIter;
+
+/// Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
+pub mod output;
 
 /// A slice into a pack file denoting a pack entry.
 ///

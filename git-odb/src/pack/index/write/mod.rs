@@ -59,7 +59,7 @@ impl pack::index::File {
     pub fn write_data_iter_to_stream<F, F2>(
         kind: pack::index::Version,
         make_resolver: F,
-        entries: impl Iterator<Item = Result<pack::data::iter::Entry, pack::data::iter::Error>>,
+        entries: impl Iterator<Item = Result<pack::data::input::Entry, pack::data::input::Error>>,
         thread_limit: Option<usize>,
         mut root_progress: impl Progress,
         out: impl io::Write,
@@ -87,7 +87,7 @@ impl pack::index::File {
         let mut pack_entries_end: u64 = 0;
 
         for (eid, entry) in entries.enumerate() {
-            let pack::data::iter::Entry {
+            let pack::data::input::Entry {
                 header,
                 pack_offset,
                 crc32,

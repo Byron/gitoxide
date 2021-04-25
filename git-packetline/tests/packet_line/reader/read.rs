@@ -73,10 +73,10 @@ fn read_pack_with_progress_extraction() -> crate::Result {
         seen_texts.push(data.as_bstr().into());
     };
     let pack_read = rd.as_read_with_sidebands(&mut do_nothing);
-    let pack_entries = pack::data::Iter::new_from_header(
+    let pack_entries = pack::data::EntriesFromBytesIter::new_from_header(
         pack_read,
-        pack::data::iter::Mode::Verify,
-        pack::data::iter::CompressedBytesMode::Ignore,
+        pack::data::input::Mode::Verify,
+        pack::data::input::CompressedBytesMode::Ignore,
     )?;
     let size = pack_entries.size_hint().0 - 1;
     let last = pack_entries.skip(size).next().expect("last entry")?;

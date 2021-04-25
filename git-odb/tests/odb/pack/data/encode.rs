@@ -2,7 +2,7 @@ mod entries {
     mod simple_compression {
         use crate::fixture_path;
         use git_features::progress;
-        use git_odb::{compound, linked, pack, pack::data::encode};
+        use git_odb::{compound, linked, pack, pack::data::output};
         use std::{path::PathBuf, sync::Arc};
 
         enum DbKind {
@@ -23,12 +23,12 @@ mod entries {
             let obj_count = db.iter().count();
             assert_eq!(obj_count, 146);
             let all_objects = db.arc_iter().flat_map(Result::ok);
-            let entries: Vec<_> = encode::entries(
+            let entries: Vec<_> = output::to_entry_iter(
                 db.clone(),
                 || pack::cache::Never,
                 all_objects,
                 progress::Discard,
-                encode::entries::Options::default(),
+                output::objects::Options::default(),
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
@@ -38,7 +38,7 @@ mod entries {
             assert!(
                 entries
                     .iter()
-                    .find(|e| !matches!(e.entry_kind, encode::entry::Kind::Base))
+                    .find(|e| !matches!(e.entry_kind, output::entry::Kind::Base))
                     .is_none(),
                 "there should only be base entries"
             );
@@ -51,8 +51,8 @@ mod entries {
                 .open(&pack_file_path)?;
             let num_written_bytes = {
                 let num_entries = entries.len();
-                let mut pack_writer = encode::write::Entries::new(
-                    std::iter::once(Ok::<_, encode::entries::Error<compound::locate::Error>>(entries)),
+                let mut pack_writer = output::write::Entries::new(
+                    std::iter::once(Ok::<_, output::objects::Error<compound::locate::Error>>(entries)),
                     &mut pack_file,
                     num_entries as u32,
                     pack::data::Version::V2,

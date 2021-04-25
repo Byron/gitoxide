@@ -71,15 +71,15 @@ mod file {
             use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
             use filebuffer::FileBuffer;
             use git_features::progress;
-            use git_odb::{pack, pack::data::iter, pack::data::EntryRange};
+            use git_odb::{pack, pack::data::input, pack::data::EntryRange};
             use std::{fs, io};
 
             #[test]
             fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
-                for mode in &[iter::Mode::AsIs, iter::Mode::Verify, iter::Mode::Restore] {
+                for mode in &[input::Mode::AsIs, input::Mode::Verify, input::Mode::Restore] {
                     for compressed in &[
-                        iter::CompressedBytesMode::Crc32,
-                        iter::CompressedBytesMode::KeepAndCrc32,
+                        input::CompressedBytesMode::Crc32,
+                        input::CompressedBytesMode::KeepAndCrc32,
                     ] {
                         for (index_path, data_path) in V2_PACKS_AND_INDICES {
                             let resolve = {
@@ -97,8 +97,8 @@ mod file {
             }
 
             fn assert_index_write<F>(
-                mode: &iter::Mode,
-                compressed: &iter::CompressedBytesMode,
+                mode: &input::Mode,
+                compressed: &input::CompressedBytesMode,
                 index_path: &&str,
                 data_path: &&str,
                 resolve: F,
@@ -106,7 +106,7 @@ mod file {
             where
                 F: Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync,
             {
-                let pack_iter = pack::data::Iter::new_from_header(
+                let pack_iter = pack::data::EntriesFromBytesIter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
                     *compressed,

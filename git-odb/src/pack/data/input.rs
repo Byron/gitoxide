@@ -3,7 +3,7 @@ use flate2::Decompress;
 use git_features::hash::Sha1;
 use std::{fs, io};
 
-/// Returned by [`Iter::new_from_header()`] and as part of `Item` of [`Iter`]
+/// Returned by [`EntriesFromBytesIter::new_from_header()`] and as part of `Item` of [`EntriesFromBytesIter`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -20,7 +20,7 @@ pub enum Error {
     IncompletePack { actual: u64, expected: u64 },
 }
 
-/// An item of the iteration produced by [`Iter`]
+/// An item of the iteration produced by [`EntriesFromBytesIter`]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
@@ -51,7 +51,7 @@ pub struct Entry {
 /// An iterator over [`Entries`][Entry] in a byte stream.
 ///
 /// The iterator used as part of [Bundle::write_stream_to_directory(…)][pack::Bundle::write_stream_to_directory()].
-pub struct Iter<R> {
+pub struct EntriesFromBytesIter<R> {
     read: R,
     decompressor: Option<Box<Decompress>>,
     offset: u64,
@@ -116,7 +116,7 @@ impl CompressedBytesMode {
     }
 }
 
-impl<R> Iter<R>
+impl<R> EntriesFromBytesIter<R>
 where
     R: io::BufRead,
 {
@@ -133,7 +133,11 @@ where
     /// Obtain an iterator from a `read` stream to a pack data file and configure it using `mode` and `compressed`.
     ///
     /// Note that `read` is expected at the beginning of a valid pack data file with a header, entries and a trailer.
-    pub fn new_from_header(mut read: R, mode: Mode, compressed: CompressedBytesMode) -> Result<Iter<R>, Error> {
+    pub fn new_from_header(
+        mut read: R,
+        mode: Mode,
+        compressed: CompressedBytesMode,
+    ) -> Result<EntriesFromBytesIter<R>, Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
@@ -143,7 +147,7 @@ where
             pack::data::Version::V2,
             "let's stop here if we see undocumented pack formats"
         );
-        Ok(Iter {
+        Ok(EntriesFromBytesIter {
             read,
             decompressor: None,
             compressed,
@@ -289,7 +293,7 @@ fn read_and_pass_to<R: io::Read, W: io::Write>(read: &mut R, to: W) -> PassThrou
     PassThrough { read, write: to }
 }
 
-impl<R> Iterator for Iter<R>
+impl<R> Iterator for EntriesFromBytesIter<R>
 where
     R: io::BufRead,
 {
@@ -315,7 +319,7 @@ where
         (self.objects_left as usize, Some(self.objects_left as usize))
     }
 }
-impl<R> std::iter::ExactSizeIterator for Iter<R> where R: io::BufRead {}
+impl<R> std::iter::ExactSizeIterator for EntriesFromBytesIter<R> where R: io::BufRead {}
 
 struct PassThrough<R, W> {
     read: R,
@@ -357,9 +361,9 @@ where
 }
 
 impl pack::data::File {
-    /// Returns an iterator over [`Entries`][pack::data::iter::Entry], without making use of the memory mapping.
-    pub fn streaming_iter(&self) -> Result<Iter<impl io::BufRead>, Error> {
+    /// Returns an iterator over [`Entries`][pack::data::input::Entry], without making use of the memory mapping.
+    pub fn streaming_iter(&self) -> Result<EntriesFromBytesIter<impl io::BufRead>, Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
-        Iter::new_from_header(reader, Mode::Verify, CompressedBytesMode::KeepAndCrc32)
+        EntriesFromBytesIter::new_from_header(reader, Mode::Verify, CompressedBytesMode::KeepAndCrc32)
     }
 }

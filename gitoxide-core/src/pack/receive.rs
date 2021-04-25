@@ -77,7 +77,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
         let options = pack::bundle::write::Options {
             thread_limit: self.ctx.thread_limit,
             index_kind: pack::index::Version::V2,
-            iteration_mode: pack::data::iter::Mode::Verify,
+            iteration_mode: pack::data::input::Mode::Verify,
         };
         let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;

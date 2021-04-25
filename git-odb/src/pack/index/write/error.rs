@@ -8,7 +8,7 @@ pub enum Error {
     #[error("An IO error occurred when reading the pack or creating a temporary file")]
     Io(#[from] io::Error),
     #[error("A pack entry could not be extracted")]
-    PackEntryDecode(#[from] pack::data::iter::Error),
+    PackEntryDecode(#[from] pack::data::input::Error),
     #[error("Indices of type {} cannot be written, only {} are supported", *.0 as usize, pack::index::Version::default() as usize)]
     Unsupported(pack::index::Version),
     #[error("Ref delta objects are not supported as there is no way to look them up. Resolve them beforehand.")]

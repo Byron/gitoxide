@@ -1,8 +1,8 @@
-use crate::{pack, pack::data::encode};
+use crate::{pack, pack::data::output};
 use git_features::{hash, parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 
-/// The error returned the pack generation functions in [this module][crate::pack::data::encode].
+/// The error returned the pack generation functions in [this module][crate::pack::data::output].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error<LocateErr>
@@ -16,24 +16,24 @@ where
     #[error("Entry expected to have hash {expected}, but it had {actual}")]
     PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
     #[error(transparent)]
-    NewEntry(encode::entry::Error),
+    NewEntry(output::entry::Error),
 }
 
 /// The way input objects are handled
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum ObjectExpansion {
+pub enum Expansion {
     /// Don't do anything with the input objects except for transforming them into pack entries
     AsIs,
 }
 
-impl Default for ObjectExpansion {
+impl Default for Expansion {
     fn default() -> Self {
-        ObjectExpansion::AsIs
+        Expansion::AsIs
     }
 }
 
-/// Configuration options for the pack generation functions provied in [this module][crate::pack::data::encode].
+/// Configuration options for the pack generation functions provied in [this module][crate::pack::data::output].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {
@@ -45,7 +45,7 @@ pub struct Options {
     /// The pack data version to produce
     pub version: crate::pack::data::Version,
     /// The way input objects are handled
-    pub input_object_expansion: ObjectExpansion,
+    pub input_object_expansion: Expansion,
 }
 
 impl Default for Options {
@@ -88,7 +88,7 @@ impl Default for Options {
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn entries<Locate, Iter, Oid, Cache>(
+pub fn to_entry_iter<Locate, Iter, Oid, Cache>(
     db: Locate,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,
@@ -99,9 +99,9 @@ pub fn entries<Locate, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<encode::Entry>, Error<Locate::Error>>>
+) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<Locate::Error>>>
        + parallel::reduce::Finalize<
-    Reduce = parallel::reduce::IdentityWithResult<Vec<encode::Entry>, Error<Locate::Error>>,
+    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<Locate::Error>>,
 >
 where
     Locate: crate::Locate + Clone + Send + Sync + 'static,
@@ -136,7 +136,7 @@ where
             )
         },
         move |oids: Vec<Oid>, (buf, cache)| {
-            use ObjectExpansion::*;
+            use Expansion::*;
             let mut out = Vec::new();
             match input_object_expansion {
                 AsIs => {
@@ -154,18 +154,18 @@ where
                                     }
                                 }
                                 if pack_entry.header.is_base() {
-                                    encode::Entry {
+                                    output::Entry {
                                         id: id.as_ref().into(),
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                                        entry_kind: encode::entry::Kind::Base,
+                                        entry_kind: output::entry::Kind::Base,
                                         decompressed_size: obj.data.len(),
                                         compressed_data: entry.data[pack_entry.data_offset as usize..].into(),
                                     }
                                 } else {
-                                    encode::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
+                                    output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
                                 }
                             }
-                            _ => encode::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
+                            _ => output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
                         });
                     }
                 }

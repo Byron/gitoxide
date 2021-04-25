@@ -10,7 +10,7 @@ pub struct Options {
     /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
     pub thread_limit: Option<usize>,
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
-    pub iteration_mode: pack::data::iter::Mode,
+    pub iteration_mode: pack::data::input::Mode,
     /// The version of pack index to write, should be [`pack::index::Version::default()`]
     pub index_kind: pack::index::Version,
 }
@@ -20,7 +20,7 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             thread_limit: None,
-            iteration_mode: pack::data::iter::Mode::Verify,
+            iteration_mode: pack::data::input::Mode::Verify,
             index_kind: Default::default(),
         }
     }

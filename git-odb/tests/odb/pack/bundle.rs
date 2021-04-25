@@ -143,7 +143,7 @@ mod write_to_directory {
             progress::Discard,
             bundle::write::Options {
                 thread_limit: None,
-                iteration_mode: pack::data::iter::Mode::Verify,
+                iteration_mode: pack::data::input::Mode::Verify,
                 index_kind: pack::index::Version::V2,
             },
         )

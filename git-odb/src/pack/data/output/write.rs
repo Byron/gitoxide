@@ -1,4 +1,4 @@
-use crate::{hash, pack, pack::data::encode};
+use crate::{hash, pack, pack::data::output};
 use std::io::Write;
 
 /// The error returned by `next()` in the [`Entries`] iterator.
@@ -14,10 +14,10 @@ where
     Input(E),
 }
 
-/// An implementation of [`Iterator`] to write [encoded entries][encode::Entry] to an inner implementation each time
+/// An implementation of [`Iterator`] to write [encoded entries][output::Entry] to an inner implementation each time
 /// `next()` is called.
 pub struct Entries<I, W> {
-    /// An iterator for input [`encode::Entry`] instances
+    /// An iterator for input [`output::Entry`] instances
     pub input: I,
     /// A way of writing encoded bytes.
     output: hash::Write<W>,
@@ -32,11 +32,11 @@ pub struct Entries<I, W> {
 
 impl<I, W, E> Entries<I, W>
 where
-    I: Iterator<Item = Result<Vec<encode::Entry>, E>>,
+    I: Iterator<Item = Result<Vec<output::Entry>, E>>,
     W: std::io::Write,
     E: std::error::Error + 'static,
 {
-    /// Create a new instance reading [entries][encode::Entry] from an `input` iterator and write pack data bytes to
+    /// Create a new instance reading [entries][output::Entry] from an `input` iterator and write pack data bytes to
     /// `output` writer, resembling a pack of `version` with exactly `num_entries` amount of objects contained in it.
     /// `hash_kind` is the kind of hash to use for the pack checksum and maybe other places, depending on the version.
     ///
@@ -99,7 +99,7 @@ where
 
 impl<I, W, E> Iterator for Entries<I, W>
 where
-    I: Iterator<Item = Result<Vec<encode::Entry>, E>>,
+    I: Iterator<Item = Result<Vec<output::Entry>, E>>,
     W: std::io::Write,
     E: std::error::Error + 'static,
 {

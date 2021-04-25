@@ -37,9 +37,9 @@ impl FromStr for IterationMode {
     }
 }
 
-impl From<IterationMode> for pack::data::iter::Mode {
+impl From<IterationMode> for pack::data::input::Mode {
     fn from(v: IterationMode) -> Self {
-        use pack::data::iter::Mode::*;
+        use pack::data::input::Mode::*;
         match v {
             IterationMode::AsIs => AsIs,
             IterationMode::Verify => Verify,
