@@ -72,7 +72,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
 }
 
 enum EitherCache<const SIZE: usize> {
-    Left(pack::cache::Noop),
+    Left(pack::cache::Never),
     Right(pack::cache::lru::StaticLinkedList<SIZE>),
 }
 
@@ -141,12 +141,12 @@ where
                 if matches!(algorithm, Algorithm::LessMemory) {
                     if output_statistics.is_some() {
                         // turn off acceleration as we need to see entire chains all the time
-                        EitherCache::Left(pack::cache::Noop)
+                        EitherCache::Left(pack::cache::Never)
                     } else {
                         EitherCache::Right(pack::cache::lru::StaticLinkedList::<CACHE_SIZE>::default())
                     }
                 } else {
-                    EitherCache::Left(pack::cache::Noop)
+                    EitherCache::Left(pack::cache::Never)
                 }
             };
 

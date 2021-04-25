@@ -6,7 +6,7 @@ mod ancestor {
         let db = db()?;
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
         let oids: Result<Vec<_>, _> =
-            git_odb::traverse::ancestors::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Noop)
+            git_odb::traverse::ancestors::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Never)
                 .collect();
         let expected: Vec<_> = tips
             .into_iter()
@@ -23,7 +23,7 @@ mod ancestor {
         let _ = git_odb::traverse::ancestors::Ancestors::new(
             db.clone(),
             vec![git_hash::ObjectId::null_sha1()],
-            &mut git_odb::pack::cache::Noop,
+            &mut git_odb::pack::cache::Never,
         );
         Ok(())
     }
@@ -34,7 +34,7 @@ mod ancestor {
         let _ = git_odb::traverse::ancestors::Ancestors::new(
             Box::new(db),
             vec![git_hash::ObjectId::null_sha1()],
-            &mut git_odb::pack::cache::Noop,
+            &mut git_odb::pack::cache::Never,
         );
         Ok(())
     }

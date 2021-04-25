@@ -291,7 +291,7 @@ mod file {
                 for mode in MODES {
                     assert_eq!(
                         idx.verify_integrity(
-                            Some((&pack, *mode, *algo, || cache::Noop)),
+                            Some((&pack, *mode, *algo, || cache::Never)),
                             None,
                             progress::Discard.into()
                         )
@@ -389,7 +389,7 @@ mod file {
             assert_eq!(idx.version(), *kind);
             assert_eq!(idx.num_objects(), *num_objects);
             assert_eq!(
-                idx.verify_integrity(None::<(_, _, _, fn() -> cache::Noop)>, None, progress::Discard.into())
+                idx.verify_integrity(None::<(_, _, _, fn() -> cache::Never)>, None, progress::Discard.into())
                     .map(|(a, b, _)| (a, b))?,
                 (idx.index_checksum(), None)
             );

@@ -112,7 +112,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_gitoxide(&hashes, &repo_objects_dir, git_odb::pack::cache::Noop::default)?;
+    let bytes = do_gitoxide(&hashes, &repo_objects_dir, git_odb::pack::cache::Never::default)?;
     let elapsed = start.elapsed();
     println!(
         "gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
@@ -122,7 +122,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(&hashes, &repo_objects_dir, git_odb::pack::cache::Noop::default)?;
+    let bytes = do_gitoxide_in_parallel(&hashes, &repo_objects_dir, git_odb::pack::cache::Never::default)?;
     let elapsed = start.elapsed();
     println!(
         "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",

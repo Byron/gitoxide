@@ -11,11 +11,11 @@ pub trait DecodeEntry {
     fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)>;
 }
 
-/// A cache that stores nothing and retrieves nothing.
+/// A cache that stores nothing and retrieves nothing, thus it _never_ caches.
 #[derive(Default)]
-pub struct Noop;
+pub struct Never;
 
-impl DecodeEntry for Noop {
+impl DecodeEntry for Never {
     fn put(&mut self, _pack_id: u32, _offset: u64, _data: &[u8], _kind: git_object::Kind, _compressed_size: usize) {}
     fn get(&mut self, _pack_id: u32, _offset: u64, _out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
         None

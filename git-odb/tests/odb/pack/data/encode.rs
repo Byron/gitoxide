@@ -26,7 +26,7 @@ mod entries {
                 let all_objects = db.arc_iter().flat_map(Result::ok);
                 let entries: Vec<_> = encode::entries(
                     db.clone(),
-                    || pack::cache::Noop,
+                    || pack::cache::Never,
                     all_objects,
                     progress::Discard,
                     encode::entries::Options::default(),
