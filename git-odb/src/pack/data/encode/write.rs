@@ -85,7 +85,13 @@ where
                     written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)? as u64;
                 }
             }
-            None => todo!("write footer and set is_done = true"),
+            None => {
+                let digest = self.output.hash.clone().digest();
+                self.output.write_all(&digest[..])?;
+                written += digest.len() as u64;
+                self.output.flush()?;
+                self.is_done = true;
+            }
         };
         Ok(written)
     }

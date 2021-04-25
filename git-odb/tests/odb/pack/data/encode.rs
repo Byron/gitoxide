@@ -18,7 +18,6 @@ mod entries {
         }
 
         #[test]
-        #[should_panic]
         fn all_input_objects() {
             (|| -> crate::Result {
                 let db = db(DbKind::AbunchOfRandomObjects)?;
@@ -48,7 +47,8 @@ mod entries {
                         pack::data::Version::V2,
                         git_hash::Kind::Sha1,
                     );
-                    let n = pack_writer.next().expect("one entries bundle was written")?;
+                    let mut n = pack_writer.next().expect("one entries bundle was written")?;
+                    n += pack_writer.next().expect("the trailer was written")?;
                     assert!(
                         pack_writer.next().is_none(),
                         "there is nothing more to iterate this time"
@@ -63,6 +63,7 @@ mod entries {
                     pack_file.metadata()?.len(),
                     "it reports the correct amount of written bytes"
                 );
+                // TODO: verify the new pack
 
                 Ok(())
             })()
