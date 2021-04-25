@@ -8,6 +8,37 @@ mod locate;
 ///
 pub mod write;
 
+mod verify {
+    use crate::pack;
+    use git_features::progress::Progress;
+
+    impl super::Bundle {
+        /// Similar to [`pack::index::File::verify_integrity()`] but more convenient to call as the presence of the
+        /// pack file is a given.
+        pub fn verify_integrity<C, P>(
+            &self,
+            verify_mode: pack::index::verify::Mode,
+            traversal: pack::index::traverse::Algorithm,
+            make_pack_lookup_cache: impl Fn() -> C + Send + Sync,
+            thread_limit: Option<usize>,
+            progress: Option<P>,
+        ) -> Result<
+            (git_hash::ObjectId, Option<pack::index::traverse::Outcome>, Option<P>),
+            pack::index::traverse::Error<pack::index::verify::Error>,
+        >
+        where
+            P: Progress,
+            C: pack::cache::DecodeEntry,
+        {
+            self.index.verify_integrity(
+                Some((&self.pack, verify_mode, traversal, make_pack_lookup_cache)),
+                thread_limit,
+                progress,
+            )
+        }
+    }
+}
+
 /// Returned by [`Bundle::at()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]

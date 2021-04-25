@@ -15,6 +15,17 @@ pub struct Options {
     pub index_kind: pack::index::Version,
 }
 
+impl Default for Options {
+    /// Options which favor speed and correctness and write the most commonly supported index file.
+    fn default() -> Self {
+        Options {
+            thread_limit: None,
+            iteration_mode: pack::data::iter::Mode::Verify,
+            index_kind: Default::default(),
+        }
+    }
+}
+
 /// Returned by [write_stream_to_directory][pack::Bundle::write_stream_to_directory()] or
 /// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
