@@ -73,19 +73,19 @@ where
         progress.inc();
         for child in base.store_changes_then_into_child_iter() {
             let (mut child_entry, entry_end, delta_bytes) = decompress_from_resolver(child.entry_slice())?;
-            let (base_size, consumed) = pack::data::file::delta_header_size_ofs(&delta_bytes);
+            let (base_size, consumed) = pack::data::delta::decode_header_size(&delta_bytes);
             let mut header_ofs = consumed;
             assert_eq!(
                 base_bytes.len(),
                 base_size as usize,
                 "recorded base size in delta does not match"
             );
-            let (result_size, consumed) = pack::data::file::delta_header_size_ofs(&delta_bytes[consumed..]);
+            let (result_size, consumed) = pack::data::delta::decode_header_size(&delta_bytes[consumed..]);
             header_ofs += consumed;
 
             let mut fully_resolved_delta_bytes = bytes_buf.borrow_mut();
             fully_resolved_delta_bytes.resize(result_size as usize, 0);
-            pack::data::file::apply_delta(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
+            pack::data::delta::apply(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
 
             // FIXME: this actually invalidates the "pack_offset()" computation, which is not obvious to consumers
             // at all

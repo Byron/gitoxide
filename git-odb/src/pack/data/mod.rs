@@ -94,3 +94,5 @@ impl File {
         git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
     }
 }
+
+pub(crate) mod delta;
