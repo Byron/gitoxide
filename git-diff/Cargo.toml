@@ -17,6 +17,7 @@ doctest = false
 git-hash = { version = "^0.2.0", path = "../git-hash" }
 git-object = { version = "0.7", path = "../git-object" }
 git-odb = { version = "0.12", path = "../git-odb" }
+petgraph = { version = "0.5.1", default-features = false }
 
 [dev-dependencies]
 test-tools = { path = "../tests/tools" }

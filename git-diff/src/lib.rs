@@ -16,13 +16,7 @@ pub mod tree {
 
     /// A tree of paths to make storage and allocation of paths more efficient.
     pub struct PathNode {
-        name: BString,
-        /// The offset into our structure, and the id of this PathTree node
-        id: PathNodeId,
-        /// The biggest offset seen in all of our children. This is the total amounf of paths stored for
-        /// the root node.
-        max_id: usize,
-        children: Vec<PathNode>,
+        graph: petgraph::graph::DiGraph<BString, ()>,
     }
 
     impl PathNode {
