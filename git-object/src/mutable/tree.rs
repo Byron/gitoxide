@@ -24,7 +24,7 @@ impl From<Error> for io::Error {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
-    /// The directories and files contained in this tree.
+    /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][Entry::filename].
     pub entries: Vec<Entry>,
 }
 
@@ -59,6 +59,15 @@ impl Mode {
 impl Tree {
     /// Serialize this tree to `out` in the git internal format.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        debug_assert_eq!(
+            &{
+                let mut entries_sorted = self.entries.clone();
+                entries_sorted.sort_by(|lhs, rhs| lhs.filename.cmp(&rhs.filename));
+                entries_sorted
+            },
+            &self.entries,
+            "entries for serialization must be sorted by filename"
+        );
         for Entry { mode, filename, oid } in &self.entries {
             out.write_all(mode.as_bytes())?;
             out.write_all(SPACE)?;
