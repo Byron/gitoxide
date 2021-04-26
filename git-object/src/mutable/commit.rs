@@ -1,6 +1,6 @@
 use crate::{
     commit,
-    mutable::{self, ser, NL},
+    mutable::{self, encode, NL},
 };
 use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
@@ -37,21 +37,21 @@ impl Commit {
     }
     /// Serializes this instance to `out` in the git serialization format.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        ser::trusted_header_id(b"tree", &self.tree, &mut out)?;
+        encode::trusted_header_id(b"tree", &self.tree, &mut out)?;
         for parent in &self.parents {
-            ser::trusted_header_id(b"parent", parent, &mut out)?;
+            encode::trusted_header_id(b"parent", parent, &mut out)?;
         }
-        ser::trusted_header_signature(b"author", &self.author, &mut out)?;
-        ser::trusted_header_signature(b"committer", &self.committer, &mut out)?;
+        encode::trusted_header_signature(b"author", &self.author, &mut out)?;
+        encode::trusted_header_signature(b"committer", &self.committer, &mut out)?;
         if let Some(encoding) = self.encoding.as_ref() {
-            ser::header_field(b"encoding", encoding, &mut out)?;
+            encode::header_field(b"encoding", encoding, &mut out)?;
         }
         for (name, value) in &self.extra_headers {
             let has_newline = value.find_byte(b'\n').is_some();
             if has_newline {
-                ser::header_field_multi_line(name, value, &mut out)?;
+                encode::header_field_multi_line(name, value, &mut out)?;
             } else {
-                ser::trusted_header_field(name, value, &mut out)?;
+                encode::trusted_header_field(name, value, &mut out)?;
             }
         }
         out.write_all(NL)?;

@@ -8,7 +8,7 @@ pub(crate) const NL: &[u8; 1] = b"\n";
 pub(crate) const SPACE: &[u8; 1] = b" ";
 
 mod convert;
-mod ser;
+mod encode;
 
 mod tag;
 pub use tag::Tag;

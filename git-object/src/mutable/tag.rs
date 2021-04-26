@@ -1,4 +1,4 @@
-use crate::mutable::{self, ser, NL};
+use crate::mutable::{self, encode, NL};
 use bstr::{BStr, BString};
 use quick_error::quick_error;
 use std::io;
@@ -45,11 +45,11 @@ pub struct Tag {
 impl Tag {
     /// Writes the encoded tag to `out`.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        ser::trusted_header_id(b"object", &self.target, &mut out)?;
-        ser::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
-        ser::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
+        encode::trusted_header_id(b"object", &self.target, &mut out)?;
+        encode::trusted_header_field(b"type", self.target_kind.to_bytes(), &mut out)?;
+        encode::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
         if let Some(tagger) = &self.signature {
-            ser::trusted_header_signature(b"tagger", tagger, &mut out)?;
+            encode::trusted_header_signature(b"tagger", tagger, &mut out)?;
         }
 
         if !self.message.is_empty() {
