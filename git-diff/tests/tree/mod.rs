@@ -46,6 +46,8 @@ mod with_tree {
             &main_tree,
             (&mut buf3, &mut buf4),
             |_oid, _buf| todo!("Actual lookup in db"),
+            &mut git_diff::tree::PathTree::default(),
+            &mut Vec::new(),
         );
         Ok(())
     }

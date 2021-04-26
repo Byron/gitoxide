@@ -15,16 +15,17 @@ pub mod tree {
     type PathNodeId = usize;
 
     /// A tree of paths to make storage and allocation of paths more efficient.
-    pub struct PathNode {
+    #[derive(Default)]
+    pub struct PathTree {
         graph: petgraph::graph::DiGraph<BString, ()>,
     }
 
-    impl PathNode {
+    impl PathTree {
         /// Find the path with the given `id` and place all of its elements in `out_elements`.
         /// Returns the amount of elements the path contains, like `&["a", "b", "c"]` would be `Some(3)`.
         ///
         /// The output vector will be cleared beforehand.
-        pub fn elements(id: PathNodeId, out_elements: &mut Vec<&BStr>) -> Option<usize> {
+        pub fn elements(&self, id: PathNodeId, out_elements: &mut Vec<&BStr>) -> Option<usize> {
             todo!("fetch elements")
         }
     }
@@ -69,10 +70,14 @@ pub mod tree {
             _other: &git_object::immutable::Tree<'_>,
             buf: (&mut Vec<u8>, &mut Vec<u8>),
             locate: LocateFn,
-        ) -> (PathNode, Vec<Change>)
-        where
+            out_paths: &mut PathTree,
+            out_changes: &mut Vec<Change>,
+        ) where
             LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::Tree<'b>>,
         {
+            out_paths.graph.clear();
+            out_changes.clear();
+
             let _this = *self.0.as_ref().unwrap_or(&&EMPTY_TREE);
             todo!("changes tree to tree")
         }
