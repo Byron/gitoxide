@@ -29,8 +29,6 @@ pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result
     if !script_result_directory.is_dir() {
         std::fs::create_dir_all(&script_result_directory)?;
         let script_absolute_path = std::env::current_dir()?.join(script_path);
-        // export =
-        // export GIT_COMMITTER_NAME=committer
         let output = std::process::Command::new("bash")
             .arg(script_absolute_path)
             .stdout(std::process::Stdio::piped())

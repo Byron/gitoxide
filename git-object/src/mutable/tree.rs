@@ -62,7 +62,10 @@ impl Tree {
         debug_assert_eq!(
             &{
                 let mut entries_sorted = self.entries.clone();
-                entries_sorted.sort_by(|lhs, rhs| lhs.filename.cmp(&rhs.filename));
+                entries_sorted.sort_by(|lhs, rhs| {
+                    let len = lhs.filename.len().min(rhs.filename.len());
+                    lhs.filename[..len].cmp(&rhs.filename[..len])
+                });
                 entries_sorted
             },
             &self.entries,
