@@ -42,8 +42,6 @@ mod with_tree {
         };
 
         git_diff::tree::Changes::from(previous_tree.as_ref()).to_obtain(&main_tree);
-        // Also works the other way around
-        git_diff::tree::Changes::from(&main_tree).to_obtain(&git_object::immutable::Tree::empty());
         Ok(())
     }
     #[test]

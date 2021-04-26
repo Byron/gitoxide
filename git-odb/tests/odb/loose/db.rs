@@ -72,7 +72,6 @@ mod locate {
         let o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9", &mut buf);
         assert_eq!(o.kind, Kind::Tag);
         assert_eq!(o.data.len(), 1024);
-        let tag = o.decode()?;
         let expected = immutable::Tag {
             target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
             name: b"1.0.0".as_bstr(),
@@ -101,7 +100,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
             ),
             signature: Some(signature(1528473343)),
         };
-        assert_eq!(tag.as_tag().expect("tag"), &expected);
+        assert_eq!(o.decode()?.as_tag().expect("tag"), &expected);
         Ok(())
     }
 
@@ -198,8 +197,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
                 },
             ],
         };
-        let tree = o.decode()?;
-        assert_eq!(tree.as_tree().expect("tree"), &expected);
+        assert_eq!(o.decode()?.as_tree().expect("tree"), &expected);
         Ok(())
     }
 }

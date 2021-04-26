@@ -72,7 +72,7 @@ pub mod ancestors {
                 match self.db.borrow().locate(oid, &mut self.buf, self.cache) {
                     Ok(Some(obj)) => match obj.decode().map_err(Error::from) {
                         Ok(obj) => {
-                            if let Some(commit) = obj.as_commit() {
+                            if let Some(commit) = obj.into_commit() {
                                 for parent_id in commit.parents() {
                                     let was_inserted = self.seen.insert(parent_id);
                                     if was_inserted {
