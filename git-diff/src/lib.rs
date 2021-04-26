@@ -1,14 +1,27 @@
 // TODO: add deny(missing_docs)
 #![forbid(unsafe_code, rust_2018_idioms)]
 
-pub struct Tree<'a>(pub &'a git_object::immutable::Tree<'a>);
+///
+pub mod tree {
+    use git_object::immutable;
+    const EMPTY_TREE: immutable::Tree<'static> = immutable::Tree::empty();
 
-const EMPTY_TREE: git_object::immutable::Tree<'static> = git_object::immutable::Tree::empty();
+    pub struct Changes<'a>(Option<&'a immutable::Tree<'a>>);
 
-impl<'a> Tree<'a> {
-    /// Returns the changes that need to be applied to `other` to get `self`.
-    pub fn changes_from(&self, other: Option<&git_object::immutable::Tree<'_>>) {
-        let other = other.unwrap_or(&EMPTY_TREE);
-        todo!("changes tree to tree")
+    impl<'a, T> From<T> for Changes<'a>
+    where
+        T: Into<Option<&'a immutable::Tree<'a>>>,
+    {
+        fn from(v: T) -> Self {
+            Changes(v.into())
+        }
+    }
+
+    impl<'a> Changes<'a> {
+        /// Returns the changes that need to be applied to `self` to get `other`.
+        pub fn to_obtain(&self, _other: &git_object::immutable::Tree<'_>) {
+            let _this = *self.0.as_ref().unwrap_or(&&EMPTY_TREE);
+            todo!("changes tree to tree")
+        }
     }
 }

@@ -30,7 +30,7 @@ mod with_tree {
             .into_tree()
             .expect("id to be a tree");
         let mut buf2 = Vec::new();
-        let previous_tree = {
+        let previous_tree: Option<_> = {
             parent_commit_id
                 .and_then(|id| db.locate(id, &mut buf2, &mut pack::cache::Never).ok().flatten())
                 .and_then(|c| c.decode().ok())
@@ -41,7 +41,9 @@ mod with_tree {
                 .and_then(|tree| tree.into_tree())
         };
 
-        git_diff::Tree(&main_tree).changes_from(previous_tree.as_ref());
+        git_diff::tree::Changes::from(previous_tree.as_ref()).to_obtain(&main_tree);
+        // Also works the other way around
+        git_diff::tree::Changes::from(&main_tree).to_obtain(&git_object::immutable::Tree::empty());
         Ok(())
     }
     #[test]
