@@ -750,6 +750,7 @@ name = "git-diff"
 version = "0.0.0"
 dependencies = [
  "git-object",
+ "test-tools",
 ]
 
 [[package]]
