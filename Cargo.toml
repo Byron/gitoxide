@@ -90,6 +90,7 @@ members = [
     "git-features",
     "git-commitgraph",
     "git-object",
+    "git-diff",
     "git-index",
     "git-packetline",
     "git-transport",

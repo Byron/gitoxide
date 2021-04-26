@@ -746,6 +746,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-diff"
+version = "0.0.0"
+
+[[package]]
 name = "git-features"
 version = "0.13.0"
 dependencies = [
