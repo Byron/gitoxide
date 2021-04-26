@@ -2,7 +2,6 @@
 set -eu -o pipefail
 
 git init -q
-git config commit.gpgsign false
 
 git checkout -q --orphan root
 git commit -q --allow-empty -m root
