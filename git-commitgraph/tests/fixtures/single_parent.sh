@@ -2,6 +2,7 @@
 set -eu -o pipefail
 
 git init -q
+git config commit.gpgsign false
 
 git checkout -q -b parent
 git commit -q --allow-empty -m parent
