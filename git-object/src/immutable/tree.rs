@@ -41,6 +41,13 @@ impl<'a> Tree<'a> {
     pub fn from_bytes(data: &'a [u8]) -> Result<Tree<'a>, decode::Error> {
         parse(data).map(|(_, t)| t).map_err(decode::Error::from)
     }
+
+    /// Create an instance of the empty tree.
+    ///
+    /// It's particularly useful as static part of a program.
+    pub const fn empty() -> Tree<'static> {
+        Tree { entries: Vec::new() }
+    }
 }
 
 impl TryFrom<&[u8]> for tree::Mode {
