@@ -69,7 +69,14 @@ impl<'a> Object<'a> {
 /// Convenient access to contained objects.
 impl<'a> Object<'a> {
     /// Interpret this object as blob.
-    pub fn as_blob(&self) -> Option<&immutable::Blob<'_>> {
+    pub fn as_blob(&self) -> Option<&immutable::Blob<'a>> {
+        match self {
+            Object::Blob(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as blob, chainable.
+    pub fn into_blob(self) -> Option<immutable::Blob<'a>> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
@@ -82,15 +89,36 @@ impl<'a> Object<'a> {
             _ => None,
         }
     }
+    /// Interpret this object as commit, chainable.
+    pub fn into_commit(self) -> Option<immutable::Commit<'a>> {
+        match self {
+            Object::Commit(v) => Some(v),
+            _ => None,
+        }
+    }
     /// Interpret this object as tree.
-    pub fn as_tree(&self) -> Option<&immutable::Tree<'_>> {
+    pub fn as_tree(&self) -> Option<&immutable::Tree<'a>> {
+        match self {
+            Object::Tree(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as tree, chainable
+    pub fn into_tree(self) -> Option<immutable::Tree<'a>> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tag.
-    pub fn as_tag(&self) -> Option<&immutable::Tag<'_>> {
+    pub fn as_tag(&self) -> Option<&immutable::Tag<'a>> {
+        match self {
+            Object::Tag(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as tag, chainable.
+    pub fn into_tag(self) -> Option<immutable::Tag<'a>> {
         match self {
             Object::Tag(v) => Some(v),
             _ => None,

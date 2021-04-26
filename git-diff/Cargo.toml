@@ -14,7 +14,9 @@ doctest = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+git-hash = { version = "^0.2.0", path = "../git-hash" }
 git-object = { version = "0.7", path = "../git-object" }
+git-odb = { version = "0.12", path = "../git-odb" }
 
 [dev-dependencies]
 test-tools = { path = "../tests/tools" }

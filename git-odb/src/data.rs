@@ -20,7 +20,7 @@ impl<'a> Object<'a> {
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
     /// using [`git_object::immutable::Object::into_mutable()`].
-    pub fn decode(&self) -> Result<immutable::Object<'_>, immutable::object::decode::Error> {
+    pub fn decode(&self) -> Result<immutable::Object<'a>, immutable::object::decode::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => immutable::Object::Tree(immutable::Tree::from_bytes(self.data)?),
             git_object::Kind::Blob => immutable::Object::Blob(immutable::Blob { data: self.data }),

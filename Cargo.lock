@@ -749,7 +749,9 @@ dependencies = [
 name = "git-diff"
 version = "0.0.0"
 dependencies = [
+ "git-hash",
  "git-object",
+ "git-odb",
  "test-tools",
 ]
 
