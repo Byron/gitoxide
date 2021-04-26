@@ -1,6 +1,7 @@
 use crate::{mutable::SPACE, tree::Mode};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
+use std::cmp::Ordering;
 use std::io;
 
 quick_error! {
@@ -29,7 +30,7 @@ pub struct Tree {
 }
 
 /// An entry in a [`Tree`], similar to an entry in a directory.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The kind of object to which `oid` is pointing to.
@@ -38,6 +39,20 @@ pub struct Entry {
     pub filename: BString,
     /// The id of the object representing the entry.
     pub oid: git_hash::ObjectId,
+}
+
+impl PartialOrd for Entry {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Entry {
+    /// Entries compare by the common portion of the filename. This is critical for proper functioning of algorithms working on trees.
+    fn cmp(&self, other: &Self) -> Ordering {
+        let len = self.filename.len().min(other.filename.len());
+        self.filename[..len].cmp(&other.filename[..len])
+    }
 }
 
 /// Serialization
@@ -62,10 +77,7 @@ impl Tree {
         debug_assert_eq!(
             &{
                 let mut entries_sorted = self.entries.clone();
-                entries_sorted.sort_by(|lhs, rhs| {
-                    let len = lhs.filename.len().min(rhs.filename.len());
-                    lhs.filename[..len].cmp(&rhs.filename[..len])
-                });
+                entries_sorted.sort_by(|lhs, rhs| lhs.cmp(&rhs));
                 entries_sorted
             },
             &self.entries,
