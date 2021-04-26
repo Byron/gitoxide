@@ -77,7 +77,7 @@ impl Tree {
         debug_assert_eq!(
             &{
                 let mut entries_sorted = self.entries.clone();
-                entries_sorted.sort_by(|lhs, rhs| lhs.cmp(&rhs));
+                entries_sorted.sort();
                 entries_sorted
             },
             &self.entries,
