@@ -41,21 +41,33 @@ impl<'a> visit::Changes<'a> {
         mut self,
         other: immutable::TreeIter<'a>,
         state: &mut visit::State<R::PathId>,
-        _locate: LocateFn,
+        mut locate: LocateFn,
         delegate: &mut R,
     ) -> Result<(), Error>
     where
-        LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::Object<'b>>,
+        LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
         R: visit::Record,
     {
         state.clear();
         let mut lhs_entries = self.0.take().unwrap_or_default();
         let mut rhs_entries = other;
+        let mut avoid_popping_path: Option<()> = None;
 
         loop {
-            delegate.pop_path_component();
+            if !avoid_popping_path.take().is_some() {
+                delegate.pop_path_component();
+            }
             match (lhs_entries.next(), rhs_entries.next()) {
-                (None, None) => return Ok(()),
+                (None, None) => match state.trees.pop_front() {
+                    Some((None, Some(rhs))) => {
+                        delegate.set_current_path(rhs.parent_path_id.clone());
+                        rhs_entries =
+                            locate(&rhs.tree_id, &mut state.buf2).ok_or_else(|| Error::NotFound(rhs.tree_id))?;
+                        avoid_popping_path = Some(());
+                    }
+                    None => return Ok(()),
+                    _ => todo!("all other combinations to re-stock iterators"),
+                },
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
@@ -100,7 +112,7 @@ impl<'a> visit::Changes<'a> {
                                     {
                                         return Err(Cancelled);
                                     };
-                                    state.trees.push((
+                                    state.trees.push_back((
                                         None,
                                         Some(TreeInfo {
                                             tree_id: rhs.oid.to_owned(),

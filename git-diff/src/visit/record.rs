@@ -1,8 +1,6 @@
 use git_hash::ObjectId;
 use git_object::{bstr::BStr, tree};
 
-pub type PathId = usize;
-
 pub enum Change {
     Addition {
         entry_mode: tree::EntryMode,
@@ -39,7 +37,7 @@ impl Action {
 pub trait Record {
     type PathId: Clone + Default;
 
-    fn set_current_path(&mut self, path: PathId);
+    fn set_current_path(&mut self, path: Self::PathId);
     fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId;
     fn push_path_component(&mut self, component: &BStr);
     fn pop_path_component(&mut self);

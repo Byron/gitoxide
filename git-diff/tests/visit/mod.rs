@@ -50,7 +50,12 @@ mod changes {
             git_diff::visit::Changes::from(previous_tree).needed_to_obtain(
                 main_tree,
                 &mut git_diff::visit::State::default(),
-                |_oid, _buf| todo!("Actual lookup in db"),
+                |oid, buf| {
+                    db.locate(oid, buf, &mut pack::cache::Never)
+                        .ok()
+                        .flatten()
+                        .and_then(|obj| obj.into_tree_iter())
+                },
                 &mut recorder,
             )?;
             Ok(recorder.records)
