@@ -41,6 +41,8 @@ impl Recorder {
     fn pop_element(&mut self) {
         if let Some(pos) = self.path.rfind_byte(b'/') {
             self.path.resize(pos, 0);
+        } else {
+            self.path.clear();
         }
     }
 
@@ -57,15 +59,8 @@ impl Recorder {
 }
 
 impl record::Record for Recorder {
-    fn update_path_component(&mut self, component: record::PathComponent<'_>, mode: record::PathComponentUpdateMode) {
-        use record::PathComponentUpdateMode::*;
-        match mode {
-            Push => self.push_element(component.name),
-            Replace => {
-                self.pop_element();
-                self.push_element(component.name);
-            }
-        }
+    fn push_path_component(&mut self, component: record::PathComponent<'_>) {
+        self.push_element(component.name)
     }
 
     fn pop_path_component(&mut self) {

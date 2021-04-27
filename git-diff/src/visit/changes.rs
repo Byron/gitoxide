@@ -2,7 +2,7 @@ use crate::{
     visit,
     visit::{
         changes::Error::Cancelled,
-        record::{Change, PathComponent, PathComponentUpdateMode},
+        record::{Change, PathComponent},
     },
 };
 use git_hash::{oid, ObjectId};
@@ -36,6 +36,7 @@ impl<'a> visit::Changes<'a> {
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
     ///
+    /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
     pub fn needed_to_obtain<LocateFn>(
         mut self,
         other: immutable::TreeIter<'a>,
@@ -51,6 +52,7 @@ impl<'a> visit::Changes<'a> {
 
         let mut path_id = 0;
         loop {
+            delegate.pop_path_component();
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => return Ok(()),
                 (Some(lhs), Some(rhs)) => {
@@ -59,10 +61,7 @@ impl<'a> visit::Changes<'a> {
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => {
                             use tree::EntryMode::*;
-                            delegate.update_path_component(
-                                PathComponent::new(lhs.filename, &mut path_id),
-                                PathComponentUpdateMode::Replace,
-                            );
+                            delegate.push_path_component(PathComponent::new(lhs.filename, &mut path_id));
                             match (lhs.mode, rhs.mode) {
                                 (Tree, Tree) => {
                                     if lhs.oid != rhs.oid {
@@ -142,10 +141,7 @@ impl<'a> visit::Changes<'a> {
                 }
                 (Some(lhs), None) => {
                     let lhs = lhs?;
-                    delegate.update_path_component(
-                        PathComponent::new(lhs.filename, &mut path_id),
-                        PathComponentUpdateMode::Replace,
-                    );
+                    delegate.push_path_component(PathComponent::new(lhs.filename, &mut path_id));
                     if delegate
                         .record(Change::Deletion {
                             entry_mode: lhs.mode,
@@ -162,10 +158,7 @@ impl<'a> visit::Changes<'a> {
                 }
                 (None, Some(rhs)) => {
                     let rhs = rhs?;
-                    delegate.update_path_component(
-                        PathComponent::new(rhs.filename, &mut path_id),
-                        PathComponentUpdateMode::Replace,
-                    );
+                    delegate.push_path_component(PathComponent::new(rhs.filename, &mut path_id));
                     if delegate
                         .record(Change::Addition {
                             entry_mode: rhs.mode,

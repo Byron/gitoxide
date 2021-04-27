@@ -30,12 +30,6 @@ pub enum Change {
 }
 
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
-pub enum PathComponentUpdateMode {
-    Replace,
-    Push,
-}
-
-#[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub struct PathComponent<'a> {
     pub name: &'a BStr,
     /// An ID referring uniquely to the path built thus far. Used to keep track of source paths
@@ -64,7 +58,7 @@ impl Action {
 }
 
 pub trait Record {
-    fn update_path_component(&mut self, component: PathComponent<'_>, mode: PathComponentUpdateMode);
+    fn push_path_component(&mut self, component: PathComponent<'_>);
     fn pop_path_component(&mut self);
     fn record(&mut self, change: Change) -> Action;
 }
