@@ -112,7 +112,7 @@ pub mod tree {
     #[repr(u16)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     #[allow(missing_docs)]
-    pub enum Mode {
+    pub enum EntryMode {
         Tree = 0o040000u16,
         Blob = 0o100644,
         BlobExecutable = 0o100755,

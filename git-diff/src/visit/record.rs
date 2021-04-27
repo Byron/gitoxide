@@ -2,7 +2,7 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, tree};
 
 pub enum Change {
-    Addition { mode: tree::Mode, oid: ObjectId },
+    Addition { mode: tree::EntryMode, oid: ObjectId },
     Copy,
     Deletion,
     Modification,

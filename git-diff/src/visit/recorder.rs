@@ -9,7 +9,7 @@ use std::{ops::Deref, path::PathBuf};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Change {
     Addition {
-        mode: tree::Mode,
+        mode: tree::EntryMode,
         oid: ObjectId,
         path: PathBuf,
     },

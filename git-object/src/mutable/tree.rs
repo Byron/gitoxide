@@ -1,4 +1,4 @@
-use crate::{mutable::SPACE, tree::Mode};
+use crate::{mutable::SPACE, tree::EntryMode};
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 use std::cmp::Ordering;
@@ -34,7 +34,7 @@ pub struct Tree {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry {
     /// The kind of object to which `oid` is pointing to.
-    pub mode: Mode,
+    pub mode: EntryMode,
     /// The name of the file in the parent tree.
     pub filename: BString,
     /// The id of the object representing the entry.
@@ -56,10 +56,10 @@ impl Ord for Entry {
 }
 
 /// Serialization
-impl Mode {
+impl EntryMode {
     /// Return the representation as used in the git internal format.
     pub fn as_bytes(&self) -> &'static [u8] {
-        use Mode::*;
+        use EntryMode::*;
         match self {
             Tree => b"40000",
             Blob => b"100644",

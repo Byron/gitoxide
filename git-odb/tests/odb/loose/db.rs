@@ -60,7 +60,7 @@ mod locate {
             signature,
         },
     };
-    use git_object::{bstr::ByteSlice, immutable, immutable::tree, tree::Mode, Kind};
+    use git_object::{bstr::ByteSlice, immutable, immutable::tree, tree::EntryMode, Kind};
 
     fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_odb::data::Object<'a> {
         locate_oid(hex_to_id(hex), buf)
@@ -182,14 +182,14 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         let expected = immutable::Tree {
             entries: vec![
                 tree::Entry {
-                    mode: Mode::Tree,
+                    mode: EntryMode::Tree,
                     filename: b"dir".as_bstr(),
                     oid: as_id(&[
                         150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                     ]),
                 },
                 tree::Entry {
-                    mode: Mode::Blob,
+                    mode: EntryMode::Blob,
                     filename: b"file.txt".as_bstr(),
                     oid: as_id(&[
                         55, 212, 230, 197, 196, 139, 160, 210, 69, 22, 76, 78, 16, 213, 244, 17, 64, 202, 185, 128,
