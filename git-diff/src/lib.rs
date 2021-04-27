@@ -74,14 +74,14 @@ pub mod visit {
         }
 
         #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
-        pub enum PathComponentMode {
+        pub enum PathComponentUpdateMode {
             Replace,
             Push,
         }
 
         #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
         pub struct PathComponent<'a> {
-            pub component: &'a BStr,
+            pub name: &'a BStr,
             /// An ID referring uniquely to the path built thus far. Used to keep track of source paths
             /// in case of [renames][Change::Rename] and [copies][Change::Copy].
             pub id: usize,
@@ -94,9 +94,9 @@ pub mod visit {
         }
 
         pub trait Record {
-            fn update_path_component(&mut self, component: PathComponent<'_>, mode: PathComponentMode);
+            fn update_path_component(&mut self, component: PathComponent<'_>, mode: PathComponentUpdateMode);
             fn pop_path_component(&mut self);
-            fn record(change: Change) -> Action;
+            fn record(&mut self, change: Change) -> Action;
         }
 
         #[cfg(test)]
@@ -117,25 +117,74 @@ pub mod visit {
 
     pub mod recorder {
         use crate::visit::record;
+        use git_hash::ObjectId;
+        use git_object::{
+            bstr::{BStr, BString, ByteSlice, ByteVec},
+            tree,
+        };
+        use std::{ops::Deref, path::PathBuf};
 
-        #[derive(Clone, Default)]
-        pub struct Recorder;
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        pub enum Change {
+            Addition {
+                mode: tree::Mode,
+                oid: ObjectId,
+                path: PathBuf,
+            },
+        }
+
+        pub type Changes = Vec<Change>;
+
+        #[derive(Clone, Debug, Default)]
+        pub struct Recorder {
+            current_component: BString,
+            pub records: Vec<Change>,
+        }
+
+        impl Recorder {
+            fn pop_element(&mut self) {
+                if let Some(pos) = self.current_component.rfind_byte(b'/') {
+                    self.current_component.resize(pos, 0);
+                }
+            }
+
+            fn push_element(&mut self, name: &BStr) {
+                self.current_component.push(b'/');
+                self.current_component.push_str(name);
+            }
+        }
 
         impl record::Record for Recorder {
             fn update_path_component(
                 &mut self,
-                _component: record::PathComponent<'_>,
-                _mode: record::PathComponentMode,
+                component: record::PathComponent<'_>,
+                mode: record::PathComponentUpdateMode,
             ) {
-                todo!()
+                use record::PathComponentUpdateMode::*;
+                match mode {
+                    Push => self.push_element(component.name),
+                    Replace => {
+                        self.pop_element();
+                        self.push_element(component.name);
+                    }
+                }
             }
 
             fn pop_path_component(&mut self) {
-                todo!()
+                self.pop_element();
             }
 
-            fn record(_change: record::Change) -> record::Action {
-                todo!()
+            fn record(&mut self, change: record::Change) -> record::Action {
+                use record::Change::*;
+                self.records.push(match change {
+                    Addition { mode, oid } => Change::Addition {
+                        mode,
+                        oid,
+                        path: self.current_component.deref().clone().into_path_buf_lossy(),
+                    },
+                    _ => todo!("record other kinds of changes"),
+                });
+                record::Action::Continue
             }
         }
     }
