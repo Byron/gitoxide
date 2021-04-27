@@ -71,6 +71,11 @@ impl<'a> TreeIter<'a> {
     pub const fn empty() -> TreeIter<'static> {
         TreeIter { data: &[] }
     }
+
+    /// Consume self and return all parsed entries.
+    pub fn entries(self) -> Result<Vec<Entry<'a>>, decode::Error> {
+        self.collect()
+    }
 }
 
 impl<'a> Iterator for TreeIter<'a> {

@@ -7,7 +7,7 @@ pub use blob::Blob;
 pub use commit::Commit;
 pub use object::{Object, Signature};
 pub use tag::Tag;
-pub use tree::Tree;
+pub use tree::{Tree, TreeIter};
 
 mod blob;
 mod commit;

@@ -28,6 +28,15 @@ impl<'a> Object<'a> {
             git_object::Kind::Tag => immutable::Object::Tag(immutable::Tag::from_bytes(self.data)?),
         })
     }
+
+    /// Returns this object as tree iterator to parse entries one at a time while avoiding allocations, or
+    /// `None` if this is not a tree object.
+    pub fn as_tree_iter(&self) -> Option<immutable::TreeIter<'_>> {
+        match self.kind {
+            git_object::Kind::Tree => Some(immutable::TreeIter { data: self.data }),
+            _ => None,
+        }
+    }
 }
 
 /// Types supporting object hash verification
