@@ -2,11 +2,13 @@ mod changes {
     mod to_obtain_tree {
         use crate::hex_to_id;
         use git_diff::visit::recorder;
+        use git_object::tree::EntryMode;
         use git_odb::{pack, Locate};
 
         const FIRST_COMMIT: &str = "055df97e18cd537da3cb16bcbdf1733fdcdfb430";
+        const SECOND_COMMIT: &str = "a5ebf9ee3b1cac5daf3dc9056026ee848be52da2";
 
-        fn diff_at(commit_id: &str) -> crate::Result<recorder::Changes> {
+        fn diff_with_previous_commit_from(commit_id: &str) -> crate::Result<recorder::Changes> {
             let db = git_odb::linked::Db::at(
                 test_tools::scripted_fixture_repo_read_only("make_diff_repo.sh")?
                     .join(".git")
@@ -56,16 +58,25 @@ mod changes {
         }
 
         #[test]
-        fn file_added() {
-            // :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f
+        fn many_different_states() {
             assert_eq!(
-                diff_at(FIRST_COMMIT).unwrap(),
+                diff_with_previous_commit_from(FIRST_COMMIT).unwrap(),
                 vec![recorder::Change::Addition {
-                    entry_mode: git_object::tree::EntryMode::Blob,
+                    entry_mode: EntryMode::Blob,
                     oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                     path: "f".into()
                 }]
-            );
+                , ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f");
+            assert_eq!(
+                diff_with_previous_commit_from(SECOND_COMMIT).unwrap(),
+                vec![recorder::Change::Modification {
+                    previous_entry_mode: EntryMode::Blob,
+                    previous_oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                    entry_mode: EntryMode::Blob,
+                    oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                    path: "f".into()
+                }]
+                , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      f");
         }
     }
 }

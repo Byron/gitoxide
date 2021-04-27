@@ -15,7 +15,15 @@ pub enum Change {
         previous_oid: ObjectId,
         path_id: PathId,
     },
-    Modification,
+    Modification {
+        previous_entry_mode: tree::EntryMode,
+        previous_oid: ObjectId,
+
+        entry_mode: tree::EntryMode,
+        oid: ObjectId,
+
+        path_id: PathId,
+    },
     Renaming,
     Type,
 }
@@ -68,7 +76,7 @@ mod tests {
     fn size_of_change() {
         assert_eq!(
             std::mem::size_of::<Change>(),
-            32,
+            56,
             "this type shouldn't grow without us knowing"
         )
     }

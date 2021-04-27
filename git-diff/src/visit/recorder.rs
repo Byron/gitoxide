@@ -13,6 +13,15 @@ pub enum Change {
         oid: ObjectId,
         path: PathBuf,
     },
+    Modification {
+        previous_entry_mode: tree::EntryMode,
+        previous_oid: ObjectId,
+
+        entry_mode: tree::EntryMode,
+        oid: ObjectId,
+
+        path: PathBuf,
+    },
 }
 
 pub type Changes = Vec<Change>;
@@ -35,6 +44,10 @@ impl Recorder {
             self.path.push(b'/');
         }
         self.path.push_str(name);
+    }
+
+    fn path_buf(&self) -> PathBuf {
+        self.path.deref().to_owned().into_path_buf_lossy()
     }
 }
 
@@ -64,7 +77,20 @@ impl record::Record for Recorder {
             } => Change::Addition {
                 entry_mode,
                 oid,
-                path: self.path.deref().clone().into_path_buf_lossy(),
+                path: self.path_buf(),
+            },
+            Modification {
+                previous_entry_mode,
+                previous_oid,
+                entry_mode,
+                oid,
+                path_id: _,
+            } => Change::Modification {
+                previous_entry_mode,
+                previous_oid,
+                entry_mode,
+                oid,
+                path: self.path_buf(),
             },
             _ => todo!("record other kinds of changes"),
         });

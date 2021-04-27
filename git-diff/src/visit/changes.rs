@@ -1,7 +1,7 @@
 use crate::visit;
 use crate::visit::record::{Change, PathComponent, PathComponentUpdateMode};
 use git_hash::{oid, ObjectId};
-use git_object::immutable;
+use git_object::{immutable, tree};
 use quick_error::quick_error;
 
 static EMPTY_TREE: immutable::Tree<'static> = immutable::Tree::empty();
@@ -20,6 +20,14 @@ quick_error! {
 
 impl<'a> visit::Changes<'a> {
     /// Returns the changes that need to be applied to `self` to get `other`.
+    ///
+    /// # Notes
+    ///
+    /// * Tree entries are expected to be ordered using [`tree-entry-comparison`][git_cmp_c] (the same [in Rust][git_cmp_rs])
+    ///
+    /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
+    /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
+    ///
     pub fn to_obtain_tree<LocateFn>(
         &self,
         other: &git_object::immutable::Tree<'_>,
@@ -40,6 +48,36 @@ impl<'a> visit::Changes<'a> {
         loop {
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => break Ok(()),
+                (Some(lhs), Some(rhs)) => {
+                    use std::cmp::Ordering::*;
+                    match lhs.filename.cmp(rhs.filename) {
+                        Equal => {
+                            if lhs.oid != rhs.oid || lhs.mode != rhs.mode {
+                                delegate.update_path_component(
+                                    PathComponent::new(lhs.filename, &mut path_id),
+                                    PathComponentUpdateMode::Replace,
+                                );
+                                if delegate
+                                    .record(Change::Modification {
+                                        previous_entry_mode: lhs.mode,
+                                        previous_oid: lhs.oid.to_owned(),
+                                        entry_mode: rhs.mode,
+                                        oid: rhs.oid.to_owned(),
+                                        path_id,
+                                    })
+                                    .cancelled()
+                                {
+                                    break Err(Error::Cancelled);
+                                }
+                            }
+                            if lhs.mode == tree::EntryMode::Tree || rhs.mode == tree::EntryMode::Tree {
+                                todo!("handle recursion")
+                            }
+                        }
+                        Less => todo!("entry compares less - catch up"),
+                        Greater => todo!("entry compares more - let the other side catch up"),
+                    }
+                }
                 (Some(lhs), None) => {
                     delegate.update_path_component(
                         PathComponent::new(lhs.filename, &mut path_id),
@@ -49,7 +87,7 @@ impl<'a> visit::Changes<'a> {
                         .record(Change::Deletion {
                             previous_entry_mode: lhs.mode,
                             previous_oid: lhs.oid.to_owned(),
-                            path_id: path_id,
+                            path_id,
                         })
                         .cancelled()
                     {
@@ -65,14 +103,13 @@ impl<'a> visit::Changes<'a> {
                         .record(Change::Addition {
                             entry_mode: rhs.mode,
                             oid: rhs.oid.to_owned(),
-                            path_id: path_id,
+                            path_id,
                         })
                         .cancelled()
                     {
                         break Err(Error::Cancelled);
                     }
                 }
-                _ => todo!("all branches"),
             }
         }
     }
