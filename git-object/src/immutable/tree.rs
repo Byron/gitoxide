@@ -23,6 +23,15 @@ pub struct Tree<'a> {
     pub entries: Vec<Entry<'a>>,
 }
 
+/// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct TreeIter<'a> {
+    /// The directories and files contained in this tree.
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    pub data: &'a [u8],
+}
+
 /// An element of a [`Tree`][Tree::entries].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -47,6 +56,37 @@ impl<'a> Tree<'a> {
     /// It's particularly useful as static part of a program.
     pub const fn empty() -> Tree<'static> {
         Tree { entries: Vec::new() }
+    }
+}
+
+impl<'a> TreeIter<'a> {
+    /// Initialize a Tree from `data`.
+    pub fn from_bytes(data: &'a [u8]) -> TreeIter<'a> {
+        TreeIter { data }
+    }
+
+    /// Create an instance of the empty tree.
+    ///
+    /// It's particularly useful as static part of a program.
+    pub const fn empty() -> TreeIter<'static> {
+        TreeIter { data: &[] }
+    }
+}
+
+impl<'a> Iterator for TreeIter<'a> {
+    type Item = Result<Entry<'a>, decode::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.data.is_empty() {
+            return None;
+        }
+        match parse_entry(self.data) {
+            Ok((data_left, entry)) => {
+                self.data = data_left;
+                Some(Ok(entry))
+            }
+            Err(err) => Some(Err(err.into())),
+        }
     }
 }
 
