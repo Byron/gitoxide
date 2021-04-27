@@ -8,6 +8,14 @@ pub struct State<PathId: Default + Clone> {
     trees: Vec<(Option<TreeInfo<PathId>>, Option<TreeInfo<PathId>>)>,
 }
 
+impl<P: Clone + Default> State<P> {
+    pub fn clear(&mut self) {
+        self.trees.clear();
+        self.buf1.clear();
+        self.buf2.clear();
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct TreeInfo<PathId: Clone> {
     pub tree_id: ObjectId,

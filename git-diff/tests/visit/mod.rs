@@ -84,6 +84,11 @@ mod changes {
                     path: "f".into()
                 },
                 recorder::Change::Addition {
+                    entry_mode: EntryMode::Tree,
+                    oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
+                    path: "f".into()
+                },
+                recorder::Change::Addition {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                     path: "f/f".into()

@@ -1,3 +1,4 @@
+use crate::visit::TreeInfo;
 use crate::{
     visit,
     visit::{changes::Error::Cancelled, record::Change},
@@ -39,7 +40,7 @@ impl<'a> visit::Changes<'a> {
     pub fn needed_to_obtain<LocateFn, R>(
         mut self,
         other: immutable::TreeIter<'a>,
-        _state: &mut visit::State<R::PathId>,
+        state: &mut visit::State<R::PathId>,
         _locate: LocateFn,
         delegate: &mut R,
     ) -> Result<(), Error>
@@ -47,6 +48,7 @@ impl<'a> visit::Changes<'a> {
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::Object<'b>>,
         R: visit::Record,
     {
+        state.clear();
         let mut lhs_entries = self.0.take().unwrap_or_default();
         let mut rhs_entries = other;
 
@@ -79,7 +81,7 @@ impl<'a> visit::Changes<'a> {
                                     todo!("schedule tree|tree iteration schedule the trees with stack")
                                 }
                                 (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
-                                    let _path_id = delegate.push_tracked_path_component(lhs.filename);
+                                    let path_id = delegate.push_tracked_path_component(lhs.filename);
                                     if delegate
                                         .record(Change::Deletion {
                                             entry_mode: lhs.mode,
@@ -98,7 +100,13 @@ impl<'a> visit::Changes<'a> {
                                     {
                                         return Err(Cancelled);
                                     };
-                                    todo!("delete non-tree ✓|add tree✓ - add rhs children recursively")
+                                    state.trees.push((
+                                        None,
+                                        Some(TreeInfo {
+                                            tree_id: rhs.oid.to_owned(),
+                                            parent_path_id: path_id,
+                                        }),
+                                    ));
                                 }
                                 (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
                                     let _path_id = delegate.push_tracked_path_component(lhs.filename);
