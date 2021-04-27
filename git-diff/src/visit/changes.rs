@@ -1,6 +1,10 @@
-use crate::visit;
-use crate::visit::changes::Error::Cancelled;
-use crate::visit::record::{Action, Change, PathComponent, PathComponentUpdateMode};
+use crate::{
+    visit,
+    visit::{
+        changes::Error::Cancelled,
+        record::{Action, Change, PathComponent, PathComponentUpdateMode},
+    },
+};
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
@@ -22,10 +26,7 @@ quick_error! {
     }
 }
 
-impl<'a, Iter> visit::Changes<'a, Iter>
-where
-    Iter: Iterator<Item = super::TreeEntryResult<'a>>,
-{
+impl<'a> visit::Changes<'a> {
     /// Returns the changes that need to be applied to `self` to get `other`.
     ///
     /// # Notes
@@ -36,8 +37,8 @@ where
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
     ///
     pub fn needed_to_obtain<LocateFn>(
-        self,
-        other: Iter,
+        mut self,
+        other: immutable::TreeIter<'a>,
         _state: &mut visit::State,
         _locate: LocateFn,
         delegate: &mut impl visit::Record,
@@ -45,7 +46,7 @@ where
     where
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::Object<'b>>,
     {
-        let mut lhs_entries = self.0;
+        let mut lhs_entries = self.0.take().unwrap_or_default();
         let mut rhs_entries = other;
 
         let mut path_id = 0;

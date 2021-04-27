@@ -47,7 +47,7 @@ mod changes {
             };
 
             let mut recorder = git_diff::visit::Recorder::default();
-            git_diff::visit::Changes::from(previous_tree.unwrap_or_default()).needed_to_obtain(
+            git_diff::visit::Changes::from(previous_tree).needed_to_obtain(
                 main_tree,
                 &mut git_diff::visit::State::default(),
                 |_oid, _buf| todo!("Actual lookup in db"),

@@ -6,17 +6,10 @@ pub struct State {
     buf2: Vec<u8>,
 }
 
-pub(crate) type TreeEntryResult<'a> = Result<immutable::tree::Entry<'a>, immutable::object::decode::Error>;
+pub struct Changes<'a>(Option<immutable::TreeIter<'a>>);
 
-pub struct Changes<'a, Iter>(Iter)
-where
-    Iter: Iterator<Item = TreeEntryResult<'a>>;
-
-impl<'a, Iter> From<Iter> for Changes<'a, Iter>
-where
-    Iter: Iterator<Item = TreeEntryResult<'a>>,
-{
-    fn from(v: Iter) -> Self {
+impl<'a> From<Option<immutable::TreeIter<'a>>> for Changes<'a> {
+    fn from(v: Option<immutable::TreeIter<'a>>) -> Self {
         Changes(v)
     }
 }
