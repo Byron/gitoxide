@@ -3,6 +3,7 @@ use git_object::{bstr::BStr, tree};
 
 pub type PathId = usize;
 
+/// `path_id`s are kept for rename or copy tracking to allow referring to a path in the tree more easily.
 pub enum Change {
     Addition {
         entry_mode: tree::EntryMode,
@@ -11,8 +12,8 @@ pub enum Change {
     },
     Copy,
     Deletion {
-        previous_entry_mode: tree::EntryMode,
-        previous_oid: ObjectId,
+        entry_mode: tree::EntryMode,
+        oid: ObjectId,
         path_id: PathId,
     },
     Modification {

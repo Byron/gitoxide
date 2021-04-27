@@ -13,6 +13,11 @@ pub enum Change {
         oid: ObjectId,
         path: PathBuf,
     },
+    Deletion {
+        entry_mode: tree::EntryMode,
+        oid: ObjectId,
+        path: PathBuf,
+    },
     Modification {
         previous_entry_mode: tree::EntryMode,
         previous_oid: ObjectId,
@@ -70,6 +75,15 @@ impl record::Record for Recorder {
     fn record(&mut self, change: record::Change) -> record::Action {
         use record::Change::*;
         self.records.push(match change {
+            Deletion {
+                entry_mode,
+                oid,
+                path_id: _,
+            } => Change::Deletion {
+                entry_mode,
+                oid,
+                path: self.path_buf(),
+            },
             Addition {
                 entry_mode,
                 oid,

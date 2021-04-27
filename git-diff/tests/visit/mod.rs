@@ -7,6 +7,7 @@ mod changes {
 
         const FIRST_COMMIT: &str = "055df97e18cd537da3cb16bcbdf1733fdcdfb430";
         const SECOND_COMMIT: &str = "a5ebf9ee3b1cac5daf3dc9056026ee848be52da2";
+        const FIFTH_COMMIT: &str = "69bbebb6608472d98be684f4e6ef1faaac2a03bc";
 
         fn diff_with_previous_commit_from(commit_id: &str) -> crate::Result<recorder::Changes> {
             let db = git_odb::linked::Db::at(
@@ -77,6 +78,20 @@ mod changes {
                     path: "f".into()
                 }]
                 , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      f");
+            assert_eq!(
+                diff_with_previous_commit_from(FIFTH_COMMIT).unwrap(),
+                vec![recorder::Change::Deletion {
+                    entry_mode: EntryMode::Blob,
+                    oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                    path: "f".into()
+                },
+                recorder::Change::Addition {
+                    entry_mode: EntryMode::Blob,
+                    oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                    path: "f/f".into()
+                }]
+                , ":100644 000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 0000000000000000000000000000000000000000 D      f
+                   :000000 100644 0000000000000000000000000000000000000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 A      f/f");
         }
     }
 }

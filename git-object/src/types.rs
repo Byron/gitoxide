@@ -119,4 +119,16 @@ pub mod tree {
         Link = 0o120000,
         Commit = 0o160000,
     }
+
+    impl EntryMode {
+        /// Return true if this entry mode represents a Tree/directory
+        pub fn is_tree(&self) -> bool {
+            *self == EntryMode::Tree
+        }
+
+        /// Return true if this entry mode represents anything BUT Tree/directory
+        pub fn is_no_tree(&self) -> bool {
+            *self != EntryMode::Tree
+        }
+    }
 }

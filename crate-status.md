@@ -77,7 +77,7 @@
 
 * **tree**
   * [ ] changes needed to obtain _other tree_
-  * [ ] rename tracking
+  * [ ] rename and copy tracking
 * **patches**    
   * There are various ways to generate a patch from two blobs.
   * [ ] any

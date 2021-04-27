@@ -52,26 +52,38 @@ impl<'a> visit::Changes<'a> {
                     use std::cmp::Ordering::*;
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => {
+                            use tree::EntryMode::*;
                             if lhs.oid != rhs.oid || lhs.mode != rhs.mode {
                                 delegate.update_path_component(
                                     PathComponent::new(lhs.filename, &mut path_id),
                                     PathComponentUpdateMode::Replace,
                                 );
-                                if delegate
-                                    .record(Change::Modification {
+                                let record_result = if (lhs.mode.is_no_tree() && rhs.mode.is_tree())
+                                    || (rhs.mode.is_tree() && rhs.mode.is_no_tree())
+                                {
+                                    delegate.record(Change::Deletion {
+                                        entry_mode: lhs.mode,
+                                        oid: lhs.oid.to_owned(),
+                                        path_id,
+                                    })
+                                } else {
+                                    delegate.record(Change::Modification {
                                         previous_entry_mode: lhs.mode,
                                         previous_oid: lhs.oid.to_owned(),
                                         entry_mode: rhs.mode,
                                         oid: rhs.oid.to_owned(),
                                         path_id,
                                     })
-                                    .cancelled()
-                                {
+                                };
+                                if record_result.cancelled() {
                                     break Err(Error::Cancelled);
                                 }
                             }
-                            if lhs.mode == tree::EntryMode::Tree || rhs.mode == tree::EntryMode::Tree {
-                                todo!("handle recursion")
+                            match (lhs.mode, rhs.mode) {
+                                (Tree, Tree) => todo!("recurse tree|tree"),
+                                (lhs, Tree) if !lhs.is_tree() => todo!("recurse non-tree|tree"),
+                                (Tree, rhs) if !rhs.is_tree() => todo!("recurse tree|non-tree"),
+                                _both_are_not_trees => {}
                             }
                         }
                         Less => todo!("entry compares less - catch up"),
@@ -85,8 +97,8 @@ impl<'a> visit::Changes<'a> {
                     );
                     if delegate
                         .record(Change::Deletion {
-                            previous_entry_mode: lhs.mode,
-                            previous_oid: lhs.oid.to_owned(),
+                            entry_mode: lhs.mode,
+                            oid: lhs.oid.to_owned(),
                             path_id,
                         })
                         .cancelled()
