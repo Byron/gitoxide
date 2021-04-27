@@ -2,16 +2,16 @@ use git_hash::ObjectId;
 use git_object::immutable;
 
 #[derive(Default, Clone)]
-pub struct State {
+pub struct State<PathId: Default + Clone> {
     buf1: Vec<u8>,
     buf2: Vec<u8>,
-    trees: Vec<(Option<TreeInfo>, Option<TreeInfo>)>,
+    trees: Vec<(Option<TreeInfo<PathId>>, Option<TreeInfo<PathId>>)>,
 }
 
 #[derive(Clone)]
-pub(crate) struct TreeInfo {
+pub(crate) struct TreeInfo<PathId: Clone> {
     pub tree_id: ObjectId,
-    pub entries_level: usize,
+    pub parent_path_id: PathId,
 }
 
 pub struct Changes<'a>(Option<immutable::TreeIter<'a>>);

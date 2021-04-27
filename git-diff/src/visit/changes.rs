@@ -36,15 +36,16 @@ impl<'a> visit::Changes<'a> {
     /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
     /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
     ///   by the delegate implementation which should be as specific as possible.
-    pub fn needed_to_obtain<LocateFn>(
+    pub fn needed_to_obtain<LocateFn, R>(
         mut self,
         other: immutable::TreeIter<'a>,
-        _state: &mut visit::State,
+        _state: &mut visit::State<R::PathId>,
         _locate: LocateFn,
-        delegate: &mut impl visit::Record,
+        delegate: &mut R,
     ) -> Result<(), Error>
     where
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::Object<'b>>,
+        R: visit::Record,
     {
         let mut lhs_entries = self.0.take().unwrap_or_default();
         let mut rhs_entries = other;

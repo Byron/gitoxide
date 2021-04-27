@@ -37,7 +37,7 @@ impl Action {
 }
 
 pub trait Record {
-    type PathId;
+    type PathId: Clone + Default;
 
     fn set_current_path(&mut self, path: PathId);
     fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId;
