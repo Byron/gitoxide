@@ -1,8 +1,3 @@
-//! Currently this experiment fails as `locate(…)` can't actually find objects. My guess is that
-//! it can't find objects in packs for some reason because it could find some objects there were
-//! probably loose, but failed right away after a `git gc`.
-//! Let's see if a unit test can reproduce this too, right now this functionality is entirely untested
-//! I think.
 use anyhow::anyhow;
 use git_hash::ObjectId;
 use git_odb::Locate;
