@@ -50,7 +50,7 @@ impl<'a> visit::Changes<'a> {
         let mut rhs_entries = other;
 
         loop {
-            delegate.pop_path_name();
+            delegate.pop_path_component();
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => return Ok(()),
                 (Some(lhs), Some(rhs)) => {
@@ -61,7 +61,7 @@ impl<'a> visit::Changes<'a> {
                             use tree::EntryMode::*;
                             match (lhs.mode, rhs.mode) {
                                 (Tree, Tree) => {
-                                    let _path_id = delegate.push_tree_name(lhs.filename);
+                                    let _path_id = delegate.push_tracked_path_component(lhs.filename);
                                     if lhs.oid != rhs.oid {
                                         if delegate
                                             .record(Change::Modification {
@@ -78,7 +78,7 @@ impl<'a> visit::Changes<'a> {
                                     todo!("schedule tree|tree iteration schedule the trees with stack")
                                 }
                                 (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
-                                    let _path_id = delegate.push_tree_name(lhs.filename);
+                                    let _path_id = delegate.push_tracked_path_component(lhs.filename);
                                     if delegate
                                         .record(Change::Deletion {
                                             entry_mode: lhs.mode,
@@ -100,7 +100,7 @@ impl<'a> visit::Changes<'a> {
                                     todo!("delete non-tree ✓|add tree✓ - add rhs children recursively")
                                 }
                                 (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
-                                    let _path_id = delegate.push_tree_name(lhs.filename);
+                                    let _path_id = delegate.push_tracked_path_component(lhs.filename);
                                     if delegate
                                         .record(Change::Deletion {
                                             entry_mode: lhs.mode,
@@ -113,7 +113,7 @@ impl<'a> visit::Changes<'a> {
                                     todo!("delete lhs recursively|add non-tree")
                                 }
                                 (lhs_non_tree, rhs_non_tree) => {
-                                    delegate.push_non_tree_name(lhs.filename);
+                                    delegate.push_path_component(lhs.filename);
                                     debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
                                     if lhs.oid != rhs.oid {
                                         if delegate
@@ -137,7 +137,7 @@ impl<'a> visit::Changes<'a> {
                 }
                 (Some(lhs), None) => {
                     let lhs = lhs?;
-                    delegate.push_non_tree_name(lhs.filename);
+                    delegate.push_path_component(lhs.filename);
                     if delegate
                         .record(Change::Deletion {
                             entry_mode: lhs.mode,
@@ -148,14 +148,14 @@ impl<'a> visit::Changes<'a> {
                         break Err(Error::Cancelled);
                     }
                     if lhs.mode.is_tree() {
-                        delegate.pop_path_name();
-                        let _path_id = delegate.push_tree_name(lhs.filename);
+                        delegate.pop_path_component();
+                        let _path_id = delegate.push_tracked_path_component(lhs.filename);
                         todo!("delete tree recursively")
                     }
                 }
                 (None, Some(rhs)) => {
                     let rhs = rhs?;
-                    delegate.push_non_tree_name(rhs.filename);
+                    delegate.push_path_component(rhs.filename);
                     if delegate
                         .record(Change::Addition {
                             entry_mode: rhs.mode,
@@ -166,8 +166,8 @@ impl<'a> visit::Changes<'a> {
                         break Err(Error::Cancelled);
                     }
                     if rhs.mode.is_tree() {
-                        delegate.pop_path_name();
-                        let _path_id = delegate.push_tree_name(rhs.filename);
+                        delegate.pop_path_component();
+                        let _path_id = delegate.push_tracked_path_component(rhs.filename);
                         todo!("add tree recursively")
                     }
                 }

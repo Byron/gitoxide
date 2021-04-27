@@ -5,7 +5,8 @@ use git_object::{
     tree,
 };
 use std::collections::BTreeMap;
-use std::{ops::Deref, path::PathBuf};
+use std::ops::Deref;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Change {
@@ -57,22 +58,22 @@ impl Recorder {
     }
 
     fn path_clone(&self) -> BString {
-        self.path.deref().into()
+        self.path.clone()
     }
 
     fn path_buf(&self) -> PathBuf {
-        self.path_clone().into_path_buf_lossy()
+        self.path.deref().to_owned().into_path_buf_lossy()
     }
 }
 
 impl record::Record for Recorder {
     type PathId = usize;
 
-    fn set_parent(&mut self, path: Self::PathId) {
-        self.path = self.path_map[path];
+    fn set_current_path(&mut self, path: Self::PathId) {
+        self.path = self.path_map.remove(&path).expect("every parent is set only once");
     }
 
-    fn push_tree_name(&mut self, component: &BStr) -> Self::PathId {
+    fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId {
         self.push_element(component);
         self.path_map.insert(self.path_count, self.path_clone());
         let res = self.path_count;
@@ -80,11 +81,11 @@ impl record::Record for Recorder {
         res
     }
 
-    fn push_non_tree_name(&mut self, component: &BStr) {
+    fn push_path_component(&mut self, component: &BStr) {
         self.push_element(component);
     }
 
-    fn pop_path_name(&mut self) {
+    fn pop_path_component(&mut self) {
         self.pop_element();
     }
 

@@ -39,10 +39,10 @@ impl Action {
 pub trait Record {
     type PathId;
 
-    fn set_parent(&mut self, path: PathId);
-    fn push_tree_name(&mut self, component: &BStr) -> Self::PathId;
-    fn push_non_tree_name(&mut self, component: &BStr);
-    fn pop_path_name(&mut self);
+    fn set_current_path(&mut self, path: PathId);
+    fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId;
+    fn push_path_component(&mut self, component: &BStr);
+    fn pop_path_component(&mut self);
     fn record(&mut self, change: Change) -> Action;
 }
 
@@ -54,7 +54,7 @@ mod tests {
     fn size_of_change() {
         assert_eq!(
             std::mem::size_of::<Change>(),
-            56,
+            46,
             "this type shouldn't grow without us knowing"
         )
     }
