@@ -1,9 +1,6 @@
 use crate::{
     visit,
-    visit::{
-        changes::Error::Cancelled,
-        record::{Change, PathComponent},
-    },
+    visit::{changes::Error::Cancelled, record::Change},
 };
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
@@ -37,6 +34,8 @@ impl<'a> visit::Changes<'a> {
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
     ///
     /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
+    /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
+    ///   by the delegate implementation which should be as specific as possible.
     pub fn needed_to_obtain<LocateFn>(
         mut self,
         other: immutable::TreeIter<'a>,
@@ -50,9 +49,8 @@ impl<'a> visit::Changes<'a> {
         let mut lhs_entries = self.0.take().unwrap_or_default();
         let mut rhs_entries = other;
 
-        let mut path_id = 0;
         loop {
-            delegate.pop_path_component();
+            delegate.pop_path_name();
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => return Ok(()),
                 (Some(lhs), Some(rhs)) => {
@@ -61,9 +59,9 @@ impl<'a> visit::Changes<'a> {
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => {
                             use tree::EntryMode::*;
-                            delegate.push_path_component(PathComponent::new(lhs.filename, &mut path_id));
                             match (lhs.mode, rhs.mode) {
                                 (Tree, Tree) => {
+                                    let _path_id = delegate.push_tree_name(lhs.filename);
                                     if lhs.oid != rhs.oid {
                                         if delegate
                                             .record(Change::Modification {
@@ -71,7 +69,6 @@ impl<'a> visit::Changes<'a> {
                                                 previous_oid: lhs.oid.to_owned(),
                                                 entry_mode: rhs.mode,
                                                 oid: rhs.oid.to_owned(),
-                                                path_id,
                                             })
                                             .cancelled()
                                         {
@@ -81,11 +78,11 @@ impl<'a> visit::Changes<'a> {
                                     todo!("schedule tree|tree iteration schedule the trees with stack")
                                 }
                                 (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
+                                    let _path_id = delegate.push_tree_name(lhs.filename);
                                     if delegate
                                         .record(Change::Deletion {
                                             entry_mode: lhs.mode,
                                             oid: lhs.oid.to_owned(),
-                                            path_id,
                                         })
                                         .cancelled()
                                     {
@@ -95,7 +92,6 @@ impl<'a> visit::Changes<'a> {
                                         .record(Change::Addition {
                                             entry_mode: rhs.mode,
                                             oid: rhs.oid.to_owned(),
-                                            path_id,
                                         })
                                         .cancelled()
                                     {
@@ -104,11 +100,11 @@ impl<'a> visit::Changes<'a> {
                                     todo!("delete non-tree ✓|add tree✓ - add rhs children recursively")
                                 }
                                 (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
+                                    let _path_id = delegate.push_tree_name(lhs.filename);
                                     if delegate
                                         .record(Change::Deletion {
                                             entry_mode: lhs.mode,
                                             oid: lhs.oid.to_owned(),
-                                            path_id,
                                         })
                                         .cancelled()
                                     {
@@ -117,6 +113,7 @@ impl<'a> visit::Changes<'a> {
                                     todo!("delete lhs recursively|add non-tree")
                                 }
                                 (lhs_non_tree, rhs_non_tree) => {
+                                    delegate.push_non_tree_name(lhs.filename);
                                     debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
                                     if lhs.oid != rhs.oid {
                                         if delegate
@@ -125,7 +122,6 @@ impl<'a> visit::Changes<'a> {
                                                 previous_oid: lhs.oid.to_owned(),
                                                 entry_mode: rhs.mode,
                                                 oid: rhs.oid.to_owned(),
-                                                path_id,
                                             })
                                             .cancelled()
                                         {
@@ -141,35 +137,37 @@ impl<'a> visit::Changes<'a> {
                 }
                 (Some(lhs), None) => {
                     let lhs = lhs?;
-                    delegate.push_path_component(PathComponent::new(lhs.filename, &mut path_id));
+                    delegate.push_non_tree_name(lhs.filename);
                     if delegate
                         .record(Change::Deletion {
                             entry_mode: lhs.mode,
                             oid: lhs.oid.to_owned(),
-                            path_id,
                         })
                         .cancelled()
                     {
                         break Err(Error::Cancelled);
                     }
                     if lhs.mode.is_tree() {
+                        delegate.pop_path_name();
+                        let _path_id = delegate.push_tree_name(lhs.filename);
                         todo!("delete tree recursively")
                     }
                 }
                 (None, Some(rhs)) => {
                     let rhs = rhs?;
-                    delegate.push_path_component(PathComponent::new(rhs.filename, &mut path_id));
+                    delegate.push_non_tree_name(rhs.filename);
                     if delegate
                         .record(Change::Addition {
                             entry_mode: rhs.mode,
                             oid: rhs.oid.to_owned(),
-                            path_id,
                         })
                         .cancelled()
                     {
                         break Err(Error::Cancelled);
                     }
                     if rhs.mode.is_tree() {
+                        delegate.pop_path_name();
+                        let _path_id = delegate.push_tree_name(rhs.filename);
                         todo!("add tree recursively")
                     }
                 }

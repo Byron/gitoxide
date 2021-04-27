@@ -3,18 +3,15 @@ use git_object::{bstr::BStr, tree};
 
 pub type PathId = usize;
 
-/// `path_id`s are kept for rename or copy tracking to allow referring to a path in the tree more easily.
 pub enum Change {
     Addition {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
-        path_id: PathId,
     },
     Copy,
     Deletion {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
-        path_id: PathId,
     },
     Modification {
         previous_entry_mode: tree::EntryMode,
@@ -22,27 +19,9 @@ pub enum Change {
 
         entry_mode: tree::EntryMode,
         oid: ObjectId,
-
-        path_id: PathId,
     },
     Renaming,
     Type,
-}
-
-#[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
-pub struct PathComponent<'a> {
-    pub name: &'a BStr,
-    /// An ID referring uniquely to the path built thus far. Used to keep track of source paths
-    /// in case of [renames][Change::Rename] and [copies][Change::Copy].
-    pub id: PathId,
-}
-
-impl<'a> PathComponent<'a> {
-    pub(crate) fn new(name: &'a BStr, id: &mut usize) -> Self {
-        let current_id = *id;
-        *id += 1;
-        PathComponent { id: current_id, name }
-    }
 }
 
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
@@ -58,8 +37,12 @@ impl Action {
 }
 
 pub trait Record {
-    fn push_path_component(&mut self, component: PathComponent<'_>);
-    fn pop_path_component(&mut self);
+    type PathId;
+
+    fn set_parent(&mut self, path: PathId);
+    fn push_tree_name(&mut self, component: &BStr) -> Self::PathId;
+    fn push_non_tree_name(&mut self, component: &BStr);
+    fn pop_path_name(&mut self);
     fn record(&mut self, change: Change) -> Action;
 }
 
