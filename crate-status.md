@@ -72,6 +72,15 @@
     * [ ] _an ODB for object lookup from multiple lower level ODB at once_
 * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
+    
+### git-diff
+
+* **tree**
+  * [ ] changes needed to obtain _other tree_
+  * [ ] rename tracking
+* **patches**    
+  * There are various ways to generate a patch from two blobs.
+  * [ ] any
 
 ### git-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
