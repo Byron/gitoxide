@@ -67,7 +67,6 @@ mod changes {
                     path: "f".into()
                 }]
             );
-            todo!("detect an added file in the root tree")
         }
     }
 }
