@@ -41,14 +41,12 @@ mod with_tree {
                 .and_then(|tree| tree.into_tree())
         };
 
-        let (mut buf3, mut buf4) = (Vec::new(), Vec::new());
-        git_diff::tree::Changes::from(previous_tree.as_ref()).to_obtain(
+        git_diff::tree::VisitChanges::from(previous_tree.as_ref()).to_obtain(
             &main_tree,
-            (&mut buf3, &mut buf4),
+            &mut git_diff::tree::State::default(),
             |_oid, _buf| todo!("Actual lookup in db"),
-            &mut git_diff::tree::PathTree::default(),
-            &mut Vec::new(),
-        );
+            &mut git_diff::tree::delegate::Recorder::default(),
+        )?;
         Ok(())
     }
     #[test]

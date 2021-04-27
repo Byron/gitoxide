@@ -759,6 +759,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "petgraph",
+ "quick-error",
  "test-tools",
 ]
 
@@ -1568,8 +1569,6 @@ dependencies = [
 [[package]]
 name = "quick-error"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ac73b1112776fc109b2e61909bc46c7e1bf0d7f690ffb1676553acce16d5cda"
 
 [[package]]
 name = "quote"
