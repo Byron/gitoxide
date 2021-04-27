@@ -33,8 +33,7 @@ mod changes {
             let main_tree = db
                 .locate(main_tree_id, &mut buf, &mut pack::cache::Never)?
                 .expect("main tree present")
-                .decode()?
-                .into_tree()
+                .into_tree_iter()
                 .expect("id to be a tree");
             let mut buf2 = Vec::new();
             let previous_tree: Option<_> = {
@@ -44,13 +43,12 @@ mod changes {
                     .and_then(|c| c.into_commit())
                     .map(|c| c.tree())
                     .and_then(|tree| db.locate(tree, &mut buf2, &mut pack::cache::Never).ok().flatten())
-                    .and_then(|tree| tree.decode().ok())
-                    .and_then(|tree| tree.into_tree())
+                    .and_then(|tree| tree.into_tree_iter())
             };
 
             let mut recorder = git_diff::visit::Recorder::default();
-            git_diff::visit::Changes::from(previous_tree.as_ref()).to_obtain_tree(
-                &main_tree,
+            git_diff::visit::Changes::from(previous_tree.unwrap_or_default()).needed_to_obtain(
+                main_tree,
                 &mut git_diff::visit::State::default(),
                 |_oid, _buf| todo!("Actual lookup in db"),
                 &mut recorder,

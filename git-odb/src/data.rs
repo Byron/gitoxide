@@ -31,7 +31,7 @@ impl<'a> Object<'a> {
 
     /// Returns this object as tree iterator to parse entries one at a time while avoiding allocations, or
     /// `None` if this is not a tree object.
-    pub fn as_tree_iter(&self) -> Option<immutable::TreeIter<'_>> {
+    pub fn into_tree_iter(self) -> Option<immutable::TreeIter<'a>> {
         match self.kind {
             git_object::Kind::Tree => Some(immutable::TreeIter { data: self.data }),
             _ => None,

@@ -60,21 +60,15 @@ impl<'a> Tree<'a> {
 }
 
 impl<'a> TreeIter<'a> {
-    /// Initialize a Tree from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> TreeIter<'a> {
-        TreeIter { data }
-    }
-
-    /// Create an instance of the empty tree.
-    ///
-    /// It's particularly useful as static part of a program.
-    pub const fn empty() -> TreeIter<'static> {
-        TreeIter { data: &[] }
-    }
-
     /// Consume self and return all parsed entries.
     pub fn entries(self) -> Result<Vec<Entry<'a>>, decode::Error> {
         self.collect()
+    }
+}
+
+impl<'a> Default for TreeIter<'a> {
+    fn default() -> Self {
+        TreeIter { data: &[] }
     }
 }
 

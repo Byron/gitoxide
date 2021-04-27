@@ -5,8 +5,6 @@ use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
 
-static EMPTY_TREE: immutable::Tree<'static> = immutable::Tree::empty();
-
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
@@ -16,10 +14,18 @@ quick_error! {
         Cancelled {
             display("The delegate cancelled the operation")
         }
+        EntriesDecode(err: immutable::object::decode::Error) {
+            display("tree entries could not be decoded.")
+            from()
+            source(err)
+        }
     }
 }
 
-impl<'a> visit::Changes<'a> {
+impl<'a, Iter> visit::Changes<'a, Iter>
+where
+    Iter: Iterator<Item = super::TreeEntryResult<'a>>,
+{
     /// Returns the changes that need to be applied to `self` to get `other`.
     ///
     /// # Notes
@@ -29,9 +35,9 @@ impl<'a> visit::Changes<'a> {
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
     ///
-    pub fn to_obtain_tree<LocateFn>(
-        &self,
-        other: &git_object::immutable::Tree<'_>,
+    pub fn needed_to_obtain<LocateFn>(
+        self,
+        other: Iter,
         _state: &mut visit::State,
         _locate: LocateFn,
         delegate: &mut impl visit::Record,
@@ -39,18 +45,16 @@ impl<'a> visit::Changes<'a> {
     where
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::Object<'b>>,
     {
-        let lhs = *self.0.as_ref().unwrap_or(&&EMPTY_TREE);
-        let rhs = other;
+        let mut lhs_entries = self.0;
+        let mut rhs_entries = other;
 
         let mut path_id = 0;
-        let mut lhs_entries = lhs.entries.iter();
-        let mut rhs_entries = rhs.entries.iter();
-
         loop {
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => break Ok(()),
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
+                    let (lhs, rhs) = (lhs?, rhs?);
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => {
                             use tree::EntryMode::*;
@@ -116,6 +120,7 @@ impl<'a> visit::Changes<'a> {
                     }
                 }
                 (Some(lhs), None) => {
+                    let lhs = lhs?;
                     delegate.update_path_component(
                         PathComponent::new(lhs.filename, &mut path_id),
                         PathComponentUpdateMode::Replace,
@@ -135,6 +140,7 @@ impl<'a> visit::Changes<'a> {
                     }
                 }
                 (None, Some(rhs)) => {
+                    let rhs = rhs?;
                     delegate.update_path_component(
                         PathComponent::new(rhs.filename, &mut path_id),
                         PathComponentUpdateMode::Replace,
