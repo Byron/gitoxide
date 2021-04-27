@@ -4,6 +4,14 @@ set -eu -o pipefail
 git init -q
 git config commit.gpgsign false
 
+function path_sep() {
+  case "$OSTYPE" in
+    msys*|cygwin*|win32)    echo "\\" ;;
+    *)        echo "/" ;;
+  esac
+}
+PATHSEP="$(path_sep)"
+
 git checkout -q -b main
 
 touch f
@@ -38,7 +46,7 @@ git add f/
 git commit -qam 'f/a f/b added'
 
 rm f/f
-ln -s f/a f/f
+ln -s f/a f${PATHSEP}f
 git commit -qam 'f/f mode changed to link'
 
 git mv a b
