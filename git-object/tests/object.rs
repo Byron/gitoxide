@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-mod borrowed;
-mod owned;
+mod immutable;
+mod mutable;
 
 #[cfg(not(windows))]
 fn fixup(v: Vec<u8>) -> Vec<u8> {

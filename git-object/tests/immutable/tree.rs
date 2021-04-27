@@ -1,5 +1,5 @@
 mod from_bytes {
-    use crate::borrowed::fixture_bytes;
+    use crate::immutable::fixture_bytes;
     use git_object::{
         bstr::ByteSlice,
         immutable::{tree::Entry, Tree},

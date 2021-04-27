@@ -1,8 +1,11 @@
 mod with_tree {
+    use crate::hex_to_id;
+    use git_diff::visit::recorder;
     use git_odb::{pack, Locate};
+
     const FIRST_COMMIT: &str = "055df97e18cd537da3cb16bcbdf1733fdcdfb430";
 
-    fn diff_at(commit_id: &str) -> crate::Result {
+    fn diff_at(commit_id: &str) -> crate::Result<recorder::Changes> {
         let db = git_odb::linked::Db::at(
             test_tools::scripted_fixture_repo_read_only("make_diff_repo.sh")?
                 .join(".git")
@@ -41,18 +44,27 @@ mod with_tree {
                 .and_then(|tree| tree.into_tree())
         };
 
+        let mut recorder = git_diff::visit::Recorder::default();
         git_diff::visit::Changes::from(previous_tree.as_ref()).to_obtain_tree(
             &main_tree,
             &mut git_diff::visit::State::default(),
             |_oid, _buf| todo!("Actual lookup in db"),
-            &mut git_diff::visit::Recorder::default(),
+            &mut recorder,
         )?;
-        Ok(())
+        Ok(recorder.records)
     }
     #[test]
     #[should_panic]
     fn file_added() {
-        diff_at(FIRST_COMMIT).unwrap();
+        // :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f
+        assert_eq!(
+            diff_at(FIRST_COMMIT).unwrap(),
+            vec![recorder::Change::Addition {
+                mode: git_object::tree::Mode::Tree,
+                oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                path: "f".into()
+            }]
+        );
         todo!("detect an added file in the root tree")
     }
 }

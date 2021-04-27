@@ -5,7 +5,7 @@ use git_object::{
 };
 
 mod method {
-    use crate::{borrowed::fixture_bytes, hex_to_id};
+    use crate::{hex_to_id, immutable::fixture_bytes};
     use git_object::immutable::Tag;
     use pretty_assertions::assert_eq;
 
@@ -20,7 +20,7 @@ mod method {
 }
 
 mod from_bytes {
-    use crate::{borrowed::fixture_bytes, borrowed::signature, borrowed::tag::tag_fixture};
+    use crate::{immutable::fixture_bytes, immutable::signature, immutable::tag::tag_fixture};
     use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
 
     #[test]
