@@ -2,7 +2,7 @@ use crate::{
     visit,
     visit::{
         changes::Error::Cancelled,
-        record::{Action, Change, PathComponent, PathComponentUpdateMode},
+        record::{Change, PathComponent, PathComponentUpdateMode},
     },
 };
 use git_hash::{oid, ObjectId};
@@ -52,7 +52,7 @@ impl<'a> visit::Changes<'a> {
         let mut path_id = 0;
         loop {
             match (lhs_entries.next(), rhs_entries.next()) {
-                (None, None) => break Ok(()),
+                (None, None) => return Ok(()),
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
@@ -63,7 +63,7 @@ impl<'a> visit::Changes<'a> {
                                 PathComponent::new(lhs.filename, &mut path_id),
                                 PathComponentUpdateMode::Replace,
                             );
-                            let record_result = match (lhs.mode, rhs.mode) {
+                            match (lhs.mode, rhs.mode) {
                                 (Tree, Tree) => {
                                     if lhs.oid != rhs.oid {
                                         if delegate
@@ -76,45 +76,65 @@ impl<'a> visit::Changes<'a> {
                                             })
                                             .cancelled()
                                         {
-                                            break Err(Cancelled);
+                                            return Err(Cancelled);
                                         }
                                     }
                                     todo!("schedule tree|tree iteration schedule the trees with stack")
                                 }
                                 (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
-                                    delegate.record(Change::Deletion {
-                                        entry_mode: lhs.mode,
-                                        oid: lhs.oid.to_owned(),
-                                        path_id,
-                                    });
-                                    todo!("delete non-tree ✓|tree - add rhs recursively")
+                                    if delegate
+                                        .record(Change::Deletion {
+                                            entry_mode: lhs.mode,
+                                            oid: lhs.oid.to_owned(),
+                                            path_id,
+                                        })
+                                        .cancelled()
+                                    {
+                                        return Err(Cancelled);
+                                    };
+                                    if delegate
+                                        .record(Change::Addition {
+                                            entry_mode: rhs.mode,
+                                            oid: rhs.oid.to_owned(),
+                                            path_id,
+                                        })
+                                        .cancelled()
+                                    {
+                                        return Err(Cancelled);
+                                    };
+                                    todo!("delete non-tree ✓|add tree✓ - add rhs children recursively")
                                 }
                                 (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
-                                    delegate.record(Change::Deletion {
-                                        entry_mode: lhs.mode,
-                                        oid: lhs.oid.to_owned(),
-                                        path_id,
-                                    });
+                                    if delegate
+                                        .record(Change::Deletion {
+                                            entry_mode: lhs.mode,
+                                            oid: lhs.oid.to_owned(),
+                                            path_id,
+                                        })
+                                        .cancelled()
+                                    {
+                                        return Err(Error::Cancelled);
+                                    }
                                     todo!("delete lhs recursively|add non-tree")
                                 }
                                 (lhs_non_tree, rhs_non_tree) => {
                                     debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
                                     if lhs.oid != rhs.oid {
-                                        delegate.record(Change::Modification {
-                                            previous_entry_mode: lhs.mode,
-                                            previous_oid: lhs.oid.to_owned(),
-                                            entry_mode: rhs.mode,
-                                            oid: rhs.oid.to_owned(),
-                                            path_id,
-                                        })
-                                    } else {
-                                        Action::Continue
+                                        if delegate
+                                            .record(Change::Modification {
+                                                previous_entry_mode: lhs.mode,
+                                                previous_oid: lhs.oid.to_owned(),
+                                                entry_mode: rhs.mode,
+                                                oid: rhs.oid.to_owned(),
+                                                path_id,
+                                            })
+                                            .cancelled()
+                                        {
+                                            return Err(Error::Cancelled);
+                                        }
                                     }
                                 }
                             };
-                            if record_result.cancelled() {
-                                break Err(Error::Cancelled);
-                            }
                         }
                         Less => todo!("entry compares less - catch up"),
                         Greater => todo!("entry compares more - let the other side catch up"),
