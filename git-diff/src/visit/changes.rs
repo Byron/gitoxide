@@ -54,15 +54,14 @@ impl<'a> visit::Changes<'a> {
         let mut avoid_popping_path: Option<()> = None;
 
         loop {
-            if !avoid_popping_path.take().is_some() {
+            if avoid_popping_path.take().is_none() {
                 delegate.pop_path_component();
             }
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => match state.trees.pop_front() {
                     Some((None, Some(rhs))) => {
                         delegate.set_current_path(rhs.parent_path_id.clone());
-                        rhs_entries =
-                            locate(&rhs.tree_id, &mut state.buf2).ok_or_else(|| Error::NotFound(rhs.tree_id))?;
+                        rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
                         avoid_popping_path = Some(());
                     }
                     None => return Ok(()),
@@ -77,8 +76,8 @@ impl<'a> visit::Changes<'a> {
                             match (lhs.mode, rhs.mode) {
                                 (Tree, Tree) => {
                                     let _path_id = delegate.push_tracked_path_component(lhs.filename);
-                                    if lhs.oid != rhs.oid {
-                                        if delegate
+                                    if lhs.oid != rhs.oid
+                                        && delegate
                                             .record(Change::Modification {
                                                 previous_entry_mode: lhs.mode,
                                                 previous_oid: lhs.oid.to_owned(),
@@ -86,9 +85,8 @@ impl<'a> visit::Changes<'a> {
                                                 oid: rhs.oid.to_owned(),
                                             })
                                             .cancelled()
-                                        {
-                                            return Err(Cancelled);
-                                        }
+                                    {
+                                        return Err(Cancelled);
                                     }
                                     todo!("schedule tree|tree iteration schedule the trees with stack")
                                 }
@@ -136,8 +134,8 @@ impl<'a> visit::Changes<'a> {
                                 (lhs_non_tree, rhs_non_tree) => {
                                     delegate.push_path_component(lhs.filename);
                                     debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
-                                    if lhs.oid != rhs.oid {
-                                        if delegate
+                                    if lhs.oid != rhs.oid
+                                        && delegate
                                             .record(Change::Modification {
                                                 previous_entry_mode: lhs.mode,
                                                 previous_oid: lhs.oid.to_owned(),
@@ -145,9 +143,8 @@ impl<'a> visit::Changes<'a> {
                                                 oid: rhs.oid.to_owned(),
                                             })
                                             .cancelled()
-                                        {
-                                            return Err(Error::Cancelled);
-                                        }
+                                    {
+                                        return Err(Error::Cancelled);
                                     }
                                 }
                             };
