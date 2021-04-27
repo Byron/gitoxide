@@ -1569,6 +1569,7 @@ dependencies = [
 [[package]]
 name = "quick-error"
 version = "2.0.0"
+source = "git+https://github.com/byron/quick-error#bdad05be05bc3e5ed73aa0b8aef6a7a591a82c02"
 
 [[package]]
 name = "quote"
