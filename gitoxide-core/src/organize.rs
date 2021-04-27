@@ -165,10 +165,6 @@ fn handle(
 
     if let Ok(destination) = destination.canonicalize() {
         if git_workdir.canonicalize()? == destination {
-            progress.info(format!(
-                "Skipping {:?} as it is in the correct spot",
-                git_workdir.display()
-            ));
             return Ok(());
         }
     }
