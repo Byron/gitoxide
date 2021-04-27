@@ -9,7 +9,7 @@ use std::{ops::Deref, path::PathBuf};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Change {
     Addition {
-        mode: tree::EntryMode,
+        entry_mode: tree::EntryMode,
         oid: ObjectId,
         path: PathBuf,
     },
@@ -19,20 +19,22 @@ pub type Changes = Vec<Change>;
 
 #[derive(Clone, Debug, Default)]
 pub struct Recorder {
-    current_component: BString,
+    path: BString,
     pub records: Vec<Change>,
 }
 
 impl Recorder {
     fn pop_element(&mut self) {
-        if let Some(pos) = self.current_component.rfind_byte(b'/') {
-            self.current_component.resize(pos, 0);
+        if let Some(pos) = self.path.rfind_byte(b'/') {
+            self.path.resize(pos, 0);
         }
     }
 
     fn push_element(&mut self, name: &BStr) {
-        self.current_component.push(b'/');
-        self.current_component.push_str(name);
+        if !self.path.is_empty() {
+            self.path.push(b'/');
+        }
+        self.path.push_str(name);
     }
 }
 
@@ -55,10 +57,14 @@ impl record::Record for Recorder {
     fn record(&mut self, change: record::Change) -> record::Action {
         use record::Change::*;
         self.records.push(match change {
-            Addition { mode, oid } => Change::Addition {
-                mode,
+            Addition {
+                entry_mode,
                 oid,
-                path: self.current_component.deref().clone().into_path_buf_lossy(),
+                path_id: _,
+            } => Change::Addition {
+                entry_mode,
+                oid,
+                path: self.path.deref().clone().into_path_buf_lossy(),
             },
             _ => todo!("record other kinds of changes"),
         });

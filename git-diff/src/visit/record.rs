@@ -1,10 +1,20 @@
 use git_hash::ObjectId;
 use git_object::{bstr::BStr, tree};
 
+pub type PathId = usize;
+
 pub enum Change {
-    Addition { mode: tree::EntryMode, oid: ObjectId },
+    Addition {
+        entry_mode: tree::EntryMode,
+        oid: ObjectId,
+        path_id: PathId,
+    },
     Copy,
-    Deletion,
+    Deletion {
+        previous_entry_mode: tree::EntryMode,
+        previous_oid: ObjectId,
+        path_id: PathId,
+    },
     Modification,
     Renaming,
     Type,
@@ -21,13 +31,27 @@ pub struct PathComponent<'a> {
     pub name: &'a BStr,
     /// An ID referring uniquely to the path built thus far. Used to keep track of source paths
     /// in case of [renames][Change::Rename] and [copies][Change::Copy].
-    pub id: usize,
+    pub id: PathId,
+}
+
+impl<'a> PathComponent<'a> {
+    pub(crate) fn new(name: &'a BStr, id: &mut usize) -> Self {
+        let current_id = *id;
+        *id += 1;
+        PathComponent { id: current_id, name }
+    }
 }
 
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Action {
     Continue,
     Cancel,
+}
+
+impl Action {
+    pub fn cancelled(&self) -> bool {
+        matches!(self, Action::Cancel)
+    }
 }
 
 pub trait Record {
@@ -44,7 +68,7 @@ mod tests {
     fn size_of_change() {
         assert_eq!(
             std::mem::size_of::<Change>(),
-            22,
+            32,
             "this type shouldn't grow without us knowing"
         )
     }

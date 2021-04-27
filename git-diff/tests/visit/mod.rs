@@ -56,13 +56,12 @@ mod changes {
         }
 
         #[test]
-        #[should_panic]
         fn file_added() {
             // :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f
             assert_eq!(
                 diff_at(FIRST_COMMIT).unwrap(),
                 vec![recorder::Change::Addition {
-                    mode: git_object::tree::EntryMode::Tree,
+                    entry_mode: git_object::tree::EntryMode::Blob,
                     oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                     path: "f".into()
                 }]
