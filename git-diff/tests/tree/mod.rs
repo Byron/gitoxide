@@ -41,11 +41,11 @@ mod with_tree {
                 .and_then(|tree| tree.into_tree())
         };
 
-        git_diff::tree::VisitChanges::from(previous_tree.as_ref()).to_obtain(
+        git_diff::visit::Changes::from(previous_tree.as_ref()).to_obtain_tree(
             &main_tree,
-            &mut git_diff::tree::State::default(),
+            &mut git_diff::visit::State::default(),
             |_oid, _buf| todo!("Actual lookup in db"),
-            &mut git_diff::tree::delegate::Recorder::default(),
+            &mut git_diff::visit::Recorder::default(),
         )?;
         Ok(())
     }
