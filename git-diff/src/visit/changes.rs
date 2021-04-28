@@ -37,6 +37,7 @@ impl<'a> visit::Changes<'a> {
     /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
     /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
     ///   by the delegate implementation which should be as specific as possible.
+    /// * cycle checking is not performed, but can be performed in the delegate
     pub fn needed_to_obtain<LocateFn, R>(
         mut self,
         other: immutable::TreeIter<'a>,
@@ -58,15 +59,27 @@ impl<'a> visit::Changes<'a> {
                 delegate.pop_path_component();
             }
             match (lhs_entries.next(), rhs_entries.next()) {
-                (None, None) => match state.trees.pop_front() {
-                    Some((None, Some(rhs))) => {
-                        delegate.set_current_path(rhs.parent_path_id.clone());
-                        rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
-                        avoid_popping_path = Some(());
-                    }
-                    None => return Ok(()),
-                    _ => todo!("all other combinations to re-stock iterators"),
-                },
+                (None, None) => {
+                    match state.trees.pop_front() {
+                        Some((None, Some(rhs))) => {
+                            delegate.set_current_path(rhs.parent_path_id.clone());
+                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
+                        }
+                        Some((Some(lhs), Some(rhs))) => {
+                            delegate.set_current_path(lhs.parent_path_id.clone());
+                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
+                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
+                        }
+                        Some((Some(_lhs), None)) => {
+                            todo!("locate none|tree");
+                            // delegate.set_current_path(lhs.parent_path_id.clone());
+                            // lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
+                        }
+                        Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
+                        None => return Ok(()),
+                    };
+                    avoid_popping_path = Some(());
+                }
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
@@ -75,7 +88,7 @@ impl<'a> visit::Changes<'a> {
                             use tree::EntryMode::*;
                             match (lhs.mode, rhs.mode) {
                                 (Tree, Tree) => {
-                                    let _path_id = delegate.push_tracked_path_component(lhs.filename);
+                                    let path_id = delegate.push_tracked_path_component(lhs.filename);
                                     if lhs.oid != rhs.oid
                                         && delegate
                                             .record(Change::Modification {
@@ -88,7 +101,16 @@ impl<'a> visit::Changes<'a> {
                                     {
                                         return Err(Cancelled);
                                     }
-                                    todo!("schedule tree|tree iteration schedule the trees with stack")
+                                    state.trees.push_back((
+                                        Some(TreeInfo {
+                                            tree_id: lhs.oid.to_owned(),
+                                            parent_path_id: path_id.clone(),
+                                        }),
+                                        Some(TreeInfo {
+                                            tree_id: rhs.oid.to_owned(),
+                                            parent_path_id: path_id,
+                                        }),
+                                    ));
                                 }
                                 (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
                                     let path_id = delegate.push_tracked_path_component(lhs.filename);
