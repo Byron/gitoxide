@@ -178,6 +178,7 @@ fn catchup_rhs_with_lhs<R: visit::Record>(
             Some(Ok(rhs)) => match lhs.filename.cmp(rhs.filename) {
                 Equal => {
                     let rhs = rhs_entries.next().transpose()?.expect("the peeked item tobe present");
+                    delegate.pop_path_component();
                     handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
                     break;
                 }
@@ -217,6 +218,7 @@ fn catchup_lhs_with_rhs<R: visit::Record>(
             Some(Ok(lhs)) => match lhs.filename.cmp(rhs.filename) {
                 Equal => {
                     let lhs = lhs_entries.next().expect("the peeked item to be present")?;
+                    delegate.pop_path_component();
                     handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
                     break;
                 }

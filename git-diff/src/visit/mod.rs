@@ -27,9 +27,12 @@ impl<P: Clone + Default> State<P> {
 
 pub struct Changes<'a>(Option<immutable::TreeIter<'a>>);
 
-impl<'a> From<Option<immutable::TreeIter<'a>>> for Changes<'a> {
-    fn from(v: Option<immutable::TreeIter<'a>>) -> Self {
-        Changes(v)
+impl<'a, T> From<T> for Changes<'a>
+where
+    T: Into<Option<immutable::TreeIter<'a>>>,
+{
+    fn from(v: T) -> Self {
+        Changes(v.into())
     }
 }
 

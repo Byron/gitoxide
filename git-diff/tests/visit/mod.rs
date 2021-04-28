@@ -3,7 +3,7 @@ mod changes {
         use crate::hex_to_id;
         use git_diff::visit::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
-        use git_object::{bstr::ByteSlice, tree::EntryMode};
+        use git_object::{bstr::ByteSlice, immutable, tree::EntryMode};
         use git_odb::{linked, pack, Locate};
 
         fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Db> {
@@ -13,6 +13,46 @@ mod changes {
                     .join("objects"),
             )
             .map_err(Into::into)
+        }
+
+        fn locate_tree_by_commit<'a>(
+            db: &linked::Db,
+            commit: &oid,
+            buf: &'a mut Vec<u8>,
+        ) -> crate::Result<immutable::TreeIter<'a>> {
+            let tree_id = db
+                .locate(commit, buf, &mut pack::cache::Never)?
+                .ok_or_else(|| String::from(format!("start commit {:?} to be present", commit)))?
+                .decode()?
+                .into_commit()
+                .expect("id is actually a commit")
+                .tree();
+
+            Ok(db
+                .locate(tree_id, buf, &mut pack::cache::Never)?
+                .expect("main tree present")
+                .into_tree_iter()
+                .expect("id to be a tree"))
+        }
+
+        fn diff_commits(db: &linked::Db, lhs: &oid, rhs: &oid) -> crate::Result<recorder::Changes> {
+            let mut buf = Vec::new();
+            let lhs_tree = locate_tree_by_commit(db, lhs, &mut buf)?;
+            let mut buf2 = Vec::new();
+            let rhs_tree = locate_tree_by_commit(db, rhs, &mut buf2)?;
+            let mut recorder = git_diff::visit::Recorder::default();
+            git_diff::visit::Changes::from(lhs_tree).needed_to_obtain(
+                rhs_tree,
+                &mut git_diff::visit::State::default(),
+                |oid, buf| {
+                    db.locate(oid, buf, &mut pack::cache::Never)
+                        .ok()
+                        .flatten()
+                        .and_then(|obj| obj.into_tree_iter())
+                },
+                &mut recorder,
+            )?;
+            Ok(recorder.records)
         }
 
         fn diff_with_previous_commit_from(db: &linked::Db, commit_id: &oid) -> crate::Result<recorder::Changes> {
@@ -30,7 +70,7 @@ mod changes {
                     p
                 })
             };
-            let main_tree = db
+            let current_tree = db
                 .locate(main_tree_id, &mut buf, &mut pack::cache::Never)?
                 .expect("main tree present")
                 .into_tree_iter()
@@ -48,7 +88,7 @@ mod changes {
 
             let mut recorder = git_diff::visit::Recorder::default();
             git_diff::visit::Changes::from(previous_tree).needed_to_obtain(
-                main_tree,
+                current_tree,
                 &mut git_diff::visit::State::default(),
                 |oid, buf| {
                     db.locate(oid, buf, &mut pack::cache::Never)
@@ -441,6 +481,55 @@ mod changes {
                 // assertions now similar to the non-nested version.
                 diff_with_previous_commit_from(&db, &commit)?;
             }
+
+            Ok(())
+        }
+
+        #[test]
+        fn maximal_difference() -> crate::Result {
+            let db = db(None)?;
+            let all_commits = all_commits(&db);
+
+            assert_eq!(
+                diff_commits(&db, &all_commits[0], &all_commits.last().expect("we have many commits"))?,
+                vec![
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "b".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
+                        path: "g".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "g/a".into()
+                    }
+                ]
+            );
+            assert_eq!(
+                diff_commits(&db, &all_commits.last().expect("we have many commits"), &all_commits[0])?,
+                vec![
+                    Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "b".into()
+                    },
+                    Deletion {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
+                        path: "g".into()
+                    },
+                    Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "g/a".into()
+                    }
+                ]
+            );
             Ok(())
         }
     }
