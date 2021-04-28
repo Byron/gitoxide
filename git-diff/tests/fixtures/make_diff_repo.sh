@@ -69,3 +69,8 @@ git commit -qam 'add g/a'
 
 git rm c d e
 git commit -qam 'remove /c /d /e'
+
+git rm f
+touch ff
+git add ff
+git commit -qam 'rm /f, add /ff'

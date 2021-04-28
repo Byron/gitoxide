@@ -90,8 +90,8 @@ impl<'a> visit::Changes<'a> {
                             delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                             'inner_less: loop {
                                 match lhs_entries.next().transpose()? {
-                                    Some(lhs) => {
-                                        if lhs.filename == rhs.filename {
+                                    Some(lhs) => match lhs.filename.cmp(rhs.filename) {
+                                        Equal => {
                                             handle_lhs_and_rhs_with_equal_filenames(
                                                 lhs,
                                                 rhs,
@@ -99,14 +99,17 @@ impl<'a> visit::Changes<'a> {
                                                 delegate,
                                             )?;
                                             break 'inner_less;
-                                        } else {
+                                        }
+                                        Less => {
                                             delegate.pop_path_component();
                                             delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                                         }
-                                    }
+                                        Greater => {
+                                            todo!("LESS -> GREATER - we overshot")
+                                        }
+                                    },
                                     None => {
-                                        todo!("LESS: catchup less: break inner depleted - it never caught up");
-                                        // break 'inner;
+                                        break 'inner_less;
                                     }
                                 }
                             }

@@ -16,6 +16,7 @@ mod changes {
         const COMMIT_14: &str = "ac7c4c37c3939b820f3ff9003a7ed11d6143dc2b";
         const COMMIT_15: &str = "6112ecdac98a18bcbdbd83f0b180b3e1df12e293";
         const COMMIT_16: &str = "0ca25edc0c0b38fd6b6a0f6e4797dc08bf0c55c2";
+        const COMMIT_17: &str = "0b93c2b59feb6c9a4efa1c78a4b4b17fd1c78508";
 
         fn db() -> crate::Result<linked::Db> {
             linked::Db::at(
@@ -280,6 +281,23 @@ mod changes {
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	c
                  :100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	d
                  :100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	e"
+            );
+            assert_eq!(
+                diff_with_previous_commit_from(&db, COMMIT_17)?,
+                vec![
+                    recorder::Change::Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "f".into()
+                    },
+                    recorder::Change::Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "ff".into()
+                    },
+                ],
+                ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f
+                  :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	ff"
             );
             Ok(())
         }
