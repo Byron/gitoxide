@@ -85,115 +85,14 @@ impl<'a> visit::Changes<'a> {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
                     match lhs.filename.cmp(rhs.filename) {
-                        Equal => {
-                            use tree::EntryMode::*;
-                            match (lhs.mode, rhs.mode) {
-                                (Tree, Tree) => {
-                                    let path_id = delegate.push_tracked_path_component(lhs.filename);
-                                    if lhs.oid != rhs.oid
-                                        && delegate
-                                            .record(Change::Modification {
-                                                previous_entry_mode: lhs.mode,
-                                                previous_oid: lhs.oid.to_owned(),
-                                                entry_mode: rhs.mode,
-                                                oid: rhs.oid.to_owned(),
-                                            })
-                                            .cancelled()
-                                    {
-                                        return Err(Cancelled);
-                                    }
-                                    state.trees.push_back((
-                                        Some(TreeInfo {
-                                            tree_id: lhs.oid.to_owned(),
-                                            parent_path_id: path_id.clone(),
-                                        }),
-                                        Some(TreeInfo {
-                                            tree_id: rhs.oid.to_owned(),
-                                            parent_path_id: path_id,
-                                        }),
-                                    ));
-                                }
-                                (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
-                                    let path_id = delegate.push_tracked_path_component(lhs.filename);
-                                    if delegate
-                                        .record(Change::Deletion {
-                                            entry_mode: lhs.mode,
-                                            oid: lhs.oid.to_owned(),
-                                        })
-                                        .cancelled()
-                                    {
-                                        return Err(Cancelled);
-                                    };
-                                    if delegate
-                                        .record(Change::Addition {
-                                            entry_mode: rhs.mode,
-                                            oid: rhs.oid.to_owned(),
-                                        })
-                                        .cancelled()
-                                    {
-                                        return Err(Cancelled);
-                                    };
-                                    state.trees.push_back((
-                                        None,
-                                        Some(TreeInfo {
-                                            tree_id: rhs.oid.to_owned(),
-                                            parent_path_id: path_id,
-                                        }),
-                                    ));
-                                }
-                                (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
-                                    let path_id = delegate.push_tracked_path_component(lhs.filename);
-                                    if delegate
-                                        .record(Change::Deletion {
-                                            entry_mode: lhs.mode,
-                                            oid: lhs.oid.to_owned(),
-                                        })
-                                        .cancelled()
-                                    {
-                                        return Err(Error::Cancelled);
-                                    }
-                                    if delegate
-                                        .record(Change::Addition {
-                                            entry_mode: rhs.mode,
-                                            oid: rhs.oid.to_owned(),
-                                        })
-                                        .cancelled()
-                                    {
-                                        return Err(Cancelled);
-                                    };
-                                    state.trees.push_back((
-                                        Some(TreeInfo {
-                                            tree_id: lhs.oid.to_owned(),
-                                            parent_path_id: path_id,
-                                        }),
-                                        None,
-                                    ));
-                                }
-                                (lhs_non_tree, rhs_non_tree) => {
-                                    delegate.push_path_component(lhs.filename);
-                                    debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
-                                    if lhs.oid != rhs.oid
-                                        && delegate
-                                            .record(Change::Modification {
-                                                previous_entry_mode: lhs.mode,
-                                                previous_oid: lhs.oid.to_owned(),
-                                                entry_mode: rhs.mode,
-                                                oid: rhs.oid.to_owned(),
-                                            })
-                                            .cancelled()
-                                    {
-                                        return Err(Error::Cancelled);
-                                    }
-                                }
-                            };
-                        }
+                        Equal => handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?,
                         Less => {
                             delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                             'inner: loop {
                                 match lhs_entries.next().transpose()? {
                                     Some(lhs) => {
                                         if lhs.filename == rhs.filename {
-                                            // unimplemented!("inner loop handle equality and type");
+                                            // todo!("inner loop handle equality and type");
                                             break 'inner;
                                         } else {
                                             todo!("need test: inner loop handle cursor next");
@@ -226,14 +125,11 @@ impl<'a> visit::Changes<'a> {
     }
 }
 
-fn delete_entry_schedule_recursion<R>(
+fn delete_entry_schedule_recursion<R: visit::Record>(
     entry: immutable::tree::Entry<'_>,
     queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
-) -> Result<(), Error>
-where
-    R: visit::Record,
-{
+) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
     if delegate
         .record(Change::Deletion {
@@ -258,14 +154,11 @@ where
     Ok(())
 }
 
-fn add_entry_schedule_recursion<R>(
+fn add_entry_schedule_recursion<R: visit::Record>(
     entry: immutable::tree::Entry<'_>,
     _queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
-) -> Result<(), Error>
-where
-    R: visit::Record,
-{
+) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
     if delegate
         .record(Change::Addition {
@@ -281,5 +174,114 @@ where
         let _path_id = delegate.push_tracked_path_component(entry.filename);
         todo!("add tree recursively")
     }
+    Ok(())
+}
+
+fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
+    lhs: immutable::tree::Entry<'_>,
+    rhs: immutable::tree::Entry<'_>,
+    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    delegate: &mut R,
+) -> Result<(), Error> {
+    use tree::EntryMode::*;
+    match (lhs.mode, rhs.mode) {
+        (Tree, Tree) => {
+            let path_id = delegate.push_tracked_path_component(lhs.filename);
+            if lhs.oid != rhs.oid
+                && delegate
+                    .record(Change::Modification {
+                        previous_entry_mode: lhs.mode,
+                        previous_oid: lhs.oid.to_owned(),
+                        entry_mode: rhs.mode,
+                        oid: rhs.oid.to_owned(),
+                    })
+                    .cancelled()
+            {
+                return Err(Cancelled);
+            }
+            queue.push_back((
+                Some(TreeInfo {
+                    tree_id: lhs.oid.to_owned(),
+                    parent_path_id: path_id.clone(),
+                }),
+                Some(TreeInfo {
+                    tree_id: rhs.oid.to_owned(),
+                    parent_path_id: path_id,
+                }),
+            ));
+        }
+        (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
+            let path_id = delegate.push_tracked_path_component(lhs.filename);
+            if delegate
+                .record(Change::Deletion {
+                    entry_mode: lhs.mode,
+                    oid: lhs.oid.to_owned(),
+                })
+                .cancelled()
+            {
+                return Err(Cancelled);
+            };
+            if delegate
+                .record(Change::Addition {
+                    entry_mode: rhs.mode,
+                    oid: rhs.oid.to_owned(),
+                })
+                .cancelled()
+            {
+                return Err(Cancelled);
+            };
+            queue.push_back((
+                None,
+                Some(TreeInfo {
+                    tree_id: rhs.oid.to_owned(),
+                    parent_path_id: path_id,
+                }),
+            ));
+        }
+        (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
+            let path_id = delegate.push_tracked_path_component(lhs.filename);
+            if delegate
+                .record(Change::Deletion {
+                    entry_mode: lhs.mode,
+                    oid: lhs.oid.to_owned(),
+                })
+                .cancelled()
+            {
+                return Err(Error::Cancelled);
+            }
+            if delegate
+                .record(Change::Addition {
+                    entry_mode: rhs.mode,
+                    oid: rhs.oid.to_owned(),
+                })
+                .cancelled()
+            {
+                return Err(Cancelled);
+            };
+            queue.push_back((
+                Some(TreeInfo {
+                    tree_id: lhs.oid.to_owned(),
+                    parent_path_id: path_id,
+                }),
+                None,
+            ));
+        }
+        (lhs_non_tree, rhs_non_tree) => {
+            delegate.push_path_component(lhs.filename);
+            debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
+            if lhs.oid != rhs.oid
+                && delegate
+                    .record(Change::Modification {
+                        previous_entry_mode: lhs.mode,
+                        previous_oid: lhs.oid.to_owned(),
+                        entry_mode: rhs.mode,
+                        oid: rhs.oid.to_owned(),
+                    })
+                    .cancelled()
+            {
+                return Err(Error::Cancelled);
+            }
+        }
+    };
     Ok(())
 }
