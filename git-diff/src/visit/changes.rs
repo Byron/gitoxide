@@ -51,8 +51,8 @@ impl<'a> visit::Changes<'a> {
         R: visit::Record,
     {
         state.clear();
-        let mut lhs_entries = self.0.take().unwrap_or_default();
-        let mut rhs_entries = other;
+        let mut lhs_entries = self.0.take().unwrap_or_default().peekable();
+        let mut rhs_entries = other.peekable();
         let mut avoid_popping_path: Option<()> = None;
 
         dbg!("================= START ===================");
@@ -65,16 +65,24 @@ impl<'a> visit::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.set_current_path(rhs.parent_path_id.clone());
-                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
+                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2)
+                                .ok_or(Error::NotFound(rhs.tree_id))?
+                                .peekable();
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
-                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
+                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1)
+                                .ok_or(Error::NotFound(lhs.tree_id))?
+                                .peekable();
+                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2)
+                                .ok_or(Error::NotFound(rhs.tree_id))?
+                                .peekable();
                         }
                         Some((Some(lhs), None)) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
+                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1)
+                                .ok_or(Error::NotFound(lhs.tree_id))?
+                                .peekable();
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
@@ -189,13 +197,13 @@ impl<'a> visit::Changes<'a> {
                             };
                         }
                         Less => {
-                            let mut cursor = lhs;
+                            let cursor = lhs;
                             loop {
                                 delete_entry_schedule_recursion(&cursor, &mut state.trees, delegate)?;
 
                                 match lhs_entries.next() {
                                     Some(entry) => {
-                                        let entry = entry?;
+                                        let _entry = entry?;
                                         // if entry.filename == rhs.
                                         todo!("peek entry, see if we caught up, ")
                                     }
