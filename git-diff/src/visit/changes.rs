@@ -90,43 +90,7 @@ impl<'a> visit::Changes<'a> {
                     let (lhs, rhs) = (lhs?, rhs?);
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?,
-                        Less => {
-                            delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
-                            'inner_less: loop {
-                                match lhs_entries.peek() {
-                                    Some(Ok(lhs)) => match lhs.filename.cmp(rhs.filename) {
-                                        Equal => {
-                                            let lhs =
-                                                lhs_entries.next().transpose()?.expect("the peeked item tobe present");
-                                            handle_lhs_and_rhs_with_equal_filenames(
-                                                lhs,
-                                                rhs,
-                                                &mut state.trees,
-                                                delegate,
-                                            )?;
-                                            break 'inner_less;
-                                        }
-                                        Less => {
-                                            let lhs =
-                                                lhs_entries.next().transpose()?.expect("the peeked item tobe present");
-                                            delegate.pop_path_component();
-                                            delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
-                                        }
-                                        Greater => {
-                                            delegate.pop_path_component();
-                                            add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
-                                            break 'inner_less;
-                                        }
-                                    },
-                                    Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
-                                    None => {
-                                        delegate.pop_path_component();
-                                        add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
-                                        break 'inner_less;
-                                    }
-                                }
-                            }
-                        }
+                        Less => catchup_lhs_with_rhs(&mut lhs_entries, lhs, rhs, &mut state.trees, delegate)?,
                         Greater => {
                             add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
                             'inner_greater: loop {
@@ -233,6 +197,45 @@ fn add_entry_schedule_recursion<R: visit::Record>(
                 parent_path_id: path_id,
             }),
         ))
+    }
+    Ok(())
+}
+
+fn catchup_lhs_with_rhs<R: visit::Record>(
+    lhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
+    lhs: immutable::tree::Entry<'_>,
+    rhs: immutable::tree::Entry<'_>,
+    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    delegate: &mut R,
+) -> Result<(), Error> {
+    use std::cmp::Ordering::*;
+    delete_entry_schedule_recursion(lhs, queue, delegate)?;
+    loop {
+        match lhs_entries.peek() {
+            Some(Ok(lhs)) => match lhs.filename.cmp(rhs.filename) {
+                Equal => {
+                    let lhs = lhs_entries.next().expect("the peeked item to be present")?;
+                    handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, queue, delegate)?;
+                    break;
+                }
+                Less => {
+                    let lhs = lhs_entries.next().expect("the peeked item to be present")?;
+                    delegate.pop_path_component();
+                    delete_entry_schedule_recursion(lhs, queue, delegate)?;
+                }
+                Greater => {
+                    delegate.pop_path_component();
+                    add_entry_schedule_recursion(rhs, queue, delegate)?;
+                    break;
+                }
+            },
+            Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
+            None => {
+                delegate.pop_path_component();
+                add_entry_schedule_recursion(rhs, queue, delegate)?;
+                break;
+            }
+        }
     }
     Ok(())
 }
@@ -346,6 +349,8 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
     Ok(())
 }
 
-fn peekable<I: Iterator>(iter: I) -> std::mem::ManuallyDrop<std::iter::Peekable<I>> {
+type IteratorType<I> = std::mem::ManuallyDrop<std::iter::Peekable<I>>;
+
+fn peekable<I: Iterator>(iter: I) -> IteratorType<I> {
     std::mem::ManuallyDrop::new(iter.peekable())
 }
