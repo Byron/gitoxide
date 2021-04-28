@@ -1,7 +1,7 @@
 mod changes {
     mod to_obtain_tree {
         use crate::hex_to_id;
-        use git_diff::visit::recorder;
+        use git_diff::visit::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, tree::EntryMode};
         use git_odb::{linked, pack, Locate};
@@ -96,7 +96,7 @@ mod changes {
             let all_commits = all_commits(&db);
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[0])?,
-                vec![recorder::Change::Addition {
+                vec![Addition {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                     path: "f".into()
@@ -105,7 +105,7 @@ mod changes {
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[1])?,
-                vec![recorder::Change::Modification {
+                vec![Modification {
                     previous_entry_mode: EntryMode::Blob,
                     previous_oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                     entry_mode: EntryMode::Blob,
@@ -116,7 +116,7 @@ mod changes {
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[2])?,
-                vec![recorder::Change::Deletion {
+                vec![Deletion {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                     path: "f".into()
@@ -127,17 +127,17 @@ mod changes {
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[4])?,
-                vec![recorder::Change::Deletion {
+                vec![Deletion {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                     path: "f".into()
                 },
-                recorder::Change::Addition {
+                Addition {
                     entry_mode: EntryMode::Tree,
                     oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
                     path: "f".into()
                 },
-                recorder::Change::Addition {
+                Addition {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                     path: "f/f".into()
@@ -148,14 +148,14 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[5])?,
                 vec![
-                    recorder::Change::Modification {
+                    Modification {
                         previous_entry_mode: EntryMode::Tree,
                         previous_oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("ebbe0b3000afdfd1aed15000094b59a2800328eb"),
                         path: "f".into()
                     },
-                    recorder::Change::Modification {
+                    Modification {
                         previous_entry_mode: EntryMode::Blob,
                         previous_oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                         entry_mode: EntryMode::Blob,
@@ -181,14 +181,14 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[8])?,
                 vec![
-                    recorder::Change::Modification {
+                    Modification {
                         previous_entry_mode: EntryMode::Tree,
                         previous_oid: hex_to_id("849bd76db90b65ebbd2e6d3970ca70c96ee5592c"),
                         entry_mode: EntryMode::Tree,
                         oid: tree_with_link_id.clone(),
                         path: "f".into()
                     },
-                    recorder::Change::Modification {
+                    Modification {
                         previous_entry_mode: EntryMode::Blob,
                         previous_oid: hex_to_id("13c2aca72ab576cb5f22dc8e7f8ba8ddab553a8a"),
                         entry_mode: link_entry_mode,
@@ -202,27 +202,27 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[10])?,
                 vec![
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Tree,
                         oid: tree_with_link_id,
                         path: "f".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "f".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "f/a".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "f/b".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: link_entry_mode,
                         oid: link_entry_oid,
                         path: "f/f".into()
@@ -236,12 +236,12 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[12])?,
                 vec![
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
                         path: "d".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "d/f".into()
@@ -252,17 +252,17 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[13])?,
                 vec![
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "c".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "d".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "e".into()
@@ -275,12 +275,12 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[14])?,
                 vec![
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
                         path: "g".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "g/a".into()
@@ -291,17 +291,17 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[15])?,
                 vec![
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "c".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "d".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "e".into()
@@ -314,12 +314,12 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[16])?,
                 vec![
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "f".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "ff".into()
@@ -331,19 +331,19 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[17])?,
                 vec![
-                    recorder::Change::Modification {
+                    Modification {
                         previous_entry_mode: EntryMode::Tree,
                         previous_oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("6e5931346904b020301f74f581142826eacc4678"),
                         path: "g".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "g/a".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "g/aa".into()
@@ -355,12 +355,12 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[18])?,
                 vec![
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "f".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "ff".into()
@@ -372,19 +372,19 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[19])?,
                 vec![
-                    recorder::Change::Modification {
+                    Modification {
                         previous_entry_mode: EntryMode::Tree,
                         previous_oid: hex_to_id("6e5931346904b020301f74f581142826eacc4678"),
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
                         path: "g".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "g/a".into()
                     },
-                    recorder::Change::Deletion {
+                    Deletion {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "g/aa".into()
@@ -404,12 +404,12 @@ mod changes {
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[0])?,
                 vec![
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Tree,
                         oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
                         path: "a".into()
                     },
-                    recorder::Change::Addition {
+                    Addition {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "a/f".into()
@@ -417,6 +417,30 @@ mod changes {
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      a/f"
             );
+            assert_eq!(
+                diff_with_previous_commit_from(&db, &all_commits[1])?,
+                vec![
+                    Modification {
+                        previous_entry_mode: EntryMode::Tree,
+                        previous_oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
+                        path: "a".into()
+                    },
+                    Modification {
+                        previous_entry_mode: EntryMode::Blob,
+                        previous_oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                        path: "a/f".into()
+                }]
+                , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      a/f");
+
+            for commit in all_commits {
+                // Just make sure it works - checked results with dbg!() once and am too ~~lazy~~ time constrained to add the
+                // assertions now similar to the non-nested version.
+                diff_with_previous_commit_from(&db, &commit)?;
+            }
             Ok(())
         }
     }
