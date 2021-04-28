@@ -9,17 +9,34 @@ static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex
 pub fn fixture_path(path: impl AsRef<str>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
+pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+    scripted_fixture_repo_read_only_with_args(script_name, None)
+}
 
 /// Returns the directory at which the data is present
-pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn scripted_fixture_repo_read_only_with_args(
+    script_name: &str,
+    args: impl IntoIterator<Item = &'static str>,
+) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
     use bstr::ByteSlice;
     let script_path = fixture_path(script_name);
 
     // keep this lock to assure we don't return unfinished directories for threaded callers
+    let args: Vec<String> = args.into_iter().map(Into::into).collect();
     let mut map = SCRIPT_IDENTITY.lock().unwrap();
     let script_identity = map
-        .entry(script_path.clone())
-        .or_insert_with(|| crc::crc32::checksum_ieee(&std::fs::read(&script_path).expect("file can be read entirely")))
+        .entry(args.iter().fold(script_path.clone(), |p, a| p.join(a)))
+        .or_insert_with(|| {
+            let mut crc_value = crc::crc32::update(
+                0,
+                &crc::crc32::IEEE_TABLE,
+                &std::fs::read(&script_path).expect("file can be read entirely"),
+            );
+            for arg in args.iter() {
+                crc_value = crc::crc32::update(crc_value, &crc::crc32::IEEE_TABLE, arg.as_bytes());
+            }
+            crc_value
+        })
         .to_owned();
     let script_result_directory = fixture_path(
         Path::new("generated")
@@ -31,6 +48,7 @@ pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result
         let script_absolute_path = std::env::current_dir()?.join(script_path);
         let output = std::process::Command::new("bash")
             .arg(script_absolute_path)
+            .args(args)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .current_dir(&script_result_directory)

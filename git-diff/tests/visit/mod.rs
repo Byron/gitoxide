@@ -6,9 +6,9 @@ mod changes {
         use git_object::{bstr::ByteSlice, tree::EntryMode};
         use git_odb::{linked, pack, Locate};
 
-        fn db() -> crate::Result<linked::Db> {
+        fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Db> {
             linked::Db::at(
-                test_tools::scripted_fixture_repo_read_only("make_diff_repo.sh")?
+                test_tools::scripted_fixture_repo_read_only_with_args("make_diff_repo.sh", args)?
                     .join(".git")
                     .join("objects"),
             )
@@ -92,7 +92,7 @@ mod changes {
 
         #[test]
         fn many_different_states() -> crate::Result {
-            let db = db()?;
+            let db = db(None)?;
             let all_commits = all_commits(&db);
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[0])?,
@@ -392,6 +392,30 @@ mod changes {
                 ],
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	g/a
                 :100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	g/aa"
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn many_different_states_nested() -> crate::Result {
+            let db = db(["a"].iter().copied())?;
+            let all_commits = all_commits(&db);
+
+            assert_eq!(
+                diff_with_previous_commit_from(&db, &all_commits[0])?,
+                vec![
+                    recorder::Change::Addition {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
+                        path: "a".into()
+                    },
+                    recorder::Change::Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/f".into()
+                    }
+                ],
+                ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      a/f"
             );
             Ok(())
         }

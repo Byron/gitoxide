@@ -1,11 +1,17 @@
 #!/bin/bash
 set -eu -o pipefail
 
+
 git init -q
 git config commit.gpgsign false
 git config core.autocrlf false
 
 git checkout -q -b main
+
+if [ -n "${1:-}" ]; then
+  mkdir "$1"
+  cd "$1"
+fi
 
 touch f
 git add f
