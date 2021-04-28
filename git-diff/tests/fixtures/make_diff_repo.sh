@@ -61,3 +61,8 @@ git commit -qam 'delete d/'
 touch c d e
 git add .
 git commit -qam 'add /c /d /e'
+
+mkdir g
+touch g/a
+git add g
+git commit -qam 'add g/a'

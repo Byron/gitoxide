@@ -173,7 +173,7 @@ fn delete_entry_schedule_recursion<R: visit::Record>(
 
 fn add_entry_schedule_recursion<R: visit::Record>(
     entry: immutable::tree::Entry<'_>,
-    _queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
@@ -188,8 +188,14 @@ fn add_entry_schedule_recursion<R: visit::Record>(
     }
     if entry.mode.is_tree() {
         delegate.pop_path_component();
-        let _path_id = delegate.push_tracked_path_component(entry.filename);
-        todo!("add tree recursively")
+        let path_id = delegate.push_tracked_path_component(entry.filename);
+        queue.push_back((
+            None,
+            Some(TreeInfo {
+                tree_id: entry.oid.to_owned(),
+                parent_path_id: path_id,
+            }),
+        ))
     }
     Ok(())
 }
