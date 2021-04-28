@@ -130,9 +130,11 @@ impl<'a> visit::Changes<'a> {
                         Greater => {
                             add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
                             'inner_greater: loop {
-                                match rhs_entries.next().transpose()? {
-                                    Some(rhs) => {
-                                        if lhs.filename == rhs.filename {
+                                match rhs_entries.peek() {
+                                    Some(Ok(rhs)) => match lhs.filename.cmp(rhs.filename) {
+                                        Equal => {
+                                            let rhs =
+                                                rhs_entries.next().transpose()?.expect("the peeked item tobe present");
                                             handle_lhs_and_rhs_with_equal_filenames(
                                                 lhs,
                                                 rhs,
@@ -140,11 +142,20 @@ impl<'a> visit::Changes<'a> {
                                                 delegate,
                                             )?;
                                             break 'inner_greater;
-                                        } else {
+                                        }
+                                        Greater => {
+                                            let rhs =
+                                                rhs_entries.next().transpose()?.expect("the peeked item tobe present");
                                             delegate.pop_path_component();
                                             add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
                                         }
-                                    }
+                                        Less => {
+                                            delegate.pop_path_component();
+                                            delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
+                                            break 'inner_greater;
+                                        }
+                                    },
+                                    Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
                                     None => {
                                         todo!("GREATER: catchup less: break inner depleted - it never caught up");
                                         // break 'inner;

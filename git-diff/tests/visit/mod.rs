@@ -340,6 +340,23 @@ mod changes {
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	g/a
                  :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	g/aa"
             );
+            assert_eq!(
+                diff_with_previous_commit_from(&db, &all_commits[18])?,
+                vec![
+                    recorder::Change::Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "f".into()
+                    },
+                    recorder::Change::Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "ff".into()
+                    },
+                ],
+                ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f
+                  :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	ff"
+            );
             Ok(())
         }
     }
