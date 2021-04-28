@@ -10,7 +10,6 @@ use nom::{
 use smallvec::SmallVec;
 
 use crate::{
-    commit,
     immutable::{object::decode, parse, parse::NL, Signature},
     BStr, ByteSlice,
 };
@@ -28,7 +27,7 @@ pub struct Commit<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
-    pub parents: SmallVec<[&'a BStr; 1]>,
+    pub parents: SmallVec<[&'a BStr; 2]>,
     /// Who wrote this commit.
     pub author: Signature<'a>,
     /// Who committed this commit.
@@ -62,8 +61,8 @@ impl<'a> Commit<'a> {
     }
 
     /// Returns a convenient iterator over all extra headers.
-    pub fn extra_headers(&self) -> commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
-        commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
+    pub fn extra_headers(&self) -> crate::commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
+        crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
     }
 }
 
@@ -110,4 +109,74 @@ fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, decode::Error> {
             extra_headers,
         },
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_commit() {
+        assert_eq!(
+            std::mem::size_of::<Commit<'_>>(),
+            216,
+            "the size of an immutable commit shouldn't change unnoticed"
+        );
+    }
+}
+
+///
+pub mod iter {
+    use crate::immutable::object::decode;
+
+    /// Like [`immutable::Commit`][super::Commit], but as `Iterator` to support (up to) entirely allocation free parsing.
+    /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
+    pub struct Iter<'a> {
+        data: &'a [u8],
+    }
+
+    impl<'a> Iter<'a> {
+        /// Create a commit iterator from data.
+        pub fn from_bytes(data: &'a [u8]) -> Iter<'a> {
+            Iter { data }
+        }
+    }
+
+    impl<'a> Iterator for Iter<'a> {
+        type Item = Result<Token<'a>, decode::Error>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            todo!("tree iter next")
+        }
+    }
+
+    /// A token returned by the [commit iterator][Iter].
+    #[allow(missing_docs)]
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum Token<'a> {
+        Tree(token::Tree<'a>),
+    }
+
+    ///
+    pub mod token {
+        use bstr::BStr;
+
+        /// A Token representing a tree as parsed from a commit.
+        #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+        #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+        pub struct Tree<'a> {
+            /// HEX hash of tree object we point to. Usually 40 bytes long.
+            ///
+            /// Use [`id()`][Tree::id()] to obtain a decoded version of it.
+            pub hex_id: &'a BStr,
+        }
+
+        impl<'a> Tree<'a> {
+            /// Return this trees object id
+            pub fn id(&self) -> git_hash::ObjectId {
+                git_hash::ObjectId::from_hex(self.hex_id).expect("prior validation of hashes during parsing")
+            }
+        }
+    }
 }
