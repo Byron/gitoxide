@@ -92,7 +92,12 @@ impl<'a> visit::Changes<'a> {
                                 match lhs_entries.next().transpose()? {
                                     Some(lhs) => {
                                         if lhs.filename == rhs.filename {
-                                            // todo!("LESS: inner loop handle equality and type");
+                                            handle_lhs_and_rhs_with_equal_filenames(
+                                                lhs,
+                                                rhs,
+                                                &mut state.trees,
+                                                delegate,
+                                            )?;
                                             break 'inner_less;
                                         } else {
                                             todo!("need test: inner loop handle cursor next");
@@ -113,7 +118,12 @@ impl<'a> visit::Changes<'a> {
                                 match rhs_entries.next().transpose()? {
                                     Some(rhs) => {
                                         if lhs.filename == rhs.filename {
-                                            // todo!("GREATER: inner loop handle equality and type");
+                                            handle_lhs_and_rhs_with_equal_filenames(
+                                                lhs,
+                                                rhs,
+                                                &mut state.trees,
+                                                delegate,
+                                            )?;
                                             break 'inner_greater;
                                         } else {
                                             delegate.pop_path_component();
