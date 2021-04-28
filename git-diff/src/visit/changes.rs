@@ -120,8 +120,9 @@ impl<'a> visit::Changes<'a> {
                                     },
                                     Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
                                     None => {
-                                        todo!("LESS: depleted lhs");
-                                        // break 'inner_less;
+                                        delegate.pop_path_component();
+                                        add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
+                                        break 'inner_less;
                                     }
                                 }
                             }

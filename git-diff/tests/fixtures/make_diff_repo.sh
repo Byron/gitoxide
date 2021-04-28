@@ -74,3 +74,8 @@ git rm f
 touch ff
 git add ff
 git commit -qam 'rm /f, add /ff'
+
+touch g/aa
+git rm g/a
+git add g/aa
+git commit -qam 'rm g/a, add g/aa'

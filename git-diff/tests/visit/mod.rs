@@ -17,6 +17,7 @@ mod changes {
         const COMMIT_15: &str = "6112ecdac98a18bcbdbd83f0b180b3e1df12e293";
         const COMMIT_16: &str = "0ca25edc0c0b38fd6b6a0f6e4797dc08bf0c55c2";
         const COMMIT_17: &str = "0b93c2b59feb6c9a4efa1c78a4b4b17fd1c78508";
+        const COMMIT_18: &str = "53e18fb0d3296990f05382f9c67f8bd256126c4c";
 
         fn db() -> crate::Result<linked::Db> {
             linked::Db::at(
@@ -298,6 +299,30 @@ mod changes {
                 ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f
                   :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	ff"
+            );
+            assert_eq!(
+                diff_with_previous_commit_from(&db, COMMIT_18)?,
+                vec![
+                    recorder::Change::Modification {
+                        previous_entry_mode: EntryMode::Tree,
+                        previous_oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("6e5931346904b020301f74f581142826eacc4678"),
+                        path: "g".into()
+                    },
+                    recorder::Change::Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "g/a".into()
+                    },
+                    recorder::Change::Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "g/aa".into()
+                    },
+                ],
+                ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	g/a
+                 :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	g/aa"
             );
             Ok(())
         }
