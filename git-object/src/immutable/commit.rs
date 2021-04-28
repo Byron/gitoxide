@@ -128,17 +128,44 @@ mod tests {
 ///
 pub mod iter {
     use crate::immutable::object::decode;
+    use crate::immutable::parse;
+
+    enum State {
+        Tree,
+    }
+
+    impl Default for State {
+        fn default() -> Self {
+            State::Tree
+        }
+    }
 
     /// Like [`immutable::Commit`][super::Commit], but as `Iterator` to support (up to) entirely allocation free parsing.
     /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
     pub struct Iter<'a> {
         data: &'a [u8],
+        state: Option<State>,
     }
 
     impl<'a> Iter<'a> {
         /// Create a commit iterator from data.
         pub fn from_bytes(data: &'a [u8]) -> Iter<'a> {
-            Iter { data }
+            Iter {
+                data,
+                state: Some(State::default()),
+            }
+        }
+    }
+    impl<'a> Iter<'a> {
+        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
+            use State::*;
+            Ok(match state {
+                Tree => {
+                    let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
+                        .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
+                    (i, Token::Tree(token::Tree { hex_id: tree }))
+                }
+            })
         }
     }
 
@@ -146,7 +173,19 @@ pub mod iter {
         type Item = Result<Token<'a>, decode::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            todo!("tree iter next")
+            match self.state.as_mut() {
+                Some(state) => match Self::next_inner(self.data, state) {
+                    Ok((data, token)) => {
+                        self.data = data;
+                        Some(Ok(token))
+                    }
+                    Err(err) => {
+                        self.state = None;
+                        Some(Err(err))
+                    }
+                },
+                None => return None,
+            }
         }
     }
 
