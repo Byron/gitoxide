@@ -2,22 +2,9 @@ mod changes {
     mod to_obtain_tree {
         use crate::hex_to_id;
         use git_diff::visit::recorder;
-        use git_object::tree::EntryMode;
+        use git_hash::{oid, ObjectId};
+        use git_object::{bstr::ByteSlice, tree::EntryMode};
         use git_odb::{linked, pack, Locate};
-
-        const COMMIT_1: &str = "055df97e18cd537da3cb16bcbdf1733fdcdfb430";
-        const COMMIT_2: &str = "a5ebf9ee3b1cac5daf3dc9056026ee848be52da2";
-        const COMMIT_3: &str = "65cd7e777303b4b3a2d41e81303b5c2dd15041fa";
-        const COMMIT_5: &str = "69bbebb6608472d98be684f4e6ef1faaac2a03bc";
-        const COMMIT_6: &str = "9bd749db486b2af4a0d4df2de1972db2f198903d";
-        const COMMIT_9: &str = "ac0a340c76810b53b23e6dc44cf1445ebbd52201";
-        const COMMIT_11: &str = "76a3f837e9b4aad1840df6be5ca413d696eabc9d";
-        const COMMIT_13: &str = "05533d594489fae72d4e7422fbdf061c1b70bc22";
-        const COMMIT_14: &str = "ac7c4c37c3939b820f3ff9003a7ed11d6143dc2b";
-        const COMMIT_15: &str = "6112ecdac98a18bcbdbd83f0b180b3e1df12e293";
-        const COMMIT_16: &str = "0ca25edc0c0b38fd6b6a0f6e4797dc08bf0c55c2";
-        const COMMIT_17: &str = "0b93c2b59feb6c9a4efa1c78a4b4b17fd1c78508";
-        const COMMIT_18: &str = "53e18fb0d3296990f05382f9c67f8bd256126c4c";
 
         fn db() -> crate::Result<linked::Db> {
             linked::Db::at(
@@ -28,8 +15,7 @@ mod changes {
             .map_err(Into::into)
         }
 
-        fn diff_with_previous_commit_from(db: &linked::Db, commit_id: &str) -> crate::Result<recorder::Changes> {
-            let commit_id = git_hash::ObjectId::from_hex(commit_id.as_bytes())?;
+        fn diff_with_previous_commit_from(db: &linked::Db, commit_id: &oid) -> crate::Result<recorder::Changes> {
             let mut buf = Vec::new();
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
@@ -75,11 +61,41 @@ mod changes {
             Ok(recorder.records)
         }
 
+        fn head_of(db: &linked::Db) -> ObjectId {
+            ObjectId::from_hex(
+                &std::fs::read(
+                    db.dbs[0]
+                        .loose
+                        .path
+                        .parent()
+                        .unwrap()
+                        .join("refs")
+                        .join("heads")
+                        .join("main"),
+                )
+                .expect("head ref")
+                .as_bstr()
+                .trim(),
+            )
+            .expect("valid hex id")
+        }
+
+        fn all_commits(db: &linked::Db) -> Vec<ObjectId> {
+            let head = head_of(db);
+            git_odb::traverse::Ancestors::new(db, Some(head), &mut pack::cache::Never)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect::<Result<Vec<_>, _>>()
+                .expect("valid iteration")
+        }
+
         #[test]
         fn many_different_states() -> crate::Result {
             let db = db()?;
+            let all_commits = all_commits(&db);
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_1)?,
+                diff_with_previous_commit_from(&db, &all_commits[0])?,
                 vec![recorder::Change::Addition {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
@@ -88,7 +104,7 @@ mod changes {
                 , ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f");
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_2)?,
+                diff_with_previous_commit_from(&db, &all_commits[1])?,
                 vec![recorder::Change::Modification {
                     previous_entry_mode: EntryMode::Blob,
                     previous_oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
@@ -99,7 +115,7 @@ mod changes {
                 , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      f");
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_3)?,
+                diff_with_previous_commit_from(&db, &all_commits[2])?,
                 vec![recorder::Change::Deletion {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
@@ -110,7 +126,7 @@ mod changes {
             );
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_5)?,
+                diff_with_previous_commit_from(&db, &all_commits[4])?,
                 vec![recorder::Change::Deletion {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
@@ -130,7 +146,7 @@ mod changes {
                    :000000 100644 0000000000000000000000000000000000000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 A      f/f");
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_6)?,
+                diff_with_previous_commit_from(&db, &all_commits[5])?,
                 vec![
                     recorder::Change::Modification {
                         previous_entry_mode: EntryMode::Tree,
@@ -151,7 +167,7 @@ mod changes {
             );
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_9)?,
+                diff_with_previous_commit_from(&db, &all_commits[8])?,
                 vec![
                     recorder::Change::Modification {
                         previous_entry_mode: EntryMode::Tree,
@@ -172,7 +188,7 @@ mod changes {
             );
 
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_11)?,
+                diff_with_previous_commit_from(&db, &all_commits[10])?,
                 vec![
                     recorder::Change::Deletion {
                         entry_mode: EntryMode::Tree,
@@ -206,7 +222,7 @@ mod changes {
                  :120000 000000 2e65efe2a145dda7ee51d1741299f848e5bf752e 0000000000000000000000000000000000000000 D	f/f"
             );
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_13)?,
+                diff_with_previous_commit_from(&db, &all_commits[12])?,
                 vec![
                     recorder::Change::Deletion {
                         entry_mode: EntryMode::Tree,
@@ -222,7 +238,7 @@ mod changes {
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	d/f"
             );
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_14)?,
+                diff_with_previous_commit_from(&db, &all_commits[13])?,
                 vec![
                     recorder::Change::Addition {
                         entry_mode: EntryMode::Blob,
@@ -245,7 +261,7 @@ mod changes {
                  :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	e"
             );
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_15)?,
+                diff_with_previous_commit_from(&db, &all_commits[14])?,
                 vec![
                     recorder::Change::Addition {
                         entry_mode: EntryMode::Tree,
@@ -261,7 +277,7 @@ mod changes {
                 ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	g/a"
             );
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_16)?,
+                diff_with_previous_commit_from(&db, &all_commits[15])?,
                 vec![
                     recorder::Change::Deletion {
                         entry_mode: EntryMode::Blob,
@@ -284,7 +300,7 @@ mod changes {
                  :100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	e"
             );
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_17)?,
+                diff_with_previous_commit_from(&db, &all_commits[16])?,
                 vec![
                     recorder::Change::Deletion {
                         entry_mode: EntryMode::Blob,
@@ -301,7 +317,7 @@ mod changes {
                   :000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A	ff"
             );
             assert_eq!(
-                diff_with_previous_commit_from(&db, COMMIT_18)?,
+                diff_with_previous_commit_from(&db, &all_commits[17])?,
                 vec![
                     recorder::Change::Modification {
                         previous_entry_mode: EntryMode::Tree,
