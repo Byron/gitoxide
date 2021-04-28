@@ -52,8 +52,8 @@ impl<'a> visit::Changes<'a> {
         R: visit::Record,
     {
         state.clear();
-        let mut lhs_entries = self.0.take().unwrap_or_default();
-        let mut rhs_entries = other;
+        let mut lhs_entries = peekable(self.0.take().unwrap_or_default());
+        let mut rhs_entries = peekable(other);
         let mut avoid_popping_path: Option<()> = None;
 
         loop {
@@ -65,16 +65,20 @@ impl<'a> visit::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.set_current_path(rhs.parent_path_id.clone());
-                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
+                            rhs_entries =
+                                peekable(locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?);
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
-                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
+                            lhs_entries =
+                                peekable(locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?);
+                            rhs_entries =
+                                peekable(locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?);
                         }
                         Some((Some(lhs), None)) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
+                            lhs_entries =
+                                peekable(locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?);
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
@@ -89,9 +93,11 @@ impl<'a> visit::Changes<'a> {
                         Less => {
                             delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                             'inner_less: loop {
-                                match lhs_entries.next().transpose()? {
-                                    Some(lhs) => match lhs.filename.cmp(rhs.filename) {
+                                match lhs_entries.peek() {
+                                    Some(Ok(lhs)) => match lhs.filename.cmp(rhs.filename) {
                                         Equal => {
+                                            let lhs =
+                                                lhs_entries.next().transpose()?.expect("the peeked item tobe present");
                                             handle_lhs_and_rhs_with_equal_filenames(
                                                 lhs,
                                                 rhs,
@@ -101,15 +107,21 @@ impl<'a> visit::Changes<'a> {
                                             break 'inner_less;
                                         }
                                         Less => {
+                                            let lhs =
+                                                lhs_entries.next().transpose()?.expect("the peeked item tobe present");
                                             delegate.pop_path_component();
                                             delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                                         }
                                         Greater => {
-                                            todo!("LESS -> GREATER - we overshot")
+                                            delegate.pop_path_component();
+                                            add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
+                                            break 'inner_less;
                                         }
                                     },
+                                    Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
                                     None => {
-                                        break 'inner_less;
+                                        todo!("LESS: depleted lhs");
+                                        // break 'inner_less;
                                     }
                                 }
                             }
@@ -319,4 +331,8 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
         }
     };
     Ok(())
+}
+
+fn peekable<I: Iterator>(iter: I) -> std::mem::ManuallyDrop<std::iter::Peekable<I>> {
+    std::mem::ManuallyDrop::new(iter.peekable())
 }
