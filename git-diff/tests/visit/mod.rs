@@ -12,6 +12,7 @@ mod changes {
         const COMMIT_6: &str = "9bd749db486b2af4a0d4df2de1972db2f198903d";
         const COMMIT_9: &str = "ac0a340c76810b53b23e6dc44cf1445ebbd52201";
         const COMMIT_11: &str = "76a3f837e9b4aad1840df6be5ca413d696eabc9d";
+        const COMMIT_13: &str = "05533d594489fae72d4e7422fbdf061c1b70bc22";
 
         fn db() -> crate::Result<linked::Db> {
             linked::Db::at(
@@ -198,6 +199,11 @@ mod changes {
                  :100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f/a
                  :100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	f/b
                  :120000 000000 2e65efe2a145dda7ee51d1741299f848e5bf752e 0000000000000000000000000000000000000000 D	f/f"
+            );
+            assert_eq!(
+                diff_with_previous_commit_from(&db, COMMIT_13)?,
+                vec![],
+                ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	d/f"
             );
             Ok(())
         }

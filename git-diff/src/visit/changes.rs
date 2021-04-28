@@ -1,4 +1,4 @@
-use crate::visit::TreeInfo;
+use crate::visit::{TreeInfo, TreeInfoPair};
 use crate::{
     visit,
     visit::{changes::Error::Cancelled, record::Change},
@@ -6,6 +6,7 @@ use crate::{
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
+use std::collections::VecDeque;
 
 quick_error! {
     #[derive(Debug)]
@@ -54,6 +55,7 @@ impl<'a> visit::Changes<'a> {
         let mut rhs_entries = other;
         let mut avoid_popping_path: Option<()> = None;
 
+        dbg!("================= START ===================");
         loop {
             if avoid_popping_path.take().is_none() {
                 delegate.pop_path_component();
@@ -82,6 +84,7 @@ impl<'a> visit::Changes<'a> {
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
+                    dbg!(&lhs, &rhs);
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => {
                             use tree::EntryMode::*;
@@ -185,27 +188,27 @@ impl<'a> visit::Changes<'a> {
                                 }
                             };
                         }
-                        Less => todo!("entry compares less - catch up"),
+                        Less => {
+                            let mut cursor = lhs;
+                            loop {
+                                delete_entry_schedule_recursion(&cursor, &mut state.trees, delegate)?;
+
+                                match lhs_entries.next() {
+                                    Some(entry) => {
+                                        let entry = entry?;
+                                        // if entry.filename == rhs.
+                                        todo!("peek entry, see if we caught up, ")
+                                    }
+                                    None => break,
+                                }
+                            }
+                        }
                         Greater => todo!("entry compares more - let the other side catch up"),
                     }
                 }
                 (Some(lhs), None) => {
                     let lhs = lhs?;
-                    delegate.push_path_component(lhs.filename);
-                    if delegate
-                        .record(Change::Deletion {
-                            entry_mode: lhs.mode,
-                            oid: lhs.oid.to_owned(),
-                        })
-                        .cancelled()
-                    {
-                        break Err(Error::Cancelled);
-                    }
-                    if lhs.mode.is_tree() {
-                        delegate.pop_path_component();
-                        let _path_id = delegate.push_tracked_path_component(lhs.filename);
-                        todo!("delete tree recursively")
-                    }
+                    delete_entry_schedule_recursion(&lhs, &mut state.trees, delegate)?;
                 }
                 (None, Some(rhs)) => {
                     let rhs = rhs?;
@@ -228,4 +231,35 @@ impl<'a> visit::Changes<'a> {
             }
         }
     }
+}
+fn delete_entry_schedule_recursion<R>(
+    entry: &immutable::tree::Entry<'_>,
+    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    delegate: &mut R,
+) -> Result<(), Error>
+where
+    R: visit::Record,
+{
+    delegate.push_path_component(entry.filename);
+    if delegate
+        .record(Change::Deletion {
+            entry_mode: entry.mode,
+            oid: entry.oid.to_owned(),
+        })
+        .cancelled()
+    {
+        return Err(Error::Cancelled);
+    }
+    if entry.mode.is_tree() {
+        delegate.pop_path_component();
+        let path_id = delegate.push_tracked_path_component(entry.filename);
+        queue.push_back((
+            Some(TreeInfo {
+                tree_id: entry.oid.to_owned(),
+                parent_path_id: path_id,
+            }),
+            None,
+        ));
+    }
+    Ok(())
 }

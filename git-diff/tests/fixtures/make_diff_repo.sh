@@ -49,5 +49,11 @@ touch f
 git add f
 git commit -qam 'f/ changed into file f'
 
+mkdir d
+touch d/f
+git add d
+git commit -qam 'add d/f'
 
+rm -r d/
+git commit -qam 'delete d/'
 
