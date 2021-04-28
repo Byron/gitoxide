@@ -57,3 +57,6 @@ git commit -qam 'add d/f'
 rm -r d/
 git commit -qam 'delete d/'
 
+touch c d e
+git add .
+git commit -qam 'add /c /d /e'

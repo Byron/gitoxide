@@ -88,28 +88,45 @@ impl<'a> visit::Changes<'a> {
                         Equal => handle_lhs_and_rhs_with_equal_filenames(lhs, rhs, &mut state.trees, delegate)?,
                         Less => {
                             delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
-                            'inner: loop {
+                            'inner_less: loop {
                                 match lhs_entries.next().transpose()? {
                                     Some(lhs) => {
                                         if lhs.filename == rhs.filename {
-                                            // todo!("inner loop handle equality and type");
-                                            break 'inner;
+                                            // todo!("LESS: inner loop handle equality and type");
+                                            break 'inner_less;
                                         } else {
                                             todo!("need test: inner loop handle cursor next");
-                                            // cursor = lhs_entries
-                                            //     .next()
-                                            //     .expect("next entry is present")
-                                            //     .expect("it has no error as we peeked");
+                                            // delegate.pop_path_component();
+                                            // delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                                         }
                                     }
                                     None => {
-                                        todo!("catchup less: break inner depleted - it never caught up");
+                                        todo!("LESS: catchup less: break inner depleted - it never caught up");
                                         // break 'inner;
                                     }
                                 }
                             }
                         }
-                        Greater => todo!("entry compares more - let the other side catch up"),
+                        Greater => {
+                            add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
+                            'inner_greater: loop {
+                                match rhs_entries.next().transpose()? {
+                                    Some(rhs) => {
+                                        if lhs.filename == rhs.filename {
+                                            // todo!("GREATER: inner loop handle equality and type");
+                                            break 'inner_greater;
+                                        } else {
+                                            delegate.pop_path_component();
+                                            add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
+                                        }
+                                    }
+                                    None => {
+                                        todo!("GREATER: catchup less: break inner depleted - it never caught up");
+                                        // break 'inner;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 (Some(lhs), None) => {
