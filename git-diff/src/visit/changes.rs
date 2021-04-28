@@ -1,12 +1,11 @@
-use crate::visit::{TreeInfo, TreeInfoPair};
 use crate::{
     visit,
-    visit::{changes::Error::Cancelled, record::Change},
+    visit::{changes::Error::Cancelled, record::Change, TreeInfo, TreeInfoPair},
 };
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, mem::ManuallyDrop};
 
 quick_error! {
     #[derive(Debug)]
@@ -39,6 +38,8 @@ impl<'a> visit::Changes<'a> {
     /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
     ///   by the delegate implementation which should be as specific as possible.
     /// * cycle checking is not performed, but can be performed in the delegate
+    /// * [ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
+    ///   borrowcheck complains as Drop is present (even though it's not)
     pub fn needed_to_obtain<LocateFn, R>(
         mut self,
         other: immutable::TreeIter<'a>,
@@ -51,8 +52,8 @@ impl<'a> visit::Changes<'a> {
         R: visit::Record,
     {
         state.clear();
-        let mut lhs_entries = self.0.take().unwrap_or_default().peekable();
-        let mut rhs_entries = other.peekable();
+        let mut lhs_entries = ManuallyDrop::new(self.0.take().unwrap_or_default().peekable());
+        let mut rhs_entries = ManuallyDrop::new(other.peekable());
         let mut avoid_popping_path: Option<()> = None;
 
         dbg!("================= START ===================");
@@ -65,24 +66,32 @@ impl<'a> visit::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.set_current_path(rhs.parent_path_id.clone());
-                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2)
-                                .ok_or(Error::NotFound(rhs.tree_id))?
-                                .peekable();
+                            rhs_entries = ManuallyDrop::new(
+                                locate(&rhs.tree_id, &mut state.buf2)
+                                    .ok_or(Error::NotFound(rhs.tree_id))?
+                                    .peekable(),
+                            );
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1)
-                                .ok_or(Error::NotFound(lhs.tree_id))?
-                                .peekable();
-                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2)
-                                .ok_or(Error::NotFound(rhs.tree_id))?
-                                .peekable();
+                            lhs_entries = ManuallyDrop::new(
+                                locate(&lhs.tree_id, &mut state.buf1)
+                                    .ok_or(Error::NotFound(lhs.tree_id))?
+                                    .peekable(),
+                            );
+                            rhs_entries = ManuallyDrop::new(
+                                locate(&rhs.tree_id, &mut state.buf2)
+                                    .ok_or(Error::NotFound(rhs.tree_id))?
+                                    .peekable(),
+                            );
                         }
                         Some((Some(lhs), None)) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1)
-                                .ok_or(Error::NotFound(lhs.tree_id))?
-                                .peekable();
+                            lhs_entries = ManuallyDrop::new(
+                                locate(&lhs.tree_id, &mut state.buf1)
+                                    .ok_or(Error::NotFound(lhs.tree_id))?
+                                    .peekable(),
+                            );
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
