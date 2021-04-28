@@ -202,7 +202,18 @@ mod changes {
             );
             assert_eq!(
                 diff_with_previous_commit_from(&db, COMMIT_13)?,
-                vec![],
+                vec![
+                    recorder::Change::Deletion {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("3d5a503f4062d198b443db5065ca727f8354e7df"),
+                        path: "d".into()
+                    },
+                    recorder::Change::Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "d/f".into()
+                    },
+                ],
                 ":100644 000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 D	d/f"
             );
             Ok(())

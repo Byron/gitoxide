@@ -216,7 +216,7 @@ pub mod decode {
 
     quick_error! {
         /// An error returned by various [`Commit`][crate::immutable::Commit] and [`Signature`][crate::immutable::Signature] methods.
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         #[allow(missing_docs)]
         pub enum Error {
             ParseIntegerError(msg: &'static str, number: crate::BString, err: btoi::ParseIntegerError) {

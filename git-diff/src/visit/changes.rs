@@ -5,7 +5,7 @@ use crate::{
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
-use std::{collections::VecDeque, mem::ManuallyDrop};
+use std::collections::VecDeque;
 
 quick_error! {
     #[derive(Debug)]
@@ -52,11 +52,10 @@ impl<'a> visit::Changes<'a> {
         R: visit::Record,
     {
         state.clear();
-        let mut lhs_entries = ManuallyDrop::new(self.0.take().unwrap_or_default().peekable());
-        let mut rhs_entries = ManuallyDrop::new(other.peekable());
+        let mut lhs_entries = self.0.take().unwrap_or_default();
+        let mut rhs_entries = other;
         let mut avoid_popping_path: Option<()> = None;
 
-        dbg!("================= START ===================");
         loop {
             if avoid_popping_path.take().is_none() {
                 delegate.pop_path_component();
@@ -66,32 +65,16 @@ impl<'a> visit::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.set_current_path(rhs.parent_path_id.clone());
-                            rhs_entries = ManuallyDrop::new(
-                                locate(&rhs.tree_id, &mut state.buf2)
-                                    .ok_or(Error::NotFound(rhs.tree_id))?
-                                    .peekable(),
-                            );
+                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = ManuallyDrop::new(
-                                locate(&lhs.tree_id, &mut state.buf1)
-                                    .ok_or(Error::NotFound(lhs.tree_id))?
-                                    .peekable(),
-                            );
-                            rhs_entries = ManuallyDrop::new(
-                                locate(&rhs.tree_id, &mut state.buf2)
-                                    .ok_or(Error::NotFound(rhs.tree_id))?
-                                    .peekable(),
-                            );
+                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
+                            rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
                         }
                         Some((Some(lhs), None)) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries = ManuallyDrop::new(
-                                locate(&lhs.tree_id, &mut state.buf1)
-                                    .ok_or(Error::NotFound(lhs.tree_id))?
-                                    .peekable(),
-                            );
+                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
@@ -101,7 +84,6 @@ impl<'a> visit::Changes<'a> {
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
                     let (lhs, rhs) = (lhs?, rhs?);
-                    dbg!(&lhs, &rhs);
                     match lhs.filename.cmp(rhs.filename) {
                         Equal => {
                             use tree::EntryMode::*;
@@ -206,17 +188,25 @@ impl<'a> visit::Changes<'a> {
                             };
                         }
                         Less => {
-                            let cursor = lhs;
-                            loop {
-                                delete_entry_schedule_recursion(&cursor, &mut state.trees, delegate)?;
-
-                                match lhs_entries.next() {
-                                    Some(entry) => {
-                                        let _entry = entry?;
-                                        // if entry.filename == rhs.
-                                        todo!("peek entry, see if we caught up, ")
+                            delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
+                            'inner: loop {
+                                match lhs_entries.next().transpose()? {
+                                    Some(lhs) => {
+                                        if lhs.filename == rhs.filename {
+                                            // unimplemented!("inner loop handle equality and type");
+                                            break 'inner;
+                                        } else {
+                                            todo!("need test: inner loop handle cursor next");
+                                            // cursor = lhs_entries
+                                            //     .next()
+                                            //     .expect("next entry is present")
+                                            //     .expect("it has no error as we peeked");
+                                        }
                                     }
-                                    None => break,
+                                    None => {
+                                        todo!("catchup less: break inner depleted - it never caught up");
+                                        // break 'inner;
+                                    }
                                 }
                             }
                         }
@@ -225,32 +215,19 @@ impl<'a> visit::Changes<'a> {
                 }
                 (Some(lhs), None) => {
                     let lhs = lhs?;
-                    delete_entry_schedule_recursion(&lhs, &mut state.trees, delegate)?;
+                    delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                 }
                 (None, Some(rhs)) => {
                     let rhs = rhs?;
-                    delegate.push_path_component(rhs.filename);
-                    if delegate
-                        .record(Change::Addition {
-                            entry_mode: rhs.mode,
-                            oid: rhs.oid.to_owned(),
-                        })
-                        .cancelled()
-                    {
-                        break Err(Error::Cancelled);
-                    }
-                    if rhs.mode.is_tree() {
-                        delegate.pop_path_component();
-                        let _path_id = delegate.push_tracked_path_component(rhs.filename);
-                        todo!("add tree recursively")
-                    }
+                    add_entry_schedule_recursion(rhs, &mut state.trees, delegate)?;
                 }
             }
         }
     }
 }
+
 fn delete_entry_schedule_recursion<R>(
-    entry: &immutable::tree::Entry<'_>,
+    entry: immutable::tree::Entry<'_>,
     queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
 ) -> Result<(), Error>
@@ -277,6 +254,32 @@ where
             }),
             None,
         ));
+    }
+    Ok(())
+}
+
+fn add_entry_schedule_recursion<R>(
+    entry: immutable::tree::Entry<'_>,
+    _queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    delegate: &mut R,
+) -> Result<(), Error>
+where
+    R: visit::Record,
+{
+    delegate.push_path_component(entry.filename);
+    if delegate
+        .record(Change::Addition {
+            entry_mode: entry.mode,
+            oid: entry.oid.to_owned(),
+        })
+        .cancelled()
+    {
+        return Err(Error::Cancelled);
+    }
+    if entry.mode.is_tree() {
+        delegate.pop_path_component();
+        let _path_id = delegate.push_tracked_path_component(entry.filename);
+        todo!("add tree recursively")
     }
     Ok(())
 }

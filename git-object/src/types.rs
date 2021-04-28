@@ -65,7 +65,7 @@ pub enum Kind {
 }
 quick_error! {
     /// The Error used in [`Kind::from_bytes()`].
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     #[allow(missing_docs)]
     pub enum Error {
         InvalidObjectKind(kind: crate::BString) {
