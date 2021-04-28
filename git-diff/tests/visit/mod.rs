@@ -30,7 +30,7 @@ mod changes {
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
                     .locate(commit_id, &mut buf, &mut pack::cache::Never)?
-                    .expect("start commit to be present")
+                    .ok_or_else(|| String::from(format!("start commit {:?} to be present", commit_id)))?
                     .decode()?
                     .into_commit()
                     .expect("id is actually a commit");
