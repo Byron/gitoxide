@@ -35,9 +35,15 @@ mod changes {
                 .expect("id to be a tree"))
         }
 
-        fn diff_commits(db: &linked::Db, lhs: &oid, rhs: &oid) -> crate::Result<recorder::Changes> {
+        fn diff_commits(
+            db: &linked::Db,
+            lhs: impl Into<Option<ObjectId>>,
+            rhs: &oid,
+        ) -> crate::Result<recorder::Changes> {
             let mut buf = Vec::new();
-            let lhs_tree = locate_tree_by_commit(db, lhs, &mut buf)?;
+            let lhs_tree = lhs
+                .into()
+                .and_then(|lhs| locate_tree_by_commit(db, &lhs, &mut buf).ok());
             let mut buf2 = Vec::new();
             let rhs_tree = locate_tree_by_commit(db, rhs, &mut buf2)?;
             let mut recorder = git_diff::visit::Recorder::default();
@@ -172,16 +178,16 @@ mod changes {
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                     path: "f".into()
                 },
-                Addition {
-                    entry_mode: EntryMode::Tree,
-                    oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
-                    path: "f".into()
-                },
-                Addition {
-                    entry_mode: EntryMode::Blob,
-                    oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
-                    path: "f/f".into()
-                }]
+                     Addition {
+                         entry_mode: EntryMode::Tree,
+                         oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
+                         path: "f".into()
+                     },
+                     Addition {
+                         entry_mode: EntryMode::Blob,
+                         oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                         path: "f/f".into()
+                     }]
                 , ":100644 000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 0000000000000000000000000000000000000000 D      f
                    :000000 100644 0000000000000000000000000000000000000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 A      f/f");
 
@@ -473,7 +479,7 @@ mod changes {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                         path: "a/f".into()
-                }]
+                    }]
                 , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      a/f");
 
             for commit in all_commits {
@@ -491,7 +497,11 @@ mod changes {
             let all_commits = all_commits(&db);
 
             assert_eq!(
-                diff_commits(&db, &all_commits[0], &all_commits.last().expect("we have many commits"))?,
+                diff_commits(
+                    &db,
+                    all_commits[0].to_owned(),
+                    &all_commits.last().expect("we have many commits")
+                )?,
                 vec![
                     Addition {
                         entry_mode: EntryMode::Blob,
@@ -511,7 +521,11 @@ mod changes {
                 ]
             );
             assert_eq!(
-                diff_commits(&db, &all_commits.last().expect("we have many commits"), &all_commits[0])?,
+                diff_commits(
+                    &db,
+                    all_commits.last().expect("we have many commits").to_owned(),
+                    &all_commits[0]
+                )?,
                 vec![
                     Deletion {
                         entry_mode: EntryMode::Blob,
@@ -527,6 +541,59 @@ mod changes {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                         path: "g/a".into()
+                    }
+                ]
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn maximal_difference_nested() -> crate::Result {
+            let db = db(["a"].iter().copied())?;
+            let all_commits = all_commits(&db);
+
+            assert_eq!(
+                diff_commits(&db, None::<ObjectId>, &all_commits[all_commits.len() - 6])?,
+                vec![
+                    Addition {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("0df4d0ed769eacd0a231e7512fca25d3cabdeca4"),
+                        path: "a".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/b".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/c".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/d".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/e".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/f".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"),
+                        path: "a/g".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+                        path: "a/g/a".into()
                     }
                 ]
             );
