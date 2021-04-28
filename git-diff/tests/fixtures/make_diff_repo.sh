@@ -44,5 +44,10 @@ git commit -qam 'f/f mode changed to link'
 git mv a b
 git commit -qam 'a renamed to b'
 
+git rm -r f
+touch f
+git add f
+git commit -qam 'f/ changed into file f'
+
 
 

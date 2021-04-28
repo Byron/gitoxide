@@ -70,10 +70,9 @@ impl<'a> visit::Changes<'a> {
                             lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
                             rhs_entries = locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?;
                         }
-                        Some((Some(_lhs), None)) => {
-                            todo!("locate none|tree");
-                            // delegate.set_current_path(lhs.parent_path_id.clone());
-                            // lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
+                        Some((Some(lhs), None)) => {
+                            delegate.set_current_path(lhs.parent_path_id.clone());
+                            lhs_entries = locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?;
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
@@ -141,7 +140,7 @@ impl<'a> visit::Changes<'a> {
                                     ));
                                 }
                                 (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
-                                    let _path_id = delegate.push_tracked_path_component(lhs.filename);
+                                    let path_id = delegate.push_tracked_path_component(lhs.filename);
                                     if delegate
                                         .record(Change::Deletion {
                                             entry_mode: lhs.mode,
@@ -151,7 +150,22 @@ impl<'a> visit::Changes<'a> {
                                     {
                                         return Err(Error::Cancelled);
                                     }
-                                    todo!("delete lhs recursively|add non-tree")
+                                    if delegate
+                                        .record(Change::Addition {
+                                            entry_mode: rhs.mode,
+                                            oid: rhs.oid.to_owned(),
+                                        })
+                                        .cancelled()
+                                    {
+                                        return Err(Cancelled);
+                                    };
+                                    state.trees.push_back((
+                                        Some(TreeInfo {
+                                            tree_id: lhs.oid.to_owned(),
+                                            parent_path_id: path_id,
+                                        }),
+                                        None,
+                                    ));
                                 }
                                 (lhs_non_tree, rhs_non_tree) => {
                                     delegate.push_path_component(lhs.filename);
