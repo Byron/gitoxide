@@ -100,9 +100,8 @@ impl<'a> visit::Changes<'a> {
                                             )?;
                                             break 'inner_less;
                                         } else {
-                                            todo!("need test: inner loop handle cursor next");
-                                            // delegate.pop_path_component();
-                                            // delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
+                                            delegate.pop_path_component();
+                                            delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
                                         }
                                     }
                                     None => {

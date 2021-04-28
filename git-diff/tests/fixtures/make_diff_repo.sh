@@ -66,3 +66,6 @@ mkdir g
 touch g/a
 git add g
 git commit -qam 'add g/a'
+
+git rm c d e
+git commit -qam 'remove /c /d /e'
