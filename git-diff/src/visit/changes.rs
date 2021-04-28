@@ -157,8 +157,9 @@ impl<'a> visit::Changes<'a> {
                                     },
                                     Some(Err(err)) => return Err(Error::EntriesDecode(err.to_owned())),
                                     None => {
-                                        todo!("GREATER: catchup less: break inner depleted - it never caught up");
-                                        // break 'inner;
+                                        delegate.pop_path_component();
+                                        delete_entry_schedule_recursion(lhs, &mut state.trees, delegate)?;
+                                        break 'inner_greater;
                                     }
                                 }
                             }
