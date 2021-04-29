@@ -58,10 +58,22 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
+    let repo = git2::Repository::open(&repo_git_dir)?;
+    let start = Instant::now();
+    let count = do_libgit2(commit_id, &repo)?;
+    let elapsed = start.elapsed();
+    let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
+    println!(
+        "libgit2: confirmed {} commits in {:?} ({:0.0} commits/s)",
+        count,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
     Ok(())
 }
 
-fn do_gitoxide<C>(tip: ObjectId, db: &git_odb::linked::Db, new_cache: impl FnOnce() -> C) -> anyhow::Result<u64>
+fn do_gitoxide<C>(tip: ObjectId, db: &git_odb::linked::Db, new_cache: impl FnOnce() -> C) -> anyhow::Result<usize>
 where
     C: git_odb::pack::cache::DecodeEntry,
 {
@@ -69,6 +81,18 @@ where
     let ancestors = git_odb::traverse::Ancestors::new(db, Some(tip), &mut cache);
     let mut commits = 0;
     for commit_id in ancestors {
+        let _ = commit_id?;
+        commits += 1;
+    }
+    Ok(commits)
+}
+
+fn do_libgit2(tip: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
+    let mut commits = 0;
+    let mut walk = db.revwalk()?;
+    walk.push(git2::Oid::from_bytes(tip.as_bytes())?)?;
+
+    for commit_id in walk {
         let _ = commit_id?;
         commits += 1;
     }
