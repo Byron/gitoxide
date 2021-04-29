@@ -117,12 +117,16 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let num_deltas = do_gitoxide_tree_diff(&all_commits, || {
-        |oid, buf| db.locate(oid, buf, &mut git_odb::pack::cache::Never).ok().flatten()
+        let mut pack_cache =
+            git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
+        let db = &db;
+        move |oid, buf| db.locate(oid, buf, &mut pack_cache).ok().flatten()
     })?;
     let elapsed = start.elapsed();
 
     println!(
-        "gitoxide-deltas (uncached|uncached): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        "gitoxide-deltas (cache = uncached object -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
         num_deltas,
         num_diffs,
         elapsed,
