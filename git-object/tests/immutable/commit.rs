@@ -15,7 +15,7 @@ mod method {
 
 mod from_bytes {
     use crate::immutable::linus_signature;
-    use crate::{immutable::fixture_bytes, immutable::signature};
+    use crate::{hex_to_id, immutable::fixture_bytes, immutable::signature};
     use git_object::{
         bstr::ByteSlice,
         immutable::commit,
@@ -42,12 +42,21 @@ mod from_bytes {
 
     #[test]
     fn unsigned_iter() -> Result<(), Box<dyn std::error::Error>> {
-        use commit::iter::{token, Token};
+        use commit::iter::Token;
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
-            vec![Token::Tree(token::Tree {
-                hex_id: b"1b2dfb4ac5e42080b682fc676e9738c94ce6d54d".as_bstr()
-            })]
+            vec![
+                Token::Tree {
+                    id: hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d")
+                },
+                Token::Author {
+                    signature: signature(1592437401)
+                },
+                Token::Committer {
+                    signature: signature(1592437401)
+                },
+                Token::Message(b"without sig".as_bstr())
+            ]
         );
         Ok(())
     }

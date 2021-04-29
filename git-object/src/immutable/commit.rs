@@ -127,11 +127,29 @@ mod tests {
 
 ///
 pub mod iter {
-    use crate::immutable::object::decode;
-    use crate::immutable::parse;
+    use crate::bstr::ByteSlice;
+    use crate::immutable::commit::parse_message;
+    use crate::immutable::{object::decode, parse, parse::NL, Signature};
+    use bstr::BStr;
+    use git_hash::ObjectId;
+    use nom::branch::alt;
+    use nom::combinator::all_consuming;
+    use nom::{bytes::complete::is_not, combinator::opt};
+    use std::borrow::Cow;
+
+    #[derive(Copy, Clone)]
+    enum SignatureKind {
+        Author,
+        Committer,
+    }
 
     enum State {
         Tree,
+        Parents,
+        Signature { of: SignatureKind },
+        Encoding,
+        ExtraHeaders,
+        Message,
     }
 
     impl Default for State {
@@ -163,7 +181,83 @@ pub mod iter {
                 Tree => {
                     let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
                         .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
-                    (i, Token::Tree(token::Tree { hex_id: tree }))
+                    *state = State::Parents;
+                    (
+                        i,
+                        Token::Tree {
+                            id: ObjectId::from_hex(tree).expect("parsing validation"),
+                        },
+                    )
+                }
+                Parents => {
+                    let (i, parent) = opt(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
+                        .map_err(decode::Error::context("commit <40 lowercase hex char>"))?;
+                    match parent {
+                        Some(parent) => (
+                            i,
+                            Token::Parent {
+                                id: ObjectId::from_hex(parent).expect("parsing validation"),
+                            },
+                        ),
+                        None => {
+                            *state = State::Signature {
+                                of: SignatureKind::Author,
+                            };
+                            return Self::next_inner(i, state);
+                        }
+                    }
+                }
+                Signature { ref mut of } => {
+                    let who = *of;
+                    let (field_name, err_msg) = match of {
+                        SignatureKind::Author => {
+                            *of = SignatureKind::Committer;
+                            (&b"author"[..], "author <signature>")
+                        }
+                        SignatureKind::Committer => {
+                            *state = State::Encoding;
+                            (&b"committer"[..], "committer <signature>")
+                        }
+                    };
+                    let (i, signature) = parse::header_field(i, field_name, parse::signature)
+                        .map_err(decode::Error::context(err_msg))?;
+                    (
+                        i,
+                        match who {
+                            SignatureKind::Author => Token::Author { signature },
+                            SignatureKind::Committer => Token::Committer { signature },
+                        },
+                    )
+                }
+                Encoding => {
+                    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i)
+                        .map_err(decode::Error::context("encoding <encoding>"))?;
+                    *state = State::ExtraHeaders;
+                    match encoding {
+                        Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
+                        None => return Self::next_inner(i, state),
+                    }
+                }
+                ExtraHeaders => {
+                    let (i, extra_header) = opt(alt((
+                        |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
+                        |i| {
+                            parse::any_header_field(i, is_not(NL))
+                                .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+                        },
+                    )))(i)
+                    .map_err(decode::Error::context("<field> <single-line|multi-line>"))?;
+                    match extra_header {
+                        Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
+                        None => {
+                            *state = State::Message;
+                            return Self::next_inner(i, state);
+                        }
+                    }
+                }
+                Message => {
+                    let (i, message) = all_consuming(parse_message)(i)?;
+                    (i, Token::Message(message))
                 }
             })
         }
@@ -194,28 +288,12 @@ pub mod iter {
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub enum Token<'a> {
-        Tree(token::Tree<'a>),
-    }
-
-    ///
-    pub mod token {
-        use bstr::BStr;
-
-        /// A Token representing a tree as parsed from a commit.
-        #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-        #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-        pub struct Tree<'a> {
-            /// HEX hash of tree object we point to. Usually 40 bytes long.
-            ///
-            /// Use [`id()`][Tree::id()] to obtain a decoded version of it.
-            pub hex_id: &'a BStr,
-        }
-
-        impl<'a> Tree<'a> {
-            /// Return this trees object id
-            pub fn id(&self) -> git_hash::ObjectId {
-                git_hash::ObjectId::from_hex(self.hex_id).expect("prior validation of hashes during parsing")
-            }
-        }
+        Tree { id: ObjectId },
+        Parent { id: ObjectId },
+        Author { signature: Signature<'a> },
+        Committer { signature: Signature<'a> },
+        Encoding(&'a BStr),
+        ExtraHeader((&'a BStr, Cow<'a, BStr>)),
+        Message(&'a BStr),
     }
 }
