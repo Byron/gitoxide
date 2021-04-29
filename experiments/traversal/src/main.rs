@@ -209,12 +209,8 @@ where
             .expect("commit present")
             .into_commit_iter()
             .expect("a commit")
-            .next()
-            .expect("tree token present")
-            .expect("tree token decodable")
-            .id()
-            .expect("first token is a tree id")
-            .to_owned();
+            .tree_id()
+            .expect("tree id present and decodable");
         find_tree_iter(&tid, buf, find).expect("tree available")
     }
 

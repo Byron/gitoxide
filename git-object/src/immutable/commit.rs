@@ -176,6 +176,17 @@ pub mod iter {
                 state: State::default(),
             }
         }
+
+        /// Returns the object id of this commits tree if it is the first function called and if there is no error in decoding
+        /// the data.
+        ///
+        /// Note that this method must only be called once or else will always return None while consuming a single token by calling
+        /// Errors are coerced into options, hiding whether there was an error or not. THe caller should assume an error if they
+        /// call the method as intended. Such a squelched error cannot be recovered unless the objects data is retrieved and parsed again.
+        /// `next()`.
+        pub fn tree_id(&mut self) -> Option<ObjectId> {
+            self.next().and_then(Result::ok).and_then(Token::into_id)
+        }
     }
     impl<'a> Iter<'a> {
         fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
@@ -308,6 +319,14 @@ pub mod iter {
         pub fn id(&self) -> Option<&oid> {
             match self {
                 Token::Tree { id } | Token::Parent { id } => Some(id.as_ref()),
+                _ => None,
+            }
+        }
+
+        /// Return the owned object id of this token if its a [tree][Token::Tree] or a [parent commit][Token::Parent].
+        pub fn into_id(self) -> Option<ObjectId> {
+            match self {
+                Token::Tree { id } | Token::Parent { id } => Some(id),
                 _ => None,
             }
         }
