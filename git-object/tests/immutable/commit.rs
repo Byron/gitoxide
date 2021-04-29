@@ -61,6 +61,17 @@ mod from_bytes {
     }
 
     #[test]
+    fn iter_error_handling() -> Result<(), Box<dyn std::error::Error>> {
+        let data = fixture_bytes("commit", "unsigned.txt");
+        let iter = CommitIter::from_bytes(&data[..data.len() / 2]);
+        assert!(
+            iter.collect::<Result<Vec<_>, _>>().is_err(),
+            "errors are propagated and none is returned from that point on"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn whitespace() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "whitespace.txt"))?,
