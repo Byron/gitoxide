@@ -33,7 +33,7 @@ impl<'a> Object<'a> {
     /// `None` if this is not a tree object.
     pub fn into_tree_iter(self) -> Option<immutable::TreeIter<'a>> {
         match self.kind {
-            git_object::Kind::Tree => Some(immutable::TreeIter { data: self.data }),
+            git_object::Kind::Tree => Some(immutable::TreeIter::from_bytes(self.data)),
             _ => None,
         }
     }

@@ -29,7 +29,14 @@ pub struct Tree<'a> {
 pub struct TreeIter<'a> {
     /// The directories and files contained in this tree.
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub data: &'a [u8],
+    data: &'a [u8],
+}
+
+impl<'a> TreeIter<'a> {
+    /// Instantiate an iterator from the given tree data.
+    pub fn from_bytes(data: &'a [u8]) -> TreeIter<'a> {
+        TreeIter { data }
+    }
 }
 
 /// An element of a [`Tree`][Tree::entries].
