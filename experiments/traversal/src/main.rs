@@ -108,7 +108,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let all_commits = git_odb::traverse::Ancestors::new(&db, Some(commit_id), &mut git_odb::pack::cache::Never)
         .collect::<Result<Vec<_>, _>>()?;
-    let num_diffs = all_commits.len() + 1;
+    let num_diffs = all_commits.len();
     let elapsed = start.elapsed();
     println!(
         "gitoxide (uncached): collect all {} commits in {:?} ({:0.0} commits/s)",
@@ -181,8 +181,8 @@ where
             .into_commit_iter()
             .expect("a commit")
             .next()
-            .expect("tree token")
-            .expect("tree decodable")
+            .expect("tree token present")
+            .expect("tree token decodable")
             .id()
             .expect("first token is a tree id")
             .to_owned();
