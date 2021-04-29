@@ -101,6 +101,7 @@ members = [
     "git-tui",
 
     "experiments/object-access",
+    "experiments/traversal",
     "experiments/hash-owned-borrowed",
 
     "tests/tools",

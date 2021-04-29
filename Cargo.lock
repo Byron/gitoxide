@@ -2090,6 +2090,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
+name = "traversal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "git-hash",
+ "git-odb",
+ "git2",
+ "rayon",
+]
+
+[[package]]
 name = "tui"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

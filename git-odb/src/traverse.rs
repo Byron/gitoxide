@@ -83,7 +83,7 @@ pub mod ancestors {
                                             self.next.push_back(id);
                                         }
                                     }
-                                    Ok(_past_parent) => break,
+                                    Ok(_a_token_past_the_parents) => break,
                                     Err(err) => return Some(Err(err.into())),
                                 }
                             }
