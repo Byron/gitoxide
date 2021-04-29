@@ -1,5 +1,9 @@
 use anyhow::anyhow;
-use git_hash::{bstr::ByteSlice, oid, ObjectId};
+use git_diff::visit::record::{Action, Change};
+use git_hash::{
+    bstr::{BStr, ByteSlice},
+    oid, ObjectId,
+};
 use git_object::immutable;
 use git_odb::Locate;
 use std::{
@@ -134,37 +138,77 @@ where
     C: Fn() -> L,
     L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
 {
-    let empty_tree = ObjectId::empty_tree();
     let mut buf: Vec<u8> = Vec::new();
-    let last = [commits.last().expect("at least one commit").to_owned(), empty_tree];
-    let iter = commits.windows(2).chain(std::iter::once(&last[..]));
+    let mut buf2: Vec<u8> = Vec::new();
+
+    let tree_pairs = commits.windows(2);
     let mut find = make_locate();
 
-    fn find_tree<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<immutable::TreeIter<'b>>
+    fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<immutable::TreeIter<'b>>
     where
-        L: FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_odb::data::Object<'a>>,
     {
         find(id, buf).and_then(|o| o.into_tree_iter())
     }
-    // let mut find_tree = |tid, buf: &mut Vec<u8>| find(tid, buf).and_then(|o| o.into_tree_iter());
-    // let tree_iter_by_commit = |cid| { let tid = find(cid, &mut buf)
-    //         .expect("commit present")
-    //         .into_commit_iter()
-    //         .expect("a commit")
-    //         .next()
-    //         .expect("tree token")
-    //         .expect("tree decodable")
-    //         .id()
-    //         .expect("first token is a tree id");
-    //     find_tree(tid, &mut buf).expect("tree available")
-    // };
-    // let mut
-    for pair in iter {
-        let (ca, cb) = (pair[0], pair[1]);
-        // let (ta, tb) = (tree_iter_by_commit(&ca), tree_iter_by_commit(&cb));
-        // git_diff::visit::Changes::from(ca).needed_to_obtain()
+
+    fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> immutable::TreeIter<'b>
+    where
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_odb::data::Object<'a>>,
+    {
+        let tid = find(id, buf)
+            .expect("commit present")
+            .into_commit_iter()
+            .expect("a commit")
+            .next()
+            .expect("tree token")
+            .expect("tree decodable")
+            .id()
+            .expect("first token is a tree id")
+            .to_owned();
+        find_tree_iter(&tid, buf, find).expect("tree available")
     }
-    todo!("tree diff")
+
+    #[derive(Default)]
+    struct Count(usize);
+
+    impl git_diff::visit::Record for Count {
+        type PathId = ();
+
+        fn set_current_path(&mut self, _path: Self::PathId) {}
+
+        fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {
+            ()
+        }
+
+        fn push_path_component(&mut self, _component: &BStr) {}
+
+        fn pop_path_component(&mut self) {}
+
+        fn record(&mut self, _change: Change) -> Action {
+            self.0 += 1;
+            Action::Continue
+        }
+    }
+
+    let mut state = git_diff::visit::State::default();
+    let mut changes = 0;
+    for pair in tree_pairs {
+        let (ca, cb) = (pair[0], pair[1]);
+        let (ta, tb) = (
+            tree_iter_by_commit(&ca, &mut buf, &mut find),
+            tree_iter_by_commit(&cb, &mut buf2, &mut find),
+        );
+        let mut count = Count::default();
+        git_diff::visit::Changes::from(ta).needed_to_obtain(
+            tb,
+            &mut state,
+            |id, buf| find_tree_iter(id, buf, &mut find),
+            &mut count,
+        )?;
+
+        changes += count.0;
+    }
+    Ok(changes)
 }
 
 fn do_gitoxide_graph_traveral<C>(
