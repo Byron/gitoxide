@@ -132,7 +132,7 @@ pub mod iter {
         immutable::{commit::parse_message, object::decode, parse, parse::NL, Signature},
     };
     use bstr::BStr;
-    use git_hash::ObjectId;
+    use git_hash::{oid, ObjectId};
     use nom::{
         branch::alt,
         bytes::complete::is_not,
@@ -301,5 +301,15 @@ pub mod iter {
         Encoding(&'a BStr),
         ExtraHeader((&'a BStr, Cow<'a, BStr>)),
         Message(&'a BStr),
+    }
+
+    impl<'a> Token<'a> {
+        /// Return the object id of this token if its a [tree][Token::Tree] or a [parent commit][Token::Parent].
+        pub fn id(&self) -> Option<&oid> {
+            match self {
+                Token::Tree { id } | Token::Parent { id } => Some(id.as_ref()),
+                _ => None,
+            }
+        }
     }
 }

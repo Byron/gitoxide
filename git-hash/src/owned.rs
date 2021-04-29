@@ -43,6 +43,10 @@ impl ObjectId {
     pub fn write_hex_to(&self, mut out: impl io::Write) -> io::Result<()> {
         out.write_all(&self.to_sha1_hex())
     }
+
+    pub const fn empty_tree() -> ObjectId {
+        ObjectId::Sha1(*b"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04")
+    }
 }
 
 /// Sha1 hash specific methods
