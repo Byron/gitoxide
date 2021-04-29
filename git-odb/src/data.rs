@@ -29,11 +29,20 @@ impl<'a> Object<'a> {
         })
     }
 
-    /// Returns this object as tree iterator to parse entries one at a time while avoiding allocations, or
+    /// Returns this object as tree iterator to parse entries one at a time to avoid allocations, or
     /// `None` if this is not a tree object.
     pub fn into_tree_iter(self) -> Option<immutable::TreeIter<'a>> {
         match self.kind {
             git_object::Kind::Tree => Some(immutable::TreeIter { data: self.data }),
+            _ => None,
+        }
+    }
+
+    /// Returns this object as commit iterator to parse tokens one at a time to avoid allocations, or
+    /// `None` if this is not a commit object.
+    pub fn into_commit_iter(self) -> Option<immutable::CommitIter<'a>> {
+        match self.kind {
+            git_object::Kind::Commit => Some(immutable::CommitIter::from_bytes(self.data)),
             _ => None,
         }
     }
