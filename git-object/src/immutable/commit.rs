@@ -127,14 +127,17 @@ mod tests {
 
 ///
 pub mod iter {
-    use crate::bstr::ByteSlice;
-    use crate::immutable::commit::parse_message;
-    use crate::immutable::{object::decode, parse, parse::NL, Signature};
+    use crate::{
+        bstr::ByteSlice,
+        immutable::{commit::parse_message, object::decode, parse, parse::NL, Signature},
+    };
     use bstr::BStr;
     use git_hash::ObjectId;
-    use nom::branch::alt;
-    use nom::combinator::all_consuming;
-    use nom::{bytes::complete::is_not, combinator::opt};
+    use nom::{
+        branch::alt,
+        bytes::complete::is_not,
+        combinator::{all_consuming, opt},
+    };
     use std::borrow::Cow;
 
     #[derive(Copy, Clone)]
@@ -295,7 +298,6 @@ pub mod iter {
     /// A token returned by the [commit iterator][Iter].
     #[allow(missing_docs)]
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub enum Token<'a> {
         Tree { id: ObjectId },
         Parent { id: ObjectId },
