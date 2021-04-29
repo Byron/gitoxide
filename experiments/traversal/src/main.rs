@@ -176,9 +176,7 @@ where
 
         fn set_current_path(&mut self, _path: Self::PathId) {}
 
-        fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {
-            ()
-        }
+        fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
 
         fn push_path_component(&mut self, _component: &BStr) {}
 
