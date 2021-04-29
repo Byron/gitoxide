@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use git_hash::{bstr::ByteSlice, oid, ObjectId};
+use git_object::immutable;
 use git_odb::Locate;
 use std::{
     path::PathBuf,
@@ -134,27 +135,33 @@ where
     L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
 {
     let empty_tree = ObjectId::empty_tree();
-    let mut buf = Vec::new();
+    let mut buf: Vec<u8> = Vec::new();
     let last = [commits.last().expect("at least one commit").to_owned(), empty_tree];
     let iter = commits.windows(2).chain(std::iter::once(&last[..]));
     let mut find = make_locate();
-    let mut find_tree = |tid, buf| find(tid, buf).and_then(|o| o.into_tree_iter());
-    let tree_iter_by_commit = |cid| {
-        let tid = find(cid, &mut buf)
-            .expect("commit present")
-            .into_commit_iter()
-            .expect("a commit")
-            .next()
-            .expect("tree token")
-            .expect("tree decodable")
-            .id()
-            .expect("first token is a tree id");
-        find_tree(tid, &mut buf).expect("tree available")
-    };
+
+    fn find_tree<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<immutable::TreeIter<'b>>
+    where
+        L: FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
+    {
+        find(id, buf).and_then(|o| o.into_tree_iter())
+    }
+    // let mut find_tree = |tid, buf: &mut Vec<u8>| find(tid, buf).and_then(|o| o.into_tree_iter());
+    // let tree_iter_by_commit = |cid| { let tid = find(cid, &mut buf)
+    //         .expect("commit present")
+    //         .into_commit_iter()
+    //         .expect("a commit")
+    //         .next()
+    //         .expect("tree token")
+    //         .expect("tree decodable")
+    //         .id()
+    //         .expect("first token is a tree id");
+    //     find_tree(tid, &mut buf).expect("tree available")
+    // };
     // let mut
     for pair in iter {
         let (ca, cb) = (pair[0], pair[1]);
-        let (ta, tb) = (tree_iter_by_commit(&ca), tree_iter_by_commit(&cb));
+        // let (ta, tb) = (tree_iter_by_commit(&ca), tree_iter_by_commit(&cb));
         // git_diff::visit::Changes::from(ca).needed_to_obtain()
     }
     todo!("tree diff")
