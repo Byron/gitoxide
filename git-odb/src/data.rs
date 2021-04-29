@@ -15,6 +15,14 @@ pub struct Object<'a> {
 }
 
 impl<'a> Object<'a> {
+    /// Constructs a new data object from `kind` and `data`.
+    pub fn new(kind: git_object::Kind, data: &'a [u8]) -> Object<'a> {
+        Object {
+            kind,
+            data,
+            pack_location: None,
+        }
+    }
     /// Decodes the data in the backing slice into a [`git_object::immutable::Object`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///

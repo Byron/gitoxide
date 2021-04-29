@@ -6,6 +6,8 @@ use git_hash::{
 };
 use git_object::immutable;
 use git_odb::Locate;
+use std::collections::btree_map::Entry;
+use std::collections::BTreeMap;
 use std::{
     path::PathBuf,
     time::{Duration, Instant},
@@ -120,12 +122,27 @@ fn main() -> anyhow::Result<()> {
         let mut pack_cache =
             git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
         let db = &db;
-        move |oid, buf| db.locate(oid, buf, &mut pack_cache).ok().flatten()
+        let mut obj_cache = BTreeMap::new();
+        move |oid, buf: &mut Vec<u8>| match obj_cache.entry(oid.to_owned()) {
+            Entry::Vacant(e) => {
+                let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
+                if let Some(ref obj) = obj {
+                    e.insert((obj.kind, obj.data.to_owned()));
+                }
+                obj
+            }
+            Entry::Occupied(e) => {
+                let (k, d) = e.get();
+                buf.resize(d.len(), 0);
+                buf.copy_from_slice(d);
+                Some(git_odb::data::Object::new(*k, buf))
+            }
+        }
     })?;
     let elapsed = start.elapsed();
 
     println!(
-        "gitoxide-deltas (cache = uncached object -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        "gitoxide-deltas (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
         num_deltas,
         num_diffs,
