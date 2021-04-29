@@ -75,7 +75,7 @@ pub mod ancestors {
                             if let Some(Err(decode_tree_err)) = iter.next() {
                                 return Some(Err(decode_tree_err.into()));
                             }
-                            while let Some(token) = iter.next() {
+                            for token in iter {
                                 match token {
                                     Ok(immutable::commit::iter::Token::Parent { id }) => {
                                         let was_inserted = self.seen.insert(id);
