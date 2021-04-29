@@ -290,7 +290,7 @@ pub mod iter {
                         Some(Err(err))
                     }
                 },
-                None => return None,
+                None => None,
             }
         }
     }
