@@ -175,91 +175,97 @@ pub mod iter {
         }
     }
     impl<'a> Iter<'a> {
-        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
+        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(bool, (&'a [u8], Token<'a>)), decode::Error> {
             use State::*;
-            Ok(match state {
-                Tree => {
-                    let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
-                        .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
-                    *state = State::Parents;
-                    (
-                        i,
-                        Token::Tree {
-                            id: ObjectId::from_hex(tree).expect("parsing validation"),
-                        },
-                    )
-                }
-                Parents => {
-                    let (i, parent) = opt(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
-                        .map_err(decode::Error::context("commit <40 lowercase hex char>"))?;
-                    match parent {
-                        Some(parent) => (
+            Ok((
+                false,
+                match state {
+                    Tree => {
+                        let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
+                            .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
+                        *state = State::Parents;
+                        (
                             i,
-                            Token::Parent {
-                                id: ObjectId::from_hex(parent).expect("parsing validation"),
+                            Token::Tree {
+                                id: ObjectId::from_hex(tree).expect("parsing validation"),
                             },
-                        ),
-                        None => {
-                            *state = State::Signature {
-                                of: SignatureKind::Author,
-                            };
-                            return Self::next_inner(i, state);
+                        )
+                    }
+                    Parents => {
+                        let (i, parent) = opt(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
+                            .map_err(decode::Error::context("commit <40 lowercase hex char>"))?;
+                        match parent {
+                            Some(parent) => (
+                                i,
+                                Token::Parent {
+                                    id: ObjectId::from_hex(parent).expect("parsing validation"),
+                                },
+                            ),
+                            None => {
+                                *state = State::Signature {
+                                    of: SignatureKind::Author,
+                                };
+                                return Self::next_inner(i, state);
+                            }
                         }
                     }
-                }
-                Signature { ref mut of } => {
-                    let who = *of;
-                    let (field_name, err_msg) = match of {
-                        SignatureKind::Author => {
-                            *of = SignatureKind::Committer;
-                            (&b"author"[..], "author <signature>")
-                        }
-                        SignatureKind::Committer => {
-                            *state = State::Encoding;
-                            (&b"committer"[..], "committer <signature>")
-                        }
-                    };
-                    let (i, signature) = parse::header_field(i, field_name, parse::signature)
-                        .map_err(decode::Error::context(err_msg))?;
-                    (
-                        i,
-                        match who {
-                            SignatureKind::Author => Token::Author { signature },
-                            SignatureKind::Committer => Token::Committer { signature },
-                        },
-                    )
-                }
-                Encoding => {
-                    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i)
-                        .map_err(decode::Error::context("encoding <encoding>"))?;
-                    *state = State::ExtraHeaders;
-                    match encoding {
-                        Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
-                        None => return Self::next_inner(i, state),
+                    Signature { ref mut of } => {
+                        let who = *of;
+                        let (field_name, err_msg) = match of {
+                            SignatureKind::Author => {
+                                *of = SignatureKind::Committer;
+                                (&b"author"[..], "author <signature>")
+                            }
+                            SignatureKind::Committer => {
+                                *state = State::Encoding;
+                                (&b"committer"[..], "committer <signature>")
+                            }
+                        };
+                        let (i, signature) = parse::header_field(i, field_name, parse::signature)
+                            .map_err(decode::Error::context(err_msg))?;
+                        (
+                            i,
+                            match who {
+                                SignatureKind::Author => Token::Author { signature },
+                                SignatureKind::Committer => Token::Committer { signature },
+                            },
+                        )
                     }
-                }
-                ExtraHeaders => {
-                    let (i, extra_header) = opt(alt((
-                        |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
-                        |i| {
-                            parse::any_header_field(i, is_not(NL))
-                                .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
-                        },
-                    )))(i)
-                    .map_err(decode::Error::context("<field> <single-line|multi-line>"))?;
-                    match extra_header {
-                        Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
-                        None => {
-                            *state = State::Message;
-                            return Self::next_inner(i, state);
+                    Encoding => {
+                        let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i)
+                            .map_err(decode::Error::context("encoding <encoding>"))?;
+                        *state = State::ExtraHeaders;
+                        match encoding {
+                            Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
+                            None => return Self::next_inner(i, state),
                         }
                     }
-                }
-                Message => {
-                    let (i, message) = all_consuming(parse_message)(i)?;
-                    (i, Token::Message(message))
-                }
-            })
+                    ExtraHeaders => {
+                        let (i, extra_header) = opt(alt((
+                            |i| {
+                                parse::any_header_field_multi_line(i)
+                                    .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o))))
+                            },
+                            |i| {
+                                parse::any_header_field(i, is_not(NL))
+                                    .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+                            },
+                        )))(i)
+                        .map_err(decode::Error::context("<field> <single-line|multi-line>"))?;
+                        match extra_header {
+                            Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
+                            None => {
+                                *state = State::Message;
+                                return Self::next_inner(i, state);
+                            }
+                        }
+                    }
+                    Message => {
+                        let (i, message) = all_consuming(parse_message)(i)?;
+                        return Ok((true, (i, Token::Message(message))));
+                    }
+                },
+            ))
         }
     }
 
@@ -269,8 +275,11 @@ pub mod iter {
         fn next(&mut self) -> Option<Self::Item> {
             match self.state.as_mut() {
                 Some(state) => match Self::next_inner(self.data, state) {
-                    Ok((data, token)) => {
+                    Ok((is_done, (data, token))) => {
                         self.data = data;
+                        if is_done {
+                            self.state = None;
+                        }
                         Some(Ok(token))
                     }
                     Err(err) => {
