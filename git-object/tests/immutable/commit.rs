@@ -18,7 +18,7 @@ mod from_bytes {
     use crate::{hex_to_id, immutable::fixture_bytes, immutable::signature};
     use git_object::{
         bstr::ByteSlice,
-        immutable::commit,
+        immutable::commit::iter::Token,
         immutable::{Commit, CommitIter},
     };
     use smallvec::SmallVec;
@@ -42,7 +42,6 @@ mod from_bytes {
 
     #[test]
     fn unsigned_iter() -> Result<(), Box<dyn std::error::Error>> {
-        use commit::iter::Token;
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -80,7 +79,6 @@ mod from_bytes {
 
     #[test]
     fn whitespace_iter() -> Result<(), Box<dyn std::error::Error>> {
-        use commit::iter::Token;
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -121,7 +119,6 @@ mod from_bytes {
 
     #[test]
     fn signed_singleline_iter() -> Result<(), Box<dyn std::error::Error>> {
-        use commit::iter::Token;
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -144,77 +141,8 @@ mod from_bytes {
         Ok(())
     }
 
-    #[test]
-    fn mergetag() -> Result<(), Box<dyn std::error::Error>> {
-        let fixture = fixture_bytes("commit", "mergetag.txt");
-        let merge_tag = "object 8d485da0ddee79d0e6713405694253d401e41b93
-type commit
-tag thermal-v5.8-rc1
-tagger Daniel Lezcano <daniel.lezcano@linaro.org> 1591979433 +0200
-
-- Add the hwmon support on the i.MX SC (Anson Huang)
-
-- Thermal framework cleanups (self-encapsulation, pointless stubs,
-  private structures) (Daniel Lezcano)
-
-- Use the PM QoS frequency changes for the devfreq cooling device (Matthias
-  Kaehlcke)
-
-- Remove duplicate error messages from platform_get_irq() error handling
-  (Markus Elfring)
-
-- Add support for the bandgap sensors (Keerthy)
-
-- Statically initialize .get_mode/.set_mode ops (Andrzej Pietrasiewicz)
-
-- Add Renesas R-Car maintainer entry (Niklas Söderlund)
-
-- Fix error checking after calling ti_bandgap_get_sensor_data() for the TI SoC
-  thermal (Sudip Mukherjee)
-
-- Add latency constraint for the idle injection, the DT binding and the change
-  the registering function (Daniel Lezcano)
-
-- Convert the thermal framework binding to the Yaml schema (Amit Kucheria)
-
-- Replace zero-length array with flexible-array on i.MX 8MM (Gustavo A. R. Silva)
-
-- Thermal framework cleanups (alphabetic order for heads, replace module.h by
-  export.h, make file naming consistent) (Amit Kucheria)
-
-- Merge tsens-common into the tsens driver (Amit Kucheria)
-
-- Fix platform dependency for the Qoriq driver (Geert Uytterhoeven)
-
-- Clean up the rcar_thermal_update_temp() function in the rcar thermal driver
-  (Niklas Söderlund)
-
-- Fix the TMSAR register for the TMUv2 on the Qoriq platform (Yuantian Tang)
-
-- Export GDDV, OEM vendor variables, and don't require IDSP for the int340x
-  thermal driver - trivial conflicts fixed (Matthew Garrett)
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEGn3N4YVz0WNVyHskqDIjiipP6E8FAl7jra8ACgkQqDIjiipP
-6E+ugAgApBF6FsHoonWIvoSrzBrrbU2oqhEJA42Mx+iY/UnXi01I79vZ/8WpZt7M
-D1J01Kf0PUhRbywoKaoCX3Oh9ZO9PKq4N9ZC8yqdoD6GLl+rC9Wmr7Ui+c80klcv
-M9rYhpPYfNXTFj0saSbbFWNNhP4TvhzGsNj8foYVQDKyhjbSmNE5ipZlbmP23jlr
-O53SmJAwS5zxLOd8QA5nfSWP9FYYMuCR2AHj8BUCmxiAjXZLPNB/Hz2RRBr7q0MF
-zRo/4HJ04mSQYp0kluP/EBhz9g2wM/htIPyWRveB/ByKEYt3UNKjB++PJmPbu5UG
-dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
-=T+RI
------END PGP SIGNATURE-----"
-            .as_bytes();
-        let commit = Commit {
-            tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
-            parents: SmallVec::from(vec![
-                b"44ebe016df3aad96e3be8f95ec52397728dd7701".as_bstr(),
-                b"8d485da0ddee79d0e6713405694253d401e41b93".as_bstr(),
-            ]),
-            author: linus_signature(1591996221),
-            committer: linus_signature(1591996221),
-            encoding: None,
-            message: "Merge tag 'thermal-v5.8-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/thermal/linux
+    const LONG_MESSAGE: &'static str =
+        "Merge tag 'thermal-v5.8-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/thermal/linux
 
 Pull thermal updates from Daniel Lezcano:
 
@@ -285,14 +213,114 @@ Pull thermal updates from Daniel Lezcano:
   thermal/drivers/thermal_helpers: Sort headers alphabetically
   thermal/core: Replace module.h with export.h
   ...
-"
-            .as_bytes()
-            .as_bstr(),
-            extra_headers: vec![(b"mergetag".as_bstr(), std::borrow::Cow::Owned(merge_tag.into()))],
+";
+
+    const MERGE_TAG: &'static str = "object 8d485da0ddee79d0e6713405694253d401e41b93
+type commit
+tag thermal-v5.8-rc1
+tagger Daniel Lezcano <daniel.lezcano@linaro.org> 1591979433 +0200
+
+- Add the hwmon support on the i.MX SC (Anson Huang)
+
+- Thermal framework cleanups (self-encapsulation, pointless stubs,
+  private structures) (Daniel Lezcano)
+
+- Use the PM QoS frequency changes for the devfreq cooling device (Matthias
+  Kaehlcke)
+
+- Remove duplicate error messages from platform_get_irq() error handling
+  (Markus Elfring)
+
+- Add support for the bandgap sensors (Keerthy)
+
+- Statically initialize .get_mode/.set_mode ops (Andrzej Pietrasiewicz)
+
+- Add Renesas R-Car maintainer entry (Niklas Söderlund)
+
+- Fix error checking after calling ti_bandgap_get_sensor_data() for the TI SoC
+  thermal (Sudip Mukherjee)
+
+- Add latency constraint for the idle injection, the DT binding and the change
+  the registering function (Daniel Lezcano)
+
+- Convert the thermal framework binding to the Yaml schema (Amit Kucheria)
+
+- Replace zero-length array with flexible-array on i.MX 8MM (Gustavo A. R. Silva)
+
+- Thermal framework cleanups (alphabetic order for heads, replace module.h by
+  export.h, make file naming consistent) (Amit Kucheria)
+
+- Merge tsens-common into the tsens driver (Amit Kucheria)
+
+- Fix platform dependency for the Qoriq driver (Geert Uytterhoeven)
+
+- Clean up the rcar_thermal_update_temp() function in the rcar thermal driver
+  (Niklas Söderlund)
+
+- Fix the TMSAR register for the TMUv2 on the Qoriq platform (Yuantian Tang)
+
+- Export GDDV, OEM vendor variables, and don't require IDSP for the int340x
+  thermal driver - trivial conflicts fixed (Matthew Garrett)
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEGn3N4YVz0WNVyHskqDIjiipP6E8FAl7jra8ACgkQqDIjiipP
+6E+ugAgApBF6FsHoonWIvoSrzBrrbU2oqhEJA42Mx+iY/UnXi01I79vZ/8WpZt7M
+D1J01Kf0PUhRbywoKaoCX3Oh9ZO9PKq4N9ZC8yqdoD6GLl+rC9Wmr7Ui+c80klcv
+M9rYhpPYfNXTFj0saSbbFWNNhP4TvhzGsNj8foYVQDKyhjbSmNE5ipZlbmP23jlr
+O53SmJAwS5zxLOd8QA5nfSWP9FYYMuCR2AHj8BUCmxiAjXZLPNB/Hz2RRBr7q0MF
+zRo/4HJ04mSQYp0kluP/EBhz9g2wM/htIPyWRveB/ByKEYt3UNKjB++PJmPbu5UG
+dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
+=T+RI
+-----END PGP SIGNATURE-----";
+
+    #[test]
+    fn mergetag() -> Result<(), Box<dyn std::error::Error>> {
+        let fixture = fixture_bytes("commit", "mergetag.txt");
+        let commit = Commit {
+            tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
+            parents: SmallVec::from(vec![
+                b"44ebe016df3aad96e3be8f95ec52397728dd7701".as_bstr(),
+                b"8d485da0ddee79d0e6713405694253d401e41b93".as_bstr(),
+            ]),
+            author: linus_signature(1591996221),
+            committer: linus_signature(1591996221),
+            encoding: None,
+            message: LONG_MESSAGE.as_bytes().as_bstr(),
+            extra_headers: vec![(
+                b"mergetag".as_bstr(),
+                std::borrow::Cow::Owned(MERGE_TAG.as_bytes().into()),
+            )],
         };
         assert_eq!(Commit::from_bytes(&fixture)?, commit);
         assert_eq!(commit.extra_headers().find_all("mergetag").count(), 1);
         assert_eq!(commit.extra_headers().mergetags().count(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn mergetag_iter() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!(
+            CommitIter::from_bytes(&fixture_bytes("commit", "mergetag.txt")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Tree {
+                    id: hex_to_id("1c61918031bf2c7fab9e17dde3c52a6a9884fcb5")
+                },
+                Token::Parent {
+                    id: hex_to_id("44ebe016df3aad96e3be8f95ec52397728dd7701")
+                },
+                Token::Parent {
+                    id: hex_to_id("8d485da0ddee79d0e6713405694253d401e41b93")
+                },
+                Token::Author {
+                    signature: linus_signature(1591996221)
+                },
+                Token::Committer {
+                    signature: linus_signature(1591996221)
+                },
+                Token::ExtraHeader((b"mergetag".as_bstr(), MERGE_TAG.as_bytes().as_bstr().into())),
+                Token::Message(LONG_MESSAGE.as_bytes().as_bstr()),
+            ]
+        );
         Ok(())
     }
 
@@ -313,6 +341,8 @@ Pull thermal updates from Daniel Lezcano:
         Ok(())
     }
 
+    const SIGNATURE: &'static [u8; 487] = b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7q2DsACgkQ7gKdHl60\nAwDvewgAkL5UjEztzeVXlzceom0uCrAkCw9wSGLTmYcMKW3JwEaTRgQ4FX+sDuFT\nLZ8DoPu3UHUP0QnKrUwHulTTlKcOAvsczHbVPIKtXCxo6QpUfhsJQwz/J29kiE4L\nsOd+lqKGnn4oati/de2xwqNGi081fO5KILX75z6KfsAe7Qz7R3jxRF4uzHI033O+\nJc2Y827XeaELxW40SmzoLanWgEcdreXf3PstXEWW77CAu0ozXmvYj56vTviVybxx\nG7bc8lwc+SSKVe2VVB+CCfVbs0i541gmghUpZfMhUgaqttcCH8ysrUJDhne1BLG8\nCrOJIWTwAeEDtomV1p76qrMeqr1GFg==\n=qlSN\n-----END PGP SIGNATURE-----";
+
     #[test]
     fn signed_with_encoding() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
@@ -324,8 +354,34 @@ Pull thermal updates from Daniel Lezcano:
                 committer: signature(1592449083),
                 encoding: Some(b"ISO-8859-1".as_bstr()),
                 message: b"encoding & sig".as_bstr(),
-                extra_headers: vec![(b"gpgsig".as_bstr(), b"-----BEGIN PGP SIGNATURE-----\n\niQEzBAABCAAdFiEEdjYp/sh4j8NRKLX27gKdHl60AwAFAl7q2DsACgkQ7gKdHl60\nAwDvewgAkL5UjEztzeVXlzceom0uCrAkCw9wSGLTmYcMKW3JwEaTRgQ4FX+sDuFT\nLZ8DoPu3UHUP0QnKrUwHulTTlKcOAvsczHbVPIKtXCxo6QpUfhsJQwz/J29kiE4L\nsOd+lqKGnn4oati/de2xwqNGi081fO5KILX75z6KfsAe7Qz7R3jxRF4uzHI033O+\nJc2Y827XeaELxW40SmzoLanWgEcdreXf3PstXEWW77CAu0ozXmvYj56vTviVybxx\nG7bc8lwc+SSKVe2VVB+CCfVbs0i541gmghUpZfMhUgaqttcCH8ysrUJDhne1BLG8\nCrOJIWTwAeEDtomV1p76qrMeqr1GFg==\n=qlSN\n-----END PGP SIGNATURE-----".as_bstr().into())]
+                extra_headers: vec![(b"gpgsig".as_bstr(), SIGNATURE.as_bstr().into())]
             }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn signed_with_encoding_iter() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!(
+            CommitIter::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))
+                .collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Tree {
+                    id: hex_to_id("1973afa74d87b2bb73fa884aaaa8752aec43ea88")
+                },
+                Token::Parent {
+                    id: hex_to_id("79c51cc86923e2b8ca0ee5c4eb75e48027133f9a")
+                },
+                Token::Author {
+                    signature: signature(1592448995)
+                },
+                Token::Committer {
+                    signature: signature(1592449083)
+                },
+                Token::Encoding(b"ISO-8859-1".as_bstr()),
+                Token::ExtraHeader((b"gpgsig".as_bstr(), SIGNATURE.as_bytes().as_bstr().into())),
+                Token::Message(b"encoding & sig".as_bstr()),
+            ]
         );
         Ok(())
     }
@@ -367,11 +423,7 @@ Pull thermal updates from Daniel Lezcano:
         Ok(())
     }
 
-    #[test]
-    fn newline_right_after_signature_multiline_header() -> Result<(), Box<dyn std::error::Error>> {
-        let fixture = fixture_bytes("commit", "signed-whitespace.txt");
-        let commit = Commit::from_bytes(&fixture)?;
-        let pgp_sig = b"-----BEGIN PGP SIGNATURE-----
+    const OTHER_SIGNATURE: &'static [u8; 455] = b"-----BEGIN PGP SIGNATURE-----
 
 wsBcBAABCAAQBQJeqxW4CRBK7hj4Ov3rIwAAdHIIAFD98qgN/k8ybukCLf6kpzvi
 5V8gf6BflONXc/oIDySurW7kfS9/r6jOgu08UN8KlQx4Q4g8yY7PROABhwGI70B3
@@ -381,12 +433,31 @@ k7D0LqGSXjU5wrQrKnemC7nWhmQsqaXDe89XXmliClCAx4/bepPiXK0eT/DNIKUr
 iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
 =HLmy
 -----END PGP SIGNATURE-----
-"
-        .as_bstr();
+";
+
+    #[test]
+    fn newline_right_after_signature_multiline_header() -> Result<(), Box<dyn std::error::Error>> {
+        let fixture = fixture_bytes("commit", "signed-whitespace.txt");
+        let commit = Commit::from_bytes(&fixture)?;
+        let pgp_sig = OTHER_SIGNATURE.as_bstr();
         assert_eq!(commit.extra_headers[0].1.as_ref(), pgp_sig);
         assert_eq!(commit.extra_headers().pgp_signature(), Some(pgp_sig));
         assert_eq!(commit.extra_headers().find("gpgsig"), Some(pgp_sig));
         assert!(commit.message.starts_with(b"Rollup"));
+        Ok(())
+    }
+
+    #[test]
+    fn newline_right_after_signature_multiline_header_iter() -> Result<(), Box<dyn std::error::Error>> {
+        let data = fixture_bytes("commit", "signed-whitespace.txt");
+        let tokens = CommitIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
+        assert_eq!(tokens.len(), 7, "mainly a parsing exercise");
+        match tokens.last().expect("there are tokens") {
+            Token::Message(msg) => {
+                assert!(msg.starts_with(b"Rollup"));
+            }
+            _ => unreachable!(),
+        }
         Ok(())
     }
 }
