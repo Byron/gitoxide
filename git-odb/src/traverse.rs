@@ -70,19 +70,25 @@ pub mod ancestors {
             let res = self.next.pop_front();
             if let Some(oid) = res {
                 match self.db.borrow().locate(oid, &mut self.buf, self.cache) {
-                    Ok(Some(obj)) => match obj.decode().map_err(Error::from) {
-                        Ok(obj) => {
-                            if let Some(commit) = obj.into_commit() {
-                                for parent_id in commit.parents() {
-                                    let was_inserted = self.seen.insert(parent_id);
-                                    if was_inserted {
-                                        self.next.push_back(parent_id);
+                    Ok(Some(obj)) => {
+                        if let Some(mut iter) = obj.into_commit_iter() {
+                            if let Some(Err(decode_tree_err)) = iter.next() {
+                                return Some(Err(decode_tree_err.into()));
+                            }
+                            while let Some(token) = iter.next() {
+                                match token {
+                                    Ok(immutable::commit::iter::Token::Parent { id }) => {
+                                        let was_inserted = self.seen.insert(id);
+                                        if was_inserted {
+                                            self.next.push_back(id);
+                                        }
                                     }
+                                    Ok(_past_parent) => break,
+                                    Err(err) => return Some(Err(err.into())),
                                 }
                             }
                         }
-                        Err(err) => return Some(Err(err)),
-                    },
+                    }
                     Ok(None) => return Some(Err(Error::NotFound { oid })),
                     Err(err) => return Some(Err(Error::Locate(err))),
                 }
