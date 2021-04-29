@@ -247,11 +247,24 @@ fn main() -> anyhow::Result<()> {
         num_diffs as f32 / elapsed.as_secs_f32()
     );
 
+    drop(repo);
     let start = Instant::now();
-    let num_deltas = do_libgit2_treediff(&all_commits, &repo, Computation::SingleThreaded)?;
+    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::SingleThreaded)?;
     let elapsed = start.elapsed();
     println!(
         "libgit2: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        num_deltas,
+        num_diffs,
+        elapsed,
+        num_deltas as f32 / elapsed.as_secs_f32(),
+        num_diffs as f32 / elapsed.as_secs_f32()
+    );
+
+    let start = Instant::now();
+    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::MultiThreaded)?;
+    let elapsed = start.elapsed();
+    println!(
+        "libgit2 PARALLEL: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         num_deltas,
         num_diffs,
         elapsed,
@@ -267,9 +280,10 @@ enum Computation {
     MultiThreaded,
 }
 
-fn do_libgit2_treediff(commits: &[ObjectId], db: &git2::Repository, mode: Computation) -> anyhow::Result<usize> {
+fn do_libgit2_treediff(commits: &[ObjectId], repo_dir: &std::path::Path, mode: Computation) -> anyhow::Result<usize> {
     Ok(match mode {
         Computation::SingleThreaded => {
+            let db = git2::Repository::open(repo_dir)?;
             let mut changes = 0;
             for pair in commits.windows(2) {
                 let (ca, cb) = (pair[0], pair[1]);
@@ -280,7 +294,21 @@ fn do_libgit2_treediff(commits: &[ObjectId], db: &git2::Repository, mode: Comput
             }
             changes
         }
-        Computation::MultiThreaded => todo!("threaded libgit2"),
+        Computation::MultiThreaded => {
+            let changes = std::sync::atomic::AtomicUsize::new(0);
+            commits.par_windows(2).try_for_each_init::<_, _, _, anyhow::Result<_>>(
+                || git2::Repository::open(repo_dir).expect("git directory is valid"),
+                |db, pair| {
+                    let (ca, cb) = (pair[0], pair[1]);
+                    let ta = db.find_commit(git2::Oid::from_bytes(ca.as_bytes())?)?.tree()?;
+                    let tb = db.find_commit(git2::Oid::from_bytes(cb.as_bytes())?)?.tree()?;
+                    let diff = db.diff_tree_to_tree(Some(&ta), Some(&tb), None)?;
+                    changes.fetch_add(diff.deltas().count(), std::sync::atomic::Ordering::Relaxed);
+                    Ok(())
+                },
+            )?;
+            changes.load(std::sync::atomic::Ordering::Acquire)
+        }
     })
 }
 
