@@ -118,27 +118,31 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let num_deltas = do_gitoxide_tree_diff(&all_commits, || {
-        let mut pack_cache =
-            git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
-        let db = &db;
-        let mut obj_cache = BTreeMap::new();
-        move |oid, buf: &mut Vec<u8>| match obj_cache.entry(oid.to_owned()) {
-            Entry::Vacant(e) => {
-                let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
-                if let Some(ref obj) = obj {
-                    e.insert((obj.kind, obj.data.to_owned()));
+    let num_deltas = do_gitoxide_tree_diff(
+        &all_commits,
+        || {
+            let mut pack_cache =
+                git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
+            let db = &db;
+            let mut obj_cache = BTreeMap::new();
+            move |oid, buf: &mut Vec<u8>| match obj_cache.entry(oid.to_owned()) {
+                Entry::Vacant(e) => {
+                    let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
+                    if let Some(ref obj) = obj {
+                        e.insert((obj.kind, obj.data.to_owned()));
+                    }
+                    obj
                 }
-                obj
+                Entry::Occupied(e) => {
+                    let (k, d) = e.get();
+                    buf.resize(d.len(), 0);
+                    buf.copy_from_slice(d);
+                    Some(git_odb::data::Object::new(*k, buf))
+                }
             }
-            Entry::Occupied(e) => {
-                let (k, d) = e.get();
-                buf.resize(d.len(), 0);
-                buf.copy_from_slice(d);
-                Some(git_odb::data::Object::new(*k, buf))
-            }
-        }
-    })?;
+        },
+        Computation::SingleThreaded,
+    )?;
     let elapsed = start.elapsed();
 
     println!(
@@ -154,17 +158,42 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_locate: C) -> anyhow::Result<usize>
+enum Computation {
+    SingleThreaded,
+}
+
+fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_locate: C, mode: Computation) -> anyhow::Result<usize>
 where
     C: Fn() -> L,
     L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
 {
-    let mut buf: Vec<u8> = Vec::new();
-    let mut buf2: Vec<u8> = Vec::new();
-
     let tree_pairs = commits.windows(2);
-    let mut find = make_locate();
+    let changes = match mode {
+        Computation::SingleThreaded => {
+            let mut state = git_diff::visit::State::default();
+            let mut find = make_locate();
+            let mut buf: Vec<u8> = Vec::new();
+            let mut buf2: Vec<u8> = Vec::new();
+            let mut changes = 0;
 
+            for pair in tree_pairs {
+                let (ca, cb) = (pair[0], pair[1]);
+                let (ta, tb) = (
+                    tree_iter_by_commit(&ca, &mut buf, &mut find),
+                    tree_iter_by_commit(&cb, &mut buf2, &mut find),
+                );
+                let mut count = Count::default();
+                git_diff::visit::Changes::from(ta).needed_to_obtain(
+                    tb,
+                    &mut state,
+                    |id, buf| find_tree_iter(id, buf, &mut find),
+                    &mut count,
+                )?;
+                changes += count.0;
+            }
+            changes
+        }
+    };
     fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<immutable::TreeIter<'b>>
     where
         L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_odb::data::Object<'a>>,
@@ -207,25 +236,6 @@ where
             self.0 += 1;
             Action::Continue
         }
-    }
-
-    let mut state = git_diff::visit::State::default();
-    let mut changes = 0;
-    for pair in tree_pairs {
-        let (ca, cb) = (pair[0], pair[1]);
-        let (ta, tb) = (
-            tree_iter_by_commit(&ca, &mut buf, &mut find),
-            tree_iter_by_commit(&cb, &mut buf2, &mut find),
-        );
-        let mut count = Count::default();
-        git_diff::visit::Changes::from(ta).needed_to_obtain(
-            tb,
-            &mut state,
-            |id, buf| find_tree_iter(id, buf, &mut find),
-            &mut count,
-        )?;
-
-        changes += count.0;
     }
     Ok(changes)
 }
