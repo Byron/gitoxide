@@ -118,6 +118,29 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
+    fn find_with_obj_cache<'b>(
+        oid: &oid,
+        buf: &'b mut Vec<u8>,
+        obj_cache: &mut BTreeMap<ObjectId, (git_object::Kind, Vec<u8>)>,
+        db: &git_odb::linked::Db,
+        pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
+    ) -> Option<git_odb::data::Object<'b>> {
+        match obj_cache.entry(oid.to_owned()) {
+            Entry::Vacant(e) => {
+                let obj = db.locate(oid, buf, pack_cache).ok().flatten();
+                if let Some(ref obj) = obj {
+                    e.insert((obj.kind, obj.data.to_owned()));
+                }
+                obj
+            }
+            Entry::Occupied(e) => {
+                let (k, d) = e.get();
+                buf.resize(d.len(), 0);
+                buf.copy_from_slice(d);
+                Some(git_odb::data::Object::new(*k, buf))
+            }
+        }
+    }
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
@@ -125,21 +148,7 @@ fn main() -> anyhow::Result<()> {
                 git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
             let db = &db;
             let mut obj_cache = BTreeMap::new();
-            move |oid, buf: &mut Vec<u8>| match obj_cache.entry(oid.to_owned()) {
-                Entry::Vacant(e) => {
-                    let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
-                    if let Some(ref obj) = obj {
-                        e.insert((obj.kind, obj.data.to_owned()));
-                    }
-                    obj
-                }
-                Entry::Occupied(e) => {
-                    let (k, d) = e.get();
-                    buf.resize(d.len(), 0);
-                    buf.copy_from_slice(d);
-                    Some(git_odb::data::Object::new(*k, buf))
-                }
-            }
+            move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
         },
         Computation::SingleThreaded,
     )?;
@@ -162,21 +171,7 @@ fn main() -> anyhow::Result<()> {
                 git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
             let db = &db;
             let mut obj_cache = BTreeMap::new();
-            move |oid, buf: &mut Vec<u8>| match obj_cache.entry(oid.to_owned()) {
-                Entry::Vacant(e) => {
-                    let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
-                    if let Some(ref obj) = obj {
-                        e.insert((obj.kind, obj.data.to_owned()));
-                    }
-                    obj
-                }
-                Entry::Occupied(e) => {
-                    let (k, d) = e.get();
-                    buf.resize(d.len(), 0);
-                    buf.copy_from_slice(d);
-                    Some(git_odb::data::Object::new(*k, buf))
-                }
-            }
+            move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
         },
         Computation::MultiThreaded,
     )?;
