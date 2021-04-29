@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-// const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
+const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
 
 fn main() -> anyhow::Result<()> {
@@ -53,6 +53,33 @@ fn main() -> anyhow::Result<()> {
     println!(
         "gitoxide (cache = {:.0}MB): confirmed {} commits in {:?} ({:0.0} commits/s)",
         GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        count,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let count = do_gitoxide(
+        commit_id,
+        &db,
+        git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
+    )?;
+    let elapsed = start.elapsed();
+    let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
+    println!(
+        "gitoxide (static cache = {:.0} entries): confirmed {} commits in {:?} ({:0.0} commits/s)",
+        GITOXIDE_STATIC_CACHE_SIZE,
+        count,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let count = do_gitoxide(commit_id, &db, || git_odb::pack::cache::Never)?;
+    let elapsed = start.elapsed();
+    let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
+    println!(
+        "gitoxide (uncached): confirmed {} commits in {:?} ({:0.0} commits/s)",
         count,
         elapsed,
         objs_per_sec(elapsed)
