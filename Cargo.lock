@@ -2099,6 +2099,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git2",
+ "memory-lru",
  "rayon",
 ]
 

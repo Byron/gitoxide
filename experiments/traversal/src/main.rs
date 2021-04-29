@@ -186,6 +186,60 @@ fn main() -> anyhow::Result<()> {
         num_diffs as f32 / elapsed.as_secs_f32()
     );
 
+    let start = Instant::now();
+    let num_deltas = do_gitoxide_tree_diff(
+        &all_commits,
+        || {
+            let mut pack_cache =
+                git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
+            let db = &db;
+            struct ObjectInfo {
+                kind: git_object::Kind,
+                data: Vec<u8>,
+            }
+            impl memory_lru::ResidentSize for ObjectInfo {
+                fn resident_size(&self) -> usize {
+                    self.data.len()
+                }
+            }
+            let mut obj_cache = memory_lru::MemoryLruCache::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
+            move |oid, buf: &mut Vec<u8>| {
+                let oid = oid.to_owned();
+                match obj_cache.get(&oid) {
+                    Some(ObjectInfo { kind, data }) => {
+                        buf.resize(data.len(), 0);
+                        buf.copy_from_slice(data);
+                        Some(git_odb::data::Object::new(*kind, buf))
+                    }
+                    None => {
+                        let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
+                        if let Some(ref obj) = obj {
+                            obj_cache.insert(
+                                oid,
+                                ObjectInfo {
+                                    kind: obj.kind,
+                                    data: obj.data.to_owned(),
+                                },
+                            );
+                        }
+                        obj
+                    }
+                }
+            }
+        },
+        Computation::MultiThreaded,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide-deltas PARALLEL (cache = memory-lrup -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        num_deltas,
+        num_diffs,
+        elapsed,
+        num_deltas as f32 / elapsed.as_secs_f32(),
+        num_diffs as f32 / elapsed.as_secs_f32()
+    );
+
     Ok(())
 }
 
