@@ -64,8 +64,9 @@ mod from_bytes {
     fn iter_error_handling() -> Result<(), Box<dyn std::error::Error>> {
         let data = fixture_bytes("commit", "unsigned.txt");
         let iter = CommitIter::from_bytes(&data[..data.len() / 2]);
+        let tokens = iter.collect::<Vec<_>>();
         assert!(
-            iter.collect::<Result<Vec<_>, _>>().is_err(),
+            tokens.last().expect("at least the errored token").is_err(),
             "errors are propagated and none is returned from that point on"
         );
         Ok(())

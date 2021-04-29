@@ -91,7 +91,10 @@ impl<'a> Iterator for TreeIter<'a> {
                 self.data = data_left;
                 Some(Ok(entry))
             }
-            Err(err) => Some(Err(err.into())),
+            Err(err) => {
+                self.data = &[];
+                Some(Err(err.into()))
+            }
         }
     }
 }

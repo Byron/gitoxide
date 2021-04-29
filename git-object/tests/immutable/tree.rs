@@ -56,8 +56,9 @@ mod from_bytes {
     fn iter_error_handling() -> Result<(), Box<dyn std::error::Error>> {
         let data = fixture_bytes("tree", "everything.tree");
         let iter = TreeIter::from_bytes(&data[..data.len() / 2]);
+        let entries = iter.collect::<Vec<_>>();
         assert!(
-            iter.collect::<Result<Vec<_>, _>>().is_err(),
+            entries.last().expect("at least one token").is_err(),
             "errors are propagated and none is returned from that point on"
         );
         Ok(())
