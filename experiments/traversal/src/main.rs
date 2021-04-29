@@ -6,9 +6,9 @@ use git_hash::{
 };
 use git_object::immutable;
 use git_odb::Locate;
-use std::collections::btree_map::Entry;
-use std::collections::BTreeMap;
+use rayon::prelude::*;
 use std::{
+    collections::{btree_map::Entry, BTreeMap},
     path::PathBuf,
     time::{Duration, Instant},
 };
@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
     let db = git_odb::linked::Db::at(&repo_objects_dir)?;
 
     let start = Instant::now();
-    let count = do_gitoxide_graph_traveral(commit_id, &db, || {
+    let count = do_gitoxide_graph_traversal(commit_id, &db, || {
         git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
     })?;
     let elapsed = start.elapsed();
@@ -67,7 +67,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let count = do_gitoxide_graph_traveral(
+    let count = do_gitoxide_graph_traversal(
         commit_id,
         &db,
         git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
@@ -83,7 +83,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let count = do_gitoxide_graph_traveral(commit_id, &db, || git_odb::pack::cache::Never)?;
+    let count = do_gitoxide_graph_traversal(commit_id, &db, || git_odb::pack::cache::Never)?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
     println!(
@@ -144,9 +144,45 @@ fn main() -> anyhow::Result<()> {
         Computation::SingleThreaded,
     )?;
     let elapsed = start.elapsed();
-
     println!(
         "gitoxide-deltas (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        num_deltas,
+        num_diffs,
+        elapsed,
+        num_deltas as f32 / elapsed.as_secs_f32(),
+        num_diffs as f32 / elapsed.as_secs_f32()
+    );
+
+    let start = Instant::now();
+    let num_deltas = do_gitoxide_tree_diff(
+        &all_commits,
+        || {
+            let mut pack_cache =
+                git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES);
+            let db = &db;
+            let mut obj_cache = BTreeMap::new();
+            move |oid, buf: &mut Vec<u8>| match obj_cache.entry(oid.to_owned()) {
+                Entry::Vacant(e) => {
+                    let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
+                    if let Some(ref obj) = obj {
+                        e.insert((obj.kind, obj.data.to_owned()));
+                    }
+                    obj
+                }
+                Entry::Occupied(e) => {
+                    let (k, d) = e.get();
+                    buf.resize(d.len(), 0);
+                    buf.copy_from_slice(d);
+                    Some(git_odb::data::Object::new(*k, buf))
+                }
+            }
+        },
+        Computation::MultiThreaded,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide-deltas PARALLEL (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
         num_deltas,
         num_diffs,
@@ -160,15 +196,45 @@ fn main() -> anyhow::Result<()> {
 
 enum Computation {
     SingleThreaded,
+    MultiThreaded,
 }
 
 fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_locate: C, mode: Computation) -> anyhow::Result<usize>
 where
-    C: Fn() -> L,
+    C: Fn() -> L + Sync,
     L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
 {
-    let tree_pairs = commits.windows(2);
-    let changes = match mode {
+    let changes: usize = match mode {
+        Computation::MultiThreaded => {
+            let changes = std::sync::atomic::AtomicUsize::new(0);
+            commits.par_windows(2).try_for_each_init::<_, _, _, anyhow::Result<_>>(
+                || {
+                    (
+                        git_diff::visit::State::<()>::default(),
+                        Vec::<u8>::new(),
+                        Vec::<u8>::new(),
+                        make_locate(),
+                    )
+                },
+                |(state, buf1, buf2, find), pair| {
+                    let (ca, cb) = (pair[0], pair[1]);
+                    let (ta, tb) = (
+                        tree_iter_by_commit(&ca, buf1, &mut *find),
+                        tree_iter_by_commit(&cb, buf2, &mut *find),
+                    );
+                    let mut count = Count::default();
+                    git_diff::visit::Changes::from(ta).needed_to_obtain(
+                        tb,
+                        state,
+                        |id, buf| find_tree_iter(id, buf, &mut *find),
+                        &mut count,
+                    )?;
+                    changes.fetch_add(count.0, std::sync::atomic::Ordering::Relaxed);
+                    Ok(())
+                },
+            )?;
+            changes.load(std::sync::atomic::Ordering::Acquire)
+        }
         Computation::SingleThreaded => {
             let mut state = git_diff::visit::State::default();
             let mut find = make_locate();
@@ -176,7 +242,7 @@ where
             let mut buf2: Vec<u8> = Vec::new();
             let mut changes = 0;
 
-            for pair in tree_pairs {
+            for pair in commits.windows(2) {
                 let (ca, cb) = (pair[0], pair[1]);
                 let (ta, tb) = (
                     tree_iter_by_commit(&ca, &mut buf, &mut find),
@@ -194,6 +260,7 @@ where
             changes
         }
     };
+
     fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<immutable::TreeIter<'b>>
     where
         L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_odb::data::Object<'a>>,
@@ -236,7 +303,7 @@ where
     Ok(changes)
 }
 
-fn do_gitoxide_graph_traveral<C>(
+fn do_gitoxide_graph_traversal<C>(
     tip: ObjectId,
     db: &git_odb::linked::Db,
     new_cache: impl FnOnce() -> C,
