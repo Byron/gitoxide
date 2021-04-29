@@ -79,6 +79,30 @@ mod from_bytes {
     }
 
     #[test]
+    fn whitespace_iter() -> Result<(), Box<dyn std::error::Error>> {
+        use commit::iter::Token;
+        assert_eq!(
+            CommitIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Tree {
+                    id: hex_to_id("9bed6275068a0575243ba8409253e61af81ab2ff")
+                },
+                Token::Parent {
+                    id: hex_to_id("26b4df046d1776c123ac69d918f5aec247b58cc6")
+                },
+                Token::Author {
+                    signature: signature(1592448450)
+                },
+                Token::Committer {
+                    signature: signature(1592448450)
+                },
+                Token::Message(b" nl".as_bstr())
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
     fn signed_singleline() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))?,
@@ -91,6 +115,31 @@ mod from_bytes {
                 message: b"update tasks\n".as_bstr(),
                 extra_headers: vec![(b"gpgsig".as_bstr(), b"magic:signature".as_bstr().into())]
             }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn signed_singleline_iter() -> Result<(), Box<dyn std::error::Error>> {
+        use commit::iter::Token;
+        assert_eq!(
+            CommitIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Tree {
+                    id: hex_to_id("00fc39317701176e326974ce44f5bd545a32ec0b")
+                },
+                Token::Parent {
+                    id: hex_to_id("09d8d3a12e161a7f6afb522dbe8900a9c09bce06")
+                },
+                Token::Author {
+                    signature: signature(1592391367)
+                },
+                Token::Committer {
+                    signature: signature(1592391367)
+                },
+                Token::ExtraHeader((b"gpgsig".as_bstr(), b"magic:signature".as_bstr().into())),
+                Token::Message(b"update tasks\n".as_bstr()),
+            ]
         );
         Ok(())
     }
