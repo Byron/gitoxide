@@ -112,7 +112,7 @@ continuous-unit-tests: ## run all unit tests whenever something changes
 jtt = target/debug/jtt
 journey-tests: always  ## run stateless journey tests (max)
 	cargo build
-	cargo build --package test-tools --bin jtt
+	cargo build --package git-testtools --bin jtt
 	./tests/stateless-journey.sh target/debug/gix target/debug/gixp $(jtt) max
 
 journey-tests-small: always ## run stateless journey tests (lean-cli)
