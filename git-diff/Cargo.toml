@@ -1,6 +1,6 @@
 [package]
 name = "git-diff"
-version = "0.0.0"
+version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated to implementing differences between things"
@@ -16,9 +16,8 @@ doctest = false
 [dependencies]
 git-hash = { version = "^0.2.0", path = "../git-hash" }
 git-object = { version = "0.7", path = "../git-object" }
-git-odb = { version = "0.12", path = "../git-odb" }
-petgraph = { version = "0.5.1", default-features = false }
 quick-error = "2.0.0"
 
 [dev-dependencies]
+git-odb = { version = "0.12", path = "../git-odb" }
 test-tools = { path = "../tests/tools" }
