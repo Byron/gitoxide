@@ -1,13 +1,13 @@
 mod ancestor {
     use crate::hex_to_id;
+    use git_odb::traverse;
     use git_odb::{linked, linked::Db};
 
     fn check_traversal_with_shared_reference(tips: &[&str], expected: &[&str]) -> crate::Result {
         let db = db()?;
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
         let oids: Result<Vec<_>, _> =
-            git_odb::traverse::ancestors::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Never)
-                .collect();
+            traverse::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Never).collect();
         let expected: Vec<_> = tips
             .into_iter()
             .chain(expected.iter().map(|hex_id| hex_to_id(hex_id)))
@@ -20,7 +20,7 @@ mod ancestor {
     fn instantiate_with_arc() -> crate::Result {
         let db = db()?;
         let db = std::sync::Arc::new(db);
-        let _ = git_odb::traverse::ancestors::Ancestors::new(
+        let _ = traverse::Ancestors::new(
             db.clone(),
             vec![git_hash::ObjectId::null_sha1()],
             &mut git_odb::pack::cache::Never,
@@ -31,7 +31,7 @@ mod ancestor {
     #[test]
     fn instantiate_with_box() -> crate::Result {
         let db = db()?;
-        let _ = git_odb::traverse::ancestors::Ancestors::new(
+        let _ = traverse::Ancestors::new(
             Box::new(db),
             vec![git_hash::ObjectId::null_sha1()],
             &mut git_odb::pack::cache::Never,

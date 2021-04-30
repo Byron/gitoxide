@@ -188,6 +188,7 @@ pub mod iter {
             self.next().and_then(Result::ok).and_then(Token::into_id)
         }
     }
+
     impl<'a> Iter<'a> {
         fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
             use State::*;

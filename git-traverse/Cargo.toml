@@ -17,7 +17,8 @@ doctest = false
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-object = { version = "^0.8", path = "../git-object" }
 quick-error = "2.0.0"
+# tmp
+git-odb = { version = "0.12", path = "../git-odb" }
 
 [dev-dependencies]
-git-odb = { version = "0.12", path = "../git-odb" }
 git-testtools = { path = "../tests/tools" }
