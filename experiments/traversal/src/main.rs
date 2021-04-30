@@ -6,6 +6,7 @@ use git_hash::{
 };
 use git_object::immutable;
 use git_odb::Locate;
+use git_traverse::iter;
 use rayon::prelude::*;
 use std::{
     collections::{btree_map::Entry, BTreeMap},
@@ -106,8 +107,13 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let all_commits = git_odb::traverse::Ancestors::new(&db, Some(commit_id), &mut git_odb::pack::cache::Never)
-        .collect::<Result<Vec<_>, _>>()?;
+    let all_commits = iter::Ancestors::new(Some(commit_id), iter::ancestors::State::default(), |oid, buf| {
+        db.locate(oid, buf, &mut git_odb::pack::cache::Never)
+            .ok()
+            .flatten()
+            .and_then(|o| o.into_commit_iter())
+    })
+    .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();
     let elapsed = start.elapsed();
     println!(
@@ -426,7 +432,12 @@ where
     C: git_odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
-    let ancestors = git_odb::traverse::Ancestors::new(db, Some(tip), &mut cache);
+    let ancestors = iter::Ancestors::new(Some(tip), iter::ancestors::State::default(), |oid, buf| {
+        db.locate(oid, buf, &mut cache)
+            .ok()
+            .flatten()
+            .and_then(|o| o.into_commit_iter())
+    });
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;

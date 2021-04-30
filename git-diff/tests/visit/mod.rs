@@ -127,13 +127,20 @@ mod changes {
         }
 
         fn all_commits(db: &linked::Db) -> Vec<ObjectId> {
+            use git_traverse::iter;
+
             let head = head_of(db);
-            git_odb::traverse::Ancestors::new(db, Some(head), &mut pack::cache::Never)
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-                .collect::<Result<Vec<_>, _>>()
-                .expect("valid iteration")
+            iter::Ancestors::new(Some(head), iter::ancestors::State::default(), |oid, buf| {
+                db.locate(oid, buf, &mut pack::cache::Never)
+                    .ok()
+                    .flatten()
+                    .and_then(|o| o.into_commit_iter())
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("valid iteration")
         }
 
         #[test]

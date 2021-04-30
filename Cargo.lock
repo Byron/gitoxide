@@ -753,6 +753,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-testtools",
+ "git-traverse",
  "quick-error",
 ]
 
@@ -2092,6 +2093,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-odb",
+ "git-traverse",
  "git2",
  "memory-lru",
  "rayon",
