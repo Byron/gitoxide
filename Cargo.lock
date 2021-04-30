@@ -899,6 +899,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-traverse"
+version = "0.0.0"
+dependencies = [
+ "git-hash",
+ "git-object",
+ "git-odb",
+ "git-testtools",
+ "quick-error",
+]
+
+[[package]]
 name = "git-tui"
 version = "0.0.0"
 

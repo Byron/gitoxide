@@ -91,6 +91,7 @@ members = [
     "git-commitgraph",
     "git-object",
     "git-diff",
+    "git-traverse",
     "git-index",
     "git-packetline",
     "git-transport",
