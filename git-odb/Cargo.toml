@@ -33,7 +33,7 @@ all-features = true
 
 [dependencies]
 git-object = { version = "^0.7.0", path = "../git-object" }
-git-hash = { version = "^0.2.0", path = "../git-hash" }
+git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-features = { version = "^0.13.0", path = "../git-features" }
 
 flate2 = { version = "1.0.17", default-features = false }

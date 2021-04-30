@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1"
 git-odb = { version = "0.12", path = "../../git-odb", features = ["pack-cache-lru-static", "pack-cache-lru-dynamic"]  }
-git-hash = { version = "0.2", path = "../../git-hash" }
+git-hash = { version = "^0.3", path = "../../git-hash" }
 git-object = { version = "0.7", path = "../../git-object" }
 git-diff = { version = "^0.1", path = "../../git-diff" }
 git2 = "0.13"

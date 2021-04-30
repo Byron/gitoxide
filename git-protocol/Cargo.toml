@@ -17,7 +17,7 @@ serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-hash/serde1"]
 [dependencies]
 git-features = { version = "^0.13.0", path = "../git-features" }
 git-transport = { version = "^0.7.0", path = "../git-transport" }
-git-hash = { version = "^0.2.0", path = "../git-hash" }
+git-hash = { version = "^0.3.0", path = "../git-hash" }
 
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
