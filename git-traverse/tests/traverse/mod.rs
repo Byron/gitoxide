@@ -1,13 +1,31 @@
 mod ancestor {
     use crate::hex_to_id;
-    use git_odb::traverse;
-    use git_odb::{linked, linked::Db};
+    use git_hash::ObjectId;
+    use git_odb::{linked, linked::Db, pack, Locate};
+    use git_traverse::iter;
+
+    fn db() -> Result<Db, Box<dyn std::error::Error>> {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo.sh")?;
+        let db = linked::Db::at(dir.join(".git").join("objects"))?;
+        Ok(db)
+    }
+
+    fn new_iter(
+        tips: impl IntoIterator<Item = impl Into<ObjectId>>,
+        state: &mut iter::ancestors::State,
+    ) -> impl Iterator<Item = Result<ObjectId, iter::ancestors::Error>> + '_ {
+        let db = db().expect("db instantiation works as its definitely valid");
+        iter::Ancestors::new(tips, state, move |oid, buf| {
+            db.locate(oid, buf, &mut pack::cache::Never)
+                .ok()
+                .flatten()
+                .and_then(|o| o.into_commit_iter())
+        })
+    }
 
     fn check_traversal_with_shared_reference(tips: &[&str], expected: &[&str]) -> crate::Result {
-        let db = db()?;
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
-        let oids: Result<Vec<_>, _> =
-            traverse::Ancestors::new(&db, tips.iter().cloned(), &mut git_odb::pack::cache::Never).collect();
+        let oids: Result<Vec<_>, _> = new_iter(tips.iter().cloned(), &mut iter::ancestors::State::default()).collect();
         let expected: Vec<_> = tips
             .into_iter()
             .chain(expected.iter().map(|hex_id| hex_to_id(hex_id)))
@@ -18,23 +36,18 @@ mod ancestor {
 
     #[test]
     fn instantiate_with_arc() -> crate::Result {
-        let db = db()?;
-        let db = std::sync::Arc::new(db);
-        let _ = traverse::Ancestors::new(
-            db.clone(),
+        let _ = new_iter(
             vec![git_hash::ObjectId::null_sha1()],
-            &mut git_odb::pack::cache::Never,
+            &mut iter::ancestors::State::default(),
         );
         Ok(())
     }
 
     #[test]
     fn instantiate_with_box() -> crate::Result {
-        let db = db()?;
-        let _ = traverse::Ancestors::new(
-            Box::new(db),
+        let _ = new_iter(
             vec![git_hash::ObjectId::null_sha1()],
-            &mut git_odb::pack::cache::Never,
+            &mut iter::ancestors::State::default(),
         );
         Ok(())
     }
@@ -83,11 +96,5 @@ mod ancestor {
                 "134385f6d781b7e97062102c6a483440bfda2a03",
             ],
         )
-    }
-
-    fn db() -> Result<Db, Box<dyn std::error::Error>> {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo.sh")?;
-        let db = linked::Db::at(dir.join(".git").join("objects"))?;
-        Ok(db)
     }
 }
