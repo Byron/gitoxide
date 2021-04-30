@@ -3,6 +3,7 @@ pub mod ancestors {
     use git_hash::{oid, ObjectId};
     use git_object::immutable;
     use quick_error::quick_error;
+    use std::borrow::BorrowMut;
     use std::collections::{BTreeSet, VecDeque};
 
     quick_error! {
@@ -38,14 +39,15 @@ pub mod ancestors {
     }
 
     /// An iterator over the ancestors one or more starting commits
-    pub struct Ancestors<'s, Find> {
+    pub struct Ancestors<Find, StateMut> {
         find: Find,
-        state: &'s mut State,
+        state: StateMut,
     }
 
-    impl<'s, Find> Ancestors<'s, Find>
+    impl<Find, StateMut> Ancestors<Find, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        StateMut: BorrowMut<State>,
     {
         /// Create a new instance.
         ///
@@ -57,24 +59,29 @@ pub mod ancestors {
         /// * `tips`
         ///   * the starting points of the iteration, usually commits
         ///   * each commit they lead to will only be returned once, including the tip that started it
-        pub fn new(tips: impl IntoIterator<Item = impl Into<ObjectId>>, state: &'s mut State, find: Find) -> Self {
-            state.clear();
-            state.next.extend(tips.into_iter().map(Into::into));
-            state.seen.extend(state.next.iter().cloned());
+        pub fn new(tips: impl IntoIterator<Item = impl Into<ObjectId>>, mut state: StateMut, find: Find) -> Self {
+            {
+                let state = state.borrow_mut();
+                state.clear();
+                state.next.extend(tips.into_iter().map(Into::into));
+                state.seen.extend(state.next.iter().cloned());
+            }
             Ancestors { find, state }
         }
     }
 
-    impl<'s, Find> Iterator for Ancestors<'s, Find>
+    impl<Find, StateMut> Iterator for Ancestors<Find, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        StateMut: BorrowMut<State>,
     {
         type Item = Result<ObjectId, Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            let res = self.state.next.pop_front();
+            let state = self.state.borrow_mut();
+            let res = state.next.pop_front();
             if let Some(oid) = res {
-                match (self.find)(&oid, &mut self.state.buf) {
+                match (self.find)(&oid, &mut state.buf) {
                     Some(mut commit_iter) => {
                         if let Some(Err(decode_tree_err)) = commit_iter.next() {
                             return Some(Err(decode_tree_err.into()));
@@ -82,9 +89,9 @@ pub mod ancestors {
                         for token in commit_iter {
                             match token {
                                 Ok(immutable::commit::iter::Token::Parent { id }) => {
-                                    let was_inserted = self.state.seen.insert(id);
+                                    let was_inserted = state.seen.insert(id);
                                     if was_inserted {
-                                        self.state.next.push_back(id);
+                                        state.next.push_back(id);
                                     }
                                 }
                                 Ok(_a_token_past_the_parents) => break,

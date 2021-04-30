@@ -12,10 +12,9 @@ mod ancestor {
 
     fn new_iter(
         tips: impl IntoIterator<Item = impl Into<ObjectId>>,
-        state: &mut iter::ancestors::State,
-    ) -> impl Iterator<Item = Result<ObjectId, iter::ancestors::Error>> + '_ {
+    ) -> impl Iterator<Item = Result<ObjectId, iter::ancestors::Error>> {
         let db = db().expect("db instantiation works as its definitely valid");
-        iter::Ancestors::new(tips, state, move |oid, buf| {
+        iter::Ancestors::new(tips, iter::ancestors::State::default(), move |oid, buf| {
             db.locate(oid, buf, &mut pack::cache::Never)
                 .ok()
                 .flatten()
@@ -25,7 +24,7 @@ mod ancestor {
 
     fn check_traversal_with_shared_reference(tips: &[&str], expected: &[&str]) -> crate::Result {
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
-        let oids: Result<Vec<_>, _> = new_iter(tips.iter().cloned(), &mut iter::ancestors::State::default()).collect();
+        let oids: Result<Vec<_>, _> = new_iter(tips.iter().cloned()).collect();
         let expected: Vec<_> = tips
             .into_iter()
             .chain(expected.iter().map(|hex_id| hex_to_id(hex_id)))
@@ -36,19 +35,13 @@ mod ancestor {
 
     #[test]
     fn instantiate_with_arc() -> crate::Result {
-        let _ = new_iter(
-            vec![git_hash::ObjectId::null_sha1()],
-            &mut iter::ancestors::State::default(),
-        );
+        let _ = new_iter(vec![git_hash::ObjectId::null_sha1()]);
         Ok(())
     }
 
     #[test]
     fn instantiate_with_box() -> crate::Result {
-        let _ = new_iter(
-            vec![git_hash::ObjectId::null_sha1()],
-            &mut iter::ancestors::State::default(),
-        );
+        let _ = new_iter(vec![git_hash::ObjectId::null_sha1()]);
         Ok(())
     }
 
