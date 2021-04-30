@@ -5,6 +5,7 @@ mod changes {
         use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, immutable, tree::EntryMode};
         use git_odb::{linked, pack, Find};
+        type Changes = Vec<recorder::Change>;
 
         fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Db> {
             linked::Db::at(
@@ -35,11 +36,7 @@ mod changes {
                 .expect("id to be a tree"))
         }
 
-        fn diff_commits(
-            db: &linked::Db,
-            lhs: impl Into<Option<ObjectId>>,
-            rhs: &oid,
-        ) -> crate::Result<recorder::Changes> {
+        fn diff_commits(db: &linked::Db, lhs: impl Into<Option<ObjectId>>, rhs: &oid) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let lhs_tree = lhs
                 .into()
@@ -61,7 +58,7 @@ mod changes {
             Ok(recorder.records)
         }
 
-        fn diff_with_previous_commit_from(db: &linked::Db, commit_id: &oid) -> crate::Result<recorder::Changes> {
+        fn diff_with_previous_commit_from(db: &linked::Db, commit_id: &oid) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let (main_tree_id, parent_commit_id) = {
                 let commit = db

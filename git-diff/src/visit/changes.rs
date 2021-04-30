@@ -40,7 +40,7 @@ impl<'a> visit::Changes<'a> {
     /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
     ///   by the delegate implementation which should be as specific as possible.
     /// * cycle checking is not performed, but can be performed in the delegate
-    /// * [ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
+    /// * [std::mem::ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
     ///   borrowcheck complains as Drop is present (even though it's not)
     pub fn needed_to_obtain<LocateFn, R, StateMut>(
         mut self,

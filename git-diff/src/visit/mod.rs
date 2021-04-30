@@ -2,6 +2,7 @@ use git_hash::ObjectId;
 use git_object::immutable;
 use std::collections::VecDeque;
 
+/// The state required to visit [Changes] to be instantiated with `State::default()`.
 #[derive(Default, Clone)]
 pub struct State<PathId: Default + Clone> {
     buf1: Vec<u8>,
@@ -18,13 +19,14 @@ pub(crate) struct TreeInfo<PathId: Clone> {
 }
 
 impl<P: Clone + Default> State<P> {
-    pub fn clear(&mut self) {
+    fn clear(&mut self) {
         self.trees.clear();
         self.buf1.clear();
         self.buf2.clear();
     }
 }
 
+/// An iterator over changes of a tree, instantiated using `Changes::from(…)`.
 pub struct Changes<'a>(Option<immutable::TreeIter<'a>>);
 
 impl<'a, T> From<T> for Changes<'a>
@@ -38,8 +40,10 @@ where
 
 mod changes;
 
+///
 pub mod record;
 pub use record::Record;
 
+/// Houses a [`record::Record`] to keep track of all seen changes. Useful for debugging primarily.
 pub mod recorder;
 pub use recorder::Recorder;

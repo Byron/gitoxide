@@ -4,11 +4,12 @@ use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
-use std::collections::BTreeMap;
-use std::ops::Deref;
-use std::path::PathBuf;
+use std::{collections::BTreeMap, ops::Deref, path::PathBuf};
 
+/// A Change as observed by a call to [`record::Record::record`], enhanced with the path affected by the change.
+/// Its similar to [record::Change] but adds a path.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum Change {
     Addition {
         entry_mode: tree::EntryMode,
@@ -31,13 +32,13 @@ pub enum Change {
     },
 }
 
-pub type Changes = Vec<Change>;
-
+/// A [record::Record] implementation to record every observed change and keep track of the changed paths.
 #[derive(Clone, Debug, Default)]
 pub struct Recorder {
     path_count: usize,
     path_map: BTreeMap<usize, BString>,
     path: BString,
+    /// The observed changes.
     pub records: Vec<Change>,
 }
 
@@ -114,7 +115,6 @@ impl record::Record for Recorder {
                 oid,
                 path: self.path_buf(),
             },
-            _ => todo!("record other kinds of changes"),
         });
         record::Action::Continue
     }
