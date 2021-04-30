@@ -49,7 +49,7 @@ mod changes {
             let mut recorder = git_diff::visit::Recorder::default();
             git_diff::visit::Changes::from(lhs_tree).needed_to_obtain(
                 rhs_tree,
-                &mut git_diff::visit::State::default(),
+                git_diff::visit::State::default(),
                 |oid, buf| {
                     db.locate(oid, buf, &mut pack::cache::Never)
                         .ok()

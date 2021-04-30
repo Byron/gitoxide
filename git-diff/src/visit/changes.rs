@@ -5,7 +5,7 @@ use crate::{
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
-use std::collections::VecDeque;
+use std::{borrow::BorrowMut, collections::VecDeque};
 
 quick_error! {
     #[derive(Debug)]
@@ -42,17 +42,19 @@ impl<'a> visit::Changes<'a> {
     /// * cycle checking is not performed, but can be performed in the delegate
     /// * [ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
     ///   borrowcheck complains as Drop is present (even though it's not)
-    pub fn needed_to_obtain<LocateFn, R>(
+    pub fn needed_to_obtain<LocateFn, R, StateMut>(
         mut self,
         other: immutable::TreeIter<'a>,
-        state: &mut visit::State<R::PathId>,
+        mut state: StateMut,
         mut locate: LocateFn,
         delegate: &mut R,
     ) -> Result<(), Error>
     where
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
         R: visit::Record,
+        StateMut: BorrowMut<visit::State<R::PathId>>,
     {
+        let state = state.borrow_mut();
         state.clear();
         let mut lhs_entries = peekable(self.0.take().unwrap_or_default());
         let mut rhs_entries = peekable(other);
