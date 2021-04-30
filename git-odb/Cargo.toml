@@ -55,4 +55,4 @@ pretty_assertions = "0.7.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 hex = "0.4.2"
 common_macros = "0.1.1"
-test-tools = { version = "0.1", path = "../tests/tools"}
+git-testtools = { version = "0.1", path = "../tests/tools"}

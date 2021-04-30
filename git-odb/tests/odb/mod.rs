@@ -1,4 +1,4 @@
-pub use test_tools::{fixture_path, scripted_fixture_repo_read_only};
+pub use git_testtools::{fixture_path, scripted_fixture_repo_read_only};
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

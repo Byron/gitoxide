@@ -729,8 +729,8 @@ dependencies = [
  "filebuffer",
  "git-features",
  "git-hash",
+ "git-testtools",
  "serde",
- "test-tools",
  "thiserror",
 ]
 
@@ -752,8 +752,8 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-odb",
+ "git-testtools",
  "quick-error",
- "test-tools",
 ]
 
 [[package]]
@@ -819,6 +819,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-object",
+ "git-testtools",
  "hex",
  "itoa",
  "memory-lru",
@@ -827,7 +828,6 @@ dependencies = [
  "serde",
  "smallvec",
  "tempfile",
- "test-tools",
  "thiserror",
  "uluru",
 ]
@@ -871,6 +871,16 @@ name = "git-repository"
 version = "0.5.0"
 dependencies = [
  "quick-error",
+]
+
+[[package]]
+name = "git-testtools"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "crc",
+ "once_cell",
+ "tempfile",
 ]
 
 [[package]]
@@ -1959,16 +1969,6 @@ dependencies = [
  "numtoa",
  "redox_syscall",
  "redox_termios",
-]
-
-[[package]]
-name = "test-tools"
-version = "0.1.0"
-dependencies = [
- "bstr",
- "crc",
- "once_cell",
- "tempfile",
 ]
 
 [[package]]

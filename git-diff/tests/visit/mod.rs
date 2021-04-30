@@ -8,7 +8,7 @@ mod changes {
 
         fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Db> {
             linked::Db::at(
-                test_tools::scripted_fixture_repo_read_only_with_args("make_diff_repo.sh", args)?
+                git_testtools::scripted_fixture_repo_read_only_with_args("make_diff_repo.sh", args)?
                     .join(".git")
                     .join("objects"),
             )

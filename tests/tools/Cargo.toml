@@ -1,10 +1,10 @@
 [package]
-name = "test-tools"
-description = "utilities specifically for our crate test suites and journey tests"
+name = "git-testtools"
+description = "Shared code for gitoxide crates to facilitate testing"
 version = "0.1.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-publish = false
+license = "MIT OR Apache-2.0"
 
 [[bin]]
 name = "jtt"
