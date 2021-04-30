@@ -34,6 +34,5 @@ pub(crate) mod hash;
 mod traits;
 
 pub mod data;
-pub mod traverse;
 
 pub use traits::*;

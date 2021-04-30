@@ -25,4 +25,3 @@ pub mod linked;
 pub mod loose;
 pub mod pack;
 pub mod sink;
-pub mod traverse;
