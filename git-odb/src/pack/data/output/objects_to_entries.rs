@@ -47,8 +47,8 @@ pub fn objects_to_entries_iter<Locate, Iter, Oid, Cache>(
     Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<Locate::Error>>,
 >
 where
-    Locate: crate::Locate + Clone + Send + Sync + 'static,
-    <Locate as crate::Locate>::Error: Send,
+    Locate: crate::Find + Clone + Send + Sync + 'static,
+    <Locate as crate::Find>::Error: Send,
     Iter: Iterator<Item = Oid> + Send + 'static,
     Oid: AsRef<oid> + Send + 'static,
     Cache: pack::cache::DecodeEntry,
@@ -84,7 +84,7 @@ where
             match input_object_expansion {
                 AsIs => {
                     for id in oids.into_iter() {
-                        let obj = db.locate(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
+                        let obj = db.find(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
                             oid: id.as_ref().to_owned(),
                         })?;
                         out.push(match db.pack_entry(&obj) {

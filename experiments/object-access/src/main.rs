@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use git_hash::ObjectId;
-use git_odb::Locate;
+use git_odb::Find;
 use std::{
     path::{Path, PathBuf},
     time::Instant,
@@ -179,7 +179,7 @@ where
     let mut bytes = 0u64;
     let mut cache = new_cache();
     for hash in hashes {
-        let obj = odb.locate(hash, &mut buf, &mut cache)?.expect("object must exist");
+        let obj = odb.find(hash, &mut buf, &mut cache)?.expect("object must exist");
         bytes += obj.data.len() as u64;
     }
     Ok(bytes)
@@ -199,7 +199,7 @@ where
     hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
         || (Vec::new(), new_cache()),
         |(buf, cache), hash| {
-            let obj = odb.locate(hash, buf, cache)?.expect("object must exist");
+            let obj = odb.find(hash, buf, cache)?.expect("object must exist");
             bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
             Ok(())
         },

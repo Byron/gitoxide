@@ -1,10 +1,10 @@
 use crate::{compound, data, data::Object, linked, pack, PackEntry};
 use git_hash::oid;
 
-impl crate::Locate for linked::Db {
-    type Error = compound::locate::Error;
+impl crate::Find for linked::Db {
+    type Error = compound::find::Error;
 
-    fn locate<'a>(
+    fn find<'a>(
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
@@ -12,8 +12,8 @@ impl crate::Locate for linked::Db {
     ) -> Result<Option<Object<'a>>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
-            match db.internal_locate(id) {
-                Some(compound::locate::PackLocation { pack_id, entry_index }) => {
+            match db.internal_find(id) {
+                Some(compound::find::PackLocation { pack_id, entry_index }) => {
                     return db
                         .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
                         .map(Some)
@@ -21,7 +21,7 @@ impl crate::Locate for linked::Db {
                 }
                 None => {
                     if db.loose.contains(id) {
-                        return db.loose.locate(id, buffer).map_err(Into::into);
+                        return db.loose.find(id, buffer).map_err(Into::into);
                     }
                 }
             }
@@ -54,16 +54,16 @@ impl crate::Locate for linked::Db {
     }
 }
 
-impl crate::Locate for &linked::Db {
-    type Error = compound::locate::Error;
+impl crate::Find for &linked::Db {
+    type Error = compound::find::Error;
 
-    fn locate<'a>(
+    fn find<'a>(
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<Object<'a>>, Self::Error> {
-        (*self).locate(id, buffer, pack_cache)
+        (*self).find(id, buffer, pack_cache)
     }
 
     fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {

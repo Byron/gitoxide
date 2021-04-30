@@ -88,7 +88,7 @@ quick_error! {
         WrittenFileMissing(id: git_hash::ObjectId) {
             display("The recently written file for loose object {} could not be found", id)
         }
-        WrittenFileCorrupt(err: loose::db::locate::Error, id: git_hash::ObjectId) {
+        WrittenFileCorrupt(err: loose::db::find::Error, id: git_hash::ObjectId) {
             display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
@@ -214,7 +214,7 @@ pub fn pack_or_pack_index(
                         }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
-                        let obj = verifier.locate(written_id, &mut read_buf)
+                        let obj = verifier.find(written_id, &mut read_buf)
                             .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
                             .ok_or(Error::WrittenFileMissing(written_id))?;
                         obj.verify_checksum(written_id)?;

@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-mod locate;
+mod find;
 ///
 pub mod write;
 

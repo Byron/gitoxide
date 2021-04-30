@@ -5,7 +5,7 @@ use git_hash::{
     oid, ObjectId,
 };
 use git_object::immutable;
-use git_odb::Locate;
+use git_odb::Find;
 use git_traverse::iter;
 use rayon::prelude::*;
 use std::{
@@ -108,7 +108,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = iter::Ancestors::new(Some(commit_id), iter::ancestors::State::default(), |oid, buf| {
-        db.locate(oid, buf, &mut git_odb::pack::cache::Never)
+        db.find(oid, buf, &mut git_odb::pack::cache::Never)
             .ok()
             .flatten()
             .and_then(|o| o.into_commit_iter())
@@ -133,7 +133,7 @@ fn main() -> anyhow::Result<()> {
     ) -> Option<git_odb::data::Object<'b>> {
         match obj_cache.entry(oid.to_owned()) {
             Entry::Vacant(e) => {
-                let obj = db.locate(oid, buf, pack_cache).ok().flatten();
+                let obj = db.find(oid, buf, pack_cache).ok().flatten();
                 if let Some(ref obj) = obj {
                     e.insert((obj.kind, obj.data.to_owned()));
                 }
@@ -225,7 +225,7 @@ fn main() -> anyhow::Result<()> {
                         Some(git_odb::data::Object::new(*kind, buf))
                     }
                     None => {
-                        let obj = db.locate(oid, buf, &mut pack_cache).ok().flatten();
+                        let obj = db.find(oid, buf, &mut pack_cache).ok().flatten();
                         if let Some(ref obj) = obj {
                             obj_cache.insert(
                                 oid,
@@ -319,7 +319,7 @@ fn do_libgit2_treediff(commits: &[ObjectId], repo_dir: &std::path::Path, mode: C
     })
 }
 
-fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_locate: C, mode: Computation) -> anyhow::Result<usize>
+fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_find: C, mode: Computation) -> anyhow::Result<usize>
 where
     C: Fn() -> L + Sync,
     L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
@@ -333,7 +333,7 @@ where
                         git_diff::visit::State::<()>::default(),
                         Vec::<u8>::new(),
                         Vec::<u8>::new(),
-                        make_locate(),
+                        make_find(),
                     )
                 },
                 |(state, buf1, buf2, find), pair| {
@@ -357,7 +357,7 @@ where
         }
         Computation::SingleThreaded => {
             let mut state = git_diff::visit::State::default();
-            let mut find = make_locate();
+            let mut find = make_find();
             let mut buf: Vec<u8> = Vec::new();
             let mut buf2: Vec<u8> = Vec::new();
             let mut changes = 0;
@@ -433,7 +433,7 @@ where
 {
     let mut cache = new_cache();
     let ancestors = iter::Ancestors::new(Some(tip), iter::ancestors::State::default(), |oid, buf| {
-        db.locate(oid, buf, &mut cache)
+        db.find(oid, buf, &mut cache)
             .ok()
             .flatten()
             .and_then(|o| o.into_commit_iter())

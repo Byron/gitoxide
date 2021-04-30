@@ -52,7 +52,7 @@ mod entries {
             let num_written_bytes = {
                 let num_entries = entries.len();
                 let mut pack_writer = output::entries_to_bytes::EntriesToBytesIter::new(
-                    std::iter::once(Ok::<_, output::objects_to_entries::Error<compound::locate::Error>>(
+                    std::iter::once(Ok::<_, output::objects_to_entries::Error<compound::find::Error>>(
                         entries,
                     )),
                     &mut pack_file,

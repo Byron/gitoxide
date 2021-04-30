@@ -2,9 +2,9 @@
 use crate::{loose, pack};
 
 ///
-pub mod init;
+pub mod find;
 ///
-pub mod locate;
+pub mod init;
 mod write;
 
 /// An object database with tiered lookup packs and loose objects.

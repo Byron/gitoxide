@@ -7,7 +7,7 @@ impl pack::Bundle {
     ///
     /// **Note** that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
     /// for thin packs, which by now are expected to be resolved already.
-    pub fn locate<'a>(
+    pub fn find<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
@@ -21,15 +21,15 @@ impl pack::Bundle {
     }
 
     /// Internal-use function to look up an object index. Used to avoid double-lookups in
-    /// compound::Db::locate. (The polonius borrow-checker would support this via the locate
+    /// [compound::Db::find()][crate::compound::Db::find()]. (The polonius borrow-checker would support this via the 'find'
     /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
     /// once polonius is stable.)
-    pub(crate) fn internal_locate_index(&self, id: &git_hash::oid) -> Option<u32> {
+    pub(crate) fn internal_find_pack_index(&self, id: &git_hash::oid) -> Option<u32> {
         self.index.lookup(id)
     }
 
     /// Internal-use function to get an object given an index previously returned from
-    /// internal_locate_index.
+    /// internal_find_pack_index.
     pub(crate) fn internal_get_object_by_index<'a>(
         &self,
         idx: u32,

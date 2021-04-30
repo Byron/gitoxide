@@ -29,12 +29,12 @@ mod iter {
 
 mod locate {
     use crate::{hex_to_id, linked::db};
-    use git_odb::{linked::Db, pack, Locate};
+    use git_odb::{linked::Db, pack, Find};
 
     fn can_locate(db: &Db, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
-            .locate(hex_to_id(hex_id), &mut buf, &mut pack::cache::Never)
+            .find(hex_to_id(hex_id), &mut buf, &mut pack::cache::Never)
             .expect("no read error")
             .is_some());
     }

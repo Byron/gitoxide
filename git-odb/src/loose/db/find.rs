@@ -5,7 +5,7 @@ use crate::{
 };
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
-/// Returned by [`Db::locate()`]
+/// Returned by [`Db::find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -38,12 +38,12 @@ impl Db {
     ///
     /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
     /// there was no such object.
-    pub fn locate<'a>(
+    pub fn find<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
     ) -> Result<Option<data::Object<'a>>, Error> {
-        match self.locate_inner(id.as_ref(), out) {
+        match self.find_inner(id.as_ref(), out) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
                 Error::Io {
@@ -66,7 +66,7 @@ impl Db {
         }
     }
 
-    fn locate_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<data::Object<'a>, Error> {
+    fn find_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<data::Object<'a>, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();

@@ -1,7 +1,7 @@
 mod ancestor {
     use crate::hex_to_id;
     use git_hash::ObjectId;
-    use git_odb::{linked, linked::Db, pack, Locate};
+    use git_odb::{linked, linked::Db, pack, Find};
     use git_traverse::iter;
 
     fn db() -> Result<Db, Box<dyn std::error::Error>> {
@@ -15,7 +15,7 @@ mod ancestor {
     ) -> impl Iterator<Item = Result<ObjectId, iter::ancestors::Error>> {
         let db = db().expect("db instantiation works as its definitely valid");
         iter::Ancestors::new(tips, iter::ancestors::State::default(), move |oid, buf| {
-            db.locate(oid, buf, &mut pack::cache::Never)
+            db.find(oid, buf, &mut pack::cache::Never)
                 .ok()
                 .flatten()
                 .and_then(|o| o.into_commit_iter())
