@@ -238,7 +238,7 @@ fn main() -> anyhow::Result<()> {
     )?;
     let elapsed = start.elapsed();
     println!(
-        "gitoxide-deltas PARALLEL (cache = memory-lrup -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        "gitoxide-deltas PARALLEL (cache = memory-LRU -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
         num_deltas,
         num_diffs,
@@ -248,11 +248,12 @@ fn main() -> anyhow::Result<()> {
     );
 
     drop(repo);
+
     let start = Instant::now();
-    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::SingleThreaded)?;
+    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::MultiThreaded)?;
     let elapsed = start.elapsed();
     println!(
-        "libgit2: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        "libgit2 PARALLEL: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         num_deltas,
         num_diffs,
         elapsed,
@@ -261,10 +262,10 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::MultiThreaded)?;
+    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::SingleThreaded)?;
     let elapsed = start.elapsed();
     println!(
-        "libgit2 PARALLEL: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        "libgit2: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         num_deltas,
         num_diffs,
         elapsed,

@@ -76,11 +76,14 @@
 ### git-diff
 
 * **tree**
-  * [ ] changes needed to obtain _other tree_
+  * [x] changes needed to obtain _other tree_
+  * [ ] case-insensitive comparisons  
   * [ ] rename and copy tracking
+  * [ ] readily available caching for 4x+ speedups
 * **patches**    
   * There are various ways to generate a patch from two blobs.
   * [ ] any
+    
 
 ### git-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls

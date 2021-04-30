@@ -27,6 +27,7 @@ quick_error! {
 impl<'a> visit::Changes<'a> {
     /// Returns the changes that need to be applied to `self` to get `other`.
     /// TODO: Talk about choices in error handling and why Option<T> is enough, as opposed to the usual Result<Option<T>>
+    ///        Talk about progress (done via delegate if needed)
     ///
     /// # Notes
     ///
