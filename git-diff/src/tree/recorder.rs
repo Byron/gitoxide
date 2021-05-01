@@ -1,4 +1,4 @@
-use crate::visit::record;
+use crate::tree::visit;
 use git_hash::ObjectId;
 use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
@@ -6,8 +6,8 @@ use git_object::{
 };
 use std::{collections::BTreeMap, ops::Deref, path::PathBuf};
 
-/// A Change as observed by a call to [`record::Record::record`], enhanced with the path affected by the change.
-/// Its similar to [record::Change] but adds a path.
+/// A Change as observed by a call to [`visit::Visit::visit`], enhanced with the path affected by the change.
+/// Its similar to [visit::Change] but adds a path.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Change {
@@ -32,7 +32,7 @@ pub enum Change {
     },
 }
 
-/// A [record::Record] implementation to record every observed change and keep track of the changed paths.
+/// A [visit::Visit] implementation to record every observed change and keep track of the changed paths.
 #[derive(Clone, Debug, Default)]
 pub struct Recorder {
     path_count: usize,
@@ -67,7 +67,7 @@ impl Recorder {
     }
 }
 
-impl record::Record for Recorder {
+impl visit::Visit for Recorder {
     type PathId = usize;
 
     fn set_current_path(&mut self, path: Self::PathId) {
@@ -90,8 +90,8 @@ impl record::Record for Recorder {
         self.pop_element();
     }
 
-    fn record(&mut self, change: record::Change) -> record::Action {
-        use record::Change::*;
+    fn visit(&mut self, change: visit::Change) -> visit::Action {
+        use visit::Change::*;
         self.records.push(match change {
             Deletion { entry_mode, oid } => Change::Deletion {
                 entry_mode,
@@ -116,6 +116,6 @@ impl record::Record for Recorder {
                 path: self.path_buf(),
             },
         });
-        record::Action::Continue
+        visit::Action::Continue
     }
 }

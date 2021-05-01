@@ -1,9 +1,9 @@
 use crate::{
-    visit,
-    visit::{changes::Error::Cancelled, record::Change, TreeInfo, TreeInfoPair},
+    tree,
+    tree::{changes::Error::Cancelled, visit::Change, TreeInfo, TreeInfoPair},
 };
 use git_hash::{oid, ObjectId};
-use git_object::{immutable, tree};
+use git_object::immutable;
 use quick_error::quick_error;
 use std::{borrow::BorrowMut, collections::VecDeque};
 
@@ -24,8 +24,8 @@ quick_error! {
     }
 }
 
-impl<'a> visit::Changes<'a> {
-    /// Returns the changes that need to be applied to `self` to get `other`.
+impl<'a> tree::Changes<'a> {
+    ///  that need to be applied to `self` to get `other`.
     /// TODO: Talk about choices in error handling and why Option<T> is enough, as opposed to the usual Result<Option<T>>
     ///        Talk about progress (done via delegate if needed)
     ///
@@ -51,8 +51,8 @@ impl<'a> visit::Changes<'a> {
     ) -> Result<(), Error>
     where
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
-        R: visit::Record,
-        StateMut: BorrowMut<visit::State<R::PathId>>,
+        R: tree::Visit,
+        StateMut: BorrowMut<tree::State<R::PathId>>,
     {
         let state = state.borrow_mut();
         state.clear();
@@ -111,14 +111,14 @@ impl<'a> visit::Changes<'a> {
     }
 }
 
-fn delete_entry_schedule_recursion<R: visit::Record>(
+fn delete_entry_schedule_recursion<R: tree::Visit>(
     entry: immutable::tree::Entry<'_>,
     queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
     if delegate
-        .record(Change::Deletion {
+        .visit(Change::Deletion {
             entry_mode: entry.mode,
             oid: entry.oid.to_owned(),
         })
@@ -140,14 +140,14 @@ fn delete_entry_schedule_recursion<R: visit::Record>(
     Ok(())
 }
 
-fn add_entry_schedule_recursion<R: visit::Record>(
+fn add_entry_schedule_recursion<R: tree::Visit>(
     entry: immutable::tree::Entry<'_>,
     queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
     if delegate
-        .record(Change::Addition {
+        .visit(Change::Addition {
             entry_mode: entry.mode,
             oid: entry.oid.to_owned(),
         })
@@ -168,7 +168,7 @@ fn add_entry_schedule_recursion<R: visit::Record>(
     }
     Ok(())
 }
-fn catchup_rhs_with_lhs<R: visit::Record>(
+fn catchup_rhs_with_lhs<R: tree::Visit>(
     rhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
     lhs: immutable::tree::Entry<'_>,
     rhs: immutable::tree::Entry<'_>,
@@ -208,7 +208,7 @@ fn catchup_rhs_with_lhs<R: visit::Record>(
     Ok(())
 }
 
-fn catchup_lhs_with_rhs<R: visit::Record>(
+fn catchup_lhs_with_rhs<R: tree::Visit>(
     lhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
     lhs: immutable::tree::Entry<'_>,
     rhs: immutable::tree::Entry<'_>,
@@ -248,19 +248,19 @@ fn catchup_lhs_with_rhs<R: visit::Record>(
     Ok(())
 }
 
-fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
+fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
     lhs: immutable::tree::Entry<'_>,
     rhs: immutable::tree::Entry<'_>,
     queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
     delegate: &mut R,
 ) -> Result<(), Error> {
-    use tree::EntryMode::*;
+    use git_object::tree::EntryMode::*;
     match (lhs.mode, rhs.mode) {
         (Tree, Tree) => {
             let path_id = delegate.push_tracked_path_component(lhs.filename);
             if lhs.oid != rhs.oid
                 && delegate
-                    .record(Change::Modification {
+                    .visit(Change::Modification {
                         previous_entry_mode: lhs.mode,
                         previous_oid: lhs.oid.to_owned(),
                         entry_mode: rhs.mode,
@@ -284,7 +284,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
         (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
             let path_id = delegate.push_tracked_path_component(lhs.filename);
             if delegate
-                .record(Change::Deletion {
+                .visit(Change::Deletion {
                     entry_mode: lhs.mode,
                     oid: lhs.oid.to_owned(),
                 })
@@ -293,7 +293,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
                 return Err(Cancelled);
             };
             if delegate
-                .record(Change::Addition {
+                .visit(Change::Addition {
                     entry_mode: rhs.mode,
                     oid: rhs.oid.to_owned(),
                 })
@@ -312,7 +312,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
         (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
             let path_id = delegate.push_tracked_path_component(lhs.filename);
             if delegate
-                .record(Change::Deletion {
+                .visit(Change::Deletion {
                     entry_mode: lhs.mode,
                     oid: lhs.oid.to_owned(),
                 })
@@ -321,7 +321,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
                 return Err(Error::Cancelled);
             }
             if delegate
-                .record(Change::Addition {
+                .visit(Change::Addition {
                     entry_mode: rhs.mode,
                     oid: rhs.oid.to_owned(),
                 })
@@ -342,7 +342,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: visit::Record>(
             debug_assert!(lhs_non_tree.is_no_tree() && rhs_non_tree.is_no_tree());
             if lhs.oid != rhs.oid
                 && delegate
-                    .record(Change::Modification {
+                    .visit(Change::Modification {
                         previous_entry_mode: lhs.mode,
                         previous_oid: lhs.oid.to_owned(),
                         entry_mode: rhs.mode,

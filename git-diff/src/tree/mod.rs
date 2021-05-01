@@ -41,9 +41,9 @@ where
 mod changes;
 
 ///
-pub mod record;
-pub use record::Record;
+pub mod visit;
+pub use visit::Visit;
 
-/// Houses a [`record::Record`] to keep track of all seen changes. Useful for debugging primarily.
+/// Houses a [`visit::Visit`] to keep track of all seen changes. Useful for debugging primarily.
 pub mod recorder;
 pub use recorder::Recorder;

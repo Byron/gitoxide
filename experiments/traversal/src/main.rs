@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use git_diff::visit::record::{Action, Change};
+use git_diff::tree::visit::{Action, Change};
 use git_hash::{
     bstr::{BStr, ByteSlice},
     oid, ObjectId,
@@ -330,7 +330,7 @@ where
             commits.par_windows(2).try_for_each_init::<_, _, _, anyhow::Result<_>>(
                 || {
                     (
-                        git_diff::visit::State::<()>::default(),
+                        git_diff::tree::State::<()>::default(),
                         Vec::<u8>::new(),
                         Vec::<u8>::new(),
                         make_find(),
@@ -343,7 +343,7 @@ where
                         tree_iter_by_commit(&cb, buf2, &mut *find),
                     );
                     let mut count = Count::default();
-                    git_diff::visit::Changes::from(ta).needed_to_obtain(
+                    git_diff::tree::Changes::from(ta).needed_to_obtain(
                         tb,
                         state,
                         |id, buf| find_tree_iter(id, buf, &mut *find),
@@ -356,7 +356,7 @@ where
             changes.load(std::sync::atomic::Ordering::Acquire)
         }
         Computation::SingleThreaded => {
-            let mut state = git_diff::visit::State::default();
+            let mut state = git_diff::tree::State::default();
             let mut find = make_find();
             let mut buf: Vec<u8> = Vec::new();
             let mut buf2: Vec<u8> = Vec::new();
@@ -369,7 +369,7 @@ where
                     tree_iter_by_commit(&cb, &mut buf2, &mut find),
                 );
                 let mut count = Count::default();
-                git_diff::visit::Changes::from(ta).needed_to_obtain(
+                git_diff::tree::Changes::from(ta).needed_to_obtain(
                     tb,
                     &mut state,
                     |id, buf| find_tree_iter(id, buf, &mut find),
@@ -404,7 +404,7 @@ where
     #[derive(Default)]
     struct Count(usize);
 
-    impl git_diff::visit::Record for Count {
+    impl git_diff::tree::Visit for Count {
         type PathId = ();
 
         fn set_current_path(&mut self, _path: Self::PathId) {}
@@ -415,7 +415,7 @@ where
 
         fn pop_path_component(&mut self) {}
 
-        fn record(&mut self, _change: Change) -> Action {
+        fn visit(&mut self, _change: Change) -> Action {
             self.0 += 1;
             Action::Continue
         }

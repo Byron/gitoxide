@@ -32,12 +32,12 @@ pub enum Change {
     },
 }
 
-/// What to do after a [Change] was [recorded][Record::record()].
+/// What to do after a [Change] was [recorded][Visit::visit()].
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Action {
     /// Continue the traversal of changes.
     Continue,
-    /// Stop the traversal of changes, making this te last call to [record(…)][Record::record()].
+    /// Stop the traversal of changes, making this te last call to [record(…)][Visit::visit()].
     Cancel,
 }
 
@@ -50,7 +50,7 @@ impl Action {
 
 /// A trait to allow responding to a traversal designed to figure out the [changes][Change]
 /// to turn tree A into tree B.
-pub trait Record {
+pub trait Visit {
     /// A type capable of uniquely identifying paths in a tree.
     type PathId: Clone + Default;
 
@@ -65,7 +65,7 @@ pub trait Record {
     /// Record a `change` and return an instruction whether to continue or not.
     ///
     /// The implementation may use the current path to lean where in the tree the change is located.
-    fn record(&mut self, change: Change) -> Action;
+    fn visit(&mut self, change: Change) -> Action;
 }
 
 #[cfg(test)]
