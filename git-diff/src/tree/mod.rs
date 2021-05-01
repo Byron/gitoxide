@@ -38,7 +38,8 @@ where
     }
 }
 
-mod changes;
+///
+pub mod changes;
 
 ///
 pub mod visit;

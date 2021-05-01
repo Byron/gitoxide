@@ -1,6 +1,6 @@
 use crate::{
     tree,
-    tree::{changes::Error::Cancelled, visit::Change, TreeInfo, TreeInfoPair},
+    tree::{visit::Change, TreeInfo, TreeInfoPair},
 };
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
@@ -8,7 +8,9 @@ use quick_error::quick_error;
 use std::{borrow::BorrowMut, collections::VecDeque};
 
 quick_error! {
+    /// The error returned by [tree::Changes::needed_to_obtain()].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         NotFound(oid: ObjectId) {
             display("The object {} referenced by the tree was not found in the database", oid)
@@ -25,23 +27,29 @@ quick_error! {
 }
 
 impl<'a> tree::Changes<'a> {
-    ///  that need to be applied to `self` to get `other`.
-    /// TODO: Talk about choices in error handling and why Option<T> is enough, as opposed to the usual Result<Option<T>>
-    ///        Talk about progress (done via delegate if needed)
+    /// Calculate the changes that would need to be applied to `self` to get `other`.
+    ///
+    /// * The `state` maybe owned or mutably borrowed to allow reuses allocated data structures through multiple runs.
+    /// * `locate` is a function `f(object_id, &mut buffer) -> Option<TreeIter>` to return a `TreeIter` for the given object id backing
+    ///   its data in the given buffer. Returning `None` is unexpected as these trees are obtained during iteration, and in a typical
+    ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::NotFound`]
+    ///   should be converted into a more telling error.
+    /// * `delegate` will receive the computed changes, see [`tree::Visit`] for more information on what to expect.
     ///
     /// # Notes
     ///
+    /// * To obtain progress, implement it within the `delegate`.
     /// * Tree entries are expected to be ordered using [`tree-entry-comparison`][git_cmp_c] (the same [in Rust][git_cmp_rs])
+    /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
+    /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
+    ///   by the delegate implementation which should be as specific as possible. Rename tracking can be computed on top of the changes
+    ///   received by the `delegate`.
+    /// * cycle checking is not performed, but can be performed in the delegate which can return [`tree::visit::Action::Cancel`] to stop the traversal.
+    /// * [std::mem::ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
+    ///   borrowcheck complains as Drop is present (even though it's not)
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
-    ///
-    /// * it does a breadth first iteration as buffer space only fits two trees, the current one on the one we compare with.
-    /// * does not do rename tracking but attempts to reduce allocations to zero (so performance is mostly determined
-    ///   by the delegate implementation which should be as specific as possible.
-    /// * cycle checking is not performed, but can be performed in the delegate
-    /// * [std::mem::ManuallyDrop] is used because `Peekable` is needed. When using it as wrapper around our no-drop iterators, all of the sudden
-    ///   borrowcheck complains as Drop is present (even though it's not)
     pub fn needed_to_obtain<LocateFn, R, StateMut>(
         mut self,
         other: immutable::TreeIter<'a>,
@@ -268,7 +276,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                     })
                     .cancelled()
             {
-                return Err(Cancelled);
+                return Err(Error::Cancelled);
             }
             queue.push_back((
                 Some(TreeInfo {
@@ -290,7 +298,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                 })
                 .cancelled()
             {
-                return Err(Cancelled);
+                return Err(Error::Cancelled);
             };
             if delegate
                 .visit(Change::Addition {
@@ -299,7 +307,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                 })
                 .cancelled()
             {
-                return Err(Cancelled);
+                return Err(Error::Cancelled);
             };
             queue.push_back((
                 None,
@@ -327,7 +335,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                 })
                 .cancelled()
             {
-                return Err(Cancelled);
+                return Err(Error::Cancelled);
             };
             queue.push_back((
                 Some(TreeInfo {
