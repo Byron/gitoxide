@@ -215,7 +215,8 @@ pub mod decode {
     use quick_error::quick_error;
 
     quick_error! {
-        /// An error returned by various [`Commit`][crate::immutable::Commit] and [`Signature`][crate::immutable::Signature] methods.
+        /// An error returned by various [`Commit`][crate::immutable::Commit] and [`Signature`][crate::immutable::Signature] methods
+        /// when they couldn't be decoded.
         #[derive(Debug, Clone)]
         #[allow(missing_docs)]
         pub enum Error {

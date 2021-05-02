@@ -34,7 +34,7 @@ impl<'a> tree::Changes<'a> {
     ///   its data in the given buffer. Returning `None` is unexpected as these trees are obtained during iteration, and in a typical
     ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::NotFound`]
     ///   should be converted into a more telling error.
-    /// * `delegate` will receive the computed changes, see [`tree::Visit`] for more information on what to expect.
+    /// * `delegate` will receive the computed changes, see the [`Visit`][`tree::Visit`] trait for more information on what to expect.
     ///
     /// # Notes
     ///
