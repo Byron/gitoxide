@@ -62,6 +62,18 @@ fn main() -> anyhow::Result<()> {
         entries_per_sec(elapsed)
     );
 
+    let repo = git2::Repository::open(&repo_git_dir)?;
+    let start = Instant::now();
+    let count = do_libgit2_tree_dag_traversal(commit_id, &repo)?;
+    let elapsed = start.elapsed();
+    let entries_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
+    println!(
+        "libgit2: confirmed {} entries in {:?} ({:0.0} entries/s)",
+        count,
+        elapsed,
+        entries_per_sec(elapsed)
+    );
+
     let start = Instant::now();
     let count = do_gitoxide_commit_graph_traversal(commit_id, &db, || {
         git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
@@ -103,9 +115,8 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
-    let repo = git2::Repository::open(&repo_git_dir)?;
     let start = Instant::now();
-    let count = do_libgit2_graph_traversal(commit_id, &repo)?;
+    let count = do_libgit2_commit_graph_traversal(commit_id, &repo)?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
     println!(
@@ -186,7 +197,17 @@ where
     Ok(count.0)
 }
 
-fn do_libgit2_graph_traversal(tip: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
+fn do_libgit2_tree_dag_traversal(commit: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
+    let commit = db.find_commit(git2::Oid::from_bytes(commit.as_bytes())?)?;
+    let mut count = 0;
+    commit.tree()?.walk(git2::TreeWalkMode::PreOrder, |_path, _entry| {
+        count += 1;
+        git2::TreeWalkResult::Ok
+    })?;
+    Ok(count)
+}
+
+fn do_libgit2_commit_graph_traversal(tip: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
     let mut commits = 0;
     let mut walk = db.revwalk()?;
     walk.push(git2::Oid::from_bytes(tip.as_bytes())?)?;
