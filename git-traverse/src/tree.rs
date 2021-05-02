@@ -41,7 +41,7 @@ pub mod visit {
 }
 
 ///
-pub mod traverse {
+pub mod breadthfirst {
     use crate::tree::visit::Visit;
     use git_hash::{oid, ObjectId};
     use git_object::{immutable, tree};

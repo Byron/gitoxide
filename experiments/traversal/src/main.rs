@@ -1,7 +1,8 @@
 use anyhow::anyhow;
-use git_hash::{bstr::ByteSlice, ObjectId};
+use git_hash::{bstr::BStr, bstr::ByteSlice, ObjectId};
+use git_object::immutable::tree::Entry;
 use git_odb::Find;
-use git_traverse::commit;
+use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
     path::PathBuf,
     time::{Duration, Instant},
@@ -46,8 +47,23 @@ fn main() -> anyhow::Result<()> {
     };
     let db = git_odb::linked::Db::at(&repo_objects_dir)?;
 
+    // TODO: actually traverse all trees in a repository
     let start = Instant::now();
-    let count = do_gitoxide_graph_traversal(commit_id, &db, || {
+    let count = do_gitoxide_tree_dag_traversal(commit_id, &db, || {
+        git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
+    })?;
+    let elapsed = start.elapsed();
+    let entries_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
+    println!(
+        "gitoxide (cache = {:.0}MB): confirmed {} entries in {:?} ({:0.0} entries/s)",
+        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        count,
+        elapsed,
+        entries_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let count = do_gitoxide_commit_graph_traversal(commit_id, &db, || {
         git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
     })?;
     let elapsed = start.elapsed();
@@ -61,7 +77,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let count = do_gitoxide_graph_traversal(
+    let count = do_gitoxide_commit_graph_traversal(
         commit_id,
         &db,
         git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
@@ -77,7 +93,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let count = do_gitoxide_graph_traversal(commit_id, &db, || git_odb::pack::cache::Never)?;
+    let count = do_gitoxide_commit_graph_traversal(commit_id, &db, || git_odb::pack::cache::Never)?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
     println!(
@@ -102,7 +118,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn do_gitoxide_graph_traversal<C>(
+fn do_gitoxide_commit_graph_traversal<C>(
     tip: ObjectId,
     db: &git_odb::linked::Db,
     new_cache: impl FnOnce() -> C,
@@ -123,6 +139,51 @@ where
         commits += 1;
     }
     Ok(commits)
+}
+
+fn do_gitoxide_tree_dag_traversal<C>(
+    commit: ObjectId,
+    db: &git_odb::linked::Db,
+    new_cache: impl FnOnce() -> C,
+) -> anyhow::Result<usize>
+where
+    C: git_odb::pack::cache::DecodeEntry,
+{
+    let mut cache = new_cache();
+    let mut buf = Vec::new();
+    let tid = db
+        .find(commit, &mut buf, &mut cache)?
+        .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
+        .expect("commit as starting point");
+
+    #[derive(Default)]
+    struct Count(usize);
+
+    impl tree::visit::Visit for Count {
+        type PathId = ();
+        fn set_current_path(&mut self, _id: Self::PathId) {}
+        fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+        fn push_path_component(&mut self, _component: &BStr) {}
+        fn pop_path_component(&mut self) {}
+        fn visit(&mut self, _entry: &Entry<'_>) -> Action {
+            self.0 += 1;
+            tree::visit::Action::Continue
+        }
+    }
+
+    let mut count = Count::default();
+    tree::breadthfirst::traverse(
+        tid,
+        tree::breadthfirst::State::default(),
+        |oid, buf| {
+            db.find(oid, buf, &mut cache)
+                .ok()
+                .flatten()
+                .and_then(|o| o.into_tree_iter())
+        },
+        &mut count,
+    )?;
+    Ok(count.0)
 }
 
 fn do_libgit2_graph_traversal(tip: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
