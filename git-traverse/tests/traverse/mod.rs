@@ -2,7 +2,7 @@ mod ancestor {
     use crate::hex_to_id;
     use git_hash::ObjectId;
     use git_odb::{linked, linked::Db, pack, Find};
-    use git_traverse::iter;
+    use git_traverse::commit;
 
     fn db() -> Result<Db, Box<dyn std::error::Error>> {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo.sh")?;
@@ -12,9 +12,9 @@ mod ancestor {
 
     fn new_iter(
         tips: impl IntoIterator<Item = impl Into<ObjectId>>,
-    ) -> impl Iterator<Item = Result<ObjectId, iter::ancestors::Error>> {
+    ) -> impl Iterator<Item = Result<ObjectId, commit::ancestors::Error>> {
         let db = db().expect("db instantiation works as its definitely valid");
-        iter::Ancestors::new(tips, iter::ancestors::State::default(), move |oid, buf| {
+        commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
             db.find(oid, buf, &mut pack::cache::Never)
                 .ok()
                 .flatten()

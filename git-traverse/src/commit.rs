@@ -55,7 +55,9 @@ pub mod ancestors {
         ///
         /// * `find` - a way to lookup new object data during traversal by their ObjectId, writing their data into buffer and returning
         ///    an iterator over commit tokens if the object is present and is a commit. Caching should be implemented within this function
-        ///    as needed.
+        ///    as needed. The return value is `Option<CommitIter>` which degenerates all error information. Not finding a commit should also
+        ///    be considered an errors as all objects in the commit graph should be present in the database. Hence [`Error::NotFound`] should
+        ///    be escalated into a more specific error if its encountered by the caller.
         /// * `state` - all state used for the traversal. If multiple traversals are performed, allocations can be minimized by reusing
         ///   this state.
         /// * `tips`

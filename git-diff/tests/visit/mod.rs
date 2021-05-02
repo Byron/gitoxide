@@ -124,10 +124,10 @@ mod changes {
         }
 
         fn all_commits(db: &linked::Db) -> Vec<ObjectId> {
-            use git_traverse::iter;
+            use git_traverse::commit;
 
             let head = head_of(db);
-            iter::Ancestors::new(Some(head), iter::ancestors::State::default(), |oid, buf| {
+            commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {
                 db.find(oid, buf, &mut pack::cache::Never)
                     .ok()
                     .flatten()

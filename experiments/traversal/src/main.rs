@@ -6,7 +6,7 @@ use git_hash::{
 };
 use git_object::immutable;
 use git_odb::Find;
-use git_traverse::iter;
+use git_traverse::commit;
 use rayon::prelude::*;
 use std::{
     collections::{btree_map::Entry, BTreeMap},
@@ -107,7 +107,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let all_commits = iter::Ancestors::new(Some(commit_id), iter::ancestors::State::default(), |oid, buf| {
+    let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
         db.find(oid, buf, &mut git_odb::pack::cache::Never)
             .ok()
             .flatten()
@@ -432,7 +432,7 @@ where
     C: git_odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
-    let ancestors = iter::Ancestors::new(Some(tip), iter::ancestors::State::default(), |oid, buf| {
+    let ancestors = commit::Ancestors::new(Some(tip), commit::ancestors::State::default(), |oid, buf| {
         db.find(oid, buf, &mut cache)
             .ok()
             .flatten()

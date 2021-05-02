@@ -2,5 +2,5 @@
 #![deny(missing_docs)]
 //! Various ways to traverse commit graphs and trees with implementations as iterator
 
-/// Iterators over various kind of git objects
-pub mod iter;
+/// Commit traversal
+pub mod commit;
