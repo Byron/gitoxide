@@ -70,82 +70,6 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    fn find_with_obj_cache<'b>(
-        oid: &oid,
-        buf: &'b mut Vec<u8>,
-        obj_cache: &mut BTreeMap<ObjectId, (git_object::Kind, Vec<u8>)>,
-        db: &git_odb::linked::Db,
-        pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
-    ) -> Option<git_odb::data::Object<'b>> {
-        match obj_cache.entry(oid.to_owned()) {
-            Entry::Vacant(e) => {
-                let obj = db.find(oid, buf, pack_cache).ok().flatten();
-                if let Some(ref obj) = obj {
-                    e.insert((obj.kind, obj.data.to_owned()));
-                }
-                obj
-            }
-            Entry::Occupied(e) => {
-                let (k, d) = e.get();
-                buf.resize(d.len(), 0);
-                buf.copy_from_slice(d);
-                Some(git_odb::data::Object::new(*k, buf))
-            }
-        }
-    }
-
-    if all_commits.len() < 150_000 {
-        let num_deltas = do_gitoxide_tree_diff(
-            &all_commits,
-            || {
-                let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(
-                    GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES,
-                );
-                let db = &db;
-                let mut obj_cache = BTreeMap::new();
-                move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
-            },
-            Computation::SingleThreaded,
-        )?;
-        let elapsed = start.elapsed();
-        println!(
-            "gitoxide-deltas (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
-            GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
-            num_deltas,
-            num_diffs,
-            elapsed,
-            num_deltas as f32 / elapsed.as_secs_f32(),
-            num_diffs as f32 / elapsed.as_secs_f32()
-        );
-
-        let start = Instant::now();
-        let num_deltas = do_gitoxide_tree_diff(
-            &all_commits,
-            || {
-                let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(
-                    GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES,
-                );
-                let db = &db;
-                let mut obj_cache = BTreeMap::new();
-                move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
-            },
-            Computation::MultiThreaded,
-        )?;
-        let elapsed = start.elapsed();
-        println!(
-            "gitoxide-deltas PARALLEL (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
-            GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
-            num_deltas,
-            num_diffs,
-            elapsed,
-            num_deltas as f32 / elapsed.as_secs_f32(),
-            num_diffs as f32 / elapsed.as_secs_f32()
-        );
-    } else {
-        eprintln!("Skipping gitoxide tree diff as this experiments cache size would be too big (unbounded)")
-    }
-
-    let start = Instant::now();
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
@@ -198,6 +122,81 @@ fn main() -> anyhow::Result<()> {
         num_deltas as f32 / elapsed.as_secs_f32(),
         num_diffs as f32 / elapsed.as_secs_f32()
     );
+
+    if all_commits.len() < 150_000 {
+        fn find_with_obj_cache<'b>(
+            oid: &oid,
+            buf: &'b mut Vec<u8>,
+            obj_cache: &mut BTreeMap<ObjectId, (git_object::Kind, Vec<u8>)>,
+            db: &git_odb::linked::Db,
+            pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
+        ) -> Option<git_odb::data::Object<'b>> {
+            match obj_cache.entry(oid.to_owned()) {
+                Entry::Vacant(e) => {
+                    let obj = db.find(oid, buf, pack_cache).ok().flatten();
+                    if let Some(ref obj) = obj {
+                        e.insert((obj.kind, obj.data.to_owned()));
+                    }
+                    obj
+                }
+                Entry::Occupied(e) => {
+                    let (k, d) = e.get();
+                    buf.resize(d.len(), 0);
+                    buf.copy_from_slice(d);
+                    Some(git_odb::data::Object::new(*k, buf))
+                }
+            }
+        }
+
+        let start = Instant::now();
+        let num_deltas = do_gitoxide_tree_diff(
+            &all_commits,
+            || {
+                let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(
+                    GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES,
+                );
+                let db = &db;
+                let mut obj_cache = BTreeMap::new();
+                move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
+            },
+            Computation::MultiThreaded,
+        )?;
+        let elapsed = start.elapsed();
+        println!(
+            "gitoxide-deltas PARALLEL (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+            GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+            num_deltas,
+            num_diffs,
+            elapsed,
+            num_deltas as f32 / elapsed.as_secs_f32(),
+            num_diffs as f32 / elapsed.as_secs_f32()
+        );
+
+        let num_deltas = do_gitoxide_tree_diff(
+            &all_commits,
+            || {
+                let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(
+                    GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES,
+                );
+                let db = &db;
+                let mut obj_cache = BTreeMap::new();
+                move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
+            },
+            Computation::SingleThreaded,
+        )?;
+        let elapsed = start.elapsed();
+        println!(
+            "gitoxide-deltas (cache = memory obj map -> {:.0}MB pack): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+            GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+            num_deltas,
+            num_diffs,
+            elapsed,
+            num_deltas as f32 / elapsed.as_secs_f32(),
+            num_diffs as f32 / elapsed.as_secs_f32()
+        );
+    } else {
+        eprintln!("Skipping gitoxide tree diff as this experiments cache size would be too big (unbounded)")
+    }
 
     let start = Instant::now();
     let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::MultiThreaded)?;
