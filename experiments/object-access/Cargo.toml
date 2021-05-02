@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-git-odb = { version = "^0.13", path = "../../git-odb", features = ["pack-cache-lru-static", "pack-cache-lru-dynamic"]  }
+git-odb = { version = "^0.14", path = "../../git-odb", features = ["pack-cache-lru-static", "pack-cache-lru-dynamic"]  }
 git-hash = { version = "^0.3", path = "../../git-hash" }
 git2 = "0.13"
 rayon = "1.5.0"
