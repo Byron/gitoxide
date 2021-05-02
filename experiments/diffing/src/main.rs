@@ -9,7 +9,7 @@ use git_odb::Find;
 use git_traverse::commit;
 use rayon::prelude::*;
 use std::{
-    collections::{btree_map::Entry, BTreeMap},
+    collections::{hash_map::Entry, HashMap},
     path::PathBuf,
     time::Instant,
 };
@@ -127,7 +127,7 @@ fn main() -> anyhow::Result<()> {
         fn find_with_obj_cache<'b>(
             oid: &oid,
             buf: &'b mut Vec<u8>,
-            obj_cache: &mut BTreeMap<ObjectId, (git_object::Kind, Vec<u8>)>,
+            obj_cache: &mut HashMap<ObjectId, (git_object::Kind, Vec<u8>)>,
             db: &git_odb::linked::Db,
             pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
         ) -> Option<git_odb::data::Object<'b>> {
@@ -156,7 +156,7 @@ fn main() -> anyhow::Result<()> {
                     GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES,
                 );
                 let db = &db;
-                let mut obj_cache = BTreeMap::new();
+                let mut obj_cache = HashMap::new();
                 move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
             },
             Computation::MultiThreaded,
@@ -179,7 +179,7 @@ fn main() -> anyhow::Result<()> {
                     GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES,
                 );
                 let db = &db;
-                let mut obj_cache = BTreeMap::new();
+                let mut obj_cache = HashMap::new();
                 move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
             },
             Computation::SingleThreaded,
