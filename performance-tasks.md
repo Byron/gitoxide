@@ -1,5 +1,10 @@
 ## Potential for improving performance
 
+### git-object
+
+* **tree-parsing performance**
+  * when diffing trees parsing [can take substantial time](https://github.com/Byron/gitoxide/discussions/74#discussioncomment-684927). Maybe optimizations are possible here.
+
 ### NLL/Borrowcheck limitation git-odb::(compound|linked)::Db cause additional code complexity
 
 * Once polonius is available with production-ready performance, we should simplify the `locate(…)` code in `(compound|linked)::Db()` respectively.
