@@ -570,6 +570,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
+name = "diffing"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "git-diff",
+ "git-hash",
+ "git-object",
+ "git-odb",
+ "git-traverse",
+ "git2",
+ "memory-lru",
+ "rayon",
+]
+
+[[package]]
 name = "digest"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

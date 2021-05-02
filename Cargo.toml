@@ -102,6 +102,7 @@ members = [
     "git-tui",
 
     "experiments/object-access",
+    "experiments/diffing",
     "experiments/traversal",
     "experiments/hash-owned-borrowed",
 
