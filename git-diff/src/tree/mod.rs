@@ -43,8 +43,10 @@ pub mod changes;
 
 ///
 pub mod visit;
+#[doc(inline)]
 pub use visit::Visit;
 
-/// Houses a [`visit::Visit`] to keep track of all seen changes. Useful for debugging primarily.
+/// Useful for use as delegate implementing [`Visit`] to keep track of all seen changes. Useful for debugging or printing primarily.
 pub mod recorder;
+#[doc(inline)]
 pub use recorder::Recorder;

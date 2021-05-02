@@ -6,8 +6,8 @@ use git_object::{
 };
 use std::{collections::BTreeMap, ops::Deref, path::PathBuf};
 
-/// A Change as observed by a call to [`visit::Visit::visit`], enhanced with the path affected by the change.
-/// Its similar to [visit::Change] but adds a path.
+/// A Change as observed by a call to [`visit(…)`][visit::Visit::visit()], enhanced with the path affected by the change.
+/// Its similar to [visit::Change] but includes the path that changed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum Change {
@@ -32,7 +32,7 @@ pub enum Change {
     },
 }
 
-/// A [visit::Visit] implementation to record every observed change and keep track of the changed paths.
+/// A [Visit][visit::Visit] implementation to record every observed change and keep track of the changed paths.
 #[derive(Clone, Debug, Default)]
 pub struct Recorder {
     path_count: usize,

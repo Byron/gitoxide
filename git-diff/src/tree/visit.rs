@@ -37,7 +37,7 @@ pub enum Change {
 pub enum Action {
     /// Continue the traversal of changes.
     Continue,
-    /// Stop the traversal of changes, making this te last call to [record(…)][Visit::visit()].
+    /// Stop the traversal of changes, making this te last call to [visit(…)][Visit::visit()].
     Cancel,
 }
 
