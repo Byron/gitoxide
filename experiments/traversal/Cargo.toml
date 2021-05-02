@@ -13,7 +13,7 @@ git-odb = { version = "^0.13", path = "../../git-odb", features = ["pack-cache-l
 git-traverse = { version = "0.1", path = "../../git-traverse" }
 git-hash = { version = "^0.3", path = "../../git-hash" }
 git-object = { version = "^0.8", path = "../../git-object" }
-git-diff = { version = "^0.1", path = "../../git-diff" }
+git-diff = { version = "^0.2", path = "../../git-diff" }
 git2 = "0.13"
 rayon = "1.5.0"
 memory-lru = "0.1.0"
