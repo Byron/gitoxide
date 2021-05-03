@@ -2104,13 +2104,12 @@ name = "traversal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "git-diff",
+ "dashmap",
  "git-hash",
  "git-object",
  "git-odb",
  "git-traverse",
  "git2",
- "memory-lru",
  "rayon",
 ]
 

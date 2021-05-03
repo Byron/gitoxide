@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use dashmap::DashSet;
 use git_hash::{bstr::BStr, bstr::ByteSlice, ObjectId};
 use git_object::immutable::tree::Entry;
 use git_odb::Find;
@@ -65,13 +66,33 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let (unique, entries) = do_gitoxide_tree_dag_traversal(&all_commits, &db, || {
-        git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
-    })?;
+    let (unique, entries) = do_gitoxide_tree_dag_traversal(
+        &all_commits,
+        &db,
+        || git_odb::pack::cache::lru::StaticLinkedList::<64>::default(),
+        Computation::MultiThreaded,
+    )?;
     let elapsed = start.elapsed();
     println!(
-        "gitoxide (cache = {:.0}MB): confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
-        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        "gitoxide PARALLEL (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
+        entries,
+        unique,
+        all_commits.len(),
+        elapsed,
+        entries as f32 / elapsed.as_secs_f32(),
+        all_commits.len() as f32 / elapsed.as_secs_f32()
+    );
+
+    let start = Instant::now();
+    let (unique, entries) = do_gitoxide_tree_dag_traversal(
+        &all_commits,
+        &db,
+        || git_odb::pack::cache::lru::StaticLinkedList::<64>::default(),
+        Computation::SingleThreaded,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
         entries,
         unique,
         all_commits.len(),
@@ -172,69 +193,146 @@ where
     Ok(commits)
 }
 
+enum Computation {
+    SingleThreaded,
+    MultiThreaded,
+}
+
 fn do_gitoxide_tree_dag_traversal<C>(
     commits: &[ObjectId],
     db: &git_odb::linked::Db,
-    new_cache: impl FnOnce() -> C,
+    new_cache: impl Fn() -> C + Sync + Send,
+    mode: Computation,
 ) -> anyhow::Result<(usize, u64)>
 where
     C: git_odb::pack::cache::DecodeEntry,
 {
-    #[derive(Default)]
-    struct Count {
-        entries: usize,
-        seen: HashSet<ObjectId>,
-    }
-
-    impl tree::visit::Visit for Count {
-        type PathId = ();
-        fn set_current_path(&mut self, _id: Self::PathId) {}
-        fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
-        fn push_path_component(&mut self, _component: &BStr) {}
-        fn pop_path_component(&mut self) {}
-        fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
-            self.entries += 1;
-            let inserted = self.seen.insert(entry.oid.to_owned());
-            if !inserted {
-                tree::visit::Action::Skip
-            } else {
-                tree::visit::Action::Continue
+    match mode {
+        Computation::SingleThreaded => {
+            #[derive(Default)]
+            struct Count {
+                entries: usize,
+                seen: HashSet<ObjectId>,
             }
+
+            impl tree::visit::Visit for Count {
+                type PathId = ();
+                fn set_current_path(&mut self, _id: Self::PathId) {}
+                fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+                fn push_path_component(&mut self, _component: &BStr) {}
+                fn pop_path_component(&mut self) {}
+                fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+                    self.entries += 1;
+                    let inserted = self.seen.insert(entry.oid.to_owned());
+                    if !inserted {
+                        tree::visit::Action::Skip
+                    } else {
+                        tree::visit::Action::Continue
+                    }
+                }
+                fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
+                    self.entries += 1;
+                    self.seen.insert(entry.oid.to_owned());
+                    tree::visit::Action::Continue
+                }
+            }
+
+            let mut cache = new_cache();
+            let mut buf = Vec::new();
+            let mut state = tree::breadthfirst::State::default();
+            let mut seen = HashSet::new();
+            let mut entries = 0;
+
+            for commit in commits {
+                let tid = db
+                    .find(commit, &mut buf, &mut cache)?
+                    .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
+                    .expect("commit as starting point");
+
+                let mut count = Count { entries: 0, seen };
+                tree::breadthfirst::traverse(
+                    tid,
+                    &mut state,
+                    |oid, buf| {
+                        db.find(oid, buf, &mut cache)
+                            .ok()
+                            .flatten()
+                            .and_then(|o| o.into_tree_iter())
+                    },
+                    &mut count,
+                )?;
+                entries += count.entries as u64;
+                seen = count.seen;
+            }
+            Ok((seen.len(), entries))
         }
-        fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
-            self.entries += 1;
-            self.seen.insert(entry.oid.to_owned());
-            tree::visit::Action::Continue
+        Computation::MultiThreaded => {
+            struct Count<'a> {
+                entries: usize,
+                seen: &'a DashSet<ObjectId>,
+            }
+
+            impl<'a> tree::visit::Visit for Count<'a> {
+                type PathId = ();
+                fn set_current_path(&mut self, _id: Self::PathId) {}
+                fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+                fn push_path_component(&mut self, _component: &BStr) {}
+                fn pop_path_component(&mut self) {}
+                fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+                    self.entries += 1;
+                    let inserted = self.seen.insert(entry.oid.to_owned());
+                    if !inserted {
+                        tree::visit::Action::Skip
+                    } else {
+                        tree::visit::Action::Continue
+                    }
+                }
+                fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
+                    self.entries += 1;
+                    self.seen.insert(entry.oid.to_owned());
+                    tree::visit::Action::Continue
+                }
+            }
+            use rayon::prelude::*;
+            let seen = DashSet::new();
+            let entries = std::sync::atomic::AtomicU64::new(0);
+
+            commits
+                .into_par_iter()
+                .try_for_each_init::<_, _, _, anyhow::Result<_>>(
+                    {
+                        let new_cache = &new_cache;
+                        let seen = &seen;
+                        move || {
+                            (
+                                Count {
+                                    entries: 0,
+                                    seen: &seen,
+                                },
+                                Vec::<u8>::new(),
+                                new_cache(),
+                                tree::breadthfirst::State::default(),
+                            )
+                        }
+                    },
+                    |(count, buf, cache, state), commit| {
+                        let tid = db
+                            .find(commit, buf, cache)?
+                            .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
+                            .expect("commit as starting point");
+                        tree::breadthfirst::traverse(
+                            tid,
+                            state,
+                            |oid, buf| db.find(oid, buf, cache).ok().flatten().and_then(|o| o.into_tree_iter()),
+                            count,
+                        )?;
+                        entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);
+                        Ok(())
+                    },
+                )?;
+            Ok((seen.len(), entries.load(std::sync::atomic::Ordering::Acquire)))
         }
     }
-
-    let mut cache = new_cache();
-    let mut buf = Vec::new();
-    let mut seen = HashSet::new();
-    let mut entries = 0;
-
-    for commit in commits {
-        let tid = db
-            .find(commit, &mut buf, &mut cache)?
-            .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
-            .expect("commit as starting point");
-
-        let mut count = Count { entries: 0, seen };
-        tree::breadthfirst::traverse(
-            tid,
-            tree::breadthfirst::State::default(),
-            |oid, buf| {
-                db.find(oid, buf, &mut cache)
-                    .ok()
-                    .flatten()
-                    .and_then(|o| o.into_tree_iter())
-            },
-            &mut count,
-        )?;
-        entries += count.entries as u64;
-        seen = count.seen;
-    }
-    Ok((seen.len(), entries))
 }
 
 fn do_libgit2_tree_dag_traversal(commits: &[ObjectId], db: &git2::Repository) -> anyhow::Result<(usize, u64)> {
