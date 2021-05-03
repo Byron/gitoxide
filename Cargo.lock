@@ -466,12 +466,6 @@ dependencies = [
 
 [[package]]
 name = "crosstermion"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f7178f7bf5b76e0807edbd7fd2bb40755b0c7d27aa5c68a6e32e894d8460272"
-
-[[package]]
-name = "crosstermion"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "903089452f4f63382e947d7a66bddcde56c111083b1342511bd48f7e3db72424"
@@ -969,7 +963,7 @@ dependencies = [
  "argh",
  "atty",
  "clap 3.0.0-beta.2",
- "crosstermion 0.6.0",
+ "crosstermion",
  "env_logger",
  "futures-lite",
  "git-features",
@@ -1577,7 +1571,7 @@ checksum = "a70ad8105707451db66c59ce14021d9c0948be5cd22128a91c797b43024d4f9b"
 dependencies = [
  "async-io",
  "bytesize",
- "crosstermion 0.7.0",
+ "crosstermion",
  "dashmap",
  "futures-core",
  "futures-lite",
