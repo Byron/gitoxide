@@ -47,31 +47,48 @@ fn main() -> anyhow::Result<()> {
     };
     let db = git_odb::linked::Db::at(&repo_objects_dir)?;
 
-    // TODO: actually traverse all trees in a repository
     let start = Instant::now();
-    let count = do_gitoxide_tree_dag_traversal(commit_id, &db, || {
+    let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
+        db.find(oid, buf, &mut git_odb::pack::cache::Never)
+            .ok()
+            .flatten()
+            .and_then(|o| o.into_commit_iter())
+    })
+    .collect::<Result<Vec<_>, _>>()?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide (uncached): collect all {} commits in {:?} ({:0.0} commits/s)",
+        all_commits.len(),
+        elapsed,
+        all_commits.len() as f32 / elapsed.as_secs_f32()
+    );
+
+    let start = Instant::now();
+    let count = do_gitoxide_tree_dag_traversal(&all_commits, &db, || {
         git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
     })?;
     let elapsed = start.elapsed();
-    let entries_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
     println!(
-        "gitoxide (cache = {:.0}MB): confirmed {} entries in {:?} ({:0.0} entries/s)",
+        "gitoxide (cache = {:.0}MB): confirmed {} entries in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
         GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
         count,
+        all_commits.len(),
         elapsed,
-        entries_per_sec(elapsed)
+        count as f32 / elapsed.as_secs_f32(),
+        all_commits.len() as f32 / elapsed.as_secs_f32()
     );
 
     let repo = git2::Repository::open(&repo_git_dir)?;
     let start = Instant::now();
-    let count = do_libgit2_tree_dag_traversal(commit_id, &repo)?;
+    let count = do_libgit2_tree_dag_traversal(&all_commits, &repo)?;
     let elapsed = start.elapsed();
-    let entries_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
     println!(
-        "libgit2: confirmed {} entries in {:?} ({:0.0} entries/s)",
+        "libgit2: confirmed {} entries in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s))",
         count,
+        all_commits.len(),
         elapsed,
-        entries_per_sec(elapsed)
+        count as f32 / elapsed.as_secs_f32(),
+        all_commits.len() as f32 / elapsed.as_secs_f32()
     );
 
     let start = Instant::now();
@@ -153,20 +170,13 @@ where
 }
 
 fn do_gitoxide_tree_dag_traversal<C>(
-    commit: ObjectId,
+    commits: &[ObjectId],
     db: &git_odb::linked::Db,
     new_cache: impl FnOnce() -> C,
-) -> anyhow::Result<usize>
+) -> anyhow::Result<u64>
 where
     C: git_odb::pack::cache::DecodeEntry,
 {
-    let mut cache = new_cache();
-    let mut buf = Vec::new();
-    let tid = db
-        .find(commit, &mut buf, &mut cache)?
-        .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
-        .expect("commit as starting point");
-
     #[derive(Default)]
     struct Count(usize);
 
@@ -182,29 +192,43 @@ where
         }
     }
 
-    let mut count = Count::default();
-    tree::breadthfirst::traverse(
-        tid,
-        tree::breadthfirst::State::default(),
-        |oid, buf| {
-            db.find(oid, buf, &mut cache)
-                .ok()
-                .flatten()
-                .and_then(|o| o.into_tree_iter())
-        },
-        &mut count,
-    )?;
-    Ok(count.0)
+    let mut cache = new_cache();
+    let mut buf = Vec::new();
+    let mut total = 0;
+
+    for commit in commits {
+        let tid = db
+            .find(commit, &mut buf, &mut cache)?
+            .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
+            .expect("commit as starting point");
+
+        let mut count = Count::default();
+        tree::breadthfirst::traverse(
+            tid,
+            tree::breadthfirst::State::default(),
+            |oid, buf| {
+                db.find(oid, buf, &mut cache)
+                    .ok()
+                    .flatten()
+                    .and_then(|o| o.into_tree_iter())
+            },
+            &mut count,
+        )?;
+        total += count.0 as u64;
+    }
+    Ok(total)
 }
 
-fn do_libgit2_tree_dag_traversal(commit: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
-    let commit = db.find_commit(git2::Oid::from_bytes(commit.as_bytes())?)?;
-    let mut count = 0;
-    commit.tree()?.walk(git2::TreeWalkMode::PreOrder, |_path, _entry| {
-        count += 1;
-        git2::TreeWalkResult::Ok
-    })?;
-    Ok(count)
+fn do_libgit2_tree_dag_traversal(commits: &[ObjectId], db: &git2::Repository) -> anyhow::Result<usize> {
+    let mut total = 0;
+    for commit in commits {
+        let commit = db.find_commit(git2::Oid::from_bytes(commit.as_bytes())?)?;
+        commit.tree()?.walk(git2::TreeWalkMode::PreOrder, |_path, _entry| {
+            total += 1;
+            git2::TreeWalkResult::Ok
+        })?;
+    }
+    Ok(total)
 }
 
 fn do_libgit2_commit_graph_traversal(tip: ObjectId, db: &git2::Repository) -> anyhow::Result<usize> {
