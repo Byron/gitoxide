@@ -192,7 +192,16 @@ where
         fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
         fn push_path_component(&mut self, _component: &BStr) {}
         fn pop_path_component(&mut self) {}
-        fn visit(&mut self, entry: &Entry<'_>) -> Action {
+        fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+            self.entries += 1;
+            let inserted = self.seen.insert(entry.oid.to_owned());
+            if !inserted {
+                tree::visit::Action::Skip
+            } else {
+                tree::visit::Action::Continue
+            }
+        }
+        fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
             self.entries += 1;
             self.seen.insert(entry.oid.to_owned());
             tree::visit::Action::Continue
@@ -235,8 +244,12 @@ fn do_libgit2_tree_dag_traversal(commits: &[ObjectId], db: &git2::Repository) ->
         let commit = db.find_commit(git2::Oid::from_bytes(commit.as_bytes())?)?;
         commit.tree()?.walk(git2::TreeWalkMode::PreOrder, |_path, entry| {
             entries += 1;
-            seen.insert(entry.id());
-            git2::TreeWalkResult::Ok
+            let was_inserted = seen.insert(entry.id());
+            if was_inserted {
+                git2::TreeWalkResult::Ok
+            } else {
+                git2::TreeWalkResult::Skip
+            }
         })?;
     }
     Ok((seen.len(), entries))

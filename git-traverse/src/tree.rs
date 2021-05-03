@@ -10,6 +10,8 @@ pub mod visit {
         Continue,
         /// Stop the traversal of entries, making this te last call to [visit(…)][Visit::visit()].
         Cancel,
+        /// Don't dive into the entry, skipping children effectively.
+        Skip,
     }
 
     impl Action {
@@ -33,10 +35,18 @@ pub mod visit {
         fn push_path_component(&mut self, component: &BStr);
         /// Removes the last component from the path, which may leave it empty.
         fn pop_path_component(&mut self);
-        /// Observe a tree entry and return an instruction whether to continue or not.
+
+        /// Observe a tree entry that is a tree and return an instruction whether to continue or not.
+        /// [`Action::Skip`] can be used to prevent traversing it, for example if it's known to the caller already.
         ///
-        /// The implementation may use the current path to lean where in the tree the change is located.
-        fn visit(&mut self, entry: &immutable::tree::Entry<'_>) -> Action;
+        /// The implementation may use the current path to learn where in the tree the change is located.
+        fn visit_tree(&mut self, entry: &immutable::tree::Entry<'_>) -> Action;
+
+        /// Observe a tree entry that is NO tree and return an instruction whether to continue or not.
+        /// [`Action::Skip`] has no effect here.
+        ///
+        /// The implementation may use the current path to learn where in the tree the change is located.
+        fn visit_nontree(&mut self, entry: &immutable::tree::Entry<'_>) -> Action;
     }
 }
 
@@ -117,15 +127,20 @@ pub mod breadthfirst {
                         let entry = entry?;
                         match entry.mode {
                             tree::EntryMode::Tree => {
+                                use super::visit::Action::*;
                                 let path_id = delegate.push_tracked_path_component(entry.filename);
-                                if delegate.visit(&entry).cancelled() {
-                                    return Err(Error::Cancelled);
+                                let action = delegate.visit_tree(&entry);
+                                match action {
+                                    Skip => {}
+                                    Continue => state.next.push_back((Some(path_id), entry.oid.to_owned())),
+                                    Cancel => {
+                                        return Err(Error::Cancelled);
+                                    }
                                 }
-                                state.next.push_back((Some(path_id), entry.oid.to_owned()));
                             }
                             _non_tree => {
                                 delegate.push_path_component(entry.filename);
-                                if delegate.visit(&entry).cancelled() {
+                                if delegate.visit_nontree(&entry).cancelled() {
                                     return Err(Error::Cancelled);
                                 }
                             }
