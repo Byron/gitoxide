@@ -11,8 +11,9 @@ where
     T: io::Write,
 {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.hash.update(buf);
-        self.inner.write(buf)
+        let written = self.inner.write(buf)?;
+        self.hash.update(&buf[..written]);
+        Ok(written)
     }
 
     fn flush(&mut self) -> io::Result<()> {
