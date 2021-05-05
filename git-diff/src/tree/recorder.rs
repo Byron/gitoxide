@@ -4,7 +4,7 @@ use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
-use std::{collections::BTreeMap, ops::Deref, path::PathBuf};
+use std::collections::BTreeMap;
 
 /// A Change as observed by a call to [`visit(…)`][visit::Visit::visit()], enhanced with the path affected by the change.
 /// Its similar to [visit::Change] but includes the path that changed.
@@ -14,12 +14,12 @@ pub enum Change {
     Addition {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
-        path: PathBuf,
+        path: BString,
     },
     Deletion {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
-        path: PathBuf,
+        path: BString,
     },
     Modification {
         previous_entry_mode: tree::EntryMode,
@@ -28,7 +28,7 @@ pub enum Change {
         entry_mode: tree::EntryMode,
         oid: ObjectId,
 
-        path: PathBuf,
+        path: BString,
     },
 }
 
@@ -61,10 +61,6 @@ impl Recorder {
     fn path_clone(&self) -> BString {
         self.path.clone()
     }
-
-    fn path_buf(&self) -> PathBuf {
-        self.path.deref().to_owned().into_path_buf_lossy()
-    }
 }
 
 impl visit::Visit for Recorder {
@@ -96,12 +92,12 @@ impl visit::Visit for Recorder {
             Deletion { entry_mode, oid } => Change::Deletion {
                 entry_mode,
                 oid,
-                path: self.path_buf(),
+                path: self.path_clone(),
             },
             Addition { entry_mode, oid } => Change::Addition {
                 entry_mode,
                 oid,
-                path: self.path_buf(),
+                path: self.path_clone(),
             },
             Modification {
                 previous_entry_mode,
@@ -113,7 +109,7 @@ impl visit::Visit for Recorder {
                 previous_oid,
                 entry_mode,
                 oid,
-                path: self.path_buf(),
+                path: self.path_clone(),
             },
         });
         visit::Action::Continue

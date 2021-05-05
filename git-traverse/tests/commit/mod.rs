@@ -1,12 +1,12 @@
 mod ancestor {
     use crate::hex_to_id;
     use git_hash::ObjectId;
-    use git_odb::{linked, linked::Db, pack, Find};
+    use git_odb::{linked::Db, pack, Find};
     use git_traverse::commit;
 
-    fn db() -> Result<Db, Box<dyn std::error::Error>> {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo.sh")?;
-        let db = linked::Db::at(dir.join(".git").join("objects"))?;
+    fn db() -> crate::Result<Db> {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo_for_commits.sh")?;
+        let db = Db::at(dir.join(".git").join("objects"))?;
         Ok(db)
     }
 

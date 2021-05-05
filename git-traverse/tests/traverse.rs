@@ -5,3 +5,4 @@ pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 }
 
 mod commit;
+mod tree;
