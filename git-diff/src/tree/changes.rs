@@ -12,7 +12,7 @@ quick_error! {
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
-        NotFound(oid: ObjectId) {
+        NotFound { oid: ObjectId } {
             display("The object {} referenced by the tree was not found in the database", oid)
         }
         Cancelled {
@@ -77,20 +77,24 @@ impl<'a> tree::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.set_current_path(rhs.parent_path_id.clone());
-                            rhs_entries =
-                                peekable(locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?);
+                            rhs_entries = peekable(
+                                locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
+                            );
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries =
-                                peekable(locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?);
-                            rhs_entries =
-                                peekable(locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound(rhs.tree_id))?);
+                            lhs_entries = peekable(
+                                locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
+                            );
+                            rhs_entries = peekable(
+                                locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
+                            );
                         }
                         Some((Some(lhs), None)) => {
                             delegate.set_current_path(lhs.parent_path_id.clone());
-                            lhs_entries =
-                                peekable(locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound(lhs.tree_id))?);
+                            lhs_entries = peekable(
+                                locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
+                            );
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
