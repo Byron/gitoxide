@@ -1,14 +1,14 @@
 use git_hash::bstr::BStr;
 use git_object::immutable;
 
-/// What to do after an entry was [recorded][Visit::visit()].
+/// What to do after an entry was [recorded][Visit::visit_tree()].
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Action {
     /// Continue the traversal of entries.
     Continue,
-    /// Stop the traversal of entries, making this te last call to [visit(…)][Visit::visit()].
+    /// Stop the traversal of entries, making this te last call to [`visit_(tree|nontree)(…)`][Visit::visit_nontree()].
     Cancel,
-    /// Don't dive into the entry, skipping children effectively.
+    /// Don't dive into the entry, skipping children effectively. Only useful in [`visit_tree(…)`][Visit::visit_tree()].
     Skip,
 }
 

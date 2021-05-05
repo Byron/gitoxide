@@ -5,5 +5,5 @@
 /// Commit traversal
 pub mod commit;
 
-///
+/// Tree traversal
 pub mod tree;

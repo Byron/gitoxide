@@ -5,7 +5,7 @@ use quick_error::quick_error;
 use std::{borrow::BorrowMut, collections::VecDeque};
 
 quick_error! {
-    /// The error is part of the item returned by the [breadthfirst] function.
+    /// The error is part of the item returned by the [`traverse()`] function.
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -37,18 +37,19 @@ impl<PathId: Clone> State<PathId> {
     }
 }
 
-/// Create a new instance.
+/// Start a breadth-first iteration over the `root` trees entries.
 ///
+/// * `root`
+///   * the starting points of the iteration
+///   * each commit they lead to will only be returned once, including the tip that started it
+/// * `state` - all state used for the iteration. If multiple iterations are performed, allocations can be minimized by reusing
+///   this state.
 /// * `find` - a way to lookup new object data during traversal by their ObjectId, writing their data into buffer and returning
 ///    an iterator over entries if the object is present and is a tree. Caching should be implemented within this function
 ///    as needed. The return value is `Option<TreeIter>` which degenerates all error information. Not finding a commit should also
 ///    be considered an errors as all objects in the tree DAG should be present in the database. Hence [`Error::NotFound`] should
 ///    be escalated into a more specific error if its encountered by the caller.
-/// * `state` - all state used for the iteration. If multiple iterations are performed, allocations can be minimized by reusing
-///   this state.
-/// * `root`
-///   * the starting points of the iteration
-///   * each commit they lead to will only be returned once, including the tip that started it
+/// * `delegate` - A way to observe entries and control the iteration while allowing the optimizer to let you pay only for what you use.
 pub fn traverse<StateMut, Find, V>(
     root: impl Into<ObjectId>,
     mut state: StateMut,

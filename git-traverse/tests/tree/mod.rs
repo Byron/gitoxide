@@ -22,7 +22,7 @@ fn basic_nesting() -> crate::Result<()> {
         .into_commit_iter()
         .expect("commit present");
     let mut recorder = tree::Recorder::default();
-    tree::breadthfirst::traverse(
+    git_traverse::tree::breadthfirst(
         commit.tree_id().expect("a tree is available in a commit"),
         tree::breadthfirst::State::default(),
         |oid, buf| {
