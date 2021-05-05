@@ -1,6 +1,8 @@
-use crate::{fixture_path, hex_to_id};
-use git_odb::loose::Db;
 use pretty_assertions::assert_eq;
+
+use git_odb::loose::Db;
+
+use crate::{fixture_path, hex_to_id};
 
 fn ldb() -> Db {
     Db::at(fixture_path("objects"))
@@ -29,8 +31,10 @@ pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_odb::data::O
 }
 
 mod write {
+    use git_odb::loose;
+    use git_odb::write::Write;
+
     use crate::loose::db::{locate_oid, object_ids};
-    use git_odb::{loose, Write};
 
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
@@ -53,6 +57,8 @@ mod write {
 }
 
 mod locate {
+    use git_object::{bstr::ByteSlice, immutable, immutable::tree, tree::EntryMode, Kind};
+
     use crate::{
         hex_to_id,
         loose::{
@@ -60,7 +66,6 @@ mod locate {
             signature,
         },
     };
-    use git_object::{bstr::ByteSlice, immutable, immutable::tree, tree::EntryMode, Kind};
 
     fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_odb::data::Object<'a> {
         locate_oid(hex_to_id(hex), buf)

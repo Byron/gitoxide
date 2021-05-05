@@ -36,3 +36,6 @@ mod traits;
 pub mod data;
 
 pub use traits::*;
+///
+pub mod write;
+pub use write::Write;

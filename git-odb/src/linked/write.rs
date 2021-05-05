@@ -2,7 +2,7 @@ use crate::{linked, loose};
 use git_object::{mutable, Kind};
 use std::io::Read;
 
-impl crate::Write for linked::Db {
+impl crate::write::Write for linked::Db {
     type Error = loose::db::write::Error;
 
     fn write(&self, object: &mutable::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {

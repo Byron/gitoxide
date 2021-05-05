@@ -22,7 +22,7 @@ pub enum Error {
     },
 }
 
-impl crate::Write for Db {
+impl crate::write::Write for Db {
     type Error = Error;
 
     /// Write the given buffer in `from` to disk in one syscall at best.

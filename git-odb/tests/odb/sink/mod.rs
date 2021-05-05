@@ -1,5 +1,5 @@
 use crate::loose::db::{locate_oid, object_ids};
-use git_odb::Write;
+use git_odb::write::Write;
 
 #[test]
 fn write() -> Result<(), Box<dyn std::error::Error>> {

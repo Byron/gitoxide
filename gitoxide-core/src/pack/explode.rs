@@ -1,7 +1,10 @@
+use std::{fs, io::Read, path::Path};
+
 use anyhow::{anyhow, Result};
+use quick_error::quick_error;
+
 use git_features::progress::{self, Progress};
 use git_odb::{loose, pack, Write};
-use std::{fs, io::Read, path::Path};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -58,8 +61,6 @@ impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
     }
 }
 
-use quick_error::quick_error;
-
 quick_error! {
     #[derive(Debug)]
     enum Error {
@@ -101,7 +102,7 @@ enum OutputWriter {
     Sink(git_odb::Sink),
 }
 
-impl git_odb::Write for OutputWriter {
+impl git_odb::write::Write for OutputWriter {
     type Error = Error;
 
     fn write_buf(
