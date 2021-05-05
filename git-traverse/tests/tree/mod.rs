@@ -1,5 +1,5 @@
 use crate::hex_to_id;
-use git_odb::{linked::Db, pack, Find};
+use git_odb::{find::FindExt, linked::Db, pack, Find};
 use git_traverse::tree;
 
 fn db() -> crate::Result<Db> {
@@ -13,12 +13,11 @@ fn basic_nesting() -> crate::Result<()> {
     let db = db()?;
     let mut buf = Vec::new();
     let mut commit = db
-        .find(
+        .find_existing(
             hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"),
             &mut buf,
             &mut pack::cache::Never,
         )?
-        .expect("commit exists")
         .into_commit_iter()
         .expect("commit present");
     let mut recorder = tree::Recorder::default();

@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use dashmap::DashSet;
 use git_hash::{bstr::BStr, bstr::ByteSlice, ObjectId};
 use git_object::immutable::tree::Entry;
-use git_odb::Find;
+use git_odb::{find::FindExt, Find};
 use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
     collections::HashSet,
@@ -254,9 +254,8 @@ where
                     tid,
                     &mut state,
                     |oid, buf| {
-                        db.find(oid, buf, &mut cache)
+                        db.find_existing(oid, buf, &mut cache)
                             .ok()
-                            .flatten()
                             .and_then(|o| o.into_tree_iter())
                     },
                     &mut count,
@@ -317,13 +316,14 @@ where
                     },
                     |(count, buf, cache, state), commit| {
                         let tid = db
-                            .find(commit, buf, cache)?
-                            .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
+                            .find_existing(commit, buf, cache)?
+                            .into_commit_iter()
+                            .and_then(|mut c| c.tree_id())
                             .expect("commit as starting point");
                         tree::breadthfirst::traverse(
                             tid,
                             state,
-                            |oid, buf| db.find(oid, buf, cache).ok().flatten().and_then(|o| o.into_tree_iter()),
+                            |oid, buf| db.find_existing(oid, buf, cache).ok().and_then(|o| o.into_tree_iter()),
                             count,
                         )?;
                         entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);
