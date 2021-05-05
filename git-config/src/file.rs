@@ -125,7 +125,6 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         self.section
             .0
             .drain(range)
-            // TODO: replace with Iterator::reduce once that hits stable
             .fold(Cow::<[u8]>::Owned(vec![]), |acc, e| match e {
                 Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
                     // This is fine because we start out with an owned
@@ -262,7 +261,6 @@ impl<'event> SectionBody<'event> {
 
         Some(normalize_cow(self.0[range].iter().fold(
             Cow::<[u8]>::Owned(vec![]),
-            // TODO: replace with Iterator::reduce once that hits stable
             |acc, e| match e {
                 Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
                     // This is fine because we start out with an owned
