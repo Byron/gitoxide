@@ -69,7 +69,7 @@ fn main() -> anyhow::Result<()> {
     let (unique, entries) = do_gitoxide_tree_dag_traversal(
         &all_commits,
         &db,
-        || git_odb::pack::cache::lru::StaticLinkedList::<64>::default(),
+        git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
         Computation::MultiThreaded,
     )?;
     let elapsed = start.elapsed();
@@ -87,7 +87,7 @@ fn main() -> anyhow::Result<()> {
     let (unique, entries) = do_gitoxide_tree_dag_traversal(
         &all_commits,
         &db,
-        || git_odb::pack::cache::lru::StaticLinkedList::<64>::default(),
+        git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
         Computation::SingleThreaded,
     )?;
     let elapsed = start.elapsed();
