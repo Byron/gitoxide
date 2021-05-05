@@ -1,4 +1,15 @@
 use crate::{data, pack};
+use git_hash::ObjectId;
+
+/// The error returned by various [`find_*`][Find] trait methods.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error<T: std::error::Error + 'static> {
+    #[error(transparent)]
+    Find(T),
+    #[error("An object with id {} could not be found", .oid)]
+    NotFound { oid: ObjectId },
+}
 
 /// Describe how object can be located in an object store
 ///
@@ -24,6 +35,21 @@ pub trait Find {
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
+
+    /// Like [`find(…)`][Self::find()], but degenerates the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
+    fn find_existing<'a>(
+        &self,
+        id: impl AsRef<git_hash::oid>,
+        buffer: &'a mut Vec<u8>,
+        pack_cache: &mut impl crate::pack::cache::DecodeEntry,
+    ) -> Result<data::Object<'a>, Error<Self::Error>> {
+        let id = id.as_ref();
+        self.find(id, buffer, pack_cache)
+            .map_err(|err| Error::Find(err))?
+            .ok_or_else(|| Error::NotFound {
+                oid: id.as_ref().to_owned(),
+            })
+    }
 
     /// Return the [`PackEntry`] for `object` if it is backed by a pack.
     ///
