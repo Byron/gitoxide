@@ -41,9 +41,39 @@ mod ext {
     use crate::{data, find};
     use git_object::{immutable, Kind};
 
+    macro_rules! make_obj_lookup {
+        ($method:ident, $object_variant:path, $object_kind:path, $object_type:ty) => {
+            /// Like [`find_existing(…)`][Self::find_existing()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
+            /// while returning the desired object type.
+            fn $method<'a>(
+                &self,
+                id: impl AsRef<git_hash::oid>,
+                buffer: &'a mut Vec<u8>,
+                pack_cache: &mut impl crate::pack::cache::DecodeEntry,
+            ) -> Result<$object_type, find::existing_object::Error<Self::Error>> {
+                let id = id.as_ref();
+                self.find(id, buffer, pack_cache)
+                    .map_err(|err| find::existing_object::Error::Find(err))?
+                    .ok_or_else(|| find::existing_object::Error::NotFound {
+                        oid: id.as_ref().to_owned(),
+                    })
+                    .and_then(|o| {
+                        o.decode()
+                            .map_err(|err| find::existing_object::Error::Decode(err))
+                    })
+                    .and_then(|o| match o {
+                        $object_variant(o) => return Ok(o),
+                        _other => Err(find::existing_object::Error::ObjectKind {
+                            expected: $object_kind,
+                        }),
+                    })
+            }
+        };
+    }
+
     /// An extension trait with convenience functions.
     pub trait FindExt: super::Find {
-        /// Like [`find(…)`][Self::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
+        /// Like [`find(…)`][super::Find::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn find_existing<'a>(
             &self,
             id: impl AsRef<git_hash::oid>,
@@ -58,26 +88,25 @@ mod ext {
                 })
         }
 
-        /// Like [`find_existing(…)`][Self::find_existing()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
-        /// while returning the desired object type.
-        fn find_existing_commit<'a>(
-            &self,
-            id: impl AsRef<git_hash::oid>,
-            buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl crate::pack::cache::DecodeEntry,
-        ) -> Result<immutable::Commit<'a>, find::existing_object::Error<Self::Error>> {
-            let id = id.as_ref();
-            self.find(id, buffer, pack_cache)
-                .map_err(|err| find::existing_object::Error::Find(err))?
-                .ok_or_else(|| find::existing_object::Error::NotFound {
-                    oid: id.as_ref().to_owned(),
-                })
-                .and_then(|o| o.decode().map_err(|err| find::existing_object::Error::Decode(err)))
-                .and_then(|o| match o {
-                    immutable::Object::Commit(o) => return Ok(o),
-                    _other => Err(find::existing_object::Error::ObjectKind { expected: Kind::Commit }),
-                })
-        }
+        make_obj_lookup!(
+            find_existing_commit,
+            immutable::Object::Commit,
+            Kind::Commit,
+            immutable::Commit<'a>
+        );
+        make_obj_lookup!(
+            find_existing_tree,
+            immutable::Object::Tree,
+            Kind::Tree,
+            immutable::Tree<'a>
+        );
+        make_obj_lookup!(find_existing_tag, immutable::Object::Tag, Kind::Tag, immutable::Tag<'a>);
+        make_obj_lookup!(
+            find_existing_blob,
+            immutable::Object::Blob,
+            Kind::Blob,
+            immutable::Blob<'a>
+        );
     }
 
     impl<T: super::Find> FindExt for T {}
@@ -88,7 +117,7 @@ pub use ext::FindExt;
 pub mod existing {
     use git_hash::ObjectId;
 
-    /// The error returned by various [`find_*`][crate::FindExt] trait methods.
+    /// The error returned by the [`find_existing(…)`][crate::FindExt::find_existing()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<T: std::error::Error + 'static> {
@@ -104,7 +133,7 @@ pub mod existing_object {
     use git_hash::ObjectId;
     use git_object::immutable;
 
-    /// The error returned by various [`find_*`][crate::FindExt] trait methods.
+    /// The error returned by the various [`find_existing_*`][crate::FindExt::find_existing_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<T: std::error::Error + 'static> {
