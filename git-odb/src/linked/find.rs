@@ -1,4 +1,4 @@
-use crate::{compound, data, data::Object, linked, pack, PackEntry};
+use crate::{compound, data, data::Object, find::PackEntry, linked, pack};
 use git_hash::oid;
 
 impl crate::Find for linked::Db {

@@ -50,11 +50,9 @@ pub struct PackEntry<'a> {
 }
 
 mod find_impls {
-    use std::ops::Deref;
-
+    use crate::{data, data::Object, find::PackEntry, pack};
     use git_hash::oid;
-
-    use crate::{data, data::Object, pack, PackEntry};
+    use std::ops::Deref;
 
     impl<T> super::Find for std::sync::Arc<T>
     where

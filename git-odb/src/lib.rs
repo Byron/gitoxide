@@ -31,11 +31,12 @@ mod sink;
 pub use sink::{sink, Sink};
 
 pub(crate) mod hash;
-mod traits;
 
 pub mod data;
 
-pub use traits::*;
+///
+pub mod find;
+pub use find::Find;
 ///
 pub mod write;
 pub use write::Write;
