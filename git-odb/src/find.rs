@@ -53,14 +53,11 @@ mod ext {
             ) -> Result<$object_type, find::existing_object::Error<Self::Error>> {
                 let id = id.as_ref();
                 self.find(id, buffer, pack_cache)
-                    .map_err(|err| find::existing_object::Error::Find(err))?
+                    .map_err(find::existing_object::Error::Find)?
                     .ok_or_else(|| find::existing_object::Error::NotFound {
                         oid: id.as_ref().to_owned(),
                     })
-                    .and_then(|o| {
-                        o.decode()
-                            .map_err(|err| find::existing_object::Error::Decode(err))
-                    })
+                    .and_then(|o| o.decode().map_err(find::existing_object::Error::Decode))
                     .and_then(|o| match o {
                         $object_variant(o) => return Ok(o),
                         _other => Err(find::existing_object::Error::ObjectKind {
@@ -83,7 +80,7 @@ mod ext {
             ) -> Result<$object_type, find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
                 self.find(id, buffer, pack_cache)
-                    .map_err(|err| find::existing_iter::Error::Find(err))?
+                    .map_err(find::existing_iter::Error::Find)?
                     .ok_or_else(|| find::existing_iter::Error::NotFound {
                         oid: id.as_ref().to_owned(),
                     })
@@ -108,7 +105,7 @@ mod ext {
         ) -> Result<data::Object<'a>, find::existing::Error<Self::Error>> {
             let id = id.as_ref();
             self.find(id, buffer, pack_cache)
-                .map_err(|err| find::existing::Error::Find(err))?
+                .map_err(find::existing::Error::Find)?
                 .ok_or_else(|| find::existing::Error::NotFound {
                     oid: id.as_ref().to_owned(),
                 })
