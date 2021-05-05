@@ -71,6 +71,32 @@ mod ext {
         };
     }
 
+    macro_rules! make_iter_lookup {
+        ($method:ident, $object_kind:path, $object_type:ty, $into_iter:tt) => {
+            /// Like [`find_existing(…)`][Self::find_existing()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
+            /// while returning the desired iterator type.
+            fn $method<'a>(
+                &self,
+                id: impl AsRef<git_hash::oid>,
+                buffer: &'a mut Vec<u8>,
+                pack_cache: &mut impl crate::pack::cache::DecodeEntry,
+            ) -> Result<$object_type, find::existing_iter::Error<Self::Error>> {
+                let id = id.as_ref();
+                self.find(id, buffer, pack_cache)
+                    .map_err(|err| find::existing_iter::Error::Find(err))?
+                    .ok_or_else(|| find::existing_iter::Error::NotFound {
+                        oid: id.as_ref().to_owned(),
+                    })
+                    .and_then(|o| {
+                        o.$into_iter()
+                            .ok_or_else(|| find::existing_iter::Error::ObjectKind {
+                                expected: $object_kind,
+                            })
+                    })
+            }
+        };
+    }
+
     /// An extension trait with convenience functions.
     pub trait FindExt: super::Find {
         /// Like [`find(…)`][super::Find::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
@@ -107,6 +133,18 @@ mod ext {
             Kind::Blob,
             immutable::Blob<'a>
         );
+        make_iter_lookup!(
+            find_existing_commit_iter,
+            Kind::Blob,
+            immutable::CommitIter<'a>,
+            into_commit_iter
+        );
+        make_iter_lookup!(
+            find_existing_tree_iter,
+            Kind::Tree,
+            immutable::TreeIter<'a>,
+            into_tree_iter
+        );
     }
 
     impl<T: super::Find> FindExt for T {}
@@ -141,6 +179,23 @@ pub mod existing_object {
         Find(T),
         #[error(transparent)]
         Decode(immutable::object::decode::Error),
+        #[error("An object with id {} could not be found", .oid)]
+        NotFound { oid: ObjectId },
+        #[error("Expected object of kind {} something else", .expected)]
+        ObjectKind { expected: git_object::Kind },
+    }
+}
+
+///
+pub mod existing_iter {
+    use git_hash::ObjectId;
+
+    /// The error returned by the various [`find_existing_*`][crate::FindExt::find_existing_commit()] trait methods.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error<T: std::error::Error + 'static> {
+        #[error(transparent)]
+        Find(T),
         #[error("An object with id {} could not be found", .oid)]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {} something else", .expected)]

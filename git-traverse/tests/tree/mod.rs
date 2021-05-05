@@ -1,5 +1,5 @@
 use crate::hex_to_id;
-use git_odb::{find::FindExt, linked::Db, pack, Find};
+use git_odb::{find::FindExt, linked::Db, pack};
 use git_traverse::tree;
 
 fn db() -> crate::Result<Db> {
@@ -12,24 +12,16 @@ fn db() -> crate::Result<Db> {
 fn basic_nesting() -> crate::Result<()> {
     let db = db()?;
     let mut buf = Vec::new();
-    let mut commit = db
-        .find_existing(
-            hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"),
-            &mut buf,
-            &mut pack::cache::Never,
-        )?
-        .into_commit_iter()
-        .expect("commit present");
+    let mut commit = db.find_existing_commit_iter(
+        hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"),
+        &mut buf,
+        &mut pack::cache::Never,
+    )?;
     let mut recorder = tree::Recorder::default();
     git_traverse::tree::breadthfirst(
         commit.tree_id().expect("a tree is available in a commit"),
         tree::breadthfirst::State::default(),
-        |oid, buf| {
-            db.find(oid, buf, &mut pack::cache::Never)
-                .ok()
-                .flatten()
-                .and_then(|o| o.into_tree_iter())
-        },
+        |oid, buf| db.find_existing_tree_iter(oid, buf, &mut pack::cache::Never).ok(),
         &mut recorder,
     )?;
 

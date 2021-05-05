@@ -15,9 +15,7 @@ mod ancestor {
     ) -> impl Iterator<Item = Result<ObjectId, commit::ancestors::Error>> {
         let db = db().expect("db instantiation works as its definitely valid");
         commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
-            db.find_existing(oid, buf, &mut pack::cache::Never)
-                .ok()
-                .and_then(|o| o.into_commit_iter())
+            db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
         })
     }
 
