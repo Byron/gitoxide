@@ -36,7 +36,7 @@ pub mod data;
 
 ///
 pub mod find;
-pub use find::Find;
+pub use find::{Find, FindExt};
 ///
 pub mod write;
 pub use write::Write;

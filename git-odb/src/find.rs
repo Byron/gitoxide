@@ -38,22 +38,44 @@ pub trait Find {
 }
 
 mod ext {
-    use crate::{data, find::find_existing};
+    use crate::{data, find};
+    use git_object::{immutable, Kind};
 
     /// An extension trait with convenience functions.
     pub trait FindExt: super::Find {
-        /// Like [`find(…)`][Self::find()], but degenerates the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
+        /// Like [`find(…)`][Self::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn find_existing<'a>(
             &self,
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::pack::cache::DecodeEntry,
-        ) -> Result<data::Object<'a>, find_existing::Error<Self::Error>> {
+        ) -> Result<data::Object<'a>, find::existing::Error<Self::Error>> {
             let id = id.as_ref();
             self.find(id, buffer, pack_cache)
-                .map_err(|err| find_existing::Error::Find(err))?
-                .ok_or_else(|| find_existing::Error::NotFound {
+                .map_err(|err| find::existing::Error::Find(err))?
+                .ok_or_else(|| find::existing::Error::NotFound {
                     oid: id.as_ref().to_owned(),
+                })
+        }
+
+        /// Like [`find_existing(…)`][Self::find_existing()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
+        /// while returning the desired object type.
+        fn find_existing_commit<'a>(
+            &self,
+            id: impl AsRef<git_hash::oid>,
+            buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl crate::pack::cache::DecodeEntry,
+        ) -> Result<immutable::Commit<'a>, find::existing_object::Error<Self::Error>> {
+            let id = id.as_ref();
+            self.find(id, buffer, pack_cache)
+                .map_err(|err| find::existing_object::Error::Find(err))?
+                .ok_or_else(|| find::existing_object::Error::NotFound {
+                    oid: id.as_ref().to_owned(),
+                })
+                .and_then(|o| o.decode().map_err(|err| find::existing_object::Error::Decode(err)))
+                .and_then(|o| match o {
+                    immutable::Object::Commit(o) => return Ok(o),
+                    _other => Err(find::existing_object::Error::ObjectKind { expected: Kind::Commit }),
                 })
         }
     }
@@ -63,7 +85,7 @@ mod ext {
 pub use ext::FindExt;
 
 ///
-pub mod find_existing {
+pub mod existing {
     use git_hash::ObjectId;
 
     /// The error returned by various [`find_*`][crate::FindExt] trait methods.
@@ -74,6 +96,26 @@ pub mod find_existing {
         Find(T),
         #[error("An object with id {} could not be found", .oid)]
         NotFound { oid: ObjectId },
+    }
+}
+
+///
+pub mod existing_object {
+    use git_hash::ObjectId;
+    use git_object::immutable;
+
+    /// The error returned by various [`find_*`][crate::FindExt] trait methods.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error<T: std::error::Error + 'static> {
+        #[error(transparent)]
+        Find(T),
+        #[error(transparent)]
+        Decode(immutable::object::decode::Error),
+        #[error("An object with id {} could not be found", .oid)]
+        NotFound { oid: ObjectId },
+        #[error("Expected object of kind {} something else", .expected)]
+        ObjectKind { expected: git_object::Kind },
     }
 }
 
