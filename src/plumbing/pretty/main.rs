@@ -141,11 +141,11 @@ pub fn main() -> Result<()> {
                     progress,
                     verify::Context {
                         output_statistics,
-                        thread_limit,
-                        algorithm,
-                        mode,
                         out,
                         err,
+                        thread_limit,
+                        mode,
+                        algorithm,
                     },
                 )
             },

@@ -200,8 +200,8 @@ impl Response {
                 };
                 Ok(Response {
                     acks,
-                    has_pack,
                     shallows,
+                    has_pack,
                 })
             }
             Protocol::V2 => {
@@ -239,8 +239,8 @@ impl Response {
                 };
                 Ok(Response {
                     acks,
-                    has_pack,
                     shallows,
+                    has_pack,
                 })
             }
         }

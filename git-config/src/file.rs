@@ -1466,9 +1466,7 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, GitConfigError<'lookup>> {
-        let section_ids = self
-            .get_section_ids_by_name_and_subname(section_name, subsection_name)?
-            .to_vec();
+        let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = Key(key.into());
 
         let mut offsets = HashMap::new();
@@ -1811,6 +1809,7 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
         let mut prev_section_header = None;
         let mut section_events = SectionBody::new();
 
+        #[allow(clippy::explicit_into_iter_loop)] // it's not really an iterator (yet), needs streaming iterator support
         for event in parser.into_iter() {
             match event {
                 Event::SectionHeader(header) => {

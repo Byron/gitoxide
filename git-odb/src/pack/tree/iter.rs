@@ -139,9 +139,9 @@ where
             let (data, children) = unsafe { tree.take_entry(index) };
             Node {
                 tree,
-                data,
-                children,
                 index,
+                children,
+                data,
             }
         })
     }
