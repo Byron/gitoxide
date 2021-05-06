@@ -1072,6 +1072,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-traverse",
+ "itertools 0.10.0",
  "rayon",
 ]
 

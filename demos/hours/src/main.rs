@@ -3,6 +3,7 @@ use git_hash::{bstr::ByteSlice, ObjectId};
 use git_object::bstr::BString;
 use git_odb::find::FindExt;
 use git_traverse::commit;
+use itertools::Itertools;
 use rayon::prelude::*;
 use std::{path::PathBuf, time::Instant};
 
@@ -110,16 +111,16 @@ fn main() -> anyhow::Result<()> {
     let mut results_by_hours = Vec::new();
     for (idx, elm) in all_commits.iter().enumerate() {
         if elm.email != *current_email {
-            results_by_hours.push(compute_hours(&all_commits[slice_start..idx]));
+            results_by_hours.push(estimate_hours(&all_commits[slice_start..idx]));
             slice_start = idx;
             current_email = &elm.email;
         }
     }
     if let Some(commits) = all_commits.get(slice_start..) {
-        results_by_hours.push(compute_hours(commits));
+        results_by_hours.push(estimate_hours(commits));
     }
 
-    results_by_hours.sort_by(|a, b| a.num_commits.cmp(&b.num_commits));
+    results_by_hours.sort_by(|a, b| a.hours.cmp(&b.hours));
     println!("{:#?}", results_by_hours);
     let (total_hours, total_commits) = results_by_hours
         .iter()
@@ -131,13 +132,28 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn compute_hours(commits: &[CommitInfo]) -> WorkByPerson {
+fn estimate_hours(commits: &[CommitInfo]) -> WorkByPerson {
     assert!(!commits.is_empty());
+    let hours = commits.iter().rev().tuple_windows().fold(
+        0,
+        |hours, (cur, next): (&git_object::mutable::Signature, &git_object::mutable::Signature)| {
+            const MAX_COMMIT_DIFFERENCE_IN_MINUTES: u32 = 2 * 60;
+            const FIRST_COMMIT_ADDITION_IN_MINUTES: u32 = 2 * 60;
+            let change_in_minutes =
+                (((next.time.time as i32 + next.time.offset) - (cur.time.time as i32 + cur.time.offset)) / 60) as u32;
+
+            if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
+                hours + (change_in_minutes as f32 / 60 as f32).round() as u32
+            } else {
+                hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / 60)
+            }
+        },
+    );
     let author = &commits[0];
     WorkByPerson {
         name: author.name.to_owned(),
         email: author.email.to_owned(),
-        hours: 0,
+        hours,
         num_commits: commits.len() as u32,
     }
 }
