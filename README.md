@@ -68,7 +68,8 @@ Follow linked crate name for detailed status.
   * [x] Generate and verify large commit graphs
   * [ ] Generate huge pack from a lot of loose objects
   
-### Ideas for Demos
+### Ideas for Examples
+
   * [x] A simple [`git-hours`][git-hours-demo] clone
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
         as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
