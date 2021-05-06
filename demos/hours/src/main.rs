@@ -45,18 +45,26 @@ fn main() -> anyhow::Result<()> {
         d.push("objects");
         d
     };
-    let db = git_odb::linked::Db::at(&repo_objects_dir)?;
 
     eprintln!("Getting all commits…");
     let start = Instant::now();
-    let mut pack_cache = git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default();
-    let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
-        db.find_existing_commit_iter(oid, buf, &mut pack_cache).ok()
-    })
-    .collect::<Result<Vec<_>, _>>()?;
+    let all_commits = {
+        let db = git_odb::linked::Db::at(&repo_objects_dir)?;
+        let mut pack_cache = git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default();
+        let mut commits = Vec::<Vec<u8>>::default();
+        for commit in commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
+            db.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
+                commits.push(o.data.to_owned());
+                git_object::immutable::CommitIter::from_bytes(o.data)
+            })
+        }) {
+            commit?;
+        }
+        commits
+    };
     let elapsed = start.elapsed();
     eprintln!(
-        "Found {} commits in {:?} ({:0.0} commits/s)",
+        "Found {} commits and extracted their data in {:?} ({:0.0} commits/s)",
         all_commits.len(),
         elapsed,
         all_commits.len() as f32 / elapsed.as_secs_f32()
@@ -67,26 +75,22 @@ fn main() -> anyhow::Result<()> {
     #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<CommitInfo> = all_commits
         .into_par_iter()
+        .map(|commit_data: Vec<u8>| {
+            git_object::immutable::Commit::from_bytes(&commit_data)
+                .map(|c| git_object::mutable::Signature::from(c.author))
+        })
         .try_fold::<_, anyhow::Result<_>, _, _>(
-            || {
-                (
-                    Vec::new(),
-                    git_odb::pack::cache::lru::MemoryCappedHashmap::new(64_000_000),
-                )
-            },
-            |(mut commits, mut cache): (Vec<CommitInfo>, git_odb::pack::cache::lru::MemoryCappedHashmap), commit_id| {
-                let mut buf_reuse_me = Vec::new();
-                let commit = db.find_existing_commit(commit_id, &mut buf_reuse_me, &mut cache)?;
-                commits.push(commit.author.into());
-                Ok((commits, cache))
+            || Vec::new(),
+            |mut out: Vec<_>, item| {
+                out.push(item?);
+                Ok(out)
             },
         )
-        .map(|res| res.map(|(commits, _)| commits))
         .try_reduce(
             || Vec::new(),
-            |mut a: Vec<CommitInfo>, b: Vec<CommitInfo>| {
-                a.extend(b.into_iter());
-                Ok(a)
+            |mut out, vec| {
+                out.extend(vec.into_iter());
+                Ok(out)
             },
         )?;
     let elapsed = start.elapsed();
