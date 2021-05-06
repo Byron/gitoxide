@@ -143,7 +143,7 @@ fn estimate_hours(commits: &[CommitInfo]) -> WorkByPerson {
                 (((next.time.time as i32 + next.time.offset) - (cur.time.time as i32 + cur.time.offset)) / 60) as u32;
 
             if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                hours + (change_in_minutes as f32 / 60 as f32).round() as u32
+                hours + (change_in_minutes as f32 / 60_f32).round() as u32
             } else {
                 hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / 60)
             }
