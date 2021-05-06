@@ -5,7 +5,7 @@ use git_hash::{
     oid, ObjectId,
 };
 use git_object::immutable;
-use git_odb::{find::FindExt, Find};
+use git_odb::find::FindExt;
 use git_traverse::commit;
 use rayon::prelude::*;
 use std::{path::PathBuf, time::Instant};
@@ -94,7 +94,7 @@ fn main() -> anyhow::Result<()> {
                 Some(git_odb::data::Object::new(*kind, buf))
             }
             None => {
-                let obj = db.find(oid, buf, pack_cache).ok().flatten();
+                let obj = db.find_existing(oid, buf, pack_cache).ok();
                 if let Some(ref obj) = obj {
                     obj_cache.insert(
                         oid,
