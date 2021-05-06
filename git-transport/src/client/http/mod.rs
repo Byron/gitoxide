@@ -1,5 +1,5 @@
 use crate::{
-    client::{self, capabilities, ExtendedBufRead, HandleProgress, RequestWriter},
+    client::{self, capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
     Protocol, Service,
 };
 use git_packetline::PacketLine;
@@ -14,7 +14,6 @@ pub(crate) mod curl;
 
 ///
 mod traits;
-use crate::client::MessageKind;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 /// The actual http client implementation.

@@ -1,3 +1,4 @@
+use maybe_async::maybe_async;
 use quick_error::quick_error;
 use std::io;
 
@@ -48,6 +49,7 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
 
 /// A trait to abstract the HTTP operations needed to power all git interactions: read via GET and write via POST.
 #[allow(clippy::type_complexity)]
+#[maybe_async]
 pub trait Http {
     /// A type providing headers line by line.
     type Headers: io::BufRead;

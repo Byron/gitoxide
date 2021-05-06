@@ -13,7 +13,7 @@ doctest = false
 
 [features]
 serde1 = ["serde"]
-http-client-curl = ["curl", "base64", "git-features/io-pipe"]
+http-client-curl = ["curl", "base64", "git-features/io-pipe", "maybe-async/is_sync"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -25,6 +25,8 @@ git-packetline = { version = "^0.4.0", path = "../git-packetline" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+maybe-async = "0.2.4"
+async-trait = "0.1.50"
 
 # for http-client-curl
 # zlib-ng-compat doesn't force zlib-ng
