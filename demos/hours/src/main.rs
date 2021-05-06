@@ -6,8 +6,6 @@ use git_traverse::commit;
 use rayon::prelude::*;
 use std::{path::PathBuf, time::Instant};
 
-const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
-
 fn main() -> anyhow::Result<()> {
     let mut args = std::env::args();
     let repo_git_dir = args
@@ -50,7 +48,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let all_commits = {
         let db = git_odb::linked::Db::at(&repo_objects_dir)?;
-        let mut pack_cache = git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default();
+        let mut pack_cache = git_odb::pack::cache::Never;
         let mut commits = Vec::<Vec<u8>>::default();
         for commit in commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
             db.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
