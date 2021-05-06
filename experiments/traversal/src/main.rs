@@ -51,10 +51,8 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
-        db.find(oid, buf, &mut git_odb::pack::cache::Never)
+        db.find_existing_commit_iter(oid, buf, &mut git_odb::pack::cache::Never)
             .ok()
-            .flatten()
-            .and_then(|o| o.into_commit_iter())
     })
     .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
@@ -180,10 +178,7 @@ where
 {
     let mut cache = new_cache();
     let ancestors = commit::Ancestors::new(Some(tip), commit::ancestors::State::default(), |oid, buf| {
-        db.find(oid, buf, &mut cache)
-            .ok()
-            .flatten()
-            .and_then(|o| o.into_commit_iter())
+        db.find_existing_commit_iter(oid, buf, &mut cache).ok()
     });
     let mut commits = 0;
     for commit_id in ancestors {
@@ -316,15 +311,14 @@ where
                     },
                     |(count, buf, cache, state), commit| {
                         let tid = db
-                            .find(commit, buf, cache)?
-                            .and_then(|o| o.into_commit_iter())
-                            .and_then(|mut c| c.tree_id())
+                            .find_existing_commit_iter(commit, buf, cache)?
+                            .tree_id()
                             .expect("commit as starting point");
                         count.entries = 0;
                         tree::breadthfirst::traverse(
                             tid,
                             state,
-                            |oid, buf| db.find(oid, buf, cache).ok().flatten().and_then(|o| o.into_tree_iter()),
+                            |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                             count,
                         )?;
                         entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);
