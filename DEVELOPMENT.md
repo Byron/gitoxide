@@ -27,8 +27,9 @@
 
 * **async**
   * **library client-side**
-    * Don't use it client side, as operations there are usually bound by the CPU and ultra-fast access to memory mapped files.
-      It's no problem to saturate either CPU or the IO system.
+    * ~~Don't use it client side, as operations there are usually bound by the CPU and ultra-fast access to memory mapped files.
+      It's no problem to saturate either CPU or the IO system.~~
+      * Provide `async` clients as opt-in using feature toggles to help integrating into an exisging async codebase.
   * **User Interfaces**
     * User interfaces can greatly benefit from using async as it's much easier to maintain a responsive UI thread that way thanks
       to the wonderful future combinators.
@@ -39,8 +40,10 @@
          of waiting the flag can be unset with the `…::uninterrupt()` function to allow new long-running operations to work. 
          Every long running operation supports this.
   * **server-side**
-    * Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
-      needs a lot of resources and threads will do just fine.
+    * ~~Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
+      needs a lot of resources and threads will do just fine.~~
+      * Support async out of the box without looking it into particular traits using conditional complication. This will make integrating
+        into an async codebase easier, which we assume is given on the server side _these days_.
       
 * **`Default` implementations**
   * These can change only if the effect is contained within the callers process.

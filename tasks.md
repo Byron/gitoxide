@@ -1,3 +1,5 @@
+This file sketches out the tasks required to be able to clone a repository whilst checking out its head ref.
+
 ### Send Pack (server to client)
 
 * **git-odb**
