@@ -75,7 +75,6 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
         )));
     }
     let (i, _) = tag(NL)(i).map_err(decode::Error::context("a newline separates headers from the message"))?;
-    debug_assert!(!i.is_empty());
     Ok((&[], &i.as_bstr()))
 }
 
