@@ -316,14 +316,14 @@ where
                     },
                     |(count, buf, cache, state), commit| {
                         let tid = db
-                            .find_existing(commit, buf, cache)?
-                            .into_commit_iter()
+                            .find(commit, buf, cache)?
+                            .and_then(|o| o.into_commit_iter())
                             .and_then(|mut c| c.tree_id())
                             .expect("commit as starting point");
                         tree::breadthfirst::traverse(
                             tid,
                             state,
-                            |oid, buf| db.find_existing(oid, buf, cache).ok().and_then(|o| o.into_tree_iter()),
+                            |oid, buf| db.find(oid, buf, cache).ok().flatten().and_then(|o| o.into_tree_iter()),
                             count,
                         )?;
                         entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);

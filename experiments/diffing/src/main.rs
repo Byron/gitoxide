@@ -55,8 +55,9 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
-        db.find_existing(oid, buf, &mut git_odb::pack::cache::Never)
+        db.find(oid, buf, &mut git_odb::pack::cache::Never)
             .ok()
+            .flatten()
             .and_then(|o| o.into_commit_iter())
     })
     .collect::<Result<Vec<_>, _>>()?;
@@ -95,7 +96,7 @@ fn main() -> anyhow::Result<()> {
                         Some(git_odb::data::Object::new(*kind, buf))
                     }
                     None => {
-                        let obj = db.find_existing(oid, buf, &mut pack_cache).ok();
+                        let obj = db.find(oid, buf, &mut pack_cache).ok().flatten();
                         if let Some(ref obj) = obj {
                             obj_cache.insert(
                                 oid,
