@@ -110,6 +110,8 @@ members = [
     "experiments/traversal",
     "experiments/hash-owned-borrowed",
 
+    "demos/hours",
+
     "tests/tools",
 ]
 

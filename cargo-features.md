@@ -93,8 +93,18 @@ All feature toggles are additive.
 
 ### git-transport
 
+#### Blocking clients
+
+Using any of the feature toggles here will set the entire codebase to be synchronous and blocking. This has the advantage that less dependencies are compiled into
+a smaller binary.
+
 * **http-client-curl**
     * Adds support for the http and https transports using the Rust bindings for `libcurl`
+
+#### Blocking clients
+
+* **async-http-client-surf**
+    ** TBD
 
 ### Serialization Support
 

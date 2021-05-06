@@ -1063,6 +1063,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "hours"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dashmap",
+ "git-hash",
+ "git-object",
+ "git-odb",
+ "git-traverse",
+ "rayon",
+]
+
+[[package]]
 name = "human_format"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
