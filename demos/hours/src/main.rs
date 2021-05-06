@@ -72,30 +72,20 @@ fn main() -> anyhow::Result<()> {
 
     eprintln!("Getting all commit data…");
     let start = Instant::now();
+    let commits_wanted = all_commits.len();
     #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<CommitInfo> = all_commits
-        .into_par_iter()
-        .map(|commit_data: Vec<u8>| {
+        .into_iter()
+        .filter_map(|commit_data: Vec<u8>| {
             git_object::immutable::CommitIter::from_bytes(&commit_data)
                 .signatures()
                 .next()
                 .map(|author| git_object::mutable::Signature::from(author))
         })
-        .try_fold(
-            || Vec::new(),
-            |mut out: Vec<_>, item| {
-                out.push(item?);
-                Some(out)
-            },
-        )
-        .try_reduce(
-            || Vec::new(),
-            |mut out, vec| {
-                out.extend(vec.into_iter());
-                Some(out)
-            },
-        )
-        .ok_or_else(|| anyhow!("An error occurred when decoding commits - one commit could not be parsed"))?;
+        .collect::<Vec<_>>();
+    if all_commits.len() != commits_wanted {
+        bail!("An error occurred when decoding commits - one commit could not be parsed");
+    }
     let elapsed = start.elapsed();
     eprintln!(
         "Obtained {} commits in {:?} ({:0.0} commits/s)",
