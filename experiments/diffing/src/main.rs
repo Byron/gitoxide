@@ -8,11 +8,7 @@ use git_object::immutable;
 use git_odb::{find::FindExt, Find};
 use git_traverse::commit;
 use rayon::prelude::*;
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    path::PathBuf,
-    time::Instant,
-};
+use std::{path::PathBuf, time::Instant};
 
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
 
@@ -74,45 +70,53 @@ fn main() -> anyhow::Result<()> {
         all_commits.len() as f32 / elapsed.as_secs_f32()
     );
 
+    struct ObjectInfo {
+        kind: git_object::Kind,
+        data: Vec<u8>,
+    }
+    impl memory_lru::ResidentSize for ObjectInfo {
+        fn resident_size(&self) -> usize {
+            self.data.len()
+        }
+    }
+    fn find_with_lru_mem_cache<'b>(
+        oid: &oid,
+        buf: &'b mut Vec<u8>,
+        obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
+        db: &git_odb::linked::Db,
+        pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
+    ) -> Option<git_odb::data::Object<'b>> {
+        let oid = oid.to_owned();
+        match obj_cache.get(&oid) {
+            Some(ObjectInfo { kind, data }) => {
+                buf.resize(data.len(), 0);
+                buf.copy_from_slice(data);
+                Some(git_odb::data::Object::new(*kind, buf))
+            }
+            None => {
+                let obj = db.find(oid, buf, pack_cache).ok().flatten();
+                if let Some(ref obj) = obj {
+                    obj_cache.insert(
+                        oid,
+                        ObjectInfo {
+                            kind: obj.kind,
+                            data: obj.data.to_owned(),
+                        },
+                    );
+                }
+                obj
+            }
+        }
+    }
+
     let start = Instant::now();
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
             let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
             let db = &db;
-            struct ObjectInfo {
-                kind: git_object::Kind,
-                data: Vec<u8>,
-            }
-            impl memory_lru::ResidentSize for ObjectInfo {
-                fn resident_size(&self) -> usize {
-                    self.data.len()
-                }
-            }
             let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
-            move |oid, buf: &mut Vec<u8>| {
-                let oid = oid.to_owned();
-                match obj_cache.get(&oid) {
-                    Some(ObjectInfo { kind, data }) => {
-                        buf.resize(data.len(), 0);
-                        buf.copy_from_slice(data);
-                        Some(git_odb::data::Object::new(*kind, buf))
-                    }
-                    None => {
-                        let obj = db.find(oid, buf, &mut pack_cache).ok().flatten();
-                        if let Some(ref obj) = obj {
-                            obj_cache.insert(
-                                oid,
-                                ObjectInfo {
-                                    kind: obj.kind,
-                                    data: obj.data.to_owned(),
-                                },
-                            );
-                        }
-                        obj
-                    }
-                }
-            }
+            move |oid, buf: &mut Vec<u8>| find_with_lru_mem_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
         },
         Computation::MultiThreaded,
     )?;
@@ -128,76 +132,28 @@ fn main() -> anyhow::Result<()> {
         num_diffs as f32 / elapsed.as_secs_f32()
     );
 
-    if all_commits.len() < 150_000 {
-        fn find_with_obj_cache<'b>(
-            oid: &oid,
-            buf: &'b mut Vec<u8>,
-            obj_cache: &mut HashMap<ObjectId, (git_object::Kind, Vec<u8>)>,
-            db: &git_odb::linked::Db,
-            pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
-        ) -> Option<git_odb::data::Object<'b>> {
-            match obj_cache.entry(oid.to_owned()) {
-                Entry::Vacant(e) => {
-                    let obj = db.find(oid, buf, pack_cache).ok().flatten();
-                    if let Some(ref obj) = obj {
-                        e.insert((obj.kind, obj.data.to_owned()));
-                    }
-                    obj
-                }
-                Entry::Occupied(e) => {
-                    let (k, d) = e.get();
-                    buf.resize(d.len(), 0);
-                    buf.copy_from_slice(d);
-                    Some(git_odb::data::Object::new(*k, buf))
-                }
-            }
-        }
-
-        let start = Instant::now();
-        let num_deltas = do_gitoxide_tree_diff(
-            &all_commits,
-            || {
-                let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
-                let db = &db;
-                let mut obj_cache = HashMap::new();
-                move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
-            },
-            Computation::MultiThreaded,
-        )?;
-        let elapsed = start.elapsed();
-        println!(
-            "gitoxide-deltas PARALLEL (cache = unbounded memory obj map | pack -> {:.0}MB): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
-            cache_size() as f32 / (1024 * 1024) as f32,
-            num_deltas,
-            num_diffs,
-            elapsed,
-            num_deltas as f32 / elapsed.as_secs_f32(),
-            num_diffs as f32 / elapsed.as_secs_f32()
-        );
-
-        let num_deltas = do_gitoxide_tree_diff(
-            &all_commits,
-            || {
-                let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
-                let db = &db;
-                let mut obj_cache = HashMap::new();
-                move |oid, buf: &mut Vec<u8>| find_with_obj_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
-            },
-            Computation::SingleThreaded,
-        )?;
-        let elapsed = start.elapsed();
-        println!(
-            "gitoxide-deltas (cache = unbounded memory obj map | pack -> {:.0}MB): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
-            cache_size() as f32 / (1024 * 1024) as f32,
-            num_deltas,
-            num_diffs,
-            elapsed,
-            num_deltas as f32 / elapsed.as_secs_f32(),
-            num_diffs as f32 / elapsed.as_secs_f32()
-        );
-    } else {
-        eprintln!("Skipping gitoxide tree diff as this experiments cache size would be too big (unbounded)")
-    }
+    let start = Instant::now();
+    let num_deltas = do_gitoxide_tree_diff(
+        &all_commits,
+        || {
+            let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
+            let db = &db;
+            let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
+            move |oid, buf: &mut Vec<u8>| find_with_lru_mem_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
+        },
+        Computation::SingleThreaded,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide-deltas (cache = memory-LRU -> {:.0}MB | pack -> {:.0}MB): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        cache_size() as f32 / (1024 * 1024) as f32,
+        cache_size() as f32 / (1024 * 1024) as f32,
+        num_deltas,
+        num_diffs,
+        elapsed,
+        num_deltas as f32 / elapsed.as_secs_f32(),
+        num_diffs as f32 / elapsed.as_secs_f32()
+    );
 
     let start = Instant::now();
     let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::MultiThreaded)?;
