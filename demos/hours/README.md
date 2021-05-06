@@ -1,9 +1,3 @@
-An experiment to see how fast we can traverse
+A clone of [git-hours].
 
-- commit-graphs
-- tree-entries
-
-and compare that to libgit2.
-
-This is relevant for learning which objects to add to a pack in case of a clone.
-[Here is the discussion with additional performance data.](https://github.com/Byron/gitoxide/discussions/76).
+[git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
