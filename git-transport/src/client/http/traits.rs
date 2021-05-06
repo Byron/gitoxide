@@ -1,4 +1,4 @@
-use maybe_async::maybe_async;
+use maybe_async::{maybe_async, sync_impl};
 use quick_error::quick_error;
 use std::io;
 
@@ -51,17 +51,20 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
 #[allow(clippy::type_complexity)]
 #[maybe_async]
 pub trait Http {
+    #[sync_impl]
     /// A type providing headers line by line.
     type Headers: io::BufRead;
     /// A type providing the response.
+    #[sync_impl]
     type ResponseBody: io::BufRead;
     /// A type allowing to write the content to post.
+    #[sync_impl]
     type PostBody: io::Write;
 
     /// Initiate a `GET` request to `url` provided the given `headers`.
     ///
     /// The `headers` are provided verbatim and include both the key as well as the value.
-    fn get(
+    async fn get(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
@@ -73,7 +76,7 @@ pub trait Http {
     /// Note that the [`PostResponse`] contains the [`post_body`][PostResponse::post_body] field which implements [`std::io::Write`]
     /// and is expected to receive the body to post to the server. **It must be dropped** before reading the response
     /// to prevent deadlocks.
-    fn post(
+    async fn post(
         &mut self,
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,

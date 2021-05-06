@@ -26,7 +26,7 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 maybe-async = "0.2.4"
-async-trait = "0.1.50"
+async-trait = { version = "0.1.50", optional = true }
 
 # for http-client-curl
 # zlib-ng-compat doesn't force zlib-ng
