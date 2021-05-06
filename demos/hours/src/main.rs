@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use git_hash::{bstr::ByteSlice, ObjectId};
 use git_object::bstr::BString;
 use git_odb::find::FindExt;
@@ -105,7 +105,7 @@ fn main() -> anyhow::Result<()> {
     );
     all_commits.sort_by(|a, b| a.email.cmp(&b.email));
     if all_commits.is_empty() {
-        eprintln!("No commits to process");
+        bail!("No commits to process");
     }
     let mut current_email = &all_commits[0].email;
     let mut slice_start = 0;
@@ -123,11 +123,13 @@ fn main() -> anyhow::Result<()> {
 
     results_by_hours.sort_by(|a, b| a.num_commits.cmp(&b.num_commits));
     println!("{:#?}", results_by_hours);
-    assert_eq!(
-        results_by_hours.iter().map(|e| e.num_commits).sum::<u32>(),
-        all_commits.len() as u32,
-        "need to get all commits"
-    );
+    let (total_hours, total_commits) = results_by_hours
+        .iter()
+        .map(|e| (e.hours, e.num_commits))
+        .reduce(|a, b| (a.0 + b.0, a.1 + b.1))
+        .expect("at least one commit at this point");
+    println!("total hours: {}, total commits = {}", total_hours, total_commits);
+    assert_eq!(total_commits, all_commits.len() as u32, "need to get all commits");
     Ok(())
 }
 
