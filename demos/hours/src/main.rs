@@ -110,9 +110,17 @@ fn main() -> anyhow::Result<()> {
             current_email = &elm.email;
         }
     }
+    if let Some(commits) = all_commits.get(slice_start..) {
+        results_by_hours.push(compute_hours(commits));
+    }
 
     results_by_hours.sort_by(|a, b| a.num_commits.cmp(&b.num_commits));
     println!("{:#?}", results_by_hours);
+    assert_eq!(
+        results_by_hours.iter().map(|e| e.num_commits).sum::<u32>(),
+        all_commits.len() as u32,
+        "need to get all commits"
+    );
     Ok(())
 }
 
