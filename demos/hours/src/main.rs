@@ -64,7 +64,7 @@ fn main() -> anyhow::Result<()> {
 
     eprintln!("Getting all commit data…");
     let start = Instant::now();
-    let all_commits = all_commits
+    let mut all_commits: Vec<CommitInfo> = all_commits
         .into_par_iter()
         .try_fold::<_, anyhow::Result<_>, _, _>(
             || {
@@ -76,7 +76,7 @@ fn main() -> anyhow::Result<()> {
             |(mut commits, mut cache): (Vec<CommitInfo>, git_odb::pack::cache::lru::MemoryCappedHashmap), commit_id| {
                 let mut buf_reuse_me = Vec::new();
                 let commit = db.find_existing_commit(commit_id, &mut buf_reuse_me, &mut cache)?;
-                commits.push(CommitInfo::from(commit));
+                commits.push(commit.author.into());
                 Ok((commits, cache))
             },
         )
@@ -95,24 +95,35 @@ fn main() -> anyhow::Result<()> {
         elapsed,
         all_commits.len() as f32 / elapsed.as_secs_f32()
     );
+    all_commits.sort_by(|a, b| a.email.cmp(&b.email));
+    if all_commits.is_empty() {
+        eprintln!("No commits to process");
+    }
+    let mut current_email = &all_commits[0].email;
+    let mut slice_start = 0;
+    let mut results_by_hours = Vec::new();
+    for (idx, elm) in all_commits.iter().enumerate() {
+        if elm.email != *current_email {
+            results_by_hours.push(compute_hours(&all_commits[slice_start..idx]));
+            slice_start = idx;
+            current_email = &elm.email;
+        }
+    }
 
+    eprintln!("{:#?}", results_by_hours);
     Ok(())
 }
 
-struct CommitInfo {
-    email: BString,
+fn compute_hours(commits: &[CommitInfo]) -> WorkByPerson {
+    todo!("compute work")
+}
+
+#[derive(Debug)]
+struct WorkByPerson {
     name: BString,
+    email: BString,
     hours: u32,
     num_commits: u32,
 }
 
-impl From<git_object::immutable::Commit<'_>> for CommitInfo {
-    fn from(c: git_object::immutable::Commit<'_>) -> Self {
-        CommitInfo {
-            email: c.author.email.to_owned(),
-            name: c.author.name.to_owned(),
-            hours: 0,
-            num_commits: 0,
-        }
-    }
-}
+type CommitInfo = git_object::mutable::Signature;
