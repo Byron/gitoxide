@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
             .map_err(Into::into)
         })?;
     let repo_objects_dir = {
-        let mut d = repo_git_dir.clone();
+        let mut d = repo_git_dir;
         d.push("objects");
         d
     };
@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
     })
     .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
-    println!(
+    eprintln!(
         "Found {} commits in {:?} ({:0.0} commits/s)",
         all_commits.len(),
         elapsed,
@@ -64,6 +64,7 @@ fn main() -> anyhow::Result<()> {
 
     eprintln!("Getting all commit data…");
     let start = Instant::now();
+    #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<CommitInfo> = all_commits
         .into_par_iter()
         .try_fold::<_, anyhow::Result<_>, _, _>(
@@ -89,7 +90,7 @@ fn main() -> anyhow::Result<()> {
             },
         )?;
     let elapsed = start.elapsed();
-    println!(
+    eprintln!(
         "Obtained {} commits in {:?} ({:0.0} commits/s)",
         all_commits.len(),
         elapsed,
