@@ -57,6 +57,16 @@ mod from_bytes {
                 Token::Message(b"without sig".as_bstr())
             ]
         );
+        assert_eq!(
+            CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).tree_id(),
+            Some(hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"))
+        );
+        assert_eq!(
+            CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
+                .signatures()
+                .collect::<Vec<_>>(),
+            vec![signature(1592437401), signature(1592437401)]
+        );
         Ok(())
     }
 

@@ -186,6 +186,20 @@ pub mod iter {
         pub fn tree_id(&mut self) -> Option<ObjectId> {
             self.next().and_then(Result::ok).and_then(Token::into_id)
         }
+
+        /// Returns all signatures, first the author, then the committer, if there is no decoding error.
+        ///
+        /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not
+        /// if not exactly two signatures were iterable.
+        /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
+        pub fn signatures(&'a mut self) -> impl Iterator<Item = Signature<'_>> + 'a {
+            self.filter_map(Result::ok)
+                .skip_while(|t| !matches!(t, Token::Author { .. } | Token::Committer { .. }))
+                .filter_map(|t| match t {
+                    Token::Author { signature } | Token::Committer { signature } => Some(signature),
+                    _ => None,
+                })
+        }
     }
 
     impl<'a> Iter<'a> {
@@ -305,10 +319,20 @@ pub mod iter {
     #[allow(missing_docs)]
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     pub enum Token<'a> {
-        Tree { id: ObjectId },
-        Parent { id: ObjectId },
-        Author { signature: Signature<'a> },
-        Committer { signature: Signature<'a> },
+        Tree {
+            id: ObjectId,
+        },
+        Parent {
+            id: ObjectId,
+        },
+        /// A person who authored the content of the commit.
+        Author {
+            signature: Signature<'a>,
+        },
+        /// A person who committed the authors work to the repository.
+        Committer {
+            signature: Signature<'a>,
+        },
         Encoding(&'a BStr),
         ExtraHeader((&'a BStr, Cow<'a, BStr>)),
         Message(&'a BStr),

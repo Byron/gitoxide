@@ -76,23 +76,26 @@ fn main() -> anyhow::Result<()> {
     let mut all_commits: Vec<CommitInfo> = all_commits
         .into_par_iter()
         .map(|commit_data: Vec<u8>| {
-            git_object::immutable::Commit::from_bytes(&commit_data)
-                .map(|c| git_object::mutable::Signature::from(c.author))
+            git_object::immutable::CommitIter::from_bytes(&commit_data)
+                .signatures()
+                .next()
+                .map(|author| git_object::mutable::Signature::from(author))
         })
-        .try_fold::<_, anyhow::Result<_>, _, _>(
+        .try_fold(
             || Vec::new(),
             |mut out: Vec<_>, item| {
                 out.push(item?);
-                Ok(out)
+                Some(out)
             },
         )
         .try_reduce(
             || Vec::new(),
             |mut out, vec| {
                 out.extend(vec.into_iter());
-                Ok(out)
+                Some(out)
             },
-        )?;
+        )
+        .ok_or_else(|| anyhow!("An error occurred when decoding commits - one commit could not be parsed"))?;
     let elapsed = start.elapsed();
     eprintln!(
         "Obtained {} commits in {:?} ({:0.0} commits/s)",
