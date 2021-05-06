@@ -320,6 +320,7 @@ where
                             .and_then(|o| o.into_commit_iter())
                             .and_then(|mut c| c.tree_id())
                             .expect("commit as starting point");
+                        count.entries = 0;
                         tree::breadthfirst::traverse(
                             tid,
                             state,
