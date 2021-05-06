@@ -110,12 +110,20 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    eprintln!("{:#?}", results_by_hours);
+    results_by_hours.sort_by(|a, b| a.num_commits.cmp(&b.num_commits));
+    println!("{:#?}", results_by_hours);
     Ok(())
 }
 
 fn compute_hours(commits: &[CommitInfo]) -> WorkByPerson {
-    todo!("compute work")
+    assert!(!commits.is_empty());
+    let author = &commits[0];
+    WorkByPerson {
+        name: author.name.to_owned(),
+        email: author.email.to_owned(),
+        hours: 0,
+        num_commits: commits.len() as u32,
+    }
 }
 
 #[derive(Debug)]
