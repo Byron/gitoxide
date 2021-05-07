@@ -1,44 +1,59 @@
 use anyhow::{anyhow, bail};
+use clap::Clap;
 use git_hash::{bstr::ByteSlice, ObjectId};
 use git_object::bstr::BString;
 use git_odb::find::FindExt;
 use git_traverse::commit;
 use itertools::Itertools;
 use rayon::prelude::*;
-use std::{path::PathBuf, time::Instant};
+use std::{
+    ffi::{OsStr, OsString},
+    path::PathBuf,
+    time::Instant,
+};
+
+fn is_repo_inner(dir: &OsStr) -> anyhow::Result<()> {
+    let p = PathBuf::from(dir).join(".git").canonicalize()?;
+    if p.extension().unwrap_or_default() == "git"
+        || p.file_name().unwrap_or_default() == ".git"
+        || p.join("HEAD").is_file()
+    {
+        Ok(())
+    } else {
+        Err(anyhow!(
+            "Path '{}' needs to be a directory containing '.git/'",
+            p.display()
+        ))
+    }
+}
+
+fn is_repo(dir: &OsStr) -> Result<(), String> {
+    is_repo_inner(dir).map_err(|err| err.to_string())
+}
+
+#[derive(Clap)]
+#[clap(name = "git-hours", about = "Estimate hours worked basted on a commit history", version = clap::crate_version!())]
+struct Opts {
+    /// The directory containing a '.git/' folder.
+    #[clap(parse(from_os_str))]
+    #[clap(validator_os = is_repo)]
+    working_dir: PathBuf,
+    /// The name of the ref like 'main' or 'master' at which to start iterating the commit graph.
+    refname: OsString,
+    /// Omit personally identifyable information, leaving only the summary.
+    #[clap(short = 'p' long)]
+    omit_pii: bool,
+}
 
 fn main() -> anyhow::Result<()> {
-    let mut args = std::env::args();
-    let repo_git_dir = args
-        .nth(1)
-        .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
-        .and_then(|p| {
-            let p = PathBuf::from(p).join(".git").canonicalize()?;
-            if p.extension().unwrap_or_default() == "git"
-                || p.file_name().unwrap_or_default() == ".git"
-                || p.join("HEAD").is_file()
-            {
-                Ok(p)
-            } else {
-                Err(anyhow!(
-                    "Path '{}' needs to be a directory containing '.git/'",
-                    p.display()
-                ))
-            }
-        })?;
-    let commit_id = args
-        .next()
-        .ok_or_else(|| {
-            anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
-        })
-        .and_then(|name| {
-            ObjectId::from_hex(
-                &std::fs::read(repo_git_dir.join("refs").join("heads").join(name))?
-                    .as_bstr()
-                    .trim(),
-            )
-            .map_err(Into::into)
-        })?;
+    let opts: Opts = Opts::parse();
+    let repo_git_dir = opts.working_dir.join(".git");
+    let commit_id = ObjectId::from_hex(
+        &std::fs::read(repo_git_dir.join("refs").join("heads").join(opts.refname))?
+            .as_bstr()
+            .trim(),
+    )?;
+
     let repo_objects_dir = {
         let mut d = repo_git_dir;
         d.push("objects");

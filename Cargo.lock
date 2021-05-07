@@ -272,6 +272,7 @@ dependencies = [
  "os_str_bytes",
  "strsim",
  "termcolor",
+ "terminal_size",
  "textwrap 0.12.1",
  "unicode-width",
  "vec_map",
@@ -1067,7 +1068,7 @@ name = "hours"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dashmap",
+ "clap 3.0.0-beta.2",
  "git-hash",
  "git-object",
  "git-odb",
@@ -2025,6 +2026,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "terminal_size"
+version = "0.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86ca8ced750734db02076f44132d802af0b33b09942331f4459dde8636fd2406"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "termion"
 version = "1.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2051,6 +2062,7 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "203008d98caf094106cfaba70acfed15e18ed3ddb7d94e49baec153a2b462789"
 dependencies = [
+ "terminal_size",
  "unicode-width",
 ]
 
