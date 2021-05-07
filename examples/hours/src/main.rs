@@ -155,34 +155,35 @@ fn main() -> anyhow::Result<()> {
         .expect("at least one commit at this point");
     writeln!(
         io::stdout(),
-        "total hours: {}, total commits = {}",
+        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}",
         total_hours,
+        total_hours / HOURS_PER_WORKDAY,
         total_commits
     )?;
     assert_eq!(total_commits, all_commits.len() as u32, "need to get all commits");
     Ok(())
 }
 
+const MINUTES_PER_HOUR: f32 = 60.0;
+const HOURS_PER_WORKDAY: f32 = 8.0;
+
 fn estimate_hours(commits: &[CommitInfo]) -> WorkByPerson {
     assert!(!commits.is_empty());
-    const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * 60.0;
-    const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * 60.0;
+    const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
+    const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
 
-    let hours = if commits.len() > 1 {
-        commits.iter().rev().tuple_windows().fold(
+    let hours = FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
+        + commits.iter().rev().tuple_windows().fold(
             0_f32,
             |hours, (cur, next): (&git_object::mutable::Signature, &git_object::mutable::Signature)| {
-                let change_in_minutes = (next.time.time - cur.time.time) as f32 / 60.0;
+                let change_in_minutes = (next.time.time - cur.time.time) as f32 / MINUTES_PER_HOUR;
                 if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                    hours + change_in_minutes as f32 / 60_f32
+                    hours + change_in_minutes as f32 / MINUTES_PER_HOUR
                 } else {
-                    hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0)
+                    hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
                 }
             },
-        )
-    } else {
-        FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
-    };
+        );
     let author = &commits[0];
     WorkByPerson {
         name: author.name.to_owned(),
@@ -208,7 +209,7 @@ impl Display for WorkByPerson {
             f,
             "total time spent: {:.02}h ({:.02} 8h days)",
             self.hours,
-            self.hours / 8.0
+            self.hours / HOURS_PER_WORKDAY
         )
     }
 }
