@@ -34,6 +34,7 @@ impl From<Error> for io::Error {
     }
 }
 
+/// Output
 impl Signature {
     /// Serialize this instance to `out` in the git serialization format for actors.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
