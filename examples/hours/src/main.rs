@@ -140,7 +140,7 @@ fn main() -> anyhow::Result<()> {
         results_by_hours.push(estimate_hours(commits));
     }
 
-    results_by_hours.sort_by(|a, b| a.hours.cmp(&b.hours));
+    results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
     if !opts.omit_pii {
         let stdout = io::stdout();
         let mut locked_stdout = stdout.lock();
@@ -166,17 +166,19 @@ fn main() -> anyhow::Result<()> {
 fn estimate_hours(commits: &[CommitInfo]) -> WorkByPerson {
     assert!(!commits.is_empty());
     let hours = commits.iter().rev().tuple_windows().fold(
-        0,
+        0_f32,
         |hours, (cur, next): (&git_object::mutable::Signature, &git_object::mutable::Signature)| {
-            const MAX_COMMIT_DIFFERENCE_IN_MINUTES: u32 = 2 * 60;
-            const FIRST_COMMIT_ADDITION_IN_MINUTES: u32 = 2 * 60;
+            const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * 60.0;
+            const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * 60.0;
             let change_in_minutes =
-                (((next.time.time as i32 + next.time.offset) - (cur.time.time as i32 + cur.time.offset)) / 60) as u32;
-
+                ((next.time.time as i32 + next.time.offset) - (cur.time.time as i32 + cur.time.offset)) as f32 / 60.0;
+            if change_in_minutes < 0.0 {
+                dbg!(change_in_minutes, next, cur);
+            }
             if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                hours + (change_in_minutes as f32 / 60_f32).round() as u32
+                hours + (change_in_minutes as f32 / 60_f32).round()
             } else {
-                hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / 60)
+                hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0)
             }
         },
     );
@@ -193,7 +195,7 @@ fn estimate_hours(commits: &[CommitInfo]) -> WorkByPerson {
 struct WorkByPerson {
     name: BString,
     email: BString,
-    hours: u32,
+    hours: f32,
     num_commits: u32,
 }
 
@@ -205,7 +207,7 @@ impl Display for WorkByPerson {
             f,
             "total time spent: {}h ({:.02} 8h days)",
             self.hours,
-            self.hours as f32 / 8.0
+            self.hours / 8.0
         )
     }
 }
