@@ -8,6 +8,8 @@ use itertools::Itertools;
 use rayon::prelude::*;
 use std::{
     ffi::{OsStr, OsString},
+    io,
+    io::Write,
     path::PathBuf,
     time::Instant,
 };
@@ -33,6 +35,7 @@ fn is_repo(dir: &OsStr) -> Result<(), String> {
 
 #[derive(Clap)]
 #[clap(name = "git-hours", about = "Estimate hours worked basted on a commit history", version = clap::crate_version!())]
+#[clap(setting = clap::AppSettings::ColoredHelp)]
 struct Opts {
     /// The directory containing a '.git/' folder.
     #[clap(parse(from_os_str))]
@@ -41,7 +44,7 @@ struct Opts {
     /// The name of the ref like 'main' or 'master' at which to start iterating the commit graph.
     refname: OsString,
     /// Omit personally identifyable information, leaving only the summary.
-    #[clap(short = 'p' long)]
+    #[clap(short = 'p', long)]
     omit_pii: bool,
 }
 
@@ -136,13 +139,20 @@ fn main() -> anyhow::Result<()> {
     }
 
     results_by_hours.sort_by(|a, b| a.hours.cmp(&b.hours));
-    println!("{:#?}", results_by_hours);
+    if !opts.omit_pii {
+        writeln!(io::stdout(), "{:#?}", results_by_hours)?;
+    }
     let (total_hours, total_commits) = results_by_hours
         .iter()
         .map(|e| (e.hours, e.num_commits))
         .reduce(|a, b| (a.0 + b.0, a.1 + b.1))
         .expect("at least one commit at this point");
-    println!("total hours: {}, total commits = {}", total_hours, total_commits);
+    writeln!(
+        io::stdout(),
+        "total hours: {}, total commits = {}",
+        total_hours,
+        total_commits
+    )?;
     assert_eq!(total_commits, all_commits.len() as u32, "need to get all commits");
     Ok(())
 }
