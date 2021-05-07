@@ -42,12 +42,17 @@ struct Opts {
     /// The directory containing a '.git/' folder.
     #[clap(parse(from_os_str))]
     #[clap(validator_os = is_repo)]
+    #[clap(default_value = ".")]
     working_dir: PathBuf,
     /// The name of the ref like 'main' or 'master' at which to start iterating the commit graph.
+    #[clap(default_value("main"))]
     refname: OsString,
-    /// Omit personally identifyable information, leaving only the summary.
+    /// Omit personally identifiable information, leaving only the summary.
     #[clap(short = 'p', long)]
     omit_pii: bool,
+    /// Unify identities by name and email
+    #[clap(short = 'i', long)]
+    unify_identities: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -140,7 +145,16 @@ fn main() -> anyhow::Result<()> {
         results_by_hours.push(estimate_hours(commits));
     }
 
-    let mut results_by_hours = deduplicate_identities(&results_by_hours);
+    let mut results_by_hours = if opts.unify_identities {
+        deduplicate_identities(&results_by_hours)
+    } else {
+        results_by_hours
+            .iter()
+            .fold(Vec::with_capacity(results_by_hours.len()), |mut acc, e| {
+                acc.push(e.into());
+                acc
+            })
+    };
     let num_contributors = results_by_hours.len();
     if !opts.omit_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
