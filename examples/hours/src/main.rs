@@ -8,6 +8,8 @@ use itertools::Itertools;
 use rayon::prelude::*;
 use std::{
     ffi::{OsStr, OsString},
+    fmt,
+    fmt::{Display, Formatter},
     io,
     io::Write,
     path::PathBuf,
@@ -140,7 +142,11 @@ fn main() -> anyhow::Result<()> {
 
     results_by_hours.sort_by(|a, b| a.hours.cmp(&b.hours));
     if !opts.omit_pii {
-        writeln!(io::stdout(), "{:#?}", results_by_hours)?;
+        let stdout = io::stdout();
+        let mut locked_stdout = stdout.lock();
+        for entry in results_by_hours.iter() {
+            writeln!(locked_stdout, "{}\n", entry)?;
+        }
     }
     let (total_hours, total_commits) = results_by_hours
         .iter()
@@ -189,6 +195,19 @@ struct WorkByPerson {
     email: BString,
     hours: u32,
     num_commits: u32,
+}
+
+impl Display for WorkByPerson {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{} <{}>", self.name, self.email)?;
+        writeln!(f, "{} commits found", self.num_commits)?;
+        writeln!(
+            f,
+            "total time spent: {}h ({:.02} 8h days)",
+            self.hours,
+            self.hours as f32 / 8.0
+        )
+    }
 }
 
 type CommitInfo = git_object::mutable::Signature;
