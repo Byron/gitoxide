@@ -83,7 +83,7 @@ fn main() -> anyhow::Result<()> {
     };
     let elapsed = start.elapsed();
     eprintln!(
-        "Found {} commits and extracted their data in {:?} ({:0.0} commits/s)",
+        "Found {} commits in {:?} ({:0.0} commits/s)",
         all_commits.len(),
         elapsed,
         all_commits.len() as f32 / elapsed.as_secs_f32()
@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     eprintln!("Getting all commit data…");
     let start = Instant::now();
     #[allow(clippy::redundant_closure)]
-    let mut all_commits: Vec<CommitInfo> = all_commits
+    let mut all_commits: Vec<git_object::mutable::Signature> = all_commits
         .into_par_iter()
         .map(|commit_data: Vec<u8>| {
             git_object::immutable::CommitIter::from_bytes(&commit_data)
@@ -117,7 +117,7 @@ fn main() -> anyhow::Result<()> {
         .ok_or_else(|| anyhow!("An error occurred when decoding commits - one commit could not be parsed"))?;
     let elapsed = start.elapsed();
     eprintln!(
-        "Obtained {} commits in {:?} ({:0.0} commits/s)",
+        "Extracted data from {} commits in {:?} ({:0.0} commits/s)",
         all_commits.len(),
         elapsed,
         all_commits.len() as f32 / elapsed.as_secs_f32()
@@ -167,7 +167,7 @@ fn main() -> anyhow::Result<()> {
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[CommitInfo]) -> WorkByPerson {
+fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByPerson {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -213,5 +213,3 @@ impl Display for WorkByPerson {
         )
     }
 }
-
-type CommitInfo = git_object::mutable::Signature;
