@@ -140,8 +140,10 @@ fn main() -> anyhow::Result<()> {
         results_by_hours.push(estimate_hours(commits));
     }
 
-    results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
+    let mut results_by_hours = deduplicate_identities(&results_by_hours);
+    let num_contributors = results_by_hours.len();
     if !opts.omit_pii {
+        results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
         let stdout = io::stdout();
         let mut locked_stdout = stdout.lock();
         for entry in results_by_hours.iter() {
@@ -155,10 +157,11 @@ fn main() -> anyhow::Result<()> {
         .expect("at least one commit at this point");
     writeln!(
         io::stdout(),
-        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}",
+        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}, total contributors: {}",
         total_hours,
         total_hours / HOURS_PER_WORKDAY,
-        total_commits
+        total_commits,
+        num_contributors
     )?;
     assert_eq!(total_commits, all_commits.len() as u32, "need to get all commits");
     Ok(())
@@ -167,7 +170,7 @@ fn main() -> anyhow::Result<()> {
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByPerson {
+fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -185,7 +188,7 @@ fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByPerson {
             },
         );
     let author = &commits[0];
-    WorkByPerson {
+    WorkByEmail {
         name: author.name.to_owned(),
         email: author.email.to_owned(),
         hours,
@@ -193,17 +196,55 @@ fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByPerson {
     }
 }
 
+fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson<'_>> {
+    let mut out = Vec::<WorkByPerson>::new();
+    for person_by_email in persons {
+        match out
+            .iter_mut()
+            .find(|p| p.email.contains(&&person_by_email.email) || p.name.contains(&&person_by_email.name))
+        {
+            Some(person) => person.merge(person_by_email),
+            None => out.push(person_by_email.into()),
+        }
+    }
+    out
+}
+
 #[derive(Debug)]
-struct WorkByPerson {
-    name: BString,
-    email: BString,
+struct WorkByPerson<'a> {
+    name: Vec<&'a BString>,
+    email: Vec<&'a BString>,
     hours: f32,
     num_commits: u32,
 }
 
-impl Display for WorkByPerson {
+impl<'a> WorkByPerson<'a> {
+    fn merge(&mut self, other: &'a WorkByEmail) {
+        if !self.name.contains(&&other.name) {
+            self.name.push(&other.name);
+        }
+        if !self.email.contains(&&other.email) {
+            self.email.push(&other.email);
+        }
+        self.num_commits += other.num_commits;
+        self.hours += other.hours;
+    }
+}
+
+impl<'a> From<&'a WorkByEmail> for WorkByPerson<'a> {
+    fn from(w: &'a WorkByEmail) -> Self {
+        WorkByPerson {
+            name: vec![&w.name],
+            email: vec![&w.email],
+            hours: w.hours,
+            num_commits: w.num_commits,
+        }
+    }
+}
+
+impl<'a> Display for WorkByPerson<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{} <{}>", self.name, self.email)?;
+        writeln!(f, "{} <{}>", self.name.iter().join(", "), self.email.iter().join(", "))?;
         writeln!(f, "{} commits found", self.num_commits)?;
         writeln!(
             f,
@@ -212,4 +253,12 @@ impl Display for WorkByPerson {
             self.hours / HOURS_PER_WORKDAY
         )
     }
+}
+
+#[derive(Debug)]
+struct WorkByEmail {
+    name: BString,
+    email: BString,
+    hours: f32,
+    num_commits: u32,
 }
