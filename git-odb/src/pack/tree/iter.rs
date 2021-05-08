@@ -6,7 +6,7 @@ use crate::{
 /// Iteration
 impl<T> Tree<T> {
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, chunk_size: usize) -> impl Iterator<Item=Chunk<'_, T>> + '_ {
+    pub fn iter_root_chunks(&mut self, chunk_size: usize) -> impl Iterator<Item = Chunk<'_, T>> + '_ {
         let (front, back) = self.items.as_mut_slices();
         if front.len() != self.roots {
             // This should not happen unless we added more nodes than were declared in the
@@ -35,11 +35,9 @@ impl<'a, T> Iterator for Chunk<'a, T> {
     type Item = Node<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|item| {
-            Node {
-                item,
-                children: self.children,
-            }
+        self.inner.next().map(|item| Node {
+            item,
+            children: self.children,
         })
     }
 }
