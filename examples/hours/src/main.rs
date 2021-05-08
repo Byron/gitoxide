@@ -50,8 +50,8 @@ struct Opts {
     /// Omit personally identifiable information, leaving only the summary.
     #[clap(short = 'p', long)]
     omit_pii: bool,
-    /// Unify identities by name and email
-    #[clap(short = 'i', long)]
+    /// Unify identities by name and email.
+    #[clap(short = 'i', long, conflicts_with = "omit-pii")]
     unify_identities: bool,
 }
 
@@ -146,7 +146,16 @@ fn main() -> anyhow::Result<()> {
     }
 
     let mut results_by_hours = if opts.unify_identities {
-        deduplicate_identities(&results_by_hours)
+        let start = Instant::now();
+        let res = deduplicate_identities(&results_by_hours);
+        let elapsed = start.elapsed();
+        eprintln!(
+            "Deduplicated {} contributors in {:.02}s by name and email, now {}",
+            results_by_hours.len(),
+            elapsed.as_secs_f32(),
+            res.len()
+        );
+        res
     } else {
         results_by_hours
             .iter()
@@ -211,7 +220,7 @@ fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByEmail {
 }
 
 fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson<'_>> {
-    let mut out = Vec::<WorkByPerson>::new();
+    let mut out = Vec::<WorkByPerson>::with_capacity(persons.len());
     for person_by_email in persons {
         match out
             .iter_mut()
