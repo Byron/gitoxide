@@ -51,9 +51,9 @@ struct Opts {
     /// Omit personally identifiable information, leaving only the summary.
     #[clap(short = 'p', long)]
     omit_pii: bool,
-    /// Unify identities by name and email.
+    /// Omit unifying identities by name and email.
     #[clap(short = 'i', long)]
-    unify_identities: bool,
+    omit_unify_identities: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -146,13 +146,13 @@ fn main() -> anyhow::Result<()> {
         results_by_hours.push(estimate_hours(commits));
     }
 
-    let num_contributors = results_by_hours.len();
-    let mut results_by_hours = if opts.unify_identities {
+    let num_authors = results_by_hours.len();
+    let mut results_by_hours = if !opts.omit_unify_identities {
         let start = Instant::now();
         let res = deduplicate_identities(&results_by_hours);
         let elapsed = start.elapsed();
         eprintln!(
-            "Deduplicated {} contributors in {:.02}s by name and email, now {}",
+            "Deduplicated {} authors in {:.02}s by name and email, now {}",
             results_by_hours.len(),
             elapsed.as_secs_f32(),
             res.len()
@@ -166,7 +166,7 @@ fn main() -> anyhow::Result<()> {
                 acc
             })
     };
-    let num_unique_contributors = results_by_hours.len();
+    let num_unique_authors = results_by_hours.len();
     if !opts.omit_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
         let stdout = io::stdout();
@@ -182,18 +182,18 @@ fn main() -> anyhow::Result<()> {
         .expect("at least one commit at this point");
     writeln!(
         io::stdout(),
-        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}\ntotal contributors: {}",
+        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}\ntotal authors: {}",
         total_hours,
         total_hours / HOURS_PER_WORKDAY,
         total_commits,
-        num_contributors
+        num_authors
     )?;
-    if opts.unify_identities {
+    if !opts.omit_unify_identities {
         writeln!(
             io::stdout(),
-            "total unique contributors: {} ({:.02}% duplication)",
-            num_unique_contributors,
-            (1.0 - (num_unique_contributors as f32 / num_contributors as f32)) * 100.0
+            "total unique authors: {} ({:.02}% duplication)",
+            num_unique_authors,
+            (1.0 - (num_unique_authors as f32 / num_authors as f32)) * 100.0
         )?;
     }
     assert_eq!(total_commits, all_commits.len() as u32, "need to get all commits");
