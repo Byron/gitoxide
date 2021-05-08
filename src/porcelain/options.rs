@@ -7,6 +7,20 @@ use std::path::PathBuf;
 #[clap(setting = AppSettings::SubcommandRequired)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Args {
+    /// Do not display verbose messages and progress information
+    #[clap(long, short = 'q')]
+    pub quiet: bool,
+
+    /// Bring up a terminal user interface displaying progress visually
+    #[clap(long, conflicts_with("quiet"))]
+    pub progress: bool,
+
+    /// The progress TUI will stay up even though the work is already completed.
+    ///
+    /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
+    #[clap(long, conflicts_with("quiet"), requires("progress"))]
+    pub progress_keep_open: bool,
+
     #[clap(subcommand)]
     pub cmd: Subcommands,
 }

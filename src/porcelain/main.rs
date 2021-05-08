@@ -6,9 +6,11 @@ use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
 
 pub fn main() -> Result<()> {
-    let args = Args::parse();
+    let args: Args = Args::parse();
     git_features::interrupt::init_handler(std::io::stderr());
-    let verbose = true;
+    let verbose = !args.quiet;
+    let progress = args.progress;
+    let progress_keep_open = args.progress_keep_open;
 
     match args.cmd {
         Subcommands::Init { directory } => core::repository::init(directory),
@@ -20,9 +22,6 @@ pub fn main() -> Result<()> {
                 omit_unify_identities,
             }) => {
                 use gitoxide_core::hours;
-                let progress = false;
-                let progress_keep_open = false;
-
                 prepare_and_run(
                     "find",
                     verbose,
@@ -45,9 +44,6 @@ pub fn main() -> Result<()> {
             }
             ToolCommands::Find { root } => {
                 use gitoxide_core::organize;
-                // force verbose only, being the line renderer.
-                let progress = false;
-                let progress_keep_open = false;
                 prepare_and_run(
                     "find",
                     verbose,
@@ -69,10 +65,6 @@ pub fn main() -> Result<()> {
                 repository_source,
             } => {
                 use gitoxide_core::organize;
-                // force verbose only, being the line renderer.
-                let progress = false;
-                let progress_keep_open = false;
-
                 prepare_and_run(
                     "organize",
                     verbose,
