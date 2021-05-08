@@ -13,7 +13,7 @@ pub struct Args {
 #[derive(Debug, Clap)]
 pub enum Subcommands {
     /// Initialize the repository in the current directory.
-    #[clap(alias = "initialize")]
+    #[clap(visible_alias = "initialize")]
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
     Init {
@@ -26,6 +26,7 @@ pub enum Subcommands {
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
     #[clap(setting = AppSettings::SubcommandRequired)]
+    #[clap(visible_alias = "t")]
     Tools(ToolCommands),
 }
 

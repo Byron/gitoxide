@@ -107,7 +107,7 @@ title "Porcelain ${kind}"
           (with "running with no further arguments"
             it "succeeds and informs about possible operations" && {
               WITH_SNAPSHOT="$snapshot/no-args-failure" \
-              expect_run_sh $WITH_CLAP_FAILURE "$exe tools"
+              expect_run_sh $WITH_CLAP_FAILURE "$exe t"
             }
           )
         )
