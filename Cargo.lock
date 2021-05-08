@@ -1001,9 +1001,12 @@ dependencies = [
  "git-odb",
  "git-protocol",
  "git-repository",
+ "git-traverse",
  "git-url",
+ "itertools 0.10.0",
  "jwalk",
  "quick-error",
+ "rayon",
  "serde",
  "serde_json",
 ]

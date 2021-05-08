@@ -38,6 +38,8 @@ mod protocol;
 pub use protocol::Protocol;
 
 pub mod commitgraph;
+#[cfg(feature = "estimate-hours")]
+pub mod hours;
 #[cfg(feature = "organize")]
 pub mod organize;
 pub mod pack;
