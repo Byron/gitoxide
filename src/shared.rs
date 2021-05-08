@@ -56,7 +56,7 @@ pub mod lean {
         if verbose {
             let progress = crate::shared::progress_tree();
             let sub_progress = progress.add_child(name);
-            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
+            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE));
             (Some(ui_handle), Some(sub_progress))
         } else {
             (None, None)
@@ -94,8 +94,7 @@ pub mod pretty {
                 let progress = crate::shared::progress_tree();
                 let sub_progress = progress.add_child(name);
                 let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
-                let ui_handle =
-                    shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE), true);
+                let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE));
                 std::thread::spawn({
                     let tx = tx.clone();
                     move || loop {
@@ -182,9 +181,7 @@ pub mod pretty {
 pub fn setup_line_renderer_range(
     progress: prodash::Tree,
     levels: std::ops::RangeInclusive<prodash::progress::key::Level>,
-    hide_cursor: bool,
 ) -> prodash::render::line::JoinHandle {
-    let output_is_terminal = atty::is(atty::Stream::Stderr);
     prodash::render::line(
         std::io::stderr(),
         progress,
@@ -192,14 +189,12 @@ pub fn setup_line_renderer_range(
             level_filter: Some(levels),
             frames_per_second: DEFAULT_FRAME_RATE,
             initial_delay: Some(std::time::Duration::from_millis(1000)),
-            output_is_terminal,
-            colored: output_is_terminal && crosstermion::color::allowed(),
-            terminal_dimensions: crosstermion::terminal::size().unwrap_or((80, 20)),
             timestamp: true,
-            hide_cursor,
             throughput: true,
+            hide_cursor: true,
             ..prodash::render::line::Options::default()
-        },
+        }
+        .auto_configure(prodash::render::line::StreamKind::Stderr),
     )
 }
 

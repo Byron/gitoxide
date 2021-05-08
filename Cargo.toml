@@ -27,8 +27,8 @@ default = ["max"]
 
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 
-max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "http-client-curl", "gitoxide-core-tools"]
-max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "http-client-curl", "gitoxide-core-tools"]
+max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools"]
+max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools"]
 
 lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools"]
 lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools"]
