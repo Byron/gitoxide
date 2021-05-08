@@ -2,7 +2,7 @@
   {
     "Symbolic": {
       "path": "HEAD",
-      "target": "refs/heads/master",
+      "target": "refs/heads/main",
       "object": "3f72b39ad1600e6dac63430c15e0d875e9d3f9d6"
     }
   },
@@ -14,7 +14,7 @@
   },
   {
     "Direct": {
-      "path": "refs/heads/master",
+      "path": "refs/heads/main",
       "object": "3f72b39ad1600e6dac63430c15e0d875e9d3f9d6"
     }
   },

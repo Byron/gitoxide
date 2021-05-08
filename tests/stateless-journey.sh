@@ -43,13 +43,72 @@ function repo-with-remotes() {
   )
 }
 
+
+function small-repo-in-sandbox() {
+  sandbox
+  {
+    git init
+    git checkout -b main
+    git config commit.gpgsign false
+    set -a
+    export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
+    export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
+    export GIT_AUTHOR_NAME="Sebastian Thiel"
+    export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
+    export GIT_AUTHOR_EMAIL="git@example.com"
+    export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
+    touch a
+    git add a
+    git commit -m "first"
+    git tag unannotated
+    touch b
+    git add b
+    git commit -m "second"
+    git tag annotated -m "tag message"
+    git branch dev
+    echo hi >> b
+    git commit -am "third"
+  } &>/dev/null
+}
+
 if test "$kind" = "max"; then
 title "Porcelain ${kind}"
 (
   snapshot="$snapshot/porcelain"
   (with_program tree
-    (with "a mix of repositories"
-      (when "using the 'tools' subcommand"
+    (when "using the 'tools' subcommand"
+      (with "a repo with a tiny commit history"
+        (small-repo-in-sandbox
+          (when "running 'estimate-hours'"
+            snapshot="$snapshot/estimate-hours"
+            (with "no arguments"
+              it "succeeds and prints only a summary" && {
+                WITH_SNAPSHOT="$snapshot/no-args-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours 2>/dev/null"
+              }
+            )
+            (with "the show-pii argument"
+              it "succeeds and shows information identifying people before the summary" && {
+                WITH_SNAPSHOT="$snapshot/show-pii-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours --show-pii 2>/dev/null"
+              }
+            )
+            (with "the omit-unify-identities argument"
+              it "succeeds and doesn't show unified identities (in this case there is only one author anyway)" && {
+                WITH_SNAPSHOT="$snapshot/no-unify-identities-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours --omit-unify-identities 2>/dev/null"
+              }
+            )
+            (with "a branch name that doesn't exist"
+              it "fails and shows a decent enough error message" && {
+                WITH_SNAPSHOT="$snapshot/invalid-branch-name-failure" \
+                expect_run_sh $WITH_FAILURE "$exe -q tools estimate-hours . foobar"
+              }
+            )
+          )
+        )
+      )
+      (with "a mix of repositories"
         (sandbox
           repo-with-remotes dir/one-origin origin https://example.com/one-origin
           repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
@@ -163,32 +222,6 @@ title "Porcelain ${kind}"
   )
 )
 fi
-
-function small-repo-in-sandbox() {
-  sandbox
-  {
-    git init
-    git config commit.gpgsign false
-    set -a
-    export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
-    export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
-    export GIT_AUTHOR_NAME="Sebastian Thiel"
-    export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
-    export GIT_AUTHOR_EMAIL="git@example.com"
-    export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
-    touch a
-    git add a
-    git commit -m "first"
-    git tag unannotated
-    touch b
-    git add b
-    git commit -m "second"
-    git tag annotated -m "tag message"
-    git branch dev
-    echo hi >> b
-    git commit -am "third"
-  } &>/dev/null
-}
 
 function launch_git_daemon() {
     git daemon  --verbose --base-path=. --export-all --user-path &>/dev/null &
