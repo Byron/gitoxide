@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::{
     pack,
     pack::data::EntryRange,
@@ -79,20 +81,18 @@ where
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Sync,
         inspect_object: MBFN,
-    ) -> Result<Vec<Item<T>>, Error>
+    ) -> Result<VecDeque<Item<T>>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
         P: Progress + Send,
         MBFN: Fn(&mut T, &mut <P as Progress>::SubProgress, Context<'_, S>) -> Result<(), E> + Send + Sync,
         E: std::error::Error + Send + Sync + 'static,
     {
-        self.pack_entries_end = Some(pack_entries_end);
+        self.set_pack_entries_end(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let object_progress = parking_lot::Mutex::new(object_progress);
 
-        // SAFETY: We are owning 'self', and it's the UnsafeCell which we are supposed to use requiring unsafe on every access now.
-        #[allow(unsafe_code)]
-        let num_objects = unsafe { (*self.items.get()).len() } as u32;
+        let num_objects = self.items.len();
         in_parallel_if(
             should_run_in_parallel,
             self.iter_root_chunks(chunk_size),
@@ -122,10 +122,10 @@ impl<'a, P> Reducer<'a, P>
 where
     P: Progress,
 {
-    pub fn new(num_objects: u32, progress: &'a parking_lot::Mutex<P>, mut size_progress: P) -> Self {
+    pub fn new(num_objects: usize, progress: &'a parking_lot::Mutex<P>, mut size_progress: P) -> Self {
         progress
             .lock()
-            .init(Some(num_objects as usize), progress::count("objects"));
+            .init(Some(num_objects), progress::count("objects"));
         size_progress.init(None, progress::bytes());
         Reducer {
             item_count: 0,

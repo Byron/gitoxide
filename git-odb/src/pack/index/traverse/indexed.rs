@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use super::{Error, SafetyCheck};
 use crate::pack::{
     self,
@@ -157,7 +159,7 @@ impl From<pack::index::Entry> for EntryWithDefault {
     }
 }
 
-fn digest_statistics(items: Vec<pack::tree::Item<EntryWithDefault>>) -> index::traverse::Outcome {
+fn digest_statistics(items: VecDeque<pack::tree::Item<EntryWithDefault>>) -> index::traverse::Outcome {
     let mut res = index::traverse::Outcome::default();
     let average = &mut res.average;
     for item in &items {

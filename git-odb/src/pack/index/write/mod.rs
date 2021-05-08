@@ -185,7 +185,7 @@ impl pack::index::File {
 
             {
                 let _progress = root_progress.add_child("sorting by id");
-                items.sort_by_key(|e| e.data.id);
+                items.make_contiguous().sort_by_key(|e| e.data.id);
             }
 
             root_progress.inc();
