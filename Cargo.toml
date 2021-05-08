@@ -111,4 +111,5 @@ members = [
     "experiments/hash-owned-borrowed",
 
     "tests/tools",
+    "etc/utils"
 ]
