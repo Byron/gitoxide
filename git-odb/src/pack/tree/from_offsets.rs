@@ -4,8 +4,9 @@ use git_features::{
     progress::{self, Progress},
 };
 use std::{
+    convert::TryFrom,
     fs, io,
-    io::{BufRead, Read},
+    io::{BufRead, Read, Seek, SeekFrom},
     time::Instant,
 };
 
@@ -122,28 +123,35 @@ impl<T> Tree<T> {
         pack_offset: u64,
         previous_offset: u64,
     ) -> Result<(), Error> {
-        let mut bytes_to_skip = pack_offset
+        let bytes_to_skip: u64 = pack_offset
             .checked_sub(previous_offset)
-            .expect("continuously ascending pack offets") as usize;
-        while bytes_to_skip != 0 {
-            let buf = r.fill_buf().map_err(|err| Error::Io {
+            .expect("continuously ascending pack offets");
+        if bytes_to_skip == 0 {
+            return Ok(());
+        }
+        let buf = r.fill_buf().map_err(|err| Error::Io {
+            source: err,
+            message: "skip bytes",
+        })?;
+        if buf.is_empty() {
+            // This means we have reached the end of file and can't make progress anymore, before we have satisfied our need
+            // for more
+            return Err(Error::Io {
+                source: io::Error::new(
+                    io::ErrorKind::UnexpectedEof,
+                    "ran out of bytes before reading desired amount of bytes",
+                ),
+                message: "index file is damaged or corrupt",
+            });
+        }
+        if bytes_to_skip <= u64::try_from(buf.len()).expect("sensible buffer size") {
+            // SAFETY: bytes_to_skip <= buf.len() <= usize::MAX
+            r.consume(bytes_to_skip as usize);
+        } else {
+            r.seek(SeekFrom::Start(pack_offset)).map_err(|err| Error::Io {
                 source: err,
-                message: "skip bytes",
+                message: "seek to next entry",
             })?;
-            if buf.is_empty() {
-                // This means we have reached the end of file and can't make progress anymore, before we have satisfied our need
-                // for more
-                return Err(Error::Io {
-                    source: io::Error::new(
-                        io::ErrorKind::UnexpectedEof,
-                        "ran out of bytes before reading desired amount of bytes",
-                    ),
-                    message: "index file is damaged or corrupt",
-                });
-            }
-            let bytes = buf.len().min(bytes_to_skip);
-            r.consume(bytes);
-            bytes_to_skip -= bytes;
         }
         Ok(())
     }
