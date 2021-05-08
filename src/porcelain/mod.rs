@@ -1,1 +1,4 @@
-pub mod options;
+mod options;
+
+mod main;
+pub use main::main;

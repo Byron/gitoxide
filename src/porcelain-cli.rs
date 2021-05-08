@@ -10,7 +10,7 @@ use anyhow::Result;
 
 #[cfg(all(not(feature = "lean-cli"), feature = "pretty-cli"))]
 fn main() -> Result<()> {
-    porcelain::options::main()
+    porcelain::main()
 }
 
 #[cfg(feature = "lean-cli")]
