@@ -51,7 +51,8 @@ struct Opts {
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]
     show_pii: bool,
-    /// Omit unifying identities by name and email.
+    /// Omit unifying identities by name and email which can lead to the same author appear multiple times
+    /// due to using different names or email addresses.
     #[clap(short = 'i', long)]
     omit_unify_identities: bool,
 }
