@@ -103,11 +103,11 @@ impl<T> Tree<T> {
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: T) -> Result<(), Error> {
         self.assert_is_incrementing(offset)?;
         let (roots, children) = self.items.as_mut_slices();
-        if roots.len() != self.roots {
-            // This should not happen unless we added more nodes than were declared in the
-            // constructor.
-            panic!("item deque has been resized");
-        }
+        assert_eq!(
+            roots.len(),
+            self.roots,
+            "item deque has been resized, maybe we added more nodes than we declared in the constructor?"
+        );
         if let Ok(i) = children.binary_search_by_key(&base_offset, |i| i.offset) {
             children[i].children.push(children.len());
         } else if let Ok(i) = roots.binary_search_by(|i| base_offset.cmp(&i.offset)) {

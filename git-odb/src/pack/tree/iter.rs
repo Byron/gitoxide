@@ -8,11 +8,11 @@ impl<T> Tree<T> {
     /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
     pub fn iter_root_chunks(&mut self, chunk_size: usize) -> impl Iterator<Item = Chunk<'_, T>> + '_ {
         let (front, back) = self.items.as_mut_slices();
-        if front.len() != self.roots {
-            // This should not happen unless we added more nodes than were declared in the
-            // constructor.
-            panic!("item deque has been resized");
-        }
+        assert_eq!(
+            front.len(),
+            self.roots,
+            "This should not happen unless we added more nodes than were declared in the constructor"
+        );
 
         front.chunks_mut(chunk_size).map(move |c| Chunk {
             inner: c.iter_mut(),
