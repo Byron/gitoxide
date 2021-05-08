@@ -148,16 +148,7 @@ fn main() -> anyhow::Result<()> {
 
     let num_authors = results_by_hours.len();
     let mut results_by_hours = if !opts.omit_unify_identities {
-        let start = Instant::now();
-        let res = deduplicate_identities(&results_by_hours);
-        let elapsed = start.elapsed();
-        eprintln!(
-            "Deduplicated {} authors in {:.02}s by name and email, now {}",
-            results_by_hours.len(),
-            elapsed.as_secs_f32(),
-            res.len()
-        );
-        res
+        deduplicate_identities(&results_by_hours)
     } else {
         results_by_hours
             .iter()
