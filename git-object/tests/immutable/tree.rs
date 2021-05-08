@@ -1,13 +1,77 @@
-mod iter {}
-
-mod from_bytes {
-    use crate::hex_to_id;
-    use crate::immutable::fixture_bytes;
+mod iter {
+    use crate::{hex_to_id, immutable::fixture_bytes};
     use git_object::{
         bstr::ByteSlice,
-        immutable::{tree::Entry, Tree, TreeIter},
+        immutable::{tree::Entry, TreeIter},
         tree,
     };
+
+    #[test]
+    fn empty() {
+        assert_eq!(TreeIter::from_bytes(&[]).count(), 0, "empty trees are definitely ok");
+    }
+
+    #[test]
+    fn error_handling() -> Result<(), Box<dyn std::error::Error>> {
+        let data = fixture_bytes("tree", "everything.tree");
+        let iter = TreeIter::from_bytes(&data[..data.len() / 2]);
+        let entries = iter.collect::<Vec<_>>();
+        assert!(
+            entries.last().expect("at least one token").is_err(),
+            "errors are propagated and none is returned from that point on"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn everything() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!(
+            TreeIter::from_bytes(&fixture_bytes("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Entry {
+                    mode: tree::EntryMode::BlobExecutable,
+                    filename: b"exe".as_bstr(),
+                    oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
+                },
+                Entry {
+                    mode: tree::EntryMode::Blob,
+                    filename: b"file".as_bstr(),
+                    oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
+                },
+                Entry {
+                    mode: tree::EntryMode::Commit,
+                    filename: b"grit-submodule".as_bstr(),
+                    oid: &hex_to_id("b2d1b5d684bdfda5f922b466cc13d4ce2d635cf8")
+                },
+                Entry {
+                    mode: tree::EntryMode::Tree,
+                    filename: b"subdir".as_bstr(),
+                    oid: &hex_to_id("4d5fcadc293a348e88f777dc0920f11e7d71441c")
+                },
+                Entry {
+                    mode: tree::EntryMode::Link,
+                    filename: b"symlink".as_bstr(),
+                    oid: &hex_to_id("1a010b1c0f081b2e8901d55307a15c29ff30af0e")
+                }
+            ]
+        );
+        Ok(())
+    }
+}
+
+mod from_bytes {
+    use crate::{hex_to_id, immutable::fixture_bytes};
+    use git_object::{
+        bstr::ByteSlice,
+        immutable::{tree::Entry, Tree},
+        tree,
+    };
+
+    #[test]
+    #[should_panic]
+    fn empty() {
+        assert_eq!(Tree::from_bytes(&[]).unwrap(), Tree { entries: vec![] });
+    }
 
     #[test]
     fn everything() -> Result<(), Box<dyn std::error::Error>> {
@@ -42,53 +106,6 @@ mod from_bytes {
                     }
                 ]
             }
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn iter_error_handling() -> Result<(), Box<dyn std::error::Error>> {
-        let data = fixture_bytes("tree", "everything.tree");
-        let iter = TreeIter::from_bytes(&data[..data.len() / 2]);
-        let entries = iter.collect::<Vec<_>>();
-        assert!(
-            entries.last().expect("at least one token").is_err(),
-            "errors are propagated and none is returned from that point on"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn everything_iter() -> Result<(), Box<dyn std::error::Error>> {
-        assert_eq!(
-            TreeIter::from_bytes(&fixture_bytes("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
-            vec![
-                Entry {
-                    mode: tree::EntryMode::BlobExecutable,
-                    filename: b"exe".as_bstr(),
-                    oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
-                },
-                Entry {
-                    mode: tree::EntryMode::Blob,
-                    filename: b"file".as_bstr(),
-                    oid: &hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
-                },
-                Entry {
-                    mode: tree::EntryMode::Commit,
-                    filename: b"grit-submodule".as_bstr(),
-                    oid: &hex_to_id("b2d1b5d684bdfda5f922b466cc13d4ce2d635cf8")
-                },
-                Entry {
-                    mode: tree::EntryMode::Tree,
-                    filename: b"subdir".as_bstr(),
-                    oid: &hex_to_id("4d5fcadc293a348e88f777dc0920f11e7d71441c")
-                },
-                Entry {
-                    mode: tree::EntryMode::Link,
-                    filename: b"symlink".as_bstr(),
-                    oid: &hex_to_id("1a010b1c0f081b2e8901d55307a15c29ff30af0e")
-                }
-            ]
         );
         Ok(())
     }
