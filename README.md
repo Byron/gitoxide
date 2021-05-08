@@ -77,7 +77,6 @@ Follow linked crate name for detailed status.
   
 ### Ideas for Examples
 
-  * [x] A simple [`git-hours`][git-hours-demo] clone
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
         as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
     
@@ -86,7 +85,6 @@ Follow linked crate name for detailed status.
 Many crates use feature flags to allow tuning the compiled result based on your needs. Have a [look at the guide][cargo-features] for more information.
 
 [cargo-features]: https://github.com/Byron/gitoxide/blob/main/crate-features.md#git-config
-[git-hours-demo]: https://github.com/Byron/gitoxide/tree/main/demos/hours
 
 ## Installation
 

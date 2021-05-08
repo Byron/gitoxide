@@ -69,14 +69,19 @@ where
         let db = git_odb::linked::Db::at(&repo_objects_dir)?;
         let mut pack_cache = git_odb::pack::cache::Never;
         let mut commits = Vec::<Vec<u8>>::default();
-        for commit in commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
+        for (idx, commit) in commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
             db.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
                 commits.push(o.data.to_owned());
                 git_object::immutable::CommitIter::from_bytes(o.data)
             })
-        }) {
+        })
+        .enumerate()
+        {
             commit?;
             count_commits.inc();
+            if idx % 100_000 == 0 && git_features::interrupt::is_triggered() {
+                bail!("Commit iteration interrupted by user.")
+            }
         }
         let elapsed = start.elapsed();
         count_commits.done(format!(
