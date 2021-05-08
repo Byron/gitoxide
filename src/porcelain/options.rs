@@ -25,6 +25,7 @@ pub enum Subcommands {
     /// A selection of useful tools
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::SubcommandRequired)]
     Tools(ToolCommands),
 }
 

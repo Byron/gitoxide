@@ -18,6 +18,7 @@ fixtures="$root/fixtures"
 
 SUCCESSFULLY=0
 WITH_FAILURE=1
+WITH_CLAP_FAILURE=2
 
 
 function remove-paths() {
@@ -48,57 +49,65 @@ title "Porcelain ${kind}"
   snapshot="$snapshot/porcelain"
   (with_program tree
     (with "a mix of repositories"
-      (sandbox
-        repo-with-remotes dir/one-origin origin https://example.com/one-origin
-        repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
-        repo-with-remotes special-origin special-name https://example.com/special-origin
-        repo-with-remotes no-origin
-        snapshot="$snapshot/tools"
+      (when "using the 'tools' subcommand"
+        (sandbox
+          repo-with-remotes dir/one-origin origin https://example.com/one-origin
+          repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
+          repo-with-remotes special-origin special-name https://example.com/special-origin
+          repo-with-remotes no-origin
+          snapshot="$snapshot/tools"
 
-        (when "running 'tools find'"
-          snapshot="$snapshot/find"
-          (with "no arguments"
-            it "succeeds and prints a list of repository work directories" && {
-              WITH_SNAPSHOT="$snapshot/no-args-success" \
-              expect_run_sh $SUCCESSFULLY "$exe tools find 2>/dev/null"
-            }
+          (when "running 'find'"
+            snapshot="$snapshot/find"
+            (with "no arguments"
+              it "succeeds and prints a list of repository work directories" && {
+                WITH_SNAPSHOT="$snapshot/no-args-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools find 2>/dev/null"
+              }
+            )
           )
-        )
-        (when "running 'tools organize'"
-          snapshot="$snapshot/organize"
-          (with "no arguments"
-            it "succeeds and informs about the operations that it WOULD do" && {
-              WITH_SNAPSHOT="$snapshot/no-args-success" \
-              expect_run_sh $SUCCESSFULLY "$exe tools organize 2>/dev/null"
-            }
+          (when "running 'organize'"
+            snapshot="$snapshot/organize"
+            (with "no arguments"
+              it "succeeds and informs about the operations that it WOULD do" && {
+                WITH_SNAPSHOT="$snapshot/no-args-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools organize 2>/dev/null"
+              }
 
-            it "does not change the directory structure at all" && {
-              WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
-              expect_run $SUCCESSFULLY tree -L 2
-            }
+              it "does not change the directory structure at all" && {
+                WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
+                expect_run $SUCCESSFULLY tree -L 2
+              }
+            )
+
+            (with "--execute"
+              it "succeeds" && {
+                WITH_SNAPSHOT="$snapshot/execute-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
+              }
+
+              it "changes the directory structure" && {
+                WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+                expect_run $SUCCESSFULLY tree -L 2
+              }
+            )
+
+            (with "--execute again"
+              it "succeeds" && {
+                WITH_SNAPSHOT="$snapshot/execute-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
+              }
+
+              it "does not alter the directory structure as these are already in place" && {
+                WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+                expect_run $SUCCESSFULLY tree -L 2
+              }
+            )
           )
-
-          (with "--execute"
-            it "succeeds" && {
-              WITH_SNAPSHOT="$snapshot/execute-success" \
-              expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
-            }
-
-            it "changes the directory structure" && {
-              WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-              expect_run $SUCCESSFULLY tree -L 2
-            }
-          )
-
-          (with "--execute again"
-            it "succeeds" && {
-              WITH_SNAPSHOT="$snapshot/execute-success" \
-              expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
-            }
-
-            it "does not alter the directory structure as these are already in place" && {
-              WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-              expect_run $SUCCESSFULLY tree -L 2
+          (with "running with no further arguments"
+            it "succeeds and informs about possible operations" && {
+              WITH_SNAPSHOT="$snapshot/no-args-failure" \
+              expect_run_sh $WITH_CLAP_FAILURE "$exe tools"
             }
           )
         )
