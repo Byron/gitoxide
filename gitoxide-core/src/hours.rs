@@ -32,7 +32,7 @@ pub struct Context<W> {
 pub fn estimate<W, P>(
     working_dir: &Path,
     refname: &OsStr,
-    progress: P,
+    mut progress: P,
     Context {
         show_pii,
         omit_unify_identities,
@@ -56,9 +56,10 @@ where
         d
     };
 
-    eprintln!("Getting all commits…");
-    let start = Instant::now();
     let all_commits = {
+        let start = Instant::now();
+        let mut count_commits = progress.add_child("Traverse commit graph");
+        count_commits.init(None, git_features::progress::count("Commit"));
         let db = git_odb::linked::Db::at(&repo_objects_dir)?;
         let mut pack_cache = git_odb::pack::cache::Never;
         let mut commits = Vec::<Vec<u8>>::default();
@@ -69,18 +70,18 @@ where
             })
         }) {
             commit?;
+            count_commits.inc();
         }
+        let elapsed = start.elapsed();
+        count_commits.done(format!(
+            "Found {} commits in {:?} ({:0.0} commits/s)",
+            commits.len(),
+            elapsed,
+            commits.len() as f32 / elapsed.as_secs_f32()
+        ));
         commits
     };
-    let elapsed = start.elapsed();
-    eprintln!(
-        "Found {} commits in {:?} ({:0.0} commits/s)",
-        all_commits.len(),
-        elapsed,
-        all_commits.len() as f32 / elapsed.as_secs_f32()
-    );
 
-    eprintln!("Getting all commit data…");
     let start = Instant::now();
     #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<git_object::mutable::Signature> = all_commits
@@ -106,13 +107,6 @@ where
             },
         )
         .ok_or_else(|| anyhow!("An error occurred when decoding commits - one commit could not be parsed"))?;
-    let elapsed = start.elapsed();
-    eprintln!(
-        "Extracted data from {} commits in {:?} ({:0.0} commits/s)",
-        all_commits.len(),
-        elapsed,
-        all_commits.len() as f32 / elapsed.as_secs_f32()
-    );
     all_commits.sort_by(|a, b| a.email.cmp(&b.email).then(a.time.time.cmp(&b.time.time).reverse()));
     if all_commits.is_empty() {
         bail!("No commits to process");
@@ -142,6 +136,14 @@ where
                 acc
             })
     };
+    let elapsed = start.elapsed();
+    progress.done(format!(
+        "Extracted and organized data from {} commits in {:?} ({:0.0} commits/s)",
+        all_commits.len(),
+        elapsed,
+        all_commits.len() as f32 / elapsed.as_secs_f32()
+    ));
+
     let num_unique_authors = results_by_hours.len();
     if show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
