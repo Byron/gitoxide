@@ -127,7 +127,7 @@ pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
         return Err(Error::EmptyPath);
     }
     if url.cannot_be_a_base() {
-        return Err(Error::RelativeUrl(url.into_string()));
+        return Err(Error::RelativeUrl(url.into()));
     }
 
     to_owned_url(url)

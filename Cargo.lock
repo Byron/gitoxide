@@ -1602,9 +1602,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "13.0.1"
+version = "13.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ceabb4e601209b6b3a1b0f355869ccc79399738c5bd1c7828e5cf312c6f0714"
+checksum = "fd8cd31ed7f341376f7636ed21bf3971aae67cdd96e2e483d5da16e573390029"
 dependencies = [
  "async-io",
  "bytesize",
@@ -2390,8 +2390,3 @@ name = "wyz"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
-
-[[patch.unused]]
-name = "quick-error"
-version = "2.0.0"
-source = "git+https://github.com/byron/quick-error#a344b67a327a138e8ff535bbad4dd4cdf4d7141d"

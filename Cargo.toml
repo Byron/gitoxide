@@ -112,7 +112,3 @@ members = [
 
     "tests/tools",
 ]
-
-[patch.crates-io]
-# Until https://github.com/tailhook/quick-error/pull/56 is merged
-quick-error = {git = "https://github.com/byron/quick-error"}
