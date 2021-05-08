@@ -23,7 +23,7 @@
    * From 1.0, we will try hardest to keep the API and user interface non-breaking the closer to the user a library is. Thus the CLI should remain at version
     1 for a long times. However, crates that make it up can change more rapidly and may see more major version changes over time.
   
-### Guidelines
+### General
 
 * **async**
   * **library client-side**
@@ -84,8 +84,31 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * don't use unwrap, not even in tests. Instead use `quick_error!()` or `Box<dyn std::error::Error>`.
 * Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
   answer "This should work _because_…<expect(…)>"
-   
-   
+  
+### Examples, Experiments, Porcelain CLI and Plumbing CLI - which does what?
+
+* **Experiments**
+  * quick, potentially one-off programs to learn about an aspect of gitoxide potentially in comparison to other implementations like `libgit2`.
+  * No need for tests of any kind, but it must compile and be idiomatic Rust and `gitoxide`.
+  * Manual commmand-line parsing is OK
+  * no polish
+  * make it compile quickly, so no extras
+* **Examples**
+  * An implementation of ideas for actual occasional use and the first step towards getting integrated into Porcelain or Plumbing CLIs.
+  * Proper command-line parsing with Clap.  
+  * No tests or progress. 
+  * High quality Rust code along with idiomatic `gitoxide` usage so people can learn from it.  
+* **Plumbing CLI**    
+  * Use Clap AND Argh for command-line parsing via feature toggles to allow for tiny builds as plumbing is mostly for scripts.
+  * Journey tests 
+  * Progress can be turned on using the `--verbose` flag  
+  * Examples can be turned into plumbing by adding journey tests and `argh` command-line parsing, as well as progress.
+* **Porcelain CLI**
+  * Use Clap for command-line parsing for the best quality CLI experience - it's for the user.
+  * Journey tests.
+  * Support for `--verbose` and `--progress`.
+  * Examples can be turned into plumbing by adding journey tests and progress.
+
 ## Maintenance Guide
 
 Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
