@@ -42,113 +42,118 @@ function repo-with-remotes() {
   )
 }
 
+if test "$kind" = "max"; then
 title "Porcelain ${kind}"
-(with_program tree
-  if test "$kind" = "max"; then
-  (with "a mix of repositories"
-    (sandbox
-      repo-with-remotes dir/one-origin origin https://example.com/one-origin
-      repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
-      repo-with-remotes special-origin special-name https://example.com/special-origin
-      repo-with-remotes no-origin
-      (when "running 'find'"
-        snapshot="$snapshot/find"
-        (with "no arguments"
-          it "succeeds and prints a list of repository work directories" && {
-            WITH_SNAPSHOT="$snapshot/no-args-success" \
-            expect_run_sh $SUCCESSFULLY "$exe find 2>/dev/null"
-          }
-        )
-      )
-      (when "running 'organize'"
-        snapshot="$snapshot/organize"
-        (with "no arguments"
-          it "succeeds and informs about the operations that it WOULD do" && {
-            WITH_SNAPSHOT="$snapshot/no-args-success" \
-            expect_run_sh $SUCCESSFULLY "$exe organize 2>/dev/null"
-          }
-
-          it "does not change the directory structure at all" && {
-            WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
-            expect_run $SUCCESSFULLY tree -L 2
-          }
-        )
-
-        (with "--execute"
-          it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/execute-success" \
-            expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
-          }
-
-          it "changes the directory structure" && {
-            WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-            expect_run $SUCCESSFULLY tree -L 2
-          }
-        )
-
-        (with "--execute again"
-          it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/execute-success" \
-            expect_run_sh $SUCCESSFULLY "$exe organize --execute 2>/dev/null"
-          }
-
-          it "does not alter the directory structure as these are already in place" && {
-            WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-            expect_run $SUCCESSFULLY tree -L 2
-          }
-        )
-      )
-    )
-  )
-  fi
-)
-
-(when "running 'init'"
-  snapshot="$snapshot/init"
-  (with "no argument"
-    (with "an empty directory"
+(
+  snapshot="$snapshot/porcelain"
+  (with_program tree
+    (with "a mix of repositories"
       (sandbox
-        it "succeeds" && {
-          WITH_SNAPSHOT="$snapshot/success" \
-          expect_run $SUCCESSFULLY "$exe" init
-        }
+        repo-with-remotes dir/one-origin origin https://example.com/one-origin
+        repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
+        repo-with-remotes special-origin special-name https://example.com/special-origin
+        repo-with-remotes no-origin
+        snapshot="$snapshot/tools"
 
-        it "matches the output of baseline git init" && {
-          expect_snapshot "$fixtures/baseline-init" .git
-        }
+        (when "running 'tools find'"
+          snapshot="$snapshot/find"
+          (with "no arguments"
+            it "succeeds and prints a list of repository work directories" && {
+              WITH_SNAPSHOT="$snapshot/no-args-success" \
+              expect_run_sh $SUCCESSFULLY "$exe tools find 2>/dev/null"
+            }
+          )
+        )
+        (when "running 'tools organize'"
+          snapshot="$snapshot/organize"
+          (with "no arguments"
+            it "succeeds and informs about the operations that it WOULD do" && {
+              WITH_SNAPSHOT="$snapshot/no-args-success" \
+              expect_run_sh $SUCCESSFULLY "$exe tools organize 2>/dev/null"
+            }
 
-        (when "trying to initialize the same directory again"
-          it "fails" && {
-            WITH_SNAPSHOT="$snapshot/fail" \
-            expect_run $WITH_FAILURE "$exe" init
-          }
+            it "does not change the directory structure at all" && {
+              WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
+              expect_run $SUCCESSFULLY tree -L 2
+            }
+          )
+
+          (with "--execute"
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/execute-success" \
+              expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
+            }
+
+            it "changes the directory structure" && {
+              WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+              expect_run $SUCCESSFULLY tree -L 2
+            }
+          )
+
+          (with "--execute again"
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/execute-success" \
+              expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
+            }
+
+            it "does not alter the directory structure as these are already in place" && {
+              WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
+              expect_run $SUCCESSFULLY tree -L 2
+            }
+          )
         )
       )
     )
   )
-  (with "a single argument denoting the directory to initialize"
-    DIR=foo/bar
-    (with "a multi-element directory: $DIR"
-      (sandbox
-        it "succeeds" && {
-          WITH_SNAPSHOT="$snapshot/success-with-multi-element-directory" \
-          expect_run $SUCCESSFULLY "$exe" init $DIR
-        }
 
-        it "matches the output of baseline git init" && {
-          expect_snapshot "$fixtures/baseline-init" $DIR/.git
-        }
-
-        (when "trying to initialize the same directory again"
-          it "fails" && {
-            WITH_SNAPSHOT="$snapshot/fail-with-multi-element-directory" \
-            expect_run $WITH_FAILURE "$exe" init $DIR
+  (when "running 'init'"
+    snapshot="$snapshot/init"
+    (with "no argument"
+      (with "an empty directory"
+        (sandbox
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/success" \
+            expect_run $SUCCESSFULLY "$exe" init
           }
+
+          it "matches the output of baseline git init" && {
+            expect_snapshot "$fixtures/baseline-init" .git
+          }
+
+          (when "trying to initialize the same directory again"
+            it "fails" && {
+              WITH_SNAPSHOT="$snapshot/fail" \
+              expect_run $WITH_FAILURE "$exe" init
+            }
+          )
+        )
+      )
+    )
+    (with "a single argument denoting the directory to initialize"
+      DIR=foo/bar
+      (with "a multi-element directory: $DIR"
+        (sandbox
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/success-with-multi-element-directory" \
+            expect_run $SUCCESSFULLY "$exe" init $DIR
+          }
+
+          it "matches the output of baseline git init" && {
+            expect_snapshot "$fixtures/baseline-init" $DIR/.git
+          }
+
+          (when "trying to initialize the same directory again"
+            it "fails" && {
+              WITH_SNAPSHOT="$snapshot/fail-with-multi-element-directory" \
+              expect_run $WITH_FAILURE "$exe" init $DIR
+            }
+          )
         )
       )
     )
   )
 )
+fi
 
 function small-repo-in-sandbox() {
   sandbox

@@ -22,6 +22,14 @@ pub enum Subcommands {
         /// Defaults to the current working directory.
         directory: Option<PathBuf>,
     },
+    /// A selection of useful tools
+    #[clap(setting = AppSettings::ColoredHelp)]
+    #[clap(setting = AppSettings::DisableVersion)]
+    Tools(ToolCommands),
+}
+
+#[derive(Debug, Clap)]
+pub enum ToolCommands {
     /// Find all repositories in a given directory.
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
