@@ -7,6 +7,7 @@ use git_traverse::commit;
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::{
+    collections::{hash_map::Entry, HashMap},
     ffi::{OsStr, OsString},
     fmt,
     fmt::{Display, Formatter},
@@ -181,7 +182,7 @@ fn main() -> anyhow::Result<()> {
         .expect("at least one commit at this point");
     writeln!(
         io::stdout(),
-        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}\n, total contributors: {}",
+        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}\ntotal contributors: {}",
         total_hours,
         total_hours / HOURS_PER_WORKDAY,
         total_commits,
@@ -229,14 +230,27 @@ fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByEmail {
 }
 
 fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson<'_>> {
+    let mut email_to_index = HashMap::<&BString, usize>::with_capacity(persons.len());
+    let mut name_to_index = HashMap::<&BString, usize>::with_capacity(persons.len());
     let mut out = Vec::<WorkByPerson>::with_capacity(persons.len());
     for person_by_email in persons {
-        match out
-            .iter_mut()
-            .find(|p| p.email.contains(&&person_by_email.email) || p.name.contains(&&person_by_email.name))
-        {
-            Some(person) => person.merge(person_by_email),
-            None => out.push(person_by_email.into()),
+        match email_to_index.entry(&person_by_email.email) {
+            Entry::Occupied(email_entry) => {
+                out[*email_entry.get()].merge(person_by_email);
+                name_to_index.insert(&person_by_email.name, *email_entry.get());
+            }
+            Entry::Vacant(email_entry) => match name_to_index.entry(&person_by_email.name) {
+                Entry::Occupied(name_entry) => {
+                    out[*name_entry.get()].merge(person_by_email);
+                    email_entry.insert(*name_entry.get());
+                }
+                Entry::Vacant(name_entry) => {
+                    let idx = out.len();
+                    name_entry.insert(idx);
+                    email_entry.insert(idx);
+                    out.push(person_by_email.into());
+                }
+            },
         }
     }
     out
