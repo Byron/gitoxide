@@ -9,7 +9,7 @@ use nom::{
     bytes::complete::{tag, take, take_while1, take_while_m_n},
     character::is_digit,
     combinator::all_consuming,
-    multi::many1,
+    multi::many0,
     sequence::terminated,
     IResult,
 };
@@ -134,6 +134,6 @@ fn parse_entry(i: &[u8]) -> IResult<&[u8], Entry<'_>, decode::Error> {
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tree<'_>, decode::Error> {
-    let (i, entries) = all_consuming(many1(parse_entry))(i)?;
+    let (i, entries) = all_consuming(many0(parse_entry))(i)?;
     Ok((i, Tree { entries }))
 }

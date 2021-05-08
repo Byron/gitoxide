@@ -12,7 +12,7 @@ mod iter {
     }
 
     #[test]
-    fn error_handling() -> Result<(), Box<dyn std::error::Error>> {
+    fn error_handling() {
         let data = fixture_bytes("tree", "everything.tree");
         let iter = TreeIter::from_bytes(&data[..data.len() / 2]);
         let entries = iter.collect::<Vec<_>>();
@@ -20,11 +20,10 @@ mod iter {
             entries.last().expect("at least one token").is_err(),
             "errors are propagated and none is returned from that point on"
         );
-        Ok(())
     }
 
     #[test]
-    fn everything() -> Result<(), Box<dyn std::error::Error>> {
+    fn everything() -> crate::Result {
         assert_eq!(
             TreeIter::from_bytes(&fixture_bytes("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -68,13 +67,17 @@ mod from_bytes {
     };
 
     #[test]
-    #[should_panic]
-    fn empty() {
-        assert_eq!(Tree::from_bytes(&[]).unwrap(), Tree { entries: vec![] });
+    fn empty() -> crate::Result {
+        assert_eq!(
+            Tree::from_bytes(&[])?,
+            Tree { entries: vec![] },
+            "empty trees are valid despite usually rare in the wild"
+        );
+        Ok(())
     }
 
     #[test]
-    fn everything() -> Result<(), Box<dyn std::error::Error>> {
+    fn everything() -> crate::Result {
         assert_eq!(
             Tree::from_bytes(&fixture_bytes("tree", "everything.tree"))?,
             Tree {
@@ -111,7 +114,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn maybe_special() -> Result<(), Box<dyn std::error::Error>> {
+    fn maybe_special() -> crate::Result {
         assert_eq!(
             Tree::from_bytes(&fixture_bytes("tree", "maybe-special.tree"))?
                 .entries
@@ -122,7 +125,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn definitely_special() -> Result<(), Box<dyn std::error::Error>> {
+    fn definitely_special() -> crate::Result {
         assert_eq!(
             Tree::from_bytes(&fixture_bytes("tree", "definitely-special.tree"))?
                 .entries

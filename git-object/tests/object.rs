@@ -3,6 +3,8 @@ use std::path::PathBuf;
 mod immutable;
 mod mutable;
 
+type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[cfg(not(windows))]
 fn fixup(v: Vec<u8>) -> Vec<u8> {
     v
