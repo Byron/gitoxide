@@ -27,8 +27,12 @@ pub struct Context<W> {
     pub out: W,
 }
 
+/// Estimate the hours it takes to produce the content of the repository in `_working_dir_`, with `_refname_` for
+/// the start of the commit graph traversal.
+///
 /// * _working_dir_ - The directory containing a '.git/' folder.
 /// * _refname_ - The name of the ref like 'main' or 'master' at which to start iterating the commit graph.
+/// * _progress_ - A way to provide progress and performance information
 pub fn estimate<W, P>(
     working_dir: &Path,
     refname: &OsStr,
