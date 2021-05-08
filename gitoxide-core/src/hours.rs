@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Context as ResultContext};
 use bstr::{BString, ByteSlice};
 use git_features::progress::Progress;
 use git_hash::ObjectId;
@@ -45,10 +45,12 @@ where
 {
     let repo_git_dir = working_dir.join(".git");
     let commit_id = ObjectId::from_hex(
-        &std::fs::read(repo_git_dir.join("refs").join("heads").join(refname))?
+        &fs_err::read(repo_git_dir.join("refs").join("heads").join(refname))
+            .with_context(|| "Currently only file based references can be handled.")?
             .as_bstr()
             .trim(),
-    )?;
+    )
+    .with_context(|| "Could not decode file contents as hex-encoded hash")?;
 
     let repo_objects_dir = {
         let mut d = repo_git_dir;
