@@ -4,11 +4,11 @@ use crate::{
 };
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::progress::{self, Progress};
-use std::{cmp::Ordering, io};
+use std::{cmp::Ordering, collections::VecDeque, io};
 
 pub(crate) fn write_to(
     out: impl io::Write,
-    entries_sorted_by_oid: Vec<pack::tree::Item<pack::index::write::TreeEntry>>,
+    entries_sorted_by_oid: VecDeque<pack::tree::Item<pack::index::write::TreeEntry>>,
     pack_hash: &git_hash::ObjectId,
     kind: pack::index::Version,
     mut progress: impl Progress,
@@ -36,7 +36,7 @@ pub(crate) fn write_to(
     const HIGH_BIT: u32 = 0x8000_0000;
 
     let needs_64bit_offsets =
-        entries_sorted_by_oid.last().expect("at least one pack entry").offset > LARGE_OFFSET_THRESHOLD;
+        entries_sorted_by_oid.back().expect("at least one pack entry").offset > LARGE_OFFSET_THRESHOLD;
     let mut fan_out_be = [0u32; 256];
     progress.init(Some(4), progress::steps());
     let start = std::time::Instant::now();

@@ -1,4 +1,4 @@
-use std::cell::UnsafeCell;
+use std::collections::VecDeque;
 
 /// Returned when using various methods on a [`Tree`]
 #[derive(thiserror::Error, Debug)]
@@ -23,7 +23,7 @@ pub enum Error {
 }
 
 mod iter;
-pub use iter::{Chunks, Node};
+pub use iter::{Chunk, Node};
 ///
 pub mod traverse;
 
@@ -34,26 +34,21 @@ pub mod from_offsets;
 pub struct Item<T> {
     /// The offset into the pack file at which the pack entry's data is located.
     pub offset: u64,
-    /// If true, this object may have children but is not a child itself. It's thus the root of a tree.
-    is_root: bool,
+    /// The offset of the next item in the pack file.
+    pub next_offset: u64,
     /// Data to store with each Item, effectively data associated with each entry in a pack.
     pub data: T,
     children: Vec<usize>,
 }
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
 /// while being shareable among threads without a lock.
-/// It does this by making the run-time guarantee that iteration only happens once.
+/// It does this by making the guarantee that iteration only happens once.
 pub struct Tree<T> {
-    items: UnsafeCell<Vec<Item<T>>>,
-    last_added_offset: u64,
-    one_past_last_seen_root: usize,
-    pack_entries_end: Option<u64>,
+    /// Roots are first, then children.
+    items: VecDeque<Item<T>>,
+    roots: usize,
+    last_index: usize,
 }
-
-/// SAFETY: We solemnly swear…that this is sync because without the unsafe cell, it is also sync.
-/// But that's really the only reason why I would dare to know.
-#[allow(unsafe_code)]
-unsafe impl<T> Sync for Tree<T> {}
 
 impl<T> Tree<T> {
     /// Instantiate a empty tree capable of storing `num_objects` amounts of items.
@@ -62,69 +57,79 @@ impl<T> Tree<T> {
             return Err(Error::InvariantNonEmpty);
         }
         Ok(Tree {
-            items: UnsafeCell::new(Vec::with_capacity(num_objects)),
-            last_added_offset: 0,
-            one_past_last_seen_root: 0,
-            pack_entries_end: None,
+            items: VecDeque::with_capacity(num_objects),
+            roots: 0,
+            last_index: 0,
         })
     }
 
-    fn assert_is_incrementing(&mut self, offset: u64) -> Result<u64, Error> {
-        if offset > self.last_added_offset {
-            self.last_added_offset = offset;
-            Ok(offset)
-        } else {
-            Err(Error::InvariantIncreasingPackOffset {
-                last_pack_offset: self.last_added_offset,
+    fn assert_is_incrementing(&mut self, offset: u64) -> Result<(), Error> {
+        if self.items.is_empty() {
+            return Ok(());
+        }
+        let last_offset = self.items[self.last_index].offset;
+        if offset <= last_offset {
+            return Err(Error::InvariantIncreasingPackOffset {
+                last_pack_offset: last_offset,
                 pack_offset: offset,
-            })
+            });
+        }
+        self.items[self.last_index].next_offset = offset;
+        Ok(())
+    }
+
+    fn set_pack_entries_end(&mut self, pack_entries_end: u64) {
+        if !self.items.is_empty() {
+            self.items[self.last_index].next_offset = pack_entries_end;
         }
     }
 
     /// Add a new root node, one that only has children but is not a child itself, at the given pack `offset` and associate
     /// custom `data` with it.
     pub fn add_root(&mut self, offset: u64, data: T) -> Result<(), Error> {
-        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
-        // standard borrow check rules.
-        #[allow(unsafe_code)]
-        let items = unsafe { &mut *(self.items.get()) };
-        let offset = self.assert_is_incrementing(offset)?;
-        items.push(Item {
+        self.assert_is_incrementing(offset)?;
+        self.last_index = 0;
+        self.items.push_front(Item {
             offset,
+            next_offset: 0,
             data,
-            is_root: true,
-            children: Default::default(),
+            children: Vec::new(),
         });
-        self.one_past_last_seen_root = items.len();
+        self.roots += 1;
         Ok(())
     }
 
     /// Add a child of the item at `base_offset` which itself resides at pack `offset` and associate custom `data` with it.
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: T) -> Result<(), Error> {
-        // SAFETY: Because we passed the assertion above which implies no other access is possible as per
-        // standard borrow check rules.
-        #[allow(unsafe_code)]
-        let items = unsafe { &mut *(self.items.get()) };
-        let offset = self.assert_is_incrementing(offset)?;
-        let base_index = items.binary_search_by_key(&base_offset, |e| e.offset).map_err(|_| {
-            Error::InvariantBasesBeforeDeltasNeedThem {
+        self.assert_is_incrementing(offset)?;
+        let (roots, children) = self.items.as_mut_slices();
+        assert_eq!(
+            roots.len(),
+            self.roots,
+            "item deque has been resized, maybe we added more nodes than we declared in the constructor?"
+        );
+        if let Ok(i) = children.binary_search_by_key(&base_offset, |i| i.offset) {
+            children[i].children.push(children.len());
+        } else if let Ok(i) = roots.binary_search_by(|i| base_offset.cmp(&i.offset)) {
+            roots[i].children.push(children.len());
+        } else {
+            return Err(Error::InvariantBasesBeforeDeltasNeedThem {
                 delta_pack_offset: offset,
                 base_pack_offset: base_offset,
-            }
-        })?;
-        let child_index = items.len();
-        items[base_index].children.push(child_index);
-        items.push(Item {
-            is_root: false,
+            });
+        }
+        self.last_index = self.items.len();
+        self.items.push_back(Item {
             offset,
+            next_offset: 0,
             data,
-            children: Default::default(),
+            children: Vec::new(),
         });
         Ok(())
     }
 
     /// Transform this `Tree` into its items.
-    pub fn into_items(self) -> Vec<Item<T>> {
-        self.items.into_inner()
+    pub fn into_items(self) -> VecDeque<Item<T>> {
+        self.items
     }
 }

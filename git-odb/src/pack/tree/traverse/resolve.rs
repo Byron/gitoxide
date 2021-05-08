@@ -6,7 +6,7 @@ use git_features::progress::{unit, Progress};
 use std::{cell::RefCell, collections::BTreeMap};
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
-    nodes: Vec<pack::tree::Node<'_, T>>,
+    nodes: pack::tree::Chunk<'_, T>,
     (bytes_buf, ref mut progress, state): &mut (Vec<u8>, P, S),
     resolve: F,
     modify_base: MBFN,
@@ -57,7 +57,7 @@ where
         };
 
         modify_base(
-            &mut base.data,
+            base.data(),
             progress,
             Context {
                 entry: &base_entry,
@@ -71,7 +71,7 @@ where
         num_objects += 1;
         decompressed_bytes += base_bytes.len() as u64;
         progress.inc();
-        for child in base.store_changes_then_into_child_iter() {
+        for child in base.into_child_iter() {
             let (mut child_entry, entry_end, delta_bytes) = decompress_from_resolver(child.entry_slice())?;
             let (base_size, consumed) = pack::data::delta::decode_header_size(&delta_bytes);
             let mut header_ofs = consumed;
