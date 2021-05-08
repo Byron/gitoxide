@@ -48,9 +48,9 @@ struct Opts {
     /// The name of the ref like 'main' or 'master' at which to start iterating the commit graph.
     #[clap(default_value("main"))]
     refname: OsString,
-    /// Omit personally identifiable information, leaving only the summary.
+    /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]
-    omit_pii: bool,
+    show_pii: bool,
     /// Omit unifying identities by name and email.
     #[clap(short = 'i', long)]
     omit_unify_identities: bool,
@@ -158,7 +158,7 @@ fn main() -> anyhow::Result<()> {
             })
     };
     let num_unique_authors = results_by_hours.len();
-    if !opts.omit_pii {
+    if opts.show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
         let stdout = io::stdout();
         let mut locked_stdout = stdout.lock();
