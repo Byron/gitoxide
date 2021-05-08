@@ -64,7 +64,8 @@ pub enum ToolCommands {
 #[clap(
     about = "Estimate hours worked basted on a commit history", 
     long_about = "See https://github.com/kimmobrunfeldt/git-hours#how-it-works for details",
-    version = clap::crate_version!())
+    version = clap::crate_version!(),
+    visible_alias = "h")
 ]
 #[clap(setting = clap::AppSettings::ColoredHelp)]
 pub struct EstimateHours {
