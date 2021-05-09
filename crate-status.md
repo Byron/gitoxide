@@ -75,6 +75,8 @@
     
 ### git-diff
 
+Check out the [performance discussion][git-diff-performance] as well.
+
 * **tree**
   * [x] changes needed to obtain _other tree_
   * [ ] case-insensitive comparisons  
@@ -88,8 +90,12 @@
 * Parallel stat calls to check/update objects in index
 * [x] API documentation
   * [ ] Examples
+    
+[git-diff-performance]: https://github.com/Byron/gitoxide/discussions/74
 
 ### git-traverse
+
+Check out the [performance discussion][git-traverse-performance] as well.
 
 * **trees**
   * [x] nested traversal
@@ -98,6 +104,7 @@
 * [x] API documentation
     * [ ] Examples
     
+[git-traverse-performance]: https://github.com/Byron/gitoxide/discussions/76
 
 * **tree**
 
