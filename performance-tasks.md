@@ -13,6 +13,7 @@
 
 ### Pack Decoding
 
+* [ ] Pack decoding takes [5x more memory][android-base-discussion] than git on the [android-base repository][android-base-repo].
 * [ ] On **ARM64 on MacOS** the SHA1 implementation of the [`sha-1` crate](https://github.com/RustCrypto/hashes) is capped at about 550MB/s, half the speed of what I saw on Intel and about 50% slower than what's implemented in `libcorecrypto.dylib`. Get that fast and the decoding stage will be able
       to beat git on fewer cores. [See this comment for more](https://github.com/Byron/gitoxide/discussions/46#discussioncomment-511268). Right now we only do when scaling beyond what `git` can do due to lock contention.
       * This should work once the `asm` feature can be enabled in the `sha-1` crate, which currently fails but is tracked [in this issue](https://github.com/RustCrypto/asm-hashes/issues/28).
@@ -35,4 +36,6 @@
   * Note that there is tension between adding more latency to build such tree and the algorithms ability to (otherwise) start instantly.
   * potential savings: unknown
     
+[android-base-discussion]: https://github.com/Byron/gitoxide/pull/81
+[android-base-repo]: https://android.googlesource.com/platform/frameworks/base
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602
