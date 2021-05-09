@@ -19,4 +19,6 @@ for crate in git-features git-url git-hash git-ref git-object git-traverse git-d
   (cd $crate && cargo release "$@")
   mkdir -p "$version_dir"
   touch "$version_path"
+  # Need to keep the working dir clean or cargo release refuses to work
+  git add "$version_dir" && git commit -m "[track publish] $version_info"
 done
