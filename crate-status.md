@@ -83,7 +83,23 @@
 * **patches**    
   * There are various ways to generate a patch from two blobs.
   * [ ] any
+* diffing, merging, working with hunks of data
+* find differences between various states, i.e. index, working tree, commit-tree
+* Parallel stat calls to check/update objects in index
+* [x] API documentation
+  * [ ] Examples
+
+### git-traverse
+
+* **trees**
+  * [x] nested traversal
+* **commits**
+  * [x] ancestor graph traversal similar to `git revlog`
+* [x] API documentation
+    * [ ] Examples
     
+
+* **tree**
 
 ### git-url
 * As documented here: https://www.git-scm.com/docs/git-clone#_git_urls
@@ -230,12 +246,6 @@
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
 
-### git-diff / git-status
-* diffing of git-object::Tree structures
-* diffing, merging, working with hunks of data
-* find differences between various states, i.e. index, working tree, commit-tree
-* Parallel stat calls to check/update objects in index
-* [ ] API documentation with examples
 
 ### git-features
 * **interrupt-handler** feature toggle

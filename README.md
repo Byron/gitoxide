@@ -52,12 +52,14 @@ Follow linked crate name for detailed status.
 * **usable**
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
-  * [git-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-odb)
   * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)
-  * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
   * [git-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-packetline)
   * [git-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-transport)
+  * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
+  * [git-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-odb)
   * [git-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-commitgraph)
+  * [git-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-diff)
+  * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
   * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
 * **very early**    
