@@ -68,7 +68,7 @@ Follow linked crate name for detailed status.
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
 * **idea**
   * [git-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bundle)
-  * git-diff / git-status
+  * git-status
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)
   
 ### Stress Testing
