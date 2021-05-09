@@ -22,3 +22,5 @@ for crate in git-features git-url git-hash git-ref git-object git-traverse git-d
   # Need to keep the working dir clean or cargo release refuses to work
   git add "$version_dir" && git commit -m "[track publish] $version_info"
 done
+
+git push --tags origin main
