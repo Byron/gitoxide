@@ -11,6 +11,14 @@ interactive-developer-environment-in-docker: ## Use docker for all dependencies 
 	docker build -t $(docker_image) - < etc/developer.Dockerfile
 	docker run -v $$PWD:/volume -w /volume -it $(docker_image)
 
+##@ Publishing
+
+target/debug/utils:
+	cargo build --package utils
+
+publish-all: target/debug/utils ## Publish all crates in the currently set version if they are not published yet.
+	etc/release.sh $<
+
 ##@ Release Builds
 
 release-all: release release-lean release-small ## all release builds

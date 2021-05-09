@@ -1,6 +1,6 @@
-## Development Guide
+# Development Guide
 
-### Practices 
+## Practices 
 
  * **test-first development**
    * protect against regression and make implementing features easy.
@@ -23,7 +23,7 @@
    * From 1.0, we will try hardest to keep the API and user interface non-breaking the closer to the user a library is. Thus the CLI should remain at version
     1 for a long times. However, crates that make it up can change more rapidly and may see more major version changes over time.
   
-### General
+## General
 
 * **async**
   * **library client-side**
@@ -70,7 +70,7 @@
   * It looks like Git prepares to support it by using compile time, we can support it at runtime though with minimal cost. If needed,
     we can later remove support using a cargo feature toggle.
     
-### Sha256
+## Sha256
 
 A bunch of notes collected to keep track of what's needed to eventually support it
 
@@ -79,13 +79,45 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * [ ] support index V3
 * [ ] Pack file PSRC field
 
-### `.unwrap()` vs `.expect(…)`
+## `.unwrap()` vs `.expect(…)`
 
 * don't use unwrap, not even in tests. Instead use `quick_error!()` or `Box<dyn std::error::Error>`.
 * Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
   answer "This should work _because_…<expect(…)>"
   
-### Examples, Experiments, Porcelain CLI and Plumbing CLI - which does what?
+## Examples, Experiments, Porcelain CLI and Plumbing CLI - which does what?
+
+### Plumbing vs Porcelain
+
+Both terms are coming from the `git` implementation itself, even though it won't necessarily point out which commands are plumbing and which
+are porcelain.
+The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or by hand for certain use
+cases.
+The term *porcelain* refers to those with a decent user experience, they are primarily intended for use by humans.
+
+In any case, both types of programs must self-document their capabilities using through the `--help` flag.
+
+From there, we can derive a few rules to adhere to unless there are good reasons not to:
+
+#### Plumbing
+
+* does not show any progress or logging output by default
+* if supported and logging is enabled, it will show timestamps in UTC
+* it does not need a git repository, but instead takes all required information via the command-line
+
+#### Porcelain
+
+* Provides output to stderr by default to provide progress information. There is no need to allow disabling it, but it shouldn't show up unless
+  the operation takes some time.
+* If timestamps are shown, they are in localtime.
+* Non-progress information goes to stdout.
+
+#### Summary
+
+Here is the hierarchy of programs - each level requires more polish and generally work to be done.
+_Experiments_ are the quickest ways to obtain some insights. _Examples_ are materialized ideas that others can learn from but that don't quite have
+the polish (or the potential) to move up to _plumbing_ or _porcelain_. _Plumbing_ is programs for use in scripts, whereas _porcelain_ is for use
+by humans.
 
 * **Experiments**
   * quick, potentially one-off programs to learn about an aspect of gitoxide potentially in comparison to other implementations like `libgit2`.
@@ -101,24 +133,27 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * **Plumbing CLI**    
   * Use Clap AND Argh for command-line parsing via feature toggles to allow for tiny builds as plumbing is mostly for scripts.
   * Journey tests 
-  * Progress can be turned on using the `--verbose` flag  
+  * Progress can be turned on using the `--verbose` flag, quiet by default.
   * Examples can be turned into plumbing by adding journey tests and `argh` command-line parsing, as well as progress.
 * **Porcelain CLI**
   * Use Clap for command-line parsing for the best quality CLI experience - it's for the user.
   * Journey tests.
-  * Support for `--verbose` and `--progress`.
+  * Support for `--quiet` and `--progress`.
+  * Verbose by default.
   * Examples can be turned into plumbing by adding journey tests and progress.
 
-## Maintenance Guide
+# Maintenance Guide
 
 Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
 get an overview.
 
-### Creating a release
+## Creating a release
 
-Run `etc/release.sh` to release all crates in leaf-first order using `cargo release`.
+Run `make publish-all` to publish all crates in leaf-first order using `cargo release` based on the currently set version.
+For this to work, you have to run `cargo release minor|major` each time you break the API of a crate but abort it during package verification.
+That way, `cargo release` updates all the dependents for you with the new version, without actually publishing to crates.io.
 
-### Which git-version to chase?
+## Which git-version to chase?
 
 Generally, we take the git version installed on ubuntu-latest as the one we stay compatible with (_while maintaining backwards
 compatibility_). Certain tests only run on CI, designed to validate certain assumptions still hold against possibly changed
@@ -126,7 +161,7 @@ git program versions.
 
 This also means that CI may fail despite everything being alright locally, and the fix depends on the problem at hand.
 
-### How to update fixtures
+## How to update fixtures
 
 Fixtures are created by using a line like this which produces a line we ignore via `tail +1` followed by the un-prettified object payload
 trailed by a newline.

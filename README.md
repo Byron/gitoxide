@@ -201,30 +201,6 @@ Provide a CLI to for the most basic user journey:
 * [ ] push
   * [ ] create (thin) pack
   
-## Plumbing vs Porcelain
-
-Both terms are coming from the `git` implementation itself, even though it won't necessarily point out which commands are plumbing and which
-are porcelain.
-The term *plumbing* refers to lower-level, more rarely used commands that complement porcelain by being invoked by it or by hand for certain use
-cases.
-The term *porcelain* refers to those with a decent user experience, they are primarily intended for use by humans.
-
-In any case, both types of programs must self-document their capabilities using through the `--help` flag.
-
-From there, we can derive a few rules to adhere to unless there are good reasons not to:
-
-### Plumbing
-
-* does not show any progress or logging output by default
-* if supported and logging is enabled, it will show timestamps in UTC
-* it does not need a git repository, but instead takes all required information via the command-line 
-
-### Porcelain
-
-* Provides output to stderr by default to provide progress information. There is no need to allow disabling it, but it shouldn't show up unless
-  the operation takes some time.
-* If timestamps are shown, they are in localtime.
-* Non-progress information goes to stdout.
 
 ## Shortcomings
 
