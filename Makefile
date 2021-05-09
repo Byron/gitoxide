@@ -17,7 +17,7 @@ target/debug/utils:
 	cargo build --package utils
 
 publish-all: target/debug/utils ## Publish all crates in the currently set version if they are not published yet.
-	etc/release.sh $<
+	etc/release.sh $< --no-confirm
 
 ##@ Release Builds
 
