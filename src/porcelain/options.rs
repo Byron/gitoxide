@@ -101,11 +101,14 @@ pub struct EstimateHours {
 }
 
 mod validator {
-    use std::ffi::OsStr;
-    use std::path::PathBuf;
+    use anyhow::Context;
+    use std::{ffi::OsStr, path::PathBuf};
 
     fn is_repo_inner(dir: &OsStr) -> anyhow::Result<()> {
-        let p = PathBuf::from(dir).join(".git").canonicalize()?;
+        let git_dir = PathBuf::from(dir).join(".git");
+        let p = git_dir
+            .canonicalize()
+            .with_context(|| format!("Could not canonicalize git repository at '{}'", git_dir.display()))?;
         if p.extension().unwrap_or_default() == "git"
             || p.file_name().unwrap_or_default() == ".git"
             || p.join("HEAD").is_file()
@@ -120,6 +123,6 @@ mod validator {
     }
 
     pub fn is_repo(dir: &OsStr) -> Result<(), String> {
-        is_repo_inner(dir).map_err(|err| err.to_string())
+        is_repo_inner(dir).map_err(|err| format!("{:#}", err))
     }
 }
