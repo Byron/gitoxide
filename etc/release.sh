@@ -20,7 +20,7 @@ for crate in git-features git-url git-hash git-ref git-object git-traverse git-d
   mkdir -p "$version_dir"
   touch "$version_path"
   # Need to keep the working dir clean or cargo release refuses to work
-  git add "$version_dir" && git commit -m "[track publish] $version_info"
+  git add "$version_dir" && printf "[track publish] %s\n\n[skip ci]" "$version_info" | git commit -F -
 done
 
 git push --tags origin main
