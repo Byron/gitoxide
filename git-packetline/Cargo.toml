@@ -23,4 +23,4 @@ hex = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 [dev-dependencies]
-git-odb = { version = "^0.14.0", path = "../git-odb" }
+git-odb = { version = "^0.15.0", path = "../git-odb" }
