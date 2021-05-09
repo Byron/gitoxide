@@ -881,7 +881,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "bstr",
  "git-odb",

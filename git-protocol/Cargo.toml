@@ -26,4 +26,4 @@ nom = { version = "6.0.0-alpha1", default-features = false, features = ["alloc"]
 btoi = "0.4.2"
 
 [dev-dependencies]
-git-packetline = { version = "^0.4.0", path = "../git-packetline" }
+git-packetline = { version = "^0.5.0", path = "../git-packetline" }
