@@ -20,5 +20,5 @@ quick-error = "2.0.0"
 
 [dev-dependencies]
 git-odb = { version = "^0.14", path = "../git-odb" }
-git-traverse = { version = "0.1", path = "../git-traverse" }
+git-traverse = { version = "^0.2", path = "../git-traverse" }
 git-testtools = { path = "../tests/tools" }
