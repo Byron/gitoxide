@@ -157,7 +157,7 @@ jobs:
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip "target/${{ matrix.target }}/release/${{ env.EXE_NAME }}{,p}"
+        run: strip target/${{ matrix.target }}/release/${{ env.EXE_NAME }}{,p}
 
       - name: Build archive
         shell: bash
@@ -168,12 +168,12 @@ jobs:
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
-            # cp "target/${{ matrix.target }}/release/${{ env.EXE_NAME }}{,p}.exe" "$staging/"
-            cp "target/release/${{ env.EXE_NAME }}{,p}.exe" "$staging/"
+            # cp target/${{ matrix.target }}/release/${{ env.EXE_NAME }}{,p}.exe "$staging/"
+            cp target/release/${{ env.EXE_NAME }}{,p}.exe "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
           else
-            cp "target/${{ matrix.target }}/release/${{ env.EXE_NAME }}{,p}" "$staging/"
+            cp target/${{ matrix.target }}/release/${{ env.EXE_NAME }}{,p} "$staging/"
             tar czf "$staging.tar.gz" "$staging"
             echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
           fi
