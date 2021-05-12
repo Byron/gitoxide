@@ -1,9 +1,12 @@
+use std::process::{self, Command, Stdio};
+
+use bstr::{BString, ByteSlice};
+
+use crate::client::blocking::git;
 use crate::{
-    client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+    client::{self, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
 };
-use bstr::{BString, ByteSlice};
-use std::process::{self, Command, Stdio};
 
 // from https://github.com/git/git/blob/20de7e7e4f4e9ae52e6cc7cfaa6469f186ddb0fa/environment.c#L115:L115
 const ENV_VARS_TO_REMOVE: &[&str] = &[

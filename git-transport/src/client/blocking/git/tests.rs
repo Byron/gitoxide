@@ -1,5 +1,6 @@
 mod message {
-    use crate::{client::git, Protocol, Service};
+    use crate::client::blocking::git;
+    use crate::{Protocol, Service};
 
     #[test]
     fn version_1_without_host_and_version() {

@@ -1,12 +1,16 @@
-use crate::fixture_bytes;
-use bstr::ByteVec;
-use git_transport::client::Transport;
-use git_transport::{client::http, Protocol};
 use std::{
     io::{Read, Write},
     net::SocketAddr,
     time::Duration,
 };
+
+use bstr::ByteVec;
+
+use git_transport::client::blocking::http;
+use git_transport::client::Transport;
+use git_transport::Protocol;
+
+use crate::fixture_bytes;
 
 enum Command {
     ReadAndRespond(Vec<u8>),

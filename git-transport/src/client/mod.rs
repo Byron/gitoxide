@@ -1,29 +1,18 @@
-use crate::{Protocol, Service};
-use bstr::BString;
 use std::{io, io::Write};
 
+use bstr::BString;
+
+use crate::{Protocol, Service};
+
 ///
-pub mod connect;
+pub mod blocking;
 #[doc(inline)]
-pub use connect::connect;
-
-///
-pub mod file;
-///
-pub mod git;
-///
-#[cfg(feature = "http-client-curl")]
-pub mod http;
-///
-pub mod ssh;
-
-///
-pub mod capabilities;
+pub use blocking::capabilities::Capabilities;
 #[doc(inline)]
-pub use capabilities::Capabilities;
-
-mod request;
-pub use request::{ExtendedBufRead, HandleProgress, RequestWriter};
+pub use blocking::connect::connect;
+pub use blocking::git;
+pub use blocking::request::{ExtendedBufRead, HandleProgress, RequestWriter};
+pub use blocking::{capabilities, http};
 
 #[cfg(feature = "http-client-curl")]
 type HttpError = http::Error;

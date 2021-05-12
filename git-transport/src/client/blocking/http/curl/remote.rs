@@ -1,4 +1,4 @@
-use crate::client::http;
+use crate::client::blocking::http;
 use curl::easy::Easy2;
 use git_features::io::pipe;
 use std::{

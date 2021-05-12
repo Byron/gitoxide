@@ -1,4 +1,4 @@
-use crate::client::http;
+use crate::client::blocking::http;
 use git_features::io;
 use std::{
     sync::mpsc::{Receiver, SyncSender},

@@ -1,12 +1,16 @@
-use crate::{
-    client::{self, capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
-    Protocol, Service,
-};
-use git_packetline::PacketLine;
 use std::{
     borrow::Cow,
     convert::Infallible,
     io::{self, BufRead, Read},
+};
+
+use git_packetline::PacketLine;
+pub use traits::{Error, GetResponse, Http, PostResponse};
+
+use crate::client::blocking::capabilities;
+use crate::{
+    client::{self, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
+    Protocol, Service,
 };
 
 #[cfg(feature = "http-client-curl")]
@@ -14,7 +18,6 @@ pub(crate) mod curl;
 
 ///
 mod traits;
-pub use traits::{Error, GetResponse, Http, PostResponse};
 
 /// The actual http client implementation.
 #[cfg(feature = "http-client-curl")]

@@ -72,15 +72,15 @@ fn transport<'a>(
     out: &'a mut Vec<u8>,
     path: &str,
     version: git_transport::Protocol,
-) -> git_transport::client::git::Connection<std::io::Cursor<Vec<u8>>, &'a mut Vec<u8>> {
+) -> git_transport::client::blocking::git::Connection<std::io::Cursor<Vec<u8>>, &'a mut Vec<u8>> {
     let response = fixture_bytes(path);
-    git_transport::client::git::Connection::new(
+    git_transport::client::blocking::git::Connection::new(
         std::io::Cursor::new(response),
         out,
         version,
         b"does/not/matter".as_bstr().to_owned(),
         None::<(&str, _)>,
-        git_transport::client::git::ConnectMode::Process,
+        git_transport::client::blocking::git::ConnectMode::Process,
     )
 }
 

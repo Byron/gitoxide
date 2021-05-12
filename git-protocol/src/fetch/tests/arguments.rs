@@ -53,15 +53,15 @@ impl<T: client::Transport> client::Transport for Transport<T> {
 fn transport(
     out: &mut Vec<u8>,
     stateful: bool,
-) -> Transport<git_transport::client::git::Connection<io::Cursor<Vec<u8>>, &mut Vec<u8>>> {
+) -> Transport<git_transport::client::blocking::git::Connection<io::Cursor<Vec<u8>>, &mut Vec<u8>>> {
     Transport {
-        inner: git_transport::client::git::Connection::new(
+        inner: git_transport::client::blocking::git::Connection::new(
             io::Cursor::new(Vec::new()),
             out,
             Protocol::V1, // does not matter
             b"does/not/matter".as_bstr().to_owned(),
             None::<(&str, _)>,
-            git_transport::client::git::ConnectMode::Process, // avoid header to be sent
+            git_transport::client::blocking::git::ConnectMode::Process, // avoid header to be sent
         ),
         stateful,
     }

@@ -1,10 +1,3 @@
-use crate::fixture_bytes;
-use bstr::ByteSlice;
-use git_transport::client::Identity;
-use git_transport::{
-    client::{self, http, SetServiceResponse, Transport, TransportV2Ext},
-    Protocol, Service,
-};
 use std::{
     cell::RefCell,
     error::Error,
@@ -12,6 +5,17 @@ use std::{
     ops::Deref,
     rc::Rc,
 };
+
+use bstr::ByteSlice;
+
+use git_transport::client::blocking::http;
+use git_transport::client::Identity;
+use git_transport::{
+    client::{self, SetServiceResponse, Transport, TransportV2Ext},
+    Protocol, Service,
+};
+
+use crate::fixture_bytes;
 
 mod mock;
 

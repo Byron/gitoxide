@@ -91,12 +91,12 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
             Box::new(
-                crate::client::file::connect(url.path, desired_version)
+                crate::client::blocking::file::connect(url.path, desired_version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }
         git_url::Scheme::Ssh => Box::new(
-            crate::client::ssh::connect(
+            crate::client::blocking::ssh::connect(
                 &url.host.as_ref().expect("host is present in url"),
                 url.path,
                 desired_version,
@@ -110,7 +110,7 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
             Box::new(
-                crate::client::git::connect(
+                crate::client::blocking::git::connect(
                     &url.host.as_ref().expect("host is present in url"),
                     url.path,
                     desired_version,

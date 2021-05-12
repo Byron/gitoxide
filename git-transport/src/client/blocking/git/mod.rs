@@ -1,18 +1,24 @@
-use crate::{
-    client::{self, capabilities, SetServiceResponse},
-    Protocol, Service,
-};
-use bstr::BString;
-use git_packetline::PacketLine;
 use std::{
     io,
     io::Write,
     net::{TcpStream, ToSocketAddrs},
 };
 
+use bstr::BString;
+use quick_error::quick_error;
+
+use git_packetline::PacketLine;
+
+use crate::client::blocking::capabilities;
+use crate::{
+    client::{self, SetServiceResponse},
+    Protocol, Service,
+};
+
 pub(crate) mod message {
-    use crate::{Protocol, Service};
     use bstr::{BString, ByteVec};
+
+    use crate::{Protocol, Service};
 
     pub fn connect(
         service: Service,
@@ -180,7 +186,6 @@ where
     }
 }
 
-use quick_error::quick_error;
 quick_error! {
     /// The error used in [`connect()`].
     #[derive(Debug)]
