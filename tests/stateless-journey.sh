@@ -20,6 +20,15 @@ SUCCESSFULLY=0
 WITH_FAILURE=1
 WITH_CLAP_FAILURE=2
 
+set -a
+export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
+export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
+export GIT_AUTHOR_NAME="Sebastian Thiel"
+export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
+export GIT_AUTHOR_EMAIL="git@example.com"
+export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
+set +a
+
 
 function remove-paths() {
   sed -E 's#/.*#"#g'
@@ -44,7 +53,7 @@ function repo-with-remotes() {
     touch a
     git add a
     git commit -m "non-bare"
-  )
+  ) &>/dev/null
 }
 
 
@@ -54,13 +63,6 @@ function small-repo-in-sandbox() {
     git init
     git checkout -b main
     git config commit.gpgsign false
-    set -a
-    export GIT_AUTHOR_DATE="2020-09-09 09:06:03 +0800"
-    export GIT_COMMITTER_DATE="${GIT_AUTHOR_DATE}"
-    export GIT_AUTHOR_NAME="Sebastian Thiel"
-    export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
-    export GIT_AUTHOR_EMAIL="git@example.com"
-    export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
     touch a
     git add a
     git commit -m "first"
