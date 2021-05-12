@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-pub type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+pub type Error = Box<dyn std::error::Error>;
+pub type Result<T = ()> = std::result::Result<T, Error>;
 
 pub fn fixture_bytes(path: &str) -> Vec<u8> {
     fn fixture_path(path: &str) -> PathBuf {
@@ -10,4 +11,4 @@ pub fn fixture_bytes(path: &str) -> Vec<u8> {
 }
 
 #[cfg(not(feature = "http-client-curl"))]
-mod client_blocking;
+mod client;
