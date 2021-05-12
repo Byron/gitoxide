@@ -10,4 +10,5 @@ pub fn fixture_bytes(path: &str) -> Vec<u8> {
     std::fs::read(fixture_path(path)).expect("fixture to be present and readable")
 }
 
-mod client;
+#[cfg(feature = "http-client-curl")]
+mod client_blocking_http;
