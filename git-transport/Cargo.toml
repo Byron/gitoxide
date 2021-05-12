@@ -12,12 +12,15 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
+default = ["blocking-client"]
 serde1 = ["serde"]
-http-client-curl = ["curl", "base64", "git-features/io-pipe", "maybe-async/is_sync"]
+http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
+blocking-client = ["maybe-async/is_sync"]
 
 [[test]]
 name = "blocking-transport"
 path = "tests/blocking-transport.rs"
+required-features = ["blocking-client"]
 
 [[test]]
 name = "blocking-transport-http-only"
@@ -34,6 +37,8 @@ git-packetline = { version = "^0.5.0", path = "../git-packetline" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+
+# handle blocking/async versions
 maybe-async = "0.2.4"
 async-trait = { version = "0.1.50", optional = true }
 
