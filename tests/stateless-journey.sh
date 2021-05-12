@@ -80,6 +80,28 @@ function small-repo-in-sandbox() {
 if test "$kind" = "max"; then
 title "Porcelain ${kind}"
 (
+  (when "running a debug-only panic test"
+    snapshot="$snapshot/panic-behaviour"
+    (with "the --quiet option set"
+      it "fails as expected" && {
+        WITH_SNAPSHOT="$snapshot/expected-failure" \
+        expect_run_sh 101 "$exe -q panic"
+      }
+    )
+
+    (with "NO --quiet option set"
+      it "fails as expected" && {
+        WITH_SNAPSHOT="$snapshot/expected-failure-in-thread" \
+        expect_run_sh 101 "$exe panic"
+      }
+    )
+    (with "progress option set"
+      it "fails as expected" && {
+        WITH_SNAPSHOT="$snapshot/expected-failure-in-thread-with-progress" \
+        expect_run_sh $WITH_FAILURE "$exe --progress panic"
+      }
+    )
+  )
   snapshot="$snapshot/porcelain"
   (with_program tree
     (when "using the 'tools' subcommand"

@@ -91,6 +91,7 @@ pub mod pretty {
             (true, false) => {
                 enum Event<T> {
                     UiDone,
+                    ComputationFailed,
                     ComputationDone(Result<T>),
                 }
                 let progress = crate::shared::progress_tree();
@@ -109,19 +110,33 @@ pub mod pretty {
                 });
                 // LIMITATION: This will hang if the thread panics as no message is send and the renderer thread will wait forever.
                 // `catch_unwind` can't be used as a parking lot mutex is not unwind safe, coming from prodash.
-                std::thread::spawn(move || {
-                    let res = run(Some(sub_progress), &mut stdout(), &mut stderr());
-                    tx.send(Event::ComputationDone(res)).ok();
+                let join_handle = std::thread::spawn(move || {
+                    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        run(Some(sub_progress), &mut stdout(), &mut stderr())
+                    }));
+                    match res {
+                        Ok(res) => tx.send(Event::ComputationDone(res)).ok(),
+                        Err(err) => {
+                            tx.send(Event::ComputationFailed).ok();
+                            std::panic::resume_unwind(err)
+                        }
+                    }
                 });
                 match rx.recv()? {
                     Event::UiDone => {
                         ui_handle.shutdown_and_wait();
+                        drop(join_handle);
                         Err(anyhow!("Operation cancelled by user"))
                     }
                     Event::ComputationDone(res) => {
                         ui_handle.shutdown_and_wait();
+                        join_handle.join().ok();
                         res
                     }
+                    Event::ComputationFailed => match join_handle.join() {
+                        Ok(_) => unreachable!("The thread has panicked and unwrap is expected to show it"),
+                        Err(err) => std::panic::resume_unwind(err),
+                    },
                 }
             }
             (true, true) | (false, true) => {

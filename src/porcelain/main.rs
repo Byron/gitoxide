@@ -13,6 +13,15 @@ pub fn main() -> Result<()> {
     let progress_keep_open = args.progress_keep_open;
 
     match args.cmd {
+        #[cfg(debug_assertions)]
+        Subcommands::Panic => prepare_and_run(
+            "panic-behaviour",
+            verbose,
+            progress,
+            progress_keep_open,
+            crate::shared::STANDARD_RANGE,
+            move |_progress, _out, _err| panic!("something went very wrong"),
+        ),
         Subcommands::Init { directory } => core::repository::init(directory),
         Subcommands::Tools(tool) => match tool {
             ToolCommands::EstimateHours(EstimateHours {

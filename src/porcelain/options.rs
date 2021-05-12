@@ -40,6 +40,8 @@ pub enum Subcommands {
     #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersion, setting = AppSettings::SubcommandRequired)]
     #[clap(visible_alias = "t")]
     Tools(ToolCommands),
+    #[cfg(debug_assertions)]
+    Panic,
 }
 
 #[derive(Debug, Clap)]
