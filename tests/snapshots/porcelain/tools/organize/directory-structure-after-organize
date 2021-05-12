@@ -1,6 +1,7 @@
 .
 ├── dir
 ├── example.com
+│   ├── a-repo-with-extension
 │   ├── one-origin
 │   └── origin-and-fork
 ├── no-origin
@@ -8,4 +9,4 @@
 └── special-origin
     └── a
 
-6 directories, 2 files
+7 directories, 2 files

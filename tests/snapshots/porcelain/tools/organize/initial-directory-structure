@@ -1,4 +1,6 @@
 .
+├── a-non-bare-repo-with-extension.git
+│   └── a
 ├── dir
 │   └── one-origin
 ├── no-origin
@@ -8,4 +10,4 @@
 └── special-origin
     └── a
 
-5 directories, 3 files
+6 directories, 4 files

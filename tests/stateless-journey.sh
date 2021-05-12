@@ -118,6 +118,7 @@ title "Porcelain ${kind}"
           repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
           repo-with-remotes special-origin special-name https://example.com/special-origin
           repo-with-remotes no-origin
+          repo-with-remotes a-non-bare-repo-with-extension.git origin https://example.com/a-repo-with-extension.git
           snapshot="$snapshot/tools"
 
           (when "running 'find'"
