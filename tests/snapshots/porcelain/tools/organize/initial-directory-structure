@@ -2,7 +2,10 @@
 ├── dir
 │   └── one-origin
 ├── no-origin
+│   └── a
 ├── origin-and-fork
+│   └── a
 └── special-origin
+    └── a
 
-5 directories, 0 files
+5 directories, 3 files

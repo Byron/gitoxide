@@ -33,14 +33,18 @@ function repo-with-remotes() {
 
   mkdir -p "$1"
   (
-      cd "$1"
-      shift
+    cd "$1"
+    shift
+    git init
     while [[ $# != 0 ]]; do
-        git init
         git remote add "$1" "$2"
         shift 2
-    done &> /dev/null
-  )
+    done
+    git config commit.gpgsign false
+    touch a
+    git add a
+    git commit -m "non-bare"
+  ) &>/dev/null
 }
 
 

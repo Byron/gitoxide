@@ -1,3 +1,4 @@
-./dir/one-origin/.git
-./origin-and-fork/.git
-./special-origin/.git
+./dir/one-origin
+./no-origin
+./origin-and-fork
+./special-origin

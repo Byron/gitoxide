@@ -18,7 +18,15 @@ impl Default for Mode {
     }
 }
 
-fn find_git_repository_workdirs<P: Progress>(root: impl AsRef<Path>, mut progress: P) -> impl Iterator<Item = PathBuf>
+enum RepoKind {
+    Bare,
+    WorkingTree,
+}
+
+fn find_git_repository_workdirs<P: Progress>(
+    root: impl AsRef<Path>,
+    mut progress: P,
+) -> impl Iterator<Item = (PathBuf, RepoKind)>
 where
     <P as Progress>::SubProgress: Sync,
 {
@@ -82,7 +90,16 @@ where
     .inspect(move |_| progress.inc())
     .filter_map(Result::ok)
     .filter(|e| e.client_state.is_repo)
-    .map(|e| into_workdir(e.path()))
+    .map(|e| {
+        (
+            into_workdir(e.path()),
+            if e.client_state.is_bare {
+                RepoKind::Bare
+            } else {
+                RepoKind::WorkingTree
+            },
+        )
+    })
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
@@ -97,6 +114,7 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
 
 fn handle(
     mode: Mode,
+    kind: RepoKind,
     git_workdir: &Path,
     canonicalized_destination: &Path,
     progress: &mut impl Progress,
@@ -160,7 +178,16 @@ fn handle(
                 .as_ref()
                 .ok_or_else(|| anyhow::Error::msg(format!("Remote URLs must have host names: {}", url)))?,
         )
-        .join(to_relative(git_url::expand_path(None, url.path.as_bstr())?));
+        .join(to_relative({
+            let mut path = git_url::expand_path(None, url.path.as_bstr())?;
+            match kind {
+                RepoKind::Bare => path,
+                RepoKind::WorkingTree => {
+                    path.set_extension("");
+                    path
+                }
+            }
+        }));
 
     if let Ok(destination) = destination.canonicalize() {
         if git_workdir.canonicalize()? == destination {
@@ -191,7 +218,7 @@ pub fn discover<P: Progress>(
 where
     <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
 {
-    for git_workdir in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
+    for (git_workdir, _kind) in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
         writeln!(&mut out, "{}", git_workdir.display())?;
     }
     Ok(())
@@ -208,8 +235,8 @@ where
 {
     let mut num_errors = 0usize;
     let destination = destination.as_ref().canonicalize()?;
-    for path_to_move in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
-        if let Err(err) = handle(mode, &path_to_move, &destination, &mut progress) {
+    for (path_to_move, kind) in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
+        if let Err(err) = handle(mode, kind, &path_to_move, &destination, &mut progress) {
             progress.fail(format!(
                 "Error when handling directory {:?}: {}",
                 path_to_move.display(),

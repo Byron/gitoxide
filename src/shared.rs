@@ -69,6 +69,7 @@ pub mod pretty {
     use crate::shared::ProgressRange;
     use anyhow::{anyhow, Result};
     use std::io::{stderr, stdout, Write};
+    use std::panic::UnwindSafe;
 
     pub fn prepare_and_run<T: Send + 'static>(
         name: &str,
@@ -78,6 +79,7 @@ pub mod pretty {
         range: impl Into<Option<ProgressRange>>,
         run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>
             + Send
+            + UnwindSafe
             + 'static,
     ) -> Result<T> {
         use crate::shared::{self, STANDARD_RANGE};
@@ -105,6 +107,8 @@ pub mod pretty {
                         }
                     }
                 });
+                // LIMITATION: This will hang if the thread panics as no message is send and the renderer thread will wait forever.
+                // `catch_unwind` can't be used as a parking lot mutex is not unwind safe, coming from prodash.
                 std::thread::spawn(move || {
                     let res = run(Some(sub_progress), &mut stdout(), &mut stderr());
                     tx.send(Event::ComputationDone(res)).ok();
