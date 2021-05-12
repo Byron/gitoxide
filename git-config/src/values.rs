@@ -157,6 +157,7 @@ impl Value<'_> {
     /// Generates a byte representation of the value. This should be used when
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
+    #[inline]
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -182,6 +183,7 @@ impl<'a> From<&'a str> for Value<'a> {
 }
 
 impl<'a> From<&'a [u8]> for Value<'a> {
+    #[inline]
     fn from(s: &'a [u8]) -> Self {
         // All parsable values must be utf-8 valid
         if let Ok(s) = std::str::from_utf8(s) {
@@ -442,6 +444,7 @@ pub enum TrueVariant<'a> {
 impl<'a> TryFrom<&'a str> for TrueVariant<'a> {
     type Error = ();
 
+    #[inline]
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         Self::try_from(value.as_bytes())
     }
@@ -468,6 +471,7 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
 impl TryFrom<String> for TrueVariant<'_> {
     type Error = String;
 
+    #[inline]
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Self::try_from(value.into_bytes()).map_err(|v| String::from_utf8(v).unwrap())
     }
@@ -711,6 +715,7 @@ impl FromStr for IntegerSuffix {
 impl TryFrom<&[u8]> for IntegerSuffix {
     type Error = ();
 
+    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }
@@ -719,6 +724,7 @@ impl TryFrom<&[u8]> for IntegerSuffix {
 impl TryFrom<Vec<u8>> for IntegerSuffix {
     type Error = ();
 
+    #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
@@ -1000,6 +1006,7 @@ impl FromStr for ColorValue {
 impl TryFrom<&[u8]> for ColorValue {
     type Error = ();
 
+    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }
@@ -1113,6 +1120,7 @@ impl FromStr for ColorAttribute {
 impl TryFrom<&[u8]> for ColorAttribute {
     type Error = ();
 
+    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }

@@ -140,12 +140,14 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
+    #[inline]
     pub fn push_newline(&mut self) {
         self.section.0.push(Event::Newline("\n".into()));
     }
 
     /// Enables or disables automatically adding newline events after adding
     /// a value. This is enabled by default.
+    #[inline]
     pub fn implicit_newline(&mut self, on: bool) {
         self.implicit_newline = on;
     }
@@ -153,12 +155,14 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Sets the number of spaces before the start of a key value. By default,
     /// this is set to two. Set to 0 to disable adding whitespace before a key
     /// value.
+    #[inline]
     pub fn set_whitespace(&mut self, num: usize) {
         self.whitespace = num;
     }
 
     /// Returns the number of whitespace this section will insert before the
     /// beginning of a key.
+    #[inline]
     #[must_use]
     pub const fn whitespace(&self) -> usize {
         self.whitespace
@@ -167,6 +171,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
 // Internal methods that may require exact indices for faster operations.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
+    #[inline]
     fn new(section: &'borrow mut SectionBody<'event>) -> Self {
         Self {
             section,
@@ -208,6 +213,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
             .ok_or(GitConfigError::KeyDoesNotExist)
     }
 
+    #[inline]
     fn delete(&mut self, start: usize, end: usize) {
         self.section.0.drain(start..=end);
     }
@@ -222,6 +228,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 impl<'event> Deref for MutableSection<'_, 'event> {
     type Target = SectionBody<'event>;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.section
     }
@@ -233,6 +240,7 @@ pub struct SectionBody<'event>(Vec<Event<'event>>);
 
 impl<'event> SectionBody<'event> {
     /// Constructs a new empty section body.
+    #[inline]
     fn new() -> Self {
         Self::default()
     }
@@ -281,6 +289,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
+    #[inline]
     pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, GitConfigError<'event>> {
         T::try_from(self.value(key).ok_or(GitConfigError::KeyDoesNotExist)?)
             .map_err(|_| GitConfigError::FailedConversion)
@@ -329,6 +338,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the conversion failed.
+    #[inline]
     pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, GitConfigError<'event>> {
         self.values(key)
             .into_iter()
@@ -338,6 +348,7 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns an iterator visiting all keys in order.
+    #[inline]
     pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
         self.0
             .iter()
@@ -358,12 +369,14 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns the number of entries in the section.
+    #[inline]
     #[must_use]
     pub fn len(&self) -> usize {
         self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
     }
 
     /// Returns if the section is empty.
+    #[inline]
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -405,6 +418,7 @@ impl<'event> SectionBody<'event> {
 }
 
 impl<'event> From<Vec<Event<'event>>> for SectionBody<'event> {
+    #[inline]
     fn from(e: Vec<Event<'event>>) -> Self {
         Self(e)
     }
@@ -502,6 +516,7 @@ pub struct GitConfig<'event> {
 
 impl<'event> GitConfig<'event> {
     /// Constructs an empty `git-config` file.
+    #[inline]
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -545,6 +560,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
+    #[inline]
     pub fn value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
         section_name: &'lookup str,
@@ -605,6 +621,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
+    #[inline]
     pub fn multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
         section_name: &'lookup str,
@@ -1196,6 +1213,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
 
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
+    #[inline]
     fn get_index_and_size(
         offsets: &'lookup HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,
@@ -1214,6 +1232,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     //
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
+    #[inline]
     fn set_offset(
         offsets: &mut HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,
@@ -1772,6 +1791,7 @@ impl<'a> TryFrom<&'a str> for GitConfig<'a> {
     /// [`GitConfig`]. See [`parse_from_str`] for more information.
     ///
     /// [`parse_from_str`]: crate::parser::parse_from_str
+    #[inline]
     fn try_from(s: &'a str) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_str(s).map(Self::from)
     }
@@ -1784,6 +1804,7 @@ impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
+    #[inline]
     fn try_from(value: &'a [u8]) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_bytes(value).map(GitConfig::from)
     }
@@ -1796,6 +1817,7 @@ impl<'a> TryFrom<&'a Vec<u8>> for GitConfig<'a> {
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
+    #[inline]
     fn try_from(value: &'a Vec<u8>) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_bytes(value).map(GitConfig::from)
     }
