@@ -95,11 +95,13 @@ title "Porcelain ${kind}"
         expect_run_sh 101 "$exe panic"
       }
     )
-    (with "progress option set"
-      it "fails as expected" && {
-        WITH_SNAPSHOT="$snapshot/expected-failure-in-thread-with-progress" \
-        expect_run_sh $WITH_FAILURE "$exe --progress panic"
-      }
+    (not_on_ci # due to different TTY settings, the output differs, it's OK for now
+      (with "progress option set"
+        it "fails as expected" && {
+          WITH_SNAPSHOT="$snapshot/expected-failure-in-thread-with-progress" \
+          expect_run_sh $WITH_FAILURE "$exe --progress panic"
+        }
+      )
     )
   )
   snapshot="$snapshot/porcelain"

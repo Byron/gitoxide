@@ -30,6 +30,17 @@ function on_ci () {
   }
 }
 
+function not_on_ci () {
+  [ -z "${CI-}" ] || {
+    function expect_run () {
+      echo 1>&2 "${WHITE} - skipped (runs only locally)"
+    }
+    function expect_run_sh () {
+      echo 1>&2 "${WHITE} - skipped (runs only locally)"
+    }
+  }
+}
+
 function title () {
   echo "$WHITE-----------------------------------------------------"
   echo "${GREEN}$*"
