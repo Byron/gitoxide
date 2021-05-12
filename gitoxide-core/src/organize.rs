@@ -29,14 +29,14 @@ where
         }
         path.join("HEAD").is_file() && path.join("config").is_file()
     }
-    fn into_workdir(path: PathBuf) -> PathBuf {
-        fn is_bare(path: &Path) -> bool {
-            !path.join("index").exists()
+    fn into_workdir(git_dir: PathBuf) -> PathBuf {
+        fn is_bare(git_dir: &Path) -> bool {
+            !git_dir.join("index").exists()
         }
-        if is_bare(&path) {
-            path
+        if is_bare(&git_dir) {
+            git_dir
         } else {
-            path.parent().expect("git is never in the root").to_owned()
+            git_dir.parent().expect("git is never in the root").to_owned()
         }
     }
 
