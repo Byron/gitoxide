@@ -44,7 +44,7 @@ function repo-with-remotes() {
     touch a
     git add a
     git commit -m "non-bare"
-  ) &>/dev/null
+  )
 }
 
 
