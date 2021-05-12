@@ -29,10 +29,10 @@ where
         }
         path.join("HEAD").is_file() && path.join("config").is_file()
     }
+    fn is_bare(git_dir: &Path) -> bool {
+        !git_dir.join("index").exists()
+    }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        fn is_bare(git_dir: &Path) -> bool {
-            !git_dir.join("index").exists()
-        }
         if is_bare(&git_dir) {
             git_dir
         } else {
@@ -40,15 +40,10 @@ where
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Default)]
     struct State {
         is_repo: bool,
-    }
-
-    impl Default for State {
-        fn default() -> Self {
-            State { is_repo: false }
-        }
+        is_bare: bool,
     }
 
     let walk = jwalk::WalkDirGeneric::<((), State)>::new(root)
@@ -63,18 +58,24 @@ where
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     let walk = walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
 
-    walk.process_read_dir(move |_depth, _path, _read_dir_state, children| {
-        let mut found_repo = false;
-        for entry in children.iter_mut().flatten() {
-            if is_repository(&entry.path()) {
-                entry.client_state = State { is_repo: true };
+    walk.process_read_dir(move |_depth, _path, _read_dir_state, siblings| {
+        let mut found_any_repo = false;
+        let mut found_bare_repo = false;
+        for entry in siblings.iter_mut().flatten() {
+            let path = entry.path();
+            if is_repository(&path) {
+                let is_bare = is_bare(&path);
+                entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
-                found_repo = true;
-                break;
+
+                found_any_repo = !is_bare;
+                found_bare_repo = is_bare;
             }
         }
-        if found_repo {
-            children.retain(|e| e.as_ref().map(|e| e.client_state.is_repo).unwrap_or(false));
+        // Only return paths which are repositories are further participating in the traversal
+        // Don't let bare repositories cause siblings to be pruned.
+        if found_any_repo && !found_bare_repo {
+            siblings.retain(|e| e.as_ref().map(|e| e.client_state.is_repo).unwrap_or(false));
         }
     })
     .into_iter()
