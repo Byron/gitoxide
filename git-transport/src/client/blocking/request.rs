@@ -10,7 +10,7 @@ use std::{
 /// A function `f(is_error, text)` receiving progress or error information.
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
-/// A [`Write`] implementation optimized for writing packet lines.
+/// A [`Write`][io::Write] implementation optimized for writing packet lines.
 /// A type implementing `Write` for packet lines, which when done can be transformed into a `Read` for
 /// obtaining the response.
 pub struct RequestWriter<'a> {

@@ -6,7 +6,7 @@ use std::{
 
 use bstr::ByteVec;
 
-use git_transport::client::blocking::http;
+use git_transport::client::http;
 use git_transport::client::Transport;
 use git_transport::Protocol;
 

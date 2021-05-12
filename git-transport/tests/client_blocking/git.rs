@@ -7,8 +7,8 @@ use std::{
 
 use bstr::ByteSlice;
 
-use git_transport::client::blocking::git;
 use git_transport::{
+    client::git,
     client::{self, Transport, TransportV2Ext},
     Protocol, Service,
 };
@@ -98,6 +98,7 @@ fn handshake_v1_and_request() -> crate::Result {
                 .push(std::str::from_utf8(data).expect("valid utf8").to_owned())
         }
     })));
+
     let mut pack = Vec::new();
     reader.read_to_end(&mut pack)?;
     assert_eq!(pack.len(), 876, "we receive the whole pack…");

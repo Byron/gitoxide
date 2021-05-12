@@ -8,7 +8,7 @@ use std::{
 
 use bstr::ByteSlice;
 
-use git_transport::client::blocking::http;
+use git_transport::client::http;
 use git_transport::client::Identity;
 use git_transport::{
     client::{self, SetServiceResponse, Transport, TransportV2Ext},

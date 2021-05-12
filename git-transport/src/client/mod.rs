@@ -5,14 +5,16 @@ use bstr::BString;
 use crate::{Protocol, Service};
 
 ///
-pub mod blocking;
+mod blocking;
+pub use blocking::capabilities;
 #[doc(inline)]
 pub use blocking::capabilities::Capabilities;
 #[doc(inline)]
 pub use blocking::connect::connect;
-pub use blocking::git;
+#[cfg(feature = "http-client-curl")]
+pub use blocking::http;
 pub use blocking::request::{ExtendedBufRead, HandleProgress, RequestWriter};
-pub use blocking::{capabilities, http};
+pub use blocking::{file, git, ssh};
 
 #[cfg(feature = "http-client-curl")]
 type HttpError = http::Error;
