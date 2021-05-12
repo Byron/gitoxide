@@ -1,4 +1,4 @@
-mod connect_message {
+mod message {
     use crate::{client::git, Protocol, Service};
 
     #[test]

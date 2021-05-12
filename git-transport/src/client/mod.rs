@@ -2,9 +2,6 @@ use crate::{Protocol, Service};
 use bstr::BString;
 use std::{io, io::Write};
 
-#[cfg(test)]
-mod tests;
-
 ///
 pub mod connect;
 #[doc(inline)]

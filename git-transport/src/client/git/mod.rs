@@ -239,3 +239,6 @@ pub fn connect(
         ConnectMode::Daemon,
     ))
 }
+
+#[cfg(test)]
+mod tests;
