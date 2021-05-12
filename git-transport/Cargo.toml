@@ -15,6 +15,15 @@ doctest = false
 serde1 = ["serde"]
 http-client-curl = ["curl", "base64", "git-features/io-pipe", "maybe-async/is_sync"]
 
+[[test]]
+name = "blocking-transport"
+path = "tests/blocking-transport.rs"
+
+[[test]]
+name = "blocking-transport-http-only"
+path = "tests/blocking-transport-http.rs"
+required-features = ["http-client-curl"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

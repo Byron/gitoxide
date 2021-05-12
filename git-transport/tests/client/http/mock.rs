@@ -83,10 +83,6 @@ impl Server {
         }
     }
 
-    pub fn addr(&self) -> &SocketAddr {
-        &self.addr
-    }
-
     pub fn received_as_string(&self) -> String {
         self.received().into_string().expect("utf8 only")
     }
@@ -104,8 +100,8 @@ pub fn serve_and_connect(
     let server = serve_once(name);
     let url = format!(
         "http://{}:{}/{}",
-        &server.addr().ip().to_string(),
-        &server.addr().port(),
+        &server.addr.ip().to_string(),
+        &server.addr.port(),
         path
     );
     let client = git_transport::client::http::connect(&url, version)?;
