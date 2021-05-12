@@ -11,6 +11,9 @@ mod tests;
 
 ///
 pub mod connect;
+#[doc(inline)]
+pub use connect::connect;
+
 ///
 pub mod file;
 ///
@@ -20,8 +23,6 @@ pub mod git;
 pub mod http;
 ///
 pub mod ssh;
-#[doc(inline)]
-pub use connect::connect;
 
 ///
 pub mod capabilities;
