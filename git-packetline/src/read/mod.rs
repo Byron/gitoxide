@@ -101,7 +101,6 @@ where
         Option<PacketLine<'static>>,
         Option<io::Result<Result<PacketLine<'a>, decode::Error>>>,
     ) {
-        buf.resize(MAX_LINE_LEN, 0);
         (
             false,
             None,
@@ -151,29 +150,20 @@ where
         if !self.peek_buf.is_empty() {
             std::mem::swap(&mut self.peek_buf, &mut self.buf);
             self.peek_buf.clear();
-            return Some(Ok(Ok(crate::decode(&self.buf).expect("only valid data in peek buf"))));
-        } else if self.buf.len() != MAX_LINE_LEN {
-            self.buf.resize(MAX_LINE_LEN, 0);
-        }
-        match Self::read_line_inner(&mut self.read, &mut self.buf) {
-            Ok(Ok(line)) => {
-                if self.delimiters.contains(&line) {
-                    self.is_done = true;
-                    self.stopped_at = self.delimiters.iter().find(|l| **l == line).cloned();
-                    None
-                } else if self.fail_on_err_lines {
-                    match line.check_error() {
-                        Some(err) => {
-                            self.is_done = true;
-                            Some(Err(io::Error::new(io::ErrorKind::Other, err.0.as_bstr().to_string())))
-                        }
-                        None => Some(Ok(Ok(line))),
-                    }
-                } else {
-                    Some(Ok(Ok(line)))
-                }
+            Some(Ok(Ok(crate::decode(&self.buf).expect("only valid data in peek buf"))))
+        } else {
+            if self.buf.len() != MAX_LINE_LEN {
+                self.buf.resize(MAX_LINE_LEN, 0);
             }
-            res => Some(res),
+            let (is_done, stopped_at, res) = Self::read_line_inner_exhaustive(
+                &mut self.read,
+                &mut self.buf,
+                &self.delimiters,
+                self.fail_on_err_lines,
+            );
+            self.is_done = is_done;
+            self.stopped_at = stopped_at;
+            res
         }
     }
 
@@ -201,6 +191,7 @@ where
             return None;
         }
         if self.peek_buf.is_empty() {
+            self.peek_buf.resize(MAX_LINE_LEN, 0);
             let (is_done, stopped_at, res) = Self::read_line_inner_exhaustive(
                 &mut self.read,
                 &mut self.peek_buf,
