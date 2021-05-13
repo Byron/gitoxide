@@ -200,43 +200,19 @@ where
         if self.is_done {
             return None;
         }
-        Some(if self.peek_buf.is_empty() {
-            // match Self::read_line_inner_exhaustive(&mut self.read, &mut self.peek_buf, &self.delimiters, self.fail_on_err_lines) {}
-            self.peek_buf.resize(MAX_LINE_LEN, 0);
-            match Self::read_line_inner(&mut self.read, &mut self.peek_buf) {
-                Ok(Ok(line)) => {
-                    if self.delimiters.contains(&line) {
-                        self.is_done = true;
-                        self.stopped_at = self.delimiters.iter().find(|l| **l == line).cloned();
-                        self.peek_buf.clear();
-                        return None;
-                    } else if self.fail_on_err_lines {
-                        if let Some(err) = line.check_error() {
-                            self.is_done = true;
-                            let err = err.0.as_bstr().to_string();
-                            self.peek_buf.clear();
-                            return Some(Err(io::Error::new(io::ErrorKind::Other, err)));
-                        }
-                    }
-                    let len = line
-                        .as_slice()
-                        .map(|s| s.len() + U16_HEX_BYTES)
-                        .unwrap_or(U16_HEX_BYTES);
-                    self.peek_buf.resize(len, 0);
-                    Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
-                }
-                Ok(Err(err)) => {
-                    self.peek_buf.clear();
-                    Ok(Err(err))
-                }
-                Err(err) => {
-                    self.peek_buf.clear();
-                    Err(err)
-                }
-            }
+        if self.peek_buf.is_empty() {
+            let (is_done, stopped_at, res) = Self::read_line_inner_exhaustive(
+                &mut self.read,
+                &mut self.peek_buf,
+                &self.delimiters,
+                self.fail_on_err_lines,
+            );
+            self.is_done = is_done;
+            self.stopped_at = stopped_at;
+            res
         } else {
-            Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here")))
-        })
+            Some(Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here"))))
+        }
     }
 
     /// Return this instance as implementor of [`Read`][io::Read] assuming side bands to be used in all received packet lines.
