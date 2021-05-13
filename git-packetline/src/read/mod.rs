@@ -8,8 +8,10 @@ pub use sidebands::WithSidebands;
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// [`Read`][io::Read]. [`Flush`][PacketLine::Flush] lines cause the reader to stop producing lines forever,
 /// leaving [`Read`][io::Read] at the start of whatever comes next.
+///
+/// This implementation tries hard not to allocate at all which leads to quite some added complexity and plenty of extra memory copies.
 pub struct StreamingPeekReader<T> {
-    inner: T,
+    read: T,
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
     buf: Vec<u8>,
@@ -25,7 +27,7 @@ where
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
     pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
         StreamingPeekReader {
-            inner: read,
+            read,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
             delimiters,
@@ -43,7 +45,7 @@ where
 
     /// Replace the reader used with the given `read`, resetting all other iteration state as well.
     pub fn replace(&mut self, read: T) -> T {
-        let prev = std::mem::replace(&mut self.inner, read);
+        let prev = std::mem::replace(&mut self.read, read);
         self.reset();
         self.fail_on_err_lines = false;
         prev
@@ -106,7 +108,7 @@ where
         } else if self.buf.len() != MAX_LINE_LEN {
             self.buf.resize(MAX_LINE_LEN, 0);
         }
-        match Self::read_line_inner(&mut self.inner, &mut self.buf) {
+        match Self::read_line_inner(&mut self.read, &mut self.buf) {
             Ok(Ok(line)) => {
                 if self.delimiters.contains(&line) {
                     self.is_done = true;
@@ -128,7 +130,11 @@ where
         }
     }
 
-    /// Modify the peek buffer, overwriting the byte at `position` with the given byte to `replace_with`.
+    /// Modify the peek buffer, overwriting the byte at `position` with the given byte to `replace_with` while truncating
+    /// it to contain only bytes until the newly replaced `position`.
+    ///
+    /// This is useful if you would want to remove 'special bytes' hidden behind, say a NULL byte to disappear and allow
+    /// standard line readers to read the next line as usual.
     ///
     /// **Note** that `position` does not include the 4 bytes prefix (they are invisible outside the reader)
     pub fn peek_buffer_replace_and_truncate(&mut self, position: usize, replace_with: u8) {
@@ -149,7 +155,7 @@ where
         }
         Some(if self.peek_buf.is_empty() {
             self.peek_buf.resize(MAX_LINE_LEN, 0);
-            match Self::read_line_inner(&mut self.inner, &mut self.peek_buf) {
+            match Self::read_line_inner(&mut self.read, &mut self.peek_buf) {
                 Ok(Ok(line)) => {
                     if self.delimiters.contains(&line) {
                         self.is_done = true;
