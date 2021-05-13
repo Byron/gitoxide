@@ -96,6 +96,7 @@ where
         buf: &'a mut Vec<u8>,
         delimiters: &[PacketLine<'static>],
         fail_on_err_lines: bool,
+        buf_resize: bool,
     ) -> (
         bool,
         Option<PacketLine<'static>>,
@@ -121,7 +122,9 @@ where
                         .as_slice()
                         .map(|s| s.len() + U16_HEX_BYTES)
                         .unwrap_or(U16_HEX_BYTES);
-                    buf.resize(len, 0);
+                    if buf_resize {
+                        buf.resize(len, 0);
+                    }
                     Ok(Ok(crate::decode(buf).expect("only valid data here")))
                 }
                 Ok(Err(err)) => {
@@ -160,6 +163,7 @@ where
                 &mut self.buf,
                 &self.delimiters,
                 self.fail_on_err_lines,
+                false,
             );
             self.is_done = is_done;
             self.stopped_at = stopped_at;
@@ -197,6 +201,7 @@ where
                 &mut self.peek_buf,
                 &self.delimiters,
                 self.fail_on_err_lines,
+                true,
             );
             self.is_done = is_done;
             self.stopped_at = stopped_at;
