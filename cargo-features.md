@@ -93,18 +93,22 @@ All feature toggles are additive.
 
 ### git-transport
 
-#### Blocking clients
+The _client_ portion of the transport layer is _async_ by default, i.e. if no feature toggles are set.
 
-Using any of the feature toggles here will set the entire codebase to be synchronous and blocking. This has the advantage that less dependencies are compiled into
-a smaller binary.
-
-* **http-client-curl**
+* **blocking-client**
+  * If set, blocking implementations of the typical git transports become available in `crate::client`
+  * **http-client-curl**
     * Adds support for the http and https transports using the Rust bindings for `libcurl`
+    
+**Note** that the _blocking_ client has a great choice of available transports, with the _async_ version of it supporting only the TCP based `git` transport leaving you
+with the responsibility to providing such an implementation of `futures-io::AsyncRead/AsyncWrite` yourself.
+    
+### git-protocol
 
-#### Blocking clients
+The _client_ portion of the protocol is _async_ by default, i.e. if no feature toggles are set.
 
-* **async-http-client-surf**
-    ** TBD
+* **blocking-client**
+  * If set, blocking implementations are available and will use the blocking version of the `git-transport` crate.
 
 ### Serialization Support
 
