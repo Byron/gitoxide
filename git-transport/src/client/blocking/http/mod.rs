@@ -132,7 +132,7 @@ impl<H: Http> client::Transport for Transport<H> {
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = capabilities::recv::v1_or_v2_as_detected(line_reader)?;
+        } = capabilities::Capabilities::from_lines_with_version_detection(line_reader)?;
         self.actual_version = actual_protocol;
         self.service = Some(service);
         Ok(client::SetServiceResponse {

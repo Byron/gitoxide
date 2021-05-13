@@ -96,7 +96,7 @@ where
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = capabilities::recv::v1_or_v2_as_detected(&mut self.line_provider)?;
+        } = capabilities::Capabilities::from_lines_with_version_detection(&mut self.line_provider)?;
         Ok(SetServiceResponse {
             actual_protocol,
             capabilities,

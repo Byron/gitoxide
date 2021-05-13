@@ -152,46 +152,48 @@ pub(crate) mod recv {
         pub protocol: Protocol,
     }
 
-    pub fn v1_or_v2_as_detected<T: io::Read>(
-        rd: &mut git_packetline::Provider<T>,
-    ) -> Result<Outcome<'_>, client::Error> {
-        // NOTE that this is vitally important - it is turned on and stays on for all following requests so
-        // we automatically abort if the server sends an ERR line anywhere.
-        // We are sure this can't clash with binary data when sent due to the way the PACK
-        // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
-        rd.fail_on_err_lines(true);
+    impl Capabilities {
+        pub(crate) fn from_lines_with_version_detection<T: io::Read>(
+            rd: &mut git_packetline::Provider<T>,
+        ) -> Result<Outcome<'_>, client::Error> {
+            // NOTE that this is vitally important - it is turned on and stays on for all following requests so
+            // we automatically abort if the server sends an ERR line anywhere.
+            // We are sure this can't clash with binary data when sent due to the way the PACK
+            // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
+            rd.fail_on_err_lines(true);
 
-        let capabilities_or_version = rd
-            .peek_line()
-            .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
-        let first_line = capabilities_or_version
-            .to_text()
-            .ok_or(client::Error::ExpectedLine("text"))?;
+            let capabilities_or_version = rd
+                .peek_line()
+                .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+            let first_line = capabilities_or_version
+                .to_text()
+                .ok_or(client::Error::ExpectedLine("text"))?;
 
-        let version = if first_line.as_bstr().starts_with_str("version ") {
-            if first_line.as_bstr().ends_with_str(" 1") {
-                Protocol::V1
+            let version = if first_line.as_bstr().starts_with_str("version ") {
+                if first_line.as_bstr().ends_with_str(" 1") {
+                    Protocol::V1
+                } else {
+                    Protocol::V2
+                }
             } else {
-                Protocol::V2
+                Protocol::V1
+            };
+            match version {
+                Protocol::V1 => {
+                    let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
+                    rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+                    Ok(Outcome {
+                        capabilities,
+                        refs: Some(Box::new(rd.as_read())),
+                        protocol: Protocol::V1,
+                    })
+                }
+                Protocol::V2 => Ok(Outcome {
+                    capabilities: Capabilities::from_lines(rd.as_read())?,
+                    refs: None,
+                    protocol: Protocol::V2,
+                }),
             }
-        } else {
-            Protocol::V1
-        };
-        match version {
-            Protocol::V1 => {
-                let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
-                rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
-                Ok(Outcome {
-                    capabilities,
-                    refs: Some(Box::new(rd.as_read())),
-                    protocol: Protocol::V1,
-                })
-            }
-            Protocol::V2 => Ok(Outcome {
-                capabilities: Capabilities::from_lines(rd.as_read())?,
-                refs: None,
-                protocol: Protocol::V2,
-            }),
         }
     }
 }
