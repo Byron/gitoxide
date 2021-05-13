@@ -12,9 +12,12 @@ mod remote_progress;
 pub use remote_progress::RemoteProgress;
 
 ///
+#[cfg(feature = "blocking-client")]
 pub mod credentials;
 ///
+#[cfg(feature = "blocking-client")]
 pub mod fetch;
 
 #[doc(inline)]
+#[cfg(feature = "blocking-client")]
 pub use fetch::fetch;

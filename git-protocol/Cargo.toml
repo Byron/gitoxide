@@ -13,6 +13,12 @@ doctest = false
 
 [features]
 serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-hash/serde1"]
+blocking-client = ["git-transport/blocking-client"]
+
+[[test]]
+name = "blocking-client"
+path = "tests/protocol.rs"
+required-features = ["blocking-client"]
 
 [dependencies]
 git-features = { version = "^0.14.0", path = "../git-features" }

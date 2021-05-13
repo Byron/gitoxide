@@ -106,12 +106,20 @@ check: ## Build all code in suitable configurations
 			   && cargo check
 	cd git-config && cargo check --all-features \
 				 && cargo check
+	cd git-transport && cargo check --all-features \
+					 && cargo check \
+					 && cargo check --features blocking-client \
+					 && cargo check --features http-client-curl
+	cd git-protocol && cargo check --all-features \
+					 && cargo check \
+					 && cargo check --features blocking-client
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
 	cd git-transport && cargo test && cargo test --features http-client-curl && cargo test --no-default-features
+	cd git-protocol && cargo test --features blocking-client
 	cd gitoxide-core && cargo test --lib
 
 continuous-unit-tests: ## run all unit tests whenever something changes

@@ -24,7 +24,7 @@ git-repository = { version = "^0.5.0", path = "../git-repository" }
 git-object = { version = "^0.9.0", path = "../git-object" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-odb = { version = "^0.15.0", path = "../git-odb", features = ["pack-cache-lru-static"] }
-git-protocol = { version = "^0.7.0", path = "../git-protocol" }
+git-protocol = { version = "^0.7.0", path = "../git-protocol", features = ["blocking-client"] }
 git-features = { version = "^0.14.0", path = "../git-features" }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
