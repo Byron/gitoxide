@@ -90,7 +90,7 @@ Many crates use feature flags to allow tuning the compiled result based on your 
 
 ## Installation
 
-### Binary Release
+### Download a Binary Release
 
 ```sh
 curl -LSfs https://raw.githubusercontent.com/Byron/gitoxide/main/ci/install.sh | \
@@ -102,7 +102,7 @@ on your needs, for _Linux_, _MacOS_ and _Windows_.
 
 [releases]: https://github.com/Byron/gitoxide/releases
 
-#### Cargo
+### From Source via Cargo
 
 `cargo` is the Rust package manager which can easily be obtained through [rustup][rustup]. With it, you can build your own binary
 effortlessly and for your particular CPU for additional performance gains.
@@ -190,9 +190,9 @@ to pick a task. If it's empty or you have other questions, feel free to [start a
 [discussions]: https://github.com/Byron/gitoxide/discussions
 [keybase]: https://keybase.io/byronbates
 
-## Roadmap to Future
+## Roadmap
 
-### Roadmap to 1.0
+### Features for 1.0
 
 Provide a CLI to for the most basic user journey:
 
