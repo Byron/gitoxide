@@ -84,6 +84,34 @@ impl Capabilities {
         ))
     }
 
+    /// Parse capabilities from the given a `first_line` and the rest of the lines as single newline
+    /// separated string via `remaining_lines`.
+    ///
+    /// Useful for parsing capabilities from a data sent from a server, and to avoid having to deal with
+    /// blocking and async traits for as long as possible. There is no value in parsing a few bytes
+    /// in a non-blocking fashion.
+    pub fn from_lines(
+        first_line: Option<impl Into<std::io::Result<String>>>,
+        remaining_lines: impl Into<String>,
+    ) -> Result<Capabilities, Error> {
+        let version_line = first_line.map(Into::into).ok_or(Error::MissingVersionLine)??;
+        let (name, value) = version_line.split_at(
+            version_line
+                .find(' ')
+                .ok_or_else(|| Error::MalformattedVersionLine(version_line.clone()))?,
+        );
+        if name != "version" {
+            return Err(Error::MalformattedVersionLine(version_line));
+        }
+        if value != " 2" {
+            return Err(Error::UnsupportedVersion(Protocol::V2, value.to_owned()));
+        }
+        Ok(Capabilities {
+            value_sep: b'\n',
+            data: remaining_lines.into().into(),
+        })
+    }
+
     /// Returns true of the given `feature` is mentioned in this list of capabilities.
     pub fn contains(&self, feature: &str) -> bool {
         self.capability(feature).is_some()
@@ -103,48 +131,10 @@ impl Capabilities {
 }
 
 #[cfg(feature = "blocking-client")]
-impl Capabilities {
-    /// Parse capabilities from the given `read`.
-    ///
-    /// Useful for parsing capabilities from a data sent from a server.
-    pub fn from_lines(read: impl io::BufRead) -> Result<Capabilities, Error> {
-        let mut lines = read.lines();
-        let version_line = lines.next().ok_or(Error::MissingVersionLine)??;
-        let (name, value) = version_line.split_at(
-            version_line
-                .find(' ')
-                .ok_or_else(|| Error::MalformattedVersionLine(version_line.clone()))?,
-        );
-        if name != "version" {
-            return Err(Error::MalformattedVersionLine(version_line));
-        }
-        if value != " 2" {
-            return Err(Error::UnsupportedVersion(Protocol::V2, value.to_owned()));
-        }
-        Ok(Capabilities {
-            value_sep: b'\n',
-            data: lines
-                .inspect(|l| {
-                    if let Ok(l) = l {
-                        assert!(
-                            !l.contains('\n'),
-                            "newlines are not expected in keys or values, got '{}'",
-                            l
-                        )
-                    }
-                })
-                .collect::<Result<Vec<_>, _>>()?
-                .join("\n")
-                .into(),
-        })
-    }
-}
-
-#[cfg(feature = "blocking-client")]
 pub(crate) mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use bstr::ByteSlice;
-    use std::io;
+    use std::{io, io::BufRead};
 
     pub struct Outcome<'a> {
         pub capabilities: Capabilities,
@@ -189,7 +179,11 @@ pub(crate) mod recv {
                     })
                 }
                 Protocol::V2 => Ok(Outcome {
-                    capabilities: Capabilities::from_lines(rd.as_read())?,
+                    capabilities: {
+                        let rd = rd.as_read();
+                        let mut lines = rd.lines();
+                        Capabilities::from_lines(lines.next(), lines.collect::<Result<Vec<_>, _>>()?.join("\n"))?
+                    },
                     refs: None,
                     protocol: Protocol::V2,
                 }),
