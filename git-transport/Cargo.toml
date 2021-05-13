@@ -45,7 +45,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 # handle blocking/async versions
 maybe-async = "0.2.4"
-async-trait = { version = "0.1.50", optional = true }
+async-trait = { version = "0.1.50", optional = false }
 
 # for http-client-curl
 # zlib-ng-compat doesn't force zlib-ng

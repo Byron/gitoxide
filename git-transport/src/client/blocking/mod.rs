@@ -1,5 +1,3 @@
-///
-pub mod capabilities;
 pub(crate) mod connect;
 ///
 pub mod file;
@@ -16,7 +14,7 @@ use crate::{Protocol, Service};
 use bstr::BString;
 use std::{io, io::Write};
 
-use capabilities::Capabilities;
+use crate::client::{capabilities, Capabilities};
 use request::{ExtendedBufRead, RequestWriter};
 
 #[cfg(feature = "http-client-curl")]

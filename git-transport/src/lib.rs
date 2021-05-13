@@ -35,7 +35,6 @@ impl Service {
 }
 
 ///
-#[cfg(feature = "blocking-client")]
 pub mod client;
 
 #[doc(inline)]
