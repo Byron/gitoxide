@@ -17,8 +17,13 @@ blocking-client = ["git-transport/blocking-client"]
 
 [[test]]
 name = "blocking-client"
-path = "tests/protocol.rs"
+path = "tests/blocking-protocol.rs"
 required-features = ["blocking-client"]
+
+[[test]]
+name = "common-client"
+path = "tests/common-protocol.rs"
+required-features = []
 
 [dependencies]
 git-features = { version = "^0.14.0", path = "../git-features" }

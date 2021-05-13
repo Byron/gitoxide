@@ -118,8 +118,10 @@ unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
-	cd git-transport && cargo test && cargo test --features http-client-curl && cargo test --no-default-features
-	cd git-protocol && cargo test --features blocking-client
+	cd git-transport && cargo test \
+					 && cargo test --features http-client-curl \
+					 && cargo test --no-default-features
+	cd git-protocol && cargo test --features blocking-client && cargo test
 	cd gitoxide-core && cargo test --lib
 
 continuous-unit-tests: ## run all unit tests whenever something changes
