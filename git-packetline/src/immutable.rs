@@ -27,27 +27,27 @@ impl<'a> PacketLine<'a> {
         }
     }
 
-    /// Return this instance as slice if it's [`Data`][Borrowed::Data].
+    /// Return this instance as slice if it's [`Data`][PacketLine::Data].
     pub fn as_slice(&self) -> Option<&[u8]> {
         match self {
             PacketLine::Data(d) => Some(d),
             PacketLine::Flush | PacketLine::Delimiter | PacketLine::ResponseEnd => None,
         }
     }
-    /// Return this instance's [`as_slice()`][Borrowed::as_slice()] as [`BStr`].
+    /// Return this instance's [`as_slice()`][PacketLine::as_slice()] as [`BStr`].
     pub fn as_bstr(&self) -> Option<&BStr> {
         self.as_slice().map(Into::into)
     }
-    /// Interpret this instance's [`as_slice()`][Borrowed::as_slice()] as [`Error`].
+    /// Interpret this instance's [`as_slice()`][PacketLine::as_slice()] as [`Error`].
     ///
     /// This works for any data received in an error [channel][crate::Channel].
     ///
     /// Note that this creates an unchecked error using the slice verbatim, which is useful to [serialize it][Error::to_write()].
-    /// See [`check_error()`][Borrowed::check_error()] for a version that assures the error information is in the expected format.
+    /// See [`check_error()`][PacketLine::check_error()] for a version that assures the error information is in the expected format.
     pub fn to_error(&self) -> Option<Error<'_>> {
         self.as_slice().map(Error)
     }
-    /// Check this instance's [`as_slice()`][Borrowed::as_slice()] is a valid [`Error`] and return it.
+    /// Check this instance's [`as_slice()`][PacketLine::as_slice()] is a valid [`Error`] and return it.
     ///
     /// This works for any data received in an error [channel][crate::Channel].
     pub fn check_error(&self) -> Option<Error<'_>> {
@@ -64,10 +64,10 @@ impl<'a> PacketLine<'a> {
         self.as_slice().map(Into::into)
     }
 
-    /// Interpret the data in this [`slice`][Borrowed::as_slice()] as [`Band`] according to the given `kind` of channel.
+    /// Interpret the data in this [`slice`][PacketLine::as_slice()] as [`Band`] according to the given `kind` of channel.
     ///
     /// Note that this is only relevant in a side-band channel.
-    /// See [`decode_band()`][Borrowed::decode_band()] in case `kind` is unknown.
+    /// See [`decode_band()`][PacketLine::decode_band()] in case `kind` is unknown.
     pub fn to_band(&self, kind: Channel) -> Option<Band<'_>> {
         self.as_slice().map(|d| match kind {
             Channel::Data => Band::Data(d),
@@ -76,7 +76,7 @@ impl<'a> PacketLine<'a> {
         })
     }
 
-    /// Decode the band of this [`slice`][Borrowed::as_slice()], or panic if it is not actually a side-band line.
+    /// Decode the band of this [`slice`][PacketLine::as_slice()], or panic if it is not actually a side-band line.
     pub fn decode_band(&self) -> Result<Band<'_>, DecodeBandError> {
         let d = self.as_slice().ok_or(DecodeBandError::NonDataLine)?;
         Ok(match d[0] {
@@ -90,7 +90,7 @@ impl<'a> PacketLine<'a> {
 
 use quick_error::quick_error;
 quick_error! {
-    /// The error used in [`decode_band()`][Borrowed::decode_band()].
+    /// The error used in [`decode_band()`][PacketLine::decode_band()].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum DecodeBandError {
