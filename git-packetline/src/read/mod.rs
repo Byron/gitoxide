@@ -10,7 +10,7 @@ pub use sidebands::WithSidebands;
 /// leaving [`Read`][io::Read] at the start of whatever comes next.
 ///
 /// This implementation tries hard not to allocate at all which leads to quite some added complexity and plenty of extra memory copies.
-pub struct StreamingPeekReader<T> {
+pub struct StreamingPeekableIter<T> {
     read: T,
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
@@ -26,13 +26,13 @@ type ExhaustiveOutcome<'a> = (
     Option<io::Result<Result<PacketLine<'a>, decode::Error>>>, // actual method result
 );
 
-impl<T> StreamingPeekReader<T>
+impl<T> StreamingPeekableIter<T>
 where
     T: io::Read,
 {
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
     pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
-        StreamingPeekReader {
+        StreamingPeekableIter {
             read,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),

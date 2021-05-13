@@ -1,6 +1,6 @@
 use crate::{
     immutable::{Band, Text},
-    PacketLine, StreamingPeekReader, MAX_DATA_LEN,
+    PacketLine, StreamingPeekableIter, MAX_DATA_LEN,
 };
 use std::io;
 
@@ -16,7 +16,7 @@ pub struct WithSidebands<'a, T, F>
 where
     T: io::Read,
 {
-    parent: &'a mut StreamingPeekReader<T>,
+    parent: &'a mut StreamingPeekableIter<T>,
     handle_progress: Option<F>,
     buf: Vec<u8>,
     pos: usize,
@@ -37,7 +37,7 @@ where
     T: io::Read,
 {
     /// Create a new instance with the given provider as `parent`.
-    pub fn new(parent: &'a mut StreamingPeekReader<T>) -> Self {
+    pub fn new(parent: &'a mut StreamingPeekableIter<T>) -> Self {
         WithSidebands {
             parent,
             handle_progress: None,
@@ -57,7 +57,7 @@ where
     ///
     /// Progress or error information will be passed to the given `handle_progress(is_error, text)` function, with `is_error: bool`
     /// being true in case the `text` is to be interpreted as error.
-    pub fn with_progress_handler(parent: &'a mut StreamingPeekReader<T>, handle_progress: F) -> Self {
+    pub fn with_progress_handler(parent: &'a mut StreamingPeekableIter<T>, handle_progress: F) -> Self {
         WithSidebands {
             parent,
             handle_progress: Some(handle_progress),
@@ -68,7 +68,7 @@ where
     }
 
     /// Create a new instance without a progress handler.
-    pub fn without_progress_handler(parent: &'a mut StreamingPeekReader<T>) -> Self {
+    pub fn without_progress_handler(parent: &'a mut StreamingPeekableIter<T>) -> Self {
         WithSidebands {
             parent,
             handle_progress: None,

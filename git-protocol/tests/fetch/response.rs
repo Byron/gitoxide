@@ -1,9 +1,9 @@
 use std::io;
 
-fn mock_reader(path: &str) -> git_packetline::StreamingPeekReader<std::io::Cursor<Vec<u8>>> {
+fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<std::io::Cursor<Vec<u8>>> {
     use crate::fixture_bytes;
     let buf = fixture_bytes(path);
-    git_packetline::StreamingPeekReader::new(io::Cursor::new(buf), &[git_packetline::PacketLine::Flush])
+    git_packetline::StreamingPeekableIter::new(io::Cursor::new(buf), &[git_packetline::PacketLine::Flush])
 }
 
 fn id(hex: &str) -> git_hash::ObjectId {

@@ -68,7 +68,7 @@ pub enum ConnectMode {
 /// context is passed using command line arguments to a [spawned `git` process][crate::client::file::SpawnProcessOnDemand].
 pub struct Connection<R, W> {
     writer: W,
-    line_provider: git_packetline::StreamingPeekReader<R>,
+    line_provider: git_packetline::StreamingPeekableIter<R>,
     path: BString,
     virtual_host: Option<(String, Option<u16>)>,
     desired_version: Protocol,
@@ -162,7 +162,7 @@ where
     ) -> Self {
         Connection {
             writer: write,
-            line_provider: git_packetline::StreamingPeekReader::new(read, &[PacketLine::Flush]),
+            line_provider: git_packetline::StreamingPeekableIter::new(read, &[PacketLine::Flush]),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,

@@ -31,7 +31,7 @@ pub use immutable::PacketLine;
 ///
 pub mod read;
 #[doc(inline)]
-pub use read::StreamingPeekReader;
+pub use read::StreamingPeekableIter;
 
 ///
 pub mod write;

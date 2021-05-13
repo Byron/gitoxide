@@ -31,7 +31,7 @@ pub struct Transport<H: Http> {
     actual_version: crate::Protocol,
     http: H,
     service: Option<Service>,
-    line_provider: Option<git_packetline::StreamingPeekReader<H::ResponseBody>>,
+    line_provider: Option<git_packetline::StreamingPeekableIter<H::ResponseBody>>,
     identity: Option<client::Identity>,
 }
 
@@ -115,7 +115,7 @@ impl<H: Http> client::Transport for Transport<H> {
 
         let line_reader = self
             .line_provider
-            .get_or_insert_with(|| git_packetline::StreamingPeekReader::new(body, &[PacketLine::Flush]));
+            .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLine::Flush]));
 
         let mut announced_service = String::new();
         line_reader.as_read().read_to_string(&mut announced_service)?;

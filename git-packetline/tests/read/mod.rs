@@ -19,7 +19,7 @@ mod streaming_peek_reader {
 
     #[test]
     fn peek_follows_read_line_delimiter_logic() -> crate::Result {
-        let mut rd = git_packetline::StreamingPeekReader::new(&b"0005a00000005b"[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&b"0005a00000005b"[..], &[PacketLine::Flush]);
         assert_eq!(rd.peek_line().expect("line")??, PacketLine::Data(b"a"));
         rd.read_line();
         assert!(rd.peek_line().is_none(), "we hit the delmiter, and thus are EOF");
@@ -40,7 +40,7 @@ mod streaming_peek_reader {
 
     #[test]
     fn peek_follows_read_line_err_logic() -> crate::Result {
-        let mut rd = git_packetline::StreamingPeekReader::new(&b"0005a0009ERR e0000"[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&b"0005a0009ERR e0000"[..], &[PacketLine::Flush]);
         rd.fail_on_err_lines(true);
         assert_eq!(rd.peek_line().expect("line")??, PacketLine::Data(b"a"));
         rd.read_line();
@@ -63,7 +63,7 @@ mod streaming_peek_reader {
 
     #[test]
     fn peek_non_data() -> crate::Result {
-        let mut rd = git_packetline::StreamingPeekReader::new(&b"000000010002"[..], &[PacketLine::ResponseEnd]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&b"000000010002"[..], &[PacketLine::ResponseEnd]);
         assert_eq!(rd.read_line().expect("line")??, PacketLine::Flush);
         assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
         rd.reset_with(&[PacketLine::Flush]);
@@ -86,7 +86,7 @@ mod streaming_peek_reader {
     #[test]
     fn fail_on_err_lines() -> crate::Result {
         let input = b"00010009ERR e0002";
-        let mut rd = git_packetline::StreamingPeekReader::new(&input[..], &[]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
         assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
         assert_eq!(
             rd.read_line().expect("line")??.as_bstr(),
@@ -94,7 +94,7 @@ mod streaming_peek_reader {
             "by default no special handling"
         );
 
-        let mut rd = git_packetline::StreamingPeekReader::new(&input[..], &[]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
         rd.fail_on_err_lines(true);
         assert_eq!(rd.read_line().expect("line")??, PacketLine::Delimiter);
         assert_eq!(
@@ -117,7 +117,7 @@ mod streaming_peek_reader {
     #[test]
     fn peek() -> crate::Result {
         let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
-        let mut rd = git_packetline::StreamingPeekReader::new(&bytes[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLine::Flush]);
         assert_eq!(rd.peek_line().expect("line")??, first_line(), "peek returns first line");
         assert_eq!(
             rd.peek_line().expect("line")??,
@@ -152,7 +152,7 @@ mod streaming_peek_reader {
     fn read_from_file_and_reader_advancement() -> crate::Result {
         let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
         bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
-        let mut rd = git_packetline::StreamingPeekReader::new(&bytes[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLine::Flush]);
         assert_eq!(rd.read_line().expect("line")??, first_line());
         assert_eq!(exhaust(&mut rd) + 1, 1561, "it stops after seeing the flush byte");
         rd.reset();
@@ -172,7 +172,7 @@ mod streaming_peek_reader {
         Ok(())
     }
 
-    fn exhaust(rd: &mut git_packetline::StreamingPeekReader<&[u8]>) -> i32 {
+    fn exhaust(rd: &mut git_packetline::StreamingPeekableIter<&[u8]>) -> i32 {
         let mut count = 0;
         while let Some(_) = rd.read_line() {
             count += 1;
