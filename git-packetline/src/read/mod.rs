@@ -20,6 +20,12 @@ pub struct StreamingPeekReader<T> {
     stopped_at: Option<PacketLine<'static>>,
 }
 
+type ExhaustiveOutcome<'a> = (
+    bool,                                                      // is_done
+    Option<PacketLine<'static>>,                               // stopped_at
+    Option<io::Result<Result<PacketLine<'a>, decode::Error>>>, // actual method result
+);
+
 impl<T> StreamingPeekReader<T>
 where
     T: io::Read,
@@ -91,17 +97,15 @@ where
         }
     }
 
+    /// This function is needed to help the borrow checker allow us to return references all the time
+    /// It contains a bunch of logic shared between peek and read_line invocations.
     fn read_line_inner_exhaustive<'a>(
         reader: &mut T,
         buf: &'a mut Vec<u8>,
         delimiters: &[PacketLine<'static>],
         fail_on_err_lines: bool,
         buf_resize: bool,
-    ) -> (
-        bool,
-        Option<PacketLine<'static>>,
-        Option<io::Result<Result<PacketLine<'a>, decode::Error>>>,
-    ) {
+    ) -> ExhaustiveOutcome<'a> {
         (
             false,
             None,
