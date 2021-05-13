@@ -5,7 +5,7 @@ use std::io;
 /// A borrowed packet line as it refers to a slice of data by reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum Borrowed<'a> {
+pub enum PacketLine<'a> {
     /// A chunk of raw data.
     Data(&'a [u8]),
     /// A flush packet.
@@ -16,22 +16,22 @@ pub enum Borrowed<'a> {
     ResponseEnd,
 }
 
-impl<'a> Borrowed<'a> {
+impl<'a> PacketLine<'a> {
     /// Serialize this instance to `out` in git `packetline` format, returning the amount of bytes written to `out`.
     pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
         match self {
-            Borrowed::Data(d) => encode::data_to_write(d, out),
-            Borrowed::Flush => encode::flush_to_write(out).map_err(Into::into),
-            Borrowed::Delimiter => encode::delim_to_write(out).map_err(Into::into),
-            Borrowed::ResponseEnd => encode::response_end_to_write(out).map_err(Into::into),
+            PacketLine::Data(d) => encode::data_to_write(d, out),
+            PacketLine::Flush => encode::flush_to_write(out).map_err(Into::into),
+            PacketLine::Delimiter => encode::delim_to_write(out).map_err(Into::into),
+            PacketLine::ResponseEnd => encode::response_end_to_write(out).map_err(Into::into),
         }
     }
 
     /// Return this instance as slice if it's [`Data`][Borrowed::Data].
     pub fn as_slice(&self) -> Option<&[u8]> {
         match self {
-            Borrowed::Data(d) => Some(d),
-            Borrowed::Flush | Borrowed::Delimiter | Borrowed::ResponseEnd => None,
+            PacketLine::Data(d) => Some(d),
+            PacketLine::Flush | PacketLine::Delimiter | PacketLine::ResponseEnd => None,
         }
     }
     /// Return this instance's [`as_slice()`][Borrowed::as_slice()] as [`BStr`].

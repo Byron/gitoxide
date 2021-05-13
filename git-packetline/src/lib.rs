@@ -25,8 +25,8 @@ pub enum Channel {
 }
 
 ///
-pub mod borrowed;
-pub use borrowed::Borrowed as PacketLine;
+pub mod immutable;
+pub use immutable::PacketLine;
 
 ///
 pub mod provider;

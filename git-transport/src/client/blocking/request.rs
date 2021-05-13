@@ -63,7 +63,7 @@ impl<'a> RequestWriter<'a> {
             MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(&mut self.writer.inner),
             MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.to_write(&mut self.writer.inner),
             MessageKind::ResponseEnd => git_packetline::PacketLine::ResponseEnd.to_write(&mut self.writer.inner),
-            MessageKind::Text(t) => git_packetline::borrowed::Text::from(t).to_write(&mut self.writer.inner),
+            MessageKind::Text(t) => git_packetline::immutable::Text::from(t).to_write(&mut self.writer.inner),
         }
         .map(|_| ())
         .map_err(|err| io::Error::new(io::ErrorKind::Other, err))

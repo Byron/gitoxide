@@ -1,7 +1,7 @@
 mod streaming {
     use crate::packet_line::assert_err_display;
     use bstr::ByteSlice;
-    use git_packetline::borrowed::Error;
+    use git_packetline::immutable::Error;
     use git_packetline::{
         decode::{self, streaming, Stream},
         Channel, PacketLine,

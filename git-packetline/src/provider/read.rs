@@ -1,5 +1,5 @@
 use crate::{
-    borrowed::{Band, Text},
+    immutable::{Band, Text},
     PacketLine, Provider, MAX_DATA_LEN,
 };
 use std::io;
