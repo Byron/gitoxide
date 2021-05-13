@@ -144,7 +144,7 @@ pub(crate) mod recv {
 
     impl Capabilities {
         pub(crate) fn from_lines_with_version_detection<T: io::Read>(
-            rd: &mut git_packetline::Provider<T>,
+            rd: &mut git_packetline::StreamingPeekReader<T>,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
             // we automatically abort if the server sends an ERR line anywhere.

@@ -29,9 +29,9 @@ pub mod immutable;
 pub use immutable::PacketLine;
 
 ///
-pub mod provider;
+pub mod read;
 #[doc(inline)]
-pub use provider::Provider;
+pub use read::StreamingPeekReader;
 
 ///
 pub mod write;

@@ -1,6 +1,6 @@
 use crate::{
     immutable::{Band, Text},
-    PacketLine, Provider, MAX_DATA_LEN,
+    PacketLine, StreamingPeekReader, MAX_DATA_LEN,
 };
 use std::io;
 
@@ -12,18 +12,18 @@ use std::io;
 /// Reading from this intermediary copies bytes 3 times:
 /// OS -> (parent) line provider buffer -> our buffer -> caller's output buffer
 /// which won't make this very efficient for huge bandwidths.
-pub struct ReadWithSidebands<'a, T, F>
+pub struct WithSidebands<'a, T, F>
 where
     T: io::Read,
 {
-    parent: &'a mut Provider<T>,
+    parent: &'a mut StreamingPeekReader<T>,
     handle_progress: Option<F>,
     buf: Vec<u8>,
     pos: usize,
     cap: usize,
 }
 
-impl<'a, T, F> Drop for ReadWithSidebands<'a, T, F>
+impl<'a, T, F> Drop for WithSidebands<'a, T, F>
 where
     T: io::Read,
 {
@@ -32,13 +32,13 @@ where
     }
 }
 
-impl<'a, T> ReadWithSidebands<'a, T, fn(bool, &[u8])>
+impl<'a, T> WithSidebands<'a, T, fn(bool, &[u8])>
 where
     T: io::Read,
 {
     /// Create a new instance with the given provider as `parent`.
-    pub fn new(parent: &'a mut Provider<T>) -> Self {
-        ReadWithSidebands {
+    pub fn new(parent: &'a mut StreamingPeekReader<T>) -> Self {
+        WithSidebands {
             parent,
             handle_progress: None,
             buf: vec![0; MAX_DATA_LEN],
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<'a, T, F> ReadWithSidebands<'a, T, F>
+impl<'a, T, F> WithSidebands<'a, T, F>
 where
     T: io::Read,
     F: FnMut(bool, &[u8]),
@@ -57,8 +57,8 @@ where
     ///
     /// Progress or error information will be passed to the given `handle_progress(is_error, text)` function, with `is_error: bool`
     /// being true in case the `text` is to be interpreted as error.
-    pub fn with_progress_handler(parent: &'a mut Provider<T>, handle_progress: F) -> Self {
-        ReadWithSidebands {
+    pub fn with_progress_handler(parent: &'a mut StreamingPeekReader<T>, handle_progress: F) -> Self {
+        WithSidebands {
             parent,
             handle_progress: Some(handle_progress),
             buf: vec![0; MAX_DATA_LEN],
@@ -68,8 +68,8 @@ where
     }
 
     /// Create a new instance without a progress handler.
-    pub fn without_progress_handler(parent: &'a mut Provider<T>) -> Self {
-        ReadWithSidebands {
+    pub fn without_progress_handler(parent: &'a mut StreamingPeekReader<T>) -> Self {
+        WithSidebands {
             parent,
             handle_progress: None,
             buf: vec![0; MAX_DATA_LEN],
@@ -105,7 +105,7 @@ where
     }
 }
 
-impl<'a, T, F> io::BufRead for ReadWithSidebands<'a, T, F>
+impl<'a, T, F> io::BufRead for WithSidebands<'a, T, F>
 where
     T: io::Read,
     F: FnMut(bool, &[u8]),
@@ -173,7 +173,7 @@ where
     }
 }
 
-impl<'a, T, F> io::Read for ReadWithSidebands<'a, T, F>
+impl<'a, T, F> io::Read for WithSidebands<'a, T, F>
 where
     T: io::Read,
     F: FnMut(bool, &[u8]),

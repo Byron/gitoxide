@@ -2,13 +2,13 @@ use crate::{decode, PacketLine, MAX_LINE_LEN, U16_HEX_BYTES};
 use bstr::ByteSlice;
 use std::io;
 
-mod read;
-pub use read::ReadWithSidebands;
+mod sidebands;
+pub use sidebands::WithSidebands;
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// [`Read`][io::Read]. [`Flush`][PacketLine::Flush] lines cause the reader to stop producing lines forever,
 /// leaving [`Read`][io::Read] at the start of whatever comes next.
-pub struct Provider<T> {
+pub struct StreamingPeekReader<T> {
     inner: T,
     peek_buf: Vec<u8>,
     fail_on_err_lines: bool,
@@ -18,13 +18,13 @@ pub struct Provider<T> {
     stopped_at: Option<PacketLine<'static>>,
 }
 
-impl<T> Provider<T>
+impl<T> StreamingPeekReader<T>
 where
     T: io::Read,
 {
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
     pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
-        Provider {
+        StreamingPeekReader {
             inner: read,
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
@@ -192,22 +192,22 @@ where
     /// being true in case the `text` is to be interpreted as error.
     ///
     /// _Please note_ that side bands need to be negotiated with the server.
-    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> ReadWithSidebands<'_, T, F> {
-        ReadWithSidebands::with_progress_handler(self, handle_progress)
+    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> WithSidebands<'_, T, F> {
+        WithSidebands::with_progress_handler(self, handle_progress)
     }
 
     /// Same as [`as_read_with_sidebands(…)`][Provider::as_read_with_sidebands()], but for channels without side band support.
     ///
     /// The type parameter `F` needs to be configured for this method to be callable using the 'turbofish' operator.
     /// Use [`as_read()`][Provider::as_read()].
-    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> ReadWithSidebands<'_, T, F> {
-        ReadWithSidebands::without_progress_handler(self)
+    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> WithSidebands<'_, T, F> {
+        WithSidebands::without_progress_handler(self)
     }
 
     /// Same as [`as_read_with_sidebands(…)`][Provider::as_read_with_sidebands()], but for channels without side band support.
     ///
     /// Due to the preconfigured function type this method can be called without 'turbofish'.
-    pub fn as_read(&mut self) -> ReadWithSidebands<'_, T, fn(bool, &[u8])> {
-        ReadWithSidebands::new(self)
+    pub fn as_read(&mut self) -> WithSidebands<'_, T, fn(bool, &[u8])> {
+        WithSidebands::new(self)
     }
 }

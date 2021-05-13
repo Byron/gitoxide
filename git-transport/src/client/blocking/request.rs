@@ -105,7 +105,7 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a> ExtendedBufRead for Box<T> {
     }
 }
 
-impl<'a, T: io::Read> ExtendedBufRead for git_packetline::provider::ReadWithSidebands<'a, T, HandleProgress> {
+impl<'a, T: io::Read> ExtendedBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
     }

@@ -1,4 +1,4 @@
-use crate::packet_line::reader::fixture_bytes;
+use crate::read::streaming_peek_reader::fixture_bytes;
 use bstr::{BString, ByteSlice};
 use git_odb::pack;
 use git_packetline::PacketLine;
@@ -7,7 +7,7 @@ use std::io::{BufRead, Read};
 #[test]
 fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
-    let mut rd = git_packetline::Provider::new(&buf[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::StreamingPeekReader::new(&buf[..], &[PacketLine::Flush]);
 
     let mut out = String::new();
     let mut r = rd.as_read();
@@ -51,7 +51,7 @@ fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
 #[test]
 fn read_pack_with_progress_extraction() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output");
-    let mut rd = git_packetline::Provider::new(&buf[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::StreamingPeekReader::new(&buf[..], &[PacketLine::Flush]);
 
     // Read without sideband decoding
     let mut out = Vec::new();
@@ -105,7 +105,7 @@ fn read_pack_with_progress_extraction() -> crate::Result {
 #[test]
 fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
     let input = b"0009ERR e";
-    let mut rd = git_packetline::Provider::new(&input[..], &[]);
+    let mut rd = git_packetline::StreamingPeekReader::new(&input[..], &[]);
     let mut reader = rd.as_read();
     assert_eq!(reader.peek_data_line().expect("one line")??, b"ERR e");
     let mut buf = String::new();
@@ -122,7 +122,7 @@ fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
 #[test]
 fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     let input = b"0009hello0000";
-    let mut rd = git_packetline::Provider::new(&input[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::StreamingPeekReader::new(&input[..], &[PacketLine::Flush]);
     let mut reader = rd.as_read();
     assert_eq!(reader.peek_data_line().expect("one line")??, b"hello");
 
@@ -139,7 +139,7 @@ fn peek_past_a_delimiter_is_no_error() -> crate::Result {
 #[test]
 fn handling_of_err_lines() {
     let input = b"0009ERR e0009ERR x0000";
-    let mut rd = git_packetline::Provider::new(&input[..], &[]);
+    let mut rd = git_packetline::StreamingPeekReader::new(&input[..], &[]);
     rd.fail_on_err_lines(true);
     let mut buf = [0u8; 2];
     let mut reader = rd.as_read();
