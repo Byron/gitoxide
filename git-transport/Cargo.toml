@@ -1,6 +1,6 @@
 [package]
 name = "git-transport"
-version = "0.8.0"
+version = "0.9.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
