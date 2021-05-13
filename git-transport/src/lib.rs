@@ -35,7 +35,9 @@ impl Service {
 }
 
 ///
+#[cfg(feature = "blocking-client")]
 pub mod client;
 
 #[doc(inline)]
+#[cfg(feature = "blocking-client")]
 pub use client::connect;

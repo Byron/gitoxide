@@ -27,6 +27,12 @@ name = "blocking-transport-http-only"
 path = "tests/blocking-transport-http.rs"
 required-features = ["http-client-curl"]
 
+[[test]]
+name = "async-transport"
+path = "tests/async-transport.rs"
+# default-features = false - when testing, use --no-default-features, nothing we can specify in test cases though.
+required-features = []
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
