@@ -69,6 +69,7 @@ where
     /// If `value` is `true` the provider will check for special `ERR` packet lines and stop iteration when one is encountered.
     ///
     /// Use [`stopped_at()]`[Provider::stopped_at()] to inspect the cause of the end of the iteration.
+    /// ne
     pub fn fail_on_err_lines(&mut self, value: bool) {
         self.fail_on_err_lines = value;
     }
@@ -90,11 +91,57 @@ where
         }
     }
 
+    fn read_line_inner_exhaustive<'a>(
+        reader: &mut T,
+        buf: &'a mut Vec<u8>,
+        delimiters: &[PacketLine<'static>],
+        fail_on_err_lines: bool,
+    ) -> (
+        bool,
+        Option<PacketLine<'static>>,
+        Option<io::Result<Result<PacketLine<'a>, decode::Error>>>,
+    ) {
+        buf.resize(MAX_LINE_LEN, 0);
+        (
+            false,
+            None,
+            Some(match Self::read_line_inner(reader, buf) {
+                Ok(Ok(line)) => {
+                    if delimiters.contains(&line) {
+                        let stopped_at = delimiters.iter().find(|l| **l == line).cloned();
+                        buf.clear();
+                        return (true, stopped_at, None);
+                    } else if fail_on_err_lines {
+                        if let Some(err) = line.check_error() {
+                            let err = err.0.as_bstr().to_string();
+                            buf.clear();
+                            return (true, None, Some(Err(io::Error::new(io::ErrorKind::Other, err))));
+                        }
+                    }
+                    let len = line
+                        .as_slice()
+                        .map(|s| s.len() + U16_HEX_BYTES)
+                        .unwrap_or(U16_HEX_BYTES);
+                    buf.resize(len, 0);
+                    Ok(Ok(crate::decode(buf).expect("only valid data here")))
+                }
+                Ok(Err(err)) => {
+                    buf.clear();
+                    Ok(Err(err))
+                }
+                Err(err) => {
+                    buf.clear();
+                    Err(err)
+                }
+            }),
+        )
+    }
+
     /// Read a packet line into the internal buffer and return it.
     ///
     /// Returns `None` if the end of iteration is reached because of one of the following:
     ///
-    ///  * EOF
+    ///  * natural EOF
     ///  * ERR packet line encountered if [`fail_on_err_lines()`][Provider::fail_on_err_lines()] is true.
     ///  * A `delimiter` packet line encountered
     pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
@@ -154,6 +201,7 @@ where
             return None;
         }
         Some(if self.peek_buf.is_empty() {
+            // match Self::read_line_inner_exhaustive(&mut self.read, &mut self.peek_buf, &self.delimiters, self.fail_on_err_lines) {}
             self.peek_buf.resize(MAX_LINE_LEN, 0);
             match Self::read_line_inner(&mut self.read, &mut self.peek_buf) {
                 Ok(Ok(line)) => {
