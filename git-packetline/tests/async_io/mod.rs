@@ -1,1 +1,2 @@
+mod encode;
 mod write;

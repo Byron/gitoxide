@@ -1,5 +1,4 @@
 use bstr::ByteSlice;
-use futures_io::AsyncWrite;
 use futures_lite::{future, prelude::*};
 use git_packetline::Writer;
 

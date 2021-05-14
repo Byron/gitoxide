@@ -20,6 +20,28 @@ quick_error! {
     }
 }
 
+#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+mod async_io {
+    use super::Error;
+    use futures_io::AsyncWrite;
+
+    async fn prefixed_and_suffixed_data_to_write(
+        prefix: &[u8],
+        data: &[u8],
+        suffix: &[u8],
+        mut out: impl AsyncWrite,
+    ) -> Result<usize, Error> {
+        todo!("prefixed_write")
+    }
+
+    /// Write a `text` message to `out`, which is assured to end in a newline.
+    pub async fn text_to_write(text: &[u8], out: impl AsyncWrite) -> Result<usize, Error> {
+        prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out).await
+    }
+}
+#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+pub use async_io::*;
+
 #[cfg(feature = "blocking-io")]
 mod blocking_io {
     use super::u16_to_hex;

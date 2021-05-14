@@ -22,7 +22,7 @@ impl<T> Writer<T> {
 }
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
-    use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
+    use crate::U16_HEX_BYTES;
     use futures_io::AsyncWrite;
     use std::{
         io,
@@ -55,7 +55,7 @@ mod async_io {
         }
     }
     impl<T: AsyncWrite> AsyncWrite for Writer<T> {
-        fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
+        fn poll_write(self: Pin<&mut Self>, _cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
             if buf.is_empty() {
                 return Poll::Ready(Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -69,7 +69,7 @@ mod async_io {
             self.project().inner.poll_flush(cx)
         }
 
-        fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        fn poll_close(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<io::Result<()>> {
             todo!()
         }
     }
