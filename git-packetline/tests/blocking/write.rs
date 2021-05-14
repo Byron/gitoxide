@@ -46,7 +46,7 @@ fn empty_writes_fail_with_error() {
 }
 
 #[test]
-fn nothing_happens_on_into_read() {
+fn nothing_happens_on_drop() {
     let mut out = Vec::new();
     let w = Writer::new(&mut out);
     drop(w);

@@ -48,6 +48,11 @@ mod async_io {
                 binary: true,
             }
         }
+
+        /// Return the inner writer, consuming self.
+        pub fn into_inner(self) -> T {
+            self.inner
+        }
     }
     impl<T: AsyncWrite> AsyncWrite for Writer<T> {
         fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
