@@ -12,13 +12,20 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
+default = []
 serde1 = ["serde", "bstr/serde1"]
+async-io = ["futures-io"]
 blocking-io = []
+
+[[test]]
+name = "non-io-packetline"
+path = "tests/common-packetline.rs"
+required-features = []
 
 [[test]]
 name = "async-packetline"
 path = "tests/async-packetline.rs"
-required-features = []
+required-features = ["async-io"]
 
 [[test]]
 name = "blocking-packetline"
@@ -33,6 +40,7 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 quick-error = "2.0.0"
 hex = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+futures-io = { version = "0.3.15", optional = true }
 
 [dev-dependencies]
 git-odb = { version = "^0.15.0", path = "../git-odb" }
