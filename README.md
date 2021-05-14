@@ -81,7 +81,12 @@ Follow linked crate name for detailed status.
 
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
         as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
+  * [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
+        only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
+        untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
     
+[syncthing]: https://github.com/syncthing/syncthing
+
 ### Cargo features
 
 Many crates use feature flags to allow tuning the compiled result based on your needs. Have a [look at the guide][cargo-features] for more information.
