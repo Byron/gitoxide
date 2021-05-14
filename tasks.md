@@ -1,20 +1,29 @@
 This file sketches out the tasks required to be able to clone a repository whilst checking out its head ref.
 
-### Send Pack (server to client)
+### Client side push (client to server)
+
+* **git-odb**
+  * [x] basic pack generation based on tree-diff or tree-traversal
+
+* **git-protocol**
+  * [ ] _async_ negotiation of commits
+  * [ ] _blocking_ negotiation of commits
+  
+### Client fetch/pull (server to client)
 
 * **git-odb**
 
 The below is a very early draft - it would be better to study existing implementations first to get a better overview on what (not) to do.
 This one starts with the fun part to allow writing tests early and experiment with different diff algorithms and potentially their performance.
   
-* [ ] generate a pack from objects received by an iterator producing
-  * [ ] base objects only
+* [x] generate a pack from objects received by an iterator producing
+  * [x] base objects only
   * [ ] best-fit delta objects using the [similar][sim-crate]
   * [ ] A mechanism to declare some bases to be 'out of pack' for thin pack support
-* [ ] **Traversal** (as building blocks to feed pack generation)
-  * [ ] Traverse a commit graph (look around to see what's common, if in doubt walk back the commit graph and see how to deal with branching)
-  * [ ] Traverse trees
-* [ ] **Iterator** to feed pack generation efficiently
+* [x] **Traversal** (as building blocks to feed pack generation)
+  * [x] Traverse a commit graph (look around to see what's common, if in doubt walk back the commit graph and see how to deal with branching)
+  * [x] Traverse trees
+* [x] **Iterator** to feed pack generation efficiently
 
 * **git-transport**
 
@@ -31,7 +40,7 @@ Certainly needs more research, but roughly…
     * [ ] protocol V2
     * [ ] protocol V1 (_probably not worth it, let's see_)
   
-* **gixp serve**
+* **gix-serve**
 
 Probably more like a toy at first merely for testing operation against various git clients.
   
@@ -76,9 +85,11 @@ Probably more like a toy at first merely for testing operation against various g
 ### FSCK an entire repository
 
 * **multi-db** (incorporate object lookup for loose objects and packs)
-  * [ ] single threaded
-  * [ ] optional object cache
-  * [ ] fs-check - verify all object content of a git repository
+  * [x] ~~single~~multi-threaded
+  * [x] ~~object~~pack-cache for speedups
+  * [ ] fs-check - verify all object content of a git repository 
+     * probably this should be based on indexed pack traversal for maximum decoding speed and not on individual
+       object lookup
     
 ### gix organize
 
