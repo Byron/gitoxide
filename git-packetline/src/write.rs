@@ -28,6 +28,39 @@ impl<T> Writer<T> {
         self
     }
 }
+// #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+mod async_io {
+    use crate::{Writer, MAX_DATA_LEN, U16_HEX_BYTES};
+    use futures_io::AsyncWrite;
+    use std::{
+        io,
+        pin::Pin,
+        task::{Context, Poll},
+    };
+
+    impl<T: AsyncWrite> Writer<T> {
+        /// Create a new instance from the given `write`
+        pub fn new(write: T) -> Self {
+            Writer {
+                inner: write,
+                binary: true,
+            }
+        }
+    }
+    impl<T: AsyncWrite> AsyncWrite for Writer<T> {
+        fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
+            todo!()
+        }
+
+        fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+            todo!()
+        }
+
+        fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+            todo!()
+        }
+    }
+}
 
 #[cfg(feature = "blocking-io")]
 mod blocking_io {

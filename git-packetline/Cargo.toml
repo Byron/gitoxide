@@ -43,4 +43,5 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 futures-io = { version = "0.3.15", optional = true }
 
 [dev-dependencies]
+futures-lite = "1.11.3"
 git-odb = { version = "^0.15.0", path = "../git-odb" }
