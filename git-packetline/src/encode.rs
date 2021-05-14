@@ -55,9 +55,18 @@ mod async_io {
         Ok(data_len)
     }
 
+    async fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
+        prefixed_and_suffixed_data_to_write(prefix, data, &[], out).await
+    }
+
     /// Write a `text` message to `out`, which is assured to end in a newline.
     pub async fn text_to_write(text: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
         prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out).await
+    }
+
+    /// Write a `data` message to `out`.
+    pub async fn data_to_write(data: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
+        prefixed_data_to_write(&[], data, out).await
     }
 }
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
