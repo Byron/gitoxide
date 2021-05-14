@@ -34,7 +34,9 @@ pub mod read;
 pub use read::StreamingPeekableIter;
 
 ///
+#[cfg(any(feature = "async-io", feature = "blocking-io"))]
 pub mod write;
+#[cfg(any(feature = "async-io", feature = "blocking-io"))]
 #[doc(inline)]
 pub use write::Writer;
 

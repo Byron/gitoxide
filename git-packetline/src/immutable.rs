@@ -1,6 +1,5 @@
-use crate::{encode, Channel, ERR_PREFIX};
+use crate::{Channel, ERR_PREFIX};
 use bstr::BStr;
-use std::io;
 
 /// A borrowed packet line as it refers to a slice of data by reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -17,16 +16,6 @@ pub enum PacketLine<'a> {
 }
 
 impl<'a> PacketLine<'a> {
-    /// Serialize this instance to `out` in git `packetline` format, returning the amount of bytes written to `out`.
-    pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
-        match self {
-            PacketLine::Data(d) => encode::data_to_write(d, out),
-            PacketLine::Flush => encode::flush_to_write(out).map_err(Into::into),
-            PacketLine::Delimiter => encode::delim_to_write(out).map_err(Into::into),
-            PacketLine::ResponseEnd => encode::response_end_to_write(out).map_err(Into::into),
-        }
-    }
-
     /// Return this instance as slice if it's [`Data`][PacketLine::Data].
     pub fn as_slice(&self) -> Option<&[u8]> {
         match self {
@@ -108,15 +97,6 @@ quick_error! {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Error<'a>(pub &'a [u8]);
 
-impl<'a> Error<'a> {
-    /// Serialize this line as error to `out`.
-    ///
-    /// This includes a marker to allow decoding it outside of a side-band channel, returning the amount of bytes written.
-    pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
-        encode::error_to_write(self.0, out)
-    }
-}
-
 /// A packet line representing text, which may include a trailing newline.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -138,10 +118,6 @@ impl<'a> Text<'a> {
     pub fn as_bstr(&self) -> &BStr {
         self.0.into()
     }
-    /// Serialize this instance to `out`, appending a newline if there is none, returning the amount of bytes written.
-    pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
-        encode::text_to_write(self.0, out)
-    }
 }
 
 /// A band in a side-band channel.
@@ -156,15 +132,53 @@ pub enum Band<'a> {
     Error(&'a [u8]),
 }
 
-impl<'a> Band<'a> {
-    /// Serialize this instance to `out`, returning the amount of bytes written.
-    ///
-    /// The data written to `out` can be decoded with [`Borrowed::decode_band()]`.
-    pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
-        match self {
-            Band::Data(d) => encode::band_to_write(Channel::Data, d, out),
-            Band::Progress(d) => encode::band_to_write(Channel::Progress, d, out),
-            Band::Error(d) => encode::band_to_write(Channel::Error, d, out),
+#[cfg(feature = "blocking-io")]
+mod blocking_io {
+    use crate::{
+        encode,
+        immutable::{Band, Error, Text},
+        Channel, PacketLine,
+    };
+    use std::io;
+
+    impl<'a> Band<'a> {
+        /// Serialize this instance to `out`, returning the amount of bytes written.
+        ///
+        /// The data written to `out` can be decoded with [`Borrowed::decode_band()]`.
+        pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
+            match self {
+                Band::Data(d) => encode::band_to_write(Channel::Data, d, out),
+                Band::Progress(d) => encode::band_to_write(Channel::Progress, d, out),
+                Band::Error(d) => encode::band_to_write(Channel::Error, d, out),
+            }
+        }
+    }
+
+    impl<'a> Text<'a> {
+        /// Serialize this instance to `out`, appending a newline if there is none, returning the amount of bytes written.
+        pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
+            encode::text_to_write(self.0, out)
+        }
+    }
+
+    impl<'a> Error<'a> {
+        /// Serialize this line as error to `out`.
+        ///
+        /// This includes a marker to allow decoding it outside of a side-band channel, returning the amount of bytes written.
+        pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
+            encode::error_to_write(self.0, out)
+        }
+    }
+
+    impl<'a> PacketLine<'a> {
+        /// Serialize this instance to `out` in git `packetline` format, returning the amount of bytes written to `out`.
+        pub fn to_write(&self, out: impl io::Write) -> Result<usize, encode::Error> {
+            match self {
+                PacketLine::Data(d) => encode::data_to_write(d, out),
+                PacketLine::Flush => encode::flush_to_write(out).map_err(Into::into),
+                PacketLine::Delimiter => encode::delim_to_write(out).map_err(Into::into),
+                PacketLine::ResponseEnd => encode::response_end_to_write(out).map_err(Into::into),
+            }
         }
     }
 }
