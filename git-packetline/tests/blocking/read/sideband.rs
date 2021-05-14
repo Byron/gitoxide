@@ -1,4 +1,4 @@
-use crate::read::streaming_peek_reader::fixture_bytes;
+use crate::blocking::read::streaming_peek_reader::fixture_bytes;
 use bstr::{BString, ByteSlice};
 use git_odb::pack;
 use git_packetline::PacketLine;

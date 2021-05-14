@@ -92,7 +92,8 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features pack-cache-lru-dynamic \
 			   && cargo check
 	cd git-packetline && cargo check --all-features \
-			   && cargo check
+					   && cargo check \
+					   && cargo check --features blocking-io
 	cd git-protocol && cargo check --all-features \
 			   && cargo check
 	cd git-url && cargo check --all-features \
@@ -118,6 +119,7 @@ unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
+	cd git-packetline && cargo test && cargo test --all-features
 	cd git-transport && cargo test \
 					 && cargo test --features http-client-curl \
 					 && cargo test --no-default-features
