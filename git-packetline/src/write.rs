@@ -22,7 +22,7 @@ impl<T> Writer<T> {
 }
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
-    use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
+    // use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
     use futures_io::AsyncWrite;
     use std::{
         io,
@@ -55,38 +55,14 @@ mod async_io {
         }
     }
     impl<T: AsyncWrite + Unpin> AsyncWrite for Writer<T> {
-        fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
+        fn poll_write(self: Pin<&mut Self>, _cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
             if buf.is_empty() {
                 return Poll::Ready(Err(io::Error::new(
                     io::ErrorKind::Other,
                     "empty packet lines are not permitted as '0004' is invalid",
                 )));
             }
-
-            let mut written = 0;
-            // self.project()
-            while !buf.is_empty() {
-                let (data, rest) = buf.split_at(buf.len().min(MAX_DATA_LEN));
-                written += if self.binary {
-                    futures_lite::ready!(Pin::new(crate::encode::data_to_write(data, &mut self.inner)).poll(cx))
-                } else {
-                    todo!("impl text_to_write branch")
-                    // futures_lite::ready!(Pin::new(&mut crate::encode::text_to_write(data, &mut self.inner)).poll(cx))
-                }
-                .map_err(|err| {
-                    use crate::encode::Error::*;
-                    match err {
-                        Io(err) => err,
-                        DataIsEmpty | DataLengthLimitExceeded(_) => {
-                            unreachable!("We are handling empty and large data here, so this can't ever happen")
-                        }
-                    }
-                })?;
-                // subtract header (and trailng NL) because write-all can't handle writing more than it passes in
-                written -= U16_HEX_BYTES + if self.binary { 0 } else { 1 };
-                buf = rest;
-            }
-            Ok(written)
+            todo!("impl actual write branch");
         }
 
         fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
