@@ -18,11 +18,6 @@ async-io = ["futures-io", "pin-project-lite"]
 blocking-io = []
 
 [[test]]
-name = "non-io-packetline"
-path = "tests/common-packetline.rs"
-required-features = []
-
-[[test]]
 name = "async-packetline"
 path = "tests/async-packetline.rs"
 required-features = ["async-io"]
