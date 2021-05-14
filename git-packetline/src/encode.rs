@@ -22,20 +22,41 @@ quick_error! {
 
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
-    use super::Error;
+    use super::u16_to_hex;
+    use crate::{encode::Error, MAX_DATA_LEN};
     use futures_io::AsyncWrite;
+    use futures_lite::AsyncWriteExt;
 
     async fn prefixed_and_suffixed_data_to_write(
         prefix: &[u8],
         data: &[u8],
         suffix: &[u8],
-        mut out: impl AsyncWrite,
+        mut out: impl AsyncWrite + Unpin,
     ) -> Result<usize, Error> {
-        todo!("prefixed_write")
+        let data_len = prefix.len() + data.len() + suffix.len();
+        if data_len > MAX_DATA_LEN {
+            return Err(Error::DataLengthLimitExceeded(data_len));
+        }
+        if data.is_empty() {
+            return Err(Error::DataIsEmpty);
+        }
+
+        let data_len = data_len + 4;
+        let buf = u16_to_hex(data_len as u16);
+
+        out.write_all(&buf).await?;
+        if !prefix.is_empty() {
+            out.write_all(prefix).await?;
+        }
+        out.write_all(data).await?;
+        if !suffix.is_empty() {
+            out.write_all(suffix).await?;
+        }
+        Ok(data_len)
     }
 
     /// Write a `text` message to `out`, which is assured to end in a newline.
-    pub async fn text_to_write(text: &[u8], out: impl AsyncWrite) -> Result<usize, Error> {
+    pub async fn text_to_write(text: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
         prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out).await
     }
 }

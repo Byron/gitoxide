@@ -22,7 +22,6 @@ impl<T> Writer<T> {
 }
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
-    use crate::U16_HEX_BYTES;
     use futures_io::AsyncWrite;
     use std::{
         io,

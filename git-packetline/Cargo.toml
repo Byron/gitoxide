@@ -14,7 +14,7 @@ doctest = false
 [features]
 default = []
 serde1 = ["serde", "bstr/serde1"]
-async-io = ["futures-io", "pin-project-lite"]
+async-io = ["futures-io", "pin-project-lite", "futures-lite"]
 blocking-io = []
 
 [[test]]
@@ -36,8 +36,8 @@ quick-error = "2.0.0"
 hex = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 futures-io = { version = "0.3.15", optional = true }
+futures-lite = { version  = "1.11.3", optional = true }
 pin-project-lite = { version = "0.2.6", optional = true }
 
 [dev-dependencies]
-futures-lite = "1.11.3"
 git-odb = { version = "^0.15.0", path = "../git-odb" }
