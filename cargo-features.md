@@ -93,6 +93,13 @@ All feature toggles are additive.
 
 ### git-transport
 
+By default, all IO related capabilities will use async IO traits from `futures-io`.
+
+* **blocking-io**
+  If set, all IO will become blocking. The same types will be used preventing side-by-side usage of blocking and non-blocking IO
+
+### git-transport
+
 The _client_ portion of the transport layer is _async_ by default, i.e. if no feature toggles are set.
 
 * **blocking-client**

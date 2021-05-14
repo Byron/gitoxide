@@ -15,7 +15,7 @@ doctest = false
 default = []
 serde1 = ["serde"]
 http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
-blocking-client = ["maybe-async/is_sync"]
+blocking-client = ["maybe-async/is_sync", "git-packetline/blocking-io"]
 
 [[test]]
 name = "blocking-transport"
