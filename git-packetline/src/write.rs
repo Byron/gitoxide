@@ -1,11 +1,3 @@
-/// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,
-/// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
-pub struct Writer<T> {
-    /// the `Write` implementation to which to propagate packet lines
-    pub inner: T,
-    binary: bool,
-}
-
 /// Non-IO methods
 impl<T> Writer<T> {
     /// If called, each call to [`write()`][io::Write::write()] will write bytes as is.
@@ -28,15 +20,25 @@ impl<T> Writer<T> {
         self
     }
 }
-// #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
-    use crate::{Writer, MAX_DATA_LEN, U16_HEX_BYTES};
+    use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
     use futures_io::AsyncWrite;
     use std::{
         io,
         pin::Pin,
         task::{Context, Poll},
     };
+
+    pin_project_lite::pin_project! {
+        /// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,
+        /// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
+        pub struct Writer<T> {
+            #[pin]
+            inner: T,
+            pub(crate) binary: bool,
+        }
+    }
 
     impl<T: AsyncWrite> Writer<T> {
         /// Create a new instance from the given `write`
@@ -49,11 +51,17 @@ mod async_io {
     }
     impl<T: AsyncWrite> AsyncWrite for Writer<T> {
         fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
-            todo!()
+            if buf.is_empty() {
+                return Poll::Ready(Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "empty packet lines are not permitted as '0004' is invalid",
+                )));
+            }
+            todo!("other writing")
         }
 
         fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-            todo!()
+            self.project().inner.poll_flush(cx)
         }
 
         fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
@@ -61,11 +69,21 @@ mod async_io {
         }
     }
 }
+#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+pub use async_io::Writer;
 
 #[cfg(feature = "blocking-io")]
 mod blocking_io {
-    use crate::{Writer, MAX_DATA_LEN, U16_HEX_BYTES};
+    use crate::{MAX_DATA_LEN, U16_HEX_BYTES};
     use std::io;
+
+    /// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,
+    /// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
+    pub struct Writer<T> {
+        /// the `Write` implementation to which to propagate packet lines
+        pub inner: T,
+        pub(crate) binary: bool,
+    }
 
     impl<T: io::Write> Writer<T> {
         /// Create a new instance from the given `write`
@@ -115,3 +133,5 @@ mod blocking_io {
         }
     }
 }
+#[cfg(feature = "blocking-io")]
+pub use blocking_io::Writer;

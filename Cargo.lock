@@ -888,6 +888,7 @@ dependencies = [
  "futures-lite",
  "git-odb",
  "hex",
+ "pin-project-lite",
  "quick-error",
  "serde",
 ]
