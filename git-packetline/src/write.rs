@@ -1,6 +1,6 @@
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
-    use crate::encode;
+    use crate::{encode, MAX_DATA_LEN, U16_HEX_BYTES};
     use futures_io::AsyncWrite;
     use std::{
         io,
@@ -14,7 +14,13 @@ mod async_io {
         pub struct Writer<T> {
             #[pin]
             inner: encode::LineWriter<'static, T>,
+            state: State
         }
+    }
+
+    enum State {
+        Idle,
+        WriteData(usize),
     }
 
     impl<T: AsyncWrite + Unpin> Writer<T> {
@@ -22,6 +28,7 @@ mod async_io {
         pub fn new(write: T) -> Self {
             Writer {
                 inner: encode::LineWriter::new(write, &[], &[]),
+                state: State::Idle,
             }
         }
 
@@ -55,14 +62,34 @@ mod async_io {
     }
 
     impl<T: AsyncWrite + Unpin> AsyncWrite for Writer<T> {
-        fn poll_write(self: Pin<&mut Self>, _cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
-            if buf.is_empty() {
-                return Poll::Ready(Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "empty packet lines are not permitted as '0004' is invalid",
-                )));
+        fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
+            let mut this = self.project();
+            loop {
+                match this.state {
+                    State::Idle => {
+                        if buf.is_empty() {
+                            return Poll::Ready(Err(io::Error::new(
+                                io::ErrorKind::Other,
+                                "empty packet lines are not permitted as '0004' is invalid",
+                            )));
+                        }
+                        *this.state = State::WriteData(0)
+                    }
+                    State::WriteData(written) => {
+                        while *written != buf.len() {
+                            let data = &buf[*written..*written + (buf.len() - *written).min(MAX_DATA_LEN)];
+                            let n = futures_lite::ready!(this.inner.as_mut().poll_write(cx, data))?;
+                            if n == 0 {
+                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                            }
+                            *written += n;
+                            *written -= U16_HEX_BYTES + this.inner.suffix.len();
+                        }
+                        *this.state = State::Idle;
+                        return Poll::Ready(Ok(buf.len()));
+                    }
+                }
             }
-            todo!("impl actual write branch");
         }
 
         fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {

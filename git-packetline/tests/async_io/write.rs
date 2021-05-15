@@ -7,7 +7,6 @@ use git_packetline::Writer;
 // const MAX_LINE_LEN: usize = 4 + MAX_DATA_LEN;
 //
 #[test]
-#[should_panic]
 fn each_write_results_in_one_line() {
     let buf = future::block_on(async {
         let mut w = Writer::new(Vec::new());

@@ -50,11 +50,7 @@ mod async_io {
         WriteData(usize),
         WriteSuffix(&'a [u8]),
     }
-    impl Default for State<'_> {
-        fn default() -> Self {
-            State::Idle
-        }
-    }
+
     impl<'a, W: AsyncWrite + Unpin> LineWriter<'a, W> {
         /// Create a new line writer writing data with a `prefix` and `suffix`.
         ///
@@ -64,7 +60,7 @@ mod async_io {
                 writer,
                 prefix,
                 suffix,
-                state: State::default(),
+                state: State::Idle,
             }
         }
 
@@ -75,13 +71,13 @@ mod async_io {
     }
 
     impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
-        fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
+        fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
             use futures_lite::ready;
             fn into_io_err(err: Error) -> io::Error {
                 io::Error::new(io::ErrorKind::Other, err)
             }
+            let mut this = self.project();
             loop {
-                let mut this = self.as_mut().project();
                 match &mut this.state {
                     State::Idle => {
                         let data_len = this.prefix.len() + data.len() + this.suffix.len();
@@ -129,7 +125,9 @@ mod async_io {
                             *written += n;
                         }
                         if this.suffix.is_empty() {
-                            return Poll::Ready(Ok(4 + this.prefix.len() + *written));
+                            let written = 4 + this.prefix.len() + *written;
+                            *this.state = State::Idle;
+                            return Poll::Ready(Ok(written));
                         } else {
                             *this.state = State::WriteSuffix(this.suffix)
                         }
@@ -143,6 +141,7 @@ mod async_io {
                             let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
                             *buf = rest;
                         }
+                        *this.state = State::Idle;
                         return Poll::Ready(Ok(4 + this.prefix.len() + data.len() + this.suffix.len()));
                     }
                 }
