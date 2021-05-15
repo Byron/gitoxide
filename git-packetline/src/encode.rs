@@ -44,7 +44,7 @@ mod async_io {
     }
     enum State {
         Idle,
-        WriteHexLen([u8; 4]),
+        WriteHexLen([u8; 4], usize),
         WritePrefix,
         WriteData,
         WriteSuffix,
@@ -70,6 +70,7 @@ mod async_io {
 
     impl<W: AsyncWrite + Unpin + ?Sized> AsyncWrite for LineWriter<'_, W> {
         fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
+            use futures_lite::ready;
             fn into_io_err(err: Error) -> io::Error {
                 io::Error::new(io::ErrorKind::Other, err)
             }
@@ -86,11 +87,15 @@ mod async_io {
                         }
                         let data_len = data_len + 4;
                         let len_buf = u16_to_hex(data_len as u16);
-                        *this.state = State::WriteHexLen(len_buf)
+                        *this.state = State::WriteHexLen(len_buf, 0)
                     }
-                    State::WriteHexLen(hex_len) => {
-                        if let Err(err) = futures_lite::ready!(this.writer.poll_write(cx, hex_len.as_ref())) {
-                            return Poll::Ready(Err(err));
+                    State::WriteHexLen(hex_len, written) => {
+                        while *written != hex_len.len() {
+                            let n = ready!(this.writer.as_mut().poll_write(cx, &hex_len[*written..]))?;
+                            if n == 0 {
+                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                            }
+                            *written += n;
                         }
                         if !this.prefix.is_empty() {
                             *this.state = State::WritePrefix
@@ -99,7 +104,7 @@ mod async_io {
                         }
                     }
                     State::WritePrefix => {
-                        if let Err(err) = futures_lite::ready!(this.writer.poll_write(cx, this.prefix)) {
+                        if let Err(err) = ready!(this.writer.poll_write(cx, this.prefix)) {
                             return Poll::Ready(Err(err));
                         }
                     }
