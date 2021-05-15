@@ -49,6 +49,24 @@ mod async_io {
         WriteData,
         WriteSuffix,
     }
+    impl Default for State {
+        fn default() -> Self {
+            State::Idle
+        }
+    }
+    impl<'a, W: AsyncWrite + Unpin + ?Sized> LineWriter<'a, W> {
+        /// Create a new line writer writing data with a `prefix` and `suffix`.
+        ///
+        /// Keep the additional `prefix` or `suffix` buffers empty if no prefix or suffix should be written.
+        pub fn new(writer: &'a mut W, prefix: &'a [u8], suffix: &'a [u8]) -> Self {
+            LineWriter {
+                writer,
+                prefix,
+                suffix,
+                state: State::default(),
+            }
+        }
+    }
 
     impl<W: AsyncWrite + Unpin + ?Sized> AsyncWrite for LineWriter<'_, W> {
         fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
@@ -56,9 +74,10 @@ mod async_io {
                 io::Error::new(io::ErrorKind::Other, err)
             }
             loop {
-                match &mut self.state {
+                let mut this = self.as_mut().project();
+                match &mut this.state {
                     State::Idle => {
-                        let data_len = self.prefix.len() + data.len() + self.suffix.len();
+                        let data_len = this.prefix.len() + data.len() + this.suffix.len();
                         if data_len > MAX_DATA_LEN {
                             return Poll::Ready(Err(into_io_err(Error::DataLengthLimitExceeded(data_len))));
                         }
@@ -67,17 +86,21 @@ mod async_io {
                         }
                         let data_len = data_len + 4;
                         let len_buf = u16_to_hex(data_len as u16);
-                        self.state = State::WriteHexLen(len_buf)
+                        *this.state = State::WriteHexLen(len_buf)
                     }
                     State::WriteHexLen(hex_len) => {
-                        {
-                            let mut this = self.as_mut().project();
-                            futures_lite::ready!(this.writer.poll_write(cx, hex_len.as_ref()));
+                        if let Err(err) = futures_lite::ready!(this.writer.poll_write(cx, hex_len.as_ref())) {
+                            return Poll::Ready(Err(err));
                         }
-                        if !self.prefix.is_empty() {
-                            self.state = State::WritePrefix
+                        if !this.prefix.is_empty() {
+                            *this.state = State::WritePrefix
                         } else {
-                            self.state = State::WriteData
+                            *this.state = State::WriteData
+                        }
+                    }
+                    State::WritePrefix => {
+                        if let Err(err) = futures_lite::ready!(this.writer.poll_write(cx, this.prefix)) {
+                            return Poll::Ready(Err(err));
                         }
                     }
                     _ => todo!("other states"),
@@ -86,12 +109,12 @@ mod async_io {
         }
 
         fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-            let mut this = self.project();
+            let this = self.project();
             this.writer.poll_flush(cx)
         }
 
         fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-            let mut this = self.project();
+            let this = self.project();
             this.writer.poll_close(cx)
         }
     }
