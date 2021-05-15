@@ -20,7 +20,7 @@ quick_error! {
     }
 }
 
-// #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
     use super::u16_to_hex;
     use crate::{encode::Error, MAX_DATA_LEN};
@@ -39,17 +39,17 @@ mod async_io {
             writer: &'a mut W,
             prefix: &'a [u8],
             suffix: &'a [u8],
-            state: State,
+            state: State<'a>,
         }
     }
-    enum State {
+    enum State<'a> {
         Idle,
         WriteHexLen([u8; 4], usize),
-        WritePrefix,
+        WritePrefix(&'a [u8]),
         WriteData,
         WriteSuffix,
     }
-    impl Default for State {
+    impl Default for State<'_> {
         fn default() -> Self {
             State::Idle
         }
@@ -98,15 +98,21 @@ mod async_io {
                             *written += n;
                         }
                         if !this.prefix.is_empty() {
-                            *this.state = State::WritePrefix
+                            *this.state = State::WritePrefix(this.prefix)
                         } else {
                             *this.state = State::WriteData
                         }
                     }
-                    State::WritePrefix => {
-                        if let Err(err) = ready!(this.writer.poll_write(cx, this.prefix)) {
-                            return Poll::Ready(Err(err));
+                    State::WritePrefix(buf) => {
+                        while !buf.is_empty() {
+                            let n = ready!(this.writer.as_mut().poll_write(cx, buf))?;
+                            if n == 0 {
+                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                            }
+                            let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
+                            *buf = rest;
                         }
+                        *this.state = State::WriteData
                     }
                     _ => todo!("other states"),
                 }
