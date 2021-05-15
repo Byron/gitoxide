@@ -46,12 +46,13 @@ impl<'a, W: AsyncWrite + Unpin> LineWriter<'a, W> {
     }
 }
 
+fn into_io_err(err: Error) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, err)
+}
+
 impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
     fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
         use futures_lite::ready;
-        fn into_io_err(err: Error) -> io::Error {
-            io::Error::new(io::ErrorKind::Other, err)
-        }
         let mut this = self.project();
         loop {
             match &mut this.state {
@@ -140,13 +141,13 @@ async fn prefixed_and_suffixed_data_to_write(
     data: &[u8],
     suffix: &[u8],
     mut out: impl AsyncWrite + Unpin,
-) -> Result<usize, Error> {
+) -> io::Result<usize> {
     let data_len = prefix.len() + data.len() + suffix.len();
     if data_len > MAX_DATA_LEN {
-        return Err(Error::DataLengthLimitExceeded(data_len));
+        return Err(into_io_err(Error::DataLengthLimitExceeded(data_len)));
     }
     if data.is_empty() {
-        return Err(Error::DataIsEmpty);
+        return Err(into_io_err(Error::DataIsEmpty));
     }
 
     let data_len = data_len + 4;
@@ -163,16 +164,16 @@ async fn prefixed_and_suffixed_data_to_write(
     Ok(data_len)
 }
 
-async fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
+async fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
     prefixed_and_suffixed_data_to_write(prefix, data, &[], out).await
 }
 
 /// Write a `text` message to `out`, which is assured to end in a newline.
-pub async fn text_to_write(text: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
+pub async fn text_to_write(text: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
     prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out).await
 }
 
 /// Write a `data` message to `out`.
-pub async fn data_to_write(data: &[u8], out: impl AsyncWrite + Unpin) -> Result<usize, Error> {
+pub async fn data_to_write(data: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
     prefixed_data_to_write(&[], data, out).await
 }

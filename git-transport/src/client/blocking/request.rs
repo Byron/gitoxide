@@ -66,7 +66,6 @@ impl<'a> RequestWriter<'a> {
             MessageKind::Text(t) => git_packetline::immutable::Text::from(t).to_write(self.writer.inner_mut()),
         }
         .map(|_| ())
-        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
     }
 }
 

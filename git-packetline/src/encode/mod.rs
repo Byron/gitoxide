@@ -6,11 +6,6 @@ quick_error! {
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
-        Io(err: std::io::Error) {
-            display("An error occurred while writing")
-            from()
-            source(err)
-        }
         DataLengthLimitExceeded(length_in_bytes: usize) {
             display("Cannot encode more than {} bytes, got {}", MAX_DATA_LEN, length_in_bytes)
         }

@@ -18,26 +18,26 @@ pub fn flush_to_write(mut out: impl io::Write) -> io::Result<usize> {
 }
 
 /// Write an error `message` to `out`.
-pub fn error_to_write(message: &[u8], out: impl io::Write) -> Result<usize, Error> {
+pub fn error_to_write(message: &[u8], out: impl io::Write) -> io::Result<usize> {
     prefixed_data_to_write(ERR_PREFIX, message, out)
 }
 
 /// Write `data` of `kind` to `out` using side-band encoding.
-pub fn band_to_write(kind: Channel, data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+pub fn band_to_write(kind: Channel, data: &[u8], out: impl io::Write) -> io::Result<usize> {
     prefixed_data_to_write(&[kind as u8], data, out)
 }
 
 /// Write a `data` message to `out`.
-pub fn data_to_write(data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+pub fn data_to_write(data: &[u8], out: impl io::Write) -> io::Result<usize> {
     prefixed_data_to_write(&[], data, out)
 }
 
 /// Write a `text` message to `out`, which is assured to end in a newline.
-pub fn text_to_write(text: &[u8], out: impl io::Write) -> Result<usize, Error> {
+pub fn text_to_write(text: &[u8], out: impl io::Write) -> io::Result<usize> {
     prefixed_and_suffixed_data_to_write(&[], text, &[b'\n'], out)
 }
 
-fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl io::Write) -> Result<usize, Error> {
+fn prefixed_data_to_write(prefix: &[u8], data: &[u8], out: impl io::Write) -> io::Result<usize> {
     prefixed_and_suffixed_data_to_write(prefix, data, &[], out)
 }
 
@@ -46,13 +46,16 @@ fn prefixed_and_suffixed_data_to_write(
     data: &[u8],
     suffix: &[u8],
     mut out: impl io::Write,
-) -> Result<usize, Error> {
+) -> io::Result<usize> {
     let data_len = prefix.len() + data.len() + suffix.len();
     if data_len > MAX_DATA_LEN {
-        return Err(Error::DataLengthLimitExceeded(data_len));
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            Error::DataLengthLimitExceeded(data_len),
+        ));
     }
     if data.is_empty() {
-        return Err(Error::DataIsEmpty);
+        return Err(io::Error::new(io::ErrorKind::Other, Error::DataIsEmpty));
     }
 
     let data_len = data_len + 4;

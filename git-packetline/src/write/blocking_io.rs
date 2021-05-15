@@ -56,16 +56,7 @@ impl<T: io::Write> io::Write for Writer<T> {
                 crate::encode::data_to_write(data, &mut self.inner)
             } else {
                 crate::encode::text_to_write(data, &mut self.inner)
-            }
-            .map_err(|err| {
-                use crate::encode::Error::*;
-                match err {
-                    Io(err) => err,
-                    DataIsEmpty | DataLengthLimitExceeded(_) => {
-                        unreachable!("We are handling empty and large data here, so this can't ever happen")
-                    }
-                }
-            })?;
+            }?;
             // subtract header (and trailng NL) because write-all can't handle writing more than it passes in
             written -= U16_HEX_BYTES + if self.binary { 0 } else { 1 };
             buf = rest;
