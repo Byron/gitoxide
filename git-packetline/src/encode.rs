@@ -32,15 +32,12 @@ mod async_io {
         task::{Context, Poll},
     };
 
-    pin_project_lite::pin_project! {
-        /// A way of writing packet lines asynchronously.
-        pub struct LineWriter<'a, 'b, W: ?Sized> {
-            #[pin]
-            writer: &'a mut W,
-            prefix: &'b [u8],
-            suffix: &'b [u8],
-            state: State<'b>,
-        }
+    /// A way of writing packet lines asynchronously.
+    pub struct LineWriter<'a, 'b, W: ?Sized> {
+        writer: &'a mut W,
+        prefix: &'b [u8],
+        suffix: &'b [u8],
+        state: State<'b>,
     }
     enum State<'a> {
         Idle,
@@ -74,8 +71,8 @@ mod async_io {
             fn into_io_err(err: Error) -> io::Error {
                 io::Error::new(io::ErrorKind::Other, err)
             }
+            let mut this = &mut *self;
             loop {
-                let mut this = self.as_mut().project();
                 match &mut this.state {
                     State::Idle => {
                         let data_len = this.prefix.len() + data.len() + this.suffix.len();
@@ -87,36 +84,36 @@ mod async_io {
                         }
                         let data_len = data_len + 4;
                         let len_buf = u16_to_hex(data_len as u16);
-                        *this.state = State::WriteHexLen(len_buf, 0)
+                        this.state = State::WriteHexLen(len_buf, 0)
                     }
                     State::WriteHexLen(hex_len, written) => {
                         while *written != hex_len.len() {
-                            let n = ready!(this.writer.as_mut().poll_write(cx, &hex_len[*written..]))?;
+                            let n = ready!(Pin::new(&mut this.writer).poll_write(cx, &hex_len[*written..]))?;
                             if n == 0 {
                                 return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
                             }
                             *written += n;
                         }
                         if this.prefix.is_empty() {
-                            *this.state = State::WriteData(0)
+                            this.state = State::WriteData(0)
                         } else {
-                            *this.state = State::WritePrefix(this.prefix)
+                            this.state = State::WritePrefix(this.prefix)
                         }
                     }
                     State::WritePrefix(buf) => {
                         while !buf.is_empty() {
-                            let n = ready!(this.writer.as_mut().poll_write(cx, buf))?;
+                            let n = ready!(Pin::new(&mut this.writer).poll_write(cx, buf))?;
                             if n == 0 {
                                 return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
                             }
                             let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
                             *buf = rest;
                         }
-                        *this.state = State::WriteData(0)
+                        this.state = State::WriteData(0)
                     }
                     State::WriteData(written) => {
                         while *written != data.len() {
-                            let n = ready!(this.writer.as_mut().poll_write(cx, &data[*written..]))?;
+                            let n = ready!(Pin::new(&mut this.writer).poll_write(cx, &data[*written..]))?;
                             if n == 0 {
                                 return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
                             }
@@ -125,12 +122,12 @@ mod async_io {
                         if this.suffix.is_empty() {
                             return Poll::Ready(Ok(4 + this.prefix.len() + *written));
                         } else {
-                            *this.state = State::WriteSuffix(this.suffix)
+                            this.state = State::WriteSuffix(this.suffix)
                         }
                     }
                     State::WriteSuffix(buf) => {
                         while !buf.is_empty() {
-                            let n = ready!(this.writer.as_mut().poll_write(cx, buf))?;
+                            let n = ready!(Pin::new(&mut this.writer).poll_write(cx, buf))?;
                             if n == 0 {
                                 return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
                             }
@@ -143,14 +140,12 @@ mod async_io {
             }
         }
 
-        fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-            let this = self.project();
-            this.writer.poll_flush(cx)
+        fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+            Pin::new(&mut *self.writer).poll_flush(cx)
         }
 
-        fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-            let this = self.project();
-            this.writer.poll_close(cx)
+        fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+            Pin::new(&mut self.writer).poll_close(cx)
         }
     }
 
