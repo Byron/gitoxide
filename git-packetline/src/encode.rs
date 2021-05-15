@@ -34,12 +34,12 @@ mod async_io {
 
     pin_project_lite::pin_project! {
         /// A way of writing packet lines asynchronously.
-        pub struct LineWriter<'a, 'b, W: ?Sized> {
+        pub struct LineWriter<'a, W> {
             #[pin]
-            writer: &'a mut W,
-            prefix: &'b [u8],
-            suffix: &'b [u8],
-            state: State<'b>,
+            writer: W,
+            prefix: &'a [u8],
+            suffix: &'a [u8],
+            state: State<'a>,
         }
     }
     enum State<'a> {
@@ -54,11 +54,11 @@ mod async_io {
             State::Idle
         }
     }
-    impl<'a, 'b, W: AsyncWrite + Unpin + ?Sized> LineWriter<'a, 'b, W> {
+    impl<'a, W: AsyncWrite + Unpin> LineWriter<'a, W> {
         /// Create a new line writer writing data with a `prefix` and `suffix`.
         ///
         /// Keep the additional `prefix` or `suffix` buffers empty if no prefix or suffix should be written.
-        pub fn new(writer: &'a mut W, prefix: &'b [u8], suffix: &'b [u8]) -> Self {
+        pub fn new(writer: W, prefix: &'a [u8], suffix: &'a [u8]) -> Self {
             LineWriter {
                 writer,
                 prefix,
@@ -68,7 +68,7 @@ mod async_io {
         }
     }
 
-    impl<W: AsyncWrite + Unpin + ?Sized> AsyncWrite for LineWriter<'_, '_, W> {
+    impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
         fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<io::Result<usize>> {
             use futures_lite::ready;
             fn into_io_err(err: Error) -> io::Error {
