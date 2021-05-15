@@ -37,7 +37,7 @@ impl<T: AsyncWrite + Unpin> Writer<T> {
 }
 
 /// Non-IO methods
-impl<T: AsyncWrite + Unpin> Writer<T> {
+impl<T> Writer<T> {
     /// If called, each call to [`write()`][io::Write::write()] will write bytes as is.
     pub fn enable_binary_mode(&mut self) {
         self.inner.suffix = &[];
@@ -46,16 +46,6 @@ impl<T: AsyncWrite + Unpin> Writer<T> {
     /// if needed before writing.
     pub fn enable_text_mode(&mut self) {
         self.inner.suffix = &[b'\n'];
-    }
-    /// As [`enable_text_mode()`][Writer::enable_text_mode()], but suitable for chaining.
-    pub fn text_mode(mut self) -> Self {
-        self.enable_text_mode();
-        self
-    }
-    /// As [`enable_binary_mode()`][Writer::enable_binary_mode()], but suitable for chaining.
-    pub fn binary_mode(mut self) -> Self {
-        self.enable_binary_mode();
-        self
     }
 }
 

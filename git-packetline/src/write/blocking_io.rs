@@ -30,15 +30,9 @@ impl<T> Writer<T> {
     pub fn enable_text_mode(&mut self) {
         self.binary = false;
     }
-    /// As [`enable_text_mode()`][Writer::enable_text_mode()], but suitable for chaining.
-    pub fn text_mode(mut self) -> Self {
-        self.binary = false;
-        self
-    }
-    /// As [`enable_binary_mode()`][Writer::enable_binary_mode()], but suitable for chaining.
-    pub fn binary_mode(mut self) -> Self {
-        self.binary = true;
-        self
+    /// Return the inner writer, consuming self.
+    pub fn into_inner(self) -> T {
+        self.inner
     }
 }
 
