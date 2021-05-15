@@ -62,3 +62,41 @@ mod text_to_write {
         Ok(())
     }
 }
+
+mod error {
+    use bstr::ByteSlice;
+    use git_packetline::encode::error_to_write;
+
+    #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+    async fn write_line() -> crate::Result {
+        let mut out = Vec::new();
+        let res = error_to_write(b"hello error", &mut out).await?;
+        assert_eq!(res, 19);
+        assert_eq!(out.as_bstr(), b"0013ERR hello error".as_bstr());
+        Ok(())
+    }
+}
+
+mod flush_delim_response_end {
+    use bstr::ByteSlice;
+    use git_packetline::encode::{delim_to_write, flush_to_write, response_end_to_write};
+
+    #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+    async fn success_flush_delim_response_end() -> crate::Result {
+        let mut out = Vec::new();
+        let res = flush_to_write(&mut out).await?;
+        assert_eq!(res, 4);
+        assert_eq!(out.as_bstr(), b"0000".as_bstr());
+
+        out.clear();
+        let res = delim_to_write(&mut out).await?;
+        assert_eq!(res, 4);
+        assert_eq!(out.as_bstr(), b"0001".as_bstr());
+
+        out.clear();
+        let res = response_end_to_write(&mut out).await?;
+        assert_eq!(res, 4);
+        assert_eq!(out.as_bstr(), b"0002".as_bstr());
+        Ok(())
+    }
+}

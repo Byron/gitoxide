@@ -1,5 +1,5 @@
 use super::u16_to_hex;
-use crate::{encode::Error, MAX_DATA_LEN};
+use crate::{encode::Error, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
 use futures_io::AsyncWrite;
 use futures_lite::AsyncWriteExt;
 use std::{
@@ -176,4 +176,27 @@ pub async fn text_to_write(text: &[u8], out: impl AsyncWrite + Unpin) -> io::Res
 /// Write a `data` message to `out`.
 pub async fn data_to_write(data: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
     prefixed_data_to_write(&[], data, out).await
+}
+
+/// Write an error `message` to `out`.
+pub async fn error_to_write(message: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
+    prefixed_data_to_write(ERR_PREFIX, message, out).await
+}
+
+/// Write a response-end message to `out`.
+pub async fn response_end_to_write(mut out: impl AsyncWrite + Unpin) -> io::Result<usize> {
+    out.write_all(RESPONSE_END_LINE).await?;
+    Ok(4)
+}
+
+/// Write a delim message to `out`.
+pub async fn delim_to_write(mut out: impl AsyncWrite + Unpin) -> io::Result<usize> {
+    out.write_all(DELIMITER_LINE).await?;
+    Ok(4)
+}
+
+/// Write a flush message to `out`.
+pub async fn flush_to_write(mut out: impl AsyncWrite + Unpin) -> io::Result<usize> {
+    out.write_all(FLUSH_LINE).await?;
+    Ok(4)
 }
