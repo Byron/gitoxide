@@ -122,8 +122,8 @@ unit-tests: ## run all unit tests
 	cd git-odb && cargo test && cargo test --all-features
 	cd git-packetline && cargo test \
 					  && cargo test --all-features \
-					  && cargo test --features "blocking-io" \
-					  && cargo test --features "async-io"
+					  && cargo test  --features blocking-io,maybe-async/is_sync --test blocking-packetline \
+					  && cargo test --features "async-io" --test async-packetline
 	cd git-transport && cargo test \
 					 && cargo test --features http-client-curl \
 					 && cargo test --no-default-features
