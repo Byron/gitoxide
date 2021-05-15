@@ -46,8 +46,8 @@ mod async_io {
         Idle,
         WriteHexLen([u8; 4], usize),
         WritePrefix(&'a [u8]),
-        WriteData,
-        WriteSuffix,
+        WriteData(usize),
+        WriteSuffix(&'a [u8]),
     }
     impl Default for State<'_> {
         fn default() -> Self {
@@ -97,10 +97,10 @@ mod async_io {
                             }
                             *written += n;
                         }
-                        if !this.prefix.is_empty() {
-                            *this.state = State::WritePrefix(this.prefix)
+                        if this.prefix.is_empty() {
+                            *this.state = State::WriteData(0)
                         } else {
-                            *this.state = State::WriteData
+                            *this.state = State::WritePrefix(this.prefix)
                         }
                     }
                     State::WritePrefix(buf) => {
@@ -112,9 +112,33 @@ mod async_io {
                             let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
                             *buf = rest;
                         }
-                        *this.state = State::WriteData
+                        *this.state = State::WriteData(0)
                     }
-                    _ => todo!("other states"),
+                    State::WriteData(written) => {
+                        while *written != data.len() {
+                            let n = ready!(this.writer.as_mut().poll_write(cx, &data[*written..]))?;
+                            if n == 0 {
+                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                            }
+                            *written += n;
+                        }
+                        if this.suffix.is_empty() {
+                            return Poll::Ready(Ok(4 + this.prefix.len() + *written));
+                        } else {
+                            *this.state = State::WriteSuffix(this.suffix)
+                        }
+                    }
+                    State::WriteSuffix(buf) => {
+                        while !buf.is_empty() {
+                            let n = ready!(this.writer.as_mut().poll_write(cx, buf))?;
+                            if n == 0 {
+                                return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
+                            }
+                            let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
+                            *buf = rest;
+                        }
+                        return Poll::Ready(Ok(4 + this.prefix.len() + data.len() + this.suffix.len()));
+                    }
                 }
             }
         }
