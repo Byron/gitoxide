@@ -34,11 +34,12 @@ mod async_io {
 
     pin_project_lite::pin_project! {
         /// A way of writing packet lines asynchronously.
+        #[allow(missing_docs)]
         pub struct LineWriter<'a, W> {
             #[pin]
-            writer: W,
-            prefix: &'a [u8],
-            suffix: &'a [u8],
+            pub writer: W,
+            pub prefix: &'a [u8],
+            pub suffix: &'a [u8],
             state: State<'a>,
         }
     }
@@ -65,6 +66,11 @@ mod async_io {
                 suffix,
                 state: State::default(),
             }
+        }
+
+        /// Consume self and reveal the inner writer.
+        pub fn into_inner(self) -> W {
+            self.writer
         }
     }
 

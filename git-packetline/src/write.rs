@@ -1,27 +1,6 @@
-/// Non-IO methods
-impl<T> Writer<T> {
-    /// If called, each call to [`write()`][io::Write::write()] will write bytes as is.
-    pub fn enable_binary_mode(&mut self) {
-        self.binary = true;
-    }
-    /// If called, each call to [`write()`][io::Write::write()] will write the input as text, appending a trailing newline
-    /// if needed before writing.
-    pub fn enable_text_mode(&mut self) {
-        self.binary = false;
-    }
-    /// As [`enable_text_mode()`][Writer::enable_text_mode()], but suitable for chaining.
-    pub fn text_mode(mut self) -> Self {
-        self.binary = false;
-        self
-    }
-    /// As [`enable_binary_mode()`][Writer::enable_binary_mode()], but suitable for chaining.
-    pub fn binary_mode(mut self) -> Self {
-        self.binary = true;
-        self
-    }
-}
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod async_io {
+    use crate::encode;
     use futures_io::AsyncWrite;
     use std::{
         io,
@@ -34,8 +13,7 @@ mod async_io {
         /// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
         pub struct Writer<T> {
             #[pin]
-            inner: T,
-            pub(crate) binary: bool,
+            inner: encode::LineWriter<'static, T>,
         }
     }
 
@@ -43,16 +21,39 @@ mod async_io {
         /// Create a new instance from the given `write`
         pub fn new(write: T) -> Self {
             Writer {
-                inner: write,
-                binary: true,
+                inner: encode::LineWriter::new(write, &[], &[]),
             }
         }
 
         /// Return the inner writer, consuming self.
         pub fn into_inner(self) -> T {
-            self.inner
+            self.inner.into_inner()
         }
     }
+
+    /// Non-IO methods
+    impl<T: AsyncWrite + Unpin> Writer<T> {
+        /// If called, each call to [`write()`][io::Write::write()] will write bytes as is.
+        pub fn enable_binary_mode(&mut self) {
+            self.inner.suffix = &[];
+        }
+        /// If called, each call to [`write()`][io::Write::write()] will write the input as text, appending a trailing newline
+        /// if needed before writing.
+        pub fn enable_text_mode(&mut self) {
+            self.inner.suffix = &[b'\n'];
+        }
+        /// As [`enable_text_mode()`][Writer::enable_text_mode()], but suitable for chaining.
+        pub fn text_mode(mut self) -> Self {
+            self.enable_text_mode();
+            self
+        }
+        /// As [`enable_binary_mode()`][Writer::enable_binary_mode()], but suitable for chaining.
+        pub fn binary_mode(mut self) -> Self {
+            self.enable_binary_mode();
+            self
+        }
+    }
+
     impl<T: AsyncWrite + Unpin> AsyncWrite for Writer<T> {
         fn poll_write(self: Pin<&mut Self>, _cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
             if buf.is_empty() {
@@ -96,6 +97,29 @@ mod blocking_io {
                 inner: write,
                 binary: true,
             }
+        }
+    }
+
+    /// Non-IO methods
+    impl<T> Writer<T> {
+        /// If called, each call to [`write()`][io::Write::write()] will write bytes as is.
+        pub fn enable_binary_mode(&mut self) {
+            self.binary = true;
+        }
+        /// If called, each call to [`write()`][io::Write::write()] will write the input as text, appending a trailing newline
+        /// if needed before writing.
+        pub fn enable_text_mode(&mut self) {
+            self.binary = false;
+        }
+        /// As [`enable_text_mode()`][Writer::enable_text_mode()], but suitable for chaining.
+        pub fn text_mode(mut self) -> Self {
+            self.binary = false;
+            self
+        }
+        /// As [`enable_binary_mode()`][Writer::enable_binary_mode()], but suitable for chaining.
+        pub fn binary_mode(mut self) -> Self {
+            self.binary = true;
+            self
         }
     }
 
