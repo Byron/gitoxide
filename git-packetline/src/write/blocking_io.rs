@@ -5,7 +5,7 @@ use std::io;
 /// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
 pub struct Writer<T> {
     /// the `Write` implementation to which to propagate packet lines
-    pub inner: T,
+    inner: T,
     pub(crate) binary: bool,
 }
 
@@ -33,6 +33,10 @@ impl<T> Writer<T> {
     /// Return the inner writer, consuming self.
     pub fn into_inner(self) -> T {
         self.inner
+    }
+    /// Return a mutable reference to the inner writer, useful if packet lines should be serialized directly.
+    pub fn inner_mut(&mut self) -> &mut T {
+        &mut self.inner
     }
 }
 

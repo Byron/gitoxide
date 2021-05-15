@@ -34,6 +34,11 @@ impl<T: AsyncWrite + Unpin> Writer<T> {
     pub fn into_inner(self) -> T {
         self.inner.into_inner()
     }
+
+    /// Return a mutable reference to the inner writer, useful if packet lines should be serialized directly.
+    pub fn inner_mut(&mut self) -> &mut T {
+        &mut self.inner.writer
+    }
 }
 
 /// Non-IO methods
