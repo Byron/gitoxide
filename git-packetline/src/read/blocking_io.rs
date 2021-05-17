@@ -1,9 +1,6 @@
-use crate::{decode, PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES};
+use crate::{decode, read::WithSidebands, PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES};
 use bstr::ByteSlice;
 use std::io;
-
-mod sidebands;
-pub use sidebands::WithSidebands;
 
 type ExhaustiveOutcome<'a> = (
     bool,                                                      // is_done

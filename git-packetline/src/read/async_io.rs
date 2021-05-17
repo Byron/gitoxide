@@ -1,4 +1,4 @@
-use crate::{decode, PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES};
+use crate::{decode, read::WithSidebands, PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES};
 use bstr::ByteSlice;
 use futures_io::AsyncRead;
 use futures_lite::AsyncReadExt;
@@ -137,5 +137,12 @@ where
         } else {
             Some(Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here"))))
         }
+    }
+
+    /// Same as [`as_read_with_sidebands(…)`][StreamingPeekableIter::as_read_with_sidebands()], but for channels without side band support.
+    ///
+    /// Due to the preconfigured function type this method can be called without 'turbofish'.
+    pub fn as_read(&mut self) -> WithSidebands<'_, T, fn(bool, &[u8])> {
+        WithSidebands::new(self)
     }
 }

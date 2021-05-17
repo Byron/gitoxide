@@ -7,11 +7,6 @@ use std::io;
 /// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][io::Read] implementation which is useful
 /// if they represent binary data, like the one of a pack file.
-///
-/// # Performance Notice
-/// Reading from this intermediary copies bytes 3 times:
-/// OS -> (parent) line provider buffer -> our buffer -> caller's output buffer
-/// which won't make this very efficient for huge bandwidths.
 pub struct WithSidebands<'a, T, F>
 where
     T: io::Read,
