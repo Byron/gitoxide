@@ -7,9 +7,7 @@ use crate::{PacketLine, MAX_LINE_LEN, U16_HEX_BYTES};
 /// This implementation tries hard not to allocate at all which leads to quite some added complexity and plenty of extra memory copies.
 pub struct StreamingPeekableIter<T> {
     read: T,
-    // #[cfg(feature = "blocking-io")]
     peek_buf: Vec<u8>,
-    // #[cfg(feature = "blocking-io")]
     buf: Vec<u8>,
     fail_on_err_lines: bool,
     delimiters: &'static [PacketLine<'static>],

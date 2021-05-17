@@ -19,6 +19,7 @@ where
     parent: &'a mut StreamingPeekableIter<T>,
     handle_progress: Option<F>,
     buf: Vec<u8>,
+    ofs: usize,
     pos: usize,
     cap: usize,
 }
@@ -42,6 +43,7 @@ where
             parent,
             handle_progress: None,
             buf: vec![0; MAX_DATA_LEN],
+            ofs: 0,
             pos: 0,
             cap: 0,
         }
@@ -62,6 +64,7 @@ where
             parent,
             handle_progress: Some(handle_progress),
             buf: vec![0; MAX_DATA_LEN],
+            ofs: 0,
             pos: 0,
             cap: 0,
         }
@@ -73,6 +76,7 @@ where
             parent,
             handle_progress: None,
             buf: vec![0; MAX_DATA_LEN],
+            ofs: 0,
             pos: 0,
             cap: 0,
         }
@@ -103,6 +107,20 @@ where
             _ => None,
         }
     }
+
+    fn ofs_and_cap_from_buf(parent_slice: &[u8], subslice: &[u8]) -> (usize, usize) {
+        let parent_start = parent_slice.as_ptr();
+        assert!(
+            parent_start <= subslice.as_ptr(),
+            "subslice start must actually be contained in parent slice"
+        );
+        assert!(
+            subslice.as_ptr() as usize + subslice.len() <= parent_start as usize + parent_slice.len(),
+            "subslice end must actually be contained in parent slice"
+        );
+
+        (subslice.as_ptr() as usize - parent_start as usize, subslice.len())
+    }
 }
 
 impl<'a, T, F> io::BufRead for WithSidebands<'a, T, F>
@@ -111,13 +129,12 @@ where
     F: FnMut(bool, &[u8]),
 {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        use io::Read;
         if self.pos >= self.cap {
             debug_assert!(self.pos == self.cap);
-            self.cap = loop {
+            let (ofs, cap) = loop {
                 let line = match self.parent.read_line() {
                     Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
-                    None => break 0,
+                    None => break (0, 0),
                 };
                 match self.handle_progress.as_mut() {
                     Some(handle_progress) => {
@@ -125,7 +142,7 @@ where
                             .decode_band()
                             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                         match band {
-                            Band::Data(ref mut d) => break d.read(&mut self.buf)?,
+                            Band::Data(d) => break Self::ofs_and_cap_from_buf(&self.parent.buf, d),
                             Band::Progress(d) => {
                                 let text = Text::from(d).0;
                                 handle_progress(false, text);
@@ -138,7 +155,7 @@ where
                     }
                     None => {
                         break match line.as_slice() {
-                            Some(ref mut d) => d.read(&mut self.buf)?,
+                            Some(d) => Self::ofs_and_cap_from_buf(&self.parent.buf, d),
                             None => {
                                 return Err(io::Error::new(
                                     io::ErrorKind::UnexpectedEof,
@@ -149,9 +166,11 @@ where
                     }
                 }
             };
+            self.cap = cap;
+            self.ofs = ofs;
             self.pos = 0;
         }
-        Ok(&self.buf[self.pos..self.cap])
+        Ok(&self.parent.buf[self.pos + self.ofs..self.cap])
     }
 
     fn consume(&mut self, amt: usize) {
