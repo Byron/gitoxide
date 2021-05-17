@@ -1,5 +1,5 @@
 use super::u16_to_hex;
-use crate::{encode::Error, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
+use crate::{encode::Error, Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
 use futures_io::AsyncWrite;
 use futures_lite::AsyncWriteExt;
 use std::{
@@ -199,4 +199,9 @@ pub async fn delim_to_write(mut out: impl AsyncWrite + Unpin) -> io::Result<usiz
 pub async fn flush_to_write(mut out: impl AsyncWrite + Unpin) -> io::Result<usize> {
     out.write_all(FLUSH_LINE).await?;
     Ok(4)
+}
+
+/// Write `data` of `kind` to `out` using side-band encoding.
+pub async fn band_to_write(kind: Channel, data: &[u8], out: impl AsyncWrite + Unpin) -> io::Result<usize> {
+    prefixed_data_to_write(&[kind as u8], data, out).await
 }

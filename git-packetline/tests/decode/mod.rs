@@ -21,6 +21,68 @@ mod streaming {
         Ok(())
     }
 
+    mod round_trip {
+        use crate::decode::streaming::assert_complete;
+        use bstr::ByteSlice;
+        use git_packetline::{decode, decode::streaming, Channel, PacketLine};
+
+        #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+        async fn trailing_line_feeds_are_removed_explicitly() -> crate::Result {
+            let line = decode::all_at_once(b"0006a\n")?;
+            assert_eq!(line.to_text().expect("text").0.as_bstr(), b"a".as_bstr());
+            let mut out = Vec::new();
+            line.to_text()
+                .expect("text")
+                .to_write(&mut out)
+                .await
+                .expect("write to memory works");
+            assert_eq!(out, b"0006a\n", "it appends a newline in text mode");
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+        async fn all_kinds_of_packetlines() -> crate::Result {
+            for (line, bytes) in &[
+                (PacketLine::ResponseEnd, 4),
+                (PacketLine::Delimiter, 4),
+                (PacketLine::Flush, 4),
+                (PacketLine::Data(b"hello there"), 15),
+            ] {
+                let mut out = Vec::new();
+                line.to_write(&mut out).await?;
+                assert_complete(streaming(&out), *bytes, *line)?;
+            }
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+        async fn error_line() -> crate::Result {
+            let mut out = Vec::new();
+            PacketLine::Data(b"the error")
+                .to_error()
+                .expect("data line")
+                .to_write(&mut out)
+                .await?;
+            let line = decode::all_at_once(&out)?;
+            assert_eq!(line.check_error().expect("err").0, b"the error");
+            Ok(())
+        }
+
+        #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+        async fn side_bands() -> crate::Result {
+            for channel in &[Channel::Data, Channel::Error, Channel::Progress] {
+                let mut out = Vec::new();
+                let band = PacketLine::Data(b"band data")
+                    .to_band(*channel)
+                    .expect("data is valid for band");
+                band.to_write(&mut out).await?;
+                let line = decode::all_at_once(&out)?;
+                assert_eq!(line.decode_band().expect("valid band"), band);
+            }
+            Ok(())
+        }
+    }
+
     #[test]
     fn flush() -> crate::Result {
         assert_complete(streaming(b"0000someotherstuff"), 4, PacketLine::Flush)
