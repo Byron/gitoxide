@@ -21,9 +21,9 @@ where
     T: AsyncRead,
 {
     #[pin]
-    parent: &'a mut StreamingPeekableIter<T>,
+    parent: Option<&'a mut StreamingPeekableIter<T>>,
     handle_progress: Option<F>,
-    read_line: Option<Pin<Box<dyn Future<Output = ReadLineResult<'a>>>>>,
+    read_line: Option<Pin<Box<dyn Future<Output = ReadLineResult<'a>> + 'a>>>,
     pos: usize,
     cap: usize,
 }
@@ -35,7 +35,7 @@ where
 {
     fn drop(mut self: Pin<&mut Self>) {
         let mut this = self.project();
-        this.parent.reset();
+        this.parent.take().map(|p| p.reset());
     }
 }
 
@@ -46,7 +46,7 @@ where
     /// Create a new instance with the given provider as `parent`.
     pub fn new(parent: &'a mut StreamingPeekableIter<T>) -> Self {
         WithSidebands {
-            parent,
+            parent: Some(parent),
             handle_progress: None,
             read_line: None,
             pos: 0,
@@ -66,7 +66,7 @@ where
     /// being true in case the `text` is to be interpreted as error.
     pub fn with_progress_handler(parent: &'a mut StreamingPeekableIter<T>, handle_progress: F) -> Self {
         WithSidebands {
-            parent,
+            parent: Some(parent),
             handle_progress: Some(handle_progress),
             read_line: None,
             pos: 0,
@@ -77,7 +77,7 @@ where
     /// Create a new instance without a progress handler.
     pub fn without_progress_handler(parent: &'a mut StreamingPeekableIter<T>) -> Self {
         WithSidebands {
-            parent,
+            parent: Some(parent),
             handle_progress: None,
             read_line: None,
             pos: 0,
@@ -87,12 +87,12 @@ where
 
     /// Forwards to the parent [StreamingPeekableIter::reset_with()]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
-        self.parent.reset_with(delimiters)
+        self.parent.as_mut().unwrap().reset_with(delimiters)
     }
 
     /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
     pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
-        self.parent.stopped_at
+        self.parent.as_ref().unwrap().stopped_at
     }
 
     /// Set or unset the progress handler.
@@ -103,7 +103,7 @@ where
     /// Effectively forwards to the parent [StreamingPeekableIter::peek_line()], allowing to see what would be returned
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     pub async fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], crate::decode::Error>>> {
-        match self.parent.peek_line().await {
+        match self.parent.as_mut().unwrap().peek_line().await {
             Some(Ok(Ok(crate::PacketLine::Data(line)))) => Some(Ok(Ok(line))),
             Some(Ok(Err(err))) => Some(Ok(Err(err))),
             Some(Err(err)) => Some(Err(err)),
@@ -117,19 +117,19 @@ where
     T: AsyncRead + Unpin + Send,
     F: FnMut(bool, &[u8]),
 {
-    fn poll_fill_buf(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
+    fn poll_fill_buf(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
         use futures_lite::FutureExt;
         use std::io;
-        let this = self.get_mut();
+        let this = self.as_mut().get_mut();
         if this.pos >= this.cap {
             let (ofs, cap) = loop {
-                todo!("poll a future based on a field of ourselves - self-ref once again");
-                this.read_line = Some(this.parent.read_line().boxed());
-                let line = match ready!(this.read_line.as_ref().expect("set above").poll(_cx)) {
+                // todo!("poll a future based on a field of ourselves - self-ref once again");
+                this.read_line = Some(this.parent.take().unwrap().read_line().boxed());
+                let line = match ready!(this.read_line.as_mut().expect("set above").poll(_cx)) {
                     Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
                     None => break (0, 0),
                 };
-                match self.handle_progress.as_mut() {
+                match this.handle_progress.as_mut() {
                     Some(handle_progress) => {
                         let band = line
                             .decode_band()
@@ -160,10 +160,10 @@ where
                     }
                 }
             };
-            self.cap = cap + ofs;
-            self.pos = ofs;
+            this.cap = cap + ofs;
+            this.pos = ofs;
         }
-        Poll::Ready(Ok(&this.parent.buf[this.pos..this.cap]))
+        Poll::Ready(Ok(&this.parent.as_ref().unwrap().buf[this.pos..this.cap]))
     }
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
