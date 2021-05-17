@@ -120,11 +120,11 @@ where
     fn poll_fill_buf(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
         use futures_lite::FutureExt;
         use std::io;
-        let this = self.project();
+        let this = self.get_mut();
         if this.pos >= this.cap {
             let (ofs, cap) = loop {
                 todo!("poll a future based on a field of ourselves - self-ref once again");
-                *this.read_line = Some(this.parent.read_line().boxed());
+                this.read_line = Some(this.parent.read_line().boxed());
                 let line = match ready!(this.read_line.as_ref().expect("set above").poll(_cx)) {
                     Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
                     None => break (0, 0),
@@ -163,7 +163,7 @@ where
             self.cap = cap + ofs;
             self.pos = ofs;
         }
-        Poll::Ready(Ok(&this.parent.buf[*this.pos..*this.cap]))
+        Poll::Ready(Ok(&this.parent.buf[this.pos..this.cap]))
     }
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
