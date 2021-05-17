@@ -1,9 +1,8 @@
 use crate::{decode, PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES};
 use bstr::ByteSlice;
+use futures_io::AsyncRead;
+use futures_lite::AsyncReadExt;
 use std::io;
-
-mod sidebands;
-pub use sidebands::WithSidebands;
 
 type ExhaustiveOutcome<'a> = (
     bool,                                                      // is_done
@@ -14,24 +13,14 @@ type ExhaustiveOutcome<'a> = (
 /// Non-IO methods
 impl<T> StreamingPeekableIter<T>
 where
-    T: io::Read,
+    T: AsyncRead + Unpin,
 {
-    /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
-    pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
-        StreamingPeekableIter {
-            read,
-            buf: vec![0; MAX_LINE_LEN],
-            peek_buf: Vec::new(),
-            delimiters,
-            fail_on_err_lines: false,
-            is_done: false,
-            stopped_at: None,
-        }
-    }
-
-    fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
+    async fn read_line_inner<'a>(
+        reader: &mut T,
+        buf: &'a mut Vec<u8>,
+    ) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
-        reader.read_exact(hex_bytes)?;
+        reader.read_exact(hex_bytes).await?;
         let num_data_bytes = match decode::hex_prefix(hex_bytes) {
             Ok(decode::PacketLineOrWantedSize::Line(line)) => return Ok(Ok(line)),
             Ok(decode::PacketLineOrWantedSize::Wanted(additional_bytes)) => additional_bytes as usize,
@@ -39,7 +28,7 @@ where
         };
 
         let (data_bytes, _) = data_bytes.split_at_mut(num_data_bytes);
-        reader.read_exact(data_bytes)?;
+        reader.read_exact(data_bytes).await?;
         match decode::to_data_line(data_bytes) {
             Ok(line) => Ok(Ok(line)),
             Err(err) => Ok(Err(err)),
@@ -48,7 +37,7 @@ where
 
     /// This function is needed to help the borrow checker allow us to return references all the time
     /// It contains a bunch of logic shared between peek and read_line invocations.
-    fn read_line_inner_exhaustive<'a>(
+    async fn read_line_inner_exhaustive<'a>(
         reader: &mut T,
         buf: &'a mut Vec<u8>,
         delimiters: &[PacketLine<'static>],
@@ -58,7 +47,7 @@ where
         (
             false,
             None,
-            Some(match Self::read_line_inner(reader, buf) {
+            Some(match Self::read_line_inner(reader, buf).await {
                 Ok(Ok(line)) => {
                     if delimiters.contains(&line) {
                         let stopped_at = delimiters.iter().find(|l| **l == line).cloned();
@@ -99,7 +88,7 @@ where
     ///  * natural EOF
     ///  * ERR packet line encountered if [`fail_on_err_lines()`][StreamingPeekableIter::fail_on_err_lines()] is true.
     ///  * A `delimiter` packet line encountered
-    pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
+    pub async fn read_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
         if self.is_done {
             return None;
         }
@@ -117,33 +106,18 @@ where
                 &self.delimiters,
                 self.fail_on_err_lines,
                 false,
-            );
+            )
+            .await;
             self.is_done = is_done;
             self.stopped_at = stopped_at;
             res
         }
     }
 
-    /// Modify the peek buffer, overwriting the byte at `position` with the given byte to `replace_with` while truncating
-    /// it to contain only bytes until the newly replaced `position`.
-    ///
-    /// This is useful if you would want to remove 'special bytes' hidden behind, say a NULL byte to disappear and allow
-    /// standard line readers to read the next line as usual.
-    ///
-    /// **Note** that `position` does not include the 4 bytes prefix (they are invisible outside the reader)
-    pub fn peek_buffer_replace_and_truncate(&mut self, position: usize, replace_with: u8) {
-        let position = position + U16_HEX_BYTES;
-        self.peek_buf[position] = replace_with;
-
-        let new_len = position + 1;
-        self.peek_buf.truncate(new_len);
-        self.peek_buf[..4].copy_from_slice(&crate::encode::u16_to_hex((new_len) as u16));
-    }
-
     /// Peek the next packet line without consuming it.
     ///
     /// Multiple calls to peek will return the same packet line, if there is one.
-    pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
+    pub async fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
         if self.is_done {
             return None;
         }
@@ -155,38 +129,13 @@ where
                 &self.delimiters,
                 self.fail_on_err_lines,
                 true,
-            );
+            )
+            .await;
             self.is_done = is_done;
             self.stopped_at = stopped_at;
             res
         } else {
             Some(Ok(Ok(crate::decode(&self.peek_buf).expect("only valid data here"))))
         }
-    }
-
-    /// Return this instance as implementor of [`Read`][io::Read] assuming side bands to be used in all received packet lines.
-    /// Each invocation of [`read_line()`][io::BufRead::read_line()] returns a packet line.
-    ///
-    /// Progress or error information will be passed to the given `handle_progress(is_error, text)` function, with `is_error: bool`
-    /// being true in case the `text` is to be interpreted as error.
-    ///
-    /// _Please note_ that side bands need to be negotiated with the server.
-    pub fn as_read_with_sidebands<F: FnMut(bool, &[u8])>(&mut self, handle_progress: F) -> WithSidebands<'_, T, F> {
-        WithSidebands::with_progress_handler(self, handle_progress)
-    }
-
-    /// Same as [`as_read_with_sidebands(…)`][StreamingPeekableIter::as_read_with_sidebands()], but for channels without side band support.
-    ///
-    /// The type parameter `F` needs to be configured for this method to be callable using the 'turbofish' operator.
-    /// Use [`as_read()`][StreamingPeekableIter::as_read()].
-    pub fn as_read_without_sidebands<F: FnMut(bool, &[u8])>(&mut self) -> WithSidebands<'_, T, F> {
-        WithSidebands::without_progress_handler(self)
-    }
-
-    /// Same as [`as_read_with_sidebands(…)`][StreamingPeekableIter::as_read_with_sidebands()], but for channels without side band support.
-    ///
-    /// Due to the preconfigured function type this method can be called without 'turbofish'.
-    pub fn as_read(&mut self) -> WithSidebands<'_, T, fn(bool, &[u8])> {
-        WithSidebands::new(self)
     }
 }

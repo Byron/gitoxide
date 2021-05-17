@@ -17,4 +17,6 @@ mod decode;
 #[cfg(feature = "blocking-io")]
 mod encode;
 #[cfg(feature = "blocking-io")]
+mod read;
+#[cfg(feature = "blocking-io")]
 mod write;

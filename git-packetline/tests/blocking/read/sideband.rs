@@ -1,4 +1,4 @@
-use crate::blocking::read::streaming_peek_iter::fixture_bytes;
+use crate::read::streaming_peek_iter::fixture_bytes;
 use bstr::{BString, ByteSlice};
 use git_odb::pack;
 use git_packetline::PacketLine;
@@ -7,6 +7,7 @@ use std::io::{BufRead, Read};
 #[test]
 fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
+
     let mut rd = git_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLine::Flush]);
 
     let mut out = String::new();

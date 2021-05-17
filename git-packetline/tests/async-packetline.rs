@@ -17,4 +17,6 @@ mod decode;
 #[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
 mod encode;
 #[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
+mod read;
+#[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
 mod write;
