@@ -13,6 +13,8 @@ pub fn assert_err_display<T: std::fmt::Debug, E: std::error::Error>(
 #[cfg(feature = "blocking-io")]
 mod blocking;
 #[cfg(feature = "blocking-io")]
+mod decode;
+#[cfg(feature = "blocking-io")]
 mod encode;
 #[cfg(feature = "blocking-io")]
 mod write;
