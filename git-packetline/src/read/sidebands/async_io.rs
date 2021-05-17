@@ -1,12 +1,17 @@
-use crate::immutable::Band;
-use crate::{immutable::Text, PacketLine, StreamingPeekableIter, U16_HEX_BYTES};
+use crate::{
+    decode,
+    immutable::{Band, Text},
+    PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
+};
 use futures_io::{AsyncBufRead, AsyncRead};
 use futures_lite::ready;
+use std::future::Future;
 use std::{
     pin::Pin,
     task::{Context, Poll},
 };
 
+type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLine<'a>, decode::Error>>>;
 /// An implementor of [`AsyncBufRead`] yielding packet lines on each call to [`read_line()`][AsyncBufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][AsyncRead] implementation which is useful
 /// if they represent binary data, like the one of a pack file.
@@ -18,6 +23,7 @@ where
     #[pin]
     parent: &'a mut StreamingPeekableIter<T>,
     handle_progress: Option<F>,
+    read_line: Option<Pin<Box<dyn Future<Output = ReadLineResult<'a>>>>>,
     pos: usize,
     cap: usize,
 }
@@ -42,6 +48,7 @@ where
         WithSidebands {
             parent,
             handle_progress: None,
+            read_line: None,
             pos: 0,
             cap: 0,
         }
@@ -61,6 +68,7 @@ where
         WithSidebands {
             parent,
             handle_progress: Some(handle_progress),
+            read_line: None,
             pos: 0,
             cap: 0,
         }
@@ -71,6 +79,7 @@ where
         WithSidebands {
             parent,
             handle_progress: None,
+            read_line: None,
             pos: 0,
             cap: 0,
         }
@@ -105,20 +114,21 @@ where
 
 impl<'a, T, F> AsyncBufRead for WithSidebands<'a, T, F>
 where
-    T: AsyncRead + Unpin,
+    T: AsyncRead + Unpin + Send,
     F: FnMut(bool, &[u8]),
 {
     fn poll_fill_buf(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
+        use futures_lite::FutureExt;
         use std::io;
         let this = self.project();
         if this.pos >= this.cap {
             let (ofs, cap) = loop {
                 todo!("poll a future based on a field of ourselves - self-ref once again");
-                let line: PacketLine<'_>;
-                // let line = match ready!(this.parent.read_line().poll) {
-                //     Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
-                //     None => break (0, 0),
-                // };
+                *this.read_line = Some(this.parent.read_line().boxed());
+                let line = match ready!(this.read_line.as_ref().expect("set above").poll(_cx)) {
+                    Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
+                    None => break (0, 0),
+                };
                 match self.handle_progress.as_mut() {
                     Some(handle_progress) => {
                         let band = line
@@ -164,7 +174,7 @@ where
 
 impl<'a, T, F> AsyncRead for WithSidebands<'a, T, F>
 where
-    T: AsyncRead + Unpin,
+    T: AsyncRead + Unpin + Send,
     F: FnMut(bool, &[u8]),
 {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
