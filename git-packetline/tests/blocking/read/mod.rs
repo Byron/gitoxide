@@ -1,6 +1,6 @@
 mod sideband;
 
-mod streaming_peek_reader {
+mod streaming_peek_iter {
     use bstr::ByteSlice;
     use git_packetline::PacketLine;
     use std::{io, path::PathBuf};
