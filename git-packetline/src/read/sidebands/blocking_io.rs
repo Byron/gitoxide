@@ -2,7 +2,7 @@ use crate::{
     immutable::{Band, Text},
     PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
 };
-use std::io;
+use std::{io, io::BufRead};
 
 /// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][io::Read] implementation which is useful
@@ -96,7 +96,7 @@ where
     }
 }
 
-impl<'a, T, F> io::BufRead for WithSidebands<'a, T, F>
+impl<'a, T, F> BufRead for WithSidebands<'a, T, F>
 where
     T: io::Read,
     F: FnMut(bool, &[u8]),
@@ -170,7 +170,6 @@ where
     F: FnMut(bool, &[u8]),
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        use std::io::BufRead;
         let nread = {
             let mut rem = self.fill_buf()?;
             rem.read(buf)?

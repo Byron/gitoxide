@@ -1,5 +1,6 @@
 use crate::{PacketLine, StreamingPeekableIter};
 use futures_io::{AsyncBufRead, AsyncRead};
+use futures_lite::ready;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -97,10 +98,10 @@ where
 
 impl<'a, T, F> AsyncBufRead for WithSidebands<'a, T, F>
 where
-    T: AsyncRead,
+    T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]),
 {
-    fn poll_fill_buf(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
+    fn poll_fill_buf(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
         todo!("poll fill buf")
     }
 
@@ -114,10 +115,16 @@ where
 
 impl<'a, T, F> AsyncRead for WithSidebands<'a, T, F>
 where
-    T: AsyncRead,
+    T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]),
 {
-    fn poll_read(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
-        todo!("poll read")
+    fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
+        let nread = {
+            use std::io::Read;
+            let mut rem = ready!(self.as_mut().poll_fill_buf(cx))?;
+            rem.read(buf)?
+        };
+        self.consume(nread);
+        Poll::Ready(Ok(nread))
     }
 }
