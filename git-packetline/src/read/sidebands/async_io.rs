@@ -64,7 +64,7 @@ enum State<'a, T> {
 impl<'a, T, F> WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin,
-    F: FnMut(bool, &[u8]),
+    F: FnMut(bool, &[u8]) + Unpin,
 {
     /// Create a new instance with the given `parent` provider and the `handle_progress` function.
     ///
@@ -121,6 +121,38 @@ where
             },
             _ => None,
         }
+    }
+
+    // /// Read a packet line as line.
+    // pub fn read_line<'b>(&'a mut self, buf: &'b mut String) -> ReadLineFuture<'a, 'b, Self> {
+    //     ReadLineFuture { parent: self, buf }
+    // }
+}
+
+pub struct ReadLineFuture<'a, 'b, F: Unpin> {
+    parent: &'a mut F,
+    buf: &'b mut String,
+}
+
+impl<'a, 'b, F> Future for ReadLineFuture<'a, 'b, F>
+where
+    F: AsyncBufRead + Unpin + Send,
+{
+    type Output = std::io::Result<usize>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        // assert_eq!(
+        //     self.cap, 0,
+        //     "we don't support partial buffers right now - read-line must be used consistently"
+        // );
+        // let line = std::str::from_utf8(self.fill_buf()?)
+        //     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
+        //     .unwrap();
+        // buf.push_str(line);
+        // let bytes = line.len();
+        // self.cap = 0;
+        // Ok(bytes)
+        todo!("poll readline")
     }
 }
 

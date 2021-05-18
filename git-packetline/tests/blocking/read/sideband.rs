@@ -136,33 +136,3 @@ fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     );
     Ok(())
 }
-
-#[test]
-fn handling_of_err_lines() {
-    let input = b"0009ERR e0009ERR x0000";
-    let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
-    rd.fail_on_err_lines(true);
-    let mut buf = [0u8; 2];
-    let mut reader = rd.as_read();
-    assert_eq!(
-        reader.read(buf.as_mut()).unwrap_err().to_string(),
-        "e",
-        "it respects errors and passes them on"
-    );
-    assert_eq!(
-        reader.read(buf.as_mut()).expect("read to succeed - EOF"),
-        0,
-        "it stops reading after an error despite there being more to read"
-    );
-    reader.reset_with(&[PacketLine::Flush]);
-    assert_eq!(
-        reader.read(buf.as_mut()).unwrap_err().to_string(),
-        "x",
-        "after a reset it continues reading, but retains the 'fail_on_err_lines' setting"
-    );
-    assert_eq!(
-        reader.stopped_at(),
-        None,
-        "An error can also be the reason, which is not distinguishable from an EOF"
-    );
-}
