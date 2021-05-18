@@ -25,7 +25,6 @@ mod blocking_io;
 #[cfg(feature = "blocking-io")]
 pub use blocking_io::*;
 
-#[cfg(any(feature = "async-io", feature = "blocking-io"))]
 pub(crate) fn u16_to_hex(value: u16) -> [u8; 4] {
     let mut buf = [0u8; 4];
     hex::encode_to_slice((value as u16).to_be_bytes(), &mut buf).expect("two bytes to 4 hex chars never fails");

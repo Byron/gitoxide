@@ -1,4 +1,6 @@
-use crate::{PacketLine, MAX_LINE_LEN, U16_HEX_BYTES};
+#[cfg(any(feature = "blocking-io", feature = "async-io"))]
+use crate::MAX_LINE_LEN;
+use crate::{PacketLine, U16_HEX_BYTES};
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// [`Read`][std::io::Read]. [`Flush`][PacketLine::Flush] lines cause the reader to stop producing lines forever,
@@ -8,6 +10,7 @@ use crate::{PacketLine, MAX_LINE_LEN, U16_HEX_BYTES};
 pub struct StreamingPeekableIter<T> {
     read: T,
     peek_buf: Vec<u8>,
+    #[cfg(any(feature = "blocking-io", feature = "async-io"))]
     buf: Vec<u8>,
     fail_on_err_lines: bool,
     delimiters: &'static [PacketLine<'static>],
@@ -20,6 +23,7 @@ impl<T> StreamingPeekableIter<T> {
     pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
         StreamingPeekableIter {
             read,
+            #[cfg(any(feature = "blocking-io", feature = "async-io"))]
             buf: vec![0; MAX_LINE_LEN],
             peek_buf: Vec::new(),
             delimiters,
@@ -90,4 +94,5 @@ mod blocking_io;
 mod async_io;
 
 mod sidebands;
+#[cfg(any(feature = "blocking-io", feature = "async-io"))]
 pub use sidebands::WithSidebands;
