@@ -14,7 +14,7 @@ doctest = false
 [features]
 default = []
 serde1 = ["serde", "bstr/serde1"]
-async-io = ["futures-io", "futures-lite", "pin-project"]
+async-io = ["futures-io", "futures-lite", "pin-project-lite"]
 blocking-io = []
 
 [[test]]
@@ -38,7 +38,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 # async support
 futures-io = { version = "0.3.15", optional = true }
 futures-lite = { version  = "1.11.3", optional = true }
-pin-project = { version = "1.0.7", optional = true }
+pin-project-lite = { version = "0.2.6", optional = true }
 
 [dev-dependencies]
 async-std = { version = "1.9.0", features = ["attributes"] }

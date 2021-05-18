@@ -6,13 +6,14 @@ use std::{
     task::{Context, Poll},
 };
 
-/// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,
-/// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
-#[pin_project::pin_project]
-pub struct Writer<T> {
-    #[pin]
-    inner: encode::LineWriter<'static, T>,
-    state: State,
+pin_project_lite::pin_project! {
+    /// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,
+    /// one line per `write(…)` call or as many lines as it takes if the data doesn't fit into the maximum allowed line length.
+    pub struct Writer<T> {
+        #[pin]
+        inner: encode::LineWriter<'static, T>,
+        state: State,
+    }
 }
 
 enum State {

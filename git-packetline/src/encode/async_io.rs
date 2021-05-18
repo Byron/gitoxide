@@ -8,15 +8,16 @@ use std::{
     task::{Context, Poll},
 };
 
-/// A way of writing packet lines asynchronously.
 #[allow(missing_docs)]
-#[pin_project::pin_project]
-pub struct LineWriter<'a, W> {
-    #[pin]
-    pub writer: W,
-    pub prefix: &'a [u8],
-    pub suffix: &'a [u8],
-    state: State<'a>,
+pin_project_lite::pin_project! {
+    /// A way of writing packet lines asynchronously.
+    pub struct LineWriter<'a, W> {
+        #[pin]
+        pub(crate) writer: W,
+        pub(crate) prefix: &'a [u8],
+        pub(crate) suffix: &'a [u8],
+        state: State<'a>,
+    }
 }
 
 enum State<'a> {
