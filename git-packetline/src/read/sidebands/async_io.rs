@@ -203,6 +203,7 @@ where
                                 Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
                                 None => break (0, 0),
                             };
+
                             match this.handle_progress.as_mut() {
                                 Some(handle_progress) => {
                                     let band = line

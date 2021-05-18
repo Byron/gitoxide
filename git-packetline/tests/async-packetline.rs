@@ -11,8 +11,6 @@ pub fn assert_err_display<T: std::fmt::Debug, E: std::error::Error>(
 }
 
 #[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
-mod async_io;
-#[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
 mod decode;
 #[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
 mod encode;
