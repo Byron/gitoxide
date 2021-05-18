@@ -1,7 +1,7 @@
 use crate::{
     decode,
     immutable::{Band, Text},
-    PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
+    PacketLine, StreamingPeekableIter, MAX_DATA_LEN,
 };
 use futures_io::{AsyncBufRead, AsyncRead};
 use futures_lite::ready;
@@ -24,6 +24,7 @@ where
     parent: Option<&'a mut StreamingPeekableIter<T>>,
     handle_progress: Option<F>,
     read_line: Option<Pin<Box<dyn Future<Output = ReadLineResult<'a>> + 'a>>>,
+    buf: Vec<u8>,
     pos: usize,
     cap: usize,
 }
@@ -49,6 +50,7 @@ where
             parent: Some(parent),
             handle_progress: None,
             read_line: None,
+            buf: Vec::with_capacity(MAX_DATA_LEN),
             pos: 0,
             cap: 0,
         }
@@ -69,6 +71,7 @@ where
             parent: Some(parent),
             handle_progress: Some(handle_progress),
             read_line: None,
+            buf: Vec::with_capacity(MAX_DATA_LEN),
             pos: 0,
             cap: 0,
         }
@@ -80,6 +83,7 @@ where
             parent: Some(parent),
             handle_progress: None,
             read_line: None,
+            buf: Vec::with_capacity(MAX_DATA_LEN),
             pos: 0,
             cap: 0,
         }
@@ -119,51 +123,52 @@ where
 {
     fn poll_fill_buf(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
         use futures_lite::FutureExt;
-        use std::io;
-        let this = self.as_mut().get_mut();
-        if this.pos >= this.cap {
-            let (ofs, cap) = loop {
-                // todo!("poll a future based on a field of ourselves - self-ref once again");
-                this.read_line = Some(this.parent.take().unwrap().read_line().boxed());
-                let line = match ready!(this.read_line.as_mut().expect("set above").poll(_cx)) {
-                    Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
-                    None => break (0, 0),
-                };
-                match this.handle_progress.as_mut() {
-                    Some(handle_progress) => {
-                        let band = line
-                            .decode_band()
-                            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-                        const ENCODED_BAND: usize = 1;
-                        match band {
-                            Band::Data(d) => break (U16_HEX_BYTES + ENCODED_BAND, d.len()),
-                            Band::Progress(d) => {
-                                let text = Text::from(d).0;
-                                handle_progress(false, text);
-                            }
-                            Band::Error(d) => {
-                                let text = Text::from(d).0;
-                                handle_progress(true, text);
-                            }
-                        };
-                    }
-                    None => {
-                        break match line.as_slice() {
-                            Some(d) => (U16_HEX_BYTES, d.len()),
-                            None => {
-                                return Poll::Ready(Err(io::Error::new(
-                                    io::ErrorKind::UnexpectedEof,
-                                    "encountered non-data line in a data-line only context",
-                                )))
+        use std::{io, io::Read};
+        {
+            let this = self.as_mut().get_mut();
+            if this.pos >= this.cap {
+                this.cap = loop {
+                    // todo!("poll a future based on a field of ourselves - self-ref once again");
+                    this.read_line = Some(this.parent.take().unwrap().read_line().boxed());
+                    let line = match ready!(this.read_line.as_mut().expect("set above").poll(_cx)) {
+                        Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
+                        None => break 0,
+                    };
+                    match this.handle_progress.as_mut() {
+                        Some(handle_progress) => {
+                            let mut band = line
+                                .decode_band()
+                                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                            match band {
+                                Band::Data(ref mut d) => break d.read(&mut this.buf)?,
+                                Band::Progress(d) => {
+                                    let text = Text::from(d).0;
+                                    handle_progress(false, text);
+                                }
+                                Band::Error(d) => {
+                                    let text = Text::from(d).0;
+                                    handle_progress(true, text);
+                                }
+                            };
+                        }
+                        None => {
+                            break match line.as_slice() {
+                                Some(ref mut d) => d.read(&mut this.buf)?,
+                                None => {
+                                    return Poll::Ready(Err(io::Error::new(
+                                        io::ErrorKind::UnexpectedEof,
+                                        "encountered non-data line in a data-line only context",
+                                    )))
+                                }
                             }
                         }
                     }
-                }
-            };
-            this.cap = cap + ofs;
-            this.pos = ofs;
+                };
+                this.pos = 0;
+            }
         }
-        Poll::Ready(Ok(&this.parent.as_ref().unwrap().buf[this.pos..this.cap]))
+        let cap = self.cap;
+        Poll::Ready(Ok(&self.get_mut().buf[..cap]))
     }
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
