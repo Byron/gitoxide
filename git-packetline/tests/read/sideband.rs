@@ -5,6 +5,30 @@ use git_packetline::PacketLine;
 use std::io::{BufRead, Read};
 
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
+async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
+    let input = b"0009ERR e";
+    let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
+    let mut reader = rd.as_read();
+    let res = reader.peek_data_line().await;
+    assert_eq!(res.expect("one line")??, b"ERR e");
+
+    let mut buf = String::new();
+    reader.read_line(&mut buf).await?;
+    assert_eq!(
+        buf, "ERR e",
+        "by default ERR lines won't propagate as failure but are merely text"
+    );
+
+    let res = reader.peek_data_line().await;
+    assert_eq!(
+        res.expect("an err").expect_err("foo").kind(),
+        std::io::ErrorKind::UnexpectedEof,
+        "peeking past the end is not an error as the caller should make sure we dont try 'invalid' reads"
+    );
+    Ok(())
+}
+
+#[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     let input = b"0009hello0000";
     let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[PacketLine::Flush]);
@@ -14,6 +38,7 @@ async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
 
     let mut buf = String::new();
     reader.read_line(&mut buf).await?;
+    assert_eq!(buf, "hello");
 
     let res = reader.peek_data_line().await;
     assert!(

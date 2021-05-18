@@ -103,19 +103,3 @@ fn read_pack_with_progress_extraction() -> crate::Result {
     );
     Ok(())
 }
-#[test]
-fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
-    let input = b"0009ERR e";
-    let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
-    let mut reader = rd.as_read();
-    assert_eq!(reader.peek_data_line().expect("one line")??, b"ERR e");
-    let mut buf = String::new();
-    reader.read_line(&mut buf)?;
-
-    assert_eq!(
-        reader.peek_data_line().expect("an err").expect_err("foo").kind(),
-        std::io::ErrorKind::UnexpectedEof,
-        "peeking past the end is not an error as the caller should make sure we dont try 'invalid' reads"
-    );
-    Ok(())
-}
