@@ -15,26 +15,22 @@ type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLine<'a>, decode::
 /// An implementor of [`AsyncBufRead`] yielding packet lines on each call to [`read_line()`][AsyncBufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][AsyncRead] implementation which is useful
 /// if they represent binary data, like the one of a pack file.
-#[pin_project::pin_project(PinnedDrop)]
 pub struct WithSidebands<'a, T, F>
 where
     T: AsyncRead,
 {
-    #[pin]
     state: State<'a, T>,
     handle_progress: Option<F>,
     pos: usize,
     cap: usize,
 }
 
-#[pin_project::pinned_drop]
-impl<'a, T, F> PinnedDrop for WithSidebands<'a, T, F>
+impl<'a, T, F> Drop for WithSidebands<'a, T, F>
 where
     T: AsyncRead,
 {
-    fn drop(mut self: Pin<&mut Self>) {
-        let this = self.project();
-        if let State::Idle { parent } = this.state.get_mut() {
+    fn drop(&mut self) {
+        if let State::Idle { parent } = self.state {
             parent.reset();
         }
     }
@@ -131,7 +127,7 @@ where
 impl<'a, T, F> AsyncBufRead for WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin + Send,
-    F: FnMut(bool, &[u8]),
+    F: FnMut(bool, &[u8]) + Unpin,
 {
     fn poll_fill_buf(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
         use futures_lite::FutureExt;
@@ -200,15 +196,14 @@ where
     }
 
     fn consume(self: Pin<&mut Self>, amt: usize) {
-        let this = self.project();
-        *this.pos = std::cmp::min(*this.pos + amt, *this.cap);
+        self.pos = std::cmp::min(self.pos + amt, self.cap);
     }
 }
 
 impl<'a, T, F> AsyncRead for WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin + Send,
-    F: FnMut(bool, &[u8]),
+    F: FnMut(bool, &[u8]) + Unpin,
 {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
         let nread = {
