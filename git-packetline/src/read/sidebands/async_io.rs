@@ -57,7 +57,7 @@ enum State<'a, T> {
     },
     ReadLine {
         read_line: Pin<Box<dyn Future<Output = ReadLineResult<'a>> + 'a>>,
-        parent_inactive: *mut StreamingPeekableIter<T>,
+        parent_inactive: Option<*mut StreamingPeekableIter<T>>,
     },
 }
 
@@ -138,18 +138,25 @@ where
                 let (ofs, cap) = loop {
                     match this.state {
                         State::Idle { ref mut parent } => {
-                            let parent = parent.take().unwrap();
+                            let parent = parent.take().expect("parent to be present here");
                             let inactive = parent as *mut _;
                             this.state = State::ReadLine {
                                 read_line: parent.read_line().boxed(),
-                                parent_inactive: inactive,
+                                parent_inactive: Some(inactive),
                             }
                         }
                         State::ReadLine {
                             ref mut read_line,
-                            parent_inactive: _,
+                            ref mut parent_inactive,
                         } => {
-                            let line = match ready!(read_line.poll(cx)) {
+                            let line = ready!(read_line.poll(cx));
+
+                            let parent = parent_inactive.take().expect("parent pointer always set");
+                            #[allow(unsafe_code)]
+                            let parent = unsafe { &mut *parent };
+                            this.state = State::Idle { parent: Some(parent) };
+
+                            let line = match line {
                                 Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
                                 None => break (0, 0),
                             };
@@ -191,8 +198,8 @@ where
             }
         }
         let range = self.pos..self.cap;
-        match self.get_mut().state {
-            State::Idle { ref parent } => Poll::Ready(Ok(&parent.as_ref().unwrap().buf[range])),
+        match &self.get_mut().state {
+            State::Idle { parent } => Poll::Ready(Ok(&parent.as_ref().expect("parent always available").buf[range])),
             State::ReadLine { .. } => unreachable!("at least in theory"),
         }
     }
