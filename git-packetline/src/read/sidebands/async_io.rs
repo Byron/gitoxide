@@ -19,7 +19,7 @@ pub struct WithSidebands<'a, T, F>
 where
     T: AsyncRead,
 {
-    state: Option<State<'a, T>>,
+    state: State<'a, T>,
     handle_progress: Option<F>,
     pos: usize,
     cap: usize,
@@ -30,7 +30,7 @@ where
     T: AsyncRead,
 {
     fn drop(&mut self) {
-        if let Some(State::Idle { parent }) = &mut self.state {
+        if let State::Idle { parent } = self.state {
             parent.reset();
         }
     }
@@ -43,7 +43,7 @@ where
     /// Create a new instance with the given provider as `parent`.
     pub fn new(parent: &'a mut StreamingPeekableIter<T>) -> Self {
         WithSidebands {
-            state: State::Idle { parent }.into(),
+            state: State::Idle { parent },
             handle_progress: None,
             pos: 0,
             cap: 0,
@@ -72,7 +72,7 @@ where
     /// being true in case the `text` is to be interpreted as error.
     pub fn with_progress_handler(parent: &'a mut StreamingPeekableIter<T>, handle_progress: F) -> Self {
         WithSidebands {
-            state: State::Idle { parent }.into(),
+            state: State::Idle { parent },
             handle_progress: Some(handle_progress),
             pos: 0,
             cap: 0,
@@ -82,7 +82,7 @@ where
     /// Create a new instance without a progress handler.
     pub fn without_progress_handler(parent: &'a mut StreamingPeekableIter<T>) -> Self {
         WithSidebands {
-            state: State::Idle { parent }.into(),
+            state: State::Idle { parent },
             handle_progress: None,
             pos: 0,
             cap: 0,
@@ -91,7 +91,7 @@ where
 
     /// Forwards to the parent [StreamingPeekableIter::reset_with()]
     pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
-        if let Some(State::Idle { ref mut parent }) = self.state {
+        if let State::Idle { ref mut parent } = self.state {
             parent.reset_with(delimiters)
         }
     }
@@ -99,7 +99,7 @@ where
     /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
     pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
         match self.state {
-            Some(State::Idle { ref parent }) => parent.stopped_at,
+            State::Idle { ref parent } => parent.stopped_at,
             _ => None,
         }
     }
@@ -113,7 +113,7 @@ where
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     pub async fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.state {
-            Some(State::Idle { ref mut parent }) => match parent.peek_line().await {
+            State::Idle { ref mut parent } => match parent.peek_line().await {
                 Some(Ok(Ok(crate::PacketLine::Data(line)))) => Some(Ok(Ok(line))),
                 Some(Ok(Err(err))) => Some(Ok(Err(err))),
                 Some(Err(err)) => Some(Err(err)),
@@ -133,21 +133,20 @@ where
         use futures_lite::FutureExt;
         use std::io;
         {
-            let this = self.as_mut().get_mut();
+            let this = self.get_mut();
             if this.pos >= this.cap {
                 let (ofs, cap) = loop {
-                    match this.state.take() {
-                        Some(State::Idle { parent }) => {
-                            let inactive = parent as *mut _;
-                            this.state = Some(State::ReadLine {
+                    match this.state {
+                        State::Idle { ref mut parent } => {
+                            this.state = State::ReadLine {
                                 read_line: parent.read_line().boxed(),
-                                parent_inactive: inactive,
-                            })
+                                parent_inactive: *parent as *mut _,
+                            }
                         }
-                        Some(State::ReadLine {
+                        State::ReadLine {
                             ref mut read_line,
                             parent_inactive,
-                        }) => {
+                        } => {
                             let line = match ready!(read_line.poll(cx)) {
                                 Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
                                 None => break (0, 0),
@@ -183,7 +182,6 @@ where
                                 }
                             }
                         }
-                        None => unreachable!("BUG: We cannot be without state, it's just needed for borrowcheck"),
                     }
                 };
                 this.cap = cap + ofs;
@@ -191,13 +189,13 @@ where
             }
         }
         let range = self.pos..self.cap;
-        match &self.get_mut().state {
-            Some(State::Idle { parent }) => Poll::Ready(Ok(&parent.buf[range])),
-            _ => unreachable!("at least in theory"),
+        match self.state {
+            State::Idle { parent } => Poll::Ready(Ok(&parent.buf[range])),
+            State::ReadLine { .. } => unreachable!("at least in theory"),
         }
     }
 
-    fn consume(mut self: Pin<&mut Self>, amt: usize) {
+    fn consume(self: Pin<&mut Self>, amt: usize) {
         self.pos = std::cmp::min(self.pos + amt, self.cap);
     }
 }
