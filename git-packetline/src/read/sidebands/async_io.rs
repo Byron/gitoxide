@@ -151,10 +151,19 @@ where
                         } => {
                             let line = ready!(read_line.poll(cx));
 
-                            let parent = parent_inactive.take().expect("parent pointer always set");
-                            #[allow(unsafe_code)]
-                            let parent = unsafe { &mut *parent };
-                            this.state = State::Idle { parent: Some(parent) };
+                            this.state = {
+                                let parent = parent_inactive.take().expect("parent pointer always set");
+                                // SAFETY: It's safe to recover the original mutable reference (from which
+                                // the `read_line` future was created as the latter isn't accessible anymore
+                                // once the state is set to Idle. In other words, either one or the other are
+                                // accessible, never both at the same time.
+                                // Also: We keep a pointer around which is protected by borrowcheck since it's created
+                                // from a legal mutable reference which is moved into the read_line future - we it was manually
+                                // implemented we would be able to re-obtain it from there.
+                                #[allow(unsafe_code)]
+                                let parent = unsafe { &mut *parent };
+                                State::Idle { parent: Some(parent) }
+                            };
 
                             let line = match line {
                                 Some(line) => line?.map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
