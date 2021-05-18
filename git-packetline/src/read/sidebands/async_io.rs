@@ -124,27 +124,28 @@ where
     }
 
     /// Read a packet line as line.
-    pub fn read_line<'b>(&'b mut self, buf: &'b mut String) -> ReadLineFuture<'b, Self> {
+    pub fn read_line<'b>(&'b mut self, buf: &'b mut String) -> ReadLineFuture<'a, 'b, T, F> {
         ReadLineFuture { parent: self, buf }
     }
 }
 
-pub struct ReadLineFuture<'a, F: Unpin + ?Sized> {
-    parent: &'a mut F,
-    buf: &'a mut String,
+pub struct ReadLineFuture<'a, 'b, T: AsyncRead, F> {
+    parent: &'b mut WithSidebands<'a, T, F>,
+    buf: &'b mut String,
 }
 
-impl<'a, F> Future for ReadLineFuture<'a, F>
+impl<'a, 'b, T, F> Future for ReadLineFuture<'a, 'b, T, F>
 where
-    F: AsyncBufRead + Unpin,
+    T: AsyncRead + Unpin + Send,
+    F: FnMut(bool, &[u8]) + Unpin,
 {
     type Output = std::io::Result<usize>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        // assert_eq!(
-        //     self.parent.cap, 0,
-        //     "we don't support partial buffers right now - read-line must be used consistently"
-        // );
+        assert_eq!(
+            self.parent.cap, 0,
+            "we don't support partial buffers right now - read-line must be used consistently"
+        );
         let Self { buf, parent } = &mut *self;
         let line = std::str::from_utf8(ready!(Pin::new(parent).poll_fill_buf(cx))?)
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
@@ -152,7 +153,7 @@ where
         buf.clear();
         buf.push_str(line);
         let bytes = line.len();
-        // self.cap = 0;
+        self.parent.cap = 0;
         Poll::Ready(Ok(bytes))
     }
 }
