@@ -119,20 +119,3 @@ fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
     );
     Ok(())
 }
-
-#[test]
-fn peek_past_a_delimiter_is_no_error() -> crate::Result {
-    let input = b"0009hello0000";
-    let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[PacketLine::Flush]);
-    let mut reader = rd.as_read();
-    assert_eq!(reader.peek_data_line().expect("one line")??, b"hello");
-
-    let mut buf = String::new();
-    reader.read_line(&mut buf)?;
-
-    assert!(
-        reader.peek_data_line().is_none(),
-        "peeking past a flush packet is a 'natural' event that shold not cause an error"
-    );
-    Ok(())
-}

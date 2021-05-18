@@ -2,7 +2,7 @@
 use futures_lite::io::AsyncReadExt;
 use git_packetline::PacketLine;
 #[cfg(feature = "blocking-io")]
-use std::io::Read;
+use std::io::{BufRead, Read};
 
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
@@ -13,7 +13,6 @@ async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     assert_eq!(res.expect("one line")??, b"hello");
 
     let mut buf = String::new();
-    use futures_lite::AsyncBufReadExt;
     reader.read_line(&mut buf).await?;
 
     let res = reader.peek_data_line().await;

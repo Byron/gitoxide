@@ -1,4 +1,5 @@
 mod sideband;
+
 pub mod streaming_peek_iter {
     use bstr::ByteSlice;
     use git_packetline::PacketLine;

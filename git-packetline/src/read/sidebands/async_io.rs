@@ -123,36 +123,37 @@ where
         }
     }
 
-    // /// Read a packet line as line.
-    // pub fn read_line<'b>(&'a mut self, buf: &'b mut String) -> ReadLineFuture<'a, 'b, Self> {
-    //     ReadLineFuture { parent: self, buf }
-    // }
+    /// Read a packet line as line.
+    pub fn read_line<'b>(&'b mut self, buf: &'b mut String) -> ReadLineFuture<'b, Self> {
+        ReadLineFuture { parent: self, buf }
+    }
 }
 
-pub struct ReadLineFuture<'a, 'b, F: Unpin> {
+pub struct ReadLineFuture<'a, F: Unpin + ?Sized> {
     parent: &'a mut F,
-    buf: &'b mut String,
+    buf: &'a mut String,
 }
 
-impl<'a, 'b, F> Future for ReadLineFuture<'a, 'b, F>
+impl<'a, F> Future for ReadLineFuture<'a, F>
 where
-    F: AsyncBufRead + Unpin + Send,
+    F: AsyncBufRead + Unpin,
 {
     type Output = std::io::Result<usize>;
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         // assert_eq!(
-        //     self.cap, 0,
+        //     self.parent.cap, 0,
         //     "we don't support partial buffers right now - read-line must be used consistently"
         // );
-        // let line = std::str::from_utf8(self.fill_buf()?)
-        //     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-        //     .unwrap();
-        // buf.push_str(line);
-        // let bytes = line.len();
+        let Self { buf, parent } = &mut *self;
+        let line = std::str::from_utf8(ready!(Pin::new(parent).poll_fill_buf(cx))?)
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
+            .unwrap();
+        buf.clear();
+        buf.push_str(line);
+        let bytes = line.len();
         // self.cap = 0;
-        // Ok(bytes)
-        todo!("poll readline")
+        Poll::Ready(Ok(bytes))
     }
 }
 
