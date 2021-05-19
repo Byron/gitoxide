@@ -32,9 +32,10 @@ required-features = []
 all-features = true
 
 [dependencies]
-git-object = { version = "^0.9.0", path = "../git-object" }
-git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-features = { version = "^0.14.0", path = "../git-features" }
+git-hash = { version = "^0.3.0", path = "../git-hash" }
+git-object = { version = "^0.9.0", path = "../git-object" }
+git-traverse = { version = "^0.2", path = "../git-traverse" }
 
 flate2 = { version = "1.0.17", default-features = false }
 smallvec = "1.3.0"
@@ -56,4 +57,3 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 hex = "0.4.2"
 common_macros = "0.1.1"
 git-testtools = { version = "0.1", path = "../tests/tools"}
-git-traverse = { version = "^0.2", path = "../git-traverse" }

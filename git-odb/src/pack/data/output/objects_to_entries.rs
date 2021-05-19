@@ -81,48 +81,59 @@ where
         move |oids: Vec<Oid>, (buf, cache)| {
             use ObjectExpansion::*;
             let mut out = Vec::new();
-            match input_object_expansion {
-                TreeAdditionsComparedToAncestor => {
-                    todo!("tree additions compared to ancestor")
-                }
-                TreeContents => {
-                    todo!("tree contents")
-                }
-                AsIs => {
-                    for id in oids.into_iter() {
-                        let obj = db.find(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
-                            oid: id.as_ref().to_owned(),
-                        })?;
-                        out.push(match db.pack_entry(&obj) {
-                            Some(entry) if entry.version == version => {
-                                let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
-                                if let Some(expected) = entry.crc32 {
-                                    let actual = hash::crc32(entry.data);
-                                    if actual != expected {
-                                        return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
-                                    }
-                                }
-                                if pack_entry.header.is_base() {
-                                    output::Entry {
-                                        id: id.as_ref().to_owned(),
-                                        object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                                        kind: output::entry::Kind::Base,
-                                        decompressed_size: obj.data.len(),
-                                        compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
-                                    }
-                                } else {
-                                    output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
-                                }
-                            }
-                            _ => output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
-                        });
+            for id in oids.into_iter() {
+                let obj = db.find(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
+                    oid: id.as_ref().to_owned(),
+                })?;
+                match input_object_expansion {
+                    TreeAdditionsComparedToAncestor => {
+                        todo!("tree additions compared to ancestor")
                     }
+                    TreeContents => {
+                        todo!("tree contents")
+                    }
+                    AsIs => out.push(obj_to_entry(&db, version, id, &obj)?),
                 }
             }
             Ok(out)
         },
         parallel::reduce::IdentityWithResult::default(),
     )
+}
+
+fn obj_to_entry<Locate, Oid>(
+    db: &Locate,
+    version: pack::data::Version,
+    id: Oid,
+    obj: &crate::data::Object<'_>,
+) -> Result<output::Entry, Error<Locate::Error>>
+where
+    Locate: crate::Find + Clone + Send + Sync + 'static,
+    Oid: AsRef<oid> + Send + 'static,
+{
+    Ok(match db.pack_entry(&obj) {
+        Some(entry) if entry.version == version => {
+            let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
+            if let Some(expected) = entry.crc32 {
+                let actual = hash::crc32(entry.data);
+                if actual != expected {
+                    return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
+                }
+            }
+            if pack_entry.header.is_base() {
+                output::Entry {
+                    id: id.as_ref().to_owned(),
+                    object_kind: pack_entry.header.to_kind().expect("non-delta"),
+                    kind: output::entry::Kind::Base,
+                    decompressed_size: obj.data.len(),
+                    compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
+                }
+            } else {
+                output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
+            }
+        }
+        _ => output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
+    })
 }
 
 mod util {
