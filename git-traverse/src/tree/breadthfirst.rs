@@ -24,13 +24,13 @@ quick_error! {
 }
 
 /// The state used and potentially shared by multiple tree traversals.
-#[derive(Default, Clone)]
-pub struct State<PathId: Clone> {
+#[derive(Default)]
+pub struct State<PathId> {
     next: VecDeque<(Option<PathId>, ObjectId)>,
     buf: Vec<u8>,
 }
 
-impl<PathId: Clone> State<PathId> {
+impl<PathId> State<PathId> {
     fn clear(&mut self) {
         self.next.clear();
         self.buf.clear();
