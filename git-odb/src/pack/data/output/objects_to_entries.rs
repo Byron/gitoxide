@@ -9,7 +9,7 @@ use git_hash::oid;
 /// allowing for natural back-pressure in case of slow writers.
 ///
 /// * `objects`
-///   * the fully expanded list of objects, no expansion will be performed here.
+///   * A unique list of objects to add to the pack. These must not be duplicated as no such validation is performed here.
 /// * `progress`
 ///   * a way to obtain progress information
 /// * `options`
@@ -86,9 +86,10 @@ where
             >;
             let mut tree_traversal_state: Option<TraversalState> = None;
             for id in oids.into_iter() {
-                let obj = db.find(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
-                    oid: id.as_ref().to_owned(),
-                })?;
+                let id = id.as_ref();
+                let obj = db
+                    .find(id, buf, cache)?
+                    .ok_or_else(|| Error::NotFound { oid: id.to_owned() })?;
                 match input_object_expansion {
                     TreeAdditionsComparedToAncestor => {
                         todo!("tree additions compared to ancestor")
@@ -97,15 +98,16 @@ where
                         use git_object::Kind::*;
                         let state = tree_traversal_state.get_or_insert_with(TraversalState::default);
                         let mut delegate = tree::traverse::AllUnseen::default();
-                        let obj = obj;
+                        let mut obj = obj;
                         loop {
+                            out.push(obj_to_entry(&db, version, id, &obj)?);
                             match obj.kind {
                                 Tree => {
                                     git_traverse::tree::breadthfirst(
-                                        id.as_ref(),
+                                        id,
                                         state,
                                         |oid, buf| {
-                                            if oid == id.as_ref() {
+                                            if oid == id {
                                                 buf.resize(obj.data.len(), 0);
                                                 buf.copy_from_slice(obj.data);
                                                 Some(git_object::immutable::TreeIter::from_bytes(buf))
@@ -116,13 +118,25 @@ where
                                         &mut delegate,
                                     )
                                     .map_err(Error::TreeTraverse)?;
+                                    for id in delegate.objects.into_iter() {
+                                        let obj =
+                                            db.find(id, buf, cache)?.ok_or_else(|| Error::NotFound { oid: id })?;
+                                        out.push(obj_to_entry(&db, version, &id, &obj)?);
+                                    }
                                     break;
                                 }
-                                Commit => todo!("commit to tree"),
-                                Blob | Tag => {
-                                    out.push(obj_to_entry(&db, version, id, &obj)?);
-                                    break;
+                                Commit => {
+                                    let tree_id = obj
+                                        .into_commit_iter()
+                                        .expect("kind is valid")
+                                        .tree_id()
+                                        .expect("every commit has a tree");
+                                    obj = db.find_existing(tree_id, buf, cache).map_err(|_| Error::NotFound {
+                                        oid: tree_id.to_owned(),
+                                    })?;
+                                    continue;
                                 }
+                                Blob | Tag => break,
                             }
                         }
                     }
@@ -144,7 +158,7 @@ mod tree {
 
         #[derive(Default)]
         pub struct AllUnseen {
-            objects: HashSet<ObjectId>,
+            pub objects: HashSet<ObjectId>,
         }
 
         impl Visit for AllUnseen {
@@ -171,15 +185,14 @@ mod tree {
     }
 }
 
-fn obj_to_entry<Locate, Oid>(
+fn obj_to_entry<Locate>(
     db: &Locate,
     version: pack::data::Version,
-    id: Oid,
+    id: &oid,
     obj: &crate::data::Object<'_>,
 ) -> Result<output::Entry, Error<Locate::Error>>
 where
-    Locate: crate::Find + Clone + Send + Sync + 'static,
-    Oid: AsRef<oid> + Send + 'static,
+    Locate: crate::Find,
 {
     Ok(match db.pack_entry(&obj) {
         Some(entry) if entry.version == version => {
@@ -192,17 +205,17 @@ where
             }
             if pack_entry.header.is_base() {
                 output::Entry {
-                    id: id.as_ref().to_owned(),
+                    id: id.to_owned(),
                     object_kind: pack_entry.header.to_kind().expect("non-delta"),
                     kind: output::entry::Kind::Base,
                     decompressed_size: obj.data.len(),
                     compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
                 }
             } else {
-                output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?
+                output::Entry::from_data(id, &obj).map_err(Error::NewEntry)?
             }
         }
-        _ => output::Entry::from_data(id.as_ref(), &obj).map_err(Error::NewEntry)?,
+        _ => output::Entry::from_data(id, &obj).map_err(Error::NewEntry)?,
     })
 }
 
