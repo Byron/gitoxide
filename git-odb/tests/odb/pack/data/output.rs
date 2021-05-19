@@ -1,24 +1,32 @@
 mod entries {
     mod simple_compression {
         use crate::fixture_path;
+        use crate::odb::hex_to_id;
         use git_features::progress;
-        use git_odb::{compound, linked, pack, pack::data::output};
+        use git_odb::{compound, linked, pack, pack::data::output, FindExt};
+        use git_traverse::commit;
         use std::{path::PathBuf, sync::Arc};
 
         enum DbKind {
             AbunchOfRandomObjects,
+            DeterministicGeneratedContent,
         }
 
         fn db(kind: DbKind) -> crate::Result<Arc<linked::Db>> {
             use DbKind::*;
             let path: PathBuf = match kind {
                 AbunchOfRandomObjects => fixture_path("objects"),
+                DeterministicGeneratedContent => {
+                    git_testtools::scripted_fixture_repo_read_only("make_pack_gen_repo.sh")?
+                        .join(".git")
+                        .join("objects")
+                }
             };
             linked::Db::at(path).map_err(Into::into).map(Into::into)
         }
 
         #[test]
-        fn all_input_objects() -> crate::Result {
+        fn all_input_objects_as_is() -> crate::Result {
             let db = db(DbKind::AbunchOfRandomObjects)?;
             let obj_count = db.iter().count();
             assert_eq!(obj_count, 146);
@@ -48,6 +56,40 @@ mod entries {
 
             write_and_verify(entries)?;
             Ok(())
+        }
+
+        #[test]
+        #[should_panic]
+        fn traversals() {
+            let db = db(DbKind::DeterministicGeneratedContent).unwrap();
+            for expansion_mode in &[
+                output::objects_to_entries::ObjectExpansion::TreeContents,
+                output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
+            ] {
+                let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
+                let commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
+                    let db = Arc::clone(&db);
+                    move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                })
+                .map(Result::unwrap);
+                let entries: Vec<_> = output::objects_to_entries_iter(
+                    db.clone(),
+                    || pack::cache::Never,
+                    commits,
+                    progress::Discard,
+                    output::objects_to_entries::Options {
+                        input_object_expansion: *expansion_mode,
+                        ..output::objects_to_entries::Options::default()
+                    },
+                )
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap()
+                .into_iter()
+                .flatten()
+                .collect();
+
+                write_and_verify(entries).unwrap();
+            }
         }
 
         fn write_and_verify(entries: Vec<output::Entry>) -> crate::Result {

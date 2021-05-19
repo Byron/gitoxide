@@ -82,6 +82,12 @@ where
             use ObjectExpansion::*;
             let mut out = Vec::new();
             match input_object_expansion {
+                TreeAdditionsComparedToAncestor => {
+                    todo!("tree additions compared to ancestor")
+                }
+                TreeContents => {
+                    todo!("tree contents")
+                }
                 AsIs => {
                     for id in oids.into_iter() {
                         let obj = db.find(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
@@ -160,6 +166,19 @@ mod types {
     pub enum ObjectExpansion {
         /// Don't do anything with the input objects except for transforming them into pack entries
         AsIs,
+        /// If the input object is a Commit then turn it into a pack entry. Additionally obtain its tree, turn it into a pack entry
+        /// along with all of its contents, that is nested trees, and any other objects reachable from it.
+        /// Otherwise, the same as [`AsIs`][ObjectExpansion::AsIs].
+        ///
+        /// This mode is useful if all reachable objects should be added, as in cloning a repository.
+        TreeContents,
+        /// If the input is a commit, obtain its ancestors and turn them into pack entries. Obtain the ancestor trees along with the commits
+        /// tree and turn them into pack entries. Finally obtain the added/changed objects when comparing the ancestor trees with the
+        /// current tree and turn them into entries as well.
+        /// Otherwise, the same as [`AsIs`][ObjectExpansion::AsIs].
+        ///
+        /// This mode is useful to build a pack containing only new objects compared to a previous state.
+        TreeAdditionsComparedToAncestor,
     }
 
     impl Default for ObjectExpansion {

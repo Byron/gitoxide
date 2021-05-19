@@ -1,0 +1,32 @@
+#!/bin/bash
+set -eu -o pipefail
+
+git init -q
+git config commit.gpgsign false
+
+function write_files() {
+  local base_dir=${1:?directory to write them into}
+  local num_files=${2:?amount of files to write}
+  local nonce=${3:?something to make files more unique}
+
+  mkdir -p "$base_dir"
+  for file_id in $(seq -w "$num_files"); do
+    seq "$file_id" > "$base_dir/$file_id"
+    echo "$nonce" >> "$base_dir/$file_id"
+  done
+}
+
+dirs=(. a b c a/a a/b a/c a/a/a)
+rounds=15
+
+git checkout -q -b main
+for round in $(seq $rounds); do
+  dir_index=$(( round % ${#dirs[@]} ))
+  num_files=$(( (round + 1) * 6 ))
+  write_files "${dirs[$dir_index]}" $num_files "$round"
+  git add .
+  git commit -q -m "$round $num_files"
+done
+
+# speed up all access by creating a pack
+git gc

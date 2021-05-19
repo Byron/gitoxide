@@ -979,6 +979,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-testtools",
+ "git-traverse",
  "hex",
  "itoa",
  "memory-lru",
