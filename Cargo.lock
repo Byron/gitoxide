@@ -2316,6 +2316,7 @@ dependencies = [
  "git-odb",
  "git-traverse",
  "git2",
+ "memory-lru",
  "rayon",
 ]
 

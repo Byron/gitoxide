@@ -16,3 +16,4 @@ git-object = { version = "^0.9", path = "../../git-object" }
 git2 = "0.13"
 rayon = "1.5.0"
 dashmap = "4.0.2"
+memory-lru = "0.1.0"

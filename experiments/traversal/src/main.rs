@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use dashmap::DashSet;
-use git_hash::{bstr::BStr, bstr::ByteSlice, ObjectId};
+use git_hash::{bstr::BStr, bstr::ByteSlice, oid, ObjectId};
 use git_object::immutable::tree::Entry;
 use git_odb::{find::FindExt, Find};
 use git_traverse::{commit, tree, tree::visit::Action};
@@ -63,41 +63,30 @@ fn main() -> anyhow::Result<()> {
         all_commits.len() as f32 / elapsed.as_secs_f32()
     );
 
-    let start = Instant::now();
-    let (unique, entries) = do_gitoxide_tree_dag_traversal(
-        &all_commits,
-        &db,
-        git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
-        Computation::MultiThreaded,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "gitoxide PARALLEL (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
-        entries,
-        unique,
-        all_commits.len(),
-        elapsed,
-        entries as f32 / elapsed.as_secs_f32(),
-        all_commits.len() as f32 / elapsed.as_secs_f32()
-    );
-
-    let start = Instant::now();
-    let (unique, entries) = do_gitoxide_tree_dag_traversal(
-        &all_commits,
-        &db,
-        git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
-        Computation::SingleThreaded,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "gitoxide (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
-        entries,
-        unique,
-        all_commits.len(),
-        elapsed,
-        entries as f32 / elapsed.as_secs_f32(),
-        all_commits.len() as f32 / elapsed.as_secs_f32()
-    );
+    for computation_mode in &[Computation::MultiThreaded, Computation::SingleThreaded] {
+        for cache_mode in &[ObjectCache::MemoryLru, ObjectCache::None] {
+            let start = Instant::now();
+            let (unique, entries) = do_gitoxide_tree_dag_traversal(
+                &all_commits,
+                &db,
+                git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
+                *computation_mode,
+                *cache_mode,
+            )?;
+            let elapsed = start.elapsed();
+            println!(
+                "gitoxide {:?} (pack-cache = 64, {:?}) entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
+                computation_mode,
+                cache_mode,
+                entries,
+                unique,
+                all_commits.len(),
+                elapsed,
+                entries as f32 / elapsed.as_secs_f32(),
+                all_commits.len() as f32 / elapsed.as_secs_f32()
+            );
+        }
+    }
 
     let repo = git2::Repository::open(&repo_git_dir)?;
     let start = Instant::now();
@@ -188,9 +177,16 @@ where
     Ok(commits)
 }
 
+#[derive(Debug, Copy, Clone)]
 enum Computation {
     SingleThreaded,
     MultiThreaded,
+}
+
+#[derive(Debug, Copy, Clone)]
+enum ObjectCache {
+    None,
+    MemoryLru,
 }
 
 fn do_gitoxide_tree_dag_traversal<C>(
@@ -198,10 +194,12 @@ fn do_gitoxide_tree_dag_traversal<C>(
     db: &git_odb::linked::Db,
     new_cache: impl Fn() -> C + Sync + Send,
     mode: Computation,
+    cache_mode: ObjectCache,
 ) -> anyhow::Result<(usize, u64)>
 where
     C: git_odb::pack::cache::DecodeEntry,
 {
+    use ObjectCache::*;
     match mode {
         Computation::SingleThreaded => {
             #[derive(Default)]
@@ -237,6 +235,7 @@ where
             let mut state = tree::breadthfirst::State::default();
             let mut seen = HashSet::new();
             let mut entries = 0;
+            let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
 
             for commit in commits {
                 let tid = db
@@ -249,9 +248,11 @@ where
                     tid,
                     &mut state,
                     |oid, buf| {
-                        db.find_existing(oid, buf, &mut cache)
-                            .ok()
-                            .and_then(|o| o.into_tree_iter())
+                        match cache_mode {
+                            None => db.find_existing(oid, buf, &mut cache).ok(),
+                            MemoryLru => find_with_lru_mem_cache(oid, buf, &mut obj_cache, db, &mut cache),
+                        }
+                        .and_then(|o| o.into_tree_iter())
                     },
                     &mut count,
                 )?;
@@ -306,10 +307,11 @@ where
                                 Vec::<u8>::new(),
                                 new_cache(),
                                 tree::breadthfirst::State::default(),
+                                memory_lru::MemoryLruCache::new(cache_size()),
                             )
                         }
                     },
-                    |(count, buf, cache, state), commit| {
+                    |(count, buf, cache, state, obj_cache), commit| {
                         let tid = db
                             .find_existing_commit_iter(commit, buf, cache)?
                             .tree_id()
@@ -318,7 +320,11 @@ where
                         tree::breadthfirst::traverse(
                             tid,
                             state,
-                            |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                            |oid, buf| match cache_mode {
+                                None => db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                MemoryLru => find_with_lru_mem_cache(oid, buf, obj_cache, db, cache)
+                                    .and_then(|o| o.into_tree_iter()),
+                            },
                             count,
                         )?;
                         entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);
@@ -326,6 +332,52 @@ where
                     },
                 )?;
             Ok((seen.len(), entries.load(std::sync::atomic::Ordering::Acquire)))
+        }
+    }
+}
+
+fn cache_size() -> usize {
+    std::env::var("GITOXIDE_OBJECT_CACHE_IN_BYTES")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
+}
+
+struct ObjectInfo {
+    kind: git_object::Kind,
+    data: Vec<u8>,
+}
+impl memory_lru::ResidentSize for ObjectInfo {
+    fn resident_size(&self) -> usize {
+        self.data.len()
+    }
+}
+fn find_with_lru_mem_cache<'b>(
+    oid: &oid,
+    buf: &'b mut Vec<u8>,
+    obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
+    db: &git_odb::linked::Db,
+    pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
+) -> Option<git_odb::data::Object<'b>> {
+    let oid = oid.to_owned();
+    match obj_cache.get(&oid) {
+        Some(ObjectInfo { kind, data }) => {
+            buf.resize(data.len(), 0);
+            buf.copy_from_slice(data);
+            Some(git_odb::data::Object::new(*kind, buf))
+        }
+        None => {
+            let obj = db.find_existing(oid, buf, pack_cache).ok();
+            if let Some(ref obj) = obj {
+                obj_cache.insert(
+                    oid,
+                    ObjectInfo {
+                        kind: obj.kind,
+                        data: obj.data.to_owned(),
+                    },
+                );
+            }
+            obj
         }
     }
 }
