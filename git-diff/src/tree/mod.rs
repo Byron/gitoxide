@@ -10,13 +10,7 @@ pub struct State {
     trees: VecDeque<TreeInfoPair>,
 }
 
-type TreeInfoPair = (Option<TreeInfo>, Option<TreeInfo>);
-
-#[derive(Clone)]
-pub(crate) struct TreeInfo {
-    pub tree_id: ObjectId,
-    pub parent_path_id: Option<()>,
-}
+type TreeInfoPair = (Option<ObjectId>, Option<ObjectId>);
 
 impl State {
     fn clear(&mut self) {

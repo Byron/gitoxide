@@ -230,7 +230,7 @@ where
             commits.par_windows(2).try_for_each_init::<_, _, _, anyhow::Result<_>>(
                 || {
                     (
-                        git_diff::tree::State::<()>::default(),
+                        git_diff::tree::State::default(),
                         Vec::<u8>::new(),
                         Vec::<u8>::new(),
                         make_find(),
@@ -305,11 +305,9 @@ where
     struct Count(usize);
 
     impl git_diff::tree::Visit for Count {
-        type PathId = ();
+        fn pop_front_tracked_path_and_set_current(&mut self) {}
 
-        fn pop_front_tracked_path_and_set_current(&mut self, _path: Self::PathId) {}
-
-        fn push_back_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+        fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
 
         fn push_path_component(&mut self, _component: &BStr) {}
 

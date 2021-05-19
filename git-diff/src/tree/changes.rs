@@ -1,6 +1,6 @@
 use crate::{
     tree,
-    tree::{visit::Change, TreeInfo, TreeInfoPair},
+    tree::{visit::Change, TreeInfoPair},
 };
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
@@ -77,24 +77,16 @@ impl<'a> tree::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            rhs_entries = peekable(
-                                locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
-                            );
+                            rhs_entries = peekable(locate(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(
-                                locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
-                            );
-                            rhs_entries = peekable(
-                                locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
-                            );
+                            lhs_entries = peekable(locate(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
+                            rhs_entries = peekable(locate(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
                         }
                         Some((Some(lhs), None)) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(
-                                locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
-                            );
+                            lhs_entries = peekable(locate(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
@@ -140,14 +132,8 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
     }
     if entry.mode.is_tree() {
         delegate.pop_path_component();
-        let path_id = delegate.push_back_tracked_path_component(entry.filename);
-        queue.push_back((
-            Some(TreeInfo {
-                tree_id: entry.oid.to_owned(),
-                parent_path_id: Some(path_id),
-            }),
-            None,
-        ));
+        delegate.push_back_tracked_path_component(entry.filename);
+        queue.push_back((Some(entry.oid.to_owned()), None));
     }
     Ok(())
 }
@@ -169,14 +155,8 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
     }
     if entry.mode.is_tree() {
         delegate.pop_path_component();
-        let path_id = delegate.push_back_tracked_path_component(entry.filename);
-        queue.push_back((
-            None,
-            Some(TreeInfo {
-                tree_id: entry.oid.to_owned(),
-                parent_path_id: Some(path_id),
-            }),
-        ))
+        delegate.push_back_tracked_path_component(entry.filename);
+        queue.push_back((None, Some(entry.oid.to_owned())))
     }
     Ok(())
 }
@@ -269,7 +249,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
     use git_object::tree::EntryMode::*;
     match (lhs.mode, rhs.mode) {
         (Tree, Tree) => {
-            let path_id = delegate.push_back_tracked_path_component(lhs.filename);
+            delegate.push_back_tracked_path_component(lhs.filename);
             if lhs.oid != rhs.oid
                 && delegate
                     .visit(Change::Modification {
@@ -282,19 +262,10 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             {
                 return Err(Error::Cancelled);
             }
-            queue.push_back((
-                Some(TreeInfo {
-                    tree_id: lhs.oid.to_owned(),
-                    parent_path_id: Some(path_id),
-                }),
-                Some(TreeInfo {
-                    tree_id: rhs.oid.to_owned(),
-                    parent_path_id: None,
-                }),
-            ));
+            queue.push_back((Some(lhs.oid.to_owned()), Some(rhs.oid.to_owned())));
         }
         (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
-            let path_id = delegate.push_back_tracked_path_component(lhs.filename);
+            delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
                     entry_mode: lhs.mode,
@@ -313,16 +284,10 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             {
                 return Err(Error::Cancelled);
             };
-            queue.push_back((
-                None,
-                Some(TreeInfo {
-                    tree_id: rhs.oid.to_owned(),
-                    parent_path_id: Some(path_id),
-                }),
-            ));
+            queue.push_back((None, Some(rhs.oid.to_owned())));
         }
         (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
-            let path_id = delegate.push_back_tracked_path_component(lhs.filename);
+            delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
                     entry_mode: lhs.mode,
@@ -341,13 +306,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             {
                 return Err(Error::Cancelled);
             };
-            queue.push_back((
-                Some(TreeInfo {
-                    tree_id: lhs.oid.to_owned(),
-                    parent_path_id: Some(path_id),
-                }),
-                None,
-            ));
+            queue.push_back((Some(lhs.oid.to_owned()), None));
         }
         (lhs_non_tree, rhs_non_tree) => {
             delegate.push_path_component(lhs.filename);
