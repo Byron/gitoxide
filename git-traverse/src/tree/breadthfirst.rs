@@ -75,11 +75,15 @@ where
                     match entry.mode {
                         tree::EntryMode::Tree => {
                             use super::visit::Action::*;
-                            let path_id = delegate.push_tracked_path_component(entry.filename);
+                            delegate.push_path_component(entry.filename);
                             let action = delegate.visit_tree(&entry);
                             match action {
                                 Skip => {}
-                                Continue => state.next.push_back((Some(path_id), entry.oid.to_owned())),
+                                Continue => {
+                                    delegate.pop_path_component();
+                                    let path_id = delegate.push_tracked_path_component(entry.filename);
+                                    state.next.push_back((Some(path_id), entry.oid.to_owned()))
+                                }
                                 Cancel => {
                                     return Err(Error::Cancelled);
                                 }
