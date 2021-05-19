@@ -66,7 +66,7 @@ where
     state.next.push_back((false, root.into()));
     while let Some((should_pop_path, oid)) = state.next.pop_front() {
         if should_pop_path {
-            delegate.pop_front_tracked_path_component();
+            delegate.pop_front_tracked_path_and_set_current();
         }
         match find(&oid, &mut state.buf) {
             Some(tree_iter) => {

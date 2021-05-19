@@ -4,7 +4,7 @@ use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
 /// A Change as observed by a call to [`visit(…)`][visit::Visit::visit()], enhanced with the path affected by the change.
 /// Its similar to [visit::Change] but includes the path that changed.
@@ -37,6 +37,7 @@ pub enum Change {
 pub struct Recorder {
     path_count: usize,
     path_map: BTreeMap<usize, BString>,
+    path_deque: VecDeque<BString>,
     path: BString,
     /// The observed changes.
     pub records: Vec<Change>,
@@ -64,18 +65,13 @@ impl Recorder {
 }
 
 impl visit::Visit for Recorder {
-    type PathId = usize;
-
-    fn set_current_path(&mut self, path: Self::PathId) {
-        self.path = self.path_map.remove(&path).expect("every parent is set only once");
+    fn pop_front_tracked_path_and_set_current(&mut self) {
+        self.path = self.path_deque.pop_front().expect("every parent is set only once");
     }
 
-    fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId {
+    fn push_back_tracked_path_component(&mut self, component: &BStr) {
         self.push_element(component);
-        self.path_map.insert(self.path_count, self.path_clone());
-        let res = self.path_count;
-        self.path_count += 1;
-        res
+        self.path_deque.push_back(self.path.clone());
     }
 
     fn push_path_component(&mut self, component: &BStr) {

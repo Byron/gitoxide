@@ -61,7 +61,7 @@ impl Recorder {
 }
 
 impl visit::Visit for Recorder {
-    fn pop_front_tracked_path_component(&mut self) {
+    fn pop_front_tracked_path_and_set_current(&mut self) {
         self.path = self
             .path_deque
             .pop_front()

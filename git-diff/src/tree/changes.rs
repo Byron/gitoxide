@@ -60,7 +60,7 @@ impl<'a> tree::Changes<'a> {
     where
         LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
         R: tree::Visit,
-        StateMut: BorrowMut<tree::State<R::PathId>>,
+        StateMut: BorrowMut<tree::State>,
     {
         let state = state.borrow_mut();
         state.clear();
@@ -75,14 +75,14 @@ impl<'a> tree::Changes<'a> {
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => {
                     match state.trees.pop_front() {
-                        Some((None, Some(mut rhs))) => {
-                            delegate.set_current_path(rhs.parent_path_id.take().expect("path-id is set"));
+                        Some((None, Some(rhs))) => {
+                            delegate.pop_front_tracked_path_and_set_current();
                             rhs_entries = peekable(
                                 locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
                             );
                         }
-                        Some((Some(mut lhs), Some(rhs))) => {
-                            delegate.set_current_path(lhs.parent_path_id.take().expect("path-id is set in lhs"));
+                        Some((Some(lhs), Some(rhs))) => {
+                            delegate.pop_front_tracked_path_and_set_current();
                             lhs_entries = peekable(
                                 locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
                             );
@@ -90,8 +90,8 @@ impl<'a> tree::Changes<'a> {
                                 locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
                             );
                         }
-                        Some((Some(mut lhs), None)) => {
-                            delegate.set_current_path(lhs.parent_path_id.take().expect("path-id is set"));
+                        Some((Some(lhs), None)) => {
+                            delegate.pop_front_tracked_path_and_set_current();
                             lhs_entries = peekable(
                                 locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
                             );
@@ -125,7 +125,7 @@ impl<'a> tree::Changes<'a> {
 
 fn delete_entry_schedule_recursion<R: tree::Visit>(
     entry: immutable::tree::Entry<'_>,
-    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
@@ -140,7 +140,7 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
     }
     if entry.mode.is_tree() {
         delegate.pop_path_component();
-        let path_id = delegate.push_tracked_path_component(entry.filename);
+        let path_id = delegate.push_back_tracked_path_component(entry.filename);
         queue.push_back((
             Some(TreeInfo {
                 tree_id: entry.oid.to_owned(),
@@ -154,7 +154,7 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
 
 fn add_entry_schedule_recursion<R: tree::Visit>(
     entry: immutable::tree::Entry<'_>,
-    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     delegate.push_path_component(entry.filename);
@@ -169,7 +169,7 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
     }
     if entry.mode.is_tree() {
         delegate.pop_path_component();
-        let path_id = delegate.push_tracked_path_component(entry.filename);
+        let path_id = delegate.push_back_tracked_path_component(entry.filename);
         queue.push_back((
             None,
             Some(TreeInfo {
@@ -184,7 +184,7 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
     rhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
     lhs: immutable::tree::Entry<'_>,
     rhs: immutable::tree::Entry<'_>,
-    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     use std::cmp::Ordering::*;
@@ -224,7 +224,7 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
     lhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
     lhs: immutable::tree::Entry<'_>,
     rhs: immutable::tree::Entry<'_>,
-    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     use std::cmp::Ordering::*;
@@ -263,13 +263,13 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
 fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
     lhs: immutable::tree::Entry<'_>,
     rhs: immutable::tree::Entry<'_>,
-    queue: &mut VecDeque<TreeInfoPair<R::PathId>>,
+    queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
     use git_object::tree::EntryMode::*;
     match (lhs.mode, rhs.mode) {
         (Tree, Tree) => {
-            let path_id = delegate.push_tracked_path_component(lhs.filename);
+            let path_id = delegate.push_back_tracked_path_component(lhs.filename);
             if lhs.oid != rhs.oid
                 && delegate
                     .visit(Change::Modification {
@@ -294,7 +294,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             ));
         }
         (lhs_mode, Tree) if lhs_mode.is_no_tree() => {
-            let path_id = delegate.push_tracked_path_component(lhs.filename);
+            let path_id = delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
                     entry_mode: lhs.mode,
@@ -322,7 +322,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             ));
         }
         (Tree, rhs_mode) if rhs_mode.is_no_tree() => {
-            let path_id = delegate.push_tracked_path_component(lhs.filename);
+            let path_id = delegate.push_back_tracked_path_component(lhs.filename);
             if delegate
                 .visit(Change::Deletion {
                     entry_mode: lhs.mode,

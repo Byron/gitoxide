@@ -159,7 +159,7 @@ mod tree {
         }
 
         impl Visit for AllUnseen {
-            fn pop_front_tracked_path_component(&mut self) {}
+            fn pop_front_tracked_path_and_set_current(&mut self) {}
 
             fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
 

@@ -307,9 +307,9 @@ where
     impl git_diff::tree::Visit for Count {
         type PathId = ();
 
-        fn set_current_path(&mut self, _path: Self::PathId) {}
+        fn pop_front_tracked_path_and_set_current(&mut self, _path: Self::PathId) {}
 
-        fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+        fn push_back_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
 
         fn push_path_component(&mut self, _component: &BStr) {}
 

@@ -51,14 +51,10 @@ impl Action {
 /// A trait to allow responding to a traversal designed to figure out the [changes][Change]
 /// to turn tree A into tree B.
 pub trait Visit {
-    /// A type capable of uniquely identifying paths in a tree.
-    type PathId;
-
-    /// Sets the path associated with the given `id` so future calls to push and pop components affect it instead.
-    /// It will only ever be called once with a given `id`.
-    fn set_current_path(&mut self, id: Self::PathId);
-    /// Append a `component` to the end of a path, which may be empty, and associate it with the returned path id.
-    fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId;
+    /// Sets the full path path in front of the queue so future calls to push and pop components affect it instead.
+    fn pop_front_tracked_path_and_set_current(&mut self);
+    /// Append a `component` to the end of a path, which may be empty.
+    fn push_back_tracked_path_component(&mut self, component: &BStr);
     /// Append a `component` to the end of a path, which may be empty.
     fn push_path_component(&mut self, component: &BStr);
     /// Removes the last component from the path, which may leave it empty.

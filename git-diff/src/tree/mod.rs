@@ -3,21 +3,22 @@ use git_object::immutable;
 use std::collections::VecDeque;
 
 /// The state required to visit [Changes] to be instantiated with `State::default()`.
-#[derive(Default)]
-pub struct State<PathId> {
+#[derive(Default, Clone)]
+pub struct State {
     buf1: Vec<u8>,
     buf2: Vec<u8>,
-    trees: VecDeque<TreeInfoPair<PathId>>,
+    trees: VecDeque<TreeInfoPair>,
 }
 
-type TreeInfoPair<PathId> = (Option<TreeInfo<PathId>>, Option<TreeInfo<PathId>>);
+type TreeInfoPair = (Option<TreeInfo>, Option<TreeInfo>);
 
-pub(crate) struct TreeInfo<PathId> {
+#[derive(Clone)]
+pub(crate) struct TreeInfo {
     pub tree_id: ObjectId,
-    pub parent_path_id: Option<PathId>,
+    pub parent_path_id: Option<()>,
 }
 
-impl<P> State<P> {
+impl State {
     fn clear(&mut self) {
         self.trees.clear();
         self.buf1.clear();
