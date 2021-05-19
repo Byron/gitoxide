@@ -4,7 +4,7 @@ use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     immutable, tree,
 };
-use std::collections::BTreeMap;
+use std::collections::VecDeque;
 
 /// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][visit::Visit::visit_tree()], enhanced with the full path to it.
 /// Otherwise similar to [`immutable::tree::Entry`][git_object::immutable::tree::Entry].
@@ -33,8 +33,7 @@ impl Entry {
 /// A [Visit][visit::Visit] implementation to record every observed change and keep track of the changed paths.
 #[derive(Clone, Debug, Default)]
 pub struct Recorder {
-    path_count: usize,
-    path_map: BTreeMap<usize, BString>,
+    path_deque: VecDeque<BString>,
     path: BString,
     /// The observed entries.
     pub records: Vec<Entry>,
@@ -62,18 +61,16 @@ impl Recorder {
 }
 
 impl visit::Visit for Recorder {
-    type PathId = usize;
-
-    fn set_current_path(&mut self, path: Self::PathId) {
-        self.path = self.path_map.remove(&path).expect("every parent is set only once");
+    fn pop_front_tracked_path_component(&mut self) {
+        self.path = self
+            .path_deque
+            .pop_front()
+            .expect("every call is matched with push_tracked_path_component");
     }
 
-    fn push_tracked_path_component(&mut self, component: &BStr) -> Self::PathId {
+    fn push_back_tracked_path_component(&mut self, component: &BStr) {
         self.push_element(component);
-        self.path_map.insert(self.path_count, self.path_clone());
-        let res = self.path_count;
-        self.path_count += 1;
-        res
+        self.path_deque.push_back(self.path.clone());
     }
 
     fn push_path_component(&mut self, component: &BStr) {

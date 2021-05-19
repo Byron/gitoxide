@@ -197,9 +197,8 @@ where
             }
 
             impl tree::visit::Visit for Count {
-                type PathId = ();
-                fn set_current_path(&mut self, _id: Self::PathId) {}
-                fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+                fn pop_front_tracked_path_component(&mut self) {}
+                fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
                 fn push_path_component(&mut self, _component: &BStr) {}
                 fn pop_path_component(&mut self) {}
                 fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
@@ -253,9 +252,8 @@ where
             }
 
             impl<'a> tree::visit::Visit for Count<'a> {
-                type PathId = ();
-                fn set_current_path(&mut self, _id: Self::PathId) {}
-                fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+                fn pop_front_tracked_path_component(&mut self) {}
+                fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
                 fn push_path_component(&mut self, _component: &BStr) {}
                 fn pop_path_component(&mut self) {}
                 fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {

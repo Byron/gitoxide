@@ -24,13 +24,13 @@ quick_error! {
 }
 
 /// The state used and potentially shared by multiple tree traversals.
-#[derive(Default)]
-pub struct State<PathId> {
-    next: VecDeque<(Option<PathId>, ObjectId)>,
+#[derive(Default, Clone)]
+pub struct State {
+    next: VecDeque<(Option<()>, ObjectId)>,
     buf: Vec<u8>,
 }
 
-impl<PathId> State<PathId> {
+impl State {
     fn clear(&mut self) {
         self.next.clear();
         self.buf.clear();
@@ -58,15 +58,15 @@ pub fn traverse<StateMut, Find, V>(
 ) -> Result<(), Error>
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::TreeIter<'a>>,
-    StateMut: BorrowMut<State<V::PathId>>,
+    StateMut: BorrowMut<State>,
     V: Visit,
 {
     let state = state.borrow_mut();
     state.clear();
     state.next.push_back((None, root.into()));
-    while let Some((path_id, oid)) = state.next.pop_front() {
-        if let Some(path_id) = path_id {
-            delegate.set_current_path(path_id);
+    while let Some((pop_path, oid)) = state.next.pop_front() {
+        if let Some(()) = pop_path {
+            delegate.pop_front_tracked_path_component();
         }
         match find(&oid, &mut state.buf) {
             Some(tree_iter) => {
@@ -81,8 +81,8 @@ where
                                 Skip => {}
                                 Continue => {
                                     delegate.pop_path_component();
-                                    let path_id = delegate.push_tracked_path_component(entry.filename);
-                                    state.next.push_back((Some(path_id), entry.oid.to_owned()))
+                                    delegate.push_back_tracked_path_component(entry.filename);
+                                    state.next.push_back((Some(()), entry.oid.to_owned()))
                                 }
                                 Cancel => {
                                     return Err(Error::Cancelled);

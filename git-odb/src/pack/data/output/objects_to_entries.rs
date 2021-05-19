@@ -81,9 +81,7 @@ where
         move |oids: Vec<Oid>, (buf, cache)| {
             use ObjectExpansion::*;
             let mut out = Vec::new();
-            type TraversalState = git_traverse::tree::breadthfirst::State<
-                <tree::traverse::AllUnseen as git_traverse::tree::Visit>::PathId,
-            >;
+            type TraversalState = git_traverse::tree::breadthfirst::State;
             let mut tree_traversal_state: Option<TraversalState> = None;
             for id in oids.into_iter() {
                 let id = id.as_ref();
@@ -161,11 +159,9 @@ mod tree {
         }
 
         impl Visit for AllUnseen {
-            type PathId = ();
+            fn pop_front_tracked_path_component(&mut self) {}
 
-            fn set_current_path(&mut self, _id: Self::PathId) {}
-
-            fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+            fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
 
             fn push_path_component(&mut self, _component: &BStr) {}
 
