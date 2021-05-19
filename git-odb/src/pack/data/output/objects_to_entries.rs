@@ -74,15 +74,15 @@ where
         thread_limit,
         move |_n| {
             (
-                Vec::new(),   // object locate buffer
+                Vec::new(),   // object data buffer
                 make_cache(), // cache to speed up pack operations
             )
         },
         move |oids: Vec<Oid>, (buf, cache)| {
             use ObjectExpansion::*;
             let mut out = Vec::new();
-            type TraversalState = git_traverse::tree::breadthfirst::State;
-            let mut tree_traversal_state: Option<TraversalState> = None;
+            let mut tree_traversal_state: Option<git_traverse::tree::breadthfirst::State> = None;
+            let mut tree_diff_state: Option<git_diff::tree::State> = None;
             for id in oids.into_iter() {
                 let id = id.as_ref();
                 let obj = db
@@ -90,11 +90,21 @@ where
                     .ok_or_else(|| Error::NotFound { oid: id.to_owned() })?;
                 match input_object_expansion {
                     TreeAdditionsComparedToAncestor => {
-                        todo!("tree additions compared to ancestor")
+                        use git_object::Kind::*;
+                        let _state = tree_diff_state.get_or_insert_with(Default::default);
+                        out.push(obj_to_entry(&db, version, id, &obj)?);
+                        if let Commit = obj.kind {
+                            let mut commit_iter = obj.into_commit_iter().expect("kind is valid");
+                            let _tree_id = commit_iter.tree_id().expect("every commit has a tree");
+                            // obj = db.find_existing(tree_id, buf, cache).map_err(|_| Error::NotFound {
+                            //     oid: tree_id.to_owned(),
+                            // })?;
+                            todo!("diff trees against parents and add object entries of added objects");
+                        }
                     }
                     TreeContents => {
                         use git_object::Kind::*;
-                        let state = tree_traversal_state.get_or_insert_with(TraversalState::default);
+                        let state = tree_traversal_state.get_or_insert_with(Default::default);
                         let mut delegate = tree::traverse::AllUnseen::default();
                         let mut obj = obj;
                         loop {

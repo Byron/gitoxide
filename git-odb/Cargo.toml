@@ -36,6 +36,7 @@ git-features = { version = "^0.14.0", path = "../git-features" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-object = { version = "^0.9.0", path = "../git-object" }
 git-traverse = { version = "^0.3", path = "../git-traverse" }
+git-diff = { version = "^0.4", path = "../git-diff" }
 
 flate2 = { version = "1.0.17", default-features = false }
 smallvec = "1.3.0"
