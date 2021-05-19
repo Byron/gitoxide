@@ -119,8 +119,7 @@ where
                                     )
                                     .map_err(Error::TreeTraverse)?;
                                     for id in delegate.objects.into_iter() {
-                                        let obj =
-                                            db.find(id, buf, cache)?.ok_or_else(|| Error::NotFound { oid: id })?;
+                                        let obj = db.find(id, buf, cache)?.ok_or(Error::NotFound { oid: id })?;
                                         out.push(obj_to_entry(&db, version, &id, &obj)?);
                                     }
                                     break;
