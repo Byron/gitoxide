@@ -63,41 +63,26 @@ fn main() -> anyhow::Result<()> {
         all_commits.len() as f32 / elapsed.as_secs_f32()
     );
 
-    let start = Instant::now();
-    let (unique, entries) = do_gitoxide_tree_dag_traversal(
-        &all_commits,
-        &db,
-        git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
-        Computation::MultiThreaded,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "gitoxide PARALLEL (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
-        entries,
-        unique,
-        all_commits.len(),
-        elapsed,
-        entries as f32 / elapsed.as_secs_f32(),
-        all_commits.len() as f32 / elapsed.as_secs_f32()
-    );
-
-    let start = Instant::now();
-    let (unique, entries) = do_gitoxide_tree_dag_traversal(
-        &all_commits,
-        &db,
-        git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
-        Computation::SingleThreaded,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "gitoxide (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
-        entries,
-        unique,
-        all_commits.len(),
-        elapsed,
-        entries as f32 / elapsed.as_secs_f32(),
-        all_commits.len() as f32 / elapsed.as_secs_f32()
-    );
+    for compute_mode in &[Computation::MultiThreaded, Computation::SingleThreaded] {
+        let start = Instant::now();
+        let (unique, entries) = do_gitoxide_tree_dag_traversal(
+            &all_commits,
+            &db,
+            git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
+            *compute_mode,
+        )?;
+        let elapsed = start.elapsed();
+        println!(
+        "gitoxide {:?} (cache = 64 entries: confirmed {} entries ({} unique objects) in {} trees in {:?} ({:0.0} entries/s, {:0.0} trees/s)",
+            compute_mode,
+            entries,
+            unique,
+            all_commits.len(),
+            elapsed,
+            entries as f32 / elapsed.as_secs_f32(),
+            all_commits.len() as f32 / elapsed.as_secs_f32()
+        );
+    }
 
     let repo = git2::Repository::open(&repo_git_dir)?;
     let start = Instant::now();
@@ -188,6 +173,7 @@ where
     Ok(commits)
 }
 
+#[derive(Debug, Copy, Clone)]
 enum Computation {
     SingleThreaded,
     MultiThreaded,
