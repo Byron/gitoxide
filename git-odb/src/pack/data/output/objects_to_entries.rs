@@ -172,8 +172,12 @@ mod tree {
             fn pop_path_component(&mut self) {}
 
             fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
-                self.objects.insert(entry.oid.to_owned());
-                Action::Continue
+                let inserted = self.objects.insert(entry.oid.to_owned());
+                if inserted {
+                    Action::Continue
+                } else {
+                    Action::Skip
+                }
             }
 
             fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
