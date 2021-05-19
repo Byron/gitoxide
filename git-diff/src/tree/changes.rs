@@ -75,14 +75,14 @@ impl<'a> tree::Changes<'a> {
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => {
                     match state.trees.pop_front() {
-                        Some((None, Some(rhs))) => {
-                            delegate.set_current_path(rhs.parent_path_id.clone());
+                        Some((None, Some(mut rhs))) => {
+                            delegate.set_current_path(rhs.parent_path_id.take().expect("path-id is set"));
                             rhs_entries = peekable(
                                 locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
                             );
                         }
-                        Some((Some(lhs), Some(rhs))) => {
-                            delegate.set_current_path(lhs.parent_path_id.clone());
+                        Some((Some(mut lhs), Some(rhs))) => {
+                            delegate.set_current_path(lhs.parent_path_id.take().expect("path-id is set in lhs"));
                             lhs_entries = peekable(
                                 locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
                             );
@@ -90,8 +90,8 @@ impl<'a> tree::Changes<'a> {
                                 locate(&rhs.tree_id, &mut state.buf2).ok_or(Error::NotFound { oid: rhs.tree_id })?,
                             );
                         }
-                        Some((Some(lhs), None)) => {
-                            delegate.set_current_path(lhs.parent_path_id.clone());
+                        Some((Some(mut lhs), None)) => {
+                            delegate.set_current_path(lhs.parent_path_id.take().expect("path-id is set"));
                             lhs_entries = peekable(
                                 locate(&lhs.tree_id, &mut state.buf1).ok_or(Error::NotFound { oid: lhs.tree_id })?,
                             );
@@ -144,7 +144,7 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
         queue.push_back((
             Some(TreeInfo {
                 tree_id: entry.oid.to_owned(),
-                parent_path_id: path_id,
+                parent_path_id: Some(path_id),
             }),
             None,
         ));
@@ -174,7 +174,7 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
             None,
             Some(TreeInfo {
                 tree_id: entry.oid.to_owned(),
-                parent_path_id: path_id,
+                parent_path_id: Some(path_id),
             }),
         ))
     }
@@ -285,11 +285,11 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             queue.push_back((
                 Some(TreeInfo {
                     tree_id: lhs.oid.to_owned(),
-                    parent_path_id: path_id.clone(),
+                    parent_path_id: Some(path_id),
                 }),
                 Some(TreeInfo {
                     tree_id: rhs.oid.to_owned(),
-                    parent_path_id: path_id,
+                    parent_path_id: None,
                 }),
             ));
         }
@@ -317,7 +317,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
                 None,
                 Some(TreeInfo {
                     tree_id: rhs.oid.to_owned(),
-                    parent_path_id: path_id,
+                    parent_path_id: Some(path_id),
                 }),
             ));
         }
@@ -344,7 +344,7 @@ fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
             queue.push_back((
                 Some(TreeInfo {
                     tree_id: lhs.oid.to_owned(),
-                    parent_path_id: path_id,
+                    parent_path_id: Some(path_id),
                 }),
                 None,
             ));
