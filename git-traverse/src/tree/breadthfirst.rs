@@ -26,7 +26,7 @@ quick_error! {
 /// The state used and potentially shared by multiple tree traversals.
 #[derive(Default, Clone)]
 pub struct State {
-    next: VecDeque<(Option<()>, ObjectId)>,
+    next: VecDeque<(bool, ObjectId)>,
     buf: Vec<u8>,
 }
 
@@ -63,9 +63,9 @@ where
 {
     let state = state.borrow_mut();
     state.clear();
-    state.next.push_back((None, root.into()));
-    while let Some((pop_path, oid)) = state.next.pop_front() {
-        if let Some(()) = pop_path {
+    state.next.push_back((false, root.into()));
+    while let Some((should_pop_path, oid)) = state.next.pop_front() {
+        if should_pop_path {
             delegate.pop_front_tracked_path_component();
         }
         match find(&oid, &mut state.buf) {
@@ -82,7 +82,7 @@ where
                                 Continue => {
                                     delegate.pop_path_component();
                                     delegate.push_back_tracked_path_component(entry.filename);
-                                    state.next.push_back((Some(()), entry.oid.to_owned()))
+                                    state.next.push_back((true, entry.oid.to_owned()))
                                 }
                                 Cancel => {
                                     return Err(Error::Cancelled);
