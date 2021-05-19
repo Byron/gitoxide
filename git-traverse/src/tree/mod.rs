@@ -1,5 +1,7 @@
 ///
 pub mod visit;
+#[doc(inline)]
+pub use visit::Visit;
 
 ///
 pub mod recorder;

@@ -1,4 +1,4 @@
-use crate::{pack, pack::data::output};
+use crate::{pack, pack::data::output, FindExt};
 use git_features::{hash, parallel, progress::Progress};
 use git_hash::oid;
 
@@ -81,6 +81,10 @@ where
         move |oids: Vec<Oid>, (buf, cache)| {
             use ObjectExpansion::*;
             let mut out = Vec::new();
+            type TraversalState = git_traverse::tree::breadthfirst::State<
+                <tree::traverse::AllUnseen as git_traverse::tree::Visit>::PathId,
+            >;
+            let mut tree_traversal_state: Option<TraversalState> = None;
             for id in oids.into_iter() {
                 let obj = db.find(id.as_ref(), buf, cache)?.ok_or_else(|| Error::NotFound {
                     oid: id.as_ref().to_owned(),
@@ -90,7 +94,37 @@ where
                         todo!("tree additions compared to ancestor")
                     }
                     TreeContents => {
-                        todo!("tree contents")
+                        use git_object::Kind::*;
+                        let state = tree_traversal_state.get_or_insert_with(TraversalState::default);
+                        let mut delegate = tree::traverse::AllUnseen::default();
+                        let obj = obj;
+                        loop {
+                            match obj.kind {
+                                Tree => {
+                                    git_traverse::tree::breadthfirst(
+                                        id.as_ref(),
+                                        state,
+                                        |oid, buf| {
+                                            if oid == id.as_ref() {
+                                                buf.resize(obj.data.len(), 0);
+                                                buf.copy_from_slice(obj.data);
+                                                Some(git_object::immutable::TreeIter::from_bytes(buf))
+                                            } else {
+                                                db.find_existing_tree_iter(oid, buf, cache).ok()
+                                            }
+                                        },
+                                        &mut delegate,
+                                    )
+                                    .map_err(Error::TreeTraverse)?;
+                                    break;
+                                }
+                                Commit => todo!("commit to tree"),
+                                Blob | Tag => {
+                                    out.push(obj_to_entry(&db, version, id, &obj)?);
+                                    break;
+                                }
+                            }
+                        }
                     }
                     AsIs => out.push(obj_to_entry(&db, version, id, &obj)?),
                 }
@@ -99,6 +133,42 @@ where
         },
         parallel::reduce::IdentityWithResult::default(),
     )
+}
+
+mod tree {
+    pub mod traverse {
+        use git_hash::{bstr::BStr, ObjectId};
+        use git_object::immutable::tree::Entry;
+        use git_traverse::tree::visit::{Action, Visit};
+        use std::collections::HashSet;
+
+        #[derive(Default)]
+        pub struct AllUnseen {
+            objects: HashSet<ObjectId>,
+        }
+
+        impl Visit for AllUnseen {
+            type PathId = ();
+
+            fn set_current_path(&mut self, _id: Self::PathId) {}
+
+            fn push_tracked_path_component(&mut self, _component: &BStr) -> Self::PathId {}
+
+            fn push_path_component(&mut self, _component: &BStr) {}
+
+            fn pop_path_component(&mut self) {}
+
+            fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+                self.objects.insert(entry.oid.to_owned());
+                Action::Continue
+            }
+
+            fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
+                self.objects.insert(entry.oid.to_owned());
+                Action::Continue
+            }
+        }
+    }
 }
 
 fn obj_to_entry<Locate, Oid>(
@@ -233,6 +303,8 @@ mod types {
     {
         #[error(transparent)]
         Locate(#[from] LocateErr),
+        #[error(transparent)]
+        TreeTraverse(git_traverse::tree::breadthfirst::Error),
         #[error("Object id {oid} wasn't found in object database")]
         NotFound { oid: ObjectId },
         #[error("Entry expected to have hash {expected}, but it had {actual}")]
