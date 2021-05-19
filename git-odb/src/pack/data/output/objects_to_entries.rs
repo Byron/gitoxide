@@ -100,7 +100,7 @@ where
                                     output::Entry {
                                         id: id.as_ref().to_owned(),
                                         object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                                        entry_kind: output::entry::Kind::Base,
+                                        kind: output::entry::Kind::Base,
                                         decompressed_size: obj.data.len(),
                                         compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
                                     }

@@ -10,7 +10,7 @@ pub struct Entry {
     pub object_kind: git_object::Kind,
     /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
     /// at rest or in transit.
-    pub entry_kind: entry::Kind,
+    pub kind: entry::Kind,
     /// The size in bytes needed once `data` gets decompressed
     pub decompressed_size: usize,
     /// The compressed data right behind the header

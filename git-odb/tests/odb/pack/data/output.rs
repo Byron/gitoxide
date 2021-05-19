@@ -28,7 +28,10 @@ mod entries {
                 || pack::cache::Never,
                 all_objects,
                 progress::Discard,
-                output::objects_to_entries::Options::default(),
+                output::objects_to_entries::Options {
+                    input_object_expansion: output::objects_to_entries::ObjectExpansion::AsIs,
+                    ..output::objects_to_entries::Options::default()
+                },
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
@@ -38,11 +41,16 @@ mod entries {
             assert!(
                 entries
                     .iter()
-                    .find(|e| !matches!(e.entry_kind, output::entry::Kind::Base))
+                    .find(|e| !matches!(e.kind, output::entry::Kind::Base))
                     .is_none(),
                 "there should only be base entries"
             );
 
+            write_and_verify(entries)?;
+            Ok(())
+        }
+
+        fn write_and_verify(entries: Vec<output::Entry>) -> crate::Result {
             let tmp_dir = tempfile::TempDir::new()?;
             let pack_file_path = tmp_dir.path().join("new.pack");
             let mut pack_file = std::fs::OpenOptions::new()

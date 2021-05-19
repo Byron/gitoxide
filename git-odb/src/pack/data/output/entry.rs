@@ -40,7 +40,7 @@ impl output::Entry {
         Ok(output::Entry {
             id: oid.into(),
             object_kind: obj.kind,
-            entry_kind: Kind::Base,
+            kind: Kind::Base,
             decompressed_size: obj.data.len(),
             compressed_data: {
                 let mut out = crate::zlib::stream::deflate::Write::new(Vec::new());
@@ -72,7 +72,7 @@ impl output::Entry {
         );
 
         use Kind::*;
-        match self.entry_kind {
+        match self.kind {
             Base => {
                 use git_object::Kind::*;
                 match self.object_kind {
