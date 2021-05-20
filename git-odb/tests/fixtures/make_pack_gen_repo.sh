@@ -25,8 +25,14 @@ for round in $(seq $rounds); do
   num_files=$(( (round + 1) * 6 ))
   write_files "${dirs[$dir_index]}" $num_files "$round"
   git add .
-  git commit -q -m "$round $num_files"
+  git commit -qm "$round $num_files"
 done
+
+echo hello world > referee
+git add referee
+git commit -qm "to be forgotten"
+git tag -m "a tag object" referrer
+git reset --hard HEAD~1
 
 # speed up all access by creating a pack
 git gc

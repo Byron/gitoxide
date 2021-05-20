@@ -113,7 +113,7 @@ mod entries {
                 let entries: Vec<_> = output::objects_to_entries_iter(
                     db.clone(),
                     || pack::cache::Never,
-                    commits,
+                    commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
                     progress::Discard,
                     output::objects_to_entries::Options {
                         input_object_expansion: expansion_mode,
