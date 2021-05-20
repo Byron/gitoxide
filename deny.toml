@@ -22,6 +22,11 @@ yanked = "warn"
 # 2019-12-17 there are no security notice advisories in
 # https://github.com/rustsec/advisory-db
 notice = "warn"
+ignore = [
+    # Both advisories are blocked on https://github.com/time-rs/time/issues/293
+    "RUSTSEC-2020-0056",
+    "RUSTSEC-2020-0071"
+]
 
 # This section is considered when running `cargo deny check licenses`
 # More documentation for the licenses section can be found here:
