@@ -63,7 +63,7 @@ pub fn create(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
-    out: impl io::Write,
+    _out: impl io::Write,
     ctx: Context,
 ) -> anyhow::Result<()> {
     let db = Arc::new(find_db(repository)?);
@@ -87,7 +87,7 @@ pub fn create(
                 .and_then(|hex_id| git_hash::ObjectId::from_hex(hex_id.as_bytes()).ok())
         })),
     };
-    let entries = pack::data::output::objects_to_entries_iter(
+    let _entries = pack::data::output::objects_to_entries_iter(
         Arc::clone(&db),
         || pack::cache::lru::StaticLinkedList::<64>::default(),
         input,
@@ -99,6 +99,7 @@ pub fn create(
             input_object_expansion: ctx.expansion.into(),
         },
     );
+    // pack::data::output::EntriesToBytesIter::new()
     todo!("impl")
 }
 
