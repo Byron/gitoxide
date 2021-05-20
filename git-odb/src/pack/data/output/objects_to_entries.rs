@@ -100,92 +100,109 @@ where
                     match input_object_expansion {
                         TreeAdditionsComparedToAncestor => {
                             use git_object::Kind::*;
-                            push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?;
-                            if let Commit = obj.kind {
-                                let current_tree_iter = {
-                                    let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
-                                    let tree_id = commit_iter.tree_id().expect("every commit has a tree");
-                                    parent_commit_ids.clear();
-                                    for token in commit_iter {
-                                        match token {
-                                            Ok(immutable::commit::iter::Token::Parent { id }) => {
-                                                parent_commit_ids.push(id)
-                                            }
-                                            Ok(_) => break,
-                                            Err(err) => return Err(Error::CommitDecode(err)),
-                                        }
-                                    }
-                                    let obj = db
-                                        .find_existing(tree_id, buf1, cache)
-                                        .map_err(|_| Error::NotFound { oid: tree_id })?;
-                                    push_obj_entry_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
-                                    immutable::TreeIter::from_bytes(obj.data)
-                                };
+                            let mut obj = obj;
+                            let mut id = id.to_owned();
 
-                                let objects = if parent_commit_ids.is_empty() {
-                                    traverse_delegate.clear();
-                                    git_traverse::tree::breadthfirst(
-                                        current_tree_iter,
-                                        &mut tree_traversal_state,
-                                        |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
-                                        &mut traverse_delegate,
-                                    )
-                                    .map_err(Error::TreeTraverse)?;
-                                    &traverse_delegate.objects
-                                } else {
-                                    changes_delegate.clear();
-                                    for commit_id in &parent_commit_ids {
-                                        let parent_tree_id = {
-                                            let parent_commit_obj =
-                                                db.find_existing(commit_id, buf2, cache).map_err(|_| {
-                                                    Error::NotFound {
-                                                        oid: commit_id.to_owned(),
+                            loop {
+                                push_obj_entry_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
+                                match obj.kind {
+                                    Tree | Blob => break,
+                                    Tag => {
+                                        id = immutable::TagIter::from_bytes(obj.data)
+                                            .target_id()
+                                            .expect("every tag has a target");
+                                        obj = db
+                                            .find_existing(id, buf1, cache)
+                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
+                                        continue;
+                                    }
+                                    Commit => {
+                                        let current_tree_iter = {
+                                            let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
+                                            let tree_id = commit_iter.tree_id().expect("every commit has a tree");
+                                            parent_commit_ids.clear();
+                                            for token in commit_iter {
+                                                match token {
+                                                    Ok(immutable::commit::iter::Token::Parent { id }) => {
+                                                        parent_commit_ids.push(id)
                                                     }
-                                                })?;
-
-                                            push_obj_entry_unique(
-                                                &mut out,
-                                                seen_objs,
-                                                &db,
-                                                version,
-                                                &commit_id,
-                                                &parent_commit_obj,
-                                            )?;
-                                            immutable::CommitIter::from_bytes(parent_commit_obj.data)
-                                                .tree_id()
-                                                .expect("every commit has a tree")
-                                        };
-                                        let parent_tree = {
-                                            let parent_tree_obj = db
-                                                .find_existing(parent_tree_id, buf2, cache)
-                                                .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
-                                            push_obj_entry_unique(
-                                                &mut out,
-                                                seen_objs,
-                                                &db,
-                                                version,
-                                                &parent_tree_id,
-                                                &parent_tree_obj,
-                                            )?;
-                                            immutable::TreeIter::from_bytes(parent_tree_obj.data)
+                                                    Ok(_) => break,
+                                                    Err(err) => return Err(Error::CommitDecode(err)),
+                                                }
+                                            }
+                                            let obj = db
+                                                .find_existing(tree_id, buf1, cache)
+                                                .map_err(|_| Error::NotFound { oid: tree_id })?;
+                                            push_obj_entry_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
+                                            immutable::TreeIter::from_bytes(obj.data)
                                         };
 
-                                        git_diff::tree::Changes::from(Some(parent_tree))
-                                            .needed_to_obtain(
-                                                current_tree_iter.clone(),
-                                                &mut tree_diff_state,
+                                        let objects = if parent_commit_ids.is_empty() {
+                                            traverse_delegate.clear();
+                                            git_traverse::tree::breadthfirst(
+                                                current_tree_iter,
+                                                &mut tree_traversal_state,
                                                 |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
-                                                &mut changes_delegate,
+                                                &mut traverse_delegate,
                                             )
-                                            .map_err(Error::TreeChanges)?;
+                                            .map_err(Error::TreeTraverse)?;
+                                            &traverse_delegate.objects
+                                        } else {
+                                            changes_delegate.clear();
+                                            for commit_id in &parent_commit_ids {
+                                                let parent_tree_id = {
+                                                    let parent_commit_obj = db
+                                                        .find_existing(commit_id, buf2, cache)
+                                                        .map_err(|_| Error::NotFound {
+                                                            oid: commit_id.to_owned(),
+                                                        })?;
+
+                                                    push_obj_entry_unique(
+                                                        &mut out,
+                                                        seen_objs,
+                                                        &db,
+                                                        version,
+                                                        &commit_id,
+                                                        &parent_commit_obj,
+                                                    )?;
+                                                    immutable::CommitIter::from_bytes(parent_commit_obj.data)
+                                                        .tree_id()
+                                                        .expect("every commit has a tree")
+                                                };
+                                                let parent_tree = {
+                                                    let parent_tree_obj = db
+                                                        .find_existing(parent_tree_id, buf2, cache)
+                                                        .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
+                                                    push_obj_entry_unique(
+                                                        &mut out,
+                                                        seen_objs,
+                                                        &db,
+                                                        version,
+                                                        &parent_tree_id,
+                                                        &parent_tree_obj,
+                                                    )?;
+                                                    immutable::TreeIter::from_bytes(parent_tree_obj.data)
+                                                };
+
+                                                git_diff::tree::Changes::from(Some(parent_tree))
+                                                    .needed_to_obtain(
+                                                        current_tree_iter.clone(),
+                                                        &mut tree_diff_state,
+                                                        |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                                        &mut changes_delegate,
+                                                    )
+                                                    .map_err(Error::TreeChanges)?;
+                                            }
+                                            &changes_delegate.objects
+                                        };
+                                        for id in objects.iter() {
+                                            let obj = db
+                                                .find(id, buf2, cache)?
+                                                .ok_or(Error::NotFound { oid: id.to_owned() })?;
+                                            out.push(obj_to_entry(&db, version, id, &obj)?);
+                                        }
+                                        break;
                                     }
-                                    &changes_delegate.objects
-                                };
-                                for id in objects.iter() {
-                                    let obj = db
-                                        .find(id, buf2, cache)?
-                                        .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                    out.push(obj_to_entry(&db, version, id, &obj)?);
                                 }
                             }
                         }
