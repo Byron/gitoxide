@@ -34,7 +34,7 @@ all-features = true
 [dependencies]
 git-features = { version = "^0.14.0", path = "../git-features" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
-git-object = { version = "^0.9.0", path = "../git-object" }
+git-object = { version = "^0.10.0", path = "../git-object" }
 git-traverse = { version = "^0.3", path = "../git-traverse" }
 git-diff = { version = "^0.4", path = "../git-diff" }
 

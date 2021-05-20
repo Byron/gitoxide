@@ -949,7 +949,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bstr",
  "btoi",

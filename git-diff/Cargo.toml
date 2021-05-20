@@ -15,7 +15,7 @@ doctest = false
 
 [dependencies]
 git-hash = { version = "^0.3.0", path = "../git-hash" }
-git-object = { version = "^0.9", path = "../git-object" }
+git-object = { version = "^0.10", path = "../git-object" }
 quick-error = "2.0.0"
 
 [dev-dependencies]
