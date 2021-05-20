@@ -82,8 +82,8 @@ where
         move |oids: Vec<Oid>, (buf1, buf2, cache)| {
             use ObjectExpansion::*;
             let mut out = Vec::new();
-            let mut tree_traversal_state: Option<git_traverse::tree::breadthfirst::State> = None;
-            let mut tree_diff_state: Option<git_diff::tree::State> = None;
+            let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
+            let mut tree_diff_state = git_diff::tree::State::default();
             let mut parent_commit_ids = Vec::new();
             let mut traverse_delegate = tree::traverse::AllUnseen::default();
             let mut changes_delegate = tree::changes::AllNew::default();
@@ -96,7 +96,6 @@ where
                 match input_object_expansion {
                     TreeAdditionsComparedToAncestor => {
                         use git_object::Kind::*;
-                        let state = tree_diff_state.get_or_insert_with(Default::default);
                         out.push(obj_to_entry(&db, version, id, &obj)?);
                         if let Commit = obj.kind {
                             let current_tree_iter = {
@@ -131,7 +130,7 @@ where
                                     git_diff::tree::Changes::from(Some(parent_tree))
                                         .needed_to_obtain(
                                             current_tree_iter.clone(),
-                                            &mut *state,
+                                            &mut tree_diff_state,
                                             |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                                             &mut changes_delegate,
                                         )
@@ -149,7 +148,6 @@ where
                     }
                     TreeContents => {
                         use git_object::Kind::*;
-                        let state = tree_traversal_state.get_or_insert_with(Default::default);
                         let mut obj = obj;
                         loop {
                             out.push(obj_to_entry(&db, version, id, &obj)?);
@@ -158,7 +156,7 @@ where
                                     traverse_delegate.clear();
                                     git_traverse::tree::breadthfirst(
                                         git_object::immutable::TreeIter::from_bytes(obj.data),
-                                        state,
+                                        &mut tree_traversal_state,
                                         |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                                         &mut traverse_delegate,
                                     )
