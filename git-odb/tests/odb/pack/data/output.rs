@@ -174,7 +174,7 @@ mod entries {
 
             // Re-generate the index from the pack for validation.
             let bundle = pack::Bundle::at(
-                pack::Bundle::write_stream_to_directory(
+                pack::Bundle::write_to_directory(
                     std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
                     Some(tmp_dir.path()),
                     progress::Discard,

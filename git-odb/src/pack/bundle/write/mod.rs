@@ -17,11 +17,13 @@ use types::PassThrough;
 pub use types::{Options, Outcome};
 
 impl pack::Bundle {
-    /// Given a `pack` data stream into the `directory` if `Some` or discard it entirely if `None`.
+    /// Given a `pack` data stream, write it along with a generated index into the `directory` if `Some` or discard all output if `None`.
+    ///
+    /// In the latter case, the functionality provided here is more akind of pack data stream validation.
     ///
     /// `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
     /// `options` further configure how the task is performed.
-    pub fn write_stream_to_directory(
+    pub fn write_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,

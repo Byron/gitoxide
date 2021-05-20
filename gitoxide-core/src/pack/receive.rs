@@ -79,7 +79,7 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
             index_kind: pack::index::Version::V2,
             iteration_mode: pack::data::input::Mode::Verify,
         };
-        let outcome = pack::bundle::Bundle::write_stream_to_directory(input, self.directory.take(), progress, options)
+        let outcome = pack::bundle::Bundle::write_to_directory(input, self.directory.take(), progress, options)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
         if let Some(directory) = self.refs_directory.take() {
