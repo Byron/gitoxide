@@ -10,7 +10,7 @@ mod method {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn target() -> Result<(), Box<dyn std::error::Error>> {
+    fn target() -> crate::Result {
         let fixture = fixture_bytes("tag", "signed.txt");
         let tag = Tag::from_bytes(&fixture)?;
         assert_eq!(tag.target(), hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"));
@@ -28,7 +28,7 @@ mod iter {
     };
 
     #[test]
-    fn empty() -> Result<(), Box<dyn std::error::Error>> {
+    fn empty() -> crate::Result {
         assert_eq!(
             TagIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -38,6 +38,62 @@ mod iter {
                 Token::TargetKind(Kind::Commit),
                 Token::Name(b"empty".as_bstr()),
                 Token::Tagger(Some(signature(1592381636))),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn no_tagger() -> crate::Result {
+        assert_eq!(
+            TagIter::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Target {
+                    id: hex_to_id("c39ae07f393806ccf406ef966e9a15afc43cc36a")
+                },
+                Token::TargetKind(Kind::Tree),
+                Token::Name(b"v2.6.11-tree".as_bstr()),
+                Token::Tagger(None),
+                Token::Body {
+                    message: b"This is the 2.6.11 tree object.
+
+NOTE! There's no commit for this, since it happened before I started with git.
+Eventually we'll import some sort of history, and that should tie this tree
+object up to a real commit. In the meantime, this acts as an anchor point for
+doing diffs etc under git."
+                        .as_bstr(),
+                    pgp_signature: Some(
+                        b"-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (GNU/Linux)
+
+iD8DBQBCeV/eF3YsRnbiHLsRAl+SAKCVp8lVXwpUhMEvy8N5jVBd16UCmACeOtP6
+KLMHist5yj0sw1E4hDTyQa0=
+=/bIK
+-----END PGP SIGNATURE-----
+"
+                        .as_bstr()
+                    )
+                }
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn whitespace() -> crate::Result {
+        assert_eq!(
+            TagIter::from_bytes(&fixture_bytes("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Target {
+                    id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
+                },
+                Token::TargetKind(Kind::Commit),
+                Token::Name(b"whitespace".as_bstr()),
+                Token::Tagger(Some(signature(1592382888))),
+                Token::Body {
+                    message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(),
+                    pgp_signature: None
+                }
             ]
         );
         Ok(())
@@ -61,13 +117,13 @@ mod from_bytes {
     use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
 
     #[test]
-    fn signed() -> Result<(), Box<dyn std::error::Error>> {
+    fn signed() -> crate::Result {
         assert_eq!(Tag::from_bytes(&fixture_bytes("tag", "signed.txt"))?, tag_fixture(9000));
         Ok(())
     }
 
     #[test]
-    fn empty() -> Result<(), Box<dyn std::error::Error>> {
+    fn empty() -> crate::Result {
         assert_eq!(
             Tag::from_bytes(&fixture_bytes("tag", "empty.txt"))?,
             Tag {
@@ -83,7 +139,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn with_newlines() -> Result<(), Box<dyn std::error::Error>> {
+    fn with_newlines() -> crate::Result {
         assert_eq!(
             Tag::from_bytes(&fixture_bytes("tag", "with-newlines.txt"))?,
             Tag {
@@ -99,7 +155,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn no_tagger() -> Result<(), Box<dyn std::error::Error>> {
+    fn no_tagger() -> crate::Result {
         assert_eq!(
             Tag::from_bytes(&fixture_bytes("tag", "no-tagger.txt"))?,
             Tag {
@@ -131,14 +187,14 @@ KLMHist5yj0sw1E4hDTyQa0=
     }
 
     #[test]
-    fn whitespace() -> Result<(), Box<dyn std::error::Error>> {
+    fn whitespace() -> crate::Result {
         assert_eq!(
             Tag::from_bytes(&fixture_bytes("tag", "whitespace.txt"))?,
             Tag {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"whitespace".as_bstr(),
                 target_kind: Kind::Commit,
-                message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(), // odd, was created with \n\n actually
+                message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(),
                 tagger: Some(signature(1592382888)),
                 pgp_signature: None
             }

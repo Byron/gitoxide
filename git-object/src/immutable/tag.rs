@@ -20,14 +20,14 @@ pub struct Tag<'a> {
     /// The hash in hexadecimal being the object this tag points to. Use [`target()`][Tag::target()] to obtain a byte representation.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
-    /// The name of the tag, e.g. "v1.0".
-    pub name: &'a BStr,
     /// The kind of object that `target` points to.
     pub target_kind: crate::Kind,
-    /// The message describing this release.
-    pub message: &'a BStr,
+    /// The name of the tag, e.g. "v1.0".
+    pub name: &'a BStr,
     /// The author of the tag.
     pub tagger: Option<Signature<'a>>,
+    /// The message describing this release.
+    pub message: &'a BStr,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
     pub pgp_signature: Option<&'a BStr>,
 }
