@@ -89,7 +89,7 @@ where
                 let mut tree_diff_state = git_diff::tree::State::default();
                 let mut parent_commit_ids = Vec::new();
                 let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs.as_ref());
-                let mut changes_delegate = tree::changes::AllNew::default();
+                let mut changes_delegate = tree::changes::AllNew::new(seen_objs.as_ref());
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
@@ -211,24 +211,31 @@ where
 
 mod tree {
     pub mod changes {
+        use dashmap::DashSet;
         use git_diff::tree::visit::{Action, Change};
         use git_diff::tree::Visit;
         use git_hash::bstr::BStr;
         use git_hash::ObjectId;
         use std::collections::HashSet;
 
-        #[derive(Default)]
-        pub struct AllNew {
+        pub struct AllNew<'a> {
             pub objects: HashSet<ObjectId>,
+            all_seen: &'a DashSet<ObjectId>,
         }
 
-        impl AllNew {
+        impl<'a> AllNew<'a> {
+            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+                AllNew {
+                    objects: Default::default(),
+                    all_seen,
+                }
+            }
             pub fn clear(&mut self) {
                 self.objects.clear();
             }
         }
 
-        impl Visit for AllNew {
+        impl<'a> Visit for AllNew<'a> {
             fn pop_front_tracked_path_and_set_current(&mut self) {}
 
             fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
@@ -240,7 +247,10 @@ mod tree {
             fn visit(&mut self, change: Change) -> Action {
                 match change {
                     Change::Addition { oid, .. } => {
-                        self.objects.insert(oid);
+                        let inserted = self.all_seen.insert(oid.clone());
+                        if inserted {
+                            self.objects.insert(oid);
+                        }
                     }
                     Change::Deletion { .. } | Change::Modification { .. } => {}
                 };
@@ -257,7 +267,7 @@ mod tree {
 
         pub struct AllUnseen<'a> {
             pub objects: HashSet<ObjectId>,
-            pub all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a DashSet<ObjectId>,
         }
 
         impl<'a> AllUnseen<'a> {
