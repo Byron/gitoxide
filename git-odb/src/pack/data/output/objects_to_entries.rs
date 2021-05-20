@@ -9,7 +9,7 @@ use git_hash::{oid, ObjectId};
 /// allowing for natural back-pressure in case of slow writers.
 ///
 /// * `objects`
-///   * A unique list of objects to add to the pack. These must not be duplicated as no such validation is performed here.
+///   * A list of objects to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
 /// * `progress`
 ///   * a way to obtain progress information
 /// * `options`
@@ -88,8 +88,9 @@ where
                 let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
                 let mut tree_diff_state = git_diff::tree::State::default();
                 let mut parent_commit_ids = Vec::new();
-                let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs.as_ref());
-                let mut changes_delegate = tree::changes::AllNew::new(seen_objs.as_ref());
+                let seen_objs = seen_objs.as_ref();
+                let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
+                let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
@@ -99,7 +100,7 @@ where
                     match input_object_expansion {
                         TreeAdditionsComparedToAncestor => {
                             use git_object::Kind::*;
-                            out.push(obj_to_entry(&db, version, id, &obj)?);
+                            push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?;
                             if let Commit = obj.kind {
                                 let current_tree_iter = {
                                     let mut commit_iter = obj.into_commit_iter().expect("kind is valid");
@@ -114,8 +115,11 @@ where
                                             Err(err) => return Err(Error::CommitDecode(err)),
                                         }
                                     }
-                                    db.find_existing_tree_iter(tree_id, buf1, cache)
-                                        .map_err(|_| Error::NotFound { oid: tree_id })?
+                                    let obj = db
+                                        .find_existing(tree_id, buf1, cache)
+                                        .map_err(|_| Error::NotFound { oid: tree_id })?;
+                                    push_obj_entry_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
+                                    immutable::TreeIter::from_bytes(obj.data)
                                 };
 
                                 let objects = if parent_commit_ids.is_empty() {
@@ -165,7 +169,7 @@ where
                             use git_object::Kind::*;
                             let mut obj = obj;
                             loop {
-                                out.push(obj_to_entry(&db, version, id, &obj)?);
+                                push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?;
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
@@ -199,7 +203,7 @@ where
                                 }
                             }
                         }
-                        AsIs => out.push(obj_to_entry(&db, version, id, &obj)?),
+                        AsIs => push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?,
                     }
                 }
                 Ok(out)
@@ -312,14 +316,32 @@ mod tree {
     }
 }
 
-fn obj_to_entry<Locate>(
-    db: &Locate,
+fn push_obj_entry_unique<Find>(
+    out: &mut Vec<output::Entry>,
+    all_seen: &DashSet<ObjectId>,
+    db: &Find,
     version: pack::data::Version,
     id: &oid,
     obj: &crate::data::Object<'_>,
-) -> Result<output::Entry, Error<Locate::Error>>
+) -> Result<(), Error<Find::Error>>
 where
-    Locate: crate::Find,
+    Find: crate::Find,
+{
+    let inserted = all_seen.insert(id.to_owned());
+    if inserted {
+        out.push(obj_to_entry(db, version, id, obj)?);
+    }
+    Ok(())
+}
+
+fn obj_to_entry<Find>(
+    db: &Find,
+    version: pack::data::Version,
+    id: &oid,
+    obj: &crate::data::Object<'_>,
+) -> Result<output::Entry, Error<Find::Error>>
+where
+    Find: crate::Find,
 {
     Ok(match db.pack_entry(&obj) {
         Some(entry) if entry.version == version => {
@@ -457,5 +479,6 @@ mod types {
         NewEntry(entry::Error),
     }
 }
+use dashmap::DashSet;
 use git_object::immutable;
 pub use types::{Error, ObjectExpansion, Options};
