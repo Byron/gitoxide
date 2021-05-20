@@ -23,16 +23,15 @@ pub fn main() -> Result<()> {
         }) => {
             let (_handle, _progress) = prepare(verbose, "pack-create", None);
             let has_tips = !tips.is_empty();
-            let (stdin, stdout) = (stdin(), stdout());
-            let (stdin_lock, stdout_lock) = (stdin.lock(), stdout.lock());
+            let stdout = stdout();
+            let stdout_lock = stdout.lock();
             core::pack::create(
                 repository.unwrap_or_else(|| PathBuf::from(".")),
                 tips,
                 if has_tips {
-                    drop(stdin_lock);
                     None
                 } else {
-                    Some(stdin_lock)
+                    Some(io::BufReader::new(stdin()))
                 },
                 stdout_lock,
                 core::pack::create::Context {

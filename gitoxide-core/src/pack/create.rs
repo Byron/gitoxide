@@ -62,13 +62,13 @@ pub struct Context {
 pub fn create(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
-    input: Option<impl io::BufRead>,
+    input: Option<impl io::BufRead + Send + 'static>,
     out: impl io::Write,
     ctx: Context,
 ) -> anyhow::Result<()> {
     let db = Arc::new(find_db(repository)?);
     let tips = tips.into_iter();
-    let input: Box<dyn Iterator<Item = ObjectId>> = match input {
+    let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
         None => Box::new(
             git_traverse::commit::Ancestors::new(
                 tips.map(|t| git_hash::ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
