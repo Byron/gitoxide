@@ -13,6 +13,37 @@ pub fn main() -> Result<()> {
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {
+        SubCommands::PackCreate(options::PackCreate {
+            repository,
+            expansion,
+            tips,
+        }) => {
+            let (_handle, _progress) = prepare(verbose, "pack-create", None);
+            let has_tips = !tips.is_empty();
+            let (stdin, stdout) = (io::stdin(), io::stdout());
+            let (stdin_lock, stdout_lock) = (stdin.lock(), stdout.lock());
+            core::pack::create(
+                repository,
+                tips,
+                if has_tips {
+                    drop(stdin_lock);
+                    None
+                } else {
+                    Some(stdin_lock)
+                },
+                stdout_lock,
+                core::pack::create::Context {
+                    expansion: expansion.unwrap_or_else(|| {
+                        if has_tips {
+                            core::pack::create::ObjectExpansion::TreeTraversal
+                        } else {
+                            core::pack::create::ObjectExpansion::None
+                        }
+                    }),
+                    thread_limit,
+                },
+            )
+        }
         SubCommands::RemoteRefList(options::RemoteRefList { protocol, url }) => {
             let (_handle, progress) = prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
             core::remote::refs::list(

@@ -1,5 +1,6 @@
 use argh::FromArgs;
 use gitoxide_core as core;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 #[derive(FromArgs)]
@@ -27,6 +28,7 @@ pub struct Args {
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand)]
 pub enum SubCommands {
+    PackCreate(PackCreate),
     PackVerify(PackVerify),
     PackExplode(PackExplode),
     IndexFromPack(IndexFromPack),
@@ -154,6 +156,28 @@ pub struct PackExplode {
     /// the path into which all objects should be written. Commonly '.git/objects'
     #[argh(positional)]
     pub object_path: Option<PathBuf>,
+}
+
+/// Verify a pack
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "pack-create")]
+pub struct PackCreate {
+    #[argh(option, short = 'r')]
+    /// the directory containing the '.git' repository from which objects should be read.
+    pub repository: PathBuf,
+
+    #[argh(option, short = 'e')]
+    /// the way objects are expanded. They differ in costs.
+    ///
+    /// Possible values are "none" and "tree-traversal". Default is "tree-diff".
+    pub expansion: Option<core::pack::create::ObjectExpansion>,
+
+    /// the tips from which to start the commit graph iteration.
+    ///
+    /// If empty, we expect to read objects on stdin and default to 'none' as expansion mode.
+    /// Otherwise the expansion mode is 'tree-traversal' by default.
+    #[argh(positional)]
+    pub tips: Vec<OsString>,
 }
 
 /// Verify a pack

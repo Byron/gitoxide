@@ -14,7 +14,7 @@ test = false
 [features]
 serde1 = ["git-commitgraph/serde1", "git-object/serde1", "git-odb/serde1", "git-protocol/serde1", "serde_json", "serde"]
 organize = ["git-url", "jwalk"]
-estimate-hours = ["itertools", "rayon", "git-traverse", "bstr", "fs-err"]
+estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -28,6 +28,7 @@ git-protocol = { version = "^0.8.0", path = "../git-protocol", features = ["bloc
 git-features = { version = "^0.14.0", path = "../git-features" }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
+git-traverse = { version = "^0.3", path = "../git-traverse" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.31"
 quick-error = "2.0.0"
@@ -38,8 +39,6 @@ serde_json = { version = "1.0.56", optional = true }
 git-url = { version = "^0.3.0", path = "../git-url", optional = true }
 jwalk = { version = "0.6.0", optional = true }
 
-# for estimate-hours command
-git-traverse = { version = "^0.3", path = "../git-traverse", optional = true }
 rayon = { version = "1.5.0", optional = true }
 itertools = { version = "0.10.0", optional = true }
 bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"], optional = true }
