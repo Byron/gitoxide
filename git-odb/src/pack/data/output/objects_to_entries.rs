@@ -191,9 +191,10 @@ where
                         }
                         TreeContents => {
                             use git_object::Kind::*;
+                            let mut id: ObjectId = id.into();
                             let mut obj = obj;
                             loop {
-                                push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?;
+                                push_obj_entry_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
@@ -219,6 +220,7 @@ where
                                         obj = db.find_existing(tree_id, buf1, cache).map_err(|_| Error::NotFound {
                                             oid: tree_id.to_owned(),
                                         })?;
+                                        id = tree_id;
                                         continue;
                                     }
                                     Blob => break,

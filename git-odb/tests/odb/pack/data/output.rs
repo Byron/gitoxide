@@ -81,6 +81,11 @@ mod entries {
                     }
                 }
             }
+            let whole_pack = Count {
+                trees: 39,
+                commits: 15,
+                blobs: 810,
+            };
             for (expansion_mode, expected_count) in [
                 (
                     output::objects_to_entries::ObjectExpansion::AsIs,
@@ -90,21 +95,10 @@ mod entries {
                         blobs: 0,
                     },
                 ),
-                (
-                    output::objects_to_entries::ObjectExpansion::TreeContents,
-                    Count {
-                        trees: 24,
-                        commits: 15,
-                        blobs: 810,
-                    },
-                ),
+                (output::objects_to_entries::ObjectExpansion::TreeContents, whole_pack),
                 (
                     output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
-                    Count {
-                        trees: 39,
-                        commits: 15,
-                        blobs: 810,
-                    },
+                    whole_pack,
                 ),
             ]
             .iter()
