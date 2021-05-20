@@ -164,7 +164,7 @@ pub struct PackExplode {
 pub struct PackCreate {
     #[argh(option, short = 'r')]
     /// the directory containing the '.git' repository from which objects should be read.
-    pub repository: PathBuf,
+    pub repository: Option<PathBuf>,
 
     #[argh(option, short = 'e')]
     /// the way objects are expanded. They differ in costs.

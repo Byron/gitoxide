@@ -5,11 +5,14 @@ use crate::{
 use anyhow::Result;
 use git_features::progress::DoOrDiscard;
 use gitoxide_core::{self as core, OutputFormat};
-use std::io::{self, stderr, stdout};
+use std::{
+    io::{self, stderr, stdin, stdout},
+    path::PathBuf,
+};
 
 pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
-    git_features::interrupt::init_handler(std::io::stderr());
+    git_features::interrupt::init_handler(stderr());
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {
@@ -20,10 +23,10 @@ pub fn main() -> Result<()> {
         }) => {
             let (_handle, _progress) = prepare(verbose, "pack-create", None);
             let has_tips = !tips.is_empty();
-            let (stdin, stdout) = (io::stdin(), io::stdout());
+            let (stdin, stdout) = (stdin(), stdout());
             let (stdin_lock, stdout_lock) = (stdin.lock(), stdout.lock());
             core::pack::create(
-                repository,
+                repository.unwrap_or_else(|| PathBuf::from(".")),
                 tips,
                 if has_tips {
                     drop(stdin_lock);

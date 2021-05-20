@@ -1,14 +1,8 @@
-use git_features::progress::Progress;
 use git_hash::ObjectId;
-use git_object::bstr::{BString, ByteVec};
+use git_object::bstr::ByteVec;
 use git_odb::{linked, pack, FindExt};
-use std::ffi::OsStr;
-use std::{
-    ffi::OsString,
-    io,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
+use std::sync::Arc;
+use std::{ffi::OsStr, io, path::Path, str::FromStr};
 
 #[derive(PartialEq, Debug)]
 pub enum ObjectExpansion {
@@ -72,7 +66,7 @@ pub fn create(
     out: impl io::Write,
     ctx: Context,
 ) -> anyhow::Result<()> {
-    let db = find_db(repository)?;
+    let db = Arc::new(find_db(repository)?);
     let tips = tips.into_iter();
     let input: Box<dyn Iterator<Item = ObjectId>> = match input {
         None => Box::new(
@@ -80,7 +74,10 @@ pub fn create(
                 tips.map(|t| git_hash::ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
                     .collect::<Result<Vec<_>, _>>()?,
                 git_traverse::commit::ancestors::State::default(),
-                |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok(),
+                {
+                    let db = Arc::clone(&db);
+                    move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                },
             )
             .filter_map(Result::ok),
         ),
@@ -90,9 +87,22 @@ pub fn create(
                 .and_then(|hex_id| git_hash::ObjectId::from_hex(hex_id.as_bytes()).ok())
         })),
     };
-    anyhow::bail!("not implemented")
+    let entries = pack::data::output::objects_to_entries_iter(
+        Arc::clone(&db),
+        || pack::cache::lru::StaticLinkedList::<64>::default(),
+        input,
+        git_features::progress::Discard,
+        pack::data::output::objects_to_entries::Options {
+            thread_limit: ctx.thread_limit,
+            chunk_size: 200,
+            version: Default::default(),
+            input_object_expansion: ctx.expansion.into(),
+        },
+    );
+    todo!("impl")
 }
 
 fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Db> {
-    anyhow::bail!("repo find not implemented")
+    let path = repository.as_ref();
+    Ok(linked::Db::at(path.join(".git").join("objects"))?)
 }
