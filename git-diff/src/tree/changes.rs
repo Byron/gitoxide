@@ -52,7 +52,7 @@ impl<'a> tree::Changes<'a> {
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
     pub fn needed_to_obtain<FindFn, R, StateMut>(
         mut self,
-        other: immutable::TreeIter<'a>,
+        other: immutable::TreeIter<'_>,
         mut state: StateMut,
         mut find: FindFn,
         delegate: &mut R,
