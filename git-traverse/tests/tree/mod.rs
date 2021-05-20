@@ -12,6 +12,7 @@ fn db() -> crate::Result<Db> {
 fn basic_nesting() -> crate::Result<()> {
     let db = db()?;
     let mut buf = Vec::new();
+    let mut buf2 = Vec::new();
     let mut commit = db.find_existing_commit_iter(
         hex_to_id("85df34aa34848b8138b2b3dcff5fb5c2b734e0ce"),
         &mut buf,
@@ -19,7 +20,11 @@ fn basic_nesting() -> crate::Result<()> {
     )?;
     let mut recorder = tree::Recorder::default();
     git_traverse::tree::breadthfirst(
-        commit.tree_id().expect("a tree is available in a commit"),
+        db.find_existing_tree_iter(
+            commit.tree_id().expect("a tree is available in a commit"),
+            &mut buf2,
+            &mut pack::cache::Never,
+        )?,
         tree::breadthfirst::State::default(),
         |oid, buf| db.find_existing_tree_iter(oid, buf, &mut pack::cache::Never).ok(),
         &mut recorder,

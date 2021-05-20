@@ -219,19 +219,20 @@ where
 
             let mut cache = new_cache();
             let mut buf = Vec::new();
+            let mut buf2 = Vec::new();
             let mut state = tree::breadthfirst::State::default();
             let mut seen = HashSet::new();
             let mut entries = 0;
 
             for commit in commits {
-                let tid = db
+                let tree_id = db
                     .find(commit, &mut buf, &mut cache)?
                     .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };
                 tree::breadthfirst::traverse(
-                    tid,
+                    db.find_existing_tree_iter(tree_id, &mut buf2, &mut cache)?,
                     &mut state,
                     |oid, buf| {
                         db.find_existing(oid, buf, &mut cache)
@@ -288,19 +289,20 @@ where
                                     seen: &seen,
                                 },
                                 Vec::<u8>::new(),
+                                Vec::<u8>::new(),
                                 new_cache(),
                                 tree::breadthfirst::State::default(),
                             )
                         }
                     },
-                    |(count, buf, cache, state), commit| {
+                    |(count, buf, buf2, cache, state), commit| {
                         let tid = db
                             .find_existing_commit_iter(commit, buf, cache)?
                             .tree_id()
                             .expect("commit as starting point");
                         count.entries = 0;
                         tree::breadthfirst::traverse(
-                            tid,
+                            db.find_existing_tree_iter(tid, buf2, cache)?,
                             state,
                             |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                             count,

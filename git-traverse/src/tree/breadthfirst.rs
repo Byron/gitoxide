@@ -40,8 +40,7 @@ impl State {
 /// Start a breadth-first iteration over the `root` trees entries.
 ///
 /// * `root`
-///   * the starting points of the iteration
-///   * each commit they lead to will only be returned once, including the tip that started it
+///   * the tree to iterate in a nested fashion.
 /// * `state` - all state used for the iteration. If multiple iterations are performed, allocations can be minimized by reusing
 ///   this state.
 /// * `find` - a way to lookup new object data during traversal by their ObjectId, writing their data into buffer and returning
@@ -51,7 +50,7 @@ impl State {
 ///    be escalated into a more specific error if its encountered by the caller.
 /// * `delegate` - A way to observe entries and control the iteration while allowing the optimizer to let you pay only for what you use.
 pub fn traverse<StateMut, Find, V>(
-    root: impl Into<ObjectId>,
+    root: immutable::TreeIter<'_>,
     mut state: StateMut,
     mut find: Find,
     delegate: &mut V,
@@ -63,44 +62,47 @@ where
 {
     let state = state.borrow_mut();
     state.clear();
-    state.next.push_back((false, root.into()));
-    while let Some((should_pop_path, oid)) = state.next.pop_front() {
-        if should_pop_path {
-            delegate.pop_front_tracked_path_and_set_current();
-        }
-        match find(&oid, &mut state.buf) {
-            Some(tree_iter) => {
-                for entry in tree_iter {
-                    let entry = entry?;
-                    match entry.mode {
-                        tree::EntryMode::Tree => {
-                            use super::visit::Action::*;
-                            delegate.push_path_component(entry.filename);
-                            let action = delegate.visit_tree(&entry);
-                            match action {
-                                Skip => {}
-                                Continue => {
-                                    delegate.pop_path_component();
-                                    delegate.push_back_tracked_path_component(entry.filename);
-                                    state.next.push_back((true, entry.oid.to_owned()))
-                                }
-                                Cancel => {
-                                    return Err(Error::Cancelled);
-                                }
-                            }
+    let mut tree = root;
+    loop {
+        for entry in tree {
+            let entry = entry?;
+            match entry.mode {
+                tree::EntryMode::Tree => {
+                    use super::visit::Action::*;
+                    delegate.push_path_component(entry.filename);
+                    let action = delegate.visit_tree(&entry);
+                    match action {
+                        Skip => {}
+                        Continue => {
+                            delegate.pop_path_component();
+                            delegate.push_back_tracked_path_component(entry.filename);
+                            state.next.push_back((true, entry.oid.to_owned()))
                         }
-                        _non_tree => {
-                            delegate.push_path_component(entry.filename);
-                            if delegate.visit_nontree(&entry).cancelled() {
-                                return Err(Error::Cancelled);
-                            }
+                        Cancel => {
+                            return Err(Error::Cancelled);
                         }
                     }
-                    delegate.pop_path_component();
+                }
+                _non_tree => {
+                    delegate.push_path_component(entry.filename);
+                    if delegate.visit_nontree(&entry).cancelled() {
+                        return Err(Error::Cancelled);
+                    }
                 }
             }
-            None => return Err(Error::NotFound { oid: oid.to_owned() }),
+            delegate.pop_path_component();
+        }
+        match state.next.pop_front() {
+            Some((should_pop_path, oid)) => {
+                if should_pop_path {
+                    delegate.pop_front_tracked_path_and_set_current();
+                }
+                match find(&oid, &mut state.buf) {
+                    Some(tree_iter) => tree = tree_iter,
+                    None => return Err(Error::NotFound { oid: oid.to_owned() }),
+                }
+            }
+            None => break Ok(()),
         }
     }
-    Ok(())
 }

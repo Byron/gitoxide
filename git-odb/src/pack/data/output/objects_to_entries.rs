@@ -157,17 +157,9 @@ where
                                 Tree => {
                                     traverse_delegate.clear();
                                     git_traverse::tree::breadthfirst(
-                                        id,
+                                        git_object::immutable::TreeIter::from_bytes(obj.data),
                                         state,
-                                        |oid, buf| {
-                                            if oid == id {
-                                                buf.resize(obj.data.len(), 0);
-                                                buf.copy_from_slice(obj.data);
-                                                Some(git_object::immutable::TreeIter::from_bytes(buf))
-                                            } else {
-                                                db.find_existing_tree_iter(oid, buf, cache).ok()
-                                            }
-                                        },
+                                        |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                                         &mut traverse_delegate,
                                     )
                                     .map_err(Error::TreeTraverse)?;
