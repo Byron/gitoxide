@@ -61,12 +61,50 @@ mod entries {
         #[test]
         fn traversals() -> crate::Result {
             let db = db(DbKind::DeterministicGeneratedContent)?;
-            for (expansion_mode, expected_entries) in [
-                (output::objects_to_entries::ObjectExpansion::AsIs, 15_usize),
-                (output::objects_to_entries::ObjectExpansion::TreeContents, 864_usize),
+            #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+            struct Count {
+                trees: usize,
+                commits: usize,
+                blobs: usize,
+            }
+            impl Count {
+                fn total(&self) -> usize {
+                    self.trees + self.commits + self.blobs
+                }
+                fn add(&mut self, kind: git_object::Kind) {
+                    use git_object::Kind::*;
+                    match kind {
+                        Tree => self.trees += 1,
+                        Commit => self.commits += 1,
+                        Blob => self.blobs += 1,
+                        Tag => unreachable!("tags are not in our test repository"),
+                    }
+                }
+            }
+            for (expansion_mode, expected_count) in [
+                (
+                    output::objects_to_entries::ObjectExpansion::AsIs,
+                    Count {
+                        trees: 0,
+                        commits: 15,
+                        blobs: 0,
+                    },
+                ),
+                (
+                    output::objects_to_entries::ObjectExpansion::TreeContents,
+                    Count {
+                        trees: 39,
+                        commits: 15,
+                        blobs: 810,
+                    },
+                ),
                 (
                     output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
-                    622,
+                    Count {
+                        trees: 7,
+                        commits: 15,
+                        blobs: 600,
+                    },
                 ),
             ]
             .iter()
@@ -92,7 +130,12 @@ mod entries {
                 .into_iter()
                 .flatten()
                 .collect();
-                assert_eq!(entries.len(), expected_entries);
+                let actual_count = entries.iter().fold(Count::default(), |mut c, e| {
+                    c.add(e.object_kind);
+                    c
+                });
+                assert_eq!(actual_count, expected_count);
+                assert_eq!(entries.len(), expected_count.total());
                 write_and_verify(entries)?;
             }
             Ok(())
