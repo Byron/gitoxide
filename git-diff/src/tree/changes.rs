@@ -50,15 +50,15 @@ impl<'a> tree::Changes<'a> {
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
-    pub fn needed_to_obtain<LocateFn, R, StateMut>(
+    pub fn needed_to_obtain<FindFn, R, StateMut>(
         mut self,
         other: immutable::TreeIter<'a>,
         mut state: StateMut,
-        mut locate: LocateFn,
+        mut find: FindFn,
         delegate: &mut R,
     ) -> Result<(), Error>
     where
-        LocateFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
+        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
         R: tree::Visit,
         StateMut: BorrowMut<tree::State>,
     {
@@ -66,32 +66,34 @@ impl<'a> tree::Changes<'a> {
         state.clear();
         let mut lhs_entries = peekable(self.0.take().unwrap_or_default());
         let mut rhs_entries = peekable(other);
-        let mut avoid_popping_path: Option<()> = None;
+        let mut pop_path = false;
 
         loop {
-            if avoid_popping_path.take().is_none() {
+            if pop_path {
                 delegate.pop_path_component();
             }
+            pop_path = true;
+
             match (lhs_entries.next(), rhs_entries.next()) {
                 (None, None) => {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            rhs_entries = peekable(locate(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
+                            rhs_entries = peekable(find(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(locate(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
-                            rhs_entries = peekable(locate(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
+                            lhs_entries = peekable(find(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
+                            rhs_entries = peekable(find(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
                         }
                         Some((Some(lhs), None)) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(locate(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
+                            lhs_entries = peekable(find(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
                     };
-                    avoid_popping_path = Some(());
+                    pop_path = false;
                 }
                 (Some(lhs), Some(rhs)) => {
                     use std::cmp::Ordering::*;
