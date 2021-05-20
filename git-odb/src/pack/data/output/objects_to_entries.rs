@@ -75,42 +75,87 @@ where
         move |_n| {
             (
                 Vec::new(),   // object data buffer
+                Vec::new(),   // object data buffer 2 to hold two objects at a time
                 make_cache(), // cache to speed up pack operations
             )
         },
-        move |oids: Vec<Oid>, (buf, cache)| {
+        move |oids: Vec<Oid>, (buf1, buf2, cache)| {
             use ObjectExpansion::*;
             let mut out = Vec::new();
             let mut tree_traversal_state: Option<git_traverse::tree::breadthfirst::State> = None;
             let mut tree_diff_state: Option<git_diff::tree::State> = None;
+            let mut parent_commit_ids = Vec::new();
+            let mut traverse_delegate = tree::traverse::AllUnseen::default();
+            let mut changes_delegate = tree::changes::AllNew::default();
+
             for id in oids.into_iter() {
                 let id = id.as_ref();
                 let obj = db
-                    .find(id, buf, cache)?
+                    .find(id, buf1, cache)?
                     .ok_or_else(|| Error::NotFound { oid: id.to_owned() })?;
                 match input_object_expansion {
                     TreeAdditionsComparedToAncestor => {
                         use git_object::Kind::*;
-                        let _state = tree_diff_state.get_or_insert_with(Default::default);
+                        let state = tree_diff_state.get_or_insert_with(Default::default);
                         out.push(obj_to_entry(&db, version, id, &obj)?);
                         if let Commit = obj.kind {
-                            let mut commit_iter = obj.into_commit_iter().expect("kind is valid");
-                            let _tree_id = commit_iter.tree_id().expect("every commit has a tree");
-                            // obj = db.find_existing(tree_id, buf, cache).map_err(|_| Error::NotFound {
-                            //     oid: tree_id.to_owned(),
-                            // })?;
+                            let current_tree_iter = {
+                                let mut commit_iter = obj.into_commit_iter().expect("kind is valid");
+                                let tree_id = commit_iter.tree_id().expect("every commit has a tree");
+                                parent_commit_ids.clear();
+                                for token in commit_iter {
+                                    match token {
+                                        Ok(immutable::commit::iter::Token::Parent { id }) => parent_commit_ids.push(id),
+                                        Ok(_) => break,
+                                        Err(err) => return Err(Error::CommitDecode(err)),
+                                    }
+                                }
+                                db.find_existing_tree_iter(tree_id, buf1, cache)
+                                    .map_err(|_| Error::NotFound { oid: tree_id })?
+                            };
+
+                            if parent_commit_ids.is_empty() {
+                                todo!("diff against the empty tree or…traverse the current tree instead");
+                            } else {
+                                for commit_id in parent_commit_ids {
+                                    let parent_tree_id = db
+                                        .find_existing_commit_iter(commit_id, buf2, cache)
+                                        .map_err(|_| Error::NotFound { oid: commit_id })?
+                                        .tree_id()
+                                        .expect("every commit has a tree");
+                                    let parent_tree = db
+                                        .find_existing_tree_iter(parent_tree_id, buf2, cache)
+                                        .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
+
+                                    changes_delegate.clear();
+                                    git_diff::tree::Changes::from(Some(parent_tree))
+                                        .needed_to_obtain(
+                                            current_tree_iter.clone(),
+                                            &mut *state,
+                                            |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                            &mut changes_delegate,
+                                        )
+                                        .map_err(Error::TreeChanges)?;
+                                    for id in changes_delegate.objects.iter() {
+                                        let obj = db
+                                            .find(id, buf2, cache)?
+                                            .ok_or(Error::NotFound { oid: id.to_owned() })?;
+                                        out.push(obj_to_entry(&db, version, id, &obj)?);
+                                    }
+                                }
+                            }
                             todo!("diff trees against parents and add object entries of added objects");
                         }
                     }
                     TreeContents => {
                         use git_object::Kind::*;
                         let state = tree_traversal_state.get_or_insert_with(Default::default);
-                        let mut delegate = tree::traverse::AllUnseen::default();
                         let mut obj = obj;
                         loop {
                             out.push(obj_to_entry(&db, version, id, &obj)?);
                             match obj.kind {
                                 Tree => {
+                                    traverse_delegate.clear();
                                     git_traverse::tree::breadthfirst(
                                         id,
                                         state,
@@ -123,12 +168,14 @@ where
                                                 db.find_existing_tree_iter(oid, buf, cache).ok()
                                             }
                                         },
-                                        &mut delegate,
+                                        &mut traverse_delegate,
                                     )
                                     .map_err(Error::TreeTraverse)?;
-                                    for id in delegate.objects.into_iter() {
-                                        let obj = db.find(id, buf, cache)?.ok_or(Error::NotFound { oid: id })?;
-                                        out.push(obj_to_entry(&db, version, &id, &obj)?);
+                                    for id in traverse_delegate.objects.iter() {
+                                        let obj = db
+                                            .find(id, buf1, cache)?
+                                            .ok_or(Error::NotFound { oid: id.to_owned() })?;
+                                        out.push(obj_to_entry(&db, version, id, &obj)?);
                                     }
                                     break;
                                 }
@@ -138,7 +185,7 @@ where
                                         .expect("kind is valid")
                                         .tree_id()
                                         .expect("every commit has a tree");
-                                    obj = db.find_existing(tree_id, buf, cache).map_err(|_| Error::NotFound {
+                                    obj = db.find_existing(tree_id, buf1, cache).map_err(|_| Error::NotFound {
                                         oid: tree_id.to_owned(),
                                     })?;
                                     continue;
@@ -157,6 +204,44 @@ where
 }
 
 mod tree {
+    pub mod changes {
+        use git_diff::tree::visit::{Action, Change};
+        use git_diff::tree::Visit;
+        use git_hash::bstr::BStr;
+        use git_hash::ObjectId;
+        use std::collections::HashSet;
+
+        #[derive(Default)]
+        pub struct AllNew {
+            pub objects: HashSet<ObjectId>,
+        }
+
+        impl AllNew {
+            pub fn clear(&mut self) {
+                self.objects.clear();
+            }
+        }
+
+        impl Visit for AllNew {
+            fn pop_front_tracked_path_and_set_current(&mut self) {}
+
+            fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
+
+            fn push_path_component(&mut self, _component: &BStr) {}
+
+            fn pop_path_component(&mut self) {}
+
+            fn visit(&mut self, change: Change) -> Action {
+                match change {
+                    Change::Addition { oid, .. } => {
+                        self.objects.insert(oid);
+                    }
+                    Change::Deletion { .. } | Change::Modification { .. } => {}
+                };
+                Action::Continue
+            }
+        }
+    }
     pub mod traverse {
         use git_hash::{bstr::BStr, ObjectId};
         use git_object::immutable::tree::Entry;
@@ -166,6 +251,12 @@ mod tree {
         #[derive(Default)]
         pub struct AllUnseen {
             pub objects: HashSet<ObjectId>,
+        }
+
+        impl AllUnseen {
+            pub fn clear(&mut self) {
+                self.objects.clear();
+            }
         }
 
         impl Visit for AllUnseen {
@@ -324,9 +415,13 @@ mod types {
         LocateErr: std::error::Error + 'static,
     {
         #[error(transparent)]
+        CommitDecode(git_object::immutable::object::decode::Error),
+        #[error(transparent)]
         Locate(#[from] LocateErr),
         #[error(transparent)]
         TreeTraverse(git_traverse::tree::breadthfirst::Error),
+        #[error(transparent)]
+        TreeChanges(git_diff::tree::changes::Error),
         #[error("Object id {oid} wasn't found in object database")]
         NotFound { oid: ObjectId },
         #[error("Entry expected to have hash {expected}, but it had {actual}")]
@@ -335,4 +430,5 @@ mod types {
         NewEntry(entry::Error),
     }
 }
+use git_object::immutable;
 pub use types::{Error, ObjectExpansion, Options};
