@@ -63,7 +63,7 @@ mod entries {
             let db = db(DbKind::DeterministicGeneratedContent)?;
             for (expansion_mode, expected_entries) in [
                 (output::objects_to_entries::ObjectExpansion::AsIs, 15_usize),
-                (output::objects_to_entries::ObjectExpansion::TreeContents, 4242_usize),
+                (output::objects_to_entries::ObjectExpansion::TreeContents, 864_usize),
                 (
                     output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
                     622,

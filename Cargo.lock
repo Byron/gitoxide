@@ -973,6 +973,7 @@ dependencies = [
  "byteorder",
  "bytesize",
  "common_macros",
+ "dashmap",
  "filebuffer",
  "flate2",
  "git-diff",
