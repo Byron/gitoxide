@@ -66,10 +66,11 @@ mod entries {
                 trees: usize,
                 commits: usize,
                 blobs: usize,
+                tags: usize,
             }
             impl Count {
                 fn total(&self) -> usize {
-                    self.trees + self.commits + self.blobs
+                    self.tags + self.trees + self.commits + self.blobs
                 }
                 fn add(&mut self, kind: git_object::Kind) {
                     use git_object::Kind::*;
@@ -77,14 +78,15 @@ mod entries {
                         Tree => self.trees += 1,
                         Commit => self.commits += 1,
                         Blob => self.blobs += 1,
-                        Tag => unreachable!("tags are not in our test repository"),
+                        Tag => self.tags += 1,
                     }
                 }
             }
             let whole_pack = Count {
-                trees: 39,
-                commits: 15,
-                blobs: 810,
+                trees: 40,
+                commits: 16,
+                blobs: 811,
+                tags: 1,
             };
             for (expansion_mode, expected_count) in [
                 (
@@ -93,6 +95,7 @@ mod entries {
                         trees: 0,
                         commits: 15,
                         blobs: 0,
+                        tags: 1,
                     },
                 ),
                 (output::objects_to_entries::ObjectExpansion::TreeContents, whole_pack),

@@ -167,6 +167,17 @@ pub mod iter {
                 state: State::default(),
             }
         }
+
+        /// Returns the target id of this tag if it is the first function called and if there is no error in decoding
+        /// the data.
+        ///
+        /// Note that this method must only be called once or else will always return None while consuming a single token.
+        /// Errors are coerced into options, hiding whether there was an error or not. The caller should assume an error if they
+        /// call the method as intended. Such a squelched error cannot be recovered unless the objects data is retrieved and parsed again.
+        /// `next()`.
+        pub fn target_id(&mut self) -> Option<ObjectId> {
+            self.next().and_then(Result::ok).and_then(Token::into_id)
+        }
     }
 
     impl<'a> Iter<'a> {

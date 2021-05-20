@@ -214,17 +214,24 @@ where
                                         break;
                                     }
                                     Commit => {
-                                        let tree_id = immutable::CommitIter::from_bytes(obj.data)
+                                        id = immutable::CommitIter::from_bytes(obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree");
-                                        obj = db.find_existing(tree_id, buf1, cache).map_err(|_| Error::NotFound {
-                                            oid: tree_id.to_owned(),
-                                        })?;
-                                        id = tree_id;
+                                        obj = db
+                                            .find_existing(id, buf1, cache)
+                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
                                         continue;
                                     }
                                     Blob => break,
-                                    Tag => todo!("expand tag objects (here and in other places)"),
+                                    Tag => {
+                                        id = immutable::TagIter::from_bytes(obj.data)
+                                            .target_id()
+                                            .expect("every tag has a target");
+                                        obj = db
+                                            .find_existing(id, buf1, cache)
+                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
+                                        continue;
+                                    }
                                 }
                             }
                         }
