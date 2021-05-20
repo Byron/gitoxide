@@ -113,20 +113,30 @@ where
                                     .map_err(|_| Error::NotFound { oid: tree_id })?
                             };
 
-                            if parent_commit_ids.is_empty() {
-                                todo!("diff against the empty tree or…traverse the current tree instead");
+                            let objects = if parent_commit_ids.is_empty() {
+                                traverse_delegate.clear();
+                                git_traverse::tree::breadthfirst(
+                                    current_tree_iter,
+                                    &mut tree_traversal_state,
+                                    |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                    &mut traverse_delegate,
+                                )
+                                .map_err(Error::TreeTraverse)?;
+                                &traverse_delegate.objects
                             } else {
-                                for commit_id in parent_commit_ids {
+                                changes_delegate.clear();
+                                for commit_id in &parent_commit_ids {
                                     let parent_tree_id = db
                                         .find_existing_commit_iter(commit_id, buf2, cache)
-                                        .map_err(|_| Error::NotFound { oid: commit_id })?
+                                        .map_err(|_| Error::NotFound {
+                                            oid: commit_id.to_owned(),
+                                        })?
                                         .tree_id()
                                         .expect("every commit has a tree");
                                     let parent_tree = db
                                         .find_existing_tree_iter(parent_tree_id, buf2, cache)
                                         .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
 
-                                    changes_delegate.clear();
                                     git_diff::tree::Changes::from(Some(parent_tree))
                                         .needed_to_obtain(
                                             current_tree_iter.clone(),
@@ -135,15 +145,15 @@ where
                                             &mut changes_delegate,
                                         )
                                         .map_err(Error::TreeChanges)?;
-                                    for id in changes_delegate.objects.iter() {
-                                        let obj = db
-                                            .find(id, buf2, cache)?
-                                            .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                        out.push(obj_to_entry(&db, version, id, &obj)?);
-                                    }
                                 }
+                                &changes_delegate.objects
+                            };
+                            for id in objects.iter() {
+                                let obj = db
+                                    .find(id, buf2, cache)?
+                                    .ok_or(Error::NotFound { oid: id.to_owned() })?;
+                                out.push(obj_to_entry(&db, version, id, &obj)?);
                             }
-                            todo!("diff trees against parents and add object entries of added objects");
                         }
                     }
                     TreeContents => {

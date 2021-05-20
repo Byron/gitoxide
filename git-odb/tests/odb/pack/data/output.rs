@@ -59,9 +59,8 @@ mod entries {
         }
 
         #[test]
-        #[should_panic]
-        fn traversals() {
-            let db = db(DbKind::DeterministicGeneratedContent).unwrap();
+        fn traversals() -> crate::Result {
+            let db = db(DbKind::DeterministicGeneratedContent)?;
             for expansion_mode in &[
                 output::objects_to_entries::ObjectExpansion::TreeContents,
                 output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
@@ -82,14 +81,14 @@ mod entries {
                         ..output::objects_to_entries::Options::default()
                     },
                 )
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap()
+                .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .flatten()
                 .collect();
 
-                write_and_verify(entries).unwrap();
+                write_and_verify(entries)?;
             }
+            Ok(())
         }
 
         fn write_and_verify(entries: Vec<output::Entry>) -> crate::Result {
