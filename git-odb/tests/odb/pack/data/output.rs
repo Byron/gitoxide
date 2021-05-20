@@ -61,10 +61,17 @@ mod entries {
         #[test]
         fn traversals() -> crate::Result {
             let db = db(DbKind::DeterministicGeneratedContent)?;
-            for expansion_mode in &[
-                output::objects_to_entries::ObjectExpansion::TreeContents,
-                output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
-            ] {
+            for (expansion_mode, expected_entries) in [
+                (output::objects_to_entries::ObjectExpansion::AsIs, 15_usize),
+                (output::objects_to_entries::ObjectExpansion::TreeContents, 4242_usize),
+                (
+                    output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
+                    622,
+                ),
+            ]
+            .iter()
+            .copied()
+            {
                 let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
                 let commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
                     let db = Arc::clone(&db);
@@ -77,7 +84,7 @@ mod entries {
                     commits,
                     progress::Discard,
                     output::objects_to_entries::Options {
-                        input_object_expansion: *expansion_mode,
+                        input_object_expansion: expansion_mode,
                         ..output::objects_to_entries::Options::default()
                     },
                 )
@@ -85,7 +92,7 @@ mod entries {
                 .into_iter()
                 .flatten()
                 .collect();
-
+                assert_eq!(entries.len(), expected_entries);
                 write_and_verify(entries)?;
             }
             Ok(())
