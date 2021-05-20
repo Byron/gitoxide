@@ -89,7 +89,7 @@ pub fn create(
     };
     let _entries = pack::data::output::objects_to_entries_iter(
         Arc::clone(&db),
-        || pack::cache::lru::StaticLinkedList::<64>::default(),
+        pack::cache::lru::StaticLinkedList::<64>::default,
         input,
         git_features::progress::Discard,
         pack::data::output::objects_to_entries::Options {
