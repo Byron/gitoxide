@@ -55,4 +55,4 @@ confidence-threshold = 0.8
 # https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
 [bans]
 # Lint level for when multiple versions of the same crate are detected
-multiple-versions = "warn"
+multiple-versions = "allow"
