@@ -273,13 +273,13 @@ mod tree {
 
             fn visit(&mut self, change: Change) -> Action {
                 match change {
-                    Change::Addition { oid, .. } => {
+                    Change::Addition { oid, .. } | Change::Modification { oid, .. } => {
                         let inserted = self.all_seen.insert(oid);
                         if inserted {
                             self.objects.insert(oid);
                         }
                     }
-                    Change::Deletion { .. } | Change::Modification { .. } => {}
+                    Change::Deletion { .. } => {}
                 };
                 Action::Continue
             }

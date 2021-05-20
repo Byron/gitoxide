@@ -101,9 +101,9 @@ mod entries {
                 (
                     output::objects_to_entries::ObjectExpansion::TreeAdditionsComparedToAncestor,
                     Count {
-                        trees: 22,
+                        trees: 39,
                         commits: 15,
-                        blobs: 600,
+                        blobs: 810,
                     },
                 ),
             ]
