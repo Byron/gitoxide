@@ -15,8 +15,9 @@ pub use commit::{iter::Iter as CommitIter, Commit};
 pub mod object;
 pub use object::{Object, Signature};
 
-mod tag;
-pub use tag::Tag;
+///
+pub mod tag;
+pub use tag::{iter::Iter as TagIter, Tag};
 
 ///
 pub mod tree;

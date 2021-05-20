@@ -27,7 +27,7 @@ pub struct Tag<'a> {
     /// The message describing this release.
     pub message: &'a BStr,
     /// The author of the tag.
-    pub signature: Option<Signature<'a>>,
+    pub tagger: Option<Signature<'a>>,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
     pub pgp_signature: Option<&'a BStr>,
 }
@@ -64,7 +64,7 @@ fn parse(i: &[u8]) -> IResult<&[u8], Tag<'_>, decode::Error> {
             name: tag_version.as_bstr(),
             target_kind: kind,
             message,
-            signature,
+            tagger: signature,
             pgp_signature,
         },
     ))
@@ -116,4 +116,157 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), decode::Err
             },
         ),
     ))
+}
+
+///
+pub mod iter {
+    use crate::{
+        bstr::ByteSlice,
+        immutable::{
+            object::decode,
+            parse::NL,
+            tag::{parse, parse_message},
+            Signature,
+        },
+        Kind,
+    };
+    use bstr::BStr;
+    use git_hash::{oid, ObjectId};
+    use nom::{
+        bytes::complete::take_while1,
+        character::is_alphabetic,
+        combinator::{all_consuming, opt},
+    };
+
+    enum State {
+        Target,
+        TargetKind,
+        Name,
+        Tagger,
+        Message,
+    }
+
+    impl Default for State {
+        fn default() -> Self {
+            State::Target
+        }
+    }
+
+    /// Like [`immutable::Tag`][super::Tag], but as `Iterator` to support entirely allocation free parsing.
+    /// It's particularly useful to dereference only the target chain.
+    pub struct Iter<'a> {
+        data: &'a [u8],
+        state: State,
+    }
+
+    impl<'a> Iter<'a> {
+        /// Create a tag iterator from data.
+        pub fn from_bytes(data: &'a [u8]) -> Iter<'a> {
+            Iter {
+                data,
+                state: State::default(),
+            }
+        }
+    }
+
+    impl<'a> Iter<'a> {
+        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
+            use State::*;
+            Ok(match state {
+                Target => {
+                    let (i, target) = parse::header_field(i, b"object", parse::hex_sha1)
+                        .map_err(decode::Error::context("object <40 lowercase hex char>"))?;
+                    *state = State::TargetKind;
+                    (
+                        i,
+                        Token::Target {
+                            id: ObjectId::from_hex(target).expect("parsing validation"),
+                        },
+                    )
+                }
+                TargetKind => {
+                    let (i, kind) = parse::header_field(i, b"type", take_while1(is_alphabetic))
+                        .map_err(decode::Error::context("type <object kind>"))?;
+                    let kind =
+                        crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(decode::Error::ParseKindError(e)))?;
+                    *state = State::Name;
+                    (i, Token::TargetKind(kind))
+                }
+                Name => {
+                    let (i, tag_version) = parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
+                        .map_err(decode::Error::context("tag <version>"))?;
+                    *state = State::Tagger;
+                    (i, Token::Name(tag_version.as_bstr()))
+                }
+                Tagger => {
+                    let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))(i)
+                        .map_err(decode::Error::context("tagger <signature>"))?;
+                    *state = State::Message;
+                    (i, Token::Tagger(signature))
+                }
+                Message => {
+                    let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
+                    debug_assert!(
+                        i.is_empty(),
+                        "we should have consumed all data - otherwise iter may go forever"
+                    );
+                    return Ok((i, Token::Body { message, pgp_signature }));
+                }
+            })
+        }
+    }
+
+    impl<'a> Iterator for Iter<'a> {
+        type Item = Result<Token<'a>, decode::Error>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.data.is_empty() {
+                return None;
+            }
+            match Self::next_inner(self.data, &mut self.state) {
+                Ok((data, token)) => {
+                    self.data = data;
+                    Some(Ok(token))
+                }
+                Err(err) => {
+                    self.data = &[];
+                    Some(Err(err))
+                }
+            }
+        }
+    }
+
+    /// A token returned by the [commit iterator][Iter].
+    #[allow(missing_docs)]
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    pub enum Token<'a> {
+        Target {
+            id: ObjectId,
+        },
+        TargetKind(Kind),
+        Name(&'a BStr),
+        Tagger(Option<Signature<'a>>),
+        Body {
+            message: &'a BStr,
+            pgp_signature: Option<&'a BStr>,
+        },
+    }
+
+    impl<'a> Token<'a> {
+        /// Return the object id of this token if its a [Target][Token::Target].
+        pub fn id(&self) -> Option<&oid> {
+            match self {
+                Token::Target { id } => Some(id.as_ref()),
+                _ => None,
+            }
+        }
+
+        /// Return the owned object id of this token if its a [Target][Token::Target].
+        pub fn into_id(self) -> Option<ObjectId> {
+            match self {
+                Token::Target { id } => Some(id),
+                _ => None,
+            }
+        }
+    }
 }

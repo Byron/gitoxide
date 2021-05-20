@@ -19,6 +19,43 @@ mod method {
     }
 }
 
+mod iter {
+    use crate::{hex_to_id, immutable::fixture_bytes, immutable::signature};
+    use git_object::{
+        bstr::ByteSlice,
+        immutable::{tag::iter::Token, TagIter},
+        Kind,
+    };
+
+    #[test]
+    fn empty() -> Result<(), Box<dyn std::error::Error>> {
+        assert_eq!(
+            TagIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
+            vec![
+                Token::Target {
+                    id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
+                },
+                Token::TargetKind(Kind::Commit),
+                Token::Name(b"empty".as_bstr()),
+                Token::Tagger(Some(signature(1592381636))),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn error_handling() -> crate::Result {
+        let data = fixture_bytes("tag", "empty.txt");
+        let iter = TagIter::from_bytes(&data[..data.len() / 2]);
+        let tokens = iter.collect::<Vec<_>>();
+        assert!(
+            tokens.last().expect("at least the errored token").is_err(),
+            "errors are propagated and none is returned from that point on"
+        );
+        Ok(())
+    }
+}
+
 mod from_bytes {
     use crate::{immutable::fixture_bytes, immutable::signature, immutable::tag::tag_fixture};
     use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
@@ -38,7 +75,7 @@ mod from_bytes {
                 name: b"empty".as_bstr(),
                 target_kind: Kind::Commit,
                 message: b"".as_bstr(),
-                signature: Some(signature(1592381636)),
+                tagger: Some(signature(1592381636)),
                 pgp_signature: None
             }
         );
@@ -54,7 +91,7 @@ mod from_bytes {
                 name: b"baz".as_bstr(),
                 target_kind: Kind::Commit,
                 message: b"hello\n\nworld".as_bstr(),
-                signature: Some(signature(1592311808)),
+                tagger: Some(signature(1592311808)),
                 pgp_signature: None
             }
         );
@@ -76,7 +113,7 @@ Eventually we'll import some sort of history, and that should tie this tree
 object up to a real commit. In the meantime, this acts as an anchor point for
 doing diffs etc under git."
                     .as_bstr(),
-                signature: None,
+                tagger: None,
                 pgp_signature: Some(
                     b"-----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.2.4 (GNU/Linux)
@@ -102,7 +139,7 @@ KLMHist5yj0sw1E4hDTyQa0=
                 name: b"whitespace".as_bstr(),
                 target_kind: Kind::Commit,
                 message: b" \ttab\nnewline\n\nlast-with-trailer\n".as_bstr(), // odd, was created with \n\n actually
-                signature: Some(signature(1592382888)),
+                tagger: Some(signature(1592382888)),
                 pgp_signature: None
             }
         );
@@ -136,7 +173,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                 .as_bstr(),
         ),
-        signature: Some(Signature {
+        tagger: Some(Signature {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
             time: Time {

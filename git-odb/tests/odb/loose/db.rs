@@ -103,7 +103,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 "
                 .as_bstr(),
             ),
-            signature: Some(signature(1528473343)),
+            tagger: Some(signature(1528473343)),
         };
         assert_eq!(o.decode()?.as_tag().expect("tag"), &expected);
         Ok(())

@@ -54,6 +54,15 @@ impl<'a> Object<'a> {
             _ => None,
         }
     }
+
+    /// Returns this object as tag iterator to parse tokens one at a time to avoid allocations, or
+    /// `None` if this is not a tag object.
+    pub fn into_tag_iter(self) -> Option<immutable::TagIter<'a>> {
+        match self.kind {
+            git_object::Kind::Tag => Some(immutable::TagIter::from_bytes(self.data)),
+            _ => None,
+        }
+    }
 }
 
 /// Types supporting object hash verification

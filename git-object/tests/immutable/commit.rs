@@ -137,7 +137,7 @@ mod method {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn tree() -> Result<(), Box<dyn std::error::Error>> {
+    fn tree() -> crate::Result {
         let fixture = fixture_bytes("commit", "unsigned.txt");
         let commit = Commit::from_bytes(&fixture)?;
         assert_eq!(commit.tree(), hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"));
@@ -157,7 +157,7 @@ mod iter {
     use git_object::{bstr::ByteSlice, immutable::commit::iter::Token, immutable::CommitIter};
 
     #[test]
-    fn newline_right_after_signature_multiline_header() -> Result<(), Box<dyn std::error::Error>> {
+    fn newline_right_after_signature_multiline_header() -> crate::Result {
         let data = fixture_bytes("commit", "signed-whitespace.txt");
         let tokens = CommitIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
         assert_eq!(tokens.len(), 7, "mainly a parsing exercise");
@@ -171,7 +171,7 @@ mod iter {
     }
 
     #[test]
-    fn signed_with_encoding() -> Result<(), Box<dyn std::error::Error>> {
+    fn signed_with_encoding() -> crate::Result {
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))
                 .collect::<Result<Vec<_>, _>>()?,
@@ -197,7 +197,7 @@ mod iter {
     }
 
     #[test]
-    fn whitespace() -> Result<(), Box<dyn std::error::Error>> {
+    fn whitespace() -> crate::Result {
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -220,7 +220,7 @@ mod iter {
     }
 
     #[test]
-    fn unsigned() -> Result<(), Box<dyn std::error::Error>> {
+    fn unsigned() -> crate::Result {
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -240,7 +240,7 @@ mod iter {
     }
 
     #[test]
-    fn signed_singleline() -> Result<(), Box<dyn std::error::Error>> {
+    fn signed_singleline() -> crate::Result {
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -264,7 +264,7 @@ mod iter {
     }
 
     #[test]
-    fn error_handling() -> Result<(), Box<dyn std::error::Error>> {
+    fn error_handling() -> crate::Result {
         let data = fixture_bytes("commit", "unsigned.txt");
         let iter = CommitIter::from_bytes(&data[..data.len() / 2]);
         let tokens = iter.collect::<Vec<_>>();
@@ -276,7 +276,7 @@ mod iter {
     }
 
     #[test]
-    fn mergetag() -> Result<(), Box<dyn std::error::Error>> {
+    fn mergetag() -> crate::Result {
         assert_eq!(
             CommitIter::from_bytes(&fixture_bytes("commit", "mergetag.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
@@ -310,7 +310,7 @@ mod iter {
         use git_object::immutable::CommitIter;
 
         #[test]
-        fn tree_id() -> Result<(), Box<dyn std::error::Error>> {
+        fn tree_id() -> crate::Result {
             assert_eq!(
                 CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).tree_id(),
                 Some(hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"))
@@ -325,7 +325,7 @@ mod iter {
         }
 
         #[test]
-        fn signatures() -> Result<(), Box<dyn std::error::Error>> {
+        fn signatures() -> crate::Result {
             assert_eq!(
                 CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
                     .signatures()
@@ -346,7 +346,7 @@ mod from_bytes {
     use smallvec::SmallVec;
 
     #[test]
-    fn unsigned() -> Result<(), Box<dyn std::error::Error>> {
+    fn unsigned() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "unsigned.txt"))?,
             Commit {
@@ -363,7 +363,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn whitespace() -> Result<(), Box<dyn std::error::Error>> {
+    fn whitespace() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "whitespace.txt"))?,
             Commit {
@@ -380,7 +380,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn signed_singleline() -> Result<(), Box<dyn std::error::Error>> {
+    fn signed_singleline() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))?,
             Commit {
@@ -397,7 +397,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn mergetag() -> Result<(), Box<dyn std::error::Error>> {
+    fn mergetag() -> crate::Result {
         let fixture = fixture_bytes("commit", "mergetag.txt");
         let commit = Commit {
             tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
@@ -421,7 +421,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn signed() -> Result<(), Box<dyn std::error::Error>> {
+    fn signed() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "signed.txt"))?,
             Commit {
@@ -438,7 +438,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn signed_with_encoding() -> Result<(), Box<dyn std::error::Error>> {
+    fn signed_with_encoding() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))?,
             Commit {
@@ -455,7 +455,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn with_encoding() -> Result<(), Box<dyn std::error::Error>> {
+    fn with_encoding() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "with-encoding.txt"))?,
             Commit {
@@ -472,7 +472,7 @@ mod from_bytes {
     }
 
     #[test]
-    fn merge() -> Result<(), Box<dyn std::error::Error>> {
+    fn merge() -> crate::Result {
         assert_eq!(
             Commit::from_bytes(&fixture_bytes("commit", "merge.txt"))?,
             Commit {
@@ -504,7 +504,7 @@ iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
 ";
 
     #[test]
-    fn newline_right_after_signature_multiline_header() -> Result<(), Box<dyn std::error::Error>> {
+    fn newline_right_after_signature_multiline_header() -> crate::Result {
         let fixture = fixture_bytes("commit", "signed-whitespace.txt");
         let commit = Commit::from_bytes(&fixture)?;
         let pgp_sig = OTHER_SIGNATURE.as_bstr();

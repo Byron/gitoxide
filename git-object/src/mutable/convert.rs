@@ -18,7 +18,7 @@ impl From<immutable::Tag<'_>> for mutable::Tag {
             name,
             target_kind,
             message,
-            signature,
+            tagger: signature,
             pgp_signature,
         } = other;
         mutable::Tag {
