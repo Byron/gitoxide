@@ -1,5 +1,5 @@
 mod count {
-    use crate::{compound::find::PackLocation, data, pack::data::output::entry};
+    use crate::{data, pack, pack::data::output::entry};
     use git_hash::ObjectId;
 
     /// An item representing a future Entry in the leanest way possible.
@@ -20,7 +20,7 @@ mod count {
         /// at rest or in transit.
         pub entry_kind: entry::Kind,
         /// A way to locate a pack entry in the object database, only available if the object is in a pack.
-        pub(crate) entry_pack_location: Option<PackLocation>,
+        pub(crate) entry_pack_location: Option<pack::bundle::Location>,
     }
 
     /// The error returned by [`output::Entry::from_data()`].
@@ -39,7 +39,7 @@ mod count {
                 object_kind: obj.kind,
                 entry_kind: entry::Kind::Base,
                 decompressed_size: obj.data.len(),
-                entry_pack_location: None, // TODO: actual pack location
+                entry_pack_location: obj.pack_location.clone(),
             })
         }
     }

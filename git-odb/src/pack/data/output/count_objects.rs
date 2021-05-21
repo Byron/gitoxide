@@ -388,7 +388,7 @@ where
                     object_kind: pack_entry.header.to_kind().expect("non-delta"),
                     entry_kind: output::entry::Kind::Base,
                     decompressed_size: obj.data.len(),
-                    entry_pack_location: None, //TODO Set it from what we know
+                    entry_pack_location: obj.pack_location.clone(),
                 }
             } else {
                 output::Count::from_data(id, &obj).map_err(Error::NewEntry)?
