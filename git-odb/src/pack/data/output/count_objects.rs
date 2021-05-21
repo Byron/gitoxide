@@ -20,7 +20,6 @@ pub fn count_objects_iter<Find, Iter, Oid, Cache>(
     objects: Iter,
     _progress: impl Progress,
     Options {
-        version,
         thread_limit,
         input_object_expansion,
         chunk_size,
@@ -36,10 +35,6 @@ where
     Oid: AsRef<oid> + Send + 'static,
     Cache: pack::cache::DecodeEntry,
 {
-    assert!(
-        matches!(version, pack::data::Version::V2),
-        "currently we can only write version 2"
-    );
     let lower_bound = objects.size_hint().0;
     let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
         chunk_size,
@@ -270,6 +265,7 @@ mod tree {
             }
         }
     }
+
     pub mod traverse {
         use dashmap::DashSet;
         use git_hash::{bstr::BStr, ObjectId};
@@ -411,8 +407,6 @@ mod types {
         /// The amount of objects per chunk or unit of work to be sent to threads for processing
         /// TODO: could this become the window size?
         pub chunk_size: usize,
-        /// The pack data version to produce
-        pub version: crate::pack::data::Version,
         /// The way input objects are handled
         pub input_object_expansion: ObjectExpansion,
     }
@@ -422,7 +416,6 @@ mod types {
             Options {
                 thread_limit: None,
                 chunk_size: 10,
-                version: Default::default(),
                 input_object_expansion: Default::default(),
             }
         }

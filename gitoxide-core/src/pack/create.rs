@@ -86,31 +86,50 @@ pub fn create(
                 .and_then(|hex_id| git_hash::ObjectId::from_hex(hex_id.as_bytes()).ok())
         })),
     };
-    let entries = pack::data::output::count_objects_iter(
+
+    let chunk_size = 200;
+    let counts = {
+        let counts_iter = pack::data::output::count_objects_iter(
+            Arc::clone(&db),
+            pack::cache::lru::StaticLinkedList::<64>::default,
+            input,
+            git_features::progress::Discard,
+            pack::data::output::count_objects::Options {
+                thread_limit: ctx.thread_limit,
+                chunk_size,
+                input_object_expansion: ctx.expansion.into(),
+            },
+        );
+        let mut counts = Vec::new();
+        for c in counts_iter {
+            counts.extend(c?.into_iter());
+        }
+        counts
+    };
+    let num_objects = counts.len();
+    let entries = pack::data::output::objects_to_entries_iter(
+        counts,
         Arc::clone(&db),
         pack::cache::lru::StaticLinkedList::<64>::default,
-        input,
         git_features::progress::Discard,
-        pack::data::output::count_objects::Options {
+        pack::data::output::objects_to_entries::Options {
             thread_limit: ctx.thread_limit,
-            chunk_size: 200,
+            chunk_size,
             version: Default::default(),
-            input_object_expansion: ctx.expansion.into(),
         },
     );
-    todo!("entries from counts");
-    // let mut output_iter = pack::data::output::EntriesToBytesIter::new(
-    //     entries,
-    //     out,
-    //     0,
-    //     pack::data::Version::default(),
-    //     git_hash::Kind::default(),
-    // );
-    // while let Some(io_res) = output_iter.next() {
-    //     let _written = io_res?;
-    // }
-    // output_iter.into_write().flush()?;
-    // Ok(())
+    let mut output_iter = pack::data::output::EntriesToBytesIter::new(
+        entries,
+        out,
+        num_objects as u32,
+        pack::data::Version::default(),
+        git_hash::Kind::default(),
+    );
+    while let Some(io_res) = output_iter.next() {
+        let _written = io_res?;
+    }
+    output_iter.into_write().flush()?;
+    Ok(())
 }
 
 fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Db> {
