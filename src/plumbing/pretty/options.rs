@@ -50,11 +50,10 @@ pub enum Subcommands {
         /// the directory containing the '.git' repository from which objects should be read.
         repository: Option<PathBuf>,
 
-        #[clap(long, short = 'e', possible_values(core::pack::create::ObjectExpansion::variants()))]
-        /// the way objects are expanded.
+        #[clap(long, short = 'e')]
+        /// the way objects are expanded. They differ in costs.
         ///
-        /// 'none' keeps objects as is. 'tree-traversal' expands to objects seen in a tree reachable from the
-        /// input object.
+        /// Possible values are "none" and "tree-traversal". Default is "tree-diff".
         expansion: Option<core::pack::create::ObjectExpansion>,
 
         /// the tips from which to start the commit graph iteration.

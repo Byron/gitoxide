@@ -12,11 +12,12 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 pub enum ObjectExpansion {
     None,
     TreeTraversal,
+    TreeDiff,
 }
 
 impl ObjectExpansion {
     pub fn variants() -> &'static [&'static str] {
-        &["none", "tree-traversal"]
+        &["none", "tree-traversal", "tree-diff"]
     }
 }
 
@@ -35,6 +36,7 @@ impl FromStr for ObjectExpansion {
         Ok(match slc.as_str() {
             "none" => None,
             "tree-traversal" => TreeTraversal,
+            "tree-diff" => TreeDiff,
             _ => return Err("invalid value".into()),
         })
     }
@@ -46,6 +48,7 @@ impl From<ObjectExpansion> for pack::data::output::count_objects::ObjectExpansio
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,
+            ObjectExpansion::TreeDiff => TreeAdditionsComparedToAncestor,
         }
     }
 }

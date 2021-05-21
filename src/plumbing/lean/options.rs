@@ -169,7 +169,7 @@ pub struct PackCreate {
     #[argh(option, short = 'e')]
     /// the way objects are expanded. They differ in costs.
     ///
-    /// Possible values are "none" and "tree-traversal".
+    /// Possible values are "none" and "tree-traversal". Default is "tree-diff".
     pub expansion: Option<core::pack::create::ObjectExpansion>,
 
     /// the tips from which to start the commit graph iteration.
