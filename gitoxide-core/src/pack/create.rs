@@ -1,8 +1,7 @@
 use git_hash::ObjectId;
 use git_object::bstr::ByteVec;
 use git_odb::{linked, pack, FindExt};
-use std::sync::Arc;
-use std::{ffi::OsStr, io, path::Path, str::FromStr};
+use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
 
 #[derive(PartialEq, Debug)]
 pub enum ObjectExpansion {
@@ -63,7 +62,7 @@ pub fn create(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
-    _out: impl io::Write,
+    out: impl io::Write,
     ctx: Context,
 ) -> anyhow::Result<()> {
     let db = Arc::new(find_db(repository)?);
@@ -87,7 +86,7 @@ pub fn create(
                 .and_then(|hex_id| git_hash::ObjectId::from_hex(hex_id.as_bytes()).ok())
         })),
     };
-    let _entries = pack::data::output::objects_to_entries_iter(
+    let entries = pack::data::output::objects_to_entries_iter(
         Arc::clone(&db),
         pack::cache::lru::StaticLinkedList::<64>::default,
         input,
@@ -99,8 +98,18 @@ pub fn create(
             input_object_expansion: ctx.expansion.into(),
         },
     );
-    // pack::data::output::EntriesToBytesIter::new()
-    todo!("impl")
+    let mut output_iter = pack::data::output::EntriesToBytesIter::new(
+        entries,
+        out,
+        0,
+        pack::data::Version::default(),
+        git_hash::Kind::default(),
+    );
+    while let Some(io_res) = output_iter.next() {
+        let _written = io_res?;
+    }
+    output_iter.into_write().flush()?;
+    Ok(())
 }
 
 fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Db> {
