@@ -1,5 +1,6 @@
 use clap::{AppSettings, Clap};
 use gitoxide_core as core;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 #[derive(Debug, Clap)]
@@ -42,6 +43,25 @@ pub struct Args {
 
 #[derive(Debug, Clap)]
 pub enum Subcommands {
+    #[clap(setting = AppSettings::ColoredHelp)]
+    #[clap(setting = AppSettings::DisableVersion)]
+    PackCreate {
+        #[clap(long, short = 'r')]
+        /// the directory containing the '.git' repository from which objects should be read.
+        repository: Option<PathBuf>,
+
+        #[clap(long, short = 'e')]
+        /// the way objects are expanded. They differ in costs.
+        ///
+        /// Possible values are "none" and "tree-traversal". Default is "tree-diff".
+        expansion: Option<core::pack::create::ObjectExpansion>,
+
+        /// the tips from which to start the commit graph iteration.
+        ///
+        /// If empty, we expect to read objects on stdin and default to 'none' as expansion mode.
+        /// Otherwise the expansion mode is 'tree-traversal' by default.
+        tips: Vec<OsString>,
+    },
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
     PackReceive {

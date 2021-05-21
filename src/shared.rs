@@ -142,7 +142,7 @@ pub mod pretty {
             (true, true) | (false, true) => {
                 enum Event<T> {
                     UiDone,
-                    ComputationDone(Result<T>, Vec<u8>, Vec<u8>),
+                    ComputationDone(Result<T>, Vec<u8>),
                 }
                 let progress = prodash::Tree::new();
                 let sub_progress = progress.add_child(name);
@@ -170,9 +170,8 @@ pub mod pretty {
                     // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
                     // We know that the printing happens at the end, so this is fine.
                     let mut out = Vec::new();
-                    let mut err = Vec::new();
-                    let res = run(Some(sub_progress), &mut out, &mut err);
-                    tx.send(Event::ComputationDone(res, out, err)).ok();
+                    let res = run(Some(sub_progress), &mut out, &mut stderr());
+                    tx.send(Event::ComputationDone(res, out)).ok();
                 });
                 loop {
                     match rx.recv()? {
@@ -182,10 +181,9 @@ pub mod pretty {
                             interrupt::trigger();
                             continue;
                         }
-                        Event::ComputationDone(res, out, err) => {
+                        Event::ComputationDone(res, out) => {
                             ui_handle.join().ok();
                             stdout().write_all(&out)?;
-                            stderr().write_all(&err)?;
                             break res;
                         }
                     }

@@ -7,6 +7,10 @@ use crate::{
     shared::pretty::prepare_and_run,
 };
 use gitoxide_core::pack::verify;
+use std::{
+    io::{stdin, BufReader},
+    path::PathBuf,
+};
 
 pub fn main() -> Result<()> {
     let Args {
@@ -20,6 +24,49 @@ pub fn main() -> Result<()> {
     git_features::interrupt::init_handler(std::io::stderr());
 
     match cmd {
+        Subcommands::PackCreate {
+            repository,
+            expansion,
+            tips,
+        } => {
+            let has_tips = !tips.is_empty();
+            let has_tui = progress;
+            #[cfg(feature = "atty")]
+            if atty::is(if has_tui {
+                atty::Stream::Stderr
+            } else {
+                atty::Stream::Stdout
+            }) {
+                anyhow::bail!("Refusing to output pack data stream to stderr.")
+            }
+            prepare_and_run(
+                "pack-create",
+                verbose,
+                progress,
+                progress_keep_open,
+                core::pack::create::PROGRESS_RANGE,
+                move |progress, out, err| {
+                    let input = if has_tips { None } else { Some(BufReader::new(stdin())) };
+                    let repository = repository.unwrap_or_else(|| PathBuf::from("."));
+                    let context = core::pack::create::Context {
+                        thread_limit,
+                        expansion: expansion.unwrap_or_else(|| {
+                            if has_tips {
+                                core::pack::create::ObjectExpansion::TreeTraversal
+                            } else {
+                                core::pack::create::ObjectExpansion::None
+                            }
+                        }),
+                    };
+                    let progress = git_features::progress::DoOrDiscard::from(progress);
+                    if has_tui {
+                        core::pack::create(repository, tips, input, err, progress, context)
+                    } else {
+                        core::pack::create(repository, tips, input, out, progress, context)
+                    }
+                },
+            )
+        }
         Subcommands::PackReceive {
             protocol,
             url,
