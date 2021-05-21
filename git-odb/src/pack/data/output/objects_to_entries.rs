@@ -36,7 +36,7 @@ pub fn objects_to_entries_iter<Find, Cache>(
     counts: Vec<output::Count>,
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
-    _progress: impl Progress,
+    progress: impl Progress,
     Options {
         version,
         thread_limit,
@@ -59,21 +59,28 @@ where
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
     let chunks = util::Chunks::new(chunk_size, counts.len());
+    let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
         chunks,
         thread_limit,
-        move |_n| {
-            (
-                Vec::new(),   // object data buffer
-                make_cache(), // cache to speed up pack operations
-            )
+        {
+            let progress = Arc::clone(&progress);
+            move |n| {
+                (
+                    Vec::new(),   // object data buffer
+                    make_cache(), // cache to speed up pack operations
+                    progress.lock().add_child(format!("thread {}", n)),
+                )
+            }
         },
         {
             let counts = Arc::clone(&counts);
-            move |chunk: std::ops::Range<usize>, (buf, cache)| {
+            move |chunk: std::ops::Range<usize>, (buf, cache, progress)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk];
+                progress.init(Some(chunk.len()), git_features::progress::count("objects"));
+
                 for count in chunk {
                     out.push(match count
                         .entry_pack_location
@@ -92,6 +99,7 @@ where
                             output::Entry::from_data(count, &obj)
                         }
                     }?);
+                    progress.inc();
                 }
                 Ok(out)
             }

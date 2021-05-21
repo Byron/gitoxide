@@ -97,13 +97,13 @@ pub fn create(
     progress.init(Some(3), git_features::progress::steps());
     let start = Instant::now();
     let counts = {
-        let mut count_progress = progress.add_child("counting");
-        count_progress.init(None, git_features::progress::count("objects"));
+        let mut progress = progress.add_child("counting");
+        progress.init(None, git_features::progress::count("objects"));
         let counts_iter = pack::data::output::count_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             input,
-            count_progress.add_child("threads"),
+            progress.add_child("threads"),
             pack::data::output::count_objects::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
@@ -116,26 +116,29 @@ pub fn create(
                 bail!("Cancelled by user")
             }
             let c = c?;
-            count_progress.inc_by(c.len());
+            progress.inc_by(c.len());
             counts.extend(c.into_iter());
         }
-        count_progress.show_throughput(start);
+        progress.show_throughput(start);
         counts
     };
 
     progress.inc();
     let num_objects = counts.len();
-    let entries = pack::data::output::objects_to_entries_iter(
-        counts,
-        Arc::clone(&db),
-        pack::cache::lru::StaticLinkedList::<64>::default,
-        git_features::progress::Discard,
-        pack::data::output::objects_to_entries::Options {
-            thread_limit: ctx.thread_limit,
-            chunk_size,
-            version: Default::default(),
-        },
-    );
+    let entries = {
+        let progress = progress.add_child("creating entries");
+        pack::data::output::objects_to_entries_iter(
+            counts,
+            Arc::clone(&db),
+            pack::cache::lru::StaticLinkedList::<64>::default,
+            progress,
+            pack::data::output::objects_to_entries::Options {
+                thread_limit: ctx.thread_limit,
+                chunk_size,
+                version: Default::default(),
+            },
+        )
+    };
 
     progress.inc();
     let mut output_iter = pack::data::output::EntriesToBytesIter::new(
