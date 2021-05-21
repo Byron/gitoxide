@@ -21,7 +21,7 @@ pub fn main() -> Result<()> {
             expansion,
             tips,
         }) => {
-            let (_handle, _progress) = prepare(verbose, "pack-create", None);
+            let (_handle, progress) = prepare(verbose, "pack-create", Some(core::pack::create::PROGRESS_RANGE));
             let has_tips = !tips.is_empty();
             let stdout = stdout();
             let stdout_lock = stdout.lock();
@@ -37,6 +37,7 @@ pub fn main() -> Result<()> {
                     Some(io::BufReader::new(stdin()))
                 },
                 stdout_lock,
+                DoOrDiscard::from(progress),
                 core::pack::create::Context {
                     expansion: expansion.unwrap_or_else(|| {
                         if has_tips {

@@ -1,7 +1,11 @@
+use anyhow::bail;
+use git_features::progress::Progress;
 use git_hash::ObjectId;
 use git_object::bstr::ByteVec;
 use git_odb::{linked, pack, FindExt};
 use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
+
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
 #[derive(PartialEq, Debug)]
 pub enum ObjectExpansion {
@@ -63,6 +67,7 @@ pub fn create(
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
     out: impl io::Write,
+    mut progress: impl Progress,
     ctx: Context,
 ) -> anyhow::Result<()> {
     let db = Arc::new(find_db(repository)?);
@@ -88,12 +93,15 @@ pub fn create(
     };
 
     let chunk_size = 200;
+    progress.init(Some(3), git_features::progress::steps());
+    let mut count_progress = progress.add_child("counting");
+    count_progress.init(None, git_features::progress::count("objects"));
     let counts = {
         let counts_iter = pack::data::output::count_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             input,
-            git_features::progress::Discard,
+            count_progress.add_child("threads"),
             pack::data::output::count_objects::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
@@ -102,10 +110,16 @@ pub fn create(
         );
         let mut counts = Vec::new();
         for c in counts_iter {
-            counts.extend(c?.into_iter());
+            if git_features::interrupt::is_triggered() {
+                bail!("Cancelled by user")
+            }
+            let c = c?;
+            count_progress.inc_by(c.len());
+            counts.extend(c.into_iter());
         }
         counts
     };
+    progress.inc();
     let num_objects = counts.len();
     let entries = pack::data::output::objects_to_entries_iter(
         counts,
@@ -118,6 +132,8 @@ pub fn create(
             version: Default::default(),
         },
     );
+
+    progress.inc();
     let mut output_iter = pack::data::output::EntriesToBytesIter::new(
         entries,
         out,

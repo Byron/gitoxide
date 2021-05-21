@@ -3,6 +3,7 @@ use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
+use std::sync::Arc;
 
 /// Generate [`Entries`][output::Count] from input `objects` into `out` without attempting to apply any delta compression.
 /// TODO: update based on new counting mechanism
@@ -18,7 +19,7 @@ pub fn count_objects_iter<Find, Iter, Oid, Cache>(
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,
-    _progress: impl Progress,
+    progress: impl Progress,
     Options {
         thread_limit,
         input_object_expansion,
@@ -46,21 +47,30 @@ where
         iter: objects,
         size: chunk_size,
     };
-    let seen_objs = std::sync::Arc::new(dashmap::DashSet::<ObjectId>::new());
+    let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
+    let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
         chunks,
         thread_limit,
-        move |_n| {
-            (
-                Vec::new(),   // object data buffer
-                Vec::new(),   // object data buffer 2 to hold two objects at a time
-                make_cache(), // cache to speed up pack operations
-            )
+        {
+            let progress = Arc::clone(&progress);
+            move |n| {
+                (
+                    Vec::new(),   // object data buffer
+                    Vec::new(),   // object data buffer 2 to hold two objects at a time
+                    make_cache(), // cache to speed up pack operations
+                    {
+                        let mut p = progress.lock().add_child(format!("thread {}", n));
+                        p.init(None, git_features::progress::count("objects"));
+                        p
+                    },
+                )
+            }
         },
         {
-            let seen_objs = std::sync::Arc::clone(&seen_objs);
-            move |oids: Vec<Oid>, (buf1, buf2, cache)| {
+            let seen_objs = Arc::clone(&seen_objs);
+            move |oids: Vec<Oid>, (buf1, buf2, cache, progress)| {
                 use ObjectExpansion::*;
                 let mut out = Vec::new();
                 let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
@@ -80,7 +90,7 @@ where
                             let mut id = id.to_owned();
 
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj);
+                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress);
                                 match obj.kind {
                                     Tree | Blob => break,
                                     Tag => {
@@ -105,7 +115,7 @@ where
                                                 }
                                             }
                                             let obj = db.find_existing(tree_id, buf1, cache)?;
-                                            push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj);
+                                            push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress);
                                             immutable::TreeIter::from_bytes(obj.data)
                                         };
 
@@ -130,6 +140,7 @@ where
                                                         seen_objs,
                                                         &commit_id,
                                                         &parent_commit_obj,
+                                                        progress,
                                                     );
                                                     immutable::CommitIter::from_bytes(parent_commit_obj.data)
                                                         .tree_id()
@@ -143,6 +154,7 @@ where
                                                         seen_objs,
                                                         &parent_tree_id,
                                                         &parent_tree_obj,
+                                                        progress,
                                                     );
                                                     immutable::TreeIter::from_bytes(parent_tree_obj.data)
                                                 };
@@ -159,7 +171,7 @@ where
                                             &changes_delegate.objects
                                         };
                                         for id in objects.iter() {
-                                            out.push(id_to_count(&db, buf2, id));
+                                            out.push(id_to_count(&db, buf2, id, progress));
                                         }
                                         break;
                                     }
@@ -171,7 +183,7 @@ where
                             let mut id: ObjectId = id.into();
                             let mut obj = obj;
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj);
+                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress);
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
@@ -183,7 +195,7 @@ where
                                         )
                                         .map_err(Error::TreeTraverse)?;
                                         for id in traverse_delegate.objects.iter() {
-                                            out.push(id_to_count(&db, buf1, id));
+                                            out.push(id_to_count(&db, buf1, id, progress));
                                         }
                                         break;
                                     }
@@ -205,7 +217,7 @@ where
                                 }
                             }
                         }
-                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj),
+                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress),
                     }
                 }
                 Ok(out)
@@ -325,14 +337,22 @@ fn push_obj_count_unique(
     all_seen: &DashSet<ObjectId>,
     id: &oid,
     obj: &crate::data::Object<'_>,
+    progress: &mut impl Progress,
 ) {
     let inserted = all_seen.insert(id.to_owned());
     if inserted {
+        progress.inc();
         out.push(output::Count::from_data(id, &obj));
     }
 }
 
-fn id_to_count<Find: crate::Find>(db: &Find, buf: &mut Vec<u8>, id: &oid) -> output::Count {
+fn id_to_count<Find: crate::Find>(
+    db: &Find,
+    buf: &mut Vec<u8>,
+    id: &oid,
+    progress: &mut impl Progress,
+) -> output::Count {
+    progress.inc();
     output::Count {
         id: id.to_owned(),
         entry_pack_location: db.location_by_id(id, buf),
