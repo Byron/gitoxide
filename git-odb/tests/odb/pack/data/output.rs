@@ -39,7 +39,7 @@ mod count_and_entries {
         pack::data::output::{db, DbKind},
     };
     use git_features::progress;
-    use git_odb::{pack, pack::data::output, FindExt};
+    use git_odb::{compound, pack, pack::data::output, FindExt};
     use git_traverse::commit;
     use std::sync::Arc;
 
@@ -140,7 +140,67 @@ mod count_and_entries {
             });
             assert_eq!(actual_count, expected_count);
             assert_eq!(counts_len, expected_count.total());
+
+            write_and_verify(entries)?;
         }
+        Ok(())
+    }
+
+    fn write_and_verify(entries: Vec<output::Entry>) -> crate::Result {
+        let tmp_dir = tempfile::TempDir::new()?;
+        let pack_file_path = tmp_dir.path().join("new.pack");
+        let mut pack_file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&pack_file_path)?;
+        let num_written_bytes = {
+            let num_entries = entries.len();
+            let mut pack_writer = output::entries_to_bytes::EntriesToBytesIter::new(
+                std::iter::once(Ok::<_, output::objects_to_entries::Error<compound::find::Error>>(
+                    entries,
+                )),
+                &mut pack_file,
+                num_entries as u32,
+                pack::data::Version::V2,
+                git_hash::Kind::Sha1,
+            );
+            let mut n = pack_writer.next().expect("one entries bundle was written")?;
+            n += pack_writer.next().expect("the trailer was written")?;
+            assert!(
+                pack_writer.next().is_none(),
+                "there is nothing more to iterate this time"
+            );
+            // verify we can still get the original parts back
+            let _ = pack_writer.input;
+            let _ = pack_writer.into_write();
+            n
+        };
+        assert_eq!(
+            num_written_bytes,
+            pack_file.metadata()?.len(),
+            "it reports the correct amount of written bytes"
+        );
+        let pack = pack::data::File::at(&pack_file_path)?;
+        pack.verify_checksum(progress::Discard)?;
+
+        // Re-generate the index from the pack for validation.
+        let bundle = pack::Bundle::at(
+            pack::Bundle::write_to_directory(
+                std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
+                Some(tmp_dir.path()),
+                progress::Discard,
+                pack::bundle::write::Options::default(),
+            )?
+            .data_path
+            .expect("directory set"),
+        )?;
+        bundle.verify_integrity(
+            pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+            pack::index::traverse::Algorithm::DeltaTreeLookup,
+            || pack::cache::Never,
+            None,
+            progress::Discard.into(),
+        )?;
         Ok(())
     }
 }
