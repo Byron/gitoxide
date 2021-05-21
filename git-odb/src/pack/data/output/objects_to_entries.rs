@@ -1,4 +1,4 @@
-use crate::{pack, pack::data::output, FindExt};
+use crate::{find, pack, pack::data::output, FindExt};
 use git_features::{parallel, progress::Progress};
 
 /// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
@@ -41,8 +41,10 @@ pub fn objects_to_entries_iter<Find, Cache>(
         thread_limit,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<Find::Error>>>
-       + parallel::reduce::Finalize<Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<Find::Error>>>
+) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<find::existing::Error<Find::Error>>>>
+       + parallel::reduce::Finalize<
+    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<find::existing::Error<Find::Error>>>,
+>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
@@ -73,12 +75,12 @@ where
                     Some(ref location) => match output::Entry::from_pack_entry(location, count, version) {
                         Some(entry) => entry,
                         None => {
-                            let obj = db.find_existing(count.id, buf, cache)?;
+                            let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
                             output::Entry::from_data(count, &obj)
                         }
                     },
                     None => {
-                        let obj = db.find_existing(count.id, buf, cache)?;
+                        let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
                         output::Entry::from_data(count, &obj)
                     }
                 }?);
@@ -90,7 +92,7 @@ where
 }
 
 mod types {
-    use crate::{find, pack::data::output::entry};
+    use crate::pack::data::output::entry;
 
     /// Configuration options for the pack generation functions provied in [this module][crate::pack::data::output].
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -123,7 +125,7 @@ mod types {
         FindErr: std::error::Error + 'static,
     {
         #[error(transparent)]
-        FindExisting(find::existing_object::Error<FindErr>),
+        FindExisting(FindErr),
         #[error(transparent)]
         NewEntry(#[from] entry::Error),
     }
