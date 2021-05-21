@@ -1,7 +1,17 @@
+use git_odb::pack::data::output;
+
+#[test]
+fn size_of_entry() {
+    assert_eq!(
+        std::mem::size_of::<output::Entry>(),
+        80,
+        "The size of the structure shouldn't change unexpectedly"
+    )
+}
+
 mod entries {
     mod simple_compression {
-        use crate::fixture_path;
-        use crate::odb::hex_to_id;
+        use crate::{fixture_path, odb::hex_to_id};
         use git_features::progress;
         use git_odb::{compound, linked, pack, pack::data::output, FindExt};
         use git_traverse::commit;
