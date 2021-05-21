@@ -1,7 +1,8 @@
 use crate::{
-    data,
+    data, find,
     pack::{self, data::output},
 };
+use git_features::hash;
 use git_hash::ObjectId;
 use std::io::Write;
 
@@ -52,14 +53,45 @@ pub enum Kind {
 pub enum Error {
     #[error("{0}")]
     ZlibDeflate(#[from] std::io::Error),
+    #[error("Entry expected to have hash {expected}, but it had {actual}")]
+    PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
 }
 
 impl output::Entry {
+    pub fn from_pack_entry(
+        entry: find::PackEntry<'_>,
+        count: &output::Count,
+        version: pack::data::Version,
+    ) -> Option<Result<Self, Error>> {
+        if entry.version != version {
+            return None;
+        };
+
+        let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
+        if let Some(expected) = entry.crc32 {
+            let actual = hash::crc32(entry.data);
+            if actual != expected {
+                return Some(Err(Error::PackToPackCopyCrc32Mismatch { actual, expected }));
+            }
+        }
+        if pack_entry.header.is_base() {
+            Some(Ok(output::Entry {
+                id: count.id.to_owned(),
+                object_kind: count.object_kind,
+                kind: output::entry::Kind::Base,
+                decompressed_size: count.decompressed_size,
+                compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
+            }))
+        } else {
+            None
+        }
+    }
+
     /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
-    pub fn from_data(oid: impl Into<ObjectId>, obj: &data::Object<'_>) -> Result<Self, Error> {
+    pub fn from_data(count: &output::Count, obj: &data::Object<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
-            id: oid.into(),
-            object_kind: obj.kind,
+            id: count.id.to_owned(),
+            object_kind: count.object_kind,
             kind: Kind::Base,
             decompressed_size: obj.data.len(),
             compressed_data: {

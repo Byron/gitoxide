@@ -36,7 +36,7 @@ fn db(kind: DbKind) -> crate::Result<Arc<linked::Db>> {
     linked::Db::at(path).map_err(Into::into).map(Into::into)
 }
 
-mod count {
+mod count_and_entries {
     use crate::odb::{
         hex_to_id,
         pack::data::output::{db, DbKind},
@@ -101,7 +101,7 @@ mod count {
                 move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
             })
             .map(Result::unwrap);
-            let entries: Vec<_> = output::count_objects_iter(
+            let counts: Vec<_> = output::count_objects_iter(
                 db.clone(),
                 || pack::cache::Never,
                 commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
@@ -115,12 +115,30 @@ mod count {
             .into_iter()
             .flatten()
             .collect();
+            let actual_count = counts.iter().fold(Count::default(), |mut c, e| {
+                c.add(e.object_kind);
+                c
+            });
+            assert_eq!(actual_count, expected_count);
+            assert_eq!(counts.len(), expected_count.total());
+
+            let entries: Vec<_> = output::objects_to_entries_iter(
+                counts,
+                db.clone(),
+                || pack::cache::Never,
+                progress::Discard,
+                Default::default(),
+            )
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .flatten()
+            .collect();
             let actual_count = entries.iter().fold(Count::default(), |mut c, e| {
                 c.add(e.object_kind);
                 c
             });
             assert_eq!(actual_count, expected_count);
-            assert_eq!(entries.len(), expected_count.total());
+            assert_eq!(counts.len(), expected_count.total());
         }
         Ok(())
     }

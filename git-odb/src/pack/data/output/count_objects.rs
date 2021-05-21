@@ -1,6 +1,6 @@
 use crate::{pack, pack::data::output, FindExt};
 use dashmap::DashSet;
-use git_features::{hash, parallel, progress::Progress};
+use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
 
@@ -84,7 +84,7 @@ where
                             let mut id = id.to_owned();
 
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
+                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj);
                                 match obj.kind {
                                     Tree | Blob => break,
                                     Tag => {
@@ -113,7 +113,7 @@ where
                                             let obj = db
                                                 .find_existing(tree_id, buf1, cache)
                                                 .map_err(|_| Error::NotFound { oid: tree_id })?;
-                                            push_obj_count_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
+                                            push_obj_count_unique(&mut out, seen_objs, &db, version, &tree_id, &obj);
                                             immutable::TreeIter::from_bytes(obj.data)
                                         };
 
@@ -144,7 +144,7 @@ where
                                                         version,
                                                         &commit_id,
                                                         &parent_commit_obj,
-                                                    )?;
+                                                    );
                                                     immutable::CommitIter::from_bytes(parent_commit_obj.data)
                                                         .tree_id()
                                                         .expect("every commit has a tree")
@@ -160,7 +160,7 @@ where
                                                         version,
                                                         &parent_tree_id,
                                                         &parent_tree_obj,
-                                                    )?;
+                                                    );
                                                     immutable::TreeIter::from_bytes(parent_tree_obj.data)
                                                 };
 
@@ -179,7 +179,7 @@ where
                                             let obj = db
                                                 .find(id, buf2, cache)?
                                                 .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                            out.push(obj_to_count(&db, version, id, &obj)?);
+                                            out.push(obj_to_count(&db, version, id, &obj));
                                         }
                                         break;
                                     }
@@ -191,7 +191,7 @@ where
                             let mut id: ObjectId = id.into();
                             let mut obj = obj;
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
+                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj);
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
@@ -206,7 +206,7 @@ where
                                             let obj = db
                                                 .find(id, buf1, cache)?
                                                 .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                            out.push(obj_to_count(&db, version, id, &obj)?);
+                                            out.push(obj_to_count(&db, version, id, &obj));
                                         }
                                         break;
                                     }
@@ -232,7 +232,7 @@ where
                                 }
                             }
                         }
-                        AsIs => push_obj_count_unique(&mut out, seen_objs, &db, version, id, &obj)?,
+                        AsIs => push_obj_count_unique(&mut out, seen_objs, &db, version, id, &obj),
                     }
                 }
                 Ok(out)
@@ -346,56 +346,42 @@ mod tree {
     }
 }
 
-fn push_obj_count_unique<Find>(
+fn push_obj_count_unique(
     out: &mut Vec<output::Count>,
     all_seen: &DashSet<ObjectId>,
-    db: &Find,
+    db: &impl crate::Find,
     version: pack::data::Version,
     id: &oid,
     obj: &crate::data::Object<'_>,
-) -> Result<(), Error<Find::Error>>
-where
-    Find: crate::Find,
-{
+) {
     let inserted = all_seen.insert(id.to_owned());
     if inserted {
-        out.push(obj_to_count(db, version, id, obj)?);
+        out.push(obj_to_count(db, version, id, obj));
     }
-    Ok(())
 }
 
-fn obj_to_count<Find>(
-    db: &Find,
+fn obj_to_count(
+    db: &impl crate::Find,
     version: pack::data::Version,
     id: &oid,
     obj: &crate::data::Object<'_>,
-) -> Result<output::Count, Error<Find::Error>>
-where
-    Find: crate::Find,
-{
-    Ok(match db.pack_entry(&obj) {
+) -> output::Count {
+    match db.pack_entry(&obj) {
         Some(entry) if entry.version == version => {
             let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
-            if let Some(expected) = entry.crc32 {
-                let actual = hash::crc32(entry.data);
-                if actual != expected {
-                    return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
-                }
-            }
             if pack_entry.header.is_base() {
                 output::Count {
                     id: id.to_owned(),
                     object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                    entry_kind: output::entry::Kind::Base,
                     decompressed_size: obj.data.len(),
                     entry_pack_location: obj.pack_location.clone(),
                 }
             } else {
-                output::Count::from_data(id, &obj).map_err(Error::NewEntry)?
+                output::Count::from_data(id, &obj)
             }
         }
-        _ => output::Count::from_data(id, &obj).map_err(Error::NewEntry)?,
-    })
+        _ => output::Count::from_data(id, &obj),
+    }
 }
 
 mod util {
@@ -430,7 +416,6 @@ mod util {
 }
 
 mod types {
-    use crate::pack::data::output::count;
     use git_hash::ObjectId;
 
     /// The way input objects are handled
@@ -496,17 +481,13 @@ mod types {
         #[error(transparent)]
         CommitDecode(git_object::immutable::object::decode::Error),
         #[error(transparent)]
-        Locate(#[from] LocateErr),
+        Find(#[from] LocateErr),
         #[error(transparent)]
         TreeTraverse(git_traverse::tree::breadthfirst::Error),
         #[error(transparent)]
         TreeChanges(git_diff::tree::changes::Error),
         #[error("Object id {oid} wasn't found in object database")]
         NotFound { oid: ObjectId },
-        #[error("Entry expected to have hash {expected}, but it had {actual}")]
-        PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
-        #[error(transparent)]
-        NewEntry(count::Error),
     }
 }
 pub use types::{Error, ObjectExpansion, Options};

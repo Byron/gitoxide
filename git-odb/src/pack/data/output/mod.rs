@@ -1,5 +1,5 @@
 mod count {
-    use crate::{data, pack, pack::data::output::entry};
+    use crate::{data, pack};
     use git_hash::ObjectId;
 
     /// An item representing a future Entry in the leanest way possible.
@@ -15,32 +15,19 @@ mod count {
         pub object_kind: git_object::Kind,
         /// The size in bytes needed once `data` gets decompressed
         pub decompressed_size: usize,
-
-        /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
-        /// at rest or in transit.
-        pub entry_kind: entry::Kind,
         /// A way to locate a pack entry in the object database, only available if the object is in a pack.
         pub(crate) entry_pack_location: Option<pack::bundle::Location>,
     }
 
-    /// The error returned by [`output::Entry::from_data()`].
-    #[allow(missing_docs)]
-    #[derive(Debug, thiserror::Error)]
-    pub enum Error {
-        #[error("{0}")]
-        ZlibDeflate(#[from] std::io::Error),
-    }
-
     impl Count {
         /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
-        pub fn from_data(oid: impl Into<ObjectId>, obj: &data::Object<'_>) -> Result<Self, Error> {
-            Ok(Count {
+        pub fn from_data(oid: impl Into<ObjectId>, obj: &data::Object<'_>) -> Self {
+            Count {
                 id: oid.into(),
                 object_kind: obj.kind,
-                entry_kind: entry::Kind::Base,
                 decompressed_size: obj.data.len(),
                 entry_pack_location: obj.pack_location.clone(),
-            })
+            }
         }
     }
 }

@@ -1,16 +1,15 @@
 use crate::{pack, pack::data::output, FindExt};
-use git_features::{hash, parallel, progress::Progress};
-use git_hash::{oid, ObjectId};
+use git_features::{parallel, progress::Progress};
 
-/// Write all `objects` into `out` without attempting to apply any delta compression.
-/// TODO: Update this
-/// This allows objects to be written rather immediately.
-/// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
-/// objects being sent to the current thread for writing. No buffering of these objects is performed,
-/// allowing for natural back-pressure in case of slow writers.
+/// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
 ///
-/// * `objects`
-///   * A list of objects to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
+/// This allows objects to be written quite soon without having to wait for the entire pack to be built in memory.
+/// A chunk of objects is held in memory and compressed using DEFLATE, and serve the output of this iterator.
+/// That way slow writers will naturally apply back pressure, and communicate to the implementation that more time can be
+/// spent compressing objects.
+///
+/// * `counts`
+///   * A list of previously counted objects to add to the pack. Duplication checks are not performed, no object is expected to be duplicated.
 /// * `progress`
 ///   * a way to obtain progress information
 /// * `options`
@@ -32,15 +31,14 @@ use git_hash::{oid, ObjectId};
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn objects_to_entries_iter<Find, Iter, Oid, Cache>(
+pub fn objects_to_entries_iter<Find, Cache>(
+    counts: impl AsRef<[output::Count]>,
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
-    objects: Iter,
     _progress: impl Progress,
     Options {
         version,
         thread_limit,
-        input_object_expansion,
         chunk_size,
     }: Options,
 ) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<Find::Error>>>
@@ -48,26 +46,16 @@ pub fn objects_to_entries_iter<Find, Iter, Oid, Cache>(
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
-    Iter: Iterator<Item = Oid> + Send + 'static,
-    Oid: AsRef<oid> + Send + 'static,
     Cache: pack::cache::DecodeEntry,
 {
     assert!(
         matches!(version, pack::data::Version::V2),
         "currently we can only write version 2"
     );
-    let lower_bound = objects.size_hint().0;
-    let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
-        chunk_size,
-        if lower_bound == 0 { None } else { Some(lower_bound) },
-        thread_limit,
-        None,
-    );
-    let chunks = util::Chunks {
-        iter: objects,
-        size: chunk_size,
-    };
-    let seen_objs = std::sync::Arc::new(dashmap::DashSet::<ObjectId>::new());
+    let counts = counts.as_ref();
+    let (chunk_size, thread_limit, _) =
+        parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
+    let chunks = counts.chunks(chunk_size);
 
     parallel::reduce::Stepwise::new(
         chunks,
@@ -75,408 +63,34 @@ where
         move |_n| {
             (
                 Vec::new(),   // object data buffer
-                Vec::new(),   // object data buffer 2 to hold two objects at a time
                 make_cache(), // cache to speed up pack operations
             )
         },
-        {
-            let seen_objs = std::sync::Arc::clone(&seen_objs);
-            move |oids: Vec<Oid>, (buf1, buf2, cache)| {
-                use ObjectExpansion::*;
-                let mut out = Vec::new();
-                let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
-                let mut tree_diff_state = git_diff::tree::State::default();
-                let mut parent_commit_ids = Vec::new();
-                let seen_objs = seen_objs.as_ref();
-                let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
-                let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
-
-                for id in oids.into_iter() {
-                    let id = id.as_ref();
-                    let obj = db
-                        .find(id, buf1, cache)?
-                        .ok_or_else(|| Error::NotFound { oid: id.to_owned() })?;
-                    match input_object_expansion {
-                        TreeAdditionsComparedToAncestor => {
-                            use git_object::Kind::*;
-                            let mut obj = obj;
-                            let mut id = id.to_owned();
-
-                            loop {
-                                push_obj_entry_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
-                                match obj.kind {
-                                    Tree | Blob => break,
-                                    Tag => {
-                                        id = immutable::TagIter::from_bytes(obj.data)
-                                            .target_id()
-                                            .expect("every tag has a target");
-                                        obj = db
-                                            .find_existing(id, buf1, cache)
-                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
-                                        continue;
-                                    }
-                                    Commit => {
-                                        let current_tree_iter = {
-                                            let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
-                                            let tree_id = commit_iter.tree_id().expect("every commit has a tree");
-                                            parent_commit_ids.clear();
-                                            for token in commit_iter {
-                                                match token {
-                                                    Ok(immutable::commit::iter::Token::Parent { id }) => {
-                                                        parent_commit_ids.push(id)
-                                                    }
-                                                    Ok(_) => break,
-                                                    Err(err) => return Err(Error::CommitDecode(err)),
-                                                }
-                                            }
-                                            let obj = db
-                                                .find_existing(tree_id, buf1, cache)
-                                                .map_err(|_| Error::NotFound { oid: tree_id })?;
-                                            push_obj_entry_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
-                                            immutable::TreeIter::from_bytes(obj.data)
-                                        };
-
-                                        let objects = if parent_commit_ids.is_empty() {
-                                            traverse_delegate.clear();
-                                            git_traverse::tree::breadthfirst(
-                                                current_tree_iter,
-                                                &mut tree_traversal_state,
-                                                |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
-                                                &mut traverse_delegate,
-                                            )
-                                            .map_err(Error::TreeTraverse)?;
-                                            &traverse_delegate.objects
-                                        } else {
-                                            changes_delegate.clear();
-                                            for commit_id in &parent_commit_ids {
-                                                let parent_tree_id = {
-                                                    let parent_commit_obj = db
-                                                        .find_existing(commit_id, buf2, cache)
-                                                        .map_err(|_| Error::NotFound {
-                                                            oid: commit_id.to_owned(),
-                                                        })?;
-
-                                                    push_obj_entry_unique(
-                                                        &mut out,
-                                                        seen_objs,
-                                                        &db,
-                                                        version,
-                                                        &commit_id,
-                                                        &parent_commit_obj,
-                                                    )?;
-                                                    immutable::CommitIter::from_bytes(parent_commit_obj.data)
-                                                        .tree_id()
-                                                        .expect("every commit has a tree")
-                                                };
-                                                let parent_tree = {
-                                                    let parent_tree_obj = db
-                                                        .find_existing(parent_tree_id, buf2, cache)
-                                                        .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
-                                                    push_obj_entry_unique(
-                                                        &mut out,
-                                                        seen_objs,
-                                                        &db,
-                                                        version,
-                                                        &parent_tree_id,
-                                                        &parent_tree_obj,
-                                                    )?;
-                                                    immutable::TreeIter::from_bytes(parent_tree_obj.data)
-                                                };
-
-                                                git_diff::tree::Changes::from(Some(parent_tree))
-                                                    .needed_to_obtain(
-                                                        current_tree_iter.clone(),
-                                                        &mut tree_diff_state,
-                                                        |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
-                                                        &mut changes_delegate,
-                                                    )
-                                                    .map_err(Error::TreeChanges)?;
-                                            }
-                                            &changes_delegate.objects
-                                        };
-                                        for id in objects.iter() {
-                                            let obj = db
-                                                .find(id, buf2, cache)?
-                                                .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                            out.push(obj_to_entry(&db, version, id, &obj)?);
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
+        move |counts: &[output::Count], (buf, cache)| {
+            let mut out = Vec::new();
+            for count in counts.into_iter() {
+                out.push(match count.entry_pack_location {
+                    Some(ref location) => match output::Entry::from_pack_entry(location, count, version) {
+                        Some(entry) => entry,
+                        None => {
+                            let obj = db.find_existing(count.id, buf, cache)?;
+                            output::Entry::from_data(count, &obj)
                         }
-                        TreeContents => {
-                            use git_object::Kind::*;
-                            let mut id: ObjectId = id.into();
-                            let mut obj = obj;
-                            loop {
-                                push_obj_entry_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
-                                match obj.kind {
-                                    Tree => {
-                                        traverse_delegate.clear();
-                                        git_traverse::tree::breadthfirst(
-                                            git_object::immutable::TreeIter::from_bytes(obj.data),
-                                            &mut tree_traversal_state,
-                                            |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
-                                            &mut traverse_delegate,
-                                        )
-                                        .map_err(Error::TreeTraverse)?;
-                                        for id in traverse_delegate.objects.iter() {
-                                            let obj = db
-                                                .find(id, buf1, cache)?
-                                                .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                            out.push(obj_to_entry(&db, version, id, &obj)?);
-                                        }
-                                        break;
-                                    }
-                                    Commit => {
-                                        id = immutable::CommitIter::from_bytes(obj.data)
-                                            .tree_id()
-                                            .expect("every commit has a tree");
-                                        obj = db
-                                            .find_existing(id, buf1, cache)
-                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
-                                        continue;
-                                    }
-                                    Blob => break,
-                                    Tag => {
-                                        id = immutable::TagIter::from_bytes(obj.data)
-                                            .target_id()
-                                            .expect("every tag has a target");
-                                        obj = db
-                                            .find_existing(id, buf1, cache)
-                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        AsIs => push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?,
+                    },
+                    None => {
+                        let obj = db.find_existing(count.id, buf, cache)?;
+                        output::Entry::from_data(count, &obj)
                     }
-                }
-                Ok(out)
+                }?);
             }
+            Ok(out)
         },
         parallel::reduce::IdentityWithResult::default(),
     )
 }
 
-mod tree {
-    pub mod changes {
-        use dashmap::DashSet;
-        use git_diff::tree::visit::{Action, Change};
-        use git_diff::tree::Visit;
-        use git_hash::bstr::BStr;
-        use git_hash::ObjectId;
-        use std::collections::HashSet;
-
-        pub struct AllNew<'a> {
-            pub objects: HashSet<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
-        }
-
-        impl<'a> AllNew<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
-                AllNew {
-                    objects: Default::default(),
-                    all_seen,
-                }
-            }
-            pub fn clear(&mut self) {
-                self.objects.clear();
-            }
-        }
-
-        impl<'a> Visit for AllNew<'a> {
-            fn pop_front_tracked_path_and_set_current(&mut self) {}
-
-            fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
-
-            fn push_path_component(&mut self, _component: &BStr) {}
-
-            fn pop_path_component(&mut self) {}
-
-            fn visit(&mut self, change: Change) -> Action {
-                match change {
-                    Change::Addition { oid, .. } | Change::Modification { oid, .. } => {
-                        let inserted = self.all_seen.insert(oid);
-                        if inserted {
-                            self.objects.insert(oid);
-                        }
-                    }
-                    Change::Deletion { .. } => {}
-                };
-                Action::Continue
-            }
-        }
-    }
-    pub mod traverse {
-        use dashmap::DashSet;
-        use git_hash::{bstr::BStr, ObjectId};
-        use git_object::immutable::tree::Entry;
-        use git_traverse::tree::visit::{Action, Visit};
-        use std::collections::HashSet;
-
-        pub struct AllUnseen<'a> {
-            pub objects: HashSet<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
-        }
-
-        impl<'a> AllUnseen<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
-                AllUnseen {
-                    objects: Default::default(),
-                    all_seen,
-                }
-            }
-            pub fn clear(&mut self) {
-                self.objects.clear();
-            }
-        }
-
-        impl<'a> Visit for AllUnseen<'a> {
-            fn pop_front_tracked_path_and_set_current(&mut self) {}
-
-            fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
-
-            fn push_path_component(&mut self, _component: &BStr) {}
-
-            fn pop_path_component(&mut self) {}
-
-            fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
-                let inserted = self.all_seen.insert(entry.oid.to_owned());
-                if inserted {
-                    self.objects.insert(entry.oid.to_owned());
-                    Action::Continue
-                } else {
-                    Action::Skip
-                }
-            }
-
-            fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
-                let inserted = self.all_seen.insert(entry.oid.to_owned());
-                if inserted {
-                    self.objects.insert(entry.oid.to_owned());
-                }
-                Action::Continue
-            }
-        }
-    }
-}
-
-fn push_obj_entry_unique<Find>(
-    out: &mut Vec<output::Entry>,
-    all_seen: &DashSet<ObjectId>,
-    db: &Find,
-    version: pack::data::Version,
-    id: &oid,
-    obj: &crate::data::Object<'_>,
-) -> Result<(), Error<Find::Error>>
-where
-    Find: crate::Find,
-{
-    let inserted = all_seen.insert(id.to_owned());
-    if inserted {
-        out.push(obj_to_entry(db, version, id, obj)?);
-    }
-    Ok(())
-}
-
-fn obj_to_entry<Find>(
-    db: &Find,
-    version: pack::data::Version,
-    id: &oid,
-    obj: &crate::data::Object<'_>,
-) -> Result<output::Entry, Error<Find::Error>>
-where
-    Find: crate::Find,
-{
-    Ok(match db.pack_entry(&obj) {
-        Some(entry) if entry.version == version => {
-            let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
-            if let Some(expected) = entry.crc32 {
-                let actual = hash::crc32(entry.data);
-                if actual != expected {
-                    return Err(Error::PackToPackCopyCrc32Mismatch { actual, expected });
-                }
-            }
-            if pack_entry.header.is_base() {
-                output::Entry {
-                    id: id.to_owned(),
-                    object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                    kind: output::entry::Kind::Base,
-                    decompressed_size: obj.data.len(),
-                    compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
-                }
-            } else {
-                output::Entry::from_data(id, &obj).map_err(Error::NewEntry)?
-            }
-        }
-        _ => output::Entry::from_data(id, &obj).map_err(Error::NewEntry)?,
-    })
-}
-
-mod util {
-    pub struct Chunks<I> {
-        pub size: usize,
-        pub iter: I,
-    }
-
-    impl<I, Item> Iterator for Chunks<I>
-    where
-        I: Iterator<Item = Item>,
-    {
-        type Item = Vec<Item>;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            let mut res = Vec::with_capacity(self.size);
-            let mut items_left = self.size;
-            while let Some(item) = self.iter.next() {
-                res.push(item);
-                items_left -= 1;
-                if items_left == 0 {
-                    break;
-                }
-            }
-            if res.is_empty() {
-                None
-            } else {
-                Some(res)
-            }
-        }
-    }
-}
-
 mod types {
-    use crate::pack::data::output::entry;
-    use git_hash::ObjectId;
-
-    /// The way input objects are handled
-    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    pub enum ObjectExpansion {
-        /// Don't do anything with the input objects except for transforming them into pack entries
-        AsIs,
-        /// If the input object is a Commit then turn it into a pack entry. Additionally obtain its tree, turn it into a pack entry
-        /// along with all of its contents, that is nested trees, and any other objects reachable from it.
-        /// Otherwise, the same as [`AsIs`][ObjectExpansion::AsIs].
-        ///
-        /// This mode is useful if all reachable objects should be added, as in cloning a repository.
-        TreeContents,
-        /// If the input is a commit, obtain its ancestors and turn them into pack entries. Obtain the ancestor trees along with the commits
-        /// tree and turn them into pack entries. Finally obtain the added/changed objects when comparing the ancestor trees with the
-        /// current tree and turn them into entries as well.
-        /// Otherwise, the same as [`AsIs`][ObjectExpansion::AsIs].
-        ///
-        /// This mode is useful to build a pack containing only new objects compared to a previous state.
-        TreeAdditionsComparedToAncestor,
-    }
-
-    impl Default for ObjectExpansion {
-        fn default() -> Self {
-            ObjectExpansion::AsIs
-        }
-    }
+    use crate::{find, pack::data::output::entry};
 
     /// Configuration options for the pack generation functions provied in [this module][crate::pack::data::output].
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -489,8 +103,6 @@ mod types {
         pub chunk_size: usize,
         /// The pack data version to produce
         pub version: crate::pack::data::Version,
-        /// The way input objects are handled
-        pub input_object_expansion: ObjectExpansion,
     }
 
     impl Default for Options {
@@ -499,7 +111,6 @@ mod types {
                 thread_limit: None,
                 chunk_size: 10,
                 version: Default::default(),
-                input_object_expansion: Default::default(),
             }
         }
     }
@@ -507,26 +118,14 @@ mod types {
     /// The error returned by the pack generation function [`to_entry_iter()`][crate::pack::data::output::objects_to_entries_iter()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<LocateErr>
+    pub enum Error<FindErr>
     where
-        LocateErr: std::error::Error + 'static,
+        FindErr: std::error::Error + 'static,
     {
         #[error(transparent)]
-        CommitDecode(git_object::immutable::object::decode::Error),
+        FindExisting(find::existing_object::Error<FindErr>),
         #[error(transparent)]
-        Locate(#[from] LocateErr),
-        #[error(transparent)]
-        TreeTraverse(git_traverse::tree::breadthfirst::Error),
-        #[error(transparent)]
-        TreeChanges(git_diff::tree::changes::Error),
-        #[error("Object id {oid} wasn't found in object database")]
-        NotFound { oid: ObjectId },
-        #[error("Entry expected to have hash {expected}, but it had {actual}")]
-        PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
-        #[error(transparent)]
-        NewEntry(entry::Error),
+        NewEntry(#[from] entry::Error),
     }
 }
-use dashmap::DashSet;
-use git_object::immutable;
-pub use types::{Error, ObjectExpansion, Options};
+pub use types::{Error, Options};
