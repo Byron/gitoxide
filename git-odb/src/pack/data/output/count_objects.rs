@@ -164,8 +164,7 @@ where
                                             &changes_delegate.objects
                                         };
                                         for id in objects.iter() {
-                                            let obj = db.find_existing(id, buf2, cache)?;
-                                            out.push(obj_to_count(id, &obj));
+                                            out.push(id_to_count(&db, buf2, id));
                                         }
                                         break;
                                     }
@@ -189,8 +188,7 @@ where
                                         )
                                         .map_err(Error::TreeTraverse)?;
                                         for id in traverse_delegate.objects.iter() {
-                                            let obj = db.find_existing(id, buf1, cache)?;
-                                            out.push(obj_to_count(id, &obj));
+                                            out.push(id_to_count(&db, buf1, id));
                                         }
                                         break;
                                     }
@@ -338,29 +336,12 @@ fn push_obj_count_unique(
     }
 }
 
-fn obj_to_count(id: &oid, obj: &crate::data::Object<'_>) -> output::Count {
-    output::Count::from_data(id, &obj)
+fn id_to_count<Find: crate::Find>(db: &Find, buf: &mut Vec<u8>, id: &oid) -> output::Count {
+    output::Count {
+        id: id.to_owned(),
+        entry_pack_location: db.location_by_id(id, buf),
+    }
 }
-
-// fn id_to_count<Find: crate::Find>(
-//     db: &impl crate::Find,
-//     id: &oid,
-// ) -> Result<output::Count, Error> {
-//     match obj.pack_location.as_ref().and_then(|l| db.pack_entry(l)) {
-//         Some(entry) if entry.version == version => {
-//             let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
-//             if pack_entry.header.is_base() {
-//                 output::Count {
-//                     id: id.to_owned(),
-//                     entry_pack_location: obj.pack_location.clone(),
-//                 }
-//             } else {
-//                 output::Count::from_data(id, &obj)
-//             }
-//         }
-//         _ => output::Count::from_data(id, &obj),
-//     }
-// }
 
 mod util {
     pub struct Chunks<I> {
