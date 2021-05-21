@@ -38,11 +38,11 @@ impl crate::Find for linked::Db {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             if let Some(compound::find::PackLocation {
-                bundle_index: pack_index,
+                bundle_index,
                 entry_index,
             }) = db.internal_find(id)
             {
-                let bundle = &db.bundles[pack_index];
+                let bundle = &db.bundles[bundle_index];
                 let pack_offset = bundle.index.pack_offset_at_index(entry_index);
                 let entry = bundle.pack.entry(pack_offset);
 
@@ -54,7 +54,7 @@ impl crate::Find for linked::Db {
                     .map(|entry_size| pack::bundle::Location {
                         pack_id: bundle.pack.id,
                         index_file_id: entry_index,
-                        entry_size,
+                        entry_size: entry.header_size() + entry_size,
                     });
             }
         }
