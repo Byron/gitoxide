@@ -53,7 +53,7 @@ pub enum Error {
 
 /// A way to uniquely identify the location of an object within a pack bundle
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub(crate) struct Location {
+pub struct Location {
     /// The id of the pack containing the object
     pub(crate) pack_id: u32,
     /// The index at which the object can be fonud in the index file

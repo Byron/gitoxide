@@ -1,5 +1,6 @@
 use crate::{find, pack, pack::data::output, FindExt};
 use git_features::{parallel, progress::Progress};
+use std::sync::Arc;
 
 /// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
 ///
@@ -32,7 +33,7 @@ use git_features::{parallel, progress::Progress};
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
 pub fn objects_to_entries_iter<Find, Cache>(
-    counts: impl AsRef<[output::Count]>,
+    counts: Vec<output::Count>,
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     _progress: impl Progress,
@@ -54,10 +55,10 @@ where
         matches!(version, pack::data::Version::V2),
         "currently we can only write version 2"
     );
-    let counts = counts.as_ref();
+    let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
-    let chunks = counts.chunks(chunk_size);
+    let chunks = util::Chunks::new(chunk_size, counts.len());
 
     parallel::reduce::Stepwise::new(
         chunks,
@@ -68,27 +69,65 @@ where
                 make_cache(), // cache to speed up pack operations
             )
         },
-        move |counts: &[output::Count], (buf, cache)| {
-            let mut out = Vec::new();
-            for count in counts.into_iter() {
-                out.push(match count.entry_pack_location {
-                    Some(ref location) => match output::Entry::from_pack_entry(location, count, version) {
-                        Some(entry) => entry,
-                        None => {
-                            let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                            output::Entry::from_data(count, &obj)
-                        }
-                    },
-                    None => {
-                        let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                        output::Entry::from_data(count, &obj)
-                    }
-                }?);
+        {
+            let counts = Arc::clone(&counts);
+            move |chunk: std::ops::Range<usize>, (buf, cache)| {
+                let mut out = Vec::new();
+                let chunk = &counts[chunk];
+                for count in chunk.into_iter() {
+                    out.push(
+                        match count.entry_pack_location.as_ref().and_then(|l| db.pack_entry(l)) {
+                            Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
+                                Some(entry) => entry,
+                                None => {
+                                    let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                                    output::Entry::from_data(count, &obj)
+                                }
+                            },
+                            None => {
+                                let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                                output::Entry::from_data(count, &obj)
+                            }
+                        }?,
+                    );
+                }
+                Ok(out)
             }
-            Ok(out)
         },
         parallel::reduce::IdentityWithResult::default(),
     )
+}
+
+mod util {
+    pub struct Chunks {
+        cursor: usize,
+        size: usize,
+        len: usize,
+    }
+
+    impl Chunks {
+        pub fn new(size: usize, total: usize) -> Self {
+            Chunks {
+                cursor: 0,
+                size,
+                len: total,
+            }
+        }
+    }
+
+    impl Iterator for Chunks {
+        type Item = std::ops::Range<usize>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.cursor >= self.len {
+                None
+            } else {
+                let range = self.cursor..(self.cursor + self.size).min(self.len);
+                self.cursor += self.size;
+                Some(range)
+            }
+        }
+    }
 }
 
 mod types {

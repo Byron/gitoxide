@@ -58,6 +58,7 @@ pub enum Error {
 }
 
 impl output::Entry {
+    /// TODO
     pub fn from_pack_entry(
         entry: find::PackEntry<'_>,
         count: &output::Count,
@@ -77,9 +78,9 @@ impl output::Entry {
         if pack_entry.header.is_base() {
             Some(Ok(output::Entry {
                 id: count.id.to_owned(),
-                object_kind: count.object_kind,
+                object_kind: pack_entry.header.to_kind().expect("valid object only"),
                 kind: output::entry::Kind::Base,
-                decompressed_size: count.decompressed_size,
+                decompressed_size: entry.data.len(),
                 compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
             }))
         } else {
@@ -91,7 +92,7 @@ impl output::Entry {
     pub fn from_data(count: &output::Count, obj: &data::Object<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
             id: count.id.to_owned(),
-            object_kind: count.object_kind,
+            object_kind: obj.kind,
             kind: Kind::Base,
             decompressed_size: obj.data.len(),
             compressed_data: {

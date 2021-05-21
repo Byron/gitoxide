@@ -11,12 +11,8 @@ mod count {
     pub struct Count {
         /// The hash of the object to write
         pub id: ObjectId,
-        /// The kind of packed object
-        pub object_kind: git_object::Kind,
-        /// The size in bytes needed once `data` gets decompressed
-        pub decompressed_size: usize,
         /// A way to locate a pack entry in the object database, only available if the object is in a pack.
-        pub(crate) entry_pack_location: Option<pack::bundle::Location>,
+        pub entry_pack_location: Option<pack::bundle::Location>,
     }
 
     impl Count {
@@ -24,8 +20,6 @@ mod count {
         pub fn from_data(oid: impl Into<ObjectId>, obj: &data::Object<'_>) -> Self {
             Count {
                 id: oid.into(),
-                object_kind: obj.kind,
-                decompressed_size: obj.data.len(),
                 entry_pack_location: obj.pack_location.clone(),
             }
         }

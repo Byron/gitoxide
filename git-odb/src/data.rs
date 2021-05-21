@@ -11,7 +11,7 @@ pub struct Object<'a> {
     /// decoded, decompressed data, owned by a backing store.
     pub data: &'a [u8],
     /// If `Some`, this object is from a pack whose pack location can be used to look up pack related information
-    pub(crate) pack_location: Option<pack::bundle::Location>,
+    pub pack_location: Option<pack::bundle::Location>,
 }
 
 impl<'a> Object<'a> {

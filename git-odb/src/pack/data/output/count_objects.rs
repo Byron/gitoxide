@@ -6,6 +6,7 @@ use git_object::immutable;
 
 /// Generate [`Entries`][output::Count] from input `objects` into `out` without attempting to apply any delta compression.
 /// TODO: update based on new counting mechanism
+/// TODO: Don't decode traversal all objects, provide info only if you have it. Massive duplication right now.
 ///
 /// * `objects`
 ///   * A list of objects to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
@@ -366,14 +367,12 @@ fn obj_to_count(
     id: &oid,
     obj: &crate::data::Object<'_>,
 ) -> output::Count {
-    match db.pack_entry(&obj) {
+    match obj.pack_location.as_ref().and_then(|l| db.pack_entry(l)) {
         Some(entry) if entry.version == version => {
             let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
             if pack_entry.header.is_base() {
                 output::Count {
                     id: id.to_owned(),
-                    object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                    decompressed_size: obj.data.len(),
                     entry_pack_location: obj.pack_location.clone(),
                 }
             } else {

@@ -25,16 +25,16 @@ pub trait Find {
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
 
-    /// Return the [`PackEntry`] for `object` if it is backed by a pack.
+    /// Return the [`PackEntry`] for `location` if it is backed by a pack.
     ///
-    /// Note that this is only in the interest of avoiding duplicate work during pack generation
-    /// as the input for this is an already decoded [`data::Object`] that is fully known.
+    /// Note that this is only in the interest of avoiding duplicate work during pack generation.
+    /// Pack locations can be obtained from a [`data::Object`].
     ///
     /// # Notes
     ///
     /// Custom implementations might be interested in providing their own meta-data with `object`,
     /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
-    fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>>;
+    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>>;
 }
 
 mod ext {
@@ -213,7 +213,7 @@ pub struct PackEntry<'a> {
 }
 
 mod find_impls {
-    use crate::{data, data::Object, find::PackEntry, pack};
+    use crate::{data::Object, find::PackEntry, pack};
     use git_hash::oid;
     use std::ops::Deref;
 
@@ -232,7 +232,7 @@ mod find_impls {
             self.deref().find(id, buffer, pack_cache)
         }
 
-        fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
+        fn pack_entry(&self, object: &pack::bundle::Location) -> Option<PackEntry<'_>> {
             self.deref().pack_entry(object)
         }
     }
@@ -252,8 +252,8 @@ mod find_impls {
             self.deref().find(id, buffer, pack_cache)
         }
 
-        fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
-            self.deref().pack_entry(object)
+        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            self.deref().pack_entry(location)
         }
     }
 }

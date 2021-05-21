@@ -1,4 +1,4 @@
-use crate::{compound, data, data::Object, find::PackEntry, linked, pack};
+use crate::{compound, data::Object, find::PackEntry, linked, pack};
 use git_hash::oid;
 
 impl crate::Find for linked::Db {
@@ -29,16 +29,11 @@ impl crate::Find for linked::Db {
         Ok(None)
     }
 
-    fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
-        object
-            .pack_location
-            .as_ref()
-            .and_then(|l| {
-                self.dbs
-                    .iter()
-                    .find_map(|db| db.packs.iter().find(|p| p.pack.id == l.pack_id))
-                    .map(|b| (b, l))
-            })
+    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+        self.dbs
+            .iter()
+            .find_map(|db| db.packs.iter().find(|p| p.pack.id == location.pack_id))
+            .map(|b| (b, location))
             .and_then(|(bundle, l)| {
                 let crc32 = bundle.index.crc32_at_index(l.index_file_id);
                 let pack_offset = bundle.index.pack_offset_at_index(l.index_file_id);
@@ -66,7 +61,7 @@ impl crate::Find for &linked::Db {
         (*self).find(id, buffer, pack_cache)
     }
 
-    fn pack_entry(&self, object: &data::Object<'_>) -> Option<PackEntry<'_>> {
-        (*self).pack_entry(object)
+    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+        (*self).pack_entry(location)
     }
 }
