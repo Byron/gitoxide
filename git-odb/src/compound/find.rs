@@ -10,6 +10,7 @@ pub enum Error {
     Pack(#[from] pack::data::decode_entry::Error),
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub(crate) struct PackLocation {
     pub pack_id: usize,
     pub entry_index: u32,

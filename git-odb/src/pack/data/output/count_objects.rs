@@ -1,13 +1,11 @@
 use crate::{pack, pack::data::output, FindExt};
+use dashmap::DashSet;
 use git_features::{hash, parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
+use git_object::immutable;
 
-/// Write all `objects` into `out` without attempting to apply any delta compression.
-/// TODO: Update this
-/// This allows objects to be written rather immediately.
-/// Objects are held in memory and compressed using DEFLATE, with those in-flight chunks of compressed
-/// objects being sent to the current thread for writing. No buffering of these objects is performed,
-/// allowing for natural back-pressure in case of slow writers.
+/// Generate [`Entries`][output::Count] from input `objects` into `out` without attempting to apply any delta compression.
+/// TODO: update based on new counting mechanism
 ///
 /// * `objects`
 ///   * A list of objects to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
@@ -15,24 +13,7 @@ use git_hash::{oid, ObjectId};
 ///   * a way to obtain progress information
 /// * `options`
 ///   * more configuration
-///
-/// _Returns_ the checksum of the pack
-///
-/// ## Discussion
-///
-/// ### Advantages
-///
-/// * Begins writing immediately and supports back-pressure.
-/// * Abstract over object databases and how input is provided.
-///
-/// ### Disadvantages
-///
-/// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
-/// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
-///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
-///  or keeping enough state to write a pack and then generate an index with recorded data.
-///
-pub fn objects_to_entries_iter<Find, Iter, Oid, Cache>(
+pub fn count_objects_iter<Find, Iter, Oid, Cache>(
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,
@@ -43,8 +24,8 @@ pub fn objects_to_entries_iter<Find, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<Find::Error>>>
-       + parallel::reduce::Finalize<Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<Find::Error>>>
+) -> impl Iterator<Item = Result<Vec<output::Count>, Error<Find::Error>>>
+       + parallel::reduce::Finalize<Reduce = parallel::reduce::IdentityWithResult<Vec<output::Count>, Error<Find::Error>>>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
@@ -103,7 +84,7 @@ where
                             let mut id = id.to_owned();
 
                             loop {
-                                push_obj_entry_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
+                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
                                 match obj.kind {
                                     Tree | Blob => break,
                                     Tag => {
@@ -132,7 +113,7 @@ where
                                             let obj = db
                                                 .find_existing(tree_id, buf1, cache)
                                                 .map_err(|_| Error::NotFound { oid: tree_id })?;
-                                            push_obj_entry_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
+                                            push_obj_count_unique(&mut out, seen_objs, &db, version, &tree_id, &obj)?;
                                             immutable::TreeIter::from_bytes(obj.data)
                                         };
 
@@ -156,7 +137,7 @@ where
                                                             oid: commit_id.to_owned(),
                                                         })?;
 
-                                                    push_obj_entry_unique(
+                                                    push_obj_count_unique(
                                                         &mut out,
                                                         seen_objs,
                                                         &db,
@@ -172,7 +153,7 @@ where
                                                     let parent_tree_obj = db
                                                         .find_existing(parent_tree_id, buf2, cache)
                                                         .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
-                                                    push_obj_entry_unique(
+                                                    push_obj_count_unique(
                                                         &mut out,
                                                         seen_objs,
                                                         &db,
@@ -198,7 +179,7 @@ where
                                             let obj = db
                                                 .find(id, buf2, cache)?
                                                 .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                            out.push(obj_to_entry(&db, version, id, &obj)?);
+                                            out.push(obj_to_count(&db, version, id, &obj)?);
                                         }
                                         break;
                                     }
@@ -210,7 +191,7 @@ where
                             let mut id: ObjectId = id.into();
                             let mut obj = obj;
                             loop {
-                                push_obj_entry_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
+                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj)?;
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
@@ -225,7 +206,7 @@ where
                                             let obj = db
                                                 .find(id, buf1, cache)?
                                                 .ok_or(Error::NotFound { oid: id.to_owned() })?;
-                                            out.push(obj_to_entry(&db, version, id, &obj)?);
+                                            out.push(obj_to_count(&db, version, id, &obj)?);
                                         }
                                         break;
                                     }
@@ -251,7 +232,7 @@ where
                                 }
                             }
                         }
-                        AsIs => push_obj_entry_unique(&mut out, seen_objs, &db, version, id, &obj)?,
+                        AsIs => push_obj_count_unique(&mut out, seen_objs, &db, version, id, &obj)?,
                     }
                 }
                 Ok(out)
@@ -264,10 +245,11 @@ where
 mod tree {
     pub mod changes {
         use dashmap::DashSet;
-        use git_diff::tree::visit::{Action, Change};
-        use git_diff::tree::Visit;
-        use git_hash::bstr::BStr;
-        use git_hash::ObjectId;
+        use git_diff::tree::{
+            visit::{Action, Change},
+            Visit,
+        };
+        use git_hash::{bstr::BStr, ObjectId};
         use std::collections::HashSet;
 
         pub struct AllNew<'a> {
@@ -364,8 +346,8 @@ mod tree {
     }
 }
 
-fn push_obj_entry_unique<Find>(
-    out: &mut Vec<output::Entry>,
+fn push_obj_count_unique<Find>(
+    out: &mut Vec<output::Count>,
     all_seen: &DashSet<ObjectId>,
     db: &Find,
     version: pack::data::Version,
@@ -377,17 +359,17 @@ where
 {
     let inserted = all_seen.insert(id.to_owned());
     if inserted {
-        out.push(obj_to_entry(db, version, id, obj)?);
+        out.push(obj_to_count(db, version, id, obj)?);
     }
     Ok(())
 }
 
-fn obj_to_entry<Find>(
+fn obj_to_count<Find>(
     db: &Find,
     version: pack::data::Version,
     id: &oid,
     obj: &crate::data::Object<'_>,
-) -> Result<output::Entry, Error<Find::Error>>
+) -> Result<output::Count, Error<Find::Error>>
 where
     Find: crate::Find,
 {
@@ -401,18 +383,18 @@ where
                 }
             }
             if pack_entry.header.is_base() {
-                output::Entry {
+                output::Count {
                     id: id.to_owned(),
                     object_kind: pack_entry.header.to_kind().expect("non-delta"),
-                    kind: output::entry::Kind::Base,
+                    entry_kind: output::entry::Kind::Base,
                     decompressed_size: obj.data.len(),
-                    compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
+                    entry_pack_location: None, //TODO Set it from what we know
                 }
             } else {
-                output::Entry::from_data(id, &obj).map_err(Error::NewEntry)?
+                output::Count::from_data(id, &obj).map_err(Error::NewEntry)?
             }
         }
-        _ => output::Entry::from_data(id, &obj).map_err(Error::NewEntry)?,
+        _ => output::Count::from_data(id, &obj).map_err(Error::NewEntry)?,
     })
 }
 
@@ -448,7 +430,7 @@ mod util {
 }
 
 mod types {
-    use crate::pack::data::output::entry;
+    use crate::pack::data::output::count;
     use git_hash::ObjectId;
 
     /// The way input objects are handled
@@ -524,9 +506,7 @@ mod types {
         #[error("Entry expected to have hash {expected}, but it had {actual}")]
         PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
         #[error(transparent)]
-        NewEntry(entry::Error),
+        NewEntry(count::Error),
     }
 }
-use dashmap::DashSet;
-use git_object::immutable;
 pub use types::{Error, ObjectExpansion, Options};

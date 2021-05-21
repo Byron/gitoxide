@@ -9,6 +9,15 @@ fn size_of_entry() {
     )
 }
 
+#[test]
+fn size_of_count() {
+    assert_eq!(
+        std::mem::size_of::<output::Count>(),
+        80,
+        "The size of the structure shouldn't change unexpectedly"
+    )
+}
+
 mod entries {
     mod simple_compression {
         use crate::{fixture_path, odb::hex_to_id};
