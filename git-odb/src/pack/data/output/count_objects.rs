@@ -1,4 +1,4 @@
-use crate::{pack, pack::data::output, FindExt};
+use crate::{find, pack, pack::data::output, FindExt};
 use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
@@ -25,8 +25,10 @@ pub fn count_objects_iter<Find, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Count>, Error<Find::Error>>>
-       + parallel::reduce::Finalize<Reduce = parallel::reduce::IdentityWithResult<Vec<output::Count>, Error<Find::Error>>>
+) -> impl Iterator<Item = Result<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>>
+       + parallel::reduce::Finalize<
+    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>,
+>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
@@ -75,9 +77,7 @@ where
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
-                    let obj = db
-                        .find(id, buf1, cache)?
-                        .ok_or_else(|| Error::NotFound { oid: id.to_owned() })?;
+                    let obj = db.find_existing(id, buf1, cache)?;
                     match input_object_expansion {
                         TreeAdditionsComparedToAncestor => {
                             use git_object::Kind::*;
@@ -92,9 +92,7 @@ where
                                         id = immutable::TagIter::from_bytes(obj.data)
                                             .target_id()
                                             .expect("every tag has a target");
-                                        obj = db
-                                            .find_existing(id, buf1, cache)
-                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
+                                        obj = db.find_existing(id, buf1, cache)?;
                                         continue;
                                     }
                                     Commit => {
@@ -111,9 +109,7 @@ where
                                                     Err(err) => return Err(Error::CommitDecode(err)),
                                                 }
                                             }
-                                            let obj = db
-                                                .find_existing(tree_id, buf1, cache)
-                                                .map_err(|_| Error::NotFound { oid: tree_id })?;
+                                            let obj = db.find_existing(tree_id, buf1, cache)?;
                                             push_obj_count_unique(&mut out, seen_objs, &db, version, &tree_id, &obj);
                                             immutable::TreeIter::from_bytes(obj.data)
                                         };
@@ -132,11 +128,7 @@ where
                                             changes_delegate.clear();
                                             for commit_id in &parent_commit_ids {
                                                 let parent_tree_id = {
-                                                    let parent_commit_obj = db
-                                                        .find_existing(commit_id, buf2, cache)
-                                                        .map_err(|_| Error::NotFound {
-                                                            oid: commit_id.to_owned(),
-                                                        })?;
+                                                    let parent_commit_obj = db.find_existing(commit_id, buf2, cache)?;
 
                                                     push_obj_count_unique(
                                                         &mut out,
@@ -151,9 +143,8 @@ where
                                                         .expect("every commit has a tree")
                                                 };
                                                 let parent_tree = {
-                                                    let parent_tree_obj = db
-                                                        .find_existing(parent_tree_id, buf2, cache)
-                                                        .map_err(|_| Error::NotFound { oid: parent_tree_id })?;
+                                                    let parent_tree_obj =
+                                                        db.find_existing(parent_tree_id, buf2, cache)?;
                                                     push_obj_count_unique(
                                                         &mut out,
                                                         seen_objs,
@@ -177,9 +168,7 @@ where
                                             &changes_delegate.objects
                                         };
                                         for id in objects.iter() {
-                                            let obj = db
-                                                .find(id, buf2, cache)?
-                                                .ok_or(Error::NotFound { oid: id.to_owned() })?;
+                                            let obj = db.find_existing(id, buf2, cache)?;
                                             out.push(obj_to_count(&db, version, id, &obj));
                                         }
                                         break;
@@ -204,9 +193,7 @@ where
                                         )
                                         .map_err(Error::TreeTraverse)?;
                                         for id in traverse_delegate.objects.iter() {
-                                            let obj = db
-                                                .find(id, buf1, cache)?
-                                                .ok_or(Error::NotFound { oid: id.to_owned() })?;
+                                            let obj = db.find_existing(id, buf1, cache)?;
                                             out.push(obj_to_count(&db, version, id, &obj));
                                         }
                                         break;
@@ -215,9 +202,7 @@ where
                                         id = immutable::CommitIter::from_bytes(obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree");
-                                        obj = db
-                                            .find_existing(id, buf1, cache)
-                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
+                                        obj = db.find_existing(id, buf1, cache)?;
                                         continue;
                                     }
                                     Blob => break,
@@ -225,9 +210,7 @@ where
                                         id = immutable::TagIter::from_bytes(obj.data)
                                             .target_id()
                                             .expect("every tag has a target");
-                                        obj = db
-                                            .find_existing(id, buf1, cache)
-                                            .map_err(|_| Error::NotFound { oid: id.to_owned() })?;
+                                        obj = db.find_existing(id, buf1, cache)?;
                                         continue;
                                     }
                                 }
@@ -383,6 +366,26 @@ fn obj_to_count(
     }
 }
 
+// fn id_to_count<Find: crate::Find>(
+//     db: &impl crate::Find,
+//     id: &oid,
+// ) -> Result<output::Count, Error> {
+//     match obj.pack_location.as_ref().and_then(|l| db.pack_entry(l)) {
+//         Some(entry) if entry.version == version => {
+//             let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
+//             if pack_entry.header.is_base() {
+//                 output::Count {
+//                     id: id.to_owned(),
+//                     entry_pack_location: obj.pack_location.clone(),
+//                 }
+//             } else {
+//                 output::Count::from_data(id, &obj)
+//             }
+//         }
+//         _ => output::Count::from_data(id, &obj),
+//     }
+// }
+
 mod util {
     pub struct Chunks<I> {
         pub size: usize,
@@ -415,8 +418,6 @@ mod util {
 }
 
 mod types {
-    use git_hash::ObjectId;
-
     /// The way input objects are handled
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -473,20 +474,18 @@ mod types {
     /// The error returned by the pack generation function [`to_entry_iter()`][crate::pack::data::output::objects_to_entries_iter()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<LocateErr>
+    pub enum Error<FindErr>
     where
-        LocateErr: std::error::Error + 'static,
+        FindErr: std::error::Error + 'static,
     {
         #[error(transparent)]
         CommitDecode(git_object::immutable::object::decode::Error),
         #[error(transparent)]
-        Find(#[from] LocateErr),
+        FindExisting(#[from] FindErr),
         #[error(transparent)]
         TreeTraverse(git_traverse::tree::breadthfirst::Error),
         #[error(transparent)]
         TreeChanges(git_diff::tree::changes::Error),
-        #[error("Object id {oid} wasn't found in object database")]
-        NotFound { oid: ObjectId },
     }
 }
 pub use types::{Error, ObjectExpansion, Options};
