@@ -34,7 +34,7 @@ pub trait Find {
     ///
     /// Custom implementations might be interested in providing their own meta-data with `object`,
     /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
-    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>>;
+    fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>>;
 }
 
 mod ext {
@@ -232,8 +232,8 @@ mod find_impls {
             self.deref().find(id, buffer, pack_cache)
         }
 
-        fn pack_entry(&self, object: &pack::bundle::Location) -> Option<PackEntry<'_>> {
-            self.deref().pack_entry(object)
+        fn pack_entry_by_location(&self, object: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            self.deref().pack_entry_by_location(object)
         }
     }
 
@@ -252,8 +252,8 @@ mod find_impls {
             self.deref().find(id, buffer, pack_cache)
         }
 
-        fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
-            self.deref().pack_entry(location)
+        fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+            self.deref().pack_entry_by_location(location)
         }
     }
 }

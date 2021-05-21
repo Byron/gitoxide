@@ -75,21 +75,23 @@ where
                 let mut out = Vec::new();
                 let chunk = &counts[chunk];
                 for count in chunk.into_iter() {
-                    out.push(
-                        match count.entry_pack_location.as_ref().and_then(|l| db.pack_entry(l)) {
-                            Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
-                                Some(entry) => entry,
-                                None => {
-                                    let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                                    output::Entry::from_data(count, &obj)
-                                }
-                            },
+                    out.push(match count
+                        .entry_pack_location
+                        .as_ref()
+                        .and_then(|l| db.pack_entry_by_location(l))
+                    {
+                        Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
+                            Some(entry) => entry,
                             None => {
                                 let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
                                 output::Entry::from_data(count, &obj)
                             }
-                        }?,
-                    );
+                        },
+                        None => {
+                            let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                            output::Entry::from_data(count, &obj)
+                        }
+                    }?);
                 }
                 Ok(out)
             }

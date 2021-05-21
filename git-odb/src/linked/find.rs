@@ -29,7 +29,7 @@ impl crate::Find for linked::Db {
         Ok(None)
     }
 
-    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+    fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
         self.dbs
             .iter()
             .find_map(|db| db.packs.iter().find(|p| p.pack.id == location.pack_id))
@@ -61,7 +61,7 @@ impl crate::Find for &linked::Db {
         (*self).find(id, buffer, pack_cache)
     }
 
-    fn pack_entry(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
-        (*self).pack_entry(location)
+    fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+        (*self).pack_entry_by_location(location)
     }
 }

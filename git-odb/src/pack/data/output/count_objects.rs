@@ -350,7 +350,7 @@ fn obj_to_count(
     id: &oid,
     obj: &crate::data::Object<'_>,
 ) -> output::Count {
-    match obj.pack_location.as_ref().and_then(|l| db.pack_entry(l)) {
+    match obj.pack_location.as_ref().and_then(|l| db.pack_entry_by_location(l)) {
         Some(entry) if entry.version == version => {
             let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
             if pack_entry.header.is_base() {
