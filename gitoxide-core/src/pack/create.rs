@@ -141,17 +141,33 @@ pub fn create(
     };
 
     progress.inc();
+    let mut entries_progress = progress.add_child("entries written");
+    let mut write_progress = progress.add_child("writing");
+    write_progress.init(None, git_features::progress::bytes());
+    let start = Instant::now();
+
     let mut output_iter = pack::data::output::EntriesToBytesIter::new(
-        entries,
+        entries.inspect(|e| {
+            if let Ok(entries) = e {
+                entries_progress.inc_by(entries.len())
+            }
+        }),
         out,
         num_objects as u32,
         pack::data::Version::default(),
         git_hash::Kind::default(),
     );
     while let Some(io_res) = output_iter.next() {
-        let _written = io_res?;
+        if git_features::interrupt::is_triggered() {
+            bail!("Cancelled by user")
+        }
+        let written = io_res?;
+        write_progress.inc_by(written as usize);
     }
     output_iter.into_write().flush()?;
+
+    write_progress.show_throughput(start);
+    entries_progress.show_throughput(start);
     Ok(())
 }
 
