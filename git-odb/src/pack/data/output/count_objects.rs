@@ -85,7 +85,7 @@ where
                             let mut id = id.to_owned();
 
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj);
+                                push_obj_count_unique(&mut out, seen_objs, &id, &obj);
                                 match obj.kind {
                                     Tree | Blob => break,
                                     Tag => {
@@ -110,7 +110,7 @@ where
                                                 }
                                             }
                                             let obj = db.find_existing(tree_id, buf1, cache)?;
-                                            push_obj_count_unique(&mut out, seen_objs, &db, version, &tree_id, &obj);
+                                            push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj);
                                             immutable::TreeIter::from_bytes(obj.data)
                                         };
 
@@ -133,8 +133,6 @@ where
                                                     push_obj_count_unique(
                                                         &mut out,
                                                         seen_objs,
-                                                        &db,
-                                                        version,
                                                         &commit_id,
                                                         &parent_commit_obj,
                                                     );
@@ -148,8 +146,6 @@ where
                                                     push_obj_count_unique(
                                                         &mut out,
                                                         seen_objs,
-                                                        &db,
-                                                        version,
                                                         &parent_tree_id,
                                                         &parent_tree_obj,
                                                     );
@@ -169,7 +165,7 @@ where
                                         };
                                         for id in objects.iter() {
                                             let obj = db.find_existing(id, buf2, cache)?;
-                                            out.push(obj_to_count(&db, version, id, &obj));
+                                            out.push(obj_to_count(id, &obj));
                                         }
                                         break;
                                     }
@@ -181,7 +177,7 @@ where
                             let mut id: ObjectId = id.into();
                             let mut obj = obj;
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &db, version, &id, &obj);
+                                push_obj_count_unique(&mut out, seen_objs, &id, &obj);
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
@@ -194,7 +190,7 @@ where
                                         .map_err(Error::TreeTraverse)?;
                                         for id in traverse_delegate.objects.iter() {
                                             let obj = db.find_existing(id, buf1, cache)?;
-                                            out.push(obj_to_count(&db, version, id, &obj));
+                                            out.push(obj_to_count(id, &obj));
                                         }
                                         break;
                                     }
@@ -216,7 +212,7 @@ where
                                 }
                             }
                         }
-                        AsIs => push_obj_count_unique(&mut out, seen_objs, &db, version, id, &obj),
+                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj),
                     }
                 }
                 Ok(out)
@@ -333,37 +329,17 @@ mod tree {
 fn push_obj_count_unique(
     out: &mut Vec<output::Count>,
     all_seen: &DashSet<ObjectId>,
-    db: &impl crate::Find,
-    version: pack::data::Version,
     id: &oid,
     obj: &crate::data::Object<'_>,
 ) {
     let inserted = all_seen.insert(id.to_owned());
     if inserted {
-        out.push(obj_to_count(db, version, id, obj));
+        out.push(output::Count::from_data(id, &obj));
     }
 }
 
-fn obj_to_count(
-    db: &impl crate::Find,
-    version: pack::data::Version,
-    id: &oid,
-    obj: &crate::data::Object<'_>,
-) -> output::Count {
-    match obj.pack_location.as_ref().and_then(|l| db.pack_entry_by_location(l)) {
-        Some(entry) if entry.version == version => {
-            let pack_entry = pack::data::Entry::from_bytes(entry.data, 0);
-            if pack_entry.header.is_base() {
-                output::Count {
-                    id: id.to_owned(),
-                    entry_pack_location: obj.pack_location.clone(),
-                }
-            } else {
-                output::Count::from_data(id, &obj)
-            }
-        }
-        _ => output::Count::from_data(id, &obj),
-    }
+fn obj_to_count(id: &oid, obj: &crate::data::Object<'_>) -> output::Count {
+    output::Count::from_data(id, &obj)
 }
 
 // fn id_to_count<Find: crate::Find>(
