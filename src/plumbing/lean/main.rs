@@ -25,9 +25,11 @@ pub fn main() -> Result<()> {
             let has_tips = !tips.is_empty();
             let stdout = stdout();
             let stdout_lock = stdout.lock();
+            #[cfg(feature = "atty")]
             if atty::is(atty::Stream::Stdout) {
                 anyhow::bail!("Refusing to output pack data stream to stdout.")
             }
+
             core::pack::create(
                 repository.unwrap_or_else(|| PathBuf::from(".")),
                 tips,
