@@ -37,7 +37,7 @@ where
                 .dbs
                 .get(db_index)
                 .expect("at least one db or no linked::Db at all");
-            if db.packs.is_empty() {
+            if db.bundles.is_empty() {
                 DbState::Loose { iter: db.loose.iter() }
             } else {
                 DbState::default()
@@ -65,7 +65,7 @@ where
                 entry_index,
             } => {
                 let db = &db.dbs[self.db_index];
-                match db.packs.get(*pack_index) {
+                match db.bundles.get(*pack_index) {
                     Some(bundle) => {
                         if *entry_index < bundle.index.num_objects() {
                             let oid = bundle.index.oid_at_index(*entry_index).to_owned();
@@ -97,7 +97,7 @@ where
     fn size_hint(&self) -> (usize, Option<usize>) {
         let packed_objects = self.db.borrow().dbs.iter().fold(0usize, |dbc, db| {
             dbc.saturating_add(
-                db.packs
+                db.bundles
                     .iter()
                     .fold(0, |pc, pack| pc.saturating_add(pack.index.num_objects() as usize)),
             )

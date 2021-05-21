@@ -12,7 +12,7 @@ pub enum Error {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub(crate) struct PackLocation {
-    pub pack_id: usize,
+    pub bundle_index: usize,
     pub entry_index: u32,
 }
 
@@ -27,7 +27,7 @@ impl compound::Db {
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Error> {
         let id = id.as_ref();
-        for pack in &self.packs {
+        for pack in &self.bundles {
             if let Some(idx) = pack.internal_find_pack_index(id) {
                 let object = pack.internal_get_object_by_index(idx, buffer, pack_cache)?;
                 return Ok(Some(object));
@@ -46,10 +46,10 @@ impl compound::Db {
     /// once polonius is stable.)
     pub(crate) fn internal_find(&self, id: impl AsRef<git_hash::oid>) -> Option<PackLocation> {
         let id = id.as_ref();
-        for (pack_idx, pack) in self.packs.iter().enumerate() {
+        for (bundle_index, pack) in self.bundles.iter().enumerate() {
             if let Some(idx) = pack.internal_find_pack_index(id) {
                 return Some(PackLocation {
-                    pack_id: pack_idx,
+                    bundle_index,
                     entry_index: idx,
                 });
             }
@@ -64,6 +64,6 @@ impl compound::Db {
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<data::Object<'a>, pack::data::decode_entry::Error> {
-        self.packs[pack_index].internal_get_object_by_index(object_index, buffer, pack_cache)
+        self.bundles[pack_index].internal_get_object_by_index(object_index, buffer, pack_cache)
     }
 }

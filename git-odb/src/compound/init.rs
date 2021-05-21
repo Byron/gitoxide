@@ -44,7 +44,7 @@ impl compound::Db {
 
         Ok(compound::Db {
             loose: loose::Db::at(loose_objects),
-            packs,
+            bundles: packs,
         })
     }
 }

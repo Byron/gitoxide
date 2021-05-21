@@ -81,6 +81,6 @@ mod init {
     fn has_packs() {
         let db = db();
         assert_eq!(db.dbs.len(), 1);
-        assert_eq!(db.dbs[0].packs.len(), 3)
+        assert_eq!(db.dbs[0].bundles.len(), 3)
     }
 }

@@ -10,7 +10,7 @@ mod init {
 
     #[test]
     fn has_packs() {
-        assert_eq!(db().packs.len(), 3)
+        assert_eq!(db().bundles.len(), 3)
     }
 }
 

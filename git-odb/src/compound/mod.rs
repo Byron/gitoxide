@@ -13,5 +13,5 @@ pub struct Db {
     /// A loose object database into which new objects are written
     pub loose: loose::Db,
     /// All packs in the `objects/packs` directory
-    pub packs: Vec<pack::Bundle>,
+    pub bundles: Vec<pack::Bundle>,
 }

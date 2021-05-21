@@ -25,6 +25,12 @@ pub trait Find {
         pack_cache: &mut impl crate::pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
 
+    /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
+    /// holding the object.
+    ///
+    /// _Note_ that the object database may have no notion of packs and thus always returns `None`.
+    fn location_by_id(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location>;
+
     /// Return the [`PackEntry`] for `location` if it is backed by a pack.
     ///
     /// Note that this is only in the interest of avoiding duplicate work during pack generation.
@@ -213,6 +219,7 @@ pub struct PackEntry<'a> {
 }
 
 mod find_impls {
+    use crate::pack::bundle::Location;
     use crate::{data::Object, find::PackEntry, pack};
     use git_hash::oid;
     use std::ops::Deref;
@@ -230,6 +237,10 @@ mod find_impls {
             pack_cache: &mut impl pack::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
             self.deref().find(id, buffer, pack_cache)
+        }
+
+        fn location_by_id(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+            self.deref().location_by_id(id, buf)
         }
 
         fn pack_entry_by_location(&self, object: &pack::bundle::Location) -> Option<PackEntry<'_>> {
@@ -250,6 +261,10 @@ mod find_impls {
             pack_cache: &mut impl pack::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
             self.deref().find(id, buffer, pack_cache)
+        }
+
+        fn location_by_id(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+            self.deref().location_by_id(id, buf)
         }
 
         fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {

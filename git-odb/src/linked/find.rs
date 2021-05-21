@@ -1,5 +1,7 @@
+use crate::pack::bundle::Location;
 use crate::{compound, data::Object, find::PackEntry, linked, pack};
 use git_hash::oid;
+use std::convert::TryInto;
 
 impl crate::Find for linked::Db {
     type Error = compound::find::Error;
@@ -13,7 +15,10 @@ impl crate::Find for linked::Db {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             match db.internal_find(id) {
-                Some(compound::find::PackLocation { pack_id, entry_index }) => {
+                Some(compound::find::PackLocation {
+                    bundle_index: pack_id,
+                    entry_index,
+                }) => {
                     return db
                         .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
                         .map(Some)
@@ -29,10 +34,37 @@ impl crate::Find for linked::Db {
         Ok(None)
     }
 
+    fn location_by_id(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {
+        let id = id.as_ref();
+        for db in self.dbs.iter() {
+            if let Some(compound::find::PackLocation {
+                bundle_index: pack_index,
+                entry_index,
+            }) = db.internal_find(id)
+            {
+                let bundle = &db.bundles[pack_index];
+                let pack_offset = bundle.index.pack_offset_at_index(entry_index);
+                let entry = bundle.pack.entry(pack_offset);
+
+                buf.resize(entry.decompressed_size.try_into().expect("representable szie"), 0);
+                return bundle
+                    .pack
+                    .decompress_entry(&entry, buf)
+                    .ok()
+                    .map(|entry_size| pack::bundle::Location {
+                        pack_id: bundle.pack.id,
+                        index_file_id: entry_index,
+                        entry_size,
+                    });
+            }
+        }
+        None
+    }
+
     fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
         self.dbs
             .iter()
-            .find_map(|db| db.packs.iter().find(|p| p.pack.id == location.pack_id))
+            .find_map(|db| db.bundles.iter().find(|p| p.pack.id == location.pack_id))
             .map(|b| (b, location))
             .and_then(|(bundle, l)| {
                 let crc32 = bundle.index.crc32_at_index(l.index_file_id);
@@ -59,6 +91,10 @@ impl crate::Find for &linked::Db {
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<Object<'a>>, Self::Error> {
         (*self).find(id, buffer, pack_cache)
+    }
+
+    fn location_by_id(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+        (*self).location_by_id(id, buf)
     }
 
     fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
