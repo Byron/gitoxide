@@ -3,6 +3,7 @@ use git_features::progress::Progress;
 use git_hash::ObjectId;
 use git_object::bstr::ByteVec;
 use git_odb::{linked, pack, FindExt};
+use std::time::Instant;
 use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -94,9 +95,10 @@ pub fn create(
 
     let chunk_size = 200;
     progress.init(Some(3), git_features::progress::steps());
-    let mut count_progress = progress.add_child("counting");
-    count_progress.init(None, git_features::progress::count("objects"));
+    let start = Instant::now();
     let counts = {
+        let mut count_progress = progress.add_child("counting");
+        count_progress.init(None, git_features::progress::count("objects"));
         let counts_iter = pack::data::output::count_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
@@ -117,8 +119,10 @@ pub fn create(
             count_progress.inc_by(c.len());
             counts.extend(c.into_iter());
         }
+        count_progress.show_throughput(start);
         counts
     };
+
     progress.inc();
     let num_objects = counts.len();
     let entries = pack::data::output::objects_to_entries_iter(
