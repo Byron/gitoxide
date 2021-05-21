@@ -5,7 +5,7 @@ use std::{fs, io};
 
 /// An iterator over [`Entries`][input::Entry] in a byte stream.
 ///
-/// The iterator used as part of [Bundle::write_stream_to_directory(…)][pack::Bundle::write_stream_to_directory()].
+/// The iterator used as part of [Bundle::write_to_directory(…)][pack::Bundle::write_to_directory()].
 pub struct BytesToEntriesIter<R> {
     read: R,
     decompressor: Option<Box<Decompress>>,
