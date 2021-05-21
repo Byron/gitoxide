@@ -120,6 +120,7 @@ pub fn create(
             counts.extend(c.into_iter());
         }
         progress.show_throughput(start);
+        counts.shrink_to_fit();
         counts
     };
 
