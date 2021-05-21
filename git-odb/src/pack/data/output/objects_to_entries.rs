@@ -74,7 +74,7 @@ where
             move |chunk: std::ops::Range<usize>, (buf, cache)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk];
-                for count in chunk.into_iter() {
+                for count in chunk {
                     out.push(match count
                         .entry_pack_location
                         .as_ref()
