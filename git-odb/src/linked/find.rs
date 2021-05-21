@@ -1,7 +1,6 @@
 use crate::pack::bundle::Location;
 use crate::{compound, data::Object, find::PackEntry, linked, pack};
 use git_hash::oid;
-use std::convert::TryInto;
 
 impl crate::Find for linked::Db {
     type Error = compound::find::Error;
@@ -46,16 +45,21 @@ impl crate::Find for linked::Db {
                 let pack_offset = bundle.index.pack_offset_at_index(entry_index);
                 let entry = bundle.pack.entry(pack_offset);
 
-                buf.resize(entry.decompressed_size.try_into().expect("representable szie"), 0);
-                return bundle
-                    .pack
-                    .decompress_entry(&entry, buf)
-                    .ok()
-                    .map(|entry_size| pack::bundle::Location {
-                        pack_id: bundle.pack.id,
-                        index_file_id: entry_index,
-                        entry_size: entry.header_size() + entry_size,
-                    });
+                let offset_index = bundle
+                    .sorted_offsets
+                    .binary_search(&pack_offset)
+                    .expect("a perfect match")
+                    + 1;
+                let entry_size = if offset_index == bundle.pack.num_objects() as usize {
+                    bundle.pack.pack_end() as u64
+                } else {
+                    bundle.sorted_offsets[offset_index]
+                } - entry.data_offset;
+                Some(pack::bundle::Location {
+                    pack_id: bundle.pack.id,
+                    index_file_id: entry_index,
+                    entry_size: entry.header_size() + entry_size as usize,
+                });
             }
         }
         None

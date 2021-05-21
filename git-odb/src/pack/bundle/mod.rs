@@ -75,6 +75,7 @@ pub struct Bundle {
     pub pack: pack::data::File,
     /// The index file corresponding to `pack`
     pub index: pack::index::File,
+    pub(crate) sorted_offsets: Vec<u64>,
 }
 
 /// Initialization
@@ -97,15 +98,31 @@ impl TryFrom<&Path> for Bundle {
             .and_then(|e| e.to_str())
             .ok_or_else(|| Error::InvalidPath(path.to_owned()))?;
         Ok(match ext {
-            "idx" => Self {
-                index: pack::index::File::at(path)?,
-                pack: pack::data::File::at(path.with_extension("pack"))?,
-            },
-            "pack" => Self {
-                pack: pack::data::File::at(path)?,
-                index: pack::index::File::at(path.with_extension("idx"))?,
-            },
+            "idx" => {
+                let index = pack::index::File::at(path)?;
+                let sorted_offsets = offsets_from_index(&index);
+                Self {
+                    index,
+                    pack: pack::data::File::at(path.with_extension("pack"))?,
+                    sorted_offsets,
+                }
+            }
+            "pack" => {
+                let index = pack::index::File::at(path.with_extension("idx"))?;
+                let sorted_offsets = offsets_from_index(&index);
+                Self {
+                    pack: pack::data::File::at(path)?,
+                    index,
+                    sorted_offsets,
+                }
+            }
             _ => return Err(Error::InvalidPath(path.to_owned())),
         })
     }
+}
+
+fn offsets_from_index(index: &pack::index::File) -> Vec<u64> {
+    let mut out = index.iter().map(|e| e.pack_offset).collect::<Vec<_>>();
+    out.sort();
+    out
 }
