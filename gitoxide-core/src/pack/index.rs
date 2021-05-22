@@ -67,8 +67,13 @@ pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 2..=3;
 
+pub enum PathOrRead {
+    Path(PathBuf),
+    Read(Box<dyn std::io::Read + Send + 'static>),
+}
+
 pub fn from_pack(
-    pack: Option<PathBuf>,
+    pack: PathOrRead,
     directory: Option<PathBuf>,
     progress: impl Progress,
     ctx: Context<impl io::Write>,
@@ -82,15 +87,12 @@ pub fn from_pack(
     let out = ctx.out;
     let format = ctx.format;
     let res = match pack {
-        Some(pack) => {
+        PathOrRead::Path(pack) => {
             let pack_len = pack.metadata()?.len();
             let pack_file = fs::File::open(pack)?;
             pack::Bundle::write_to_directory_eagerly(pack_file, Some(pack_len), directory, progress, options)
         }
-        None => {
-            let stdin = io::stdin();
-            pack::Bundle::write_to_directory_eagerly(stdin, None, directory, progress, options)
-        }
+        PathOrRead::Read(input) => pack::Bundle::write_to_directory_eagerly(input, None, directory, progress, options),
     }
     .with_context(|| "Failed to write pack and index")?;
     match format {

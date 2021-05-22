@@ -90,9 +90,19 @@ pub fn main() -> Result<()> {
             pack_path,
             directory,
         }) => {
+            use gitoxide_core::pack::index::PathOrRead;
             let (_handle, progress) = prepare(verbose, "pack-explode", core::pack::index::PROGRESS_RANGE);
+            let input = if let Some(path) = pack_path {
+                PathOrRead::Path(path)
+            } else {
+                #[cfg(feature = "atty")]
+                if atty::is(atty::Stream::Stdin) {
+                    anyhow::bail!("Refusing to read from standard input as no path is given, but it's a terminal.")
+                }
+                PathOrRead::Read(Box::new(std::io::stdin()))
+            };
             core::pack::index::from_pack(
-                pack_path,
+                input,
                 directory,
                 DoOrDiscard::from(progress),
                 core::pack::index::Context {

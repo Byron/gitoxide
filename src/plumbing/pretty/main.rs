@@ -31,7 +31,6 @@ pub fn main() -> Result<()> {
         } => {
             let has_tips = !tips.is_empty();
             let has_tui = progress;
-            #[cfg(feature = "atty")]
             if atty::is(if has_tui {
                 atty::Stream::Stderr
             } else {
@@ -123,8 +122,17 @@ pub fn main() -> Result<()> {
             progress_keep_open,
             core::pack::index::PROGRESS_RANGE,
             move |progress, out, _err| {
+                use gitoxide_core::pack::index::PathOrRead;
+                let input = if let Some(path) = pack_path {
+                    PathOrRead::Path(path)
+                } else {
+                    if atty::is(atty::Stream::Stdin) {
+                        anyhow::bail!("Refusing to read from standard input as no path is given, but it's a terminal.")
+                    }
+                    PathOrRead::Read(Box::new(std::io::stdin()))
+                };
                 core::pack::index::from_pack(
-                    pack_path,
+                    input,
                     directory,
                     git_features::progress::DoOrDiscard::from(progress),
                     core::pack::index::Context {
