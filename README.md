@@ -32,6 +32,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] [pack explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
         * [x] verify written objects (by reading them back from disk)
       * [x] [pack-receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
+      * [x] **pack-create** - create a pack from given objects or tips of the commit graph.
       * [ ] **pack-send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
             for consumption by **pack-receive** or _git-receive-pack_
     * **pack-index**
