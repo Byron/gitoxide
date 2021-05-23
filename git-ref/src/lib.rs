@@ -3,4 +3,4 @@
 #![deny(missing_docs, rust_2018_idioms)]
 
 ///
-pub mod validated;
+pub mod validate;

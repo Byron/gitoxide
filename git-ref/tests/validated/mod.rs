@@ -1,13 +1,13 @@
 mod name {
     mod valid {
         use bstr::ByteSlice;
-        use git_ref::validated;
+        use git_ref::validate;
 
         macro_rules! mktest {
             ($name:ident, $input:expr) => {
                 #[test]
                 fn $name() {
-                    assert!(validated::name($input.as_bstr()).is_ok())
+                    assert!(validate::name($input.as_bstr()).is_ok())
                 }
             };
         }
@@ -26,14 +26,14 @@ mod name {
 
     mod invalid {
         use bstr::ByteSlice;
-        use git_ref::validated;
+        use git_ref::validate;
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $expected:ident) => {
                 #[test]
                 fn $name() {
-                    match validated::name($input.as_bstr()) {
-                        Err(validated::NameError::$expected) => {}
+                    match validate::name($input.as_bstr()) {
+                        Err(validate::NameError::$expected) => {}
                         got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                     }
                 }
@@ -43,8 +43,8 @@ mod name {
             ($name:ident, $input:literal) => {
                 #[test]
                 fn $name() {
-                    match validated::name($input.as_bstr()) {
-                        Err(validated::NameError::InvalidByte(_)) => {}
+                    match validate::name($input.as_bstr()) {
+                        Err(validate::NameError::InvalidByte(_)) => {}
                         got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                     }
                 }
