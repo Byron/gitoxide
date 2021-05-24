@@ -99,7 +99,7 @@ quick_error! {
 #[allow(clippy::large_enum_variant)]
 enum OutputWriter {
     Loose(loose::Backend),
-    Sink(git_odb::Sink),
+    Sink(git_odb::store::Sink),
 }
 
 impl git_odb::write::Write for OutputWriter {
@@ -135,7 +135,7 @@ impl OutputWriter {
     fn new(path: Option<impl AsRef<Path>>, compress: bool) -> Self {
         match path {
             Some(path) => OutputWriter::Loose(loose::Backend::at(path.as_ref())),
-            None => OutputWriter::Sink(git_odb::sink().compress(compress)),
+            None => OutputWriter::Sink(git_odb::store::sink().compress(compress)),
         }
     }
 }

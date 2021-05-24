@@ -20,7 +20,6 @@
 //!   * A database containing various [`compound::Backends`][store::compound::Backend] as gathered from `alternates` files.
 
 pub use find::{Find, FindExt};
-pub use sink::{sink, Sink};
 pub use write::Write;
 
 mod zlib;
@@ -31,7 +30,6 @@ pub mod store;
 pub mod pack;
 
 pub(crate) mod hash;
-mod sink;
 
 pub mod data;
 

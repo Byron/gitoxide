@@ -20,5 +20,4 @@ pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 }
 
 pub mod pack;
-pub mod sink;
 pub mod store;
