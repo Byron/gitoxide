@@ -19,25 +19,24 @@
 //! * [`linked::Db`]
 //!   * A database containing various [`compound::Dbs`][compound::Db] as gathered from `alternates` files.
 
+pub use find::{Find, FindExt};
+pub use sink::{sink, Sink};
+pub use write::Write;
+
 mod zlib;
 
-pub mod compound;
 pub mod linked;
 ///
 pub mod store;
 
 pub mod pack;
 
-mod sink;
-pub use sink::{sink, Sink};
-
 pub(crate) mod hash;
+mod sink;
 
 pub mod data;
 
 ///
 pub mod find;
-pub use find::{Find, FindExt};
 ///
 pub mod write;
-pub use write::Write;

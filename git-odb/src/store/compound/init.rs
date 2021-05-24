@@ -1,5 +1,7 @@
-use crate::{compound, pack, store::loose};
 use std::path::PathBuf;
+
+use crate::store::compound;
+use crate::{pack, store::loose};
 
 /// Returned by [`compound::Db::at()`]
 #[derive(thiserror::Error, Debug)]

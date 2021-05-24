@@ -1,5 +1,5 @@
 //! An object database representing a list of [compound databases][compound::Db] commonly created using _git alternates_.
-use crate::compound;
+use crate::store::compound;
 
 /// A database with a list of [compound databases][compound::Db] created by traversing git `alternates` files.
 ///

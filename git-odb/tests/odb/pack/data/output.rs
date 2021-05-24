@@ -1,5 +1,6 @@
-use git_odb::{linked, pack::data::output};
 use std::{path::PathBuf, sync::Arc};
+
+use git_odb::{linked, pack::data::output};
 
 #[test]
 fn size_of_entry() {
@@ -34,14 +35,17 @@ fn db(kind: DbKind) -> crate::Result<Arc<linked::Db>> {
 }
 
 mod count_and_entries {
+    use std::sync::Arc;
+
+    use git_features::progress;
+    use git_odb::store::compound;
+    use git_odb::{pack, pack::data::output, FindExt};
+    use git_traverse::commit;
+
     use crate::odb::{
         hex_to_id,
         pack::data::output::{db, DbKind},
     };
-    use git_features::progress;
-    use git_odb::{compound, pack, pack::data::output, FindExt};
-    use git_traverse::commit;
-    use std::sync::Arc;
 
     #[test]
     fn traversals() -> crate::Result {

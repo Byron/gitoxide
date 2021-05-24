@@ -1,6 +1,9 @@
-use crate::{compound, store::loose};
-use git_object::{mutable, Kind};
 use std::io::Read;
+
+use git_object::{mutable, Kind};
+
+use crate::store::compound;
+use crate::store::loose;
 
 impl crate::write::Write for compound::Backend {
     type Error = loose::backend::write::Error;

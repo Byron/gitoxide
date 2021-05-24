@@ -1,4 +1,5 @@
-use crate::{compound, data, pack, store::loose};
+use crate::store::compound;
+use crate::{data, pack, store::loose};
 
 /// Returned by [`compound::Db::find()`]
 #[derive(thiserror::Error, Debug)]

@@ -1,12 +1,13 @@
+use git_odb::store::compound::Backend;
+
 use crate::fixture_path;
-use git_odb::compound::Backend;
 
 fn db() -> Backend {
     Backend::at(fixture_path("objects")).expect("valid object path")
 }
 
 mod init {
-    use crate::compound::db;
+    use crate::odb::store::compound::db;
 
     #[test]
     fn has_packs() {
@@ -15,8 +16,10 @@ mod init {
 }
 
 mod locate {
-    use crate::{compound::db, hex_to_id};
-    use git_odb::compound::Backend;
+    use git_odb::store::compound::Backend;
+
+    use crate::hex_to_id;
+    use crate::odb::store::compound::db;
 
     fn can_locate(db: &Backend, hex_id: &str) {
         let mut buf = vec![];
