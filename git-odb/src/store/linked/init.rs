@@ -13,27 +13,27 @@ pub enum Error {
     AlternateResolve(#[from] alternate::Error),
 }
 
-impl linked::Backend {
+impl linked::Db {
     /// Instantiate an instance at the given `objects_directory`, commonly `.git/objects`.
     ///
     /// _git alternate_ files will be traversed to build a chain of [`compound::Db`] instances.
     pub fn at(objects_directory: impl Into<PathBuf>) -> Result<Self, Error> {
-        let mut dbs = vec![compound::Backend::at(objects_directory.into())?];
+        let mut dbs = vec![compound::Db::at(objects_directory.into())?];
         for object_path in alternate::resolve(dbs[0].loose.path.clone())?.into_iter() {
-            dbs.push(compound::Backend::at(object_path)?);
+            dbs.push(compound::Db::at(object_path)?);
         }
         assert!(
             !dbs.is_empty(),
             "we can rely on at least one compound database to be present"
         );
-        Ok(linked::Backend { dbs })
+        Ok(linked::Db { dbs })
     }
 }
 
-impl std::convert::TryFrom<PathBuf> for linked::Backend {
+impl std::convert::TryFrom<PathBuf> for linked::Db {
     type Error = Error;
 
     fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
-        linked::Backend::at(value)
+        linked::Db::at(value)
     }
 }

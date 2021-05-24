@@ -5,7 +5,7 @@ use crate::pack::bundle::Location;
 use crate::store::{compound, linked};
 use crate::{data::Object, find::PackEntry, pack};
 
-impl crate::Find for linked::Backend {
+impl crate::Find for linked::Db {
     type Error = compound::find::Error;
 
     fn find<'a>(
@@ -83,7 +83,7 @@ impl crate::Find for linked::Backend {
     }
 }
 
-impl crate::Find for &linked::Backend {
+impl crate::Find for &linked::Db {
     type Error = compound::find::Error;
 
     fn find<'a>(

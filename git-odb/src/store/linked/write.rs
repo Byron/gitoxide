@@ -4,7 +4,7 @@ use std::io::Read;
 use crate::store::linked;
 use crate::store::loose;
 
-impl crate::write::Write for linked::Backend {
+impl crate::write::Write for linked::Db {
     type Error = loose::backend::write::Error;
 
     fn write(&self, object: &mutable::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {

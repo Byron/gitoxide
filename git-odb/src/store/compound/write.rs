@@ -5,7 +5,7 @@ use git_object::{mutable, Kind};
 use crate::store::compound;
 use crate::store::loose;
 
-impl crate::write::Write for compound::Backend {
+impl crate::write::Write for compound::Db {
     type Error = loose::backend::write::Error;
 
     fn write(&self, object: &mutable::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {

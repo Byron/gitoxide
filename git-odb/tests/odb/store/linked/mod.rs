@@ -1,9 +1,9 @@
-use git_odb::store::linked::Backend;
+use git_odb::store::linked::Db;
 
 use crate::fixture_path;
 
-fn db() -> Backend {
-    Backend::at(fixture_path("objects")).expect("valid object path")
+fn db() -> Db {
+    Db::at(fixture_path("objects")).expect("valid object path")
 }
 
 mod iter {
@@ -29,13 +29,13 @@ mod iter {
 }
 
 mod locate {
-    use git_odb::store::linked::Backend;
+    use git_odb::store::linked::Db;
     use git_odb::{pack, Find};
 
     use crate::hex_to_id;
     use crate::odb::store::linked::db;
 
-    fn can_locate(db: &Backend, hex_id: &str) {
+    fn can_locate(db: &Db, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
             .find(hex_to_id(hex_id), &mut buf, &mut pack::cache::Never)
@@ -67,7 +67,7 @@ mod init {
     fn multiple_linked_repositories_via_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let (object_path, linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
-        let db = linked::Backend::try_from(object_path.clone())?;
+        let db = linked::Db::try_from(object_path.clone())?;
         assert_eq!(db.dbs.len(), 2);
         assert_eq!(db.dbs[0].loose.path, object_path);
         assert_eq!(db.dbs[1].loose.path, linked_object_path);
@@ -77,7 +77,7 @@ mod init {
     #[test]
     fn a_linked_db_without_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let db = linked::Backend::at(tmp.path())?;
+        let db = linked::Db::at(tmp.path())?;
         assert_eq!(db.dbs.len(), 1);
         assert_eq!(db.dbs[0].loose.path, tmp.path());
         Ok(())

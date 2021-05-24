@@ -16,12 +16,12 @@ pub enum Error {
 }
 
 /// Instantiation
-impl compound::Backend {
+impl compound::Db {
     /// Returns a compound database as initialized from the given git `objects_directory`, commonly `.git/objects`.
     ///
     /// Only loose and packed objects will be considered. See the [linked Db][crate::linked::Db] for a database with
     /// support for _git alternates_, i.e. linking to other repositories.
-    pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Backend, Error> {
+    pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Db, Error> {
         let loose_objects = objects_directory.into();
         if !loose_objects.is_dir() {
             return Err(Error::Inaccessible(loose_objects));
@@ -44,7 +44,7 @@ impl compound::Backend {
             Err(_) => Vec::new(),
         };
 
-        Ok(compound::Backend {
+        Ok(compound::Db {
             loose: loose::Backend::at(loose_objects),
             bundles: packs,
         })

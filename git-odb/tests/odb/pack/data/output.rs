@@ -25,14 +25,14 @@ enum DbKind {
     DeterministicGeneratedContent,
 }
 
-fn db(kind: DbKind) -> crate::Result<Arc<linked::Backend>> {
+fn db(kind: DbKind) -> crate::Result<Arc<linked::Db>> {
     use DbKind::*;
     let path: PathBuf = match kind {
         DeterministicGeneratedContent => git_testtools::scripted_fixture_repo_read_only("make_pack_gen_repo.sh")?
             .join(".git")
             .join("objects"),
     };
-    linked::Backend::at(path).map_err(Into::into).map(Into::into)
+    linked::Db::at(path).map_err(Into::into).map(Into::into)
 }
 
 mod count_and_entries {
