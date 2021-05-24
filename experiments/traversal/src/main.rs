@@ -47,7 +47,7 @@ fn main() -> anyhow::Result<()> {
         d.push("objects");
         d
     };
-    let db = git_odb::linked::Db::at(&repo_objects_dir)?;
+    let db = git_odb::linked::Backend::at(&repo_objects_dir)?;
 
     let start = Instant::now();
     let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
@@ -155,7 +155,7 @@ fn main() -> anyhow::Result<()> {
 
 fn do_gitoxide_commit_graph_traversal<C>(
     tip: ObjectId,
-    db: &git_odb::linked::Db,
+    db: &git_odb::linked::Backend,
     new_cache: impl FnOnce() -> C,
 ) -> anyhow::Result<usize>
 where
@@ -181,7 +181,7 @@ enum Computation {
 
 fn do_gitoxide_tree_dag_traversal<C>(
     commits: &[ObjectId],
-    db: &git_odb::linked::Db,
+    db: &git_odb::linked::Backend,
     new_cache: impl Fn() -> C + Sync + Send,
     mode: Computation,
 ) -> anyhow::Result<(usize, u64)>

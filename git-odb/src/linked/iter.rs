@@ -26,7 +26,7 @@ pub struct AllObjects<Db> {
 
 impl<Db> AllObjects<Db>
 where
-    Db: Borrow<linked::Db>,
+    Db: Borrow<linked::Backend>,
 {
     /// Create a new iterator from a linked database
     pub fn new(db: Db) -> Self {
@@ -49,7 +49,7 @@ where
 
 impl<Db> Iterator for AllObjects<Db>
 where
-    Db: Borrow<linked::Db>,
+    Db: Borrow<linked::Backend>,
 {
     type Item = Result<ObjectId, loose::backend::iter::Error>;
 
@@ -106,18 +106,18 @@ where
     }
 }
 
-impl linked::Db {
+impl linked::Backend {
     /// Return an iterator over all objects in all linked databases, database after database, first packed
     /// objects with the 'best' packs first, followed by loose objects.
     /// For specialized iterations, use the `dbs` fields directly as all databases are accessible.
-    pub fn iter(&self) -> AllObjects<&linked::Db> {
+    pub fn iter(&self) -> AllObjects<&linked::Backend> {
         AllObjects::new(self)
     }
 
     /// Like [`iter()`][linked::Db::iter()] but works with this instance living in an [`Arc`]
     ///
     /// Useful in conjunction with `'static threads`.
-    pub fn arc_iter(self: &Arc<linked::Db>) -> AllObjects<Arc<linked::Db>> {
+    pub fn arc_iter(self: &Arc<linked::Backend>) -> AllObjects<Arc<linked::Backend>> {
         AllObjects::new(Arc::clone(&self))
     }
 }

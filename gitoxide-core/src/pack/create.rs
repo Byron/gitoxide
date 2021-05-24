@@ -172,7 +172,7 @@ pub fn create(
     Ok(())
 }
 
-fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Db> {
+fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Backend> {
     let path = repository.as_ref();
-    Ok(linked::Db::at(path.join(".git").join("objects"))?)
+    Ok(linked::Backend::at(path.join(".git").join("objects"))?)
 }
