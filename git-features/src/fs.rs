@@ -24,7 +24,7 @@ pub mod walkdir {
     pub type DirEntryIter = DirEntryIterGeneric<((), ())>;
 }
 
-#[cfg(not(feature = "parallel"))]
+#[cfg(all(feature = "walkdir", not(feature = "parallel")))]
 ///
 pub mod walkdir {
     use std::path::Path;
@@ -39,4 +39,5 @@ pub mod walkdir {
     pub type DirEntryIter = walkdir::IntoIter;
 }
 
+#[cfg(any(feature = "walkdir", feature = "jwalk"))]
 pub use self::walkdir::{walkdir_new, WalkDir};

@@ -74,15 +74,20 @@ All feature toggles are additive.
     * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
       where it makes sense.
     * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
+* **crc32**
+    * provide a proven and fast `crc32` implementation.
+* **io-pipe**
+    * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
+* **walkdir**
+    * Makes facilities of the `walkdir` crate partially available.
+    * In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
 * _mutually-exclusive_
     * **fast-sha1**
         * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
           CPUs that support it, like AMD Ryzen or Intel Core i3.
-        * Takes precedence over `sha1`.
+        * Takes precedence over `sha1` if both are specified.
     * **sha1**
         * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
-* **crc32**
-    * provide a proven `crc32` implementation.
 * _mutually-exclusive_
     * **interrupt-handler**
         * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
@@ -94,8 +99,6 @@ All feature toggles are additive.
         * If set, interrupts cannot be triggered programmatically and it's up to the user to inject means of supporting interrupts.
         * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all, this facility is a global one.
         * Probably useful for server implementations.
-* **io-pipe**
-    * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
 
 ### git-transport
 
