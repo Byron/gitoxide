@@ -10,7 +10,7 @@ quick_error! {
         StartsWithDash {
             display("Tags must not start with a dash: '-'")
         }
-        InvalidRefName(err: git_ref::validate::NameError) {
+        InvalidRefName(err: crate::tag::validate::NameError) {
             display("The tag name was no valid reference name")
             from()
             source(err)
@@ -65,7 +65,7 @@ impl Tag {
 }
 
 fn validated_name(name: &BStr) -> Result<&BStr, Error> {
-    git_ref::validate::name(name)?;
+    crate::tag::validate::name(name)?;
     if name[0] == b'-' {
         return Err(Error::StartsWithDash);
     }

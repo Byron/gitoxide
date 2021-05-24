@@ -954,7 +954,6 @@ dependencies = [
  "bstr",
  "btoi",
  "git-hash",
- "git-ref",
  "hex",
  "itoa",
  "nom",

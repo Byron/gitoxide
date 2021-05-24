@@ -16,3 +16,5 @@ pub use types::{tree, Error, Kind, Sign, Time};
 
 ///
 pub mod commit;
+///
+pub mod tag;

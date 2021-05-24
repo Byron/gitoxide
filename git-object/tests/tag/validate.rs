@@ -1,7 +1,7 @@
 mod name {
     mod valid {
         use bstr::ByteSlice;
-        use git_ref::validate;
+        use git_object::tag::validate;
 
         macro_rules! mktest {
             ($name:ident, $input:expr) => {
@@ -26,7 +26,7 @@ mod name {
 
     mod invalid {
         use bstr::ByteSlice;
-        use git_ref::validate;
+        use git_object::tag::validate;
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $expected:ident) => {

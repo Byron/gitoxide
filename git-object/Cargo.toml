@@ -18,7 +18,6 @@ serde1 = ["serde", "bstr/serde1", "smallvec/serde", "git-hash/serde1"]
 all-features = true
 
 [dependencies]
-git-ref = { version = "^0.5.0", path = "../git-ref" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 quick-error = "2.0.0"
 hex = "0.4.2"
