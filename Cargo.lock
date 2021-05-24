@@ -1005,6 +1005,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-pack"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "btoi",
+ "byteorder",
+ "bytesize",
+ "common_macros",
+ "dashmap",
+ "filebuffer",
+ "git-diff",
+ "git-features",
+ "git-hash",
+ "git-object",
+ "git-odb",
+ "git-testtools",
+ "git-traverse",
+ "hex",
+ "itoa",
+ "memory-lru",
+ "parking_lot",
+ "pretty_assertions",
+ "serde",
+ "smallvec",
+ "tempfile",
+ "thiserror",
+ "uluru",
+]
+
+[[package]]
 name = "git-packetline"
 version = "0.6.0"
 dependencies = [
