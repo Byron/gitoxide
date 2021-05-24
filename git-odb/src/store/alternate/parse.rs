@@ -1,4 +1,4 @@
-use crate::alternate::unquote;
+use crate::store::alternate::unquote;
 use git_object::bstr::ByteSlice;
 use std::{borrow::Cow, path::PathBuf};
 

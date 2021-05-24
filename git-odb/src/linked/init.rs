@@ -1,4 +1,4 @@
-use crate::{alternate, compound, linked};
+use crate::{compound, linked, store::alternate};
 use std::path::PathBuf;
 
 /// The error returned by [`linked::Db::at()`]
