@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use crate::store::compound;
-use crate::{linked, store::alternate};
+use crate::store::alternate;
+use crate::store::{compound, linked};
 
 /// The error returned by [`linked::Db::at()`]
 #[derive(Debug, thiserror::Error)]

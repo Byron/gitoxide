@@ -1,12 +1,13 @@
+use git_odb::store::linked::Backend;
+
 use crate::fixture_path;
-use git_odb::linked::Backend;
 
 fn db() -> Backend {
     Backend::at(fixture_path("objects")).expect("valid object path")
 }
 
 mod iter {
-    use crate::linked::db;
+    use crate::odb::store::linked::db;
 
     #[test]
     fn arc_iter() {
@@ -28,8 +29,11 @@ mod iter {
 }
 
 mod locate {
-    use crate::{hex_to_id, linked::db};
-    use git_odb::{linked::Backend, pack, Find};
+    use git_odb::store::linked::Backend;
+    use git_odb::{pack, Find};
+
+    use crate::hex_to_id;
+    use crate::odb::store::linked::db;
 
     fn can_locate(db: &Backend, hex_id: &str) {
         let mut buf = vec![];
@@ -53,9 +57,11 @@ mod locate {
 }
 
 mod init {
-    use crate::{linked::db, store::alternate::alternate};
-    use git_odb::linked;
+    use git_odb::store::linked;
     use std::convert::TryFrom;
+
+    use crate::odb::store::linked::db;
+    use crate::store::alternate::alternate;
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {

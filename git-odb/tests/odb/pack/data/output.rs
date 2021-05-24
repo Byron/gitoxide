@@ -1,6 +1,7 @@
 use std::{path::PathBuf, sync::Arc};
 
-use git_odb::{linked, pack::data::output};
+use git_odb::pack::data::output;
+use git_odb::store::linked;
 
 #[test]
 fn size_of_entry() {

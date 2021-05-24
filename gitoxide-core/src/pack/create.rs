@@ -1,10 +1,13 @@
+use std::time::Instant;
+use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
+
 use anyhow::bail;
+
 use git_features::progress::Progress;
 use git_hash::ObjectId;
 use git_object::bstr::ByteVec;
-use git_odb::{linked, pack, FindExt};
-use std::time::Instant;
-use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
+use git_odb::store::linked;
+use git_odb::{pack, FindExt};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 

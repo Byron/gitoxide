@@ -25,7 +25,6 @@ pub use write::Write;
 
 mod zlib;
 
-pub mod linked;
 ///
 pub mod store;
 

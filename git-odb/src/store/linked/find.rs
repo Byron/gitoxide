@@ -1,10 +1,9 @@
+use git_hash::oid;
 use std::convert::TryInto;
 
-use git_hash::oid;
-
 use crate::pack::bundle::Location;
-use crate::store::compound;
-use crate::{data::Object, find::PackEntry, linked, pack};
+use crate::store::{compound, linked};
+use crate::{data::Object, find::PackEntry, pack};
 
 impl crate::Find for linked::Backend {
     type Error = compound::find::Error;

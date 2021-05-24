@@ -1,6 +1,8 @@
-use crate::hex_to_id;
-use git_odb::{find::FindExt, linked::Backend, pack};
+use git_odb::store::linked::Backend;
+use git_odb::{find::FindExt, pack};
 use git_traverse::tree;
+
+use crate::hex_to_id;
 
 fn db() -> crate::Result<Backend> {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo_for_trees.sh")?;

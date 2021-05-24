@@ -1,10 +1,13 @@
 mod changes {
     mod to_obtain_tree {
-        use crate::hex_to_id;
         use git_diff::tree::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, immutable, tree::EntryMode};
-        use git_odb::{linked, pack, Find};
+        use git_odb::store::linked;
+        use git_odb::{pack, Find};
+
+        use crate::hex_to_id;
+
         type Changes = Vec<recorder::Change>;
 
         fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Backend> {
