@@ -29,29 +29,30 @@ pub fn main() -> Result<()> {
             if atty::is(atty::Stream::Stdout) {
                 anyhow::bail!("Refusing to output pack data stream to stdout.")
             }
-
+            let input = if has_tips {
+                None
+            } else {
+                #[cfg(feature = "atty")]
+                if atty::is(atty::Stream::Stdin) {
+                    anyhow::bail!("Refusing to read from standard input as no path is given, but it's a terminal.")
+                }
+                Some(io::BufReader::new(stdin()))
+            };
+            let expansion = expansion.unwrap_or_else(|| {
+                if has_tips {
+                    core::pack::create::ObjectExpansion::TreeTraversal
+                } else {
+                    core::pack::create::ObjectExpansion::None
+                }
+            });
             core::pack::create(
                 repository.unwrap_or_else(|| PathBuf::from(".")),
                 tips,
-                if has_tips {
-                    None
-                } else {
-                    #[cfg(feature = "atty")]
-                    if atty::is(atty::Stream::Stdin) {
-                        anyhow::bail!("Refusing to read from standard input as no path is given, but it's a terminal.")
-                    }
-                    Some(io::BufReader::new(stdin()))
-                },
+                input,
                 stdout_lock,
                 DoOrDiscard::from(progress),
                 core::pack::create::Context {
-                    expansion: expansion.unwrap_or_else(|| {
-                        if has_tips {
-                            core::pack::create::ObjectExpansion::TreeTraversal
-                        } else {
-                            core::pack::create::ObjectExpansion::None
-                        }
-                    }),
+                    expansion,
                     thread_limit,
                 },
             )
