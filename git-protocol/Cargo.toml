@@ -26,7 +26,7 @@ path = "tests/common-protocol.rs"
 required-features = []
 
 [dependencies]
-git-features = { version = "^0.14.0", path = "../git-features", features = ["progress"] }
+git-features = { version = "^0.15.0", path = "../git-features", features = ["progress"] }
 git-transport = { version = "^0.9.0", path = "../git-transport" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 

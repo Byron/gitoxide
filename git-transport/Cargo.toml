@@ -35,7 +35,7 @@ required-features = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version = "^0.14.0", path = "../git-features" }
+git-features = { version = "^0.15.0", path = "../git-features" }
 git-url = { version = "^0.3.0", path = "../git-url" }
 git-packetline = { version = "^0.6.0", path = "../git-packetline" }
 
