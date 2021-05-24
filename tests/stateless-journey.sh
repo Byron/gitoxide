@@ -566,8 +566,14 @@ snapshot="$snapshot/plumbing"
             }
 
             (with_program tree
+
+              if test "$kind" == "max"; then
+                suffix=zlib-ng
+              else
+                suffix=miniz-oxide
+              fi
               it "creates all pack objects, but the broken ones" && {
-                WITH_SNAPSHOT="$snapshot/broken-with-objects-dir-skip-checks-success-tree" \
+                WITH_SNAPSHOT="$snapshot/broken-with-objects-dir-skip-checks-success-tree-$suffix" \
                 expect_run $SUCCESSFULLY tree
               }
             )
