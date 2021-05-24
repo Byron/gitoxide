@@ -1,5 +1,5 @@
-#![forbid(missing_docs, rust_2018_idioms)]
-#![deny(unsafe_code)]
+#![forbid(rust_2018_idioms)]
+#![deny(unsafe_code, missing_docs)]
 //! A crate providing foundational capabilities to other `git-*` crates with trade-offs between compile time, binary size or speed
 //! selectable using cargo feature toggles.
 //!
@@ -17,3 +17,6 @@ pub mod io;
 pub mod parallel;
 #[cfg(feature = "progress")]
 pub mod progress;
+///
+#[cfg(all(feature = "zlib", any(feature = "zlib-ng-compat", feature = "zlib-rust-backend")))]
+pub mod zlib;

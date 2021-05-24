@@ -10,7 +10,7 @@ The top-level command-line interface.
 
 * **fast**
     * Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
-      as well as fast, hardware accelerated hashing.
+      as well as fast, hardware accelerated hashing, along with a faster zlib backend.
     * If disabled, the binary will be visibly smaller.
 * **http**
     * support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) at the expense of compile times and binary size
@@ -42,7 +42,7 @@ There are **convenience features**, which combine common choices of the above in
 * **light** = *lean-cli* + *fast* + *gitoxide-core-organize*
     * crossplatform by nature as this comes with simplified log based progress
 * **small** = *lean-cli*
-    * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt
+    * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt, rust based zlib implementation.
 
 ### gitoxide-core
 
@@ -81,6 +81,15 @@ All feature toggles are additive.
     * provide a proven and fast `crc32` implementation.
 * **io-pipe**
     * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
+* **zlib**
+    * Enable the usage of zlib related utilities to compress or decompress data.
+    * It comes with additional features of which one must be set.
+    * _mutually-exclusive_
+       * **zlib-ng-compat**
+         * Use a C-based backend which can compress and decompress significantly faster.
+       * **zlib-rust-backend**
+         * A pure rust implementation which is slower than the **ng** version, but might be relevant if you prefer a pure-rust build
+           and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` performance.
 * **walkdir**
     * Makes facilities of the `walkdir` crate partially available.
     * In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
@@ -89,6 +98,7 @@ All feature toggles are additive.
         * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
           CPUs that support it, like AMD Ryzen or Intel Core i3.
         * Takes precedence over `sha1` if both are specified.
+        * A fast SHA1 implementation is critical to `gitoxide's` performance
     * **sha1**
         * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
 * _mutually-exclusive_
