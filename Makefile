@@ -65,7 +65,7 @@ lint: ## Run lints with clippy
 
 ##@ Testing
 
-tests: clippy check doc unit-tests journey-tests-small journey-tests audit ## run all tests, including journey tests, try building docs, audit
+tests: clippy check doc unit-tests journey-tests-small journey-tests ## run all tests, including journey tests, try building docs
 
 audit: ## run various auditing tools to assure we are legal and safe
 	cargo deny check advisories bans licenses sources
