@@ -1,9 +1,9 @@
-use crate::{compound, loose};
+use crate::{compound, store::loose};
 use git_object::{mutable, Kind};
 use std::io::Read;
 
 impl crate::write::Write for compound::Db {
-    type Error = loose::db::write::Error;
+    type Error = loose::backend::write::Error;
 
     fn write(&self, object: &mutable::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         self.loose.write(object, hash)

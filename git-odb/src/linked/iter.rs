@@ -1,11 +1,11 @@
-use crate::{linked, loose};
+use crate::{linked, store::loose};
 use git_hash::ObjectId;
 use std::{borrow::Borrow, option::Option::None, sync::Arc};
 
 #[allow(clippy::large_enum_variant)]
 enum DbState {
     Pack { pack_index: usize, entry_index: u32 },
-    Loose { iter: loose::db::iter::Type },
+    Loose { iter: loose::backend::iter::Type },
 }
 
 impl Default for DbState {
@@ -51,7 +51,7 @@ impl<Db> Iterator for AllObjects<Db>
 where
     Db: Borrow<linked::Db>,
 {
-    type Item = Result<ObjectId, loose::db::iter::Error>;
+    type Item = Result<ObjectId, loose::backend::iter::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let db = self.db.borrow();

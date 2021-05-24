@@ -64,7 +64,7 @@ pub mod header {
     #[cfg(test)]
     mod tests {
         mod encode_decode_round_trip {
-            use crate::loose::object::header;
+            use crate::store::loose::object::header;
             use git_object::bstr::ByteSlice;
 
             #[test]

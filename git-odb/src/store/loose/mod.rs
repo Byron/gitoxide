@@ -2,9 +2,9 @@
 const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 
 ///
-pub mod db;
+pub mod backend;
 #[doc(inline)]
-pub use db::Db;
+pub use backend::Backend;
 
 ///
 pub mod object;

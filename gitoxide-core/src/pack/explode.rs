@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use quick_error::quick_error;
 
 use git_features::progress::{self, Progress};
-use git_odb::{loose, pack, Write};
+use git_odb::{pack, store::loose, Write};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -69,7 +69,7 @@ quick_error! {
             source(err)
             from()
         }
-        OdbWrite(err: loose::db::write::Error) {
+        OdbWrite(err: loose::backend::write::Error) {
             display("An object could not be written to the database")
             source(err)
             from()
@@ -89,7 +89,7 @@ quick_error! {
         WrittenFileMissing(id: git_hash::ObjectId) {
             display("The recently written file for loose object {} could not be found", id)
         }
-        WrittenFileCorrupt(err: loose::db::find::Error, id: git_hash::ObjectId) {
+        WrittenFileCorrupt(err: loose::backend::find::Error, id: git_hash::ObjectId) {
             display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
@@ -98,7 +98,7 @@ quick_error! {
 
 #[allow(clippy::large_enum_variant)]
 enum OutputWriter {
-    Loose(loose::Db),
+    Loose(loose::Backend),
     Sink(git_odb::Sink),
 }
 
@@ -134,7 +134,7 @@ impl git_odb::write::Write for OutputWriter {
 impl OutputWriter {
     fn new(path: Option<impl AsRef<Path>>, compress: bool) -> Self {
         match path {
-            Some(path) => OutputWriter::Loose(loose::Db::at(path.as_ref())),
+            Some(path) => OutputWriter::Loose(loose::Backend::at(path.as_ref())),
             None => OutputWriter::Sink(git_odb::sink().compress(compress)),
         }
     }
@@ -198,7 +198,7 @@ pub fn pack_or_pack_index(
             move || {
                 let out = OutputWriter::new(object_path.clone(), sink_compress);
                 let object_verifier = if verify {
-                    object_path.as_ref().map(loose::Db::at)
+                    object_path.as_ref().map(loose::Backend::at)
                 } else {
                     None
                 };

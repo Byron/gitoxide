@@ -1,11 +1,11 @@
 use crate::{
     data,
-    loose::{db::sha1_path, object::header, Db, HEADER_READ_UNCOMPRESSED_BYTES},
+    store::loose::{backend::sha1_path, object::header, Backend, HEADER_READ_UNCOMPRESSED_BYTES},
     zlib,
 };
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
-/// Returned by [`Db::find()`]
+/// Returned by [`Backend::find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -25,7 +25,7 @@ pub enum Error {
 }
 
 /// Object lookup
-impl Db {
+impl Backend {
     const OPEN_ACTION: &'static str = "open";
 
     /// Returns true if the given id is contained in our repository.

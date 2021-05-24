@@ -168,7 +168,7 @@ where
 {
     if check.object_checksum() {
         let header_size =
-            crate::loose::object::header::encode(object_kind, decompressed.len() as u64, &mut header_buf[..])
+            crate::store::loose::object::header::encode(object_kind, decompressed.len() as u64, &mut header_buf[..])
                 .expect("header buffer to be big enough");
         let mut hasher = git_features::hash::Sha1::default();
         hasher.update(&header_buf[..header_size]);

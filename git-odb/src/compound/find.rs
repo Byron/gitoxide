@@ -1,11 +1,11 @@
-use crate::{compound, data, loose, pack};
+use crate::{compound, data, pack, store::loose};
 
 /// Returned by [`compound::Db::find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
     #[error("An error occurred while obtaining an object from the loose object store")]
-    Loose(#[from] loose::db::find::Error),
+    Loose(#[from] loose::backend::find::Error),
     #[error("An error occurred while obtaining an object from the packed object store")]
     Pack(#[from] pack::data::decode_entry::Error),
 }

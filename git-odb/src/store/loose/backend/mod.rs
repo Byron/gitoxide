@@ -1,19 +1,19 @@
 use std::path::PathBuf;
 
 /// A database for reading and writing objects to disk, one file per object.
-pub struct Db {
+pub struct Backend {
     /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
     pub path: PathBuf,
 }
 
 /// Initialization
-impl Db {
+impl Backend {
     /// Initialize the Db with the `objects_directory` containing the hexadecimal first byte subdirectories, which in turn
     /// contain all loose objects.
     ///
     /// In a git repository, this would be `.git/objects`.
-    pub fn at(objects_directory: impl Into<PathBuf>) -> Db {
-        Db {
+    pub fn at(objects_directory: impl Into<PathBuf>) -> Backend {
+        Backend {
             path: objects_directory.into(),
         }
     }

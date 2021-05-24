@@ -1,6 +1,7 @@
 use crate::{
-    loose, pack,
+    pack,
     pack::tree::{traverse::Context, Tree},
+    store::loose,
 };
 use git_features::progress::{self, Progress};
 use std::{convert::TryInto, io};

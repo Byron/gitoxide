@@ -6,14 +6,14 @@
 //!
 //! There are various flavours of object databases, all of which supporting iteration, reading and possibly writing.
 //!
-//! * [`loose::Db`]
+//! * [`loose::Backend`]
 //!   * A database storing one object per file, named by its hash, using zlib compression.
 //!   * O(1) reads and writes, bound by IO operations per second
 //! * [`pack::Bundle`]
 //!   * A database storing multiple objects within an indexed pack file, reaching compression ratios of 60 to 1 or more.
 //!   * Slow writes and fast reads
 //! * [`compound::Db`]
-//!   * A database using a [`loose::Db`] for writes and multiple [`pack::Bundle`]s for object reading. It can also refer to multiple
+//!   * A database using a [`loose::Backend`] for writes and multiple [`pack::Bundle`]s for object reading. It can also refer to multiple
 //!     additional [`compound::Db`] instances using git-alternates.
 //!   * This is the database closely resembling the object database in a git repository, and probably what most people would want to use.
 //! * [`linked::Db`]
@@ -23,7 +23,6 @@ mod zlib;
 
 pub mod compound;
 pub mod linked;
-pub mod loose;
 ///
 pub mod store;
 

@@ -67,7 +67,7 @@ impl<'a> Object<'a> {
 
 /// Types supporting object hash verification
 pub mod verify {
-    use crate::{hash, loose};
+    use crate::{hash, store::loose};
     use std::io;
 
     /// Returned by [`crate::data::Object::verify_checksum()`]

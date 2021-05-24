@@ -1,4 +1,4 @@
-use crate::loose::Db;
+use crate::store::loose::Backend;
 use git_features::fs;
 
 /// Returned by [`Db::iter()`]
@@ -16,7 +16,7 @@ pub type Type = std::iter::FilterMap<
 >;
 
 /// Iteration and traversal
-impl Db {
+impl Backend {
     fn iter_filter_map(
         res: Result<fs::walkdir::DirEntry, fs::walkdir::Error>,
     ) -> Option<Result<git_hash::ObjectId, Error>> {
@@ -67,6 +67,6 @@ impl Db {
             .max_depth(3)
             .follow_links(false)
             .into_iter()
-            .filter_map(Db::iter_filter_map)
+            .filter_map(Backend::iter_filter_map)
     }
 }

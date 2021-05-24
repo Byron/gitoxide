@@ -1,5 +1,5 @@
-use super::Db;
-use crate::{hash, loose, zlib::stream::deflate};
+use super::Backend;
+use crate::{hash, store::loose, zlib::stream::deflate};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
@@ -22,7 +22,7 @@ pub enum Error {
     },
 }
 
-impl crate::write::Write for Db {
+impl crate::write::Write for Backend {
     type Error = Error;
 
     /// Write the given buffer in `from` to disk in one syscall at best.
@@ -75,7 +75,7 @@ impl crate::write::Write for Db {
 
 type CompressedTempfile = deflate::Write<NamedTempFile>;
 
-impl Db {
+impl Backend {
     fn write_header(
         &self,
         kind: git_object::Kind,
@@ -104,7 +104,7 @@ impl Db {
         hash::Write { hash, inner: file }: hash::Write<CompressedTempfile>,
     ) -> Result<git_hash::ObjectId, Error> {
         let id = git_hash::ObjectId::from(hash.digest());
-        let object_path = loose::db::sha1_path(&id, self.path.clone());
+        let object_path = loose::backend::sha1_path(&id, self.path.clone());
         let object_dir = object_path
             .parent()
             .expect("each object path has a 1 hex-bytes directory");

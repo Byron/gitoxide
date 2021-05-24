@@ -1,4 +1,4 @@
-use crate::{compound, loose, pack};
+use crate::{compound, pack, store::loose};
 use std::path::PathBuf;
 
 /// Returned by [`compound::Db::at()`]
@@ -43,7 +43,7 @@ impl compound::Db {
         };
 
         Ok(compound::Db {
-            loose: loose::Db::at(loose_objects),
+            loose: loose::Backend::at(loose_objects),
             bundles: packs,
         })
     }

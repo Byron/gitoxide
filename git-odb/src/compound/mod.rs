@@ -1,5 +1,5 @@
 //! An object database delegating object access to multiple contained object databases with loose and packed objects.
-use crate::{loose, pack};
+use crate::{pack, store::loose};
 
 ///
 pub mod find;
@@ -11,7 +11,7 @@ mod write;
 /// This is a typical git database as used in git repositories, sans 'alternates'.
 pub struct Db {
     /// A loose object database into which new objects are written
-    pub loose: loose::Db,
+    pub loose: loose::Backend,
     /// All packs in the `objects/packs` directory
     pub bundles: Vec<pack::Bundle>,
 }

@@ -1,9 +1,9 @@
-use crate::{linked, loose};
+use crate::{linked, store::loose};
 use git_object::{mutable, Kind};
 use std::io::Read;
 
 impl crate::write::Write for linked::Db {
-    type Error = loose::db::write::Error;
+    type Error = loose::backend::write::Error;
 
     fn write(&self, object: &mutable::Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         self.dbs[0].loose.write(object, hash)

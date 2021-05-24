@@ -1,4 +1,4 @@
-use crate::{loose, zlib::stream::deflate};
+use crate::{store::loose, zlib::stream::deflate};
 use std::{
     cell::RefCell,
     convert::TryInto,
@@ -7,7 +7,7 @@ use std::{
 
 /// An object database equivalent to `/dev/null`, dropping all objects stored into it.
 ///
-/// It can optionally compress the content, similarly to what would happen when using a [`loose::Db`].
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Backend`].
 ///
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<io::Sink>>>,
