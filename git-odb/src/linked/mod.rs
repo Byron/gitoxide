@@ -6,7 +6,7 @@ use crate::compound;
 /// It does not contain any objects itself.
 pub struct Db {
     /// The compound databases containing the actual objects.
-    pub dbs: Vec<compound::Db>,
+    pub dbs: Vec<compound::Backend>,
 }
 
 ///
