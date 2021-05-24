@@ -20,6 +20,7 @@ where
 
 /// Read bytes from `rd` and decompress them using `state` into a pre-allocated fitting buffer `dst`, returning the amount of bytes written.
 pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -> io::Result<usize> {
+    let mut total_written = 0;
     loop {
         let (written, consumed, ret, eof);
         {
@@ -34,21 +35,23 @@ pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -
             };
             ret = state.decompress(input, dst, flush);
             written = (state.total_out() - before_out) as usize;
+            total_written += written;
             dst = &mut dst[written..];
             consumed = (state.total_in() - before_in) as usize;
         }
-        // dbg!(&ret, eof, written, consumed, dst.len());
         rd.consume(consumed);
 
         match ret {
             // The stream has officially ended, nothing more to do here.
-            Ok(Status::StreamEnd) => return Ok(written),
+            Ok(Status::StreamEnd) => return Ok(total_written),
             // Either input our output are depleted even though the stream is not depleted yet.
-            Ok(Status::Ok) | Ok(Status::BufError) if eof || dst.is_empty() => return Ok(written),
+            Ok(Status::Ok) | Ok(Status::BufError) if eof || dst.is_empty() => return Ok(total_written),
             // Consume more if no output could be produced. At least some input must be consumed though.
             Ok(Status::Ok) | Ok(Status::BufError) if consumed != 0 && written == 0 => continue,
+            // Write or consume more if we have only written something. This means there was unwritten output.
+            Ok(Status::Ok) | Ok(Status::BufError) if consumed == 0 && written != 0 => continue,
             // A strange state, no
-            Ok(Status::Ok) | Ok(Status::BufError) => return Ok(written),
+            Ok(Status::Ok) | Ok(Status::BufError) => return Ok(total_written),
             Err(..) => return Err(io::Error::new(io::ErrorKind::InvalidInput, "corrupt deflate stream")),
         }
     }

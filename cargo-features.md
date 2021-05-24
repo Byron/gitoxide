@@ -89,7 +89,11 @@ All feature toggles are additive.
       * _mutually-exclusive_
        * **zlib-ng-compat**
          * Use a C-based backend which can compress and decompress significantly faster.
-       * **_zlib-rust-backend_** is available for completeness even though it's the default - it may be chosen for more maintainable feature flags.
+      * **cloudflare-zlib**
+         * Another incarnation of a faster-than-normal zlib backend.
+      * **_zlib-rust-backend_**
+         * available for completeness even though it's the default - it may be chosen for more maintainable feature flags.
+    
 * **walkdir**
     * Makes facilities of the `walkdir` crate partially available.
     * In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
