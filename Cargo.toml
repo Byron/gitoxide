@@ -34,7 +34,7 @@ lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/inter
 lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools"]
 
 light = ["fast", "lean-cli", "git-features/interrupt-handler", "gitoxide-core-tools"]
-small = ["lean-cli"]
+small = ["lean-cli", "git-features/sha1"]
 http-client-curl = ["git-transport/http-client-curl"]
 
 fast = ["git-features/parallel", "git-features/fast-sha1"]
