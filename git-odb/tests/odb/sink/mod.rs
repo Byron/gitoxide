@@ -1,4 +1,4 @@
-use crate::loose::db::{locate_oid, object_ids};
+use crate::store::loose::backend::{locate_oid, object_ids};
 use git_odb::write::Write;
 
 #[test]

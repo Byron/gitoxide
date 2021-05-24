@@ -34,7 +34,7 @@ mod write {
     use git_odb::store::loose;
     use git_odb::write::Write;
 
-    use crate::loose::db::{locate_oid, object_ids};
+    use crate::store::loose::backend::{locate_oid, object_ids};
 
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
@@ -61,8 +61,8 @@ mod locate {
 
     use crate::{
         hex_to_id,
-        loose::{
-            db::{ldb, locate_oid},
+        store::loose::{
+            backend::{ldb, locate_oid},
             signature,
         },
     };

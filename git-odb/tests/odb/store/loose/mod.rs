@@ -1,6 +1,6 @@
 use git_object::{bstr::ByteSlice, immutable, Sign, Time};
 
-pub mod db;
+pub mod backend;
 
 fn signature(time: u32) -> immutable::Signature<'static> {
     immutable::Signature {

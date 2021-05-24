@@ -53,7 +53,7 @@ mod locate {
 }
 
 mod init {
-    use crate::{alternate::alternate, linked::db};
+    use crate::{linked::db, store::alternate::alternate};
     use git_odb::linked;
     use std::convert::TryFrom;
 
