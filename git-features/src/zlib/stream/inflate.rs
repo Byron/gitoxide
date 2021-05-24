@@ -46,12 +46,10 @@ pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -
             Ok(Status::StreamEnd) => return Ok(total_written),
             // Either input our output are depleted even though the stream is not depleted yet.
             Ok(Status::Ok) | Ok(Status::BufError) if eof || dst.is_empty() => return Ok(total_written),
-            // Consume more if no output could be produced. At least some input must be consumed though.
-            Ok(Status::Ok) | Ok(Status::BufError) if consumed != 0 && written == 0 => continue,
-            // Write or consume more if we have only written something. This means there was unwritten output.
-            Ok(Status::Ok) | Ok(Status::BufError) if consumed == 0 && written != 0 => continue,
-            // A strange state, no
-            Ok(Status::Ok) | Ok(Status::BufError) => return Ok(total_written),
+            // Some progress was made in both the input and the output, it must continue to reach the end.
+            Ok(Status::Ok) | Ok(Status::BufError) if consumed != 0 || written != 0 => continue,
+            // A strange state, where zlib makes no progress but isn't done either. Call it out.
+            Ok(Status::Ok) | Ok(Status::BufError) => unreachable!("Definitely a bug somewhere"),
             Err(..) => return Err(io::Error::new(io::ErrorKind::InvalidInput, "corrupt deflate stream")),
         }
     }
