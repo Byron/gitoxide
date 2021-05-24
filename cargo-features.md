@@ -74,9 +74,13 @@ All feature toggles are additive.
     * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
       where it makes sense.
     * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
-* **fast-sha1**
-    * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
-      CPUs that support it, like AMD Ryzen or Intel Core i3.
+* _mutually-exclusive_
+    * **fast-sha1**
+        * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
+          CPUs that support it, like AMD Ryzen or Intel Core i3.
+        * Takes precedence over `sha1`.
+    * **sha1**
+        * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
 * **crc32**
     * provide a proven `crc32` implementation.
 * _mutually-exclusive_
