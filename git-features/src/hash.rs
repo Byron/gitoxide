@@ -57,14 +57,20 @@ pub use _impl::Sha1;
 /// chunks of `bytes`.
 #[cfg(feature = "crc32")]
 pub fn crc32_update(previous_value: u32, bytes: &[u8]) -> u32 {
-    crc::crc32::update(previous_value, &crc::crc32::IEEE_TABLE, bytes)
+    let mut h = crc32fast::Hasher::new_with_initial(previous_value);
+    h.update(bytes);
+    h.finalize()
 }
 
 /// Compute a CRC32 value of the given input `bytes`.
 ///
 /// In case multiple chunkes of `bytes` are present, one should use [`crc32_update()`] instead.
 #[cfg(feature = "crc32")]
-pub use crc::crc32::checksum_ieee as crc32;
+pub fn crc32(bytes: &[u8]) -> u32 {
+    let mut h = crc32fast::Hasher::new();
+    h.update(bytes);
+    h.finalize()
+}
 
 /// Compute the hash of `kind` for the bytes in the file at `path`, hashing only the first `num_bytes_from_start`
 /// while initializing and calling `progress`.

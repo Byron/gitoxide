@@ -17,7 +17,7 @@ fast-sha1 = ["fastsha1"]
 interrupt-handler = ["ctrlc"]
 disable-interrupts = []
 io-pipe = ["bytes"]
-crc32 = ["crc"]
+crc32 = ["crc32fast"]
 
 [[test]]
 name = "parallel"
@@ -52,7 +52,7 @@ walkdir = { version = "2.3.1" } # used when parallel is off
 
 # hashing and 'fast-sha1' feature
 sha1 = "0.6.0"
-crc = { version = "1.8.1", optional = true }
+crc32fast = { version = "1.2.1", optional = true }
 fastsha1 = { package = "sha-1", version = "0.9.1", optional = true }
 
 # progress

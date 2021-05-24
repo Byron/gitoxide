@@ -233,8 +233,6 @@ Provide a CLI to for the most basic user journey:
 * **Objects larger than 32 bits cannot be loaded on 32 bit systems**
   * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
   * This should not affect git LFS though.
-* **CRC32** implementation doesn't use SIMD
-  * Probably at no cost one could upgrade to the **crc32fast** crate, but it looks unmaintained and builds more slowly.
 * **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
   * Thus far there is no proof for this, and as _potential remedy_ we could certainly re-implement exactly what git does
     to handle its URLs.

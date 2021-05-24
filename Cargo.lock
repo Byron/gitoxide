@@ -920,7 +920,7 @@ name = "git-features"
 version = "0.14.0"
 dependencies = [
  "bytes",
- "crc",
+ "crc32fast",
  "crossbeam-channel",
  "crossbeam-utils",
  "ctrlc",
