@@ -37,13 +37,17 @@ pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -
             dst = &mut dst[written..];
             consumed = (state.total_in() - before_in) as usize;
         }
-        // dbg!(&ret, written, consumed, dst.len());
+        // dbg!(&ret, eof, written, consumed, dst.len());
         rd.consume(consumed);
 
         match ret {
+            // The stream has officially ended, nothing more to do here.
             Ok(Status::StreamEnd) => return Ok(written),
+            // Either input our output are depleted even though the stream is not depleted yet.
             Ok(Status::Ok) | Ok(Status::BufError) if eof || dst.is_empty() => return Ok(written),
-            Ok(Status::Ok) | Ok(Status::BufError) if written == 0 && !eof && !dst.is_empty() => continue,
+            // Consume more if no output could be produced. At least some input must be consumed though.
+            Ok(Status::Ok) | Ok(Status::BufError) if consumed != 0 && written == 0 => continue,
+            // A strange state, no
             Ok(Status::Ok) | Ok(Status::BufError) => return Ok(written),
             Err(..) => return Err(io::Error::new(io::ErrorKind::InvalidInput, "corrupt deflate stream")),
         }
