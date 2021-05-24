@@ -36,6 +36,10 @@ pub fn main() -> Result<()> {
                 if has_tips {
                     None
                 } else {
+                    #[cfg(feature = "atty")]
+                    if atty::is(atty::Stream::Stdin) {
+                        anyhow::bail!("Refusing to read from standard input as no path is given, but it's a terminal.")
+                    }
                     Some(io::BufReader::new(stdin()))
                 },
                 stdout_lock,

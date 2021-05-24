@@ -45,7 +45,16 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 core::pack::create::PROGRESS_RANGE,
                 move |progress, out, err| {
-                    let input = if has_tips { None } else { Some(BufReader::new(stdin())) };
+                    let input = if has_tips {
+                        None
+                    } else {
+                        if atty::is(atty::Stream::Stdin) {
+                            anyhow::bail!(
+                                "Refusing to read from standard input as no path is given, but it's a terminal."
+                            )
+                        }
+                        Some(BufReader::new(stdin()))
+                    };
                     let repository = repository.unwrap_or_else(|| PathBuf::from("."));
                     let context = core::pack::create::Context {
                         thread_limit,
