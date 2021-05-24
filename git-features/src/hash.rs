@@ -83,7 +83,7 @@ pub fn crc32(bytes: &[u8]) -> u32 {
 /// * Only available with the `git-object` feature enabled due to usage of the [`git_hash::Kind`] enum and the
 ///   [`git_hash::ObjectId`] return value.
 /// * [Interrupts][crate::interrupt] are supported.
-#[cfg(any(feature = "sha1", feature = "fast-sha1"))]
+#[cfg(all(feature = "progress", any(feature = "sha1", feature = "fast-sha1")))]
 pub fn bytes_of_file(
     path: impl AsRef<std::path::Path>,
     num_bytes_from_start: usize,

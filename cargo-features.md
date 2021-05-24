@@ -70,6 +70,9 @@ A crate to help controlling which capabilities are available from the top-level 
 `gitoxide` crate that uses `git-features`.
 All feature toggles are additive.
 
+* **progress**
+    * Provide traits and utilities for providing progress information. These can then be rendered using facilities provided by
+      the `prodash` crate.
 * **parallel**
     * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
       where it makes sense.
