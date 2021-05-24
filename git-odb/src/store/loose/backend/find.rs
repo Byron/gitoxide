@@ -1,8 +1,8 @@
 use crate::{
     data,
     store::loose::{backend::sha1_path, object::header, Backend, HEADER_READ_UNCOMPRESSED_BYTES},
-    zlib,
 };
+use git_features::zlib;
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
 /// Returned by [`Backend::find()`]
@@ -97,7 +97,7 @@ impl Backend {
         };
         assert_ne!(
             status,
-            flate2::Status::BufError,
+            zlib::Status::BufError,
             "Buffer errors might mean we encountered huge headers"
         );
 
@@ -105,7 +105,7 @@ impl Backend {
         let (kind, size, header_size) = header::decode(&buf[decompressed_start..decompressed_start + consumed_out])?;
         let size: usize = size.try_into().expect("object size fits into machine architecture");
 
-        if status == flate2::Status::StreamEnd {
+        if status == zlib::Status::StreamEnd {
             let decompressed_body_bytes_sans_header =
                 decompressed_start + header_size..decompressed_start + consumed_out;
             assert_eq!(

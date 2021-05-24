@@ -22,8 +22,6 @@
 pub use find::{Find, FindExt};
 pub use write::Write;
 
-mod zlib;
-
 ///
 pub mod store;
 

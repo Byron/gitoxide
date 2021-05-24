@@ -83,13 +83,13 @@ All feature toggles are additive.
     * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
 * **zlib**
     * Enable the usage of zlib related utilities to compress or decompress data.
-    * It comes with additional features of which one must be set.
-    * _mutually-exclusive_
+    * By default it uses a pure rust implementation which is slower than the **zlib-ng-compat** version, but might be relevant if you prefer a pure-rust build
+      and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` performance.
+    * Additional backends are supported, each of which overriding the default Rust backend.
+      * _mutually-exclusive_
        * **zlib-ng-compat**
          * Use a C-based backend which can compress and decompress significantly faster.
-       * **zlib-rust-backend**
-         * A pure rust implementation which is slower than the **ng** version, but might be relevant if you prefer a pure-rust build
-           and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` performance.
+       * **_zlib-rust-backend_** is available for completeness even though it's the default - it may be chosen for more maintainable feature flags.
 * **walkdir**
     * Makes facilities of the `walkdir` crate partially available.
     * In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.

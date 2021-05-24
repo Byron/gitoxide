@@ -20,7 +20,7 @@ mod resolve;
 pub enum Error {
     #[error("{message}")]
     ZlibInflate {
-        source: crate::zlib::inflate::Error,
+        source: git_features::zlib::inflate::Error,
         message: &'static str,
     },
     #[error("The resolver failed to obtain the pack entry bytes for the entry at {pack_offset}")]

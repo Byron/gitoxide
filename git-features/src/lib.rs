@@ -18,5 +18,5 @@ pub mod parallel;
 #[cfg(feature = "progress")]
 pub mod progress;
 ///
-#[cfg(all(feature = "zlib", any(feature = "zlib-ng-compat", feature = "zlib-rust-backend")))]
+#[cfg(feature = "zlib")]
 pub mod zlib;

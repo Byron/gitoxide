@@ -1,4 +1,5 @@
-use crate::{store::loose, zlib::stream::deflate};
+use crate::store::loose;
+use git_features::zlib::stream::deflate;
 use std::{
     cell::RefCell,
     convert::TryInto,

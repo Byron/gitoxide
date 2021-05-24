@@ -1,8 +1,6 @@
-use crate::{
-    pack::{self, data::EntryRange, tree::traverse::Context, tree::traverse::Error},
-    zlib,
-};
+use crate::pack::{self, data::EntryRange, tree::traverse::Context, tree::traverse::Error};
 use git_features::progress::{unit, Progress};
+use git_features::zlib;
 use std::{cell::RefCell, collections::BTreeMap};
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(

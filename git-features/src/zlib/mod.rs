@@ -1,4 +1,4 @@
-use flate2::Decompress;
+pub use flate2::{Decompress, Status};
 
 /// non-streaming interfaces for decompression
 pub mod inflate {
@@ -22,7 +22,8 @@ pub mod inflate {
 
 /// Decompress a few bytes of a zlib stream without allocation
 pub struct Inflate {
-    pub(crate) state: Decompress,
+    /// The actual decompressor doing all the work.
+    pub state: Decompress,
 }
 
 impl Default for Inflate {

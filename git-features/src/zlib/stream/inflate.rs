@@ -3,8 +3,10 @@ use std::{io, io::BufRead};
 
 /// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
 pub struct ReadBoxed<R> {
-    pub(crate) inner: R,
-    pub(crate) decompressor: Box<Decompress>,
+    /// The reader from which bytes should be decompressed.
+    pub inner: R,
+    /// The decompressor doing all the work.
+    pub decompressor: Box<Decompress>,
 }
 
 impl<R> io::Read for ReadBoxed<R>
@@ -16,24 +18,25 @@ where
     }
 }
 
-pub(crate) fn read<R: BufRead>(obj: &mut R, data: &mut Decompress, dst: &mut [u8]) -> io::Result<usize> {
+/// Read bytes from `read` and decompress them using `state` into a pre-allocated fitting buffer `dst`.
+pub fn read(rd: &mut impl BufRead, state: &mut Decompress, dst: &mut [u8]) -> io::Result<usize> {
     loop {
         let (read, consumed, ret, eof);
         {
-            let input = obj.fill_buf()?;
+            let input = rd.fill_buf()?;
             eof = input.is_empty();
-            let before_out = data.total_out();
-            let before_in = data.total_in();
+            let before_out = state.total_out();
+            let before_in = state.total_in();
             let flush = if eof {
                 FlushDecompress::Finish
             } else {
                 FlushDecompress::None
             };
-            ret = data.decompress(input, dst, flush);
-            read = (data.total_out() - before_out) as usize;
-            consumed = (data.total_in() - before_in) as usize;
+            ret = state.decompress(input, dst, flush);
+            read = (state.total_out() - before_out) as usize;
+            consumed = (state.total_in() - before_in) as usize;
         }
-        obj.consume(consumed);
+        rd.consume(consumed);
 
         match ret {
             // If we haven't ready any data and we haven't hit EOF yet,

@@ -1,6 +1,6 @@
-use crate::{hash, pack, pack::data::input, zlib::stream::inflate::ReadBoxed};
-use flate2::Decompress;
+use crate::{hash, pack, pack::data::input};
 use git_features::hash::Sha1;
+use git_features::zlib::{stream::inflate::ReadBoxed, Decompress};
 use std::{fs, io};
 
 /// An iterator over [`Entries`][input::Entry] in a byte stream.

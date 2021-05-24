@@ -976,7 +976,6 @@ dependencies = [
  "common_macros",
  "dashmap",
  "filebuffer",
- "flate2",
  "git-diff",
  "git-features",
  "git-hash",
