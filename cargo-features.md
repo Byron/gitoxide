@@ -77,6 +77,8 @@ All feature toggles are additive.
 * **fast-sha1**
     * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
       CPUs that support it, like AMD Ryzen or Intel Core i3.
+* **crc32**
+    * provide a proven `crc32` implementation.
 * _mutually-exclusive_
     * **interrupt-handler**
         * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.

@@ -55,6 +55,7 @@ pub use _impl::Sha1;
 /// When calling this function for the first time, `previous_value` should be `0`. Otherwise it
 /// should be the previous return value of this function to provide a hash of multiple sequential
 /// chunks of `bytes`.
+#[cfg(feature = "crc32")]
 pub fn crc32_update(previous_value: u32, bytes: &[u8]) -> u32 {
     crc::crc32::update(previous_value, &crc::crc32::IEEE_TABLE, bytes)
 }
@@ -62,6 +63,7 @@ pub fn crc32_update(previous_value: u32, bytes: &[u8]) -> u32 {
 /// Compute a CRC32 value of the given input `bytes`.
 ///
 /// In case multiple chunkes of `bytes` are present, one should use [`crc32_update()`] instead.
+#[cfg(feature = "crc32")]
 pub use crc::crc32::checksum_ieee as crc32;
 
 /// Compute the hash of `kind` for the bytes in the file at `path`, hashing only the first `num_bytes_from_start`
