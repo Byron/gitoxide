@@ -125,7 +125,7 @@ impl Backend {
             {
                 let (input, output) = buf.split_at_mut(bytes_read);
                 let num_decompressed_bytes = zlib::stream::inflate::read(
-                    &mut std::io::Cursor::new(&mut input[consumed_in..]),
+                    &mut &input[consumed_in..],
                     &mut inflate.state,
                     &mut output[consumed_out..],
                 )

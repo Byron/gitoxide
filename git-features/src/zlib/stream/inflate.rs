@@ -18,10 +18,10 @@ where
     }
 }
 
-/// Read bytes from `read` and decompress them using `state` into a pre-allocated fitting buffer `dst`.
-pub fn read(rd: &mut impl BufRead, state: &mut Decompress, dst: &mut [u8]) -> io::Result<usize> {
+/// Read bytes from `rd` and decompress them using `state` into a pre-allocated fitting buffer `dst`, returning the amount of bytes written.
+pub fn read(rd: &mut impl BufRead, state: &mut Decompress, mut dst: &mut [u8]) -> io::Result<usize> {
     loop {
-        let (read, consumed, ret, eof);
+        let (written, consumed, ret, eof);
         {
             let input = rd.fill_buf()?;
             eof = input.is_empty();
@@ -33,19 +33,18 @@ pub fn read(rd: &mut impl BufRead, state: &mut Decompress, dst: &mut [u8]) -> io
                 FlushDecompress::None
             };
             ret = state.decompress(input, dst, flush);
-            read = (state.total_out() - before_out) as usize;
+            written = (state.total_out() - before_out) as usize;
+            dst = &mut dst[written..];
             consumed = (state.total_in() - before_in) as usize;
         }
+        // dbg!(&ret, written, consumed, dst.len());
         rd.consume(consumed);
 
         match ret {
-            // If we haven't ready any data and we haven't hit EOF yet,
-            // then we need to keep asking for more data because if we
-            // return that 0 bytes of data have been read then it will
-            // be interpreted as EOF.
-            Ok(Status::Ok) | Ok(Status::BufError) if read == 0 && !eof && !dst.is_empty() => continue,
-            Ok(Status::Ok) | Ok(Status::BufError) | Ok(Status::StreamEnd) => return Ok(read),
-
+            Ok(Status::StreamEnd) => return Ok(written),
+            Ok(Status::Ok) | Ok(Status::BufError) if eof || dst.is_empty() => return Ok(written),
+            Ok(Status::Ok) | Ok(Status::BufError) if written == 0 && !eof && !dst.is_empty() => continue,
+            Ok(Status::Ok) | Ok(Status::BufError) => return Ok(written),
             Err(..) => return Err(io::Error::new(io::ErrorKind::InvalidInput, "corrupt deflate stream")),
         }
     }
