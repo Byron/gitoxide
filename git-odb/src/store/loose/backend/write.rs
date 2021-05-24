@@ -3,7 +3,7 @@ use crate::{hash, store::loose, zlib::stream::deflate};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
-/// Returned by the [`crate::Write`] trait implementation of [`Db`]
+/// Returned by the [`crate::Write`] trait implementation of [`Backend`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

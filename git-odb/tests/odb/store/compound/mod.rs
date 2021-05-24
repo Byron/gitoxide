@@ -1,9 +1,9 @@
-use git_odb::store::compound::Db;
+use git_odb::store::compound::Backend;
 
 use crate::fixture_path;
 
-fn db() -> Db {
-    Db::at(fixture_path("objects")).expect("valid object path")
+fn db() -> Backend {
+    Backend::at(fixture_path("objects")).expect("valid object path")
 }
 
 mod init {
@@ -16,12 +16,12 @@ mod init {
 }
 
 mod locate {
-    use git_odb::store::compound::Db;
+    use git_odb::store::compound::Backend;
 
     use crate::hex_to_id;
     use crate::odb::store::compound::db;
 
-    fn can_locate(db: &Db, hex_id: &str) {
+    fn can_locate(db: &Backend, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
             .find(hex_to_id(hex_id), &mut buf, &mut git_odb::pack::cache::Never)

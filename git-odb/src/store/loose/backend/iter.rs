@@ -1,7 +1,7 @@
 use crate::store::loose::Backend;
 use git_features::fs;
 
-/// Returned by [`Db::iter()`]
+/// Returned by [`Backend::iter()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -54,7 +54,7 @@ impl Backend {
 
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Db::find()] method.
+    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Backend::find()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     ///
     /// # Notes

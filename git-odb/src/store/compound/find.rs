@@ -1,7 +1,7 @@
 use crate::store::compound;
 use crate::{data, pack, store::loose};
 
-/// Returned by [`compound::Db::find()`]
+/// Returned by [`compound::Backend::find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -17,7 +17,7 @@ pub(crate) struct PackLocation {
     pub entry_index: u32,
 }
 
-impl compound::Db {
+impl compound::Backend {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
     /// Use a `pack_cache` to accelerate pack access by reducing the amount of work duplication, or [`pack::cache::Never`] to disable any caching.

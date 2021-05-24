@@ -2,7 +2,7 @@ use crate::store::alternate::unquote;
 use git_object::bstr::ByteSlice;
 use std::{borrow::Cow, path::PathBuf};
 
-/// Returned as part of [`crate::alternate::Error::Parse`]
+/// Returned as part of [`crate::store::alternate::Error::Parse`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

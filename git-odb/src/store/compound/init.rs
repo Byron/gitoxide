@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::store::compound;
 use crate::{pack, store::loose};
 
-/// Returned by [`compound::Db::at()`]
+/// Returned by [`compound::Backend::at()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -16,12 +16,12 @@ pub enum Error {
 }
 
 /// Instantiation
-impl compound::Db {
+impl compound::Backend {
     /// Returns a compound database as initialized from the given git `objects_directory`, commonly `.git/objects`.
     ///
-    /// Only loose and packed objects will be considered. See the [linked Db][crate::linked::Db] for a database with
+    /// Only loose and packed objects will be considered. See the [linked Db][crate::store::linked::Db] for a database with
     /// support for _git alternates_, i.e. linking to other repositories.
-    pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Db, Error> {
+    pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Backend, Error> {
         let loose_objects = objects_directory.into();
         if !loose_objects.is_dir() {
             return Err(Error::Inaccessible(loose_objects));
@@ -44,7 +44,7 @@ impl compound::Db {
             Err(_) => Vec::new(),
         };
 
-        Ok(compound::Db {
+        Ok(compound::Backend {
             loose: loose::Backend::at(loose_objects),
             bundles: packs,
         })
