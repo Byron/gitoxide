@@ -1,8 +1,7 @@
 use git_object::{mutable, Kind};
 use std::io::Read;
 
-use crate::store::linked;
-use crate::store::loose;
+use crate::store::{linked, loose};
 
 impl crate::write::Write for linked::Db {
     type Error = loose::backend::write::Error;
