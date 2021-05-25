@@ -20,9 +20,6 @@
 //!   * A database containing various [`compound::Backends`][store::compound::Backend] as gathered from `alternates` files.
 pub use git_pack as pack;
 pub use pack::{data, Find, FindExt};
-pub use write::Write;
-
-// TODO: leave it at 'git_odb::pack::data::Object` which is really what it is by now.
 
 ///
 pub mod store;
@@ -30,3 +27,4 @@ pub mod store;
 pub mod alternate;
 ///
 pub mod write;
+pub use write::Write;

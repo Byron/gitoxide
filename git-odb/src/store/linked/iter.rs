@@ -7,7 +7,7 @@ use crate::store::loose;
 #[allow(clippy::large_enum_variant)]
 enum DbState {
     Pack { pack_index: usize, entry_index: u32 },
-    Loose { iter: loose::backend::iter::Type },
+    Loose { iter: loose::iter::Type },
 }
 
 impl Default for DbState {
@@ -53,7 +53,7 @@ impl<Db> Iterator for AllObjects<Db>
 where
     Db: Borrow<linked::Db>,
 {
-    type Item = Result<ObjectId, loose::backend::iter::Error>;
+    type Item = Result<ObjectId, loose::iter::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let db = self.db.borrow();

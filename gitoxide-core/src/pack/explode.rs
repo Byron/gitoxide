@@ -69,7 +69,7 @@ quick_error! {
             source(err)
             from()
         }
-        OdbWrite(err: loose::backend::write::Error) {
+        OdbWrite(err: loose::write::Error) {
             display("An object could not be written to the database")
             source(err)
             from()
@@ -89,7 +89,7 @@ quick_error! {
         WrittenFileMissing(id: git_hash::ObjectId) {
             display("The recently written file for loose object {} could not be found", id)
         }
-        WrittenFileCorrupt(err: loose::backend::find::Error, id: git_hash::ObjectId) {
+        WrittenFileCorrupt(err: loose::find::Error, id: git_hash::ObjectId) {
             display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
