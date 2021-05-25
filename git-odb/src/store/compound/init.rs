@@ -14,7 +14,7 @@ pub enum Error {
     #[error(transparent)]
     Pack(#[from] pack::bundle::Error),
     #[error(transparent)]
-    Alternate(#[from] Box<crate::store::alternate::Error>),
+    Alternate(#[from] Box<crate::alternate::Error>),
 }
 
 /// Instantiation

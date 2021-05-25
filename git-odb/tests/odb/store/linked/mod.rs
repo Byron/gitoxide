@@ -57,8 +57,8 @@ mod init {
     use git_odb::store::linked;
     use std::convert::TryFrom;
 
+    use crate::odb::alternate::alternate;
     use crate::odb::store::linked::db;
-    use crate::store::alternate::alternate;
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {

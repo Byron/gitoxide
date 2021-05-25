@@ -1,4 +1,4 @@
-use git_odb::store::alternate;
+use git_odb::alternate;
 use std::{
     fs, io,
     path::{Path, PathBuf},
