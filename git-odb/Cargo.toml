@@ -28,11 +28,9 @@ required-features = []
 all-features = true
 
 [dependencies]
-git-features = { version = "^0.15.0", path = "../git-features", features = ["crc32", "sha1", "walkdir", "progress", "zlib"] }
+git-features = { version = "^0.15.0", path = "../git-features", features = ["sha1", "walkdir", "zlib"] }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-object = { version = "^0.10.0", path = "../git-object" }
-git-traverse = { version = "^0.3", path = "../git-traverse" }
-git-diff = { version = "^0.4", path = "../git-diff" }
 git-pack = { version = "^0.1", path = "../git-pack" }
 
 btoi = "0.4.2"
