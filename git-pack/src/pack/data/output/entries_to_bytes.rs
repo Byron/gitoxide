@@ -1,4 +1,5 @@
-use crate::{hash, pack, pack::data::output};
+use crate::{pack, pack::data::output};
+use git_features::hash;
 use std::io::Write;
 
 /// The error returned by `next()` in the [`EntriesToBytesIter`] iterator.

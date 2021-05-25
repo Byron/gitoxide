@@ -19,11 +19,8 @@
 //! * [`store::linked::Db`]
 //!   * A database containing various [`compound::Backends`][store::compound::Backend] as gathered from `alternates` files.
 
-pub mod pack;
-
-pub(crate) mod hash;
-
 pub mod data;
+pub mod pack;
 
 ///
 pub mod find;

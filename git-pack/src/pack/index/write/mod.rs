@@ -221,7 +221,7 @@ fn modify_base(
     hash: git_hash::Kind,
 ) {
     fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: git_hash::Kind) -> git_hash::ObjectId {
-        let mut write = crate::hash::Write::new(io::sink(), hash_kind);
+        let mut write = git_features::hash::Write::new(io::sink(), hash_kind);
         loose::object::header::encode(kind, bytes.len() as u64, &mut write)
             .expect("write to sink and hash cannot fail");
         write.hash.update(bytes);

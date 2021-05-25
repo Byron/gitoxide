@@ -1,9 +1,12 @@
 use crate::{
-    hash, pack,
+    pack,
     pack::index::{util::Count, V2_SIGNATURE},
 };
 use byteorder::{BigEndian, WriteBytesExt};
-use git_features::progress::{self, Progress};
+use git_features::{
+    hash,
+    progress::{self, Progress},
+};
 use std::{cmp::Ordering, collections::VecDeque, io};
 
 pub(crate) fn write_to(
