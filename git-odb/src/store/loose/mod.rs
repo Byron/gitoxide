@@ -5,6 +5,3 @@ const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 pub mod backend;
 #[doc(inline)]
 pub use backend::Backend;
-
-///
-pub mod object;

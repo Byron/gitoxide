@@ -92,7 +92,7 @@ impl Backend {
             hash,
         );
 
-        loose::object::header::encode(kind, size, &mut to).map_err(|err| Error::Io {
+        git_pack::loose::object::header::encode(kind, size, &mut to).map_err(|err| Error::Io {
             source: err,
             message: "write header to tempfile in",
             path: self.path.to_owned(),

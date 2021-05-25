@@ -12,7 +12,7 @@ doctest = false
 test = false
 
 [features]
-serde1 = ["git-commitgraph/serde1", "git-object/serde1", "git-odb/serde1", "git-protocol/serde1", "serde_json", "serde"]
+serde1 = ["git-commitgraph/serde1", "git-object/serde1", "git-pack/serde1", "git-odb/serde1", "git-protocol/serde1", "serde_json", "serde"]
 organize = ["git-url", "jwalk"]
 estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
 
@@ -23,7 +23,8 @@ all-features = true
 git-repository = { version = "^0.5.0", path = "../git-repository" }
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
-git-odb = { version = "^0.15.0", path = "../git-odb", features = ["pack-cache-lru-static"] }
+git-odb = { version = "^0.15.0", path = "../git-odb" }
+git-pack = { version = "^0.1", path = "../git-pack", features = ["pack-cache-lru-static"] }
 git-protocol = { version = "^0.8.0", path = "../git-protocol", features = ["blocking-client"] }
 git-features = { version = "^0.15.0", path = "../git-features", features = ["progress"] }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }

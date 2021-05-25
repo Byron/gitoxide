@@ -5,7 +5,7 @@ use git_hash::{
     oid, ObjectId,
 };
 use git_object::immutable;
-use git_odb::find::FindExt;
+use git_odb::FindExt;
 use git_traverse::commit;
 use rayon::prelude::*;
 use std::{path::PathBuf, time::Instant};

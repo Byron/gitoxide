@@ -1,4 +1,3 @@
-use crate::store::loose;
 use git_features::zlib::stream::deflate;
 use std::{
     cell::RefCell,
@@ -8,7 +7,7 @@ use std::{
 
 /// An object database equivalent to `/dev/null`, dropping all objects stored into it.
 ///
-/// It can optionally compress the content, similarly to what would happen when using a [`loose::Backend`].
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Backend`][crate::loose::Backend].
 ///
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<io::Sink>>>,
@@ -53,7 +52,7 @@ impl crate::write::Write for Sink {
         match hash {
             git_hash::Kind::Sha1 => {
                 let mut hasher = Sha1::default();
-                let header_len = loose::object::header::encode(kind, size, &mut buf[..])?;
+                let header_len = git_pack::loose::object::header::encode(kind, size, &mut buf[..])?;
                 hasher.update(&buf[..header_len]);
                 possibly_compress(&buf[..header_len])?;
 

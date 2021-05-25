@@ -1,5 +1,4 @@
-use git_odb::store::linked::Db;
-use git_odb::{find::FindExt, pack};
+use git_odb::{pack, store::linked::Db, FindExt};
 use git_traverse::tree;
 
 use crate::hex_to_id;

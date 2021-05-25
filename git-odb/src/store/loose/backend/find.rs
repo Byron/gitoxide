@@ -1,6 +1,7 @@
-use crate::store::loose::{backend::sha1_path, object::header, Backend, HEADER_READ_UNCOMPRESSED_BYTES};
+use crate::store::loose::{backend::sha1_path, Backend, HEADER_READ_UNCOMPRESSED_BYTES};
 use git_features::zlib;
 use git_pack::data;
+use git_pack::loose::object::header;
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
 /// Returned by [`Backend::find()`]

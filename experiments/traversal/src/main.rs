@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use dashmap::DashSet;
 use git_hash::{bstr::BStr, bstr::ByteSlice, ObjectId};
 use git_object::immutable::tree::Entry;
-use git_odb::{find::FindExt, Find};
+use git_odb::{Find, FindExt};
 use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
     collections::HashSet,
@@ -68,7 +68,7 @@ fn main() -> anyhow::Result<()> {
         let (unique, entries) = do_gitoxide_tree_dag_traversal(
             &all_commits,
             &db,
-            git_odb::pack::cache::lru::StaticLinkedList::<64>::default,
+            git_pack::pack::cache::lru::StaticLinkedList::<64>::default,
             *compute_mode,
         )?;
         let elapsed = start.elapsed();
