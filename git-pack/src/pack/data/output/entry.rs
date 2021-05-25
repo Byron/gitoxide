@@ -58,13 +58,14 @@ pub enum Error {
 }
 
 impl output::Entry {
-    /// TODO
+    /// Create an Entry from a previously counted object which is located in a pack. It's `entry` is provided here.
+    /// The `version` specifies what kind of target `Entry` version the caller desires.
     pub fn from_pack_entry(
         entry: find::PackEntry<'_>,
         count: &output::Count,
-        version: pack::data::Version,
+        target_version: pack::data::Version,
     ) -> Option<Result<Self, Error>> {
-        if entry.version != version {
+        if entry.version != target_version {
             return None;
         };
 

@@ -1,6 +1,6 @@
 use crate::{data, pack};
 
-/// Describe how object can be located in an object store
+/// Describe how object can be located in an object store with built-in facilities to supports packs specifically.
 ///
 /// ## Notes
 ///
@@ -210,7 +210,7 @@ pub mod existing_iter {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)] // TODO: docs
 pub struct PackEntry<'a> {
-    /// The encoded data of the entry as present in the pack file, including the header followed by compressed data.
+    /// The pack-data encoded bytes of the pack data entry as present in the pack file, including the header followed by compressed data.
     pub data: &'a [u8],
     /// The crc32 hash over the entirety of `data`, or None if the pack file format doesn't support it yet.
     pub crc32: Option<u32>,
