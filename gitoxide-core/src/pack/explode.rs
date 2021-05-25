@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use quick_error::quick_error;
 
 use git_features::progress::{self, Progress};
-use git_odb::{store::loose, Write};
+use git_odb::{loose, Write};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -98,8 +98,8 @@ quick_error! {
 
 #[allow(clippy::large_enum_variant)]
 enum OutputWriter {
-    Loose(loose::Backend),
-    Sink(git_odb::store::Sink),
+    Loose(loose::Store),
+    Sink(git_odb::Sink),
 }
 
 impl git_odb::write::Write for OutputWriter {
@@ -134,8 +134,8 @@ impl git_odb::write::Write for OutputWriter {
 impl OutputWriter {
     fn new(path: Option<impl AsRef<Path>>, compress: bool) -> Self {
         match path {
-            Some(path) => OutputWriter::Loose(loose::Backend::at(path.as_ref())),
-            None => OutputWriter::Sink(git_odb::store::sink().compress(compress)),
+            Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref())),
+            None => OutputWriter::Sink(git_odb::sink().compress(compress)),
         }
     }
 }
@@ -198,7 +198,7 @@ pub fn pack_or_pack_index(
             move || {
                 let out = OutputWriter::new(object_path.clone(), sink_compress);
                 let object_verifier = if verify {
-                    object_path.as_ref().map(loose::Backend::at)
+                    object_path.as_ref().map(loose::Store::at)
                 } else {
                     None
                 };

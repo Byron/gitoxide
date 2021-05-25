@@ -1,11 +1,11 @@
-use git_odb::{pack, store::linked::Db, FindExt};
+use git_odb::{linked::Store, pack, FindExt};
 use git_traverse::tree;
 
 use crate::hex_to_id;
 
-fn db() -> crate::Result<Db> {
+fn db() -> crate::Result<Store> {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo_for_trees.sh")?;
-    let db = Db::at(dir.join(".git").join("objects"))?;
+    let db = Store::at(dir.join(".git").join("objects"))?;
     Ok(db)
 }
 

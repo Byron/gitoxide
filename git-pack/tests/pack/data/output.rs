@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use git_odb::store::linked;
+use git_odb::linked;
 use git_pack::data::output;
 
 #[test]
@@ -25,21 +25,21 @@ enum DbKind {
     DeterministicGeneratedContent,
 }
 
-fn db(kind: DbKind) -> crate::Result<Arc<linked::Db>> {
+fn db(kind: DbKind) -> crate::Result<Arc<linked::Store>> {
     use DbKind::*;
     let path: PathBuf = match kind {
         DeterministicGeneratedContent => git_testtools::scripted_fixture_repo_read_only("make_pack_gen_repo.sh")?
             .join(".git")
             .join("objects"),
     };
-    linked::Db::at(path).map_err(Into::into).map(Into::into)
+    linked::Store::at(path).map_err(Into::into).map(Into::into)
 }
 
 mod count_and_entries {
     use std::sync::Arc;
 
     use git_features::progress;
-    use git_odb::store::compound;
+    use git_odb::compound;
     use git_odb::{pack, FindExt};
     use git_traverse::commit;
 

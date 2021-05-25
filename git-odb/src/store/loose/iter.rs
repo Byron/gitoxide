@@ -1,7 +1,7 @@
-use crate::store::loose::Backend;
+use crate::store::loose::Store;
 use git_features::fs;
 
-/// Returned by [`Backend::iter()`]
+/// Returned by [`Store::iter()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -16,7 +16,7 @@ pub type Type = std::iter::FilterMap<
 >;
 
 /// Iteration and traversal
-impl Backend {
+impl Store {
     fn iter_filter_map(
         res: Result<fs::walkdir::DirEntry, fs::walkdir::Error>,
     ) -> Option<Result<git_hash::ObjectId, Error>> {
@@ -54,7 +54,7 @@ impl Backend {
 
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Backend::find()] method.
+    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Store::find()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     ///
     /// # Notes
@@ -67,6 +67,6 @@ impl Backend {
             .max_depth(3)
             .follow_links(false)
             .into_iter()
-            .filter_map(Backend::iter_filter_map)
+            .filter_map(Store::iter_filter_map)
     }
 }

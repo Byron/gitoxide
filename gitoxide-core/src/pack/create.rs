@@ -6,7 +6,7 @@ use anyhow::bail;
 use git_features::progress::Progress;
 use git_hash::ObjectId;
 use git_object::bstr::ByteVec;
-use git_odb::store::linked;
+use git_odb::linked;
 use git_odb::{pack, FindExt};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -175,7 +175,7 @@ pub fn create(
     Ok(())
 }
 
-fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Db> {
+fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Store> {
     let path = repository.as_ref();
-    Ok(linked::Db::at(path.join(".git").join("objects"))?)
+    Ok(linked::Store::at(path.join(".git").join("objects"))?)
 }

@@ -1,10 +1,10 @@
-use super::Backend;
+use super::Store;
 use crate::store::loose;
 use git_features::{hash, zlib::stream::deflate};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
-/// Returned by the [`crate::Write`] trait implementation of [`Backend`]
+/// Returned by the [`crate::Write`] trait implementation of [`Store`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -23,7 +23,7 @@ pub enum Error {
     },
 }
 
-impl crate::write::Write for Backend {
+impl crate::write::Write for Store {
     type Error = Error;
 
     /// Write the given buffer in `from` to disk in one syscall at best.
@@ -76,7 +76,7 @@ impl crate::write::Write for Backend {
 
 type CompressedTempfile = deflate::Write<NamedTempFile>;
 
-impl Backend {
+impl Store {
     fn write_header(
         &self,
         kind: git_object::Kind,

@@ -1,14 +1,14 @@
 mod ancestor {
     use git_hash::{oid, ObjectId};
-    use git_odb::store::linked::Db;
+    use git_odb::linked::Store;
     use git_odb::{pack, FindExt};
     use git_traverse::commit;
 
     use crate::hex_to_id;
 
-    fn db() -> crate::Result<Db> {
+    fn db() -> crate::Result<Store> {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_traversal_repo_for_commits.sh")?;
-        let db = Db::at(dir.join(".git").join("objects"))?;
+        let db = Store::at(dir.join(".git").join("objects"))?;
         Ok(db)
     }
 

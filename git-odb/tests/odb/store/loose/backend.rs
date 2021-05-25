@@ -1,11 +1,11 @@
 use pretty_assertions::assert_eq;
 
-use git_odb::store::loose::Backend;
+use git_odb::loose::Store;
 
 use crate::{fixture_path, hex_to_id};
 
-fn ldb() -> Backend {
-    Backend::at(fixture_path("objects"))
+fn ldb() -> Store {
+    Store::at(fixture_path("objects"))
 }
 
 pub fn object_ids() -> Vec<git_hash::ObjectId> {
@@ -31,7 +31,7 @@ pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_pack::data::
 }
 
 mod write {
-    use git_odb::store::loose;
+    use git_odb::loose;
     use git_odb::write::Write;
 
     use crate::store::loose::backend::{locate_oid, object_ids};
@@ -39,7 +39,7 @@ mod write {
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
         let dir = tempfile::tempdir()?;
-        let db = loose::Backend::at(dir.path());
+        let db = loose::Store::at(dir.path());
         let mut buf = Vec::new();
         let mut buf2 = Vec::new();
 

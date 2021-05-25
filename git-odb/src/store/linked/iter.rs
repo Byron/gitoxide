@@ -28,7 +28,7 @@ pub struct AllObjects<Db> {
 
 impl<Db> AllObjects<Db>
 where
-    Db: Borrow<linked::Db>,
+    Db: Borrow<linked::Store>,
 {
     /// Create a new iterator from a linked database
     pub fn new(db: Db) -> Self {
@@ -38,7 +38,7 @@ where
                 .borrow()
                 .dbs
                 .get(db_index)
-                .expect("at least one db or no linked::Db at all");
+                .expect("at least one db or no linked::Store at all");
             if db.bundles.is_empty() {
                 DbState::Loose { iter: db.loose.iter() }
             } else {
@@ -51,7 +51,7 @@ where
 
 impl<Db> Iterator for AllObjects<Db>
 where
-    Db: Borrow<linked::Db>,
+    Db: Borrow<linked::Store>,
 {
     type Item = Result<ObjectId, loose::iter::Error>;
 
@@ -108,18 +108,18 @@ where
     }
 }
 
-impl linked::Db {
+impl linked::Store {
     /// Return an iterator over all objects in all linked databases, database after database, first packed
     /// objects with the 'best' packs first, followed by loose objects.
     /// For specialized iterations, use the `dbs` fields directly as all databases are accessible.
-    pub fn iter(&self) -> AllObjects<&linked::Db> {
+    pub fn iter(&self) -> AllObjects<&linked::Store> {
         AllObjects::new(self)
     }
 
-    /// Like [`iter()`][linked::Db::iter()] but works with this instance living in an [`Arc`]
+    /// Like [`iter()`][linked::Store::iter()] but works with this instance living in an [`Arc`]
     ///
     /// Useful in conjunction with `'static threads`.
-    pub fn arc_iter(self: &Arc<linked::Db>) -> AllObjects<Arc<linked::Db>> {
+    pub fn arc_iter(self: &Arc<linked::Store>) -> AllObjects<Arc<linked::Store>> {
         AllObjects::new(Arc::clone(&self))
     }
 }

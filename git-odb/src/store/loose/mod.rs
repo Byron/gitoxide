@@ -3,19 +3,19 @@ const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 use std::path::PathBuf;
 
 /// A database for reading and writing objects to disk, one file per object.
-pub struct Backend {
+pub struct Store {
     /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
     pub path: PathBuf,
 }
 
 /// Initialization
-impl Backend {
+impl Store {
     /// Initialize the Db with the `objects_directory` containing the hexadecimal first byte subdirectories, which in turn
     /// contain all loose objects.
     ///
     /// In a git repository, this would be `.git/objects`.
-    pub fn at(objects_directory: impl Into<PathBuf>) -> Backend {
-        Backend {
+    pub fn at(objects_directory: impl Into<PathBuf>) -> Store {
+        Store {
             path: objects_directory.into(),
         }
     }

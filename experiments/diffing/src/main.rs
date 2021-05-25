@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
         d.push("objects");
         d
     };
-    let db = git_odb::store::linked::Db::at(&repo_objects_dir)?;
+    let db = git_odb::linked::Store::at(&repo_objects_dir)?;
 
     let start = Instant::now();
     let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
@@ -83,7 +83,7 @@ fn main() -> anyhow::Result<()> {
         oid: &oid,
         buf: &'b mut Vec<u8>,
         obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
-        db: &git_odb::store::linked::Db,
+        db: &git_odb::linked::Store,
         pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
     ) -> Option<git_odb::data::Object<'b>> {
         let oid = oid.to_owned();

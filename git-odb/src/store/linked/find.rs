@@ -8,7 +8,7 @@ use crate::{
 };
 use git_pack::{data::Object, find::PackEntry};
 
-impl crate::Find for linked::Db {
+impl crate::Find for linked::Store {
     type Error = compound::find::Error;
 
     fn find<'a>(
@@ -86,7 +86,7 @@ impl crate::Find for linked::Db {
     }
 }
 
-impl crate::Find for &linked::Db {
+impl crate::Find for &linked::Store {
     type Error = compound::find::Error;
 
     fn find<'a>(

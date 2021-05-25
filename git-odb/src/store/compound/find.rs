@@ -4,7 +4,7 @@ use crate::{
 };
 use git_pack::data;
 
-/// Returned by [`compound::Backend::find()`]
+/// Returned by [`compound::Store::find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -20,7 +20,7 @@ pub(crate) struct PackLocation {
     pub entry_index: u32,
 }
 
-impl compound::Backend {
+impl compound::Store {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
     /// Use a `pack_cache` to accelerate pack access by reducing the amount of work duplication, or [`pack::cache::Never`] to disable any caching.
@@ -44,7 +44,7 @@ impl compound::Backend {
     }
 
     /// Internal-use function to look up a packed object index or loose object.
-    /// Used to avoid double-lookups in linked::Db::locate.
+    /// Used to avoid double-lookups in linked::Store::locate.
     /// (The polonius borrow-checker would support this via the locate
     /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
     /// once polonius is stable.)
@@ -73,7 +73,7 @@ impl compound::Backend {
 }
 
 /// Special-use function to look up an object index. Used to avoid double-lookups in
-/// [compound::Backend::find()][crate::store::compound::Backend::find()]. (The polonius borrow-checker would support this via the 'find'
+/// [compound::Store::find()][crate::store::compound::Store::find()]. (The polonius borrow-checker would support this via the 'find'
 /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
 /// once polonius is stable.)
 pub fn find_pack_index(bundle: &git_pack::Bundle, id: &git_hash::oid) -> Option<u32> {

@@ -1,9 +1,9 @@
-use crate::store::loose::{sha1_path, Backend, HEADER_READ_UNCOMPRESSED_BYTES};
+use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
 use git_features::zlib;
 use git_pack::{data, loose::object::header};
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
-/// Returned by [`Backend::find()`]
+/// Returned by [`Store::find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -23,7 +23,7 @@ pub enum Error {
 }
 
 /// Object lookup
-impl Backend {
+impl Store {
     const OPEN_ACTION: &'static str = "open";
 
     /// Returns true if the given id is contained in our repository.

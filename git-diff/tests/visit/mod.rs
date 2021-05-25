@@ -3,15 +3,15 @@ mod changes {
         use git_diff::tree::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, immutable, tree::EntryMode};
-        use git_odb::store::linked;
+        use git_odb::linked;
         use git_odb::{pack, Find};
 
         use crate::hex_to_id;
 
         type Changes = Vec<recorder::Change>;
 
-        fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Db> {
-            linked::Db::at(
+        fn db(args: impl IntoIterator<Item = &'static str>) -> crate::Result<linked::Store> {
+            linked::Store::at(
                 git_testtools::scripted_fixture_repo_read_only_with_args("make_diff_repo.sh", args)?
                     .join(".git")
                     .join("objects"),
@@ -20,7 +20,7 @@ mod changes {
         }
 
         fn locate_tree_by_commit<'a>(
-            db: &linked::Db,
+            db: &linked::Store,
             commit: &oid,
             buf: &'a mut Vec<u8>,
         ) -> crate::Result<immutable::TreeIter<'a>> {
@@ -39,7 +39,7 @@ mod changes {
                 .expect("id to be a tree"))
         }
 
-        fn diff_commits(db: &linked::Db, lhs: impl Into<Option<ObjectId>>, rhs: &oid) -> crate::Result<Changes> {
+        fn diff_commits(db: &linked::Store, lhs: impl Into<Option<ObjectId>>, rhs: &oid) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let lhs_tree = lhs
                 .into()
@@ -61,7 +61,7 @@ mod changes {
             Ok(recorder.records)
         }
 
-        fn diff_with_previous_commit_from(db: &linked::Db, commit_id: &oid) -> crate::Result<Changes> {
+        fn diff_with_previous_commit_from(db: &linked::Store, commit_id: &oid) -> crate::Result<Changes> {
             let mut buf = Vec::new();
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
@@ -107,7 +107,7 @@ mod changes {
             Ok(recorder.records)
         }
 
-        fn head_of(db: &linked::Db) -> ObjectId {
+        fn head_of(db: &linked::Store) -> ObjectId {
             ObjectId::from_hex(
                 &std::fs::read(
                     db.dbs[0]
@@ -126,7 +126,7 @@ mod changes {
             .expect("valid hex id")
         }
 
-        fn all_commits(db: &linked::Db) -> Vec<ObjectId> {
+        fn all_commits(db: &linked::Store) -> Vec<ObjectId> {
             use git_traverse::commit;
 
             let head = head_of(db);

@@ -66,7 +66,7 @@ where
         let start = Instant::now();
         let mut count_commits = progress.add_child("Traverse commit graph");
         count_commits.init(None, git_features::progress::count("Commit"));
-        let db = git_odb::store::linked::Db::at(&repo_objects_dir)?;
+        let db = git_odb::linked::Store::at(&repo_objects_dir)?;
         let mut pack_cache = git_odb::pack::cache::Never;
         let mut commits = Vec::<Vec<u8>>::default();
         for (idx, commit) in commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
