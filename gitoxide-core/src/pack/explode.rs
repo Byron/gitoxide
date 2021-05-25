@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use quick_error::quick_error;
 
 use git_features::progress::{self, Progress};
-use git_odb::{pack, store::loose, Write};
+use git_odb::{store::loose, Write};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -47,7 +47,7 @@ impl std::str::FromStr for SafetyCheck {
     }
 }
 
-impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
+impl From<SafetyCheck> for git_pack::index::traverse::SafetyCheck {
     fn from(v: SafetyCheck) -> Self {
         use git_pack::index::traverse::SafetyCheck::*;
         match v {
@@ -78,7 +78,7 @@ quick_error! {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
-        Verify(err: git_odb::data::verify::Error) {
+        Verify(err: git_pack::data::object::verify::Error) {
             display("Object didn't verify after right after writing it")
             source(err)
             from()
@@ -163,7 +163,7 @@ pub fn pack_or_pack_index(
     use anyhow::Context;
 
     let path = pack_path.as_ref();
-    let bundle = pack::Bundle::at(path).with_context(|| {
+    let bundle = git_pack::Bundle::at(path).with_context(|| {
         format!(
             "Could not find .idx or .pack file from given file at '{}'",
             path.display()
@@ -182,12 +182,12 @@ pub fn pack_or_pack_index(
 
     let algorithm = object_path
         .as_ref()
-        .map(|_| pack::index::traverse::Algorithm::Lookup)
+        .map(|_| git_pack::index::traverse::Algorithm::Lookup)
         .unwrap_or_else(|| {
             if sink_compress {
-                pack::index::traverse::Algorithm::Lookup
+                git_pack::index::traverse::Algorithm::Lookup
             } else {
-                pack::index::traverse::Algorithm::DeltaTreeLookup
+                git_pack::index::traverse::Algorithm::DeltaTreeLookup
             }
         });
     let mut progress = bundle.index.traverse(
@@ -224,8 +224,8 @@ pub fn pack_or_pack_index(
                 }
             }
         },
-        pack::cache::lru::StaticLinkedList::<64>::default,
-        pack::index::traverse::Options {
+        git_pack::cache::lru::StaticLinkedList::<64>::default,
+        git_pack::index::traverse::Options {
             algorithm,
             thread_limit,
             check: check.into(),
