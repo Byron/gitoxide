@@ -31,8 +31,7 @@ pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_pack::data::
 }
 
 mod write {
-    use git_odb::loose;
-    use git_odb::write::Write;
+    use git_odb::{loose, Write};
 
     use crate::store::loose::backend::{locate_oid, object_ids};
 
