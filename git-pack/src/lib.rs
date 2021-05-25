@@ -15,10 +15,12 @@
 
 ///
 pub mod bundle;
+pub use crate::bundle::Bundle;
+
 ///
 pub mod find;
+pub use find::{Find, FindExt};
 #[doc(inline)]
-pub use crate::bundle::Bundle;
 
 ///
 pub mod cache;
@@ -28,8 +30,6 @@ pub mod data;
 pub mod index;
 ///
 pub mod tree;
-
-pub use find::{Find, FindExt};
 
 ///
 pub mod loose;
