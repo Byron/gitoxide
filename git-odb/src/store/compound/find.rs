@@ -73,7 +73,7 @@ impl compound::Backend {
 }
 
 /// Special-use function to look up an object index. Used to avoid double-lookups in
-/// [compound::Backend::find()][crate::compound::Backend::find()]. (The polonius borrow-checker would support this via the 'find'
+/// [compound::Backend::find()][crate::store::compound::Backend::find()]. (The polonius borrow-checker would support this via the 'find'
 /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
 /// once polonius is stable.)
 pub fn find_pack_index(bundle: &git_pack::Bundle, id: &git_hash::oid) -> Option<u32> {

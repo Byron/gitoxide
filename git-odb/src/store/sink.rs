@@ -7,7 +7,7 @@ use std::{
 
 /// An object database equivalent to `/dev/null`, dropping all objects stored into it.
 ///
-/// It can optionally compress the content, similarly to what would happen when using a [`loose::Backend`][crate::loose::Backend].
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Backend`][crate::store::loose::Backend].
 ///
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<io::Sink>>>,
