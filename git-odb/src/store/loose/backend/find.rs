@@ -1,8 +1,6 @@
-use crate::{
-    data,
-    store::loose::{backend::sha1_path, object::header, Backend, HEADER_READ_UNCOMPRESSED_BYTES},
-};
+use crate::store::loose::{backend::sha1_path, object::header, Backend, HEADER_READ_UNCOMPRESSED_BYTES};
 use git_features::zlib;
+use git_pack::data;
 use std::{convert::TryInto, fs, io::Read, path::PathBuf};
 
 /// Returned by [`Backend::find()`]
@@ -115,7 +113,7 @@ impl Backend {
             );
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
             buf.resize(size, 0);
-            Ok(crate::data::Object {
+            Ok(git_pack::data::Object {
                 kind,
                 data: buf,
                 pack_location: None,
@@ -142,7 +140,7 @@ impl Backend {
             };
             buf.copy_within(decompressed_start + header_size.., 0);
             buf.resize(size, 0);
-            Ok(crate::data::Object {
+            Ok(git_pack::data::Object {
                 kind,
                 data: buf,
                 pack_location: None,

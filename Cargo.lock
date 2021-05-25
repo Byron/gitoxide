@@ -980,6 +980,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-object",
+ "git-pack",
  "git-testtools",
  "git-traverse",
  "hex",

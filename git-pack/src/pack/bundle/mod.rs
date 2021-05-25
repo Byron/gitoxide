@@ -56,11 +56,11 @@ pub enum Error {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Location {
     /// The id of the pack containing the object
-    pub(crate) pack_id: u32,
+    pub pack_id: u32,
     /// The index at which the object can be fonud in the index file
-    pub(crate) index_file_id: u32,
+    pub index_file_id: u32,
     /// The size of the entry of disk
-    pub(crate) entry_size: usize,
+    pub entry_size: usize,
 }
 
 impl Location {

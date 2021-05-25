@@ -18,20 +18,11 @@
 //!   * This is the database closely resembling the object database in a git repository, and probably what most people would want to use.
 //! * [`store::linked::Db`]
 //!   * A database containing various [`compound::Backends`][store::compound::Backend] as gathered from `alternates` files.
-
-pub use find::{Find, FindExt};
-pub use write::Write;
+pub use git_pack::{Find, FindExt};
 
 ///
 pub mod store;
 
-pub mod pack;
-
-pub(crate) mod hash;
-
-pub mod data;
-
-///
-pub mod find;
 ///
 pub mod write;
+pub use write::Write;

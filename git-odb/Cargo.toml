@@ -36,6 +36,7 @@ git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-traverse = { version = "^0.3", path = "../git-traverse" }
 git-diff = { version = "^0.4", path = "../git-diff" }
+git-pack = { version = "^0.1", path = "../git-pack" }
 
 smallvec = "1.3.0"
 filebuffer = "0.4.0"

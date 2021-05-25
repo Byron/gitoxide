@@ -17,20 +17,16 @@ impl pack::Bundle {
             Some(idx) => idx,
             None => return Ok(None),
         };
-        self.internal_get_object_by_index(idx, out, cache).map(Some)
+        self.get_object_by_index(idx, out, cache).map(Some)
     }
 
-    /// Internal-use function to look up an object index. Used to avoid double-lookups in
-    /// [compound::Backend::find()][crate::compound::Backend::find()]. (The polonius borrow-checker would support this via the 'find'
-    /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
-    /// once polonius is stable.)
-    pub fn find_pack_index(&self, id: &git_hash::oid) -> Option<u32> {
-        self.index.lookup(id)
-    }
-
-    /// Internal-use function to get an object given an index previously returned from
+    /// Special-use function to get an object given an index previously returned from
     /// internal_find_pack_index.
-    pub(crate) fn internal_get_object_by_index<'a>(
+    ///
+    /// # Panics
+    ///
+    /// If `index` is out of bounds.
+    pub fn get_object_by_index<'a>(
         &self,
         idx: u32,
         out: &'a mut Vec<u8>,

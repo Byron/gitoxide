@@ -1,6 +1,6 @@
 use super::Backend;
-use crate::{hash, store::loose};
-use git_features::zlib::stream::deflate;
+use crate::store::loose;
+use git_features::{hash, zlib::stream::deflate};
 use std::{fs, io, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 

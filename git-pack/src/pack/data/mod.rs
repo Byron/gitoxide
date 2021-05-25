@@ -49,8 +49,11 @@ impl Default for Version {
 pub struct File {
     data: FileBuffer,
     path: std::path::PathBuf,
-    /// A portion of a hash to represent the `path` field when used with cache lookup
-    pub(crate) id: u32,
+    /// A hash to represent the `path` field when used with cache lookup, or a way to identify this pack by its location on disk.
+    ///
+    /// Note that `path` might not be canonicalized, thus different hashes might actually refer to the same pack on disk. This will
+    /// only lead to less efficient cache usage.
+    pub id: u32,
     version: Version,
     num_objects: u32,
 }

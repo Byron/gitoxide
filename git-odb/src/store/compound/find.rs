@@ -1,5 +1,5 @@
-use crate::store::compound;
-use crate::{data, pack, store::loose};
+use crate::store::{compound, loose};
+use git_pack::{data, pack};
 
 /// Returned by [`compound::Backend::find()`]
 #[derive(thiserror::Error, Debug)]
@@ -28,9 +28,9 @@ impl compound::Backend {
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<data::Object<'a>>, Error> {
         let id = id.as_ref();
-        for pack in &self.bundles {
-            if let Some(idx) = pack.internal_find_pack_index(id) {
-                let object = pack.internal_get_object_by_index(idx, buffer, pack_cache)?;
+        for bundle in &self.bundles {
+            if let Some(idx) = find_pack_index(bundle, id) {
+                let object = bundle.get_object_by_index(idx, buffer, pack_cache)?;
                 return Ok(Some(object));
             }
         }
@@ -47,8 +47,8 @@ impl compound::Backend {
     /// once polonius is stable.)
     pub(crate) fn internal_find(&self, id: impl AsRef<git_hash::oid>) -> Option<PackLocation> {
         let id = id.as_ref();
-        for (bundle_index, pack) in self.bundles.iter().enumerate() {
-            if let Some(idx) = pack.internal_find_pack_index(id) {
+        for (bundle_index, bundle) in self.bundles.iter().enumerate() {
+            if let Some(idx) = find_pack_index(bundle, id) {
                 return Some(PackLocation {
                     bundle_index,
                     entry_index: idx,
@@ -65,6 +65,14 @@ impl compound::Backend {
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<data::Object<'a>, pack::data::decode_entry::Error> {
-        self.bundles[pack_index].internal_get_object_by_index(object_index, buffer, pack_cache)
+        self.bundles[pack_index].get_object_by_index(object_index, buffer, pack_cache)
     }
+}
+
+/// Special-use function to look up an object index. Used to avoid double-lookups in
+/// [compound::Backend::find()][crate::compound::Backend::find()]. (The polonius borrow-checker would support this via the 'find'
+/// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
+/// once polonius is stable.)
+pub fn find_pack_index(bundle: &git_pack::pack::Bundle, id: &git_hash::oid) -> Option<u32> {
+    bundle.index.lookup(id)
 }
