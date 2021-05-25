@@ -23,7 +23,7 @@ all-features = true
 git-repository = { version = "^0.5.0", path = "../git-repository" }
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
-git-odb = { version = "^0.15.0", path = "../git-odb" }
+git-odb = { version = "^0.16.0", path = "../git-odb" }
 git-pack = { version = "^0.1", path = "../git-pack", features = ["pack-cache-lru-static"] }
 git-protocol = { version = "^0.8.0", path = "../git-protocol", features = ["blocking-client"] }
 git-features = { version = "^0.15.0", path = "../git-features", features = ["progress"] }

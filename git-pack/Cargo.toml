@@ -53,7 +53,7 @@ dashmap = "4.0.2"
 
 [dev-dependencies]
 git-testtools = { version = "0.1", path = "../tests/tools"}
-git-odb = { version = "0.15", path = "../git-odb" }
+git-odb = { version = "^0.16", path = "../git-odb" }
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 hex = "0.4.2"
 common_macros = "0.1.1"
