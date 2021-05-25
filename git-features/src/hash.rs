@@ -119,40 +119,47 @@ pub fn bytes_of_file(
     Ok(id)
 }
 
-/// A utility to automatically generate a hash while writing into an inner writer.
-pub struct Write<T> {
-    /// The hash implementation.
-    pub hash: Sha1,
-    /// The inner writer.
-    pub inner: T,
-}
+#[cfg(any(feature = "sha1", feature = "fast-sha1"))]
+mod write {
+    use crate::hash::Sha1;
 
-impl<T> std::io::Write for Write<T>
-where
-    T: std::io::Write,
-{
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let written = self.inner.write(buf)?;
-        self.hash.update(&buf[..written]);
-        Ok(written)
+    /// A utility to automatically generate a hash while writing into an inner writer.
+    pub struct Write<T> {
+        /// The hash implementation.
+        pub hash: Sha1,
+        /// The inner writer.
+        pub inner: T,
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.inner.flush()
-    }
-}
+    impl<T> std::io::Write for Write<T>
+    where
+        T: std::io::Write,
+    {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            let written = self.inner.write(buf)?;
+            self.hash.update(&buf[..written]);
+            Ok(written)
+        }
 
-impl<T> Write<T>
-where
-    T: std::io::Write,
-{
-    /// Create a new hash writer which hashes all bytes written to `inner` with a hash of `kind`.
-    pub fn new(inner: T, kind: git_hash::Kind) -> Self {
-        match kind {
-            git_hash::Kind::Sha1 => Write {
-                inner,
-                hash: Sha1::default(),
-            },
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.inner.flush()
+        }
+    }
+
+    impl<T> Write<T>
+    where
+        T: std::io::Write,
+    {
+        /// Create a new hash writer which hashes all bytes written to `inner` with a hash of `kind`.
+        pub fn new(inner: T, kind: git_hash::Kind) -> Self {
+            match kind {
+                git_hash::Kind::Sha1 => Write {
+                    inner,
+                    hash: Sha1::default(),
+                },
+            }
         }
     }
 }
+#[cfg(any(feature = "sha1", feature = "fast-sha1"))]
+pub use write::Write;

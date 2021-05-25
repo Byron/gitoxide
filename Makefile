@@ -108,7 +108,12 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features sha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features interrupt-handler \
-			   && cargo check --features disable-interrupts
+			   && cargo check --features disable-interrupts \
+			   && cargo check --features progress \
+			   && cargo check --features io-pipe \
+			   && cargo check --features crc32 \
+			   && cargo check --features zlib \
+			   && cargo check --features zlib,zlib-ng-compat
 	cd git-commitgraph && cargo check --all-features \
 			   && cargo check
 	cd git-config && cargo check --all-features \
