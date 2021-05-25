@@ -1,4 +1,4 @@
-use crate::odb::fixture_path;
+use crate::pack::fixture_path;
 use std::convert::TryInto;
 
 #[test]

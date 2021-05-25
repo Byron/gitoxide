@@ -43,9 +43,9 @@ mod count_and_entries {
     use git_odb::{pack, pack::data::output, FindExt};
     use git_traverse::commit;
 
-    use crate::odb::{
+    use crate::pack::{
+        data::output::{db, DbKind},
         hex_to_id,
-        pack::data::output::{db, DbKind},
     };
 
     #[test]
