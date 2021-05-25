@@ -37,5 +37,7 @@ pub(crate) fn sha1_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
 pub mod find;
 ///
 pub mod iter;
+#[doc(inline)]
+pub use iter::Iter;
 ///
 pub mod write;

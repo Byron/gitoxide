@@ -12,8 +12,7 @@ pub struct Store {
 ///
 pub mod init;
 
-///
-pub mod find;
+mod find;
 
 ///
 mod write;

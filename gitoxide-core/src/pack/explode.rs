@@ -102,7 +102,7 @@ enum OutputWriter {
     Sink(git_odb::Sink),
 }
 
-impl git_odb::write::Write for OutputWriter {
+impl git_odb::Write for OutputWriter {
     type Error = Error;
 
     fn write_buf(
