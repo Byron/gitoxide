@@ -4,7 +4,7 @@ mod method {
             fixture_path,
             pack::{INDEX_V1, PACK_FOR_INDEX_V1, SMALL_PACK, SMALL_PACK_INDEX},
         };
-        use git_pack::pack;
+        use git_odb::pack;
 
         #[test]
         fn v1() -> Result<(), Box<dyn std::error::Error>> {
@@ -62,7 +62,7 @@ fn using_option_as_data_does_not_increase_size_in_memory() {
 
 #[test]
 fn size_of_pack_verify_data_structure() {
-    use git_pack::pack;
+    use git_odb::pack;
     pub struct EntryWithDefault {
         _index_entry: pack::index::Entry,
         _kind: git_object::Kind,

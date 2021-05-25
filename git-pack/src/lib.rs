@@ -19,11 +19,22 @@
 //! * [`store::linked::Db`]
 //!   * A database containing various [`compound::Backends`][store::compound::Backend] as gathered from `alternates` files.
 
-pub mod data;
-pub mod pack;
-
+///
+pub mod bundle;
 ///
 pub mod find;
+#[doc(inline)]
+pub use crate::bundle::Bundle;
+
+///
+pub mod cache;
+///
+pub mod data;
+///
+pub mod index;
+///
+pub mod tree;
+
 pub use find::{Find, FindExt};
 
 ///

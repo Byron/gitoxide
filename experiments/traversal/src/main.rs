@@ -68,7 +68,7 @@ fn main() -> anyhow::Result<()> {
         let (unique, entries) = do_gitoxide_tree_dag_traversal(
             &all_commits,
             &db,
-            git_pack::pack::cache::lru::StaticLinkedList::<64>::default,
+            git_pack::cache::lru::StaticLinkedList::<64>::default,
             *compute_mode,
         )?;
         let elapsed = start.elapsed();

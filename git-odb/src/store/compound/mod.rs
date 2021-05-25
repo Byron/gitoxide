@@ -1,6 +1,5 @@
 //! An object database delegating object access to multiple contained object databases with loose and packed objects.
-use crate::store::loose;
-use git_pack::pack;
+use crate::{pack, store::loose};
 
 ///
 pub mod find;

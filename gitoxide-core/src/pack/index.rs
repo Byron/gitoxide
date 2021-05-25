@@ -39,7 +39,7 @@ impl FromStr for IterationMode {
 
 impl From<IterationMode> for pack::data::input::Mode {
     fn from(v: IterationMode) -> Self {
-        use pack::data::input::Mode::*;
+        use git_pack::data::input::Mode::*;
         match v {
             IterationMode::AsIs => AsIs,
             IterationMode::Verify => Verify,

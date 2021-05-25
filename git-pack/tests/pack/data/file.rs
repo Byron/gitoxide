@@ -1,5 +1,5 @@
 use crate::fixture_path;
-use git_pack::pack;
+use git_odb::pack;
 use std::convert::TryFrom;
 
 fn pack_at(at: &str) -> pack::data::File {
@@ -39,7 +39,8 @@ mod method {
 mod decode_entry {
     use crate::{fixture_path, fixup, pack::data::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
-    use git_pack::pack::{cache, data::ResolvedBase};
+    use git_pack::cache;
+    use git_pack::data::ResolvedBase;
 
     fn content_of(path: &str) -> Vec<u8> {
         fixup(std::fs::read(fixture_path(path)).expect("valid fixture"))

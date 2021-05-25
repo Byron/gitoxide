@@ -1,8 +1,12 @@
 use git_hash::oid;
 use std::convert::TryInto;
 
-use crate::store::{compound, linked};
-use git_pack::{data::Object, find::PackEntry, pack, pack::bundle::Location};
+use crate::{
+    pack,
+    pack::bundle::Location,
+    store::{compound, linked},
+};
+use git_pack::{data::Object, find::PackEntry};
 
 impl crate::Find for linked::Db {
     type Error = compound::find::Error;

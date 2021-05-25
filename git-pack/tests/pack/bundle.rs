@@ -2,7 +2,7 @@ mod locate {
     use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
     use bstr::ByteSlice;
     use git_object::Kind;
-    use git_pack::pack;
+    use git_odb::pack;
 
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_pack::data::Object<'a> {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).expect("pack and idx");
@@ -14,7 +14,7 @@ mod locate {
 
     mod locate_and_verify {
         use crate::{fixture_path, pack::PACKS_AND_INDICES};
-        use git_pack::pack;
+        use git_odb::pack;
 
         #[test]
         fn all() -> Result<(), Box<dyn std::error::Error>> {
@@ -75,11 +75,11 @@ mod locate {
 mod write_to_directory {
     use crate::{fixture_path, pack::SMALL_PACK, pack::SMALL_PACK_INDEX};
     use git_features::progress;
-    use git_pack::pack::{self, bundle};
+    use git_odb::pack;
     use std::{fs, path::Path};
     use tempfile::TempDir;
 
-    fn expected_outcome() -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
+    fn expected_outcome() -> Result<pack::bundle::write::Outcome, Box<dyn std::error::Error>> {
         Ok(pack::bundle::write::Outcome {
             index: pack::index::write::Outcome {
                 index_kind: pack::index::Version::V2,
@@ -134,14 +134,14 @@ mod write_to_directory {
     fn write_pack(
         directory: Option<impl AsRef<Path>>,
         pack_file: &str,
-    ) -> Result<bundle::write::Outcome, Box<dyn std::error::Error>> {
+    ) -> Result<pack::bundle::write::Outcome, Box<dyn std::error::Error>> {
         let pack_file = fs::File::open(fixture_path(pack_file))?;
         pack::Bundle::write_to_directory_eagerly(
             pack_file,
             None,
             directory,
             progress::Discard,
-            bundle::write::Options {
+            pack::bundle::write::Options {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
                 index_kind: pack::index::Version::V2,

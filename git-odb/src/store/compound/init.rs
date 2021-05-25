@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
-use crate::store::{compound, loose};
-use git_pack::pack;
+use crate::{
+    pack,
+    store::{compound, loose},
+};
 
 /// Returned by [`compound::Backend::at()`]
 #[derive(thiserror::Error, Debug)]

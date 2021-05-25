@@ -49,7 +49,7 @@ impl std::str::FromStr for SafetyCheck {
 
 impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
     fn from(v: SafetyCheck) -> Self {
-        use pack::index::traverse::SafetyCheck::*;
+        use git_pack::index::traverse::SafetyCheck::*;
         match v {
             SafetyCheck::All => All,
             SafetyCheck::SkipFileChecksumVerification => SkipFileChecksumVerification,

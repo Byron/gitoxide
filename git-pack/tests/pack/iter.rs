@@ -1,4 +1,4 @@
-use git_pack::pack;
+use git_odb::pack;
 
 #[test]
 fn size_of_entry() {

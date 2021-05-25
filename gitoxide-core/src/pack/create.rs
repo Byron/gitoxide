@@ -47,7 +47,7 @@ impl FromStr for ObjectExpansion {
 
 impl From<ObjectExpansion> for pack::data::output::count_objects::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use pack::data::output::count_objects::ObjectExpansion::*;
+        use git_pack::data::output::count_objects::ObjectExpansion::*;
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,

@@ -6,12 +6,12 @@ mod file {
     };
     use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
     use git_object::{self as object};
-    use git_pack::pack::{self, data::decode_entry::Outcome, index};
+    use git_odb::pack;
 
     mod method {
         mod v1 {
             use crate::{fixture_path, pack::INDEX_V1};
-            use git_pack::pack::index;
+            use git_pack::index;
 
             #[test]
             fn lookup() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,7 +40,7 @@ mod file {
 
         mod v2 {
             use crate::{fixture_path, pack::INDEX_V2};
-            use git_pack::pack::index;
+            use git_pack::index;
 
             #[test]
             fn lookup() -> Result<(), Box<dyn std::error::Error>> {
@@ -71,7 +71,8 @@ mod file {
             use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
             use filebuffer::FileBuffer;
             use git_features::progress;
-            use git_odb::{pack, pack::data::input, pack::data::EntryRange};
+            use git_odb::pack;
+            use git_pack::data::{input, EntryRange};
             use std::{fs, io};
 
             #[test]
@@ -181,7 +182,9 @@ mod file {
     use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};
     use common_macros::b_tree_map;
     use git_features::progress;
-    use git_pack::pack::cache;
+    use git_pack::cache;
+    use git_pack::data::decode_entry::Outcome;
+    use git_pack::index;
 
     static ALGORITHMS: &[index::traverse::Algorithm] = &[
         index::traverse::Algorithm::Lookup,
