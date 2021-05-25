@@ -2,7 +2,7 @@ use flate2::Compress;
 
 const BUF_SIZE: usize = 4096 * 8;
 
-/// A utility to zlib compress anything that is written via its [io::Write] implementation.
+/// A utility to zlib compress anything that is written via its [Write][std::io::Write] implementation.
 ///
 /// Be sure to call `flush()` when done to finalize the deflate stream.
 pub struct Write<W> {

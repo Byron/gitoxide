@@ -1,6 +1,6 @@
 use std::io;
 
-/// Returned by [`pack::index::File::write_data_iter_to_stream()`]
+/// Returned by [`crate::index::File::write_data_iter_to_stream()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

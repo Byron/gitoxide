@@ -11,7 +11,7 @@ mod verify {
     use git_features::progress::Progress;
 
     impl super::Bundle {
-        /// Similar to [`pack::index::File::verify_integrity()`] but more convenient to call as the presence of the
+        /// Similar to [`crate::index::File::verify_integrity()`] but more convenient to call as the presence of the
         /// pack file is a given.
         pub fn verify_integrity<C, P>(
             &self,

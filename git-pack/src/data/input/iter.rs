@@ -8,7 +8,7 @@ use std::{fs, io};
 
 /// An iterator over [`Entries`][input::Entry] in a byte stream.
 ///
-/// The iterator used as part of [Bundle::write_to_directory(…)][pack::Bundle::write_to_directory()].
+/// The iterator used as part of [Bundle::write_to_directory(…)][crate::Bundle::write_to_directory()].
 pub struct BytesToEntriesIter<R> {
     read: R,
     decompressor: Option<Box<Decompress>>,
@@ -268,7 +268,7 @@ where
 }
 
 impl crate::data::File {
-    /// Returns an iterator over [`Entries`][pack::data::input::Entry], without making use of the memory mapping.
+    /// Returns an iterator over [`Entries`][crate::data::input::Entry], without making use of the memory mapping.
     pub fn streaming_iter(&self) -> Result<BytesToEntriesIter<impl io::BufRead>, input::Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
         BytesToEntriesIter::new_from_header(reader, input::Mode::Verify, input::EntryDataMode::KeepAndCrc32)

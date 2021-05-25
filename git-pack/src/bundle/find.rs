@@ -3,7 +3,7 @@ use crate::data;
 impl crate::Bundle {
     /// Find an object with the given [`ObjectId`][git_hash::ObjectId] and place its data into `out`.
     ///
-    /// [`cache`][pack::cache::DecodeEntry] is used to accelerate the lookup.
+    /// [`cache`][crate::cache::DecodeEntry] is used to accelerate the lookup.
     ///
     /// **Note** that ref deltas are automatically resolved within this pack only, which makes this implementation unusable
     /// for thin packs, which by now are expected to be resolved already.

@@ -66,7 +66,7 @@ impl crate::Bundle {
         })
     }
 
-    /// Equivalent to [`write_to_directory()`][pack::Bundle::write_to_directory()] but offloads reading of the pack into its own thread, hence the `Send + 'static'` bounds.
+    /// Equivalent to [`write_to_directory()`][crate::Bundle::write_to_directory()] but offloads reading of the pack into its own thread, hence the `Send + 'static'` bounds.
     pub fn write_to_directory_eagerly(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,

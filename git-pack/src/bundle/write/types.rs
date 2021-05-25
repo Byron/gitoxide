@@ -1,8 +1,8 @@
 use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
-/// Configuration for [write_to_directory][pack::Bundle::write_to_directory()] or
-/// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
+/// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
+/// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {
@@ -10,7 +10,7 @@ pub struct Options {
     pub thread_limit: Option<usize>,
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
     pub iteration_mode: crate::data::input::Mode,
-    /// The version of pack index to write, should be [`pack::index::Version::default()`]
+    /// The version of pack index to write, should be [`crate::index::Version::default()`]
     pub index_kind: crate::index::Version,
 }
 
@@ -25,8 +25,8 @@ impl Default for Options {
     }
 }
 
-/// Returned by [write_to_directory][pack::Bundle::write_to_directory()] or
-/// [write_to_directory_eagerly][pack::Bundle::write_to_directory_eagerly()]
+/// Returned by [write_to_directory][crate::Bundle::write_to_directory()] or
+/// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {

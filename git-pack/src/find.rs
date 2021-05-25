@@ -13,7 +13,7 @@ pub trait Find {
     type Error: std::error::Error + 'static;
 
     /// Find an object matching `id` in the database while placing its raw, undecoded data into `buffer`.
-    /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`pack::cache::Never`] if the
+    /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`crate::cache::Never`] if the
     /// workload isn't suitable for caching.
     ///
     /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object

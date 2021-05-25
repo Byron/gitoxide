@@ -1,7 +1,7 @@
 use std::io;
 
-/// Returned by [`BytesToEntriesIter::new_from_header()`][pack::data::BytesToEntriesIter::new_from_header()] and as part
-/// of `Item` of [`BytesToEntriesIter`][pack::data::BytesToEntriesIter].
+/// Returned by [`BytesToEntriesIter::new_from_header()`][crate::data::BytesToEntriesIter::new_from_header()] and as part
+/// of `Item` of [`BytesToEntriesIter`][crate::data::BytesToEntriesIter].
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

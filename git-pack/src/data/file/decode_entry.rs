@@ -97,7 +97,7 @@ impl File {
         );
     }
 
-    /// Obtain the [`Entry`][pack::data::Entry] at the given `offset` into the pack.
+    /// Obtain the [`Entry`][crate::data::Entry] at the given `offset` into the pack.
     ///
     /// The `offset` is typically obtained from the pack index file.
     pub fn entry(&self, offset: u64) -> crate::data::Entry {

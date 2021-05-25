@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-/// The outcome of the [`traverse()`][pack::index::File::traverse()] method
+/// The outcome of the [`traverse()`][crate::index::File::traverse()] method
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
@@ -111,7 +111,7 @@ impl Default for Algorithm {
     }
 }
 
-/// Traversal options for [`traverse()`][pack::index::File::traverse()]
+/// Traversal options for [`traverse()`][crate::index::File::traverse()]
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {

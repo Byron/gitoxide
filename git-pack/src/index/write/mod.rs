@@ -23,7 +23,7 @@ impl Default for TreeEntry {
     }
 }
 
-/// Information gathered while executing [`write_data_iter_to_stream()`][pack::index::File::write_data_iter_to_stream]
+/// Information gathered while executing [`write_data_iter_to_stream()`][crate::index::File::write_data_iter_to_stream]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
@@ -44,7 +44,7 @@ impl crate::index::File {
     /// The resolver produced by `make_resolver` must resolve pack entries from the same pack data file that produced the
     /// `entries` iterator.
     ///
-    /// `kind` is the version of pack index to produce, use [`pack::index::Version::default()`] if in doubt.
+    /// `kind` is the version of pack index to produce, use [`crate::index::Version::default()`] if in doubt.
     /// `tread_limit` is used for a parallel tree traversal for obtaining object hashes with optimal performance.
     /// `root_progress` is the top-level progress to stay informed about the progress of this potentially long-running
     /// computation.

@@ -58,7 +58,7 @@ impl index::File {
 
     /// Returns the hash of the pack data file that this index file corresponds to.
     ///
-    /// It should [`pack::data::File::checksum()`] of the corresponding pack data file.
+    /// It should [`crate::data::File::checksum()`] of the corresponding pack data file.
     pub fn pack_checksum(&self) -> git_hash::ObjectId {
         let from = self.data.len() - SHA1_SIZE * 2;
         git_hash::ObjectId::from_20_bytes(&self.data[from..from + SHA1_SIZE])
@@ -99,12 +99,12 @@ impl index::File {
     /// If `pack` is provided, it is expected (and validated to be) the pack belonging to this index.
     /// It will be used to validate internal integrity of the pack before checking each objects integrity
     /// is indeed as advertised via its SHA1 as stored in this index, as well as the CRC32 hash.
-    /// The last member of the Option is a function returning an implementation of [`pack::cache::DecodeEntry`] to be used if
+    /// The last member of the Option is a function returning an implementation of [`crate::cache::DecodeEntry`] to be used if
     /// the [`index::traverse::Algorithm`] is `Lookup`.
     /// To set this to `None`, use `None::<(_, _, _, fn() -> crate::cache::Never)>`.
     ///
     /// The `thread_limit` optionally specifies the amount of threads to be used for the [pack traversal][index::File::traverse()].
-    /// `make_cache` is only used in case a `pack` is specified, use existing implementations in the [`pack::cache`] module.
+    /// `make_cache` is only used in case a `pack` is specified, use existing implementations in the [`crate::cache`] module.
     ///
     /// # Tradeoffs
     ///
