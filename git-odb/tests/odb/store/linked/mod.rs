@@ -29,10 +29,8 @@ mod iter {
 }
 
 mod locate {
-    use git_odb::store::linked::Db;
-    use git_pack::{pack, Find};
-
     use crate::{hex_to_id, odb::store::linked::db};
+    use git_odb::{pack, store::linked::Db, Find};
 
     fn can_locate(db: &Db, hex_id: &str) {
         let mut buf = vec![];
