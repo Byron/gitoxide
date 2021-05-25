@@ -1046,7 +1046,10 @@ name = "git-ref"
 version = "0.5.0"
 dependencies = [
  "bstr",
+ "git-hash",
+ "nom",
  "quick-error",
+ "serde",
 ]
 
 [[package]]

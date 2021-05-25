@@ -8,6 +8,9 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*"]
 
+[features]
+serde1 = ["serde", "bstr/serde1"]
+
 [lib]
 doctest = false
 test = true
@@ -15,5 +18,9 @@ test = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+git-hash = { version = "^0.3.0", path = "../git-hash" }
+
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+nom = { version = "6", default-features = false, features = ["alloc"]}
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
