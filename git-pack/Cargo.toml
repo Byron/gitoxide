@@ -31,7 +31,7 @@ required-features = []
 all-features = true
 
 [dependencies]
-git-features = { version = "^0.15.0", path = "../git-features", features = ["crc32", "sha1", "walkdir", "progress", "zlib"] }
+git-features = { version = "^0.15.0", path = "../git-features", features = ["crc32", "sha1", "progress", "zlib"] }
 git-hash = { version = "^0.3.0", path = "../git-hash" }
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-traverse = { version = "^0.3", path = "../git-traverse" }
@@ -54,7 +54,6 @@ dashmap = "4.0.2"
 [dev-dependencies]
 git-testtools = { version = "0.1", path = "../tests/tools"}
 git-odb = { version = "0.15", path = "../git-odb" }
-pretty_assertions = "0.7.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 hex = "0.4.2"
 common_macros = "0.1.1"

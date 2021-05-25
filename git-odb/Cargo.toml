@@ -4,7 +4,7 @@ version = "0.15.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
-description = "Implements a git object database for loose objects and packs"
+description = "Implements various git object databases"
 edition = "2018"
 include = ["src/**/*"]
 
@@ -40,6 +40,3 @@ thiserror = "1.0.20"
 [dev-dependencies]
 git-testtools = { version = "0.1", path = "../tests/tools"}
 pretty_assertions = "0.7.1"
-bstr = { version = "0.2.13", default-features = false, features = ["std"] }
-hex = "0.4.2"
-common_macros = "0.1.1"

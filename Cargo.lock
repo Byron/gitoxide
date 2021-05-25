@@ -970,15 +970,12 @@ dependencies = [
 name = "git-odb"
 version = "0.15.0"
 dependencies = [
- "bstr",
  "btoi",
- "common_macros",
  "git-features",
  "git-hash",
  "git-object",
  "git-pack",
  "git-testtools",
- "hex",
  "pretty_assertions",
  "tempfile",
  "thiserror",
@@ -1006,7 +1003,6 @@ dependencies = [
  "itoa",
  "memory-lru",
  "parking_lot",
- "pretty_assertions",
  "serde",
  "smallvec",
  "tempfile",
