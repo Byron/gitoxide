@@ -715,6 +715,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-odb",
+ "git-pack",
  "git-traverse",
  "git2",
  "memory-lru",
@@ -971,11 +972,7 @@ version = "0.15.0"
 dependencies = [
  "bstr",
  "btoi",
- "byteorder",
- "bytesize",
  "common_macros",
- "dashmap",
- "filebuffer",
  "git-diff",
  "git-features",
  "git-hash",
@@ -984,15 +981,9 @@ dependencies = [
  "git-testtools",
  "git-traverse",
  "hex",
- "itoa",
- "memory-lru",
- "parking_lot",
  "pretty_assertions",
- "serde",
- "smallvec",
  "tempfile",
  "thiserror",
- "uluru",
 ]
 
 [[package]]
@@ -1573,6 +1564,7 @@ dependencies = [
  "anyhow",
  "git-hash",
  "git-odb",
+ "git-pack",
  "git2",
  "rayon",
 ]
