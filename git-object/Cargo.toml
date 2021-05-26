@@ -19,7 +19,7 @@ all-features = true
 
 [dependencies]
 git-hash = { version = "^0.3.0", path = "../git-hash" }
-git-validate = { version = "^0.1.0", path = "../git-validate" }
+git-validate = { version = "^0.2.0", path = "../git-validate" }
 
 quick-error = "2.0.0"
 hex = "0.4.2"
