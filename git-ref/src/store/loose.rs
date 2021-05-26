@@ -22,9 +22,9 @@ impl Store {
 }
 
 pub mod reference {
-    use crate::{loose::Reference, Kind};
+    use crate::{loose::Reference, Kind, Target};
     use bstr::BString;
-    use git_hash::{oid, ObjectId};
+    use git_hash::ObjectId;
 
     #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -40,10 +40,10 @@ pub mod reference {
                 State::Id(_) => Kind::Peeled,
             }
         }
-        pub fn target(&self) -> Option<&oid> {
+        pub fn target(&'a self) -> Target<'a> {
             match self.state {
-                State::Path(_) => None,
-                State::Id(ref oid) => Some(oid),
+                State::Path(ref path) => Target::Symbolic(path.as_ref()),
+                State::Id(ref oid) => Target::Peeled(oid.as_ref()),
             }
         }
     }
