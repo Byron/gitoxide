@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Reference<'a> {
     parent: &'a Store,
     /// The path relative to the stores base at which this reference is located
@@ -10,7 +9,6 @@ pub struct Reference<'a> {
 }
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Store {
     /// The location at which loose references can be found as per conventions of a typical git repository
     pub base: PathBuf,
