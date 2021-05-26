@@ -1115,6 +1115,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-validate"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "git-testtools",
+ "quick-error",
+]
+
+[[package]]
 name = "git2"
 version = "0.13.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -89,6 +89,7 @@ build-override = { opt-level = 0 }
 members = [
     "git-url",
     "git-hash",
+    "git-validate",
     "git-ref",
     "git-config",
     "git-features",

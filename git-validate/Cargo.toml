@@ -1,0 +1,22 @@
+[package]
+name = "git-validate"
+version = "0.1.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "Validation functions for various kinds of names in git"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+include = ["src/**/*"]
+
+[lib]
+doctest = false
+test = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-error = "2.0.0"
+bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+git-testtools = { version = "0.1", path = "../tests/tools" }
