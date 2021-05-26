@@ -48,7 +48,10 @@ pub mod reference {
     }
 
     pub mod decode {
-        use crate::loose::{reference::State, Reference, Store};
+        use crate::{
+            loose::{reference::State, Reference, Store},
+            validate,
+        };
         use bstr::BString;
         use git_hash::ObjectId;
         use nom::{
@@ -60,7 +63,13 @@ pub mod reference {
             IResult,
         };
         use quick_error::quick_error;
-        use std::path::PathBuf;
+        use std::convert::TryInto;
+        use std::{convert::TryFrom, path::PathBuf};
+
+        enum MaybeUnsafeState {
+            Id(ObjectId),
+            UnvalidatedPath(BString),
+        }
 
         quick_error! {
             #[derive(Debug)]
@@ -68,6 +77,24 @@ pub mod reference {
                 Parse(content: BString) {
                     display("{:?} could not be parsed", content)
                 }
+                RefnameValidation{err: validate::refname::Error, path: BString} {
+                    display("The path to a symbolic reference is invalid")
+                    source(err)
+                }
+            }
+        }
+
+        impl TryFrom<MaybeUnsafeState> for State {
+            type Error = Error;
+
+            fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
+                Ok(match v {
+                    MaybeUnsafeState::Id(id) => State::Id(id),
+                    MaybeUnsafeState::UnvalidatedPath(path) => State::Path(match validate::refname(path.as_ref()) {
+                        Err(err) => return Err(Error::RefnameValidation { err, path }),
+                        Ok(_) => path,
+                    }),
+                })
             }
         }
 
@@ -83,7 +110,8 @@ pub mod reference {
                     state: parse(path_contents)
                         .map_err(|err| err.to_string())
                         .map_err(|_| Error::Parse(path_contents.into()))?
-                        .1,
+                        .1
+                        .try_into()?,
                 })
             }
         }
@@ -100,15 +128,15 @@ pub mod reference {
             alt((tag(b"\r\n"), tag(b"\n")))(i)
         }
 
-        fn parse(bytes: &[u8]) -> IResult<&[u8], State> {
+        fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
             let is_space = |b: u8| b == b' ';
             if let (path, Some(_ref_prefix)) = opt(terminated(tag("ref: "), take_while(is_space)))(bytes)? {
                 map(terminated(take_while(|b| b != b'\r' && b != b'\n'), newline), |path| {
-                    State::Path(path.into())
+                    MaybeUnsafeState::UnvalidatedPath(path.into())
                 })(path)
             } else {
                 map(terminated(hex_sha1, newline), |hex| {
-                    State::Id(ObjectId::from_hex(hex).expect("prior validation"))
+                    MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation"))
                 })(bytes)
             }
         }
