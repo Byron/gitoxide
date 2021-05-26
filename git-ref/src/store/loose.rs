@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 pub struct Reference<'a> {
     parent: &'a Store,
+    path: PathBuf,
     state: reference::State,
 }
 
@@ -31,10 +32,22 @@ pub mod reference {
     }
 
     pub mod decode {
-        use crate::loose::Reference;
+        use crate::loose::reference::State;
+        use crate::loose::{Reference, Store};
         use nom::IResult;
         use quick_error::quick_error;
         use std::{io, path::PathBuf};
+
+        impl<'a> Reference<'a> {
+            pub fn from_path(parent: &'a Store, path: impl Into<PathBuf>) -> Result<Self, Error> {
+                let path = path.into();
+                let state = {
+                    let contents = std::fs::read(&path).map_err(|err| Error::Io(err, path.clone()))?;
+                    parse(&contents).map_err(|err| Error::Parse(err.to_string()))?.1
+                };
+                Ok(Reference { parent, path, state })
+            }
+        }
 
         quick_error! {
             #[derive(Debug)]
@@ -49,7 +62,7 @@ pub mod reference {
             }
         }
 
-        fn file(bytes: &[u8]) -> IResult<&[u8], Reference<'_>> {
+        fn parse(bytes: &[u8]) -> IResult<&[u8], State> {
             todo!("parse loose ref bytes into reference")
         }
     }
