@@ -50,7 +50,13 @@ pub mod reference {
 
     pub mod decode {
         use crate::loose::{reference::State, Reference, Store};
-        use nom::IResult;
+        use git_hash::ObjectId;
+        use nom::branch::alt;
+        use nom::{
+            bytes::complete::{tag, take_while_m_n},
+            sequence::terminated,
+            IResult,
+        };
         use std::path::PathBuf;
 
         impl<'a> Reference<'a> {
@@ -67,8 +73,21 @@ pub mod reference {
             }
         }
 
-        fn parse(_bytes: &[u8]) -> IResult<&[u8], State> {
-            todo!("parse loose ref bytes into reference")
+        fn is_hex_digit_lc(b: u8) -> bool {
+            matches!(b, b'0'..=b'9' | b'a'..=b'f')
+        }
+
+        fn hex_sha1(i: &[u8]) -> IResult<&[u8], &[u8]> {
+            take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
+        }
+
+        fn newline(i: &[u8]) -> IResult<&[u8], &[u8]> {
+            alt((tag(b"\r\n"), tag(b"\n")))(i)
+        }
+
+        fn parse(bytes: &[u8]) -> IResult<&[u8], State> {
+            let (i, hex) = terminated(hex_sha1, newline)(bytes)?;
+            Ok((i, State::Id(ObjectId::from_hex(hex).expect("prior validation"))))
         }
     }
 }
