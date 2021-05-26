@@ -24,7 +24,7 @@ mod find {
         where
             Name: TryInto<SafeName<'a>, Error = crate::safe_name::Error>,
         {
-            let path = path.try_into().map_err(|err| Error::RefnameValidation(err))?;
+            let path = path.try_into().map_err(Error::RefnameValidation)?;
 
             let relative_path = path.to_path();
             let ref_path = self.base.join(relative_path);
