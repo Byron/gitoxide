@@ -4,6 +4,7 @@ use std::path::PathBuf;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Reference<'a> {
     parent: &'a Store,
+    /// The path relative to the stores base at which this reference is located
     relative_path: PathBuf,
     state: reference::State,
 }
@@ -52,6 +53,8 @@ pub mod reference {
         use crate::loose::{reference::State, Reference, Store};
         use git_hash::ObjectId;
         use nom::branch::alt;
+        use nom::bytes::complete::take_while;
+        use nom::combinator::opt;
         use nom::{
             bytes::complete::{tag, take_while_m_n},
             sequence::terminated,
@@ -86,8 +89,15 @@ pub mod reference {
         }
 
         fn parse(bytes: &[u8]) -> IResult<&[u8], State> {
-            let (i, hex) = terminated(hex_sha1, newline)(bytes)?;
-            Ok((i, State::Id(ObjectId::from_hex(hex).expect("prior validation"))))
+            let is_space = |b: u8| b == b' ';
+            if let (path, Some(_ref_prefix)) = opt(terminated(tag("ref: "), take_while(is_space)))(bytes)? {
+                // let (i, path) = terminated(take_while(|_| true), newline)(path)?;
+                let (i, path) = take_while(|b| b != b'\n')(path)?;
+                Ok((i, State::Path(path.into())))
+            } else {
+                let (i, hex) = terminated(hex_sha1, newline)(bytes)?;
+                Ok((i, State::Id(ObjectId::from_hex(hex).expect("prior validation"))))
+            }
         }
     }
 }
