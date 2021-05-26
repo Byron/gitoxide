@@ -40,14 +40,25 @@ pub mod reference {
         }
         let mut previous = 0;
         let mut one_before_previous = 0;
+        let mut saw_slash = false;
         for byte in path.iter() {
             match *byte {
                 b'/' if previous == b'.' && one_before_previous == b'/' => return Err(name::Error::SingleDot),
                 b'/' if previous == b'/' => return Err(name::Error::RepeatedSlash),
                 _ => {}
             }
+
+            if *byte == b'/' {
+                saw_slash = true;
+            }
             one_before_previous = previous;
             previous = *byte;
+        }
+
+        if !saw_slash {
+            if path.iter().any(|c| !c.is_ascii_uppercase()) {
+                return Err(name::Error::SomeLowercase);
+            }
         }
         Ok(path)
     }

@@ -15,6 +15,7 @@ mod valid {
     mktest!(refs_path_underscores_and_dashes, b"refs/heads/main-2nd_ext");
     mktest!(relative_path, b"etc/foo");
     mktest!(all_uppercase, b"MAIN");
+    mktest!(chinese_utf8, "refs/heads/你好吗".as_bytes());
 }
 
 mod invalid {
