@@ -9,10 +9,13 @@ mod store {
         }
 
         #[test]
-        fn success() -> crate::Result<()> {
-            let store = store()?;
-            assert_eq!(store.find_one("main")?.relative_path, Path::new("refs/heads/main"));
-            Ok(())
+        #[should_panic]
+        fn success() {
+            let store = store().unwrap();
+            assert_eq!(
+                store.find_one("main").unwrap().expect("exists").relative_path,
+                Path::new("refs/heads/main")
+            );
         }
     }
 }

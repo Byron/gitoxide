@@ -1,7 +1,8 @@
 mod find {
     use crate::{loose, SafeName};
     use quick_error::quick_error;
-    use std::convert::TryInto;
+    use std::io::Read;
+    use std::{convert::TryInto, io};
 
     quick_error! {
         #[derive(Debug)]
@@ -10,16 +11,29 @@ mod find {
                 display("The input name or path is not a valid ref name")
                 source(err)
             }
+            ReadFileContents(err: io::Error) {
+                display("The ref file could not be read in full")
+                from()
+                source(err)
+            }
         }
     }
 
     impl loose::Store {
-        pub fn find_one<'a, Name>(&self, path: Name) -> Result<loose::Reference<'_>, Error>
+        pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<loose::Reference<'_>>, Error>
         where
             Name: TryInto<SafeName<'a>, Error = crate::safe_name::Error>,
         {
             let path = path.try_into().map_err(|err| Error::RefnameValidation(err))?;
-            let ref_path = self.base.join(path.to_path());
+
+            let relative_path = path.to_path();
+            let ref_path = self.base.join(relative_path);
+            let mut contents = Vec::new();
+            match std::fs::File::open(ref_path) {
+                Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
+                Err(err) => return Err(err.into()),
+                Ok(mut file) => file.read_to_end(&mut contents)?,
+            };
             todo!("impl")
         }
     }
