@@ -10,13 +10,31 @@ pub mod reference {
         quick_error! {
             #[derive(Debug)]
             pub enum Error {
-                Todo
+                Tag(err: crate::tag::name::Error) {
+                    display("A reference must be a valid tag name as well")
+                    from()
+                    source(err)
+                }
+                SomeLowercase {
+                    display("Standalone references must be all uppercased, like 'HEAD'")
+                }
+                StartsWithSlash {
+                    display("A reference name must not start with a slash '/'")
+                }
+                RepeatedSlash {
+                    display("Multiple slashes in a row are not allowed as they may change the reference's meaning")
+                }
+                SingleDot {
+                    display("Names must not be a single '.', but may contain it.")
+                }
+
             }
         }
     }
 
     use bstr::BStr;
     pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
+        crate::tagname(path)?;
         Ok(path)
     }
 }
