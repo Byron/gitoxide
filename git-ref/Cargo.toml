@@ -24,3 +24,6 @@ quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "6", default-features = false, features = ["alloc"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+git-testtools = { version = "0.1", path = "../tests/tools" }

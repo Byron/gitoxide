@@ -957,6 +957,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-hash",
+ "git-testtools",
  "hex",
  "itoa",
  "nom",
@@ -1047,6 +1048,7 @@ version = "0.5.0"
 dependencies = [
  "bstr",
  "git-hash",
+ "git-testtools",
  "nom",
  "quick-error",
  "serde",
@@ -1065,6 +1067,7 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "crc",
+ "git-hash",
  "once_cell",
  "tempfile",
 ]

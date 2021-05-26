@@ -6,6 +6,10 @@ pub use tempfile;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
+pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
+    git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
+}
+
 pub fn fixture_path(path: impl AsRef<str>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
