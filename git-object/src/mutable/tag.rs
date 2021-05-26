@@ -10,7 +10,7 @@ quick_error! {
         StartsWithDash {
             display("Tags must not start with a dash: '-'")
         }
-        InvalidRefName(err: crate::tag::validate::NameError) {
+        InvalidRefName(err: crate::tag::validate::name::Error) {
             display("The tag name was no valid reference name")
             from()
             source(err)

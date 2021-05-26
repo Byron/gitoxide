@@ -33,7 +33,7 @@ mod name {
                 #[test]
                 fn $name() {
                     match validate::name($input.as_bstr()) {
-                        Err(validate::NameError::$expected) => {}
+                        Err(validate::name::Error::$expected) => {}
                         got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                     }
                 }
@@ -44,7 +44,7 @@ mod name {
                 #[test]
                 fn $name() {
                     match validate::name($input.as_bstr()) {
-                        Err(validate::NameError::InvalidByte(_)) => {}
+                        Err(validate::name::Error::InvalidByte(_)) => {}
                         got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                     }
                 }
