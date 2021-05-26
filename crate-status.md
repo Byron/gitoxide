@@ -17,15 +17,8 @@
 * [x] API documentation
     * [ ] Some examples
 
-### git-odb
-* **loose objects**
-    * [x] traverse
-    * [x] read
-        * [x] into memory
-        * [x] streaming
-        * [x] verify checksum
-    * [x] streaming write for blobs
-    * [x] buffer write for small in-memory objects/non-blobs to bring IO down to open-read-close == 3 syscalls
+### git-pack
+
 * **packs**
     * [x] traverse pack index
     * [x] 'object' abstraction
@@ -37,9 +30,9 @@
         * [x] deltified objects
     * **decode**
         * _decode a pack from `Read` input_
-          * [x] Add support for zlib-ng for 20% faster _decompression_ performance
-          * [x] `Read` to `Iterator` of entries
-            * _read as is, verify hash, and restore partial packs_
+            * [x] Add support for zlib-ng for 20% faster _decompression_ performance
+            * [x] `Read` to `Iterator` of entries
+                * _read as is, verify hash, and restore partial packs_
         * [x] create index from pack alone (_much faster than git_)
             * [ ] resolve 'thin' packs
     * **encode**
@@ -51,7 +44,7 @@
             * [ ] delta compression
                 * [ ] create 'thin' pack, i.e. deltas that are based on objects the other side has.
             * [x] parallel implementation that scales perfectly
-         * [x] entries to pack data iterator
+        * [x] entries to pack data iterator
     * [x] **verify** pack with statistics
         * [x] brute force - less memory
         * [x] indexed - faster, but more memory
@@ -62,16 +55,33 @@
         * [ ] [detect and retry packed object reading](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L1268:L1268)
 * [x] API documentation
     * [ ] Some examples
+
+### git-odb
+
+* **loose object store**
+    * [x] traverse
+    * [x] read
+        * [x] into memory
+        * [x] streaming
+        * [x] verify checksum
+    * [x] streaming write for blobs
+    * [x] buffer write for small in-memory objects/non-blobs to bring IO down to open-read-close == 3 syscalls
+* **compound store**
+    * [x] everything loose object stores can do
+    * [x] lookup objects in packs
+* **linked store**
+    * [x] everything the first loose object store can do
+    * [x] lookup objects in multiple linked object stores
 * **sink**
     * [x] write objects and obtain id
 * **alternates**
-    * _database that act as link to other known git ODBs on disk_
+    * _resolve links between object databases_
     * [x] safe with cycles and recursive configurations
     * [x] multi-line with comments and quotes
-* **multi-odb**
-    * [ ] _an ODB for object lookup from multiple lower level ODB at once_
 * **promisor**
     * It's vague, but these seems to be like index files allowing to fetch objects from a server on demand.
+* [x] API documentation
+    * [ ] Some examples
     
 ### git-diff
 

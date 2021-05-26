@@ -53,10 +53,12 @@ Follow linked crate name for detailed status.
 * **usable**
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
+  * [git-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-validate)
   * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)
   * [git-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-packetline)
   * [git-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-transport)
   * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
+  * [git-pack](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pack)
   * [git-odb](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-odb)
   * [git-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-commitgraph)
   * [git-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-diff)
