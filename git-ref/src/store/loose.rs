@@ -77,7 +77,7 @@ pub mod reference {
                 Parse(content: BString) {
                     display("{:?} could not be parsed", content)
                 }
-                RefnameValidation{err: validate::refname::Error, path: BString} {
+                RefnameValidation{err: validate::name::Error, path: BString} {
                     display("The path to a symbolic reference is invalid")
                     source(err)
                 }
@@ -90,7 +90,7 @@ pub mod reference {
             fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
                 Ok(match v {
                     MaybeUnsafeState::Id(id) => State::Id(id),
-                    MaybeUnsafeState::UnvalidatedPath(path) => State::Path(match validate::refname(path.as_ref()) {
+                    MaybeUnsafeState::UnvalidatedPath(path) => State::Path(match validate::name(path.as_ref()) {
                         Err(err) => return Err(Error::RefnameValidation { err, path }),
                         Ok(_) => path,
                     }),
@@ -99,7 +99,7 @@ pub mod reference {
         }
 
         impl<'a> Reference<'a> {
-            pub fn from_path(
+            pub fn try_from_path(
                 parent: &'a Store,
                 relative_path: impl Into<PathBuf>,
                 path_contents: &[u8],

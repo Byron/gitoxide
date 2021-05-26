@@ -49,10 +49,10 @@ impl<'a> Target<'a> {
     }
 }
 
-mod validate {
+pub mod validate {
     use bstr::BStr;
 
-    pub mod refname {
+    pub mod name {
         use quick_error::quick_error;
         quick_error! {
             #[derive(Debug)]
@@ -62,7 +62,7 @@ mod validate {
         }
     }
 
-    pub fn refname(path: &BStr) -> Result<&BStr, refname::Error> {
+    pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
         Ok(path)
     }
 }

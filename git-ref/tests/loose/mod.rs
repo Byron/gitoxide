@@ -15,7 +15,7 @@ mod reference {
                     #[test]
                     fn $name() {
                         let store = store();
-                        let err = Reference::from_path(&store, "name", $input).unwrap_err();
+                        let err = Reference::try_from_path(&store, "name", $input).unwrap_err();
                         assert_eq!(err.to_string(), $err);
                     }
                 };
@@ -35,7 +35,7 @@ mod reference {
                     #[test]
                     fn $name() {
                         let store = store();
-                        let reference = Reference::from_path(&store, "name", $input).unwrap();
+                        let reference = Reference::try_from_path(&store, "name", $input).unwrap();
                         assert_eq!(reference.kind(), $kind);
                         assert_eq!(reference.target().as_id(), $id);
                         assert_eq!(reference.target().as_ref(), $ref);
