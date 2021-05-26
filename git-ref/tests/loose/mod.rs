@@ -1,3 +1,22 @@
+mod store {
+    mod find_one {
+        use git_ref::loose;
+        use std::path::Path;
+
+        fn store() -> crate::Result<loose::Store> {
+            let path = git_testtools::scripted_fixture_repo_read_only("make_ref_repository.sh")?;
+            Ok(loose::Store::from(path))
+        }
+
+        #[test]
+        fn success() -> crate::Result<()> {
+            let store = store()?;
+            assert_eq!(store.find_one("main")?.relative_path, Path::new("refs/heads/main"));
+            Ok(())
+        }
+    }
+}
+
 mod reference {
     mod parse {
         use git_ref::loose::Store;
