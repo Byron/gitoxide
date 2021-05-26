@@ -4,17 +4,19 @@
 #![allow(missing_docs)]
 
 pub mod reference {
-    use bstr::BStr;
-    use quick_error::quick_error;
+    pub mod name {
+        use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Todo
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Todo
+            }
         }
     }
 
-    pub fn name(path: &BStr) -> Result<&BStr, Error> {
+    use bstr::BStr;
+    pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
         Ok(path)
     }
 }

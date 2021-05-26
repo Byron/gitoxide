@@ -1050,6 +1050,7 @@ dependencies = [
  "bstr",
  "git-hash",
  "git-testtools",
+ "git-validate",
  "nom",
  "quick-error",
 ]

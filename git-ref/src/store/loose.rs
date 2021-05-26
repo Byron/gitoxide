@@ -48,10 +48,7 @@ pub mod reference {
     }
 
     pub mod decode {
-        use crate::{
-            loose::{reference::State, Reference, Store},
-            validate,
-        };
+        use crate::loose::{reference::State, Reference, Store};
         use bstr::BString;
         use git_hash::ObjectId;
         use nom::{
@@ -77,7 +74,7 @@ pub mod reference {
                 Parse(content: BString) {
                     display("{:?} could not be parsed", content)
                 }
-                RefnameValidation{err: validate::name::Error, path: BString} {
+                RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
                     display("The path to a symbolic reference is invalid")
                     source(err)
                 }
@@ -90,10 +87,12 @@ pub mod reference {
             fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
                 Ok(match v {
                     MaybeUnsafeState::Id(id) => State::Id(id),
-                    MaybeUnsafeState::UnvalidatedPath(path) => State::Path(match validate::name(path.as_ref()) {
-                        Err(err) => return Err(Error::RefnameValidation { err, path }),
-                        Ok(_) => path,
-                    }),
+                    MaybeUnsafeState::UnvalidatedPath(path) => {
+                        State::Path(match git_validate::refname(path.as_ref()) {
+                            Err(err) => return Err(Error::RefnameValidation { err, path }),
+                            Ok(_) => path,
+                        })
+                    }
                 })
             }
         }

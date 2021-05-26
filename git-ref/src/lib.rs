@@ -48,21 +48,3 @@ impl<'a> Target<'a> {
         }
     }
 }
-
-pub mod validate {
-    use bstr::BStr;
-
-    pub mod name {
-        use quick_error::quick_error;
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Todo
-            }
-        }
-    }
-
-    pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
-        Ok(path)
-    }
-}
