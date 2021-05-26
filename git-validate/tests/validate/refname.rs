@@ -13,6 +13,7 @@ mod valid {
     mktest!(refs_path, b"refs/heads/main");
     mktest!(refs_path_with_file_extension, b"refs/heads/main.ext");
     mktest!(refs_path_underscores_and_dashes, b"refs/heads/main-2nd_ext");
+    mktest!(relative_path, b"etc/foo");
     mktest!(all_uppercase, b"MAIN");
 }
 
@@ -39,7 +40,7 @@ mod invalid {
     );
     mktest!(
         refs_path_name_starts_with_dot,
-        b"refs/.somewhere",
+        b".refs/somewhere",
         RefError::Tag(TagError::StartsWithDot)
     );
     mktest!(
@@ -50,6 +51,7 @@ mod invalid {
     mktest!(capitalized_name_without_path, b"Main", RefError::SomeLowercase);
     mktest!(lowercase_name_without_path, b"main", RefError::SomeLowercase);
     mktest!(any_path_starts_with_slash, b"/etc/foo", RefError::StartsWithSlash);
+    mktest!(empty_path, b"", RefError::Tag(TagError::Empty));
     mktest!(refs_starts_with_slash, b"/refs/heads/main", RefError::StartsWithSlash);
     mktest!(
         ends_with_slash,

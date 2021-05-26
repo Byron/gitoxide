@@ -35,6 +35,20 @@ pub mod reference {
     use bstr::BStr;
     pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
         crate::tagname(path)?;
+        if path[0] == b'/' {
+            return Err(name::Error::StartsWithSlash);
+        }
+        let mut previous = 0;
+        let mut one_before_previous = 0;
+        for byte in path.iter() {
+            match *byte {
+                b'/' if previous == b'.' && one_before_previous == b'/' => return Err(name::Error::SingleDot),
+                b'/' if previous == b'/' => return Err(name::Error::RepeatedSlash),
+                _ => {}
+            }
+            one_before_previous = previous;
+            previous = *byte;
+        }
         Ok(path)
     }
 }
@@ -85,6 +99,9 @@ pub mod tag {
         if bytes.is_empty() {
             return Err(name::Error::Empty);
         }
+        if *bytes.last().expect("non-empty") == b'/' {
+            return Err(name::Error::EndsWithSlash);
+        }
 
         let mut previous = 0;
         for byte in bytes.iter() {
@@ -101,9 +118,6 @@ pub mod tag {
         }
         if bytes[0] == b'.' {
             return Err(name::Error::StartsWithDot);
-        }
-        if *bytes.last().expect("non-empty") == b'/' {
-            return Err(name::Error::EndsWithSlash);
         }
         if bytes.ends_with(b".lock") {
             return Err(name::Error::LockFileSuffix);
