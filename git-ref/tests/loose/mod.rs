@@ -40,6 +40,14 @@ mod reference {
                 None,
                 Some(b"refs/heads/main".as_bstr())
             );
+
+            mktest!(
+                symbolic_more_than_one_space,
+                b"ref:        refs/foobar\n",
+                git_ref::Kind::Symbolic,
+                None,
+                Some(b"refs/foobar".as_bstr())
+            );
         }
     }
 }
