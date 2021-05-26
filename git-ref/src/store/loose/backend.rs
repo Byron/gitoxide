@@ -6,13 +6,21 @@ mod find {
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
-            Tbd
+            RefnameValidation(err: crate::safe_name::Error) {
+                display("The input name or path is not a valid ref name")
+                source(err)
+            }
         }
     }
 
     impl loose::Store {
-        pub fn find_one<'a>(&self, _path: impl TryInto<SafeName<'a>>) -> Result<loose::Reference<'_>, Error> {
-            todo!("find one")
+        pub fn find_one<'a, Name>(&self, path: Name) -> Result<loose::Reference<'_>, Error>
+        where
+            Name: TryInto<SafeName<'a>, Error = crate::safe_name::Error>,
+        {
+            let path = path.try_into().map_err(|err| Error::RefnameValidation(err))?;
+            let ref_path = self.base.join(path.to_path());
+            todo!("impl")
         }
     }
 }

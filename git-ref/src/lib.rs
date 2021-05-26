@@ -9,7 +9,6 @@ mod store;
 pub use store::*;
 
 pub struct SafeName<'a>(&'a BStr);
-
 mod safe_name;
 
 /// Denotes the kind of function to produce a `Id`
