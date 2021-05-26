@@ -6,6 +6,24 @@ mod reference {
             Store::new("base doesnt matter")
         }
 
+        mod invalid {
+            use crate::loose::reference::parse::store;
+            use git_ref::loose::Reference;
+
+            macro_rules! mktest {
+                ($name:ident, $input:literal, $err:literal) => {
+                    #[test]
+                    fn $name() {
+                        let store = store();
+                        let err = Reference::from_path(&store, "name", $input).unwrap_err();
+                        assert_eq!(err.to_string(), $err);
+                    }
+                };
+            }
+
+            mktest!(hex_id, b"foobar", "\"foobar\" could not be parsed");
+            mktest!(ref_tag, b"reff: hello", "\"reff: hello\" could not be parsed");
+        }
         mod valid {
             use crate::loose::reference::parse::store;
             use bstr::ByteSlice;

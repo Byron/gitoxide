@@ -49,27 +49,41 @@ pub mod reference {
 
     pub mod decode {
         use crate::loose::{reference::State, Reference, Store};
+        use bstr::BString;
         use git_hash::ObjectId;
-        use nom::branch::alt;
-        use nom::bytes::complete::take_while;
-        use nom::combinator::{map, opt};
         use nom::{
+            branch::alt,
+            bytes::complete::take_while,
             bytes::complete::{tag, take_while_m_n},
+            combinator::{map, opt},
             sequence::terminated,
             IResult,
         };
+        use quick_error::quick_error;
         use std::path::PathBuf;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Parse(content: BString) {
+                    display("{:?} could not be parsed", content)
+                }
+            }
+        }
 
         impl<'a> Reference<'a> {
             pub fn from_path(
                 parent: &'a Store,
                 relative_path: impl Into<PathBuf>,
                 path_contents: &[u8],
-            ) -> Result<Self, String> {
+            ) -> Result<Self, Error> {
                 Ok(Reference {
                     parent,
                     relative_path: relative_path.into(),
-                    state: parse(path_contents).map_err(|err| err.to_string())?.1,
+                    state: parse(path_contents)
+                        .map_err(|err| err.to_string())
+                        .map_err(|_| Error::Parse(path_contents.into()))?
+                        .1,
                 })
             }
         }
