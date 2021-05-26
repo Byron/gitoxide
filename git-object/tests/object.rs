@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 mod immutable;
 mod mutable;
-mod tag;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

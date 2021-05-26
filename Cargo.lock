@@ -958,6 +958,7 @@ dependencies = [
  "btoi",
  "git-hash",
  "git-testtools",
+ "git-validate",
  "hex",
  "itoa",
  "nom",
