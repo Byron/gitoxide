@@ -8,11 +8,11 @@
 * *decode (zero-copy)* borrowed objects
     * [x] commit
     * [x] tree
-    * [x] tag
 * encode owned objects
     * [x] commit
     * [x] tree
     * [x] tag
+      * [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
 * [x] transform borrowed to owned objects
 * [x] API documentation
     * [ ] Some examples
@@ -243,9 +243,19 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-ref
 * Handle symbolic references and packed references
 * discover them in typical folder structures
-* [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
-* [ ] Support for the [reftable][reftable-spec], see [here for a Go/C implementation][reftable-impl]
-  * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2]
+* **Stores**
+  * [ ] loose file
+    * [ ] find single ref by name
+    * [ ] find refs matching pattern
+    * [ ] iterate
+    * [ ] write ref
+  * [ ] packed
+    * [ ] find single ref by name
+    * [ ] find refs matching pattern
+    * [ ] iterate
+    * [ ] write refs
+  * [ ] [reftable][reftable-spec], see [here for a Go/C implementation][reftable-impl]
+    * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2]
 * [x] API documentation
     * [ ] Some examples
 
