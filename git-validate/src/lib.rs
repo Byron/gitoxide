@@ -55,10 +55,8 @@ pub mod reference {
             previous = *byte;
         }
 
-        if !saw_slash {
-            if path.iter().any(|c| !c.is_ascii_uppercase()) {
-                return Err(name::Error::SomeLowercase);
-            }
+        if !saw_slash && path.iter().any(|c| !c.is_ascii_uppercase()) {
+            return Err(name::Error::SomeLowercase);
         }
         Ok(path)
     }
