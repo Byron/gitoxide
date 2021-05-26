@@ -12,7 +12,7 @@
     * [x] commit
     * [x] tree
     * [x] tag
-      * [x] [name validation](https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23)
+      * [x] [name validation][tagname-validation]
 * [x] transform borrowed to owned objects
 * [x] API documentation
     * [ ] Some examples
@@ -240,6 +240,10 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [ ] API documentation
     * [ ] Some examples
 
+### git-validate
+* [ ] validate ref names
+* [x] [validate][tagname-validation] tag names
+
 ### git-ref
 * Handle symbolic references and packed references
 * discover them in typical folder structures
@@ -281,3 +285,5 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-tui
 * _a terminal user interface seeking to replace and improve on `tig`_
+
+[tagname-validation]: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23
