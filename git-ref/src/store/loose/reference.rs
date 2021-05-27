@@ -25,6 +25,35 @@ impl<'a> Reference<'a> {
 }
 
 pub mod peel {
+    mod to_id {
+        use crate::{
+            loose::{reference, Reference},
+            Target,
+        };
+        use quick_error::quick_error;
+        use std::path::PathBuf;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                PeelOne(err: reference::peel::Error) {
+                    display("Could not peel a single level of a reference")
+                    from()
+                    source(err)
+                }
+                Cycle(start: PathBuf) {
+                    display("A symbolic reference cycle was detected starting from '{}'", start.display())
+                }
+            }
+        }
+
+        impl<'a> Reference<'a> {
+            pub fn peel_to_id(&mut self) -> Result<Target<'_>, Error> {
+                todo!("not implemented")
+            }
+        }
+    }
+
     use crate::{
         loose::{self, find, reference::State, Reference},
         Target,
@@ -37,12 +66,10 @@ pub mod peel {
         pub enum Error {
             FindExisting(err: find::existing::Error) {
                 display("Could not resolve symbolic reference name that is expected to exist")
-                from()
                 source(err)
             }
             Decode(err: loose::reference::decode::Error) {
                 display("The reference could not be decoded.")
-                from()
                 source(err)
             }
         }

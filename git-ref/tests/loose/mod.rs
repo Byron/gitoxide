@@ -84,11 +84,11 @@ mod reference {
         use git_testtools::hex_to_id;
 
         #[test]
-        fn iteration_single() -> crate::Result {
+        fn one() -> crate::Result {
             let store = loose::store()?;
             let mut r = store.find_one_existing("HEAD")?;
-
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+
             assert!(
                 matches!(r.peel_one(), Some(Ok(git_ref::Target::Peeled(_)))),
                 "iteration peels a single level"
@@ -99,6 +99,22 @@ mod reference {
                 git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
                 "we still have the peeled target"
             );
+            Ok(())
+        }
+
+        #[test]
+        fn to_id() -> crate::Result {
+            let store = loose::store()?;
+            let mut r = store.find_one_existing("multi-link")?;
+            assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+
+            for _ in 0..2 {
+                assert_eq!(
+                    r.peel_to_id()?,
+                    git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
+                );
+            }
+
             Ok(())
         }
     }
