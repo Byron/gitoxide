@@ -1,4 +1,19 @@
-//! Various functionality related to git references
+//! A crate for handling the references (➡ _ref_) stored in various formats in a git repository.
+//!
+//! Refs are the way to keep track of objects and come in two flavors.
+//!
+//! * symbolic refs are pointing to another reference
+//! * peeled refs point to the an object by its [ObjectId][git_hash::ObjectId]
+//!
+//! They can be identified by a relative path and stored in various flavors.
+//!
+//! * **files**
+//!   * **[loose][loose::Store]**
+//!     * one reference maps to a file on disk
+//!   * **packed**
+//!     * references are stored in a single human-readable file, along with their targets if they are symbolic.
+//! * **ref-table**
+//!   * supersedes all of the above to allow handling hundreds of thousands of references.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]
@@ -8,16 +23,19 @@ use git_hash::oid;
 mod store;
 pub use store::*;
 
+/// A validated and potentially partial reference name - it can safely be used for common operations.
 pub struct SafePartialName<'a>(&'a BStr);
 mod safe_name;
 
-/// Denotes the kind of function to produce a `Id`
+/// Denotes the kind of reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
-    /// A reference that points to an object id
+    /// A ref that points to an object id
     Peeled,
-    /// A reference that points to another reference
+    /// A ref that points to another reference, adding a level of indirection.
+    ///
+    /// It can be resolved to an id using the [`peel_to_id()`][loose::Reference::peel_to_id()] method.
     Symbolic,
 }
 
@@ -25,25 +43,28 @@ pub enum Kind {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Target<'a> {
-    /// A reference that points to an object id
+    /// A ref that points to an object id
     Peeled(&'a oid),
-    /// A reference that points to another reference
+    /// A ref that points to another reference by its name, adding a level of indirection.
     Symbolic(&'a BStr),
 }
 
 impl<'a> Target<'a> {
+    /// Returns the kind of the target the ref is pointing to.
     pub fn kind(&self) -> Kind {
         match self {
             Target::Symbolic(_) => Kind::Symbolic,
             Target::Peeled(_) => Kind::Peeled,
         }
     }
+    /// Interpret this target as object id which maybe `None` if it is symbolic.
     pub fn as_id(&self) -> Option<&oid> {
         match self {
             Target::Symbolic(_) => None,
             Target::Peeled(oid) => Some(oid),
         }
     }
+    /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
     pub fn as_ref(&self) -> Option<&BStr> {
         match self {
             Target::Symbolic(path) => Some(path),

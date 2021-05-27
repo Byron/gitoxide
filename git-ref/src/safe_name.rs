@@ -4,7 +4,9 @@ use quick_error::quick_error;
 use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 quick_error! {
+    /// The error used in the [`SafePartialName`]::try_from(…) implementations.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
             display("The path to a symbolic reference is invalid")
@@ -14,6 +16,7 @@ quick_error! {
 }
 
 impl<'a> SafePartialName<'a> {
+    /// Convert this name into the relative path identifying the reference location.
     pub fn to_path(&self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
     }
