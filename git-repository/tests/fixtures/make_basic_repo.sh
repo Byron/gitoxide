@@ -2,4 +2,4 @@
 set -eu -o pipefail
 
 git init -q
-mkdir some/very/deeply/nested/subdir
+mkdir -p some/very/deeply/nested/subdir

@@ -225,6 +225,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-repository
 * [ ] discovery
   * [ ] option to not cross file systems
+  * [ ] handle git-common-dir
 * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
 * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)

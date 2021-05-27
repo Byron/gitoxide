@@ -42,9 +42,9 @@ mod store {
                 ("heads/dt1", "refs/heads/dt1", git_ref::Kind::Peeled),
                 ("d1", "refs/d1", git_ref::Kind::Peeled), // direct refs before heads
                 ("heads/d1", "refs/heads/d1", git_ref::Kind::Peeled),
+                ("HEAD", "HEAD", git_ref::Kind::Symbolic), // it finds shortest paths first
                 ("origin", "refs/remotes/origin/HEAD", git_ref::Kind::Symbolic),
                 ("origin/main", "refs/remotes/origin/main", git_ref::Kind::Peeled),
-                ("HEAD", "HEAD", git_ref::Kind::Symbolic),
                 ("t1", "refs/tags/t1", git_ref::Kind::Peeled),
                 ("main", "refs/heads/main", git_ref::Kind::Peeled),
                 ("heads/main", "refs/heads/main", git_ref::Kind::Peeled),
