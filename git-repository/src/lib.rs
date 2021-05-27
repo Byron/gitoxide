@@ -45,25 +45,24 @@ pub mod discover {
             return Err(path::Error::InaccessibleDirectory(directory.into()));
         }
 
-        if let Ok(kind) = is_git(&directory) {
-            return Ok(dir_from_kind(directory, kind));
-        }
         let mut cursor = directory;
-        while let Some(parent) = cursor.parent() {
-            if let Some(file_name) = parent.file_name() {
+        loop {
+            if let Some(file_name) = cursor.file_name() {
                 if file_name == ".git" {
-                    if let Ok(kind) = is_git(parent) {
-                        return Ok(dir_from_kind(parent, kind));
+                    if let Ok(kind) = is_git(cursor) {
+                        break Ok(dir_from_kind(cursor, kind));
                     }
                 }
             }
-            let git_dir = parent.join(".git");
+            let git_dir = cursor.join(".git");
             if let Ok(kind) = is_git(&git_dir) {
-                return Ok(dir_from_kind(git_dir, kind));
+                break Ok(dir_from_kind(git_dir, kind));
             }
-            cursor = parent;
+            match cursor.parent() {
+                Some(parent) => cursor = parent,
+                None => break Err(path::Error::NoGitRepository(directory.to_owned())),
+            }
         }
-        return Err(path::Error::NoGitRepository(directory.to_owned()));
     }
 
     pub mod is_git {
