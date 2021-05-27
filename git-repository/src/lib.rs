@@ -18,6 +18,14 @@ impl Repository {
             None => Kind::Bare,
         }
     }
+
+    pub fn git_dir(&self) -> &std::path::Path {
+        &self.refs.base
+    }
+}
+
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::existing::Error> {
+    Repository::discover(directory)
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -59,7 +67,7 @@ mod path {
             }
         }
 
-        pub fn into_repository(self) -> PathBuf {
+        pub fn into_repository_directory(self) -> PathBuf {
             match self {
                 Path::WorkingTree(path) => path.join(".git"),
                 Path::Repository(path) => path,

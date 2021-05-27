@@ -1,6 +1,6 @@
 use std::path::Path;
 
-mod existing {
+pub mod existing {
     use quick_error::quick_error;
     use std::path::PathBuf;
 
