@@ -51,17 +51,17 @@ pub mod peel {
         /// Follow this symbolic reference one level and return the ref it refers to.
         ///
         /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
-        pub fn peel_one_level(&self) -> Result<Option<Reference<'a>>, Error> {
+        pub fn peel_one_level(&self) -> Option<Result<Reference<'a>, Error>> {
             match &self.state {
-                State::Id(_) => Ok(None),
+                State::Id(_) => None,
                 State::ValidatedPath(relative_path) => {
                     let path = relative_path.to_path_lossy();
                     match self.parent.find_one_with_verified_input(path.as_ref()) {
-                        Ok(Some(next)) => Ok(Some(next)),
-                        Ok(None) => Err(Error::FindExisting(find_one::existing::Error::NotFound(
+                        Ok(Some(next)) => Some(Ok(next)),
+                        Ok(None) => Some(Err(Error::FindExisting(find_one::existing::Error::NotFound(
                             path.into_owned(),
-                        ))),
-                        Err(err) => Err(Error::FindExisting(find_one::existing::Error::Find(err))),
+                        )))),
+                        Err(err) => Some(Err(Error::FindExisting(find_one::existing::Error::Find(err)))),
                     }
                 }
             }
@@ -97,7 +97,8 @@ pub mod peel {
                 let mut seen = BTreeSet::new();
                 let mut storage;
                 let mut cursor = self;
-                while let Some(next_ref) = cursor.peel_one_level()? {
+                while let Some(next) = cursor.peel_one_level() {
+                    let next_ref = next?;
                     if let crate::Kind::Peeled = next_ref.kind() {
                         return Ok(next_ref);
                     }
