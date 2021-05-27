@@ -1,12 +1,21 @@
 use crate::{file::Reference, Kind, Target};
 use bstr::BString;
-use git_hash::ObjectId;
+use git_hash::{oid, ObjectId};
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub(in crate::file) enum State {
     Id(ObjectId),
     ValidatedPath(BString),
+}
+
+impl State {
+    fn as_id(&self) -> Option<&oid> {
+        match self {
+            State::Id(id) => Some(id),
+            State::ValidatedPath(_) => None,
+        }
+    }
 }
 
 impl<'a> Reference<'a> {
@@ -71,10 +80,8 @@ pub mod peel {
 
     ///
     pub mod to_id {
-        use crate::{
-            file::{reference, Reference},
-            Target,
-        };
+        use crate::file::{reference, Reference};
+        use git_hash::oid;
         use quick_error::quick_error;
         use std::{collections::BTreeSet, path::PathBuf};
 
@@ -101,7 +108,7 @@ pub mod peel {
             /// Peel this symbolic reference until the end of the chain is reached and an object ID is available.
             ///
             /// If an error occurs this reference remains unchanged.
-            pub fn peel_to_id_in_place(&mut self) -> Result<Target<'_>, Error> {
+            pub fn peel_to_id_in_place(&mut self) -> Result<&oid, Error> {
                 let mut count = 0;
                 let mut seen = BTreeSet::new();
                 let mut storage;
@@ -110,7 +117,7 @@ pub mod peel {
                     let next_ref = next?;
                     if let crate::Kind::Peeled = next_ref.kind() {
                         *self = next_ref;
-                        return Ok(self.target());
+                        return Ok(self.state.as_id().expect("it to be present"));
                     }
                     storage = next_ref;
                     cursor = &mut storage;
@@ -126,7 +133,7 @@ pub mod peel {
                         });
                     }
                 }
-                Ok(self.target())
+                Ok(self.state.as_id().expect("to be peeled"))
             }
         }
     }
