@@ -23,7 +23,7 @@ mod store {
                         Some(expected_path) => assert_eq!(reference?.relative_path, Path::new(expected_path)),
                         None => match reference {
                             Ok(_) => panic!("Expected error"),
-                            Err(git_ref::file::find::existing::Error::NotFound(name)) => {
+                            Err(git_ref::file::find_one::existing::Error::NotFound(name)) => {
                                 assert_eq!(name, Path::new(*partial_name));
                             }
                             Err(err) => panic!("Unexpected err: {:?}", err),
@@ -85,16 +85,16 @@ mod reference {
         use std::path::Path;
 
         #[test]
-        fn one() -> crate::Result {
+        fn one_level() -> crate::Result {
             let store = file::store()?;
             let mut r = store.find_one_existing("HEAD")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
             assert!(
-                matches!(r.peel_one(), Some(Ok(git_ref::Target::Peeled(_)))),
+                matches!(r.peel_one_level(), Some(Ok(git_ref::Target::Peeled(_)))),
                 "iteration peels a single level"
             );
-            assert!(r.peel_one().is_none(), "end of iteration");
+            assert!(r.peel_one_level().is_none(), "end of iteration");
             assert_eq!(
                 r.target(),
                 git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),

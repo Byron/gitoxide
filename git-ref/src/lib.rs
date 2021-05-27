@@ -8,7 +8,7 @@
 //! They can be identified by a relative path and stored in various flavors.
 //!
 //! * **files**
-//!   * **[loose][loose::Store]**
+//!   * **[loose][file::Store]**
 //!     * one reference maps to a file on disk
 //!   * **packed**
 //!     * references are stored in a single human-readable file, along with their targets if they are symbolic.
@@ -35,7 +35,7 @@ pub enum Kind {
     Peeled,
     /// A ref that points to another reference, adding a level of indirection.
     ///
-    /// It can be resolved to an id using the [`peel_to_id()`][loose::Reference::peel_to_id()] method.
+    /// It can be resolved to an id using the [`peel_to_id()`][file::Reference::peel_to_id()] method.
     Symbolic,
 }
 

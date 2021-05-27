@@ -1,11 +1,13 @@
-pub mod find {
+///
+pub mod find_one {
     use crate::{file, SafePartialName};
     use quick_error::quick_error;
-    use std::path::Path;
-    use std::{convert::TryInto, io, io::Read, path::PathBuf};
+    use std::{convert::TryInto, io, io::Read, path::Path, path::PathBuf};
 
     quick_error! {
+        /// The error returned by [file::Store::find_one()].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             RefnameValidation(err: crate::safe_name::Error) {
                 display("The input name or path is not a valid ref name")
@@ -28,43 +30,16 @@ pub mod find {
         None,
     }
 
-    pub mod existing {
-        use crate::{file, file::find, SafePartialName};
-        use quick_error::quick_error;
-        use std::{convert::TryInto, path::PathBuf};
-
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Find(err: find::Error) {
-                    display("An error occured while trying to find a reference")
-                    from()
-                    source(err)
-                }
-                NotFound(name: PathBuf) {
-                    display("The ref partially named '{}' could not be found", name.display())
-                }
-            }
-        }
-
-        impl file::Store {
-            pub fn find_one_existing<'a, Name>(&self, path: Name) -> Result<file::Reference<'_>, Error>
-            where
-                Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
-            {
-                let path = path
-                    .try_into()
-                    .map_err(|err| Error::Find(find::Error::RefnameValidation(err)))?;
-                match self.find_one_with_verified_input(path.to_path().as_ref()) {
-                    Ok(Some(r)) => Ok(r),
-                    Ok(None) => Err(Error::NotFound(path.to_path().into_owned())),
-                    Err(err) => Err(err.into()),
-                }
-            }
-        }
-    }
-
     impl file::Store {
+        /// Find a single reference by the given `path` which is required to be a valid reference name.
+        ///
+        /// Returns Ok(None) if no such ref exists.
+        ///
+        /// ### Note
+        ///
+        /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
+        ///
+        /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
         pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<file::Reference<'_>>, Error>
         where
             Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
@@ -73,9 +48,6 @@ pub mod find {
             self.find_one_with_verified_input(path.to_path().as_ref())
         }
 
-        /// As per [the git documentation][git-lookup-docs]
-        ///
-        /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
         pub(in crate::store::file) fn find_one_with_verified_input(
             &self,
             relative_path: &Path,
@@ -137,6 +109,45 @@ pub mod find {
             ))
         }
     }
+
+    pub mod existing {
+        use crate::{file, file::find_one, SafePartialName};
+        use quick_error::quick_error;
+        use std::{convert::TryInto, path::PathBuf};
+
+        quick_error! {
+            /// The error returned by [file::Store::find_one_existing()].
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            pub enum Error {
+                Find(err: find_one::Error) {
+                    display("An error occured while trying to find a reference")
+                    from()
+                    source(err)
+                }
+                NotFound(name: PathBuf) {
+                    display("The ref partially named '{}' could not be found", name.display())
+                }
+            }
+        }
+
+        impl file::Store {
+            /// Similar to [`file::Store::find_one()`] but a non-existing ref is treated as error.
+            pub fn find_one_existing<'a, Name>(&self, path: Name) -> Result<file::Reference<'_>, Error>
+            where
+                Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
+            {
+                let path = path
+                    .try_into()
+                    .map_err(|err| Error::Find(find_one::Error::RefnameValidation(err)))?;
+                match self.find_one_with_verified_input(path.to_path().as_ref()) {
+                    Ok(Some(r)) => Ok(r),
+                    Ok(None) => Err(Error::NotFound(path.to_path().into_owned())),
+                    Err(err) => Err(err.into()),
+                }
+            }
+        }
+    }
 }
 
 mod init {
@@ -144,6 +155,8 @@ mod init {
     use std::path::PathBuf;
 
     impl file::Store {
+        /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
+        /// `refs/` subdirectory.
         pub fn new(git_dir: impl Into<PathBuf>) -> Self {
             file::Store { base: git_dir.into() }
         }

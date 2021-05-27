@@ -4,18 +4,20 @@ use git_hash::ObjectId;
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub(crate) enum State {
+pub(in crate::file) enum State {
     Id(ObjectId),
     ValidatedPath(BString),
 }
 
 impl<'a> Reference<'a> {
+    /// Return the kind of ref.
     pub fn kind(&self) -> Kind {
         match self.state {
             State::ValidatedPath(_) => Kind::Symbolic,
             State::Id(_) => Kind::Peeled,
         }
     }
+    /// Return the target to which this instance is pointing.
     pub fn target(&'a self) -> Target<'a> {
         match self.state {
             State::ValidatedPath(ref path) => Target::Symbolic(path.as_ref()),
@@ -26,16 +28,18 @@ impl<'a> Reference<'a> {
 
 pub mod peel {
     use crate::{
-        file::{self, find, reference::State, Reference},
+        file::{self, find_one, reference::State, Reference},
         Target,
     };
     use bstr::ByteSlice;
     use quick_error::quick_error;
 
     quick_error! {
+        /// The error returned by [`Reference::peel_one_level()`].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
-            FindExisting(err: find::existing::Error) {
+            FindExisting(err: find_one::existing::Error) {
                 display("Could not resolve symbolic reference name that is expected to exist")
                 source(err)
             }
@@ -47,7 +51,8 @@ pub mod peel {
     }
 
     impl<'a> Reference<'a> {
-        pub fn peel_one(&mut self) -> Option<Result<Target<'_>, Error>> {
+        /// Change this reference to point to the next level of indirection.
+        pub fn peel_one_level(&mut self) -> Option<Result<Target<'_>, Error>> {
             match &self.state {
                 State::Id(_) => None,
                 State::ValidatedPath(relative_path) => {
@@ -58,10 +63,10 @@ pub mod peel {
                             self.state = next.state;
                             Some(Ok(self.target()))
                         }
-                        Ok(None) => Some(Err(Error::FindExisting(find::existing::Error::NotFound(
+                        Ok(None) => Some(Err(Error::FindExisting(find_one::existing::Error::NotFound(
                             path.into_owned(),
                         )))),
-                        Err(err) => Some(Err(Error::FindExisting(find::existing::Error::Find(err)))),
+                        Err(err) => Some(Err(Error::FindExisting(find_one::existing::Error::Find(err)))),
                     }
                 }
             }
@@ -99,7 +104,7 @@ pub mod peel {
             pub fn peel_to_id(&mut self) -> Result<Target<'_>, Error> {
                 let mut count = 0;
                 let mut seen = BTreeSet::new();
-                while let Some(target) = self.peel_one() {
+                while let Some(target) = self.peel_one_level() {
                     let target = target?;
                     if let crate::Kind::Peeled = target.kind() {
                         return Ok(self.target());
