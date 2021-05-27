@@ -9,16 +9,21 @@ mod store {
         }
 
         #[test]
-        fn success() {
-            let store = store().unwrap();
-            assert_eq!(
-                store
-                    .find_one("refs/heads/main")
-                    .unwrap()
-                    .expect("exists")
-                    .relative_path,
-                Path::new("refs/heads/main")
-            );
+        fn success() -> crate::Result {
+            let store = store()?;
+            for (partial_name, expected_path, expected_ref_kind) in &[
+                ("origin/main", "refs/remotes/origin/main", git_ref::Kind::Peeled),
+                ("HEAD", "HEAD", git_ref::Kind::Symbolic),
+                ("t1", "refs/tags/t1", git_ref::Kind::Peeled),
+                ("main", "refs/heads/main", git_ref::Kind::Peeled),
+                ("heads/main", "refs/heads/main", git_ref::Kind::Peeled),
+                ("refs/heads/main", "refs/heads/main", git_ref::Kind::Peeled),
+            ] {
+                let reference = store.find_one(*partial_name)?.expect("exists");
+                assert_eq!(reference.relative_path, Path::new(expected_path));
+                assert_eq!(reference.target().kind(), *expected_ref_kind);
+            }
+            Ok(())
         }
     }
 }
