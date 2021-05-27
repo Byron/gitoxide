@@ -52,7 +52,7 @@ pub mod decode {
                 display("{:?} could not be parsed", content)
             }
             RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
-                display("The path to a symbolic reference is invalid")
+                display("The path to a symbolic reference within a ref file is invalid")
                 source(err)
             }
         }

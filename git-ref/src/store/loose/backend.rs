@@ -1,8 +1,7 @@
 mod find {
-    use crate::{loose, SafeName};
+    use crate::{loose, SafePartialName};
     use quick_error::quick_error;
-    use std::io::Read;
-    use std::{convert::TryInto, io};
+    use std::{convert::TryInto, io, io::Read, path::PathBuf};
 
     quick_error! {
         #[derive(Debug)]
@@ -16,25 +15,36 @@ mod find {
                 from()
                 source(err)
             }
+            ReferenceCreation{ err: loose::reference::decode::Error, relative_path: PathBuf } {
+                display("The reference at '{}' could not be instantiated", relative_path.display())
+                source(err)
+            }
         }
     }
 
     impl loose::Store {
         pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<loose::Reference<'_>>, Error>
         where
-            Name: TryInto<SafeName<'a>, Error = crate::safe_name::Error>,
+            Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
         {
             let path = path.try_into().map_err(Error::RefnameValidation)?;
 
             let relative_path = path.to_path();
-            let ref_path = self.base.join(relative_path);
+            let ref_path = self.base.join(&relative_path);
             let mut contents = Vec::new();
             match std::fs::File::open(ref_path) {
                 Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
                 Err(err) => return Err(err.into()),
                 Ok(mut file) => file.read_to_end(&mut contents)?,
             };
-            todo!("impl")
+            Ok(Some(
+                loose::Reference::try_from_path(self, relative_path.as_ref(), &contents).map_err(|err| {
+                    Error::ReferenceCreation {
+                        err,
+                        relative_path: relative_path.into(),
+                    }
+                })?,
+            ))
         }
     }
 }

@@ -29,6 +29,19 @@ pub mod name {
 use bstr::BStr;
 
 pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
+    validate(path, Mode::Complete)
+}
+
+pub fn name_partial(path: &BStr) -> Result<&BStr, name::Error> {
+    validate(path, Mode::Partial)
+}
+
+enum Mode {
+    Complete,
+    Partial,
+}
+
+fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
     crate::tagname(path)?;
     if path[0] == b'/' {
         return Err(name::Error::StartsWithSlash);
@@ -50,8 +63,10 @@ pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
         previous = *byte;
     }
 
-    if !saw_slash && path.iter().any(|c| !c.is_ascii_uppercase()) {
-        return Err(name::Error::SomeLowercase);
+    if let Mode::Complete = mode {
+        if !saw_slash && path.iter().any(|c| !c.is_ascii_uppercase()) {
+            return Err(name::Error::SomeLowercase);
+        }
     }
     Ok(path)
 }

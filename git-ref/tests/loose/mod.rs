@@ -5,15 +5,18 @@ mod store {
 
         fn store() -> crate::Result<loose::Store> {
             let path = git_testtools::scripted_fixture_repo_read_only("make_ref_repository.sh")?;
-            Ok(loose::Store::from(path))
+            Ok(loose::Store::from(path.join(".git")))
         }
 
         #[test]
-        #[should_panic]
         fn success() {
             let store = store().unwrap();
             assert_eq!(
-                store.find_one("main").unwrap().expect("exists").relative_path,
+                store
+                    .find_one("refs/heads/main")
+                    .unwrap()
+                    .expect("exists")
+                    .relative_path,
                 Path::new("refs/heads/main")
             );
         }

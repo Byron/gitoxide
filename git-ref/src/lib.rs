@@ -8,7 +8,7 @@ use git_hash::oid;
 mod store;
 pub use store::*;
 
-pub struct SafeName<'a>(&'a BStr);
+pub struct SafePartialName<'a>(&'a BStr);
 mod safe_name;
 
 /// Denotes the kind of function to produce a `Id`
