@@ -56,14 +56,12 @@ pub mod peel {
                         Ok(Some(next)) => {
                             self.relative_path = next.relative_path;
                             self.state = next.state;
-                            return Some(Ok(self.target()));
+                            Some(Ok(self.target()))
                         }
-                        Ok(None) => {
-                            return Some(Err(Error::FindExisting(find::existing::Error::NotFound(
-                                path.into_owned(),
-                            ))))
-                        }
-                        Err(err) => return Some(Err(Error::FindExisting(find::existing::Error::Find(err)))),
+                        Ok(None) => Some(Err(Error::FindExisting(find::existing::Error::NotFound(
+                            path.into_owned(),
+                        )))),
+                        Err(err) => Some(Err(Error::FindExisting(find::existing::Error::Find(err)))),
                     }
                 }
             }
