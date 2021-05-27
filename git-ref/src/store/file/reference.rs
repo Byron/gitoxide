@@ -79,7 +79,7 @@ pub mod peel {
         use std::{collections::BTreeSet, path::PathBuf};
 
         quick_error! {
-            /// The error returned by [`Reference::peel_in_place_to_id()`].
+            /// The error returned by [`Reference::peel_to_id_in_place()`].
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {

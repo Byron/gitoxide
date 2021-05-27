@@ -36,7 +36,7 @@ pub enum Kind {
     Peeled,
     /// A ref that points to another reference, adding a level of indirection.
     ///
-    /// It can be resolved to an id using the [`peel_in_place_to_id()`][file::Reference::peel_in_place_to_id()] method.
+    /// It can be resolved to an id using the [`peel_in_place_to_id()`][file::Reference::peel_to_id_in_place()] method.
     Symbolic,
 }
 
