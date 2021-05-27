@@ -90,10 +90,10 @@ mod reference {
 
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
             assert!(
-                matches!(r.next(), Some(Ok(git_ref::Target::Peeled(_)))),
+                matches!(r.peel_one(), Some(Ok(git_ref::Target::Peeled(_)))),
                 "iteration peels a single level"
             );
-            assert!(r.next().is_none(), "end of iteration");
+            assert!(r.peel_one().is_none(), "end of iteration");
             assert_eq!(
                 r.target(),
                 git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),

@@ -48,10 +48,8 @@ pub mod peel {
         }
     }
 
-    impl<'a> Iterator for Reference<'a> {
-        type Item = Result<Target<'a>, Error>;
-
-        fn next(&mut self) -> Option<Self::Item> {
+    impl<'a> Reference<'a> {
+        pub fn peel_one(&mut self) -> Option<Result<Target<'_>, Error>> {
             match &self.state {
                 State::Id(_) => None,
                 State::ValidatedPath(relative_path) => {
