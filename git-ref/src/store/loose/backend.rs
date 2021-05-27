@@ -1,4 +1,4 @@
-mod find {
+pub mod find {
     use crate::{loose, SafePartialName};
     use quick_error::quick_error;
     use std::path::Path;
@@ -28,17 +28,55 @@ mod find {
         None,
     }
 
+    pub mod existing {
+        use crate::{loose, loose::find, SafePartialName};
+        use quick_error::quick_error;
+        use std::{convert::TryInto, path::PathBuf};
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Find(err: find::Error) {
+                    display("An error occured while trying to find a reference")
+                    from()
+                    source(err)
+                }
+                NotFound(name: PathBuf) {
+                    display("The ref partially named '{}' could not be found", name.display())
+                }
+            }
+        }
+
+        impl loose::Store {
+            pub fn find_one_existing<'a, Name>(&self, path: Name) -> Result<loose::Reference<'_>, Error>
+            where
+                Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
+            {
+                let path = path
+                    .try_into()
+                    .map_err(|err| Error::Find(find::Error::RefnameValidation(err)))?;
+                match self.find_one_with_verified_input(path.to_path().as_ref()) {
+                    Ok(Some(r)) => Ok(r),
+                    Ok(None) => Err(Error::NotFound(path.to_path().into_owned())),
+                    Err(err) => Err(err.into()),
+                }
+            }
+        }
+    }
+
     impl loose::Store {
-        /// As per [the git documentation][git-lookup-docs]
-        ///
-        /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
         pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<loose::Reference<'_>>, Error>
         where
             Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
         {
             let path = path.try_into().map_err(Error::RefnameValidation)?;
+            self.find_one_with_verified_input(path.to_path().as_ref())
+        }
 
-            let relative_path = path.to_path();
+        /// As per [the git documentation][git-lookup-docs]
+        ///
+        /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
+        fn find_one_with_verified_input(&self, relative_path: &Path) -> Result<Option<loose::Reference<'_>>, Error> {
             let is_all_uppercase = relative_path
                 .to_string_lossy()
                 .as_ref()

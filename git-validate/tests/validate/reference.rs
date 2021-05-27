@@ -51,8 +51,6 @@ mod name_partial {
             b"refs/./still-inside-but-not-cool",
             RefError::SingleDot
         );
-        mktest!(capitalized_name_without_path, b"Main", RefError::SomeLowercase);
-        mktest!(lowercase_name_without_path, b"main", RefError::SomeLowercase);
         mktest!(any_path_starts_with_slash, b"/etc/foo", RefError::StartsWithSlash);
         mktest!(empty_path, b"", RefError::Tag(TagError::Empty));
         mktest!(refs_starts_with_slash, b"/refs/heads/main", RefError::StartsWithSlash);
@@ -62,9 +60,14 @@ mod name_partial {
             RefError::Tag(TagError::EndsWithSlash)
         );
         mktest!(
-            a_path_with_duplicate_slashes,
+            path_with_duplicate_slashes,
             b"refs//heads/main",
             RefError::RepeatedSlash
+        );
+        mktest!(
+            path_with_spaces,
+            b"refs//heads/name with spaces",
+            RefError::Tag(TagError::InvalidByte(_))
         );
     }
 }

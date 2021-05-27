@@ -15,4 +15,5 @@ pub struct Store {
 }
 
 mod backend;
+pub use backend::*;
 pub mod reference;
