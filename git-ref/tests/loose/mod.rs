@@ -30,6 +30,23 @@ mod store {
             }
             Ok(())
         }
+
+        #[test]
+        fn failure() -> crate::Result {
+            let store = store()?;
+            for (partial_name, reason, is_err) in
+                &[("foobar", "does not exist", false), ("broken", "does not parse", true)]
+            {
+                let reference = store.find_one(*partial_name);
+                if *is_err {
+                    assert!(reference.is_err(), "{}", reason);
+                } else {
+                    let reference = reference?;
+                    assert!(reference.is_none(), "{}", reason);
+                }
+            }
+            Ok(())
+        }
     }
 }
 

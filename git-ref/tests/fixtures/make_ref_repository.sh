@@ -15,6 +15,7 @@ cp .git/refs/heads/main .git/refs/remotes/origin/
 cp .git/refs/heads/main .git/refs/d1
 
 echo "ref: refs/remotes/origin/main" > .git/refs/remotes/origin/HEAD
+echo "notahexsha" > .git/refs/broken
 
 git tag t1
 git tag dt1
