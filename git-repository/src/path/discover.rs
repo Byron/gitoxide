@@ -1,3 +1,4 @@
+use crate::path;
 use std::path::Path;
 
 pub mod existing {
@@ -26,11 +27,11 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
 
     let mut cursor = directory;
     loop {
-        if let Ok(kind) = crate::is_git(cursor) {
+        if let Ok(kind) = path::is_git(cursor) {
             break Ok(crate::Path::from_dot_git_dir(cursor, kind));
         }
         let git_dir = cursor.join(".git");
-        if let Ok(kind) = crate::is_git(&git_dir) {
+        if let Ok(kind) = path::is_git(&git_dir) {
             break Ok(crate::Path::from_dot_git_dir(git_dir, kind));
         }
         match cursor.parent() {

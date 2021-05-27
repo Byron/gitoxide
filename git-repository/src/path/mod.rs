@@ -2,6 +2,8 @@ use crate::Kind;
 use std::path::PathBuf;
 
 pub mod discover;
+pub mod is_git;
+pub use is_git::is_git;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Path {
