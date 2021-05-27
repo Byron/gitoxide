@@ -1,15 +1,17 @@
+use git_ref::loose;
+
+fn store() -> crate::Result<loose::Store> {
+    let path = git_testtools::scripted_fixture_repo_read_only("make_ref_repository.sh")?;
+    Ok(loose::Store::from(path.join(".git")))
+}
+
 mod store {
     mod find_one {
-        use git_ref::loose;
+        use crate::loose::store;
         use std::path::Path;
 
-        fn store() -> crate::Result<loose::Store> {
-            let path = git_testtools::scripted_fixture_repo_read_only("make_ref_repository.sh")?;
-            Ok(loose::Store::from(path.join(".git")))
-        }
-
         mod existing {
-            use crate::loose::store::find_one::store;
+            use crate::loose::store;
             use std::path::Path;
 
             #[test]
@@ -58,9 +60,11 @@ mod store {
         #[test]
         fn failure() -> crate::Result {
             let store = store()?;
-            for (partial_name, reason, is_err) in
-                &[("foobar", "does not exist", false), ("broken", "does not parse", true)]
-            {
+            for (partial_name, reason, is_err) in &[
+                ("foobar", "does not exist", false),
+                ("broken", "does not parse", true),
+                ("../escaping", "an invalid ref name", true),
+            ] {
                 let reference = store.find_one(*partial_name);
                 if *is_err {
                     assert!(reference.is_err(), "{}", reason);
@@ -75,6 +79,30 @@ mod store {
 }
 
 mod reference {
+    mod peel {
+        use crate::loose;
+        use git_testtools::hex_to_id;
+
+        #[test]
+        fn iteration_single() -> crate::Result {
+            let store = loose::store()?;
+            let mut r = store.find_one_existing("HEAD")?;
+
+            assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+            assert!(
+                matches!(r.next(), Some(Ok(git_ref::Target::Peeled(_)))),
+                "iteration peels a single level"
+            );
+            assert!(r.next().is_none(), "end of iteration");
+            assert_eq!(
+                r.target(),
+                git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
+                "we still have the peeled target"
+            );
+            Ok(())
+        }
+    }
+
     mod parse {
         use git_ref::loose::Store;
 

@@ -6,20 +6,71 @@ use git_hash::ObjectId;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub(crate) enum State {
     Id(ObjectId),
-    Path(BString),
+    ValidatedPath(BString),
 }
 
 impl<'a> Reference<'a> {
     pub fn kind(&self) -> Kind {
         match self.state {
-            State::Path(_) => Kind::Symbolic,
+            State::ValidatedPath(_) => Kind::Symbolic,
             State::Id(_) => Kind::Peeled,
         }
     }
     pub fn target(&'a self) -> Target<'a> {
         match self.state {
-            State::Path(ref path) => Target::Symbolic(path.as_ref()),
+            State::ValidatedPath(ref path) => Target::Symbolic(path.as_ref()),
             State::Id(ref oid) => Target::Peeled(oid.as_ref()),
+        }
+    }
+}
+
+pub mod peel {
+    use crate::{
+        loose::{self, find, reference::State, Reference},
+        Target,
+    };
+    use bstr::ByteSlice;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            FindExisting(err: find::existing::Error) {
+                display("Could not resolve symbolic reference name that is expected to exist")
+                from()
+                source(err)
+            }
+            Decode(err: loose::reference::decode::Error) {
+                display("The reference could not be decoded.")
+                from()
+                source(err)
+            }
+        }
+    }
+
+    impl<'a> Iterator for Reference<'a> {
+        type Item = Result<Target<'a>, Error>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            match &self.state {
+                State::Id(_) => None,
+                State::ValidatedPath(relative_path) => {
+                    let path = relative_path.to_path_lossy();
+                    match self.parent.find_one_with_verified_input(path.as_ref()) {
+                        Ok(Some(next)) => {
+                            self.relative_path = next.relative_path;
+                            self.state = next.state;
+                            return Some(Ok(self.target()));
+                        }
+                        Ok(None) => {
+                            return Some(Err(Error::FindExisting(find::existing::Error::NotFound(
+                                path.into_owned(),
+                            ))))
+                        }
+                        Err(err) => return Some(Err(Error::FindExisting(find::existing::Error::Find(err)))),
+                    }
+                }
+            }
         }
     }
 }
@@ -64,10 +115,12 @@ pub mod decode {
         fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
             Ok(match v {
                 MaybeUnsafeState::Id(id) => State::Id(id),
-                MaybeUnsafeState::UnvalidatedPath(path) => State::Path(match git_validate::refname(path.as_ref()) {
-                    Err(err) => return Err(Error::RefnameValidation { err, path }),
-                    Ok(_) => path,
-                }),
+                MaybeUnsafeState::UnvalidatedPath(path) => {
+                    State::ValidatedPath(match git_validate::refname(path.as_ref()) {
+                        Err(err) => return Err(Error::RefnameValidation { err, path }),
+                        Ok(_) => path,
+                    })
+                }
             })
         }
     }

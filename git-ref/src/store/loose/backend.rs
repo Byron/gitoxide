@@ -76,7 +76,10 @@ pub mod find {
         /// As per [the git documentation][git-lookup-docs]
         ///
         /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-        fn find_one_with_verified_input(&self, relative_path: &Path) -> Result<Option<loose::Reference<'_>>, Error> {
+        pub(in crate::store::loose) fn find_one_with_verified_input(
+            &self,
+            relative_path: &Path,
+        ) -> Result<Option<loose::Reference<'_>>, Error> {
             let is_all_uppercase = relative_path
                 .to_string_lossy()
                 .as_ref()
