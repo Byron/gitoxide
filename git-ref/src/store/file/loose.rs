@@ -33,7 +33,7 @@ pub mod find_one {
     impl file::Store {
         /// Find a single reference by the given `path` which is required to be a valid reference name.
         ///
-        /// Returns Ok(None) if no such ref exists.
+        /// Returns `Ok(None)` if no such ref exists.
         ///
         /// ### Note
         ///
@@ -110,6 +110,7 @@ pub mod find_one {
         }
     }
 
+    ///
     pub mod existing {
         use crate::{file, file::find_one, SafePartialName};
         use quick_error::quick_error;

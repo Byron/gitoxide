@@ -1,4 +1,6 @@
-//! A crate for handling the references (➡ _ref_) stored in various formats in a git repository.
+//! A crate for handling the references stored in various formats in a git repository.
+//!
+//! References are also called _refs_ which are used interchangeably.
 //!
 //! Refs are the way to keep track of objects and come in two flavors.
 //!
@@ -15,8 +17,7 @@
 //! * **ref-table**
 //!   * supersedes all of the above to allow handling hundreds of thousands of references.
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
-#![allow(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
 use bstr::BStr;
 use git_hash::oid;
 
@@ -35,7 +36,7 @@ pub enum Kind {
     Peeled,
     /// A ref that points to another reference, adding a level of indirection.
     ///
-    /// It can be resolved to an id using the [`peel_to_id()`][file::Reference::peel_to_id()] method.
+    /// It can be resolved to an id using the [`peel_in_place_to_id()`][file::Reference::peel_in_place_to_id()] method.
     Symbolic,
 }
 

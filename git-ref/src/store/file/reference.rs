@@ -26,6 +26,7 @@ impl<'a> Reference<'a> {
     }
 }
 
+///
 pub mod peel {
     use crate::file::{self, find_one, reference::State, Reference};
     use bstr::ByteSlice;
@@ -68,6 +69,7 @@ pub mod peel {
         }
     }
 
+    ///
     pub mod to_id {
         use crate::{
             file::{reference, Reference},
@@ -77,7 +79,7 @@ pub mod peel {
         use std::{collections::BTreeSet, path::PathBuf};
 
         quick_error! {
-            /// The error returned by [`Reference::peel_to_id()`].
+            /// The error returned by [`Reference::peel_in_place_to_id()`].
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {
@@ -130,6 +132,7 @@ pub mod peel {
     }
 }
 
+///
 pub mod decode {
     use crate::file::{reference::State, Reference, Store};
     use bstr::BString;
@@ -152,7 +155,9 @@ pub mod decode {
     }
 
     quick_error! {
+        /// The error returned by [`Reference::try_from_path()`].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             Parse(content: BString) {
                 display("{:?} could not be parsed", content)
@@ -181,6 +186,8 @@ pub mod decode {
     }
 
     impl<'a> Reference<'a> {
+        /// Create a new reference of the given `parent` store with `relative_path` service as unique identifier
+        /// at which the `path_contents` was read to obtain the refs value.
         pub fn try_from_path(
             parent: &'a Store,
             relative_path: impl Into<PathBuf>,
