@@ -1,3 +1,16 @@
+mod init {
+    use crate::Repository;
+    use std::path::Path;
+
+    impl Repository {
+        /// Really just a sketch at this point to help guide the API.
+        pub fn create_and_init(directory: impl AsRef<Path>) -> Result<Self, crate::init::Error> {
+            // TODO: proper error
+            crate::init::repository(Some(directory.as_ref().to_owned()))?;
+            Ok(Repository::discover(directory).unwrap()) // TODO: a specialized method without discovery
+        }
+    }
+}
 pub mod discover {
     use crate::{path::discover, Repository};
     use quick_error::quick_error;
