@@ -47,12 +47,8 @@ pub mod discover {
 
         let mut cursor = directory;
         loop {
-            if let Some(file_name) = cursor.file_name() {
-                if file_name == ".git" {
-                    if let Ok(kind) = is_git(cursor) {
-                        break Ok(dir_from_kind(cursor, kind));
-                    }
-                }
+            if let Ok(kind) = is_git(cursor) {
+                break Ok(dir_from_kind(cursor, kind));
             }
             let git_dir = cursor.join(".git");
             if let Ok(kind) = is_git(&git_dir) {

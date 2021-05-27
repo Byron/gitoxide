@@ -1,5 +1,28 @@
-mod path {
+mod existing {
     use std::path::PathBuf;
+
+    #[test]
+    fn from_bare_git_dir() -> crate::Result {
+        let dir = repo_path()?.join("bare.git");
+        assert_eq!(
+            git_repository::discover::existing(&dir)?,
+            dir,
+            "the bare .git dir is directly returned"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn from_inside_bare_git_dir() -> crate::Result {
+        let git_dir = repo_path()?.join("bare.git");
+        let dir = git_dir.join("objects");
+        assert_eq!(
+            git_repository::discover::existing(&dir)?,
+            git_dir,
+            "the bare .git dir is found while traversing upwards"
+        );
+        Ok(())
+    }
 
     #[test]
     fn from_git_dir() -> crate::Result {
