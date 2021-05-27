@@ -82,6 +82,7 @@ mod reference {
     mod peel {
         use crate::loose;
         use git_testtools::hex_to_id;
+        use std::path::Path;
 
         #[test]
         fn one() -> crate::Result {
@@ -113,6 +114,7 @@ mod reference {
                     r.peel_to_id()?,
                     git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
                 );
+                assert_eq!(r.relative_path, Path::new("refs/remotes/origin/multi-link-target3"))
             }
 
             Ok(())

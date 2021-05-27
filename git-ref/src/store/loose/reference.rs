@@ -25,35 +25,6 @@ impl<'a> Reference<'a> {
 }
 
 pub mod peel {
-    mod to_id {
-        use crate::{
-            loose::{reference, Reference},
-            Target,
-        };
-        use quick_error::quick_error;
-        use std::path::PathBuf;
-
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                PeelOne(err: reference::peel::Error) {
-                    display("Could not peel a single level of a reference")
-                    from()
-                    source(err)
-                }
-                Cycle(start: PathBuf) {
-                    display("A symbolic reference cycle was detected starting from '{}'", start.display())
-                }
-            }
-        }
-
-        impl<'a> Reference<'a> {
-            pub fn peel_to_id(&mut self) -> Result<Target<'_>, Error> {
-                todo!("not implemented")
-            }
-        }
-    }
-
     use crate::{
         loose::{self, find, reference::State, Reference},
         Target,
@@ -95,6 +66,53 @@ pub mod peel {
                         Err(err) => return Some(Err(Error::FindExisting(find::existing::Error::Find(err)))),
                     }
                 }
+            }
+        }
+    }
+
+    mod to_id {
+        use crate::{
+            loose::{reference, Reference},
+            Target,
+        };
+        use quick_error::quick_error;
+        use std::path::PathBuf;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                PeelOne(err: reference::peel::Error) {
+                    display("Could not peel a single level of a reference")
+                    from()
+                    source(err)
+                }
+                Cycle(start: PathBuf) {
+                    display("A symbolic reference cycle was detected starting from '{}'", start.display())
+                }
+                DepthLimitExceeded{  max_depth: usize  } {
+                    display("Refusing to follow more than {} levels of indirection", max_depth)
+                }
+            }
+        }
+
+        impl<'a> Reference<'a> {
+            /// When the depth limit is exceeded, one can indeed call this method again to unroll more.
+            pub fn peel_to_id(&mut self) -> Result<Target<'_>, Error> {
+                let mut count = 0;
+                while let Some(target) = self.peel_one() {
+                    let target = target?;
+                    if let crate::Kind::Peeled = target.kind() {
+                        return Ok(self.target());
+                    }
+                    count += 1;
+                    const MAX_REF_DEPTH: usize = 5;
+                    if count == MAX_REF_DEPTH {
+                        return Err(Error::DepthLimitExceeded {
+                            max_depth: MAX_REF_DEPTH,
+                        });
+                    }
+                }
+                Ok(self.target())
             }
         }
     }

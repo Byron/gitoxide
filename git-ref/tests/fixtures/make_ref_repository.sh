@@ -17,5 +17,10 @@ cp .git/refs/heads/main .git/refs/d1
 echo "ref: refs/remotes/origin/main" > .git/refs/remotes/origin/HEAD
 echo "notahexsha" > .git/refs/broken
 
+echo "ref: refs/heads/multi-link-target1" > .git/refs/multi-link
+echo "ref: refs/tags/multi-link-target2" > .git/refs/heads/multi-link-target1
+echo "ref: refs/remotes/origin/multi-link-target3" > .git/refs/tags/multi-link-target2
+git rev-parse HEAD > .git/refs/remotes/origin/multi-link-target3
+
 git tag t1
 git tag dt1
