@@ -57,7 +57,7 @@ mod find {
                     Err(err) => return Err(err),
                 }
             }
-            todo!("check remotes HEAD")
+            self.find_inner("remotes", &relative_path.join("HEAD"), Transform::EnforceRefsPrefix)
         }
 
         fn find_inner(
@@ -78,7 +78,12 @@ mod find {
             }
             .join(inbetween)
             .join(relative_path);
+
             let ref_path = self.base.join(&relative_path);
+            if ref_path.is_dir() {
+                return Ok(None);
+            }
+
             let mut contents = Vec::new();
             match std::fs::File::open(ref_path) {
                 Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),

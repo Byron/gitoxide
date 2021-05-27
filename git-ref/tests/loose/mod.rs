@@ -12,6 +12,11 @@ mod store {
         fn success() -> crate::Result {
             let store = store()?;
             for (partial_name, expected_path, expected_ref_kind) in &[
+                ("dt1", "refs/tags/dt1", git_ref::Kind::Peeled), // tags before heads
+                ("heads/dt1", "refs/heads/dt1", git_ref::Kind::Peeled),
+                ("d1", "refs/d1", git_ref::Kind::Peeled), // direct refs before heads
+                ("heads/d1", "refs/heads/d1", git_ref::Kind::Peeled),
+                ("origin", "refs/remotes/origin/HEAD", git_ref::Kind::Symbolic),
                 ("origin/main", "refs/remotes/origin/main", git_ref::Kind::Peeled),
                 ("HEAD", "HEAD", git_ref::Kind::Symbolic),
                 ("t1", "refs/tags/t1", git_ref::Kind::Peeled),
