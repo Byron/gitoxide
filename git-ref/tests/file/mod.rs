@@ -107,15 +107,14 @@ mod reference {
         #[test]
         fn to_id_multi_hop() -> crate::Result {
             let store = file::store()?;
-            let r = store.find_one_existing("multi-link")?;
+            let mut r = store.find_one_existing("multi-link")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-            let nr = r.peel_to_id()?;
             assert_eq!(
-                nr.target(),
+                r.peel_to_id_in_place()?,
                 git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
             );
-            assert_eq!(nr.relative_path, Path::new("refs/remotes/origin/multi-link-target3"));
+            assert_eq!(r.relative_path, Path::new("refs/remotes/origin/multi-link-target3"));
 
             Ok(())
         }
@@ -123,13 +122,19 @@ mod reference {
         #[test]
         fn to_id_cycle() -> crate::Result {
             let store = file::store()?;
-            let r = store.find_one_existing("loop-a")?;
+            let mut r = store.find_one_existing("loop-a")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+            assert_eq!(r.relative_path, Path::new("refs/loop-a"));
 
             assert!(matches!(
-                r.peel_to_id().unwrap_err(),
+                r.peel_to_id_in_place().unwrap_err(),
                 git_ref::file::reference::peel::to_id::Error::Cycle { .. }
             ));
+            assert_eq!(
+                r.relative_path,
+                Path::new("refs/loop-a"),
+                "the ref is not changed on error"
+            );
             Ok(())
         }
     }

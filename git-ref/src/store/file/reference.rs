@@ -69,12 +69,17 @@ pub mod peel {
     }
 
     pub mod to_id {
-        use crate::file::{reference, Reference};
+        use crate::{
+            file::{reference, Reference},
+            Target,
+        };
         use quick_error::quick_error;
         use std::{collections::BTreeSet, path::PathBuf};
 
         quick_error! {
+            /// The error returned by [`Reference::peel_to_id()`].
             #[derive(Debug)]
+            #[allow(missing_docs)]
             pub enum Error {
                 PeelOne(err: reference::peel::Error) {
                     display("Could not peel a single level of a reference")
@@ -91,21 +96,24 @@ pub mod peel {
         }
 
         impl<'a> Reference<'a> {
-            /// When the depth limit is exceeded, one can indeed call this method again to unroll more.
-            pub fn peel_to_id(&self) -> Result<Reference<'a>, Error> {
+            /// Peel this symbolic reference until the end of the chain is reached and an object ID is available.
+            ///
+            /// If an error occurs this reference remains unchanged.
+            pub fn peel_to_id_in_place(&mut self) -> Result<Target<'_>, Error> {
                 let mut count = 0;
                 let mut seen = BTreeSet::new();
                 let mut storage;
-                let mut cursor = self;
+                let mut cursor = &mut *self;
                 while let Some(next) = cursor.peel_one_level() {
                     let next_ref = next?;
                     if let crate::Kind::Peeled = next_ref.kind() {
-                        return Ok(next_ref);
+                        *self = next_ref;
+                        return Ok(self.target());
                     }
                     storage = next_ref;
-                    cursor = &storage;
+                    cursor = &mut storage;
                     if seen.contains(&cursor.relative_path) {
-                        return Err(Error::Cycle(self.parent.base.join(&cursor.relative_path)));
+                        return Err(Error::Cycle(cursor.parent.base.join(&cursor.relative_path)));
                     }
                     seen.insert(cursor.relative_path.clone());
                     count += 1;
@@ -116,7 +124,7 @@ pub mod peel {
                         });
                     }
                 }
-                Ok(self.clone())
+                Ok(self.target())
             }
         }
     }
