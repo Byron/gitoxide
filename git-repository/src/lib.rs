@@ -3,8 +3,12 @@
 #![allow(missing_docs)]
 use std::path::PathBuf;
 
-pub mod discover;
 pub mod init;
+
+pub mod path;
+pub use path::Path;
+
+pub mod repository;
 
 pub struct Repository {
     pub refs: git_ref::file::Store,
@@ -28,97 +32,11 @@ impl Repository {
     }
 }
 
-pub mod repository {
-    pub mod discover {
-        use crate::{discover, Repository};
-        use quick_error::quick_error;
-        use std::path::Path;
-
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Discover(err: discover::existing::Error) {
-                    display("Could not find a valid git repository directory")
-                    from()
-                    source(err)
-                }
-                ObjectStoreInitialization(err: git_odb::linked::init::Error) {
-                    display("Could not initialize the object database")
-                    from()
-                    source(err)
-                }
-            }
-        }
-
-        impl Repository {
-            pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
-                let path = discover::existing(directory)?;
-                let (git_dir, working_tree) = match path {
-                    crate::Path::WorkingTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
-                    crate::Path::Repository(repository) => (repository, None),
-                };
-                Ok(Repository {
-                    odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
-                    refs: git_ref::file::Store::at(git_dir),
-                    working_tree,
-                })
-            }
-        }
-    }
-}
-
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {
-    Repository::discover(directory)
-}
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
     Bare,
     WorkingTree,
 }
-
-mod path {
-    use crate::Kind;
-    use std::path::PathBuf;
-
-    #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-    pub enum Path {
-        WorkingTree(PathBuf),
-        Repository(PathBuf),
-    }
-
-    impl AsRef<std::path::Path> for Path {
-        fn as_ref(&self) -> &std::path::Path {
-            match self {
-                Path::WorkingTree(path) | Path::Repository(path) => path,
-            }
-        }
-    }
-
-    impl Path {
-        pub fn from_dot_git_dir(dir: impl Into<PathBuf>, kind: Kind) -> Self {
-            let dir = dir.into();
-            match kind {
-                Kind::WorkingTree => Path::WorkingTree(dir.parent().expect("this is a sub-directory").to_owned()),
-                Kind::Bare => Path::Repository(dir),
-            }
-        }
-        pub fn kind(&self) -> Kind {
-            match self {
-                Path::WorkingTree(_) => Kind::WorkingTree,
-                Path::Repository(_) => Kind::Bare,
-            }
-        }
-
-        pub fn into_repository_directory(self) -> PathBuf {
-            match self {
-                Path::WorkingTree(path) => path.join(".git"),
-                Path::Repository(path) => path,
-            }
-        }
-    }
-}
-pub use path::Path;
 
 pub mod is_git {
     use quick_error::quick_error;
@@ -186,3 +104,7 @@ pub mod is_git {
     }
 }
 pub use is_git::is_git;
+
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {
+    Repository::discover(directory)
+}
