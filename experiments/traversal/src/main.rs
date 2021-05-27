@@ -13,15 +13,18 @@ const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
 
 fn main() -> anyhow::Result<()> {
-    let mut args = std::env::args();
-    let repo = args
-        .nth(1)
-        .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
-        .and_then(|p| git_repository::discover(p).map_err(Into::into))?;
-    let name = args.next().ok_or_else(|| {
-        anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
-    })?;
-    let commit_id = repo.refs.find_one_existing(&name)?.peel_to_id_in_place()?.to_owned();
+    let (repo, commit_id) = {
+        let mut args = std::env::args();
+        let directory = args
+            .nth(1)
+            .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))?;
+        let repo = git_repository::discover(directory)?;
+        let name = args.next().ok_or_else(|| {
+            anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
+        })?;
+        let commit_id = repo.refs.find_one_existing(&name)?.peel_to_id_in_place()?.to_owned();
+        (repo, commit_id)
+    };
     let db = &repo.odb;
 
     let start = Instant::now();
