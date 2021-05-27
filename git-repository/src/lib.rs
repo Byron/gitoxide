@@ -1,9 +1,24 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]
+use std::path::PathBuf;
 
 pub mod discover;
 pub mod init;
+
+pub struct Repository {
+    pub refs: git_ref::file::Store,
+    pub working_tree: Option<PathBuf>,
+}
+
+impl Repository {
+    pub fn kind(&self) -> Kind {
+        match self.working_tree {
+            Some(_) => Kind::WorkingTree,
+            None => Kind::Bare,
+        }
+    }
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {

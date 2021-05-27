@@ -1,8 +1,29 @@
 use std::path::Path;
 
-mod path {
+mod existing {
     use quick_error::quick_error;
     use std::path::PathBuf;
+
+    mod repository {
+        use crate::{discover, Repository};
+        use std::path::Path;
+
+        impl Repository {
+            pub fn discover(directory: impl AsRef<Path>) -> Result<Self, discover::existing::Error> {
+                let path = discover::existing(directory)?;
+                Ok(match path {
+                    crate::Path::WorkingTree(working_tree) => Repository {
+                        refs: git_ref::file::Store::at(working_tree.join(".git")),
+                        working_tree: Some(working_tree),
+                    },
+                    crate::Path::Repository(repository) => Repository {
+                        working_tree: None,
+                        refs: git_ref::file::Store::at(repository),
+                    },
+                })
+            }
+        }
+    }
 
     quick_error! {
         #[derive(Debug)]
@@ -18,10 +39,10 @@ mod path {
 }
 
 /// Returns the working tree if possible and the found repository is not bare or the git repository itself.
-pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, path::Error> {
+pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Error> {
     let directory = directory.as_ref();
     if !directory.is_dir() {
-        return Err(path::Error::InaccessibleDirectory(directory.into()));
+        return Err(existing::Error::InaccessibleDirectory(directory.into()));
     }
 
     let mut cursor = directory;
@@ -35,7 +56,7 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, path::Error>
         }
         match cursor.parent() {
             Some(parent) => cursor = parent,
-            None => break Err(path::Error::NoGitRepository(directory.to_owned())),
+            None => break Err(existing::Error::NoGitRepository(directory.to_owned())),
         }
     }
 }
