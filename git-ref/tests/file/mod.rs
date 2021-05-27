@@ -90,12 +90,12 @@ mod reference {
             let r = store.find_one_existing("HEAD")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-            let nr = r.peel_one_level().expect("exists").expect("no failure");
+            let nr = r.peel_one_level().expect("no failure").expect("exists");
             assert!(
                 matches!(nr.target(), git_ref::Target::Peeled(_)),
                 "iteration peels a single level"
             );
-            assert!(nr.peel_one_level().is_none(), "end of iteration");
+            assert!(nr.peel_one_level()?.is_none(), "end of iteration");
             assert_eq!(
                 nr.target(),
                 git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
