@@ -141,8 +141,8 @@ mod init {
     use std::path::PathBuf;
 
     impl loose::Store {
-        pub fn new(path: impl Into<PathBuf>) -> Self {
-            loose::Store { base: path.into() }
+        pub fn new(git_dir: impl Into<PathBuf>) -> Self {
+            loose::Store { base: git_dir.into() }
         }
     }
 
