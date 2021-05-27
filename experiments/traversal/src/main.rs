@@ -18,15 +18,11 @@ fn main() -> anyhow::Result<()> {
         .nth(1)
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
         .and_then(|p| git_repository::discover(p).map_err(Into::into))?;
-    let commit_id = args
-        .next()
-        .ok_or_else(|| {
-            anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
-        })
-        .and_then(|name| repo.refs.find_one_existing(&name).map_err(Into::into))
-        .and_then(|mut r| r.peel_to_id_in_place().map_err(Into::into).map(ToOwned::to_owned))?;
-    let repo_objects_dir = repo.git_dir().join("objects");
-    let db = git_odb::linked::Store::at(&repo_objects_dir)?;
+    let name = args.next().ok_or_else(|| {
+        anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
+    })?;
+    let commit_id = repo.refs.find_one_existing(&name)?.peel_to_id_in_place()?.to_owned();
+    let db = &repo.odb;
 
     let start = Instant::now();
     let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {

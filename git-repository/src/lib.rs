@@ -9,6 +9,7 @@ pub mod init;
 pub struct Repository {
     pub refs: git_ref::file::Store,
     pub working_tree: Option<PathBuf>,
+    pub odb: git_odb::linked::Store,
 }
 
 impl Repository {
@@ -21,6 +22,9 @@ impl Repository {
 
     pub fn git_dir(&self) -> &std::path::Path {
         &self.refs.base
+    }
+    pub fn objects_dir(&self) -> &std::path::Path {
+        &self.odb.dbs[0].loose.path
     }
 }
 

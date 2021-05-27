@@ -11,15 +11,14 @@ pub mod existing {
         impl Repository {
             pub fn discover(directory: impl AsRef<Path>) -> Result<Self, discover::existing::Error> {
                 let path = discover::existing(directory)?;
-                Ok(match path {
-                    crate::Path::WorkingTree(working_tree) => Repository {
-                        refs: git_ref::file::Store::at(working_tree.join(".git")),
-                        working_tree: Some(working_tree),
-                    },
-                    crate::Path::Repository(repository) => Repository {
-                        working_tree: None,
-                        refs: git_ref::file::Store::at(repository),
-                    },
+                let (git_dir, working_tree) = match path {
+                    crate::Path::WorkingTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
+                    crate::Path::Repository(repository) => (repository, None),
+                };
+                Ok(Repository {
+                    odb: git_odb::linked::Store::at(git_dir.join("objects")).unwrap(), // TODO: proper error
+                    refs: git_ref::file::Store::at(git_dir),
+                    working_tree,
                 })
             }
         }
