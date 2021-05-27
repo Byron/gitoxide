@@ -1,5 +1,5 @@
 pub mod find {
-    use crate::{loose, SafePartialName};
+    use crate::{file, SafePartialName};
     use quick_error::quick_error;
     use std::path::Path;
     use std::{convert::TryInto, io, io::Read, path::PathBuf};
@@ -16,7 +16,7 @@ pub mod find {
                 from()
                 source(err)
             }
-            ReferenceCreation{ err: loose::reference::decode::Error, relative_path: PathBuf } {
+            ReferenceCreation{ err: file::reference::decode::Error, relative_path: PathBuf } {
                 display("The reference at '{}' could not be instantiated", relative_path.display())
                 source(err)
             }
@@ -29,7 +29,7 @@ pub mod find {
     }
 
     pub mod existing {
-        use crate::{loose, loose::find, SafePartialName};
+        use crate::{file, file::find, SafePartialName};
         use quick_error::quick_error;
         use std::{convert::TryInto, path::PathBuf};
 
@@ -47,8 +47,8 @@ pub mod find {
             }
         }
 
-        impl loose::Store {
-            pub fn find_one_existing<'a, Name>(&self, path: Name) -> Result<loose::Reference<'_>, Error>
+        impl file::Store {
+            pub fn find_one_existing<'a, Name>(&self, path: Name) -> Result<file::Reference<'_>, Error>
             where
                 Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
             {
@@ -64,8 +64,8 @@ pub mod find {
         }
     }
 
-    impl loose::Store {
-        pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<loose::Reference<'_>>, Error>
+    impl file::Store {
+        pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<file::Reference<'_>>, Error>
         where
             Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
         {
@@ -76,10 +76,10 @@ pub mod find {
         /// As per [the git documentation][git-lookup-docs]
         ///
         /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-        pub(in crate::store::loose) fn find_one_with_verified_input(
+        pub(in crate::store::file) fn find_one_with_verified_input(
             &self,
             relative_path: &Path,
-        ) -> Result<Option<loose::Reference<'_>>, Error> {
+        ) -> Result<Option<file::Reference<'_>>, Error> {
             let is_all_uppercase = relative_path
                 .to_string_lossy()
                 .as_ref()
@@ -106,7 +106,7 @@ pub mod find {
             inbetween: &str,
             relative_path: &Path,
             transform: Transform,
-        ) -> Result<Option<loose::Reference<'_>>, Error> {
+        ) -> Result<Option<file::Reference<'_>>, Error> {
             let relative_path = match transform {
                 Transform::EnforceRefsPrefix => {
                     if relative_path.starts_with("refs") {
@@ -132,7 +132,7 @@ pub mod find {
                 Ok(mut file) => file.read_to_end(&mut contents)?,
             };
             Ok(Some(
-                loose::Reference::try_from_path(self, &relative_path, &contents)
+                file::Reference::try_from_path(self, &relative_path, &contents)
                     .map_err(|err| Error::ReferenceCreation { err, relative_path })?,
             ))
         }
@@ -140,21 +140,21 @@ pub mod find {
 }
 
 mod init {
-    use crate::loose;
+    use crate::file;
     use std::path::PathBuf;
 
-    impl loose::Store {
+    impl file::Store {
         pub fn new(git_dir: impl Into<PathBuf>) -> Self {
-            loose::Store { base: git_dir.into() }
+            file::Store { base: git_dir.into() }
         }
     }
 
-    impl<P> From<P> for loose::Store
+    impl<P> From<P> for file::Store
     where
         P: Into<PathBuf>,
     {
         fn from(path: P) -> Self {
-            loose::Store::new(path)
+            file::Store::new(path)
         }
     }
 }

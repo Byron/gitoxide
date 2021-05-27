@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+/// A git _ref_ which is stored in a file.
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 pub struct Reference<'a> {
     parent: &'a Store,
@@ -14,6 +15,6 @@ pub struct Store {
     pub base: PathBuf,
 }
 
-mod backend;
-pub use backend::*;
+mod loose;
+pub use loose::*;
 pub mod reference;

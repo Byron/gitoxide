@@ -1,17 +1,17 @@
-use git_ref::loose;
+use git_ref::file;
 
-fn store() -> crate::Result<loose::Store> {
+fn store() -> crate::Result<file::Store> {
     let path = git_testtools::scripted_fixture_repo_read_only("make_ref_repository.sh")?;
-    Ok(loose::Store::from(path.join(".git")))
+    Ok(file::Store::from(path.join(".git")))
 }
 
 mod store {
     mod find_one {
-        use crate::loose::store;
+        use crate::file::store;
         use std::path::Path;
 
         mod existing {
-            use crate::loose::store;
+            use crate::file::store;
             use std::path::Path;
 
             #[test]
@@ -23,7 +23,7 @@ mod store {
                         Some(expected_path) => assert_eq!(reference?.relative_path, Path::new(expected_path)),
                         None => match reference {
                             Ok(_) => panic!("Expected error"),
-                            Err(git_ref::loose::find::existing::Error::NotFound(name)) => {
+                            Err(git_ref::file::find::existing::Error::NotFound(name)) => {
                                 assert_eq!(name, Path::new(*partial_name));
                             }
                             Err(err) => panic!("Unexpected err: {:?}", err),
@@ -80,13 +80,13 @@ mod store {
 
 mod reference {
     mod peel {
-        use crate::loose;
+        use crate::file;
         use git_testtools::hex_to_id;
         use std::path::Path;
 
         #[test]
         fn one() -> crate::Result {
-            let store = loose::store()?;
+            let store = file::store()?;
             let mut r = store.find_one_existing("HEAD")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
@@ -105,7 +105,7 @@ mod reference {
 
         #[test]
         fn to_id_multi_hop() -> crate::Result {
-            let store = loose::store()?;
+            let store = file::store()?;
             let mut r = store.find_one_existing("multi-link")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
@@ -122,28 +122,28 @@ mod reference {
 
         #[test]
         fn to_id_cycle() -> crate::Result {
-            let store = loose::store()?;
+            let store = file::store()?;
             let mut r = store.find_one_existing("loop-a")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
             assert!(matches!(
                 r.peel_to_id().unwrap_err(),
-                git_ref::loose::reference::peel::to_id::Error::Cycle { .. }
+                git_ref::file::reference::peel::to_id::Error::Cycle { .. }
             ));
             Ok(())
         }
     }
 
     mod parse {
-        use git_ref::loose::Store;
+        use git_ref::file::Store;
 
         fn store() -> Store {
             Store::new("base doesnt matter")
         }
 
         mod invalid {
-            use crate::loose::reference::parse::store;
-            use git_ref::loose::Reference;
+            use crate::file::reference::parse::store;
+            use git_ref::file::Reference;
 
             macro_rules! mktest {
                 ($name:ident, $input:literal, $err:literal) => {
@@ -160,9 +160,9 @@ mod reference {
             mktest!(ref_tag, b"reff: hello", "\"reff: hello\" could not be parsed");
         }
         mod valid {
-            use crate::loose::reference::parse::store;
+            use crate::file::reference::parse::store;
             use bstr::ByteSlice;
-            use git_ref::loose::Reference;
+            use git_ref::file::Reference;
             use git_testtools::hex_to_id;
 
             macro_rules! mktest {

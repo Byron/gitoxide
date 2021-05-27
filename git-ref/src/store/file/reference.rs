@@ -1,4 +1,4 @@
-use crate::{loose::Reference, Kind, Target};
+use crate::{file::Reference, Kind, Target};
 use bstr::BString;
 use git_hash::ObjectId;
 
@@ -26,7 +26,7 @@ impl<'a> Reference<'a> {
 
 pub mod peel {
     use crate::{
-        loose::{self, find, reference::State, Reference},
+        file::{self, find, reference::State, Reference},
         Target,
     };
     use bstr::ByteSlice;
@@ -39,7 +39,7 @@ pub mod peel {
                 display("Could not resolve symbolic reference name that is expected to exist")
                 source(err)
             }
-            Decode(err: loose::reference::decode::Error) {
+            Decode(err: file::reference::decode::Error) {
                 display("The reference could not be decoded.")
                 source(err)
             }
@@ -70,7 +70,7 @@ pub mod peel {
 
     pub mod to_id {
         use crate::{
-            loose::{reference, Reference},
+            file::{reference, Reference},
             Target,
         };
         use quick_error::quick_error;
@@ -123,7 +123,7 @@ pub mod peel {
 }
 
 pub mod decode {
-    use crate::loose::{reference::State, Reference, Store};
+    use crate::file::{reference::State, Reference, Store};
     use bstr::BString;
     use git_hash::ObjectId;
     use nom::{
