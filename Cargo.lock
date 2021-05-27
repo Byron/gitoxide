@@ -1059,6 +1059,8 @@ dependencies = [
 name = "git-repository"
 version = "0.5.0"
 dependencies = [
+ "git-ref",
+ "git-testtools",
  "quick-error",
 ]
 
