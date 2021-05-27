@@ -70,12 +70,13 @@ pub mod peel {
         }
     }
 
-    mod to_id {
+    pub mod to_id {
         use crate::{
             loose::{reference, Reference},
             Target,
         };
         use quick_error::quick_error;
+        use std::collections::BTreeSet;
         use std::path::PathBuf;
 
         quick_error! {
@@ -86,8 +87,8 @@ pub mod peel {
                     from()
                     source(err)
                 }
-                Cycle(start: PathBuf) {
-                    display("A symbolic reference cycle was detected starting from '{}'", start.display())
+                Cycle(start_absolute: PathBuf){
+                    display("Aborting due to reference cycle with first seen path being '{}'", start_absolute.display())
                 }
                 DepthLimitExceeded{  max_depth: usize  } {
                     display("Refusing to follow more than {} levels of indirection", max_depth)
@@ -99,11 +100,16 @@ pub mod peel {
             /// When the depth limit is exceeded, one can indeed call this method again to unroll more.
             pub fn peel_to_id(&mut self) -> Result<Target<'_>, Error> {
                 let mut count = 0;
+                let mut seen = BTreeSet::new();
                 while let Some(target) = self.peel_one() {
                     let target = target?;
                     if let crate::Kind::Peeled = target.kind() {
                         return Ok(self.target());
                     }
+                    if seen.contains(&self.relative_path) {
+                        return Err(Error::Cycle(self.parent.base.join(&self.relative_path)));
+                    }
+                    seen.insert(self.relative_path.clone());
                     count += 1;
                     const MAX_REF_DEPTH: usize = 5;
                     if count == MAX_REF_DEPTH {

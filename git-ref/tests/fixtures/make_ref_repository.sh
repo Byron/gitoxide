@@ -22,5 +22,9 @@ echo "ref: refs/tags/multi-link-target2" > .git/refs/heads/multi-link-target1
 echo "ref: refs/remotes/origin/multi-link-target3" > .git/refs/tags/multi-link-target2
 git rev-parse HEAD > .git/refs/remotes/origin/multi-link-target3
 
+
+echo "ref: refs/loop-b" > .git/refs/loop-a
+echo "ref: refs/loop-a" > .git/refs/loop-b
+
 git tag t1
 git tag dt1

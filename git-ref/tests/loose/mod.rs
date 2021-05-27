@@ -104,7 +104,7 @@ mod reference {
         }
 
         #[test]
-        fn to_id() -> crate::Result {
+        fn to_id_multi_hop() -> crate::Result {
             let store = loose::store()?;
             let mut r = store.find_one_existing("multi-link")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
@@ -117,6 +117,19 @@ mod reference {
                 assert_eq!(r.relative_path, Path::new("refs/remotes/origin/multi-link-target3"))
             }
 
+            Ok(())
+        }
+
+        #[test]
+        fn to_id_cycle() -> crate::Result {
+            let store = loose::store()?;
+            let mut r = store.find_one_existing("loop-a")?;
+            assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
+
+            assert!(matches!(
+                r.peel_to_id().unwrap_err(),
+                git_ref::loose::reference::peel::to_id::Error::Cycle { .. }
+            ));
             Ok(())
         }
     }
