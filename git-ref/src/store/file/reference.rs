@@ -27,10 +27,7 @@ impl<'a> Reference<'a> {
 }
 
 pub mod peel {
-    use crate::{
-        file::{self, find_one, reference::State, Reference},
-        Target,
-    };
+    use crate::file::{self, find_one, reference::State, Reference};
     use bstr::ByteSlice;
     use quick_error::quick_error;
 
@@ -51,18 +48,16 @@ pub mod peel {
     }
 
     impl<'a> Reference<'a> {
-        /// Change this reference to point to the next level of indirection.
-        pub fn peel_one_level(&mut self) -> Option<Result<Target<'_>, Error>> {
+        /// Follow this symbolic reference one level and return the ref it refers to.
+        ///
+        /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
+        pub fn peel_one_level(&self) -> Option<Result<Reference<'a>, Error>> {
             match &self.state {
                 State::Id(_) => None,
                 State::ValidatedPath(relative_path) => {
                     let path = relative_path.to_path_lossy();
                     match self.parent.find_one_with_verified_input(path.as_ref()) {
-                        Ok(Some(next)) => {
-                            self.relative_path = next.relative_path;
-                            self.state = next.state;
-                            Some(Ok(self.target()))
-                        }
+                        Ok(Some(next)) => Some(Ok(next)),
                         Ok(None) => Some(Err(Error::FindExisting(find_one::existing::Error::NotFound(
                             path.into_owned(),
                         )))),
@@ -74,13 +69,9 @@ pub mod peel {
     }
 
     pub mod to_id {
-        use crate::{
-            file::{reference, Reference},
-            Target,
-        };
+        use crate::file::{reference, Reference};
         use quick_error::quick_error;
-        use std::collections::BTreeSet;
-        use std::path::PathBuf;
+        use std::{collections::BTreeSet, path::PathBuf};
 
         quick_error! {
             #[derive(Debug)]
@@ -101,18 +92,22 @@ pub mod peel {
 
         impl<'a> Reference<'a> {
             /// When the depth limit is exceeded, one can indeed call this method again to unroll more.
-            pub fn peel_to_id(&mut self) -> Result<Target<'_>, Error> {
+            pub fn peel_to_id(&self) -> Result<Reference<'a>, Error> {
                 let mut count = 0;
                 let mut seen = BTreeSet::new();
-                while let Some(target) = self.peel_one_level() {
-                    let target = target?;
-                    if let crate::Kind::Peeled = target.kind() {
-                        return Ok(self.target());
+                let mut storage;
+                let mut cursor = self;
+                while let Some(next) = cursor.peel_one_level() {
+                    let next_ref = next?;
+                    if let crate::Kind::Peeled = next_ref.kind() {
+                        return Ok(next_ref);
                     }
-                    if seen.contains(&self.relative_path) {
-                        return Err(Error::Cycle(self.parent.base.join(&self.relative_path)));
+                    storage = next_ref;
+                    cursor = &storage;
+                    if seen.contains(&cursor.relative_path) {
+                        return Err(Error::Cycle(self.parent.base.join(&cursor.relative_path)));
                     }
-                    seen.insert(self.relative_path.clone());
+                    seen.insert(cursor.relative_path.clone());
                     count += 1;
                     const MAX_REF_DEPTH: usize = 5;
                     if count == MAX_REF_DEPTH {
@@ -121,7 +116,7 @@ pub mod peel {
                         });
                     }
                 }
-                Ok(self.target())
+                Ok(self.clone())
             }
         }
     }

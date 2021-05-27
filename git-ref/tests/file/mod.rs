@@ -87,16 +87,17 @@ mod reference {
         #[test]
         fn one_level() -> crate::Result {
             let store = file::store()?;
-            let mut r = store.find_one_existing("HEAD")?;
+            let r = store.find_one_existing("HEAD")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
+            let nr = r.peel_one_level().expect("exists").expect("no failure");
             assert!(
-                matches!(r.peel_one_level(), Some(Ok(git_ref::Target::Peeled(_)))),
+                matches!(nr.target(), git_ref::Target::Peeled(_)),
                 "iteration peels a single level"
             );
-            assert!(r.peel_one_level().is_none(), "end of iteration");
+            assert!(nr.peel_one_level().is_none(), "end of iteration");
             assert_eq!(
-                r.target(),
+                nr.target(),
                 git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
                 "we still have the peeled target"
             );
@@ -106,16 +107,15 @@ mod reference {
         #[test]
         fn to_id_multi_hop() -> crate::Result {
             let store = file::store()?;
-            let mut r = store.find_one_existing("multi-link")?;
+            let r = store.find_one_existing("multi-link")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-            for _ in 0..2 {
-                assert_eq!(
-                    r.peel_to_id()?,
-                    git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
-                );
-                assert_eq!(r.relative_path, Path::new("refs/remotes/origin/multi-link-target3"))
-            }
+            let nr = r.peel_to_id()?;
+            assert_eq!(
+                nr.target(),
+                git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
+            );
+            assert_eq!(nr.relative_path, Path::new("refs/remotes/origin/multi-link-target3"));
 
             Ok(())
         }
@@ -123,7 +123,7 @@ mod reference {
         #[test]
         fn to_id_cycle() -> crate::Result {
             let store = file::store()?;
-            let mut r = store.find_one_existing("loop-a")?;
+            let r = store.find_one_existing("loop-a")?;
             assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
             assert!(matches!(
