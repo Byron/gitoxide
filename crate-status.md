@@ -258,11 +258,14 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * Handle symbolic references and packed references
 * discover them in typical folder structures
 * **Stores**
-  * [ ] loose file
-    * [ ] find single ref by name
+  * **loose file**
+    * [x] ref validation
+    * [x] find single ref by name
     * [ ] find refs matching pattern
     * [ ] iterate
     * [ ] write ref
+    * **ref**
+      * [x] peel to id
   * [ ] packed
     * [ ] find single ref by name
     * [ ] find refs matching pattern
