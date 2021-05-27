@@ -1,12 +1,11 @@
 use anyhow::anyhow;
 use dashmap::DashSet;
-use git_hash::{bstr::BStr, bstr::ByteSlice, ObjectId};
+use git_hash::{bstr::BStr, ObjectId};
 use git_object::immutable::tree::Entry;
 use git_odb::{Find, FindExt};
 use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
     collections::HashSet,
-    path::PathBuf,
     time::{Duration, Instant},
 };
 
@@ -18,30 +17,13 @@ fn main() -> anyhow::Result<()> {
     let repo_git_dir = args
         .nth(1)
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
-        .and_then(|p| {
-            let p = PathBuf::from(p).canonicalize()?;
-            if p.extension().unwrap_or_default() == "git"
-                || p.file_name().unwrap_or_default() == ".git"
-                || p.join("HEAD").is_file()
-            {
-                Ok(p)
-            } else {
-                Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
-            }
-        })?;
-    let commit_id = args
-        .next()
-        .ok_or_else(|| {
-            anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
-        })
-        .and_then(|name| {
-            ObjectId::from_hex(
-                &std::fs::read(repo_git_dir.join("refs").join("heads").join(name))?
-                    .as_bstr()
-                    .trim(),
-            )
-            .map_err(Into::into)
-        })?;
+        .and_then(|p| git_repository::discover::existing(p).map_err(Into::into))?
+        .into_repository();
+    let name = args.next().ok_or_else(|| {
+        anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
+    })?;
+    let store = git_ref::file::Store::at(&repo_git_dir);
+    let commit_id = store.find_one_existing(&name)?.peel_to_id_in_place()?.to_owned();
     let repo_objects_dir = {
         let mut d = repo_git_dir.clone();
         d.push("objects");

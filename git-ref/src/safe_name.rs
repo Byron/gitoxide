@@ -42,3 +42,14 @@ impl<'a> TryFrom<&'a str> for SafePartialName<'a> {
         ))
     }
 }
+
+impl<'a> TryFrom<&'a String> for SafePartialName<'a> {
+    type Error = Error;
+
+    fn try_from(v: &'a String) -> Result<Self, Self::Error> {
+        let v = v.as_bytes().as_bstr();
+        Ok(SafePartialName(
+            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+        ))
+    }
+}

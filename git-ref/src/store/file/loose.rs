@@ -158,7 +158,7 @@ mod init {
     impl file::Store {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
-        pub fn new(git_dir: impl Into<PathBuf>) -> Self {
+        pub fn at(git_dir: impl Into<PathBuf>) -> Self {
             file::Store { base: git_dir.into() }
         }
     }
@@ -168,7 +168,7 @@ mod init {
         P: Into<PathBuf>,
     {
         fn from(path: P) -> Self {
-            file::Store::new(path)
+            file::Store::at(path)
         }
     }
 }

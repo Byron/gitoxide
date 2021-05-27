@@ -2389,6 +2389,8 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-pack",
+ "git-ref",
+ "git-repository",
  "git-traverse",
  "git2",
  "rayon",

@@ -143,7 +143,7 @@ mod reference {
         use git_ref::file::Store;
 
         fn store() -> Store {
-            Store::new("base doesnt matter")
+            Store::at("base doesnt matter")
         }
 
         mod invalid {

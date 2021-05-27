@@ -223,7 +223,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [x] Some examples
 
 ### git-repository
-* [ ] discovery
+* [x] discovery
   * [ ] option to not cross file systems
   * [ ] handle git-common-dir
 * [x] initialize
