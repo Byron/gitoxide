@@ -229,7 +229,15 @@ Check out the [performance discussion][git-traverse-performance] as well.
   * [ ] handle environment variables
 * **Repository**    
   * [x] discovery
-    * [ ] handle other non-discovery modes and provide control over environment variable usage.
+     * [ ] handle other non-discovery modes and provide control over environment variable usage.
+* [x] access to refs and objects
+* traverse 
+    * [x] commit graphs
+    * [x] tree entries
+* diffs/changes
+   * [x] tree with tree
+   * [ ] tree with index
+   * [ ] index with working tree
 * [x] initialize
     * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
 * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
