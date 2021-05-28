@@ -1,12 +1,16 @@
 pub mod refs {
     use crate::{OutputFormat, Protocol};
-    use git_features::progress::Progress;
-    use git_protocol::{
-        fetch::{Action, Ref},
-        transport,
+    use git_repository::{
+        protocol,
+        protocol::{
+            fetch::{Action, Arguments, Ref, Response},
+            transport,
+        },
+        Progress,
     };
+
     pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
-    use git_protocol::fetch::{Arguments, Response};
+
     use std::io;
 
     #[derive(Default)]
@@ -14,7 +18,7 @@ pub mod refs {
         refs: Vec<Ref>,
     }
 
-    impl git_protocol::fetch::Delegate for LsRemotes {
+    impl protocol::fetch::Delegate for LsRemotes {
         fn prepare_fetch(
             &mut self,
             _version: transport::Protocol,
@@ -60,7 +64,7 @@ pub mod refs {
     ) -> anyhow::Result<()> {
         let transport = transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let mut delegate = LsRemotes::default();
-        git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
+        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
 
         match ctx.format {
             OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),

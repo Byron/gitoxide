@@ -1,6 +1,5 @@
 use crate::OutputFormat;
-use git_features::progress::Progress;
-use git_odb::pack;
+use git_repository::{odb::pack, Progress};
 use std::{fs, io, path::PathBuf, str::FromStr};
 
 #[derive(PartialEq, Debug)]

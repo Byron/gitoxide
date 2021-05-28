@@ -3,11 +3,14 @@ use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
 
 use anyhow::bail;
 
-use git_features::progress::Progress;
-use git_hash::ObjectId;
-use git_object::bstr::ByteVec;
-use git_odb::linked;
-use git_odb::{pack, FindExt};
+use git_repository::{
+    hash::ObjectId,
+    interrupt,
+    object::bstr::ByteVec,
+    odb::{linked, pack},
+    prelude::FindExt,
+    progress, Progress,
+};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
@@ -97,11 +100,11 @@ pub fn create(
     };
 
     let chunk_size = 200;
-    progress.init(Some(3), git_features::progress::steps());
+    progress.init(Some(3), progress::steps());
     let start = Instant::now();
     let counts = {
         let mut progress = progress.add_child("counting");
-        progress.init(None, git_features::progress::count("objects"));
+        progress.init(None, progress::count("objects"));
         let counts_iter = pack::data::output::count_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
@@ -115,7 +118,7 @@ pub fn create(
         );
         let mut counts = Vec::new();
         for c in counts_iter {
-            if git_features::interrupt::is_triggered() {
+            if interrupt::is_triggered() {
                 bail!("Cancelled by user")
             }
             let c = c?;
@@ -147,7 +150,7 @@ pub fn create(
     progress.inc();
     let mut entries_progress = progress.add_child("entries written");
     let mut write_progress = progress.add_child("writing");
-    write_progress.init(None, git_features::progress::bytes());
+    write_progress.init(None, progress::bytes());
     let start = Instant::now();
 
     let mut output_iter = pack::data::output::EntriesToBytesIter::new(
@@ -162,7 +165,7 @@ pub fn create(
         git_hash::Kind::default(),
     );
     while let Some(io_res) = output_iter.next() {
-        if git_features::interrupt::is_triggered() {
+        if interrupt::is_triggered() {
             bail!("Cancelled by user")
         }
         let written = io_res?;

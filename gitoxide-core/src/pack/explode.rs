@@ -3,8 +3,10 @@ use std::{fs, io::Read, path::Path};
 use anyhow::{anyhow, Result};
 use quick_error::quick_error;
 
-use git_features::progress::{self, Progress};
-use git_odb::{loose, Write};
+use git_repository::{
+    odb::{loose, Write},
+    progress, Progress,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {

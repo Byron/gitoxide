@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_config::file::GitConfig;
-use git_repository::Progress;
+use git_repository::{progress, Progress};
 use std::{
     convert::TryFrom,
     path::{Path, PathBuf},
@@ -30,7 +30,7 @@ fn find_git_repository_workdirs<P: Progress>(
 where
     <P as Progress>::SubProgress: Sync,
 {
-    progress.init(None, git_features::progress::count("filesystem items"));
+    progress.init(None, progress::count("filesystem items"));
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
         if git_repository::path::is_bare(&git_dir) {
             git_dir

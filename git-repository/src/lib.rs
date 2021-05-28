@@ -1,7 +1,8 @@
 //! This crate provides the [`Repository`] abstraction which serves as a hub into all the functionality of git.
 //!
 //! It's powerful and won't sacrifice performance while still increasing convenience compared to using the sub-crates
-//! individually.
+//! individually. Sometimes it may hide complexity under the assumption that the performance difference doesn't matter
+//! for all but the fewest tools out there, which would be using the underlying crates directly or file an issue.
 //!
 //! # The prelude and extensions
 //!
@@ -33,6 +34,8 @@
 //! * `traverse`
 //! * `diff`
 //! * `Progress`
+//! * `protocol`
+//!   * `transport`
 //!
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
@@ -43,17 +46,19 @@ use std::path::PathBuf;
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
-#[cfg(feature = "one-stop-shop")]
+#[cfg(feature = "git-diff")]
 pub use git_diff as diff;
-#[cfg(feature = "one-stop-shop")]
+#[cfg(feature = "git-features")]
 pub use git_features::{interrupt, progress, progress::Progress};
-#[cfg(feature = "one-stop-shop")]
+#[cfg(feature = "git-hash")]
 pub use git_hash as hash;
-#[cfg(feature = "one-stop-shop")]
+#[cfg(feature = "git-object")]
 pub use git_object as object;
 pub use git_odb as odb;
+#[cfg(feature = "git-protocol")]
+pub use git_protocol as protocol;
 pub use git_ref as refs;
-#[cfg(feature = "one-stop-shop")]
+#[cfg(feature = "git-traverse")]
 pub use git_traverse as traverse;
 
 #[cfg(feature = "one-stop-shop")]
@@ -61,7 +66,7 @@ pub mod ext;
 pub mod prelude {
     #[cfg(feature = "one-stop-shop")]
     pub use crate::ext::*;
-    pub use git_odb::{Find, FindExt};
+    pub use git_odb::{Find, FindExt, Write};
 }
 
 pub mod init;

@@ -15,7 +15,18 @@ test = true
 [features]
 default = ["max-performance", "one-stop-shop"]
 max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
-one-stop-shop = ["git-features", "git-hash", "git-traverse", "git-diff", "git-object", "git-pack/pack-cache-lru-dynamic", "git-pack/pack-cache-lru-static"]
+one-stop-shop = [
+    "git-features",
+    "git-features/progress",
+    "git-features",
+    "git-hash",
+    "git-traverse",
+    "git-diff",
+    "git-object",
+    "git-pack/pack-cache-lru-dynamic",
+    "git-pack/pack-cache-lru-static",
+    "git-protocol"
+]
 
 
 [dependencies]
@@ -25,6 +36,7 @@ git-hash = { version = "^0.4.0", path = "../git-hash", optional = true }
 git-pack = { version = "^0.2", path = "../git-pack", optional = true }
 git-object = { version = "^0.10", path = "../git-object", optional = true }
 git-traverse = { version = "^0.3", path = "../git-traverse", optional = true }
+git-protocol = { version = "^0.8.0", path = "../git-protocol", optional = true }
 git-diff = { version = "^0.4", path = "../git-diff", optional = true }
 git-features = { version = "^0.15.0", path = "../git-features", optional = true }
 

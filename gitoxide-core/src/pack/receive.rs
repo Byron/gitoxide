@@ -1,11 +1,14 @@
 use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
-use git_features::progress::Progress;
-use git_object::bstr::{BString, ByteSlice};
-use git_odb::pack;
-use git_protocol::{
-    fetch::{Action, Arguments, Ref, Response},
-    transport,
-    transport::client::Capabilities,
+use git_repository::{
+    object::bstr::{BString, ByteSlice},
+    odb::pack,
+    protocol,
+    protocol::{
+        fetch::{Action, Arguments, Ref, Response},
+        transport,
+        transport::client::Capabilities,
+    },
+    Progress,
 };
 use std::{
     io::{self, BufRead},
@@ -28,7 +31,7 @@ struct CloneDelegate<W: io::Write> {
 }
 static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
 
-impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
+impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
     fn prepare_ls_refs(
         &mut self,
         server: &Capabilities,
@@ -182,13 +185,13 @@ pub fn receive<P: Progress, W: io::Write>(
     progress: P,
     ctx: Context<W>,
 ) -> anyhow::Result<()> {
-    let transport = git_protocol::transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+    let transport = protocol::transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
     let mut delegate = CloneDelegate {
         ctx,
         directory,
         refs_directory,
         ref_filter: None,
     };
-    git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
+    protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
     Ok(())
 }

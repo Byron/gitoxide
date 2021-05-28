@@ -1,9 +1,11 @@
 use crate::OutputFormat;
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
-use git_features::progress::{self, Progress};
-use git_object::Kind;
-use git_odb::pack::{self, index};
+use git_repository::{
+    object,
+    odb::{pack, pack::index},
+    progress, Progress,
+};
 use std::{io, path::Path, str::FromStr};
 
 pub use index::verify::Mode;
@@ -77,14 +79,14 @@ enum EitherCache<const SIZE: usize> {
 }
 
 impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
-    fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: Kind, compressed_size: usize) {
+    fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: object::Kind, compressed_size: usize) {
         match self {
             EitherCache::Left(v) => v.put(pack_id, offset, data, kind, compressed_size),
             EitherCache::Right(v) => v.put(pack_id, offset, data, kind, compressed_size),
         }
     }
 
-    fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(Kind, usize)> {
+    fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(object::Kind, usize)> {
         match self {
             EitherCache::Left(v) => v.get(pack_id, offset, out),
             EitherCache::Right(v) => v.get(pack_id, offset, out),
