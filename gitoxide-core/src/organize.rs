@@ -62,7 +62,7 @@ where
         let mut found_bare_repo = false;
         for entry in siblings.iter_mut().flatten() {
             let path = entry.path();
-            if let Some(kind) = git_repository::path::is_git(&path).ok() {
+            if let Ok(kind) = git_repository::path::is_git(&path) {
                 let is_bare = kind.is_bare();
                 entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
