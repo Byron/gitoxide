@@ -1,4 +1,12 @@
+//! This crate provides the [`Repository`] abstraction which serves as a hub into all the functionality of git.
+//!
+//! It's reasonably powerful but reduced in some places to increase convenience. If most control over every detail is needed
+//! use the _sub-crates_.
+//!
 //! # One-stop-shop
+//!
+//! To make using  _sub-crates_ easier these are re-exported into the root of this crate.
+//! With `use git_repository::prelude::*` all extension traits provided here and in sub-crates are made available.
 //!
 //! `git_repository::`
 //! * `hash`
@@ -7,7 +15,7 @@
 //! * `odb`
 //!   * `pack`
 //! * `refs`
-//! * `prelude::*` -- all extension traits.
+//!
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]
