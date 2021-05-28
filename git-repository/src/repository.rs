@@ -11,6 +11,7 @@ mod init {
         }
     }
 }
+
 pub mod discover {
     use crate::{path::discover, Repository};
     use quick_error::quick_error;

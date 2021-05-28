@@ -1,6 +1,6 @@
+use bstr::ByteSlice;
 use git_config::file::GitConfig;
 use git_features::progress::Progress;
-use git_hash::bstr::ByteSlice;
 use std::{
     convert::TryFrom,
     path::{Path, PathBuf},

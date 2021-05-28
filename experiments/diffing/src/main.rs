@@ -1,10 +1,10 @@
 use anyhow::anyhow;
 use git_diff::tree::visit::{Action, Change};
-use git_hash::{
+use git_hash::{oid, ObjectId};
+use git_object::{
     bstr::{BStr, ByteSlice},
-    oid, ObjectId,
+    immutable,
 };
-use git_object::immutable;
 use git_odb::FindExt;
 use git_traverse::commit;
 use rayon::prelude::*;

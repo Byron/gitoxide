@@ -940,7 +940,6 @@ dependencies = [
 name = "git-hash"
 version = "0.3.0"
 dependencies = [
- "bstr",
  "hex",
  "quick-error",
  "serde",
@@ -1059,6 +1058,7 @@ dependencies = [
 name = "git-repository"
 version = "0.5.0"
 dependencies = [
+ "git-hash",
  "git-odb",
  "git-ref",
  "git-testtools",
@@ -2386,9 +2386,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dashmap",
- "git-hash",
  "git-object",
- "git-odb",
  "git-pack",
  "git-ref",
  "git-repository",

@@ -234,7 +234,8 @@ mod tree {
             visit::{Action, Change},
             Visit,
         };
-        use git_hash::{bstr::BStr, ObjectId};
+        use git_hash::ObjectId;
+        use git_object::bstr::BStr;
         use std::collections::HashSet;
 
         pub struct AllNew<'a> {
@@ -280,8 +281,8 @@ mod tree {
 
     pub mod traverse {
         use dashmap::DashSet;
-        use git_hash::{bstr::BStr, ObjectId};
-        use git_object::immutable::tree::Entry;
+        use git_hash::ObjectId;
+        use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
         use std::collections::HashSet;
 

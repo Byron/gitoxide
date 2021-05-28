@@ -3,6 +3,16 @@
 #![allow(missing_docs)]
 use std::path::PathBuf;
 
+// Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
+// This also means that their major version changes affect our major version, but that's alright as we directly expose their
+// APIs/instances anyway.
+#[cfg(feature = "one-stop-shop")]
+pub use git_hash as hash;
+pub use git_odb as odb;
+pub use git_ref as refs;
+// #[cfg(feature = "git-hash")]
+// pub use bstr
+
 pub mod init;
 
 pub mod path;

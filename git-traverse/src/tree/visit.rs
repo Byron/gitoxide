@@ -1,4 +1,4 @@
-use git_hash::bstr::BStr;
+use git_object::bstr::BStr;
 use git_object::immutable;
 
 /// What to do after an entry was [recorded][Visit::visit_tree()].

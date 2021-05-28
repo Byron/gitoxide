@@ -1,8 +1,10 @@
 use anyhow::anyhow;
 use dashmap::DashSet;
-use git_hash::{bstr::BStr, ObjectId};
-use git_object::immutable::tree::Entry;
-use git_odb::{Find, FindExt};
+use git_object::{bstr::BStr, immutable::tree::Entry};
+use git_repository::{
+    hash::ObjectId,
+    odb::{self, Find, FindExt},
+};
 use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
     collections::HashSet,
@@ -29,7 +31,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
-        db.find_existing_commit_iter(oid, buf, &mut git_odb::pack::cache::Never)
+        db.find_existing_commit_iter(oid, buf, &mut odb::pack::cache::Never)
             .ok()
     })
     .collect::<Result<Vec<_>, _>>()?;
@@ -46,7 +48,7 @@ fn main() -> anyhow::Result<()> {
         let (unique, entries) = do_gitoxide_tree_dag_traversal(
             &all_commits,
             &db,
-            git_pack::cache::lru::StaticLinkedList::<64>::default,
+            odb::pack::cache::lru::StaticLinkedList::<64>::default,
             *compute_mode,
         )?;
         let elapsed = start.elapsed();
@@ -78,7 +80,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let count = do_gitoxide_commit_graph_traversal(commit_id, &db, || {
-        git_odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
+        odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
     })?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
@@ -94,7 +96,7 @@ fn main() -> anyhow::Result<()> {
     let count = do_gitoxide_commit_graph_traversal(
         commit_id,
         &db,
-        git_odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
+        odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
     )?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
@@ -107,7 +109,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let count = do_gitoxide_commit_graph_traversal(commit_id, &db, || git_odb::pack::cache::Never)?;
+    let count = do_gitoxide_commit_graph_traversal(commit_id, &db, || odb::pack::cache::Never)?;
     let elapsed = start.elapsed();
     let objs_per_sec = |elapsed: Duration| count as f32 / elapsed.as_secs_f32();
     println!(
@@ -133,11 +135,11 @@ fn main() -> anyhow::Result<()> {
 
 fn do_gitoxide_commit_graph_traversal<C>(
     tip: ObjectId,
-    db: &git_odb::linked::Store,
+    db: &odb::linked::Store,
     new_cache: impl FnOnce() -> C,
 ) -> anyhow::Result<usize>
 where
-    C: git_odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
     let ancestors = commit::Ancestors::new(Some(tip), commit::ancestors::State::default(), |oid, buf| {
@@ -159,12 +161,12 @@ enum Computation {
 
 fn do_gitoxide_tree_dag_traversal<C>(
     commits: &[ObjectId],
-    db: &git_odb::linked::Store,
+    db: &odb::linked::Store,
     new_cache: impl Fn() -> C + Sync + Send,
     mode: Computation,
 ) -> anyhow::Result<(usize, u64)>
 where
-    C: git_odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry,
 {
     match mode {
         Computation::SingleThreaded => {

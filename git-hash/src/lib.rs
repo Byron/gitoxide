@@ -4,9 +4,6 @@
 #![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
-/// For convenience to allow using `bstr` without adding it to own cargo manifest
-pub use bstr;
-
 #[allow(missing_docs)]
 mod borrowed;
 pub use borrowed::oid;
