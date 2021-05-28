@@ -6,7 +6,7 @@
 #![deny(rust_2018_idioms, missing_docs)]
 
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
-pub use git_transport;
+pub use git_transport as transport;
 
 mod remote_progress;
 pub use remote_progress::RemoteProgress;

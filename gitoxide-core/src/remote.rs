@@ -3,7 +3,7 @@ pub mod refs {
     use git_features::progress::Progress;
     use git_protocol::{
         fetch::{Action, Ref},
-        git_transport,
+        transport,
     };
     pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
     use git_protocol::fetch::{Arguments, Response};
@@ -17,8 +17,8 @@ pub mod refs {
     impl git_protocol::fetch::Delegate for LsRemotes {
         fn prepare_fetch(
             &mut self,
-            _version: git_transport::Protocol,
-            _server: &git_transport::client::Capabilities,
+            _version: transport::Protocol,
+            _server: &transport::client::Capabilities,
             _features: &mut Vec<(&str, Option<&str>)>,
             refs: &[Ref],
         ) -> Action {
@@ -58,7 +58,7 @@ pub mod refs {
         progress: impl Progress,
         ctx: Context<impl io::Write>,
     ) -> anyhow::Result<()> {
-        let transport = git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+        let transport = transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let mut delegate = LsRemotes::default();
         git_protocol::fetch(transport, &mut delegate, git_protocol::credentials::helper, progress)?;
 

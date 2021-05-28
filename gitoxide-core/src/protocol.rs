@@ -1,4 +1,4 @@
-use git_protocol::git_transport;
+use git_protocol::transport;
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug)]
@@ -19,11 +19,11 @@ impl FromStr for Protocol {
     }
 }
 
-impl From<Protocol> for git_transport::Protocol {
+impl From<Protocol> for transport::Protocol {
     fn from(v: Protocol) -> Self {
         match v {
-            Protocol::V1 => git_transport::Protocol::V1,
-            Protocol::V2 => git_transport::Protocol::V2,
+            Protocol::V1 => transport::Protocol::V1,
+            Protocol::V2 => transport::Protocol::V2,
         }
     }
 }

@@ -4,7 +4,8 @@ use git_object::bstr::{BString, ByteSlice};
 use git_odb::pack;
 use git_protocol::{
     fetch::{Action, Arguments, Ref, Response},
-    git_transport::{self, client::Capabilities},
+    transport,
+    transport::client::Capabilities,
 };
 use std::{
     io::{self, BufRead},
@@ -41,12 +42,12 @@ impl<W: io::Write> git_protocol::fetch::Delegate for CloneDelegate<W> {
 
     fn prepare_fetch(
         &mut self,
-        version: git_transport::Protocol,
+        version: transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
     ) -> Action {
-        if version == git_transport::Protocol::V1 {
+        if version == transport::Protocol::V1 {
             self.ref_filter = Some(&FILTER);
         }
         Action::Continue
@@ -181,7 +182,7 @@ pub fn receive<P: Progress, W: io::Write>(
     progress: P,
     ctx: Context<W>,
 ) -> anyhow::Result<()> {
-    let transport = git_protocol::git_transport::client::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+    let transport = git_protocol::transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
     let mut delegate = CloneDelegate {
         ctx,
         directory,
