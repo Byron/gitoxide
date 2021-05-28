@@ -1,5 +1,1 @@
-Error: Currently only file based references can be handled.
-
-Caused by:
-    0: failed to open file `./.git/refs/heads/foobar`
-    1: No such file or directory (os error 2)
+Error: The ref partially named 'foobar' could not be found
