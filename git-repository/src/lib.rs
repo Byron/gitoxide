@@ -21,6 +21,10 @@ pub use git_object as object;
 pub use git_odb as odb;
 pub use git_ref as refs;
 
+pub mod prelude {
+    pub use git_odb::{Find, FindExt};
+}
+
 pub mod init;
 
 pub mod path;

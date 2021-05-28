@@ -3,7 +3,8 @@ use dashmap::DashSet;
 use git_repository::{
     hash::ObjectId,
     object::{bstr::BStr, immutable::tree::Entry},
-    odb::{self, Find, FindExt},
+    odb,
+    prelude::*,
 };
 use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
