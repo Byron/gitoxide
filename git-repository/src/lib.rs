@@ -25,17 +25,19 @@
 //! To make using  _sub-crates_ easier these are re-exported into the root of this crate.
 //!
 //! `git_repository::`
-//! * `hash`
-//! * `object`
-//!   * `bstr`
-//! * `odb`
-//!   * `pack`
-//! * `refs`
-//! * `traverse`
-//! * `diff`
-//! * `Progress`
-//! * `protocol`
-//!   * `transport`
+//! * [`hash`]
+//! * [`object`]
+//!   * [`bstr`][object::bstr]
+//! * [`odb`]
+//!   * [`pack`][odb::pack]
+//! * [`refs`]
+//! * [`traverse`]
+//! * [`diff`]
+//! * [`Progress`]
+//! * [`progress`]
+//! * [`interrupt`]
+//! * [`protocol`]
+//!   * [`transport`][protocol::transport]
 //!
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
