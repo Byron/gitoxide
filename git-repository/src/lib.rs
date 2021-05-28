@@ -1,12 +1,27 @@
 //! This crate provides the [`Repository`] abstraction which serves as a hub into all the functionality of git.
 //!
-//! It's reasonably powerful but reduced in some places to increase convenience. If most control over every detail is needed
-//! use the _sub-crates_.
+//! It's powerful and won't sacrifice performance while still increasing convenience compared to using the sub-crates
+//! individually.
 //!
-//! # One-stop-shop
+//! # The prelude and extensions
+//!
+//! With `use git_repository::prelude::*` you should be ready to go as it pulls in various extension traits to make functionality
+//! available on objects that may use it.
+//!
+//! The method signatures are still complex and may require various arguments for configuration and cache control.
+//!
+//! ## Easy-Mode
+//!
+//! Most extensions to existing objects provide an `obj_with_extension.easy(&repo).an_easier_version_of_a_method()` or `easy(&repo)`
+//! method to hide all complex arguments and sacrifice some performance for a lot of convenience.
+//!
+//! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out more performance.
+//!
+//! # Cargo-features
+//!
+//! ## One-stop-shop
 //!
 //! To make using  _sub-crates_ easier these are re-exported into the root of this crate.
-//! With `use git_repository::prelude::*` all extension traits provided here and in sub-crates are made available.
 //!
 //! `git_repository::`
 //! * `hash`
