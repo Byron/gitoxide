@@ -1,3 +1,11 @@
+//! # One-stop-shop
+//!
+//! * hash
+//! * object
+//!   * bstr
+//! * odb
+//!   * pack
+//! * refs
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]
@@ -8,10 +16,10 @@ use std::path::PathBuf;
 // APIs/instances anyway.
 #[cfg(feature = "one-stop-shop")]
 pub use git_hash as hash;
+#[cfg(feature = "one-stop-shop")]
+pub use git_object as object;
 pub use git_odb as odb;
 pub use git_ref as refs;
-// #[cfg(feature = "git-hash")]
-// pub use bstr
 
 pub mod init;
 

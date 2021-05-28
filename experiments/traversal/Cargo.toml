@@ -10,10 +10,7 @@ publish = false
 [dependencies]
 anyhow = "1"
 git-repository = { version = "^0.5", path = "../../git-repository" }
-git-ref = { version = "^0.5", path = "../../git-ref" }
-git-pack = { version = "^0.2", path = "../../git-pack", features = ["pack-cache-lru-static", "pack-cache-lru-dynamic"]  }
 git-traverse = { version = "^0.3", path = "../../git-traverse" }
-git-object = { version = "^0.10", path = "../../git-object" }
 git2 = "0.13"
 rayon = "1.5.0"
 dashmap = "4.0.2"

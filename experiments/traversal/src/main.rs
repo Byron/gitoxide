@@ -1,8 +1,8 @@
 use anyhow::anyhow;
 use dashmap::DashSet;
-use git_object::{bstr::BStr, immutable::tree::Entry};
 use git_repository::{
     hash::ObjectId,
+    object::{bstr::BStr, immutable::tree::Entry},
     odb::{self, Find, FindExt},
 };
 use git_traverse::{commit, tree, tree::visit::Action};

@@ -1059,7 +1059,9 @@ name = "git-repository"
 version = "0.5.0"
 dependencies = [
  "git-hash",
+ "git-object",
  "git-odb",
+ "git-pack",
  "git-ref",
  "git-testtools",
  "quick-error",
@@ -2386,9 +2388,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dashmap",
- "git-object",
- "git-pack",
- "git-ref",
  "git-repository",
  "git-traverse",
  "git2",
