@@ -6,7 +6,7 @@ mod init {
         /// Really just a sketch at this point to help guide the API.
         pub fn create_and_init(directory: impl AsRef<Path>) -> Result<Self, crate::init::Error> {
             // TODO: proper error
-            crate::init::repository(Some(directory.as_ref().to_owned()))?;
+            crate::init::repository(directory.as_ref())?;
             Ok(Repository::discover(directory).unwrap()) // TODO: a specialized method without discovery
         }
     }

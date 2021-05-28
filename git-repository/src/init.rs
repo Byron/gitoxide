@@ -94,8 +94,8 @@ fn create_dir(p: &Path) -> Result<(), Error> {
     fs::create_dir_all(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
 }
 
-pub fn repository(directory: Option<PathBuf>) -> Result<(), Error> {
-    let mut cursor = directory.unwrap_or_default();
+pub fn repository(directory: impl Into<PathBuf>) -> Result<(), Error> {
+    let mut cursor = directory.into();
     cursor.push(GIT_DIR_NAME);
 
     if cursor.is_dir() {
