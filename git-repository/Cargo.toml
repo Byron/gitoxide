@@ -14,7 +14,7 @@ test = true
 
 [features]
 default = ["one-stop-shop"]
-one-stop-shop = ["git-hash", "git-object", "git-pack/pack-cache-lru-dynamic", "git-pack/pack-cache-lru-static"]
+one-stop-shop = ["git-hash", "git-traverse", "git-object", "git-pack/pack-cache-lru-dynamic", "git-pack/pack-cache-lru-static"]
 
 
 [dependencies]
@@ -23,6 +23,7 @@ git-odb = { version = "^0.16", path = "../git-odb" }
 git-hash = { version = "^0.4.0", path = "../git-hash", optional = true }
 git-pack = { version = "^0.2", path = "../git-pack", optional = true }
 git-object = { version = "^0.10", path = "../git-object", optional = true }
+git-traverse = { version = "^0.3", path = "../git-traverse", optional = true }
 
 quick-error = "2.0.0"
 

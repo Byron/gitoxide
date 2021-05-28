@@ -1,14 +1,17 @@
 //! # One-stop-shop
 //!
-//! * hash
-//! * object
-//!   * bstr
-//! * odb
-//!   * pack
-//! * refs
+//! `git_repository::`
+//! * `hash`
+//! * `object`
+//!   * `bstr`
+//! * `odb`
+//!   * `pack`
+//! * `refs`
+//! * `prelude::*` -- all extension traits.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]
+
 use std::path::PathBuf;
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
@@ -20,8 +23,12 @@ pub use git_hash as hash;
 pub use git_object as object;
 pub use git_odb as odb;
 pub use git_ref as refs;
+#[cfg(feature = "one-stop-shop")]
+pub use git_traverse as traverse;
 
+pub mod ext;
 pub mod prelude {
+    pub use crate::ext::*;
     pub use git_odb::{Find, FindExt};
 }
 

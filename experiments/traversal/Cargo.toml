@@ -10,7 +10,6 @@ publish = false
 [dependencies]
 anyhow = "1"
 git-repository = { version = "^0.5", path = "../../git-repository" }
-git-traverse = { version = "^0.3", path = "../../git-traverse" }
 git2 = "0.13"
 rayon = "1.5.0"
 dashmap = "4.0.2"

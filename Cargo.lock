@@ -1064,6 +1064,7 @@ dependencies = [
  "git-pack",
  "git-ref",
  "git-testtools",
+ "git-traverse",
  "quick-error",
 ]
 
@@ -2389,7 +2390,6 @@ dependencies = [
  "anyhow",
  "dashmap",
  "git-repository",
- "git-traverse",
  "git2",
  "rayon",
 ]

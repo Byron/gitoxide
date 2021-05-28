@@ -5,8 +5,8 @@ use git_repository::{
     object::{bstr::BStr, immutable::tree::Entry},
     odb,
     prelude::*,
+    traverse::{commit, tree, tree::visit::Action},
 };
-use git_traverse::{commit, tree, tree::visit::Action};
 use std::{
     collections::HashSet,
     time::{Duration, Instant},
@@ -212,8 +212,7 @@ where
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };
-                tree::breadthfirst::traverse(
-                    db.find_existing_tree_iter(tree_id, &mut buf2, &mut cache)?,
+                db.find_existing_tree_iter(tree_id, &mut buf2, &mut cache)?.traverse(
                     &mut state,
                     |oid, buf| {
                         db.find_existing(oid, buf, &mut cache)
@@ -282,8 +281,7 @@ where
                             .tree_id()
                             .expect("commit as starting point");
                         count.entries = 0;
-                        tree::breadthfirst::traverse(
-                            db.find_existing_tree_iter(tid, buf2, cache)?,
+                        db.find_existing_tree_iter(tid, buf2, cache)?.traverse(
                             state,
                             |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                             count,
