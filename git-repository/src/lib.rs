@@ -46,7 +46,7 @@ use std::path::PathBuf;
 #[cfg(feature = "one-stop-shop")]
 pub use git_diff as diff;
 #[cfg(feature = "one-stop-shop")]
-pub use git_features::progress::Progress;
+pub use git_features::{interrupt, progress, progress::Progress};
 #[cfg(feature = "one-stop-shop")]
 pub use git_hash as hash;
 #[cfg(feature = "one-stop-shop")]

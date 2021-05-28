@@ -221,12 +221,7 @@ where
                         tree_iter_by_commit(&cb, buf2, &mut *find),
                     );
                     let mut count = Count::default();
-                    ta.changes_needed_to_obtain_with_state(
-                        tb,
-                        state,
-                        |id, buf| find_tree_iter(id, buf, &mut *find),
-                        &mut count,
-                    )?;
+                    ta.changes_needed(tb, state, |id, buf| find_tree_iter(id, buf, &mut *find), &mut count)?;
                     changes.fetch_add(count.0, std::sync::atomic::Ordering::Relaxed);
                     Ok(())
                 },
@@ -247,12 +242,7 @@ where
                     tree_iter_by_commit(&cb, &mut buf2, &mut find),
                 );
                 let mut count = Count::default();
-                ta.changes_needed_to_obtain_with_state(
-                    tb,
-                    &mut state,
-                    |id, buf| find_tree_iter(id, buf, &mut find),
-                    &mut count,
-                )?;
+                ta.changes_needed(tb, &mut state, |id, buf| find_tree_iter(id, buf, &mut find), &mut count)?;
                 changes += count.0;
             }
             changes

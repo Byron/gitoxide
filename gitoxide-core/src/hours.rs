@@ -1,9 +1,6 @@
-use anyhow::{anyhow, bail, Context as ResultContext};
-use bstr::{BString, ByteSlice};
-use git_features::progress::Progress;
-use git_hash::ObjectId;
-use git_odb::FindExt;
-use git_traverse::commit;
+use anyhow::{anyhow, bail};
+use bstr::BString;
+use git_repository::{interrupt, object, odb, prelude::*, progress, Progress};
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::{
@@ -47,39 +44,31 @@ where
     W: io::Write,
     P: Progress,
 {
-    let repo_git_dir = working_dir.join(".git");
-    let commit_id = ObjectId::from_hex(
-        &fs_err::read(repo_git_dir.join("refs").join("heads").join(refname))
-            .with_context(|| "Currently only file based references can be handled.")?
-            .as_bstr()
-            .trim(),
-    )
-    .with_context(|| "Could not decode file contents as hex-encoded hash")?;
-
-    let repo_objects_dir = {
-        let mut d = repo_git_dir;
-        d.push("objects");
-        d
-    };
+    let repo = git_repository::discover(working_dir)?;
+    let commit_id = repo
+        .refs
+        .find_one_existing(refname.to_string_lossy().as_ref())?
+        .peel_to_id_in_place()?
+        .to_owned();
 
     let all_commits = {
         let start = Instant::now();
         let mut count_commits = progress.add_child("Traverse commit graph");
-        count_commits.init(None, git_features::progress::count("Commit"));
-        let db = git_odb::linked::Store::at(&repo_objects_dir)?;
-        let mut pack_cache = git_odb::pack::cache::Never;
+        count_commits.init(None, progress::count("Commit"));
+        let mut pack_cache = odb::pack::cache::Never;
         let mut commits = Vec::<Vec<u8>>::default();
-        for (idx, commit) in commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
-            db.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
-                commits.push(o.data.to_owned());
-                git_object::immutable::CommitIter::from_bytes(o.data)
+        for (idx, commit) in commit_id
+            .ancestors_iter(|oid, buf| {
+                repo.odb.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
+                    commits.push(o.data.to_owned());
+                    object::immutable::CommitIter::from_bytes(o.data)
+                })
             })
-        })
-        .enumerate()
+            .enumerate()
         {
             commit?;
             count_commits.inc();
-            if idx % 100_000 == 0 && git_features::interrupt::is_triggered() {
+            if idx % 100_000 == 0 && interrupt::is_triggered() {
                 bail!("Commit iteration interrupted by user.")
             }
         }
@@ -95,13 +84,13 @@ where
 
     let start = Instant::now();
     #[allow(clippy::redundant_closure)]
-    let mut all_commits: Vec<git_object::mutable::Signature> = all_commits
+    let mut all_commits: Vec<object::mutable::Signature> = all_commits
         .into_par_iter()
         .map(|commit_data: Vec<u8>| {
-            git_object::immutable::CommitIter::from_bytes(&commit_data)
+            object::immutable::CommitIter::from_bytes(&commit_data)
                 .signatures()
                 .next()
-                .map(|author| git_object::mutable::Signature::from(author))
+                .map(|author| object::mutable::Signature::from(author))
         })
         .try_fold(
             || Vec::new(),
@@ -190,7 +179,7 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByEmail {
+fn estimate_hours(commits: &[object::mutable::Signature]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -198,7 +187,7 @@ fn estimate_hours(commits: &[git_object::mutable::Signature]) -> WorkByEmail {
     let hours = FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
         + commits.iter().rev().tuple_windows().fold(
             0_f32,
-            |hours, (cur, next): (&git_object::mutable::Signature, &git_object::mutable::Signature)| {
+            |hours, (cur, next): (&object::mutable::Signature, &object::mutable::Signature)| {
                 let change_in_minutes = (next.time.time - cur.time.time) as f32 / MINUTES_PER_HOUR;
                 if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
                     hours + change_in_minutes as f32 / MINUTES_PER_HOUR

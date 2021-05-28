@@ -7,7 +7,7 @@ mod tree {
     pub trait Sealed {}
 
     pub trait TreeExt: Sealed {
-        fn changes_needed_to_obtain_with_state<FindFn, R, StateMut>(
+        fn changes_needed<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
             state: StateMut,
@@ -20,7 +20,7 @@ mod tree {
             StateMut: BorrowMut<git_diff::tree::State>;
 
         /// Use this for squeezing out the last bits of performance.
-        fn traverse_with_state<StateMut, Find, V>(
+        fn traverse<StateMut, Find, V>(
             &self,
             state: StateMut,
             find: Find,
@@ -35,7 +35,7 @@ mod tree {
     impl<'d> Sealed for immutable::TreeIter<'d> {}
 
     impl<'d> TreeExt for immutable::TreeIter<'d> {
-        fn changes_needed_to_obtain_with_state<FindFn, R, StateMut>(
+        fn changes_needed<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
             state: StateMut,
@@ -50,7 +50,7 @@ mod tree {
             git_diff::tree::Changes::from(Some(self.clone())).needed_to_obtain(other, state, find, delegate)
         }
 
-        fn traverse_with_state<StateMut, Find, V>(
+        fn traverse<StateMut, Find, V>(
             &self,
             state: StateMut,
             find: Find,

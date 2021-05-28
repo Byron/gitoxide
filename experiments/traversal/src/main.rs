@@ -211,16 +211,15 @@ where
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };
-                db.find_existing_tree_iter(tree_id, &mut buf2, &mut cache)?
-                    .traverse_with_state(
-                        &mut state,
-                        |oid, buf| {
-                            db.find_existing(oid, buf, &mut cache)
-                                .ok()
-                                .and_then(|o| o.into_tree_iter())
-                        },
-                        &mut count,
-                    )?;
+                db.find_existing_tree_iter(tree_id, &mut buf2, &mut cache)?.traverse(
+                    &mut state,
+                    |oid, buf| {
+                        db.find_existing(oid, buf, &mut cache)
+                            .ok()
+                            .and_then(|o| o.into_tree_iter())
+                    },
+                    &mut count,
+                )?;
                 entries += count.entries as u64;
                 seen = count.seen;
             }
@@ -281,7 +280,7 @@ where
                             .tree_id()
                             .expect("commit as starting point");
                         count.entries = 0;
-                        db.find_existing_tree_iter(tid, buf2, cache)?.traverse_with_state(
+                        db.find_existing_tree_iter(tid, buf2, cache)?.traverse(
                             state,
                             |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
                             count,
