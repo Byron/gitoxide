@@ -30,11 +30,11 @@ where
     <P as Progress>::SubProgress: Sync,
 {
     progress.init(None, progress::count("filesystem items"));
-    fn is_repository(path: &Path) -> bool {
+    fn is_repository(path: &Path) -> Option<git_repository::Kind> {
         if !(path.is_dir() && path.ends_with(".git")) {
-            return false;
+            return None;
         }
-        path.join("HEAD").is_file() && path.join("config").is_file()
+        git_repository::path::is_git(&path).ok()
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
         if git_repository::path::is_bare(&git_dir) {
@@ -67,8 +67,8 @@ where
         let mut found_bare_repo = false;
         for entry in siblings.iter_mut().flatten() {
             let path = entry.path();
-            if is_repository(&path) {
-                let is_bare = git_repository::path::is_bare(&path);
+            if let Some(kind) = is_repository(&path) {
+                let is_bare = kind.is_bare();
                 entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
 
