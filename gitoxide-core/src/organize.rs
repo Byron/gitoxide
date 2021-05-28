@@ -36,11 +36,8 @@ where
         }
         path.join("HEAD").is_file() && path.join("config").is_file()
     }
-    fn is_bare(git_dir: &Path) -> bool {
-        !git_dir.join("index").exists()
-    }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        if is_bare(&git_dir) {
+        if git_repository::path::is_bare(&git_dir) {
             git_dir
         } else {
             git_dir.parent().expect("git is never in the root").to_owned()
@@ -71,7 +68,7 @@ where
         for entry in siblings.iter_mut().flatten() {
             let path = entry.path();
             if is_repository(&path) {
-                let is_bare = is_bare(&path);
+                let is_bare = git_repository::path::is_bare(&path);
                 entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
 
