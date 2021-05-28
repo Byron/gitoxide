@@ -20,7 +20,7 @@ one-stop-shop = ["git-hash"]
 [dependencies]
 git-ref = { version = "0.5.0", path = "../git-ref" }
 git-odb = { version = "^0.16", path = "../git-odb" }
-git-hash = { version = "^0.3.0", path = "../git-hash", optional = true }
+git-hash = { version = "^0.4.0", path = "../git-hash", optional = true }
 quick-error = "2.0.0"
 
 [dev-dependencies]

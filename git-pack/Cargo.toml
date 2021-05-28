@@ -32,7 +32,7 @@ all-features = true
 
 [dependencies]
 git-features = { version = "^0.15.0", path = "../git-features", features = ["crc32", "sha1", "progress", "zlib"] }
-git-hash = { version = "^0.3.0", path = "../git-hash" }
+git-hash = { version = "^0.4.0", path = "../git-hash" }
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-traverse = { version = "^0.3", path = "../git-traverse" }
 git-diff = { version = "^0.4", path = "../git-diff" }

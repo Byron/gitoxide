@@ -17,7 +17,7 @@ serde1 = ["serde", "git-hash/serde1"]
 
 [dependencies]
 git-features = { version = "^0.15.0", path = "../git-features", features = ["sha1"] }
-git-hash = { version = "^0.3.0", path = "../git-hash" }
+git-hash = { version = "^0.4.0", path = "../git-hash" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 byteorder = "1.2.3"
