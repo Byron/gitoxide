@@ -14,7 +14,7 @@ pub mod ancestors {
         #[allow(missing_docs)]
         pub enum Error {
             NotFound{oid: ObjectId} {
-                display("The object {} could not be found", oid)
+                display("The commit {} could not be found", oid)
             }
             ObjectDecode(err: immutable::object::decode::Error) {
                 display("An object could not be decoded")

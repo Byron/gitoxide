@@ -13,7 +13,7 @@ quick_error! {
     #[allow(missing_docs)]
     pub enum Error {
         NotFound { oid: ObjectId } {
-            display("The object {} referenced by the tree was not found in the database", oid)
+            display("The object {} referenced by the tree or the tree itself was not found in the database", oid)
         }
         Cancelled {
             display("The delegate cancelled the operation")
