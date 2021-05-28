@@ -1574,9 +1574,7 @@ name = "object-access"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "git-hash",
- "git-odb",
- "git-pack",
+ "git-repository",
  "git2",
  "rayon",
 ]
