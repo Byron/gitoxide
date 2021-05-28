@@ -5,7 +5,8 @@ use git_repository::{
     object::{bstr::BStr, immutable::tree::Entry},
     odb,
     prelude::*,
-    traverse::{commit, tree, tree::visit::Action},
+    traverse::{tree, tree::visit::Action},
+    Repository,
 };
 use std::{
     collections::HashSet,
@@ -31,7 +32,7 @@ fn main() -> anyhow::Result<()> {
     let db = &repo.odb;
 
     let start = Instant::now();
-    let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
+    let all_commits = Repository::ancestors_iter(commit_id, |oid, buf| {
         db.find_existing_commit_iter(oid, buf, &mut odb::pack::cache::Never)
             .ok()
     })
@@ -143,9 +144,7 @@ where
     C: odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
-    let ancestors = commit::Ancestors::new(Some(tip), commit::ancestors::State::default(), |oid, buf| {
-        db.find_existing_commit_iter(oid, buf, &mut cache).ok()
-    });
+    let ancestors = Repository::ancestors_iter(tip, |oid, buf| db.find_existing_commit_iter(oid, buf, &mut cache).ok());
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;

@@ -125,6 +125,8 @@ check: ## Build all code in suitable configurations
 	cd git-protocol && cargo check --all-features \
 					 && cargo check \
 					 && cargo check --features blocking-client
+	cd git-repository && cargo check --all-features \
+					 && cargo check --no-default-features
 
 unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
