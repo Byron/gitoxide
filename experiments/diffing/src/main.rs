@@ -1,14 +1,12 @@
 use anyhow::anyhow;
 use git_diff::tree::visit::{Action, Change};
-use git_hash::{oid, ObjectId};
-use git_object::{
-    bstr::{BStr, ByteSlice},
-    immutable,
+use git_repository::{
+    hash::{oid, ObjectId},
+    object::{bstr::BStr, immutable},
+    prelude::*,
 };
-use git_odb::FindExt;
-use git_traverse::commit;
 use rayon::prelude::*;
-use std::{path::PathBuf, time::Instant};
+use std::time::Instant;
 
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
 
@@ -23,44 +21,21 @@ fn main() -> anyhow::Result<()> {
     let mut args = std::env::args();
     let repo_git_dir = args
         .nth(1)
-        .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))
-        .and_then(|p| {
-            let p = PathBuf::from(p).canonicalize()?;
-            if p.extension().unwrap_or_default() == "git"
-                || p.file_name().unwrap_or_default() == ".git"
-                || p.join("HEAD").is_file()
-            {
-                Ok(p)
-            } else {
-                Err(anyhow!("Path '{}' needs to be a .git directory", p.display()))
-            }
-        })?;
-    let commit_id = args
-        .next()
-        .ok_or_else(|| {
-            anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
-        })
-        .and_then(|name| {
-            ObjectId::from_hex(
-                &std::fs::read(repo_git_dir.join("refs").join("heads").join(name))?
-                    .as_bstr()
-                    .trim(),
-            )
-            .map_err(Into::into)
-        })?;
-    let repo_objects_dir = {
-        let mut d = repo_git_dir.clone();
-        d.push("objects");
-        d
-    };
-    let db = git_odb::linked::Store::at(&repo_objects_dir)?;
+        .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))?;
+    let repo = git_repository::discover(repo_git_dir)?;
+    let name = args.next().ok_or_else(|| {
+        anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
+    })?;
+    let commit_id = repo.refs.find_one_existing(&name)?.peel_to_id_in_place()?.to_owned();
+    let db = &repo.odb;
 
     let start = Instant::now();
-    let all_commits = commit::Ancestors::new(Some(commit_id), commit::ancestors::State::default(), |oid, buf| {
-        db.find_existing_commit_iter(oid, buf, &mut git_odb::pack::cache::Never)
-            .ok()
-    })
-    .collect::<Result<Vec<_>, _>>()?;
+    let all_commits = commit_id
+        .ancestors_iter(|oid, buf| {
+            db.find_existing_commit_iter(oid, buf, &mut git_odb::pack::cache::Never)
+                .ok()
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();
     let elapsed = start.elapsed();
     println!(
@@ -156,7 +131,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::MultiThreaded)?;
+    let num_deltas = do_libgit2_treediff(&all_commits, repo.git_dir(), Computation::MultiThreaded)?;
     let elapsed = start.elapsed();
     println!(
         "libgit2 PARALLEL: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
@@ -168,7 +143,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let num_deltas = do_libgit2_treediff(&all_commits, &repo_git_dir, Computation::SingleThreaded)?;
+    let num_deltas = do_libgit2_treediff(&all_commits, repo.git_dir(), Computation::SingleThreaded)?;
     let elapsed = start.elapsed();
     println!(
         "libgit2: collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",

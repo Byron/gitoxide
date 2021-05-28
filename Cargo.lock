@@ -716,6 +716,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-pack",
+ "git-repository",
  "git-traverse",
  "git2",
  "memory-lru",
