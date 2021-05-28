@@ -4,7 +4,9 @@ mod tree {
     use git_traverse::tree::breadthfirst;
     use std::borrow::BorrowMut;
 
-    pub trait TreeExt {
+    pub trait Sealed {}
+
+    pub trait TreeExt: Sealed {
         fn changes_needed_to_obtain_with_state<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
@@ -17,7 +19,8 @@ mod tree {
             R: git_diff::tree::Visit,
             StateMut: BorrowMut<git_diff::tree::State>;
 
-        fn traverse<StateMut, Find, V>(
+        /// Use this for squeezing out the last bits of performance.
+        fn traverse_with_state<StateMut, Find, V>(
             &self,
             state: StateMut,
             find: Find,
@@ -28,6 +31,8 @@ mod tree {
             StateMut: BorrowMut<breadthfirst::State>,
             V: git_traverse::tree::Visit;
     }
+
+    impl<'d> Sealed for immutable::TreeIter<'d> {}
 
     impl<'d> TreeExt for immutable::TreeIter<'d> {
         fn changes_needed_to_obtain_with_state<FindFn, R, StateMut>(
@@ -45,7 +50,7 @@ mod tree {
             git_diff::tree::Changes::from(Some(self.clone())).needed_to_obtain(other, state, find, delegate)
         }
 
-        fn traverse<StateMut, Find, V>(
+        fn traverse_with_state<StateMut, Find, V>(
             &self,
             state: StateMut,
             find: Find,
@@ -67,12 +72,15 @@ mod object_id {
     use git_object::immutable;
     use git_traverse::commit::ancestors::{Ancestors, State};
 
-    pub trait ObjectIdExt {
+    pub trait Sealed {}
+
+    pub trait ObjectIdExt: Sealed {
         fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
     }
 
+    impl Sealed for ObjectId {}
     impl ObjectIdExt for ObjectId {
         fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
         where
