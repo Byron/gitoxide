@@ -4,7 +4,10 @@ use anyhow::{anyhow, Result};
 use quick_error::quick_error;
 
 use git_repository::{
-    odb::{loose, Write},
+    hash,
+    hash::ObjectId,
+    object, odb,
+    odb::{loose, pack, Write},
     progress, Progress,
 };
 
@@ -49,9 +52,9 @@ impl std::str::FromStr for SafetyCheck {
     }
 }
 
-impl From<SafetyCheck> for git_pack::index::traverse::SafetyCheck {
+impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
     fn from(v: SafetyCheck) -> Self {
-        use git_pack::index::traverse::SafetyCheck::*;
+        use pack::index::traverse::SafetyCheck::*;
         match v {
             SafetyCheck::All => All,
             SafetyCheck::SkipFileChecksumVerification => SkipFileChecksumVerification,
@@ -76,22 +79,22 @@ quick_error! {
             source(err)
             from()
         }
-        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: git_object::Kind, id: git_hash::ObjectId) {
+        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: object::Kind, id: ObjectId) {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
-        Verify(err: git_pack::data::object::verify::Error) {
+        Verify(err: pack::data::object::verify::Error) {
             display("Object didn't verify after right after writing it")
             source(err)
             from()
         }
-        ObjectEncodeMismatch(kind: git_object::Kind, actual: git_hash::ObjectId, expected: git_hash::ObjectId) {
+        ObjectEncodeMismatch(kind: object::Kind, actual: ObjectId, expected: ObjectId) {
             display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
         }
-        WrittenFileMissing(id: git_hash::ObjectId) {
+        WrittenFileMissing(id: ObjectId) {
             display("The recently written file for loose object {} could not be found", id)
         }
-        WrittenFileCorrupt(err: loose::find::Error, id: git_hash::ObjectId) {
+        WrittenFileCorrupt(err: loose::find::Error, id: ObjectId) {
             display("The recently written file for loose object {} cold not be read", id)
             source(err)
         }
@@ -101,18 +104,13 @@ quick_error! {
 #[allow(clippy::large_enum_variant)]
 enum OutputWriter {
     Loose(loose::Store),
-    Sink(git_odb::Sink),
+    Sink(odb::Sink),
 }
 
-impl git_odb::Write for OutputWriter {
+impl git_repository::odb::Write for OutputWriter {
     type Error = Error;
 
-    fn write_buf(
-        &self,
-        kind: git_object::Kind,
-        from: &[u8],
-        hash: git_hash::Kind,
-    ) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write_buf(&self, kind: object::Kind, from: &[u8], hash: hash::Kind) -> Result<ObjectId, Self::Error> {
         match self {
             OutputWriter::Loose(db) => db.write_buf(kind, from, hash).map_err(Into::into),
             OutputWriter::Sink(db) => db.write_buf(kind, from, hash).map_err(Into::into),
@@ -121,11 +119,11 @@ impl git_odb::Write for OutputWriter {
 
     fn write_stream(
         &self,
-        kind: git_object::Kind,
+        kind: object::Kind,
         size: u64,
         from: impl Read,
-        hash: git_hash::Kind,
-    ) -> Result<git_hash::ObjectId, Self::Error> {
+        hash: hash::Kind,
+    ) -> Result<ObjectId, Self::Error> {
         match self {
             OutputWriter::Loose(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
             OutputWriter::Sink(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
@@ -137,7 +135,7 @@ impl OutputWriter {
     fn new(path: Option<impl AsRef<Path>>, compress: bool) -> Self {
         match path {
             Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref())),
-            None => OutputWriter::Sink(git_odb::sink().compress(compress)),
+            None => OutputWriter::Sink(odb::sink().compress(compress)),
         }
     }
 }
@@ -165,7 +163,7 @@ pub fn pack_or_pack_index(
     use anyhow::Context;
 
     let path = pack_path.as_ref();
-    let bundle = git_pack::Bundle::at(path).with_context(|| {
+    let bundle = pack::Bundle::at(path).with_context(|| {
         format!(
             "Could not find .idx or .pack file from given file at '{}'",
             path.display()
@@ -184,12 +182,12 @@ pub fn pack_or_pack_index(
 
     let algorithm = object_path
         .as_ref()
-        .map(|_| git_pack::index::traverse::Algorithm::Lookup)
+        .map(|_| pack::index::traverse::Algorithm::Lookup)
         .unwrap_or_else(|| {
             if sink_compress {
-                git_pack::index::traverse::Algorithm::Lookup
+                pack::index::traverse::Algorithm::Lookup
             } else {
-                git_pack::index::traverse::Algorithm::DeltaTreeLookup
+                pack::index::traverse::Algorithm::DeltaTreeLookup
             }
         });
     let mut progress = bundle.index.traverse(
@@ -207,10 +205,10 @@ pub fn pack_or_pack_index(
                 let mut read_buf = Vec::new();
                 move |object_kind, buf, index_entry, progress| {
                     let written_id = out
-                        .write_buf(object_kind, buf, git_hash::Kind::Sha1)
+                        .write_buf(object_kind, buf, hash::Kind::Sha1)
                         .map_err(|err| Error::Write(Box::new(err) as Box<dyn std::error::Error + Send + Sync>, object_kind, index_entry.oid))?;
                     if written_id != index_entry.oid {
-                        if let git_object::Kind::Tree = object_kind {
+                        if let object::Kind::Tree = object_kind {
                             progress.info(format!("The tree in pack named {} was written as {} due to modes 100664 and 100640 rewritten as 100644.", index_entry.oid, written_id));
                         } else {
                             return Err(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id));
@@ -226,8 +224,8 @@ pub fn pack_or_pack_index(
                 }
             }
         },
-        git_pack::cache::lru::StaticLinkedList::<64>::default,
-        git_pack::index::traverse::Options {
+        pack::cache::lru::StaticLinkedList::<64>::default,
+        pack::index::traverse::Options {
             algorithm,
             thread_limit,
             check: check.into(),

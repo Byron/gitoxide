@@ -1,5 +1,6 @@
 use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
 use git_repository::{
+    hash::ObjectId,
     object::bstr::{BString, ByteSlice},
     odb::pack,
     protocol,
@@ -87,7 +88,7 @@ impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
         if let Some(directory) = self.refs_directory.take() {
-            let assure_dir = |path: &git_object::bstr::BString| {
+            let assure_dir = |path: &BString| {
                 assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
                 let path = directory.join(path.to_path_lossy());
                 std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
@@ -157,12 +158,7 @@ impl JsonOutcome {
     }
 }
 
-fn print_hash_and_path(
-    out: &mut impl io::Write,
-    name: &str,
-    id: git_hash::ObjectId,
-    path: Option<PathBuf>,
-) -> io::Result<()> {
+fn print_hash_and_path(out: &mut impl io::Write, name: &str, id: ObjectId, path: Option<PathBuf>) -> io::Result<()> {
     match path {
         Some(path) => writeln!(out, "{}: {} ({})", name, id, path.display()),
         None => writeln!(out, "{}: {}", name, id),

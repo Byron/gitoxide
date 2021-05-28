@@ -2,7 +2,8 @@ use crate::OutputFormat;
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
 use git_repository::{
-    object,
+    hash::ObjectId,
+    object, odb,
     odb::{pack, pack::index},
     progress, Progress,
 };
@@ -105,7 +106,7 @@ pub fn pack_or_pack_index<W1, W2>(
         thread_limit,
         algorithm,
     }: Context<W1, W2>,
-) -> Result<(git_hash::ObjectId, Option<index::traverse::Outcome>)>
+) -> Result<(ObjectId, Option<index::traverse::Outcome>)>
 where
     W1: io::Write,
     W2: io::Write,
@@ -119,14 +120,14 @@ where
     })?;
     let res = match ext {
         "pack" => {
-            let pack = git_odb::pack::data::File::at(path).with_context(|| "Could not open pack file")?;
+            let pack = odb::pack::data::File::at(path).with_context(|| "Could not open pack file")?;
             pack.verify_checksum(progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"))
                 .map(|id| (id, None))?
         }
         "idx" => {
-            let idx = git_odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
+            let idx = odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
             let packfile_path = path.with_extension("pack");
-            let pack = git_odb::pack::data::File::at(&packfile_path)
+            let pack = odb::pack::data::File::at(&packfile_path)
                 .map_err(|e| {
                     writeln!(
                         err,

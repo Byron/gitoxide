@@ -15,6 +15,7 @@ test = true
 [features]
 default = ["max-performance", "one-stop-shop"]
 max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
+serde1 = ["git-pack/serde1", "git-object/serde1"]
 one-stop-shop = [
     "git-features",
     "git-features/progress",

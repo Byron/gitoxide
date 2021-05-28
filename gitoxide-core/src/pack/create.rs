@@ -4,12 +4,13 @@ use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
 use anyhow::bail;
 
 use git_repository::{
+    hash,
     hash::ObjectId,
     interrupt,
     object::bstr::ByteVec,
     odb::{linked, pack},
     prelude::FindExt,
-    progress, Progress,
+    progress, traverse, Progress,
 };
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -50,7 +51,7 @@ impl FromStr for ObjectExpansion {
 
 impl From<ObjectExpansion> for pack::data::output::count_objects::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use git_pack::data::output::count_objects::ObjectExpansion::*;
+        use pack::data::output::count_objects::ObjectExpansion::*;
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,
@@ -81,10 +82,10 @@ pub fn create(
     let tips = tips.into_iter();
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
         None => Box::new(
-            git_traverse::commit::Ancestors::new(
-                tips.map(|t| git_hash::ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
+            traverse::commit::Ancestors::new(
+                tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
                     .collect::<Result<Vec<_>, _>>()?,
-                git_traverse::commit::ancestors::State::default(),
+                traverse::commit::ancestors::State::default(),
                 {
                     let db = Arc::clone(&db);
                     move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
@@ -95,7 +96,7 @@ pub fn create(
         Some(input) => Box::new(input.lines().filter_map(|hex_id| {
             hex_id
                 .ok()
-                .and_then(|hex_id| git_hash::ObjectId::from_hex(hex_id.as_bytes()).ok())
+                .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).ok())
         })),
     };
 
@@ -162,7 +163,7 @@ pub fn create(
         out,
         num_objects as u32,
         pack::data::Version::default(),
-        git_hash::Kind::default(),
+        hash::Kind::default(),
     );
     while let Some(io_res) = output_iter.next() {
         if interrupt::is_triggered() {

@@ -12,7 +12,7 @@ doctest = false
 test = false
 
 [features]
-serde1 = ["git-commitgraph/serde1", "git-object/serde1", "git-pack/serde1", "git-protocol-for-configuration-only/serde1", "serde_json", "serde"]
+serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "git-protocol-for-configuration-only/serde1", "serde_json", "serde"]
 organize = ["git-url", "jwalk"]
 estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
 
@@ -22,14 +22,9 @@ all-features = true
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
 git-repository = { version = "^0.5.0", path = "../git-repository", default-features = false, features = ["one-stop-shop"]}
-git-object = { version = "^0.10.0", path = "../git-object" }
-git-hash = { version = "^0.4.0", path = "../git-hash" }
-git-odb = { version = "^0.16.0", path = "../git-odb" }
-git-pack = { version = "^0.2", path = "../git-pack", features = ["pack-cache-lru-static"] }
 git-protocol-for-configuration-only = { package = "git-protocol", version = "^0.8.0", path = "../git-protocol", features = ["blocking-client"] }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
-git-traverse = { version = "^0.3", path = "../git-traverse" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.31"
 quick-error = "2.0.0"
