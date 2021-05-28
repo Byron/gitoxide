@@ -20,7 +20,8 @@ estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
 all-features = true
 
 [dependencies]
-git-repository = { version = "^0.5.0", path = "../git-repository" }
+# deselect everything else (like "performance") as this should be controllable by the parent application.
+git-repository = { version = "^0.5.0", path = "../git-repository", default-features = false, features = ["one-stop-shop"]}
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-hash = { version = "^0.4.0", path = "../git-hash" }
 git-odb = { version = "^0.16.0", path = "../git-odb" }

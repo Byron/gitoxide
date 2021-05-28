@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use git_config::file::GitConfig;
-use git_features::progress::Progress;
+use git_repository::Progress;
 use std::{
     convert::TryFrom,
     path::{Path, PathBuf},
@@ -31,17 +31,8 @@ where
     <P as Progress>::SubProgress: Sync,
 {
     progress.init(None, git_features::progress::count("filesystem items"));
-    fn is_repository(path: &Path) -> bool {
-        if !(path.is_dir() && path.ends_with(".git")) {
-            return false;
-        }
-        path.join("HEAD").is_file() && path.join("config").is_file()
-    }
-    fn is_bare(git_dir: &Path) -> bool {
-        !git_dir.join("index").exists()
-    }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        if is_bare(&git_dir) {
+        if git_repository::path::is_bare(&git_dir) {
             git_dir
         } else {
             git_dir.parent().expect("git is never in the root").to_owned()
@@ -71,8 +62,8 @@ where
         let mut found_bare_repo = false;
         for entry in siblings.iter_mut().flatten() {
             let path = entry.path();
-            if is_repository(&path) {
-                let is_bare = is_bare(&path);
+            if let Some(kind) = git_repository::path::is_git(&path).ok() {
+                let is_bare = kind.is_bare();
                 entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
 

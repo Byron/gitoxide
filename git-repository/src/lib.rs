@@ -30,6 +30,9 @@
 //! * `odb`
 //!   * `pack`
 //! * `refs`
+//! * `traverse`
+//! * `diff`
+//! * `Progress`
 //!
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
@@ -42,6 +45,8 @@ use std::path::PathBuf;
 // APIs/instances anyway.
 #[cfg(feature = "one-stop-shop")]
 pub use git_diff as diff;
+#[cfg(feature = "one-stop-shop")]
+pub use git_features::progress::Progress;
 #[cfg(feature = "one-stop-shop")]
 pub use git_hash as hash;
 #[cfg(feature = "one-stop-shop")]
@@ -92,6 +97,12 @@ impl Repository {
 pub enum Kind {
     Bare,
     WorkingTree,
+}
+
+impl Kind {
+    pub fn is_bare(&self) -> bool {
+        matches!(self, Kind::Bare)
+    }
 }
 
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {

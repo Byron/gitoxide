@@ -14,8 +14,8 @@ test = true
 
 [features]
 default = ["max-performance", "one-stop-shop"]
-max-performance = ["git-features/zlib-ng-compat", "git-features/crc32fast", "git-features/fast-sha1"]
-one-stop-shop = ["git-hash", "git-traverse", "git-diff", "git-object", "git-pack/pack-cache-lru-dynamic", "git-pack/pack-cache-lru-static"]
+max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
+one-stop-shop = ["git-features", "git-hash", "git-traverse", "git-diff", "git-object", "git-pack/pack-cache-lru-dynamic", "git-pack/pack-cache-lru-static"]
 
 
 [dependencies]

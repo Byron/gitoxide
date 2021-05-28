@@ -21,6 +21,13 @@ quick_error! {
     }
 }
 
+/// Returns true if the given `git_dir` seems to be a bare repository.
+///
+/// Please note that repositories without any file in their working tree will also appear bare.
+pub fn is_bare(git_dir: impl AsRef<Path>) -> bool {
+    !git_dir.as_ref().join("index").exists()
+}
+
 /// What constitutes a valid git repository, and what's yet to be implemented.
 ///
 /// * [x] a valid head
@@ -55,9 +62,9 @@ pub fn is_git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
         }
     }
 
-    Ok(if dot_git.join("index").is_file() {
-        crate::Kind::WorkingTree
-    } else {
+    Ok(if is_bare(git_dir) {
         crate::Kind::Bare
+    } else {
+        crate::Kind::WorkingTree
     })
 }
