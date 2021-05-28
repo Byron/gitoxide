@@ -26,8 +26,10 @@ pub use git_ref as refs;
 #[cfg(feature = "one-stop-shop")]
 pub use git_traverse as traverse;
 
+#[cfg(feature = "one-stop-shop")]
 pub mod ext;
 pub mod prelude {
+    #[cfg(feature = "one-stop-shop")]
     pub use crate::ext::*;
     pub use git_odb::{Find, FindExt};
 }
@@ -58,23 +60,6 @@ impl Repository {
     }
     pub fn objects_dir(&self) -> &std::path::Path {
         &self.odb.dbs[0].loose.path
-    }
-}
-
-#[cfg(feature = "one-stop-shop")]
-mod extensions {
-    use crate::Repository;
-    use git_hash::{oid, ObjectId};
-    use git_object::immutable;
-    use git_traverse::commit::ancestors::{Ancestors, State};
-
-    impl Repository {
-        pub fn ancestors_iter<Find>(commit: impl Into<ObjectId>, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
-        where
-            Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
-        {
-            Ancestors::new(Some(commit), State::default(), find)
-        }
     }
 }
 

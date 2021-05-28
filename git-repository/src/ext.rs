@@ -1,4 +1,3 @@
-#[cfg(feature = "one-stop-shop")]
 mod tree {
     use git_hash::oid;
     use git_object::immutable;
@@ -28,6 +27,26 @@ mod tree {
         }
     }
 }
-
-#[cfg(feature = "one-stop-shop")]
 pub use tree::TreeExt;
+
+mod object_id {
+    use git_hash::{oid, ObjectId};
+    use git_object::immutable;
+    use git_traverse::commit::ancestors::{Ancestors, State};
+
+    pub trait ObjectIdExt {
+        fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
+        where
+            Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
+    }
+
+    impl ObjectIdExt for ObjectId {
+        fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
+        where
+            Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        {
+            Ancestors::new(Some(self), State::default(), find)
+        }
+    }
+}
+pub use object_id::ObjectIdExt;

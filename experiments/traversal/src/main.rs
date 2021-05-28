@@ -6,7 +6,6 @@ use git_repository::{
     odb,
     prelude::*,
     traverse::{tree, tree::visit::Action},
-    Repository,
 };
 use std::{
     collections::HashSet,
@@ -32,11 +31,12 @@ fn main() -> anyhow::Result<()> {
     let db = &repo.odb;
 
     let start = Instant::now();
-    let all_commits = Repository::ancestors_iter(commit_id, |oid, buf| {
-        db.find_existing_commit_iter(oid, buf, &mut odb::pack::cache::Never)
-            .ok()
-    })
-    .collect::<Result<Vec<_>, _>>()?;
+    let all_commits = commit_id
+        .ancestors_iter(|oid, buf| {
+            db.find_existing_commit_iter(oid, buf, &mut odb::pack::cache::Never)
+                .ok()
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
     println!(
         "gitoxide (uncached): collect all {} commits in {:?} ({:0.0} commits/s)",
@@ -144,7 +144,7 @@ where
     C: odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
-    let ancestors = Repository::ancestors_iter(tip, |oid, buf| db.find_existing_commit_iter(oid, buf, &mut cache).ok());
+    let ancestors = tip.ancestors_iter(|oid, buf| db.find_existing_commit_iter(oid, buf, &mut cache).ok());
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;
