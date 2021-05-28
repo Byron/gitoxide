@@ -34,7 +34,11 @@ where
         if !(path.is_dir() && path.ends_with(".git")) {
             return None;
         }
-        git_repository::path::is_git(&path).ok()
+        if path.join("HEAD").is_file() && path.join("config").is_file() {
+            git_repository::path::is_git(path).ok()
+        } else {
+            None
+        }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
         if git_repository::path::is_bare(&git_dir) {
