@@ -1,27 +1,60 @@
 mod tree {
     use git_hash::oid;
     use git_object::immutable;
-    use git_traverse::tree::{
-        breadthfirst,
-        breadthfirst::{Error, State},
-        Visit,
-    };
+    use git_traverse::tree::breadthfirst;
     use std::borrow::BorrowMut;
 
     pub trait TreeExt {
-        fn traverse<StateMut, Find, V>(&self, state: StateMut, find: Find, delegate: &mut V) -> Result<(), Error>
+        fn changes_needed_to_obtain_with_state<FindFn, R, StateMut>(
+            &self,
+            other: immutable::TreeIter<'_>,
+            state: StateMut,
+            find: FindFn,
+            delegate: &mut R,
+        ) -> Result<(), git_diff::tree::changes::Error>
+        where
+            FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
+            R: git_diff::tree::Visit,
+            StateMut: BorrowMut<git_diff::tree::State>;
+
+        fn traverse<StateMut, Find, V>(
+            &self,
+            state: StateMut,
+            find: Find,
+            delegate: &mut V,
+        ) -> Result<(), breadthfirst::Error>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::TreeIter<'a>>,
-            StateMut: BorrowMut<State>,
-            V: Visit;
+            StateMut: BorrowMut<breadthfirst::State>,
+            V: git_traverse::tree::Visit;
     }
 
     impl<'d> TreeExt for immutable::TreeIter<'d> {
-        fn traverse<StateMut, Find, V>(&self, state: StateMut, find: Find, delegate: &mut V) -> Result<(), Error>
+        fn changes_needed_to_obtain_with_state<FindFn, R, StateMut>(
+            &self,
+            other: immutable::TreeIter<'_>,
+            state: StateMut,
+            find: FindFn,
+            delegate: &mut R,
+        ) -> Result<(), git_diff::tree::changes::Error>
+        where
+            FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
+            R: git_diff::tree::Visit,
+            StateMut: BorrowMut<git_diff::tree::State>,
+        {
+            git_diff::tree::Changes::from(Some(self.clone())).needed_to_obtain(other, state, find, delegate)
+        }
+
+        fn traverse<StateMut, Find, V>(
+            &self,
+            state: StateMut,
+            find: Find,
+            delegate: &mut V,
+        ) -> Result<(), breadthfirst::Error>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::TreeIter<'a>>,
-            StateMut: BorrowMut<State>,
-            V: Visit,
+            StateMut: BorrowMut<breadthfirst::State>,
+            V: git_traverse::tree::Visit,
         {
             breadthfirst(self.clone(), state, find, delegate)
         }

@@ -26,6 +26,8 @@ use std::path::PathBuf;
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 #[cfg(feature = "one-stop-shop")]
+pub use git_diff as diff;
+#[cfg(feature = "one-stop-shop")]
 pub use git_hash as hash;
 #[cfg(feature = "one-stop-shop")]
 pub use git_object as object;

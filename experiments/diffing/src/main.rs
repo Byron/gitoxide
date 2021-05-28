@@ -1,8 +1,11 @@
 use anyhow::anyhow;
-use git_diff::tree::visit::{Action, Change};
+use diff::tree::visit::{Action, Change};
 use git_repository::{
+    diff,
     hash::{oid, ObjectId},
+    object,
     object::{bstr::BStr, immutable},
+    odb,
     prelude::*,
 };
 use rayon::prelude::*;
@@ -32,7 +35,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let all_commits = commit_id
         .ancestors_iter(|oid, buf| {
-            db.find_existing_commit_iter(oid, buf, &mut git_odb::pack::cache::Never)
+            db.find_existing_commit_iter(oid, buf, &mut odb::pack::cache::Never)
                 .ok()
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -46,7 +49,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     struct ObjectInfo {
-        kind: git_object::Kind,
+        kind: object::Kind,
         data: Vec<u8>,
     }
     impl memory_lru::ResidentSize for ObjectInfo {
@@ -58,15 +61,15 @@ fn main() -> anyhow::Result<()> {
         oid: &oid,
         buf: &'b mut Vec<u8>,
         obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
-        db: &git_odb::linked::Store,
-        pack_cache: &mut impl git_odb::pack::cache::DecodeEntry,
-    ) -> Option<git_odb::data::Object<'b>> {
+        db: &odb::linked::Store,
+        pack_cache: &mut impl odb::pack::cache::DecodeEntry,
+    ) -> Option<odb::data::Object<'b>> {
         let oid = oid.to_owned();
         match obj_cache.get(&oid) {
             Some(ObjectInfo { kind, data }) => {
                 buf.resize(data.len(), 0);
                 buf.copy_from_slice(data);
-                Some(git_odb::data::Object::new(*kind, buf))
+                Some(odb::data::Object::new(*kind, buf))
             }
             None => {
                 let obj = db.find_existing(oid, buf, pack_cache).ok();
@@ -88,7 +91,7 @@ fn main() -> anyhow::Result<()> {
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
-            let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
+            let mut pack_cache = odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
             let db = &db;
             let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
             move |oid, buf: &mut Vec<u8>| find_with_lru_mem_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
@@ -111,7 +114,7 @@ fn main() -> anyhow::Result<()> {
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
-            let mut pack_cache = git_odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
+            let mut pack_cache = odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
             let db = &db;
             let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
             move |oid, buf: &mut Vec<u8>| find_with_lru_mem_cache(oid, buf, &mut obj_cache, db, &mut pack_cache)
@@ -197,7 +200,7 @@ fn do_libgit2_treediff(commits: &[ObjectId], repo_dir: &std::path::Path, mode: C
 fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_find: C, mode: Computation) -> anyhow::Result<usize>
 where
     C: Fn() -> L + Sync,
-    L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_odb::data::Object<'b>>,
+    L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<odb::data::Object<'b>>,
 {
     let changes: usize = match mode {
         Computation::MultiThreaded => {
@@ -205,7 +208,7 @@ where
             commits.par_windows(2).try_for_each_init::<_, _, _, anyhow::Result<_>>(
                 || {
                     (
-                        git_diff::tree::State::default(),
+                        diff::tree::State::default(),
                         Vec::<u8>::new(),
                         Vec::<u8>::new(),
                         make_find(),
@@ -218,7 +221,7 @@ where
                         tree_iter_by_commit(&cb, buf2, &mut *find),
                     );
                     let mut count = Count::default();
-                    git_diff::tree::Changes::from(ta).needed_to_obtain(
+                    ta.changes_needed_to_obtain_with_state(
                         tb,
                         state,
                         |id, buf| find_tree_iter(id, buf, &mut *find),
@@ -231,7 +234,7 @@ where
             changes.load(std::sync::atomic::Ordering::Acquire)
         }
         Computation::SingleThreaded => {
-            let mut state = git_diff::tree::State::default();
+            let mut state = diff::tree::State::default();
             let mut find = make_find();
             let mut buf: Vec<u8> = Vec::new();
             let mut buf2: Vec<u8> = Vec::new();
@@ -244,7 +247,7 @@ where
                     tree_iter_by_commit(&cb, &mut buf2, &mut find),
                 );
                 let mut count = Count::default();
-                git_diff::tree::Changes::from(ta).needed_to_obtain(
+                ta.changes_needed_to_obtain_with_state(
                     tb,
                     &mut state,
                     |id, buf| find_tree_iter(id, buf, &mut find),
@@ -258,14 +261,14 @@ where
 
     fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<immutable::TreeIter<'b>>
     where
-        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_odb::data::Object<'a>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
     {
         find(id, buf).and_then(|o| o.into_tree_iter())
     }
 
     fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> immutable::TreeIter<'b>
     where
-        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_odb::data::Object<'a>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
     {
         let tid = find(id, buf)
             .expect("commit present")
@@ -279,7 +282,7 @@ where
     #[derive(Default)]
     struct Count(usize);
 
-    impl git_diff::tree::Visit for Count {
+    impl diff::tree::Visit for Count {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
 
         fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
