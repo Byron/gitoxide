@@ -10,48 +10,14 @@ pub(crate) mod request;
 ///
 pub mod ssh;
 
-use crate::{Protocol, Service};
+use crate::{
+    client::{capabilities, Capabilities, Error, Identity, MessageKind, WriteMode},
+    Protocol, Service,
+};
 use bstr::BString;
 use std::{io, io::Write};
 
-use crate::client::{capabilities, Capabilities};
 use request::{ExtendedBufRead, RequestWriter};
-
-#[cfg(feature = "http-client-curl")]
-type HttpError = http::Error;
-#[cfg(not(feature = "http-client-curl"))]
-type HttpError = std::convert::Infallible;
-
-/// The error used in most methods of the [`client`][crate::client] module
-#[derive(thiserror::Error, Debug)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("An IO error occurred when talking to the server")]
-    Io {
-        #[from]
-        err: io::Error,
-    },
-    #[error("Capabilities could not be parsed")]
-    Capabilities {
-        #[from]
-        err: capabilities::Error,
-    },
-    #[error("A packet line could not be decoded")]
-    LineDecode {
-        #[from]
-        err: git_packetline::decode::Error,
-    },
-    #[error("A {0} line was expected, but there was none")]
-    ExpectedLine(&'static str),
-    #[error("Expected a data line, but got a delimiter")]
-    ExpectedDataLine,
-    #[error("The transport layer does not support authentication")]
-    AuthenticationUnsupported,
-    #[error("The transport layer refuses to use a given identity: {0}")]
-    AuthenticationRefused(&'static str),
-    #[error(transparent)]
-    Http(#[from] HttpError),
-}
 
 /// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {
@@ -61,49 +27,6 @@ pub struct SetServiceResponse<'a> {
     pub capabilities: Capabilities,
     /// In protocol version one, this is set to a list of refs and their peeled counterparts.
     pub refs: Option<Box<dyn io::BufRead + 'a>>,
-}
-
-/// Configure how the [`RequestWriter`] behaves when writing bytes.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum WriteMode {
-    /// Each [write()][Write::write()] call writes the bytes verbatim as one or more packet lines.
-    Binary,
-    /// Each [write()][Write::write()] call assumes text in the input, assures a trailing newline and writes it as single packet line.
-    OneLfTerminatedLinePerWriteCall,
-}
-
-impl Default for WriteMode {
-    fn default() -> Self {
-        WriteMode::OneLfTerminatedLinePerWriteCall
-    }
-}
-
-/// The kind of packet line to write when transforming a [`RequestWriter`] into an [`ExtendedBufRead`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum MessageKind {
-    /// A `flush` packet.
-    Flush,
-    /// A V2 delimiter.
-    Delimiter,
-    /// The end of a response.
-    ResponseEnd,
-    /// The given text.
-    Text(&'static [u8]),
-}
-
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-/// An identity for use when authenticating the transport layer.
-pub enum Identity {
-    /// An account based identity
-    Account {
-        /// The user's name
-        username: String,
-        /// The user's password
-        password: String,
-    },
 }
 
 /// All methods provided here must be called in the correct order according to the [communication protocol][Protocol]
@@ -194,5 +117,44 @@ impl<T: Transport> TransportV2Ext for T {
             }
         }
         Ok(writer.into_read()?)
+    }
+}
+
+mod box_impl {
+    use crate::{
+        client::{self, Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+        Protocol, Service,
+    };
+    use std::ops::{Deref, DerefMut};
+
+    // Would be nice if the box implementation could auto-forward to all implemented traits.
+    impl<T: client::Transport + ?Sized> client::Transport for Box<T> {
+        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
+            self.deref_mut().handshake(service)
+        }
+
+        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+            self.deref_mut().set_identity(identity)
+        }
+
+        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
+            self.deref_mut().request(write_mode, on_into_read)
+        }
+
+        fn close(&mut self) -> Result<(), Error> {
+            self.deref_mut().close()
+        }
+
+        fn to_url(&self) -> String {
+            self.deref().to_url()
+        }
+
+        fn desired_protocol_version(&self) -> Protocol {
+            self.deref().desired_protocol_version()
+        }
+
+        fn is_stateful(&self) -> bool {
+            self.deref().is_stateful()
+        }
     }
 }

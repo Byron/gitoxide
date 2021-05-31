@@ -33,45 +33,6 @@ quick_error! {
     }
 }
 
-mod box_impl {
-    use crate::{
-        client::{self, Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
-        Protocol, Service,
-    };
-    use std::ops::{Deref, DerefMut};
-
-    // Would be nice if the box implementation could auto-forward to all implemented traits.
-    impl<T: client::Transport + ?Sized> client::Transport for Box<T> {
-        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-            self.deref_mut().handshake(service)
-        }
-
-        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
-            self.deref_mut().set_identity(identity)
-        }
-
-        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
-            self.deref_mut().request(write_mode, on_into_read)
-        }
-
-        fn close(&mut self) -> Result<(), Error> {
-            self.deref_mut().close()
-        }
-
-        fn to_url(&self) -> String {
-            self.deref().to_url()
-        }
-
-        fn desired_protocol_version(&self) -> Protocol {
-            self.deref().desired_protocol_version()
-        }
-
-        fn is_stateful(&self) -> bool {
-            self.deref().is_stateful()
-        }
-    }
-}
-
 /// A general purpose connector connecting to a repository identified by the given `url`.
 ///
 /// This includes connections to
