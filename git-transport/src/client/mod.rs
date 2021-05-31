@@ -15,7 +15,7 @@ pub use connect::connect;
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
 mod async_io;
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-pub use async_io::SetServiceResponse;
+pub use async_io::{SetServiceResponse, Transport};
 
 mod non_io_types;
 pub use non_io_types::{Error, Identity, MessageKind, WriteMode};
