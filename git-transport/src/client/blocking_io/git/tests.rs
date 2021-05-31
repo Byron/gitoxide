@@ -1,5 +1,5 @@
 mod message {
-    use crate::client::blocking::git;
+    use crate::client::blocking_io::git;
     use crate::{Protocol, Service};
 
     #[test]

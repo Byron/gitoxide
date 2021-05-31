@@ -9,7 +9,7 @@ use quick_error::quick_error;
 
 use git_packetline::PacketLine;
 
-use crate::client::blocking::capabilities;
+use crate::client::blocking_io::capabilities;
 use crate::{
     client::{self, SetServiceResponse},
     Protocol, Service,

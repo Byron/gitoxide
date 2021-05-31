@@ -2,7 +2,7 @@ use std::process::{self, Command, Stdio};
 
 use bstr::{BString, ByteSlice};
 
-use crate::client::blocking::git;
+use crate::client::blocking_io::git;
 use crate::{
     client::{self, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,

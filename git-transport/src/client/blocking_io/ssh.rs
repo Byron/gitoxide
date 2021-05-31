@@ -2,7 +2,7 @@ use bstr::BString;
 use quick_error::quick_error;
 use std::borrow::Cow;
 
-use crate::client::blocking;
+use crate::client::blocking_io;
 use crate::Protocol;
 
 quick_error! {
@@ -34,7 +34,7 @@ pub fn connect(
     desired_version: crate::Protocol,
     user: Option<&str>,
     port: Option<u16>,
-) -> Result<blocking::file::SpawnProcessOnDemand, Error> {
+) -> Result<blocking_io::file::SpawnProcessOnDemand, Error> {
     let ssh_cmd_line = std::env::var("GIT_SSH_COMMAND").unwrap_or_else(|_| "ssh".into());
     let mut ssh_cmd_line = ssh_cmd_line.split(' ');
     let ssh_cmd = ssh_cmd_line.next().expect("there is always a single item");
@@ -72,7 +72,7 @@ pub fn connect(
         path: path.clone(),
     };
     Ok(match args_and_env {
-        Some((args, envs)) => blocking::file::SpawnProcessOnDemand::new_ssh(
+        Some((args, envs)) => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,
             ssh_cmd.into(),
             ssh_cmd_line.map(Cow::from).chain(args).chain(Some(host.into())),
@@ -80,7 +80,7 @@ pub fn connect(
             path,
             desired_version,
         ),
-        None => blocking::file::SpawnProcessOnDemand::new_ssh(
+        None => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,
             ssh_cmd.into(),
             ssh_cmd_line.chain(Some(host.as_str())),
@@ -95,7 +95,7 @@ pub fn connect(
 mod tests {
     use bstr::ByteSlice;
 
-    use crate::client::blocking::ssh::connect;
+    use crate::client::blocking_io::ssh::connect;
     use crate::Protocol;
 
     #[test]
