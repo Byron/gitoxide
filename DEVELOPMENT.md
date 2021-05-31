@@ -29,7 +29,7 @@
   * **library client-side**
     * ~~Don't use it client side, as operations there are usually bound by the CPU and ultra-fast access to memory mapped files.
       It's no problem to saturate either CPU or the IO system.~~
-      * Provide `async` clients as opt-in using feature toggles to help integrating into an exisging async codebase.
+      * Provide `async` clients as opt-in using feature toggles to help integrating into an existing async codebase.
   * **User Interfaces**
     * User interfaces can greatly benefit from using async as it's much easier to maintain a responsive UI thread that way thanks
       to the wonderful future combinators.
@@ -42,10 +42,16 @@
   * **server-side**
     * ~~Building a pack is CPU and at some point, IO bound, and it makes no sense to use async to handle more connections - git
       needs a lot of resources and threads will do just fine.~~
-      * Support async out of the box without looking it into particular traits using conditional complication. This will make integrating
+      * Support async out of the box without locking it into particular traits using conditional complication. This will make integrating
         into an async codebase easier, which we assume is given on the server side _these days_.
+  * **usage of `maybe_async`**
+    * Right not we intentionally only use it in tests to allow one set of test cases to test both blocking and async implementations. This is the
+      only way to prevent drift of otherwise distinct implementations.
+    * **Why not use it to generate blocking versions of traits automatically?**
+      * This would require `maybe_async` and its dependencies to always be present, increasing compile times. For now we chose a little more code to handle
+        over increasing compile times for everyone. This stance may change later once compile times don't matter that much anymore to allow the removal of code.
       
-* **`Default` implementations**
+* **`Default` trait implementations**
   * These can change only if the effect is contained within the callers process.
     This means **changing the default of a file version** is a **breaking change**.
 * **Using the `Progress` trait**
