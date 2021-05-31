@@ -121,6 +121,7 @@ check: ## Build all code in suitable configurations
 	cd git-transport && cargo check --all-features \
 					 && cargo check \
 					 && cargo check --features blocking-client \
+					 && cargo check --features async-client \
 					 && cargo check --features http-client-curl
 	cd git-protocol && cargo check --all-features \
 					 && cargo check \
@@ -138,7 +139,7 @@ unit-tests: ## run all unit tests
 					  && cargo test --features "async-io" --test async-packetline
 	cd git-transport && cargo test \
 					 && cargo test --features http-client-curl \
-					 && cargo test --no-default-features
+					 && cargo test --features async-client
 	cd git-protocol && cargo test --features blocking-client && cargo test
 	cd gitoxide-core && cargo test --lib
 
