@@ -1,19 +1,33 @@
 #[cfg(feature = "blocking-client")]
 mod blocking_io;
+#[cfg(all(feature = "blocking-client", feature = "http-client-curl"))]
+pub use blocking_io::http;
 #[cfg(feature = "blocking-client")]
-mod _blocking_api_exports {
-    #[doc(inline)]
-    pub use super::blocking_io::connect::connect;
-    #[cfg(feature = "http-client-curl")]
-    pub use super::blocking_io::http;
-    pub use super::blocking_io::{
-        file, git,
-        request::{ExtendedBufRead, HandleProgress, RequestWriter},
-        ssh, SetServiceResponse, Transport, TransportV2Ext,
-    };
+pub use blocking_io::{
+    connect, file, git,
+    request::{ExtendedBufRead, HandleProgress, RequestWriter},
+    ssh, SetServiceResponse, Transport, TransportV2Ext,
+};
+#[cfg(feature = "blocking-client")]
+#[doc(inline)]
+pub use connect::connect;
+
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+mod async_io {
+    use crate::{client::Capabilities, Protocol};
+
+    /// The response of the [`handshake()`][Transport::handshake()] method.
+    pub struct SetServiceResponse<'a> {
+        /// The protocol the service can provide. May be different from the requested one
+        pub actual_protocol: Protocol,
+        /// The capabilities parsed from the server response.
+        pub capabilities: Capabilities,
+        /// In protocol version one, this is set to a list of refs and their peeled counterparts.
+        pub refs: Option<Box<dyn futures_io::AsyncBufRead + 'a>>,
+    }
 }
-#[cfg(feature = "blocking-client")]
-pub use _blocking_api_exports::*;
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+pub use async_io::SetServiceResponse;
 
 mod error {
     use crate::client::capabilities;
@@ -57,7 +71,7 @@ mod error {
 }
 pub use error::Error;
 
-mod types {
+mod non_io_types {
     /// Configure how the [`RequestWriter`][crate::client::RequestWriter] behaves when writing bytes.
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -102,7 +116,7 @@ mod types {
         },
     }
 }
-pub use types::{Identity, MessageKind, WriteMode};
+pub use non_io_types::{Identity, MessageKind, WriteMode};
 
 ///
 pub mod capabilities;

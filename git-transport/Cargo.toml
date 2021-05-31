@@ -16,7 +16,7 @@ default = []
 serde1 = ["serde"]
 http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
 blocking-client = ["git-packetline/blocking-io"]
-async-client = ["async-trait"]
+async-client = ["async-trait", "futures-io"]
 
 [[test]]
 name = "blocking-transport"
@@ -46,6 +46,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 # for async-client
 async-trait = { version = "0.1.50", optional = true }
+futures-io = { version = "0.3.15", optional = true }
 
 # for http-client-curl
 # zlib-ng-compat doesn't force zlib-ng

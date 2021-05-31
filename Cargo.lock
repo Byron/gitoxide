@@ -1086,6 +1086,7 @@ dependencies = [
  "base64",
  "bstr",
  "curl",
+ "futures-io",
  "git-features",
  "git-packetline",
  "git-url",

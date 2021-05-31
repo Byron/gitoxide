@@ -1,4 +1,6 @@
-pub(crate) mod connect;
+///
+pub mod connect;
+
 ///
 pub mod file;
 ///
@@ -7,6 +9,8 @@ pub mod git;
 #[cfg(feature = "http-client-curl")]
 pub mod http;
 pub(crate) mod request;
+use request::{ExtendedBufRead, RequestWriter};
+
 ///
 pub mod ssh;
 
@@ -16,8 +20,6 @@ use crate::{
 };
 use bstr::BString;
 use std::{io, io::Write};
-
-use request::{ExtendedBufRead, RequestWriter};
 
 /// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {
