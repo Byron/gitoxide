@@ -2,9 +2,9 @@
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum WriteMode {
-    /// Each [write()][Write::write()] call writes the bytes verbatim as one or more packet lines.
+    /// Each [write()][std::io::Write::write()] call writes the bytes verbatim as one or more packet lines.
     Binary,
-    /// Each [write()][Write::write()] call assumes text in the input, assures a trailing newline and writes it as single packet line.
+    /// Each [write()][std::io::Write::write()] call assumes text in the input, assures a trailing newline and writes it as single packet line.
     OneLfTerminatedLinePerWriteCall,
 }
 
