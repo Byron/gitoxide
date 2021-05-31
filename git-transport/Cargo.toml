@@ -15,7 +15,8 @@ doctest = false
 default = []
 serde1 = ["serde"]
 http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
-blocking-client = ["maybe-async/is_sync", "git-packetline/blocking-io"]
+blocking-client = ["git-packetline/blocking-io"]
+async-client = ["async-trait"]
 
 [[test]]
 name = "blocking-transport"
@@ -43,12 +44,14 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
-# handle blocking/async versions
-maybe-async = "0.2.4"
-async-trait = { version = "0.1.50", optional = false }
+# for async-client
+async-trait = { version = "0.1.50", optional = true }
 
 # for http-client-curl
 # zlib-ng-compat doesn't force zlib-ng
 curl = { version = "0.4", optional = true, features = ["static-curl", "static-ssl", "zlib-ng-compat"] }
 thiserror = "1.0.20"
 base64 = { version = "0.13.0", optional = true }
+
+[dev-dependencies]
+maybe-async = "0.2.4"
