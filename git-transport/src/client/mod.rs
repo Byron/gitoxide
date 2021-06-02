@@ -24,8 +24,6 @@ mod non_io_types;
 pub use non_io_types::{Error, Identity, MessageKind, WriteMode};
 
 ///
-#[cfg(feature = "blocking-client")]
 pub mod request;
 #[doc(inline)]
-#[cfg(feature = "blocking-client")]
 pub use request::RequestWriter;
