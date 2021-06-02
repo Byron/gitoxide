@@ -8,7 +8,7 @@ use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 use crate::{
-    client::{self, capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
+    client::{self, capabilities, Capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
     Protocol, Service,
 };
 
@@ -131,7 +131,7 @@ impl<H: Http> client::Transport for Transport<H> {
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = capabilities::Capabilities::from_lines_with_version_detection(line_reader)?;
+        } = Capabilities::from_lines_with_version_detection(line_reader)?;
         self.actual_version = actual_protocol;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
