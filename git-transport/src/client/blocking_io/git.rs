@@ -1,126 +1,20 @@
-use std::{io, io::Write};
-
-use bstr::BString;
-
-use git_packetline::PacketLine;
-
 use crate::{
-    client::{self, capabilities, Capabilities, SetServiceResponse},
+    client::{self, capabilities, git, Capabilities, SetServiceResponse},
     Protocol, Service,
 };
+use bstr::BString;
+use git_packetline::PacketLine;
+use std::{io, io::Write};
 
-pub(crate) mod message {
-    use bstr::{BString, ByteVec};
-
-    use crate::{Protocol, Service};
-
-    pub fn connect(
-        service: Service,
-        version: Protocol,
-        path: &[u8],
-        virtual_host: Option<&(String, Option<u16>)>,
-    ) -> BString {
-        let mut out = bstr::BString::from(service.as_str());
-        out.push(b' ');
-        let path = git_url::expand_path::for_shell(path.into());
-        out.extend_from_slice(&path);
-        out.push(0);
-        if let Some((host, port)) = virtual_host {
-            out.push_str("host=");
-            out.extend_from_slice(host.as_bytes());
-            if let Some(port) = port {
-                out.push_byte(b':');
-                out.push_str(&format!("{}", port));
-            }
-            out.push(0);
-        }
-        // We only send the version when needed, as otherwise a V2 server who is asked for V1 will respond with 'version 1'
-        // as extra lines in the reply, which we don't want to handle. Especially since an old server will not respond with that
-        // line (is what I assume, at least), so it's an optional part in the response to understand and handle. There is no value
-        // in that, so let's help V2 servers to respond in a way that assumes V1.
-        if version != Protocol::V1 {
-            out.push(0);
-            out.push_str(format!("version={}", version as usize));
-            out.push(0);
-        }
-        out
-    }
-    #[cfg(test)]
-    mod tests {
-        use crate::{client::blocking_io::git, Protocol, Service};
-
-        #[test]
-        fn version_1_without_host_and_version() {
-            assert_eq!(
-                git::message::connect(Service::UploadPack, Protocol::V1, b"hello/world", None),
-                "git-upload-pack hello/world\0"
-            )
-        }
-        #[test]
-        fn version_2_without_host_and_version() {
-            assert_eq!(
-                git::message::connect(Service::UploadPack, Protocol::V2, b"hello\\world", None),
-                "git-upload-pack hello\\world\0\0version=2\0"
-            )
-        }
-        #[test]
-        fn with_host_without_port() {
-            assert_eq!(
-                git::message::connect(
-                    Service::UploadPack,
-                    Protocol::V1,
-                    b"hello\\world",
-                    Some(&("host".into(), None))
-                ),
-                "git-upload-pack hello\\world\0host=host\0"
-            )
-        }
-        #[test]
-        fn with_host_with_port() {
-            assert_eq!(
-                git::message::connect(
-                    Service::UploadPack,
-                    Protocol::V1,
-                    b"hello\\world",
-                    Some(&("host".into(), Some(404)))
-                ),
-                "git-upload-pack hello\\world\0host=host:404\0"
-            )
-        }
-    }
-}
-
-/// The way to connect to a process speaking the `git` protocol.
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum ConnectMode {
-    /// A git daemon.
-    Daemon,
-    /// A spawned `git` process to upload a pack to the client.
-    Process,
-}
-
-/// A TCP connection to either a `git` daemon or a spawned `git` process.
-///
-/// When connecting to a daemon, additional context information is sent with the first line of the handshake. Otherwise that
-/// context is passed using command line arguments to a [spawned `git` process][crate::client::file::SpawnProcessOnDemand].
-pub struct Connection<R, W> {
-    writer: W,
-    line_provider: git_packetline::StreamingPeekableIter<R>,
-    path: BString,
-    virtual_host: Option<(String, Option<u16>)>,
-    desired_version: Protocol,
-    mode: ConnectMode,
-}
-
-impl<R, W> client::Transport for Connection<R, W>
+impl<R, W> client::Transport for git::Connection<R, W>
 where
     R: io::Read,
     W: io::Write,
 {
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
-        if self.mode == ConnectMode::Daemon {
+        if self.mode == git::ConnectMode::Daemon {
             let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
-            line_writer.write_all(&message::connect(
+            line_writer.write_all(&git::message::connect(
                 service,
                 self.desired_version,
                 &self.path,
@@ -180,7 +74,7 @@ where
     }
 }
 
-impl<R, W> Connection<R, W>
+impl<R, W> git::Connection<R, W>
 where
     R: io::Read,
     W: io::Write,
@@ -195,9 +89,9 @@ where
         desired_version: Protocol,
         repository_path: impl Into<BString>,
         virtual_host: Option<(impl Into<String>, Option<u16>)>,
-        mode: ConnectMode,
+        mode: git::ConnectMode,
     ) -> Self {
-        Connection {
+        git::Connection {
             writer: write,
             line_provider: git_packetline::StreamingPeekableIter::new(read, &[PacketLine::Flush]),
             path: repository_path.into(),
@@ -218,7 +112,7 @@ where
             desired_version,
             repository_path,
             None::<(&str, _)>,
-            ConnectMode::Process,
+            git::ConnectMode::Process,
         )
     }
 }
@@ -230,7 +124,7 @@ pub mod connect {
         net::{TcpStream, ToSocketAddrs},
     };
 
-    use crate::client::git::{ConnectMode, Connection};
+    use crate::client::git;
     use bstr::BString;
     use quick_error::quick_error;
     quick_error! {
@@ -269,7 +163,7 @@ pub mod connect {
         path: BString,
         desired_version: crate::Protocol,
         port: Option<u16>,
-    ) -> Result<Connection<TcpStream, TcpStream>, Error> {
+    ) -> Result<git::Connection<TcpStream, TcpStream>, Error> {
         let read = TcpStream::connect_timeout(
             &(host, port.unwrap_or(9418))
                 .to_socket_addrs()?
@@ -282,13 +176,13 @@ pub mod connect {
             .ok()
             .map(parse_host)
             .transpose()?;
-        Ok(Connection::new(
+        Ok(git::Connection::new(
             read,
             write,
             desired_version,
             path,
             vhost,
-            ConnectMode::Daemon,
+            git::ConnectMode::Daemon,
         ))
     }
 }

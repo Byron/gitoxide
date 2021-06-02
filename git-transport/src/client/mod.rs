@@ -9,8 +9,7 @@ mod blocking_io;
 pub use blocking_io::http;
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{
-    connect, file, git, ssh, ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport,
-    TransportV2Ext,
+    connect, file, ssh, ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport, TransportV2Ext,
 };
 #[cfg(feature = "blocking-client")]
 #[doc(inline)]
@@ -23,3 +22,6 @@ pub use capabilities::Capabilities;
 
 mod non_io_types;
 pub use non_io_types::{Error, Identity, MessageKind, WriteMode};
+
+///
+pub mod git;
