@@ -1,3 +1,14 @@
+use std::io;
+
+pub use bufread_ext::{ExtendedBufRead, HandleProgress};
+pub use trait_ext::TransportV2Ext;
+
+pub use crate::client::RequestWriter;
+use crate::{
+    client::{capabilities, Capabilities, Error, Identity, MessageKind, WriteMode},
+    Protocol, Service,
+};
+
 ///
 pub mod connect;
 
@@ -9,20 +20,9 @@ pub mod git;
 #[cfg(feature = "http-client-curl")]
 pub mod http;
 
-pub mod request;
-pub use request::RequestWriter;
-
 mod bufread_ext;
-pub use bufread_ext::{ExtendedBufRead, HandleProgress};
-
 ///
 pub mod ssh;
-
-use crate::{
-    client::{capabilities, Capabilities, Error, Identity, MessageKind, WriteMode},
-    Protocol, Service,
-};
-use std::io;
 
 /// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {
@@ -88,9 +88,11 @@ pub trait Transport {
 }
 
 mod trait_ext {
-    use crate::client::{Error, ExtendedBufRead, MessageKind, Transport, WriteMode};
-    use bstr::BString;
     use std::io::Write;
+
+    use bstr::BString;
+
+    use crate::client::{Error, ExtendedBufRead, MessageKind, Transport, WriteMode};
 
     /// An extension trait to add more methods to everything implementing [`Transport`].
     pub trait TransportV2Ext {
@@ -130,14 +132,14 @@ mod trait_ext {
         }
     }
 }
-pub use trait_ext::TransportV2Ext;
 
 mod box_impl {
+    use std::ops::{Deref, DerefMut};
+
     use crate::{
         client::{self, Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
-    use std::ops::{Deref, DerefMut};
 
     // Would be nice if the box implementation could auto-forward to all implemented traits.
     impl<T: client::Transport + ?Sized> client::Transport for Box<T> {

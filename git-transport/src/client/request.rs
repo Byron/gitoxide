@@ -20,6 +20,7 @@ impl<'a> io::Write for RequestWriter<'a> {
     }
 }
 
+/// methods with bonds to IO
 impl<'a> RequestWriter<'a> {
     /// Create a new instance from a `writer` (commonly a socket), a `reader` into which to transform once the
     /// writes are finished, along with configuration for the `write_mode` and information about which message to write
@@ -42,12 +43,6 @@ impl<'a> RequestWriter<'a> {
         }
     }
 
-    /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
-    pub fn into_read(mut self) -> io::Result<Box<dyn ExtendedBufRead + 'a>> {
-        self.write_message(self.on_into_read)?;
-        Ok(self.reader)
-    }
-
     /// Write the given message as packet line.
     pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
         match message {
@@ -57,5 +52,14 @@ impl<'a> RequestWriter<'a> {
             MessageKind::Text(t) => git_packetline::immutable::Text::from(t).to_write(self.writer.inner_mut()),
         }
         .map(|_| ())
+    }
+}
+
+/// TODO: make this general
+impl<'a> RequestWriter<'a> {
+    /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
+    pub fn into_read(mut self) -> io::Result<Box<dyn ExtendedBufRead + 'a>> {
+        self.write_message(self.on_into_read)?;
+        Ok(self.reader)
     }
 }
