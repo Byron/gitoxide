@@ -1,3 +1,6 @@
+/// A function `f(is_error, text)` receiving progress or error information.
+pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
+
 /// Configure how the [`RequestWriter`][crate::client::RequestWriter] behaves when writing bytes.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

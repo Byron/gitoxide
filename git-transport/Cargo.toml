@@ -16,7 +16,7 @@ default = []
 serde1 = ["serde"]
 http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
 blocking-client = ["git-packetline/blocking-io"]
-async-client = ["async-trait", "futures-io"]
+async-client = ["async-trait", "futures-io", "git-packetline/async-io"]
 
 [[test]]
 name = "blocking-transport"

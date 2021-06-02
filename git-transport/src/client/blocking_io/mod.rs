@@ -1,8 +1,5 @@
 use std::io;
 
-pub use bufread_ext::{ExtendedBufRead, HandleProgress};
-pub use trait_ext::TransportV2Ext;
-
 pub use crate::client::RequestWriter;
 use crate::{
     client::{capabilities, Capabilities, Error, Identity, MessageKind, WriteMode},
@@ -21,6 +18,8 @@ pub mod git;
 pub mod http;
 
 mod bufread_ext;
+pub use bufread_ext::ExtendedBufRead;
+
 ///
 pub mod ssh;
 
@@ -132,6 +131,7 @@ mod trait_ext {
         }
     }
 }
+pub use trait_ext::TransportV2Ext;
 
 mod box_impl {
     use std::ops::{Deref, DerefMut};
