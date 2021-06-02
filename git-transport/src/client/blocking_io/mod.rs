@@ -18,7 +18,7 @@ pub mod git;
 pub mod http;
 
 mod bufread_ext;
-pub use bufread_ext::ExtendedBufRead;
+pub use bufread_ext::{ExtendedBufRead, HandleProgress};
 
 ///
 pub mod ssh;

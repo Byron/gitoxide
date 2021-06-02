@@ -1,11 +1,13 @@
 use crate::{
-    client::{Error, HandleProgress, MessageKind},
+    client::{Error, MessageKind},
     Protocol,
 };
 use std::{
     io,
     ops::{Deref, DerefMut},
 };
+/// A function `f(is_error, text)` receiving progress or error information.
+pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
 /// This trait exists to get a version of a `git_packetline::Provider` without type parameters.
 /// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to (eventually)

@@ -61,6 +61,30 @@ enum State<'a, T> {
     },
 }
 
+/// # SAFETY
+/// It's safe because T is `Send` and we have a test that assures that our `StreamingPeekableIter` is `Send` as well,
+/// hence the `*mut _` is `Send`.
+#[allow(unsafe_code)]
+unsafe impl<'a, T> Send for State<'a, T> where T: Send {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn receiver<T: Send>(_i: T) {}
+
+    /// We want to declare items containing pointers of StreamingPeekableIter `Send` as well, so it must be `Send` itself.
+    #[test]
+    fn streaming_peekable_iter_is_send() {
+        receiver(StreamingPeekableIter::new(Vec::<u8>::new(), &[]));
+    }
+
+    #[test]
+    fn state_is_send() {
+        let mut s = StreamingPeekableIter::new(Vec::<u8>::new(), &[]);
+        receiver(State::Idle { parent: Some(&mut s) });
+    }
+}
+
 impl<'a, T, F> WithSidebands<'a, T, F>
 where
     T: AsyncRead + Unpin,

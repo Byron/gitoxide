@@ -6,7 +6,7 @@ use crate::{
 use async_trait::async_trait;
 
 mod bufread_ext;
-pub use bufread_ext::ExtendedBufRead;
+pub use bufread_ext::{ExtendedBufRead, HandleProgress};
 
 /// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {
