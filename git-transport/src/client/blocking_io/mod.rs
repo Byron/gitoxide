@@ -8,8 +8,12 @@ pub mod git;
 ///
 #[cfg(feature = "http-client-curl")]
 pub mod http;
-pub(crate) mod request;
-use request::RequestWriter;
+
+pub mod request;
+pub use request::RequestWriter;
+
+mod bufread_ext;
+pub use bufread_ext::{ExtendedBufRead, HandleProgress};
 
 ///
 pub mod ssh;

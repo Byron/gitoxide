@@ -4,9 +4,8 @@ mod blocking_io;
 pub use blocking_io::http;
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{
-    connect, file, git,
-    request::{ExtendedBufRead, HandleProgress, RequestWriter},
-    ssh, SetServiceResponse, Transport, TransportV2Ext,
+    connect, file, git, ssh, ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport,
+    TransportV2Ext,
 };
 #[cfg(feature = "blocking-client")]
 #[doc(inline)]
