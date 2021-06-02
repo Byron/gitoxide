@@ -1,6 +1,5 @@
-// use crate::client::{RequestWriter, MessageKind, WriteMode};
 use crate::{
-    client::{Capabilities, Error, Identity},
+    client::{Capabilities, Error, Identity, MessageKind, WriteMode},
     Protocol, Service,
 };
 use async_trait::async_trait;
@@ -49,7 +48,7 @@ pub trait Transport {
     /// to support the task at hand.
     /// `write_mode` determines how calls to the `write(…)` method are interpreted, and `on_into_read` determines
     /// which message to write when the writer is turned into the response reader using [`into_read()`][RequestWriter::into_read()].
-    // fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error>;
+    async fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
     async fn close(&mut self) -> Result<(), Error>;
@@ -75,16 +74,16 @@ pub trait Transport {
     fn is_stateful(&self) -> bool;
 }
 
-// TODO: needs ExtendedBufReader
+// TODO: needs fixes
 // mod trait_ext;
+// pub use trait_ext::TransportV2Ext;
 
 mod box_impl {
-    use async_trait::async_trait;
-    // use crate::client::{MessageKind, WriteMode, RequestWriter};
     use crate::{
-        client::{self, Error, Identity, SetServiceResponse},
+        client::{self, Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
+    use async_trait::async_trait;
     use std::ops::{Deref, DerefMut};
 
     // Would be nice if the box implementation could auto-forward to all implemented traits.
@@ -98,9 +97,13 @@ mod box_impl {
             self.deref_mut().set_identity(identity)
         }
 
-        // fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
-        //     self.deref_mut().request(write_mode, on_into_read)
-        // }
+        async fn request(
+            &mut self,
+            write_mode: WriteMode,
+            on_into_read: MessageKind,
+        ) -> Result<RequestWriter<'_>, Error> {
+            self.deref_mut().request(write_mode, on_into_read).await
+        }
 
         async fn close(&mut self) -> Result<(), Error> {
             self.deref_mut().close().await

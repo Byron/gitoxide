@@ -1087,6 +1087,7 @@ dependencies = [
  "bstr",
  "curl",
  "futures-io",
+ "futures-lite",
  "git-features",
  "git-packetline",
  "git-url",
