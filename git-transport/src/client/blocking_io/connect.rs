@@ -71,7 +71,7 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
             Box::new(
-                crate::client::blocking_io::git::connect(
+                crate::client::git::connect(
                     &url.host.as_ref().expect("host is present in url"),
                     url.path,
                     desired_version,
