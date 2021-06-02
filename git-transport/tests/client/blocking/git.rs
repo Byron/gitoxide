@@ -8,8 +8,8 @@ use std::{
 use bstr::ByteSlice;
 
 use git_transport::{
-    client::git,
-    client::{self, Transport, TransportV2Ext},
+    client,
+    client::{git, Transport},
     Protocol, Service,
 };
 
@@ -143,6 +143,7 @@ fn handshake_v1_process_mode() -> crate::Result {
 
 #[test]
 fn handshake_v2_and_request() -> crate::Result {
+    use git_transport::client::TransportV2Ext;
     let mut out = Vec::new();
     let input = fixture_bytes("v2/clone.response");
     let mut c = git::Connection::new(
