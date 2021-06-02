@@ -1,5 +1,5 @@
 use crate::{
-    client::{self, capabilities, git, Capabilities, SetServiceResponse},
+    client::{self, git, SetServiceResponse},
     Protocol, Service,
 };
 use async_trait::async_trait;
@@ -7,7 +7,6 @@ use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
 use git_packetline::PacketLine;
-use std::io;
 
 #[async_trait]
 impl<R, W> client::Transport for git::Connection<R, W>
@@ -78,5 +77,33 @@ where
 
     fn is_stateful(&self) -> bool {
         true
+    }
+}
+
+impl<R, W> git::Connection<R, W>
+where
+    R: AsyncRead + Unpin + Send,
+    W: AsyncWrite + Unpin + Send,
+{
+    /// Create a connection from the given `read` and `write`, asking for `desired_version` as preferred protocol
+    /// and the transfer of the repository at `repository_path`.
+    ///
+    /// `virtual_host` along with a port to which to connect to, while `mode` determines the kind of endpoint to connect to.
+    pub fn new(
+        read: R,
+        write: W,
+        desired_version: Protocol,
+        repository_path: impl Into<BString>,
+        virtual_host: Option<(impl Into<String>, Option<u16>)>,
+        mode: git::ConnectMode,
+    ) -> Self {
+        git::Connection {
+            writer: write,
+            line_provider: git_packetline::StreamingPeekableIter::new(read, &[PacketLine::Flush]),
+            path: repository_path.into(),
+            virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
+            desired_version,
+            mode,
+        }
     }
 }
