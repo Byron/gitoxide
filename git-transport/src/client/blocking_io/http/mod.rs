@@ -7,9 +7,8 @@ use std::{
 use git_packetline::PacketLine;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
-use crate::client::blocking_io::capabilities;
 use crate::{
-    client::{self, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
+    client::{self, capabilities, ExtendedBufRead, HandleProgress, MessageKind, RequestWriter},
     Protocol, Service,
 };
 

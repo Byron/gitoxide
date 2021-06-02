@@ -1,7 +1,7 @@
 use std::io;
 
 use crate::{
-    client::{capabilities, Capabilities, Error, Identity, MessageKind, WriteMode},
+    client::{Capabilities, Error, Identity, MessageKind, WriteMode},
     Protocol, Service,
 };
 

@@ -1,15 +1,10 @@
-use std::{
-    io,
-    io::Write,
-    net::{TcpStream, ToSocketAddrs},
-};
+use std::{io, io::Write};
 
 use bstr::BString;
-use quick_error::quick_error;
 
 use git_packetline::PacketLine;
 
-use crate::client::blocking_io::capabilities;
+use crate::client::capabilities;
 use crate::{
     client::{self, SetServiceResponse},
     Protocol, Service,
@@ -186,64 +181,76 @@ where
     }
 }
 
-quick_error! {
-    /// The error used in [`connect()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Io(err: io::Error){
-            display("An IO error occurred when connecting to the server")
-            from()
-            source(err)
-        }
-        VirtualHostInvalid(host: String) {
-            display("Could not parse '{}' as virtual host with format <host>[:port]", host)
+///
+pub mod connect {
+    use std::{
+        io,
+        net::{TcpStream, ToSocketAddrs},
+    };
+
+    use crate::client::git::{ConnectMode, Connection};
+    use bstr::BString;
+    use quick_error::quick_error;
+    quick_error! {
+        /// The error used in [`connect()`].
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            Io(err: io::Error){
+                display("An IO error occurred when connecting to the server")
+                from()
+                source(err)
+            }
+            VirtualHostInvalid(host: String) {
+                display("Could not parse '{}' as virtual host with format <host>[:port]", host)
+            }
         }
     }
-}
 
-fn parse_host(input: String) -> Result<(String, Option<u16>), Error> {
-    let mut tokens = input.splitn(2, ':');
-    Ok(match (tokens.next(), tokens.next()) {
-        (Some(host), None) => (host.to_owned(), None),
-        (Some(host), Some(port)) => (
-            host.to_owned(),
-            Some(port.parse().map_err(|_| Error::VirtualHostInvalid(input))?),
-        ),
-        _ => unreachable!("we expect at least one token, the original string"),
-    })
-}
+    fn parse_host(input: String) -> Result<(String, Option<u16>), Error> {
+        let mut tokens = input.splitn(2, ':');
+        Ok(match (tokens.next(), tokens.next()) {
+            (Some(host), None) => (host.to_owned(), None),
+            (Some(host), Some(port)) => (
+                host.to_owned(),
+                Some(port.parse().map_err(|_| Error::VirtualHostInvalid(input))?),
+            ),
+            _ => unreachable!("we expect at least one token, the original string"),
+        })
+    }
 
-/// Connect to a git daemon running on `host` and optionally `port` and a repository at `path`.
-///
-/// Use `desired_version` to specify a preferred protocol to use, knowing that it can be downgraded by a server not supporting it.
-pub fn connect(
-    host: &str,
-    path: BString,
-    desired_version: crate::Protocol,
-    port: Option<u16>,
-) -> Result<Connection<TcpStream, TcpStream>, Error> {
-    let read = TcpStream::connect_timeout(
-        &(host, port.unwrap_or(9418))
-            .to_socket_addrs()?
-            .next()
-            .expect("after successful resolution there is an IP address"),
-        std::time::Duration::from_secs(5),
-    )?;
-    let write = read.try_clone()?;
-    let vhost = std::env::var("GIT_OVERRIDE_VIRTUAL_HOST")
-        .ok()
-        .map(parse_host)
-        .transpose()?;
-    Ok(Connection::new(
-        read,
-        write,
-        desired_version,
-        path,
-        vhost,
-        ConnectMode::Daemon,
-    ))
+    /// Connect to a git daemon running on `host` and optionally `port` and a repository at `path`.
+    ///
+    /// Use `desired_version` to specify a preferred protocol to use, knowing that it can be downgraded by a server not supporting it.
+    pub fn connect(
+        host: &str,
+        path: BString,
+        desired_version: crate::Protocol,
+        port: Option<u16>,
+    ) -> Result<Connection<TcpStream, TcpStream>, Error> {
+        let read = TcpStream::connect_timeout(
+            &(host, port.unwrap_or(9418))
+                .to_socket_addrs()?
+                .next()
+                .expect("after successful resolution there is an IP address"),
+            std::time::Duration::from_secs(5),
+        )?;
+        let write = read.try_clone()?;
+        let vhost = std::env::var("GIT_OVERRIDE_VIRTUAL_HOST")
+            .ok()
+            .map(parse_host)
+            .transpose()?;
+        Ok(Connection::new(
+            read,
+            write,
+            desired_version,
+            path,
+            vhost,
+            ConnectMode::Daemon,
+        ))
+    }
 }
+pub use connect::connect;
 
 #[cfg(test)]
 mod tests;

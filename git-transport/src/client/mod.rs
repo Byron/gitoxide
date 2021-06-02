@@ -1,5 +1,10 @@
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+mod async_io;
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
 pub use async_io::{ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport};
+
+#[cfg(feature = "blocking-client")]
+mod blocking_io;
 #[cfg(all(feature = "blocking-client", feature = "http-client-curl"))]
 pub use blocking_io::http;
 #[cfg(feature = "blocking-client")]
@@ -10,11 +15,6 @@ pub use blocking_io::{
 #[cfg(feature = "blocking-client")]
 #[doc(inline)]
 pub use connect::connect;
-
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-mod async_io;
-#[cfg(feature = "blocking-client")]
-mod blocking_io;
 
 ///
 pub mod capabilities;
