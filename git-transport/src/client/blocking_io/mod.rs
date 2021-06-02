@@ -1,6 +1,5 @@
 use std::io;
 
-pub use crate::client::RequestWriter;
 use crate::{
     client::{capabilities, Capabilities, Error, Identity, MessageKind, WriteMode},
     Protocol, Service,
@@ -19,6 +18,9 @@ pub mod http;
 
 mod bufread_ext;
 pub use bufread_ext::{ExtendedBufRead, HandleProgress};
+
+mod request;
+pub use request::RequestWriter;
 
 ///
 pub mod ssh;
