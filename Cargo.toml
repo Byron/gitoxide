@@ -115,3 +115,6 @@ members = [
     "tests/tools",
     "etc/utils"
 ]
+
+[patch.crates-io]
+futures-lite = { git = "https://github.com/smol-rs/futures-lite", branch = "master" }

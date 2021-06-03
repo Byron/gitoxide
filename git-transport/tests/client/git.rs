@@ -1,7 +1,7 @@
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-use futures_lite::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, StreamExt};
+use futures_lite::{AsyncBufReadExt, AsyncWriteExt, StreamExt};
 #[cfg(feature = "blocking-client")]
-use std::io::{BufRead, Read, Write};
+use std::io::{BufRead, Write};
 
 use std::ops::Deref;
 
@@ -107,20 +107,29 @@ async fn handshake_v1_and_request() -> crate::Result {
         }
     })));
 
-    let mut pack = Vec::new();
-
-    let mut buf = [0u8; 1024];
-    // manual read-to-end sans some checks as it's not available in async world (to us) because we use an unsized, boxed object.
-    loop {
-        let n = reader.read(&mut buf).await?;
-        if n == 0 {
-            break;
-        }
-        pack.extend_from_slice(&buf[..n]);
+    let expected_entries = 3;
+    #[cfg(feature = "blocking-client")]
+    {
+        use git_pack::data::input;
+        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+            reader,
+            input::Mode::Verify,
+            input::EntryDataMode::Crc32,
+        )?;
+        assert_eq!(entries.count(), expected_entries);
     }
-    assert_eq!(pack.len(), 876, "we receive the whole pack…");
+    // In async mode, show that we can indeed
+    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+    {
+        use git_pack::data::input;
+        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+            futures_lite::io::BlockOn::new(reader),
+            input::Mode::Verify,
+            input::EntryDataMode::Crc32,
+        )?;
+        assert_eq!(entries.count(), expected_entries);
+    }
 
-    drop(reader);
     let sidebands = Arc::try_unwrap(messages)
         .expect("no other handle")
         .into_inner()

@@ -9,8 +9,8 @@ use std::{fs, io};
 /// An iterator over [`Entries`][input::Entry] in a byte stream.
 ///
 /// The iterator used as part of [Bundle::write_to_directory(…)][crate::Bundle::write_to_directory()].
-pub struct BytesToEntriesIter<R> {
-    read: R,
+pub struct BytesToEntriesIter<BR> {
+    read: BR,
     decompressor: Option<Box<Decompress>>,
     offset: u64,
     had_error: bool,
@@ -22,9 +22,9 @@ pub struct BytesToEntriesIter<R> {
     compressed_buf: Option<Vec<u8>>,
 }
 
-impl<R> BytesToEntriesIter<R>
+impl<BR> BytesToEntriesIter<BR>
 where
-    R: io::BufRead,
+    BR: io::BufRead,
 {
     /// The pack version currently being iterated
     pub fn kind(&self) -> crate::data::Version {
@@ -40,10 +40,10 @@ where
     ///
     /// Note that `read` is expected at the beginning of a valid pack data file with a header, entries and a trailer.
     pub fn new_from_header(
-        mut read: R,
+        mut read: BR,
         mode: input::Mode,
         compressed: input::EntryDataMode,
-    ) -> Result<BytesToEntriesIter<R>, input::Error> {
+    ) -> Result<BytesToEntriesIter<BR>, input::Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 

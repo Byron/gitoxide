@@ -835,8 +835,7 @@ checksum = "acc499defb3b348f8d8f3f66415835a9131856ff7714bf10dadfc4ec4bdb29a1"
 [[package]]
 name = "futures-lite"
 version = "1.11.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4481d0cd0de1d204a4fa55e7d45f07b1d958abcb06714b3446438e2eff695fb"
+source = "git+https://github.com/smol-rs/futures-lite#f6e0707eb40a59c4d425deeecf7d2814fa04ccab"
 dependencies = [
  "fastrand",
  "futures-core",
@@ -1089,6 +1088,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-features",
+ "git-pack",
  "git-packetline",
  "git-url",
  "maybe-async",
