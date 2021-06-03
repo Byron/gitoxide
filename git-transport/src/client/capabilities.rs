@@ -205,3 +205,60 @@ pub(crate) mod recv {
         }
     }
 }
+
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+pub(crate) mod recv {
+    use crate::{client, client::Capabilities, Protocol};
+    use futures_io::{AsyncBufRead, AsyncRead};
+    use futures_lite::{AsyncBufReadExt, StreamExt};
+
+    pub struct Outcome<'a> {
+        pub capabilities: Capabilities,
+        pub refs: Option<Box<dyn AsyncBufRead + Unpin + 'a>>,
+        pub protocol: Protocol,
+    }
+
+    impl Capabilities {
+        pub(crate) async fn from_lines_with_version_detection<T: AsyncRead + Unpin + Send>(
+            rd: &mut git_packetline::StreamingPeekableIter<T>,
+        ) -> Result<Outcome<'_>, client::Error> {
+            // NOTE that this is vitally important - it is turned on and stays on for all following requests so
+            // we automatically abort if the server sends an ERR line anywhere.
+            // We are sure this can't clash with binary data when sent due to the way the PACK
+            // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
+            rd.fail_on_err_lines(true);
+
+            let capabilities_or_version = rd
+                .peek_line()
+                .await
+                .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+
+            let (first_line, version) = Capabilities::extract_protocol(&capabilities_or_version)?;
+            match version {
+                Protocol::V1 => {
+                    let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
+                    rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
+                    Ok(Outcome {
+                        capabilities,
+                        refs: Some(Box::new(rd.as_read())),
+                        protocol: Protocol::V1,
+                    })
+                }
+                Protocol::V2 => Ok(Outcome {
+                    capabilities: {
+                        let rd = rd.as_read();
+                        let mut lines_with_err = rd.lines();
+                        let mut lines = Vec::new();
+                        while let Some(line) = lines_with_err.next().await {
+                            lines.push(line?);
+                        }
+                        let mut lines = lines.into_iter();
+                        Capabilities::from_lines(lines.next().map(Ok), lines.collect::<Vec<_>>().join("\n"))?
+                    },
+                    refs: None,
+                    protocol: Protocol::V2,
+                }),
+            }
+        }
+    }
+}

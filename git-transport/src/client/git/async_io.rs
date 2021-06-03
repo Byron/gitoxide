@@ -1,5 +1,5 @@
 use crate::{
-    client::{self, git, SetServiceResponse},
+    client::{self, capabilities, git, Capabilities, SetServiceResponse},
     Protocol, Service,
 };
 use async_trait::async_trait;
@@ -28,17 +28,16 @@ where
             line_writer.flush().await?;
         }
 
-        // let capabilities::recv::Outcome {
-        //     capabilities,
-        //     refs,
-        //     protocol: actual_protocol,
-        // } = Capabilities::from_lines_with_version_detection(&mut self.line_provider)?;
-        // Ok(SetServiceResponse {
-        //     actual_protocol,
-        //     capabilities,
-        //     refs,
-        // })
-        todo!("Capabilities::from_lines_with_version_detection")
+        let capabilities::recv::Outcome {
+            capabilities,
+            refs,
+            protocol: actual_protocol,
+        } = Capabilities::from_lines_with_version_detection(&mut self.line_provider).await?;
+        Ok(SetServiceResponse {
+            actual_protocol,
+            capabilities,
+            refs,
+        })
     }
 
     fn request(
