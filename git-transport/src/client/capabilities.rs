@@ -1,4 +1,4 @@
-use crate::Protocol;
+use crate::{client, Protocol};
 use bstr::{BStr, BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;
@@ -130,10 +130,35 @@ impl Capabilities {
     }
 }
 
+/// internal use
+impl Capabilities {
+    fn extract_protocol<'a>(
+        capabilities_or_version: &'a git_packetline::PacketLine<'_>,
+    ) -> Result<(git_packetline::immutable::Text<'a>, Protocol), client::Error> {
+        let first_line = capabilities_or_version
+            .to_text()
+            .ok_or(client::Error::ExpectedLine("text"))?;
+
+        let line = first_line.as_bstr();
+        let version = if line.starts_with_str("version ") {
+            if line.len() != "version X".len() {
+                return Err(client::Error::UnsupportedProtocolVersion(line.as_bstr().into()));
+            }
+            match line {
+                line if line.ends_with_str("1") => Protocol::V1,
+                line if line.ends_with_str("2") => Protocol::V2,
+                _ => return Err(client::Error::UnsupportedProtocolVersion(line.as_bstr().into())),
+            }
+        } else {
+            Protocol::V1
+        };
+        Ok((first_line, version))
+    }
+}
+
 #[cfg(feature = "blocking-client")]
 pub(crate) mod recv {
     use crate::{client, client::Capabilities, Protocol};
-    use bstr::ByteSlice;
     use std::{io, io::BufRead};
 
     pub struct Outcome<'a> {
@@ -155,25 +180,8 @@ pub(crate) mod recv {
             let capabilities_or_version = rd
                 .peek_line()
                 .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
-            let first_line = capabilities_or_version
-                .to_text()
-                .ok_or(client::Error::ExpectedLine("text"))?;
 
-            let version = {
-                let first_line = first_line.as_bstr();
-                if first_line.starts_with_str("version ") {
-                    if first_line.len() != "version X".len() {
-                        return Err(client::Error::UnsupportedProtocolVersion(first_line.as_bstr().into()));
-                    }
-                    match first_line {
-                        line if line.ends_with_str("1") => Protocol::V1,
-                        line if line.ends_with_str("2") => Protocol::V2,
-                        _ => return Err(client::Error::UnsupportedProtocolVersion(first_line.as_bstr().into())),
-                    }
-                } else {
-                    Protocol::V1
-                }
-            };
+            let (first_line, version) = Capabilities::extract_protocol(&capabilities_or_version)?;
             match version {
                 Protocol::V1 => {
                     let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
