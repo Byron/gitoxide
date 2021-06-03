@@ -138,7 +138,7 @@ unit-tests: ## run all unit tests
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline
 	cd git-transport && cargo test \
-					 && cargo test --features http-client-curl \
+					 && cargo test --features http-client-curl,maybe-async/is_sync \
 					 && cargo test --features async-client
 	cd git-protocol && cargo test --features blocking-client && cargo test
 	cd gitoxide-core && cargo test --lib
