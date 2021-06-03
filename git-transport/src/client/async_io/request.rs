@@ -15,7 +15,7 @@ pin_project! {
         on_into_read: MessageKind,
         #[pin]
         pub(crate) writer: git_packetline::Writer<Box<dyn AsyncWrite + Unpin + 'a>>,
-        pub(crate) reader: Box<dyn ExtendedBufRead + 'a>,
+        pub(crate) reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
     }
 }
 impl<'a> futures_io::AsyncWrite for RequestWriter<'a> {
@@ -39,7 +39,7 @@ impl<'a> RequestWriter<'a> {
     /// when this instance is converted into a `reader` to read the request's response.
     pub fn new_from_bufread<W: AsyncWrite + Unpin + 'a>(
         writer: W,
-        reader: Box<dyn ExtendedBufRead + 'a>,
+        reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
         write_mode: WriteMode,
         on_into_read: MessageKind,
     ) -> Self {
@@ -82,7 +82,7 @@ impl<'a> RequestWriter<'a> {
         .map(|_| ())
     }
     /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
-    pub async fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + 'a>> {
+    pub async fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Unpin + 'a>> {
         self.write_message(self.on_into_read).await?;
         Ok(self.reader)
     }

@@ -21,12 +21,12 @@ async-client = ["async-trait", "futures-lite", "futures-io", "git-packetline/asy
 [[test]]
 name = "blocking-transport"
 path = "tests/blocking-transport.rs"
-required-features = ["blocking-client"]
+required-features = ["blocking-client", "maybe-async/is_sync"]
 
 [[test]]
 name = "blocking-transport-http-only"
 path = "tests/blocking-transport-http.rs"
-required-features = ["http-client-curl"]
+required-features = ["http-client-curl", "maybe-async/is_sync"]
 
 [[test]]
 name = "async-transport"
