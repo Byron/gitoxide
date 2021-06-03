@@ -159,14 +159,20 @@ pub(crate) mod recv {
                 .to_text()
                 .ok_or(client::Error::ExpectedLine("text"))?;
 
-            let version = if first_line.as_bstr().starts_with_str("version ") {
-                if first_line.as_bstr().ends_with_str(" 1") {
-                    Protocol::V1
+            let version = {
+                let first_line = first_line.as_bstr();
+                if first_line.starts_with_str("version ") {
+                    if first_line.len() != "version X".len() {
+                        return Err(client::Error::UnsupportedProtocolVersion(first_line.as_bstr().into()));
+                    }
+                    match first_line {
+                        line if line.ends_with_str("1") => Protocol::V1,
+                        line if line.ends_with_str("2") => Protocol::V2,
+                        _ => return Err(client::Error::UnsupportedProtocolVersion(first_line.as_bstr().into())),
+                    }
                 } else {
-                    Protocol::V2
+                    Protocol::V1
                 }
-            } else {
-                Protocol::V1
             };
             match version {
                 Protocol::V1 => {

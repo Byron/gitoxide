@@ -46,6 +46,8 @@ mod error {
     use crate::client::capabilities;
     #[cfg(feature = "http-client-curl")]
     use crate::client::http;
+    use bstr::BString;
+
     #[cfg(feature = "http-client-curl")]
     type HttpError = http::Error;
     #[cfg(not(feature = "http-client-curl"))]
@@ -78,6 +80,8 @@ mod error {
         AuthenticationUnsupported,
         #[error("The transport layer refuses to use a given identity: {0}")]
         AuthenticationRefused(&'static str),
+        #[error("The protocol version indicated by {:?} is unsupported", {0})]
+        UnsupportedProtocolVersion(BString),
         #[error(transparent)]
         Http(#[from] HttpError),
     }
