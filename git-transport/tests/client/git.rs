@@ -9,7 +9,7 @@ use bstr::ByteSlice;
 
 use git_transport::{
     client,
-    client::{git, Transport},
+    client::{git, Transport, TransportV2Ext},
     Protocol, Service,
 };
 
@@ -196,7 +196,6 @@ async fn handshake_v2_downgrade_to_v1() -> crate::Result {
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn handshake_v2_and_request() -> crate::Result {
-    use git_transport::client::TransportV2Ext;
     let mut out = Vec::new();
     let input = fixture_bytes("v2/clone.response");
     let mut c = git::Connection::new(
@@ -269,6 +268,37 @@ async fn handshake_v2_and_request() -> crate::Result {
     );
     drop(lines);
 
+    let mut c = fetch_pack(c).await?;
+
+    c.close().await?;
+
+    assert_eq!(
+        out.as_slice().as_bstr(),
+        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
+0015agent=git/2.28.0
+0017object-format=sha1
+00010009peel
+000csymrefs
+0014ref-prefix HEAD
+001bref-prefix refs/heads/
+0019ref-prefix refs/tags
+00000012command=fetch
+0015agent=git/2.28.0
+001csomething-without-value
+0017object-format=sha1
+0001000ethin-pack
+000eofs-delta
+0032want 808e50d724f604f69ab93c6da2919c014667bedb
+0009done
+00000000"
+            .as_bstr(),
+        "it sends the correct request, including the adjusted version"
+    );
+    Ok(())
+}
+
+#[maybe_async::maybe_async]
+async fn fetch_pack<T: Transport + Send>(mut c: T) -> crate::Result<T> {
     let mut reader = c
         .invoke(
             "fetch",
@@ -309,53 +339,18 @@ async fn handshake_v2_and_request() -> crate::Result {
     })));
 
     let expected_entries = 3;
-    #[cfg(feature = "blocking-client")]
-    {
-        use git_pack::data::input;
-        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
-            reader,
-            input::Mode::Verify,
-            input::EntryDataMode::Crc32,
-        )?;
-        assert_eq!(entries.count(), expected_entries);
-    }
-    // In async mode, show that we can indeed
     #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-    {
-        use git_pack::data::input;
-        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
-            futures_lite::io::BlockOn::new(reader),
-            input::Mode::Verify,
-            input::EntryDataMode::Crc32,
-        )?;
-        assert_eq!(entries.count(), expected_entries);
-    }
+    let reader = futures_lite::io::BlockOn::new(reader);
+
+    use git_pack::data::input;
+    let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+        reader,
+        input::Mode::Verify,
+        input::EntryDataMode::Crc32,
+    )?;
+    assert_eq!(entries.count(), expected_entries);
 
     let messages = Arc::try_unwrap(messages).expect("no other handle").into_inner()?;
     assert_eq!(messages.len(), 4);
-    c.close().await?;
-
-    assert_eq!(
-        out.as_slice().as_bstr(),
-        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
-0015agent=git/2.28.0
-0017object-format=sha1
-00010009peel
-000csymrefs
-0014ref-prefix HEAD
-001bref-prefix refs/heads/
-0019ref-prefix refs/tags
-00000012command=fetch
-0015agent=git/2.28.0
-001csomething-without-value
-0017object-format=sha1
-0001000ethin-pack
-000eofs-delta
-0032want 808e50d724f604f69ab93c6da2919c014667bedb
-0009done
-00000000"
-            .as_bstr(),
-        "it sends the correct request, including the adjusted version"
-    );
-    Ok(())
+    Ok(c)
 }
