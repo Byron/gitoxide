@@ -60,3 +60,4 @@ base64 = { version = "0.13.0", optional = true }
 async-std = { version = "1.9.0", features = ["attributes"] }
 maybe-async = "0.2.4"
 git-pack = { version = "^0.2", path = "../git-pack" }
+blocking = "1.0.2"

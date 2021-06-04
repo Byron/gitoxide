@@ -1084,6 +1084,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "base64",
+ "blocking",
  "bstr",
  "curl",
  "futures-io",

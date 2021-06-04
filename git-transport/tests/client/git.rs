@@ -323,12 +323,16 @@ async fn handshake_v2_and_request() -> crate::Result {
     #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
     {
         use git_pack::data::input;
-        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+        let mut entries = blocking::Unblock::new(git_pack::data::input::BytesToEntriesIter::new_from_header(
             futures_lite::io::BlockOn::new(reader),
             input::Mode::Verify,
             input::EntryDataMode::Crc32,
-        )?;
-        assert_eq!(entries.count(), expected_entries);
+        )?);
+        let mut count = 0;
+        while let Some(Ok(_entry)) = entries.next().await {
+            count += 1;
+        }
+        assert_eq!(count, expected_entries);
     }
 
     let messages = Arc::try_unwrap(messages).expect("no other handle").into_inner()?;
