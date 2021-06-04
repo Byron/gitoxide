@@ -328,7 +328,9 @@ async fn handshake_v2_and_request() -> crate::Result {
             input::Mode::Verify,
             input::EntryDataMode::Crc32,
         )?;
-        assert_eq!(entries.count(), expected_entries);
+        let executor = async_executor::LocalExecutor::new();
+        let task = executor.spawn(async move { entries.count() });
+        assert_eq!(task.await, expected_entries);
     }
 
     let messages = Arc::try_unwrap(messages).expect("no other handle").into_inner()?;
