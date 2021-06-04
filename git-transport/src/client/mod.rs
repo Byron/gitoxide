@@ -1,7 +1,7 @@
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
 mod async_io;
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-pub use async_io::{ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport};
+pub use async_io::{ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport, TransportV2Ext};
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io;

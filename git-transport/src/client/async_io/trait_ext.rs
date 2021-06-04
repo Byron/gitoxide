@@ -14,7 +14,7 @@ pub trait TransportV2Ext {
         command: &str,
         capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + Send + 'a,
         arguments: Option<impl Iterator<Item = bstr::BString> + Send + 'a>,
-    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error>;
+    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error>;
 }
 
 #[async_trait]
@@ -24,7 +24,7 @@ impl<T: Transport + Send> TransportV2Ext for T {
         command: &str,
         capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + Send + 'a,
         arguments: Option<impl Iterator<Item = BString> + Send + 'a>,
-    ) -> Result<Box<dyn ExtendedBufRead + '_>, Error> {
+    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
         writer.write_all(format!("command={}", command).as_bytes()).await?;
         for (name, value) in capabilities {
