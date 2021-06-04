@@ -184,6 +184,23 @@ async fn handshake_v2_downgrade_to_v1() -> crate::Result {
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn handshake_v2_and_request() -> crate::Result {
+    #[cfg(feature = "blocking-client")]
+    return handshake_v2_and_request_inner().await;
+    // This monstrosity simulates how one can process a pack received in async-io by transforming it into
+    // blocking io::BufRead, while still handling the whole operation in a way that won't block the executor.
+    // It's a way of `spawn_blocking()` in other executors. Currently this can only be done on a per-command basis.
+    // Thinking about it, it's most certainly fine to do `fetch' commands on another thread and move the entire conenction
+    // there as it's always the end of an operation and a lot of IO is required that is blocking anyway, like accessing
+    // commit graph information for fetch negotiations, and of cource processing a received pack.
+    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+    Ok(
+        blocking::unblock(|| futures_lite::future::block_on(handshake_v2_and_request_inner()).expect("no failure"))
+            .await,
+    )
+}
+
+#[maybe_async::maybe_async]
+async fn handshake_v2_and_request_inner() -> crate::Result {
     let mut out = Vec::new();
     let input = fixture_bytes("v2/clone.response");
     let mut c = git::Connection::new(
@@ -256,39 +273,6 @@ async fn handshake_v2_and_request() -> crate::Result {
     );
     drop(lines);
 
-    #[cfg(feature = "blocking-client")]
-    let mut c = fetch_pack(c).await?;
-    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-    let mut c = blocking::unblock(move || futures_lite::future::block_on(fetch_pack(c)).expect("no failure")).await;
-    c.close().await?;
-
-    assert_eq!(
-        out.as_slice().as_bstr(),
-        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
-0015agent=git/2.28.0
-0017object-format=sha1
-00010009peel
-000csymrefs
-0014ref-prefix HEAD
-001bref-prefix refs/heads/
-0019ref-prefix refs/tags
-00000012command=fetch
-0015agent=git/2.28.0
-001csomething-without-value
-0017object-format=sha1
-0001000ethin-pack
-000eofs-delta
-0032want 808e50d724f604f69ab93c6da2919c014667bedb
-0009done
-00000000"
-            .as_bstr(),
-        "it sends the correct request, including the adjusted version"
-    );
-    Ok(())
-}
-
-#[maybe_async::maybe_async]
-async fn fetch_pack<T: Transport + Send>(mut c: T) -> crate::Result<T> {
     let mut reader = c
         .invoke(
             "fetch",
@@ -342,5 +326,29 @@ async fn fetch_pack<T: Transport + Send>(mut c: T) -> crate::Result<T> {
 
     let messages = Arc::try_unwrap(messages).expect("no other handle").into_inner()?;
     assert_eq!(messages.len(), 4);
-    Ok(c)
+    c.close().await?;
+
+    assert_eq!(
+        out.as_slice().as_bstr(),
+        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
+0015agent=git/2.28.0
+0017object-format=sha1
+00010009peel
+000csymrefs
+0014ref-prefix HEAD
+001bref-prefix refs/heads/
+0019ref-prefix refs/tags
+00000012command=fetch
+0015agent=git/2.28.0
+001csomething-without-value
+0017object-format=sha1
+0001000ethin-pack
+000eofs-delta
+0032want 808e50d724f604f69ab93c6da2919c014667bedb
+0009done
+00000000"
+            .as_bstr(),
+        "it sends the correct request, including the adjusted version"
+    );
+    Ok(())
 }
