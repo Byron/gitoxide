@@ -24,4 +24,5 @@ mod non_io_types;
 pub use non_io_types::{Error, Identity, MessageKind, WriteMode};
 
 ///
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub mod git;

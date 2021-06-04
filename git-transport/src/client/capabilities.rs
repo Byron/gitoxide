@@ -1,4 +1,6 @@
-use crate::{client, Protocol};
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+use crate::client;
+use crate::Protocol;
 use bstr::{BStr, BString, ByteSlice};
 use quick_error::quick_error;
 use std::io;
@@ -131,6 +133,7 @@ impl Capabilities {
 }
 
 /// internal use
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 impl Capabilities {
     fn extract_protocol<'a>(
         capabilities_or_version: &'a git_packetline::PacketLine<'_>,
