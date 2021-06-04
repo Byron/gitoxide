@@ -4,6 +4,7 @@ use std::{
     io::{self, BufRead, Read, Write},
     ops::Deref,
     rc::Rc,
+    vec::IntoIter,
 };
 
 use bstr::ByteSlice;
@@ -358,7 +359,7 @@ Git-Protocol: version=2
     let res = c.invoke(
         "ls-refs",
         [("without-value", None), ("with-value", Some("value"))].iter().cloned(),
-        Some(vec!["arg1".as_bytes().as_bstr().to_owned()]),
+        Some(vec!["arg1".as_bytes().as_bstr().to_owned()].into_iter()),
     )?;
     assert_eq!(
         res.lines().collect::<Result<Vec<_>, _>>()?,
@@ -396,7 +397,7 @@ Git-Protocol: version=2
     );
 
     server.next_read_and_respond_with(fixture_bytes("v2/http-fetch.response"));
-    let mut res = c.invoke("fetch", Vec::new(), None::<Vec<bstr::BString>>)?;
+    let mut res = c.invoke("fetch", Vec::new().into_iter(), None::<IntoIter<bstr::BString>>)?;
     let mut line = String::new();
     res.read_line(&mut line)?;
     assert_eq!(line, "packfile\n");

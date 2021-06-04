@@ -74,7 +74,6 @@ pub trait Transport {
     fn is_stateful(&self) -> bool;
 }
 
-// TODO: needs fixes, important for easy V2
 mod trait_ext;
 pub use trait_ext::TransportV2Ext;
 
