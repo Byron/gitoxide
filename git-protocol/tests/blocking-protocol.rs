@@ -6,6 +6,5 @@ pub fn fixture_bytes(path: &str) -> Vec<u8> {
 }
 
 mod credentials;
-#[cfg(feature = "blocking-client")]
 mod fetch;
 mod remote_progress;
