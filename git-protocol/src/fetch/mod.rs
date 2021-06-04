@@ -171,8 +171,12 @@ where
         progress.set_name("list refs");
         let mut remote_refs = transport.invoke(
             ls_refs.as_str(),
-            ls_features,
-            if ls_args.is_empty() { None } else { Some(ls_args) },
+            ls_features.into_iter(),
+            if ls_args.is_empty() {
+                None
+            } else {
+                Some(ls_args.into_iter())
+            },
         )?;
         refs::from_v2_refs(&mut parsed_refs, &mut remote_refs)?;
     }

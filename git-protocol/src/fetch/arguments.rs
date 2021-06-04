@@ -198,7 +198,7 @@ impl Arguments {
                 transport.invoke(
                     Command::Fetch.as_str(),
                     self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
-                    Some(std::mem::replace(&mut self.args, retained_state)),
+                    Some(std::mem::replace(&mut self.args, retained_state).into_iter()),
                 )
             }
         }
