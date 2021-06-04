@@ -108,27 +108,15 @@ async fn handshake_v1_and_request() -> crate::Result {
     })));
 
     let expected_entries = 3;
-    #[cfg(feature = "blocking-client")]
-    {
-        use git_pack::data::input;
-        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
-            reader,
-            input::Mode::Verify,
-            input::EntryDataMode::Crc32,
-        )?;
-        assert_eq!(entries.count(), expected_entries);
-    }
-    // In async mode, show that we can indeed
     #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-    {
-        use git_pack::data::input;
-        let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
-            futures_lite::io::BlockOn::new(reader),
-            input::Mode::Verify,
-            input::EntryDataMode::Crc32,
-        )?;
-        assert_eq!(entries.count(), expected_entries);
-    }
+    let reader = futures_lite::io::BlockOn::new(reader);
+    use git_pack::data::input;
+    let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
+        reader,
+        input::Mode::Verify,
+        input::EntryDataMode::Crc32,
+    )?;
+    assert_eq!(entries.count(), expected_entries);
 
     let sidebands = Arc::try_unwrap(messages)
         .expect("no other handle")
@@ -268,8 +256,10 @@ async fn handshake_v2_and_request() -> crate::Result {
     );
     drop(lines);
 
+    #[cfg(feature = "blocking-client")]
     let mut c = fetch_pack(c).await?;
-
+    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+    let mut c = blocking::unblock(move || futures_lite::future::block_on(fetch_pack(c)).expect("no failure")).await;
     c.close().await?;
 
     assert_eq!(
