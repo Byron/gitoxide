@@ -12,7 +12,6 @@ mod remote_progress;
 pub use remote_progress::RemoteProgress;
 
 ///
-#[cfg(feature = "blocking-client")]
 pub mod credentials;
 ///
 #[cfg(feature = "blocking-client")]
