@@ -75,8 +75,8 @@ pub trait Transport {
 }
 
 // TODO: needs fixes, important for easy V2
-// mod trait_ext;
-// pub use trait_ext::TransportV2Ext;
+mod trait_ext;
+pub use trait_ext::TransportV2Ext;
 
 mod box_impl {
     use crate::{
