@@ -1081,7 +1081,6 @@ dependencies = [
 name = "git-transport"
 version = "0.9.0"
 dependencies = [
- "async-executor",
  "async-std",
  "async-trait",
  "base64",
