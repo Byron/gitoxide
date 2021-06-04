@@ -14,11 +14,17 @@ doctest = false
 [features]
 serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-hash/serde1"]
 blocking-client = ["git-transport/blocking-client"]
+async-client = ["git-transport/async-client"]
 
 [[test]]
-name = "blocking-client"
+name = "blocking-client-protocol"
 path = "tests/blocking-protocol.rs"
 required-features = ["blocking-client"]
+
+[[test]]
+name = "async-client-protocol"
+path = "tests/async-protocol.rs"
+required-features = ["async-client"]
 
 [dependencies]
 git-features = { version = "^0.15.0", path = "../git-features", features = ["progress"] }

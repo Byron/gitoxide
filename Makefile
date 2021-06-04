@@ -140,7 +140,9 @@ unit-tests: ## run all unit tests
 	cd git-transport && cargo test \
 					 && cargo test --features http-client-curl,maybe-async/is_sync \
 					 && cargo test --features async-client
-	cd git-protocol && cargo test --features blocking-client && cargo test
+	cd git-protocol && cargo test --features blocking-client \
+					&& cargo test --features async-client \
+					&& cargo test
 	cd gitoxide-core && cargo test --lib
 
 continuous-unit-tests: ## run all unit tests whenever something changes
