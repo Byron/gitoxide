@@ -1,11 +1,6 @@
 use crate::fetch;
 use bstr::ByteSlice;
-use git_transport::{
-    client,
-    client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
-    Protocol, Service,
-};
-use std::io;
+use git_transport::{client, Protocol};
 
 fn arguments_v1(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect())
@@ -20,43 +15,53 @@ struct Transport<T: client::Transport> {
     stateful: bool,
 }
 
-impl<T: client::Transport> client::Transport for Transport<T> {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-        self.inner.handshake(service)
-    }
+#[cfg(feature = "blocking-client")]
+mod impls {
+    use crate::fetch::tests::arguments::Transport;
+    use git_transport::{
+        client,
+        client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+        Protocol, Service,
+    };
 
-    fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
-        self.inner.set_identity(identity)
-    }
+    impl<T: client::Transport> client::Transport for Transport<T> {
+        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
+            self.inner.handshake(service)
+        }
 
-    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
-        self.inner.request(write_mode, on_into_read)
-    }
+        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+            self.inner.set_identity(identity)
+        }
 
-    fn close(&mut self) -> Result<(), Error> {
-        self.inner.close()
-    }
+        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
+            self.inner.request(write_mode, on_into_read)
+        }
 
-    fn to_url(&self) -> String {
-        self.inner.to_url()
-    }
+        fn close(&mut self) -> Result<(), Error> {
+            self.inner.close()
+        }
 
-    fn desired_protocol_version(&self) -> Protocol {
-        self.inner.desired_protocol_version()
-    }
+        fn to_url(&self) -> String {
+            self.inner.to_url()
+        }
 
-    fn is_stateful(&self) -> bool {
-        self.stateful
+        fn desired_protocol_version(&self) -> Protocol {
+            self.inner.desired_protocol_version()
+        }
+
+        fn is_stateful(&self) -> bool {
+            self.stateful
+        }
     }
 }
 
 fn transport(
     out: &mut Vec<u8>,
     stateful: bool,
-) -> Transport<git_transport::client::git::Connection<io::Cursor<Vec<u8>>, &mut Vec<u8>>> {
+) -> Transport<git_transport::client::git::Connection<&'static [u8], &mut Vec<u8>>> {
     Transport {
         inner: git_transport::client::git::Connection::new(
-            io::Cursor::new(Vec::new()),
+            &[],
             out,
             Protocol::V1, // does not matter
             b"does/not/matter".as_bstr().to_owned(),
@@ -75,8 +80,8 @@ mod v1 {
     use crate::fetch::tests::arguments::{arguments_v1, id, transport};
     use bstr::ByteSlice;
 
-    #[test]
-    fn haves_and_wants_for_clone() {
+    #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+    async fn haves_and_wants_for_clone() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
         let mut arguments = arguments_v1(["feature-a", "feature-b"].iter().cloned());
@@ -94,8 +99,8 @@ mod v1 {
         );
     }
 
-    #[test]
-    fn haves_and_wants_for_fetch_stateless() {
+    #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+    async fn haves_and_wants_for_fetch_stateless() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, false);
         let mut arguments = arguments_v1(["feature-a", "shallow", "deepen-since", "deepen-not"].iter().copied());
@@ -130,8 +135,8 @@ mod v1 {
         );
     }
 
-    #[test]
-    fn haves_and_wants_for_fetch_stateful() {
+    #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+    async fn haves_and_wants_for_fetch_stateful() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
         let mut arguments = arguments_v1(["feature-a", "shallow"].iter().copied());
@@ -160,8 +165,8 @@ mod v2 {
     use crate::fetch::tests::arguments::{arguments_v2, id, transport};
     use bstr::ByteSlice;
 
-    #[test]
-    fn haves_and_wants_for_clone_stateful() {
+    #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+    async fn haves_and_wants_for_clone_stateful() {
         let mut out = Vec::new();
         let mut t = transport(&mut out, true);
         let mut arguments = arguments_v2(["feature-a", "shallow"].iter().copied());
@@ -187,8 +192,8 @@ mod v2 {
         );
     }
 
-    #[test]
-    fn haves_and_wants_for_fetch_stateless_and_stateful() {
+    #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+    async fn haves_and_wants_for_fetch_stateless_and_stateful() {
         for is_stateful in &[false, true] {
             let mut out = Vec::new();
             let mut t = transport(&mut out, *is_stateful);
