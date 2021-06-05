@@ -1026,12 +1026,16 @@ dependencies = [
 name = "git-protocol"
 version = "0.8.0"
 dependencies = [
+ "async-std",
+ "async-trait",
  "bstr",
  "btoi",
+ "futures-io",
  "git-features",
  "git-hash",
  "git-packetline",
  "git-transport",
+ "maybe-async",
  "nom",
  "quick-error",
  "serde",

@@ -1,14 +1,7 @@
-use std::{fmt, io::Write};
-
-use bstr::{BStr, BString, ByteSlice};
-
-use git_transport::{
-    client::{self, TransportV2Ext},
-    Protocol,
-};
-
-use crate::fetch::blocking_io::command::Feature;
-use crate::fetch::Command;
+use crate::{fetch::command::Feature, fetch::Command};
+use bstr::{BStr, BString};
+use git_transport::Protocol;
+use std::fmt;
 
 /// The arguments passed to a server command.
 pub struct Arguments {
@@ -152,58 +145,72 @@ impl Arguments {
             features_for_first_want,
         }
     }
-    pub(crate) fn send<'a, T: client::Transport + 'a>(
-        &mut self,
-        transport: &'a mut T,
-        add_done_argument: bool,
-    ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
-        if self.haves.is_empty() {
-            assert!(add_done_argument, "If there are no haves, is_done must be true.");
-        }
-        match self.version {
-            git_transport::Protocol::V1 => {
-                let on_into_read = if add_done_argument {
-                    client::MessageKind::Text(&b"done"[..])
-                } else {
-                    client::MessageKind::Flush
-                };
-                let retained_state = if transport.is_stateful() {
-                    None
-                } else {
-                    Some(self.args.clone())
-                };
-                let mut line_writer =
-                    transport.request(client::WriteMode::OneLfTerminatedLinePerWriteCall, on_into_read)?;
+}
 
-                if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
-                    self.args.swap(first_arg_position, 0);
-                }
-                let had_args = !self.args.is_empty();
-                for arg in self.args.drain(..) {
-                    line_writer.write_all(&arg)?;
-                }
-                if had_args {
-                    line_writer.write_message(client::MessageKind::Flush)?;
-                }
-                for line in self.haves.drain(..) {
-                    line_writer.write_all(&line)?;
-                }
-                if let Some(next_args) = retained_state {
-                    self.args = next_args;
-                }
-                Ok(line_writer.into_read()?)
+#[cfg(feature = "blocking-client")]
+mod blocking_io {
+    use std::io::Write;
+
+    use bstr::ByteSlice;
+
+    use git_transport::{client, client::TransportV2Ext};
+
+    use crate::fetch::{Arguments, Command};
+
+    impl Arguments {
+        pub(crate) fn send<'a, T: client::Transport + 'a>(
+            &mut self,
+            transport: &'a mut T,
+            add_done_argument: bool,
+        ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
+            if self.haves.is_empty() {
+                assert!(add_done_argument, "If there are no haves, is_done must be true.");
             }
-            git_transport::Protocol::V2 => {
-                let retained_state = self.args.clone();
-                self.args.extend(self.haves.drain(..));
-                if add_done_argument {
-                    self.args.push("done".into());
+            match self.version {
+                git_transport::Protocol::V1 => {
+                    let on_into_read = if add_done_argument {
+                        client::MessageKind::Text(&b"done"[..])
+                    } else {
+                        client::MessageKind::Flush
+                    };
+                    let retained_state = if transport.is_stateful() {
+                        None
+                    } else {
+                        Some(self.args.clone())
+                    };
+                    let mut line_writer =
+                        transport.request(client::WriteMode::OneLfTerminatedLinePerWriteCall, on_into_read)?;
+
+                    if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
+                        self.args.swap(first_arg_position, 0);
+                    }
+                    let had_args = !self.args.is_empty();
+                    for arg in self.args.drain(..) {
+                        line_writer.write_all(&arg)?;
+                    }
+                    if had_args {
+                        line_writer.write_message(client::MessageKind::Flush)?;
+                    }
+                    for line in self.haves.drain(..) {
+                        line_writer.write_all(&line)?;
+                    }
+                    if let Some(next_args) = retained_state {
+                        self.args = next_args;
+                    }
+                    Ok(line_writer.into_read()?)
                 }
-                transport.invoke(
-                    Command::Fetch.as_str(),
-                    self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
-                    Some(std::mem::replace(&mut self.args, retained_state).into_iter()),
-                )
+                git_transport::Protocol::V2 => {
+                    let retained_state = self.args.clone();
+                    self.args.extend(self.haves.drain(..));
+                    if add_done_argument {
+                        self.args.push("done".into());
+                    }
+                    transport.invoke(
+                        Command::Fetch.as_str(),
+                        self.features.iter().filter(|(_, v)| v.is_some()).cloned(),
+                        Some(std::mem::replace(&mut self.args, retained_state).into_iter()),
+                    )
+                }
             }
         }
     }

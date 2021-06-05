@@ -72,7 +72,7 @@ fn id(hex: &str) -> git_hash::ObjectId {
 }
 
 mod v1 {
-    use crate::fetch::blocking_io::tests::arguments::{arguments_v1, id, transport};
+    use crate::fetch::tests::arguments::{arguments_v1, id, transport};
     use bstr::ByteSlice;
 
     #[test]
@@ -157,7 +157,7 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::blocking_io::tests::arguments::{arguments_v2, id, transport};
+    use crate::fetch::tests::arguments::{arguments_v2, id, transport};
     use bstr::ByteSlice;
 
     #[test]

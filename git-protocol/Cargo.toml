@@ -14,7 +14,7 @@ doctest = false
 [features]
 serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-hash/serde1"]
 blocking-client = ["git-transport/blocking-client"]
-async-client = ["git-transport/async-client"]
+async-client = ["git-transport/async-client", "async-trait", "futures-io"]
 
 [[test]]
 name = "blocking-client-protocol"
@@ -37,5 +37,11 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "6", default-features = false, features = ["alloc"]}
 btoi = "0.4.2"
 
+# for async-client
+async-trait = { version = "0.1.50", optional = true }
+futures-io = { version = "0.3.15", optional = true }
+
 [dev-dependencies]
+async-std = { version = "1.9.0", features = ["attributes"] }
+maybe-async = "0.2.4"
 git-packetline = { version = "^0.6.0", path = "../git-packetline" }

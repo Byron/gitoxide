@@ -1,4 +1,4 @@
-use crate::fetch::blocking_io::command::Feature;
+use crate::fetch::command::Feature;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
 use std::io;

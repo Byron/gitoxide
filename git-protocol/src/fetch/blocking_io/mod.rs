@@ -1,7 +1,6 @@
-///
-pub mod arguments;
-///
-pub mod command;
+pub use error::Error;
+pub use fetch::fetch;
+
 ///
 pub mod delegate;
 ///
@@ -12,12 +11,16 @@ pub mod response;
 mod tests;
 
 mod error {
-    use crate::fetch::blocking_io::{refs, response};
-    use git_transport::client;
-    use quick_error::quick_error;
     use std::io;
 
-    use crate::credentials;
+    use quick_error::quick_error;
+
+    use git_transport::client;
+
+    use crate::{
+        credentials,
+        fetch::blocking_io::{refs, response},
+    };
 
     quick_error! {
         /// The error used in [`fetch()`].
@@ -55,9 +58,17 @@ mod error {
         }
     }
 }
-pub use error::Error;
 
 mod fetch {
+    use std::io;
+
+    use git_features::{progress, progress::Progress};
+    use git_transport::{
+        client,
+        client::{SetServiceResponse, TransportV2Ext},
+        Service,
+    };
+
     use crate::{
         credentials,
         fetch::{
@@ -65,13 +76,6 @@ mod fetch {
             Action, Arguments, Command, Delegate, Error, Ref, Response,
         },
     };
-    use git_features::{progress, progress::Progress};
-    use git_transport::{
-        client,
-        client::{SetServiceResponse, TransportV2Ext},
-        Service,
-    };
-    use std::io;
 
     /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
     ///
@@ -241,4 +245,3 @@ mod fetch {
         }) as git_transport::client::HandleProgress));
     }
 }
-pub use fetch::fetch;
