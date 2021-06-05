@@ -117,7 +117,7 @@ All feature toggles are additive.
         * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all, this facility is a global one.
         * Probably useful for server implementations.
 
-### git-transport
+### git-packetline
 
 By default, all IO related capabilities will be missing unless one of the following is chosen.
 
@@ -131,15 +131,18 @@ By default, all IO related capabilities will be missing unless one of the follow
 
 ### git-transport
 
-The _client_ portion of the transport layer is _async_ by default, i.e. if no feature toggles are set.
+The _client_ portion of transport can be blocking or async. If none is selected, it will be missing entirely.
 
-* **blocking-client**
-  * If set, blocking implementations of the typical git transports become available in `crate::client`
-  * **http-client-curl**
-    * Adds support for the http and https transports using the Rust bindings for `libcurl`
-    
-**Note** that the _blocking_ client has a great choice of available transports, with the _async_ version of it supporting only the TCP based `git` transport leaving you
-with the responsibility to providing such an implementation of `futures-io::AsyncRead/AsyncWrite` yourself.
+- _mutually exclusive_
+    - **blocking-client**
+      - If set, blocking implementations of the typical git transports become available in `crate::client`
+      - **http-client-curl**
+          - Adds support for the http and https transports using the Rust bindings for `libcurl`
+  - **async-client**
+      - If set, an async implementations of the git transports becomes available in `crate::client`.
+      - Suitable for implementing your own transports while using git's way of communication, typically in conjunction with a custom server.
+         - **Note** that the _blocking_ client has a wide range of available transports, with the _async_ version of it supporting only the TCP based `git` transport leaving you
+            with the responsibility to providing such an implementation of `futures-io::AsyncRead/AsyncWrite` yourself.
     
 ### git-protocol
 
