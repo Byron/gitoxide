@@ -16,7 +16,7 @@ mod iter {
     }
 
     #[test]
-    fn a_bunch_of_loose_and_packed_objects() {
+    fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
         let db = db();
         let iter = db.iter();
         assert_eq!(
@@ -25,6 +25,10 @@ mod iter {
             "we only count packs and have no upper bound"
         );
         assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
+        for id in db.iter() {
+            assert!(db.contains(id?), "each object exists");
+        }
+        Ok(())
     }
 }
 

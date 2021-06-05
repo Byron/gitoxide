@@ -8,6 +8,21 @@ use crate::{
 };
 use git_pack::{data::Object, find::Entry};
 
+impl linked::Store {
+    /// Return true if the given object `id` is contained in the store.
+    pub fn contains(&self, id: impl AsRef<oid>) -> bool {
+        let id = id.as_ref();
+        for db in self.dbs.iter() {
+            if let Some(_) = db.internal_find_packed(id) {
+                return true;
+            } else if db.loose.contains(id) {
+                return true;
+            }
+        }
+        false
+    }
+}
+
 impl crate::Find for linked::Store {
     type Error = compound::find::Error;
 

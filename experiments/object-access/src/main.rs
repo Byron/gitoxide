@@ -21,9 +21,22 @@ fn main() -> anyhow::Result<()> {
 
     let objs_per_sec = |elapsed: std::time::Duration| hashes.len() as f32 / elapsed.as_secs_f32();
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(&hashes, &repo, || {
-        odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
-    })?;
+    do_gitoxide_in_parallel(&hashes, &repo, || odb::pack::cache::Never, AccessMode::ObjectExists)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide : confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_gitoxide_in_parallel(
+        &hashes,
+        &repo,
+        || odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES),
+        AccessMode::ObjectData,
+    )?;
     let elapsed = start.elapsed();
     println!(
         "parallel gitoxide (cache = {:.0}MB): confirmed {} bytes in {:?} ({:0.0} objects/s)",
@@ -38,6 +51,7 @@ fn main() -> anyhow::Result<()> {
         &hashes,
         &repo,
         odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
+        AccessMode::ObjectData,
     )?;
     let elapsed = start.elapsed();
     println!(
@@ -48,7 +62,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default)?;
+    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
         "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
@@ -164,10 +178,16 @@ where
     Ok(bytes)
 }
 
+enum AccessMode {
+    ObjectData,
+    ObjectExists,
+}
+
 fn do_gitoxide_in_parallel<C>(
     hashes: &[ObjectId],
     repo: &Repository,
     new_cache: impl Fn() -> C + Sync + Send,
+    mode: AccessMode,
 ) -> anyhow::Result<u64>
 where
     C: odb::pack::cache::DecodeEntry,
@@ -177,8 +197,15 @@ where
     hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
         || (Vec::new(), new_cache()),
         |(buf, cache), hash| {
-            let obj = repo.odb.find_existing(hash, buf, cache)?;
-            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+            match mode {
+                AccessMode::ObjectData => {
+                    let obj = repo.odb.find_existing(hash, buf, cache)?;
+                    bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                }
+                AccessMode::ObjectExists => {
+                    assert!(repo.odb.contains(hash), "each traversed object exists");
+                }
+            }
             Ok(())
         },
     )?;
