@@ -171,7 +171,7 @@ mod shared {
         if path.is_empty() {
             return Err(refs::Error::MalformedV1RefLine(trimmed.to_owned()));
         }
-        Ok(match path.strip_suffix("^{}") {
+        match path.strip_suffix("^{}") {
             Some(stripped) => {
                 let (previous_path, tag) =
                     out_refs
@@ -212,7 +212,8 @@ mod shared {
                     }),
                 };
             }
-        })
+        }
+        Ok(())
     }
 
     pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, refs::Error> {
@@ -256,7 +257,7 @@ mod shared {
                     }
                 })
             }
-            _ => return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned())),
+            _ => Err(refs::Error::MalformedV2RefLine(trimmed.to_owned())),
         }
     }
 }

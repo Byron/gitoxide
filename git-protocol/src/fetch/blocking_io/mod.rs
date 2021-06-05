@@ -65,7 +65,7 @@ mod fetch {
     use crate::fetch::refs::InternalRef;
     use crate::{
         credentials,
-        fetch::{ Action, Arguments, Command, Delegate, Error, Ref, Response},
+        fetch::{Action, Arguments, Command, Delegate, Error, Ref, Response},
     };
 
     /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
