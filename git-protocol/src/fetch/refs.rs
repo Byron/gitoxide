@@ -261,6 +261,48 @@ mod shared {
     }
 }
 
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+mod async_io {
+    use crate::fetch::{refs, refs::InternalRef, Ref};
+    use futures_io::AsyncBufRead;
+    use futures_lite::AsyncBufReadExt;
+
+    pub(crate) async fn from_v2_refs(
+        out_refs: &mut Vec<Ref>,
+        in_refs: &mut (dyn AsyncBufRead + Unpin),
+    ) -> Result<(), refs::Error> {
+        let mut line = String::new();
+        loop {
+            line.clear();
+            let bytes_read = in_refs.read_line(&mut line).await?;
+            if bytes_read == 0 {
+                break;
+            }
+            out_refs.push(refs::shared::parse_v2(&line)?);
+        }
+        Ok(())
+    }
+
+    pub(crate) async fn from_v1_refs_received_as_part_of_handshake(
+        out_refs: &mut Vec<InternalRef>,
+        in_refs: &mut (dyn AsyncBufRead + Unpin),
+    ) -> Result<(), refs::Error> {
+        let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
+        let mut line = String::new();
+        loop {
+            line.clear();
+            let bytes_read = in_refs.read_line(&mut line).await?;
+            if bytes_read == 0 {
+                break;
+            }
+            refs::shared::parse_v1(number_of_possible_symbolic_refs_for_lookup, out_refs, &line)?;
+        }
+        Ok(())
+    }
+}
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+pub(crate) use async_io::{from_v1_refs_received_as_part_of_handshake, from_v2_refs};
+
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
     use crate::fetch::{refs, refs::InternalRef, Ref};

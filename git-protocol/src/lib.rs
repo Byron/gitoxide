@@ -9,7 +9,7 @@
         feature = "async-client",
         all(not(feature = "blocking-client"), not(feature = "async-client"))
     ),
-    allow(dead_code)
+    allow(dead_code, unused_imports)
 )] // TODO: remove this and assure this holds at when done.
 
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
