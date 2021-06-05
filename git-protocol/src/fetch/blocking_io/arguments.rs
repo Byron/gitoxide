@@ -1,10 +1,14 @@
-use crate::fetch::{command::Feature, Command};
+use std::{fmt, io::Write};
+
 use bstr::{BStr, BString, ByteSlice};
+
 use git_transport::{
     client::{self, TransportV2Ext},
     Protocol,
 };
-use std::{fmt, io::Write};
+
+use crate::fetch::blocking_io::command::Feature;
+use crate::fetch::Command;
 
 /// The arguments passed to a server command.
 pub struct Arguments {

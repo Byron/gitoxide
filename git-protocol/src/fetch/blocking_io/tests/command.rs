@@ -8,11 +8,8 @@ mod v1 {
     const GITHUB_CAPABILITIES: &str = "multi_ack thin-pack side-band ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag allow-tip-sha1-in-want allow-reachable-sha1-in-want no-done symref=HEAD:refs/heads/main filter agent=git/github-gdf51a71f0236";
     mod fetch {
         mod default_features {
-            use crate::fetch::{
-                self,
-                tests::command::v1::{capabilities, GITHUB_CAPABILITIES},
-                Command,
-            };
+            use crate::fetch::blocking_io::tests::command::v1::{capabilities, GITHUB_CAPABILITIES};
+            use crate::fetch::{self, Command};
 
             #[test]
             fn it_chooses_the_best_multi_ack_and_sideband() {
@@ -61,7 +58,8 @@ mod v2 {
 
     mod fetch {
         mod default_features {
-            use crate::fetch::{self, tests::command::v2::capabilities, Command};
+            use crate::fetch::blocking_io::tests::command::v2::capabilities;
+            use crate::fetch::{self, Command};
 
             #[test]
             fn all_features() {
@@ -80,8 +78,10 @@ mod v2 {
         }
 
         mod initial_arguments {
-            use crate::fetch::{tests::command::v2::capabilities, Command};
             use bstr::ByteSlice;
+
+            use crate::fetch::blocking_io::tests::command::v2::capabilities;
+            use crate::fetch::Command;
 
             #[test]
             fn for_all_features() {
@@ -108,7 +108,8 @@ mod v2 {
 
     mod ls_refs {
         mod default_features {
-            use crate::fetch::{self, tests::command::v2::capabilities, Command};
+            use crate::fetch::blocking_io::tests::command::v2::capabilities;
+            use crate::fetch::{self, Command};
 
             #[test]
             fn default_as_there_are_no_features() {
@@ -123,8 +124,10 @@ mod v2 {
         }
 
         mod validate {
-            use crate::fetch::{tests::command::v2::capabilities, Command};
             use bstr::ByteSlice;
+
+            use crate::fetch::blocking_io::tests::command::v2::capabilities;
+            use crate::fetch::Command;
 
             #[test]
             fn ref_prefixes_can_always_be_used() {

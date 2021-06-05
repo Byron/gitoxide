@@ -12,13 +12,15 @@ fn id(hex: &str) -> git_hash::ObjectId {
 
 mod v1 {
     mod from_line_reader {
-        use crate::fetch::response::{id, mock_reader};
+        use std::io::Read;
+
         use git_protocol::fetch::{
             self,
             response::{Acknowledgement, ShallowUpdate},
         };
         use git_transport::Protocol;
-        use std::io::Read;
+
+        use crate::fetch::response::{id, mock_reader};
 
         #[test]
         fn clone() -> crate::Result {
@@ -104,12 +106,15 @@ mod v1 {
 }
 mod v2 {
     mod from_line_reader {
-        use crate::fetch::response::{id, mock_reader};
-        use git_protocol::fetch::response::ShallowUpdate;
-        use git_protocol::fetch::{self, response::Acknowledgement};
+        use std::{io, io::Read};
+
+        use git_protocol::fetch::{
+            self,
+            response::{Acknowledgement, ShallowUpdate},
+        };
         use git_transport::Protocol;
-        use std::io;
-        use std::io::Read;
+
+        use crate::fetch::response::{id, mock_reader};
 
         #[test]
         fn clone() -> crate::Result {

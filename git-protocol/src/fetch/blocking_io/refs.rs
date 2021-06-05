@@ -3,7 +3,9 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
+    /// The error returned when parsing References/refs from the server response.
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         Io(err: io::Error) {
             display("An IO error occurred while reading refs from the server")
