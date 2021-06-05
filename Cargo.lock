@@ -1031,6 +1031,7 @@ dependencies = [
  "bstr",
  "btoi",
  "futures-io",
+ "futures-lite",
  "git-features",
  "git-hash",
  "git-packetline",

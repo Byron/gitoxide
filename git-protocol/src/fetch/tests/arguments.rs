@@ -55,6 +55,48 @@ mod impls {
     }
 }
 
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+mod impls {
+    use crate::fetch::tests::arguments::Transport;
+    use async_trait::async_trait;
+    use git_transport::{
+        client,
+        client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+        Protocol, Service,
+    };
+
+    #[async_trait]
+    impl<T: client::Transport + Send> client::Transport for Transport<T> {
+        async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
+            self.inner.handshake(service).await
+        }
+
+        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+            self.inner.set_identity(identity)
+        }
+
+        fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
+            self.inner.request(write_mode, on_into_read)
+        }
+
+        async fn close(&mut self) -> Result<(), Error> {
+            self.inner.close().await
+        }
+
+        fn to_url(&self) -> String {
+            self.inner.to_url()
+        }
+
+        fn desired_protocol_version(&self) -> Protocol {
+            self.inner.desired_protocol_version()
+        }
+
+        fn is_stateful(&self) -> bool {
+            self.stateful
+        }
+    }
+}
+
 fn transport(
     out: &mut Vec<u8>,
     stateful: bool,
@@ -88,7 +130,7 @@ mod v1 {
 
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
-        arguments.send(&mut t, true).expect("sending to buffer to work");
+        arguments.send(&mut t, true).await.expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
             b"0046want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a feature-b
@@ -111,10 +153,10 @@ mod v1 {
         arguments.deepen_since(12345);
         arguments.deepen_not("refs/heads/main".into());
         arguments.have(id("0000000000000000000000000000000000000000"));
-        arguments.send(&mut t, false).expect("sending to buffer to work");
+        arguments.send(&mut t, false).await.expect("sending to buffer to work");
 
         arguments.have(id("1111111111111111111111111111111111111111"));
-        arguments.send(&mut t, true).expect("sending to buffer to work");
+        arguments.send(&mut t, true).await.expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
             b"005cwant 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow deepen-since deepen-not
@@ -144,10 +186,10 @@ mod v1 {
         arguments.deepen(1);
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
         arguments.have(id("0000000000000000000000000000000000000000"));
-        arguments.send(&mut t, false).expect("sending to buffer to work");
+        arguments.send(&mut t, false).await.expect("sending to buffer to work");
 
         arguments.have(id("1111111111111111111111111111111111111111"));
-        arguments.send(&mut t, true).expect("sending to buffer to work");
+        arguments.send(&mut t, true).await.expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
             b"0044want 7b333369de1221f9bfbbe03a3a13e9a09bc1c907 feature-a shallow
@@ -175,7 +217,7 @@ mod v2 {
         arguments.deepen_relative();
         arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
         arguments.want(id("ff333369de1221f9bfbbe03a3a13e9a09bc1ffff"));
-        arguments.send(&mut t, true).expect("sending to buffer to work");
+        arguments.send(&mut t, true).await.expect("sending to buffer to work");
         assert_eq!(
             out.as_bstr(),
             b"0012command=fetch
@@ -205,10 +247,10 @@ mod v2 {
             arguments.want(id("7b333369de1221f9bfbbe03a3a13e9a09bc1c907"));
             arguments.deepen_not("refs/heads/main".into());
             arguments.have(id("0000000000000000000000000000000000000000"));
-            arguments.send(&mut t, false).expect("sending to buffer to work");
+            arguments.send(&mut t, false).await.expect("sending to buffer to work");
 
             arguments.have(id("1111111111111111111111111111111111111111"));
-            arguments.send(&mut t, true).expect("sending to buffer to work");
+            arguments.send(&mut t, true).await.expect("sending to buffer to work");
             assert_eq!(
                 out.as_bstr(),
                 b"0012command=fetch
