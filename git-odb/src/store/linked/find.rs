@@ -13,9 +13,7 @@ impl linked::Store {
     pub fn contains(&self, id: impl AsRef<oid>) -> bool {
         let id = id.as_ref();
         for db in self.dbs.iter() {
-            if let Some(_) = db.internal_find_packed(id) {
-                return true;
-            } else if db.loose.contains(id) {
+            if db.internal_find_packed(id).is_some() || db.loose.contains(id) {
                 return true;
             }
         }
