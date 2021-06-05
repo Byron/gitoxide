@@ -1,5 +1,11 @@
 ## Potential for improving performance
 
+### git-odb
+
+* Finding an object in a loose object store [costs an extra disk IO operation][extra-iop] to pacify the borrow checker. This wouldn't be an issue with polonius.
+
+[extra-iop]: https://github.com/Byron/gitoxide/blob/2958145a0ae1ef582bbf88352f5567d5c2b5eaf0/git-odb/src/store/linked/find.rs#L33
+
 ### git-object
 
 * **tree-parsing performance**

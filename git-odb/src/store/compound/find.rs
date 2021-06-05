@@ -48,7 +48,7 @@ impl compound::Store {
     /// (The polonius borrow-checker would support this via the locate
     /// function, so this can be [simplified](https://github.com/Byron/gitoxide/blob/0c5f4043da4615820cb180804a81c2d4fe75fe5e/git-odb/src/compound/locate.rs#L47)
     /// once polonius is stable.)
-    pub(crate) fn internal_find(&self, id: impl AsRef<git_hash::oid>) -> Option<PackLocation> {
+    pub(crate) fn internal_find_packed(&self, id: impl AsRef<git_hash::oid>) -> Option<PackLocation> {
         let id = id.as_ref();
         for (bundle_index, bundle) in self.bundles.iter().enumerate() {
             if let Some(idx) = find_pack_index(bundle, id) {

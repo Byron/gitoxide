@@ -6,7 +6,7 @@ use crate::{
     pack::bundle::Location,
     store::{compound, linked},
 };
-use git_pack::{data::Object, find::PackEntry};
+use git_pack::{data::Object, find::Entry};
 
 impl crate::Find for linked::Store {
     type Error = compound::find::Error;
@@ -19,7 +19,7 @@ impl crate::Find for linked::Store {
     ) -> Result<Option<Object<'a>>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
-            match db.internal_find(id) {
+            match db.internal_find_packed(id) {
                 Some(compound::find::PackLocation {
                     bundle_index: pack_id,
                     entry_index,
@@ -45,7 +45,7 @@ impl crate::Find for linked::Store {
             if let Some(compound::find::PackLocation {
                 bundle_index,
                 entry_index,
-            }) = db.internal_find(id)
+            }) = db.internal_find_packed(id)
             {
                 let bundle = &db.bundles[bundle_index];
                 let pack_offset = bundle.index.pack_offset_at_index(entry_index);
@@ -56,17 +56,17 @@ impl crate::Find for linked::Store {
                     .pack
                     .decompress_entry(&entry, buf)
                     .ok()
-                    .map(|entry_size| pack::bundle::Location {
+                    .map(|entry_size_past_header| pack::bundle::Location {
                         pack_id: bundle.pack.id,
                         index_file_id: entry_index,
-                        entry_size: entry.header_size() + entry_size,
+                        entry_size: entry.header_size() + entry_size_past_header,
                     });
             }
         }
         None
     }
 
-    fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
+    fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {
         self.dbs
             .iter()
             .find_map(|db| db.bundles.iter().find(|p| p.pack.id == location.pack_id))
@@ -74,14 +74,11 @@ impl crate::Find for linked::Store {
             .and_then(|(bundle, l)| {
                 let crc32 = bundle.index.crc32_at_index(l.index_file_id);
                 let pack_offset = bundle.index.pack_offset_at_index(l.index_file_id);
-                bundle
-                    .pack
-                    .entry_slice(l.entry_range(pack_offset))
-                    .map(|data| PackEntry {
-                        data,
-                        crc32,
-                        version: bundle.pack.version(),
-                    })
+                bundle.pack.entry_slice(l.entry_range(pack_offset)).map(|data| Entry {
+                    data,
+                    crc32,
+                    version: bundle.pack.version(),
+                })
             })
     }
 }
@@ -102,7 +99,7 @@ impl crate::Find for &linked::Store {
         (*self).location_by_id(id, buf)
     }
 
-    fn pack_entry_by_location(&self, location: &pack::bundle::Location) -> Option<PackEntry<'_>> {
-        (*self).pack_entry_by_location(location)
+    fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {
+        (*self).entry_by_location(location)
     }
 }

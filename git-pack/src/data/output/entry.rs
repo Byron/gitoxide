@@ -58,7 +58,7 @@ impl output::Entry {
     /// Create an Entry from a previously counted object which is located in a pack. It's `entry` is provided here.
     /// The `version` specifies what kind of target `Entry` version the caller desires.
     pub fn from_pack_entry(
-        entry: find::PackEntry<'_>,
+        entry: find::Entry<'_>,
         count: &output::Count,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {

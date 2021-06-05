@@ -82,23 +82,21 @@ where
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
                 for count in chunk {
-                    out.push(match count
-                        .entry_pack_location
-                        .as_ref()
-                        .and_then(|l| db.pack_entry_by_location(l))
-                    {
-                        Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
-                            Some(entry) => entry,
+                    out.push(
+                        match count.entry_pack_location.as_ref().and_then(|l| db.entry_by_location(l)) {
+                            Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
+                                Some(entry) => entry,
+                                None => {
+                                    let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                                    output::Entry::from_data(count, &obj)
+                                }
+                            },
                             None => {
                                 let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
                                 output::Entry::from_data(count, &obj)
                             }
-                        },
-                        None => {
-                            let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                            output::Entry::from_data(count, &obj)
-                        }
-                    }?);
+                        }?,
+                    );
                     progress.inc();
                 }
                 Ok(out)

@@ -31,7 +31,7 @@ pub trait Find {
     /// _Note_ that the object database may have no notion of packs and thus always returns `None`.
     fn location_by_id(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location>;
 
-    /// Return the [`PackEntry`] for `location` if it is backed by a pack.
+    /// Return the [`Entry`] for `location` if it is backed by a pack.
     ///
     /// Note that this is only in the interest of avoiding duplicate work during pack generation.
     /// Pack locations can be obtained from a [`data::Object`].
@@ -40,7 +40,7 @@ pub trait Find {
     ///
     /// Custom implementations might be interested in providing their own meta-data with `object`,
     /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
-    fn pack_entry_by_location(&self, location: &crate::bundle::Location) -> Option<PackEntry<'_>>;
+    fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<Entry<'_>>;
 }
 
 mod ext {
@@ -209,7 +209,7 @@ pub mod existing_iter {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)] // TODO: docs
-pub struct PackEntry<'a> {
+pub struct Entry<'a> {
     /// The pack-data encoded bytes of the pack data entry as present in the pack file, including the header followed by compressed data.
     pub data: &'a [u8],
     /// The crc32 hash over the entirety of `data`, or None if the pack file format doesn't support it yet.
@@ -220,7 +220,7 @@ pub struct PackEntry<'a> {
 
 mod find_impls {
     use crate::bundle::Location;
-    use crate::{data::Object, find::PackEntry};
+    use crate::{data::Object, find::Entry};
     use git_hash::oid;
     use std::ops::Deref;
 
@@ -243,8 +243,8 @@ mod find_impls {
             self.deref().location_by_id(id, buf)
         }
 
-        fn pack_entry_by_location(&self, object: &crate::bundle::Location) -> Option<PackEntry<'_>> {
-            self.deref().pack_entry_by_location(object)
+        fn entry_by_location(&self, object: &crate::bundle::Location) -> Option<Entry<'_>> {
+            self.deref().entry_by_location(object)
         }
     }
 
@@ -267,8 +267,8 @@ mod find_impls {
             self.deref().location_by_id(id, buf)
         }
 
-        fn pack_entry_by_location(&self, location: &crate::bundle::Location) -> Option<PackEntry<'_>> {
-            self.deref().pack_entry_by_location(location)
+        fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<Entry<'_>> {
+            self.deref().entry_by_location(location)
         }
     }
 }
