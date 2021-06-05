@@ -147,10 +147,44 @@ impl Arguments {
     }
 }
 
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+mod shared {
+    use crate::fetch::Arguments;
+    use bstr::{BString, ByteSlice};
+    use git_transport::client;
+    use git_transport::client::MessageKind;
+
+    impl Arguments {
+        pub(in crate::fetch::arguments) fn send_shared_v1(
+            &mut self,
+            transport_is_stateful: bool,
+            add_done_argument: bool,
+        ) -> Result<(MessageKind, Option<Vec<BString>>), client::Error> {
+            if self.haves.is_empty() {
+                assert!(add_done_argument, "If there are no haves, is_done must be true.");
+            }
+            let on_into_read = if add_done_argument {
+                client::MessageKind::Text(&b"done"[..])
+            } else {
+                client::MessageKind::Flush
+            };
+            let retained_state = if transport_is_stateful {
+                None
+            } else {
+                Some(self.args.clone())
+            };
+
+            if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
+                self.args.swap(first_arg_position, 0);
+            }
+            Ok((on_into_read, retained_state))
+        }
+    }
+}
+
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
 mod async_io {
     use crate::fetch::{Arguments, Command};
-    use bstr::ByteSlice;
     use futures_lite::io::AsyncWriteExt;
     use git_transport::{client, client::TransportV2Ext};
 
@@ -165,22 +199,10 @@ mod async_io {
             }
             match self.version {
                 git_transport::Protocol::V1 => {
-                    let on_into_read = if add_done_argument {
-                        client::MessageKind::Text(&b"done"[..])
-                    } else {
-                        client::MessageKind::Flush
-                    };
-                    let retained_state = if transport.is_stateful() {
-                        None
-                    } else {
-                        Some(self.args.clone())
-                    };
+                    let (on_into_read, retained_state) =
+                        self.send_shared_v1(transport.is_stateful(), add_done_argument)?;
                     let mut line_writer =
                         transport.request(client::WriteMode::OneLfTerminatedLinePerWriteCall, on_into_read)?;
-
-                    if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
-                        self.args.swap(first_arg_position, 0);
-                    }
                     let had_args = !self.args.is_empty();
                     for arg in self.args.drain(..) {
                         line_writer.write_all(&arg).await?;
@@ -217,13 +239,9 @@ mod async_io {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use std::io::Write;
-
-    use bstr::ByteSlice;
-
-    use git_transport::{client, client::TransportV2Ext};
-
     use crate::fetch::{Arguments, Command};
+    use git_transport::{client, client::TransportV2Ext};
+    use std::io::Write;
 
     impl Arguments {
         pub(crate) fn send<'a, T: client::Transport + 'a>(
@@ -236,22 +254,10 @@ mod blocking_io {
             }
             match self.version {
                 git_transport::Protocol::V1 => {
-                    let on_into_read = if add_done_argument {
-                        client::MessageKind::Text(&b"done"[..])
-                    } else {
-                        client::MessageKind::Flush
-                    };
-                    let retained_state = if transport.is_stateful() {
-                        None
-                    } else {
-                        Some(self.args.clone())
-                    };
+                    let (on_into_read, retained_state) =
+                        self.send_shared_v1(transport.is_stateful(), add_done_argument)?;
                     let mut line_writer =
                         transport.request(client::WriteMode::OneLfTerminatedLinePerWriteCall, on_into_read)?;
-
-                    if let Some(first_arg_position) = self.args.iter().position(|l| l.starts_with_str("want ")) {
-                        self.args.swap(first_arg_position, 0);
-                    }
                     let had_args = !self.args.is_empty();
                     for arg in self.args.drain(..) {
                         line_writer.write_all(&arg)?;
