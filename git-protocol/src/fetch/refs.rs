@@ -152,122 +152,138 @@ pub(crate) fn from_capabilities<'a>(
     Ok(())
 }
 
-pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRead) -> Result<(), Error> {
-    let mut line = String::new();
-    loop {
-        line.clear();
-        let bytes_read = in_refs.read_line(&mut line)?;
-        if bytes_read == 0 {
-            break;
-        }
-        let trimmed = line.trim_end();
-        let mut tokens = trimmed.splitn(3, ' ');
-        match (tokens.next(), tokens.next()) {
-            (Some(hex_hash), Some(path)) => {
-                let id = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
-                if path.is_empty() {
-                    return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
-                }
-                out_refs.push(if let Some(attribute) = tokens.next() {
-                    let mut tokens = attribute.splitn(2, ':');
-                    match (tokens.next(), tokens.next()) {
-                        (Some(attribute), Some(value)) => {
-                            if value.is_empty() {
-                                return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
-                            }
-                            match attribute {
-                                "peeled" => Ref::Peeled {
-                                    path: path.into(),
-                                    object: git_hash::ObjectId::from_hex(value.as_bytes())?,
-                                    tag: id,
-                                },
-                                "symref-target" => Ref::Symbolic {
-                                    path: path.into(),
-                                    object: id,
-                                    target: value.into(),
-                                },
-                                _ => return Err(Error::UnkownAttribute(attribute.to_owned(), trimmed.to_owned())),
-                            }
-                        }
-                        _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned())),
-                    }
-                } else {
-                    Ref::Direct {
-                        object: id,
-                        path: path.into(),
-                    }
-                });
-            }
-            _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned())),
-        }
-    }
-    Ok(())
-}
+#[cfg(feature = "blocking-client")]
+mod blocking_io {
+    use crate::fetch::refs::InternalRef;
+    use crate::fetch::{refs, Ref};
+    use std::io;
 
-pub(crate) fn from_v1_refs_received_as_part_of_handshake(
-    out_refs: &mut Vec<InternalRef>,
-    in_refs: &mut dyn io::BufRead,
-) -> Result<(), Error> {
-    let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
-    let mut line = String::new();
-    loop {
-        line.clear();
-        let bytes_read = in_refs.read_line(&mut line)?;
-        if bytes_read == 0 {
-            break;
-        }
-        let trimmed = line.trim_end();
-        let (hex_hash, path) = trimmed.split_at(
-            trimmed
-                .find(' ')
-                .ok_or_else(|| Error::MalformedV1RefLine(trimmed.to_owned()))?,
-        );
-        let path = &path[1..];
-        if path.is_empty() {
-            return Err(Error::MalformedV1RefLine(trimmed.to_owned()));
-        }
-        match path.strip_suffix("^{}") {
-            Some(stripped) => {
-                let (previous_path, tag) =
-                    out_refs
-                        .pop()
-                        .and_then(InternalRef::unpack_direct)
-                        .ok_or(Error::InvariantViolation(
-                            "Expecting peeled refs to be preceded by direct refs",
-                        ))?;
-                if previous_path != stripped {
-                    return Err(Error::InvariantViolation(
-                        "Expecting peeled refs to have the same base path as the previous, unpeeled one",
-                    ));
-                }
-                out_refs.push(InternalRef::Peeled {
-                    path: previous_path,
-                    tag,
-                    object: git_hash::ObjectId::from_hex(hex_hash.as_bytes())?,
-                });
+    pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRead) -> Result<(), refs::Error> {
+        let mut line = String::new();
+        loop {
+            line.clear();
+            let bytes_read = in_refs.read_line(&mut line)?;
+            if bytes_read == 0 {
+                break;
             }
-            None => {
-                let object = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
-                match out_refs
-                    .iter()
-                    .take(number_of_possible_symbolic_refs_for_lookup)
-                    .position(|r| r.lookup_symbol_has_path(path))
-                {
-                    Some(position) => match out_refs.swap_remove(position) {
-                        InternalRef::SymbolicForLookup { path: _, target } => out_refs.push(InternalRef::Symbolic {
+            let trimmed = line.trim_end();
+            let mut tokens = trimmed.splitn(3, ' ');
+            match (tokens.next(), tokens.next()) {
+                (Some(hex_hash), Some(path)) => {
+                    let id = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
+                    if path.is_empty() {
+                        return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned()));
+                    }
+                    out_refs.push(if let Some(attribute) = tokens.next() {
+                        let mut tokens = attribute.splitn(2, ':');
+                        match (tokens.next(), tokens.next()) {
+                            (Some(attribute), Some(value)) => {
+                                if value.is_empty() {
+                                    return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned()));
+                                }
+                                match attribute {
+                                    "peeled" => Ref::Peeled {
+                                        path: path.into(),
+                                        object: git_hash::ObjectId::from_hex(value.as_bytes())?,
+                                        tag: id,
+                                    },
+                                    "symref-target" => Ref::Symbolic {
+                                        path: path.into(),
+                                        object: id,
+                                        target: value.into(),
+                                    },
+                                    _ => {
+                                        return Err(refs::Error::UnkownAttribute(
+                                            attribute.to_owned(),
+                                            trimmed.to_owned(),
+                                        ))
+                                    }
+                                }
+                            }
+                            _ => return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned())),
+                        }
+                    } else {
+                        Ref::Direct {
+                            object: id,
                             path: path.into(),
-                            object,
-                            target,
-                        }),
-                        _ => unreachable!("Bug in lookup_symbol_has_path - must return lookup symbols"),
-                    },
-                    None => out_refs.push(InternalRef::Direct {
-                        object,
-                        path: path.into(),
-                    }),
-                };
+                        }
+                    });
+                }
+                _ => return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned())),
             }
         }
+        Ok(())
     }
-    Ok(())
+
+    pub(crate) fn from_v1_refs_received_as_part_of_handshake(
+        out_refs: &mut Vec<InternalRef>,
+        in_refs: &mut dyn io::BufRead,
+    ) -> Result<(), refs::Error> {
+        let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
+        let mut line = String::new();
+        loop {
+            line.clear();
+            let bytes_read = in_refs.read_line(&mut line)?;
+            if bytes_read == 0 {
+                break;
+            }
+            let trimmed = line.trim_end();
+            let (hex_hash, path) = trimmed.split_at(
+                trimmed
+                    .find(' ')
+                    .ok_or_else(|| refs::Error::MalformedV1RefLine(trimmed.to_owned()))?,
+            );
+            let path = &path[1..];
+            if path.is_empty() {
+                return Err(refs::Error::MalformedV1RefLine(trimmed.to_owned()));
+            }
+            match path.strip_suffix("^{}") {
+                Some(stripped) => {
+                    let (previous_path, tag) =
+                        out_refs
+                            .pop()
+                            .and_then(InternalRef::unpack_direct)
+                            .ok_or(refs::Error::InvariantViolation(
+                                "Expecting peeled refs to be preceded by direct refs",
+                            ))?;
+                    if previous_path != stripped {
+                        return Err(refs::Error::InvariantViolation(
+                            "Expecting peeled refs to have the same base path as the previous, unpeeled one",
+                        ));
+                    }
+                    out_refs.push(InternalRef::Peeled {
+                        path: previous_path,
+                        tag,
+                        object: git_hash::ObjectId::from_hex(hex_hash.as_bytes())?,
+                    });
+                }
+                None => {
+                    let object = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
+                    match out_refs
+                        .iter()
+                        .take(number_of_possible_symbolic_refs_for_lookup)
+                        .position(|r| r.lookup_symbol_has_path(path))
+                    {
+                        Some(position) => match out_refs.swap_remove(position) {
+                            InternalRef::SymbolicForLookup { path: _, target } => {
+                                out_refs.push(InternalRef::Symbolic {
+                                    path: path.into(),
+                                    object,
+                                    target,
+                                })
+                            }
+                            _ => unreachable!("Bug in lookup_symbol_has_path - must return lookup symbols"),
+                        },
+                        None => out_refs.push(InternalRef::Direct {
+                            object,
+                            path: path.into(),
+                        }),
+                    };
+                }
+            }
+        }
+        Ok(())
+    }
 }
+#[cfg(feature = "blocking-client")]
+pub(crate) use blocking_io::{from_v1_refs_received_as_part_of_handshake, from_v2_refs};

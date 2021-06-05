@@ -3,9 +3,7 @@ mod blocking_io;
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{
     delegate::{Action, Delegate},
-    fetch, refs,
-    refs::Ref,
-    response,
+    fetch, response,
     response::Response,
     Error,
 };
@@ -21,6 +19,10 @@ pub use command::Command;
 pub fn agent() -> (&'static str, Option<&'static str>) {
     ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
 }
+
+///
+pub mod refs;
+pub use refs::Ref;
 
 #[cfg(test)]
 mod tests;

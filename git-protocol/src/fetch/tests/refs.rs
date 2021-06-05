@@ -2,7 +2,10 @@ use std::io;
 
 use git_transport::client;
 
-use crate::fetch::{blocking_io::refs::InternalRef, refs, Ref};
+use crate::{
+    fetch::refs::InternalRef,
+    fetch::{refs, Ref},
+};
 
 fn oid(hex_sha: &str) -> git_hash::ObjectId {
     git_hash::ObjectId::from_hex(hex_sha.as_bytes()).expect("valid input")
