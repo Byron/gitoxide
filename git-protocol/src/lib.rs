@@ -4,7 +4,13 @@
 //! the actual client implementation.
 #![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
-#![cfg_attr(feature = "async-client", allow(dead_code))] // TODO: remove this and assure this holds at when done.
+#![cfg_attr(
+    any(
+        feature = "async-client",
+        all(not(feature = "blocking-client"), not(feature = "async-client"))
+    ),
+    allow(dead_code)
+)] // TODO: remove this and assure this holds at when done.
 
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
 pub use git_transport as transport;
