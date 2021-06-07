@@ -9,7 +9,7 @@ use std::ops::{Deref, DerefMut};
 /// This trait represents all transport related functions that don't require any input/output to be done which helps
 /// implementation to share more code across blocking and async programs.
 pub trait TransportWithoutIO {
-    /// If the handshake or subsequent reads failed with [io::ErrorKind::PermissionDenied], use this method to
+    /// If the handshake or subsequent reads failed with [std::io::ErrorKind::PermissionDenied], use this method to
     /// inform the transport layer about the identity to use for subsequent calls.
     /// If authentication continues to fail even with an identity set, consider communicating this to the provider
     /// of the identity in order to mark it as invalid. Otherwise the user might have difficulty updating obsolete
