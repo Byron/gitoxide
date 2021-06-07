@@ -1,7 +1,7 @@
 use crate::fetch::command::Feature;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
-use std::io;
+use std::{borrow::Cow, io};
 
 quick_error! {
     /// The error used in the [response module][crate::fetch::response].
@@ -167,7 +167,7 @@ mod blocking_io {
     use git_transport::{client, Protocol};
     use std::io;
 
-    fn parse_section<T>(
+    fn parse_v2_section<T>(
         line: &mut String,
         reader: &mut impl client::ExtendedBufRead,
         res: &mut Vec<T>,
@@ -231,24 +231,9 @@ mod blocking_io {
                             }
                         };
 
-                        // with a friendly server, we just assume that a non-ack line is a pack line
-                        // which is our hint to stop here.
-                        match Acknowledgement::from_line(&peeked_line) {
-                            Ok(ack) => match ack.id() {
-                                Some(id) => {
-                                    if !acks.iter().any(|a| a.id() == Some(id)) {
-                                        acks.push(ack);
-                                    }
-                                }
-                                None => acks.push(ack),
-                            },
-                            Err(_) => match ShallowUpdate::from_line(&peeked_line) {
-                                Ok(shallow) => {
-                                    shallows.push(shallow);
-                                }
-                                Err(_) => break 'lines true,
-                            },
-                        };
+                        if Response::parse_v1_ack_or_shallow_or_assume_pack(&mut acks, &mut shallows, &peeked_line) {
+                            break 'lines true;
+                        }
                         assert_ne!(reader.read_line(&mut line)?, 0, "consuming a peeked line works");
                     };
                     Ok(Response {
@@ -274,12 +259,12 @@ mod blocking_io {
 
                         match line.trim_end() {
                             "acknowledgments" => {
-                                if parse_section(&mut line, reader, &mut acks, Acknowledgement::from_line)? {
+                                if parse_v2_section(&mut line, reader, &mut acks, Acknowledgement::from_line)? {
                                     break 'section false;
                                 }
                             }
                             "shallow-info" => {
-                                if parse_section(&mut line, reader, &mut shallows, ShallowUpdate::from_line)? {
+                                if parse_v2_section(&mut line, reader, &mut shallows, ShallowUpdate::from_line)? {
                                     break 'section false;
                                 }
                             }
@@ -298,5 +283,34 @@ mod blocking_io {
                 }
             }
         }
+    }
+}
+
+#[cfg(any(feature = "async-client", feature = "blocking-client"))]
+impl Response {
+    /// with a friendly server, we just assume that a non-ack line is a pack line
+    /// which is our hint to stop here.
+    fn parse_v1_ack_or_shallow_or_assume_pack(
+        acks: &mut Vec<Acknowledgement>,
+        shallows: &mut Vec<ShallowUpdate>,
+        peeked_line: &Cow<'_, str>,
+    ) -> bool {
+        match Acknowledgement::from_line(&peeked_line) {
+            Ok(ack) => match ack.id() {
+                Some(id) => {
+                    if !acks.iter().any(|a| a.id() == Some(id)) {
+                        acks.push(ack);
+                    }
+                }
+                None => acks.push(ack),
+            },
+            Err(_) => match ShallowUpdate::from_line(&peeked_line) {
+                Ok(shallow) => {
+                    shallows.push(shallow);
+                }
+                Err(_) => return true,
+            },
+        };
+        false
     }
 }
