@@ -97,50 +97,7 @@ fn append_url(base: &str, suffix: &str) -> String {
     }
 }
 
-impl<H: Http> client::Transport for Transport<H> {
-    fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse<'_>, client::Error> {
-        let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
-        let static_headers = [Cow::Borrowed(self.user_agent_header)];
-        let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
-        if self.desired_version != Protocol::V1 {
-            dynamic_headers.push(Cow::Owned(format!(
-                "Git-Protocol: version={}",
-                self.desired_version as usize
-            )));
-        }
-        self.add_basic_auth_if_present(&mut dynamic_headers)?;
-        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
-        <Transport<H>>::check_content_type(service, "advertisement", headers)?;
-
-        let line_reader = self
-            .line_provider
-            .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLine::Flush]));
-
-        let mut announced_service = String::new();
-        line_reader.as_read().read_to_string(&mut announced_service)?;
-        let expected_service_announcement = format!("# service={}", service.as_str());
-        if announced_service.trim() != expected_service_announcement {
-            return Err(client::Error::Http(Error::Detail(format!(
-                "Expected to see {:?}, but got {:?}",
-                expected_service_announcement,
-                announced_service.trim()
-            ))));
-        }
-
-        let capabilities::recv::Outcome {
-            capabilities,
-            refs,
-            protocol: actual_protocol,
-        } = Capabilities::from_lines_with_version_detection(line_reader)?;
-        self.actual_version = actual_protocol;
-        self.service = Some(service);
-        Ok(client::SetServiceResponse {
-            actual_protocol,
-            capabilities,
-            refs,
-        })
-    }
-
+impl<H: Http> client::TransportWithoutIO for Transport<H> {
     fn set_identity(&mut self, identity: client::Identity) -> Result<(), client::Error> {
         self.identity = Some(identity);
         Ok(())
@@ -190,10 +147,6 @@ impl<H: Http> client::Transport for Transport<H> {
         ))
     }
 
-    fn close(&mut self) -> Result<(), client::Error> {
-        Ok(())
-    }
-
     fn to_url(&self) -> String {
         self.url.to_owned()
     }
@@ -204,6 +157,55 @@ impl<H: Http> client::Transport for Transport<H> {
 
     fn is_stateful(&self) -> bool {
         false
+    }
+}
+
+impl<H: Http> client::Transport for Transport<H> {
+    fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse<'_>, client::Error> {
+        let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
+        let static_headers = [Cow::Borrowed(self.user_agent_header)];
+        let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
+        if self.desired_version != Protocol::V1 {
+            dynamic_headers.push(Cow::Owned(format!(
+                "Git-Protocol: version={}",
+                self.desired_version as usize
+            )));
+        }
+        self.add_basic_auth_if_present(&mut dynamic_headers)?;
+        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        <Transport<H>>::check_content_type(service, "advertisement", headers)?;
+
+        let line_reader = self
+            .line_provider
+            .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLine::Flush]));
+
+        let mut announced_service = String::new();
+        line_reader.as_read().read_to_string(&mut announced_service)?;
+        let expected_service_announcement = format!("# service={}", service.as_str());
+        if announced_service.trim() != expected_service_announcement {
+            return Err(client::Error::Http(Error::Detail(format!(
+                "Expected to see {:?}, but got {:?}",
+                expected_service_announcement,
+                announced_service.trim()
+            ))));
+        }
+
+        let capabilities::recv::Outcome {
+            capabilities,
+            refs,
+            protocol: actual_protocol,
+        } = Capabilities::from_lines_with_version_detection(line_reader)?;
+        self.actual_version = actual_protocol;
+        self.service = Some(service);
+        Ok(client::SetServiceResponse {
+            actual_protocol,
+            capabilities,
+            refs,
+        })
+    }
+
+    fn close(&mut self) -> Result<(), client::Error> {
+        Ok(())
     }
 }
 

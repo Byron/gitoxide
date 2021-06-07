@@ -6,6 +6,44 @@ use bstr::BString;
 use git_packetline::PacketLine;
 use std::{io, io::Write};
 
+impl<R, W> client::TransportWithoutIO for git::Connection<R, W>
+where
+    R: io::Read,
+    W: io::Write,
+{
+    fn request(
+        &mut self,
+        write_mode: client::WriteMode,
+        on_into_read: client::MessageKind,
+    ) -> Result<client::RequestWriter<'_>, client::Error> {
+        Ok(client::RequestWriter::new_from_bufread(
+            &mut self.writer,
+            Box::new(self.line_provider.as_read_without_sidebands()),
+            write_mode,
+            on_into_read,
+        ))
+    }
+
+    fn to_url(&self) -> String {
+        git_url::Url {
+            scheme: git_url::Scheme::File,
+            user: None,
+            host: None,
+            port: None,
+            path: self.path.clone(),
+        }
+        .to_string()
+    }
+
+    fn desired_protocol_version(&self) -> Protocol {
+        self.desired_version
+    }
+
+    fn is_stateful(&self) -> bool {
+        true
+    }
+}
+
 impl<R, W> client::Transport for git::Connection<R, W>
 where
     R: io::Read,
@@ -35,42 +73,10 @@ where
         })
     }
 
-    fn request(
-        &mut self,
-        write_mode: client::WriteMode,
-        on_into_read: client::MessageKind,
-    ) -> Result<client::RequestWriter<'_>, client::Error> {
-        Ok(client::RequestWriter::new_from_bufread(
-            &mut self.writer,
-            Box::new(self.line_provider.as_read_without_sidebands()),
-            write_mode,
-            on_into_read,
-        ))
-    }
-
     fn close(&mut self) -> Result<(), client::Error> {
         git_packetline::encode::flush_to_write(&mut self.writer)?;
         self.writer.flush()?;
         Ok(())
-    }
-
-    fn to_url(&self) -> String {
-        git_url::Url {
-            scheme: git_url::Scheme::File,
-            user: None,
-            host: None,
-            port: None,
-            path: self.path.clone(),
-        }
-        .to_string()
-    }
-
-    fn desired_protocol_version(&self) -> Protocol {
-        self.desired_version
-    }
-
-    fn is_stateful(&self) -> bool {
-        true
     }
 }
 

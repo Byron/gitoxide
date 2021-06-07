@@ -9,7 +9,7 @@ use bstr::ByteSlice;
 
 use git_transport::{
     client,
-    client::{git, Transport, TransportV2Ext},
+    client::{git, Transport, TransportV2Ext, TransportWithoutIO},
     Protocol, Service,
 };
 

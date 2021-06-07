@@ -6,9 +6,10 @@ use std::{
 
 use bstr::ByteVec;
 
-use git_transport::client::http;
-use git_transport::client::Transport;
-use git_transport::Protocol;
+use git_transport::{
+    client::{http, TransportWithoutIO},
+    Protocol,
+};
 
 use crate::fixture_bytes;
 

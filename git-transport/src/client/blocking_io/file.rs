@@ -2,9 +2,8 @@ use std::process::{self, Command, Stdio};
 
 use bstr::{BString, ByteSlice};
 
-use crate::client::git;
 use crate::{
-    client::{self, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+    client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
 };
 
@@ -89,6 +88,31 @@ impl SpawnProcessOnDemand {
     }
 }
 
+impl client::TransportWithoutIO for SpawnProcessOnDemand {
+    fn request(
+        &mut self,
+        write_mode: WriteMode,
+        on_into_read: MessageKind,
+    ) -> Result<RequestWriter<'_>, client::Error> {
+        self.connection
+            .as_mut()
+            .expect("handshake() to have been called first")
+            .request(write_mode, on_into_read)
+    }
+
+    fn to_url(&self) -> String {
+        self.url.to_string()
+    }
+
+    fn desired_protocol_version(&self) -> Protocol {
+        self.desired_version
+    }
+
+    fn is_stateful(&self) -> bool {
+        true
+    }
+}
+
 impl client::Transport for SpawnProcessOnDemand {
     fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
         assert!(
@@ -125,35 +149,12 @@ impl client::Transport for SpawnProcessOnDemand {
         c.handshake(service)
     }
 
-    fn request(
-        &mut self,
-        write_mode: WriteMode,
-        on_into_read: MessageKind,
-    ) -> Result<RequestWriter<'_>, client::Error> {
-        self.connection
-            .as_mut()
-            .expect("handshake() to have been called first")
-            .request(write_mode, on_into_read)
-    }
-
     fn close(&mut self) -> Result<(), client::Error> {
         if let Some(mut c) = self.connection.take() {
             c.close()
         } else {
             Ok(())
         }
-    }
-
-    fn to_url(&self) -> String {
-        self.url.to_string()
-    }
-
-    fn desired_protocol_version(&self) -> Protocol {
-        self.desired_version
-    }
-
-    fn is_stateful(&self) -> bool {
-        true
     }
 }
 
