@@ -2452,9 +2452,9 @@ checksum = "56dee185309b50d1f11bfedef0fe6d036842e3fb77413abef29f8f8d1c5d4c1c"
 
 [[package]]
 name = "uluru"
-version = "2.0.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e81efc0221a844c70a582efbe34341fe2052574896e740ac80cc3b0c677ff897"
+checksum = "ce7967da538013500fa504ce61af688d6a310e6dea6985c71f3c6be37e2a55c7"
 dependencies = [
  "arrayvec",
 ]
