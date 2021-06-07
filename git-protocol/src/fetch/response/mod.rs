@@ -1,7 +1,7 @@
 use crate::fetch::command::Feature;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
-use std::{borrow::Cow, io};
+use std::io;
 
 quick_error! {
     /// The error used in the [response module][crate::fetch::response].
@@ -164,7 +164,7 @@ impl Response {
     fn parse_v1_ack_or_shallow_or_assume_pack(
         acks: &mut Vec<Acknowledgement>,
         shallows: &mut Vec<ShallowUpdate>,
-        peeked_line: &Cow<'_, str>,
+        peeked_line: &str,
     ) -> bool {
         match Acknowledgement::from_line(&peeked_line) {
             Ok(ack) => match ack.id() {
