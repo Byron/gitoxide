@@ -1,7 +1,4 @@
-#[cfg(feature = "blocking-client")]
-type Cursor = std::io::Cursor<Vec<u8>>;
-#[cfg(feature = "async-client")]
-type Cursor = futures_lite::io::Cursor<Vec<u8>>;
+use crate::fetch::Cursor;
 
 fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<Cursor> {
     use crate::fixture_bytes;

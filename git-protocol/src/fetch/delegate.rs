@@ -137,7 +137,7 @@ mod async_io {
         /// to check additional acks.
         async fn receive_pack(
             &mut self,
-            input: impl AsyncBufRead,
+            input: impl AsyncBufRead + Unpin + 'async_trait,
             progress: impl Progress,
             refs: &[Ref],
             previous: &Response,
