@@ -27,7 +27,9 @@ pub use refs::Ref;
 pub mod response;
 pub use response::Response;
 
+#[cfg(any(feature = "async-client", feature = "blocking-client"))]
 mod fetch;
+#[cfg(any(feature = "async-client", feature = "blocking-client"))]
 pub use fetch::fetch;
 
 #[cfg(test)]

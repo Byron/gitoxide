@@ -24,6 +24,7 @@ pub mod credentials;
 pub mod fetch;
 
 #[doc(inline)]
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use fetch::fetch;
 
 #[cfg(all(feature = "blocking-client", feature = "async-client"))]
