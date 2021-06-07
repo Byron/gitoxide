@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.40"
-cargo_toml = "0.9.0"
+cargo_toml = "0.9.2"
