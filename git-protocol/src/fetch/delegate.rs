@@ -82,25 +82,69 @@ pub trait DelegateWithoutIO {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
 }
 
-/// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
-///
-/// Implementations of this trait are controlled by code with intricate knowledge about how fetching works in protocol version V1 and V2,
-/// so you don't have to.
-/// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
-/// features or arguments don't make it to the server in the first place.
-/// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
-pub trait Delegate: DelegateWithoutIO {
-    /// Receive a pack provided from the given `input`.
+#[cfg(feature = "blocking-client")]
+mod blocking_io {
+    use crate::fetch::{DelegateWithoutIO, Ref, Response};
+    use git_features::progress::Progress;
+    use std::io;
+
+    /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
-    /// Use `progress` to emit your own progress messages when decoding the pack.
-    ///
-    /// `refs` of the remote side are provided for convenience, along with the parsed `previous` response in case you want
-    /// to check additional acks.
-    fn receive_pack(
-        &mut self,
-        input: impl io::BufRead,
-        progress: impl Progress,
-        refs: &[Ref],
-        previous: &Response,
-    ) -> io::Result<()>;
+    /// Implementations of this trait are controlled by code with intricate knowledge about how fetching works in protocol version V1 and V2,
+    /// so you don't have to.
+    /// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
+    /// features or arguments don't make it to the server in the first place.
+    /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
+    pub trait Delegate: DelegateWithoutIO {
+        /// Receive a pack provided from the given `input`.
+        ///
+        /// Use `progress` to emit your own progress messages when decoding the pack.
+        ///
+        /// `refs` of the remote side are provided for convenience, along with the parsed `previous` response in case you want
+        /// to check additional acks.
+        fn receive_pack(
+            &mut self,
+            input: impl io::BufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()>;
+    }
 }
+#[cfg(feature = "blocking-client")]
+pub use blocking_io::Delegate;
+
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+mod async_io {
+    use crate::fetch::{DelegateWithoutIO, Ref, Response};
+    use async_trait::async_trait;
+    use futures_io::AsyncBufRead;
+    use git_features::progress::Progress;
+    use std::io;
+
+    /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
+    ///
+    /// Implementations of this trait are controlled by code with intricate knowledge about how fetching works in protocol version V1 and V2,
+    /// so you don't have to.
+    /// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
+    /// features or arguments don't make it to the server in the first place.
+    /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
+    #[async_trait]
+    pub trait Delegate: DelegateWithoutIO {
+        /// Receive a pack provided from the given `input`.
+        ///
+        /// Use `progress` to emit your own progress messages when decoding the pack.
+        ///
+        /// `refs` of the remote side are provided for convenience, along with the parsed `previous` response in case you want
+        /// to check additional acks.
+        async fn receive_pack(
+            &mut self,
+            input: impl AsyncBufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()>;
+    }
+}
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+pub use async_io::Delegate;

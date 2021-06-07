@@ -1,14 +1,10 @@
-#[cfg(feature = "blocking-client")]
-pub use blocking_io::{
-    delegate::{Action, Delegate, DelegateWithoutIO},
-    fetch,
-};
-
 mod arguments;
 pub use arguments::Arguments;
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io;
+#[cfg(feature = "blocking-client")]
+pub use blocking_io::fetch;
 
 ///
 pub mod command;
@@ -19,12 +15,19 @@ pub fn agent() -> (&'static str, Option<&'static str>) {
     ("agent", Some(concat!("git/oxide-", env!("CARGO_PKG_VERSION"))))
 }
 
+///
+pub mod delegate;
+#[cfg(any(feature = "async-client", feature = "blocking-client"))]
+pub use delegate::Delegate;
+pub use delegate::{Action, DelegateWithoutIO};
+
 mod error;
 pub use error::Error;
 
 ///
 pub mod refs;
 pub use refs::Ref;
+
 ///
 pub mod response;
 pub use response::Response;

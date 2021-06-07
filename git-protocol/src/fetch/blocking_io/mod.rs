@@ -1,6 +1,3 @@
-///
-pub mod delegate;
-
 mod fetch {
     use std::io;
 
