@@ -1,7 +1,5 @@
 ///
 pub mod delegate;
-///
-pub mod response;
 
 mod error {
     use std::io;
@@ -10,8 +8,8 @@ mod error {
 
     use git_transport::client;
 
-    use crate::fetch::refs;
-    use crate::{credentials, fetch::blocking_io::response};
+    use crate::credentials;
+    use crate::fetch::{refs, response};
 
     quick_error! {
         /// The error used in [`fetch()`].
@@ -61,11 +59,9 @@ mod fetch {
         Service,
     };
 
-    use crate::fetch::refs;
-    use crate::fetch::refs::InternalRef;
     use crate::{
         credentials,
-        fetch::{Action, Arguments, Command, Delegate, Error, Ref, Response},
+        fetch::{refs, refs::InternalRef, Action, Arguments, Command, Delegate, Error, Ref, Response},
     };
 
     /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.

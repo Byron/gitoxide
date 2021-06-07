@@ -1,16 +1,14 @@
 #[cfg(feature = "blocking-client")]
-mod blocking_io;
-#[cfg(feature = "blocking-client")]
 pub use blocking_io::{
     delegate::{Action, Delegate},
-    fetch, response,
-    response::Response,
-    Error,
+    fetch, Error,
 };
 
 mod arguments;
 pub use arguments::Arguments;
 
+#[cfg(feature = "blocking-client")]
+mod blocking_io;
 ///
 pub mod command;
 pub use command::Command;
@@ -23,6 +21,10 @@ pub fn agent() -> (&'static str, Option<&'static str>) {
 ///
 pub mod refs;
 pub use refs::Ref;
+
+///
+pub mod response;
+pub use response::Response;
 
 #[cfg(test)]
 mod tests;

@@ -14,10 +14,8 @@ mod v1 {
     mod from_line_reader {
         use std::io::Read;
 
-        use git_protocol::fetch::{
-            self,
-            response::{Acknowledgement, ShallowUpdate},
-        };
+        use git_protocol::fetch::response::{Acknowledgement, ShallowUpdate};
+        use git_protocol::fetch::{self};
         use git_transport::Protocol;
 
         use crate::fetch::response::{id, mock_reader};
@@ -108,10 +106,8 @@ mod v2 {
     mod from_line_reader {
         use std::{io, io::Read};
 
-        use git_protocol::fetch::{
-            self,
-            response::{Acknowledgement, ShallowUpdate},
-        };
+        use git_protocol::fetch::response::{Acknowledgement, ShallowUpdate};
+        use git_protocol::fetch::{self};
         use git_transport::Protocol;
 
         use crate::fetch::response::{id, mock_reader};
