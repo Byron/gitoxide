@@ -38,5 +38,5 @@ tempfile = "3.1.0"
 thiserror = "1.0.20"
 
 [dev-dependencies]
-git-testtools = { version = "0.1", path = "../tests/tools"}
+git-testtools = { version = "^0.2", path = "../tests/tools"}
 pretty_assertions = "0.7.1"

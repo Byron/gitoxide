@@ -44,4 +44,4 @@ git-features = { version = "^0.15.0", path = "../git-features", optional = true 
 quick-error = "2.0.0"
 
 [dev-dependencies]
-git-testtools = { version = "0.1", path = "../tests/tools" }
+git-testtools = { version = "^0.2", path = "../tests/tools" }
