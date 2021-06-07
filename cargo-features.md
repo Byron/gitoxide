@@ -146,10 +146,15 @@ The _client_ portion of transport can be blocking or async. If none is selected,
     
 ### git-protocol
 
-The _client_ portion of the protocol is _async_ by default, i.e. if no feature toggles are set.
+The _client_ portion of the protocol uses `git-transport` to communicate to a server. For it to be usable, one of the following features must
+be selected.
 
-* **blocking-client**
-  * If set, blocking implementations are available and will use the blocking version of the `git-transport` crate.
+- _mutually exclusive_ 
+    - Specifying both causes a compile error, preventing the use of `--all-features`.
+    * **blocking-client**
+      * If set, blocking command implementations are available and will use the blocking version of the `git-transport` crate.
+    * **async-client**
+      * As above, but provides async implementations instead.
 
 ### Serialization Support
 
