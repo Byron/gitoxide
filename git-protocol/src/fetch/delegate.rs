@@ -1,8 +1,6 @@
 use crate::fetch::{Arguments, Ref, Response};
 use bstr::BString;
-use git_features::progress::Progress;
 use git_transport::client::Capabilities;
-use std::io;
 
 /// Defines what to do next after certain [`Delegate`] operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

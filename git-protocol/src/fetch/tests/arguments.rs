@@ -1,6 +1,6 @@
 use crate::fetch;
 use bstr::ByteSlice;
-use git_transport::{client, Protocol};
+use git_transport::Protocol;
 
 fn arguments_v1(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect())
@@ -10,7 +10,7 @@ fn arguments_v2(features: impl IntoIterator<Item = &'static str>) -> fetch::Argu
     fetch::Arguments::new(Protocol::V2, features.into_iter().map(|n| (n, None)).collect())
 }
 
-struct Transport<T: client::Transport> {
+struct Transport<T> {
     inner: T,
     stateful: bool,
 }
@@ -24,21 +24,13 @@ mod impls {
         Protocol, Service,
     };
 
-    impl<T: client::Transport> client::Transport for Transport<T> {
-        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-            self.inner.handshake(service)
-        }
-
+    impl<T: client::TransportWithoutIO> client::TransportWithoutIO for Transport<T> {
         fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
             self.inner.set_identity(identity)
         }
 
         fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
             self.inner.request(write_mode, on_into_read)
-        }
-
-        fn close(&mut self) -> Result<(), Error> {
-            self.inner.close()
         }
 
         fn to_url(&self) -> String {
@@ -53,6 +45,16 @@ mod impls {
             self.stateful
         }
     }
+
+    impl<T: client::Transport> client::Transport for Transport<T> {
+        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
+            self.inner.handshake(service)
+        }
+
+        fn close(&mut self) -> Result<(), Error> {
+            self.inner.close()
+        }
+    }
 }
 
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
@@ -64,23 +66,13 @@ mod impls {
         client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
-
-    #[async_trait]
-    impl<T: client::Transport + Send> client::Transport for Transport<T> {
-        async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-            self.inner.handshake(service).await
-        }
-
+    impl<T: client::TransportWithoutIO + Send> client::TransportWithoutIO for Transport<T> {
         fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
             self.inner.set_identity(identity)
         }
 
         fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
             self.inner.request(write_mode, on_into_read)
-        }
-
-        async fn close(&mut self) -> Result<(), Error> {
-            self.inner.close().await
         }
 
         fn to_url(&self) -> String {
@@ -93,6 +85,17 @@ mod impls {
 
         fn is_stateful(&self) -> bool {
             self.stateful
+        }
+    }
+
+    #[async_trait]
+    impl<T: client::Transport + Send> client::Transport for Transport<T> {
+        async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
+            self.inner.handshake(service).await
+        }
+
+        async fn close(&mut self) -> Result<(), Error> {
+            self.inner.close().await
         }
     }
 }

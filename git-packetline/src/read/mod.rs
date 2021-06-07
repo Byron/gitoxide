@@ -2,6 +2,7 @@
 use crate::MAX_LINE_LEN;
 use crate::{PacketLine, U16_HEX_BYTES};
 
+#[cfg(any(feature = "blocking-io", feature = "async-io"))]
 type ExhaustiveOutcome<'a> = (
     bool,                                                                  // is_done
     Option<PacketLine<'static>>,                                           // stopped_at
