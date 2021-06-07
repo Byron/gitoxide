@@ -52,7 +52,7 @@ mod box_impl {
 
     // Would be nice if the box implementation could auto-forward to all implemented traits.
     #[async_trait]
-    impl<T: client::Transport + Send> client::Transport for Box<T> {
+    impl<T: client::Transport + ?Sized + Send> client::Transport for Box<T> {
         async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
             self.deref_mut().handshake(service).await
         }

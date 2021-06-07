@@ -63,7 +63,7 @@ mod box_impl {
     };
 
     // Would be nice if the box implementation could auto-forward to all implemented traits.
-    impl<T: client::Transport> client::Transport for Box<T> {
+    impl<T: client::Transport + ?Sized> client::Transport for Box<T> {
         fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
             self.deref_mut().handshake(service)
         }

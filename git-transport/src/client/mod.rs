@@ -56,7 +56,7 @@ mod traits {
         use std::ops::{Deref, DerefMut};
 
         // Would be nice if the box implementation could auto-forward to all implemented traits.
-        impl<T: client::TransportWithoutIO> client::TransportWithoutIO for Box<T> {
+        impl<T: client::TransportWithoutIO + ?Sized> client::TransportWithoutIO for Box<T> {
             fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
                 self.deref_mut().set_identity(identity)
             }
