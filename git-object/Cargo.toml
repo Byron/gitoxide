@@ -32,4 +32,4 @@ itoa = "0.4.6"
 
 [dev-dependencies]
 pretty_assertions = "0.7.1"
-git-testtools = { version = "^0.2", path = "../tests/tools"}
+git-testtools = { version = "^0.3", path = "../tests/tools"}

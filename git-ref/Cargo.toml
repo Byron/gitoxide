@@ -23,4 +23,4 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "6", default-features = false, features = ["alloc"]}
 
 [dev-dependencies]
-git-testtools = { version = "^0.2", path = "../tests/tools" }
+git-testtools = { version = "^0.3", path = "../tests/tools" }
