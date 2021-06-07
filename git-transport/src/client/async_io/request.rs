@@ -14,8 +14,8 @@ pin_project! {
     pub struct RequestWriter<'a> {
         on_into_read: MessageKind,
         #[pin]
-        pub(crate) writer: git_packetline::Writer<Box<dyn AsyncWrite + Send + Unpin + 'a>>,
-        pub(crate) reader: Box<dyn ExtendedBufRead + Send + Unpin + 'a>,
+        pub(crate) writer: git_packetline::Writer<Box<dyn AsyncWrite + Unpin + 'a>>,
+        pub(crate) reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
     }
 }
 impl<'a> futures_io::AsyncWrite for RequestWriter<'a> {
@@ -37,13 +37,13 @@ impl<'a> RequestWriter<'a> {
     /// Create a new instance from a `writer` (commonly a socket), a `reader` into which to transform once the
     /// writes are finished, along with configuration for the `write_mode` and information about which message to write
     /// when this instance is converted into a `reader` to read the request's response.
-    pub fn new_from_bufread<W: AsyncWrite + Unpin + Send + 'a>(
+    pub fn new_from_bufread<W: AsyncWrite + Unpin + 'a>(
         writer: W,
-        reader: Box<dyn ExtendedBufRead + Unpin + Send + 'a>,
+        reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
         write_mode: WriteMode,
         on_into_read: MessageKind,
     ) -> Self {
-        let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn AsyncWrite + Send + Unpin>);
+        let mut writer = git_packetline::Writer::new(Box::new(writer) as Box<dyn AsyncWrite + Unpin>);
         match write_mode {
             WriteMode::Binary => writer.enable_binary_mode(),
             WriteMode::OneLfTerminatedLinePerWriteCall => writer.enable_text_mode(),
@@ -82,7 +82,7 @@ impl<'a> RequestWriter<'a> {
         .map(|_| ())
     }
     /// Discard the ability to write and turn this instance into the reader for obtaining the other side's response.
-    pub async fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Send + Unpin + 'a>> {
+    pub async fn into_read(mut self) -> std::io::Result<Box<dyn ExtendedBufRead + Unpin + 'a>> {
         self.write_message(self.on_into_read).await?;
         Ok(self.reader)
     }

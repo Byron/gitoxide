@@ -10,8 +10,8 @@ use git_packetline::PacketLine;
 
 impl<R, W> client::TransportWithoutIO for git::Connection<R, W>
 where
-    R: AsyncRead + Unpin + Send,
-    W: AsyncWrite + Unpin + Send,
+    R: AsyncRead + Unpin,
+    W: AsyncWrite + Unpin,
 {
     fn request(
         &mut self,
@@ -45,11 +45,11 @@ where
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl<R, W> client::Transport for git::Connection<R, W>
 where
-    R: AsyncRead + Unpin + Send,
-    W: AsyncWrite + Unpin + Send,
+    R: AsyncRead + Unpin,
+    W: AsyncWrite + Unpin,
 {
     async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == git::ConnectMode::Daemon {
@@ -86,8 +86,8 @@ where
 
 impl<R, W> git::Connection<R, W>
 where
-    R: AsyncRead + Unpin + Send,
-    W: AsyncWrite + Unpin + Send,
+    R: AsyncRead + Unpin,
+    W: AsyncWrite + Unpin,
 {
     /// Create a connection from the given `read` and `write`, asking for `desired_version` as preferred protocol
     /// and the transfer of the repository at `repository_path`.

@@ -7,7 +7,7 @@ impl Arguments {
         &mut self,
         transport: &'a mut T,
         add_done_argument: bool,
-    ) -> Result<Box<dyn client::ExtendedBufRead + 'a>, client::Error> {
+    ) -> Result<Box<dyn client::ExtendedBufRead + Unpin + 'a>, client::Error> {
         if self.haves.is_empty() {
             assert!(add_done_argument, "If there are no haves, is_done must be true.");
         }

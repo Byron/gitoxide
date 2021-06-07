@@ -3,7 +3,7 @@ use futures_lite::io::AsyncWriteExt;
 use git_transport::{client, client::TransportV2Ext};
 
 impl Arguments {
-    pub(crate) async fn send<'a, T: client::Transport + Send + 'a>(
+    pub(crate) async fn send<'a, T: client::Transport + 'a>(
         &mut self,
         transport: &'a mut T,
         add_done_argument: bool,

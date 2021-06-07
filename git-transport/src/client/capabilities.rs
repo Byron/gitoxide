@@ -222,7 +222,7 @@ pub(crate) mod recv {
     }
 
     impl Capabilities {
-        pub(crate) async fn from_lines_with_version_detection<T: AsyncRead + Unpin + Send>(
+        pub(crate) async fn from_lines_with_version_detection<T: AsyncRead + Unpin>(
             rd: &mut git_packetline::StreamingPeekableIter<T>,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so

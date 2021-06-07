@@ -1,11 +1,6 @@
 mod arguments;
 pub use arguments::Arguments;
 
-#[cfg(feature = "blocking-client")]
-mod blocking_io;
-#[cfg(feature = "blocking-client")]
-pub use blocking_io::fetch;
-
 ///
 pub mod command;
 pub use command::Command;
@@ -31,6 +26,9 @@ pub use refs::Ref;
 ///
 pub mod response;
 pub use response::Response;
+
+mod fetch;
+pub use fetch::fetch;
 
 #[cfg(test)]
 mod tests;

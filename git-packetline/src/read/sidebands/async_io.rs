@@ -160,7 +160,7 @@ pub struct ReadLineFuture<'a, 'b, T: AsyncRead, F> {
 
 impl<'a, 'b, T, F> Future for ReadLineFuture<'a, 'b, T, F>
 where
-    T: AsyncRead + Unpin + Send,
+    T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) + Unpin,
 {
     type Output = std::io::Result<usize>;
@@ -184,7 +184,7 @@ where
 
 impl<'a, T, F> AsyncBufRead for WithSidebands<'a, T, F>
 where
-    T: AsyncRead + Unpin + Send,
+    T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) + Unpin,
 {
     fn poll_fill_buf(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
@@ -199,7 +199,7 @@ where
                             let parent = parent.take().expect("parent to be present here");
                             let inactive = parent as *mut _;
                             this.state = State::ReadLine {
-                                read_line: parent.read_line().boxed(),
+                                read_line: parent.read_line().boxed_local(),
                                 parent_inactive: Some(inactive),
                             }
                         }
@@ -280,7 +280,7 @@ where
 
 impl<'a, T, F> AsyncRead for WithSidebands<'a, T, F>
 where
-    T: AsyncRead + Unpin + Send,
+    T: AsyncRead + Unpin,
     F: FnMut(bool, &[u8]) + Unpin,
 {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<std::io::Result<usize>> {
