@@ -1,12 +1,11 @@
-use crate::{fetch::command::Feature, fetch::Command};
 use bstr::{BStr, BString};
-use git_transport::Protocol;
 use std::fmt;
 
 /// The arguments passed to a server command.
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
-    features: Vec<Feature>,
+    #[cfg(any(feature = "async-client", feature = "blocking-client"))]
+    features: Vec<crate::fetch::command::Feature>,
 
     args: Vec<BString>,
     haves: Vec<BString>,
@@ -18,7 +17,8 @@ pub struct Arguments {
     deepen_relative: bool,
 
     features_for_first_want: Option<Vec<String>>,
-    version: Protocol,
+    #[cfg(any(feature = "async-client", feature = "blocking-client"))]
+    version: git_transport::Protocol,
 }
 
 impl Arguments {
@@ -108,7 +108,9 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
-    pub(crate) fn new(version: Protocol, features: Vec<Feature>) -> Self {
+    #[cfg(any(feature = "async-client", feature = "blocking-client"))]
+    pub(crate) fn new(version: git_transport::Protocol, features: Vec<crate::fetch::command::Feature>) -> Self {
+        use crate::fetch::Command;
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");
@@ -116,7 +118,7 @@ impl Arguments {
         let mut deepen_not = shallow;
         let mut deepen_relative = shallow;
         let (initial_arguments, features_for_first_want) = match version {
-            Protocol::V1 => {
+            git_transport::Protocol::V1 => {
                 deepen_since = has("deepen-since");
                 deepen_not = has("deepen-not");
                 deepen_relative = has("deepen-relative");
@@ -129,7 +131,7 @@ impl Arguments {
                     .collect::<Vec<_>>();
                 (Vec::new(), Some(baked_features))
             }
-            Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
+            git_transport::Protocol::V2 => (Command::Fetch.initial_arguments(&features), None),
         };
 
         Arguments {

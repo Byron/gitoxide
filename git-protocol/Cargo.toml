@@ -46,3 +46,4 @@ maybe-async = "0.2.6"
 [dev-dependencies]
 async-std = { version = "1.9.0", features = ["attributes"] }
 git-packetline = { version = "^0.6.0", path = "../git-packetline" }
+git-testtools = { path = "../tests/tools" }

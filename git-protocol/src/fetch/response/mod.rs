@@ -54,7 +54,7 @@ pub enum ShallowUpdate {
 
 impl ShallowUpdate {
     /// Parse a `ShallowUpdate` from a `line` as received to the server.
-    fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
+    pub fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
         let mut tokens = line.trim_end().splitn(2, ' ');
         match (tokens.next(), tokens.next()) {
             (Some(prefix), Some(id)) => {
@@ -73,7 +73,7 @@ impl ShallowUpdate {
 
 impl Acknowledgement {
     /// Parse an `Acknowledgement` from a `line` as received to the server.
-    fn from_line(line: &str) -> Result<Acknowledgement, Error> {
+    pub fn from_line(line: &str) -> Result<Acknowledgement, Error> {
         let mut tokens = line.trim_end().splitn(3, ' ');
         Ok(match (tokens.next(), tokens.next(), tokens.next()) {
             (Some(first), id, description) => match first {

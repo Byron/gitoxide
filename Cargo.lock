@@ -1034,6 +1034,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-packetline",
+ "git-testtools",
  "git-transport",
  "maybe-async",
  "nom",

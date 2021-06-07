@@ -1,14 +1,8 @@
-use crate::{
-    fetch::refs::InternalRef,
-    fetch::{refs, Ref},
-};
+use crate::fetch::{refs, refs::InternalRef, Ref};
 use git_transport::client;
 
-fn oid(hex_sha: &str) -> git_hash::ObjectId {
-    git_hash::ObjectId::from_hex(hex_sha.as_bytes()).expect("valid input")
-}
+use git_testtools::hex_to_id as oid;
 
-#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn extract_references_from_v2_refs() {
     let input = &mut "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/main
@@ -48,7 +42,6 @@ async fn extract_references_from_v2_refs() {
     )
 }
 
-#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn extract_references_from_v1_refs() {
     let input = &mut "73a6868963993a3328e7d8fe94e5a6ac5078a944 HEAD

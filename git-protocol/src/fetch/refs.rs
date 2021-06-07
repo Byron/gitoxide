@@ -1,4 +1,4 @@
-use bstr::{BString, ByteSlice};
+use bstr::BString;
 use quick_error::quick_error;
 use std::io;
 
@@ -78,83 +78,84 @@ impl Ref {
     }
 }
 
-impl From<InternalRef> for Ref {
-    fn from(v: InternalRef) -> Self {
-        match v {
-            InternalRef::Symbolic { path, target, object } => Ref::Symbolic { path, target, object },
-            InternalRef::Peeled { path, tag, object } => Ref::Peeled { path, tag, object },
-            InternalRef::Direct { path, object } => Ref::Direct { path, object },
-            InternalRef::SymbolicForLookup { .. } => {
-                unreachable!("this case should have been removed during processing")
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+mod shared {
+    use crate::fetch::{refs, Ref};
+    use bstr::{BString, ByteSlice};
+
+    impl From<InternalRef> for Ref {
+        fn from(v: InternalRef) -> Self {
+            match v {
+                InternalRef::Symbolic { path, target, object } => Ref::Symbolic { path, target, object },
+                InternalRef::Peeled { path, tag, object } => Ref::Peeled { path, tag, object },
+                InternalRef::Direct { path, object } => Ref::Direct { path, object },
+                InternalRef::SymbolicForLookup { .. } => {
+                    unreachable!("this case should have been removed during processing")
+                }
             }
         }
     }
-}
 
-#[cfg_attr(test, derive(PartialEq, Eq, Debug, Clone))]
-pub(crate) enum InternalRef {
-    /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
-    Peeled {
-        path: BString,
-        tag: git_hash::ObjectId,
-        object: git_hash::ObjectId,
-    },
-    /// A ref pointing to a commit object
-    Direct { path: BString, object: git_hash::ObjectId },
-    /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
-    Symbolic {
-        path: BString,
-        target: BString,
-        object: git_hash::ObjectId,
-    },
-    /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
-    /// These don't contain the Id
-    SymbolicForLookup { path: BString, target: BString },
-}
+    #[cfg_attr(test, derive(PartialEq, Eq, Debug, Clone))]
+    pub(crate) enum InternalRef {
+        /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
+        Peeled {
+            path: BString,
+            tag: git_hash::ObjectId,
+            object: git_hash::ObjectId,
+        },
+        /// A ref pointing to a commit object
+        Direct { path: BString, object: git_hash::ObjectId },
+        /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
+        Symbolic {
+            path: BString,
+            target: BString,
+            object: git_hash::ObjectId,
+        },
+        /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
+        /// These don't contain the Id
+        SymbolicForLookup { path: BString, target: BString },
+    }
 
-impl InternalRef {
-    fn unpack_direct(self) -> Option<(BString, git_hash::ObjectId)> {
-        match self {
-            InternalRef::Direct { path, object } => Some((path, object)),
-            _ => None,
+    impl InternalRef {
+        fn unpack_direct(self) -> Option<(BString, git_hash::ObjectId)> {
+            match self {
+                InternalRef::Direct { path, object } => Some((path, object)),
+                _ => None,
+            }
+        }
+        fn lookup_symbol_has_path(&self, predicate_path: &str) -> bool {
+            matches!(self, InternalRef::SymbolicForLookup { path, .. } if path == predicate_path)
         }
     }
-    fn lookup_symbol_has_path(&self, predicate_path: &str) -> bool {
-        matches!(self, InternalRef::SymbolicForLookup { path, .. } if path == predicate_path)
-    }
-}
 
-pub(crate) fn from_capabilities<'a>(
-    out_refs: &mut Vec<InternalRef>,
-    capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
-) -> Result<(), Error> {
-    let symref_values = capabilities.filter_map(|c| {
-        if c.name() == b"symref".as_bstr() {
-            c.value().map(ToOwned::to_owned)
-        } else {
-            None
+    pub(crate) fn from_capabilities<'a>(
+        out_refs: &mut Vec<InternalRef>,
+        capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
+    ) -> Result<(), refs::Error> {
+        let symref_values = capabilities.filter_map(|c| {
+            if c.name() == b"symref".as_bstr() {
+                c.value().map(ToOwned::to_owned)
+            } else {
+                None
+            }
+        });
+        for symref in symref_values {
+            let (left, right) = symref.split_at(
+                symref
+                    .find_byte(b':')
+                    .ok_or_else(|| refs::Error::MalformedSymref(symref.to_owned()))?,
+            );
+            if left.is_empty() || right.is_empty() {
+                return Err(refs::Error::MalformedSymref(symref.to_owned()));
+            }
+            out_refs.push(InternalRef::SymbolicForLookup {
+                path: left.into(),
+                target: right[1..].into(),
+            })
         }
-    });
-    for symref in symref_values {
-        let (left, right) = symref.split_at(
-            symref
-                .find_byte(b':')
-                .ok_or_else(|| Error::MalformedSymref(symref.to_owned()))?,
-        );
-        if left.is_empty() || right.is_empty() {
-            return Err(Error::MalformedSymref(symref.to_owned()));
-        }
-        out_refs.push(InternalRef::SymbolicForLookup {
-            path: left.into(),
-            target: right[1..].into(),
-        })
+        Ok(())
     }
-    Ok(())
-}
-
-#[cfg(any(feature = "blocking-client", feature = "async-client"))]
-mod shared {
-    use crate::fetch::{refs, refs::InternalRef, Ref};
 
     pub(in crate::fetch::refs) fn parse_v1(
         num_initial_out_refs: usize,
@@ -261,6 +262,8 @@ mod shared {
         }
     }
 }
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+pub(crate) use shared::{from_capabilities, InternalRef};
 
 #[cfg(feature = "async-client")]
 mod async_io {
