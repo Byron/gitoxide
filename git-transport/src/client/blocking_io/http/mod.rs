@@ -209,13 +209,13 @@ impl<H: Http> client::Transport for Transport<H> {
     }
 }
 
-struct HeadersThenBody<H: Http, B> {
+struct HeadersThenBody<H: Http, B: Unpin> {
     service: Service,
     headers: Option<H::Headers>,
     body: B,
 }
 
-impl<H: Http, B> HeadersThenBody<H, B> {
+impl<H: Http, B: Unpin> HeadersThenBody<H, B> {
     fn handle_headers(&mut self) -> io::Result<()> {
         if let Some(headers) = self.headers.take() {
             <Transport<H>>::check_content_type(self.service, "result", headers)
@@ -225,14 +225,14 @@ impl<H: Http, B> HeadersThenBody<H, B> {
     }
 }
 
-impl<H: Http, B: ExtendedBufRead> io::Read for HeadersThenBody<H, B> {
+impl<H: Http, B: ExtendedBufRead + Unpin> io::Read for HeadersThenBody<H, B> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.handle_headers()?;
         self.body.read(buf)
     }
 }
 
-impl<H: Http, B: ExtendedBufRead> io::BufRead for HeadersThenBody<H, B> {
+impl<H: Http, B: ExtendedBufRead + Unpin> io::BufRead for HeadersThenBody<H, B> {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
         self.handle_headers()?;
         self.body.fill_buf()
@@ -243,7 +243,7 @@ impl<H: Http, B: ExtendedBufRead> io::BufRead for HeadersThenBody<H, B> {
     }
 }
 
-impl<H: Http, B: ExtendedBufRead> ExtendedBufRead for HeadersThenBody<H, B> {
+impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H, B> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.body.set_progress_handler(handle_progress)
     }

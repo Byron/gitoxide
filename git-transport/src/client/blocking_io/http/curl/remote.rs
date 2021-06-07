@@ -21,7 +21,7 @@ impl Handler {
     fn reset(&mut self) {
         self.checked_status = false;
     }
-    fn parse_status_inner(data: &[u8]) -> Result<usize, Box<dyn std::error::Error + Sync>> {
+    fn parse_status_inner(data: &[u8]) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
         let code = data
             .split(|b| *b == b' ')
             .nth(1)
@@ -29,7 +29,7 @@ impl Handler {
         let code = std::str::from_utf8(code)?;
         code.parse().map_err(Into::into)
     }
-    fn parse_status(data: &[u8]) -> Option<(usize, Box<dyn std::error::Error + Sync>)> {
+    fn parse_status(data: &[u8]) -> Option<(usize, Box<dyn std::error::Error + Send + Sync>)> {
         match Self::parse_status_inner(data) {
             Ok(status) if !(200..=299).contains(&status) => {
                 Some((status, format!("Received HTTP status {}", status).into()))

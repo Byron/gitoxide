@@ -50,7 +50,7 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
 #[allow(clippy::type_complexity)]
 pub trait Http {
     /// A type providing headers line by line.
-    type Headers: io::BufRead;
+    type Headers: io::BufRead + Unpin;
     /// A type providing the response.
     type ResponseBody: io::BufRead;
     /// A type allowing to write the content to post.
