@@ -10,8 +10,8 @@ use std::{
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
 
 /// This trait exists to get a version of a `git_packetline::Provider` without type parameters.
-/// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to (eventually)
-/// read pack files while keeping the possibility to read individual lines with low overhead.
+/// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to
+/// read pack files while keeping open the option to read individual lines with low overhead.
 pub trait ExtendedBufRead: io::BufRead {
     /// Set the handler to which progress will be delivered.
     ///

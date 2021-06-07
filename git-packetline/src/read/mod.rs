@@ -2,6 +2,12 @@
 use crate::MAX_LINE_LEN;
 use crate::{PacketLine, U16_HEX_BYTES};
 
+type ExhaustiveOutcome<'a> = (
+    bool,                                                                  // is_done
+    Option<PacketLine<'static>>,                                           // stopped_at
+    Option<std::io::Result<Result<PacketLine<'a>, crate::decode::Error>>>, // actual method result
+);
+
 /// Read pack lines one after another, without consuming more than needed from the underlying
 /// [`Read`][std::io::Read]. [`Flush`][PacketLine::Flush] lines cause the reader to stop producing lines forever,
 /// leaving [`Read`][std::io::Read] at the start of whatever comes next.

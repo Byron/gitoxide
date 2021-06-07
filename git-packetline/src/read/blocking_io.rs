@@ -1,12 +1,10 @@
-use crate::{decode, read::WithSidebands, PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES};
+use crate::{
+    decode,
+    read::{ExhaustiveOutcome, WithSidebands},
+    PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES,
+};
 use bstr::ByteSlice;
 use std::io;
-
-type ExhaustiveOutcome<'a> = (
-    bool,                                                      // is_done
-    Option<PacketLine<'static>>,                               // stopped_at
-    Option<io::Result<Result<PacketLine<'a>, decode::Error>>>, // actual method result
-);
 
 /// Non-IO methods
 impl<T> StreamingPeekableIter<T>
