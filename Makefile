@@ -99,8 +99,6 @@ check: ## Build all code in suitable configurations
 					   && cargo check \
 					   && cargo check --features blocking-io \
 					   && cargo check --features async-io
-	cd git-protocol && cargo check --all-features \
-			   && cargo check
 	cd git-url && cargo check --all-features \
 			   && cargo check
 	cd git-features && cargo check --all-features \
@@ -123,9 +121,10 @@ check: ## Build all code in suitable configurations
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
 					 && cargo check --features http-client-curl
-	cd git-protocol && cargo check --all-features \
-					 && cargo check \
-					 && cargo check --features blocking-client
+	cd git-protocol && cargo check \
+					&& cargo check --features blocking-client \
+					&& cargo check --features async-client
+	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-repository && cargo check --all-features \
 					 && cargo check --no-default-features
 
