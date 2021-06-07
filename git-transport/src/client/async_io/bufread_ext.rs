@@ -23,7 +23,8 @@ pub trait ExtendedBufRead: AsyncBufRead {
     ///
     /// Note that this is only possible if packet lines are sent in side band mode.
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>);
-    /// Peek the next data packet line.
+    /// Peek the next data packet line. Maybe None if the next line is a packet we stop at, queryable using
+    /// [`stopped_at()`][ExtendedBufRead::stopped_at()].
     async fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], Error>>>;
     /// Resets the reader to allow reading past a previous stop, and sets delimiters according to the
     /// given protocol.

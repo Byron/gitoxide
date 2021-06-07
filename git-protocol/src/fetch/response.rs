@@ -215,6 +215,11 @@ mod blocking_io {
                             Some(Ok(Err(err))) => return Err(err.into()),
                             None => {
                                 // maybe we saw a shallow flush packet, let's reset and retry
+                                debug_assert_eq!(
+                                    reader.stopped_at(),
+                                    Some(client::MessageKind::Flush),
+                                    "If this isn't a flush packet, we don't know what's going on"
+                                );
                                 reader.read_line(&mut line)?;
                                 reader.reset(Protocol::V1);
                                 match reader.peek_data_line() {
