@@ -43,4 +43,4 @@ pin-project-lite = { version = "0.2.6", optional = true }
 [dev-dependencies]
 async-std = { version = "1.9.0", features = ["attributes"] }
 git-odb = { version = "^0.16.0", path = "../git-odb" }
-maybe-async = "0.2.4"
+maybe-async = "0.2.6"
