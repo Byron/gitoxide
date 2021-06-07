@@ -1,9 +1,12 @@
-use std::io;
+#[cfg(feature = "blocking-client")]
+type Cursor = std::io::Cursor<Vec<u8>>;
+#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+type Cursor = futures_lite::io::Cursor<Vec<u8>>;
 
-fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<std::io::Cursor<Vec<u8>>> {
+fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<Cursor> {
     use crate::fixture_bytes;
     let buf = fixture_bytes(path);
-    git_packetline::StreamingPeekableIter::new(io::Cursor::new(buf), &[git_packetline::PacketLine::Flush])
+    git_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[git_packetline::PacketLine::Flush])
 }
 
 fn id(hex: &str) -> git_hash::ObjectId {
@@ -12,32 +15,35 @@ fn id(hex: &str) -> git_hash::ObjectId {
 
 mod v1 {
     mod from_line_reader {
+        use crate::fetch::response::{id, mock_reader};
+        #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+        use futures_lite::io::AsyncReadExt;
+        use git_protocol::fetch::{
+            self,
+            response::{Acknowledgement, ShallowUpdate},
+        };
+        use git_transport::Protocol;
+        #[cfg(feature = "blocking-client")]
         use std::io::Read;
 
-        use git_protocol::fetch::response::{Acknowledgement, ShallowUpdate};
-        use git_protocol::fetch::{self};
-        use git_transport::Protocol;
-
-        use crate::fetch::response::{id, mock_reader};
-
-        #[test]
-        fn clone() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn clone() -> crate::Result {
             let mut provider = mock_reader("v1/clone-only.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 1090, "should be able to read the whole pack");
             Ok(())
         }
 
-        #[test]
-        fn shallow_clone() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v1/clone-deepen-1.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
             assert_eq!(
                 r.shallow_updates(),
                 &[ShallowUpdate::Shallow(id("808e50d724f604f69ab93c6da2919c014667bedb"))]
@@ -45,29 +51,29 @@ mod v1 {
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 1989, "should be able to read the whole pack");
             Ok(())
         }
 
-        #[test]
-        fn empty_shallow_clone_due_to_depth_being_too_high() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn empty_shallow_clone_due_to_depth_being_too_high() -> crate::Result {
             let mut provider = mock_reader("v1/clone-deepen-5.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
             assert!(r.shallow_updates().is_empty());
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak]);
             assert!(r.has_pack());
             let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 1988, "should be able to read the whole pack");
             Ok(())
         }
 
-        #[test]
-        fn fetch_acks_without_pack() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch-no-pack.response");
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands())?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut provider.as_read_without_sidebands()).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -79,11 +85,11 @@ mod v1 {
             Ok(())
         }
 
-        #[test]
-        fn fetch_acks_and_pack() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v1/fetch.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V1, &mut reader).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -96,7 +102,7 @@ mod v1 {
             );
             assert!(r.has_pack());
             let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 9703, "should be able to read the whole pack");
             Ok(())
         }
@@ -104,65 +110,66 @@ mod v1 {
 }
 mod v2 {
     mod from_line_reader {
-        use std::{io, io::Read};
-
-        use git_protocol::fetch::response::{Acknowledgement, ShallowUpdate};
-        use git_protocol::fetch::{self};
-        use git_transport::Protocol;
-
         use crate::fetch::response::{id, mock_reader};
+        #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+        use futures_lite::io::AsyncReadExt;
+        use git_protocol::fetch::{
+            self,
+            response::{Acknowledgement, ShallowUpdate},
+        };
+        use git_transport::Protocol;
+        #[cfg(feature = "blocking-client")]
+        use std::io::Read;
 
-        #[test]
-        fn clone() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-only.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert!(r.has_pack());
             let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
             Ok(())
         }
 
-        #[test]
-        fn shallow_clone() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-deepen-1.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert_eq!(
                 r.shallow_updates(),
                 &[ShallowUpdate::Shallow(id("808e50d724f604f69ab93c6da2919c014667bedb"))]
             );
             assert!(r.has_pack());
-            assert_eq!(
-                io::copy(&mut reader, &mut io::sink())?,
-                1991,
-                "should be able to read the whole pack"
-            );
+            let mut pack = Vec::new();
+            reader.read_to_end(&mut pack).await?;
+            assert_eq!(pack.len(), 1991, "should be able to read the whole pack");
             Ok(())
         }
 
-        #[test]
-        fn empty_shallow_clone() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn empty_shallow_clone() -> crate::Result {
             let mut provider = mock_reader("v2/clone-deepen-5.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert!(r.shallow_updates().is_empty(), "it should go straight to the packfile");
             assert!(r.has_pack());
-            let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let mut pack = Vec::new();
+            let bytes_read = reader.read_to_end(&mut pack).await?;
             assert_eq!(bytes_read, 1989, "should be able to read the whole pack");
             Ok(())
         }
 
-        #[test]
-        fn clone_with_sidebands() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn clone_with_sidebands() -> crate::Result {
             let mut provider = mock_reader("v2/clone-only-2.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
             assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
             assert!(r.has_pack());
 
@@ -170,7 +177,7 @@ mod v2 {
             reader.set_progress_handler(Some(Box::new(|is_err: bool, _data: &[u8]| {
                 assert!(!is_err, "fixture does not have an error");
             }) as git_transport::client::HandleProgress));
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 1643, "should be able to read the whole pack");
             assert_eq!(&buf[..4], b"PACK");
             assert_eq!(
@@ -180,19 +187,19 @@ mod v2 {
             Ok(())
         }
 
-        #[test]
-        fn fetch_acks_without_pack() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn fetch_acks_without_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch-no-pack.response");
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands())?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut provider.as_read_without_sidebands()).await?;
             assert_eq!(r.acknowledgements(), &[Acknowledgement::Nak,]);
             Ok(())
         }
 
-        #[test]
-        fn fetch_acks_and_pack() -> crate::Result {
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch.response");
             let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader)?;
+            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
             assert_eq!(
                 r.acknowledgements(),
                 &[
@@ -206,7 +213,7 @@ mod v2 {
             reader.set_progress_handler(Some(Box::new(|a: bool, b: &[u8]| {
                 git_protocol::RemoteProgress::translate_to_progress(a, b, &mut git_features::progress::Discard)
             }) as git_transport::client::HandleProgress));
-            let bytes_read = reader.read_to_end(&mut buf)?;
+            let bytes_read = reader.read_to_end(&mut buf).await?;
             assert_eq!(bytes_read, 5360, "should be able to read the whole pack");
             Ok(())
         }

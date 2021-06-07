@@ -1,11 +1,12 @@
-use crate::fixture_bytes;
+use std::io;
+
 use bstr::ByteSlice;
+
 use git_features::progress::Progress;
 use git_protocol::fetch::{self, Action, Arguments, Ref, Response};
 use git_transport::client::Capabilities;
-use std::io;
 
-pub mod response;
+use crate::fixture_bytes;
 
 #[derive(Default)]
 pub struct CloneDelegate {
@@ -85,11 +86,13 @@ pub fn transport<'a>(
 }
 
 mod v1 {
-    use crate::fetch::{oid, transport, CloneDelegate, LsRemoteDelegate};
     use bstr::ByteSlice;
+
     use git_features::progress;
     use git_protocol::fetch;
     use git_transport::Protocol;
+
+    use crate::fetch::{oid, transport, CloneDelegate, LsRemoteDelegate};
 
     #[test]
     fn clone() -> crate::Result {
@@ -140,11 +143,13 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::{oid, transport, LsRemoteDelegate};
     use bstr::ByteSlice;
+
     use git_features::progress;
     use git_protocol::fetch;
     use git_transport::Protocol;
+
+    use crate::fetch::{oid, transport, LsRemoteDelegate};
 
     #[test]
     fn ls_remote() -> crate::Result {
