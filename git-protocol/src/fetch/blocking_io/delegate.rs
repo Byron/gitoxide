@@ -13,14 +13,11 @@ pub enum Action {
     Close,
 }
 
-/// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
+/// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
+/// the IO parts.
 ///
-/// Implementations of this trait are controlled by code with intricate knowledge about how fetching works in protocol version V1 and V2,
-/// so you don't have to.
-/// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
-/// features or arguments don't make it to the server in the first place.
-/// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
-pub trait Delegate {
+/// See [Delegate] for the complete trait.
+pub trait DelegateWithoutIO {
     /// Called before invoking 'ls-refs' on the server to allow providing it with additional `arguments` and to enable `features`.
     ///
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
@@ -83,7 +80,16 @@ pub trait Delegate {
     /// Return `Action::Close` if you want to give up before finding a common base. This can happen if the remote repository
     /// has radically changed so there are no bases, or they are very far in the past, causing all objects to be sent.
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
+}
 
+/// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
+///
+/// Implementations of this trait are controlled by code with intricate knowledge about how fetching works in protocol version V1 and V2,
+/// so you don't have to.
+/// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
+/// features or arguments don't make it to the server in the first place.
+/// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
+pub trait Delegate: DelegateWithoutIO {
     /// Receive a pack provided from the given `input`.
     ///
     /// Use `progress` to emit your own progress messages when decoding the pack.

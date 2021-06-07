@@ -32,7 +32,7 @@ struct CloneDelegate<W: io::Write> {
 }
 static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
 
-impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
+impl<W: io::Write> protocol::fetch::DelegateWithoutIO for CloneDelegate<W> {
     fn prepare_ls_refs(
         &mut self,
         server: &Capabilities,
@@ -71,7 +71,9 @@ impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
         }
         Action::Close
     }
+}
 
+impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
     fn receive_pack(
         &mut self,
         input: impl BufRead,

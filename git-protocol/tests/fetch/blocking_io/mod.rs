@@ -13,14 +13,16 @@ pub struct CloneDelegate {
     pack_bytes: usize,
 }
 
-impl fetch::Delegate for CloneDelegate {
+impl fetch::DelegateWithoutIO for CloneDelegate {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
         for r in refs {
             arguments.want(r.unpack().1);
         }
         Action::Close
     }
+}
 
+impl fetch::Delegate for CloneDelegate {
     fn receive_pack(
         &mut self,
         mut input: impl io::BufRead,
@@ -38,7 +40,7 @@ pub struct LsRemoteDelegate {
     refs: Vec<fetch::Ref>,
 }
 
-impl fetch::Delegate for LsRemoteDelegate {
+impl fetch::DelegateWithoutIO for LsRemoteDelegate {
     fn prepare_fetch(
         &mut self,
         _version: git_transport::Protocol,
@@ -53,7 +55,9 @@ impl fetch::Delegate for LsRemoteDelegate {
     fn negotiate(&mut self, _refs: &[Ref], _arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
     }
+}
 
+impl fetch::Delegate for LsRemoteDelegate {
     fn receive_pack(
         &mut self,
         _input: impl io::BufRead,

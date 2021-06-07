@@ -18,7 +18,7 @@ pub mod refs {
         refs: Vec<Ref>,
     }
 
-    impl protocol::fetch::Delegate for LsRemotes {
+    impl protocol::fetch::DelegateWithoutIO for LsRemotes {
         fn prepare_fetch(
             &mut self,
             _version: transport::Protocol,
@@ -38,7 +38,9 @@ pub mod refs {
         ) -> Action {
             unreachable!("not to be called due to Action::Close in `prepare_fetch`")
         }
+    }
 
+    impl protocol::fetch::Delegate for LsRemotes {
         fn receive_pack(
             &mut self,
             _input: impl io::BufRead,

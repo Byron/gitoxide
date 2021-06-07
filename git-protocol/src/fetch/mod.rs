@@ -1,6 +1,6 @@
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{
-    delegate::{Action, Delegate},
+    delegate::{Action, Delegate, DelegateWithoutIO},
     fetch,
 };
 
