@@ -1,6 +1,6 @@
 #[cfg(feature = "blocking-client")]
 type Cursor = std::io::Cursor<Vec<u8>>;
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 type Cursor = futures_lite::io::Cursor<Vec<u8>>;
 
 fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<Cursor> {
@@ -16,7 +16,7 @@ fn id(hex: &str) -> git_hash::ObjectId {
 mod v1 {
     mod from_line_reader {
         use crate::fetch::response::{id, mock_reader};
-        #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+        #[cfg(feature = "async-client")]
         use futures_lite::io::AsyncReadExt;
         use git_protocol::fetch::{
             self,
@@ -111,7 +111,7 @@ mod v1 {
 mod v2 {
     mod from_line_reader {
         use crate::fetch::response::{id, mock_reader};
-        #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+        #[cfg(feature = "async-client")]
         use futures_lite::io::AsyncReadExt;
         use git_protocol::fetch::{
             self,

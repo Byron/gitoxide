@@ -7,7 +7,7 @@
 #![cfg_attr(
     any(
         feature = "async-client",
-        all(not(feature = "blocking-client"), not(feature = "async-client"))
+        not(any(feature = "async-client", feature = "blocking-client"))
     ),
     allow(dead_code, unused_imports)
 )] // TODO: remove this and assure this holds at when done.

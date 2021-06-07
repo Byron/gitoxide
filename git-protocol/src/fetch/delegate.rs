@@ -112,7 +112,7 @@ mod blocking_io {
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::Delegate;
 
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 mod async_io {
     use crate::fetch::{DelegateWithoutIO, Ref, Response};
     use async_trait::async_trait;
@@ -144,5 +144,5 @@ mod async_io {
         ) -> io::Result<()>;
     }
 }
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 pub use async_io::Delegate;

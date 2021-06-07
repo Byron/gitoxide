@@ -181,7 +181,7 @@ mod shared {
     }
 }
 
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 mod async_io;
 
 #[cfg(feature = "blocking-client")]

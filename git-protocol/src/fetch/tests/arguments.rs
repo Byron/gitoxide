@@ -57,7 +57,7 @@ mod impls {
     }
 }
 
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 mod impls {
     use crate::fetch::tests::arguments::Transport;
     use async_trait::async_trait;

@@ -262,7 +262,7 @@ mod shared {
     }
 }
 
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 mod async_io {
     use crate::fetch::{refs, refs::InternalRef, Ref};
     use futures_io::AsyncBufRead;
@@ -301,7 +301,7 @@ mod async_io {
         Ok(())
     }
 }
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 pub(crate) use async_io::{from_v1_refs_received_as_part_of_handshake, from_v2_refs};
 
 #[cfg(feature = "blocking-client")]
