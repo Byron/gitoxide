@@ -133,7 +133,6 @@ unit-tests: ## run all unit tests
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
 	cd git-packetline && cargo test \
-					  && cargo test --all-features \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline
 	cd git-transport && cargo test \
