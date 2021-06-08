@@ -20,7 +20,7 @@ impl Command {
     }
 }
 
-#[cfg(any(feature = "async-client", feature = "blocking-client"))]
+#[cfg(any(test, feature = "async-client", feature = "blocking-client"))]
 mod with_io {
     use crate::fetch::{agent, command::Feature, Command};
     use bstr::{BString, ByteSlice};
