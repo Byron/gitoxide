@@ -63,10 +63,10 @@ pub use git_ref as refs;
 #[cfg(feature = "git-traverse")]
 pub use git_traverse as traverse;
 
-#[cfg(feature = "one-stop-shop")]
+#[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]
 pub mod ext;
 pub mod prelude {
-    #[cfg(feature = "one-stop-shop")]
+    #[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]
     pub use crate::ext::*;
     pub use git_odb::{Find, FindExt, Write};
 }

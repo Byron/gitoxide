@@ -64,6 +64,7 @@ pub enum Subcommands {
     },
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
+    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     PackReceive {
         /// The protocol version to use. Valid values are 1 and 2
         #[clap(long, short = 'p')]
@@ -91,6 +92,7 @@ pub enum Subcommands {
     /// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
+    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     RemoteRefList {
         /// The protocol version to use. Valid values are 1 and 2
         #[clap(long, short = 'p')]

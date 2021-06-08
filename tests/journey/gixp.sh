@@ -7,6 +7,7 @@ title "gixp pack-receive"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"
   (small-repo-in-sandbox
+    if [[ "$kind" != "small" ]]; then
     (with "file:// protocol"
       (with "version 1"
         (with "NO output directory"
@@ -122,12 +123,20 @@ title "gixp pack-receive"
       )
       fi
     )
+    else
+      it "fails as the CLI doesn't have networking in 'small' mode" && {
+        WITH_SNAPSHOT="$snapshot/pack-receive-no-networking-in-small-failure" \
+        expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 .git
+      }
+    fi
   )
 )
+
 title "gixp remote-ref-list"
 (when "running 'remote-ref-list'"
   snapshot="$snapshot/remote-ref-list"
   (small-repo-in-sandbox
+    if [[ "$kind" != "small" ]]; then
     (with "file:// protocol"
       (with "version 1"
         it "generates the correct output" && {
@@ -189,8 +198,15 @@ title "gixp remote-ref-list"
       )
       fi
     )
+    else
+      it "fails as the CLI doesn't include networking in 'small' mode" && {
+        WITH_SNAPSHOT="$snapshot/remote-ref-list-no-networking-in-small-failure" \
+        expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 .git
+      }
+    fi
   )
 )
+
 title "gixp pack-index-from-data"
 (when "running 'pack-index-from-data"
   snapshot="$snapshot/pack-index-from-data"

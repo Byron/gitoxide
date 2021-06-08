@@ -16,7 +16,7 @@ test = true
 default = ["max-performance", "one-stop-shop"]
 max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
 serde1 = ["git-pack/serde1", "git-object/serde1"]
-one-stop-shop = [
+local = [
     "git-features",
     "git-features/progress",
     "git-features",
@@ -26,7 +26,13 @@ one-stop-shop = [
     "git-object",
     "git-pack/pack-cache-lru-dynamic",
     "git-pack/pack-cache-lru-static",
+]
+network = [
     "git-protocol"
+]
+one-stop-shop = [
+    "local",
+    "network",
 ]
 
 

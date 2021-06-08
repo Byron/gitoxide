@@ -1,4 +1,3 @@
-use git_repository::protocol::transport;
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug)]
@@ -19,11 +18,17 @@ impl FromStr for Protocol {
     }
 }
 
-impl From<Protocol> for transport::Protocol {
-    fn from(v: Protocol) -> Self {
-        match v {
-            Protocol::V1 => transport::Protocol::V1,
-            Protocol::V2 => transport::Protocol::V2,
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+mod impls {
+    use crate::Protocol;
+    use git_repository::protocol::transport;
+
+    impl From<Protocol> for transport::Protocol {
+        fn from(v: Protocol) -> Self {
+            match v {
+                Protocol::V1 => transport::Protocol::V1,
+                Protocol::V2 => transport::Protocol::V2,
+            }
         }
     }
 }

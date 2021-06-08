@@ -26,35 +26,48 @@ The top-level command-line interface.
 * **prodash-render-line-crossterm** or **prodash-render-line-termion** _(mutually exclusive)_
     * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
       that appears after a short duration.
-* **gitoxide-core-organize**
-    * An alias for `gitoxide-core/organize`.
+* **gitoxide-core-tools**
+    * A way to enable all `gitoxide-core` tools found in `gix tools`
+* **gitoxide-core-blocking-client**
+    * Use blocking client networking.
 
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-organize*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-organize* + *networking*
     * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-organize*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-organize* + *networking*
     * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-organize*
+* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-organize* + *networking*
     * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-organize*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-organize* + *networking*
     * for unix only, faster compile times, a little smaller
-* **light** = *lean-cli* + *fast* + *gitoxide-core-organize*
+* **light** = *lean-cli* + *fast* + *gitoxide-core-organize* + *networking*
     * crossplatform by nature as this comes with simplified log based progress
 * **small** = *lean-cli*
     * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt, rust based zlib implementation.
+    * no networking, local operations only.
 
 ### gitoxide-core
 
 The library powering the command-line interface.
 
 * **organize**
-    * **provides the 'organize' subcommand**
+    * **provides the 'organize' command**
         * Includes `jwalk` to find repositories quickly in order to move into a directory structure automatically.
-    * **provides the 'find' subcommand**
+    * **provides the 'find' command**
         * discover all git repositories within a directory. Particularly useful with [skim][skim].
+* **estimate-hours**
+    * Derive the amount of time invested akin to [git-hours].
+* _mutually exclusive_    
+  - if both are set, _blocking-client_ will take precedence.
+  - **blocking-client**
+    - If set, the client used to connect to git servers will use a blocking API. It supports more transports and is what most would want.
+  - **async-client**
+    - The client to connect to git servers will be async, while supporting only the 'git' transport itself. It's the most limited and can be seen as example
+      on how to use custom transports for custom servers.
 
 [skim]: https://github.com/lotabout/skim
+[git-hours]: https://github.com/kimmobrunfeldt/git-hours
 
 ### git-odb
 

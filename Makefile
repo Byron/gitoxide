@@ -87,7 +87,9 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features max
 	cargo check --no-default-features --features max-termion
 	cd gitoxide-core && cargo check --all-features \
-                     && cargo check
+                     && cargo check \
+                     && cargo check --features blocking-client
+#                     && cargo check --features async-client
 	cd git-hash && cargo check --all-features \
 				&& cargo check
 	cd git-object && cargo check --all-features

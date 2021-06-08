@@ -25,19 +25,20 @@ doctest = false
 [features]
 default = ["max"]
 
-gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
+max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
+max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 
-max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools"]
-max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools"]
+lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
+lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 
-lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools"]
-lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools"]
-
-light = ["fast", "lean-cli", "git-features/interrupt-handler", "gitoxide-core-tools"]
+light = ["fast", "lean-cli", "git-features/interrupt-handler", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 small = ["lean-cli", "git-features/sha1", "git-features/zlib-rust-backend"]
-http-client-curl = ["git-transport/http-client-curl"]
 
+gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
+gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
+http-client-curl = ["git-transport/http-client-curl"]
 fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
+
 pretty-cli = ["clap",
     "git-features/interrupt-handler",
     "gitoxide-core/serde1",

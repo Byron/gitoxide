@@ -32,7 +32,9 @@ pub enum SubCommands {
     PackVerify(PackVerify),
     PackExplode(PackExplode),
     IndexFromPack(IndexFromPack),
+    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     RemoteRefList(RemoteRefList),
+    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     PackReceive(PackReceive),
     CommitGraphVerify(CommitGraphVerify),
 }
@@ -72,6 +74,7 @@ pub struct IndexFromPack {
 /// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "remote-ref-list")]
+#[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 pub struct RemoteRefList {
     /// the protocol version to use. Valid values are 1 and 2
     #[argh(option, short = 'p')]
@@ -90,6 +93,7 @@ pub struct RemoteRefList {
 /// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "pack-receive")]
+#[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 pub struct PackReceive {
     /// the protocol version to use. Valid values are 1 and 2
     #[argh(option, short = 'p')]

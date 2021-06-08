@@ -75,6 +75,7 @@ pub fn main() -> Result<()> {
                 },
             )
         }
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Subcommands::PackReceive {
             protocol,
             url,
@@ -101,6 +102,7 @@ pub fn main() -> Result<()> {
                 )
             },
         ),
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Subcommands::RemoteRefList { protocol, url } => prepare_and_run(
             "remote-ref-list",
             verbose,
