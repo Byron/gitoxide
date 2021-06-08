@@ -209,7 +209,7 @@ pub(crate) mod recv {
     }
 }
 
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 pub(crate) mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use futures_io::{AsyncBufRead, AsyncRead};

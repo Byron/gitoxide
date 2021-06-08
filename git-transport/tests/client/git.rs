@@ -1,4 +1,4 @@
-#[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+#[cfg(feature = "async-client")]
 use futures_lite::{AsyncBufReadExt, AsyncWriteExt, StreamExt};
 #[cfg(feature = "blocking-client")]
 use std::io::{BufRead, Write};
@@ -108,7 +108,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     })));
 
     let expected_entries = 3;
-    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+    #[cfg(feature = "async-client")]
     let reader = futures_lite::io::BlockOn::new(reader);
     use git_pack::data::input;
     let entries = git_pack::data::input::BytesToEntriesIter::new_from_header(
@@ -192,7 +192,7 @@ async fn handshake_v2_and_request() -> crate::Result {
     // Thinking about it, it's most certainly fine to do `fetch' commands on another thread and move the entire conenction
     // there as it's always the end of an operation and a lot of IO is required that is blocking anyway, like accessing
     // commit graph information for fetch negotiations, and of cource processing a received pack.
-    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+    #[cfg(feature = "async-client")]
     Ok(
         blocking::unblock(|| futures_lite::future::block_on(handshake_v2_and_request_inner()).expect("no failure"))
             .await,
@@ -313,7 +313,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
     })));
 
     let expected_entries = 3;
-    #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
+    #[cfg(feature = "async-client")]
     let reader = futures_lite::io::BlockOn::new(reader);
 
     use git_pack::data::input;
