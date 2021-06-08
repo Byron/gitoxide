@@ -107,8 +107,10 @@ title "Porcelain ${kind}"
   snapshot="$snapshot/porcelain"
   (with_program tree
     (when "using the 'tools' subcommand"
+      title "gix tools…"
       (with "a repo with a tiny commit history"
         (small-repo-in-sandbox
+          title "gix tools estimate-hours"
           (when "running 'estimate-hours'"
             snapshot="$snapshot/estimate-hours"
             (with "no arguments"
@@ -147,6 +149,7 @@ title "Porcelain ${kind}"
           repo-with-remotes a-non-bare-repo-with-extension.git origin https://example.com/a-repo-with-extension.git
           snapshot="$snapshot/tools"
 
+          title "gix tools find"
           (when "running 'find'"
             snapshot="$snapshot/find"
             (with "no arguments"
@@ -156,6 +159,7 @@ title "Porcelain ${kind}"
               }
             )
           )
+          title "gix tools organize"
           (when "running 'organize'"
             snapshot="$snapshot/organize"
             (with "no arguments"
@@ -205,6 +209,7 @@ title "Porcelain ${kind}"
     )
   )
 
+  title "gix init"
   (when "running 'init'"
     snapshot="$snapshot/init"
     (with "no argument"
@@ -265,6 +270,7 @@ function launch_git_daemon() {
 
 title plumbing "${kind}"
 snapshot="$snapshot/plumbing"
+title "gixp pack-receive"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"
   (small-repo-in-sandbox
@@ -385,6 +391,7 @@ snapshot="$snapshot/plumbing"
     )
   )
 )
+title "gixp remote-ref-list"
 (when "running 'remote-ref-list'"
   snapshot="$snapshot/remote-ref-list"
   (small-repo-in-sandbox
@@ -451,6 +458,7 @@ snapshot="$snapshot/plumbing"
     )
   )
 )
+title "gixp pack-index-from-data"
 (when "running 'pack-index-from-data"
   snapshot="$snapshot/pack-index-from-data"
   PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
@@ -513,6 +521,7 @@ snapshot="$snapshot/plumbing"
     )
   )
 )
+title "gixp pack-explode"
 (when "running 'pack-explode"
   snapshot="$snapshot/pack-explode"
   PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2"
@@ -606,6 +615,7 @@ snapshot="$snapshot/plumbing"
   )
 )
 
+title "gixp pack-verify"
 (when "running 'pack-verify"
   snapshot="$snapshot/pack-verify"
   (with "a valid pack file"
@@ -669,6 +679,7 @@ snapshot="$snapshot/plumbing"
     )
   )
 )
+title "gixp commit-graph-verify"
 (when "running 'commit-graph-verify'"
   snapshot="$snapshot/commit-graph-verify"
   (small-repo-in-sandbox
