@@ -45,3 +45,6 @@ pub mod decode;
 pub use decode::all_at_once as decode;
 /// Utilities to encode different kinds of packet lines
 pub mod encode;
+
+#[cfg(all(feature = "async-io", feature = "blocking-io"))]
+compile_error!("Cannot set both 'blocking-io' and 'async-io' features as they are mutually exclusive");

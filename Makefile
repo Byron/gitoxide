@@ -95,10 +95,10 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features pack-cache-lru-static \
 			   && cargo check --features pack-cache-lru-dynamic \
 			   && cargo check
-	cd git-packetline && cargo check --all-features \
-					   && cargo check \
+	cd git-packetline && cargo check \
 					   && cargo check --features blocking-io \
 					   && cargo check --features async-io
+	cd git-packetline && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-url && cargo check --all-features \
 			   && cargo check
 	cd git-features && cargo check --all-features \
@@ -116,11 +116,11 @@ check: ## Build all code in suitable configurations
 			   && cargo check
 	cd git-config && cargo check --all-features \
 				 && cargo check
-	cd git-transport && cargo check --all-features \
-					 && cargo check \
+	cd git-transport && cargo check \
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
 					 && cargo check --features http-client-curl
+	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-protocol && cargo check \
 					&& cargo check --features blocking-client \
 					&& cargo check --features async-client

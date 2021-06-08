@@ -40,3 +40,6 @@ pub mod client;
 #[doc(inline)]
 #[cfg(feature = "blocking-client")]
 pub use client::connect;
+
+#[cfg(all(feature = "async-client", feature = "blocking-client"))]
+compile_error!("Cannot set both 'blocking-client' and 'async-client' features as they are mutually exclusive");

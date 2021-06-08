@@ -122,7 +122,7 @@ All feature toggles are additive.
 By default, all IO related capabilities will be missing unless one of the following is chosen.
 
 * _mutually exclusive_
-  * If both are present, _blocking-io_ is chosen.
+    - Specifying both causes a compile error, preventing the use of `--all-features`.
   * **blocking-io**
     * If set, all IO will become blocking. The same types will be used preventing side-by-side usage of blocking and non-blocking IO
   * **async-io**
@@ -134,6 +134,7 @@ By default, all IO related capabilities will be missing unless one of the follow
 The _client_ portion of transport can be blocking or async. If none is selected, it will be missing entirely.
 
 - _mutually exclusive_
+    - Specifying both causes a compile error, preventing the use of `--all-features`.
     - **blocking-client**
       - If set, blocking implementations of the typical git transports become available in `crate::client`
       - **http-client-curl**
@@ -146,7 +147,7 @@ The _client_ portion of transport can be blocking or async. If none is selected,
     
 ### git-protocol
 
-The _client_ portion of the protocol uses `git-transport` to communicate to a server. For it to be usable, one of the following features must
+The _client_ portion of the protocol uses `git-transport` to communicate to a server. For it to be available, one of the following features must
 be selected.
 
 - _mutually exclusive_ 
