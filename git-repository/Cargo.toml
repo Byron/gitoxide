@@ -21,6 +21,7 @@ local = [
     "git-features/progress",
     "git-features",
     "git-hash",
+    "git-url",
     "git-traverse",
     "git-diff",
     "git-object",
@@ -39,6 +40,7 @@ one-stop-shop = [
 [dependencies]
 git-ref = { version = "0.5.0", path = "../git-ref" }
 git-odb = { version = "^0.16", path = "../git-odb" }
+git-url = { version = "0.3.0", path = "../git-url", optional = true }
 git-hash = { version = "^0.4.0", path = "../git-hash", optional = true }
 git-pack = { version = "^0.2", path = "../git-pack", optional = true }
 git-object = { version = "^0.10", path = "../git-object", optional = true }

@@ -1,7 +1,9 @@
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
 mod async_io;
 #[cfg(all(not(feature = "blocking-client"), feature = "async-client"))]
-pub use async_io::{ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport, TransportV2Ext};
+pub use async_io::{
+    connect, ExtendedBufRead, HandleProgress, RequestWriter, SetServiceResponse, Transport, TransportV2Ext,
+};
 
 mod traits;
 pub use traits::TransportWithoutIO;
@@ -23,7 +25,7 @@ pub mod capabilities;
 #[doc(inline)]
 pub use capabilities::Capabilities;
 
-mod non_io_types;
+pub(crate) mod non_io_types;
 pub use non_io_types::{Error, Identity, MessageKind, WriteMode};
 
 ///

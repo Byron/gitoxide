@@ -1,37 +1,6 @@
 use crate::client::Transport;
-use quick_error::quick_error;
-quick_error! {
-    /// The error used in [`connect()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Url(err: git_url::parse::Error) {
-            display("The URL could not be parsed")
-            from()
-            source(err)
-        }
-        PathConversion(err: bstr::Utf8Error) {
-            display("The git repository paths could not be converted to UTF8")
-            from()
-            source(err)
-        }
-        Connection(err: Box<dyn std::error::Error + Send + Sync>) {
-            display("connection failed")
-            from()
-            source(&**err)
-        }
-        UnsupportedUrlTokens(url: bstr::BString, scheme: git_url::Scheme) {
-            display("The url '{}' contains information that would not be used by the '{}' protocol", url, scheme)
-        }
-        UnsupportedScheme(scheme: git_url::Scheme) {
-            display("The '{}' protocol is currently unsupported", scheme)
-        }
-        #[cfg(not(feature = "http-client-curl"))]
-        CompiledWithoutHttp(scheme: git_url::Scheme) {
-            display("'{}' is not compiled in. Compile with the 'http-client-curl' cargo feature", scheme)
-        }
-    }
-}
+
+pub use crate::client::non_io_types::connect::Error;
 
 /// A general purpose connector connecting to a repository identified by the given `url`.
 ///

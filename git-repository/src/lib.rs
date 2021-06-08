@@ -26,6 +26,7 @@
 //!
 //! `git_repository::`
 //! * [`hash`]
+//! * [`url`]
 //! * [`object`]
 //!   * [`bstr`][object::bstr]
 //! * [`odb`]
@@ -62,6 +63,8 @@ pub use git_protocol as protocol;
 pub use git_ref as refs;
 #[cfg(feature = "git-traverse")]
 pub use git_traverse as traverse;
+#[cfg(feature = "git-url")]
+pub use git_url as url;
 
 #[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]
 pub mod ext;

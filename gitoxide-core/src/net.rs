@@ -42,11 +42,29 @@ impl Default for Protocol {
 }
 #[cfg(feature = "async-client")]
 mod async_io {
-    pub async fn connect(
-        url: &[u8],
-        desired_version: super::Protocol,
-    ) -> anyhow::Result<Box<dyn git_repository::protocol::transport::client::Transport>> {
-        todo!("async connect")
+    use git_repository::protocol::transport::{client, client::connect::Error};
+
+    pub async fn connect(url: &[u8], desired_version: super::Protocol) -> Result<Box<dyn client::Transport>, Error> {
+        let urlb = url;
+        let url = git_repository::url::parse(urlb)?;
+        Ok(match url.scheme {
+            git_repository::url::Scheme::Git => {
+                if url.user.is_some() {
+                    return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
+                }
+                todo!("create git connection with async tcp streams")
+                // Box::new(
+                // crate::client::git::connect(
+                //     &url.host.as_ref().expect("host is present in url"),
+                //     url.path,
+                //     desired_version,
+                //     url.port,
+                // )
+                // .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
+                // )
+            }
+            scheme => return Err(Error::UnsupportedScheme(scheme)),
+        })
     }
 }
 #[cfg(feature = "async-client")]
