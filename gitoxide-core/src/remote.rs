@@ -75,7 +75,7 @@ pub mod refs {
         }
     }
     #[cfg(feature = "async-client")]
-    pub use async_io::list;
+    pub use self::async_io::list;
 
     #[cfg(feature = "blocking-client")]
     mod blocking_io {

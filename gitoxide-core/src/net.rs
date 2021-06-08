@@ -42,9 +42,45 @@ impl Default for Protocol {
 }
 #[cfg(feature = "async-client")]
 mod async_io {
-    use git_repository::protocol::transport::{client, client::connect::Error};
+    use async_net::TcpStream;
+    use futures_lite::FutureExt;
+    use git_repository::{
+        object::bstr::BString,
+        protocol::{
+            transport,
+            transport::{client, client::connect::Error, client::git},
+        },
+    };
+    use std::{io, time::Duration};
 
-    pub async fn connect(url: &[u8], desired_version: super::Protocol) -> Result<Box<dyn client::Transport>, Error> {
+    async fn git_connect(
+        host: &str,
+        path: BString,
+        desired_version: transport::Protocol,
+        port: Option<u16>,
+    ) -> Result<git::Connection<TcpStream, TcpStream>, Error> {
+        let read = TcpStream::connect(&(host, port.unwrap_or(9418)))
+            .or(async {
+                async_io::Timer::after(Duration::from_secs(5)).await;
+                Err(io::ErrorKind::TimedOut.into())
+            })
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+        let write = read.clone();
+        Ok(git::Connection::new(
+            read,
+            write,
+            desired_version,
+            path,
+            None::<(String, _)>,
+            git::ConnectMode::Daemon,
+        ))
+    }
+
+    pub async fn connect(
+        url: &[u8],
+        desired_version: transport::Protocol,
+    ) -> Result<Box<dyn client::Transport>, Error> {
         let urlb = url;
         let url = git_repository::url::parse(urlb)?;
         Ok(match url.scheme {
@@ -52,23 +88,22 @@ mod async_io {
                 if url.user.is_some() {
                     return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
                 }
-                todo!("create git connection with async tcp streams")
-                // Box::new(
-                // crate::client::git::connect(
-                //     &url.host.as_ref().expect("host is present in url"),
-                //     url.path,
-                //     desired_version,
-                //     url.port,
-                // )
-                // .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
-                // )
+                Box::new(
+                    git_connect(
+                        &url.host.as_ref().expect("host is present in url"),
+                        url.path,
+                        desired_version,
+                        url.port,
+                    )
+                    .await?,
+                )
             }
             scheme => return Err(Error::UnsupportedScheme(scheme)),
         })
     }
 }
 #[cfg(feature = "async-client")]
-pub use async_io::connect;
+pub use self::async_io::connect;
 
 #[cfg(feature = "blocking-client")]
 pub use git_repository::protocol::transport::connect;

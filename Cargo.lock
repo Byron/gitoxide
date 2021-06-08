@@ -152,6 +152,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-net"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69b0a74e7f70af3c8cf1aa539edbd044795706659ac52b78a71dc1a205ecefdf"
+dependencies = [
+ "async-io",
+ "blocking",
+ "fastrand",
+ "futures-lite",
+]
+
+[[package]]
 name = "async-std"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1178,11 +1190,14 @@ name = "gitoxide-core"
 version = "0.9.0"
 dependencies = [
  "anyhow",
+ "async-io",
+ "async-net",
  "async-trait",
  "bstr",
  "bytesize",
  "fs-err",
  "futures-io",
+ "futures-lite",
  "git-commitgraph",
  "git-config",
  "git-protocol",

@@ -192,7 +192,7 @@ mod async_io {
     }
 }
 #[cfg(feature = "async-client")]
-pub use async_io::receive;
+pub use self::async_io::receive;
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JsonBundleWriteOutcome {
