@@ -16,7 +16,7 @@ serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "git-protocol-for-c
 
 # async or blocking tooling
 blocking-client = ["git-protocol-for-configuration-only/blocking-client", "git-repository/network"]
-async-client = ["git-protocol-for-configuration-only/async-client", "git-repository/network", "async-trait", "futures-io", "async-net", "async-io", "futures-lite"]
+async-client = ["git-protocol-for-configuration-only/async-client", "git-repository/network", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
 
 # tools
 organize = ["git-url", "jwalk"]
@@ -43,6 +43,7 @@ async-net = { version = "1.6", optional = true }
 futures-lite = { version  = "1.12.0", optional = true }
 async-io = { version = "1.4", optional = true }
 futures-io = { version = "0.3.15", optional = true }
+blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
 git-url = { version = "^0.3.0", path = "../git-url", optional = true }

@@ -42,7 +42,7 @@ pub mod refs {
     #[cfg(feature = "async-client")]
     mod async_io {
         use super::{Context, LsRemotes};
-        use crate::net;
+        use crate::{net, remote::refs::print, OutputFormat};
         use async_trait::async_trait;
         use futures_io::AsyncBufRead;
         use git_repository::{
@@ -69,9 +69,22 @@ pub mod refs {
             protocol: Option<net::Protocol>,
             url: &str,
             progress: impl Progress,
-            ctx: Context<impl io::Write>,
+            ctx: Context<impl io::Write + Send + 'static>,
         ) -> anyhow::Result<()> {
-            todo!("async list")
+            let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
+            let mut delegate = LsRemotes::default();
+            protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress).await?;
+
+            blocking::unblock(move || match ctx.format {
+                OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
+                #[cfg(feature = "serde1")]
+                OutputFormat::Json => serde_json::to_writer_pretty(
+                    ctx.out,
+                    &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+                )?,
+            })
+            .await;
+            Ok(())
         }
     }
     #[cfg(feature = "async-client")]

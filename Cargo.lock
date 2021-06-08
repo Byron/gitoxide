@@ -1193,6 +1193,7 @@ dependencies = [
  "async-io",
  "async-net",
  "async-trait",
+ "blocking",
  "bstr",
  "bytesize",
  "fs-err",
