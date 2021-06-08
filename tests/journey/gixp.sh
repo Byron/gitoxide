@@ -7,7 +7,7 @@ title "gixp pack-receive"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"
   (small-repo-in-sandbox
-    if [[ "$kind" != "small" ]]; then
+    if [[ "$kind" = 'max' ]]; then
     (with "file:// protocol"
       (with "version 1"
         (with "NO output directory"
@@ -123,7 +123,8 @@ title "gixp pack-receive"
       )
       fi
     )
-    else
+    elif [[ "$kind" = "small" ]]; then
+      # TODO: actually part of the journey test should run in async mode too
       it "fails as the CLI doesn't have networking in 'small' mode" && {
         WITH_SNAPSHOT="$snapshot/pack-receive-no-networking-in-small-failure" \
         expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 .git
@@ -137,6 +138,8 @@ title "gixp remote-ref-list"
   snapshot="$snapshot/remote-ref-list"
   (small-repo-in-sandbox
     if [[ "$kind" != "small" ]]; then
+
+    if [[ "$kind" != "async" ]]; then
     (with "file:// protocol"
       (with "version 1"
         it "generates the correct output" && {
@@ -159,6 +162,8 @@ title "gixp remote-ref-list"
       )
       fi
     )
+    fi
+
     (with "git:// protocol"
       launch-git-daemon
       (with "version 1"
@@ -174,7 +179,7 @@ title "gixp remote-ref-list"
         }
       )
     )
-    if test "$kind" != "max"; then
+    if [[ "$kind" == "small" ]]; then
     (with "https:// protocol (in small builds)"
       it "fails as http is not compiled in" && {
         WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
@@ -183,7 +188,7 @@ title "gixp remote-ref-list"
     )
     fi
     (on_ci
-      if test "$kind" = "max"; then
+      if [[ "$kind" = "max" ]]; then
       (with "https:// protocol"
         (with "version 1"
           it "generates the correct output" && {
@@ -325,10 +330,10 @@ title "gixp pack-explode"
 
             (with_program tree
 
-              if test "$kind" == "max"; then
-                suffix=zlib-ng
-              else
+              if test "$kind" = "small"; then
                 suffix=miniz-oxide
+              else
+                suffix=zlib-ng
               fi
               it "creates all pack objects, but the broken ones" && {
                 WITH_SNAPSHOT="$snapshot/broken-with-objects-dir-skip-checks-success-tree-$suffix" \

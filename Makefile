@@ -65,7 +65,7 @@ lint: ## Run lints with clippy
 
 ##@ Testing
 
-tests: clippy check doc unit-tests journey-tests-small journey-tests ## run all tests, including journey tests, try building docs
+tests: clippy check doc unit-tests journey-tests-small journey-tests-async journey-tests ## run all tests, including journey tests, try building docs
 
 audit: ## run various auditing tools to assure we are legal and safe
 	cargo deny check advisories bans licenses sources
@@ -160,6 +160,11 @@ journey-tests-small: always ## run journey tests (lean-cli)
 	cargo build --no-default-features --features small
 	cd tests/tools && cargo build
 	./tests/journey.sh target/debug/gix target/debug/gixp $(jtt) small
+
+journey-tests-async: always ## run journey tests (light-async)
+	cargo build --no-default-features --features light-async
+	cd tests/tools && cargo build
+	./tests/journey.sh target/debug/gix target/debug/gixp $(jtt) async
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
