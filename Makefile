@@ -73,7 +73,7 @@ audit: ## run various auditing tools to assure we are legal and safe
 
 doc: ## Run cargo doc on all crates
 	cargo doc
-	cargo doc --all-features
+	cargo doc --features=max,lean,light,small
 
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all
@@ -82,14 +82,16 @@ check: ## Build all code in suitable configurations
 	cargo check --all
 	cargo check --no-default-features --features small
 	cargo check --no-default-features --features light
+	cargo check --no-default-features --features light-async
+	if cargo check --features light-async 2>/dev/null; then false; else true; fi
 	cargo check --no-default-features --features lean
 	cargo check --no-default-features --features lean-termion
 	cargo check --no-default-features --features max
 	cargo check --no-default-features --features max-termion
-	cd gitoxide-core && cargo check --all-features \
-                     && cargo check \
-                     && cargo check --features blocking-client
-#                     && cargo check --features async-client
+	cd gitoxide-core && cargo check \
+                     && cargo check --features blocking-client \
+                     && cargo check --features async-client
+	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check
 	cd git-object && cargo check --all-features

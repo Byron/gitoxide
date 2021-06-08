@@ -1,12 +1,11 @@
 pub mod refs {
-    use crate::{OutputFormat, Protocol};
+    use crate::OutputFormat;
     use git_repository::{
         protocol,
         protocol::{
             fetch::{Action, Arguments, Ref, Response},
             transport,
         },
-        Progress,
     };
 
     pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -40,43 +39,97 @@ pub mod refs {
         }
     }
 
-    impl protocol::fetch::Delegate for LsRemotes {
-        fn receive_pack(
-            &mut self,
-            _input: impl io::BufRead,
-            _progress: impl Progress,
-            _refs: &[Ref],
-            _previous: &Response,
-        ) -> io::Result<()> {
-            unreachable!("not called for ls-refs")
+    #[cfg(feature = "async-client")]
+    mod async_io {
+        use super::{Context, LsRemotes};
+        use crate::net;
+        use async_trait::async_trait;
+        use futures_io::AsyncBufRead;
+        use git_repository::{
+            protocol,
+            protocol::fetch::{Ref, Response},
+            Progress,
+        };
+        use std::io;
+
+        #[async_trait(?Send)]
+        impl protocol::fetch::Delegate for LsRemotes {
+            async fn receive_pack(
+                &mut self,
+                input: impl AsyncBufRead + Unpin + 'async_trait,
+                progress: impl Progress,
+                refs: &[Ref],
+                previous: &Response,
+            ) -> io::Result<()> {
+                unreachable!("not called for ls-refs")
+            }
+        }
+
+        pub async fn list(
+            protocol: Option<net::Protocol>,
+            url: &str,
+            progress: impl Progress,
+            ctx: Context<impl io::Write>,
+        ) -> anyhow::Result<()> {
+            todo!("async list")
         }
     }
+    #[cfg(feature = "async-client")]
+    pub use async_io::list;
+
+    #[cfg(feature = "blocking-client")]
+    mod blocking_io {
+        #[cfg(feature = "serde1")]
+        use super::JsonRef;
+        use super::{print, Context, LsRemotes};
+        use crate::{net, OutputFormat};
+        use git_repository::{
+            protocol,
+            protocol::fetch::{Ref, Response},
+            Progress,
+        };
+        use std::io;
+
+        impl protocol::fetch::Delegate for LsRemotes {
+            fn receive_pack(
+                &mut self,
+                _input: impl io::BufRead,
+                _progress: impl Progress,
+                _refs: &[Ref],
+                _previous: &Response,
+            ) -> io::Result<()> {
+                unreachable!("not called for ls-refs")
+            }
+        }
+
+        pub fn list(
+            protocol: Option<net::Protocol>,
+            url: &str,
+            progress: impl Progress,
+            ctx: Context<impl io::Write>,
+        ) -> anyhow::Result<()> {
+            let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+            let mut delegate = LsRemotes::default();
+            protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
+
+            match ctx.format {
+                OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
+                #[cfg(feature = "serde1")]
+                OutputFormat::Json => serde_json::to_writer_pretty(
+                    ctx.out,
+                    &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+                )?,
+            };
+            Ok(())
+        }
+    }
+    #[cfg(feature = "blocking-client")]
+    pub use blocking_io::list;
 
     pub struct Context<W: io::Write> {
         pub thread_limit: Option<usize>,
         pub format: OutputFormat,
         pub out: W,
-    }
-
-    pub fn list(
-        protocol: Option<Protocol>,
-        url: &str,
-        progress: impl Progress,
-        ctx: Context<impl io::Write>,
-    ) -> anyhow::Result<()> {
-        let transport = transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
-        let mut delegate = LsRemotes::default();
-        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
-
-        match ctx.format {
-            OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
-            #[cfg(feature = "serde1")]
-            OutputFormat::Json => serde_json::to_writer_pretty(
-                ctx.out,
-                &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
-            )?,
-        };
-        Ok(())
     }
 
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

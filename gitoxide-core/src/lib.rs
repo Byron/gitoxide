@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
+#![cfg_attr(feature = "async-client", allow(unused))]
 
 use std::str::FromStr;
 
@@ -34,8 +35,7 @@ impl FromStr for OutputFormat {
     }
 }
 
-mod protocol;
-pub use protocol::Protocol;
+pub mod net;
 
 pub mod commitgraph;
 #[cfg(feature = "estimate-hours")]
@@ -46,3 +46,6 @@ pub mod pack;
 #[cfg(any(feature = "async-client", feature = "blocking-client"))]
 pub mod remote;
 pub mod repository;
+
+#[cfg(all(feature = "async-client", feature = "blocking-client"))]
+compile_error!("Cannot set both 'blocking-client' and 'async-client' features as they are mutually exclusive");

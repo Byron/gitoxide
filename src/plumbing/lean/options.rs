@@ -78,7 +78,7 @@ pub struct IndexFromPack {
 pub struct RemoteRefList {
     /// the protocol version to use. Valid values are 1 and 2
     #[argh(option, short = 'p')]
-    pub protocol: Option<core::Protocol>,
+    pub protocol: Option<core::net::Protocol>,
 
     /// the URLs or path from which to receive references
     ///
@@ -97,7 +97,7 @@ pub struct RemoteRefList {
 pub struct PackReceive {
     /// the protocol version to use. Valid values are 1 and 2
     #[argh(option, short = 'p')]
-    pub protocol: Option<core::Protocol>,
+    pub protocol: Option<core::net::Protocol>,
 
     /// the directory into which to write references. Existing files will be overwritten.
     ///

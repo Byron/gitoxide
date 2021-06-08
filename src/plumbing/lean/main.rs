@@ -9,6 +9,8 @@ use std::{
     io::{self, stderr, stdin, stdout},
     path::PathBuf,
 };
+#[cfg(all(feature = "gitoxide-core-blocking-client", feature = "gitoxide-core-async-client"))]
+compile_error!("Please set only one of the client networking options.");
 
 pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
@@ -60,7 +62,7 @@ pub fn main() -> Result<()> {
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         SubCommands::RemoteRefList(options::RemoteRefList { protocol, url }) => {
             let (_handle, progress) = prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
-            core::remote::refs::list(
+            let res = core::remote::refs::list(
                 protocol,
                 &url,
                 DoOrDiscard::from(progress),
@@ -69,7 +71,11 @@ pub fn main() -> Result<()> {
                     format: OutputFormat::Human,
                     out: io::stdout(),
                 },
-            )
+            );
+            #[cfg(feature = "gitoxide-core-blocking-client")]
+            return res;
+            #[cfg(feature = "gitoxide-core-async-client")]
+            return futures_lite::future::block_on(res);
         }
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         SubCommands::PackReceive(options::PackReceive {
@@ -79,7 +85,7 @@ pub fn main() -> Result<()> {
             refs_directory,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
-            core::pack::receive(
+            let res = core::pack::receive(
                 protocol,
                 &url,
                 directory,
@@ -90,7 +96,11 @@ pub fn main() -> Result<()> {
                     format: OutputFormat::Human,
                     out: io::stdout(),
                 },
-            )
+            );
+            #[cfg(feature = "gitoxide-core-blocking-client")]
+            return res;
+            #[cfg(feature = "gitoxide-core-async-client")]
+            return futures_lite::future::block_on(res);
         }
         SubCommands::IndexFromPack(options::IndexFromPack {
             iteration_mode,

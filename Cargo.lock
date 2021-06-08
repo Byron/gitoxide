@@ -1177,9 +1177,11 @@ name = "gitoxide-core"
 version = "0.9.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bstr",
  "bytesize",
  "fs-err",
+ "futures-io",
  "git-commitgraph",
  "git-config",
  "git-protocol",

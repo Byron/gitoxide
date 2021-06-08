@@ -1,4 +1,4 @@
-use crate::{remote::refs::JsonRef, OutputFormat, Protocol};
+use crate::{remote::refs::JsonRef, OutputFormat};
 use git_repository::{
     hash::ObjectId,
     object::bstr::{BString, ByteSlice},
@@ -9,12 +9,8 @@ use git_repository::{
         transport,
         transport::client::Capabilities,
     },
-    Progress,
 };
-use std::{
-    io::{self, BufRead},
-    path::PathBuf,
-};
+use std::{io, path::PathBuf};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
@@ -73,49 +69,130 @@ impl<W: io::Write> protocol::fetch::DelegateWithoutIO for CloneDelegate<W> {
     }
 }
 
-impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
-    fn receive_pack(
-        &mut self,
-        input: impl BufRead,
-        progress: impl Progress,
-        refs: &[Ref],
-        _previous: &Response,
-    ) -> io::Result<()> {
-        let options = pack::bundle::write::Options {
-            thread_limit: self.ctx.thread_limit,
-            index_kind: pack::index::Version::V2,
-            iteration_mode: pack::data::input::Mode::Verify,
-        };
-        let outcome = pack::bundle::Bundle::write_to_directory(input, self.directory.take(), progress, options)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+#[cfg(feature = "blocking-client")]
+mod blocking_io {
+    #[cfg(feature = "serde1")]
+    use super::JsonOutcome;
+    use super::{CloneDelegate, Context};
+    use crate::{net, pack::receive::print, OutputFormat};
+    use git_repository::{
+        object::bstr::{BString, ByteSlice},
+        odb::pack,
+        protocol,
+        protocol::fetch::{Ref, Response},
+        Progress,
+    };
+    use std::{io, io::BufRead, path::PathBuf};
 
-        if let Some(directory) = self.refs_directory.take() {
-            let assure_dir = |path: &BString| {
-                assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-                let path = directory.join(path.to_path_lossy());
-                std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+    impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
+        fn receive_pack(
+            &mut self,
+            input: impl BufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            _previous: &Response,
+        ) -> io::Result<()> {
+            let options = pack::bundle::write::Options {
+                thread_limit: self.ctx.thread_limit,
+                index_kind: pack::index::Version::V2,
+                iteration_mode: pack::data::input::Mode::Verify,
             };
-            for r in refs {
-                let (path, content) = match r {
-                    Ref::Symbolic { path, target, .. } => (assure_dir(path)?, format!("ref: {}", target)),
-                    Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                        (assure_dir(path)?, object.to_string())
-                    }
-                };
-                std::fs::write(path, content.as_bytes())?;
-            }
-        }
+            let outcome = pack::bundle::Bundle::write_to_directory(input, self.directory.take(), progress, options)
+                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
-        match self.ctx.format {
-            OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
-            #[cfg(feature = "serde1")]
-            OutputFormat::Json => {
-                serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+            if let Some(directory) = self.refs_directory.take() {
+                let assure_dir = |path: &BString| {
+                    assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
+                    let path = directory.join(path.to_path_lossy());
+                    std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+                };
+                for r in refs {
+                    let (path, content) = match r {
+                        Ref::Symbolic { path, target, .. } => (assure_dir(path)?, format!("ref: {}", target)),
+                        Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
+                            (assure_dir(path)?, object.to_string())
+                        }
+                    };
+                    std::fs::write(path, content.as_bytes())?;
+                }
             }
+
+            match self.ctx.format {
+                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
+                #[cfg(feature = "serde1")]
+                OutputFormat::Json => {
+                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+                }
+            };
+            Ok(())
+        }
+    }
+
+    pub fn receive<P: Progress, W: io::Write>(
+        protocol: Option<net::Protocol>,
+        url: &str,
+        directory: Option<PathBuf>,
+        refs_directory: Option<PathBuf>,
+        progress: P,
+        ctx: Context<W>,
+    ) -> anyhow::Result<()> {
+        let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+        let mut delegate = CloneDelegate {
+            ctx,
+            directory,
+            refs_directory,
+            ref_filter: None,
         };
+        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
         Ok(())
     }
 }
+#[cfg(feature = "blocking-client")]
+pub use blocking_io::receive;
+
+#[cfg(feature = "async-client")]
+mod async_io {
+    #[cfg(feature = "serde1")]
+    use super::JsonOutcome;
+    use super::{CloneDelegate, Context};
+    use crate::{net, pack::receive::print, OutputFormat};
+    use async_trait::async_trait;
+    use futures_io::AsyncBufRead;
+    use git_repository::{
+        object::bstr::{BString, ByteSlice},
+        odb::pack,
+        protocol,
+        protocol::fetch::{Ref, Response},
+        Progress,
+    };
+    use std::{io, io::BufRead, path::PathBuf};
+
+    #[async_trait(?Send)]
+    impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
+        async fn receive_pack(
+            &mut self,
+            input: impl AsyncBufRead + Unpin + 'async_trait,
+            progress: impl Progress,
+            refs: &[Ref],
+            _previous: &Response,
+        ) -> io::Result<()> {
+            todo!("receive pack trait method impl")
+        }
+    }
+
+    pub async fn receive<P: Progress, W: io::Write>(
+        protocol: Option<net::Protocol>,
+        url: &str,
+        directory: Option<PathBuf>,
+        refs_directory: Option<PathBuf>,
+        progress: P,
+        ctx: Context<W>,
+    ) -> anyhow::Result<()> {
+        todo!("receive impl")
+    }
+}
+#[cfg(feature = "async-client")]
+pub use async_io::receive;
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JsonBundleWriteOutcome {
@@ -172,24 +249,5 @@ fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Re
     print_hash_and_path(out, "pack", res.index.data_hash, res.data_path)?;
     writeln!(out)?;
     crate::remote::refs::print(out, refs)?;
-    Ok(())
-}
-
-pub fn receive<P: Progress, W: io::Write>(
-    protocol: Option<Protocol>,
-    url: &str,
-    directory: Option<PathBuf>,
-    refs_directory: Option<PathBuf>,
-    progress: P,
-    ctx: Context<W>,
-) -> anyhow::Result<()> {
-    let transport = protocol::transport::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
-    let mut delegate = CloneDelegate {
-        ctx,
-        directory,
-        refs_directory,
-        ref_filter: None,
-    };
-    protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
     Ok(())
 }

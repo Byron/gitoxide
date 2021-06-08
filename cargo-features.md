@@ -28,21 +28,28 @@ The top-level command-line interface.
       that appears after a short duration.
 * **gitoxide-core-tools**
     * A way to enable all `gitoxide-core` tools found in `gix tools`
-* **gitoxide-core-blocking-client**
-    * Use blocking client networking.
+* _mutually exclusive_    
+    * If both are set a compile error is triggered. This also means that `cargo … --all-features` will fail.
+    * **gitoxide-core-blocking-client**
+        * Use blocking client networking.
+    * **gitoxide-core-async-client**
+      * Use async client networking.
 
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-organize* + *networking*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-organize* + *client-networking*
     * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-organize* + *networking*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-organize* + *client-networking*
     * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-organize* + *networking*
+* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-organize* + *client-networking*
     * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-organize* + *networking*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-organize* + *client-networking*
     * for unix only, faster compile times, a little smaller
-* **light** = *lean-cli* + *fast* + *gitoxide-core-organize* + *networking*
+* **light** = *lean-cli* + *fast* + *gitoxide-core-organize* + *client-networking*
     * crossplatform by nature as this comes with simplified log based progress
+* **light-async** = *lean-cli* + *fast* + *gitoxide-core-organize* + *client-async-networking*
+   * Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport. It uses, however, a fully asynchronous
+     networking implementation which can serve a real-world example on how to implement custom async transports.
 * **small** = *lean-cli*
     * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt, rust based zlib implementation.
     * no networking, local operations only.

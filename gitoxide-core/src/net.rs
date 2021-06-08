@@ -20,7 +20,7 @@ impl FromStr for Protocol {
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod impls {
-    use crate::Protocol;
+    use super::Protocol;
     use git_repository::protocol::transport;
 
     impl From<Protocol> for transport::Protocol {
@@ -40,3 +40,17 @@ impl Default for Protocol {
         Protocol::V2
     }
 }
+#[cfg(feature = "async-client")]
+mod async_io {
+    pub async fn connect(
+        url: &[u8],
+        desired_version: super::Protocol,
+    ) -> anyhow::Result<Box<dyn git_repository::protocol::transport::client::Transport>> {
+        todo!("async connect")
+    }
+}
+#[cfg(feature = "async-client")]
+pub use async_io::connect;
+
+#[cfg(feature = "blocking-client")]
+pub use git_repository::protocol::transport::connect;

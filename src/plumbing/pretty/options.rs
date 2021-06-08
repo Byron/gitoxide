@@ -68,7 +68,7 @@ pub enum Subcommands {
     PackReceive {
         /// The protocol version to use. Valid values are 1 and 2
         #[clap(long, short = 'p')]
-        protocol: Option<core::Protocol>,
+        protocol: Option<core::net::Protocol>,
 
         /// the directory into which to write references. Existing files will be overwritten.
         ///
@@ -96,7 +96,7 @@ pub enum Subcommands {
     RemoteRefList {
         /// The protocol version to use. Valid values are 1 and 2
         #[clap(long, short = 'p')]
-        protocol: Option<core::Protocol>,
+        protocol: Option<core::net::Protocol>,
 
         /// the URLs or path from which to receive references
         ///
