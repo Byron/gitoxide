@@ -129,7 +129,7 @@ mod blocking_io {
         }
     }
 
-    pub fn receive<P: Progress, W: io::Write>(
+    pub fn receive<P: Progress, W: io::Write + Send + 'static>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
@@ -138,13 +138,13 @@ mod blocking_io {
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
         let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
-        let mut delegate = CloneDelegate {
+        let delegate = CloneDelegate {
             ctx,
             directory,
             refs_directory,
             ref_filter: None,
         };
-        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
+        protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?;
         Ok(())
     }
 }

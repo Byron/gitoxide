@@ -73,7 +73,9 @@ pub mod refs {
         ) -> anyhow::Result<()> {
             let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
             let mut delegate = LsRemotes::default();
-            let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress).await?;
+            let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)
+                .await?
+                .0;
 
             blocking::unblock(move || match ctx.format {
                 OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
@@ -119,11 +121,11 @@ pub mod refs {
             protocol: Option<net::Protocol>,
             url: &str,
             progress: impl Progress,
-            ctx: Context<impl io::Write>,
+            ctx: Context<impl io::Write + Send + 'static>,
         ) -> anyhow::Result<()> {
             let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
-            let mut delegate = LsRemotes::default();
-            protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
+            let delegate = LsRemotes::default();
+            let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?.0;
 
             match ctx.format {
                 OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),

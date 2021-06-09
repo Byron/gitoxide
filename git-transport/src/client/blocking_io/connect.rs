@@ -11,7 +11,7 @@ pub use crate::client::non_io_types::connect::Error;
 /// and if compiled in connections to [git repositories over https][crate::client::http::connect()].
 ///
 /// Use `desired_version` to set the desired protocol version to use when connecting, but not that the server may downgrade it.
-pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn Transport>, Error> {
+pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn Transport + Send>, Error> {
     let urlb = url;
     let url = git_url::parse(urlb)?;
     Ok(match url.scheme {

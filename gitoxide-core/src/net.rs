@@ -80,7 +80,7 @@ mod async_io {
     pub async fn connect(
         url: &[u8],
         desired_version: transport::Protocol,
-    ) -> Result<Box<dyn client::Transport>, Error> {
+    ) -> Result<Box<dyn client::Transport + Send>, Error> {
         let urlb = url;
         let url = git_repository::url::parse(urlb)?;
         Ok(match url.scheme {

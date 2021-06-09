@@ -23,10 +23,16 @@ pub struct Connection<R, W> {
     pub(in crate::client) mode: ConnectMode,
 }
 
-pub(crate) mod message {
-    use bstr::{BString, ByteVec};
+impl<R, W> Connection<R, W> {
+    /// Return the inner reader and writer
+    pub fn into_inner(self) -> (R, W) {
+        (self.line_provider.into_inner(), self.writer)
+    }
+}
 
+pub(crate) mod message {
     use crate::{Protocol, Service};
+    use bstr::{BString, ByteVec};
 
     pub fn connect(
         service: Service,

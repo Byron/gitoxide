@@ -92,6 +92,11 @@ impl<T> StreamingPeekableIter<T> {
         self.fail_on_err_lines = false;
         prev
     }
+
+    /// Return the inner read
+    pub fn into_inner(self) -> T {
+        self.read
+    }
 }
 
 #[cfg(feature = "blocking-io")]

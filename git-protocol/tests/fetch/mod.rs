@@ -126,11 +126,29 @@ pub fn oid(hex_sha: &str) -> git_hash::ObjectId {
     git_hash::ObjectId::from_hex(hex_sha.as_bytes()).expect("valid input")
 }
 
-pub fn transport<'a>(
-    out: &'a mut Vec<u8>,
+#[cfg(feature = "async-client")]
+pub fn transport<'a, W: futures_io::AsyncWrite + Unpin>(
+    out: W,
     path: &str,
     version: git_transport::Protocol,
-) -> git_transport::client::git::Connection<Cursor, &'a mut Vec<u8>> {
+) -> git_transport::client::git::Connection<Cursor, W> {
+    let response = fixture_bytes(path);
+    git_transport::client::git::Connection::new(
+        Cursor::new(response),
+        out,
+        version,
+        b"does/not/matter".as_bstr().to_owned(),
+        None::<(&str, _)>,
+        git_transport::client::git::ConnectMode::Process,
+    )
+}
+
+#[cfg(feature = "blocking-client")]
+pub fn transport<'a, W: std::io::Write>(
+    out: W,
+    path: &str,
+    version: git_transport::Protocol,
+) -> git_transport::client::git::Connection<Cursor, W> {
     let response = fixture_bytes(path);
     git_transport::client::git::Connection::new(
         Cursor::new(response),

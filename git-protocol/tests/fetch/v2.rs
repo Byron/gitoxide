@@ -6,10 +6,10 @@ use git_transport::Protocol;
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
-    let mut out = Vec::new();
+    let out = Vec::new();
     let delegate = LsRemoteDelegate::default();
-    let delegate = git_protocol::fetch(
-        transport(&mut out, "v2/clone.response", Protocol::V2),
+    let (delegate, out) = git_protocol::fetch(
+        transport(out, "v2/clone.response", Protocol::V2),
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,
@@ -31,7 +31,7 @@ async fn ls_remote() -> crate::Result {
         ]
     );
     assert_eq!(
-        out.as_bstr(),
+        out.into_inner().1.as_bstr(),
         format!(
             "0014command=ls-refs
 001aagent={}

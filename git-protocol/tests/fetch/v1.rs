@@ -6,25 +6,26 @@ use git_transport::Protocol;
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn clone() -> crate::Result {
-    let mut out = Vec::new();
+    let out = Vec::new();
     let dlg = CloneDelegate::default();
     let dlg = git_protocol::fetch(
-        transport(&mut out, "v1/clone.response", Protocol::V1),
+        transport(out, "v1/clone.response", Protocol::V1),
         dlg,
         git_protocol::credentials::helper,
         progress::Discard,
     )
-    .await?;
+    .await?
+    .0;
     assert_eq!(dlg.pack_bytes, 876, "It be able to read pack bytes");
     Ok(())
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
-    let mut out = Vec::new();
+    let out = Vec::new();
     let delegate = LsRemoteDelegate::default();
-    let delegate = git_protocol::fetch(
-        transport(&mut out, "v1/clone.response", Protocol::V1),
+    let (delegate, out) = git_protocol::fetch(
+        transport(out, "v1/clone.response", Protocol::V1),
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,
@@ -46,7 +47,7 @@ async fn ls_remote() -> crate::Result {
         ]
     );
     assert_eq!(
-        out.as_bstr(),
+        out.into_inner().1.as_bstr(),
         b"0000".as_bstr(),
         "we dont have to send anything in V1, except for the final flush byte to indicate we are done"
     );

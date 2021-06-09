@@ -19,15 +19,37 @@ use std::io;
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[maybe_async]
-pub async fn fetch<F, D>(
-    mut transport: impl client::Transport,
+pub async fn fetch<F, D, T>(
+    transport: T,
+    delegate: D,
+    authenticate: F,
+    progress: impl Progress + Send + 'static,
+) -> Result<(D, T), Error>
+where
+    F: FnMut(credentials::Action<'_>) -> credentials::Result + Send + 'static,
+    D: Delegate + Send + 'static,
+    T: client::Transport + Send + 'static,
+{
+    #[cfg(feature = "blocking-client")]
+    return fetch_inner(transport, delegate, authenticate, progress);
+    #[cfg(feature = "async-client")]
+    return blocking::unblock(move || {
+        futures_lite::future::block_on(fetch_inner(transport, delegate, authenticate, progress))
+    })
+    .await;
+}
+
+#[maybe_async]
+async fn fetch_inner<F, D, T>(
+    mut transport: T,
     mut delegate: D,
     mut authenticate: F,
-    mut progress: impl Progress,
-) -> Result<D, Error>
+    mut progress: impl Progress + Send + 'static,
+) -> Result<(D, T), Error>
 where
-    F: FnMut(credentials::Action<'_>) -> credentials::Result,
+    F: FnMut(credentials::Action<'_>) -> credentials::Result + Send + 'static,
     D: Delegate + Send + 'static,
+    T: client::Transport + Send + 'static,
 {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
@@ -135,7 +157,7 @@ where
 
     if next == Action::Close {
         transport.close().await?;
-        return Ok(delegate);
+        return Ok((delegate, transport));
     }
 
     Response::check_required_features(protocol_version, &fetch_features)?;
@@ -168,7 +190,7 @@ where
             }
         }
     }
-    Ok(delegate)
+    Ok((delegate, transport))
 }
 
 fn setup_remote_progress(
