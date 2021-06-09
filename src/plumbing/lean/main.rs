@@ -94,7 +94,7 @@ pub fn main() -> Result<()> {
                 core::pack::receive::Context {
                     thread_limit,
                     format: OutputFormat::Human,
-                    out: Some(io::stdout()),
+                    out: io::stdout(),
                 },
             );
             #[cfg(feature = "gitoxide-core-blocking-client")]

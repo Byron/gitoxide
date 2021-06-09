@@ -17,7 +17,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub struct Context<W> {
     pub thread_limit: Option<usize>,
     pub format: OutputFormat,
-    pub out: Option<W>,
+    pub out: W,
 }
 
 struct CloneDelegate<W> {
@@ -117,13 +117,12 @@ mod blocking_io {
                 }
             }
 
-            match (self.ctx.format, self.ctx.out.as_mut()) {
-                (OutputFormat::Human, Some(out)) => drop(print(out, outcome, refs)),
+            match self.ctx.format {
+                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
                 #[cfg(feature = "serde1")]
-                (OutputFormat::Json, Some(out)) => {
-                    serde_json::to_writer_pretty(out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+                OutputFormat::Json => {
+                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
                 }
-                (_, None) => {}
             };
             Ok(())
         }
@@ -182,7 +181,6 @@ mod async_io {
                 index_kind: pack::index::Version::V2,
                 iteration_mode: pack::data::input::Mode::Verify,
             };
-            // TODO: unblock
             let outcome = pack::bundle::Bundle::write_to_directory(
                 futures_lite::io::BlockOn::new(input),
                 self.directory.take(),
@@ -192,45 +190,32 @@ mod async_io {
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
             if let Some(directory) = self.refs_directory.take() {
-                let refs = refs.to_owned();
-                blocking::unblock(move || -> io::Result<()> {
-                    let assure_dir_exists = |path: &BString| {
-                        assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-                        let path = directory.join(path.to_path_lossy());
-                        std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+                let assure_dir_exists = |path: &BString| {
+                    assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
+                    let path = directory.join(path.to_path_lossy());
+                    std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+                };
+                for r in refs {
+                    let (path, content) = match r {
+                        Ref::Symbolic { path, target, .. } => (assure_dir_exists(&path)?, format!("ref: {}", target)),
+                        Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
+                            (assure_dir_exists(&path)?, object.to_string())
+                        }
                     };
-                    for r in refs {
-                        let (path, content) = match r {
-                            Ref::Symbolic { path, target, .. } => {
-                                (assure_dir_exists(&path)?, format!("ref: {}", target))
-                            }
-                            Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                                (assure_dir_exists(&path)?, object.to_string())
-                            }
-                        };
-                        std::fs::write(path, content.as_bytes())?;
-                    }
-                    Ok(())
-                })
-                .await?;
+                    std::fs::write(path, content.as_bytes())?;
+                }
             }
 
-            blocking::unblock({
-                let format_and_output = (self.ctx.format, self.ctx.out.take());
-                let refs = refs.to_owned();
-                move || -> io::Result<()> {
-                    match format_and_output {
-                        (OutputFormat::Human, Some(mut out)) => drop(print(&mut out, outcome, &refs)),
-                        #[cfg(feature = "serde1")]
-                        (OutputFormat::Json, Some(mut out)) => {
-                            serde_json::to_writer_pretty(&mut out, &JsonOutcome::from_outcome_and_refs(outcome, &refs))?
-                        }
-                        (_, None) => {}
-                    };
-                    Ok(())
-                }
-            })
-            .await
+            let refs = refs.to_owned();
+            match self.ctx.format {
+                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, &refs)),
+                #[cfg(feature = "serde1")]
+                OutputFormat::Json => serde_json::to_writer_pretty(
+                    &mut self.ctx.out,
+                    &JsonOutcome::from_outcome_and_refs(outcome, &refs),
+                )?,
+            };
+            Ok(())
         }
     }
 
