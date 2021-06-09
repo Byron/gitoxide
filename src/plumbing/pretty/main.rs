@@ -97,7 +97,7 @@ pub fn main() -> Result<()> {
                     core::pack::receive::Context {
                         thread_limit,
                         format,
-                        out,
+                        out: Some(out),
                     },
                 )
             },
