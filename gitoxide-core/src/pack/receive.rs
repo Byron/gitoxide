@@ -176,7 +176,53 @@ mod async_io {
             refs: &[Ref],
             _previous: &Response,
         ) -> io::Result<()> {
-            todo!("receive pack trait method impl")
+            let options = pack::bundle::write::Options {
+                thread_limit: self.ctx.thread_limit,
+                index_kind: pack::index::Version::V2,
+                iteration_mode: pack::data::input::Mode::Verify,
+            };
+            // TODO: unblock
+            let outcome = pack::bundle::Bundle::write_to_directory(
+                futures_lite::io::BlockOn::new(input),
+                self.directory.take(),
+                progress,
+                options,
+            )
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+
+            if let Some(directory) = self.refs_directory.take() {
+                let refs = refs.to_owned();
+                blocking::unblock(move || -> io::Result<()> {
+                    let assure_dir_exists = |path: &BString| {
+                        assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
+                        let path = directory.join(path.to_path_lossy());
+                        std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+                    };
+                    for r in refs {
+                        let (path, content) = match r {
+                            Ref::Symbolic { path, target, .. } => {
+                                (assure_dir_exists(&path)?, format!("ref: {}", target))
+                            }
+                            Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
+                                (assure_dir_exists(&path)?, object.to_string())
+                            }
+                        };
+                        std::fs::write(path, content.as_bytes())?;
+                    }
+                    Ok(())
+                })
+                .await?;
+            }
+
+            // TODO: unblock
+            match self.ctx.format {
+                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
+                #[cfg(feature = "serde1")]
+                OutputFormat::Json => {
+                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+                }
+            };
+            Ok(())
         }
     }
 
@@ -188,7 +234,15 @@ mod async_io {
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
-        todo!("receive impl")
+        let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
+        let mut delegate = CloneDelegate {
+            ctx,
+            directory,
+            refs_directory,
+            ref_filter: None,
+        };
+        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress).await?;
+        Ok(())
     }
 }
 #[cfg(feature = "async-client")]
