@@ -121,7 +121,7 @@ pub mod refs {
             protocol: Option<net::Protocol>,
             url: &str,
             progress: impl Progress,
-            ctx: Context<impl io::Write + Send + 'static>,
+            ctx: Context<impl io::Write>,
         ) -> anyhow::Result<()> {
             let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
             let delegate = LsRemotes::default();

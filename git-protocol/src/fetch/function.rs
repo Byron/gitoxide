@@ -25,12 +25,12 @@ pub async fn fetch<F, D, T>(
     mut transport: T,
     mut delegate: D,
     mut authenticate: F,
-    mut progress: impl Progress + Send + 'static,
+    mut progress: impl Progress,
 ) -> Result<(D, T), Error>
 where
-    F: FnMut(credentials::Action<'_>) -> credentials::Result + Send + 'static,
-    D: Delegate + Send + 'static,
-    T: client::Transport + Send + 'static,
+    F: FnMut(credentials::Action<'_>) -> credentials::Result,
+    D: Delegate,
+    T: client::Transport,
 {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());

@@ -128,7 +128,7 @@ mod blocking_io {
         }
     }
 
-    pub fn receive<P: Progress, W: io::Write + Send + 'static>(
+    pub fn receive<P: Progress, W: io::Write>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
