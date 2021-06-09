@@ -160,7 +160,7 @@ pub struct ReadLineFuture<'a, 'b, T: AsyncRead, F> {
 
 impl<'a, 'b, T, F> Future for ReadLineFuture<'a, 'b, T, F>
 where
-    T: AsyncRead + Unpin,
+    T: AsyncRead + Unpin + Send,
     F: FnMut(bool, &[u8]) + Unpin,
 {
     type Output = std::io::Result<usize>;

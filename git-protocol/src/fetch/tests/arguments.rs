@@ -88,7 +88,7 @@ mod impls {
         }
     }
 
-    #[async_trait(?Send)]
+    #[async_trait]
     impl<T: client::Transport + Send> client::Transport for Transport<T> {
         async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
             self.inner.handshake(service).await

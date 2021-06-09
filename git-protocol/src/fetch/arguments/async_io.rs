@@ -3,11 +3,11 @@ use futures_lite::io::AsyncWriteExt;
 use git_transport::{client, client::TransportV2Ext};
 
 impl Arguments {
-    pub(crate) async fn send<'a, T: client::Transport + 'a>(
+    pub(crate) async fn send<'a, T: client::Transport + 'a + Send>(
         &mut self,
         transport: &'a mut T,
         add_done_argument: bool,
-    ) -> Result<Box<dyn client::ExtendedBufRead + Unpin + 'a>, client::Error> {
+    ) -> Result<Box<dyn client::ExtendedBufRead + Unpin + 'a + Send>, client::Error> {
         if self.haves.is_empty() {
             assert!(add_done_argument, "If there are no haves, is_done must be true.");
         }

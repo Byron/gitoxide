@@ -12,12 +12,12 @@ use std::{
 /// A function `f(is_error, text)` receiving progress or error information.
 /// As it is not a future itself, it must not block. If IO is performed within the function, be sure to spawn
 /// it onto an executor.
-pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;
+pub type HandleProgress = Box<dyn FnMut(bool, &[u8]) + Send>;
 
 /// This trait exists to get a version of a `git_packetline::Provider` without type parameters.
 /// For the sake of usability, it also implements [`std::io::BufRead`] making it trivial to (eventually)
 /// read pack files while keeping the possibility to read individual lines with low overhead.
-#[async_trait(?Send)]
+#[async_trait]
 pub trait ExtendedBufRead: AsyncBufRead {
     /// Set the handler to which progress will be delivered.
     ///
@@ -33,8 +33,8 @@ pub trait ExtendedBufRead: AsyncBufRead {
     fn stopped_at(&self) -> Option<MessageKind>;
 }
 
-#[async_trait(?Send)]
-impl<'a, T: ExtendedBufRead + ?Sized + 'a + Unpin> ExtendedBufRead for Box<T> {
+#[async_trait]
+impl<'a, T: ExtendedBufRead + ?Sized + 'a + Unpin + Send> ExtendedBufRead for Box<T> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.deref_mut().set_progress_handler(handle_progress)
     }
@@ -52,8 +52,8 @@ impl<'a, T: ExtendedBufRead + ?Sized + 'a + Unpin> ExtendedBufRead for Box<T> {
     }
 }
 
-#[async_trait(?Send)]
-impl<'a, T: AsyncRead + Unpin> ExtendedBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
+#[async_trait]
+impl<'a, T: AsyncRead + Unpin + Send> ExtendedBufRead for git_packetline::read::WithSidebands<'a, T, HandleProgress> {
     fn set_progress_handler(&mut self, handle_progress: Option<HandleProgress>) {
         self.set_progress_handler(handle_progress)
     }

@@ -52,11 +52,11 @@ pub mod refs {
         };
         use std::io;
 
-        #[async_trait(?Send)]
+        #[async_trait]
         impl protocol::fetch::Delegate for LsRemotes {
             async fn receive_pack(
                 &mut self,
-                input: impl AsyncBufRead + Unpin + 'async_trait,
+                input: impl AsyncBufRead + Unpin + 'async_trait + Send,
                 progress: impl Progress,
                 refs: &[Ref],
                 previous: &Response,

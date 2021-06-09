@@ -20,7 +20,7 @@ use std::io;
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[maybe_async]
 pub async fn fetch<F>(
-    mut transport: impl client::Transport,
+    mut transport: impl client::Transport + Send,
     delegate: &mut impl Delegate,
     mut authenticate: F,
     mut progress: impl Progress,
@@ -172,7 +172,7 @@ where
 
 fn setup_remote_progress(
     progress: &mut impl Progress,
-    reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_>,
+    reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_ + Send>,
 ) {
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child("remote");

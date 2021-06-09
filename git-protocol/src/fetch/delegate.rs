@@ -127,7 +127,7 @@ mod async_io {
     /// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
     /// features or arguments don't make it to the server in the first place.
     /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
-    #[async_trait(?Send)]
+    #[async_trait]
     pub trait Delegate: DelegateWithoutIO {
         /// Receive a pack provided from the given `input`.
         ///
@@ -137,7 +137,7 @@ mod async_io {
         /// to check additional acks.
         async fn receive_pack(
             &mut self,
-            input: impl AsyncBufRead + Unpin + 'async_trait,
+            input: impl AsyncBufRead + Unpin + 'async_trait + Send,
             progress: impl Progress,
             refs: &[Ref],
             previous: &Response,

@@ -21,7 +21,7 @@ enum State {
     WriteData(usize),
 }
 
-impl<T: AsyncWrite + Unpin> Writer<T> {
+impl<T: AsyncWrite + Unpin + Send> Writer<T> {
     /// Create a new instance from the given `write`
     pub fn new(write: T) -> Self {
         Writer {
@@ -54,7 +54,7 @@ impl<T> Writer<T> {
     }
 }
 
-impl<T: AsyncWrite + Unpin> AsyncWrite for Writer<T> {
+impl<T: AsyncWrite + Unpin + Send> AsyncWrite for Writer<T> {
     fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
         let mut this = self.project();
         loop {

@@ -10,8 +10,8 @@ use git_packetline::PacketLine;
 
 impl<R, W> client::TransportWithoutIO for git::Connection<R, W>
 where
-    R: AsyncRead + Unpin,
-    W: AsyncWrite + Unpin,
+    R: AsyncRead + Unpin + Send,
+    W: AsyncWrite + Unpin + Send,
 {
     fn request(
         &mut self,
@@ -45,11 +45,11 @@ where
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<R, W> client::Transport for git::Connection<R, W>
 where
-    R: AsyncRead + Unpin,
-    W: AsyncWrite + Unpin,
+    R: AsyncRead + Unpin + Send,
+    W: AsyncWrite + Unpin + Send,
 {
     async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == git::ConnectMode::Daemon {
