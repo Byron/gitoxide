@@ -29,8 +29,7 @@ where
     F: FnMut(credentials::Action<'_>) -> credentials::Result,
     D: Delegate + Send + 'static,
 {
-    #[cfg_attr(feature = "blocking-client", allow(unused_mut))]
-    let (protocol_version, mut parsed_refs, mut capabilities, call_ls_refs) = {
+    let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
         progress.set_name("handshake");
         progress.step();
@@ -100,7 +99,6 @@ where
         ));
     }
 
-    #[cfg_attr(feature = "blocking-client", allow(unused_mut))]
     if call_ls_refs {
         assert_eq!(
             protocol_version,
@@ -108,24 +106,9 @@ where
             "Only V2 needs a separate request to get specific refs"
         );
 
-        let mut ls_refs = Command::LsRefs;
+        let ls_refs = Command::LsRefs;
         let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
         let mut ls_args = ls_refs.initial_arguments(&ls_features);
-        #[cfg(feature = "async-client")]
-        {
-            let (returned_delegate, returned_ls_refs, returned_ls_features, returned_ls_args, returned_capabilities) =
-                blocking::unblock(move || {
-                    delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
-                    (delegate, ls_refs, ls_features, ls_args, capabilities)
-                })
-                .await;
-            delegate = returned_delegate;
-            ls_refs = returned_ls_refs;
-            ls_features = returned_ls_features;
-            ls_args = returned_ls_args;
-            capabilities = returned_capabilities;
-        };
-        #[cfg(feature = "blocking-client")]
         delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
         ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
