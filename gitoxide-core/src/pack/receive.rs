@@ -215,21 +215,22 @@ mod async_io {
                 .await?;
             }
 
-            let tuple = (self.ctx.format, self.ctx.out.take());
-            let refs = refs.to_owned();
-            blocking::unblock(move || -> io::Result<()> {
-                match tuple {
-                    (OutputFormat::Human, Some(mut out)) => drop(print(&mut out, outcome, &refs)),
-                    #[cfg(feature = "serde1")]
-                    (OutputFormat::Json, Some(mut out)) => {
-                        serde_json::to_writer_pretty(&mut out, &JsonOutcome::from_outcome_and_refs(outcome, &refs))?
-                    }
-                    (_, None) => {}
-                };
-                Ok(())
+            blocking::unblock({
+                let format_and_output = (self.ctx.format, self.ctx.out.take());
+                let refs = refs.to_owned();
+                move || -> io::Result<()> {
+                    match format_and_output {
+                        (OutputFormat::Human, Some(mut out)) => drop(print(&mut out, outcome, &refs)),
+                        #[cfg(feature = "serde1")]
+                        (OutputFormat::Json, Some(mut out)) => {
+                            serde_json::to_writer_pretty(&mut out, &JsonOutcome::from_outcome_and_refs(outcome, &refs))?
+                        }
+                        (_, None) => {}
+                    };
+                    Ok(())
+                }
             })
-            .await?;
-            Ok(())
+            .await
         }
     }
 
