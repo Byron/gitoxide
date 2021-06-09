@@ -7,10 +7,10 @@ use git_transport::Protocol;
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn clone() -> crate::Result {
     let mut out = Vec::new();
-    let mut dlg = CloneDelegate::default();
-    git_protocol::fetch(
+    let dlg = CloneDelegate::default();
+    let dlg = git_protocol::fetch(
         transport(&mut out, "v1/clone.response", Protocol::V1),
-        &mut dlg,
+        dlg,
         git_protocol::credentials::helper,
         progress::Discard,
     )
@@ -22,10 +22,10 @@ async fn clone() -> crate::Result {
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
     let mut out = Vec::new();
-    let mut delegate = LsRemoteDelegate::default();
-    git_protocol::fetch(
+    let delegate = LsRemoteDelegate::default();
+    let delegate = git_protocol::fetch(
         transport(&mut out, "v1/clone.response", Protocol::V1),
-        &mut delegate,
+        delegate,
         git_protocol::credentials::helper,
         progress::Discard,
     )

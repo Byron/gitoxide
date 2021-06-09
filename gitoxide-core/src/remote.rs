@@ -73,7 +73,7 @@ pub mod refs {
         ) -> anyhow::Result<()> {
             let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
             let mut delegate = LsRemotes::default();
-            protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress).await?;
+            let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress).await?;
 
             blocking::unblock(move || match ctx.format {
                 OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),

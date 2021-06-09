@@ -249,7 +249,7 @@ mod async_io {
             refs_directory,
             ref_filter: None,
         };
-        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress).await?;
+        protocol::fetch(transport, delegate, protocol::credentials::helper, progress).await?;
         Ok(())
     }
 }

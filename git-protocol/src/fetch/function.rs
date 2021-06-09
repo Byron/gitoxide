@@ -19,14 +19,15 @@ use std::io;
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[maybe_async]
-pub async fn fetch<F>(
+pub async fn fetch<F, D>(
     mut transport: impl client::Transport,
-    delegate: &mut impl Delegate,
+    mut delegate: D,
     mut authenticate: F,
     mut progress: impl Progress,
-) -> Result<(), Error>
+) -> Result<D, Error>
 where
     F: FnMut(credentials::Action<'_>) -> credentials::Result,
+    D: Delegate + Send + 'static,
 {
     let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
         progress.init(None, progress::steps());
@@ -134,7 +135,7 @@ where
 
     if next == Action::Close {
         transport.close().await?;
-        return Ok(());
+        return Ok(delegate);
     }
 
     Response::check_required_features(protocol_version, &fetch_features)?;
@@ -167,7 +168,7 @@ where
             }
         }
     }
-    Ok(())
+    Ok(delegate)
 }
 
 fn setup_remote_progress(
