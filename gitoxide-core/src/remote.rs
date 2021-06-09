@@ -71,22 +71,32 @@ pub mod refs {
             progress: impl Progress,
             ctx: Context<impl io::Write + Send + 'static>,
         ) -> anyhow::Result<()> {
+            let url = url.to_owned();
             let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
-            let mut delegate = LsRemotes::default();
-            let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)
-                .await?
-                .0;
+            blocking::unblock(
+                // `blocking` really needs a way to unblock futures, which is what it does internally anyway.
+                // Both fetch() needs unblocking as it executes blocking code within the future, and the other
+                // block does blocking IO because it's primarily a blocking codebase.
+                move || {
+                    futures_lite::future::block_on(async move {
+                        let mut delegate = LsRemotes::default();
+                        let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)
+                            .await?
+                            .0;
 
-            blocking::unblock(move || match ctx.format {
-                OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
-                #[cfg(feature = "serde1")]
-                OutputFormat::Json => serde_json::to_writer_pretty(
-                    ctx.out,
-                    &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
-                )?,
-            })
-            .await;
-            Ok(())
+                        match ctx.format {
+                            OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
+                            #[cfg(feature = "serde1")]
+                            OutputFormat::Json => serde_json::to_writer_pretty(
+                                ctx.out,
+                                &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+                            )?,
+                        }
+                        Ok(())
+                    })
+                },
+            )
+            .await
         }
     }
     #[cfg(feature = "async-client")]
