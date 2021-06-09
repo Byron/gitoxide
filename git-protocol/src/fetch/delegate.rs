@@ -130,7 +130,8 @@ mod async_io {
     /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
     #[async_trait(?Send)]
     pub trait Delegate: DelegateBlocking {
-        /// Receive a pack provided from the given `input`.
+        /// Receive a pack provided from the given `input`, and the caller should consider it to be blocking as
+        /// most operations on the received pack are implemented in a blocking fashion.
         ///
         /// Use `progress` to emit your own progress messages when decoding the pack.
         ///

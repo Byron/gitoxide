@@ -1039,7 +1039,6 @@ version = "0.8.0"
 dependencies = [
  "async-std",
  "async-trait",
- "blocking",
  "bstr",
  "btoi",
  "futures-io",

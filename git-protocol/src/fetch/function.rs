@@ -12,6 +12,8 @@ use maybe_async::maybe_async;
 use std::io;
 
 /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
+/// Note that `delegate` has blocking operations and thus this entire call should be on an executor which can handle
+/// that. This could be the current thread blocking, or another thread.
 ///
 /// * `authenticate(operation_to_perform)` is used to receive credentials for the connection and potentially store it
 ///   if the server indicates 'permission denied'. Note that not all transport support authentication or authorization.
@@ -20,27 +22,6 @@ use std::io;
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[maybe_async]
 pub async fn fetch<F, D, T>(
-    transport: T,
-    delegate: D,
-    authenticate: F,
-    progress: impl Progress + Send + 'static,
-) -> Result<(D, T), Error>
-where
-    F: FnMut(credentials::Action<'_>) -> credentials::Result + Send + 'static,
-    D: Delegate + Send + 'static,
-    T: client::Transport + Send + 'static,
-{
-    #[cfg(feature = "blocking-client")]
-    return fetch_inner(transport, delegate, authenticate, progress);
-    #[cfg(feature = "async-client")]
-    return blocking::unblock(move || {
-        futures_lite::future::block_on(fetch_inner(transport, delegate, authenticate, progress))
-    })
-    .await;
-}
-
-#[maybe_async]
-async fn fetch_inner<F, D, T>(
     mut transport: T,
     mut delegate: D,
     mut authenticate: F,

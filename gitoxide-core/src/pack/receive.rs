@@ -249,7 +249,15 @@ mod async_io {
             refs_directory,
             ref_filter: None,
         };
-        protocol::fetch(transport, delegate, protocol::credentials::helper, progress).await?;
+        blocking::unblock(move || {
+            futures_lite::future::block_on(protocol::fetch(
+                transport,
+                delegate,
+                protocol::credentials::helper,
+                progress,
+            ))
+        })
+        .await?;
         Ok(())
     }
 }
