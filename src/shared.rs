@@ -69,25 +69,26 @@ pub mod pretty {
     use crate::shared::ProgressRange;
     use anyhow::{anyhow, Result};
     use std::io::{stderr, stdout, Write};
-    use std::panic::UnwindSafe;
 
-    pub fn prepare_and_run<T: Send + 'static>(
+    pub fn prepare_and_run<T, W1, W2>(
         name: &str,
         verbose: bool,
         progress: bool,
         progress_keep_open: bool,
         range: impl Into<Option<ProgressRange>>,
-        run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>
-            + Send
-            + UnwindSafe
-            + 'static,
-    ) -> Result<T> {
+        run: impl FnOnce(Option<prodash::tree::Item>, W1, W2) -> Result<(T, W1, W2)> + Send + 'static,
+    ) -> Result<T>
+    where
+        T: Send + 'static,
+        W1: std::io::Write + Send + 'static,
+        W2: std::io::Write + Send + 'static,
+    {
         use crate::shared::{self, STANDARD_RANGE};
         crate::shared::init_env_logger(false);
         use git_features::interrupt;
 
         match (verbose, progress) {
-            (false, false) => run(None, &mut stdout(), &mut stderr()),
+            (false, false) => run(None, stdout(), stderr()).map(|(r, _, _)| r),
             (true, false) => {
                 enum Event<T> {
                     UiDone,
@@ -108,11 +109,9 @@ pub mod pretty {
                         }
                     }
                 });
-                // LIMITATION: This will hang if the thread panics as no message is send and the renderer thread will wait forever.
-                // `catch_unwind` can't be used as a parking lot mutex is not unwind safe, coming from prodash.
                 let join_handle = std::thread::spawn(move || {
                     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        run(Some(sub_progress), &mut stdout(), &mut stderr())
+                        run(Some(sub_progress), stdout(), stderr())
                     }));
                     match res {
                         Ok(res) => tx.send(Event::ComputationDone(res)).ok(),
@@ -169,8 +168,8 @@ pub mod pretty {
                 std::thread::spawn(move || {
                     // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
                     // We know that the printing happens at the end, so this is fine.
-                    let mut out = Vec::new();
-                    let res = run(Some(sub_progress), &mut out, &mut stderr());
+                    let out = Vec::new();
+                    let (res, out, _) = run(Some(sub_progress), out, stderr());
                     tx.send(Event::ComputationDone(res, out)).ok();
                 });
                 loop {

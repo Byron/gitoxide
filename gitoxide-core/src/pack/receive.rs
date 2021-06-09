@@ -136,7 +136,7 @@ mod blocking_io {
         refs_directory: Option<PathBuf>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Option<W>> {
         let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {
             ctx,
@@ -144,8 +144,8 @@ mod blocking_io {
             refs_directory,
             ref_filter: None,
         };
-        protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?;
-        Ok(())
+        let (delegate, _) = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?;
+        Ok(delegate.ctx.out)
     }
 }
 #[cfg(feature = "blocking-client")]
@@ -241,7 +241,7 @@ mod async_io {
         refs_directory: Option<PathBuf>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Option<W>> {
         let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
         let mut delegate = CloneDelegate {
             ctx,
@@ -249,7 +249,7 @@ mod async_io {
             refs_directory,
             ref_filter: None,
         };
-        blocking::unblock(move || {
+        let (delegate, _) = blocking::unblock(move || {
             futures_lite::future::block_on(protocol::fetch(
                 transport,
                 delegate,
@@ -257,8 +257,9 @@ mod async_io {
                 progress,
             ))
         })
-        .await?;
-        Ok(())
+        .await?
+        .0;
+        Ok(delegate.ctx.out)
     }
 }
 #[cfg(feature = "async-client")]

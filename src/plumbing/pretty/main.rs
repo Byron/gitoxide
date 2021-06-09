@@ -68,9 +68,9 @@ pub fn main() -> Result<()> {
                     };
                     let progress = git_features::progress::DoOrDiscard::from(progress);
                     if has_tui {
-                        core::pack::create(repository, tips, input, err, progress, context)
+                        core::pack::create(repository, tips, input, err, progress, context).map(|err| ((), out, err))
                     } else {
-                        core::pack::create(repository, tips, input, out, progress, context)
+                        core::pack::create(repository, tips, input, out, progress, context).map(|out| ((), out, err))
                     }
                 },
             )
@@ -100,6 +100,7 @@ pub fn main() -> Result<()> {
                         out: Some(out),
                     },
                 )
+                .map(|out| ((), out.expect("we put it in"), _err))
             },
         ),
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
