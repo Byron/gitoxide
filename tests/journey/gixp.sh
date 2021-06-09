@@ -7,7 +7,9 @@ title "gixp pack-receive"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"
   (small-repo-in-sandbox
-    if [[ "$kind" = 'max' ]]; then
+    if [[ "$kind" != 'small' ]]; then
+
+    if [[ "$kind" != 'async' ]]; then
     (with "file:// protocol"
       (with "version 1"
         (with "NO output directory"
@@ -75,6 +77,7 @@ title "gixp pack-receive"
         fi
       )
     )
+    fi
     (with "git:// protocol"
       launch-git-daemon
       (with "version 1"
@@ -124,7 +127,6 @@ title "gixp pack-receive"
       fi
     )
     elif [[ "$kind" = "small" ]]; then
-      # TODO: actually part of the journey test should run in async mode too
       it "fails as the CLI doesn't have networking in 'small' mode" && {
         WITH_SNAPSHOT="$snapshot/pack-receive-no-networking-in-small-failure" \
         expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 .git
