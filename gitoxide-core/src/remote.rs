@@ -17,7 +17,7 @@ pub mod refs {
         refs: Vec<Ref>,
     }
 
-    impl protocol::fetch::DelegateWithoutIO for LsRemotes {
+    impl protocol::fetch::DelegateBlocking for LsRemotes {
         fn prepare_fetch(
             &mut self,
             _version: transport::Protocol,

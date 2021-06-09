@@ -15,7 +15,7 @@ pub struct CloneDelegate {
     pack_bytes: usize,
 }
 
-impl fetch::DelegateWithoutIO for CloneDelegate {
+impl fetch::DelegateBlocking for CloneDelegate {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
         for r in refs {
             arguments.want(r.unpack().1);
@@ -29,7 +29,7 @@ pub struct LsRemoteDelegate {
     refs: Vec<fetch::Ref>,
 }
 
-impl fetch::DelegateWithoutIO for LsRemoteDelegate {
+impl fetch::DelegateBlocking for LsRemoteDelegate {
     fn prepare_fetch(
         &mut self,
         _version: git_transport::Protocol,

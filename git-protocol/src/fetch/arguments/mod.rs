@@ -156,7 +156,7 @@ mod shared {
     use git_transport::{client, client::MessageKind};
 
     impl Arguments {
-        pub(in crate::fetch::arguments) fn send_shared_v1(
+        pub(in crate::fetch::arguments) fn prepare_v1(
             &mut self,
             transport_is_stateful: bool,
             add_done_argument: bool,

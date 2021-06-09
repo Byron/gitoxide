@@ -13,7 +13,7 @@ impl Arguments {
         }
         match self.version {
             git_transport::Protocol::V1 => {
-                let (on_into_read, retained_state) = self.send_shared_v1(transport.is_stateful(), add_done_argument)?;
+                let (on_into_read, retained_state) = self.prepare_v1(transport.is_stateful(), add_done_argument)?;
                 let mut line_writer =
                     transport.request(client::WriteMode::OneLfTerminatedLinePerWriteCall, on_into_read)?;
                 let had_args = !self.args.is_empty();

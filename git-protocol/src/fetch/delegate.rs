@@ -13,9 +13,10 @@ pub enum Action {
 
 /// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
 /// the IO parts.
+/// Async implementations must treat it as blocking and unblock it by evaluating it elsewhere.
 ///
 /// See [Delegate] for the complete trait.
-pub trait DelegateWithoutIO {
+pub trait DelegateBlocking {
     /// Called before invoking 'ls-refs' on the server to allow providing it with additional `arguments` and to enable `features`.
     ///
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
@@ -82,7 +83,7 @@ pub trait DelegateWithoutIO {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use crate::fetch::{DelegateWithoutIO, Ref, Response};
+    use crate::fetch::{DelegateBlocking, Ref, Response};
     use git_features::progress::Progress;
     use std::io;
 
@@ -93,7 +94,7 @@ mod blocking_io {
     /// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
     /// features or arguments don't make it to the server in the first place.
     /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
-    pub trait Delegate: DelegateWithoutIO {
+    pub trait Delegate: DelegateBlocking {
         /// Receive a pack provided from the given `input`.
         ///
         /// Use `progress` to emit your own progress messages when decoding the pack.
@@ -114,7 +115,7 @@ pub use blocking_io::Delegate;
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use crate::fetch::{DelegateWithoutIO, Ref, Response};
+    use crate::fetch::{DelegateBlocking, Ref, Response};
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
@@ -128,7 +129,7 @@ mod async_io {
     /// features or arguments don't make it to the server in the first place.
     /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
     #[async_trait(?Send)]
-    pub trait Delegate: DelegateWithoutIO {
+    pub trait Delegate: DelegateBlocking {
         /// Receive a pack provided from the given `input`.
         ///
         /// Use `progress` to emit your own progress messages when decoding the pack.

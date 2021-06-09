@@ -28,7 +28,7 @@ struct CloneDelegate<W> {
 }
 static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
 
-impl<W> protocol::fetch::DelegateWithoutIO for CloneDelegate<W> {
+impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
     fn prepare_ls_refs(
         &mut self,
         server: &Capabilities,
