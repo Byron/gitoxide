@@ -17,7 +17,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub struct Context<W> {
     pub thread_limit: Option<usize>,
     pub format: OutputFormat,
-    pub out: Option<W>,
+    pub out: W,
 }
 
 struct CloneDelegate<W> {
@@ -117,13 +117,12 @@ mod blocking_io {
                 }
             }
 
-            match (self.ctx.format, self.ctx.out.as_mut()) {
-                (OutputFormat::Human, Some(out)) => drop(print(out, outcome, refs)),
+            match self.ctx.format {
+                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
                 #[cfg(feature = "serde1")]
-                (OutputFormat::Json, Some(out)) => {
-                    serde_json::to_writer_pretty(out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+                OutputFormat::Json => {
+                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
                 }
-                (_, None) => {}
             };
             Ok(())
         }
@@ -136,7 +135,7 @@ mod blocking_io {
         refs_directory: Option<PathBuf>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<W> {
         let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {
             ctx,
@@ -144,8 +143,8 @@ mod blocking_io {
             refs_directory,
             ref_filter: None,
         };
-        protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?;
-        Ok(())
+        let (delegate, _) = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?;
+        Ok(delegate.ctx.out)
     }
 }
 #[cfg(feature = "blocking-client")]
@@ -182,7 +181,6 @@ mod async_io {
                 index_kind: pack::index::Version::V2,
                 iteration_mode: pack::data::input::Mode::Verify,
             };
-            // TODO: unblock
             let outcome = pack::bundle::Bundle::write_to_directory(
                 futures_lite::io::BlockOn::new(input),
                 self.directory.take(),
@@ -241,7 +239,7 @@ mod async_io {
         refs_directory: Option<PathBuf>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Option<W>> {
         let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
         let mut delegate = CloneDelegate {
             ctx,
@@ -249,7 +247,7 @@ mod async_io {
             refs_directory,
             ref_filter: None,
         };
-        blocking::unblock(move || {
+        let (delegate, _) = blocking::unblock(move || {
             futures_lite::future::block_on(protocol::fetch(
                 transport,
                 delegate,
@@ -258,7 +256,7 @@ mod async_io {
             ))
         })
         .await?;
-        Ok(())
+        Ok(delegate.ctx.out)
     }
 }
 #[cfg(feature = "async-client")]

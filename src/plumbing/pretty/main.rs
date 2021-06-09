@@ -4,7 +4,7 @@ use gitoxide_core as core;
 
 use crate::{
     plumbing::pretty::options::{Args, Subcommands},
-    shared::pretty::prepare_and_run,
+    shared::pretty::{prepare_and_run, prepare_and_run_threadsafe},
 };
 use gitoxide_core::pack::verify;
 use std::{
@@ -81,7 +81,7 @@ pub fn main() -> Result<()> {
             url,
             directory,
             refs_directory,
-        } => prepare_and_run(
+        } => prepare_and_run_threadsafe(
             "pack-receive",
             verbose,
             progress,
@@ -103,7 +103,7 @@ pub fn main() -> Result<()> {
             },
         ),
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-        Subcommands::RemoteRefList { protocol, url } => prepare_and_run(
+        Subcommands::RemoteRefList { protocol, url } => prepare_and_run_threadsafe(
             "remote-ref-list",
             verbose,
             progress,
