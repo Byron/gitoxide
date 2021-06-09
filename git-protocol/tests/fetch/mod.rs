@@ -94,11 +94,11 @@ mod async_io {
     };
     use std::io;
 
-    #[async_trait]
+    #[async_trait(?Send)]
     impl fetch::Delegate for CloneDelegate {
         async fn receive_pack(
             &mut self,
-            mut input: impl AsyncBufRead + Unpin + 'async_trait + Send,
+            mut input: impl AsyncBufRead + Unpin + 'async_trait,
             _progress: impl Progress,
             _refs: &[Ref],
             _previous: &Response,
@@ -108,11 +108,11 @@ mod async_io {
         }
     }
 
-    #[async_trait]
+    #[async_trait(?Send)]
     impl fetch::Delegate for LsRemoteDelegate {
         async fn receive_pack(
             &mut self,
-            _input: impl AsyncBufRead + Unpin + 'async_trait + Send,
+            _input: impl AsyncBufRead + Unpin + 'async_trait,
             _progress: impl Progress,
             _refs: &[Ref],
             _previous: &Response,

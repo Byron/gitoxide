@@ -22,7 +22,7 @@ pub struct SetServiceResponse<'a> {
 /// It does, however, know just enough to be able to provide a higher-level interface than would otherwise be possible.
 /// Thus the consumer of this trait will not have to deal with packet lines at all.
 /// **Note that**  whenever a `Read` trait or `Write` trait is produced, it must be exhausted.
-#[async_trait]
+#[async_trait(?Send)]
 pub trait Transport: TransportWithoutIO {
     /// Initiate connection to the given service.
     /// Returns the service capabilities according according to the actual [Protocol] it supports,
@@ -37,8 +37,8 @@ pub trait Transport: TransportWithoutIO {
 }
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
-#[async_trait]
-impl<T: Transport + ?Sized + Send> Transport for Box<T> {
+#[async_trait(?Send)]
+impl<T: Transport + ?Sized> Transport for Box<T> {
     async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
         self.deref_mut().handshake(service).await
     }
@@ -49,7 +49,7 @@ impl<T: Transport + ?Sized + Send> Transport for Box<T> {
 }
 
 /// An extension trait to add more methods to everything implementing [`Transport`].
-#[async_trait]
+#[async_trait(?Send)]
 pub trait TransportV2Ext {
     /// Invoke a protocol V2 style `command` with given `capabilities` and optional command specific `arguments`.
     /// The `capabilities` were communicated during the handshake.
@@ -57,19 +57,19 @@ pub trait TransportV2Ext {
     async fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + 'a + Send,
-        arguments: Option<impl Iterator<Item = bstr::BString> + 'a + Send>,
-    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_ + Send>, Error>;
+        capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + 'a,
+        arguments: Option<impl Iterator<Item = bstr::BString> + 'a>,
+    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error>;
 }
 
-#[async_trait]
-impl<T: Transport + Send> TransportV2Ext for T {
+#[async_trait(?Send)]
+impl<T: Transport> TransportV2Ext for T {
     async fn invoke<'a>(
         &mut self,
         command: &str,
-        capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + 'a + Send,
-        arguments: Option<impl Iterator<Item = BString> + 'a + Send>,
-    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_ + Send>, Error> {
+        capabilities: impl Iterator<Item = (&'a str, Option<&'a str>)> + 'a,
+        arguments: Option<impl Iterator<Item = BString> + 'a>,
+    ) -> Result<Box<dyn ExtendedBufRead + Unpin + '_>, Error> {
         let mut writer = self.request(WriteMode::OneLfTerminatedLinePerWriteCall, MessageKind::Flush)?;
         writer.write_all(format!("command={}", command).as_bytes()).await?;
         for (name, value) in capabilities {

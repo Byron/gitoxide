@@ -168,30 +168,28 @@ mod async_io {
     };
     use std::{io, io::BufRead, path::PathBuf};
 
-    #[async_trait]
+    #[async_trait(?Send)]
     impl<W: io::Write + Send + 'static> protocol::fetch::Delegate for CloneDelegate<W> {
         async fn receive_pack(
             &mut self,
-            input: impl AsyncBufRead + Unpin + 'async_trait + Send,
+            input: impl AsyncBufRead + Unpin + 'async_trait,
             progress: impl Progress,
             refs: &[Ref],
             _previous: &Response,
         ) -> io::Result<()> {
-            let outcome = blocking::unblock(move || -> io::Result<_> {
-                let options = pack::bundle::write::Options {
-                    thread_limit: self.ctx.thread_limit,
-                    index_kind: pack::index::Version::V2,
-                    iteration_mode: pack::data::input::Mode::Verify,
-                };
-                pack::bundle::Bundle::write_to_directory(
-                    futures_lite::io::BlockOn::new(input),
-                    self.directory.take(),
-                    progress,
-                    options,
-                )
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-            })
-            .await?;
+            let options = pack::bundle::write::Options {
+                thread_limit: self.ctx.thread_limit,
+                index_kind: pack::index::Version::V2,
+                iteration_mode: pack::data::input::Mode::Verify,
+            };
+            // TODO: unblock
+            let outcome = pack::bundle::Bundle::write_to_directory(
+                futures_lite::io::BlockOn::new(input),
+                self.directory.take(),
+                progress,
+                options,
+            )
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
             if let Some(directory) = self.refs_directory.take() {
                 let refs = refs.to_owned();
