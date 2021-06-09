@@ -14,13 +14,13 @@ use std::{io, path::PathBuf};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
-pub struct Context<W: io::Write> {
+pub struct Context<W> {
     pub thread_limit: Option<usize>,
     pub format: OutputFormat,
-    pub out: W,
+    pub out: Option<W>,
 }
 
-struct CloneDelegate<W: io::Write> {
+struct CloneDelegate<W> {
     ctx: Context<W>,
     directory: Option<PathBuf>,
     refs_directory: Option<PathBuf>,
@@ -28,7 +28,7 @@ struct CloneDelegate<W: io::Write> {
 }
 static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
 
-impl<W: io::Write> protocol::fetch::DelegateWithoutIO for CloneDelegate<W> {
+impl<W> protocol::fetch::DelegateWithoutIO for CloneDelegate<W> {
     fn prepare_ls_refs(
         &mut self,
         server: &Capabilities,
@@ -117,12 +117,13 @@ mod blocking_io {
                 }
             }
 
-            match self.ctx.format {
-                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
+            match (self.ctx.format, self.ctx.out.as_mut()) {
+                (OutputFormat::Human, Some(out)) => drop(print(out, outcome, refs)),
                 #[cfg(feature = "serde1")]
-                OutputFormat::Json => {
-                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+                (OutputFormat::Json, Some(out)) => {
+                    serde_json::to_writer_pretty(out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
                 }
+                (_, None) => {}
             };
             Ok(())
         }
@@ -168,7 +169,7 @@ mod async_io {
     use std::{io, io::BufRead, path::PathBuf};
 
     #[async_trait(?Send)]
-    impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
+    impl<W: io::Write + Send + 'static> protocol::fetch::Delegate for CloneDelegate<W> {
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
@@ -214,19 +215,25 @@ mod async_io {
                 .await?;
             }
 
-            // TODO: unblock
-            match self.ctx.format {
-                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
-                #[cfg(feature = "serde1")]
-                OutputFormat::Json => {
-                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
-                }
-            };
+            let tuple = (self.ctx.format, self.ctx.out.take());
+            let refs = refs.to_owned();
+            blocking::unblock(move || -> io::Result<()> {
+                match tuple {
+                    (OutputFormat::Human, Some(mut out)) => drop(print(&mut out, outcome, &refs)),
+                    #[cfg(feature = "serde1")]
+                    (OutputFormat::Json, Some(mut out)) => {
+                        serde_json::to_writer_pretty(&mut out, &JsonOutcome::from_outcome_and_refs(outcome, &refs))?
+                    }
+                    (_, None) => {}
+                };
+                Ok(())
+            })
+            .await?;
             Ok(())
         }
     }
 
-    pub async fn receive<P: Progress, W: io::Write>(
+    pub async fn receive<P: Progress, W: io::Write + Send + 'static>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
