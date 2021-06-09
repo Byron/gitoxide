@@ -70,14 +70,14 @@ pub struct Context {
     pub thread_limit: Option<usize>,
 }
 
-pub fn create<W: io::Write>(
+pub fn create(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
-    out: W,
+    out: impl io::Write,
     mut progress: impl Progress,
     ctx: Context,
-) -> anyhow::Result<W> {
+) -> anyhow::Result<()> {
     let db = Arc::new(find_db(repository)?);
     let tips = tips.into_iter();
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
@@ -172,12 +172,11 @@ pub fn create<W: io::Write>(
         let written = io_res?;
         write_progress.inc_by(written as usize);
     }
-    let mut out = output_iter.into_write();
-    out.flush()?;
+    output_iter.into_write().flush()?;
 
     write_progress.show_throughput(start);
     entries_progress.show_throughput(start);
-    Ok(out)
+    Ok(())
 }
 
 fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Store> {
