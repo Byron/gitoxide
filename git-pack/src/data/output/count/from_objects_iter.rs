@@ -82,9 +82,11 @@ where
                 let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
                 let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
                 let mut outcome = reduce::Outcome::default();
+                let stats = &mut outcome;
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
+                    stats.input_objects += 1;
                     let obj = db.find_existing(id, buf1, cache)?;
                     match input_object_expansion {
                         TreeAdditionsComparedToAncestor => {
@@ -93,7 +95,7 @@ where
                             let mut id = id.to_owned();
 
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress);
+                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
                                 match obj.kind {
                                     Tree | Blob => break,
                                     Tag => {
@@ -101,6 +103,7 @@ where
                                             .target_id()
                                             .expect("every tag has a target");
                                         obj = db.find_existing(id, buf1, cache)?;
+                                        stats.expanded_objects += 1;
                                         continue;
                                     }
                                     Commit => {
@@ -118,7 +121,9 @@ where
                                                 }
                                             }
                                             let obj = db.find_existing(tree_id, buf1, cache)?;
-                                            push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress);
+                                            push_obj_count_unique(
+                                                &mut out, seen_objs, &tree_id, &obj, progress, stats, true,
+                                            );
                                             immutable::TreeIter::from_bytes(obj.data)
                                         };
 
@@ -127,13 +132,15 @@ where
                                             git_traverse::tree::breadthfirst(
                                                 current_tree_iter,
                                                 &mut tree_traversal_state,
-                                                |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                                |oid, buf| {
+                                                    stats.decoded_objects += 1;
+                                                    db.find_existing_tree_iter(oid, buf, cache).ok()
+                                                },
                                                 &mut traverse_delegate,
                                             )
                                             .map_err(Error::TreeTraverse)?;
                                             &traverse_delegate.objects
                                         } else {
-                                            changes_delegate.clear();
                                             for commit_id in &parent_commit_ids {
                                                 let parent_tree_id = {
                                                     let parent_commit_obj = db.find_existing(commit_id, buf2, cache)?;
@@ -144,6 +151,8 @@ where
                                                         &commit_id,
                                                         &parent_commit_obj,
                                                         progress,
+                                                        stats,
+                                                        true,
                                                     );
                                                     immutable::CommitIter::from_bytes(parent_commit_obj.data)
                                                         .tree_id()
@@ -158,15 +167,21 @@ where
                                                         &parent_tree_id,
                                                         &parent_tree_obj,
                                                         progress,
+                                                        stats,
+                                                        true,
                                                     );
                                                     immutable::TreeIter::from_bytes(parent_tree_obj.data)
                                                 };
 
+                                                changes_delegate.clear();
                                                 git_diff::tree::Changes::from(Some(parent_tree))
                                                     .needed_to_obtain(
                                                         current_tree_iter.clone(),
                                                         &mut tree_diff_state,
-                                                        |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                                        |oid, buf| {
+                                                            stats.decoded_objects += 1;
+                                                            db.find_existing_tree_iter(oid, buf, cache).ok()
+                                                        },
                                                         &mut changes_delegate,
                                                     )
                                                     .map_err(Error::TreeChanges)?;
@@ -174,7 +189,7 @@ where
                                             &changes_delegate.objects
                                         };
                                         for id in objects.iter() {
-                                            out.push(id_to_count(&db, buf2, id, progress));
+                                            out.push(id_to_count(&db, buf2, id, progress, stats));
                                         }
                                         break;
                                     }
@@ -186,19 +201,22 @@ where
                             let mut id: ObjectId = id.into();
                             let mut obj = obj;
                             loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress);
+                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
                                 match obj.kind {
                                     Tree => {
                                         traverse_delegate.clear();
                                         git_traverse::tree::breadthfirst(
                                             git_object::immutable::TreeIter::from_bytes(obj.data),
                                             &mut tree_traversal_state,
-                                            |oid, buf| db.find_existing_tree_iter(oid, buf, cache).ok(),
+                                            |oid, buf| {
+                                                stats.decoded_objects += 1;
+                                                db.find_existing_tree_iter(oid, buf, cache).ok()
+                                            },
                                             &mut traverse_delegate,
                                         )
                                         .map_err(Error::TreeTraverse)?;
                                         for id in traverse_delegate.objects.iter() {
-                                            out.push(id_to_count(&db, buf1, id, progress));
+                                            out.push(id_to_count(&db, buf1, id, progress, stats));
                                         }
                                         break;
                                     }
@@ -206,6 +224,7 @@ where
                                         id = immutable::CommitIter::from_bytes(obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree");
+                                        stats.expanded_objects += 1;
                                         obj = db.find_existing(id, buf1, cache)?;
                                         continue;
                                     }
@@ -214,13 +233,14 @@ where
                                         id = immutable::TagIter::from_bytes(obj.data)
                                             .target_id()
                                             .expect("every tag has a target");
+                                        stats.expanded_objects += 1;
                                         obj = db.find_existing(id, buf1, cache)?;
                                         continue;
                                     }
                                 }
                             }
                         }
-                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress),
+                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress, stats, false),
                     }
                 }
                 Ok((out, outcome))
@@ -342,10 +362,16 @@ fn push_obj_count_unique(
     id: &oid,
     obj: &crate::data::Object<'_>,
     progress: &mut impl Progress,
+    statistics: &mut reduce::Outcome,
+    count_expanded: bool,
 ) {
     let inserted = all_seen.insert(id.to_owned());
     if inserted {
         progress.inc();
+        statistics.decoded_objects += 1;
+        if count_expanded {
+            statistics.expanded_objects += 1;
+        }
         out.push(output::Count::from_data(id, &obj));
     }
 }
@@ -355,8 +381,10 @@ fn id_to_count<Find: crate::Find>(
     buf: &mut Vec<u8>,
     id: &oid,
     progress: &mut impl Progress,
+    statistics: &mut reduce::Outcome,
 ) -> output::Count {
     progress.inc();
+    statistics.expanded_objects += 1;
     output::Count {
         id: id.to_owned(),
         entry_pack_location: db.location_by_id(id, buf),
@@ -473,26 +501,37 @@ mod reduce {
     #[derive(Default)]
     pub struct Outcome {
         /// The amount of objects provided to start the iteration.
-        input_objects: usize,
-        /// The amount of fully decoded objects. These are the most expensive as they are fully decoded
-        decoded_objects: usize,
+        pub input_objects: usize,
         /// The amount of objects that have been expanded from the input source.
         /// It's desirable to do that as expansion happens on multiple threads, allowing the amount of input objects to be small.
-        expanded_objects: usize,
+        /// `expanded_objects - decoded_objects` is the 'cheap' object we found without decoding the object itself.
+        pub expanded_objects: usize,
+        /// The amount of fully decoded objects. These are the most expensive as they are fully decoded
+        pub decoded_objects: usize,
+        /// The total amount of objects seed. Should be `expanded_objects + input_objects`.
+        pub total_objects: usize,
     }
 
     impl Outcome {
+        /// Returns true if the numbers are valid according the invariants of the fields.
+        /// Seeing false here indicates a bug in the way we count, but is not in itself an issue.
+        pub fn is_consistent(&self) -> bool {
+            self.total_objects == self.expanded_objects + self.input_objects
+        }
+
         fn aggregate(
             &mut self,
             Outcome {
                 input_objects,
                 decoded_objects,
                 expanded_objects,
+                total_objects,
             }: Self,
         ) {
             self.input_objects += input_objects;
             self.decoded_objects += decoded_objects;
             self.expanded_objects += expanded_objects;
+            self.total_objects += total_objects;
         }
     }
 
@@ -517,7 +556,8 @@ mod reduce {
         type Error = Error;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item.map(|(counts, stats)| {
+            item.map(|(counts, mut stats)| {
+                stats.total_objects = counts.len();
                 self.total.aggregate(stats);
                 counts
             })
