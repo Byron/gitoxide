@@ -1,4 +1,4 @@
-use crate::{find, FindExt};
+use crate::{data::output, find, FindExt};
 use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
@@ -463,5 +463,41 @@ mod types {
         TreeChanges(git_diff::tree::changes::Error),
     }
 }
-use crate::data::output;
 pub use types::{Error, ObjectExpansion, Options};
+
+mod reduce {
+    use crate::data::output;
+    use git_features::parallel;
+    use std::marker::PhantomData;
+
+    /// Information gathered during the run of [`from_objects_iter()`].
+    pub struct Outcome {
+        /// The amount of objects provided to start the iteration.
+        input_objects: usize,
+        /// The amount of fully decoded objects. These are the most expensive as they are fully decoded
+        decoded_objects: usize,
+        /// The amount of objects that have been expanded from the input source.
+        /// It's desirable to do that as expansion happens on multiple threads, allowing the amount of input objects to be small.
+        expanded_objects: usize,
+    }
+
+    pub struct Reduce<Error> {
+        total: Outcome,
+        _err: PhantomData<Error>,
+    }
+
+    impl<Error> parallel::Reduce for Reduce<Error> {
+        type Input = Result<Vec<output::Count>, Error>;
+        type FeedProduce = Vec<output::Count>;
+        type Output = Outcome;
+        type Error = Error;
+
+        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+            item
+        }
+
+        fn finalize(self) -> Result<Self::Output, Self::Error> {
+            Ok(self.total)
+        }
+    }
+}
