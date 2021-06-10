@@ -176,6 +176,10 @@ pub struct PackCreate {
     /// Possible values are "none" and "tree-traversal". Default is "none".
     pub expansion: Option<core::pack::create::ObjectExpansion>,
 
+    /// the directory into which to write the pack file.
+    #[argh(option, short = 'o')]
+    pub output_directory: PathBuf,
+
     /// the tips from which to start the commit graph iteration.
     ///
     /// If empty, we expect to read objects on stdin and default to 'none' as expansion mode.

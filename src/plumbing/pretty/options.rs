@@ -56,6 +56,10 @@ pub enum Subcommands {
         /// Possible values are "none" and "tree-traversal". Default is "none".
         expansion: Option<core::pack::create::ObjectExpansion>,
 
+        /// The directory into which to write the pack file.
+        #[clap(long, short = 'o')]
+        output_directory: PathBuf,
+
         /// the tips from which to start the commit graph iteration.
         ///
         /// If empty, we expect to read objects on stdin and default to 'none' as expansion mode.

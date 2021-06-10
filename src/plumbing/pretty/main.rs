@@ -28,23 +28,16 @@ pub fn main() -> Result<()> {
             repository,
             expansion,
             tips,
+            output_directory,
         } => {
             let has_tips = !tips.is_empty();
-            let has_tui = progress;
-            if atty::is(if has_tui {
-                atty::Stream::Stderr
-            } else {
-                atty::Stream::Stdout
-            }) {
-                anyhow::bail!("Refusing to output pack data stream to stderr.")
-            }
             prepare_and_run(
                 "pack-create",
                 verbose,
                 progress,
                 progress_keep_open,
                 core::pack::create::PROGRESS_RANGE,
-                move |progress, out, err| {
+                move |progress, _out, _err| {
                     let input = if has_tips {
                         None
                     } else {
@@ -67,11 +60,7 @@ pub fn main() -> Result<()> {
                         }),
                     };
                     let progress = git_features::progress::DoOrDiscard::from(progress);
-                    if has_tui {
-                        core::pack::create(repository, tips, input, err, progress, context)
-                    } else {
-                        core::pack::create(repository, tips, input, out, progress, context)
-                    }
+                    core::pack::create(repository, tips, input, output_directory, progress, context)
                 },
             )
         }

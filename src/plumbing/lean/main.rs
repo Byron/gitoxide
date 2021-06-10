@@ -22,15 +22,10 @@ pub fn main() -> Result<()> {
             repository,
             expansion,
             tips,
+            output_directory,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-create", Some(core::pack::create::PROGRESS_RANGE));
             let has_tips = !tips.is_empty();
-            let stdout = stdout();
-            let stdout_lock = stdout.lock();
-            #[cfg(feature = "atty")]
-            if atty::is(atty::Stream::Stdout) {
-                anyhow::bail!("Refusing to output pack data stream to stdout.")
-            }
             let input = if has_tips {
                 None
             } else {
@@ -51,7 +46,7 @@ pub fn main() -> Result<()> {
                 repository.unwrap_or_else(|| PathBuf::from(".")),
                 tips,
                 input,
-                stdout_lock,
+                output_directory,
                 DoOrDiscard::from(progress),
                 core::pack::create::Context {
                     expansion,

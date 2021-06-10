@@ -36,6 +36,7 @@ anyhow = "1.0.31"
 quick-error = "2.0.0"
 bytesize = "1.0.1"
 serde_json = { version = "1.0.56", optional = true }
+tempfile = "3.1.0"
 
 # for async-client
 async-trait = { version = "0.1.50", optional = true }

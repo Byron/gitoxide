@@ -74,7 +74,7 @@ pub fn create(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
-    out: impl io::Write,
+    output_directory: impl AsRef<Path>,
     mut progress: impl Progress,
     ctx: Context,
 ) -> anyhow::Result<()> {
@@ -154,25 +154,27 @@ pub fn create(
     write_progress.init(None, progress::bytes());
     let start = Instant::now();
 
+    let mut pack_file = tempfile::NamedTempFile::new_in(&output_directory)?;
     let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
         entries.inspect(|e| {
             if let Ok(entries) = e {
                 entries_progress.inc_by(entries.len())
             }
         }),
-        out,
+        &mut pack_file,
         num_objects as u32,
         pack::data::Version::default(),
         hash::Kind::default(),
     );
-    while let Some(io_res) = output_iter.next() {
+    for io_res in output_iter.by_ref() {
         if interrupt::is_triggered() {
             bail!("Cancelled by user")
         }
         let written = io_res?;
         write_progress.inc_by(written as usize);
     }
-    output_iter.into_write().flush()?;
+    let hash = output_iter.digest().expect("iteration is done");
+    pack_file.persist(output_directory.as_ref().join(format!("{}.pack", hash)))?;
 
     write_progress.show_throughput(start);
     entries_progress.show_throughput(start);
