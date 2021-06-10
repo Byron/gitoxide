@@ -80,7 +80,7 @@ mod async_io {
     pub async fn connect(
         url: &[u8],
         desired_version: transport::Protocol,
-    ) -> Result<Box<dyn client::Transport + Send>, Error> {
+    ) -> Result<impl client::Transport + Send, Error> {
         let urlb = url;
         let url = git_repository::url::parse(urlb)?;
         Ok(match url.scheme {
@@ -88,15 +88,13 @@ mod async_io {
                 if url.user.is_some() {
                     return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
                 }
-                Box::new(
-                    git_connect(
-                        &url.host.as_ref().expect("host is present in url"),
-                        url.path,
-                        desired_version,
-                        url.port,
-                    )
-                    .await?,
+                git_connect(
+                    &url.host.as_ref().expect("host is present in url"),
+                    url.path,
+                    desired_version,
+                    url.port,
                 )
+                .await?
             }
             scheme => return Err(Error::UnsupportedScheme(scheme)),
         })
