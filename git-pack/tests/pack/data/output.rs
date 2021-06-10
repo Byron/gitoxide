@@ -38,11 +38,12 @@ fn db(kind: DbKind) -> crate::Result<Arc<linked::Store>> {
 mod count_and_entries {
     use std::sync::Arc;
 
-    use git_features::progress;
-    use git_odb::compound;
-    use git_odb::{pack, FindExt};
-    use git_pack::data::output;
-    use git_pack::data::output::{count, entry};
+    use git_features::{parallel::reduce::Finalize, progress};
+    use git_odb::{compound, pack, FindExt};
+    use git_pack::data::{
+        output,
+        output::{count, entry},
+    };
     use git_traverse::commit;
 
     use crate::pack::{
@@ -80,7 +81,7 @@ mod count_and_entries {
             blobs: 811,
             tags: 1,
         };
-        for (expansion_mode, expected_count) in [
+        for (expansion_mode, expected_count, expected_outcome) in [
             (
                 count::from_objects_iter::ObjectExpansion::AsIs,
                 Count {
@@ -89,11 +90,32 @@ mod count_and_entries {
                     blobs: 0,
                     tags: 1,
                 },
+                output::count::from_objects_iter::Outcome {
+                    input_objects: 16,
+                    expanded_objects: 0,
+                    decoded_objects: 16,
+                    total_objects: 16,
+                },
             ),
-            (count::from_objects_iter::ObjectExpansion::TreeContents, whole_pack),
+            (
+                count::from_objects_iter::ObjectExpansion::TreeContents,
+                whole_pack,
+                output::count::from_objects_iter::Outcome {
+                    input_objects: 16,
+                    expanded_objects: 852,
+                    decoded_objects: 57,
+                    total_objects: 868,
+                },
+            ),
             (
                 count::from_objects_iter::ObjectExpansion::TreeAdditionsComparedToAncestor,
                 whole_pack,
+                output::count::from_objects_iter::Outcome {
+                    input_objects: 16,
+                    expanded_objects: 866,
+                    decoded_objects: 208,
+                    total_objects: 868,
+                },
             ),
         ]
         .iter()
@@ -106,7 +128,7 @@ mod count_and_entries {
             })
             .map(Result::unwrap);
 
-            let counts: Vec<_> = output::count::from_objects_iter(
+            let mut iter = output::count::from_objects_iter(
                 db.clone(),
                 || pack::cache::Never,
                 commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
@@ -115,11 +137,13 @@ mod count_and_entries {
                     input_object_expansion: expansion_mode,
                     ..Default::default()
                 },
-            )
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .flatten()
-            .collect();
+            );
+            let counts: Vec<_> = iter
+                .by_ref()
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .collect();
             let actual_count = counts.iter().fold(Count::default(), |mut c, e| {
                 let mut buf = Vec::new();
                 if let Some(obj) = db.find_existing(e.id, &mut buf, &mut pack::cache::Never).ok() {
@@ -130,6 +154,10 @@ mod count_and_entries {
             assert_eq!(actual_count, expected_count);
             let counts_len = counts.len();
             assert_eq!(counts_len, expected_count.total());
+
+            let stats = iter.finalize()?;
+            assert_eq!(stats, expected_outcome);
+            assert_eq!(stats.total_objects, expected_count.total());
 
             let entries: Vec<_> = output::entry::from_count_iter(
                 counts,

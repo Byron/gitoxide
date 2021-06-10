@@ -81,7 +81,7 @@ where
                 let seen_objs = seen_objs.as_ref();
                 let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
                 let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
-                let mut outcome = reduce::Outcome::default();
+                let mut outcome = Outcome::default();
                 let stats = &mut outcome;
 
                 for id in oids.into_iter() {
@@ -362,7 +362,7 @@ fn push_obj_count_unique(
     id: &oid,
     obj: &crate::data::Object<'_>,
     progress: &mut impl Progress,
-    statistics: &mut reduce::Outcome,
+    statistics: &mut Outcome,
     count_expanded: bool,
 ) {
     let inserted = all_seen.insert(id.to_owned());
@@ -381,7 +381,7 @@ fn id_to_count<Find: crate::Find>(
     buf: &mut Vec<u8>,
     id: &oid,
     progress: &mut impl Progress,
-    statistics: &mut reduce::Outcome,
+    statistics: &mut Outcome,
 ) -> output::Count {
     progress.inc();
     statistics.expanded_objects += 1;
@@ -423,6 +423,46 @@ mod util {
 }
 
 mod types {
+    /// Information gathered during the run of [`from_objects_iter()`][super::from_objects_iter()].
+    /// The way input objects are handled
+    #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Outcome {
+        /// The amount of objects provided to start the iteration.
+        pub input_objects: usize,
+        /// The amount of objects that have been expanded from the input source.
+        /// It's desirable to do that as expansion happens on multiple threads, allowing the amount of input objects to be small.
+        /// `expanded_objects - decoded_objects` is the 'cheap' object we found without decoding the object itself.
+        pub expanded_objects: usize,
+        /// The amount of fully decoded objects. These are the most expensive as they are fully decoded
+        pub decoded_objects: usize,
+        /// The total amount of objects seed. Should be `expanded_objects + input_objects`.
+        pub total_objects: usize,
+    }
+
+    impl Outcome {
+        /// Returns true if the numbers are valid according the invariants of the fields.
+        /// Seeing false here indicates a bug in the way we count, but is not in itself an issue.
+        pub fn is_consistent(&self) -> bool {
+            self.total_objects == self.expanded_objects + self.input_objects
+        }
+
+        pub(in crate::data::output::count) fn aggregate(
+            &mut self,
+            Outcome {
+                input_objects,
+                decoded_objects,
+                expanded_objects,
+                total_objects,
+            }: Self,
+        ) {
+            self.input_objects += input_objects;
+            self.decoded_objects += decoded_objects;
+            self.expanded_objects += expanded_objects;
+            self.total_objects += total_objects;
+        }
+    }
+
     /// The way input objects are handled
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -490,50 +530,13 @@ mod types {
         TreeChanges(git_diff::tree::changes::Error),
     }
 }
-pub use types::{Error, ObjectExpansion, Options};
+pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod reduce {
+    use super::Outcome;
     use crate::data::output;
     use git_features::parallel;
     use std::marker::PhantomData;
-
-    /// Information gathered during the run of [`from_objects_iter()`].
-    #[derive(Default)]
-    pub struct Outcome {
-        /// The amount of objects provided to start the iteration.
-        pub input_objects: usize,
-        /// The amount of objects that have been expanded from the input source.
-        /// It's desirable to do that as expansion happens on multiple threads, allowing the amount of input objects to be small.
-        /// `expanded_objects - decoded_objects` is the 'cheap' object we found without decoding the object itself.
-        pub expanded_objects: usize,
-        /// The amount of fully decoded objects. These are the most expensive as they are fully decoded
-        pub decoded_objects: usize,
-        /// The total amount of objects seed. Should be `expanded_objects + input_objects`.
-        pub total_objects: usize,
-    }
-
-    impl Outcome {
-        /// Returns true if the numbers are valid according the invariants of the fields.
-        /// Seeing false here indicates a bug in the way we count, but is not in itself an issue.
-        pub fn is_consistent(&self) -> bool {
-            self.total_objects == self.expanded_objects + self.input_objects
-        }
-
-        fn aggregate(
-            &mut self,
-            Outcome {
-                input_objects,
-                decoded_objects,
-                expanded_objects,
-                total_objects,
-            }: Self,
-        ) {
-            self.input_objects += input_objects;
-            self.decoded_objects += decoded_objects;
-            self.expanded_objects += expanded_objects;
-            self.total_objects += total_objects;
-        }
-    }
 
     pub struct Statistics<E> {
         total: Outcome,
