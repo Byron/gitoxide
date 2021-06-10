@@ -17,7 +17,7 @@ where
 
 /// An implementation of [`Iterator`] to write [encoded entries][output::Entry] to an inner implementation each time
 /// `next()` is called.
-pub struct EntriesToBytesIter<I, W> {
+pub struct FromEntriesIter<I, W> {
     /// An iterator for input [`output::Entry`] instances
     pub input: I,
     /// A way of writing encoded bytes.
@@ -31,7 +31,7 @@ pub struct EntriesToBytesIter<I, W> {
     is_done: bool,
 }
 
-impl<I, W, E> EntriesToBytesIter<I, W>
+impl<I, W, E> FromEntriesIter<I, W>
 where
     I: Iterator<Item = Result<Vec<output::Entry>, E>>,
     W: std::io::Write,
@@ -59,7 +59,7 @@ where
             matches!(hash_kind, git_hash::Kind::Sha1),
             "currently only Sha1 is supported",
         );
-        EntriesToBytesIter {
+        FromEntriesIter {
             input,
             output: hash::Write::new(output, hash_kind),
             entry_version: version,
@@ -104,7 +104,7 @@ where
     }
 }
 
-impl<I, W, E> Iterator for EntriesToBytesIter<I, W>
+impl<I, W, E> Iterator for FromEntriesIter<I, W>
 where
     I: Iterator<Item = Result<Vec<output::Entry>, E>>,
     W: std::io::Write,

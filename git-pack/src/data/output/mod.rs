@@ -9,5 +9,4 @@ pub mod entry;
 pub use entry::Entry;
 
 ///
-pub mod entries_to_bytes;
-pub use entries_to_bytes::EntriesToBytesIter;
+pub mod data;
