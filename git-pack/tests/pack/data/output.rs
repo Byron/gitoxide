@@ -42,7 +42,7 @@ mod count_and_entries {
     use git_odb::compound;
     use git_odb::{pack, FindExt};
     use git_pack::data::output;
-    use git_pack::data::output::count;
+    use git_pack::data::output::{count, entry};
     use git_traverse::commit;
 
     use crate::pack::{
@@ -131,12 +131,12 @@ mod count_and_entries {
             let counts_len = counts.len();
             assert_eq!(counts_len, expected_count.total());
 
-            let entries: Vec<_> = output::objects_to_entries_iter(
+            let entries: Vec<_> = output::entry::from_count_iter(
                 counts,
                 db.clone(),
                 || pack::cache::Never,
                 progress::Discard,
-                Default::default(),
+                output::entry::from_count_iter::Options::default(),
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
@@ -164,7 +164,7 @@ mod count_and_entries {
         let num_written_bytes = {
             let num_entries = entries.len();
             let mut pack_writer = output::entries_to_bytes::EntriesToBytesIter::new(
-                std::iter::once(Ok::<_, output::count_to_entries::Error<compound::find::Error>>(entries)),
+                std::iter::once(Ok::<_, entry::from_count_iter::Error<compound::find::Error>>(entries)),
                 &mut pack_file,
                 num_entries as u32,
                 pack::data::Version::V2,

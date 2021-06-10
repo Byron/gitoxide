@@ -26,7 +26,7 @@ pub use input::BytesToEntriesIter;
 /// Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
 pub mod output;
 #[doc(inline)]
-pub use output::{objects_to_entries_iter, EntriesToBytesIter};
+pub use output::EntriesToBytesIter;
 
 /// A slice into a pack file denoting a pack entry.
 ///

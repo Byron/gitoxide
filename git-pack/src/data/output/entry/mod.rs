@@ -3,6 +3,10 @@ use git_features::hash;
 use git_hash::ObjectId;
 use std::io::Write;
 
+///
+pub mod from_count_iter;
+pub use from_count_iter::from_count_iter;
+
 /// An entry to be written to a file.
 ///
 /// Some of these will be in-flight and in memory while waiting to be written. Memory requirements depend on the amount of compressed

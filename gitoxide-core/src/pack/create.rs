@@ -135,12 +135,12 @@ pub fn create(
     let num_objects = counts.len();
     let entries = {
         let progress = progress.add_child("creating entries");
-        pack::data::output::objects_to_entries_iter(
+        pack::data::output::from_count_iter(
             counts,
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             progress,
-            pack::data::output::count_to_entries::Options {
+            git_repository::odb::data::output::entry::from_count_iter::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
                 version: Default::default(),

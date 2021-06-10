@@ -32,7 +32,7 @@ use std::sync::Arc;
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn objects_to_entries_iter<Find, Cache>(
+pub fn from_count_iter<Find, Cache>(
     counts: Vec<output::Count>,
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
