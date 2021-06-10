@@ -32,7 +32,7 @@ git-protocol-for-configuration-only = { package = "git-protocol", version = "^0.
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
-anyhow = "1.0.31"
+anyhow = "1.0.41"
 quick-error = "2.0.0"
 bytesize = "1.0.1"
 serde_json = { version = "1.0.56", optional = true }
