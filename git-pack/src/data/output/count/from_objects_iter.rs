@@ -30,9 +30,7 @@ pub fn from_objects_iter<Find, Iter, Oid, Cache>(
         chunk_size,
     }: Options,
 ) -> impl Iterator<Item = Result<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>>
-       + parallel::reduce::Finalize<
-    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>,
->
+       + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
@@ -227,7 +225,7 @@ where
                 Ok(out)
             }
         },
-        parallel::reduce::IdentityWithResult::default(),
+        reduce::Statistics::default(),
     )
 }
 
@@ -471,6 +469,7 @@ mod reduce {
     use std::marker::PhantomData;
 
     /// Information gathered during the run of [`from_objects_iter()`].
+    #[derive(Default)]
     pub struct Outcome {
         /// The amount of objects provided to start the iteration.
         input_objects: usize,
@@ -481,12 +480,21 @@ mod reduce {
         expanded_objects: usize,
     }
 
-    pub struct Reduce<Error> {
+    pub struct Statistics<E> {
         total: Outcome,
-        _err: PhantomData<Error>,
+        _err: PhantomData<E>,
     }
 
-    impl<Error> parallel::Reduce for Reduce<Error> {
+    impl<E> Default for Statistics<E> {
+        fn default() -> Self {
+            Statistics {
+                total: Default::default(),
+                _err: PhantomData::default(),
+            }
+        }
+    }
+
+    impl<Error> parallel::Reduce for Statistics<Error> {
         type Input = Result<Vec<output::Count>, Error>;
         type FeedProduce = Vec<output::Count>;
         type Output = Outcome;
