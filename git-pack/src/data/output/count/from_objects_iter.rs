@@ -513,7 +513,7 @@ mod types {
         }
     }
 
-    /// The error returned by the pack generation function [`to_entry_iter()`][crate::data::output::data::FromEntriesIter].
+    /// The error returned by the pack generation iterator [bytes::FromEntriesIter][crate::data::output::bytes::FromEntriesIter].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<FindErr>

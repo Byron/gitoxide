@@ -191,7 +191,7 @@ mod count_and_entries {
             .open(&pack_file_path)?;
         let num_written_bytes = {
             let num_entries = entries.len();
-            let mut pack_writer = output::data::FromEntriesIter::new(
+            let mut pack_writer = output::bytes::FromEntriesIter::new(
                 std::iter::once(Ok::<_, entry::from_counts_iter::Error<compound::find::Error>>(entries)),
                 &mut pack_file,
                 num_entries as u32,

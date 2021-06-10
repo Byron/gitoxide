@@ -154,7 +154,7 @@ pub fn create(
     write_progress.init(None, progress::bytes());
     let start = Instant::now();
 
-    let mut output_iter = pack::data::output::data::FromEntriesIter::new(
+    let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
         entries.inspect(|e| {
             if let Ok(entries) = e {
                 entries_progress.inc_by(entries.len())
