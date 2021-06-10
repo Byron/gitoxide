@@ -49,9 +49,9 @@ impl FromStr for ObjectExpansion {
     }
 }
 
-impl From<ObjectExpansion> for git_pack::data::output::count::count_objects::ObjectExpansion {
+impl From<ObjectExpansion> for pack::data::output::count::from_objects_iter::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use git_pack::data::output::count::count_objects::ObjectExpansion::*;
+        use pack::data::output::count::from_objects_iter::ObjectExpansion::*;
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,
@@ -106,12 +106,12 @@ pub fn create(
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let counts_iter = pack::data::output::objects_iter(
+        let counts_iter = pack::data::output::count::from_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             input,
             progress.add_child("threads"),
-            git_pack::data::output::count::count_objects::Options {
+            pack::data::output::count::from_objects_iter::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
                 input_object_expansion: ctx.expansion.into(),
@@ -135,12 +135,12 @@ pub fn create(
     let num_objects = counts.len();
     let entries = {
         let progress = progress.add_child("creating entries");
-        pack::data::output::from_count_iter(
+        pack::data::output::entry::from_counts_iter(
             counts,
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             progress,
-            git_repository::odb::data::output::entry::from_count_iter::Options {
+            git_repository::odb::data::output::entry::from_counts_iter::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
                 version: Default::default(),
@@ -154,7 +154,7 @@ pub fn create(
     write_progress.init(None, progress::bytes());
     let start = Instant::now();
 
-    let mut output_iter = pack::data::output::EntriesToBytesIter::new(
+    let mut output_iter = pack::data::output::data::FromEntriesIter::new(
         entries.inspect(|e| {
             if let Ok(entries) = e {
                 entries_progress.inc_by(entries.len())

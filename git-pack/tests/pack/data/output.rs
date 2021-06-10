@@ -159,12 +159,12 @@ mod count_and_entries {
             assert_eq!(stats, expected_outcome);
             assert_eq!(stats.total_objects, expected_count.total());
 
-            let entries: Vec<_> = output::entry::from_count_iter(
+            let entries: Vec<_> = output::entry::from_counts_iter(
                 counts,
                 db.clone(),
                 || pack::cache::Never,
                 progress::Discard,
-                output::entry::from_count_iter::Options::default(),
+                output::entry::from_counts_iter::Options::default(),
             )
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
@@ -192,7 +192,7 @@ mod count_and_entries {
         let num_written_bytes = {
             let num_entries = entries.len();
             let mut pack_writer = output::data::FromEntriesIter::new(
-                std::iter::once(Ok::<_, entry::from_count_iter::Error<compound::find::Error>>(entries)),
+                std::iter::once(Ok::<_, entry::from_counts_iter::Error<compound::find::Error>>(entries)),
                 &mut pack_file,
                 num_entries as u32,
                 pack::data::Version::V2,
