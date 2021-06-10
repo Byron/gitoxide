@@ -5,17 +5,21 @@ use git_hash::{oid, ObjectId};
 use git_object::immutable;
 use std::sync::Arc;
 
-/// Generate [`Entries`][output::Count] from input `objects` into `out` without attempting to apply any delta compression.
-/// TODO: update based on new counting mechanism
-/// TODO: Don't decode traversal all objects, provide info only if you have it. Massive duplication right now.
+/// Generate [`Count`][output::Count] from input `objects` with object expansion based on [`options`][Options]
+/// to learn which objects would be part of a pack.
 ///
+/// A [`Count`][output::Count] object maintains enough state to greatly accelerate future access of packed objects.
+///
+/// * `db` - the object store to use for accessing objects.
+/// * `make_cache` - a function to create thread-local pack caches
 /// * `objects`
 ///   * A list of objects to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
+///   * Objects may be expanded based on the provided [`options`][Options]
 /// * `progress`
 ///   * a way to obtain progress information
 /// * `options`
 ///   * more configuration
-pub fn count_objects_iter<Find, Iter, Oid, Cache>(
+pub fn from_objects_iter<Find, Iter, Oid, Cache>(
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects: Iter,

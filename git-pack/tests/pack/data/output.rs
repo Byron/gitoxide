@@ -41,13 +41,14 @@ mod count_and_entries {
     use git_features::progress;
     use git_odb::compound;
     use git_odb::{pack, FindExt};
+    use git_pack::data::output;
+    use git_pack::data::output::count;
     use git_traverse::commit;
 
     use crate::pack::{
         data::output::{db, DbKind},
         hex_to_id,
     };
-    use git_pack::data::output;
 
     #[test]
     fn traversals() -> crate::Result {
@@ -81,7 +82,7 @@ mod count_and_entries {
         };
         for (expansion_mode, expected_count) in [
             (
-                output::count_objects::ObjectExpansion::AsIs,
+                count::from_objects_iter::ObjectExpansion::AsIs,
                 Count {
                     trees: 0,
                     commits: 15,
@@ -89,9 +90,9 @@ mod count_and_entries {
                     tags: 1,
                 },
             ),
-            (output::count_objects::ObjectExpansion::TreeContents, whole_pack),
+            (count::from_objects_iter::ObjectExpansion::TreeContents, whole_pack),
             (
-                output::count_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
+                count::from_objects_iter::ObjectExpansion::TreeAdditionsComparedToAncestor,
                 whole_pack,
             ),
         ]
@@ -104,12 +105,13 @@ mod count_and_entries {
                 move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
             })
             .map(Result::unwrap);
-            let counts: Vec<_> = output::count_objects_iter(
+
+            let counts: Vec<_> = output::count::from_objects_iter(
                 db.clone(),
                 || pack::cache::Never,
                 commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
                 progress::Discard,
-                output::count_objects::Options {
+                count::from_objects_iter::Options {
                     input_object_expansion: expansion_mode,
                     ..Default::default()
                 },
@@ -162,9 +164,7 @@ mod count_and_entries {
         let num_written_bytes = {
             let num_entries = entries.len();
             let mut pack_writer = output::entries_to_bytes::EntriesToBytesIter::new(
-                std::iter::once(Ok::<_, output::objects_to_entries::Error<compound::find::Error>>(
-                    entries,
-                )),
+                std::iter::once(Ok::<_, output::count_to_entries::Error<compound::find::Error>>(entries)),
                 &mut pack_file,
                 num_entries as u32,
                 pack::data::Version::V2,

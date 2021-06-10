@@ -49,9 +49,9 @@ impl FromStr for ObjectExpansion {
     }
 }
 
-impl From<ObjectExpansion> for pack::data::output::count_objects::ObjectExpansion {
+impl From<ObjectExpansion> for git_pack::data::output::count::count_objects::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use pack::data::output::count_objects::ObjectExpansion::*;
+        use git_pack::data::output::count::count_objects::ObjectExpansion::*;
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,
@@ -106,12 +106,12 @@ pub fn create(
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let counts_iter = pack::data::output::count_objects_iter(
+        let counts_iter = pack::data::output::objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             input,
             progress.add_child("threads"),
-            pack::data::output::count_objects::Options {
+            git_pack::data::output::count::count_objects::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
                 input_object_expansion: ctx.expansion.into(),
@@ -140,7 +140,7 @@ pub fn create(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             progress,
-            pack::data::output::objects_to_entries::Options {
+            pack::data::output::count_to_entries::Options {
                 thread_limit: ctx.thread_limit,
                 chunk_size,
                 version: Default::default(),
