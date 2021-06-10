@@ -81,6 +81,7 @@ where
                 let seen_objs = seen_objs.as_ref();
                 let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
                 let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
+                let mut outcome = reduce::Outcome::default();
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
@@ -222,7 +223,7 @@ where
                         AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress),
                     }
                 }
-                Ok(out)
+                Ok((out, outcome))
             }
         },
         reduce::Statistics::default(),
@@ -480,6 +481,21 @@ mod reduce {
         expanded_objects: usize,
     }
 
+    impl Outcome {
+        fn aggregate(
+            &mut self,
+            Outcome {
+                input_objects,
+                decoded_objects,
+                expanded_objects,
+            }: Self,
+        ) {
+            self.input_objects += input_objects;
+            self.decoded_objects += decoded_objects;
+            self.expanded_objects += expanded_objects;
+        }
+    }
+
     pub struct Statistics<E> {
         total: Outcome,
         _err: PhantomData<E>,
@@ -495,13 +511,16 @@ mod reduce {
     }
 
     impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<Vec<output::Count>, Error>;
+        type Input = Result<(Vec<output::Count>, Outcome), Error>;
         type FeedProduce = Vec<output::Count>;
         type Output = Outcome;
         type Error = Error;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item
+            item.map(|(counts, stats)| {
+                self.total.aggregate(stats);
+                counts
+            })
         }
 
         fn finalize(self) -> Result<Self::Output, Self::Error> {
