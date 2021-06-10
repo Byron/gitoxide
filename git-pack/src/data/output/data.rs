@@ -2,7 +2,7 @@ use crate::data::output;
 use git_features::hash;
 use std::io::Write;
 
-/// The error returned by `next()` in the [`EntriesToBytesIter`] iterator.
+/// The error returned by `next()` in the [`FromEntriesIter`] iterator.
 #[allow(missing_docs)]
 #[derive(Debug, thiserror::Error)]
 pub enum Error<E>

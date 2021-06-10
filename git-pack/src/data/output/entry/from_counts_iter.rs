@@ -164,7 +164,7 @@ mod types {
         }
     }
 
-    /// The error returned by the pack generation function [`to_entry_iter()`][crate::data::output::objects_to_entries_iter()].
+    /// The error returned by the pack generation function [`to_entry_iter()`][crate::data::output::entry::from_counts_iter()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<FindErr>
