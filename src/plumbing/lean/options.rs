@@ -176,6 +176,11 @@ pub struct PackCreate {
     /// Possible values are "none" and "tree-traversal". Default is "none".
     pub expansion: Option<core::pack::create::ObjectExpansion>,
 
+    #[argh(switch, short = 's')]
+    /// if set statistical information will be presented to inform about pack creation details.
+    /// It's a form of instrumentation for developers to help improve pack generation.
+    pub statistics: bool,
+
     /// the directory into which to write the pack file.
     #[argh(option, short = 'o')]
     pub output_directory: PathBuf,

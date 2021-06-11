@@ -56,6 +56,11 @@ pub enum Subcommands {
         /// Possible values are "none" and "tree-traversal". Default is "none".
         expansion: Option<core::pack::create::ObjectExpansion>,
 
+        #[clap(long, short = 's')]
+        /// If set statistical information will be presented to inform about pack creation details.
+        /// It's a form of instrumentation for developers to help improve pack generation.
+        statistics: bool,
+
         /// The directory into which to write the pack file.
         #[clap(long, short = 'o')]
         output_directory: PathBuf,

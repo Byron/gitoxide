@@ -52,7 +52,7 @@ use std::path::PathBuf;
 #[cfg(feature = "git-diff")]
 pub use git_diff as diff;
 #[cfg(feature = "git-features")]
-pub use git_features::{interrupt, progress, progress::Progress};
+pub use git_features::{interrupt, parallel, progress, progress::Progress};
 #[cfg(feature = "git-hash")]
 pub use git_hash as hash;
 #[cfg(feature = "git-object")]
@@ -71,6 +71,8 @@ pub mod ext;
 pub mod prelude {
     #[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]
     pub use crate::ext::*;
+    #[cfg(feature = "git-features")]
+    pub use git_features::parallel::reduce::Finalize;
     pub use git_odb::{Find, FindExt, Write};
 }
 

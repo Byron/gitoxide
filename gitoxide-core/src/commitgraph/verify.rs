@@ -45,7 +45,7 @@ where
         .with_context(|| "Verification failure")?;
 
     match output_statistics {
-        Some(OutputFormat::Human) => drop(print_statistics(&mut out, &stats)),
+        Some(OutputFormat::Human) => drop(print_human_output(&mut out, &stats)),
         #[cfg(feature = "serde1")]
         Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, &stats)?,
         _ => {}
@@ -54,7 +54,7 @@ where
     Ok(stats)
 }
 
-fn print_statistics(out: &mut impl io::Write, stats: &Outcome) -> io::Result<()> {
+fn print_human_output(out: &mut impl io::Write, stats: &Outcome) -> io::Result<()> {
     writeln!(out, "number of commits with the given number of parents")?;
     let mut parent_counts: Vec<_> = stats.parent_counts.iter().map(|(a, b)| (*a, *b)).collect();
     parent_counts.sort_by_key(|e| e.0);

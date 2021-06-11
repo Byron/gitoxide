@@ -1,17 +1,15 @@
-use std::time::Instant;
-use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc};
-
+use crate::OutputFormat;
 use anyhow::bail;
-
 use git_repository::{
     hash,
     hash::ObjectId,
     interrupt,
     object::bstr::ByteVec,
     odb::{linked, pack},
-    prelude::FindExt,
+    prelude::{Finalize, FindExt},
     progress, traverse, Progress,
 };
+use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
@@ -61,22 +59,31 @@ impl From<ObjectExpansion> for pack::data::output::count::from_objects_iter::Obj
 }
 
 /// A general purpose context for many operations provided here
-pub struct Context {
+pub struct Context<W> {
     /// The way input objects should be handled
     pub expansion: ObjectExpansion,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit
     pub thread_limit: Option<usize>,
+    /// If set, statistics about the operation will be written to the output stream.
+    pub statistics: Option<OutputFormat>,
+    /// The output stream for use of additional information
+    pub out: W,
 }
 
-pub fn create(
+pub fn create<W: std::io::Write>(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
     output_directory: impl AsRef<Path>,
     mut progress: impl Progress,
-    ctx: Context,
+    Context {
+        expansion,
+        thread_limit,
+        statistics,
+        out,
+    }: Context<W>,
 ) -> anyhow::Result<()> {
     let db = Arc::new(find_db(repository)?);
     let tips = tips.into_iter();
@@ -100,25 +107,26 @@ pub fn create(
         })),
     };
 
+    let mut stats = Statistics::default();
     let chunk_size = 200;
     progress.init(Some(3), progress::steps());
     let start = Instant::now();
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let counts_iter = pack::data::output::count::from_objects_iter(
+        let mut counts_iter = pack::data::output::count::from_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             input,
             progress.add_child("threads"),
             pack::data::output::count::from_objects_iter::Options {
-                thread_limit: ctx.thread_limit,
+                thread_limit,
                 chunk_size,
-                input_object_expansion: ctx.expansion.into(),
+                input_object_expansion: expansion.into(),
             },
         );
         let mut counts = Vec::new();
-        for c in counts_iter {
+        for c in counts_iter.by_ref() {
             if interrupt::is_triggered() {
                 bail!("Cancelled by user")
             }
@@ -126,6 +134,7 @@ pub fn create(
             progress.inc_by(c.len());
             counts.extend(c.into_iter());
         }
+        stats.counts = counts_iter.finalize()?;
         progress.show_throughput(start);
         counts.shrink_to_fit();
         counts
@@ -141,7 +150,7 @@ pub fn create(
             pack::cache::lru::StaticLinkedList::<64>::default,
             progress,
             git_repository::odb::data::output::entry::from_counts_iter::Options {
-                thread_limit: ctx.thread_limit,
+                thread_limit,
                 chunk_size,
                 version: Default::default(),
             },
@@ -178,10 +187,55 @@ pub fn create(
 
     write_progress.show_throughput(start);
     entries_progress.show_throughput(start);
+
+    if let Some(format) = statistics {
+        print(stats, format, out)?;
+    }
     Ok(())
 }
 
 fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Store> {
     let path = repository.as_ref();
     Ok(linked::Store::at(path.join(".git").join("objects"))?)
+}
+
+fn print(stats: Statistics, format: OutputFormat, out: impl std::io::Write) -> anyhow::Result<()> {
+    match format {
+        OutputFormat::Human => human_output(stats, out).map_err(Into::into),
+        #[cfg(feature = "serde1")]
+        OutputFormat::Json => serde_json::to_writer_pretty(out, &stats).map_err(Into::into),
+    }
+}
+
+fn human_output(
+    Statistics {
+        counts:
+            pack::data::output::count::from_objects_iter::Outcome {
+                input_objects,
+                expanded_objects,
+                decoded_objects,
+                total_objects,
+            },
+    }: Statistics,
+    mut out: impl std::io::Write,
+) -> std::io::Result<()> {
+    let width = 30;
+    writeln!(out, "counting phase")?;
+    #[rustfmt::skip]
+    writeln!(
+        out,
+        "\t{:<width$} {}\n\t{:<width$} {}\n\t{:<width$} {}\n\t{:<width$} {}",
+        "input objects", input_objects,
+        "expanded objects", expanded_objects,
+        "decoded objects", decoded_objects,
+        "total objects", total_objects,
+        width = width
+    )?;
+    Ok(())
+}
+
+#[derive(Default)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+struct Statistics {
+    counts: pack::data::output::count::from_objects_iter::Outcome,
 }

@@ -21,6 +21,7 @@ pub fn main() -> Result<()> {
         SubCommands::PackCreate(options::PackCreate {
             repository,
             expansion,
+            statistics,
             tips,
             output_directory,
         }) => {
@@ -50,6 +51,8 @@ pub fn main() -> Result<()> {
                 DoOrDiscard::from(progress),
                 core::pack::create::Context {
                     expansion,
+                    statistics: if statistics { Some(OutputFormat::Human) } else { None },
+                    out: stdout(),
                     thread_limit,
                 },
             )

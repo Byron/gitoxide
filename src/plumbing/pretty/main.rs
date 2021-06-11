@@ -27,6 +27,7 @@ pub fn main() -> Result<()> {
         Subcommands::PackCreate {
             repository,
             expansion,
+            statistics,
             tips,
             output_directory,
         } => {
@@ -37,7 +38,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 core::pack::create::PROGRESS_RANGE,
-                move |progress, _out, _err| {
+                move |progress, out, _err| {
                     let input = if has_tips {
                         None
                     } else {
@@ -51,6 +52,8 @@ pub fn main() -> Result<()> {
                     let repository = repository.unwrap_or_else(|| PathBuf::from("."));
                     let context = core::pack::create::Context {
                         thread_limit,
+                        statistics: if statistics { Some(format) } else { None },
+                        out,
                         expansion: expansion.unwrap_or_else(|| {
                             if has_tips {
                                 core::pack::create::ObjectExpansion::TreeTraversal

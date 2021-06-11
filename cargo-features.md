@@ -190,5 +190,6 @@ The feature above is provided by the crates:
 * **git-url**
 * **git-odb**
 * **git-protocol**
+* **git-repository**
 * **gitoxide-core**
  
