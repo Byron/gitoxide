@@ -12,7 +12,7 @@ use maybe_async::maybe_async;
 use std::io;
 
 /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
-/// Note that `delegate` has blocking operations and thus this entire call should be on an executor which can handle
+/// **Note** that `delegate` has blocking operations and thus this entire call should be on an executor which can handle
 /// that. This could be the current thread blocking, or another thread.
 ///
 /// * `authenticate(operation_to_perform)` is used to receive credentials for the connection and potentially store it

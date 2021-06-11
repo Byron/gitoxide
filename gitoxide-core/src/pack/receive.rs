@@ -181,7 +181,7 @@ mod async_io {
                 index_kind: pack::index::Version::V2,
                 iteration_mode: pack::data::input::Mode::Verify,
             };
-            let outcome = pack::bundle::Bundle::write_to_directory(
+            let outcome = pack::Bundle::write_to_directory(
                 futures_lite::io::BlockOn::new(input),
                 self.directory.take(),
                 progress,
