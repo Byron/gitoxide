@@ -81,7 +81,7 @@ where
     /// Returns the trailing hash over all written entries once done.
     /// It's `None` if we are not yet done writing.
     pub fn digest(&self) -> Option<git_hash::ObjectId> {
-        self.trailer.clone()
+        self.trailer
     }
 
     fn next_inner(&mut self) -> Result<u64, Error<E>> {
