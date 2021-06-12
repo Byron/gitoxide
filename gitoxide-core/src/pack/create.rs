@@ -163,19 +163,16 @@ pub fn create<W: std::io::Write>(
     write_progress.init(None, progress::bytes());
     let start = Instant::now();
 
-    let mut pack_file_store: Option<tempfile::NamedTempFile> = None;
+    let mut named_tempfile_store: Option<tempfile::NamedTempFile> = None;
     let mut sink_store: std::io::Sink;
     let (mut pack_file, output_directory): (&mut dyn std::io::Write, Option<_>) = match output_directory {
         Some(dir) => {
-            pack_file_store = Some(tempfile::NamedTempFile::new_in(dir.as_ref())?);
-            (
-                pack_file_store.as_mut().expect("packfile just set") as &mut dyn std::io::Write,
-                Some(dir),
-            )
+            named_tempfile_store = Some(tempfile::NamedTempFile::new_in(dir.as_ref())?);
+            (named_tempfile_store.as_mut().expect("packfile just set"), Some(dir))
         }
         None => {
             sink_store = std::io::sink();
-            (&mut sink_store as &mut dyn std::io::Write, None)
+            (&mut sink_store, None)
         }
     };
     let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
@@ -198,7 +195,7 @@ pub fn create<W: std::io::Write>(
     }
     let hash = output_iter.digest().expect("iteration is done");
 
-    if let (Some(pack_file), Some(dir)) = (pack_file_store.take(), output_directory) {
+    if let (Some(pack_file), Some(dir)) = (named_tempfile_store.take(), output_directory) {
         pack_file.persist(dir.as_ref().join(format!("{}.pack", hash)))?;
     }
     stats.entries = entries.finalize()?;
