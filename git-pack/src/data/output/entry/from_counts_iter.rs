@@ -1,4 +1,4 @@
-use crate::{find, FindExt};
+use crate::{data::output, find, FindExt};
 use git_features::{parallel, progress::Progress};
 use std::sync::Arc;
 
@@ -43,9 +43,7 @@ pub fn from_counts_iter<Find, Cache>(
         chunk_size,
     }: Options,
 ) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<find::existing::Error<Find::Error>>>>
-       + parallel::reduce::Finalize<
-    Reduce = parallel::reduce::IdentityWithResult<Vec<output::Entry>, Error<find::existing::Error<Find::Error>>>,
->
+       + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
@@ -79,30 +77,36 @@ where
             move |chunk: std::ops::Range<usize>, (buf, cache, progress)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk];
+                let mut stats = Outcome::default();
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
                 for count in chunk {
                     out.push(
                         match count.entry_pack_location.as_ref().and_then(|l| db.entry_by_location(l)) {
                             Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
-                                Some(entry) => entry,
+                                Some(entry) => {
+                                    stats.objects_copied_from_pack += 1;
+                                    entry
+                                }
                                 None => {
                                     let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                                    stats.decoded_objects += 1;
                                     output::Entry::from_data(count, &obj)
                                 }
                             },
                             None => {
                                 let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                                stats.decoded_objects += 1;
                                 output::Entry::from_data(count, &obj)
                             }
                         }?,
                     );
                     progress.inc();
                 }
-                Ok(out)
+                Ok((out, stats))
             }
         },
-        parallel::reduce::IdentityWithResult::default(),
+        reduce::Statistics::default(),
     )
 }
 
@@ -138,8 +142,71 @@ mod util {
     }
 }
 
+mod reduce {
+    use super::Outcome;
+    use crate::data::output;
+    use git_features::parallel;
+    use std::marker::PhantomData;
+
+    pub struct Statistics<E> {
+        total: Outcome,
+        _err: PhantomData<E>,
+    }
+
+    impl<E> Default for Statistics<E> {
+        fn default() -> Self {
+            Statistics {
+                total: Default::default(),
+                _err: PhantomData::default(),
+            }
+        }
+    }
+
+    impl<Error> parallel::Reduce for Statistics<Error> {
+        type Input = Result<(Vec<output::Entry>, Outcome), Error>;
+        type FeedProduce = Vec<output::Entry>;
+        type Output = Outcome;
+        type Error = Error;
+
+        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+            item.map(|(entries, stats)| {
+                self.total.aggregate(stats);
+                entries
+            })
+        }
+
+        fn finalize(self) -> Result<Self::Output, Self::Error> {
+            Ok(self.total)
+        }
+    }
+}
+
 mod types {
     use crate::data::output::entry;
+
+    /// Information gathered during the run of [`from_counts_iter()`][super::from_counts_iter()].
+    #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Outcome {
+        /// The amount of fully decoded objects. These are the most expensive as they are fully decoded.
+        pub decoded_objects: usize,
+        /// The amount of objects that could be copied directly from the pack. These are cheapest as they
+        /// only cost a memory copy for the most part.
+        pub objects_copied_from_pack: usize,
+    }
+
+    impl Outcome {
+        pub(in crate::data::output::entry) fn aggregate(
+            &mut self,
+            Outcome {
+                decoded_objects,
+                objects_copied_from_pack,
+            }: Self,
+        ) {
+            self.decoded_objects += decoded_objects;
+            self.objects_copied_from_pack += objects_copied_from_pack;
+        }
+    }
 
     /// Configuration options for the pack generation functions provied in [this module][crate::data::output].
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -177,5 +244,4 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
-use crate::data::output;
-pub use types::{Error, Options};
+pub use types::{Error, Options, Outcome};

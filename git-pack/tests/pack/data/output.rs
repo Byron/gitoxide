@@ -81,7 +81,7 @@ mod count_and_entries {
             blobs: 811,
             tags: 1,
         };
-        for (expansion_mode, expected_count, expected_outcome) in [
+        for (expansion_mode, expected_count, expected_counts_outcome, expected_entries_outcome) in [
             (
                 count::from_objects_iter::ObjectExpansion::AsIs,
                 Count {
@@ -96,6 +96,10 @@ mod count_and_entries {
                     decoded_objects: 16,
                     total_objects: 16,
                 },
+                output::entry::from_counts_iter::Outcome {
+                    decoded_objects: 0,
+                    objects_copied_from_pack: 16,
+                },
             ),
             (
                 count::from_objects_iter::ObjectExpansion::TreeContents,
@@ -106,6 +110,10 @@ mod count_and_entries {
                     decoded_objects: 57,
                     total_objects: 868,
                 },
+                output::entry::from_counts_iter::Outcome {
+                    decoded_objects: 531,
+                    objects_copied_from_pack: 337,
+                },
             ),
             (
                 count::from_objects_iter::ObjectExpansion::TreeAdditionsComparedToAncestor,
@@ -115,6 +123,10 @@ mod count_and_entries {
                     expanded_objects: 866,
                     decoded_objects: 208,
                     total_objects: 868,
+                },
+                output::entry::from_counts_iter::Outcome {
+                    decoded_objects: 531,
+                    objects_copied_from_pack: 337,
                 },
             ),
         ]
@@ -156,26 +168,30 @@ mod count_and_entries {
             assert_eq!(counts_len, expected_count.total());
 
             let stats = iter.finalize()?;
-            assert_eq!(stats, expected_outcome);
+            assert_eq!(stats, expected_counts_outcome);
             assert_eq!(stats.total_objects, expected_count.total());
 
-            let entries: Vec<_> = output::entry::from_counts_iter(
+            let mut iter = output::entry::from_counts_iter(
                 counts,
                 db.clone(),
                 || pack::cache::Never,
                 progress::Discard,
                 output::entry::from_counts_iter::Options::default(),
-            )
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .flatten()
-            .collect();
+            );
+            let entries: Vec<_> = iter
+                .by_ref()
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .collect();
             let actual_count = entries.iter().fold(Count::default(), |mut c, e| {
                 c.add(e.object_kind);
                 c
             });
             assert_eq!(actual_count, expected_count);
             assert_eq!(counts_len, expected_count.total());
+            let stats = iter.finalize()?;
+            assert_eq!(stats, expected_entries_outcome);
 
             write_and_verify(entries)?;
         }

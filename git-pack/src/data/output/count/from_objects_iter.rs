@@ -424,7 +424,6 @@ mod util {
 
 mod types {
     /// Information gathered during the run of [`from_objects_iter()`][super::from_objects_iter()].
-    /// The way input objects are handled
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Outcome {
@@ -441,12 +440,6 @@ mod types {
     }
 
     impl Outcome {
-        /// Returns true if the numbers are valid according the invariants of the fields.
-        /// Seeing false here indicates a bug in the way we count, but is not in itself an issue.
-        pub fn is_consistent(&self) -> bool {
-            self.total_objects == self.expanded_objects + self.input_objects
-        }
-
         pub(in crate::data::output::count) fn aggregate(
             &mut self,
             Outcome {
