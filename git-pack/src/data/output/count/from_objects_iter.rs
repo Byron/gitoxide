@@ -259,10 +259,9 @@ mod tree {
         };
         use git_hash::ObjectId;
         use git_object::bstr::BStr;
-        use std::collections::HashSet;
 
         pub struct AllNew<'a> {
-            pub objects: HashSet<ObjectId>,
+            pub objects: Vec<ObjectId>,
             all_seen: &'a DashSet<ObjectId>,
         }
 
@@ -292,7 +291,7 @@ mod tree {
                     Change::Addition { oid, .. } | Change::Modification { oid, .. } => {
                         let inserted = self.all_seen.insert(oid);
                         if inserted {
-                            self.objects.insert(oid);
+                            self.objects.push(oid);
                         }
                     }
                     Change::Deletion { .. } => {}
@@ -307,10 +306,9 @@ mod tree {
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
-        use std::collections::HashSet;
 
         pub struct AllUnseen<'a> {
-            pub objects: HashSet<ObjectId>,
+            pub objects: Vec<ObjectId>,
             all_seen: &'a DashSet<ObjectId>,
         }
 
@@ -338,7 +336,7 @@ mod tree {
             fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
                 let inserted = self.all_seen.insert(entry.oid.to_owned());
                 if inserted {
-                    self.objects.insert(entry.oid.to_owned());
+                    self.objects.push(entry.oid.to_owned());
                     Action::Continue
                 } else {
                     Action::Skip
@@ -348,7 +346,7 @@ mod tree {
             fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
                 let inserted = self.all_seen.insert(entry.oid.to_owned());
                 if inserted {
-                    self.objects.insert(entry.oid.to_owned());
+                    self.objects.push(entry.oid.to_owned());
                 }
                 Action::Continue
             }
