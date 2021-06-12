@@ -183,7 +183,7 @@ pub struct PackCreate {
 
     /// the directory into which to write the pack file.
     #[argh(option, short = 'o')]
-    pub output_directory: PathBuf,
+    pub output_directory: Option<PathBuf>,
 
     /// the tips from which to start the commit graph iteration.
     ///

@@ -76,7 +76,7 @@ pub fn create<W: std::io::Write>(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
-    output_directory: impl AsRef<Path>,
+    output_directory: Option<impl AsRef<Path>>,
     mut progress: impl Progress,
     Context {
         expansion,
@@ -163,7 +163,21 @@ pub fn create<W: std::io::Write>(
     write_progress.init(None, progress::bytes());
     let start = Instant::now();
 
-    let mut pack_file = tempfile::NamedTempFile::new_in(&output_directory)?;
+    let mut pack_file_store: Option<tempfile::NamedTempFile> = None;
+    let mut sink_store: std::io::Sink;
+    let (mut pack_file, output_directory): (&mut dyn std::io::Write, Option<_>) = match output_directory {
+        Some(dir) => {
+            pack_file_store = Some(tempfile::NamedTempFile::new_in(dir.as_ref())?);
+            (
+                pack_file_store.as_mut().expect("packfile just set") as &mut dyn std::io::Write,
+                Some(dir),
+            )
+        }
+        None => {
+            sink_store = std::io::sink();
+            (&mut sink_store as &mut dyn std::io::Write, None)
+        }
+    };
     let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
         entries.by_ref().inspect(|e| {
             if let Ok(entries) = e {
@@ -183,7 +197,10 @@ pub fn create<W: std::io::Write>(
         write_progress.inc_by(written as usize);
     }
     let hash = output_iter.digest().expect("iteration is done");
-    pack_file.persist(output_directory.as_ref().join(format!("{}.pack", hash)))?;
+
+    if let (Some(pack_file), Some(dir)) = (pack_file_store.take(), output_directory) {
+        pack_file.persist(dir.as_ref().join(format!("{}.pack", hash)))?;
+    }
     stats.entries = entries.finalize()?;
 
     write_progress.show_throughput(start);

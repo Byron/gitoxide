@@ -63,7 +63,7 @@ pub enum Subcommands {
 
         /// The directory into which to write the pack file.
         #[clap(long, short = 'o')]
-        output_directory: PathBuf,
+        output_directory: Option<PathBuf>,
 
         /// the tips from which to start the commit graph iteration.
         ///
