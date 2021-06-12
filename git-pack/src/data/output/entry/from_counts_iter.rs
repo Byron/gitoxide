@@ -90,13 +90,13 @@ where
                                 }
                                 None => {
                                     let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                                    stats.decoded_objects += 1;
+                                    stats.decoded_and_recompressed_objects += 1;
                                     output::Entry::from_data(count, &obj)
                                 }
                             },
                             None => {
                                 let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                                stats.decoded_objects += 1;
+                                stats.decoded_and_recompressed_objects += 1;
                                 output::Entry::from_data(count, &obj)
                             }
                         }?,
@@ -189,7 +189,7 @@ mod types {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Outcome {
         /// The amount of fully decoded objects. These are the most expensive as they are fully decoded.
-        pub decoded_objects: usize,
+        pub decoded_and_recompressed_objects: usize,
         /// The amount of objects that could be copied directly from the pack. These are cheapest as they
         /// only cost a memory copy for the most part.
         pub objects_copied_from_pack: usize,
@@ -199,11 +199,11 @@ mod types {
         pub(in crate::data::output::entry) fn aggregate(
             &mut self,
             Outcome {
-                decoded_objects,
+                decoded_and_recompressed_objects: decoded_objects,
                 objects_copied_from_pack,
             }: Self,
         ) {
-            self.decoded_objects += decoded_objects;
+            self.decoded_and_recompressed_objects += decoded_objects;
             self.objects_copied_from_pack += objects_copied_from_pack;
         }
     }

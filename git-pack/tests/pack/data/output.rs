@@ -97,7 +97,7 @@ mod count_and_entries {
                     total_objects: 16,
                 },
                 output::entry::from_counts_iter::Outcome {
-                    decoded_objects: 0,
+                    decoded_and_recompressed_objects: 0,
                     objects_copied_from_pack: 16,
                 },
             ),
@@ -111,7 +111,7 @@ mod count_and_entries {
                     total_objects: 868,
                 },
                 output::entry::from_counts_iter::Outcome {
-                    decoded_objects: 531,
+                    decoded_and_recompressed_objects: 531,
                     objects_copied_from_pack: 337,
                 },
             ),
@@ -125,7 +125,7 @@ mod count_and_entries {
                     total_objects: 868,
                 },
                 output::entry::from_counts_iter::Outcome {
-                    decoded_objects: 531,
+                    decoded_and_recompressed_objects: 531,
                     objects_copied_from_pack: 337,
                 },
             ),

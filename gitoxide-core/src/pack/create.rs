@@ -239,7 +239,7 @@ fn human_output(
             },
         entries:
             pack::data::output::entry::from_counts_iter::Outcome {
-                decoded_objects: decoded_objects_in_entries,
+                decoded_and_recompressed_objects,
                 objects_copied_from_pack,
             },
     }: Statistics,
@@ -262,7 +262,7 @@ fn human_output(
     writeln!(
         out,
         "\t{:<width$} {}\n\t{:<width$} {}",
-        "decoded objects", decoded_objects_in_entries,
+        "decoded and recompressed", decoded_and_recompressed_objects,
         "pack-to-pack copies", objects_copied_from_pack,
         width = width
     )?;
