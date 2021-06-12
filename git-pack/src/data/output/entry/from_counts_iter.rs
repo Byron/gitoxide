@@ -134,8 +134,9 @@ mod util {
             if self.cursor >= self.len {
                 None
             } else {
-                let range = self.cursor..(self.cursor + self.size).min(self.len);
-                self.cursor += self.size;
+                let upper = (self.cursor + self.size).min(self.len);
+                let range = self.cursor..upper;
+                self.cursor = upper;
                 Some(range)
             }
         }

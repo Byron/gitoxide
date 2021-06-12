@@ -35,4 +35,4 @@ git tag -m "a tag object" referrer
 git reset --hard HEAD~1
 
 # speed up all access by creating a pack
-git gc
+git gc --aggressive

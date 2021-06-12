@@ -81,7 +81,7 @@ mod count_and_entries {
             blobs: 811,
             tags: 1,
         };
-        for (expansion_mode, expected_count, expected_counts_outcome, expected_entries_outcome) in [
+        for (expansion_mode, expected_count, expected_counts_outcome, expected_entries_outcome, expected_pack_hash) in [
             (
                 count::from_objects_iter::ObjectExpansion::AsIs,
                 Count {
@@ -100,6 +100,7 @@ mod count_and_entries {
                     decoded_and_recompressed_objects: 0,
                     objects_copied_from_pack: 16,
                 },
+                hex_to_id("a84ddea36a6504a7385761ede0ccc8eb4451392e"),
             ),
             (
                 count::from_objects_iter::ObjectExpansion::TreeContents,
@@ -111,9 +112,10 @@ mod count_and_entries {
                     total_objects: 868,
                 },
                 output::entry::from_counts_iter::Outcome {
-                    decoded_and_recompressed_objects: 531,
-                    objects_copied_from_pack: 337,
+                    decoded_and_recompressed_objects: 542,
+                    objects_copied_from_pack: 326,
                 },
+                hex_to_id("c0f566c050fc5ff41d1b68cc56e13f5aa96c2df7"),
             ),
             (
                 count::from_objects_iter::ObjectExpansion::TreeAdditionsComparedToAncestor,
@@ -125,9 +127,10 @@ mod count_and_entries {
                     total_objects: 868,
                 },
                 output::entry::from_counts_iter::Outcome {
-                    decoded_and_recompressed_objects: 531,
-                    objects_copied_from_pack: 337,
+                    decoded_and_recompressed_objects: 542,
+                    objects_copied_from_pack: 326,
                 },
+                hex_to_id("e3134a132fd77335d4b99f60f8ed3698d4babc89"),
             ),
         ]
         .iter()
@@ -140,7 +143,7 @@ mod count_and_entries {
             })
             .map(Result::unwrap);
 
-            let mut iter = output::count::from_objects_iter(
+            let mut counts_iter = output::count::from_objects_iter(
                 db.clone(),
                 || pack::cache::Never,
                 commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
@@ -150,7 +153,7 @@ mod count_and_entries {
                     ..Default::default()
                 },
             );
-            let counts: Vec<_> = iter
+            let counts: Vec<_> = counts_iter
                 .by_ref()
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
@@ -167,18 +170,18 @@ mod count_and_entries {
             let counts_len = counts.len();
             assert_eq!(counts_len, expected_count.total());
 
-            let stats = iter.finalize()?;
+            let stats = counts_iter.finalize()?;
             assert_eq!(stats, expected_counts_outcome);
             assert_eq!(stats.total_objects, expected_count.total());
 
-            let mut iter = output::entry::from_counts_iter(
+            let mut entries_iter = output::entry::from_counts_iter(
                 counts,
                 db.clone(),
                 || pack::cache::Never,
                 progress::Discard,
                 output::entry::from_counts_iter::Options::default(),
             );
-            let entries: Vec<_> = iter
+            let entries: Vec<_> = entries_iter
                 .by_ref()
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
@@ -190,22 +193,22 @@ mod count_and_entries {
             });
             assert_eq!(actual_count, expected_count);
             assert_eq!(counts_len, expected_count.total());
-            let stats = iter.finalize()?;
+            let stats = entries_iter.finalize()?;
             assert_eq!(stats, expected_entries_outcome);
 
-            write_and_verify(entries)?;
+            write_and_verify(entries, expected_pack_hash)?;
         }
         Ok(())
     }
 
-    fn write_and_verify(entries: Vec<output::Entry>) -> crate::Result {
+    fn write_and_verify(entries: Vec<output::Entry>, _expected_pack_hash: git_hash::ObjectId) -> crate::Result {
         let tmp_dir = tempfile::TempDir::new()?;
         let pack_file_path = tmp_dir.path().join("new.pack");
         let mut pack_file = std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
             .open(&pack_file_path)?;
-        let num_written_bytes = {
+        let (num_written_bytes, pack_hash) = {
             let num_entries = entries.len();
             let mut pack_writer = output::bytes::FromEntriesIter::new(
                 std::iter::once(Ok::<_, entry::from_counts_iter::Error<compound::find::Error>>(entries)),
@@ -221,9 +224,10 @@ mod count_and_entries {
                 "there is nothing more to iterate this time"
             );
             // verify we can still get the original parts back
+            let hash = pack_writer.digest().expect("digest is available when iterator is done");
             let _ = pack_writer.input;
             let _ = pack_writer.into_write();
-            n
+            (n, hash)
         };
         assert_eq!(
             num_written_bytes,
@@ -231,7 +235,14 @@ mod count_and_entries {
             "it reports the correct amount of written bytes"
         );
         let pack = pack::data::File::at(&pack_file_path)?;
-        pack.verify_checksum(progress::Discard)?;
+        let hash = pack.verify_checksum(progress::Discard)?;
+        assert_eq!(
+            hash, pack_hash,
+            "the trailer of the pack matches the actually written trailer"
+        );
+
+        #[cfg(feature = "internal-testing-git-features-parallel")] // TODO: make parallel iteration stable, too, and remote this attr
+        assert_eq!(hash, _expected_pack_hash, "pack hashes are stable if the input is");
 
         // Re-generate the index from the pack for validation.
         let bundle = pack::Bundle::at(
