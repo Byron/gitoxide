@@ -72,7 +72,7 @@ pub struct Context<W> {
     pub out: W,
 }
 
-pub fn create<W: std::io::Write>(
+pub fn create<W>(
     repository: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
@@ -82,9 +82,12 @@ pub fn create<W: std::io::Write>(
         expansion,
         thread_limit,
         statistics,
-        out,
+        mut out,
     }: Context<W>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<()>
+where
+    W: std::io::Write,
+{
     let db = Arc::new(find_db(repository)?);
     let tips = tips.into_iter();
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
@@ -193,10 +196,13 @@ pub fn create<W: std::io::Write>(
         let written = io_res?;
         write_progress.inc_by(written as usize);
     }
-    let hash = output_iter.digest().expect("iteration is done");
 
+    let hash = output_iter.digest().expect("iteration is done");
+    let pack_name = format!("{}.pack", hash);
     if let (Some(pack_file), Some(dir)) = (named_tempfile_store.take(), output_directory) {
-        pack_file.persist(dir.as_ref().join(format!("{}.pack", hash)))?;
+        pack_file.persist(dir.as_ref().join(pack_name))?;
+    } else {
+        writeln!(out, "{}", pack_name)?;
     }
     stats.entries = entries.finalize()?;
 
