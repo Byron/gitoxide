@@ -142,7 +142,7 @@ pub fn create<W: std::io::Write>(
 
     progress.inc();
     let num_objects = counts.len();
-    let entries = {
+    let mut entries = {
         let progress = progress.add_child("creating entries");
         pack::data::output::entry::from_counts_iter(
             counts,
@@ -165,7 +165,7 @@ pub fn create<W: std::io::Write>(
 
     let mut pack_file = tempfile::NamedTempFile::new_in(&output_directory)?;
     let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
-        entries.inspect(|e| {
+        entries.by_ref().inspect(|e| {
             if let Ok(entries) = e {
                 entries_progress.inc_by(entries.len())
             }
@@ -184,6 +184,7 @@ pub fn create<W: std::io::Write>(
     }
     let hash = output_iter.digest().expect("iteration is done");
     pack_file.persist(output_directory.as_ref().join(format!("{}.pack", hash)))?;
+    stats.entries = entries.finalize()?;
 
     write_progress.show_throughput(start);
     entries_progress.show_throughput(start);
@@ -216,6 +217,11 @@ fn human_output(
                 decoded_objects,
                 total_objects,
             },
+        entries:
+            pack::data::output::entry::from_counts_iter::Outcome {
+                decoded_objects: decoded_objects_in_entries,
+                objects_copied_from_pack,
+            },
     }: Statistics,
     mut out: impl std::io::Write,
 ) -> std::io::Result<()> {
@@ -231,6 +237,15 @@ fn human_output(
         "total objects", total_objects,
         width = width
     )?;
+    writeln!(out, "generation phase")?;
+    #[rustfmt::skip]
+    writeln!(
+        out,
+        "\t{:<width$} {}\n\t{:<width$} {}",
+        "decoded objects", decoded_objects_in_entries,
+        "pack-to-pack copies", objects_copied_from_pack,
+        width = width
+    )?;
     Ok(())
 }
 
@@ -238,4 +253,5 @@ fn human_output(
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 struct Statistics {
     counts: pack::data::output::count::from_objects_iter::Outcome,
+    entries: pack::data::output::entry::from_counts_iter::Outcome,
 }
