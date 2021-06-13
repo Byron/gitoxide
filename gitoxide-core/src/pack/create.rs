@@ -100,8 +100,21 @@ where
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
         None => Box::new(
             traverse::commit::Ancestors::new(
-                tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
-                    .collect::<Result<Vec<_>, _>>()?,
+                tips.map(|t| {
+                    ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref()))
+                        .map_err(anyhow::Error::from)
+                        .and_then(|oid| {
+                            if db.contains(oid) {
+                                Ok(oid)
+                            } else {
+                                Err(anyhow::anyhow!(
+                                    "An object with id {} does not exist in object store",
+                                    oid
+                                ))
+                            }
+                        })
+                })
+                .collect::<Result<Vec<_>, _>>()?,
                 traverse::commit::ancestors::State::default(),
                 {
                     let db = Arc::clone(&db);
@@ -172,7 +185,8 @@ where
     };
 
     progress.inc();
-    let mut entries_progress = progress.add_child("entries written");
+    let mut entries_progress = progress.add_child("consumed");
+    entries_progress.init(Some(num_objects), progress::count("entries"));
     let mut write_progress = progress.add_child("writing");
     write_progress.init(None, progress::bytes());
     let start = Instant::now();
