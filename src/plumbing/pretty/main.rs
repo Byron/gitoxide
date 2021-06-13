@@ -28,6 +28,7 @@ pub fn main() -> Result<()> {
             repository,
             expansion,
             statistics,
+            nondeterministic_count,
             tips,
             output_directory,
         } => {
@@ -52,6 +53,7 @@ pub fn main() -> Result<()> {
                     let repository = repository.unwrap_or_else(|| PathBuf::from("."));
                     let context = core::pack::create::Context {
                         thread_limit,
+                        nondeterministic_count,
                         statistics: if statistics { Some(format) } else { None },
                         out,
                         expansion: expansion.unwrap_or_else(|| {

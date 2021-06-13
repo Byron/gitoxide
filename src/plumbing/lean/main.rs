@@ -21,6 +21,7 @@ pub fn main() -> Result<()> {
         SubCommands::PackCreate(options::PackCreate {
             repository,
             expansion,
+            nondeterministic_count,
             statistics,
             tips,
             output_directory,
@@ -51,6 +52,7 @@ pub fn main() -> Result<()> {
                 DoOrDiscard::from(progress),
                 core::pack::create::Context {
                     expansion,
+                    nondeterministic_count,
                     statistics: if statistics { Some(OutputFormat::Human) } else { None },
                     out: stdout(),
                     thread_limit,

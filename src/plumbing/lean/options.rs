@@ -176,6 +176,13 @@ pub struct PackCreate {
     /// Possible values are "none" and "tree-traversal". Default is "none".
     pub expansion: Option<core::pack::create::ObjectExpansion>,
 
+    #[argh(switch)]
+    /// if set, the counting phase may be accelerated using multithreading.
+    ///
+    /// On the flip side, however, one will loose deterministic counting results which affects the
+    /// way the resulting pack is structured.
+    pub nondeterministic_count: bool,
+
     #[argh(switch, short = 's')]
     /// if set statistical information will be presented to inform about pack creation details.
     /// It's a form of instrumentation for developers to help improve pack generation.

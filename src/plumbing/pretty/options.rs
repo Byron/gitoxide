@@ -56,6 +56,13 @@ pub enum Subcommands {
         /// Possible values are "none" and "tree-traversal". Default is "none".
         expansion: Option<core::pack::create::ObjectExpansion>,
 
+        #[clap(long)]
+        /// if set, the counting phase may be accelerated using multithreading.
+        ///
+        /// On the flip side, however, one will loose deterministic counting results which affects the
+        /// way the resulting pack is structured.
+        nondeterministic_count: bool,
+
         #[clap(long, short = 's')]
         /// If set statistical information will be presented to inform about pack creation details.
         /// It's a form of instrumentation for developers to help improve pack generation.

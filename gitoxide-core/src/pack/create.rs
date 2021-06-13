@@ -63,6 +63,12 @@ impl From<ObjectExpansion> for pack::data::output::count::from_objects_iter::Obj
 pub struct Context<W> {
     /// The way input objects should be handled
     pub expansion: ObjectExpansion,
+    /// If set, use `tread_limit` to accelerate the counting phase at the cost of loosing determinism as the order of objects
+    /// during expansion changes with multiple threads unless no expansion is performed. In the latter case, this flag
+    /// has no effect.
+    /// If unset, counting will only use one thread and thus yield the same sequence of objects in any case.
+    /// If the `thread_limit` is 1, the count is always deterministic.
+    pub nondeterministic_count: bool,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit
@@ -81,6 +87,7 @@ pub fn create<W>(
     mut progress: impl Progress,
     Context {
         expansion,
+        nondeterministic_count,
         thread_limit,
         statistics,
         mut out,
@@ -124,7 +131,13 @@ where
             input,
             progress.add_child("threads"),
             pack::data::output::count::from_objects_iter::Options {
-                thread_limit,
+                thread_limit: if nondeterministic_count {
+                    thread_limit
+                } else if matches!(expansion, ObjectExpansion::None) {
+                    thread_limit
+                } else {
+                    Some(1)
+                },
                 chunk_size,
                 input_object_expansion: expansion.into(),
             },
