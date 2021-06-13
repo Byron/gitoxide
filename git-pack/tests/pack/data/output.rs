@@ -296,4 +296,29 @@ mod in_order_iter {
             vec!['a', 'b', 'c', 'd']
         )
     }
+
+    #[test]
+    fn in_sequence_errors_immediately_trigger_a_fuse() {
+        let mut iter =
+            InOrderIter::from(vec![Ok::<_, &'static str>((0usize, 'a')), Err("err"), Ok((1, 'b'))].into_iter());
+        assert_eq!(iter.next(), Some(Ok('a')));
+        assert_eq!(iter.next(), Some(Err("err")));
+        assert_eq!(
+            iter.next(),
+            None,
+            "fuse should have triggered so we don't see anything else"
+        );
+    }
+
+    #[test]
+    fn out_of_sequence_errors_immediately_trigger_a_fuse() {
+        let mut iter =
+            InOrderIter::from(vec![Ok::<_, &'static str>((1usize, 'b')), Err("err"), Ok((0, 'a'))].into_iter());
+        assert_eq!(iter.next(), Some(Err("err")));
+        assert_eq!(
+            iter.next(),
+            None,
+            "fuse should have triggered so we don't see anything else"
+        );
+    }
 }
