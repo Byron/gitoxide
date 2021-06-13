@@ -42,7 +42,7 @@ pub fn from_counts_iter<Find, Cache>(
         thread_limit,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Entry>, Error<find::existing::Error<Find::Error>>>>
+) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Entry>), Error<find::existing::Error<Find::Error>>>>
        + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
@@ -56,7 +56,7 @@ where
     let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
-    let chunks = util::Chunks::new(chunk_size, counts.len());
+    let chunks = util::Chunks::new(chunk_size, counts.len()).enumerate();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
@@ -74,7 +74,7 @@ where
         },
         {
             let counts = Arc::clone(&counts);
-            move |chunk: std::ops::Range<usize>, (buf, cache, progress)| {
+            move |(chunk_id, chunk): (ChunkId, std::ops::Range<usize>), (buf, cache, progress)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk];
                 let mut stats = Outcome::default();
@@ -103,7 +103,7 @@ where
                     );
                     progress.inc();
                 }
-                Ok((out, stats))
+                Ok((chunk_id, out, stats))
             }
         },
         reduce::Statistics::default(),
@@ -144,7 +144,7 @@ mod util {
 }
 
 mod reduce {
-    use super::Outcome;
+    use super::{ChunkId, Outcome};
     use crate::data::output;
     use git_features::parallel;
     use std::marker::PhantomData;
@@ -164,15 +164,15 @@ mod reduce {
     }
 
     impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<(Vec<output::Entry>, Outcome), Error>;
-        type FeedProduce = Vec<output::Entry>;
+        type Input = Result<(ChunkId, Vec<output::Entry>, Outcome), Error>;
+        type FeedProduce = (ChunkId, Vec<output::Entry>);
         type Output = Outcome;
         type Error = Error;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item.map(|(entries, stats)| {
+            item.map(|(cid, entries, stats)| {
                 self.total.aggregate(stats);
-                entries
+                (cid, entries)
             })
         }
 
@@ -184,6 +184,9 @@ mod reduce {
 
 mod types {
     use crate::data::output::entry;
+
+    /// A counter for chunks to be able to put them back into original order later.
+    pub type ChunkId = usize;
 
     /// Information gathered during the run of [`from_counts_iter()`][super::from_counts_iter()].
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -245,4 +248,4 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
-pub use types::{Error, Options, Outcome};
+pub use types::{ChunkId, Error, Options, Outcome};

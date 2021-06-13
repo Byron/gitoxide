@@ -181,8 +181,7 @@ mod count_and_entries {
                 progress::Discard,
                 output::entry::from_counts_iter::Options::default(),
             );
-            let entries: Vec<_> = entries_iter
-                .by_ref()
+            let entries: Vec<_> = output::InOrderIter::from(entries_iter.by_ref())
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .flatten()
@@ -263,5 +262,38 @@ mod count_and_entries {
             progress::Discard.into(),
         )?;
         Ok(())
+    }
+}
+
+mod in_order_iter {
+    use git_odb::data::output::InOrderIter;
+    use std::convert::Infallible;
+
+    #[test]
+    fn in_order_stays_in_order() {
+        assert_eq!(
+            InOrderIter::from(vec![Ok::<_, Infallible>((0usize, 'a')), Ok((1, 'b')), Ok((2, 'c'))].into_iter())
+                .collect::<Result<Vec<_>, _>>()
+                .expect("infallible"),
+            vec!['a', 'b', 'c']
+        )
+    }
+
+    #[test]
+    fn out_of_order_items_are_held_until_the_sequence_is_complete() {
+        assert_eq!(
+            InOrderIter::from(
+                vec![
+                    Ok::<_, Infallible>((2usize, 'c')),
+                    Ok((1, 'b')),
+                    Ok((0, 'a')),
+                    Ok((3, 'd'))
+                ]
+                .into_iter()
+            )
+            .collect::<Result<Vec<_>, _>>()
+            .expect("infallible"),
+            vec!['a', 'b', 'c', 'd']
+        )
     }
 }

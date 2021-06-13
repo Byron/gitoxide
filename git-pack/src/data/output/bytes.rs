@@ -43,6 +43,9 @@ where
     /// `output` writer, resembling a pack of `version` with exactly `num_entries` amount of objects contained in it.
     /// `hash_kind` is the kind of hash to use for the pack checksum and maybe other places, depending on the version.
     ///
+    /// The input chunks are expected to be sorted already. You can use the [InOrderIter][super::InOrderIter] to assure
+    /// this happens on the fly holding entire chunks in memory as long as needed for them to be dispensed in order.
+    ///
     /// # Panics
     ///
     /// Not all combinations of `hash_kind` and `version` are supported currently triggering assertion errors.
