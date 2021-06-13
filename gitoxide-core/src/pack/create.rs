@@ -145,9 +145,9 @@ where
 
     progress.inc();
     let num_objects = counts.len();
-    let mut entries = {
+    let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
-        pack::data::output::entry::from_counts_iter(
+        pack::data::output::InOrderIter::from(pack::data::output::entry::from_counts_iter(
             counts,
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
@@ -157,7 +157,7 @@ where
                 chunk_size,
                 version: Default::default(),
             },
-        )
+        ))
     };
 
     progress.inc();
@@ -179,7 +179,7 @@ where
         }
     };
     let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
-        entries.by_ref().inspect(|e| {
+        in_order_entries.by_ref().inspect(|e| {
             if let Ok(entries) = e {
                 entries_progress.inc_by(entries.len())
             }
@@ -204,7 +204,7 @@ where
     } else {
         writeln!(out, "{}", pack_name)?;
     }
-    stats.entries = entries.finalize()?;
+    stats.entries = in_order_entries.inner.finalize()?;
 
     write_progress.show_throughput(start);
     entries_progress.show_throughput(start);
