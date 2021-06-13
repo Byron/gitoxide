@@ -136,6 +136,8 @@ unit-tests: ## run all unit tests
 	cargo test --all --no-fail-fast
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
+	cd git-pack && cargo test \
+				&& cargo test --features "internal-testing-git-features-parallel"
 	cd git-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline
