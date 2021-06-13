@@ -6,8 +6,8 @@ This file sketches out the tasks required to be able to clone a repository whils
   * [x] basic pack generation based on tree-diff or tree-traversal
 
 * **git-protocol**
-  * [ ] _async_ negotiation of commits
-  * [ ] _blocking_ negotiation of commits
+  * [ ] `ReceivePack` logic for V1 and V2
+  * [ ] _async_ & _blocking_ negotiation of commits
   
 ### Client fetch/pull (server to client)
 
@@ -16,14 +16,17 @@ This file sketches out the tasks required to be able to clone a repository whils
 The below is a very early draft - it would be better to study existing implementations first to get a better overview on what (not) to do.
 This one starts with the fun part to allow writing tests early and experiment with different diff algorithms and potentially their performance.
   
-* [x] generate a pack from objects received by an iterator producing
+* [x] generate a pack from objects received by an iterator producing (see [issue][pack-mvp])
   * [x] base objects only
+  * [ ] re-use existing delta objects
   * [ ] best-fit delta objects using the [similar][sim-crate]
   * [ ] A mechanism to declare some bases to be 'out of pack' for thin pack support
 * [x] **Traversal** (as building blocks to feed pack generation)
   * [x] Traverse a commit graph (look around to see what's common, if in doubt walk back the commit graph and see how to deal with branching)
   * [x] Traverse trees
 * [x] **Iterator** to feed pack generation efficiently
+
+[pack-mvp]: https://github.com/Byron/gitoxide/issues/67
 
 * **git-transport**
 
@@ -72,15 +75,14 @@ Probably more like a toy at first merely for testing operation against various g
 * **git-repository**
   * [ ] instance for a valid looking repository
     * [ ] support shallow repos/references
-  * [ ] create-update refs as received from clone/git-receive-pack
+  * [ ] create-update refs as received from clone/git-receive-pack safely (i.e. with required locking)
+  * [ ] clone from https remote
 * **gix clone**
   * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
     * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates_.
   * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
-* **receive pack**
+* **gixp receive-pack**
   * [ ] resolve thin pack with Bundle
-* **git-repository**
-  * [ ] clone from https remote
 
 ### FSCK an entire repository
 
