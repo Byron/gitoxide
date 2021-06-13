@@ -240,7 +240,6 @@ mod count_and_entries {
             "the trailer of the pack matches the actually written trailer"
         );
 
-        #[cfg(feature = "internal-testing-git-features-parallel")] // TODO: make parallel iteration stable, too, and remote this attr
         assert_eq!(hash, _expected_pack_hash, "pack hashes are stable if the input is");
 
         // Re-generate the index from the pack for validation.
