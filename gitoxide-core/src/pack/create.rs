@@ -100,28 +100,16 @@ where
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
         None => Box::new(
             traverse::commit::Ancestors::new(
-                tips.map(|t| {
-                    ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref()))
-                        .map_err(anyhow::Error::from)
-                        .and_then(|oid| {
-                            if db.contains(oid) {
-                                Ok(oid)
-                            } else {
-                                Err(anyhow::anyhow!(
-                                    "An object with id {} does not exist in object store",
-                                    oid
-                                ))
-                            }
-                        })
-                })
-                .collect::<Result<Vec<_>, _>>()?,
+                tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
+                    .collect::<Result<Vec<_>, _>>()?,
                 traverse::commit::ancestors::State::default(),
                 {
                     let db = Arc::clone(&db);
                     move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                 },
             )
-            .filter_map(Result::ok),
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter(),
         ),
         Some(input) => Box::new(input.lines().filter_map(|hex_id| {
             hex_id

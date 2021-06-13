@@ -12,8 +12,8 @@ use std::sync::Arc;
 ///
 /// * `db` - the object store to use for accessing objects.
 /// * `make_cache` - a function to create thread-local pack caches
-/// * `objects`
-///   * A list of objects to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
+/// * `objects_ids`
+///   * A list of objects ids to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
 ///   * Objects may be expanded based on the provided [`options`][Options]
 /// * `progress`
 ///   * a way to obtain progress information
@@ -22,7 +22,7 @@ use std::sync::Arc;
 pub fn from_objects_iter<Find, Iter, Oid, Cache>(
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
-    objects: Iter,
+    objects_ids: Iter,
     progress: impl Progress,
     Options {
         thread_limit,
@@ -38,7 +38,7 @@ where
     Oid: AsRef<oid> + Send + 'static,
     Cache: crate::cache::DecodeEntry,
 {
-    let lower_bound = objects.size_hint().0;
+    let lower_bound = objects_ids.size_hint().0;
     let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
         chunk_size,
         if lower_bound == 0 { None } else { Some(lower_bound) },
@@ -46,7 +46,7 @@ where
         None,
     );
     let chunks = util::Chunks {
-        iter: objects,
+        iter: objects_ids,
         size: chunk_size,
     };
     let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
@@ -86,8 +86,8 @@ where
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
-                    stats.input_objects += 1;
                     let obj = db.find_existing(id, buf1, cache)?;
+                    stats.input_objects += 1;
                     match input_object_expansion {
                         TreeAdditionsComparedToAncestor => {
                             use git_object::Kind::*;
