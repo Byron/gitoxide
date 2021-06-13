@@ -50,7 +50,6 @@ mod count_and_entries {
         data::output::{db, DbKind},
         hex_to_id,
     };
-    use git_odb::data::output::InOrderIter;
 
     #[test]
     fn traversals() -> crate::Result {
@@ -144,6 +143,7 @@ mod count_and_entries {
             })
             .map(Result::unwrap);
 
+            let deterministic_count_needs_single_thread = Some(1);
             let mut counts_iter = output::count::from_objects_iter(
                 db.clone(),
                 || pack::cache::Never,
@@ -151,10 +151,12 @@ mod count_and_entries {
                 progress::Discard,
                 count::from_objects_iter::Options {
                     input_object_expansion: expansion_mode,
+                    thread_limit: deterministic_count_needs_single_thread,
                     ..Default::default()
                 },
             );
-            let counts: Vec<_> = InOrderIter::from(counts_iter.by_ref())
+            let counts: Vec<_> = counts_iter
+                .by_ref()
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .flatten()
