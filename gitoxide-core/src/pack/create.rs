@@ -1,5 +1,6 @@
 use crate::OutputFormat;
 use anyhow::bail;
+use git_repository::odb::data::output::InOrderIter;
 use git_repository::{
     hash,
     hash::ObjectId,
@@ -117,7 +118,7 @@ where
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let mut counts_iter = pack::data::output::count::from_objects_iter(
+        let mut in_order_counts_iter = InOrderIter::from(pack::data::output::count::from_objects_iter(
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             input,
@@ -127,9 +128,9 @@ where
                 chunk_size,
                 input_object_expansion: expansion.into(),
             },
-        );
+        ));
         let mut counts = Vec::new();
-        for c in counts_iter.by_ref() {
+        for c in in_order_counts_iter.by_ref() {
             if interrupt::is_triggered() {
                 bail!("Cancelled by user")
             }
@@ -137,7 +138,7 @@ where
             progress.inc_by(c.len());
             counts.extend(c.into_iter());
         }
-        stats.counts = counts_iter.finalize()?;
+        stats.counts = in_order_counts_iter.inner.finalize()?;
         progress.show_throughput(start);
         counts.shrink_to_fit();
         counts

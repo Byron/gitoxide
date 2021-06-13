@@ -50,6 +50,7 @@ mod count_and_entries {
         data::output::{db, DbKind},
         hex_to_id,
     };
+    use git_odb::data::output::InOrderIter;
 
     #[test]
     fn traversals() -> crate::Result {
@@ -153,8 +154,7 @@ mod count_and_entries {
                     ..Default::default()
                 },
             );
-            let counts: Vec<_> = counts_iter
-                .by_ref()
+            let counts: Vec<_> = InOrderIter::from(counts_iter.by_ref())
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .flatten()

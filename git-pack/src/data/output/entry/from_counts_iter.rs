@@ -1,4 +1,7 @@
-use crate::{data::output, find, FindExt};
+use crate::{
+    data::{output, output::ChunkId},
+    find, FindExt,
+};
 use git_features::{parallel, progress::Progress};
 use std::sync::Arc;
 
@@ -185,9 +188,6 @@ mod reduce {
 mod types {
     use crate::data::output::entry;
 
-    /// A counter for chunks to be able to put them back into original order later.
-    pub type ChunkId = usize;
-
     /// Information gathered during the run of [`from_counts_iter()`][super::from_counts_iter()].
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -248,4 +248,4 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
-pub use types::{ChunkId, Error, Options, Outcome};
+pub use types::{Error, Options, Outcome};

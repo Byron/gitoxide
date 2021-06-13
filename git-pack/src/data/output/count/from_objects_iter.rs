@@ -1,4 +1,7 @@
-use crate::{data::output, find, FindExt};
+use crate::{
+    data::{output, output::ChunkId},
+    find, FindExt,
+};
 use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
@@ -29,7 +32,7 @@ pub fn from_objects_iter<Find, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>>
+) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Count>), Error<find::existing::Error<Find::Error>>>>
        + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
@@ -48,7 +51,8 @@ where
     let chunks = util::Chunks {
         iter: objects,
         size: chunk_size,
-    };
+    }
+    .enumerate();
     let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
@@ -72,7 +76,7 @@ where
         },
         {
             let seen_objs = Arc::clone(&seen_objs);
-            move |oids: Vec<Oid>, (buf1, buf2, cache, progress)| {
+            move |(chunk_id, oids): (ChunkId, Vec<Oid>), (buf1, buf2, cache, progress)| {
                 use ObjectExpansion::*;
                 let mut out = Vec::new();
                 let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
@@ -243,7 +247,7 @@ where
                         AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress, stats, false),
                     }
                 }
-                Ok((out, outcome))
+                Ok((chunk_id, out, outcome))
             }
         },
         reduce::Statistics::default(),
@@ -525,7 +529,7 @@ pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod reduce {
     use super::Outcome;
-    use crate::data::output;
+    use crate::data::{output, output::ChunkId};
     use git_features::parallel;
     use std::marker::PhantomData;
 
@@ -544,16 +548,16 @@ mod reduce {
     }
 
     impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<(Vec<output::Count>, Outcome), Error>;
-        type FeedProduce = Vec<output::Count>;
+        type Input = Result<(ChunkId, Vec<output::Count>, Outcome), Error>;
+        type FeedProduce = (ChunkId, Vec<output::Count>);
         type Output = Outcome;
         type Error = Error;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item.map(|(counts, mut stats)| {
+            item.map(|(chunk_id, counts, mut stats)| {
                 stats.total_objects = counts.len();
                 self.total.aggregate(stats);
-                counts
+                (chunk_id, counts)
             })
         }
 

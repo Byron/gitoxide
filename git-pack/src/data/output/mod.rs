@@ -12,4 +12,4 @@ pub use entry::Entry;
 pub mod bytes;
 
 mod in_order;
-pub use in_order::InOrderIter;
+pub use in_order::{ChunkId, InOrderIter};

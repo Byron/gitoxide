@@ -1,5 +1,7 @@
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::{cmp::Ordering, collections::BTreeMap};
+
+/// A counter for chunks to be able to put them back into original order later.
+pub type ChunkId = usize;
 
 /// An iterator which olds iterated items with a **sequential** ID starting at 0 long enough to dispense them in order.
 ///
@@ -8,14 +10,14 @@ use std::collections::BTreeMap;
 pub struct InOrderIter<T, I> {
     /// The iterator yielding the out-of-order elements we are to yield in order.
     pub inner: I,
-    store: BTreeMap<usize, T>,
-    next_chunk: usize,
+    store: BTreeMap<ChunkId, T>,
+    next_chunk: ChunkId,
     is_done: bool,
 }
 
 impl<T, E, I> From<I> for InOrderIter<T, I>
 where
-    I: Iterator<Item = Result<(usize, T), E>>,
+    I: Iterator<Item = Result<(ChunkId, T), E>>,
 {
     fn from(iter: I) -> Self {
         InOrderIter {
@@ -29,7 +31,7 @@ where
 
 impl<T, E, I> Iterator for InOrderIter<T, I>
 where
-    I: Iterator<Item = Result<(usize, T), E>>,
+    I: Iterator<Item = Result<(ChunkId, T), E>>,
 {
     type Item = Result<T, E>;
 
