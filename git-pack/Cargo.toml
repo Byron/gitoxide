@@ -16,6 +16,7 @@ pack-cache-lru-static = ["uluru"]
 pack-cache-lru-dynamic = ["memory-lru"]
 serde1 = ["serde", "git-object/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"]
+internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [[test]]
 name = "multi-threaded"
@@ -25,7 +26,7 @@ required-features = ["internal-testing-git-features-parallel"]
 [[test]]
 name = "single-threaded"
 path = "tests/pack-single-threaded.rs"
-required-features = []
+required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [package.metadata.docs.rs]
 all-features = true

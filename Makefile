@@ -133,10 +133,10 @@ check: ## Build all code in suitable configurations
 					 && cargo check --no-default-features
 
 unit-tests: ## run all unit tests
-	cargo test --all --no-fail-fast
+	cargo test --all
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
-	cd git-pack && cargo test \
+	cd git-pack && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-git-features-parallel"
 	cd git-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
