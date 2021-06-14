@@ -1,4 +1,4 @@
-use crate::fetch::{refs, refs::InternalRef, Ref};
+use crate::fetch::{refs, refs::shared::InternalRef, Ref};
 use git_transport::client;
 
 use git_testtools::hex_to_id as oid;
@@ -88,7 +88,7 @@ fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> 
         b"\0unrelated symref=HEAD:refs/heads/main symref=ANOTHER:refs/heads/foo agent=git/2.28.0",
     )?
     .0;
-    let out = refs::from_capabilities(caps.iter()).expect("a working example");
+    let out = refs::shared::from_capabilities(caps.iter()).expect("a working example");
 
     assert_eq!(
         out,

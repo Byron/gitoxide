@@ -79,7 +79,7 @@ impl Ref {
 }
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-mod shared {
+pub(crate) mod shared {
     use crate::fetch::{refs, Ref};
     use bstr::{BString, ByteSlice};
 
@@ -262,19 +262,15 @@ mod shared {
         }
     }
 }
-#[cfg(any(feature = "blocking-client", feature = "async-client"))]
-pub(crate) use shared::{from_capabilities, InternalRef};
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use crate::fetch::{refs, refs::InternalRef, Ref};
+    use crate::fetch::{refs, Ref};
     use futures_io::AsyncBufRead;
     use futures_lite::AsyncBufReadExt;
 
-    pub(crate) async fn from_v2_refs(
-        out_refs: &mut Vec<Ref>,
-        in_refs: &mut (dyn AsyncBufRead + Unpin),
-    ) -> Result<(), refs::Error> {
+    pub(crate) async fn from_v2_refs(in_refs: &mut (dyn AsyncBufRead + Unpin)) -> Result<Vec<Ref>, refs::Error> {
+        let mut out_refs = Vec::new();
         let mut line = String::new();
         loop {
             line.clear();
@@ -284,13 +280,14 @@ mod async_io {
             }
             out_refs.push(refs::shared::parse_v2(&line)?);
         }
-        Ok(())
+        Ok(out_refs)
     }
 
-    pub(crate) async fn from_v1_refs_received_as_part_of_handshake(
-        out_refs: &mut Vec<InternalRef>,
+    pub(crate) async fn from_v1_refs_received_as_part_of_handshake_and_capabilities<'a>(
         in_refs: &mut (dyn AsyncBufRead + Unpin),
-    ) -> Result<(), refs::Error> {
+        capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
+    ) -> Result<Vec<Ref>, refs::Error> {
+        let mut out_refs = refs::shared::from_capabilities(capabilities)?;
         let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
         let mut line = String::new();
         loop {
@@ -299,13 +296,13 @@ mod async_io {
             if bytes_read == 0 {
                 break;
             }
-            refs::shared::parse_v1(number_of_possible_symbolic_refs_for_lookup, out_refs, &line)?;
+            refs::shared::parse_v1(number_of_possible_symbolic_refs_for_lookup, &mut out_refs, &line)?;
         }
-        Ok(())
+        Ok(out_refs.into_iter().map(Into::into).collect())
     }
 }
 #[cfg(feature = "async-client")]
-pub(crate) use async_io::{from_v1_refs_received_as_part_of_handshake, from_v2_refs};
+pub(crate) use async_io::{from_v1_refs_received_as_part_of_handshake_and_capabilities, from_v2_refs};
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
@@ -330,7 +327,7 @@ mod blocking_io {
         in_refs: &mut dyn io::BufRead,
         capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
     ) -> Result<Vec<Ref>, refs::Error> {
-        let mut out_refs = refs::from_capabilities(capabilities)?;
+        let mut out_refs = refs::shared::from_capabilities(capabilities)?;
         let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
         let mut line = String::new();
         loop {
