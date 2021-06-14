@@ -7,7 +7,7 @@ use quick_error::quick_error;
 use std::io;
 
 quick_error! {
-    /// The error used in [`fetch()`].
+    /// The error used in [`fetch()`][super::fetch].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
