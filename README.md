@@ -27,15 +27,14 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
           * See the [discussion][git-hours-discussion] for some performance data.
   * **the `gixp` program** _(plumbing)_ - lower level commands for use in automation
     * **pack**
-      * [x] [pack verify](https://asciinema.org/a/352942)
-      * [x] [pack index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
-      * [x] [pack explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
+      * [x] [verify](https://asciinema.org/a/352942)
+      * [x] [index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
+      * [x] [explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
         * [x] verify written objects (by reading them back from disk)
-      * [x] [pack-receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
-      * [x] **pack-create** - create a pack from given objects or tips of the commit graph.
-      * [ ] **pack-send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
+      * [x] [receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
+      * [x] **create** - create a pack from given objects or tips of the commit graph.
+      * [ ] **send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
             for consumption by **pack-receive** or _git-receive-pack_
-    * **pack-index**
       * [x] [index from data](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [ ] support for thin packs (as needed for fetch/pull)
     * **commit-graph**
