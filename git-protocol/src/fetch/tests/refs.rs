@@ -2,6 +2,7 @@ use crate::fetch::{refs, refs::InternalRef, Ref};
 use git_transport::client;
 
 use git_testtools::hex_to_id as oid;
+use git_transport::client::Capabilities;
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn extract_references_from_v2_refs() {
@@ -12,10 +13,7 @@ async fn extract_references_from_v2_refs() {
 "
     .as_bytes();
 
-    let mut out = Vec::new();
-    refs::from_v2_refs(&mut out, input)
-        .await
-        .expect("no failure on valid input");
+    let out = refs::from_v2_refs(input).await.expect("no failure on valid input");
 
     assert_eq!(
         out,
@@ -50,30 +48,32 @@ async fn extract_references_from_v1_refs() {
 dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
 21c9b7500cb144b3169a6537961ec2b9e865be81 refs/tags/git-commitgraph-v0.0.0^{}"
         .as_bytes();
-    let mut out = vec![InternalRef::SymbolicForLookup {
-        path: "HEAD".into(),
-        target: "refs/heads/main".into(),
-    }];
-    refs::from_v1_refs_received_as_part_of_handshake(&mut out, input)
-        .await
-        .expect("no failure from valid input");
+    let out = refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(
+        input,
+        Capabilities::from_bytes(b"\0symref=HEAD:refs/heads/main")
+            .expect("valid capabilities")
+            .0
+            .iter(),
+    )
+    .await
+    .expect("no failure from valid input");
     assert_eq!(
         out,
         vec![
-            InternalRef::Symbolic {
+            Ref::Symbolic {
                 path: "HEAD".into(),
                 target: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
-            InternalRef::Direct {
+            Ref::Direct {
                 path: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
-            InternalRef::Direct {
+            Ref::Direct {
                 path: "refs/pull/13/head".into(),
                 object: oid("8e472f9ccc7d745927426cbb2d9d077de545aa4e")
             },
-            InternalRef::Peeled {
+            Ref::Peeled {
                 path: "refs/tags/git-commitgraph-v0.0.0".into(),
                 tag: oid("dce0ea858eef7ff61ad345cc5cdac62203fb3c10"),
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
@@ -88,8 +88,7 @@ fn extract_symbolic_references_from_capabilities() -> Result<(), client::Error> 
         b"\0unrelated symref=HEAD:refs/heads/main symref=ANOTHER:refs/heads/foo agent=git/2.28.0",
     )?
     .0;
-    let mut out = Vec::new();
-    refs::from_capabilities(&mut out, caps.iter()).expect("a working example");
+    let out = refs::from_capabilities(caps.iter()).expect("a working example");
 
     assert_eq!(
         out,

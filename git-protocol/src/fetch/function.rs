@@ -1,6 +1,6 @@
 use crate::{
     credentials,
-    fetch::{refs, refs::InternalRef, Action, Arguments, Command, Delegate, Error, Ref, Response},
+    fetch::{refs, Action, Arguments, Command, Delegate, Error, Response},
 };
 use git_features::{progress, progress::Progress};
 use git_transport::{
@@ -32,7 +32,7 @@ where
     D: Delegate,
     T: client::Transport,
 {
-    let (protocol_version, mut parsed_refs, capabilities, call_ls_refs) = {
+    let (protocol_version, parsed_refs, capabilities) = {
         progress.init(None, progress::steps());
         progress.set_name("handshake");
         progress.step();
@@ -71,27 +71,21 @@ where
             Err(err) => Err(err),
         }?;
 
-        let mut parsed_refs = Vec::<InternalRef>::new();
-        refs::from_capabilities(&mut parsed_refs, capabilities.iter())?;
-
-        let call_ls_refs = match refs {
+        let parsed_refs = match refs {
             Some(mut refs) => {
                 assert_eq!(
                     actual_protocol,
                     git_transport::Protocol::V1,
                     "Only V1 auto-responds with refs"
                 );
-                refs::from_v1_refs_received_as_part_of_handshake(&mut parsed_refs, &mut refs).await?;
-                false
+                Some(
+                    refs::from_v1_refs_received_as_part_of_handshake_and_capabilities(&mut refs, capabilities.iter())
+                        .await?,
+                )
             }
-            None => true,
+            None => None,
         };
-        (
-            actual_protocol,
-            parsed_refs.into_iter().map(Into::into).collect::<Vec<Ref>>(),
-            capabilities,
-            call_ls_refs,
-        )
+        (actual_protocol, parsed_refs, capabilities)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
     if transport.desired_protocol_version() != protocol_version {
@@ -102,34 +96,37 @@ where
         ));
     }
 
-    if call_ls_refs {
-        assert_eq!(
-            protocol_version,
-            git_transport::Protocol::V2,
-            "Only V2 needs a separate request to get specific refs"
-        );
+    let parsed_refs = match parsed_refs {
+        Some(refs) => refs,
+        None => {
+            assert_eq!(
+                protocol_version,
+                git_transport::Protocol::V2,
+                "Only V2 needs a separate request to get specific refs"
+            );
 
-        let ls_refs = Command::LsRefs;
-        let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
-        let mut ls_args = ls_refs.initial_arguments(&ls_features);
-        delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
-        ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
+            let ls_refs = Command::LsRefs;
+            let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
+            let mut ls_args = ls_refs.initial_arguments(&ls_features);
+            delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
+            ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
-        progress.step();
-        progress.set_name("list refs");
-        let mut remote_refs = transport
-            .invoke(
-                ls_refs.as_str(),
-                ls_features.into_iter(),
-                if ls_args.is_empty() {
-                    None
-                } else {
-                    Some(ls_args.into_iter())
-                },
-            )
-            .await?;
-        refs::from_v2_refs(&mut parsed_refs, &mut remote_refs).await?;
-    }
+            progress.step();
+            progress.set_name("list refs");
+            let mut remote_refs = transport
+                .invoke(
+                    ls_refs.as_str(),
+                    ls_features.into_iter(),
+                    if ls_args.is_empty() {
+                        None
+                    } else {
+                        Some(ls_args.into_iter())
+                    },
+                )
+                .await?;
+            refs::from_v2_refs(&mut remote_refs).await?
+        }
+    };
 
     let fetch = Command::Fetch;
     let mut fetch_features = fetch.default_features(protocol_version, &capabilities);

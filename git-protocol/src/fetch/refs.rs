@@ -130,9 +130,9 @@ mod shared {
     }
 
     pub(crate) fn from_capabilities<'a>(
-        out_refs: &mut Vec<InternalRef>,
         capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
-    ) -> Result<(), refs::Error> {
+    ) -> Result<Vec<InternalRef>, refs::Error> {
+        let mut out_refs = Vec::new();
         let symref_values = capabilities.filter_map(|c| {
             if c.name() == b"symref".as_bstr() {
                 c.value().map(ToOwned::to_owned)
@@ -154,7 +154,7 @@ mod shared {
                 target: right[1..].into(),
             })
         }
-        Ok(())
+        Ok(out_refs)
     }
 
     pub(in crate::fetch::refs) fn parse_v1(
@@ -309,10 +309,11 @@ pub(crate) use async_io::{from_v1_refs_received_as_part_of_handshake, from_v2_re
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use crate::fetch::{refs, refs::InternalRef, Ref};
+    use crate::fetch::{refs, Ref};
     use std::io;
 
-    pub(crate) fn from_v2_refs(out_refs: &mut Vec<Ref>, in_refs: &mut dyn io::BufRead) -> Result<(), refs::Error> {
+    pub(crate) fn from_v2_refs(in_refs: &mut dyn io::BufRead) -> Result<Vec<Ref>, refs::Error> {
+        let mut out_refs = Vec::new();
         let mut line = String::new();
         loop {
             line.clear();
@@ -322,13 +323,14 @@ mod blocking_io {
             }
             out_refs.push(refs::shared::parse_v2(&line)?);
         }
-        Ok(())
+        Ok(out_refs)
     }
 
-    pub(crate) fn from_v1_refs_received_as_part_of_handshake(
-        out_refs: &mut Vec<InternalRef>,
+    pub(crate) fn from_v1_refs_received_as_part_of_handshake_and_capabilities<'a>(
         in_refs: &mut dyn io::BufRead,
-    ) -> Result<(), refs::Error> {
+        capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
+    ) -> Result<Vec<Ref>, refs::Error> {
+        let mut out_refs = refs::from_capabilities(capabilities)?;
         let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
         let mut line = String::new();
         loop {
@@ -337,10 +339,10 @@ mod blocking_io {
             if bytes_read == 0 {
                 break;
             }
-            refs::shared::parse_v1(number_of_possible_symbolic_refs_for_lookup, out_refs, &line)?;
+            refs::shared::parse_v1(number_of_possible_symbolic_refs_for_lookup, &mut out_refs, &line)?;
         }
-        Ok(())
+        Ok(out_refs.into_iter().map(Into::into).collect())
     }
 }
 #[cfg(feature = "blocking-client")]
-pub(crate) use blocking_io::{from_v1_refs_received_as_part_of_handshake, from_v2_refs};
+pub(crate) use blocking_io::{from_v1_refs_received_as_part_of_handshake_and_capabilities, from_v2_refs};
