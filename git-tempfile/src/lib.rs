@@ -42,7 +42,13 @@ static REGISTER: Lazy<DashMap<usize, NamedTempFile>> = Lazy::new(|| {
 });
 
 mod handler {
-    pub fn cleanup_tempfiles() {}
+    use crate::REGISTER;
+
+    pub fn cleanup_tempfiles() {
+        for tempfile in REGISTER.iter() {
+            std::fs::remove_file(tempfile.path()).ok();
+        }
+    }
 }
 
 pub enum SignalHandlerMode {
