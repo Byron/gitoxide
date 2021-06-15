@@ -32,16 +32,45 @@ pub struct Registration {
     index: usize,
 }
 
-impl Drop for Registration {
-    fn drop(&mut self) {
-        REGISTER.take(self.index);
+mod registration {
+    use crate::{Registration, REGISTER};
+    use std::{io, path::Path};
+    use tempfile::NamedTempFile;
+
+    impl Registration {
+        pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
+            Ok(Registration {
+                index: REGISTER
+                    .insert(NamedTempFile::new_in(containing_directory)?)
+                    .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?,
+            })
+        }
+
+        /// Take ownership of the temporary file.
+        ///
+        /// # Note
+        ///
+        /// Signals interrupting the calling thread right after taking ownership will cause all but this
+        /// tempfile to be removed automatically. In the common case it will persist on disk as destructors
+        /// were not called.
+        ///
+        /// In the best case the file is a true temporary with a non-clashing name that 'only' fills up the disk,
+        /// in the worst case the temporary file is used as a lock file which may leave the repository in a locked
+        /// state forever.
+        pub fn take(self) -> Option<NamedTempFile> {
+            let res = REGISTER.take(self.index);
+            std::mem::forget(self); // no need for another slab access in destructor
+            res
+        }
+    }
+
+    impl Drop for Registration {
+        fn drop(&mut self) {
+            REGISTER.take(self.index);
+        }
     }
 }
 
 pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
-    Ok(Registration {
-        index: REGISTER
-            .insert(NamedTempFile::new_in(containing_directory)?)
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?,
-    })
+    Registration::new(containing_directory)
 }

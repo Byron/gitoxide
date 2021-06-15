@@ -1,8 +1,16 @@
-mod register {
+mod registration {
     use std::path::Path;
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
         std::fs::read_dir(path).expect("valid dir").count()
+    }
+
+    #[test]
+    fn it_can_be_kept() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        drop(git_tempfile::new(dir.path())?.take().expect("not taken yet").keep()?);
+        assert_eq!(filecount_in(&dir), 1, "a temp file and persisted");
+        Ok(())
     }
 
     #[test]
