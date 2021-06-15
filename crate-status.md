@@ -205,6 +205,10 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [ ] create and update graphs and graph files
 * [x] API documentation
     * [ ] Some examples
+    
+### git-tempfile
+
+* [x] registered temporary files which are deleted automatically as the process terminates.
 
 ### git-config
 * [ ] read
