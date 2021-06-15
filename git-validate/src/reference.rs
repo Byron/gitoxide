@@ -1,7 +1,10 @@
+///
 pub mod name {
     use quick_error::quick_error;
 
     quick_error! {
+        /// The error used in [name()][super::name()] and [name_partial()][super::name_partial()]
+        #[allow(missing_docs)]
         #[derive(Debug)]
         pub enum Error {
             Tag(err: crate::tag::name::Error) {
@@ -28,10 +31,14 @@ pub mod name {
 
 use bstr::BStr;
 
+/// Validate a reference name running all the tests in the book. This disallows lower-case references, but allows
+/// ones like `HEAD`.
 pub fn name(path: &BStr) -> Result<&BStr, name::Error> {
     validate(path, Mode::Complete)
 }
 
+/// Validate a partial reference name. As it is assumed to be partial, names like `some-name` is allowed
+/// even though these would be disallowed with when using [`name()`].
 pub fn name_partial(path: &BStr) -> Result<&BStr, name::Error> {
     validate(path, Mode::Partial)
 }
