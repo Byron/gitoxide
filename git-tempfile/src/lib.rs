@@ -38,12 +38,32 @@ mod registration {
     use tempfile::NamedTempFile;
 
     impl Registration {
+        pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
+            let path = path.as_ref();
+            let index = REGISTER
+                .insert({
+                    let mut builder = tempfile::Builder::new();
+                    let dot_ext_storage;
+                    match path.file_stem() {
+                        Some(stem) => builder.prefix(stem),
+                        None => builder.prefix(""),
+                    };
+                    if let Some(ext) = path.extension() {
+                        dot_ext_storage = format!(".{}", ext.to_string_lossy());
+                        builder.suffix(&dot_ext_storage);
+                    }
+                    builder
+                        .rand_bytes(0)
+                        .tempfile_in(path.parent().expect("parent directory is present"))?
+                })
+                .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?;
+            Ok(Registration { index })
+        }
         pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
-            Ok(Registration {
-                index: REGISTER
-                    .insert(NamedTempFile::new_in(containing_directory)?)
-                    .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?,
-            })
+            let index = REGISTER
+                .insert(NamedTempFile::new_in(containing_directory)?)
+                .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?;
+            Ok(Registration { index: index })
         }
 
         /// Take ownership of the temporary file.
@@ -73,4 +93,8 @@ mod registration {
 
 pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
     Registration::new(containing_directory)
+}
+
+pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
+    Registration::at_path(path)
 }
