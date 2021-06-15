@@ -1088,10 +1088,10 @@ dependencies = [
 name = "git-tempfile"
 version = "0.0.0"
 dependencies = [
+ "dashmap",
  "git-testtools",
  "once_cell",
  "quick-error",
- "sharded-slab",
  "signal-hook 0.3.9",
  "tempfile",
 ]
@@ -2141,15 +2141,6 @@ name = "sha1"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
-
-[[package]]
-name = "sharded-slab"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79c719719ee05df97490f80a45acfc99e5a30ce98a1e4fb67aee422745ae14e3"
-dependencies = [
- "lazy_static",
-]
 
 [[package]]
 name = "signal-hook"

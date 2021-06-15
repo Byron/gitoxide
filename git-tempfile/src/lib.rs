@@ -20,30 +20,25 @@
 //! * The application is performing a write operation on the tempfile when a signal arrives, preventing this tempfile to be removed,
 //!   but not others. Any other operation dealing with the tempfile suffers from the same issue.
 //!
-//! ## Amount of concurrently open files
-//!
-//! * The amount of temporary files open at a time are not only limited by the amount of open file handles, but also
-//!   the amount of items storable in the concurrent slab serving as backend. The amount of items in the slab _might_ be much
-//!   smaller on 32 bit systems.
-//!
 //! [signal-hook]: https://docs.rs/signal-hook
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
 
+use dashmap::DashMap;
 use once_cell::sync::Lazy;
-use sharded_slab::Slab;
 use std::{io, path::Path, sync::atomic::AtomicUsize};
 use tempfile::NamedTempFile;
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
-static REGISTER: Lazy<Slab<NamedTempFile>> = Lazy::new(|| {
+static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
+static REGISTER: Lazy<DashMap<usize, NamedTempFile>> = Lazy::new(|| {
     for sig in signal_hook::consts::TERM_SIGNALS {
         // SAFETY: handlers are considered unsafe because a lot can go wrong. See `cleanup_tempfiles()` for details on safety.
         #[allow(unsafe_code)]
         unsafe { signal_hook::low_level::register(*sig, handler::cleanup_tempfiles) }
             .expect("signals can always be installed");
     }
-    Slab::new()
+    DashMap::new()
 });
 
 mod handler {
@@ -76,55 +71,61 @@ impl SignalHandlerMode {
 ///
 /// This kind of raciness exists whenever [`take()`][Registration::take()] is used and can't be circumvented.
 pub struct Registration {
-    index: usize,
+    id: usize,
 }
 
 mod registration {
-    use crate::{Registration, REGISTER};
+    use crate::{Registration, NEXT_MAP_INDEX, REGISTER};
     use std::{io, path::Path};
     use tempfile::NamedTempFile;
 
     impl Registration {
         pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
             let path = path.as_ref();
-            let index = REGISTER
-                .insert({
-                    let mut builder = tempfile::Builder::new();
-                    let dot_ext_storage;
-                    match path.file_stem() {
-                        Some(stem) => builder.prefix(stem),
-                        None => builder.prefix(""),
-                    };
-                    if let Some(ext) = path.extension() {
-                        dot_ext_storage = format!(".{}", ext.to_string_lossy());
-                        builder.suffix(&dot_ext_storage);
-                    }
-                    builder
-                        .rand_bytes(0)
-                        .tempfile_in(path.parent().expect("parent directory is present"))?
-                })
-                .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?;
-            Ok(Registration { index })
+            let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            expect_none(REGISTER.insert(id, {
+                let mut builder = tempfile::Builder::new();
+                let dot_ext_storage;
+                match path.file_stem() {
+                    Some(stem) => builder.prefix(stem),
+                    None => builder.prefix(""),
+                };
+                if let Some(ext) = path.extension() {
+                    dot_ext_storage = format!(".{}", ext.to_string_lossy());
+                    builder.suffix(&dot_ext_storage);
+                }
+                builder
+                    .rand_bytes(0)
+                    .tempfile_in(path.parent().expect("parent directory is present"))?
+            }));
+            Ok(Registration { id })
         }
+
         pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
-            let index = REGISTER
-                .insert(NamedTempFile::new_in(containing_directory)?)
-                .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?;
-            Ok(Registration { index: index })
+            let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            expect_none(REGISTER.insert(id, NamedTempFile::new_in(containing_directory)?));
+            Ok(Registration { id })
         }
 
         /// Take ownership of the temporary file.
         ///
         pub fn take(self) -> Option<NamedTempFile> {
-            let res = REGISTER.take(self.index);
+            let res = REGISTER.remove(&self.id);
             std::mem::forget(self); // no need for another slab access in destructor
-            res
+            res.map(|(_k, v)| v)
         }
+    }
+
+    fn expect_none<T>(v: Option<T>) {
+        assert!(
+            v.is_none(),
+            "there should never be conflicts or old values as ids are never reused."
+        );
     }
 
     impl Drop for Registration {
         fn drop(&mut self) {
-            REGISTER.take(self.index);
+            REGISTER.remove(&self.id);
         }
     }
 }
