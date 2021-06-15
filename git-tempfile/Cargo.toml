@@ -16,6 +16,9 @@ test = true
 
 [dependencies]
 quick-error = "2.0.0"
+sharded-slab = "0.1.1"
+signal-hook = { version = "0.3.9", default-features = false }
+tempfile = "3.2.0"
 
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools" }
