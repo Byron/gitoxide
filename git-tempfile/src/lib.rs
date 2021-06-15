@@ -31,7 +31,7 @@ use tempfile::NamedTempFile;
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
-static REGISTER: Lazy<DashMap<usize, NamedTempFile>> = Lazy::new(|| {
+static REGISTER: Lazy<DashMap<usize, Option<NamedTempFile>>> = Lazy::new(|| {
     for sig in signal_hook::consts::TERM_SIGNALS {
         // SAFETY: handlers are considered unsafe because a lot can go wrong. See `cleanup_tempfiles()` for details on safety.
         #[allow(unsafe_code)]
@@ -44,9 +44,15 @@ static REGISTER: Lazy<DashMap<usize, NamedTempFile>> = Lazy::new(|| {
 mod handler {
     use crate::REGISTER;
 
+    /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
     pub fn cleanup_tempfiles() {
-        for tempfile in REGISTER.iter() {
-            std::fs::remove_file(tempfile.path()).ok();
+        for mut tempfile in REGISTER.iter_mut() {
+            if let Some(tempfile) = tempfile.take() {
+                let (file, temppath) = tempfile.into_parts();
+                std::fs::remove_file(&temppath).ok();
+                std::mem::forget(temppath); // leak memory to prevent deallocation
+                file.sync_all().ok();
+            }
         }
     }
 }
@@ -89,27 +95,30 @@ mod registration {
         pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
             let path = path.as_ref();
             let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-            expect_none(REGISTER.insert(id, {
-                let mut builder = tempfile::Builder::new();
-                let dot_ext_storage;
-                match path.file_stem() {
-                    Some(stem) => builder.prefix(stem),
-                    None => builder.prefix(""),
-                };
-                if let Some(ext) = path.extension() {
-                    dot_ext_storage = format!(".{}", ext.to_string_lossy());
-                    builder.suffix(&dot_ext_storage);
-                }
-                builder
-                    .rand_bytes(0)
-                    .tempfile_in(path.parent().expect("parent directory is present"))?
-            }));
+            expect_none(REGISTER.insert(
+                id,
+                Some({
+                    let mut builder = tempfile::Builder::new();
+                    let dot_ext_storage;
+                    match path.file_stem() {
+                        Some(stem) => builder.prefix(stem),
+                        None => builder.prefix(""),
+                    };
+                    if let Some(ext) = path.extension() {
+                        dot_ext_storage = format!(".{}", ext.to_string_lossy());
+                        builder.suffix(&dot_ext_storage);
+                    }
+                    builder
+                        .rand_bytes(0)
+                        .tempfile_in(path.parent().expect("parent directory is present"))?
+                }),
+            ));
             Ok(Registration { id })
         }
 
         pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
             let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-            expect_none(REGISTER.insert(id, NamedTempFile::new_in(containing_directory)?));
+            expect_none(REGISTER.insert(id, Some(NamedTempFile::new_in(containing_directory)?)));
             Ok(Registration { id })
         }
 
@@ -117,8 +126,8 @@ mod registration {
         ///
         pub fn take(self) -> Option<NamedTempFile> {
             let res = REGISTER.remove(&self.id);
-            std::mem::forget(self); // no need for another slab access in destructor
-            res.map(|(_k, v)| v)
+            std::mem::forget(self);
+            res.and_then(|(_k, v)| v)
         }
     }
 
