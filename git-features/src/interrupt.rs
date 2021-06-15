@@ -14,13 +14,13 @@ mod _impl {
 
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
     ///
-    /// When `Ctrl+C` is pressed, a message will be sent to `message_channel` to inform the user about it being registered, after all
+    /// When `Ctrl+C` is pressed, a message will be sent to `out` to inform the user about it being registered, after all
     /// actually responding to it is implementation dependent and might thus take some time (or not work at all).
     ///
     /// # Note
     ///
     /// This implementation is available only with the **interrupt-handler** feature toggle with the **disable-interrupts** feature disabled.
-    pub fn init_handler(mut message_channel: impl io::Write + Send + 'static) {
+    pub fn init_handler(mut out: impl io::Write + Send + 'static) {
         ctrlc::set_handler(move || {
             const MESSAGES: &[&str] = &[
                 "interrupt requested", 
@@ -34,7 +34,7 @@ mod _impl {
             }
             let msg_idx = CURRENT_MESSAGE.fetch_add(1, Ordering::Relaxed);
             super::IS_INTERRUPTED.store(true, Ordering::Relaxed);
-            writeln!(message_channel, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
+            writeln!(out, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
         })
         .expect("it is up to the application to ensure only one interrupt handler is installed, and this function is called only once.")
     }
@@ -48,7 +48,7 @@ mod _impl {
     use std::io;
 
     /// Does nothing, as the **disable-interrupts** feature is enabled while the **interrupt-handler** feature is not present.
-    pub fn init_handler(_message_channel: impl io::Write + Send + 'static) {}
+    pub fn init_handler(_out: impl io::Write + Send + 'static) {}
 }
 pub use _impl::init_handler;
 
