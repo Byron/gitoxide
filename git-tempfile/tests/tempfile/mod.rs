@@ -77,19 +77,41 @@ mod slab_assumptions {
     use sharded_slab::Slab;
 
     #[test]
-    fn the_capacity_is_limited_or_this_hangs_or_runs_out_of_memory() {
-        let s = Slab::new();
-        let mut item = 0;
-        const MAX: usize = 10_000;
-        loop {
-            if s.insert(item).is_none() || item == MAX {
-                break;
-            }
-            item += 1;
+    fn the_capacity_is_limited_or_this_hangs_or_runs_out_of_memory_and_id_is_incrementing() {
+        let s = std::sync::Arc::new(Slab::new());
+        const MAX: usize = 2_500;
+        const THREADS: usize = 4;
+        let mut handles = Vec::new();
+
+        for _ in 0..THREADS {
+            let mut last_id = 0;
+            handles.push(std::thread::spawn({
+                let s = s.clone();
+                move || {
+                    let mut item = 0;
+                    loop {
+                        match s.insert(item) {
+                            Some(id) => last_id = id,
+                            None => break last_id,
+                        }
+                        if item == MAX {
+                            break last_id;
+                        }
+                        item += 1;
+                    }
+                }
+            }));
+        }
+        let mut highest = 0;
+        for handle in handles {
+            highest = highest.max(handle.join().expect("no panic"));
         }
         eprintln!(
-            "Could store {} items in slab with default configuration, gave up after {}",
-            item, MAX
+            "Could store {} items (max-id = {}) in slab with default configuration, gave up after {} in {} threads",
+            MAX * THREADS,
+            highest,
+            MAX,
+            THREADS
         );
     }
 }
