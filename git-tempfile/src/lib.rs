@@ -36,17 +36,18 @@ static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
     for sig in signal_hook::consts::TERM_SIGNALS {
         // SAFETY: handlers are considered unsafe because a lot can go wrong. See `cleanup_tempfiles()` for details on safety.
         #[allow(unsafe_code)]
-        unsafe { signal_hook::low_level::register(*sig, handler::cleanup_tempfiles) }
+        unsafe { signal_hook_registry::register_sigaction(*sig, handler::cleanup_tempfiles) }
             .expect("signals can always be installed");
     }
     DashMap::new()
 });
 
 mod handler {
-    use crate::REGISTER;
+    use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
+    use libc::siginfo_t;
 
     /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
-    pub fn cleanup_tempfiles() {
+    pub fn cleanup_tempfiles(sig: &siginfo_t) {
         let current_pid = std::process::id();
         for mut tempfile in REGISTER.iter_mut() {
             if tempfile
@@ -61,20 +62,56 @@ mod handler {
                 }
             }
         }
+        let restore_original_behaviour =
+            SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour as usize;
+        if SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst) == restore_original_behaviour {
+            signal_hook::low_level::emulate_default_handler(sig.si_signo).ok();
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use std::path::Path;
+        fn filecount_in(path: impl AsRef<Path>) -> usize {
+            std::fs::read_dir(path).expect("valid dir").count()
+        }
+
+        #[test]
+        fn various_termination_signals_remove_tempfiles_unconditionally() -> Result<(), Box<dyn std::error::Error>> {
+            let dir = tempfile::tempdir()?;
+            for sig in signal_hook::consts::TERM_SIGNALS {
+                let _tempfile = crate::new(dir.path())?;
+                assert_eq!(
+                    filecount_in(dir.path()),
+                    1,
+                    "only one tempfile exists no matter the iteration"
+                );
+                signal_hook::low_level::raise(*sig)?;
+                assert_eq!(
+                    filecount_in(dir.path()),
+                    0,
+                    "the signal triggers removal but won't terminate the process (anymore)"
+                );
+            }
+            Ok(())
+        }
     }
 }
 
 pub enum SignalHandlerMode {
-    HandleTermination = 0,
-    HandleTerminationAndRestoreDefaultBehaviour = 1,
+    DeleteTempfilesOnTermination = 0,
+    DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour = 1,
 }
 
 impl SignalHandlerMode {
+    /// By default we will emulate the default behaviour and abort the process.
+    ///
+    /// While testing, we will not abort the process.
     const fn default() -> Self {
         #[cfg(not(test))]
-        return SignalHandlerMode::HandleTerminationAndRestoreDefaultBehaviour;
+        return SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour;
         #[cfg(test)]
-        return SignalHandlerMode::HandleTermination;
+        return SignalHandlerMode::DeleteTempfilesOnTermination;
     }
 }
 
@@ -176,7 +213,8 @@ pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.
-/// Only has an effect the first time it is called.
+/// Only has an effect the first time it is called and furthermore allows to set the `mode` in which signal handlers
+/// are installed.
 ///
 /// This is required if the application wants to install their own signal handlers _after_ the ones defined here.
 pub fn force_setup(mode: SignalHandlerMode) {
