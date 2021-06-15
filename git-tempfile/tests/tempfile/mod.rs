@@ -1,7 +1,35 @@
 mod registration {
+    use std::path::Path;
+    fn filecount_in(path: impl AsRef<Path>) -> usize {
+        std::fs::read_dir(path).expect("valid dir").count()
+    }
+
+    mod signals {
+        use crate::tempfile::registration::filecount_in;
+
+        #[test]
+        fn various_termination_signals_remove_tempfiles_unconditionally() -> crate::Result {
+            let dir = tempfile::tempdir()?;
+            for sig in signal_hook::consts::TERM_SIGNALS {
+                let _tempfile = git_tempfile::new(dir.path())?;
+                assert_eq!(
+                    filecount_in(dir.path()),
+                    1,
+                    "only one tempfile exists no matter the iteration"
+                );
+                signal_hook::low_level::raise(*sig)?;
+                assert_eq!(
+                    filecount_in(dir.path()),
+                    0,
+                    "the signal triggers removal but won't terminate the process (anymore)"
+                );
+            }
+            Ok(())
+        }
+    }
     mod at_path {
         #[test]
-        fn it_names_files_correctly() -> crate::Result {
+        fn it_names_files_correctly_and_removes_them_when_out_of_scope() -> crate::Result {
             let dir = tempfile::tempdir()?;
             let filename = dir.path().join("something-specific.ext");
             let tempfile = git_tempfile::at_path(&filename)?;
@@ -13,11 +41,7 @@ mod registration {
     }
 
     mod new {
-        use std::path::Path;
-
-        fn filecount_in(path: impl AsRef<Path>) -> usize {
-            std::fs::read_dir(path).expect("valid dir").count()
-        }
+        use crate::tempfile::registration::filecount_in;
 
         #[test]
         fn it_can_be_kept() -> crate::Result {
@@ -37,6 +61,15 @@ mod registration {
             assert_eq!(filecount_in(&dir), 0, "tempfile was automatically removed");
             Ok(())
         }
+    }
+}
+
+mod force_setup {
+    #[test]
+    fn can_be_called_multiple_times() {
+        // we could probably be smart and figure out that this does the right thing, but… it's good enough it won't fail ;).
+        git_tempfile::force_setup(git_tempfile::SignalHandlerMode::HandleTermination);
+        git_tempfile::force_setup(git_tempfile::SignalHandlerMode::HandleTerminationAndRestoreDefaultBehaviour);
     }
 }
 
