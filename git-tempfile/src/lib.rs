@@ -6,12 +6,12 @@
 //! set of tempfiles that won't get deleted when the parent process exits.
 //!
 //! As typical handlers for `TERMination` are installed on first use and effectively overriding the defaults, we install
-//! default handlers to restore this behaviour.
+//! default handlers to restore this behaviour. Whether or not to do that can be controlled using [`force_setup()`].
 //!
 //! # Note
 //!
 //! Applications setting their own signal handlers on termination and want to be called after the ones of this crate
-//! can call [`force_setup()`] to install handlers without other side-effects.
+//! can call [`force_setup()`] to install their own handlers.
 //!
 //! # Limitations
 //!
@@ -22,8 +22,7 @@
 //!   but not others. Any other operation dealing with the tempfile suffers from the same issue.
 //!
 //! [signal-hook]: https://docs.rs/signal-hook
-#![deny(unsafe_code, rust_2018_idioms)]
-#![allow(missing_docs)]
+#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
@@ -46,7 +45,9 @@ mod handler {
     use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
     use libc::siginfo_t;
 
+    /// # Safety
     /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
+    /// We are usign lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
     pub fn cleanup_tempfiles(sig: &siginfo_t) {
         let current_pid = std::process::id();
         for mut tempfile in REGISTER.iter_mut() {
@@ -98,8 +99,13 @@ mod handler {
     }
 }
 
+/// Define how our signal handlers act
 pub enum SignalHandlerMode {
+    /// Delete all remaining registered tempfiles on termination.
     DeleteTempfilesOnTermination = 0,
+    /// Delete all remaining registered tempfiles on termination and emulate the default handler behaviour.
+    ///
+    /// This is the default, which leads to the process to be aborted.
     DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour = 1,
 }
 
@@ -150,6 +156,9 @@ mod registration {
     use tempfile::NamedTempFile;
 
     impl Registration {
+        /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
+        ///
+        /// **Note** that intermediate directories will _not_ be created.
         pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
             let path = path.as_ref();
             let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -175,6 +184,8 @@ mod registration {
             Ok(Registration { id })
         }
 
+        /// Create a registered tempfile within `containing_directory` with a name that won't clash.
+        /// **Note** that intermediate directories will _not_ be created.
         pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
             let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
             expect_none(REGISTER.insert(id, Some(NamedTempFile::new_in(containing_directory)?.into())));
@@ -204,10 +215,12 @@ mod registration {
     }
 }
 
+/// A shortcut to [`Registration::new()`].
 pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
     Registration::new(containing_directory)
 }
 
+/// A shortcut to [`Registration::at_path()`].
 pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
     Registration::at_path(path)
 }
