@@ -106,6 +106,7 @@ members = [
     "git-protocol",
     "git-pack",
     "git-odb",
+    "git-tempfile",
     "git-repository",
     "gitoxide-core",
     "git-tui",

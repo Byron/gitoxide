@@ -1,0 +1,21 @@
+[package]
+name = "git-tempfile"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A tempfile implementation with a global registry to assure cleanup"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+include = ["src/**/*"]
+
+[lib]
+doctest = false
+test = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-error = "2.0.0"
+
+[dev-dependencies]
+git-testtools = { version = "^0.3", path = "../tests/tools" }

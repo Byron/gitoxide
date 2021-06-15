@@ -7,7 +7,7 @@ set -eu -o pipefail
 utils="${1?The first argument is the 'utils' tool}"
 shift
 
-for crate in git-features git-url git-validate git-hash git-ref git-object git-traverse git-diff git-pack git-odb git-packetline git-transport git-protocol git-repository gitoxide-core .; do
+for crate in git-tempfile git-features git-url git-validate git-hash git-ref git-object git-traverse git-diff git-pack git-odb git-packetline git-transport git-protocol git-repository gitoxide-core .; do
   version_info=$($utils crate-path "$crate")
   version_path="etc/crates/$version_info"
   version_dir="${version_path%/*}"

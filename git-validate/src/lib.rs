@@ -1,4 +1,4 @@
-//! Various functionality related to git references
+//! Validation for various kinds of git related items.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![allow(missing_docs)]

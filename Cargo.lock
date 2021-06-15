@@ -1085,6 +1085,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-tempfile"
+version = "0.0.0"
+dependencies = [
+ "git-testtools",
+ "quick-error",
+]
+
+[[package]]
 name = "git-testtools"
 version = "0.3.0"
 dependencies = [
