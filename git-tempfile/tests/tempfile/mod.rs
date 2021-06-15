@@ -1,3 +1,22 @@
+mod register {
+    use std::path::Path;
+
+    fn filecount_in(path: impl AsRef<Path>) -> usize {
+        std::fs::read_dir(path).expect("valid dir").count()
+    }
+
+    #[test]
+    fn it_is_removed_if_it_goes_out_of_scope() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        {
+            let _keep = git_tempfile::new(dir.path());
+            assert_eq!(filecount_in(&dir), 1, "a temp file was created");
+        }
+        assert_eq!(filecount_in(&dir), 0, "tempfile was automatically removed");
+        Ok(())
+    }
+}
+
 mod slab_assumptions {
     use sharded_slab::Slab;
 

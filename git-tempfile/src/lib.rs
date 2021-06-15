@@ -20,3 +20,28 @@
 //! [signal-hook]: https://docs.rs/signal-hook
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
+
+use once_cell::sync::Lazy;
+use sharded_slab::Slab;
+use std::{io, path::Path};
+use tempfile::NamedTempFile;
+
+static REGISTER: Lazy<Slab<NamedTempFile>> = Lazy::new(|| Slab::new());
+
+pub struct Registration {
+    index: usize,
+}
+
+impl Drop for Registration {
+    fn drop(&mut self) {
+        REGISTER.take(self.index);
+    }
+}
+
+pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
+    Ok(Registration {
+        index: REGISTER
+            .insert(NamedTempFile::new_in(containing_directory)?)
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "slab at capacity"))?,
+    })
+}

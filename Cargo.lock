@@ -1089,6 +1089,7 @@ name = "git-tempfile"
 version = "0.0.0"
 dependencies = [
  "git-testtools",
+ "once_cell",
  "quick-error",
  "sharded-slab",
  "signal-hook 0.3.9",
