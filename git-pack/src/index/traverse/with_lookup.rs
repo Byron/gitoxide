@@ -5,6 +5,7 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
+use std::sync::Arc;
 
 mod options {
     use crate::index::traverse::SafetyCheck;
@@ -69,6 +70,7 @@ impl index::File {
             {
                 let pack_progress = progress.add_child("SHA1 of pack");
                 let index_progress = progress.add_child("SHA1 of index");
+                let should_interrupt = Arc::clone(&should_interrupt);
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
@@ -139,7 +141,7 @@ impl index::File {
                         }
                         Ok(stats)
                     },
-                    Reducer::from_progress(&reduce_progress, pack.data_len(), check),
+                    Reducer::from_progress(&reduce_progress, pack.data_len(), check, &should_interrupt),
                 )
             },
         );

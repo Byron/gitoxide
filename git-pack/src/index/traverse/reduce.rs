@@ -1,6 +1,9 @@
 use crate::{data, index::traverse};
-use git_features::{interrupt::is_triggered, parallel, progress::Progress};
-use std::time::Instant;
+use git_features::{parallel, progress::Progress};
+use std::{
+    sync::atomic::{AtomicBool, Ordering},
+    time::Instant,
+};
 
 fn add_decode_result(lhs: &mut data::decode_entry::Outcome, rhs: data::decode_entry::Outcome) {
     lhs.num_deltas += rhs.num_deltas;
@@ -24,6 +27,7 @@ pub struct Reducer<'a, P, E> {
     then: Instant,
     entries_seen: usize,
     stats: traverse::Outcome,
+    should_interrupt: &'a AtomicBool,
     _error: std::marker::PhantomData<E>,
 }
 
@@ -35,6 +39,7 @@ where
         progress: &'a parking_lot::Mutex<P>,
         pack_data_len_in_bytes: usize,
         check: traverse::SafetyCheck,
+        should_interrupt: &'a AtomicBool,
     ) -> Self {
         let stats = traverse::Outcome {
             pack_size: pack_data_len_in_bytes as u64,
@@ -45,6 +50,7 @@ where
             check,
             then: Instant::now(),
             entries_seen: 0,
+            should_interrupt,
             stats,
             _error: Default::default(),
         }
@@ -93,7 +99,7 @@ where
         add_decode_result(&mut self.stats.average, chunk_total);
         self.progress.lock().set(self.entries_seen);
 
-        if is_triggered() {
+        if self.should_interrupt.load(Ordering::SeqCst) {
             return Err(Self::Error::Interrupted);
         }
         Ok(())
