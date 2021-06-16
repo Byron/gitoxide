@@ -1,7 +1,7 @@
 use crate::data::File;
 use git_features::progress::Progress;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::sync::{atomic::AtomicBool, Arc};
+use std::sync::atomic::AtomicBool;
 
 /// Returned by [`File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
@@ -34,7 +34,7 @@ impl File {
     pub fn verify_checksum(
         &self,
         mut progress: impl Progress,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<git_hash::ObjectId, Error> {
         let right_before_trailer = self.data.len() - SHA1_SIZE;
         let actual = match git_features::hash::bytes_of_file(

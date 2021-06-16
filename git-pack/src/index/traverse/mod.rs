@@ -137,9 +137,9 @@ impl index::File {
             let (pack_res, id) = parallel::join(
                 {
                     let should_interrupt = Arc::clone(&should_interrupt);
-                    move || pack.verify_checksum(pack_progress, should_interrupt)
+                    move || pack.verify_checksum(pack_progress, &should_interrupt)
                 },
-                move || self.verify_checksum(index_progress, should_interrupt),
+                move || self.verify_checksum(index_progress, &should_interrupt),
             );
             pack_res?;
             id?

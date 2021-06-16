@@ -7,8 +7,7 @@ use git_object::{
 };
 
 use crate::index;
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
+use std::{sync::atomic::AtomicBool, sync::Arc};
 
 /// Returned by [`index::File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
@@ -71,7 +70,7 @@ impl index::File {
     pub fn verify_checksum(
         &self,
         mut progress: impl Progress,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<git_hash::ObjectId, Error> {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let actual = match git_features::hash::bytes_of_file(
@@ -158,7 +157,7 @@ impl index::File {
                 )
                 .map(|(id, outcome, root)| (id, Some(outcome), root)),
             None => self
-                .verify_checksum(root.add_child("Sha1 of index"), should_interrupt)
+                .verify_checksum(root.add_child("Sha1 of index"), &should_interrupt)
                 .map_err(Into::into)
                 .map(|id| (id, None, root.into_inner())),
         }

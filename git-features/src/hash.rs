@@ -3,10 +3,7 @@
 //! With the `fast-sha1` feature, the [`Sha1`] hash type will use a more elaborate implementation utilizing hardware support
 //! in case it is available. Otherwise the `sha1` feature should be set. `fast-sha1` will take precedence.
 //! Otherwise, a minimal yet performant implementation is used instead for a decent trade-off between compile times and run-time performance.
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(all(feature = "sha1", not(feature = "fast-sha1")))]
 mod _impl {
@@ -93,7 +90,7 @@ pub fn bytes_of_file(
     num_bytes_from_start: usize,
     kind: git_hash::Kind,
     progress: &mut impl crate::progress::Progress,
-    should_interrupt: Arc<AtomicBool>,
+    should_interrupt: &AtomicBool,
 ) -> std::io::Result<git_hash::ObjectId> {
     let mut hasher = match kind {
         git_hash::Kind::Sha1 => crate::hash::Sha1::default(),
