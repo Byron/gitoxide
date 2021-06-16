@@ -1,2 +1,2 @@
-thread 'main' panicked at 'something went very wrong', src/porcelain/main.rs:23:42
+thread 'main' panicked at 'something went very wrong', src/porcelain/main.rs:25:42
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

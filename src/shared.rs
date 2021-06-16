@@ -68,8 +68,10 @@ pub mod lean {
 pub mod pretty {
     use crate::shared::ProgressRange;
     use anyhow::{anyhow, Result};
-    use std::io::{stderr, stdout, Write};
-    use std::panic::UnwindSafe;
+    use std::{
+        io::{stderr, stdout, Write},
+        panic::UnwindSafe,
+    };
 
     pub fn prepare_and_run<T: Send + 'static>(
         name: &str,
