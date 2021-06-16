@@ -137,17 +137,17 @@ mod write_to_directory {
         pack_file: &str,
     ) -> Result<pack::bundle::write::Outcome, Box<dyn std::error::Error>> {
         let pack_file = fs::File::open(fixture_path(pack_file))?;
-        let should_interrupt = AtomicBool::new(false);
+        static SHOULD_INTERRUPT: AtomicBool = AtomicBool::new(false);
         pack::Bundle::write_to_directory_eagerly(
             pack_file,
             None,
             directory,
             progress::Discard,
+            &SHOULD_INTERRUPT,
             pack::bundle::write::Options {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
                 index_kind: pack::index::Version::V2,
-                should_interrupt: &should_interrupt,
             },
         )
         .map_err(Into::into)

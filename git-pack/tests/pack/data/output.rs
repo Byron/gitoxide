@@ -251,7 +251,8 @@ mod count_and_entries {
                 std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
                 Some(tmp_dir.path()),
                 progress::Discard,
-                pack::bundle::write::Options::default_with_interrupt(&should_interrupt),
+                &should_interrupt,
+                pack::bundle::write::Options::default(),
             )?
             .data_path
             .expect("directory set"),
