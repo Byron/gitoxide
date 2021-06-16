@@ -1083,7 +1083,6 @@ dependencies = [
  "git-testtools",
  "libc",
  "once_cell",
- "quick-error",
  "signal-hook 0.3.9",
  "signal-hook-registry",
  "tempfile",

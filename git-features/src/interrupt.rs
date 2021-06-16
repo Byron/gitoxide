@@ -64,6 +64,54 @@ mod _impl {
 }
 pub use _impl::init_handler;
 
+/// A wrapper for an inner iterator which will check for interruptions on each iteration.
+pub struct Iter<I, EFN> {
+    pub inner: I,
+    make_err: Option<EFN>,
+    is_done: bool,
+}
+
+impl<I, EFN, E> Iter<I, EFN>
+where
+    I: Iterator,
+    EFN: FnOnce() -> E,
+{
+    /// Create a new iterator over `inner` which checks for interruptions on each iteration and cals `make_err()` to
+    /// signal an interruption happened, causing no further items to be iterated from that point on.
+    pub fn new(inner: I, make_err: EFN) -> Self {
+        Iter {
+            inner,
+            make_err: Some(make_err),
+            is_done: false,
+        }
+    }
+}
+
+impl<I, EFN, E> Iterator for Iter<I, EFN>
+where
+    I: Iterator,
+    EFN: FnOnce() -> E,
+{
+    type Item = Result<I::Item, E>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.is_done {
+            return None;
+        }
+        if is_triggered() {
+            self.is_done = true;
+            return Some(Err(self.make_err.take().expect("no bug")()));
+        }
+        match self.inner.next() {
+            Some(next) => Some(Ok(next)),
+            None => {
+                self.is_done = true;
+                None
+            }
+        }
+    }
+}
+
 /// A wrapper for implementors of [`std::io::Read`] or [`std::io::BufRead`] with interrupt support.
 ///
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
