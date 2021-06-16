@@ -3,7 +3,7 @@ use crate::{
     tree::{traverse::Context, Tree},
 };
 use git_features::progress::{self, Progress};
-use std::{convert::TryInto, io};
+use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 
 mod encode;
 mod error;
@@ -63,6 +63,7 @@ impl crate::index::File {
         thread_limit: Option<usize>,
         mut root_progress: impl Progress,
         out: impl io::Write,
+        should_interrupt: &AtomicBool,
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
@@ -168,6 +169,7 @@ impl crate::index::File {
                 root_progress.add_child("Resolving"),
                 root_progress.add_child("Decoding"),
                 thread_limit,
+                should_interrupt,
                 pack_entries_end,
                 || (),
                 |data,

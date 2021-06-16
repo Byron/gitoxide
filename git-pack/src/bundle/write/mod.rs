@@ -26,7 +26,7 @@ impl crate::Bundle {
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
-        options: Options,
+        options: Options<'_>,
     ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
@@ -72,7 +72,7 @@ impl crate::Bundle {
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
-        options: Options,
+        options: Options<'_>,
     ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
@@ -120,7 +120,8 @@ impl crate::Bundle {
             thread_limit,
             iteration_mode: _,
             index_kind,
-        }: Options,
+            should_interrupt,
+        }: Options<'_>,
         data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
         data_path: PathBuf,
         pack_entries_iter: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
@@ -138,6 +139,7 @@ impl crate::Bundle {
                     thread_limit,
                     indexing_progress,
                     &mut index_file,
+                    should_interrupt,
                 )?;
 
                 let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_sha1_hex_string()));
@@ -166,6 +168,7 @@ impl crate::Bundle {
                     thread_limit,
                     indexing_progress,
                     io::sink(),
+                    should_interrupt,
                 )?,
                 None,
                 None,

@@ -94,6 +94,7 @@ pub fn main() -> Result<()> {
                         thread_limit,
                         format,
                         out,
+                        should_interrupt: &should_interrupt,
                     },
                 )
             },
@@ -147,6 +148,7 @@ pub fn main() -> Result<()> {
                         iteration_mode,
                         format,
                         out,
+                        should_interrupt: &should_interrupt,
                     },
                 )
             },

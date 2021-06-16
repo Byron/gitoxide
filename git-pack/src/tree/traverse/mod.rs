@@ -1,13 +1,15 @@
-use std::collections::VecDeque;
-
 use crate::{
     data::EntryRange,
     tree::{Item, Tree},
 };
 use git_features::{
-    interrupt, parallel,
+    parallel,
     parallel::in_parallel_if,
     progress::{self, Progress},
+};
+use std::{
+    collections::VecDeque,
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 mod resolve;
@@ -76,6 +78,7 @@ where
         object_progress: P,
         size_progress: P,
         thread_limit: Option<usize>,
+        should_interrupt: &AtomicBool,
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Sync,
         inspect_object: MBFN,
@@ -103,7 +106,7 @@ where
                 )
             },
             |root_nodes, state| resolve::deltas(root_nodes, state, &resolve, &inspect_object),
-            Reducer::new(num_objects, &object_progress, size_progress),
+            Reducer::new(num_objects, &object_progress, size_progress, should_interrupt),
         )?;
         Ok(self.into_items())
     }
@@ -114,13 +117,19 @@ pub(crate) struct Reducer<'a, P> {
     progress: &'a parking_lot::Mutex<P>,
     start: std::time::Instant,
     size_progress: P,
+    should_interrupt: &'a AtomicBool,
 }
 
 impl<'a, P> Reducer<'a, P>
 where
     P: Progress,
 {
-    pub fn new(num_objects: usize, progress: &'a parking_lot::Mutex<P>, mut size_progress: P) -> Self {
+    pub fn new(
+        num_objects: usize,
+        progress: &'a parking_lot::Mutex<P>,
+        mut size_progress: P,
+        should_interrupt: &'a AtomicBool,
+    ) -> Self {
         progress.lock().init(Some(num_objects), progress::count("objects"));
         size_progress.init(None, progress::bytes());
         Reducer {
@@ -128,6 +137,7 @@ where
             progress,
             start: std::time::Instant::now(),
             size_progress,
+            should_interrupt,
         }
     }
 }
@@ -146,7 +156,7 @@ where
         self.item_count += num_objects;
         self.size_progress.inc_by(decompressed_size as usize);
         self.progress.lock().set(self.item_count);
-        if interrupt::is_triggered() {
+        if self.should_interrupt.load(Ordering::SeqCst) {
             return Err(Error::Interrupted);
         }
         Ok(())

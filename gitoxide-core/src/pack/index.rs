@@ -1,5 +1,6 @@
 use crate::OutputFormat;
 use git_repository::{odb::pack, Progress};
+use std::sync::atomic::AtomicBool;
 use std::{fs, io, path::PathBuf, str::FromStr};
 
 #[derive(PartialEq, Debug)]
@@ -47,10 +48,11 @@ impl From<IterationMode> for pack::data::input::Mode {
     }
 }
 
-pub struct Context<W: io::Write> {
+pub struct Context<'a, W: io::Write> {
     pub thread_limit: Option<usize>,
     pub iteration_mode: IterationMode,
     pub format: OutputFormat,
+    pub should_interrupt: &'a AtomicBool,
     pub out: W,
 }
 
@@ -75,13 +77,14 @@ pub fn from_pack(
     pack: PathOrRead,
     directory: Option<PathBuf>,
     progress: impl Progress,
-    ctx: Context<impl io::Write>,
+    ctx: Context<'_, impl io::Write>,
 ) -> anyhow::Result<()> {
     use anyhow::Context;
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
         iteration_mode: ctx.iteration_mode.into(),
         index_kind: pack::index::Version::default(),
+        should_interrupt: ctx.should_interrupt,
     };
     let out = ctx.out;
     let format = ctx.format;

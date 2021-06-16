@@ -1,29 +1,32 @@
+use std::sync::atomic::AtomicBool;
 use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
 /// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Options {
+#[derive(Debug, Clone)]
+pub struct Options<'a> {
     /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
     pub thread_limit: Option<usize>,
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
     pub iteration_mode: crate::data::input::Mode,
     /// The version of pack index to write, should be [`crate::index::Version::default()`]
     pub index_kind: crate::index::Version,
+    /// A flag causing the interruption of the computation if set to true
+    pub should_interrupt: &'a AtomicBool,
 }
 
-impl Default for Options {
-    /// Options which favor speed and correctness and write the most commonly supported index file.
-    fn default() -> Self {
-        Options {
-            thread_limit: None,
-            iteration_mode: crate::data::input::Mode::Verify,
-            index_kind: Default::default(),
-        }
-    }
-}
+// impl<'a> Default for Options<'a> {
+//     /// Options which favor speed and correctness and write the most commonly supported index file.
+//     fn default() -> Self {
+//         Options {
+//             thread_limit: None,
+//             iteration_mode: crate::data::input::Mode::Verify,
+//             index_kind: Default::default(),
+//             should_interrupt: Default::default(),
+//         }
+//     }
+// }
 
 /// Returned by [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]

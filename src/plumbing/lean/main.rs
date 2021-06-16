@@ -98,6 +98,7 @@ pub fn main() -> Result<()> {
                     thread_limit,
                     format: OutputFormat::Human,
                     out: io::stdout(),
+                    should_interrupt: &should_interrupt,
                 },
             );
             #[cfg(feature = "gitoxide-core-blocking-client")]
@@ -130,6 +131,7 @@ pub fn main() -> Result<()> {
                     iteration_mode: iteration_mode.unwrap_or_default(),
                     format: OutputFormat::Human,
                     out: io::stdout(),
+                    should_interrupt: &should_interrupt,
                 },
             )
         }

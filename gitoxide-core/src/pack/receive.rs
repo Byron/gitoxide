@@ -10,25 +10,26 @@ use git_repository::{
         transport::client::Capabilities,
     },
 };
-use std::{io, path::PathBuf};
+use std::{io, path::PathBuf, sync::atomic::AtomicBool};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
-pub struct Context<W> {
+pub struct Context<'a, W> {
     pub thread_limit: Option<usize>,
     pub format: OutputFormat,
+    pub should_interrupt: &'a AtomicBool,
     pub out: W,
 }
 
-struct CloneDelegate<W> {
-    ctx: Context<W>,
+struct CloneDelegate<'a, W> {
+    ctx: Context<'a, W>,
     directory: Option<PathBuf>,
     refs_directory: Option<PathBuf>,
     ref_filter: Option<&'static [&'static str]>,
 }
 static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
 
-impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
+impl<'a, W> protocol::fetch::DelegateBlocking for CloneDelegate<'a, W> {
     fn prepare_ls_refs(
         &mut self,
         server: &Capabilities,
@@ -84,7 +85,7 @@ mod blocking_io {
     };
     use std::{io, io::BufRead, path::PathBuf};
 
-    impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
+    impl<'a, W: io::Write> protocol::fetch::Delegate for CloneDelegate<'a, W> {
         fn receive_pack(
             &mut self,
             input: impl BufRead,
@@ -96,6 +97,7 @@ mod blocking_io {
                 thread_limit: self.ctx.thread_limit,
                 index_kind: pack::index::Version::V2,
                 iteration_mode: pack::data::input::Mode::Verify,
+                should_interrupt: self.ctx.should_interrupt,
             };
             let outcome = pack::bundle::Bundle::write_to_directory(input, self.directory.take(), progress, options)
                 .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
@@ -134,7 +136,7 @@ mod blocking_io {
         directory: Option<PathBuf>,
         refs_directory: Option<PathBuf>,
         progress: P,
-        ctx: Context<W>,
+        ctx: Context<'_, W>,
     ) -> anyhow::Result<()> {
         let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {

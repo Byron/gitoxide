@@ -35,13 +35,12 @@
 //! suitable input iterators as long as they can hold something on the heap.
 #[cfg(feature = "parallel")]
 mod in_parallel;
-mod serial;
-
-#[cfg(not(feature = "parallel"))]
-pub use serial::*;
-
 #[cfg(feature = "parallel")]
 pub use in_parallel::*;
+
+mod serial;
+#[cfg(not(feature = "parallel"))]
+pub use serial::*;
 
 mod eager_iter;
 pub use eager_iter::{EagerIter, EagerIterIf};

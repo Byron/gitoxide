@@ -43,6 +43,7 @@ impl index::File {
             {
                 let pack_progress = progress.add_child("SHA1 of pack");
                 let index_progress = progress.add_child("SHA1 of index");
+                let should_interrupt = Arc::clone(&should_interrupt);
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
@@ -68,6 +69,7 @@ impl index::File {
                     progress.add_child("Resolving"),
                     progress.add_child("Decoding"),
                     thread_limit,
+                    &should_interrupt,
                     pack.pack_end() as u64,
                     || (new_processor(), [0u8; 64]),
                     |data,
