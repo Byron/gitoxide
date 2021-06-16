@@ -9,7 +9,7 @@
 mod _impl {
     use std::{
         io,
-        sync::atomic::{AtomicUsize, Ordering},
+        sync::atomic::{AtomicBool, AtomicUsize, Ordering},
     };
 
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
@@ -20,6 +20,10 @@ mod _impl {
     /// * It will abort the process on second press and won't inform the user about this behaviour either as we are unable to do so without
     ///   deadlocking even when trying to write to stderr directly.
     pub fn init_handler() -> io::Result<()> {
+        static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
+        if IS_INITIALIZED.load(Ordering::SeqCst) {
+            return Err(io::Error::new(io::ErrorKind::Other, "Already initialized"));
+        }
         for sig in signal_hook::consts::TERM_SIGNALS {
             // # SAFETY
             // * we only set atomics or call functions that do
