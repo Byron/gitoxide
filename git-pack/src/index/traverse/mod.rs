@@ -1,7 +1,9 @@
+use crate::index;
 use git_features::{
     parallel,
     progress::{self, Progress},
 };
+use std::sync::{atomic::AtomicBool, Arc};
 
 ///
 mod indexed;
@@ -13,7 +15,6 @@ mod error;
 pub use error::Error;
 
 mod types;
-use crate::index;
 pub use types::{Algorithm, Options, Outcome, SafetyCheck};
 
 /// Traversal of pack data files using an index file
@@ -48,6 +49,7 @@ impl index::File {
             algorithm,
             thread_limit,
             check,
+            should_interrupt,
         }: Options,
     ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
     where
@@ -63,10 +65,18 @@ impl index::File {
     {
         let progress = progress::DoOrDiscard::from(progress);
         match algorithm {
-            Algorithm::Lookup => {
-                self.traverse_with_lookup(check, thread_limit, new_processor, new_cache, progress, pack)
+            Algorithm::Lookup => self.traverse_with_lookup(
+                check,
+                thread_limit,
+                new_processor,
+                new_cache,
+                progress,
+                pack,
+                should_interrupt,
+            ),
+            Algorithm::DeltaTreeLookup => {
+                self.traverse_with_index(check, thread_limit, new_processor, progress, pack, should_interrupt)
             }
-            Algorithm::DeltaTreeLookup => self.traverse_with_index(check, thread_limit, new_processor, progress, pack),
         }
         .map(|(a, b, p)| (a, b, p.into_inner()))
     }
@@ -77,6 +87,7 @@ impl index::File {
         check: SafetyCheck,
         pack_progress: impl Progress,
         index_progress: impl Progress,
+        should_interrupt: Arc<AtomicBool>,
     ) -> Result<git_hash::ObjectId, Error<E>>
     where
         E: std::error::Error + Send + Sync + 'static,
@@ -89,8 +100,11 @@ impl index::File {
                 });
             }
             let (pack_res, id) = parallel::join(
-                move || pack.verify_checksum(pack_progress),
-                move || self.verify_checksum(index_progress),
+                {
+                    let should_interrupt = Arc::clone(&should_interrupt);
+                    move || pack.verify_checksum(pack_progress, should_interrupt)
+                },
+                move || self.verify_checksum(index_progress, should_interrupt),
             );
             pack_res?;
             id?

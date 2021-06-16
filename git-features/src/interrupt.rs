@@ -9,7 +9,10 @@
 mod _impl {
     use std::{
         io,
-        sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+        sync::{
+            atomic::{AtomicBool, AtomicUsize, Ordering},
+            Arc,
+        },
     };
 
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
@@ -19,7 +22,7 @@ mod _impl {
     /// * This implementation is available only with the **interrupt-handler** feature toggle with the **disable-interrupts** feature disabled.
     /// * It will abort the process on second press and won't inform the user about this behaviour either as we are unable to do so without
     ///   deadlocking even when trying to write to stderr directly.
-    pub fn init_handler() -> io::Result<()> {
+    pub fn init_handler(interrupt_flag: Arc<AtomicBool>) -> io::Result<()> {
         static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
         if IS_INITIALIZED.load(Ordering::SeqCst) {
             return Err(io::Error::new(io::ErrorKind::Other, "Already initialized"));
@@ -28,6 +31,7 @@ mod _impl {
             // # SAFETY
             // * we only set atomics or call functions that do
             // * there is no use of the heap
+            let interrupt_flag = Arc::clone(&interrupt_flag);
             #[allow(unsafe_code)]
             unsafe {
                 signal_hook::low_level::register(*sig, move || {
@@ -39,6 +43,7 @@ mod _impl {
                     if msg_idx == 1 {
                         signal_hook::low_level::emulate_default_handler(signal_hook::consts::SIGTERM).ok();
                     }
+                    interrupt_flag.store(true, Ordering::SeqCst);
                     super::trigger();
                 })?;
             }

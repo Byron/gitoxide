@@ -1,4 +1,9 @@
-use std::{fs, io::Read, path::Path};
+use std::{
+    fs,
+    io::Read,
+    path::Path,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 use anyhow::{anyhow, Result};
 use quick_error::quick_error;
@@ -146,6 +151,7 @@ pub struct Context {
     pub delete_pack: bool,
     pub sink_compress: bool,
     pub verify: bool,
+    pub should_interrupt: Arc<AtomicBool>,
 }
 
 pub fn pack_or_pack_index(
@@ -158,6 +164,7 @@ pub fn pack_or_pack_index(
         delete_pack,
         sink_compress,
         verify,
+        should_interrupt,
     }: Context,
 ) -> Result<()> {
     use anyhow::Context;
@@ -229,6 +236,7 @@ pub fn pack_or_pack_index(
             algorithm,
             thread_limit,
             check: check.into(),
+            should_interrupt
         },
     ).map(|(_, _, c)| progress::DoOrDiscard::from(c)).with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 

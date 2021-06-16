@@ -6,10 +6,12 @@ use anyhow::Result;
 use clap::Clap;
 use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
+use std::sync::{atomic::AtomicBool, Arc};
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();
-    git_features::interrupt::init_handler()?;
+    let should_interrupt = Arc::new(AtomicBool::new(false));
+    git_features::interrupt::init_handler(Arc::clone(&should_interrupt))?;
     let verbose = !args.quiet;
     let progress = args.progress;
     let progress_keep_open = args.progress_keep_open;

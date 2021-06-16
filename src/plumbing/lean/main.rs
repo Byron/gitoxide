@@ -8,13 +8,16 @@ use gitoxide_core::{self as core, OutputFormat};
 use std::{
     io::{self, stderr, stdin, stdout},
     path::PathBuf,
+    sync::atomic::AtomicBool,
+    sync::Arc,
 };
 #[cfg(all(feature = "gitoxide-core-blocking-client", feature = "gitoxide-core-async-client"))]
 compile_error!("Please set only one of the client networking options.");
 
 pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
-    git_features::interrupt::init_handler()?;
+    let should_interrupt = Arc::new(AtomicBool::new(false));
+    git_features::interrupt::init_handler(Arc::clone(&should_interrupt))?;
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {
@@ -149,6 +152,7 @@ pub fn main() -> Result<()> {
                     delete_pack,
                     sink_compress,
                     verify,
+                    should_interrupt,
                 },
             )
         }
@@ -179,6 +183,7 @@ pub fn main() -> Result<()> {
                     },
                     out: stdout(),
                     err: stderr(),
+                    should_interrupt,
                 },
             )
             .map(|_| ())

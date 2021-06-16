@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use super::{Error, SafetyCheck};
 use crate::{
     index::{self, util::index_entries_sorted_by_offset_ascending},
@@ -9,6 +7,10 @@ use git_features::{
     interrupt::{trigger, ResetOnDrop},
     parallel,
     progress::Progress,
+};
+use std::{
+    collections::VecDeque,
+    sync::{atomic::AtomicBool, Arc},
 };
 
 /// Traversal with index
@@ -24,6 +26,7 @@ impl index::File {
         new_processor: impl Fn() -> Processor + Send + Sync,
         mut progress: P,
         pack: &crate::data::File,
+        should_interrupt: Arc<AtomicBool>,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
@@ -41,7 +44,7 @@ impl index::File {
                 let pack_progress = progress.add_child("SHA1 of pack");
                 let index_progress = progress.add_child("SHA1 of index");
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress);
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
                         trigger();
                     }

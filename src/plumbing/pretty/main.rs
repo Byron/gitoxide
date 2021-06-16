@@ -10,6 +10,7 @@ use gitoxide_core::pack::verify;
 use std::{
     io::{stdin, BufReader},
     path::PathBuf,
+    sync::{atomic::AtomicBool, Arc},
 };
 
 pub fn main() -> Result<()> {
@@ -21,7 +22,8 @@ pub fn main() -> Result<()> {
         format,
         cmd,
     } = Args::parse();
-    git_features::interrupt::init_handler()?;
+    let should_interrupt = Arc::new(AtomicBool::new(false));
+    git_features::interrupt::init_handler(Arc::clone(&should_interrupt))?;
 
     match cmd {
         Subcommands::PackCreate {
@@ -173,6 +175,7 @@ pub fn main() -> Result<()> {
                         delete_pack,
                         sink_compress,
                         verify,
+                        should_interrupt,
                     },
                 )
             },
@@ -206,6 +209,7 @@ pub fn main() -> Result<()> {
                         thread_limit,
                         mode,
                         algorithm,
+                        should_interrupt,
                     },
                 )
             },

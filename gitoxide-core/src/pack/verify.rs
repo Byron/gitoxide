@@ -7,7 +7,12 @@ use git_repository::{
     odb::{pack, pack::index},
     progress, Progress,
 };
-use std::{io, path::Path, str::FromStr};
+use std::{
+    io,
+    path::Path,
+    str::FromStr,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 pub use index::verify::Mode;
 
@@ -59,6 +64,7 @@ pub struct Context<W1: io::Write, W2: io::Write> {
     pub thread_limit: Option<usize>,
     pub mode: index::verify::Mode,
     pub algorithm: Algorithm,
+    pub should_interrupt: Arc<AtomicBool>,
 }
 
 impl Default for Context<Vec<u8>, Vec<u8>> {
@@ -70,6 +76,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
             algorithm: Algorithm::LessMemory,
             out: Vec::new(),
             err: Vec::new(),
+            should_interrupt: Default::default(),
         }
     }
 }
@@ -105,6 +112,7 @@ pub fn pack_or_pack_index<W1, W2>(
         output_statistics,
         thread_limit,
         algorithm,
+        should_interrupt,
     }: Context<W1, W2>,
 ) -> Result<(ObjectId, Option<index::traverse::Outcome>)>
 where
@@ -121,8 +129,11 @@ where
     let res = match ext {
         "pack" => {
             let pack = odb::pack::data::File::at(path).with_context(|| "Could not open pack file")?;
-            pack.verify_checksum(progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"))
-                .map(|id| (id, None))?
+            pack.verify_checksum(
+                progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"),
+                should_interrupt,
+            )
+            .map(|id| (id, None))?
         }
         "idx" => {
             let idx = odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
@@ -157,6 +168,7 @@ where
                 pack.as_ref().map(|p| (p, mode, algorithm.into(), cache)),
                 thread_limit,
                 progress,
+                should_interrupt,
             )
             .map(|(a, b, _)| (a, b))
             .with_context(|| "Verification failure")?

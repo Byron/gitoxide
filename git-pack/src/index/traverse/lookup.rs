@@ -5,6 +5,7 @@ use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
+use std::sync::{atomic::AtomicBool, Arc};
 
 /// Verify and validate the content of the index file
 impl index::File {
@@ -20,6 +21,7 @@ impl index::File {
         new_cache: impl Fn() -> C + Send + Sync,
         mut progress: P,
         pack: &crate::data::File,
+        should_interrupt: Arc<AtomicBool>,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
@@ -38,7 +40,7 @@ impl index::File {
                 let pack_progress = progress.add_child("SHA1 of pack");
                 let index_progress = progress.add_child("SHA1 of index");
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress);
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
                         git_features::interrupt::trigger();
                     }

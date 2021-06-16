@@ -9,6 +9,7 @@ pub mod write;
 
 mod verify {
     use git_features::progress::Progress;
+    use std::sync::{atomic::AtomicBool, Arc};
 
     impl super::Bundle {
         /// Similar to [`crate::index::File::verify_integrity()`] but more convenient to call as the presence of the
@@ -20,6 +21,7 @@ mod verify {
             make_pack_lookup_cache: impl Fn() -> C + Send + Sync,
             thread_limit: Option<usize>,
             progress: Option<P>,
+            should_interrupt: Arc<AtomicBool>,
         ) -> Result<
             (git_hash::ObjectId, Option<crate::index::traverse::Outcome>, Option<P>),
             crate::index::traverse::Error<crate::index::verify::Error>,
@@ -32,6 +34,7 @@ mod verify {
                 Some((&self.pack, verify_mode, traversal, make_pack_lookup_cache)),
                 thread_limit,
                 progress,
+                should_interrupt,
             )
         }
     }

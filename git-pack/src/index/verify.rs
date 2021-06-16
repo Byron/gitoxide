@@ -7,6 +7,8 @@ use git_object::{
 };
 
 use crate::index;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 /// Returned by [`index::File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
@@ -66,13 +68,18 @@ impl index::File {
 
     /// Validate that our [`index_checksum()`][index::File::index_checksum()] matches the actual contents
     /// of this index file, and return it if it does.
-    pub fn verify_checksum(&self, mut progress: impl Progress) -> Result<git_hash::ObjectId, Error> {
+    pub fn verify_checksum(
+        &self,
+        mut progress: impl Progress,
+        should_interrupt: Arc<AtomicBool>,
+    ) -> Result<git_hash::ObjectId, Error> {
         let data_len_without_trailer = self.data.len() - SHA1_SIZE;
         let actual = match git_features::hash::bytes_of_file(
             &self.path,
             data_len_without_trailer,
             git_hash::Kind::Sha1,
             &mut progress,
+            should_interrupt,
         ) {
             Ok(id) => id,
             Err(_io_err) => {
@@ -120,6 +127,7 @@ impl index::File {
         )>,
         thread_limit: Option<usize>,
         progress: Option<P>,
+        should_interrupt: Arc<AtomicBool>,
     ) -> Result<
         (git_hash::ObjectId, Option<index::traverse::Outcome>, Option<P>),
         index::traverse::Error<crate::index::verify::Error>,
@@ -145,11 +153,12 @@ impl index::File {
                         algorithm,
                         thread_limit,
                         check: index::traverse::SafetyCheck::All,
+                        should_interrupt,
                     },
                 )
                 .map(|(id, outcome, root)| (id, Some(outcome), root)),
             None => self
-                .verify_checksum(root.add_child("Sha1 of index"))
+                .verify_checksum(root.add_child("Sha1 of index"), should_interrupt)
                 .map_err(Into::into)
                 .map(|id| (id, None, root.into_inner())),
         }
