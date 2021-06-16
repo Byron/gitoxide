@@ -93,8 +93,8 @@ pub fn main() -> Result<()> {
                     core::pack::receive::Context {
                         thread_limit,
                         format,
+                        should_interrupt,
                         out,
-                        should_interrupt: &should_interrupt,
                     },
                 )
             },

@@ -98,7 +98,7 @@ pub fn main() -> Result<()> {
                     thread_limit,
                     format: OutputFormat::Human,
                     out: io::stdout(),
-                    should_interrupt: &should_interrupt,
+                    should_interrupt,
                 },
             );
             #[cfg(feature = "gitoxide-core-blocking-client")]
