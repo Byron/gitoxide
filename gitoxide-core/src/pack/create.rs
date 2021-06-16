@@ -103,17 +103,20 @@ where
         None => Box::new({
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
-            traverse::commit::Ancestors::new(
-                tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
-                    .collect::<Result<Vec<_>, _>>()?,
-                traverse::commit::ancestors::State::default(),
-                {
-                    let db = Arc::clone(&db);
-                    move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
-                },
+            interrupt::Iter::new(
+                traverse::commit::Ancestors::new(
+                    tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
+                        .collect::<Result<Vec<_>, _>>()?,
+                    traverse::commit::ancestors::State::default(),
+                    {
+                        let db = Arc::clone(&db);
+                        move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                    },
+                )
+                .inspect(move |_| progress.inc()),
+                make_cancellation_err,
             )
-            .inspect(move |_| progress.inc())
-            .collect::<Result<Vec<_>, _>>()?
+            .collect::<Result<Result<Vec<_>, _>, _>>()??
             .into_iter()
         }),
         Some(input) => Box::new(input.lines().filter_map(|hex_id| {
