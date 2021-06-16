@@ -125,17 +125,6 @@ All feature toggles are additive.
         * A fast SHA1 implementation is critical to `gitoxide's` performance
     * **sha1**
         * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
-* _mutually-exclusive_
-    * **interrupt-handler**
-        * Listen to interrupts and termination requests and provide long-running operations tooling to allow aborting the input stream.
-            * **Note that** `git_features::interrupt::init_handler()` must be called at the start of the application.
-        * If the application already sets a handler, this handler will have no effect.
-        * If unset, these utilities can still be triggered programmatically. However, interrupting with Ctrl+C or SIGTERM may lead to
-          leaking temporary files.
-      * **disable-interrupts** (_takes precedence if **interrupt-handler** is set as well_)
-        * If set, interrupts cannot be triggered programmatically and it's up to the user to inject means of supporting interrupts.
-        * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all, this facility is a global one.
-        * Probably useful for server implementations.
 
 ### git-packetline
 

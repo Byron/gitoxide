@@ -109,8 +109,6 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features parallel \
 			   && cargo check --features sha1 \
 			   && cargo check --features fast-sha1 \
-			   && cargo check --features interrupt-handler \
-			   && cargo check --features disable-interrupts \
 			   && cargo check --features progress \
 			   && cargo check --features io-pipe \
 			   && cargo check --features crc32 \

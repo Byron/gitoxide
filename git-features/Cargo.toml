@@ -15,7 +15,6 @@ test = false
 progress = ["prodash"]
 parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus", "jwalk"]
 fast-sha1 = ["fastsha1"]
-disable-interrupts = []
 io-pipe = ["bytes"]
 crc32 = ["crc32fast"]
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]

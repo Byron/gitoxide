@@ -227,6 +227,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [x] Some examples
 
 ### git-repository
+* [x] utilities for applications to make long running operations interruptiple gracefully and to support timeouts in servers.
 * [x] discovery
   * [ ] option to not cross file systems
   * [ ] handle git-common-dir
@@ -301,9 +302,6 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 
 ### git-features
-* **interrupt-handler** feature toggle
-    * Interruption for computations when receiving SIGTERM and SIGINT
-    * can be entirely didsabled with the **disable-interrupts** feature toggle
 * **io-pipe** feature toggle
     * a unix like pipeline for bytes
 * **parallel** feature toggle
