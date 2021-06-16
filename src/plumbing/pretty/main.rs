@@ -21,7 +21,7 @@ pub fn main() -> Result<()> {
         format,
         cmd,
     } = Args::parse();
-    git_features::interrupt::init_handler(true)?;
+    git_features::interrupt::init_handler()?;
 
     match cmd {
         Subcommands::PackCreate {

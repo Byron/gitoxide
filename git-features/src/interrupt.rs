@@ -14,45 +14,28 @@ mod _impl {
 
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
     ///
-    /// When `Ctrl+C` is pressed and `write_info_to_stderr` is true, a message will be sent to `stderr()` (unsynchronized) to
-    /// inform the user about it being registered, after all actually responding to it is implementation dependent
-    /// and might thus take some time (or not work at all).
-    ///
     /// # Note
     ///
-    /// This implementation is available only with the **interrupt-handler** feature toggle with the **disable-interrupts** feature disabled.
-    pub fn init_handler(write_info_to_stderr: bool) -> io::Result<()> {
+    /// * This implementation is available only with the **interrupt-handler** feature toggle with the **disable-interrupts** feature disabled.
+    /// * It will abort the process on second press and won't inform the user about this behaviour either as we are unable to do so without
+    ///   deadlocking even when trying to write to stderr directly.
+    pub fn init_handler() -> io::Result<()> {
         for sig in signal_hook::consts::TERM_SIGNALS {
             // # SAFETY
             // * we only set atomics or call functions that do
             // * there is no use of the heap
-            // * our IO is asynchronous and bypasses the lock otherwise provided by `std`.
             #[allow(unsafe_code)]
             unsafe {
                 signal_hook::low_level::register(*sig, move || {
-                    const MESSAGES: &[&str] = &[
-                        "interrupt requested",
-                        "please let us know here https://github.com/Byron/gitoxide/issues if this is a bug - next interrupt aborts."
-                    ];
                     static INTERRUPT_COUNT: AtomicUsize = AtomicUsize::new(0);
                     if !super::is_triggered() {
                         INTERRUPT_COUNT.store(0, Ordering::SeqCst);
                     }
                     let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
-                    if msg_idx == MESSAGES.len() {
+                    if msg_idx == 1 {
                         signal_hook::low_level::emulate_default_handler(signal_hook::consts::SIGTERM).ok();
                     }
                     super::trigger();
-                    if write_info_to_stderr {
-                        use std::io::Write;
-                        #[cfg(unix)]
-                        let mut out = {
-                            use std::os::unix::io::FromRawFd;
-                            std::fs::File::from_raw_fd(2)
-                        };
-                        #[cfg(unix)]
-                        writeln!(out, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
-                    }
                 })?;
             }
         }
@@ -66,7 +49,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(any(feature = "disable-interrupts", not(feature = "interrupt-handler")))]
 mod _impl {
     /// Does nothing, as the **disable-interrupts** feature is enabled while the **interrupt-handler** feature is not present.
-    pub fn init_handler(_write_info_to_stderr: bool) {}
+    pub fn init_handler() {}
 }
 pub use _impl::init_handler;
 

@@ -14,7 +14,7 @@ compile_error!("Please set only one of the client networking options.");
 
 pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
-    git_features::interrupt::init_handler(true)?;
+    git_features::interrupt::init_handler()?;
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {

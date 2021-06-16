@@ -9,7 +9,7 @@ use gitoxide_core as core;
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();
-    git_features::interrupt::init_handler(true)?;
+    git_features::interrupt::init_handler()?;
     let verbose = !args.quiet;
     let progress = args.progress;
     let progress_keep_open = args.progress_keep_open;
