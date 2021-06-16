@@ -4,7 +4,7 @@ use git_features::{interrupt, progress, progress::Progress};
 use std::{
     io,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{atomic::AtomicBool, Arc},
 };
 use tempfile::NamedTempFile;
 
@@ -26,6 +26,7 @@ impl crate::Bundle {
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
+        should_interrupt: &AtomicBool,
         options: Options,
     ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
@@ -43,7 +44,7 @@ impl crate::Bundle {
         let pack = PassThrough {
             reader: interrupt::Read {
                 inner: pack,
-                should_interrupt: Arc::clone(&options.should_interrupt),
+                should_interrupt,
             },
             writer: Some(data_file.clone()),
         };
@@ -58,8 +59,15 @@ impl crate::Bundle {
             crate::data::input::EntryDataMode::Crc32,
         )?;
         let pack_kind = pack_entries_iter.kind();
-        let (outcome, data_path, index_path) =
-            crate::Bundle::inner_write(directory, progress, options, data_file, data_path, pack_entries_iter)?;
+        let (outcome, data_path, index_path) = crate::Bundle::inner_write(
+            directory,
+            progress,
+            options,
+            data_file,
+            data_path,
+            pack_entries_iter,
+            should_interrupt,
+        )?;
 
         Ok(Outcome {
             index: outcome,
@@ -70,11 +78,18 @@ impl crate::Bundle {
     }
 
     /// Equivalent to [`write_to_directory()`][crate::Bundle::write_to_directory()] but offloads reading of the pack into its own thread, hence the `Send + 'static'` bounds.
+    ///
+    /// # Note
+    ///
+    /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
+    /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
+    /// or don't mind that all of them abort when the flag is set.
     pub fn write_to_directory_eagerly(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
+        should_interrupt: &'static AtomicBool,
         options: Options,
     ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
@@ -92,7 +107,7 @@ impl crate::Bundle {
         let pack = PassThrough {
             reader: interrupt::Read {
                 inner: pack,
-                should_interrupt: Arc::clone(&options.should_interrupt),
+                should_interrupt,
             },
             writer: Some(data_file.clone()),
         };
@@ -108,8 +123,15 @@ impl crate::Bundle {
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
-        let (outcome, data_path, index_path) =
-            crate::Bundle::inner_write(directory, progress, options, data_file, data_path, pack_entries_iter)?;
+        let (outcome, data_path, index_path) = crate::Bundle::inner_write(
+            directory,
+            progress,
+            options,
+            data_file,
+            data_path,
+            pack_entries_iter,
+            should_interrupt,
+        )?;
 
         Ok(Outcome {
             index: outcome,
@@ -126,11 +148,11 @@ impl crate::Bundle {
             thread_limit,
             iteration_mode: _,
             index_kind,
-            should_interrupt,
         }: Options,
         data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
         data_path: PathBuf,
         pack_entries_iter: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
+        should_interrupt: &AtomicBool,
     ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
@@ -145,7 +167,7 @@ impl crate::Bundle {
                     thread_limit,
                     indexing_progress,
                     &mut index_file,
-                    &should_interrupt,
+                    should_interrupt,
                 )?;
 
                 let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_sha1_hex_string()));
@@ -174,7 +196,7 @@ impl crate::Bundle {
                     thread_limit,
                     indexing_progress,
                     io::sink(),
-                    &should_interrupt,
+                    should_interrupt,
                 )?,
                 None,
                 None,

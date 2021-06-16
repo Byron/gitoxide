@@ -17,7 +17,7 @@ compile_error!("Please set only one of the client networking options.");
 pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    git_features::interrupt::init_handler(Arc::clone(&should_interrupt))?;
+    git_repository::interrupt::init_handler(Arc::clone(&should_interrupt))?;
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {
@@ -131,7 +131,7 @@ pub fn main() -> Result<()> {
                     iteration_mode: iteration_mode.unwrap_or_default(),
                     format: OutputFormat::Human,
                     out: io::stdout(),
-                    should_interrupt: &should_interrupt,
+                    should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
                 },
             )
         }

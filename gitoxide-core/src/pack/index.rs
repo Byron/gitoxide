@@ -77,14 +77,13 @@ pub fn from_pack(
     pack: PathOrRead,
     directory: Option<PathBuf>,
     progress: impl Progress,
-    ctx: Context<'_, impl io::Write>,
+    ctx: Context<'static, impl io::Write>,
 ) -> anyhow::Result<()> {
     use anyhow::Context;
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
         iteration_mode: ctx.iteration_mode.into(),
         index_kind: pack::index::Version::default(),
-        should_interrupt: ctx.should_interrupt,
     };
     let out = ctx.out;
     let format = ctx.format;
@@ -92,9 +91,18 @@ pub fn from_pack(
         PathOrRead::Path(pack) => {
             let pack_len = pack.metadata()?.len();
             let pack_file = fs::File::open(pack)?;
-            pack::Bundle::write_to_directory_eagerly(pack_file, Some(pack_len), directory, progress, options)
+            pack::Bundle::write_to_directory_eagerly(
+                pack_file,
+                Some(pack_len),
+                directory,
+                progress,
+                ctx.should_interrupt,
+                options,
+            )
         }
-        PathOrRead::Read(input) => pack::Bundle::write_to_directory_eagerly(input, None, directory, progress, options),
+        PathOrRead::Read(input) => {
+            pack::Bundle::write_to_directory_eagerly(input, None, directory, progress, ctx.should_interrupt, options)
+        }
     }
     .with_context(|| "Failed to write pack and index")?;
     match format {

@@ -23,7 +23,7 @@ pub fn main() -> Result<()> {
         cmd,
     } = Args::parse();
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    git_features::interrupt::init_handler(Arc::clone(&should_interrupt))?;
+    git_repository::interrupt::init_handler(Arc::clone(&should_interrupt))?;
 
     match cmd {
         Subcommands::PackCreate {
@@ -148,7 +148,7 @@ pub fn main() -> Result<()> {
                         iteration_mode,
                         format,
                         out,
-                        should_interrupt: &should_interrupt,
+                        should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
                     },
                 )
             },

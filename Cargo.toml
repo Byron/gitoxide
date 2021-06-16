@@ -64,9 +64,10 @@ anyhow = "1.0.41"
 
 gitoxide-core = { version = "^0.9.0", path = "gitoxide-core" }
 git-features = { version = "^0.15.0", path = "git-features" }
+git-repository = { version = "^0.6.0", path = "git-repository", default-features = false }
+
 # just for feature configuration
 git-transport = { optional = true, version = "^0.9.0", path = "git-transport" }
-git-repository = { optional = true, version = "^0.6.0", path = "git-repository", default-features = false }
 
 clap = { version = "=3.0.0-beta.2", optional = true }
 argh = { version = "0.1.3", optional = true, default-features = false }

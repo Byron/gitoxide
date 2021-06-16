@@ -1,5 +1,4 @@
 //! Utilities to cause interruptions in common traits, like Read/Write and Iterator.
-use std::sync::Arc;
 use std::{
     io,
     sync::atomic::{AtomicBool, Ordering},
@@ -59,14 +58,14 @@ where
 /// A wrapper for implementors of [`std::io::Read`] or [`std::io::BufRead`] with interrupt support.
 ///
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
-pub struct Read<R> {
+pub struct Read<'a, R> {
     /// The actual implementor of [`std::io::Read`] to which interrupt support will be added.
     pub inner: R,
     /// The flag to trigger interruption
-    pub should_interrupt: Arc<AtomicBool>,
+    pub should_interrupt: &'a AtomicBool,
 }
 
-impl<R> io::Read for Read<R>
+impl<'a, R> io::Read for Read<'a, R>
 where
     R: io::Read,
 {
@@ -78,7 +77,7 @@ where
     }
 }
 
-impl<R> io::BufRead for Read<R>
+impl<'a, R> io::BufRead for Read<'a, R>
 where
     R: io::BufRead,
 {

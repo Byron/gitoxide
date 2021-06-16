@@ -97,10 +97,15 @@ mod blocking_io {
                 thread_limit: self.ctx.thread_limit,
                 index_kind: pack::index::Version::V2,
                 iteration_mode: pack::data::input::Mode::Verify,
-                should_interrupt: &self.ctx.should_interrupt,
             };
-            let outcome = pack::bundle::Bundle::write_to_directory(input, self.directory.take(), progress, options)
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+            let outcome = pack::bundle::Bundle::write_to_directory(
+                input,
+                self.directory.take(),
+                progress,
+                &self.ctx.should_interrupt,
+                options,
+            )
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
             if let Some(directory) = self.refs_directory.take() {
                 let assure_dir = |path: &BString| {
@@ -182,12 +187,12 @@ mod async_io {
                 thread_limit: self.ctx.thread_limit,
                 index_kind: pack::index::Version::V2,
                 iteration_mode: pack::data::input::Mode::Verify,
-                should_interrupt: &self.ctx.should_interrupt,
             };
             let outcome = pack::Bundle::write_to_directory(
                 futures_lite::io::BlockOn::new(input),
                 self.directory.take(),
                 progress,
+                &self.ctx.should_interrupt,
                 options,
             )
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;

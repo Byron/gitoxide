@@ -86,7 +86,7 @@ pub mod pretty {
     ) -> Result<T> {
         use crate::shared::{self, STANDARD_RANGE};
         crate::shared::init_env_logger(false);
-        use git_features::interrupt;
+        use git_repository::interrupt;
 
         match (verbose, progress) {
             (false, false) => run(None, &mut stdout(), &mut stderr()),

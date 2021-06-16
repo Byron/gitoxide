@@ -1,4 +1,3 @@
-use std::sync::atomic::AtomicBool;
 use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
@@ -12,18 +11,15 @@ pub struct Options {
     pub iteration_mode: crate::data::input::Mode,
     /// The version of pack index to write, should be [`crate::index::Version::default()`]
     pub index_kind: crate::index::Version,
-    /// A flag causing the interruption of the computation if set to true
-    pub should_interrupt: Arc<AtomicBool>,
 }
 
-impl Options {
+impl Default for Options {
     /// Options which favor speed and correctness and write the most commonly supported index file.
-    pub fn default_with_interrupt(should_interrupt: Arc<AtomicBool>) -> Self {
+    fn default() -> Self {
         Options {
             thread_limit: None,
             iteration_mode: crate::data::input::Mode::Verify,
             index_kind: Default::default(),
-            should_interrupt,
         }
     }
 }

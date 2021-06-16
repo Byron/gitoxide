@@ -11,7 +11,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    git_features::interrupt::init_handler(Arc::clone(&should_interrupt))?;
+    git_repository::interrupt::init_handler(Arc::clone(&should_interrupt))?;
     let verbose = !args.quiet;
     let progress = args.progress;
     let progress_keep_open = args.progress_keep_open;

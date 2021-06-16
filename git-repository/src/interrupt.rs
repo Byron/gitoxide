@@ -59,10 +59,7 @@ pub use init::init_handler;
 
 use std::{
     io,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
@@ -107,7 +104,7 @@ where
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {
     /// The actual implementor of [`std::io::Read`] to which interrupt support will be added.
-    inner: git_features::interrupt::Read<R>,
+    inner: git_features::interrupt::Read<'static, R>,
 }
 
 impl<R> Read<R>
@@ -119,7 +116,7 @@ where
         Read {
             inner: git_features::interrupt::Read {
                 inner: read,
-                should_interrupt: Arc::clone(&IS_INTERRUPTED),
+                should_interrupt: &IS_INTERRUPTED,
             },
         }
     }
@@ -152,7 +149,8 @@ where
     }
 }
 
-static IS_INTERRUPTED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+/// The flag behind all utility functions in this module.
+pub static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
 /// Returns true if an interrupt is requested.
 ///
