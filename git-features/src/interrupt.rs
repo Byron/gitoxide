@@ -60,7 +60,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(any(feature = "disable-interrupts", not(feature = "interrupt-handler")))]
 mod _impl {
     /// Does nothing, as the **disable-interrupts** feature is enabled while the **interrupt-handler** feature is not present.
-    pub fn init_handler() {}
+    pub fn init_handler() -> std::io::Result<()> {
+        Ok(())
+    }
 }
 pub use _impl::init_handler;
 
