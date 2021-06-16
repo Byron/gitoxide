@@ -1,5 +1,4 @@
 use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
-use libc::siginfo_t;
 
 /// # Safety
 /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
@@ -23,7 +22,7 @@ pub fn cleanup_tempfiles() {
 
 /// On linux we can handle the actual signal as we know it.
 #[cfg(not(windows))]
-pub fn cleanup_tempfiles_nix(sig: &siginfo_t) {
+pub fn cleanup_tempfiles_nix(sig: &libc::siginfo_t) {
     cleanup_tempfiles();
     let restore_original_behaviour = SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour as usize;
     if SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst) == restore_original_behaviour {
