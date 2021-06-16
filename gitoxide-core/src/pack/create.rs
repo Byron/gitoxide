@@ -98,7 +98,9 @@ where
     let db = Arc::new(find_db(repository)?);
     let tips = tips.into_iter();
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
-        None => Box::new(
+        None => Box::new({
+            let mut progress = progress.add_child("traversing");
+            progress.init(None, progress::count("commits"));
             traverse::commit::Ancestors::new(
                 tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
                     .collect::<Result<Vec<_>, _>>()?,
@@ -108,9 +110,10 @@ where
                     move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                 },
             )
+            .inspect(move |_| progress.inc())
             .collect::<Result<Vec<_>, _>>()?
-            .into_iter(),
-        ),
+            .into_iter()
+        }),
         Some(input) => Box::new(input.lines().filter_map(|hex_id| {
             hex_id
                 .ok()
