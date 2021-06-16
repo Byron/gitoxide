@@ -14,29 +14,49 @@ mod _impl {
 
     /// Initialize a signal handler to listen to SIGINT and SIGTERM and trigger our [`trigger()`][super::trigger()] that way.
     ///
-    /// When `Ctrl+C` is pressed, a message will be sent to `out` to inform the user about it being registered, after all
-    /// actually responding to it is implementation dependent and might thus take some time (or not work at all).
+    /// When `Ctrl+C` is pressed and `write_info_to_stderr` is true, a message will be sent to `stderr()` (unsynchronized) to
+    /// inform the user about it being registered, after all actually responding to it is implementation dependent
+    /// and might thus take some time (or not work at all).
     ///
     /// # Note
     ///
     /// This implementation is available only with the **interrupt-handler** feature toggle with the **disable-interrupts** feature disabled.
-    pub fn init_handler(mut out: impl io::Write + Send + 'static) {
-        ctrlc::set_handler(move || {
-            const MESSAGES: &[&str] = &[
-                "interrupt requested", 
-                "please wait…", 
-                "the program will respond soon…", 
-                "if the program doesn't respond quickly enough, please let us know here: https://github.com/Byron/gitoxide/issues"
-            ];
-            static CURRENT_MESSAGE: AtomicUsize = AtomicUsize::new(0);
-            if !super::is_triggered() {
-                CURRENT_MESSAGE.store(0, Ordering::Relaxed);
+    pub fn init_handler(write_info_to_stderr: bool) -> io::Result<()> {
+        for sig in signal_hook::consts::TERM_SIGNALS {
+            // # SAFETY
+            // * we only set atomics or call functions that do
+            // * there is no use of the heap
+            // * our IO is asynchronous and bypasses the lock otherwise provided by `std`.
+            #[allow(unsafe_code)]
+            unsafe {
+                signal_hook::low_level::register(*sig, move || {
+                    const MESSAGES: &[&str] = &[
+                        "interrupt requested",
+                        "please let us know here https://github.com/Byron/gitoxide/issues if this is a bug - next interrupt aborts."
+                    ];
+                    static INTERRUPT_COUNT: AtomicUsize = AtomicUsize::new(0);
+                    if !super::is_triggered() {
+                        INTERRUPT_COUNT.store(0, Ordering::SeqCst);
+                    }
+                    let msg_idx = INTERRUPT_COUNT.fetch_add(1, Ordering::SeqCst);
+                    if msg_idx == MESSAGES.len() {
+                        signal_hook::low_level::emulate_default_handler(signal_hook::consts::SIGTERM).ok();
+                    }
+                    super::trigger();
+                    if write_info_to_stderr {
+                        use std::io::Write;
+                        #[cfg(unix)]
+                        let mut out = {
+                            use std::os::unix::io::FromRawFd;
+                            std::fs::File::from_raw_fd(2)
+                        };
+                        #[cfg(unix)]
+                        writeln!(out, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
+                    }
+                })?;
             }
-            let msg_idx = CURRENT_MESSAGE.fetch_add(1, Ordering::Relaxed);
-            super::IS_INTERRUPTED.store(true, Ordering::Relaxed);
-            writeln!(out, "{}", MESSAGES[msg_idx % MESSAGES.len()]).ok();
-        })
-        .expect("it is up to the application to ensure only one interrupt handler is installed, and this function is called only once.")
+        }
+        Ok(())
     }
 }
 use std::io;
@@ -45,10 +65,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 #[cfg(any(feature = "disable-interrupts", not(feature = "interrupt-handler")))]
 mod _impl {
-    use std::io;
-
     /// Does nothing, as the **disable-interrupts** feature is enabled while the **interrupt-handler** feature is not present.
-    pub fn init_handler(_out: impl io::Write + Send + 'static) {}
+    pub fn init_handler(_write_info_to_stderr: bool) {}
 }
 pub use _impl::init_handler;
 
@@ -108,7 +126,7 @@ pub fn is_triggered() -> bool {
 /// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn trigger() {
     #[cfg(not(feature = "disable-interrupts"))]
-    IS_INTERRUPTED.store(true, Ordering::Relaxed);
+    IS_INTERRUPTED.store(true, Ordering::SeqCst);
 }
 /// Sets the interrupt request to false, thus allowing those checking for [`is_triggered()`] to proceed.
 ///
@@ -120,7 +138,7 @@ pub fn trigger() {
 /// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn reset() {
     #[cfg(not(feature = "disable-interrupts"))]
-    IS_INTERRUPTED.store(false, Ordering::Relaxed);
+    IS_INTERRUPTED.store(false, Ordering::SeqCst);
 }
 
 /// Useful if some parts of the program set the interrupt programmatically to cause others to stop, while

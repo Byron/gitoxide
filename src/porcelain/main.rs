@@ -1,5 +1,7 @@
-use crate::porcelain::options::{Args, EstimateHours, Subcommands, ToolCommands};
-use crate::shared::pretty::prepare_and_run;
+use crate::{
+    porcelain::options::{Args, EstimateHours, Subcommands, ToolCommands},
+    shared::pretty::prepare_and_run,
+};
 use anyhow::Result;
 use clap::Clap;
 use git_features::progress::DoOrDiscard;
@@ -7,7 +9,7 @@ use gitoxide_core as core;
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();
-    git_features::interrupt::init_handler(std::io::stderr());
+    git_features::interrupt::init_handler(true)?;
     let verbose = !args.quiet;
     let progress = args.progress;
     let progress_keep_open = args.progress_keep_open;

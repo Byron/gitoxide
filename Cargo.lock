@@ -662,16 +662,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ctrlc"
-version = "3.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "232295399409a8b7ae41276757b5a1cc21032848d42bff2352261f958b3ca29a"
-dependencies = [
- "nix",
- "winapi",
-]
-
-[[package]]
 name = "curl"
 version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -930,7 +920,6 @@ dependencies = [
  "crc32fast",
  "crossbeam-channel",
  "crossbeam-utils",
- "ctrlc",
  "flate2",
  "git-hash",
  "jwalk",
@@ -939,6 +928,7 @@ dependencies = [
  "quick-error",
  "sha-1",
  "sha1",
+ "signal-hook 0.3.9",
  "walkdir",
 ]
 
@@ -1550,18 +1540,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "nix"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa9b4819da1bc61c0ea48b63b7bc8604064dd43013e7cc325df098d49cd7c18a"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
 ]
 
 [[package]]

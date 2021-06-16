@@ -1,10 +1,5 @@
 ## General
 
-### Replace `ctrlc` crate with `signal-hook` or `signal-hook-registry` _(cost: low)_
-
-It should be no problem and the reason `ctrlc` is still here is that it's confident about its windows implementation even though it's unclear if its justified.
-In theory we could replace `ctrlc` right now without an issue.
-
 ### Get rid of unsafe pointer magic [WithSidebands] _(cost: high)_
 
 What needs to be done is to transform the &mut StreamingPeekableIter into a child future, and when exhausted, it must be transformed back 
