@@ -26,7 +26,7 @@ impl crate::Bundle {
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
-        options: Options<'_>,
+        options: Options,
     ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
@@ -41,7 +41,10 @@ impl crate::Bundle {
         }));
         let data_path: PathBuf = data_file.lock().path().into();
         let pack = PassThrough {
-            reader: interrupt::Read { inner: pack },
+            reader: interrupt::Read {
+                inner: pack,
+                should_interrupt: Arc::clone(&options.should_interrupt),
+            },
             writer: Some(data_file.clone()),
         };
         // This buff-reader is required to assure we call 'read()' in order to fill the (extra) buffer. Otherwise all the counting
@@ -72,7 +75,7 @@ impl crate::Bundle {
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
-        options: Options<'_>,
+        options: Options,
     ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
@@ -87,7 +90,10 @@ impl crate::Bundle {
         }));
         let data_path: PathBuf = data_file.lock().path().into();
         let pack = PassThrough {
-            reader: interrupt::Read { inner: pack },
+            reader: interrupt::Read {
+                inner: pack,
+                should_interrupt: Arc::clone(&options.should_interrupt),
+            },
             writer: Some(data_file.clone()),
         };
         let eight_pages = 4096 * 8;
@@ -100,7 +106,7 @@ impl crate::Bundle {
         let pack_kind = pack_entries_iter.kind();
         let num_objects = pack_entries_iter.size_hint().0;
         let pack_entries_iter =
-            git_features::parallel::EagerIterIf::new(|| num_objects > 25_000, pack_entries_iter, 5_000, 5);
+            git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
         let (outcome, data_path, index_path) =
             crate::Bundle::inner_write(directory, progress, options, data_file, data_path, pack_entries_iter)?;
@@ -121,7 +127,7 @@ impl crate::Bundle {
             iteration_mode: _,
             index_kind,
             should_interrupt,
-        }: Options<'_>,
+        }: Options,
         data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
         data_path: PathBuf,
         pack_entries_iter: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
@@ -139,7 +145,7 @@ impl crate::Bundle {
                     thread_limit,
                     indexing_progress,
                     &mut index_file,
-                    should_interrupt,
+                    &should_interrupt,
                 )?;
 
                 let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_sha1_hex_string()));
@@ -168,7 +174,7 @@ impl crate::Bundle {
                     thread_limit,
                     indexing_progress,
                     io::sink(),
-                    should_interrupt,
+                    &should_interrupt,
                 )?,
                 None,
                 None,

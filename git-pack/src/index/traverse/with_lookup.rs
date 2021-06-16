@@ -1,7 +1,6 @@
 use super::{Error, Reducer};
 use crate::{data, index, index::util};
 use git_features::{
-    interrupt::ResetOnDrop,
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
@@ -66,7 +65,6 @@ impl index::File {
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
     {
-        let _reset_interrupt = ResetOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
                 let pack_progress = progress.add_child("SHA1 of pack");

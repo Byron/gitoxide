@@ -42,8 +42,7 @@
 //! * [`protocol`]
 //!   * [`transport`][protocol::transport]
 //!
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
 
 use std::path::PathBuf;
@@ -72,7 +71,7 @@ pub mod interrupt;
 #[cfg(feature = "git-traverse")]
 pub mod ext;
 pub mod prelude {
-    #[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]
+    #[cfg(all(feature = "git-traverse"))]
     pub use crate::ext::*;
     #[cfg(feature = "git-features")]
     pub use git_features::parallel::reduce::Finalize;

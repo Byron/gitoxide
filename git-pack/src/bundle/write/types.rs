@@ -5,7 +5,7 @@ use tempfile::NamedTempFile;
 /// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
 #[derive(Debug, Clone)]
-pub struct Options<'a> {
+pub struct Options {
     /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
     pub thread_limit: Option<usize>,
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
@@ -13,12 +13,12 @@ pub struct Options<'a> {
     /// The version of pack index to write, should be [`crate::index::Version::default()`]
     pub index_kind: crate::index::Version,
     /// A flag causing the interruption of the computation if set to true
-    pub should_interrupt: &'a AtomicBool,
+    pub should_interrupt: Arc<AtomicBool>,
 }
 
-impl<'a> Options<'a> {
+impl Options {
     /// Options which favor speed and correctness and write the most commonly supported index file.
-    pub fn default_with_interrupt(should_interrupt: &'a AtomicBool) -> Self {
+    pub fn default_with_interrupt(should_interrupt: Arc<AtomicBool>) -> Self {
         Options {
             thread_limit: None,
             iteration_mode: crate::data::input::Mode::Verify,

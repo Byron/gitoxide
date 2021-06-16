@@ -3,7 +3,7 @@ use crate::{
     index::{self, util::index_entries_sorted_by_offset_ascending},
     tree::traverse::Context,
 };
-use git_features::{interrupt::ResetOnDrop, parallel, progress::Progress};
+use git_features::{parallel, progress::Progress};
 use std::{
     collections::VecDeque,
     sync::{
@@ -37,7 +37,6 @@ impl index::File {
         ) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let _reset_interrupt = ResetOnDrop::default();
         let (verify_result, traversal_result) = parallel::join(
             {
                 let pack_progress = progress.add_child("SHA1 of pack");

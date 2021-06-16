@@ -160,7 +160,7 @@ where
             progress.inc_by(c.len());
             counts.extend(c.into_iter());
         }
-        stats.counts = interruptible_counts_iter.inner.finalize()?;
+        stats.counts = interruptible_counts_iter.into_inner().finalize()?;
         progress.show_throughput(start);
         counts.shrink_to_fit();
         counts
@@ -221,7 +221,10 @@ where
         write_progress.inc_by(written as usize);
     }
 
-    let hash = interruptible_output_iter.inner.digest().expect("iteration is done");
+    let hash = interruptible_output_iter
+        .into_inner()
+        .digest()
+        .expect("iteration is done");
     let pack_name = format!("{}.pack", hash);
     if let (Some(pack_file), Some(dir)) = (named_tempfile_store.take(), output_directory) {
         pack_file.persist(dir.as_ref().join(pack_name))?;

@@ -59,15 +59,16 @@ pub use init::init_handler;
 
 use std::{
     io,
-    sync::atomic::{AtomicBool, Ordering},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {
     /// The actual iterator to yield elements from.
-    pub inner: I,
-    make_err: Option<EFN>,
-    is_done: bool,
+    inner: git_features::interrupt::Iter<'static, I, EFN>,
 }
 
 impl<I, EFN, E> Iter<I, EFN>
@@ -79,10 +80,13 @@ where
     /// signal an interruption happened, causing no further items to be iterated from that point on.
     pub fn new(inner: I, make_err: EFN) -> Self {
         Iter {
-            inner,
-            make_err: Some(make_err),
-            is_done: false,
+            inner: git_features::interrupt::Iter::new(inner, make_err, &IS_INTERRUPTED),
         }
+    }
+
+    /// Return the inner iterator
+    pub fn into_inner(self) -> I {
+        self.inner.inner
     }
 }
 
@@ -94,20 +98,7 @@ where
     type Item = Result<I::Item, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.is_done {
-            return None;
-        }
-        if is_triggered() {
-            self.is_done = true;
-            return Some(Err(self.make_err.take().expect("no bug")()));
-        }
-        match self.inner.next() {
-            Some(next) => Some(Ok(next)),
-            None => {
-                self.is_done = true;
-                None
-            }
-        }
+        self.inner.next()
     }
 }
 
@@ -116,7 +107,27 @@ where
 /// It fails a [read][`std::io::Read::read`] while an interrupt was requested.
 pub struct Read<R> {
     /// The actual implementor of [`std::io::Read`] to which interrupt support will be added.
-    pub inner: R,
+    inner: git_features::interrupt::Read<R>,
+}
+
+impl<R> Read<R>
+where
+    R: io::Read,
+{
+    /// Create a new interruptible reader from `read`.
+    pub fn new(read: R) -> Self {
+        Read {
+            inner: git_features::interrupt::Read {
+                inner: read,
+                should_interrupt: Arc::clone(&IS_INTERRUPTED),
+            },
+        }
+    }
+
+    /// Return the inner reader
+    pub fn into_inner(self) -> R {
+        self.inner.inner
+    }
 }
 
 impl<R> io::Read for Read<R>
@@ -124,9 +135,6 @@ where
     R: io::Read,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        if is_triggered() {
-            return Err(io::Error::new(io::ErrorKind::Other, "interrupted by user"));
-        }
         self.inner.read(buf)
     }
 }
@@ -144,7 +152,7 @@ where
     }
 }
 
-static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
+static IS_INTERRUPTED: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 
 /// Returns true if an interrupt is requested.
 ///
@@ -170,31 +178,4 @@ pub fn trigger() {
 /// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn reset() {
     IS_INTERRUPTED.store(false, Ordering::SeqCst);
-}
-
-/// Useful if some parts of the program set the interrupt programmatically to cause others to stop, while
-/// assuring the interrupt state is reset at the end of the function to avoid other side-effects.
-///
-/// Note that this is inherently racy and that this will only work deterministically if there is only one
-/// top-level function running in a process.
-pub struct ResetOnDrop {
-    was_interrupted: bool,
-}
-
-impl Default for ResetOnDrop {
-    fn default() -> Self {
-        ResetOnDrop {
-            was_interrupted: is_triggered(),
-        }
-    }
-}
-
-impl Drop for ResetOnDrop {
-    fn drop(&mut self) {
-        if self.was_interrupted {
-            trigger()
-        } else {
-            reset()
-        }
-    }
 }
