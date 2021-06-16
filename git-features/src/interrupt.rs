@@ -66,6 +66,7 @@ pub use _impl::init_handler;
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {
+    /// The actual iterator to yield elements from.
     pub inner: I,
     make_err: Option<EFN>,
     is_done: bool,

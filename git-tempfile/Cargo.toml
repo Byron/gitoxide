@@ -16,7 +16,7 @@ test = true
 
 [dependencies]
 dashmap = "4.0.2"
-once_cell = { version = "1.8.0", default-features = false, features = ["race"] }
+once_cell = { version = "1.8.0", default-features = false, features = ["race", "std"] }
 signal-hook = { version = "0.3.9", default-features = false }
 signal-hook-registry = "1.4.0"
 tempfile = "3.2.0"

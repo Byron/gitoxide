@@ -1,5 +1,5 @@
 use crate::OutputFormat;
-use anyhow::bail;
+use anyhow::anyhow;
 use git_repository::{
     hash,
     hash::ObjectId,
@@ -122,34 +122,35 @@ where
     let chunk_size = 200;
     progress.init(Some(3), progress::steps());
     let start = Instant::now();
+    let make_cancellation_err = || anyhow!("Cancelled by user");
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let mut counts_iter = pack::data::output::count::from_objects_iter(
-            Arc::clone(&db),
-            pack::cache::lru::StaticLinkedList::<64>::default,
-            input,
-            progress.add_child("threads"),
-            pack::data::output::count::from_objects_iter::Options {
-                thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
-                    thread_limit
-                } else {
-                    Some(1)
+        let mut interruptible_counts_iter = interrupt::Iter::new(
+            pack::data::output::count::from_objects_iter(
+                Arc::clone(&db),
+                pack::cache::lru::StaticLinkedList::<64>::default,
+                input,
+                progress.add_child("threads"),
+                pack::data::output::count::from_objects_iter::Options {
+                    thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
+                        thread_limit
+                    } else {
+                        Some(1)
+                    },
+                    chunk_size,
+                    input_object_expansion: expansion.into(),
                 },
-                chunk_size,
-                input_object_expansion: expansion.into(),
-            },
+            ),
+            make_cancellation_err,
         );
         let mut counts = Vec::new();
-        for c in counts_iter.by_ref() {
-            if interrupt::is_triggered() {
-                bail!("Cancelled by user")
-            }
-            let c = c?;
+        for c in interruptible_counts_iter.by_ref() {
+            let c = c??;
             progress.inc_by(c.len());
             counts.extend(c.into_iter());
         }
-        stats.counts = counts_iter.finalize()?;
+        stats.counts = interruptible_counts_iter.inner.finalize()?;
         progress.show_throughput(start);
         counts.shrink_to_fit();
         counts
@@ -191,26 +192,26 @@ where
             (&mut sink_store, None)
         }
     };
-    let mut output_iter = pack::data::output::bytes::FromEntriesIter::new(
-        in_order_entries.by_ref().inspect(|e| {
-            if let Ok(entries) = e {
-                entries_progress.inc_by(entries.len())
-            }
-        }),
-        &mut pack_file,
-        num_objects as u32,
-        pack::data::Version::default(),
-        hash::Kind::default(),
+    let mut interruptible_output_iter = interrupt::Iter::new(
+        pack::data::output::bytes::FromEntriesIter::new(
+            in_order_entries.by_ref().inspect(|e| {
+                if let Ok(entries) = e {
+                    entries_progress.inc_by(entries.len())
+                }
+            }),
+            &mut pack_file,
+            num_objects as u32,
+            pack::data::Version::default(),
+            hash::Kind::default(),
+        ),
+        make_cancellation_err,
     );
-    for io_res in output_iter.by_ref() {
-        if interrupt::is_triggered() {
-            bail!("Cancelled by user")
-        }
-        let written = io_res?;
+    for io_res in interruptible_output_iter.by_ref() {
+        let written = io_res??;
         write_progress.inc_by(written as usize);
     }
 
-    let hash = output_iter.digest().expect("iteration is done");
+    let hash = interruptible_output_iter.inner.digest().expect("iteration is done");
     let pack_name = format!("{}.pack", hash);
     if let (Some(pack_file), Some(dir)) = (named_tempfile_store.take(), output_directory) {
         pack_file.persist(dir.as_ref().join(pack_name))?;
