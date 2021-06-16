@@ -1,11 +1,39 @@
-use super::{Error, Reducer, SafetyCheck};
+use super::{Error, Reducer};
 use crate::{data, index, index::util};
 use git_features::{
     interrupt::ResetOnDrop,
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
-use std::sync::{atomic::AtomicBool, Arc};
+
+mod options {
+    use crate::index::traverse::SafetyCheck;
+    use std::sync::{atomic::AtomicBool, Arc};
+
+    /// Traversal options for [`traverse()`][crate::index::File::traverse_with_lookup()]
+    #[derive(Debug, Clone)]
+    pub struct Options {
+        /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
+        /// the amount of available logical cores.
+        pub thread_limit: Option<usize>,
+        /// The kinds of safety checks to perform.
+        pub check: SafetyCheck,
+        /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
+        /// computation.
+        pub should_interrupt: Arc<AtomicBool>,
+    }
+
+    impl Default for Options {
+        fn default() -> Self {
+            Self {
+                thread_limit: Default::default(),
+                check: Default::default(),
+                should_interrupt: Default::default(),
+            }
+        }
+    }
+}
+pub use options::Options;
 
 /// Verify and validate the content of the index file
 impl index::File {
@@ -15,13 +43,15 @@ impl index::File {
     /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
     pub fn traverse_with_lookup<P, C, Processor, E>(
         &self,
-        check: SafetyCheck,
-        thread_limit: Option<usize>,
         new_processor: impl Fn() -> Processor + Send + Sync,
         new_cache: impl Fn() -> C + Send + Sync,
         mut progress: P,
         pack: &crate::data::File,
-        should_interrupt: Arc<AtomicBool>,
+        Options {
+            thread_limit,
+            check,
+            should_interrupt,
+        }: Options,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,

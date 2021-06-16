@@ -7,15 +7,48 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 ///
 mod indexed;
-mod lookup;
 mod reduce;
+///
+pub mod with_lookup;
 pub(crate) use reduce::Reducer;
 
 mod error;
 pub use error::Error;
 
 mod types;
-pub use types::{Algorithm, Options, Outcome, SafetyCheck};
+pub use types::{Algorithm, Outcome, SafetyCheck};
+
+mod options {
+    use crate::index::traverse::{Algorithm, SafetyCheck};
+    use std::sync::{atomic::AtomicBool, Arc};
+
+    /// Traversal options for [`traverse()`][crate::index::File::traverse()]
+    #[derive(Debug, Clone)]
+    pub struct Options {
+        /// The algorithm to employ.
+        pub algorithm: Algorithm,
+        /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
+        /// the amount of available logical cores.
+        pub thread_limit: Option<usize>,
+        /// The kinds of safety checks to perform.
+        pub check: SafetyCheck,
+        /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
+        /// computation.
+        pub should_interrupt: Arc<AtomicBool>,
+    }
+
+    impl Default for Options {
+        fn default() -> Self {
+            Self {
+                algorithm: Algorithm::Lookup,
+                thread_limit: Default::default(),
+                check: Default::default(),
+                should_interrupt: Default::default(),
+            }
+        }
+    }
+}
+pub use options::Options;
 
 /// Traversal of pack data files using an index file
 impl index::File {
@@ -66,13 +99,15 @@ impl index::File {
         let progress = progress::DoOrDiscard::from(progress);
         match algorithm {
             Algorithm::Lookup => self.traverse_with_lookup(
-                check,
-                thread_limit,
                 new_processor,
                 new_cache,
                 progress,
                 pack,
-                should_interrupt,
+                with_lookup::Options {
+                    thread_limit,
+                    check,
+                    should_interrupt,
+                },
             ),
             Algorithm::DeltaTreeLookup => {
                 self.traverse_with_index(check, thread_limit, new_processor, progress, pack, should_interrupt)
