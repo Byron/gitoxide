@@ -3,14 +3,13 @@ use crate::{
     index::{self, util::index_entries_sorted_by_offset_ascending},
     tree::traverse::Context,
 };
-use git_features::{
-    interrupt::{trigger, ResetOnDrop},
-    parallel,
-    progress::Progress,
-};
+use git_features::{interrupt::ResetOnDrop, parallel, progress::Progress};
 use std::{
     collections::VecDeque,
-    sync::{atomic::AtomicBool, Arc},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 
 /// Traversal with index
@@ -45,9 +44,15 @@ impl index::File {
                 let index_progress = progress.add_child("SHA1 of index");
                 let should_interrupt = Arc::clone(&should_interrupt);
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
+                    let res = self.possibly_verify(
+                        pack,
+                        check,
+                        pack_progress,
+                        index_progress,
+                        Arc::clone(&should_interrupt),
+                    );
                     if res.is_err() {
-                        trigger();
+                        should_interrupt.store(true, Ordering::SeqCst);
                     }
                     res
                 }
@@ -60,6 +65,7 @@ impl index::File {
                     |e| e.index_entry.pack_offset,
                     pack.path(),
                     progress.add_child("indexing"),
+                    &should_interrupt,
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
                 )?;
                 let there_are_enough_objects = || self.num_objects > 10_000;

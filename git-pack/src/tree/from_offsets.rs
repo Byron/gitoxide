@@ -1,12 +1,10 @@
 use crate::{index::access::PackOffset, tree::Tree};
-use git_features::{
-    interrupt::is_triggered,
-    progress::{self, Progress},
-};
+use git_features::progress::{self, Progress};
 use std::{
     convert::TryFrom,
     fs, io,
     io::{BufRead, Read, Seek, SeekFrom},
+    sync::atomic::{AtomicBool, Ordering},
     time::Instant,
 };
 
@@ -46,6 +44,7 @@ impl<T> Tree<T> {
         get_pack_offset: impl Fn(&T) -> PackOffset,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
+        should_interrupt: &AtomicBool,
         resolve_in_pack_id: impl Fn(&git_hash::oid) -> Option<PackOffset>,
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(
@@ -109,7 +108,7 @@ impl<T> Tree<T> {
                 }
             };
             progress.inc();
-            if idx % 10_000 == 0 && is_triggered() {
+            if idx % 10_000 == 0 && should_interrupt.load(Ordering::SeqCst) {
                 return Err(Error::Interrupted);
             }
         }
