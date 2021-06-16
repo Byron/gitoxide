@@ -1,0 +1,54 @@
+use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
+use libc::siginfo_t;
+
+/// # Safety
+/// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
+/// We are usign lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
+pub fn cleanup_tempfiles(sig: &siginfo_t) {
+    let current_pid = std::process::id();
+    for mut tempfile in REGISTER.iter_mut() {
+        if tempfile
+            .as_ref()
+            .map_or(false, |tf| tf.owning_process_id == current_pid)
+        {
+            if let Some(tempfile) = tempfile.take() {
+                let (file, temppath) = tempfile.inner.into_parts();
+                std::fs::remove_file(&temppath).ok();
+                std::mem::forget(temppath); // leak memory to prevent deallocation
+                file.sync_all().ok();
+            }
+        }
+    }
+    let restore_original_behaviour = SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour as usize;
+    if SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst) == restore_original_behaviour {
+        signal_hook::low_level::emulate_default_handler(sig.si_signo).ok();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+    fn filecount_in(path: impl AsRef<Path>) -> usize {
+        std::fs::read_dir(path).expect("valid dir").count()
+    }
+
+    #[test]
+    fn various_termination_signals_remove_tempfiles_unconditionally() -> Result<(), Box<dyn std::error::Error>> {
+        let dir = tempfile::tempdir()?;
+        for sig in signal_hook::consts::TERM_SIGNALS {
+            let _tempfile = crate::new(dir.path())?;
+            assert_eq!(
+                filecount_in(dir.path()),
+                1,
+                "only one tempfile exists no matter the iteration"
+            );
+            signal_hook::low_level::raise(*sig)?;
+            assert_eq!(
+                filecount_in(dir.path()),
+                0,
+                "the signal triggers removal but won't terminate the process (anymore)"
+            );
+        }
+        Ok(())
+    }
+}

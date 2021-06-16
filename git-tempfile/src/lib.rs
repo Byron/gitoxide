@@ -29,6 +29,9 @@ use once_cell::sync::Lazy;
 use std::{io, path::Path, sync::atomic::AtomicUsize};
 use tempfile::NamedTempFile;
 
+mod handler;
+mod registration;
+
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
 static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
@@ -40,64 +43,6 @@ static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
     }
     DashMap::new()
 });
-
-mod handler {
-    use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
-    use libc::siginfo_t;
-
-    /// # Safety
-    /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
-    /// We are usign lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
-    pub fn cleanup_tempfiles(sig: &siginfo_t) {
-        let current_pid = std::process::id();
-        for mut tempfile in REGISTER.iter_mut() {
-            if tempfile
-                .as_ref()
-                .map_or(false, |tf| tf.owning_process_id == current_pid)
-            {
-                if let Some(tempfile) = tempfile.take() {
-                    let (file, temppath) = tempfile.inner.into_parts();
-                    std::fs::remove_file(&temppath).ok();
-                    std::mem::forget(temppath); // leak memory to prevent deallocation
-                    file.sync_all().ok();
-                }
-            }
-        }
-        let restore_original_behaviour =
-            SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour as usize;
-        if SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst) == restore_original_behaviour {
-            signal_hook::low_level::emulate_default_handler(sig.si_signo).ok();
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use std::path::Path;
-        fn filecount_in(path: impl AsRef<Path>) -> usize {
-            std::fs::read_dir(path).expect("valid dir").count()
-        }
-
-        #[test]
-        fn various_termination_signals_remove_tempfiles_unconditionally() -> Result<(), Box<dyn std::error::Error>> {
-            let dir = tempfile::tempdir()?;
-            for sig in signal_hook::consts::TERM_SIGNALS {
-                let _tempfile = crate::new(dir.path())?;
-                assert_eq!(
-                    filecount_in(dir.path()),
-                    1,
-                    "only one tempfile exists no matter the iteration"
-                );
-                signal_hook::low_level::raise(*sig)?;
-                assert_eq!(
-                    filecount_in(dir.path()),
-                    0,
-                    "the signal triggers removal but won't terminate the process (anymore)"
-                );
-            }
-            Ok(())
-        }
-    }
-}
 
 /// Define how our signal handlers act
 pub enum SignalHandlerMode {
@@ -146,71 +91,6 @@ impl From<NamedTempFile> for ForksafeTempfile {
         ForksafeTempfile {
             inner,
             owning_process_id: std::process::id(),
-        }
-    }
-}
-
-mod registration {
-    use crate::{Registration, NEXT_MAP_INDEX, REGISTER};
-    use std::{io, path::Path};
-    use tempfile::NamedTempFile;
-
-    impl Registration {
-        /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
-        ///
-        /// **Note** that intermediate directories will _not_ be created.
-        pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
-            let path = path.as_ref();
-            let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-            expect_none(REGISTER.insert(
-                id,
-                Some({
-                    let mut builder = tempfile::Builder::new();
-                    let dot_ext_storage;
-                    match path.file_stem() {
-                        Some(stem) => builder.prefix(stem),
-                        None => builder.prefix(""),
-                    };
-                    if let Some(ext) = path.extension() {
-                        dot_ext_storage = format!(".{}", ext.to_string_lossy());
-                        builder.suffix(&dot_ext_storage);
-                    }
-                    builder
-                        .rand_bytes(0)
-                        .tempfile_in(path.parent().expect("parent directory is present"))?
-                        .into()
-                }),
-            ));
-            Ok(Registration { id })
-        }
-
-        /// Create a registered tempfile within `containing_directory` with a name that won't clash.
-        /// **Note** that intermediate directories will _not_ be created.
-        pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
-            let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-            expect_none(REGISTER.insert(id, Some(NamedTempFile::new_in(containing_directory)?.into())));
-            Ok(Registration { id })
-        }
-
-        /// Take ownership of the temporary file.
-        ///
-        pub fn take(self) -> Option<NamedTempFile> {
-            let res = REGISTER.remove(&self.id);
-            std::mem::forget(self);
-            res.and_then(|(_k, v)| v.map(|v| v.inner))
-        }
-    }
-
-    fn expect_none<T>(v: Option<T>) {
-        assert!(
-            v.is_none(),
-            "there should never be conflicts or old values as ids are never reused."
-        );
-    }
-
-    impl Drop for Registration {
-        fn drop(&mut self) {
-            REGISTER.remove(&self.id);
         }
     }
 }
