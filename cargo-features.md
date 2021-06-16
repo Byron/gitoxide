@@ -132,9 +132,6 @@ All feature toggles are additive.
         * If the application already sets a handler, this handler will have no effect.
         * If unset, these utilities can still be triggered programmatically. However, interrupting with Ctrl+C or SIGTERM may lead to
           leaking temporary files.
-        * **tempfile-handler-integration**
-            * If set, when initializing interrupt handling we will also initialize the signal handlers of `git-tempfile` in a way that interacts well with
-              our interrupt handling which aborts the second time an interrupt is attempted.
       * **disable-interrupts** (_takes precedence if **interrupt-handler** is set as well_)
         * If set, interrupts cannot be triggered programmatically and it's up to the user to inject means of supporting interrupts.
         * Useful if there is multiple interruptible operations at the same time that should be triggered independently. After all, this facility is a global one.

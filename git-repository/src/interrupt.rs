@@ -5,8 +5,7 @@
 //! Such checks for interrupts are provided in custom implementations of various traits to transparently add interrupt
 //! support to methods who wouldn't otherwise by injecting it. see [`Read`].
 
-#[cfg(all(feature = "interrupt-handler", not(feature = "disable-interrupts")))]
-mod _impl {
+mod init {
     use std::{
         io,
         sync::{
@@ -49,27 +48,19 @@ mod _impl {
             }
         }
 
-        #[cfg(feature = "tempfile-handler-integration")]
-        {
-            // This means that their handler won't try to abort, which is done the second time our handler runs.
-            // Thus their handler can run exactly once.
-            git_tempfile::force_setup(git_tempfile::SignalHandlerMode::DeleteTempfilesOnTermination);
-        }
-        Ok(())
-    }
-}
-use std::io;
-#[cfg(not(feature = "disable-interrupts"))]
-use std::sync::atomic::{AtomicBool, Ordering};
+        // This means that their handler won't try to abort, which is done the second time our handler runs.
+        // Thus their handler can run exactly once.
+        git_tempfile::force_setup(git_tempfile::SignalHandlerMode::DeleteTempfilesOnTermination);
 
-#[cfg(any(feature = "disable-interrupts", not(feature = "interrupt-handler")))]
-mod _impl {
-    /// Does nothing, as the **disable-interrupts** feature is enabled while the **interrupt-handler** feature is not present.
-    pub fn init_handler(_interrupt_flag: std::sync::Arc<std::sync::atomic::AtomicBool>) -> std::io::Result<()> {
         Ok(())
     }
 }
-pub use _impl::init_handler;
+pub use init::init_handler;
+
+use std::{
+    io,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {
@@ -153,21 +144,13 @@ where
     }
 }
 
-#[cfg(not(feature = "disable-interrupts"))]
 static IS_INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
 /// Returns true if an interrupt is requested.
 ///
 /// Only implemented if the **disable-interrupts** feature toggle is not present.
-#[cfg(not(feature = "disable-interrupts"))]
 pub fn is_triggered() -> bool {
     IS_INTERRUPTED.load(Ordering::Relaxed)
-}
-
-/// Returns always false if the **disable-interrupts** feature is present.
-#[cfg(feature = "disable-interrupts")]
-pub fn is_triggered() -> bool {
-    false
 }
 
 /// Trigger an interrupt, signalling to those checking for [`is_triggered()`] to stop what they are doing.
@@ -175,7 +158,6 @@ pub fn is_triggered() -> bool {
 /// # Note
 /// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn trigger() {
-    #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(true, Ordering::SeqCst);
 }
 /// Sets the interrupt request to false, thus allowing those checking for [`is_triggered()`] to proceed.
@@ -187,7 +169,6 @@ pub fn trigger() {
 /// # Note
 /// Only effective if the **disable-interrupts** feature is **not** present.
 pub fn reset() {
-    #[cfg(not(feature = "disable-interrupts"))]
     IS_INTERRUPTED.store(false, Ordering::SeqCst);
 }
 

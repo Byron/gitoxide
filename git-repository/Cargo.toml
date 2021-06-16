@@ -20,11 +20,9 @@ local = [
     "git-features",
     "git-features/progress",
     "git-features",
-    "git-hash",
     "git-url",
     "git-traverse",
     "git-diff",
-    "git-object",
     "git-pack/pack-cache-lru-dynamic",
     "git-pack/pack-cache-lru-static",
 ]
@@ -39,16 +37,20 @@ one-stop-shop = [
 
 [dependencies]
 git-ref = { version = "0.5.0", path = "../git-ref" }
+git-tempfile = { version = "^0.1.0", path = "../git-tempfile" }
+
 git-odb = { version = "^0.16", path = "../git-odb" }
+git-hash = { version = "^0.4.0", path = "../git-hash" }
+git-object = { version = "^0.10", path = "../git-object" }
+git-pack = { version = "^0.2", path = "../git-pack" }
+
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
-git-hash = { version = "^0.4.0", path = "../git-hash", optional = true }
-git-pack = { version = "^0.2", path = "../git-pack", optional = true }
-git-object = { version = "^0.10", path = "../git-object", optional = true }
 git-traverse = { version = "^0.3", path = "../git-traverse", optional = true }
 git-protocol = { version = "^0.8.0", path = "../git-protocol", optional = true }
 git-diff = { version = "^0.4", path = "../git-diff", optional = true }
 git-features = { version = "^0.15.0", path = "../git-features", optional = true }
 
+signal-hook = { version = "0.3.9", default-features = false }
 quick-error = "2.0.0"
 
 [dev-dependencies]

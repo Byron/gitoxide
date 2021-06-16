@@ -32,6 +32,8 @@
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
 //! * [`refs`]
+//! * [`interrupt`]
+//! * [`tempfile`]
 //! * [`traverse`]
 //! * [`diff`]
 //! * [`Progress`]
@@ -52,21 +54,22 @@ use std::path::PathBuf;
 #[cfg(feature = "git-diff")]
 pub use git_diff as diff;
 #[cfg(feature = "git-features")]
-pub use git_features::{interrupt, parallel, progress, progress::Progress};
-#[cfg(feature = "git-hash")]
+pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
-#[cfg(feature = "git-object")]
 pub use git_object as object;
 pub use git_odb as odb;
 #[cfg(feature = "git-protocol")]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
+pub use git_tempfile as tempfile;
 #[cfg(feature = "git-traverse")]
 pub use git_traverse as traverse;
 #[cfg(feature = "git-url")]
 pub use git_url as url;
 
-#[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]
+pub mod interrupt;
+
+#[cfg(feature = "git-traverse")]
 pub mod ext;
 pub mod prelude {
     #[cfg(all(feature = "git-hash", feature = "git-object", feature = "git-traverse"))]

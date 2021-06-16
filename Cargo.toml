@@ -28,11 +28,11 @@ default = ["max"]
 max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 max-termion = ["fast", "pretty-cli", "prodash/render-tui-termion", "prodash-render-line-termion", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 
-lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
-lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "git-features/interrupt-handler", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
+lean = ["fast", "lean-cli", "prodash-render-line-crossterm", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
+lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 
-light = ["fast", "lean-cli", "git-features/interrupt-handler", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
-light-async = ["fast", "lean-cli", "git-features/interrupt-handler", "gitoxide-core-tools", "gitoxide-core-async-client"]
+light = ["fast", "lean-cli", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
+light-async = ["fast", "lean-cli", "gitoxide-core-tools", "gitoxide-core-async-client"]
 small = ["lean-cli", "git-features/sha1", "git-features/zlib-rust-backend"]
 
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
@@ -42,8 +42,6 @@ http-client-curl = ["git-transport/http-client-curl"]
 fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
 
 pretty-cli = ["clap",
-    "git-features/interrupt-handler",
-    "git-features/tempfile-handler-integration",
     "gitoxide-core/serde1",
     "prodash/progress-tree",
     "prodash/progress-tree-log",
@@ -52,7 +50,7 @@ pretty-cli = ["clap",
     "prodash-render-line",
     "env_logger",
     "futures-lite"]
-lean-cli = ["argh", "prodash/progress-log", "env_logger", "git-features/tempfile-handler-integration"]
+lean-cli = ["argh", "prodash/progress-log", "env_logger" ]
 
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
 prodash-render-line-termion = ["prodash-render-line", "prodash/render-line-termion", "atty", "crosstermion"]
@@ -68,6 +66,7 @@ gitoxide-core = { version = "^0.9.0", path = "gitoxide-core" }
 git-features = { version = "^0.15.0", path = "git-features" }
 # just for feature configuration
 git-transport = { optional = true, version = "^0.9.0", path = "git-transport" }
+git-repository = { optional = true, version = "^0.6.0", path = "git-repository", default-features = false }
 
 clap = { version = "=3.0.0-beta.2", optional = true }
 argh = { version = "0.1.3", optional = true, default-features = false }

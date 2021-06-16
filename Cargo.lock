@@ -922,14 +922,12 @@ dependencies = [
  "crossbeam-utils",
  "flate2",
  "git-hash",
- "git-tempfile",
  "jwalk",
  "num_cpus",
  "prodash",
  "quick-error",
  "sha-1",
  "sha1",
- "signal-hook 0.3.9",
  "walkdir",
 ]
 
@@ -1069,10 +1067,12 @@ dependencies = [
  "git-pack",
  "git-protocol",
  "git-ref",
+ "git-tempfile",
  "git-testtools",
  "git-traverse",
  "git-url",
  "quick-error",
+ "signal-hook 0.3.9",
 ]
 
 [[package]]
@@ -1184,6 +1184,7 @@ dependencies = [
  "env_logger",
  "futures-lite",
  "git-features",
+ "git-repository",
  "git-transport",
  "gitoxide-core",
  "prodash",
