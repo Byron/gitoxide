@@ -35,6 +35,7 @@ mod options {
     }
 }
 pub use options::Options;
+use std::sync::atomic::Ordering;
 
 /// Verify and validate the content of the index file
 impl index::File {
@@ -72,9 +73,15 @@ impl index::File {
                 let index_progress = progress.add_child("SHA1 of index");
                 let should_interrupt = Arc::clone(&should_interrupt);
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
+                    let res = self.possibly_verify(
+                        pack,
+                        check,
+                        pack_progress,
+                        index_progress,
+                        Arc::clone(&should_interrupt),
+                    );
                     if res.is_err() {
-                        git_features::interrupt::trigger();
+                        should_interrupt.store(true, Ordering::SeqCst);
                     }
                     res
                 }
