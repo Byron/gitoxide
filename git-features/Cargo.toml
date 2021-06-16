@@ -22,6 +22,7 @@ crc32 = ["crc32fast"]
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]
 zlib-ng-compat = ["flate2/zlib-ng-compat"]
 zlib-rust-backend = ["flate2/rust_backend"]
+tempfile-handler-integration = ["git-tempfile"]
 
 [[test]]
 name = "hash"
@@ -50,6 +51,7 @@ required-features = ["io-pipe"]
 
 [dependencies]
 git-hash = { version = "^0.4.0", path = "../git-hash" }
+git-tempfile = { version = "^0.1.0", path = "../git-tempfile", optional = true }
 
 # 'parallel' feature
 crossbeam-utils = { version = "0.8.5", optional = true }

@@ -43,6 +43,7 @@ fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng
 
 pretty-cli = ["clap",
     "git-features/interrupt-handler",
+    "git-features/tempfile-handler-integration",
     "gitoxide-core/serde1",
     "prodash/progress-tree",
     "prodash/progress-tree-log",
@@ -51,7 +52,7 @@ pretty-cli = ["clap",
     "prodash-render-line",
     "env_logger",
     "futures-lite"]
-lean-cli = ["argh", "prodash/progress-log", "env_logger"]
+lean-cli = ["argh", "prodash/progress-log", "env_logger", "git-features/tempfile-handler-integration"]
 
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
 prodash-render-line-termion = ["prodash-render-line", "prodash/render-line-termion", "atty", "crosstermion"]

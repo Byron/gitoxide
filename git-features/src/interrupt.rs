@@ -43,6 +43,13 @@ mod _impl {
                 })?;
             }
         }
+
+        #[cfg(feature = "tempfile-handler-integration")]
+        {
+            // This means that their handler won't try to abort, which is done the second time our handler runs.
+            // Thus their handler can run exactly once.
+            git_tempfile::force_setup(git_tempfile::SignalHandlerMode::DeleteTempfilesOnTermination);
+        }
         Ok(())
     }
 }

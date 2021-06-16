@@ -922,6 +922,7 @@ dependencies = [
  "crossbeam-utils",
  "flate2",
  "git-hash",
+ "git-tempfile",
  "jwalk",
  "num_cpus",
  "prodash",
