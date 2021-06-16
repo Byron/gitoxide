@@ -53,32 +53,23 @@ where
 
     let all_commits = {
         let start = Instant::now();
-        let mut count_commits = progress.add_child("Traverse commit graph");
-        count_commits.init(None, progress::count("Commit"));
+        let mut progress = progress.add_child("Traverse commit graph");
+        progress.init(None, progress::count("commits"));
         let mut pack_cache = odb::pack::cache::Never;
-        let mut commits = Vec::<Vec<u8>>::default();
-        for (idx, commit) in commit_id
-            .ancestors_iter(|oid, buf| {
+        let mut commits: Vec<Vec<u8>> = Vec::new();
+        for c in interrupt::Iter::new(
+            commit_id.ancestors_iter(|oid, buf| {
+                progress.inc();
                 repo.odb.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
                     commits.push(o.data.to_owned());
                     object::immutable::CommitIter::from_bytes(o.data)
                 })
-            })
-            .enumerate()
-        {
-            commit?;
-            count_commits.inc();
-            if idx % 100_000 == 0 && interrupt::is_triggered() {
-                bail!("Commit iteration interrupted by user.")
-            }
+            }),
+            || anyhow!("Cancelled by user"),
+        ) {
+            c??;
         }
-        let elapsed = start.elapsed();
-        count_commits.done(format!(
-            "Found {} commits in {:?} ({:0.0} commits/s)",
-            commits.len(),
-            elapsed,
-            commits.len() as f32 / elapsed.as_secs_f32()
-        ));
+        progress.show_throughput(start);
         commits
     };
 
