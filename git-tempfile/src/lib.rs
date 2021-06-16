@@ -38,8 +38,17 @@ static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
     for sig in signal_hook::consts::TERM_SIGNALS {
         // SAFETY: handlers are considered unsafe because a lot can go wrong. See `cleanup_tempfiles()` for details on safety.
         #[allow(unsafe_code)]
-        unsafe { signal_hook_registry::register_sigaction(*sig, handler::cleanup_tempfiles) }
-            .expect("signals can always be installed");
+        unsafe {
+            #[cfg(not(windows))]
+            {
+                signal_hook_registry::register_sigaction(*sig, handler::cleanup_tempfiles_nix)
+            }
+            #[cfg(windows)]
+            {
+                signal_hook::low_level::register(*sig, handler::cleanup_tempfiles_windows)
+            }
+        }
+        .expect("signals can always be installed");
     }
     DashMap::new()
 });
