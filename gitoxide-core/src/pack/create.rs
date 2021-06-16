@@ -96,7 +96,9 @@ where
     W: std::io::Write,
 {
     let db = Arc::new(find_db(repository)?);
+    progress.init(Some(4), progress::steps());
     let tips = tips.into_iter();
+    let make_cancellation_err = || anyhow!("Cancelled by user");
     let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
         None => Box::new({
             let mut progress = progress.add_child("traversing");
@@ -120,12 +122,11 @@ where
                 .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).ok())
         })),
     };
+    progress.inc();
 
     let mut stats = Statistics::default();
     let chunk_size = 200;
-    progress.init(Some(3), progress::steps());
     let start = Instant::now();
-    let make_cancellation_err = || anyhow!("Cancelled by user");
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
@@ -234,7 +235,11 @@ where
 
 fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Store> {
     let path = repository.as_ref();
-    Ok(linked::Store::at(path.join(".git").join("objects"))?)
+    Ok(linked::Store::at(
+        git_repository::path::discover::existing(path)?
+            .into_repository_directory()
+            .join("objects"),
+    )?)
 }
 
 fn print(stats: Statistics, format: OutputFormat, out: impl std::io::Write) -> anyhow::Result<()> {
