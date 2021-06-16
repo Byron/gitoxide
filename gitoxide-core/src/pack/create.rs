@@ -103,7 +103,8 @@ where
         None => Box::new({
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
-            interrupt::Iter::new(
+            let start = Instant::now();
+            let iter = interrupt::Iter::new(
                 traverse::commit::Ancestors::new(
                     tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
                         .collect::<Result<Vec<_>, _>>()?,
@@ -113,11 +114,13 @@ where
                         move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                     },
                 )
-                .inspect(move |_| progress.inc()),
+                .inspect(|_| progress.inc()),
                 make_cancellation_err,
             )
             .collect::<Result<Result<Vec<_>, _>, _>>()??
-            .into_iter()
+            .into_iter();
+            progress.show_throughput(start);
+            iter
         }),
         Some(input) => Box::new(input.lines().filter_map(|hex_id| {
             hex_id
