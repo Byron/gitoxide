@@ -76,6 +76,7 @@ mod write_to_directory {
     use crate::{fixture_path, pack::SMALL_PACK, pack::SMALL_PACK_INDEX};
     use git_features::progress;
     use git_odb::pack;
+    use std::sync::atomic::AtomicBool;
     use std::{fs, path::Path};
     use tempfile::TempDir;
 
@@ -136,6 +137,7 @@ mod write_to_directory {
         pack_file: &str,
     ) -> Result<pack::bundle::write::Outcome, Box<dyn std::error::Error>> {
         let pack_file = fs::File::open(fixture_path(pack_file))?;
+        let should_interrupt = AtomicBool::new(false);
         pack::Bundle::write_to_directory_eagerly(
             pack_file,
             None,
@@ -145,6 +147,7 @@ mod write_to_directory {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
                 index_kind: pack::index::Version::V2,
+                should_interrupt: &should_interrupt,
             },
         )
         .map_err(Into::into)

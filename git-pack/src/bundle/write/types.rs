@@ -16,17 +16,17 @@ pub struct Options<'a> {
     pub should_interrupt: &'a AtomicBool,
 }
 
-// impl<'a> Default for Options<'a> {
-//     /// Options which favor speed and correctness and write the most commonly supported index file.
-//     fn default() -> Self {
-//         Options {
-//             thread_limit: None,
-//             iteration_mode: crate::data::input::Mode::Verify,
-//             index_kind: Default::default(),
-//             should_interrupt: Default::default(),
-//         }
-//     }
-// }
+impl<'a> Options<'a> {
+    /// Options which favor speed and correctness and write the most commonly supported index file.
+    pub fn default_with_interrupt(should_interrupt: &'a AtomicBool) -> Self {
+        Options {
+            thread_limit: None,
+            iteration_mode: crate::data::input::Mode::Verify,
+            index_kind: Default::default(),
+            should_interrupt,
+        }
+    }
+}
 
 /// Returned by [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]

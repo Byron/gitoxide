@@ -38,6 +38,10 @@ fn db(kind: DbKind) -> crate::Result<Arc<linked::Store>> {
 mod count_and_entries {
     use std::sync::Arc;
 
+    use crate::pack::{
+        data::output::{db, DbKind},
+        hex_to_id,
+    };
     use git_features::{parallel::reduce::Finalize, progress};
     use git_odb::{compound, pack, FindExt};
     use git_pack::data::{
@@ -45,11 +49,7 @@ mod count_and_entries {
         output::{count, entry},
     };
     use git_traverse::commit;
-
-    use crate::pack::{
-        data::output::{db, DbKind},
-        hex_to_id,
-    };
+    use std::sync::atomic::AtomicBool;
 
     #[test]
     fn traversals() -> crate::Result {
@@ -236,7 +236,8 @@ mod count_and_entries {
             "it reports the correct amount of written bytes"
         );
         let pack = pack::data::File::at(&pack_file_path)?;
-        let hash = pack.verify_checksum(progress::Discard)?;
+        let should_interrupt = AtomicBool::new(false);
+        let hash = pack.verify_checksum(progress::Discard, &should_interrupt)?;
         assert_eq!(
             hash, pack_hash,
             "the trailer of the pack matches the actually written trailer"
@@ -250,7 +251,7 @@ mod count_and_entries {
                 std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
                 Some(tmp_dir.path()),
                 progress::Discard,
-                pack::bundle::write::Options::default(),
+                pack::bundle::write::Options::default_with_interrupt(&should_interrupt),
             )?
             .data_path
             .expect("directory set"),
@@ -261,6 +262,7 @@ mod count_and_entries {
             || pack::cache::Never,
             None,
             progress::Discard.into(),
+            Arc::new(should_interrupt),
         )?;
         Ok(())
     }

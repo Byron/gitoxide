@@ -73,7 +73,7 @@ mod file {
             use git_features::progress;
             use git_odb::pack;
             use git_pack::data::{input, EntryRange};
-            use std::{fs, io};
+            use std::{fs, io, sync::atomic::AtomicBool};
 
             #[test]
             fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
@@ -120,6 +120,7 @@ mod file {
                     None,
                     progress::Discard,
                     &mut actual,
+                    &AtomicBool::new(false),
                 )?;
 
                 let expected = fs::read(fixture_path(index_path))?;
@@ -293,7 +294,8 @@ mod file {
                         idx.verify_integrity(
                             Some((&pack, *mode, *algo, || cache::Never)),
                             None,
-                            progress::Discard.into()
+                            progress::Discard.into(),
+                            Default::default()
                         )
                         .map(|(a, b, _)| (a, b))?,
                         (idx.index_checksum(), Some(stats.to_owned())),
@@ -389,8 +391,13 @@ mod file {
             assert_eq!(idx.version(), *kind);
             assert_eq!(idx.num_objects(), *num_objects);
             assert_eq!(
-                idx.verify_integrity(None::<(_, _, _, fn() -> cache::Never)>, None, progress::Discard.into())
-                    .map(|(a, b, _)| (a, b))?,
+                idx.verify_integrity(
+                    None::<(_, _, _, fn() -> cache::Never)>,
+                    None,
+                    progress::Discard.into(),
+                    Default::default()
+                )
+                .map(|(a, b, _)| (a, b))?,
                 (idx.index_checksum(), None)
             );
             assert_eq!(idx.index_checksum(), hex_to_id(index_checksum));

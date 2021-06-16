@@ -5,6 +5,7 @@ mod method {
             pack::{INDEX_V1, PACK_FOR_INDEX_V1, SMALL_PACK, SMALL_PACK_INDEX},
         };
         use git_odb::pack;
+        use std::sync::atomic::AtomicBool;
 
         #[test]
         fn v1() -> Result<(), Box<dyn std::error::Error>> {
@@ -23,6 +24,7 @@ mod method {
                 |ofs| *ofs,
                 fixture_path(pack_path),
                 git_features::progress::Discard,
+                &AtomicBool::new(false),
                 |id| idx.lookup(id).map(|index| idx.pack_offset_at_index(index)),
             )?;
             Ok(())

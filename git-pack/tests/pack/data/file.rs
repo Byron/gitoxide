@@ -9,6 +9,7 @@ fn pack_at(at: &str) -> pack::data::File {
 mod method {
     use crate::{pack::data::file::pack_at, pack::SMALL_PACK};
     use git_features::progress;
+    use std::sync::atomic::AtomicBool;
 
     #[test]
     fn checksum() {
@@ -22,7 +23,10 @@ mod method {
     #[test]
     fn verify_checksum() -> Result<(), Box<dyn std::error::Error>> {
         let p = pack_at(SMALL_PACK);
-        assert_eq!(p.verify_checksum(progress::Discard)?, p.checksum());
+        assert_eq!(
+            p.verify_checksum(progress::Discard, &AtomicBool::new(false))?,
+            p.checksum()
+        );
         Ok(())
     }
 
