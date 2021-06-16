@@ -1,3 +1,3 @@
-[?1049h[?25lthread '<unnamed>' panicked at 'something went very wrong', src/porcelain/main.rs:25:42
+[?1049h[?25lthread '<unnamed>' panicked at 'something went very wrong', src/porcelain/main.rs:27:42
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 [?25h[?1049lError: receiving on a closed channel
