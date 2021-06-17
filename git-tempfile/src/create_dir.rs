@@ -22,30 +22,25 @@ impl Default for Retries {
 }
 
 mod error {
-    use quick_error::quick_error;
-    use std::path::PathBuf;
+    use std::path::Path;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Intermediate(kind: std::io::ErrorKind) {
-                display("Intermediate failure with error: {:?}", kind)
-                from()
-            }
-            Permanent { err: std::io::Error, dir: PathBuf, attempts: Option<usize> } {
-                display("Permanently failing to create directory {:?}{}", dir, match attempts {Some(attempts) => format!(" after {} attempts", attempts), None => "".into()})
-                source(err)
-            }
-        }
-    }
-
-    impl Error {
-        pub fn intermediate(&self) -> Option<std::io::ErrorKind> {
-            match self {
-                Error::Intermediate(kind) => Some(*kind),
-                _ => None,
-            }
-        }
+    //     {
+    //     display("Intermediate failure with error: {:?}", kind)
+    //     from()
+    // }{
+    //                 display("Permanently failing to create directory {:?}{}", dir, match attempts {Some(attempts) => format!(" after {} attempts", attempts), None => "".into()})
+    //                 source(err)
+    //             }
+    #[derive(Debug)]
+    pub enum Error<'a> {
+        Intermediate {
+            kind: std::io::ErrorKind,
+        },
+        Permanent {
+            err: std::io::Error,
+            dir: &'a Path,
+            attempts: Option<usize>,
+        },
     }
 }
 pub use error::Error;
@@ -81,25 +76,25 @@ impl<'a> Iter<'a> {
 
     fn pernanent_failure(
         &mut self,
-        dir: &Path,
+        dir: &'a Path,
         err: impl Into<std::io::Error>,
         attempts: impl Into<Option<usize>>,
-    ) -> Option<Result<&'a Path, Error>> {
+    ) -> Option<Result<&'a Path, Error<'a>>> {
         self.cursors.clear();
         Some(Err(Error::Permanent {
             err: err.into(),
-            dir: dir.to_owned(),
+            dir,
             attempts: attempts.into(),
         }))
     }
 
-    fn intermediate_failure(&self, err: std::io::Error) -> Option<Result<&'a Path, Error>> {
-        Some(Err(Error::Intermediate(err.kind())))
+    fn intermediate_failure(&self, err: std::io::Error) -> Option<Result<&'a Path, Error<'a>>> {
+        Some(Err(Error::Intermediate { kind: err.kind() }))
     }
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = Result<&'a Path, Error>;
+    type Item = Result<&'a Path, Error<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use std::io::ErrorKind::*;

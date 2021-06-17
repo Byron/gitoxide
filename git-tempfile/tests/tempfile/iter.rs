@@ -39,11 +39,11 @@ mod create_dir {
         let new_dir = dir.path().join("s1").join("s2").join("new");
         let mut it = create_dir::Iter::new(&new_dir);
         assert!(
-            matches!(it.next(), Some(Err(Intermediate(k))) if k == NotFound),
+            matches!(it.next(), Some(Err(Intermediate{kind: k})) if k == NotFound),
             "dir is not present"
         );
         assert!(
-            matches!(it.next(), Some(Err(Intermediate(k))) if k == NotFound),
+            matches!(it.next(), Some(Err(Intermediate{kind:k})) if k == NotFound),
             "parent dir is not present"
         );
         assert_eq!(
@@ -115,7 +115,7 @@ mod create_dir {
         let mut it = create_dir::Iter::new(&new_dir);
 
         assert!(
-            matches!(it.next(), Some(Err(Intermediate(k))) if k == NotFound),
+            matches!(it.next(), Some(Err(Intermediate{kind:k})) if k == NotFound),
             "dir is not present, and we go up a level"
         );
         assert!(
@@ -126,7 +126,7 @@ mod create_dir {
         std::fs::remove_dir(parent_dir)?;
 
         assert!(
-            matches!(it.next(), Some(Err(Intermediate(k))) if k == NotFound),
+            matches!(it.next(), Some(Err(Intermediate{kind:k})) if k == NotFound),
             "now when it tries the actual dir its not found"
         );
         assert!(
