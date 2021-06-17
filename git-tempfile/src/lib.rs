@@ -31,6 +31,7 @@ use std::{io, path::Path, sync::atomic::AtomicUsize};
 use tempfile::NamedTempFile;
 
 mod handler;
+pub mod iter;
 mod registration;
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
