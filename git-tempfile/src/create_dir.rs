@@ -1,6 +1,20 @@
 #![allow(missing_docs)]
 use std::path::Path;
 
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
+pub struct Options {
+    /// How often to retry if an interrupt happens.
+    retries_on_interrupt: usize,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            retries_on_interrupt: 10,
+        }
+    }
+}
+
 mod error {
     use quick_error::quick_error;
     use std::path::PathBuf;
@@ -37,19 +51,27 @@ pub use error::Error;
 /// * `Some(Err(Error::Permanent))` is yielded exactly once on failure.
 pub struct Iter<'a> {
     cursors: Vec<&'a Path>,
+    options: Options,
 }
 
 impl<'a> Iter<'a> {
     pub fn new(target: &'a Path) -> Self {
-        Iter { cursors: vec![target] }
+        Iter {
+            cursors: vec![target],
+            options: Default::default(),
+        }
     }
 
-    fn fail_permanently(&mut self, dir: &Path, err: impl Into<std::io::Error>) -> Option<Result<&'a Path, Error>> {
+    fn pernanent_failure(&mut self, dir: &Path, err: impl Into<std::io::Error>) -> Option<Result<&'a Path, Error>> {
         self.cursors.clear();
         Some(Err(Error::Permanent {
             err: err.into(),
             dir: dir.to_owned(),
         }))
+    }
+
+    fn intermediate_failure(&self, err: std::io::Error) -> Option<Result<&'a Path, Error>> {
+        Some(Err(Error::Intermediate(err.kind())))
     }
 }
 
@@ -59,17 +81,23 @@ impl<'a> Iterator for Iter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         use std::io::ErrorKind::*;
         match self.cursors.pop() {
-            Some(cursor) => match std::fs::create_dir(cursor) {
-                Ok(()) => Some(Ok(cursor)),
+            Some(dir) => match std::fs::create_dir(dir) {
+                Ok(()) => Some(Ok(dir)),
                 Err(err) => match err.kind() {
-                    AlreadyExists => Some(Ok(cursor)),
+                    AlreadyExists => Some(Ok(dir)),
                     NotFound => {
-                        self.cursors.push(cursor);
-                        self.cursors.push(match cursor.parent() {
-                            None => return self.fail_permanently(cursor, InvalidInput),
+                        self.cursors.push(dir);
+                        self.cursors.push(match dir.parent() {
+                            None => return self.pernanent_failure(dir, InvalidInput),
                             Some(parent) => parent,
                         });
-                        Some(Err(Error::Intermediate(err.kind())))
+                        self.intermediate_failure(err)
+                    }
+                    Interrupted if self.options.retries_on_interrupt == 0 => self.pernanent_failure(dir, Interrupted),
+                    Interrupted => {
+                        self.options.retries_on_interrupt -= 1;
+                        self.cursors.push(dir);
+                        self.intermediate_failure(err)
                     }
                     kind => todo!("{:?}", kind),
                 },
