@@ -87,7 +87,7 @@ impl Kind {
     }
 
     /// Return the name of `self` for use in serialized loose git objects.
-    pub fn to_bytes(&self) -> &[u8] {
+    pub fn as_bytes(&self) -> &[u8] {
         match self {
             Kind::Tree => b"tree",
             Kind::Commit => b"commit",
@@ -99,7 +99,7 @@ impl Kind {
 
 impl fmt::Display for Kind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(std::str::from_utf8(self.to_bytes()).expect("Converting Kind name to utf8"))
+        f.write_str(std::str::from_utf8(self.as_bytes()).expect("Converting Kind name to utf8"))
     }
 }
 

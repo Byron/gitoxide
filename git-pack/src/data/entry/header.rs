@@ -44,7 +44,7 @@ impl Header {
         pack_offset.checked_sub(distance)
     }
     /// Convert the header's object kind into [`git_object::Kind`] if possible
-    pub fn to_kind(&self) -> Option<git_object::Kind> {
+    pub fn as_kind(&self) -> Option<git_object::Kind> {
         use git_object::Kind::*;
         Some(match self {
             Header::Tree => Tree,
@@ -55,7 +55,7 @@ impl Header {
         })
     }
     /// Convert this header's object kind into the packs internal representation
-    pub fn to_type_id(&self) -> u8 {
+    pub fn as_type_id(&self) -> u8 {
         use Header::*;
         match self {
             Blob => BLOB,
@@ -81,10 +81,10 @@ impl Header {
     ///
     /// Returns the amount of bytes written to `out`.
     /// `decompressed_size_in_bytes` is the full size in bytes of the object that this header represents
-    pub fn to_write(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<usize> {
+    pub fn write_to(&self, decompressed_size_in_bytes: u64, mut out: impl io::Write) -> io::Result<usize> {
         let mut size = decompressed_size_in_bytes;
         let mut written = 1;
-        let mut c: u8 = (self.to_type_id() << 4) | (size as u8 & 0b0000_1111);
+        let mut c: u8 = (self.as_type_id() << 4) | (size as u8 & 0b0000_1111);
         size >>= 4;
         while size != 0 {
             out.write_all(&[c | 0b1000_0000])?;

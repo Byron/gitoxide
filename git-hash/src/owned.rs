@@ -63,7 +63,7 @@ impl ObjectId {
     /// Return ourselves as array of 40 hexadecimal bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
-    pub fn to_sha1_hex(&self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
+    pub fn to_sha1_hex(self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
         match self {
             Self::Sha1(b) => {
                 let mut hex_buf = [0u8; 40];
@@ -76,7 +76,7 @@ impl ObjectId {
     /// Return ourselves as hexadecimal string with a length of 40 bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
-    pub fn to_sha1_hex_string(&self) -> String {
+    pub fn to_sha1_hex_string(self) -> String {
         let buf = self.to_sha1_hex();
         std::str::from_utf8(&buf).expect("hex is valid UTF-8").to_string()
     }

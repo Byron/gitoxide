@@ -46,10 +46,10 @@ impl<'a> RequestWriter<'a> {
     /// Write the given message as packet line.
     pub fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
         match message {
-            MessageKind::Flush => git_packetline::PacketLine::Flush.to_write(self.writer.inner_mut()),
-            MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.to_write(self.writer.inner_mut()),
-            MessageKind::ResponseEnd => git_packetline::PacketLine::ResponseEnd.to_write(self.writer.inner_mut()),
-            MessageKind::Text(t) => git_packetline::immutable::Text::from(t).to_write(self.writer.inner_mut()),
+            MessageKind::Flush => git_packetline::PacketLine::Flush.write_to(self.writer.inner_mut()),
+            MessageKind::Delimiter => git_packetline::PacketLine::Delimiter.write_to(self.writer.inner_mut()),
+            MessageKind::ResponseEnd => git_packetline::PacketLine::ResponseEnd.write_to(self.writer.inner_mut()),
+            MessageKind::Text(t) => git_packetline::immutable::Text::from(t).write_to(self.writer.inner_mut()),
         }
         .map(|_| ())
     }

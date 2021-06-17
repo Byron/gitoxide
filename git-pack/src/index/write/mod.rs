@@ -230,7 +230,7 @@ fn modify_base(
         git_hash::ObjectId::from(write.hash.digest())
     }
 
-    let object_kind = pack_entry.header.to_kind().expect("base object as source of iteration");
+    let object_kind = pack_entry.header.as_kind().expect("base object as source of iteration");
     let id = compute_hash(object_kind, &decompressed, hash);
     entry.id = id;
 }

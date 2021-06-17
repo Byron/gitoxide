@@ -86,7 +86,7 @@ impl index::File {
                          state: (ref mut processor, ref mut header_buf),
                          level,
                      }| {
-                        let object_kind = pack_entry.header.to_kind().expect("non-delta object");
+                        let object_kind = pack_entry.header.as_kind().expect("non-delta object");
                         data.level = level;
                         data.decompressed_size = pack_entry.decompressed_size;
                         data.object_kind = object_kind;

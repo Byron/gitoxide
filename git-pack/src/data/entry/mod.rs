@@ -36,7 +36,7 @@ impl Entry {
     /// The amount of bytes used to describe this entry in the pack. The header starts at [`Self::pack_offset()`]
     pub fn header_size(&self) -> usize {
         self.header
-            .to_write(self.decompressed_size, io::sink())
+            .write_to(self.decompressed_size, io::sink())
             .expect("io::sink() to never fail")
     }
 }

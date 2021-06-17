@@ -33,7 +33,7 @@ impl<'a> PacketLine<'a> {
     ///
     /// Note that this creates an unchecked error using the slice verbatim, which is useful to [serialize it][Error::to_write()].
     /// See [`check_error()`][PacketLine::check_error()] for a version that assures the error information is in the expected format.
-    pub fn to_error(&self) -> Option<Error<'_>> {
+    pub fn as_error(&self) -> Option<Error<'_>> {
         self.as_slice().map(Error)
     }
     /// Check this instance's [`as_slice()`][PacketLine::as_slice()] is a valid [`Error`] and return it.
@@ -49,7 +49,7 @@ impl<'a> PacketLine<'a> {
         })
     }
     /// Return this instance as text, with the trailing newline truncated if present.
-    pub fn to_text(&self) -> Option<Text<'_>> {
+    pub fn as_text(&self) -> Option<Text<'_>> {
         self.as_slice().map(Into::into)
     }
 
@@ -57,7 +57,7 @@ impl<'a> PacketLine<'a> {
     ///
     /// Note that this is only relevant in a side-band channel.
     /// See [`decode_band()`][PacketLine::decode_band()] in case `kind` is unknown.
-    pub fn to_band(&self, kind: Channel) -> Option<Band<'_>> {
+    pub fn as_band(&self, kind: Channel) -> Option<Band<'_>> {
         self.as_slice().map(|d| match kind {
             Channel::Data => Band::Data(d),
             Channel::Progress => Band::Progress(d),

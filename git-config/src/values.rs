@@ -549,7 +549,7 @@ impl Integer {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(self) -> Vec<u8> {
         self.into()
     }
 }

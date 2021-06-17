@@ -60,22 +60,22 @@ impl<'a> RequestWriter<'a> {
         match message {
             MessageKind::Flush => {
                 git_packetline::PacketLine::Flush
-                    .to_write(self.writer.inner_mut())
+                    .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::Delimiter => {
                 git_packetline::PacketLine::Delimiter
-                    .to_write(self.writer.inner_mut())
+                    .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::ResponseEnd => {
                 git_packetline::PacketLine::ResponseEnd
-                    .to_write(self.writer.inner_mut())
+                    .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::Text(t) => {
                 git_packetline::immutable::Text::from(t)
-                    .to_write(self.writer.inner_mut())
+                    .write_to(self.writer.inner_mut())
                     .await
             }
         }

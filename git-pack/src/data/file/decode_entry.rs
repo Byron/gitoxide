@@ -153,7 +153,7 @@ impl File {
                 );
                 self.decompress_entry(&entry, out.as_mut_slice()).map(|consumed_input| {
                     Outcome::from_object_entry(
-                        entry.header.to_kind().expect("a non-delta entry"),
+                        entry.header.as_kind().expect("a non-delta entry"),
                         &entry,
                         consumed_input,
                     )
@@ -314,7 +314,7 @@ impl File {
             if base_buffer_size.is_none() {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
-                object_kind = base_entry.header.to_kind();
+                object_kind = base_entry.header.as_kind();
                 let packed_size = self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
                 cache.put(
                     self.id,

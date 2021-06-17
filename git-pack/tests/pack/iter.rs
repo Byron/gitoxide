@@ -29,7 +29,7 @@ mod new_from_header {
                 let entry = entry?;
 
                 let mut buf = Vec::<u8>::new();
-                entry.header.to_write(entry.decompressed_size, &mut buf)?;
+                entry.header.write_to(entry.decompressed_size, &mut buf)?;
                 let new_entry = pack::data::Entry::from_bytes(&buf, entry.pack_offset);
 
                 assert_eq!(

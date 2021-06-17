@@ -138,7 +138,7 @@ where
 
         let crc32 = if self.compressed.crc32() {
             let mut header_buf = [0u8; 32];
-            let header_len = entry.header.to_write(bytes_copied, header_buf.as_mut())?;
+            let header_len = entry.header.write_to(bytes_copied, header_buf.as_mut())?;
             let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
             Some(git_features::hash::crc32_update(state, &compressed))
         } else {

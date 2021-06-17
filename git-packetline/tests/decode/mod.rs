@@ -29,11 +29,11 @@ mod streaming {
         #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
         async fn trailing_line_feeds_are_removed_explicitly() -> crate::Result {
             let line = decode::all_at_once(b"0006a\n")?;
-            assert_eq!(line.to_text().expect("text").0.as_bstr(), b"a".as_bstr());
+            assert_eq!(line.as_text().expect("text").0.as_bstr(), b"a".as_bstr());
             let mut out = Vec::new();
-            line.to_text()
+            line.as_text()
                 .expect("text")
-                .to_write(&mut out)
+                .write_to(&mut out)
                 .await
                 .expect("write to memory works");
             assert_eq!(out, b"0006a\n", "it appends a newline in text mode");
@@ -49,7 +49,7 @@ mod streaming {
                 (PacketLine::Data(b"hello there"), 15),
             ] {
                 let mut out = Vec::new();
-                line.to_write(&mut out).await?;
+                line.write_to(&mut out).await?;
                 assert_complete(streaming(&out), *bytes, *line)?;
             }
             Ok(())
@@ -59,9 +59,9 @@ mod streaming {
         async fn error_line() -> crate::Result {
             let mut out = Vec::new();
             PacketLine::Data(b"the error")
-                .to_error()
+                .as_error()
                 .expect("data line")
-                .to_write(&mut out)
+                .write_to(&mut out)
                 .await?;
             let line = decode::all_at_once(&out)?;
             assert_eq!(line.check_error().expect("err").0, b"the error");
@@ -73,9 +73,9 @@ mod streaming {
             for channel in &[Channel::Data, Channel::Error, Channel::Progress] {
                 let mut out = Vec::new();
                 let band = PacketLine::Data(b"band data")
-                    .to_band(*channel)
+                    .as_band(*channel)
                     .expect("data is valid for band");
-                band.to_write(&mut out).await?;
+                band.write_to(&mut out).await?;
                 let line = decode::all_at_once(&out)?;
                 assert_eq!(line.decode_band().expect("valid band"), band);
             }

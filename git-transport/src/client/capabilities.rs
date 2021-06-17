@@ -139,7 +139,7 @@ impl Capabilities {
         capabilities_or_version: &'a git_packetline::PacketLine<'_>,
     ) -> Result<(git_packetline::immutable::Text<'a>, Protocol), client::Error> {
         let first_line = capabilities_or_version
-            .to_text()
+            .as_text()
             .ok_or(client::Error::ExpectedLine("text"))?;
 
         let line = first_line.as_bstr();

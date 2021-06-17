@@ -250,7 +250,7 @@ impl<'event> SectionBody<'event> {
     // We hit this lint because of the unreachable!() call may panic, but this
     // is a clippy bug (rust-clippy#6699), so we allow this lint for this
     // function.
-    #[allow(clippy::clippy::missing_panics_doc)]
+    #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
         let range = self.get_value_range_by_key(key);
@@ -1843,12 +1843,14 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
                     prev_section_header = Some(header);
                     section_events = SectionBody::new();
                 }
-                e @ Event::Key(_)
-                | e @ Event::Value(_)
-                | e @ Event::ValueNotDone(_)
-                | e @ Event::ValueDone(_)
-                | e @ Event::KeyValueSeparator => section_events.0.push(e),
-                e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
+                e
+                @
+                (Event::Key(_)
+                | Event::Value(_)
+                | Event::ValueNotDone(_)
+                | Event::ValueDone(_)
+                | Event::KeyValueSeparator) => section_events.0.push(e),
+                e @ (Event::Comment(_) | Event::Newline(_) | Event::Whitespace(_)) => {
                     section_events.0.push(e);
                 }
             }
