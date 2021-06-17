@@ -108,6 +108,7 @@ members = [
     "git-pack",
     "git-odb",
     "git-tempfile",
+    "git-lock",
     "git-repository",
     "gitoxide-core",
     "git-tui",

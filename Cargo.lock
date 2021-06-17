@@ -945,6 +945,14 @@ name = "git-index"
 version = "0.0.0"
 
 [[package]]
+name = "git-lock"
+version = "0.0.0"
+dependencies = [
+ "git-tempfile",
+ "git-testtools",
+]
+
+[[package]]
 name = "git-object"
 version = "0.10.0"
 dependencies = [

@@ -33,7 +33,7 @@ mod registration {
                 let _keep = git_tempfile::new(dir.path());
                 assert_eq!(filecount_in(&dir), 1, "a temp file was created");
             }
-            assert_eq!(filecount_in(&dir), 0, "tempfile was automatically removed");
+            assert_eq!(filecount_in(&dir), 0, "lock was automatically removed");
             Ok(())
         }
     }

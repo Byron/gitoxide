@@ -1,0 +1,21 @@
+[package]
+name = "git-lock"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A git-style lock-file implementation"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+include = ["src/**/*"]
+
+[lib]
+doctest = false
+test = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+git-tempfile = { version = "0.1.0", path = "../git-tempfile" }
+
+[dev-dependencies]
+git-testtools = { version = "^0.3", path = "../tests/tools" }
