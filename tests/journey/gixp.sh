@@ -4,6 +4,26 @@ set -eu
 title plumbing "${kind}"
 snapshot="$snapshot/plumbing"
 title "gixp pack-receive"
+(when "testing 'git-tempfile'"
+  snapshot="$snapshot/git-tempfile"
+  cd git-tempfile
+  ABORTED=143
+
+  (when "running the example program to raise a signal with a tempfile present"
+    it "fails as the process aborts" && {
+      expect_run $ABORTED cargo run --example delete-tempfiles-on-sigterm
+    }
+    TEMPFILE="$(cargo run --example delete-tempfiles-on-sigterm || true)"
+    it "outputs a tempfile with an expected name" && {
+      expect_run $SUCCESSFULLY test "$TEMPFILE" = "tempfile.ext"
+    }
+    it "cleans up the tempfile '$TEMPFILE' it created" && {
+      expect_run $WITH_FAILURE test -e "$TEMPFILE"
+    }
+  )
+
+)
+title "gixp pack-receive"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"
   (small-repo-in-sandbox
