@@ -5,11 +5,18 @@ use std::path::Path;
 pub struct Retries {
     /// How often to retry if an interrupt happens.
     on_interrupt: usize,
+    /// How many parent directories can be created in total.
+    /// Note that this includes retries needed to combat racy behaviour
+    /// from other processes trying to delete empty directories.
+    on_parent_missing: usize,
 }
 
 impl Default for Retries {
     fn default() -> Self {
-        Retries { on_interrupt: 10 }
+        Retries {
+            on_interrupt: 10,
+            on_parent_missing: 100,
+        }
     }
 }
 
@@ -100,7 +107,11 @@ impl<'a> Iterator for Iter<'a> {
                 Ok(()) => Some(Ok(dir)),
                 Err(err) => match err.kind() {
                     AlreadyExists => Some(Ok(dir)),
+                    NotFound if self.retries.on_parent_missing <= 1 => {
+                        self.pernanent_failure(dir, NotFound, self.original_retries.on_parent_missing)
+                    }
                     NotFound => {
+                        self.retries.on_parent_missing -= 1;
                         self.cursors.push(dir);
                         self.cursors.push(match dir.parent() {
                             None => return self.pernanent_failure(dir, InvalidInput, 1),
