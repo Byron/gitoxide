@@ -176,6 +176,7 @@ where
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
     if let Some(stats) = res.1.as_ref() {
+        #[allow(clippy::single_match)]
         match output_statistics {
             Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
             #[cfg(feature = "serde1")]

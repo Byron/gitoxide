@@ -112,12 +112,6 @@ impl Store {
                 "At this point we have decompressed everything and given 'size' should match"
             );
             buf.copy_within(decompressed_body_bytes_sans_header, 0);
-            buf.resize(size, 0);
-            Ok(git_pack::data::Object {
-                kind,
-                data: buf,
-                pack_location: None,
-            })
         } else {
             buf.resize(bytes_read + size + header_size, 0);
             {
@@ -139,12 +133,12 @@ impl Store {
                 );
             };
             buf.copy_within(decompressed_start + header_size.., 0);
-            buf.resize(size, 0);
-            Ok(git_pack::data::Object {
-                kind,
-                data: buf,
-                pack_location: None,
-            })
         }
+        buf.resize(size, 0);
+        Ok(git_pack::data::Object {
+            kind,
+            data: buf,
+            pack_location: None,
+        })
     }
 }

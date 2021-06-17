@@ -13,6 +13,7 @@ impl<T> StreamingPeekableIter<T>
 where
     T: AsyncRead + Unpin,
 {
+    #[allow(clippy::needless_lifetimes)] // TODO: remove once this is clippy false positive is fixed
     async fn read_line_inner<'a>(
         reader: &mut T,
         buf: &'a mut Vec<u8>,

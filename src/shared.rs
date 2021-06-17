@@ -225,7 +225,7 @@ pub fn from_env<T: argh::TopLevelCommand>() -> T {
     T::from_args(&[strs[0]], &strs[1..]).unwrap_or_else(|early_exit| {
         // This allows us to make subcommands mandatory,
         // and trigger a helpful message unless --version is specified
-        if let Some(arg) = std::env::args().skip(1).next() {
+        if let Some(arg) = std::env::args().nth(1) {
             if arg == "--version" {
                 println!("{}", VERSION);
                 std::process::exit(0);
