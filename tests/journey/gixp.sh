@@ -13,7 +13,7 @@ title "gixp pack-receive"
     it "fails as the process aborts" && {
       expect_run $ABORTED cargo run --example delete-tempfiles-on-sigterm
     }
-    TEMPFILE="$(cargo run --example delete-tempfiles-on-sigterm || true)"
+    TEMPFILE="$(cargo run --example delete-tempfiles-on-sigterm 2>/dev/null || true)"
     it "outputs a tempfile with an expected name" && {
       expect_run $SUCCESSFULLY test "$TEMPFILE" = "tempfile.ext"
     }
