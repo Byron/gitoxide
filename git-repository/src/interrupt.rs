@@ -162,10 +162,6 @@ pub fn trigger() {
 }
 
 /// Sets the interrupt request to false, thus allowing those checking for [`is_triggered()`] to proceed.
-///
-/// Call this in code that is able to trigger an interrupt.
-/// This may also be performed by the [`ResetOnDrop`] helper to assure the trigger state is returned
-/// to its original state.
 pub fn reset() {
     IS_INTERRUPTED.store(false, Ordering::SeqCst);
 }

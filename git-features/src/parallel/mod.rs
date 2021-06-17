@@ -6,8 +6,7 @@
 //! made available to a `consume(…)` function to process input. The result is sent to the [`Reduce`] running in the calling
 //! thread to aggregate the results into a single output, which is returned by [`in_parallel()`].
 //!
-//! Interruptions can be achieved by checking for [`is_interrupted()`][crate::interrupt::is_triggered()] in the input iterator
-//! or by letting the reducers [`feed(…)`][Reduce::feed()]` method fail.
+//! Interruptions can be achieved by letting the reducers [`feed(…)`][Reduce::feed()]` method fail.
 //!
 //! It gets a boost in usability as it allows threads to borrow variables from the stack, most commonly the repository itself
 //! or the data to work on.
