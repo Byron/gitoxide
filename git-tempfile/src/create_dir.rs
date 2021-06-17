@@ -32,8 +32,8 @@ mod error {
                 display("Intermediate failure with error: {:?}", kind)
                 from()
             }
-            Permanent { err: std::io::Error, dir: PathBuf, attempts: usize } {
-                display("Permanently failing to create directory {:?} after {} attempts", dir, attempts)
+            Permanent { err: std::io::Error, dir: PathBuf, attempts: Option<usize> } {
+                display("Permanently failing to create directory {:?}{}", dir, match attempts {Some(attempts) => format!(" after {} attempts", attempts), None => "".into()})
                 source(err)
             }
         }
@@ -83,13 +83,13 @@ impl<'a> Iter<'a> {
         &mut self,
         dir: &Path,
         err: impl Into<std::io::Error>,
-        attempts: usize,
+        attempts: impl Into<Option<usize>>,
     ) -> Option<Result<&'a Path, Error>> {
         self.cursors.clear();
         Some(Err(Error::Permanent {
             err: err.into(),
             dir: dir.to_owned(),
-            attempts,
+            attempts: attempts.into(),
         }))
     }
 
@@ -107,7 +107,8 @@ impl<'a> Iterator for Iter<'a> {
             Some(dir) => match std::fs::create_dir(dir) {
                 Ok(()) => Some(Ok(dir)),
                 Err(err) => match err.kind() {
-                    AlreadyExists => Some(Ok(dir)),
+                    AlreadyExists if dir.is_dir() => Some(Ok(dir)),
+                    AlreadyExists => self.pernanent_failure(dir, err, None),
                     NotFound if self.retries.on_create_directory <= 1 => {
                         self.pernanent_failure(dir, NotFound, self.original_retries.on_create_directory)
                     }

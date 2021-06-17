@@ -78,13 +78,31 @@ mod create_dir {
             },
         );
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == 1
+            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == Some(1)
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
         );
         assert!(it.next().is_none(), "iterator depleted");
         assert!(!new_dir.is_dir(), "the wasn't created");
+        Ok(())
+    }
+
+    #[test]
+    fn an_existing_file_makes_directory_creation_fail_permanently() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let new_dir = dir.path().join("also-file");
+        std::fs::write(&new_dir, &[42])?;
+        let mut it = create_dir::Iter::new(&new_dir);
+        assert!(
+            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == None
+                                                                    && err.kind() == AlreadyExists
+                                                                    && dir == new_dir),
+            "parent dir is not present and we run out of attempts"
+        );
+
+        let mut it = create_dir::Iter::new(&new_dir);
+        dbg!(it.next());
         Ok(())
     }
 }
