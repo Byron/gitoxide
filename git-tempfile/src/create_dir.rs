@@ -4,18 +4,19 @@ use std::path::Path;
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Retries {
     /// How often to retry if an interrupt happens.
-    on_interrupt: usize,
-    /// How many parent directories can be created in total.
-    /// Note that this includes retries needed to combat racy behaviour
-    /// from other processes trying to delete empty directories.
-    on_parent_missing: usize,
+    pub on_interrupt: usize,
+    /// How many directories can be created in total. 1 means only the target directory itself can be created and
+    /// not a single parent directory.
+    /// Note that this also counts towards retries needed to combat racy behaviour from other
+    /// processes trying to delete empty directories.
+    pub on_create_directory: usize,
 }
 
 impl Default for Retries {
     fn default() -> Self {
         Retries {
             on_interrupt: 10,
-            on_parent_missing: 100,
+            on_create_directory: 100,
         }
     }
 }
@@ -31,7 +32,7 @@ mod error {
                 display("Intermediate failure with error: {:?}", kind)
                 from()
             }
-            Permanent{ err: std::io::Error, dir: PathBuf, attempts: usize } {
+            Permanent { err: std::io::Error, dir: PathBuf, attempts: usize } {
                 display("Permanently failing to create directory {:?} after {} attempts", dir, attempts)
                 source(err)
             }
@@ -107,11 +108,11 @@ impl<'a> Iterator for Iter<'a> {
                 Ok(()) => Some(Ok(dir)),
                 Err(err) => match err.kind() {
                     AlreadyExists => Some(Ok(dir)),
-                    NotFound if self.retries.on_parent_missing <= 1 => {
-                        self.pernanent_failure(dir, NotFound, self.original_retries.on_parent_missing)
+                    NotFound if self.retries.on_create_directory <= 1 => {
+                        self.pernanent_failure(dir, NotFound, self.original_retries.on_create_directory)
                     }
                     NotFound => {
-                        self.retries.on_parent_missing -= 1;
+                        self.retries.on_create_directory -= 1;
                         self.cursors.push(dir);
                         self.cursors.push(match dir.parent() {
                             None => return self.pernanent_failure(dir, InvalidInput, 1),

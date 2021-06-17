@@ -1,5 +1,8 @@
 mod create_dir {
-    use git_tempfile::{create_dir, create_dir::Error::*};
+    use git_tempfile::{
+        create_dir,
+        create_dir::{Error::*, Retries},
+    };
     pub use std::io::ErrorKind::*;
 
     #[test]
@@ -58,7 +61,30 @@ mod create_dir {
             new_dir,
             "target directory is created"
         );
+        assert!(it.next().is_none(), "iterator depleted");
         assert!(new_dir.is_dir(), "the directory exists");
+        Ok(())
+    }
+
+    #[test]
+    fn multiple_intermediate_directories_are_created_up_to_retries_limit() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let new_dir = dir.path().join("s1").join("s2").join("new");
+        let mut it = create_dir::Iter::new_with_retries(
+            &new_dir,
+            Retries {
+                on_create_directory: 1,
+                ..Default::default()
+            },
+        );
+        assert!(
+            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == 1
+                                                                    && err.kind() == NotFound
+                                                                    && dir == new_dir),
+            "parent dir is not present and we run out of attempts"
+        );
+        assert!(it.next().is_none(), "iterator depleted");
+        assert!(!new_dir.is_dir(), "the wasn't created");
         Ok(())
     }
 }
