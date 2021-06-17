@@ -60,8 +60,7 @@ debug-small: always ## minimal dependencies, at cost of performance
 target/release/gix: always
 	cargo build --release --no-default-features --features small
 
-lint: ## Run lints with clippy
-	cargo clippy
+lint: clippy ## Run lints with clippy
 
 ##@ Testing
 
@@ -77,6 +76,8 @@ doc: ## Run cargo doc on all crates
 
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all
+	cargo clippy --all --no-default-features --features small
+	cargo clippy --all --no-default-features --features light-async
 
 check: ## Build all code in suitable configurations
 	cargo check --all
