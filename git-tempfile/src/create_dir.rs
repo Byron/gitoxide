@@ -2,16 +2,14 @@
 use std::path::Path;
 
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
-pub struct Options {
+pub struct Retries {
     /// How often to retry if an interrupt happens.
-    retries_on_interrupt: usize,
+    on_interrupt: usize,
 }
 
-impl Default for Options {
+impl Default for Retries {
     fn default() -> Self {
-        Options {
-            retries_on_interrupt: 10,
-        }
+        Retries { on_interrupt: 10 }
     }
 }
 
@@ -26,8 +24,8 @@ mod error {
                 display("Intermediate failure with error: {:?}", kind)
                 from()
             }
-            Permanent{ err: std::io::Error, dir: PathBuf } {
-                display("Permanently failing to create directory {:?}", dir)
+            Permanent{ err: std::io::Error, dir: PathBuf, attempts: usize } {
+                display("Permanently failing to create directory {:?} after {} attempts", dir, attempts)
                 source(err)
             }
         }
@@ -51,22 +49,39 @@ pub use error::Error;
 /// * `Some(Err(Error::Permanent))` is yielded exactly once on failure.
 pub struct Iter<'a> {
     cursors: Vec<&'a Path>,
-    options: Options,
+    retries: Retries,
+    original_retries: Retries,
 }
 
 impl<'a> Iter<'a> {
     pub fn new(target: &'a Path) -> Self {
+        let retries = Default::default();
         Iter {
             cursors: vec![target],
-            options: Default::default(),
+            original_retries: retries,
+            retries,
         }
     }
 
-    fn pernanent_failure(&mut self, dir: &Path, err: impl Into<std::io::Error>) -> Option<Result<&'a Path, Error>> {
+    pub fn new_with_retries(target: &'a Path, retries: Retries) -> Self {
+        Iter {
+            cursors: vec![target],
+            original_retries: retries,
+            retries,
+        }
+    }
+
+    fn pernanent_failure(
+        &mut self,
+        dir: &Path,
+        err: impl Into<std::io::Error>,
+        attempts: usize,
+    ) -> Option<Result<&'a Path, Error>> {
         self.cursors.clear();
         Some(Err(Error::Permanent {
             err: err.into(),
             dir: dir.to_owned(),
+            attempts,
         }))
     }
 
@@ -88,14 +103,16 @@ impl<'a> Iterator for Iter<'a> {
                     NotFound => {
                         self.cursors.push(dir);
                         self.cursors.push(match dir.parent() {
-                            None => return self.pernanent_failure(dir, InvalidInput),
+                            None => return self.pernanent_failure(dir, InvalidInput, 1),
                             Some(parent) => parent,
                         });
                         self.intermediate_failure(err)
                     }
-                    Interrupted if self.options.retries_on_interrupt == 0 => self.pernanent_failure(dir, Interrupted),
+                    Interrupted if self.retries.on_interrupt <= 1 => {
+                        self.pernanent_failure(dir, Interrupted, self.original_retries.on_interrupt)
+                    }
                     Interrupted => {
-                        self.options.retries_on_interrupt -= 1;
+                        self.retries.on_interrupt -= 1;
                         self.cursors.push(dir);
                         self.intermediate_failure(err)
                     }
