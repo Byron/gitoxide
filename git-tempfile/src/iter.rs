@@ -16,15 +16,15 @@ impl<'a> CreateDir<'a> {
 }
 
 impl<'a> Iterator for CreateDir<'a> {
-    type Item = std::io::Result<()>;
+    type Item = std::io::Result<&'a Path>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use std::io::ErrorKind::*;
         match self.cursor.take() {
             Some(cursor) => match std::fs::create_dir(cursor) {
-                Ok(()) => Some(Ok(())),
+                Ok(()) => Some(Ok(cursor)),
                 Err(err) => match err.kind() {
-                    AlreadyExists => Some(Ok(())),
+                    AlreadyExists => Some(Ok(cursor)),
                     _ => todo!("other errors"),
                 },
             },
