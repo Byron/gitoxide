@@ -93,6 +93,8 @@ mod create_dir {
         let dir = tempfile::tempdir()?;
         let new_dir = dir.path().join("also-file");
         std::fs::write(&new_dir, &[42])?;
+        assert!(new_dir.is_file());
+
         let mut it = create_dir::Iter::new(&new_dir);
         assert!(
             matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == None
@@ -100,9 +102,44 @@ mod create_dir {
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
         );
+        assert!(it.next().is_none(), "iterator depleted");
+        assert!(new_dir.is_file(), "file is untouched");
+        Ok(())
+    }
 
+    #[test]
+    fn racy_directory_creation_causes_new_directory_to_be_deleted() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let new_dir = dir.path().join("a").join("new");
+        let parent_dir = new_dir.parent().expect("available");
         let mut it = create_dir::Iter::new(&new_dir);
-        dbg!(it.next());
+
+        assert!(
+            matches!(it.next(), Some(Err(Intermediate(k))) if k == NotFound),
+            "dir is not present, and we go up a level"
+        );
+        assert!(
+            matches!(it.next(), Some(Ok(dir)) if dir == parent_dir),
+            "parent dir is created"
+        );
+        // Someone deletes the new directory
+        std::fs::remove_dir(parent_dir)?;
+
+        assert!(
+            matches!(it.next(), Some(Err(Intermediate(k))) if k == NotFound),
+            "now when it tries the actual dir its not found"
+        );
+        assert!(
+            matches!(it.next(), Some(Ok(dir)) if dir == parent_dir),
+            "parent dir is created as it retries"
+        );
+        assert!(
+            matches!(it.next(), Some(Ok(dir)) if dir == new_dir),
+            "target dir is created successfully"
+        );
+        assert!(it.next().is_none(), "iterator depleted");
+        assert!(new_dir.is_dir());
+
         Ok(())
     }
 }
