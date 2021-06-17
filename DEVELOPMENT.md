@@ -75,6 +75,9 @@
     implement it ahead of time once there is a specification to follow.
   * It looks like Git prepares to support it by using compile time, we can support it at runtime though with minimal cost. If needed,
     we can later remove support using a cargo feature toggle.
+* **symbolic links do not exist** as far as we are concerned
+  * in older, probably linux only, git versions symbolic links were used for symbolic references for example. This required special handling
+    in some places. We don't implement that and assume more modern repositories.
     
 ## Sha256
 
