@@ -27,11 +27,12 @@ mod error {
     #[derive(Debug)]
     pub enum Error<'a> {
         Intermediate {
+            dir: &'a Path,
             kind: std::io::ErrorKind,
         },
         Permanent {
-            err: std::io::Error,
             dir: &'a Path,
+            err: std::io::Error,
             attempts: Option<usize>,
         },
     }
@@ -39,7 +40,12 @@ mod error {
     impl<'a> fmt::Display for Error<'a> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Error::Intermediate { kind } => write!(f, "Intermediae failure with error: {:?}", kind),
+                Error::Intermediate { dir, kind } => write!(
+                    f,
+                    "Intermediae failure creating {:?} with error: {:?}",
+                    dir.display(),
+                    kind
+                ),
                 Error::Permanent { err: _, dir, attempts } => write!(
                     f,
                     "Permanently failing to create directory {:?}{}",
@@ -107,8 +113,8 @@ impl<'a> Iter<'a> {
         }))
     }
 
-    fn intermediate_failure(&self, err: std::io::Error) -> Option<Result<&'a Path, Error<'a>>> {
-        Some(Err(Error::Intermediate { kind: err.kind() }))
+    fn intermediate_failure(&self, dir: &'a Path, err: std::io::Error) -> Option<Result<&'a Path, Error<'a>>> {
+        Some(Err(Error::Intermediate { dir, kind: err.kind() }))
     }
 }
 
@@ -133,7 +139,7 @@ impl<'a> Iterator for Iter<'a> {
                             None => return self.pernanent_failure(dir, InvalidInput, 1),
                             Some(parent) => parent,
                         });
-                        self.intermediate_failure(err)
+                        self.intermediate_failure(dir, err)
                     }
                     Interrupted if self.retries.on_interrupt <= 1 => {
                         self.pernanent_failure(dir, Interrupted, self.original_retries.on_interrupt)
@@ -141,7 +147,7 @@ impl<'a> Iterator for Iter<'a> {
                     Interrupted => {
                         self.retries.on_interrupt -= 1;
                         self.cursors.push(dir);
-                        self.intermediate_failure(err)
+                        self.intermediate_failure(dir, err)
                     }
                     kind => todo!("{:?}", kind),
                 },
