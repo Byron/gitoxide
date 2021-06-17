@@ -10,8 +10,9 @@
 //!
 //! # Note
 //!
-//! Applications setting their own signal handlers on termination and want to be called after the ones of this crate
-//! can call [`force_setup()`] to install their own handlers.
+//! Applications setting their own signal handlers on termination to abort the process probably want to be called after the ones of this crate
+//! can call [`force_setup()`] before installing their own handlers.
+//! By default, our signal handlers will emulate the default behaviour and abort the process after cleaning temporary files.
 //!
 //! # Limitations
 //!
