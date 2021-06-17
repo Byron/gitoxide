@@ -22,15 +22,8 @@ impl Default for Retries {
 }
 
 mod error {
-    use std::path::Path;
+    use std::{fmt, path::Path};
 
-    //     {
-    //     display("Intermediate failure with error: {:?}", kind)
-    //     from()
-    // }{
-    //                 display("Permanently failing to create directory {:?}{}", dir, match attempts {Some(attempts) => format!(" after {} attempts", attempts), None => "".into()})
-    //                 source(err)
-    //             }
     #[derive(Debug)]
     pub enum Error<'a> {
         Intermediate {
@@ -41,6 +34,32 @@ mod error {
             dir: &'a Path,
             attempts: Option<usize>,
         },
+    }
+
+    impl<'a> fmt::Display for Error<'a> {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Error::Intermediate { kind } => write!(f, "Intermediae failure with error: {:?}", kind),
+                Error::Permanent { err: _, dir, attempts } => write!(
+                    f,
+                    "Permanently failing to create directory {:?}{}",
+                    dir,
+                    match attempts {
+                        Some(attempts) => std::borrow::Cow::from(format!(" after {} attempts", attempts)),
+                        None => "".into(),
+                    }
+                ),
+            }
+        }
+    }
+
+    impl<'a> std::error::Error for Error<'a> {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Error::Permanent { err, .. } => Some(err),
+                _ => None,
+            }
+        }
     }
 }
 pub use error::Error;
