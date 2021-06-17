@@ -149,7 +149,7 @@ impl<'a> Iterator for Iter<'a> {
                         self.cursors.push(dir);
                         self.intermediate_failure(dir, err)
                     }
-                    kind => todo!("{:?}", kind),
+                    _unexpected_kind => self.pernanent_failure(dir, err, None),
                 },
             },
             None => None,
