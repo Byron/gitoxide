@@ -115,6 +115,8 @@ on your needs, for _Linux_, _MacOS_ and _Windows_.
 `cargo` is the Rust package manager which can easily be obtained through [rustup][rustup]. With it, you can build your own binary
 effortlessly and for your particular CPU for additional performance gains.
 
+The minimum required cargo version is _the latest stable_ release, but may run on older stable releases as well.
+
 ```
 # The default installation, 'max'
 cargo install gitoxide
