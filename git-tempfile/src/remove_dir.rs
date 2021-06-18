@@ -1,12 +1,12 @@
-/// The amount of retries to do during various aspects of the directory removal.
+/// The amount of retries to do during various aspects of the directory deletion.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Retries {
-    /// How many directories can be deleted in total. 1 means only the target directory itself can be created and
-    /// not a single parent directory.
-    /// Note that this also counts towards retries needed to combat racy behaviour from other
-    /// processes trying to delete empty directories.
-    pub on_create_directory: usize,
-    /// How often to retry if an interrupt happens.
+    /// How many times we can try to delete the whole directory while being disturbed by racy interference.
+    /// This count combats racy situations where another process is trying to create a directory that we want to delete,
+    /// and is deliberately lower than those who do creation. That way, creation usually wins which is preferable as we run
+    /// as part of the cleanup.
+    pub to_delete_entire_directory_tree_until_boundary: usize,
+    /// How often to retry to delete a single directory if an interrupt happens, as caused by signals.
     pub on_interrupt: usize,
 }
 
@@ -14,7 +14,7 @@ impl Default for Retries {
     fn default() -> Self {
         Retries {
             on_interrupt: 10,
-            on_create_directory: 100,
+            to_delete_entire_directory_tree_until_boundary: 1,
         }
     }
 }
