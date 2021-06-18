@@ -1,9 +1,12 @@
-use std::io::{stdout, Write};
-use std::path::PathBuf;
+use git_tempfile::ContainingDirectory;
+use std::{
+    io::{stdout, Write},
+    path::PathBuf,
+};
 
 fn main() -> std::io::Result<()> {
     let filepath = PathBuf::new().join("tempfile.ext");
-    let _tempfile = git_tempfile::at_path(&filepath)?;
+    let _tempfile = git_tempfile::at_path(&filepath, ContainingDirectory::Exists)?;
     assert!(filepath.is_file(), "a tempfile was created");
 
     writeln!(stdout(), "{}", filepath.display())?;

@@ -156,3 +156,13 @@ impl<'a> Iterator for Iter<'a> {
         }
     }
 }
+
+pub fn all(dir: &Path, retries: Retries) -> std::io::Result<&Path> {
+    for res in Iter::new_with_retries(dir, retries) {
+        match res {
+            Err(Error::Permanent { err, .. }) => return Err(err),
+            Err(Error::Intermediate { .. }) | Ok(_) => continue,
+        }
+    }
+    Ok(dir)
+}

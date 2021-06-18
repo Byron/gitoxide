@@ -56,6 +56,7 @@ static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
 });
 
 /// Define how our signal handlers act
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub enum SignalHandlerMode {
     /// Delete all remaining registered tempfiles on termination.
     DeleteTempfilesOnTermination = 0,
@@ -75,6 +76,15 @@ impl SignalHandlerMode {
         #[cfg(test)]
         return SignalHandlerMode::DeleteTempfilesOnTermination;
     }
+}
+
+/// A type expressing the ways we can deal with directories containing a tempfile.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
+pub enum ContainingDirectory {
+    /// Assume the directory for the tempfile exists and cause failure if it doesn't
+    Exists,
+    /// Create the directory recursively with the given amount of retries in a way that is somewhat race resistant
+    CreateRecursiveAndRaceProofIfNeeded(create_dir::Retries),
 }
 
 /// # Note
@@ -107,13 +117,13 @@ impl From<NamedTempFile> for ForksafeTempfile {
 }
 
 /// A shortcut to [`Registration::new()`].
-pub fn new(containing_directory: impl AsRef<Path>) -> io::Result<Registration> {
-    Registration::new(containing_directory)
+pub fn new(containing_directory: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
+    Registration::new(containing_directory, directory)
 }
 
 /// A shortcut to [`Registration::at_path()`].
-pub fn at_path(path: impl AsRef<Path>) -> io::Result<Registration> {
-    Registration::at_path(path)
+pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
+    Registration::at_path(path, directory)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.
