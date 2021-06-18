@@ -94,7 +94,7 @@ pub enum Subcommands {
 
         /// The URLs or path from which to receive the pack.
         ///
-        /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+        /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
         url: String,
 
         /// The directory into which to write the received pack and index.
@@ -105,7 +105,7 @@ pub enum Subcommands {
     /// List remote references from a remote identified by a url.
     ///
     /// This is the plumbing equivalent of `git ls-remote`.
-    /// Supported URLs are documented here: https://www.git-scm.com/docs/git-clone#_git_urls
+    /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
     #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersion)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
@@ -116,7 +116,7 @@ pub enum Subcommands {
 
         /// the URLs or path from which to receive references
         ///
-        /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
+        /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
         url: String,
     },
     #[clap(setting = AppSettings::ColoredHelp)]

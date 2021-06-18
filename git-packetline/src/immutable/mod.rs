@@ -31,7 +31,7 @@ impl<'a> PacketLine<'a> {
     ///
     /// This works for any data received in an error [channel][crate::Channel].
     ///
-    /// Note that this creates an unchecked error using the slice verbatim, which is useful to [serialize it][Error::to_write()].
+    /// Note that this creates an unchecked error using the slice verbatim, which is useful to [serialize it][Error::write_to()].
     /// See [`check_error()`][PacketLine::check_error()] for a version that assures the error information is in the expected format.
     pub fn as_error(&self) -> Option<Error<'_>> {
         self.as_slice().map(Error)
