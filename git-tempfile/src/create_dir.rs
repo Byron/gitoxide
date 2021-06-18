@@ -4,11 +4,13 @@ use std::path::Path;
 /// The amount of retries to do during various aspects of the directory creation.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Retries {
-    /// How many directories can be created in total. 1 means only the target directory itself can be created and
-    /// not a single parent directory.
-    /// Note that this also counts towards retries needed to combat racy behaviour from other
-    /// processes trying to delete empty directories.
-    pub on_create_directory: usize,
+    /// How many times the whole directory can be created.
+    /// This count combats racy situations where another process is trying to remove a directory that we want to create,
+    /// and is deliberately higher than those who do deletion. That way, creation usually wins.
+    pub to_create_entire_directory: usize,
+    /// The amount of times we can try to create a directory because we couldn't as the parent didn't exist.
+    /// This amounts to the maximum subdirectory depth we allow to be created. Counts once per attempt to create the entire directory.
+    pub on_create_directory_failure: usize,
     /// How often to retry if an interrupt happens.
     pub on_interrupt: usize,
 }
@@ -17,7 +19,8 @@ impl Default for Retries {
     fn default() -> Self {
         Retries {
             on_interrupt: 10,
-            on_create_directory: 100,
+            to_create_entire_directory: 5,
+            on_create_directory_failure: 25,
         }
     }
 }
@@ -81,6 +84,8 @@ pub struct Iter<'a> {
     cursors: Vec<&'a Path>,
     retries: Retries,
     original_retries: Retries,
+    /// Set once each time we try creating the entire directory
+    currently_creating_directories: bool,
 }
 
 impl<'a> Iter<'a> {
@@ -91,6 +96,7 @@ impl<'a> Iter<'a> {
             cursors: vec![target],
             original_retries: retries,
             retries,
+            currently_creating_directories: false,
         }
     }
 
@@ -100,6 +106,7 @@ impl<'a> Iter<'a> {
             cursors: vec![target],
             original_retries: retries,
             retries,
+            currently_creating_directories: false,
         }
     }
 
@@ -129,15 +136,34 @@ impl<'a> Iterator for Iter<'a> {
         use std::io::ErrorKind::*;
         match self.cursors.pop() {
             Some(dir) => match std::fs::create_dir(dir) {
-                Ok(()) => Some(Ok(dir)),
+                Ok(()) => {
+                    self.currently_creating_directories = true;
+                    Some(Ok(dir))
+                }
                 Err(err) => match err.kind() {
-                    AlreadyExists if dir.is_dir() => Some(Ok(dir)),
-                    AlreadyExists => self.pernanent_failure(dir, err, None),
-                    NotFound if self.retries.on_create_directory <= 1 => {
-                        self.pernanent_failure(dir, NotFound, self.original_retries.on_create_directory)
+                    AlreadyExists if dir.is_dir() => {
+                        self.currently_creating_directories = true;
+                        Some(Ok(dir))
+                    }
+                    AlreadyExists => self.pernanent_failure(dir, err, None), // is non-directory
+                    NotFound if self.retries.on_create_directory_failure <= 1 => {
+                        self.pernanent_failure(dir, NotFound, self.original_retries.on_create_directory_failure)
                     }
                     NotFound => {
-                        self.retries.on_create_directory -= 1;
+                        if self.currently_creating_directories {
+                            self.currently_creating_directories = false;
+                            if self.retries.to_create_entire_directory <= 1 {
+                                return self.pernanent_failure(
+                                    dir,
+                                    NotFound,
+                                    self.original_retries.to_create_entire_directory,
+                                );
+                            }
+                            self.retries.to_create_entire_directory -= 1;
+                            self.retries.on_create_directory_failure =
+                                self.original_retries.on_create_directory_failure;
+                        }
+                        self.retries.on_create_directory_failure -= 1;
                         self.cursors.push(dir);
                         self.cursors.push(match dir.parent() {
                             None => return self.pernanent_failure(dir, InvalidInput, 1),

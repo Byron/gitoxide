@@ -1,3 +1,15 @@
+mod all {
+    use git_tempfile::create_dir;
+
+    #[test]
+    fn a_deeply_nested_directory() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let target = &dir.path().join("1").join("2").join("3").join("4").join("5").join("6");
+        let dir = create_dir::all(target, Default::default())?;
+        assert_eq!(dir, target, "all subdirectories can be created");
+        Ok(())
+    }
+}
 mod iter {
     use git_tempfile::{
         create_dir,
@@ -73,7 +85,7 @@ mod iter {
         let mut it = create_dir::Iter::new_with_retries(
             &new_dir,
             Retries {
-                on_create_directory: 1,
+                on_create_directory_failure: 1,
                 ..Default::default()
             },
         );
@@ -106,12 +118,41 @@ mod iter {
         assert!(new_dir.is_file(), "file is untouched");
         Ok(())
     }
+    #[test]
+    fn racy_directory_creation_with_new_directory_being_deleted_not_enough_retries() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let new_dir = dir.path().join("a").join("b");
+        let parent_dir = new_dir.parent().unwrap();
+        let mut it = create_dir::Iter::new_with_retries(
+            &new_dir,
+            Retries {
+                to_create_entire_directory: 1,
+                // on_create_directory_failure: 2,
+                ..Default::default()
+            },
+        );
+
+        assert!(
+            matches!(it.nth(1), Some(Ok(dir)) if dir == parent_dir),
+            "parent dir is created"
+        );
+        // Someone deletes the new directory
+        std::fs::remove_dir(parent_dir)?;
+
+        assert!(
+            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == Some(1)
+                                                                    && err.kind() == NotFound
+                                                                    && dir == new_dir),
+            "we run out of attempts to retry to combat against racyness"
+        );
+        Ok(())
+    }
 
     #[test]
-    fn racy_directory_creation_causes_new_directory_to_be_deleted() -> crate::Result {
+    fn racy_directory_creation_with_new_directory_being_deleted() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let new_dir = dir.path().join("a").join("new");
-        let parent_dir = new_dir.parent().expect("available");
+        let parent_dir = new_dir.parent().unwrap();
         let mut it = create_dir::Iter::new(&new_dir);
 
         assert!(
