@@ -44,7 +44,7 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
 
     let res = rd.read_line().await;
     assert_eq!(
-        res.expect("line")??.to_text().expect("data line").0.as_bstr(),
+        res.expect("line")??.as_text().expect("data line").0.as_bstr(),
         b"NAK".as_bstr()
     );
     let mut seen_texts = Vec::<BString>::new();
