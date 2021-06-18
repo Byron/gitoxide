@@ -90,7 +90,7 @@ mod iter {
             },
         );
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == Some(1)
+            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.on_create_directory_failure == 0
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
@@ -109,8 +109,7 @@ mod iter {
 
         let mut it = create_dir::Iter::new(&new_dir);
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == None
-                                                                    && err.kind() == AlreadyExists
+            matches!(it.next(), Some(Err(Permanent{ retries_left: _, dir, err })) if err.kind() == AlreadyExists
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
         );
@@ -127,7 +126,7 @@ mod iter {
             &new_dir,
             Retries {
                 to_create_entire_directory: 1,
-                // on_create_directory_failure: 2,
+                on_create_directory_failure: 2,
                 ..Default::default()
             },
         );
@@ -138,12 +137,11 @@ mod iter {
         );
         // Someone deletes the new directory
         std::fs::remove_dir(parent_dir)?;
-
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ attempts, dir, err })) if attempts == Some(1)
+            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.on_create_directory_failure == 0
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),
-            "we run out of attempts to retry to combat against racyness"
+            "we run out of attempts to retry to combat against raciness"
         );
         Ok(())
     }

@@ -26,6 +26,7 @@ impl Default for Retries {
 }
 
 mod error {
+    use crate::create_dir::Retries;
     use std::{fmt, path::Path};
 
     /// The error returned by [all()][super::all()].
@@ -38,7 +39,7 @@ mod error {
         Permanent {
             dir: &'a Path,
             err: std::io::Error,
-            attempts: Option<usize>,
+            retries_left: Retries,
         },
     }
 
@@ -51,14 +52,14 @@ mod error {
                     dir.display(),
                     kind
                 ),
-                Error::Permanent { err: _, dir, attempts } => write!(
-                    f,
-                    "Permanently failing to create directory {:?}{}",
+                Error::Permanent {
+                    err: _,
                     dir,
-                    match attempts {
-                        Some(attempts) => std::borrow::Cow::from(format!(" after {} attempts", attempts)),
-                        None => "".into(),
-                    }
+                    retries_left,
+                } => write!(
+                    f,
+                    "Permanently failing to create directory {:?} ({:?})",
+                    dir, retries_left
                 ),
             }
         }
@@ -118,13 +119,12 @@ impl<'a> Iter<'a> {
         &mut self,
         dir: &'a Path,
         err: impl Into<std::io::Error>,
-        attempts: impl Into<Option<usize>>,
     ) -> Option<Result<&'a Path, Error<'a>>> {
         self.cursors.clear();
         Some(Err(Error::Permanent {
             err: err.into(),
             dir,
-            attempts: attempts.into(),
+            retries_left: self.retries,
         }))
     }
 
@@ -149,41 +149,37 @@ impl<'a> Iterator for Iter<'a> {
                         self.state = State::CurrentlyCreatingDirectories;
                         Some(Ok(dir))
                     }
-                    AlreadyExists => self.pernanent_failure(dir, err, None), // is non-directory
-                    NotFound if self.retries.on_create_directory_failure <= 1 => {
-                        self.pernanent_failure(dir, NotFound, self.original_retries.on_create_directory_failure)
-                    }
+                    AlreadyExists => self.pernanent_failure(dir, err), // is non-directory
                     NotFound => {
+                        self.retries.on_create_directory_failure -= 1;
+                        if self.retries.on_create_directory_failure < 1 {
+                            return self.pernanent_failure(dir, NotFound);
+                        };
                         if let State::CurrentlyCreatingDirectories = self.state {
                             self.state = State::SearchingUpwardsForExistingDirectory;
                             if self.retries.to_create_entire_directory <= 1 {
-                                return self.pernanent_failure(
-                                    dir,
-                                    NotFound,
-                                    self.original_retries.to_create_entire_directory,
-                                );
+                                return self.pernanent_failure(dir, NotFound);
                             }
                             self.retries.to_create_entire_directory -= 1;
                             self.retries.on_create_directory_failure =
                                 self.original_retries.on_create_directory_failure;
                         }
-                        self.retries.on_create_directory_failure -= 1;
                         self.cursors.push(dir);
                         self.cursors.push(match dir.parent() {
-                            None => return self.pernanent_failure(dir, InvalidInput, 1),
+                            None => return self.pernanent_failure(dir, InvalidInput),
                             Some(parent) => parent,
                         });
                         self.intermediate_failure(dir, err)
                     }
-                    Interrupted if self.retries.on_interrupt <= 1 => {
-                        self.pernanent_failure(dir, Interrupted, self.original_retries.on_interrupt)
-                    }
                     Interrupted => {
                         self.retries.on_interrupt -= 1;
+                        if self.retries.on_interrupt <= 1 {
+                            return self.pernanent_failure(dir, Interrupted);
+                        };
                         self.cursors.push(dir);
                         self.intermediate_failure(dir, err)
                     }
-                    _unexpected_kind => self.pernanent_failure(dir, err, None),
+                    _unexpected_kind => self.pernanent_failure(dir, err),
                 },
             },
             None => None,
