@@ -27,7 +27,11 @@
 
 use dashmap::DashMap;
 use once_cell::sync::Lazy;
-use std::{io, path::Path, sync::atomic::AtomicUsize};
+use std::{
+    io,
+    path::{Path, PathBuf},
+    sync::atomic::AtomicUsize,
+};
 use tempfile::NamedTempFile;
 
 pub mod create_dir;
@@ -87,6 +91,20 @@ pub enum ContainingDirectory {
     /// Create the directory recursively with the given amount of retries in a way that is somewhat race resistant
     /// depending on the amount of retries.
     CreateAllRaceProof(create_dir::Retries),
+}
+
+/// A type expressing the ways we cleanup after ourselves.
+/// Note that cleanup has no effect if the tempfile is persisted.
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub enum Cleanup {
+    /// Remove the temporary file after usage if it wasn't persisted.
+    Tempfile,
+    /// Remove the temporary file as well the containing directories if they are empty in a somewhat race resistant
+    /// way until the given `directory`.
+    TempfileAndEmptyParentDirectoriesUntil {
+        /// The directory which shall not be removed even if it is empty.
+        border_directory: PathBuf,
+    },
 }
 
 /// # Note
