@@ -144,11 +144,10 @@ mod iter {
         );
         // Someone deletes the new directory, again
         std::fs::remove_dir(parent_dir)?;
-        dbg!(it.next());
-        dbg!(it.next());
-        dbg!(it.next());
+
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.on_create_directory_failure == 0
+            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.to_create_entire_directory == 0 
+                                                                    && retries_left.on_create_directory_failure == 1
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),
             "we run out of attempts to retry to combat against raciness"

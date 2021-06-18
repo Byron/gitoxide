@@ -154,10 +154,10 @@ impl<'a> Iterator for Iter<'a> {
                         self.retries.on_create_directory_failure -= 1;
                         if let State::CurrentlyCreatingDirectories = self.state {
                             self.state = State::SearchingUpwardsForExistingDirectory;
+                            self.retries.to_create_entire_directory -= 1;
                             if self.retries.to_create_entire_directory < 1 {
                                 return self.pernanent_failure(dir, NotFound);
                             }
-                            self.retries.to_create_entire_directory -= 1;
                             self.retries.on_create_directory_failure =
                                 self.original_retries.on_create_directory_failure;
                         }
