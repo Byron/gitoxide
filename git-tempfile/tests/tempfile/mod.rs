@@ -1,5 +1,6 @@
-mod iter;
+mod create_dir;
 mod registration;
+mod remove_dir;
 mod force_setup {
     #[test]
     fn can_be_called_multiple_times() {

@@ -33,6 +33,7 @@ use tempfile::NamedTempFile;
 pub mod create_dir;
 mod handler;
 mod registration;
+mod remove_dir;
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);

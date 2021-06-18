@@ -1,6 +1,7 @@
-#![allow(missing_docs)]
+//!
 use std::path::Path;
 
+/// The amount of retries to do during various aspects of the directory creation.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Retries {
     /// How often to retry if an interrupt happens.
@@ -24,12 +25,13 @@ impl Default for Retries {
 mod error {
     use std::{fmt, path::Path};
 
+    /// The error returned by [all()][super::all()].
+    #[allow(missing_docs)]
     #[derive(Debug)]
     pub enum Error<'a> {
-        Intermediate {
-            dir: &'a Path,
-            kind: std::io::ErrorKind,
-        },
+        /// A failure we will probably recover from by trying again.
+        Intermediate { dir: &'a Path, kind: std::io::ErrorKind },
+        /// A failure that ends the operation.
         Permanent {
             dir: &'a Path,
             err: std::io::Error,
@@ -82,6 +84,7 @@ pub struct Iter<'a> {
 }
 
 impl<'a> Iter<'a> {
+    /// Create a new instance that creates `target` when iterated with the default amount of [`Retries`].
     pub fn new(target: &'a Path) -> Self {
         let retries = Default::default();
         Iter {
@@ -91,6 +94,7 @@ impl<'a> Iter<'a> {
         }
     }
 
+    /// Create a new instance that creates `target` when iterated with the specified amount of `retries`.
     pub fn new_with_retries(target: &'a Path, retries: Retries) -> Self {
         Iter {
             cursors: vec![target],
@@ -157,6 +161,8 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
+/// Create all directories leading to `dir` including `dir` itself with the specified amount of `retries`.
+/// Returns the input `dir` on success that make it useful in expressions.
 pub fn all(dir: &Path, retries: Retries) -> std::io::Result<&Path> {
     for res in Iter::new_with_retries(dir, retries) {
         match res {

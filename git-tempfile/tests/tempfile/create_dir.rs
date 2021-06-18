@@ -1,4 +1,4 @@
-mod create_dir {
+mod iter {
     use git_tempfile::{
         create_dir,
         create_dir::{Error::*, Retries},
