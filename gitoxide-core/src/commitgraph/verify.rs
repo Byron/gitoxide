@@ -44,7 +44,7 @@ where
         .verify_integrity(noop_processor)
         .with_context(|| "Verification failure")?;
 
-    #[allow(clippy::single_match)]
+    #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
     match output_statistics {
         Some(OutputFormat::Human) => drop(print_human_output(&mut out, &stats)),
         #[cfg(feature = "serde1")]

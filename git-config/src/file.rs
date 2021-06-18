@@ -1833,6 +1833,7 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
 
         #[allow(clippy::explicit_into_iter_loop)] // it's not really an iterator (yet), needs streaming iterator support
         for event in parser.into_iter() {
+            #[allow(clippy::unnested_or_patterns)] // TODO: remove once Rust 1.53 is available on CI
             match event {
                 Event::SectionHeader(header) => {
                     if let Some(prev_header) = prev_section_header.take() {
@@ -1843,14 +1844,12 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
                     prev_section_header = Some(header);
                     section_events = SectionBody::new();
                 }
-                e
-                @
-                (Event::Key(_)
-                | Event::Value(_)
-                | Event::ValueNotDone(_)
-                | Event::ValueDone(_)
-                | Event::KeyValueSeparator) => section_events.0.push(e),
-                e @ (Event::Comment(_) | Event::Newline(_) | Event::Whitespace(_)) => {
+                e @ Event::Key(_)
+                | e @ Event::Value(_)
+                | e @ Event::ValueNotDone(_)
+                | e @ Event::ValueDone(_)
+                | e @ Event::KeyValueSeparator => section_events.0.push(e),
+                e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
                     section_events.0.push(e);
                 }
             }
