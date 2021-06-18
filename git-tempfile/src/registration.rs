@@ -20,12 +20,7 @@ impl Registration {
                 builder.suffix(&dot_ext_storage);
             }
             let parent_dir = path.parent().expect("parent directory is present");
-            let parent_dir = match directory {
-                ContainingDirectory::Exists => parent_dir,
-                ContainingDirectory::CreateRecursiveAndRaceProofIfNeeded(retries) => {
-                    crate::create_dir::all(parent_dir, retries)?
-                }
-            };
+            let parent_dir = directory.resolve(parent_dir)?;
             builder.rand_bytes(0).tempfile_in(parent_dir)?.into()
         };
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -37,13 +32,7 @@ impl Registration {
     /// **Note** that intermediate directories will _not_ be created.
     pub fn new(containing_directory: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let containing_directory = containing_directory.as_ref();
-        let containing_directory = match directory {
-            ContainingDirectory::Exists => containing_directory,
-            ContainingDirectory::CreateRecursiveAndRaceProofIfNeeded(retries) => {
-                crate::create_dir::all(containing_directory, retries)?
-            }
-        };
+        let containing_directory = directory.resolve(containing_directory.as_ref())?;
         expect_none(REGISTER.insert(id, Some(NamedTempFile::new_in(containing_directory)?.into())));
         Ok(Registration { id })
     }
@@ -54,6 +43,15 @@ impl Registration {
         let res = REGISTER.remove(&self.id);
         std::mem::forget(self);
         res.and_then(|(_k, v)| v.map(|v| v.inner))
+    }
+}
+
+impl ContainingDirectory {
+    fn resolve(self, dir: &Path) -> std::io::Result<&Path> {
+        match self {
+            ContainingDirectory::Exists => Ok(dir),
+            ContainingDirectory::CreateRecursiveAndRaceProofIfNeeded(retries) => crate::create_dir::all(dir, retries),
+        }
     }
 }
 
