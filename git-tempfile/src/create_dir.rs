@@ -152,18 +152,18 @@ impl<'a> Iterator for Iter<'a> {
                     AlreadyExists => self.pernanent_failure(dir, err), // is non-directory
                     NotFound => {
                         self.retries.on_create_directory_failure -= 1;
-                        if self.retries.on_create_directory_failure < 1 {
-                            return self.pernanent_failure(dir, NotFound);
-                        };
                         if let State::CurrentlyCreatingDirectories = self.state {
                             self.state = State::SearchingUpwardsForExistingDirectory;
-                            if self.retries.to_create_entire_directory <= 1 {
+                            if self.retries.to_create_entire_directory < 1 {
                                 return self.pernanent_failure(dir, NotFound);
                             }
                             self.retries.to_create_entire_directory -= 1;
                             self.retries.on_create_directory_failure =
                                 self.original_retries.on_create_directory_failure;
                         }
+                        if self.retries.on_create_directory_failure < 1 {
+                            return self.pernanent_failure(dir, NotFound);
+                        };
                         self.cursors.push(dir);
                         self.cursors.push(match dir.parent() {
                             None => return self.pernanent_failure(dir, InvalidInput),

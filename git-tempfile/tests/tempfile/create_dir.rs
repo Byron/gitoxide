@@ -120,12 +120,12 @@ mod iter {
     #[test]
     fn racy_directory_creation_with_new_directory_being_deleted_not_enough_retries() -> crate::Result {
         let dir = tempfile::tempdir()?;
-        let new_dir = dir.path().join("a").join("b");
+        let new_dir = dir.path().join("a").join("new");
         let parent_dir = new_dir.parent().unwrap();
         let mut it = create_dir::Iter::new_with_retries(
             &new_dir,
             Retries {
-                to_create_entire_directory: 1,
+                to_create_entire_directory: 2,
                 on_create_directory_failure: 2,
                 ..Default::default()
             },
@@ -137,6 +137,16 @@ mod iter {
         );
         // Someone deletes the new directory
         std::fs::remove_dir(parent_dir)?;
+
+        assert!(
+            matches!(it.nth(1), Some(Ok(dir)) if dir == parent_dir),
+            "parent dir is created"
+        );
+        // Someone deletes the new directory, again
+        std::fs::remove_dir(parent_dir)?;
+        dbg!(it.next());
+        dbg!(it.next());
+        dbg!(it.next());
         assert!(
             matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.on_create_directory_failure == 0
                                                                     && err.kind() == NotFound
