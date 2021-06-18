@@ -75,6 +75,11 @@ mod error {
 }
 pub use error::Error;
 
+enum State {
+    CurrentlyCreatingDirectories,
+    SearchingUpwardsForExistingDirectory,
+}
+
 /// A special iterator which communicates its operation through results where…
 ///
 /// * `Some(Ok(created_directory))` is yielded once or more success, followed by `None`
@@ -84,8 +89,7 @@ pub struct Iter<'a> {
     cursors: Vec<&'a Path>,
     retries: Retries,
     original_retries: Retries,
-    /// Set once each time we try creating the entire directory
-    currently_creating_directories: bool,
+    state: State,
 }
 
 impl<'a> Iter<'a> {
@@ -96,7 +100,7 @@ impl<'a> Iter<'a> {
             cursors: vec![target],
             original_retries: retries,
             retries,
-            currently_creating_directories: false,
+            state: State::SearchingUpwardsForExistingDirectory,
         }
     }
 
@@ -106,7 +110,7 @@ impl<'a> Iter<'a> {
             cursors: vec![target],
             original_retries: retries,
             retries,
-            currently_creating_directories: false,
+            state: State::SearchingUpwardsForExistingDirectory,
         }
     }
 
@@ -137,12 +141,12 @@ impl<'a> Iterator for Iter<'a> {
         match self.cursors.pop() {
             Some(dir) => match std::fs::create_dir(dir) {
                 Ok(()) => {
-                    self.currently_creating_directories = true;
+                    self.state = State::CurrentlyCreatingDirectories;
                     Some(Ok(dir))
                 }
                 Err(err) => match err.kind() {
                     AlreadyExists if dir.is_dir() => {
-                        self.currently_creating_directories = true;
+                        self.state = State::CurrentlyCreatingDirectories;
                         Some(Ok(dir))
                     }
                     AlreadyExists => self.pernanent_failure(dir, err, None), // is non-directory
@@ -150,8 +154,8 @@ impl<'a> Iterator for Iter<'a> {
                         self.pernanent_failure(dir, NotFound, self.original_retries.on_create_directory_failure)
                     }
                     NotFound => {
-                        if self.currently_creating_directories {
-                            self.currently_creating_directories = false;
+                        if let State::CurrentlyCreatingDirectories = self.state {
+                            self.state = State::SearchingUpwardsForExistingDirectory;
                             if self.retries.to_create_entire_directory <= 1 {
                                 return self.pernanent_failure(
                                     dir,
