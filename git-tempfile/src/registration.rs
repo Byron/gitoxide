@@ -1,12 +1,17 @@
-use crate::{ContainingDirectory, Registration, NEXT_MAP_INDEX, REGISTER};
+use crate::{Cleanup, ContainingDirectory, ForksafeTempfile, Registration, NEXT_MAP_INDEX, REGISTER};
 use std::{io, path::Path};
 use tempfile::NamedTempFile;
 
 impl Registration {
     /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
     ///
-    /// **Note** that intermediate directories will _not_ be created.
-    pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
+    /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
+    /// intermediate directories will be removed.
+    pub fn at_path(
+        path: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: Cleanup,
+    ) -> io::Result<Registration> {
         let path = path.as_ref();
         let tempfile = {
             let mut builder = tempfile::Builder::new();
@@ -21,19 +26,29 @@ impl Registration {
             }
             let parent_dir = path.parent().expect("parent directory is present");
             let parent_dir = directory.resolve(parent_dir)?;
-            builder.rand_bytes(0).tempfile_in(parent_dir)?.into()
+            ForksafeTempfile::new(builder.rand_bytes(0).tempfile_in(parent_dir)?, cleanup)
         };
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         expect_none(REGISTER.insert(id, Some(tempfile)));
         Ok(Registration { id })
     }
 
-    /// Create a registered tempfile within `containing_directory` with a name that won't clash.
-    /// **Note** that intermediate directories will _not_ be created.
-    pub fn new(containing_directory: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
+    /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
+    /// Control how to deal with intermediate directories with `directory`.
+    pub fn new(
+        containing_directory: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: Cleanup,
+    ) -> io::Result<Registration> {
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let containing_directory = directory.resolve(containing_directory.as_ref())?;
-        expect_none(REGISTER.insert(id, Some(NamedTempFile::new_in(containing_directory)?.into())));
+        expect_none(REGISTER.insert(
+            id,
+            Some(ForksafeTempfile::new(
+                NamedTempFile::new_in(containing_directory)?,
+                cleanup,
+            )),
+        ));
         Ok(Registration { id })
     }
 
@@ -64,6 +79,15 @@ fn expect_none<T>(v: Option<T>) {
 
 impl Drop for Registration {
     fn drop(&mut self) {
-        REGISTER.remove(&self.id);
+        if let Some((_id, Some(tempfile))) = REGISTER.remove(&self.id) {
+            let directory = tempfile
+                .inner
+                .path()
+                .parent()
+                .expect("every tempfile has a parent directory")
+                .to_owned();
+            drop(tempfile.inner);
+            tempfile.cleanup.execute_best_effort(&directory);
+        }
     }
 }

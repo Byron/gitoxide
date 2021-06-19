@@ -94,7 +94,7 @@ pub enum ContainingDirectory {
     CreateAllRaceProof(create_dir::Retries),
 }
 
-/// A type expressing the ways we cleanup after ourselves.
+/// A type expressing the ways we cleanup after ourselves to remove resources we created.
 /// Note that cleanup has no effect if the tempfile is persisted.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Cleanup {
@@ -103,8 +103,20 @@ pub enum Cleanup {
     /// Remove the temporary file as well the containing directories if they are empty way until the given `directory`.
     TempfileAndEmptyParentDirectoriesUntil {
         /// The directory which shall not be removed even if it is empty.
-        border_directory: PathBuf,
+        boundary_directory: PathBuf,
     },
+}
+
+impl Cleanup {
+    pub(crate) fn execute_best_effort(self, directory_to_potentially_delete: &Path) -> Option<PathBuf> {
+        match self {
+            Cleanup::Tempfile => None,
+            Cleanup::TempfileAndEmptyParentDirectoriesUntil { boundary_directory } => {
+                crate::remove_dir::empty_until_boundary(directory_to_potentially_delete, &boundary_directory).ok();
+                Some(boundary_directory)
+            }
+        }
+    }
 }
 
 /// # Note
@@ -124,26 +136,32 @@ pub struct Registration {
 
 struct ForksafeTempfile {
     inner: NamedTempFile,
+    cleanup: Cleanup,
     owning_process_id: u32,
 }
 
-impl From<NamedTempFile> for ForksafeTempfile {
-    fn from(inner: NamedTempFile) -> Self {
+impl ForksafeTempfile {
+    fn new(inner: NamedTempFile, cleanup: Cleanup) -> Self {
         ForksafeTempfile {
             inner,
+            cleanup,
             owning_process_id: std::process::id(),
         }
     }
 }
 
 /// A shortcut to [`Registration::new()`].
-pub fn new(containing_directory: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
-    Registration::new(containing_directory, directory)
+pub fn new(
+    containing_directory: impl AsRef<Path>,
+    directory: ContainingDirectory,
+    cleanup: Cleanup,
+) -> io::Result<Registration> {
+    Registration::new(containing_directory, directory, cleanup)
 }
 
 /// A shortcut to [`Registration::at_path()`].
-pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory) -> io::Result<Registration> {
-    Registration::at_path(path, directory)
+pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: Cleanup) -> io::Result<Registration> {
+    Registration::at_path(path, directory, cleanup)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.

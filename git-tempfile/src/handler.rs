@@ -15,6 +15,11 @@ pub fn cleanup_tempfiles() {
                 let (mut file, temppath) = tempfile.inner.into_parts();
                 file.flush().ok();
                 std::fs::remove_file(&temppath).ok();
+                std::mem::forget(
+                    tempfile
+                        .cleanup
+                        .execute_best_effort(temppath.parent().expect("every file has a directory")),
+                );
                 std::mem::forget(temppath); // leak memory to prevent deallocation
             }
         }
@@ -43,7 +48,7 @@ pub fn cleanup_tempfiles_windows() {
 
 #[cfg(test)]
 mod tests {
-    use crate::ContainingDirectory;
+    use crate::{Cleanup, ContainingDirectory};
     use std::path::Path;
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
@@ -54,7 +59,7 @@ mod tests {
     fn various_termination_signals_remove_tempfiles_unconditionally() -> Result<(), Box<dyn std::error::Error>> {
         let dir = tempfile::tempdir()?;
         for sig in signal_hook::consts::TERM_SIGNALS {
-            let _tempfile = crate::new(dir.path(), ContainingDirectory::Exists)?;
+            let _tempfile = crate::new(dir.path(), ContainingDirectory::Exists, Cleanup::Tempfile)?;
             assert_eq!(
                 filecount_in(dir.path()),
                 1,
