@@ -73,6 +73,7 @@ impl<'a> Iter<'a> {
             err: err.into(),
             dir,
             retries_left: self.retries,
+            retries: self.original_retries,
         }))
     }
 

@@ -89,7 +89,7 @@ mod iter {
             },
         );
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.on_create_directory_failure == 0
+            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err, ..})) if retries_left.on_create_directory_failure == 0
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
@@ -108,7 +108,7 @@ mod iter {
 
         let mut it = create_dir::Iter::new(&new_dir);
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left: _, dir, err })) if err.kind() == AlreadyExists
+            matches!(it.next(), Some(Err(Permanent{ dir, err, .. })) if err.kind() == AlreadyExists
                                                                     && dir == new_dir),
             "parent dir is not present and we run out of attempts"
         );
@@ -145,7 +145,7 @@ mod iter {
         std::fs::remove_dir(parent_dir)?;
 
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err })) if retries_left.to_create_entire_directory == 0 
+            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err, .. })) if retries_left.to_create_entire_directory == 0 
                                                                     && retries_left.on_create_directory_failure == 1
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),

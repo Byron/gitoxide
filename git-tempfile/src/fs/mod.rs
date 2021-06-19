@@ -15,7 +15,10 @@ mod error {
         Permanent {
             dir: &'a Path,
             err: std::io::Error,
+            /// The retries left after running the operation
             retries_left: Retries,
+            /// The original amount of retries to allow determining how many were actually used
+            retries: Retries,
         },
     }
 
@@ -32,10 +35,11 @@ mod error {
                     err: _,
                     dir,
                     retries_left,
+                    retries,
                 } => write!(
                     f,
-                    "Permanently failing to create directory {:?} ({:?})",
-                    dir, retries_left
+                    "Permanently failing to create directory {:?} ({:?} of {:?})",
+                    dir, retries_left, retries
                 ),
             }
         }
