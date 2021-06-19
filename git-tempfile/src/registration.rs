@@ -2,6 +2,7 @@ use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Registration, NEX
 use std::{io, path::Path};
 use tempfile::NamedTempFile;
 
+/// Creation and ownership transfer
 impl Registration {
     /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
     ///
@@ -40,8 +41,8 @@ impl Registration {
         directory: ContainingDirectory,
         cleanup: AutoRemove,
     ) -> io::Result<Registration> {
-        let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let containing_directory = directory.resolve(containing_directory.as_ref())?;
+        let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         expect_none(REGISTER.insert(
             id,
             Some(ForksafeTempfile::new(
@@ -54,11 +55,42 @@ impl Registration {
 
     /// Take ownership of the temporary file.
     ///
+    /// It's a theoretical possibility that the file isn't present anymore if signals interfere, hence the `Option`
     pub fn take(self) -> Option<NamedTempFile> {
         let res = REGISTER.remove(&self.id);
         std::mem::forget(self);
         res.and_then(|(_k, v)| v.map(|v| v.inner))
     }
+}
+
+/// Mutation
+impl Registration {
+    /// Obtain a mutable handler to the underlying tempfile and call `f(&mut named_tempfile)` on it.
+    ///
+    /// Note that for the duration of the call, a signal interrupting the operation will cause the tempfile not to be cleaned up.
+    /// Also note that it might theoretically be possible that due to signal interference the underlying tempfile isn't present
+    /// anymore which may cause the function `f` not to be called and an io error kind `Interrupted` is returned, consuming the
+    /// handle in the process.
+    pub fn map<T>(self, once: impl FnOnce(&mut NamedTempFile) -> T) -> std::io::Result<(Self, T)> {
+        match REGISTER.remove(&self.id) {
+            Some((id, Some(mut t))) => {
+                let res = once(&mut t.inner);
+                expect_none(REGISTER.insert(id, Some(t)));
+                Ok((self, res))
+            }
+            None | Some((_, None)) => Err(std::io::Error::new(
+                std::io::ErrorKind::Interrupted,
+                format!("The tempfile with id {} wasn't available anymore", self.id),
+            )),
+        }
+    }
+
+    /// Close the underlying file-handle saving system resources if you don't intend to write to the file anymore.
+    ///
+    /// For other mechanisms and notes, see the [`map()`][Registration::map()] method.
+    // pub fn close(self) -> std::io::Result<Self> {
+    //     self.map(|tf| tf.as_file_mut().close()).map(|_| self)
+    // }
 }
 
 impl ContainingDirectory {
