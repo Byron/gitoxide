@@ -149,7 +149,7 @@ pub fn new_writable(
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration<Writable>> {
-    Registration::new_writable(containing_directory, directory, cleanup)
+    Registration::<Writable>::new(containing_directory, directory, cleanup)
 }
 
 /// A shortcut to [`Registration::at_path_writable()`].
@@ -158,7 +158,7 @@ pub fn at_path_writable(
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration<Writable>> {
-    Registration::at_path_writable(path, directory, cleanup)
+    Registration::<Writable>::at_path(path, directory, cleanup)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.

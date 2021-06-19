@@ -1,10 +1,15 @@
 //!
 use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Registration, NEXT_MAP_INDEX, REGISTER};
 use std::{io, path::Path};
-use tempfile::NamedTempFile;
+use tempfile::{NamedTempFile, TempPath};
 
 /// Marker to signal the Registration is an open file able to be written to.
 pub struct Writable;
+
+/// Marker to signal the Registration is a closed file that consumes no additional process resources.
+///
+/// It can't ever be written to unless reopened after persisting it.
+pub struct Closed;
 
 /// Utilities
 impl<T> Registration<T> {
@@ -56,16 +61,51 @@ impl<T> Registration<T> {
 }
 
 /// Creation and ownership transfer
+impl Registration<Closed> {
+    /// Create a registered tempfile at the given `path`, where `path` includes the desired filename and close it immediately.
+    ///
+    /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
+    /// intermediate directories will be removed.
+    pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
+        Ok(Registration {
+            id: Registration::<()>::at_path_inner(path, directory, cleanup, false)?,
+            _marker: Default::default(),
+        })
+    }
+
+    /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`,
+    /// and close it immediately.
+    /// Control how to deal with intermediate directories with `directory`.
+    /// The temporary file is opened and can be written to using the [`map()`][Registration::map()] method.
+    pub fn new(
+        containing_directory: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: AutoRemove,
+    ) -> io::Result<Self> {
+        Ok(Registration {
+            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, false)?,
+            _marker: Default::default(),
+        })
+    }
+
+    /// Take ownership of the temporary file path, which deletes it when dropped without persisting it beforehand.
+    ///
+    /// It's a theoretical possibility that the file isn't present anymore if signals interfere, hence the `Option`
+    pub fn take(self) -> Option<TempPath> {
+        let res = REGISTER.remove(&self.id);
+        std::mem::forget(self);
+        todo!("impl take")
+        // res.and_then(|(_k, v)| v.map(|v| v.inner))
+    }
+}
+
+/// Creation and ownership transfer
 impl Registration<Writable> {
     /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
-    pub fn at_path_writable(
-        path: impl AsRef<Path>,
-        directory: ContainingDirectory,
-        cleanup: AutoRemove,
-    ) -> io::Result<Registration<Writable>> {
+    pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Registration {
             id: Registration::<()>::at_path_inner(path, directory, cleanup, true)?,
             _marker: Default::default(),
@@ -75,11 +115,11 @@ impl Registration<Writable> {
     /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
     /// Control how to deal with intermediate directories with `directory`.
     /// The temporary file is opened and can be written to using the [`map()`][Registration::map()] method.
-    pub fn new_writable(
+    pub fn new(
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
-    ) -> io::Result<Registration<Writable>> {
+    ) -> io::Result<Self> {
         Ok(Registration {
             id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, true)?,
             _marker: Default::default(),
