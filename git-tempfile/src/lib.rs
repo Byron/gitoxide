@@ -143,7 +143,7 @@ pub struct Registration<Marker> {
     _marker: PhantomData<Marker>,
 }
 
-/// A shortcut to [`Registration::new_writable()`].
+/// A shortcut to [`Registration::<Writable>::new()`].
 pub fn new_writable(
     containing_directory: impl AsRef<Path>,
     directory: ContainingDirectory,
@@ -152,7 +152,7 @@ pub fn new_writable(
     Registration::<Writable>::new(containing_directory, directory, cleanup)
 }
 
-/// A shortcut to [`Registration::at_path_writable()`].
+/// A shortcut to [`Registration::<Writable>::at_path()`].
 pub fn at_path_writable(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
