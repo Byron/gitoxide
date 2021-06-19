@@ -119,6 +119,9 @@ impl AutoRemove {
     }
 }
 
+/// A registered temporary file which will delete itself on drop or if the program is receiving signals that
+/// should cause it to terminate.
+///
 /// # Note
 ///
 /// Signals interrupting the calling thread right after taking ownership of the registered tempfile
