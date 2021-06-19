@@ -1,9 +1,9 @@
-use git_tempfile::{Cleanup, ContainingDirectory};
+use git_tempfile::{AutoRemove, ContainingDirectory};
 use std::path::PathBuf;
 
 fn main() -> std::io::Result<()> {
     let filepath = PathBuf::new().join("tempfile.ext");
-    let _tempfile = git_tempfile::at_path(&filepath, ContainingDirectory::Exists, Cleanup::Tempfile)?;
+    let _tempfile = git_tempfile::at_path(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
     eprintln!(
         "Observe the tempfile at {} and hit Ctrl+C to see it vanish. I will go to sleep now…",
         filepath.display()

@@ -48,7 +48,7 @@ pub fn cleanup_tempfiles_windows() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Cleanup, ContainingDirectory};
+    use crate::{AutoRemove, ContainingDirectory};
     use std::path::Path;
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
@@ -59,7 +59,7 @@ mod tests {
     fn various_termination_signals_remove_tempfiles_unconditionally() -> Result<(), Box<dyn std::error::Error>> {
         let dir = tempfile::tempdir()?;
         for sig in signal_hook::consts::TERM_SIGNALS {
-            let _tempfile = crate::new(dir.path(), ContainingDirectory::Exists, Cleanup::Tempfile)?;
+            let _tempfile = crate::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?;
             assert_eq!(
                 filecount_in(dir.path()),
                 1,

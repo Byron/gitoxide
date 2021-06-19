@@ -97,21 +97,21 @@ pub enum ContainingDirectory {
 /// A type expressing the ways we cleanup after ourselves to remove resources we created.
 /// Note that cleanup has no effect if the tempfile is persisted.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum Cleanup {
+pub enum AutoRemove {
     /// Remove the temporary file after usage if it wasn't persisted.
     Tempfile,
-    /// Remove the temporary file as well the containing directories if they are empty way until the given `directory`.
+    /// Remove the temporary file as well the containing directories if they are empty until the given `directory`.
     TempfileAndEmptyParentDirectoriesUntil {
         /// The directory which shall not be removed even if it is empty.
         boundary_directory: PathBuf,
     },
 }
 
-impl Cleanup {
+impl AutoRemove {
     pub(crate) fn execute_best_effort(self, directory_to_potentially_delete: &Path) -> Option<PathBuf> {
         match self {
-            Cleanup::Tempfile => None,
-            Cleanup::TempfileAndEmptyParentDirectoriesUntil { boundary_directory } => {
+            AutoRemove::Tempfile => None,
+            AutoRemove::TempfileAndEmptyParentDirectoriesUntil { boundary_directory } => {
                 crate::remove_dir::empty_until_boundary(directory_to_potentially_delete, &boundary_directory).ok();
                 Some(boundary_directory)
             }
@@ -136,12 +136,12 @@ pub struct Registration {
 
 struct ForksafeTempfile {
     inner: NamedTempFile,
-    cleanup: Cleanup,
+    cleanup: AutoRemove,
     owning_process_id: u32,
 }
 
 impl ForksafeTempfile {
-    fn new(inner: NamedTempFile, cleanup: Cleanup) -> Self {
+    fn new(inner: NamedTempFile, cleanup: AutoRemove) -> Self {
         ForksafeTempfile {
             inner,
             cleanup,
@@ -154,13 +154,17 @@ impl ForksafeTempfile {
 pub fn new(
     containing_directory: impl AsRef<Path>,
     directory: ContainingDirectory,
-    cleanup: Cleanup,
+    cleanup: AutoRemove,
 ) -> io::Result<Registration> {
     Registration::new(containing_directory, directory, cleanup)
 }
 
 /// A shortcut to [`Registration::at_path()`].
-pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: Cleanup) -> io::Result<Registration> {
+pub fn at_path(
+    path: impl AsRef<Path>,
+    directory: ContainingDirectory,
+    cleanup: AutoRemove,
+) -> io::Result<Registration> {
     Registration::at_path(path, directory, cleanup)
 }
 

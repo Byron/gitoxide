@@ -1,4 +1,4 @@
-use crate::{Cleanup, ContainingDirectory, ForksafeTempfile, Registration, NEXT_MAP_INDEX, REGISTER};
+use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Registration, NEXT_MAP_INDEX, REGISTER};
 use std::{io, path::Path};
 use tempfile::NamedTempFile;
 
@@ -10,7 +10,7 @@ impl Registration {
     pub fn at_path(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
-        cleanup: Cleanup,
+        cleanup: AutoRemove,
     ) -> io::Result<Registration> {
         let path = path.as_ref();
         let tempfile = {
@@ -38,7 +38,7 @@ impl Registration {
     pub fn new(
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
-        cleanup: Cleanup,
+        cleanup: AutoRemove,
     ) -> io::Result<Registration> {
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let containing_directory = directory.resolve(containing_directory.as_ref())?;

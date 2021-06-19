@@ -1,5 +1,4 @@
 //!
-#![allow(missing_docs)]
 
 pub use super::error::Error;
 use std::path::Path;
