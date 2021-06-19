@@ -1,6 +1,5 @@
 //!
 
-pub use super::error::Error;
 use std::path::Path;
 
 /// A special iterator which communicates its operation through results where…
