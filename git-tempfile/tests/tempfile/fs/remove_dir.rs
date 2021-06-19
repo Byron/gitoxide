@@ -10,6 +10,33 @@ mod empty_until_boundary {
         std::fs::create_dir(&boundary)?;
         assert!(matches!(remove_dir::empty_until_boundary(&target, &boundary),
                             Err(err) if err.kind() == io::ErrorKind::InvalidInput));
+        assert!(target.is_dir());
+        assert!(boundary.is_dir());
+        Ok(())
+    }
+    #[test]
+    fn target_directory_non_existing_causes_existing_parents_not_to_be_deleted() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let parent = dir.path().join("a");
+        std::fs::create_dir(&parent)?;
+        let target = parent.join("not-existing");
+        assert_eq!(remove_dir::empty_until_boundary(&target, dir.path())?, target);
+        assert!(
+            parent.is_dir(),
+            "the parent wasn't touched if the target already wasn't present"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn target_directory_being_a_file_immediately_fails() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let target = dir.path().join("actually-a-file");
+        std::fs::write(&target, &[42])?;
+        assert!(matches!(remove_dir::empty_until_boundary(&target, dir.path()),
+                            Err(err) if err.kind() == io::ErrorKind::Other));
+        assert!(target.is_file(), "it didn't touch the file");
+        assert!(dir.path().is_dir(), "it won't touch the boundary");
         Ok(())
     }
     #[test]
@@ -24,6 +51,7 @@ mod empty_until_boundary {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("does-not-exist");
         assert_eq!(remove_dir::empty_until_boundary(&target, dir.path())?, target);
+        assert!(dir.path().is_dir(), "it won't touch the boundary");
         Ok(())
     }
     #[test]
@@ -40,8 +68,39 @@ mod empty_until_boundary {
         std::fs::create_dir_all(&nested)?;
         assert_eq!(remove_dir::empty_until_boundary(&nested, dir.path())?, nested);
         assert!(!nested.is_dir(), "it actually deleted the nested directory");
+        assert!(!nested.parent().unwrap().is_dir(), "parent one was deleted");
+        assert!(
+            !nested.parent().unwrap().parent().unwrap().is_dir(),
+            "parent two was deleted"
+        );
+        assert!(dir.path().is_dir(), "it won't touch the boundary");
         Ok(())
     }
 }
 
-mod iter {}
+/// We assume that all checks above also apply to the iterator, so won't repeat them here
+/// Test outside interference only
+mod iter {
+    use git_tempfile::remove_dir;
+    use std::io;
+
+    #[test]
+    fn racy_directory_creation_during_deletion_always_wins_immediately() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let nested = dir.path().join("a").join("b").join("to-delete");
+        std::fs::create_dir_all(&nested)?;
+
+        let mut it = remove_dir::Iter::new(&nested, dir.path())?;
+        assert_eq!(it.next().expect("item")?, nested, "delete leaves directory");
+
+        // recreate the deleted directory in racy fashion, causing the next-to-delete directory not to be empty.
+        std::fs::create_dir(&nested)?;
+        assert_eq!(
+            it.next().expect("err item").unwrap_err().kind(),
+            io::ErrorKind::Other,
+            "cannot delete non-empty directory"
+        );
+        assert!(it.next().is_none(), "iterator is depleted");
+        Ok(())
+    }
+}

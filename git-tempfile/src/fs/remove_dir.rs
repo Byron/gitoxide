@@ -29,7 +29,15 @@ impl<'a> Iter<'a> {
                 ),
             ));
         }
-        let cursor = if target == boundary { None } else { Some(target) };
+        let cursor = if target == boundary {
+            None
+        } else {
+            if target.exists() {
+                Some(target)
+            } else {
+                None
+            }
+        };
         Ok(Iter { cursor, boundary })
     }
 }
