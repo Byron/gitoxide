@@ -100,8 +100,7 @@ pub enum ContainingDirectory {
 pub enum Cleanup {
     /// Remove the temporary file after usage if it wasn't persisted.
     Tempfile,
-    /// Remove the temporary file as well the containing directories if they are empty in a somewhat race resistant
-    /// way until the given `directory`.
+    /// Remove the temporary file as well the containing directories if they are empty way until the given `directory`.
     TempfileAndEmptyParentDirectoriesUntil {
         /// The directory which shall not be removed even if it is empty.
         border_directory: PathBuf,
