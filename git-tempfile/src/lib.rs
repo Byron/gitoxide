@@ -154,21 +154,21 @@ impl ForksafeTempfile {
 }
 
 /// A shortcut to [`Registration::new()`].
-pub fn new(
+pub fn new_writable(
     containing_directory: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration> {
-    Registration::new(containing_directory, directory, cleanup)
+    Registration::new_writable(containing_directory, directory, cleanup)
 }
 
 /// A shortcut to [`Registration::at_path()`].
-pub fn at_path(
+pub fn at_path_writable(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration> {
-    Registration::at_path(path, directory, cleanup)
+    Registration::at_path_writable(path, directory, cleanup)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.

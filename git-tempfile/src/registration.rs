@@ -8,7 +8,7 @@ impl Registration {
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
-    pub fn at_path(
+    pub fn at_path_writable(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
@@ -36,7 +36,8 @@ impl Registration {
 
     /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
     /// Control how to deal with intermediate directories with `directory`.
-    pub fn new(
+    /// The temporary file is opened and can be written to using the [`map()`][Registration::map()] method.
+    pub fn new_writable(
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
@@ -65,7 +66,7 @@ impl Registration {
 
 /// Mutation
 impl Registration {
-    /// Obtain a mutable handler to the underlying tempfile and call `f(&mut named_tempfile)` on it.
+    /// Obtain a mutable handler to the underlying named tempfile and call `f(&mut named_tempfile)` on it.
     ///
     /// Note that for the duration of the call, a signal interrupting the operation will cause the tempfile not to be cleaned up.
     /// Also note that it might theoretically be possible that due to signal interference the underlying tempfile isn't present
@@ -84,13 +85,6 @@ impl Registration {
             )),
         }
     }
-
-    /// Close the underlying file-handle saving system resources if you don't intend to write to the file anymore.
-    ///
-    /// For other mechanisms and notes, see the [`map()`][Registration::map()] method.
-    // pub fn close(self) -> std::io::Result<Self> {
-    //     self.map(|tf| tf.as_file_mut().close()).map(|_| self)
-    // }
 }
 
 impl ContainingDirectory {
