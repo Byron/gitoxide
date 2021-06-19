@@ -93,16 +93,11 @@ pub struct Iter<'a> {
     state: State,
 }
 
+/// Construction
 impl<'a> Iter<'a> {
     /// Create a new instance that creates `target` when iterated with the default amount of [`Retries`].
     pub fn new(target: &'a Path) -> Self {
-        let retries = Default::default();
-        Iter {
-            cursors: vec![target],
-            original_retries: retries,
-            retries,
-            state: State::SearchingUpwardsForExistingDirectory,
-        }
+        Self::new_with_retries(target, Default::default())
     }
 
     /// Create a new instance that creates `target` when iterated with the specified amount of `retries`.
@@ -114,7 +109,9 @@ impl<'a> Iter<'a> {
             state: State::SearchingUpwardsForExistingDirectory,
         }
     }
+}
 
+impl<'a> Iter<'a> {
     fn pernanent_failure(
         &mut self,
         dir: &'a Path,
