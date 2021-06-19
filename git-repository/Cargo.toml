@@ -34,7 +34,7 @@ one-stop-shop = [
 
 [dependencies]
 git-ref = { version = "0.5.0", path = "../git-ref" }
-git-tempfile = { version = "^0.1.0", path = "../git-tempfile" }
+git-tempfile = { version = "^0.2.0", path = "../git-tempfile" }
 
 git-odb = { version = "^0.16", path = "../git-odb" }
 git-hash = { version = "^0.4.0", path = "../git-hash" }
