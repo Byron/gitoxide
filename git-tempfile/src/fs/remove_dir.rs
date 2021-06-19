@@ -29,12 +29,10 @@ impl<'a> Iter<'a> {
         }
         let cursor = if target == boundary {
             None
+        } else if target.exists() {
+            Some(target)
         } else {
-            if target.exists() {
-                Some(target)
-            } else {
-                None
-            }
+            None
         };
         Ok(Iter { cursor, boundary })
     }
