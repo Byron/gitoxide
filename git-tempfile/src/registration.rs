@@ -106,14 +106,7 @@ fn expect_none<T>(v: Option<T>) {
 impl Drop for Registration {
     fn drop(&mut self) {
         if let Some((_id, Some(tempfile))) = REGISTER.remove(&self.id) {
-            let directory = tempfile
-                .inner
-                .path()
-                .parent()
-                .expect("every tempfile has a parent directory")
-                .to_owned();
-            drop(tempfile.inner);
-            tempfile.cleanup.execute_best_effort(&directory);
+            tempfile.drop_impl();
         }
     }
 }

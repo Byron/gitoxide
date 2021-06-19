@@ -1,5 +1,4 @@
 use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
-use std::io::Write;
 
 /// # Safety
 /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
@@ -12,15 +11,7 @@ pub fn cleanup_tempfiles() {
             .map_or(false, |tf| tf.owning_process_id == current_pid)
         {
             if let Some(tempfile) = tempfile.take() {
-                let (mut file, temppath) = tempfile.inner.into_parts();
-                file.flush().ok();
-                std::fs::remove_file(&temppath).ok();
-                std::mem::forget(
-                    tempfile
-                        .cleanup
-                        .execute_best_effort(temppath.parent().expect("every file has a directory")),
-                );
-                std::mem::forget(temppath); // leak memory to prevent deallocation
+                tempfile.drop_without_deallocation();
             }
         }
     }
