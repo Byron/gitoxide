@@ -25,19 +25,25 @@
 //! [signal-hook]: https://docs.rs/signal-hook
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
+use dashmap::DashMap;
+use once_cell::sync::Lazy;
 use std::{
     io,
+    marker::PhantomData,
     path::{Path, PathBuf},
     sync::atomic::AtomicUsize,
 };
 
-use dashmap::DashMap;
-use once_cell::sync::Lazy;
-
 mod fs;
 pub use fs::{create_dir, remove_dir};
+
 mod handler;
-mod registration;
+
+mod forksafe;
+pub(crate) use forksafe::ForksafeTempfile;
+
+pub mod registration;
+use crate::registration::Writable;
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
@@ -132,72 +138,26 @@ impl AutoRemove {
 /// state forever.
 ///
 /// This kind of raciness exists whenever [`take()`][Registration::take()] is used and can't be circumvented.
-pub struct Registration {
+pub struct Registration<Marker> {
     id: usize,
+    _marker: PhantomData<Marker>,
 }
 
-mod forksafe {
-    use crate::AutoRemove;
-    use std::io::Write;
-    use tempfile::NamedTempFile;
-
-    pub(crate) struct ForksafeTempfile {
-        pub inner: NamedTempFile,
-        pub cleanup: AutoRemove,
-        pub owning_process_id: u32,
-    }
-
-    impl ForksafeTempfile {
-        pub fn new(inner: NamedTempFile, cleanup: AutoRemove) -> Self {
-            ForksafeTempfile {
-                inner,
-                cleanup,
-                owning_process_id: std::process::id(),
-            }
-        }
-    }
-
-    impl ForksafeTempfile {
-        pub fn drop_impl(self) {
-            let directory = self
-                .inner
-                .path()
-                .parent()
-                .expect("every tempfile has a parent directory")
-                .to_owned();
-            drop(self.inner);
-            self.cleanup.execute_best_effort(&directory);
-        }
-
-        pub fn drop_without_deallocation(self) {
-            let (mut file, temppath) = self.inner.into_parts();
-            file.flush().ok();
-            std::fs::remove_file(&temppath).ok();
-            std::mem::forget(
-                self.cleanup
-                    .execute_best_effort(temppath.parent().expect("every file has a directory")),
-            );
-            std::mem::forget(temppath); // leak memory to prevent deallocation
-        }
-    }
-}
-pub(crate) use forksafe::ForksafeTempfile;
-
-/// A shortcut to [`Registration::new()`].
+/// A shortcut to [`Registration::new_writable()`].
 pub fn new_writable(
     containing_directory: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
-) -> io::Result<Registration> {
+) -> io::Result<Registration<Writable>> {
     Registration::new_writable(containing_directory, directory, cleanup)
 }
 
-/// A shortcut to [`Registration::at_path()`].
+/// A shortcut to [`Registration::at_path_writable()`].
 pub fn at_path_writable(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
-) -> io::Result<Registration> {
+) -> io::Result<Registration<Writable>> {
     Registration::at_path_writable(path, directory, cleanup)
 }
 

@@ -1,9 +1,13 @@
+//!
 use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Registration, NEXT_MAP_INDEX, REGISTER};
 use std::{io, path::Path};
 use tempfile::NamedTempFile;
 
+/// Marker to signal the Registration is an open file able to be written to.
+pub struct Writable;
+
 /// Creation and ownership transfer
-impl Registration {
+impl Registration<Writable> {
     /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
@@ -12,7 +16,7 @@ impl Registration {
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
-    ) -> io::Result<Registration> {
+    ) -> io::Result<Registration<Writable>> {
         let path = path.as_ref();
         let tempfile = {
             let mut builder = tempfile::Builder::new();
@@ -31,7 +35,10 @@ impl Registration {
         };
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         expect_none(REGISTER.insert(id, Some(tempfile)));
-        Ok(Registration { id })
+        Ok(Registration {
+            id,
+            _marker: Default::default(),
+        })
     }
 
     /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
@@ -41,7 +48,7 @@ impl Registration {
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
-    ) -> io::Result<Registration> {
+    ) -> io::Result<Registration<Writable>> {
         let containing_directory = directory.resolve(containing_directory.as_ref())?;
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         expect_none(REGISTER.insert(
@@ -51,7 +58,10 @@ impl Registration {
                 cleanup,
             )),
         ));
-        Ok(Registration { id })
+        Ok(Registration {
+            id,
+            _marker: Default::default(),
+        })
     }
 
     /// Take ownership of the temporary file.
@@ -65,7 +75,7 @@ impl Registration {
 }
 
 /// Mutation
-impl Registration {
+impl Registration<Writable> {
     /// Obtain a mutable handler to the underlying named tempfile and call `f(&mut named_tempfile)` on it.
     ///
     /// Note that for the duration of the call, a signal interrupting the operation will cause the tempfile not to be cleaned up.
@@ -103,7 +113,7 @@ fn expect_none<T>(v: Option<T>) {
     );
 }
 
-impl Drop for Registration {
+impl<T> Drop for Registration<T> {
     fn drop(&mut self) {
         if let Some((_id, Some(tempfile))) = REGISTER.remove(&self.id) {
             tempfile.drop_impl();
