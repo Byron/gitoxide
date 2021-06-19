@@ -25,19 +25,20 @@
 //! [signal-hook]: https://docs.rs/signal-hook
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
-use dashmap::DashMap;
-use once_cell::sync::Lazy;
 use std::{
     io,
     path::{Path, PathBuf},
     sync::atomic::AtomicUsize,
 };
+
+use dashmap::DashMap;
+use once_cell::sync::Lazy;
 use tempfile::NamedTempFile;
 
-pub mod create_dir;
+mod fs;
+pub use fs::{create_dir, remove_dir};
 mod handler;
 mod registration;
-pub mod remove_dir;
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
