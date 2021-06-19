@@ -9,11 +9,15 @@ pub(crate) struct ForksafeTempfile {
 }
 
 impl ForksafeTempfile {
-    pub fn new(inner: NamedTempFile, cleanup: AutoRemove) -> Self {
-        ForksafeTempfile {
-            inner,
-            cleanup,
-            owning_process_id: std::process::id(),
+    pub fn new(inner: NamedTempFile, cleanup: AutoRemove, writable: bool) -> Self {
+        if writable {
+            ForksafeTempfile {
+                inner,
+                cleanup,
+                owning_process_id: std::process::id(),
+            }
+        } else {
+            todo!("closed-file mode")
         }
     }
 }

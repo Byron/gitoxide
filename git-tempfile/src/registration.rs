@@ -6,17 +6,14 @@ use tempfile::NamedTempFile;
 /// Marker to signal the Registration is an open file able to be written to.
 pub struct Writable;
 
-/// Creation and ownership transfer
-impl Registration<Writable> {
-    /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
-    ///
-    /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
-    /// intermediate directories will be removed.
-    pub fn at_path_writable(
+/// Utilities
+impl<T> Registration<T> {
+    fn at_path_inner(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
-    ) -> io::Result<Registration<Writable>> {
+        writable: bool,
+    ) -> io::Result<usize> {
         let path = path.as_ref();
         let tempfile = {
             let mut builder = tempfile::Builder::new();
@@ -31,12 +28,46 @@ impl Registration<Writable> {
             }
             let parent_dir = path.parent().expect("parent directory is present");
             let parent_dir = directory.resolve(parent_dir)?;
-            ForksafeTempfile::new(builder.rand_bytes(0).tempfile_in(parent_dir)?, cleanup)
+            ForksafeTempfile::new(builder.rand_bytes(0).tempfile_in(parent_dir)?, cleanup, writable)
         };
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         expect_none(REGISTER.insert(id, Some(tempfile)));
-        Ok(Registration {
+        Ok(id)
+    }
+
+    fn new_writable_inner(
+        containing_directory: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: AutoRemove,
+        writable: bool,
+    ) -> io::Result<usize> {
+        let containing_directory = directory.resolve(containing_directory.as_ref())?;
+        let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        expect_none(REGISTER.insert(
             id,
+            Some(ForksafeTempfile::new(
+                NamedTempFile::new_in(containing_directory)?,
+                cleanup,
+                writable,
+            )),
+        ));
+        Ok(id)
+    }
+}
+
+/// Creation and ownership transfer
+impl Registration<Writable> {
+    /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
+    ///
+    /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
+    /// intermediate directories will be removed.
+    pub fn at_path_writable(
+        path: impl AsRef<Path>,
+        directory: ContainingDirectory,
+        cleanup: AutoRemove,
+    ) -> io::Result<Registration<Writable>> {
+        Ok(Registration {
+            id: Registration::<()>::at_path_inner(path, directory, cleanup, true)?,
             _marker: Default::default(),
         })
     }
@@ -49,17 +80,8 @@ impl Registration<Writable> {
         directory: ContainingDirectory,
         cleanup: AutoRemove,
     ) -> io::Result<Registration<Writable>> {
-        let containing_directory = directory.resolve(containing_directory.as_ref())?;
-        let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        expect_none(REGISTER.insert(
-            id,
-            Some(ForksafeTempfile::new(
-                NamedTempFile::new_in(containing_directory)?,
-                cleanup,
-            )),
-        ));
         Ok(Registration {
-            id,
+            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, true)?,
             _marker: Default::default(),
         })
     }
