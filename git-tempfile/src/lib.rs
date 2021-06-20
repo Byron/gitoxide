@@ -137,38 +137,38 @@ impl AutoRemove {
 /// in the worst case the temporary file is used as a lock file which may leave the repository in a locked
 /// state forever.
 ///
-/// This kind of raciness exists whenever [`take()`][Registration::take()] is used and can't be circumvented.
+/// This kind of raciness exists whenever [`take()`][Handle::take()] is used and can't be circumvented.
 #[derive(Debug)]
-pub struct Registration<Marker: std::fmt::Debug> {
+pub struct Handle<Marker: std::fmt::Debug> {
     id: usize,
     _marker: PhantomData<Marker>,
 }
 
-/// A shortcut to [`Registration::<Writable>::new()`], creating a writable temporary file with non-clashing name in a directory.
+/// A shortcut to [`Handle::<Writable>::new()`], creating a writable temporary file with non-clashing name in a directory.
 pub fn new(
     containing_directory: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
-) -> io::Result<Registration<Writable>> {
-    Registration::<Writable>::new(containing_directory, directory, cleanup)
+) -> io::Result<Handle<Writable>> {
+    Handle::<Writable>::new(containing_directory, directory, cleanup)
 }
 
-/// A shortcut to [`Registration::<Writable>::at_path()`] providing a writable temporary file at the given path.
+/// A shortcut to [`Handle::<Writable>::at()`] providing a writable temporary file at the given path.
 pub fn writable_at(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
-) -> io::Result<Registration<Writable>> {
-    Registration::<Writable>::at(path, directory, cleanup)
+) -> io::Result<Handle<Writable>> {
+    Handle::<Writable>::at(path, directory, cleanup)
 }
 
-/// A shortcut to [`Registration::<Closed>::at_path()`] providing a closed temporary file to mark the presence of something.
+/// A shortcut to [`Handle::<Closed>::at()`] providing a closed temporary file to mark the presence of something.
 pub fn mark_at(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
-) -> io::Result<Registration<Closed>> {
-    Registration::<Closed>::at(path, directory, cleanup)
+) -> io::Result<Handle<Closed>> {
+    Handle::<Closed>::at(path, directory, cleanup)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.

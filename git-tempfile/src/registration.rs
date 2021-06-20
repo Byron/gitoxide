@@ -1,5 +1,5 @@
 //!
-use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Registration, NEXT_MAP_INDEX, REGISTER};
+use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Handle, NEXT_MAP_INDEX, REGISTER};
 use std::{io, path::Path};
 use tempfile::{NamedTempFile, TempPath};
 
@@ -19,7 +19,7 @@ pub(crate) enum Mode {
 }
 
 /// Utilities
-impl<T: std::fmt::Debug> Registration<T> {
+impl<T: std::fmt::Debug> Handle<T> {
     fn at_path(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
@@ -68,14 +68,14 @@ impl<T: std::fmt::Debug> Registration<T> {
 }
 
 /// Creation and ownership transfer
-impl Registration<Closed> {
+impl Handle<Closed> {
     /// Create a registered tempfile at the given `path`, where `path` includes the desired filename and close it immediately.
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
     pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
-        Ok(Registration {
-            id: Registration::<()>::at_path(path, directory, cleanup, Mode::Closed)?,
+        Ok(Handle {
+            id: Handle::<()>::at_path(path, directory, cleanup, Mode::Closed)?,
             _marker: Default::default(),
         })
     }
@@ -91,28 +91,28 @@ impl Registration<Closed> {
 }
 
 /// Creation and ownership transfer
-impl Registration<Writable> {
+impl Handle<Writable> {
     /// Create a registered tempfile at the given `path`, where `path` includes the desired filename.
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
     pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
-        Ok(Registration {
-            id: Registration::<()>::at_path(path, directory, cleanup, Mode::Writable)?,
+        Ok(Handle {
+            id: Handle::<()>::at_path(path, directory, cleanup, Mode::Writable)?,
             _marker: Default::default(),
         })
     }
 
     /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
     /// Control how to deal with intermediate directories with `directory`.
-    /// The temporary file is opened and can be written to using the [`map()`][Registration::map()] method.
+    /// The temporary file is opened and can be written to using the [`map()`][Handle::map()] method.
     pub fn new(
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
     ) -> io::Result<Self> {
-        Ok(Registration {
-            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, Mode::Writable)?,
+        Ok(Handle {
+            id: Handle::<()>::new_writable_inner(containing_directory, directory, cleanup, Mode::Writable)?,
             _marker: Default::default(),
         })
     }
@@ -128,7 +128,7 @@ impl Registration<Writable> {
 }
 
 /// Mutation
-impl Registration<Writable> {
+impl Handle<Writable> {
     /// Obtain a mutable handler to the underlying named tempfile and call `f(&mut named_tempfile)` on it.
     ///
     /// Note that for the duration of the call, a signal interrupting the operation will cause the tempfile not to be cleaned up.
@@ -166,7 +166,7 @@ fn expect_none<T>(v: Option<T>) {
     );
 }
 
-impl<T: std::fmt::Debug> Drop for Registration<T> {
+impl<T: std::fmt::Debug> Drop for Handle<T> {
     fn drop(&mut self) {
         if let Some((_id, Some(tempfile))) = REGISTER.remove(&self.id) {
             tempfile.drop_impl();

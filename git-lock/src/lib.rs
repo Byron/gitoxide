@@ -16,7 +16,7 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
 
-use git_tempfile::registration::Writable;
+use git_tempfile::registration::{Closed, Writable};
 use std::time::Duration;
 
 /// Describe what to do if a lock cannot be obtained as it's already held elsewhere.
@@ -29,8 +29,10 @@ pub enum Fail {
 }
 
 /// Locks a resource to eventually be overwritten with the content of this file.
+///
+/// Dropping the file without [committing][File::commit] will delete it, leaving the underlying resource unchanged.
 pub struct File {
-    _inner: git_tempfile::Registration<Writable>,
+    _inner: git_tempfile::Handle<Writable>,
 }
 
 mod file {
