@@ -7,7 +7,7 @@ mod at_path {
         let target = dir.path().join("a").join("b").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
         drop(
-            git_tempfile::at_path_writable(
+            git_tempfile::at_path(
                 &target,
                 ContainingDirectory::CreateAllRaceProof(Default::default()),
                 AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -31,7 +31,7 @@ mod at_path {
         let dir = tempfile::tempdir()?;
         let first_dir = "dir";
         let filename = dir.path().join(first_dir).join("subdir").join("file.tmp");
-        let tempfile = git_tempfile::at_path_writable(
+        let tempfile = git_tempfile::at_path(
             &filename,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -55,7 +55,7 @@ mod at_path {
     fn it_names_files_correctly_and_removes_them_when_out_of_scope() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let filename = dir.path().join("something-specific.ext");
-        let tempfile = git_tempfile::at_path_writable(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+        let tempfile = git_tempfile::at_path(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
         assert!(filename.is_file(), "specified file should exist precisely");
         drop(tempfile);
         assert!(!filename.is_file(), "after drop named files are deleted as well");
@@ -75,7 +75,7 @@ mod new {
     fn it_can_be_kept() -> crate::Result {
         let dir = tempfile::tempdir()?;
         drop(
-            git_tempfile::new_writable(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?
+            git_tempfile::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?
                 .take()
                 .expect("not taken yet")
                 .keep()?,
@@ -88,7 +88,7 @@ mod new {
     fn it_is_removed_if_it_goes_out_of_scope() -> crate::Result {
         let dir = tempfile::tempdir()?;
         {
-            let _keep = git_tempfile::new_writable(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile);
+            let _keep = git_tempfile::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile);
             assert_eq!(filecount_in(&dir), 1, "a temp file was created");
         }
         assert_eq!(filecount_in(&dir), 0, "lock was automatically removed");
@@ -101,7 +101,7 @@ mod new {
         let containing_dir = dir.path().join("dir");
         assert!(!containing_dir.exists());
         {
-            let _keep = git_tempfile::new_writable(
+            let _keep = git_tempfile::new(
                 &containing_dir,
                 ContainingDirectory::CreateAllRaceProof(Default::default()),
                 AutoRemove::TempfileAndEmptyParentDirectoriesUntil {

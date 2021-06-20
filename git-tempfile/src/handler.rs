@@ -50,7 +50,7 @@ mod tests {
     fn various_termination_signals_remove_tempfiles_unconditionally() -> Result<(), Box<dyn std::error::Error>> {
         let dir = tempfile::tempdir()?;
         for sig in signal_hook::consts::TERM_SIGNALS {
-            let _tempfile = crate::new_writable(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+            let _tempfile = crate::new(dir.path(), ContainingDirectory::Exists, AutoRemove::Tempfile)?;
             assert_eq!(
                 filecount_in(dir.path()),
                 1,

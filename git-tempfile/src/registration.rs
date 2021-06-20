@@ -78,21 +78,6 @@ impl Registration<Closed> {
         })
     }
 
-    /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`,
-    /// and close it immediately.
-    /// Control how to deal with intermediate directories with `directory`.
-    /// The temporary file is opened and can be written to using the [`map()`][Registration::map()] method.
-    pub fn new(
-        containing_directory: impl AsRef<Path>,
-        directory: ContainingDirectory,
-        cleanup: AutoRemove,
-    ) -> io::Result<Self> {
-        Ok(Registration {
-            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, Mode::Closed)?,
-            _marker: Default::default(),
-        })
-    }
-
     /// Take ownership of the temporary file path, which deletes it when dropped without persisting it beforehand.
     ///
     /// It's a theoretical possibility that the file isn't present anymore if signals interfere, hence the `Option`

@@ -43,7 +43,7 @@ mod forksafe;
 pub(crate) use forksafe::ForksafeTempfile;
 
 pub mod registration;
-use crate::registration::Writable;
+use crate::registration::{Closed, Writable};
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
@@ -143,8 +143,8 @@ pub struct Registration<Marker> {
     _marker: PhantomData<Marker>,
 }
 
-/// A shortcut to [`Registration::<Writable>::new()`].
-pub fn new_writable(
+/// A shortcut to [`Registration::<Writable>::new()`], creating a writable temporary file with non-clashing name in a directory.
+pub fn new(
     containing_directory: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
@@ -152,13 +152,22 @@ pub fn new_writable(
     Registration::<Writable>::new(containing_directory, directory, cleanup)
 }
 
-/// A shortcut to [`Registration::<Writable>::at_path()`].
-pub fn at_path_writable(
+/// A shortcut to [`Registration::<Writable>::at_path()`] providing a writable temporary file at the given path.
+pub fn at_path(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration<Writable>> {
     Registration::<Writable>::at_path(path, directory, cleanup)
+}
+
+/// A shortcut to [`Registration::<Closed>::at_path()`] providing a closed temporary file to mark the presence of something.
+pub fn mark_path(
+    path: impl AsRef<Path>,
+    directory: ContainingDirectory,
+    cleanup: AutoRemove,
+) -> io::Result<Registration<Closed>> {
+    Registration::<Closed>::at_path(path, directory, cleanup)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.
