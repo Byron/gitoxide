@@ -6,7 +6,7 @@ use std::{
 
 fn main() -> std::io::Result<()> {
     let filepath = PathBuf::new().join("tempfile.ext");
-    let _tempfile = git_tempfile::mark_path(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+    let _tempfile = git_tempfile::mark_at(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
     assert!(filepath.is_file(), "a tempfile was created");
 
     writeln!(stdout(), "{}", filepath.display())?;

@@ -153,21 +153,21 @@ pub fn new(
 }
 
 /// A shortcut to [`Registration::<Writable>::at_path()`] providing a writable temporary file at the given path.
-pub fn at_path(
+pub fn writable_at(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration<Writable>> {
-    Registration::<Writable>::at_path(path, directory, cleanup)
+    Registration::<Writable>::at(path, directory, cleanup)
 }
 
 /// A shortcut to [`Registration::<Closed>::at_path()`] providing a closed temporary file to mark the presence of something.
-pub fn mark_path(
+pub fn mark_at(
     path: impl AsRef<Path>,
     directory: ContainingDirectory,
     cleanup: AutoRemove,
 ) -> io::Result<Registration<Closed>> {
-    Registration::<Closed>::at_path(path, directory, cleanup)
+    Registration::<Closed>::at(path, directory, cleanup)
 }
 
 /// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.

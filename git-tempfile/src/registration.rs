@@ -18,7 +18,7 @@ pub(crate) enum Mode {
 
 /// Utilities
 impl<T> Registration<T> {
-    fn at_path_inner(
+    fn at_path(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
@@ -71,9 +71,9 @@ impl Registration<Closed> {
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
-    pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
+    pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Registration {
-            id: Registration::<()>::at_path_inner(path, directory, cleanup, Mode::Closed)?,
+            id: Registration::<()>::at_path(path, directory, cleanup, Mode::Closed)?,
             _marker: Default::default(),
         })
     }
@@ -94,9 +94,9 @@ impl Registration<Writable> {
     ///
     /// Depending on the `directory` configuration, intermediate directories will be created, and depending on `cleanup` empty
     /// intermediate directories will be removed.
-    pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
+    pub fn at(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Registration {
-            id: Registration::<()>::at_path_inner(path, directory, cleanup, Mode::Writable)?,
+            id: Registration::<()>::at_path(path, directory, cleanup, Mode::Writable)?,
             _marker: Default::default(),
         })
     }

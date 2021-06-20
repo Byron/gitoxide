@@ -208,7 +208,9 @@ Check out the [performance discussion][git-traverse-performance] as well.
     
 ### git-tempfile
 
-* [x] registered temporary files which are deleted automatically as the process terminates.
+* [x] registered temporary files which are deleted automatically as the process terminates or on drop
+   * [x] write to temorary file and persist it under new name
+   * [x] mark paths with a closed temporary file
 
 ### git-config
 * [ ] read
