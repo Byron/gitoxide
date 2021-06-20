@@ -17,16 +17,8 @@
 #![allow(missing_docs)]
 
 use git_tempfile::registration::{Closed, Writable};
-use std::time::Duration;
 
-/// Describe what to do if a lock cannot be obtained as it's already held elsewhere.
-pub enum Fail {
-    /// Fail after the first unsuccessful attempt of obtaining a lock.
-    Immediately,
-    /// Retry after failure with exponentially longer sleep times to block the current thread.
-    /// Fail once the given duration is exceeded, similar to [Fail::Immediately]
-    AfterDurationWithBackoff(Duration),
-}
+const SUFFIX: &str = ".lock";
 
 /// Locks a resource to eventually be overwritten with the content of this file.
 ///
@@ -35,27 +27,100 @@ pub struct File {
     _inner: git_tempfile::Handle<Writable>,
 }
 
-mod file {
-    use crate::{Fail, File};
-    use std::path::{Path, PathBuf};
+/// Locks a resource for other markers or [files][File] that intend to update it.
+///
+/// As opposed to the [File] type this one won't keep the tempfile open for writing and thus consumes no
+/// system resources.
+pub struct Marker {
+    _inner: git_tempfile::Handle<Closed>,
+}
 
-    mod error {
-        use quick_error::quick_error;
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Tbd
+pub mod acquire {
+    use crate::{File, Marker};
+    use quick_error::quick_error;
+    use std::{
+        fmt,
+        path::{Path, PathBuf},
+        time::Duration,
+    };
+
+    /// Describe what to do if a lock cannot be obtained as it's already held elsewhere.
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+    pub enum FailMode {
+        /// Fail after the first unsuccessful attempt of obtaining a lock.
+        FailImmediately,
+        /// Retry after failure with exponentially longer sleep times to block the current thread.
+        /// Fail once the given duration is exceeded, similar to [Fail::Immediately]
+        FailAfterDurationWithBackoff(Duration),
+    }
+
+    impl Default for FailMode {
+        fn default() -> Self {
+            FailMode::FailImmediately
+        }
+    }
+
+    impl fmt::Display for FailMode {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                FailMode::FailImmediately => f.write_str("immediately"),
+                FailMode::FailAfterDurationWithBackoff(duration) => {
+                    write!(f, "after {:.02}s", duration.as_secs_f32())
+                }
             }
         }
     }
-    use error::Error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Io(err: std::io::Error) {
+                display("Another IO error occurred while obtaining the lock")
+                from()
+                source(err)
+            }
+            PermanentlyLocked { resource_path: PathBuf, mode: FailMode } {
+                display("The lock for resource '{} could not be obtained {}. The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, resource_path.display(), super::SUFFIX)
+            }
+        }
+    }
 
     impl File {
         /// Create a writable lock file with failure `mode` whose content will eventually overwrite the given resource `at_path`.
-        pub fn hold_to_update_resource(_at_path: impl AsRef<Path>, _mode: Fail) -> Result<File, Error> {
-            Err(Error::Tbd)
+        ///
+        /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
+        /// a rollback. Otherwise the containing directory is expected to exist, even though the resource doesn't have to.
+        pub fn acquire_to_update_resource(
+            _at_path: impl AsRef<Path>,
+            _mode: FailMode,
+            _boundary_directory: Option<PathBuf>,
+        ) -> Result<File, Error> {
+            todo!("acquire file")
         }
+    }
 
+    impl Marker {
+        /// Like [`acquire_to_update_resource()`][File::acquire_to_update_resource()] but without the possibility to make changes
+        /// and commit them.
+        ///
+        /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
+        /// a rollback.
+        pub fn acquire_to_hold_resource(
+            _at_path: impl AsRef<Path>,
+            _mode: FailMode,
+            _boundary_directory: Option<PathBuf>,
+        ) -> Result<Marker, Error> {
+            todo!("acquire marker")
+        }
+    }
+}
+
+///
+pub mod file {
+    use crate::File;
+    use std::path::PathBuf;
+
+    impl File {
         /// Commit the changes written to this lock file and overwrite the original resource atomically, returning the resource path
         /// on success.
         pub fn commit(self) -> std::io::Result<PathBuf> {
