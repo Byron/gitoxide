@@ -2,46 +2,68 @@ use crate::{registration, AutoRemove};
 use std::io::Write;
 use tempfile::{NamedTempFile, TempPath};
 
+enum TempfileOrTemppath {
+    Tempfile(NamedTempFile),
+    Temppath(TempPath),
+}
+
 pub(crate) struct ForksafeTempfile {
-    pub inner: NamedTempFile,
-    pub cleanup: AutoRemove,
+    inner: TempfileOrTemppath,
+    cleanup: AutoRemove,
     pub owning_process_id: u32,
 }
 
 impl ForksafeTempfile {
-    pub fn new(inner: NamedTempFile, cleanup: AutoRemove, mode: registration::Mode) -> Self {
-        match mode {
-            registration::Mode::Closed => todo!("closed mode"),
-            registration::Mode::Writable => ForksafeTempfile {
-                inner,
-                cleanup,
-                owning_process_id: std::process::id(),
+    pub fn new(tempfile: NamedTempFile, cleanup: AutoRemove, mode: registration::Mode) -> Self {
+        use registration::Mode::*;
+        ForksafeTempfile {
+            inner: match mode {
+                Closed => TempfileOrTemppath::Temppath(tempfile.into_temp_path()),
+                Writable => TempfileOrTemppath::Tempfile(tempfile),
             },
+            cleanup,
+            owning_process_id: std::process::id(),
         }
     }
 }
 
 impl ForksafeTempfile {
-    pub fn into_temppath(self) -> Option<TempPath> {
-        Some(self.inner.into_temp_path())
+    pub fn as_mut_tempfile(&mut self) -> Option<&mut NamedTempFile> {
+        match &mut self.inner {
+            TempfileOrTemppath::Tempfile(file) => Some(file),
+            TempfileOrTemppath::Temppath(_) => None,
+        }
+    }
+    pub fn into_temppath(self) -> TempPath {
+        match self.inner {
+            TempfileOrTemppath::Tempfile(file) => file.into_temp_path(),
+            TempfileOrTemppath::Temppath(path) => path,
+        }
     }
     pub fn into_tempfile(self) -> Option<NamedTempFile> {
-        Some(self.inner)
+        match self.inner {
+            TempfileOrTemppath::Tempfile(file) => Some(file),
+            TempfileOrTemppath::Temppath(_) => None,
+        }
     }
     pub fn drop_impl(self) {
-        let directory = self
-            .inner
-            .path()
-            .parent()
-            .expect("every tempfile has a parent directory")
-            .to_owned();
-        drop(self.inner);
-        self.cleanup.execute_best_effort(&directory);
+        let file_path = match self.inner {
+            TempfileOrTemppath::Tempfile(file) => file.path().to_owned(),
+            TempfileOrTemppath::Temppath(path) => path.to_path_buf(),
+        };
+        let parent_directory = file_path.parent().expect("every tempfile has a parent directory");
+        self.cleanup.execute_best_effort(&parent_directory);
     }
 
     pub fn drop_without_deallocation(self) {
-        let (mut file, temppath) = self.inner.into_parts();
-        file.flush().ok();
+        let temppath = match self.inner {
+            TempfileOrTemppath::Tempfile(file) => {
+                let (mut file, temppath) = file.into_parts();
+                file.flush().ok();
+                temppath
+            }
+            TempfileOrTemppath::Temppath(path) => path,
+        };
         std::fs::remove_file(&temppath).ok();
         std::mem::forget(
             self.cleanup

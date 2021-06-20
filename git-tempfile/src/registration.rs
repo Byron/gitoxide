@@ -99,7 +99,7 @@ impl Registration<Closed> {
     pub fn take(self) -> Option<TempPath> {
         let res = REGISTER.remove(&self.id);
         std::mem::forget(self);
-        res.and_then(|(_k, v)| v.map(|v| v.into_temppath().expect("proper runtime typing")))
+        res.and_then(|(_k, v)| v.map(|v| v.into_temppath()))
     }
 }
 
@@ -151,7 +151,7 @@ impl Registration<Writable> {
     pub fn map<T>(self, once: impl FnOnce(&mut NamedTempFile) -> T) -> std::io::Result<(Self, T)> {
         match REGISTER.remove(&self.id) {
             Some((id, Some(mut t))) => {
-                let res = once(&mut t.inner);
+                let res = once(t.as_mut_tempfile().expect("correct runtime typing"));
                 expect_none(REGISTER.insert(id, Some(t)));
                 Ok((self, res))
             }
