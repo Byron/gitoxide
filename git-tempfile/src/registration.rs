@@ -11,13 +11,18 @@ pub struct Writable;
 /// It can't ever be written to unless reopened after persisting it.
 pub struct Closed;
 
+pub(crate) enum Mode {
+    Writable,
+    Closed,
+}
+
 /// Utilities
 impl<T> Registration<T> {
     fn at_path_inner(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
-        writable: bool,
+        mode: Mode,
     ) -> io::Result<usize> {
         let path = path.as_ref();
         let tempfile = {
@@ -33,7 +38,7 @@ impl<T> Registration<T> {
             }
             let parent_dir = path.parent().expect("parent directory is present");
             let parent_dir = directory.resolve(parent_dir)?;
-            ForksafeTempfile::new(builder.rand_bytes(0).tempfile_in(parent_dir)?, cleanup, writable)
+            ForksafeTempfile::new(builder.rand_bytes(0).tempfile_in(parent_dir)?, cleanup, mode)
         };
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         expect_none(REGISTER.insert(id, Some(tempfile)));
@@ -44,7 +49,7 @@ impl<T> Registration<T> {
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
         cleanup: AutoRemove,
-        writable: bool,
+        mode: Mode,
     ) -> io::Result<usize> {
         let containing_directory = directory.resolve(containing_directory.as_ref())?;
         let id = NEXT_MAP_INDEX.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -53,7 +58,7 @@ impl<T> Registration<T> {
             Some(ForksafeTempfile::new(
                 NamedTempFile::new_in(containing_directory)?,
                 cleanup,
-                writable,
+                mode,
             )),
         ));
         Ok(id)
@@ -68,7 +73,7 @@ impl Registration<Closed> {
     /// intermediate directories will be removed.
     pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Registration {
-            id: Registration::<()>::at_path_inner(path, directory, cleanup, false)?,
+            id: Registration::<()>::at_path_inner(path, directory, cleanup, Mode::Closed)?,
             _marker: Default::default(),
         })
     }
@@ -83,7 +88,7 @@ impl Registration<Closed> {
         cleanup: AutoRemove,
     ) -> io::Result<Self> {
         Ok(Registration {
-            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, false)?,
+            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, Mode::Closed)?,
             _marker: Default::default(),
         })
     }
@@ -94,8 +99,7 @@ impl Registration<Closed> {
     pub fn take(self) -> Option<TempPath> {
         let res = REGISTER.remove(&self.id);
         std::mem::forget(self);
-        todo!("impl take")
-        // res.and_then(|(_k, v)| v.map(|v| v.inner))
+        res.and_then(|(_k, v)| v.map(|v| v.into_temppath().expect("proper runtime typing")))
     }
 }
 
@@ -107,7 +111,7 @@ impl Registration<Writable> {
     /// intermediate directories will be removed.
     pub fn at_path(path: impl AsRef<Path>, directory: ContainingDirectory, cleanup: AutoRemove) -> io::Result<Self> {
         Ok(Registration {
-            id: Registration::<()>::at_path_inner(path, directory, cleanup, true)?,
+            id: Registration::<()>::at_path_inner(path, directory, cleanup, Mode::Writable)?,
             _marker: Default::default(),
         })
     }
@@ -121,7 +125,7 @@ impl Registration<Writable> {
         cleanup: AutoRemove,
     ) -> io::Result<Self> {
         Ok(Registration {
-            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, true)?,
+            id: Registration::<()>::new_writable_inner(containing_directory, directory, cleanup, Mode::Writable)?,
             _marker: Default::default(),
         })
     }
@@ -132,7 +136,7 @@ impl Registration<Writable> {
     pub fn take(self) -> Option<NamedTempFile> {
         let res = REGISTER.remove(&self.id);
         std::mem::forget(self);
-        res.and_then(|(_k, v)| v.map(|v| v.inner))
+        res.and_then(|(_k, v)| v.map(|v| v.into_tempfile().expect("correct runtime typing")))
     }
 }
 
