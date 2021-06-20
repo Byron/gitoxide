@@ -22,6 +22,3 @@ signal-hook-registry = "1.4.0"
 tempfile = "3.2.0"
 [target.'cfg(not(windows))'.dependencies]
 libc = { version = "0.2.97", default-features = false }
-
-[dev-dependencies]
-git-testtools = { version = "^0.3", path = "../tests/tools" }

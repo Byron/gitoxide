@@ -16,6 +16,4 @@ test = true
 
 [dependencies]
 git-tempfile = { version = "^0.3.0", path = "../git-tempfile" }
-
-[dev-dependencies]
-git-testtools = { version = "^0.3", path = "../tests/tools" }
+quick-error = "2.0.0"

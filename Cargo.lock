@@ -951,7 +951,7 @@ name = "git-lock"
 version = "0.0.0"
 dependencies = [
  "git-tempfile",
- "git-testtools",
+ "quick-error",
 ]
 
 [[package]]
@@ -1090,7 +1090,6 @@ name = "git-tempfile"
 version = "0.3.0"
 dependencies = [
  "dashmap",
- "git-testtools",
  "libc",
  "once_cell",
  "signal-hook 0.3.9",
