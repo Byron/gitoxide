@@ -151,16 +151,18 @@ mod backoff {
         use super::*;
         #[test]
         fn how_many_iterations_for_a_second_of_waittime() {
-            let mut remaining = Duration::from_millis(1000);
+            let mut total = Duration::default();
+            let max = Duration::from_millis(1000);
             assert_eq!(
                 Exponential::default()
                     .take_while(|d| {
-                        remaining = remaining.saturating_sub(*d);
-                        !remaining.is_zero()
+                        total += *d;
+                        total < max
                     })
                     .count(),
                 13
             );
+            assert_eq!(total, Duration::from_millis(1015), "a little overshoot");
         }
 
         #[test]
