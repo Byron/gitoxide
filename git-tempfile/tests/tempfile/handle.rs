@@ -115,8 +115,9 @@ mod at_path {
         let dir = tempfile::tempdir()?;
         let filename = dir.path().join("something-specific.ext");
         let tempfile = git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+        let res = git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile);
         assert!(
-            matches!(git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile), Err(err) if err.kind() == ErrorKind::AlreadyExists),
+            matches!(res, Err(err) if err.kind() == ErrorKind::AlreadyExists),
             "only one tempfile can be created at a time, they are exclusive"
         );
         assert!(filename.is_file(), "specified file should exist precisely");
@@ -177,7 +178,7 @@ mod new {
                 1,
                 "a temp file was created, as well as the directory"
             );
-            writable.map(|tf| tf.write_all(b"hello world"))?.1?;
+            writable.with_mut(|tf| tf.write_all(b"hello world"))?.1?;
         }
         assert!(!containing_dir.is_dir(), "the now empty directory was deleted as well");
         assert!(dir.path().is_dir(), "it won't touch the containing directory");

@@ -16,7 +16,7 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
 
-use git_tempfile::registration::{Closed, Writable};
+use git_tempfile::handle::{Closed, Writable};
 
 const SUFFIX: &str = ".lock";
 
@@ -46,25 +46,25 @@ pub mod acquire {
 
     /// Describe what to do if a lock cannot be obtained as it's already held elsewhere.
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-    pub enum FailMode {
+    pub enum Fail {
         /// Fail after the first unsuccessful attempt of obtaining a lock.
-        FailImmediately,
+        Immediately,
         /// Retry after failure with exponentially longer sleep times to block the current thread.
         /// Fail once the given duration is exceeded, similar to [Fail::Immediately]
-        FailAfterDurationWithBackoff(Duration),
+        AfterDurationWithBackoff(Duration),
     }
 
-    impl Default for FailMode {
+    impl Default for Fail {
         fn default() -> Self {
-            FailMode::FailImmediately
+            Fail::Immediately
         }
     }
 
-    impl fmt::Display for FailMode {
+    impl fmt::Display for Fail {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                FailMode::FailImmediately => f.write_str("immediately"),
-                FailMode::FailAfterDurationWithBackoff(duration) => {
+                Fail::Immediately => f.write_str("immediately"),
+                Fail::AfterDurationWithBackoff(duration) => {
                     write!(f, "after {:.02}s", duration.as_secs_f32())
                 }
             }
@@ -79,7 +79,7 @@ pub mod acquire {
                 from()
                 source(err)
             }
-            PermanentlyLocked { resource_path: PathBuf, mode: FailMode } {
+            PermanentlyLocked { resource_path: PathBuf, mode: Fail } {
                 display("The lock for resource '{} could not be obtained {}. The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, resource_path.display(), super::SUFFIX)
             }
         }
@@ -92,7 +92,7 @@ pub mod acquire {
         /// a rollback. Otherwise the containing directory is expected to exist, even though the resource doesn't have to.
         pub fn acquire_to_update_resource(
             _at_path: impl AsRef<Path>,
-            _mode: FailMode,
+            _mode: Fail,
             _boundary_directory: Option<PathBuf>,
         ) -> Result<File, Error> {
             todo!("acquire file")
@@ -107,7 +107,7 @@ pub mod acquire {
         /// a rollback.
         pub fn acquire_to_hold_resource(
             _at_path: impl AsRef<Path>,
-            _mode: FailMode,
+            _mode: Fail,
             _boundary_directory: Option<PathBuf>,
         ) -> Result<Marker, Error> {
             todo!("acquire marker")
@@ -118,12 +118,15 @@ pub mod acquire {
 ///
 pub mod file {
     use crate::File;
-    use std::path::PathBuf;
 
     impl File {
+        /// Obtain a mutable reference to the write handle and call `f(out)` with it.
+        pub fn with_mut<T>(&mut self, _f: impl FnOnce(&mut std::fs::File) -> std::io::Result<T>) -> std::io::Result<T> {
+            todo!("with mut")
+        }
         /// Commit the changes written to this lock file and overwrite the original resource atomically, returning the resource path
         /// on success.
-        pub fn commit(self) -> std::io::Result<PathBuf> {
+        pub fn commit(self) -> std::io::Result<()> {
             todo!("commit")
         }
     }

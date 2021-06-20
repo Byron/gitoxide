@@ -135,7 +135,7 @@ impl Handle<Writable> {
     /// Also note that it might theoretically be possible that due to signal interference the underlying tempfile isn't present
     /// anymore which may cause the function `f` not to be called and an io error kind `Interrupted` is returned, consuming the
     /// handle in the process.
-    pub fn map<T>(self, once: impl FnOnce(&mut NamedTempFile) -> T) -> std::io::Result<(Self, T)> {
+    pub fn with_mut<T>(self, once: impl FnOnce(&mut NamedTempFile) -> T) -> std::io::Result<(Self, T)> {
         match REGISTER.remove(&self.id) {
             Some((id, Some(mut t))) => {
                 let res = once(t.as_mut_tempfile().expect("correct runtime typing"));

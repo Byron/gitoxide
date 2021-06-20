@@ -1,4 +1,4 @@
-use crate::{registration, AutoRemove};
+use crate::{handle, AutoRemove};
 use std::io::Write;
 use tempfile::{NamedTempFile, TempPath};
 
@@ -14,8 +14,8 @@ pub(crate) struct ForksafeTempfile {
 }
 
 impl ForksafeTempfile {
-    pub fn new(tempfile: NamedTempFile, cleanup: AutoRemove, mode: registration::Mode) -> Self {
-        use registration::Mode::*;
+    pub fn new(tempfile: NamedTempFile, cleanup: AutoRemove, mode: handle::Mode) -> Self {
+        use handle::Mode::*;
         ForksafeTempfile {
             inner: match mode {
                 Closed => TempfileOrTemppath::Temppath(tempfile.into_temp_path()),

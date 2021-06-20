@@ -42,8 +42,8 @@ mod handler;
 mod forksafe;
 pub(crate) use forksafe::ForksafeTempfile;
 
-pub mod registration;
-use crate::registration::{Closed, Writable};
+pub mod handle;
+use crate::handle::{Closed, Writable};
 
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);

@@ -1,5 +1,5 @@
 mod fs;
-mod registration;
+mod handle;
 
 mod force_setup {
     #[test]

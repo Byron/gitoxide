@@ -952,6 +952,7 @@ version = "0.0.0"
 dependencies = [
  "git-tempfile",
  "quick-error",
+ "tempfile",
 ]
 
 [[package]]
