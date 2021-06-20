@@ -1,13 +1,13 @@
-mod at_path {
+mod mark_path {
     use git_tempfile::{AutoRemove, ContainingDirectory};
 
     #[test]
-    fn it_persists_tempfiles_along_with_newly_created_directories() -> crate::Result {
+    fn it_persists_markers_along_with_newly_created_directories() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("a").join("b").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
         drop(
-            git_tempfile::at_path(
+            git_tempfile::mark_path(
                 &target,
                 ContainingDirectory::CreateAllRaceProof(Default::default()),
                 AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -22,6 +22,64 @@ mod at_path {
         assert!(
             new_filename.is_file(),
             "new file was placed (and parent directories still exist)"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn it_can_create_the_containing_directory_and_remove_it_on_drop() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let first_dir = "dir";
+        let filename = dir.path().join(first_dir).join("subdir").join("file.tmp");
+        let tempfile = git_tempfile::mark_path(
+            &filename,
+            ContainingDirectory::CreateAllRaceProof(Default::default()),
+            AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
+                boundary_directory: dir.path().into(),
+            },
+        )?;
+        assert!(filename.is_file(), "specified file should exist precisely");
+        drop(tempfile);
+        assert!(
+            !filename.is_file(),
+            "after drop named files are deleted as well as extra directories"
+        );
+        assert!(
+            !dir.path().join(first_dir).is_dir(),
+            "previously created and now empty directories are deleted, too"
+        );
+        Ok(())
+    }
+}
+mod at_path {
+    use git_tempfile::{AutoRemove, ContainingDirectory};
+    use std::io::Write;
+
+    #[test]
+    fn it_persists_tempfiles_along_with_newly_created_directories() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let target = dir.path().join("a").join("b").join("file.tmp");
+        let new_filename = target.parent().unwrap().join("file.ext");
+        let mut file = git_tempfile::at_path(
+            &target,
+            ContainingDirectory::CreateAllRaceProof(Default::default()),
+            AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
+                boundary_directory: dir.path().into(),
+            },
+        )?
+        .take()
+        .expect("still there");
+        file.write_all(b"hello world")?;
+        drop(file.persist(&new_filename)?);
+        assert!(!target.exists(), "tempfile was renamed");
+        assert!(
+            new_filename.is_file(),
+            "new file was placed (and parent directories still exist)"
+        );
+        assert_eq!(
+            std::fs::read(new_filename)?,
+            &b"hello world"[..],
+            "written content is persisted, too"
         );
         Ok(())
     }
@@ -48,6 +106,7 @@ mod at_path {
             !dir.path().join(first_dir).is_dir(),
             "previously created and now empty directories are deleted, too"
         );
+        assert!(dir.path().is_dir(), "it won't touch the containing directory");
         Ok(())
     }
 
@@ -59,6 +118,7 @@ mod at_path {
         assert!(filename.is_file(), "specified file should exist precisely");
         drop(tempfile);
         assert!(!filename.is_file(), "after drop named files are deleted as well");
+        assert!(dir.path().is_dir(), "it won't touch the containing directory");
         Ok(())
     }
 }
@@ -115,6 +175,7 @@ mod new {
             );
         }
         assert!(!containing_dir.is_dir(), "the now empty directory was deleted as well");
+        assert!(dir.path().is_dir(), "it won't touch the containing directory");
         Ok(())
     }
 }
