@@ -53,7 +53,7 @@ mod mark_path {
 }
 mod at_path {
     use git_tempfile::{AutoRemove, ContainingDirectory};
-    use std::io::Write;
+    use std::io::{ErrorKind, Write};
 
     #[test]
     fn it_persists_tempfiles_along_with_newly_created_directories() -> crate::Result {
@@ -111,10 +111,14 @@ mod at_path {
     }
 
     #[test]
-    fn it_names_files_correctly_and_removes_them_when_out_of_scope() -> crate::Result {
+    fn it_names_files_correctly_and_similarly_named_tempfiles_cannot_be_created() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let filename = dir.path().join("something-specific.ext");
         let tempfile = git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+        assert!(
+            matches!(git_tempfile::writable_at(&filename, ContainingDirectory::Exists, AutoRemove::Tempfile), Err(err) if err.kind() == ErrorKind::AlreadyExists),
+            "only one tempfile can be created at a time, they are exclusive"
+        );
         assert!(filename.is_file(), "specified file should exist precisely");
         drop(tempfile);
         assert!(!filename.is_file(), "after drop named files are deleted as well");

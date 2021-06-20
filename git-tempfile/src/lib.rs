@@ -138,7 +138,8 @@ impl AutoRemove {
 /// state forever.
 ///
 /// This kind of raciness exists whenever [`take()`][Registration::take()] is used and can't be circumvented.
-pub struct Registration<Marker> {
+#[derive(Debug)]
+pub struct Registration<Marker: std::fmt::Debug> {
     id: usize,
     _marker: PhantomData<Marker>,
 }

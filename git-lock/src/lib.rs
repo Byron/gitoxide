@@ -1,6 +1,9 @@
 //! git-style registered lock files to make altering resources atomic.
 //!
-//! They are mostly provided by `git-tempfile` with its auto-cleanup and they add the following:
+//! In this model, reads are always atomic and can be performed directly while writes are facilitated by a locking mechanism
+//! implemented here.
+//!
+//! Lock files mostly `git-tempfile` with its auto-cleanup and the following:
 //!
 //! * consistent naming of lock files
 //! * block the thread (with timeout) or fail immediately if a lock cannot be obtained right away

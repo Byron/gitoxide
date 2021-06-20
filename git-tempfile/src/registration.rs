@@ -4,11 +4,13 @@ use std::{io, path::Path};
 use tempfile::{NamedTempFile, TempPath};
 
 /// Marker to signal the Registration is an open file able to be written to.
+#[derive(Debug)]
 pub struct Writable;
 
 /// Marker to signal the Registration is a closed file that consumes no additional process resources.
 ///
 /// It can't ever be written to unless reopened after persisting it.
+#[derive(Debug)]
 pub struct Closed;
 
 pub(crate) enum Mode {
@@ -17,7 +19,7 @@ pub(crate) enum Mode {
 }
 
 /// Utilities
-impl<T> Registration<T> {
+impl<T: std::fmt::Debug> Registration<T> {
     fn at_path(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
@@ -164,7 +166,7 @@ fn expect_none<T>(v: Option<T>) {
     );
 }
 
-impl<T> Drop for Registration<T> {
+impl<T: std::fmt::Debug> Drop for Registration<T> {
     fn drop(&mut self) {
         if let Some((_id, Some(tempfile))) = REGISTER.remove(&self.id) {
             tempfile.drop_impl();
