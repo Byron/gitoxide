@@ -166,7 +166,7 @@ mod new {
         let containing_dir = dir.path().join("dir");
         assert!(!containing_dir.exists());
         {
-            let writable = git_tempfile::new(
+            let mut writable = git_tempfile::new(
                 &containing_dir,
                 ContainingDirectory::CreateAllRaceProof(Default::default()),
                 AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
@@ -178,7 +178,7 @@ mod new {
                 1,
                 "a temp file was created, as well as the directory"
             );
-            writable.with_mut(|tf| tf.write_all(b"hello world"))?.1?;
+            writable.with_mut(|tf| tf.write_all(b"hello world"))??;
         }
         assert!(!containing_dir.is_dir(), "the now empty directory was deleted as well");
         assert!(dir.path().is_dir(), "it won't touch the containing directory");

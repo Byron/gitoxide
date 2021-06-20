@@ -13,6 +13,7 @@
 //! Applications setting their own signal handlers on termination to abort the process probably want to be called after the ones of this crate
 //! can call [`force_setup()`] before installing their own handlers.
 //! By default, our signal handlers will emulate the default behaviour and abort the process after cleaning temporary files.
+//! For full control the application can also prevent our handler to be installed and call it themselves from their own signal handlers.
 //!
 //! # Limitations
 //!
@@ -37,7 +38,7 @@ use std::{
 mod fs;
 pub use fs::{create_dir, remove_dir};
 
-mod handler;
+pub mod handler;
 
 mod forksafe;
 pub(crate) use forksafe::ForksafeTempfile;
@@ -48,20 +49,23 @@ use crate::handle::{Closed, Writable};
 static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
 static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
-    for sig in signal_hook::consts::TERM_SIGNALS {
-        // SAFETY: handlers are considered unsafe because a lot can go wrong. See `cleanup_tempfiles()` for details on safety.
-        #[allow(unsafe_code)]
-        unsafe {
-            #[cfg(not(windows))]
-            {
-                signal_hook_registry::register_sigaction(*sig, handler::cleanup_tempfiles_nix)
+    let mode = SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst);
+    if mode != SignalHandlerMode::None as usize {
+        for sig in signal_hook::consts::TERM_SIGNALS {
+            // SAFETY: handlers are considered unsafe because a lot can go wrong. See `cleanup_tempfiles()` for details on safety.
+            #[allow(unsafe_code)]
+            unsafe {
+                #[cfg(not(windows))]
+                {
+                    signal_hook_registry::register_sigaction(*sig, handler::cleanup_tempfiles_nix)
+                }
+                #[cfg(windows)]
+                {
+                    signal_hook::low_level::register(*sig, handler::cleanup_tempfiles_windows)
+                }
             }
-            #[cfg(windows)]
-            {
-                signal_hook::low_level::register(*sig, handler::cleanup_tempfiles_windows)
-            }
+            .expect("signals can always be installed");
         }
-        .expect("signals can always be installed");
     }
     DashMap::new()
 });
@@ -69,12 +73,14 @@ static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
 /// Define how our signal handlers act
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub enum SignalHandlerMode {
+    /// Do not install a signal handler at all, but have somebody else call our handler directly.
+    None = 0,
     /// Delete all remaining registered tempfiles on termination.
-    DeleteTempfilesOnTermination = 0,
+    DeleteTempfilesOnTermination = 1,
     /// Delete all remaining registered tempfiles on termination and emulate the default handler behaviour.
     ///
     /// This is the default, which leads to the process to be aborted.
-    DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour = 1,
+    DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour = 2,
 }
 
 impl SignalHandlerMode {
@@ -177,6 +183,6 @@ pub fn mark_at(
 ///
 /// This is required if the application wants to install their own signal handlers _after_ the ones defined here.
 pub fn force_setup(mode: SignalHandlerMode) {
-    SIGNAL_HANDLER_MODE.store(mode as usize, std::sync::atomic::Ordering::Relaxed);
+    SIGNAL_HANDLER_MODE.store(mode as usize, std::sync::atomic::Ordering::SeqCst);
     Lazy::force(&REGISTER);
 }

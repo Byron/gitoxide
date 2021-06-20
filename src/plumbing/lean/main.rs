@@ -8,8 +8,10 @@ use gitoxide_core::{self as core, OutputFormat};
 use std::{
     io::{self, stderr, stdin, stdout},
     path::PathBuf,
-    sync::atomic::AtomicBool,
-    sync::Arc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 #[cfg(all(feature = "gitoxide-core-blocking-client", feature = "gitoxide-core-async-client"))]
 compile_error!("Please set only one of the client networking options.");
@@ -17,7 +19,10 @@ compile_error!("Please set only one of the client networking options.");
 pub fn main() -> Result<()> {
     let cli: Args = crate::shared::from_env();
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    git_repository::interrupt::init_handler(Arc::clone(&should_interrupt))?;
+    git_repository::interrupt::init_handler({
+        let should_interrupt = Arc::clone(&should_interrupt);
+        move || should_interrupt.store(true, Ordering::SeqCst)
+    })?;
     let thread_limit = cli.threads;
     let verbose = cli.verbose;
     match cli.subcommand {

@@ -131,16 +131,18 @@ impl Handle<Writable> {
 impl Handle<Writable> {
     /// Obtain a mutable handler to the underlying named tempfile and call `f(&mut named_tempfile)` on it.
     ///
-    /// Note that for the duration of the call, a signal interrupting the operation will cause the tempfile not to be cleaned up.
-    /// Also note that it might theoretically be possible that due to signal interference the underlying tempfile isn't present
-    /// anymore which may cause the function `f` not to be called and an io error kind `Interrupted` is returned, consuming the
-    /// handle in the process.
-    pub fn with_mut<T>(self, once: impl FnOnce(&mut NamedTempFile) -> T) -> std::io::Result<(Self, T)> {
+    /// Note that for the duration of the call, a signal interrupting the operation will cause the tempfile not to be cleaned up
+    /// as it is not visible anymore to the signal handler.
+    ///
+    /// # Assumptions
+    /// The caller must assure that the signal handler for cleanup will be followed by an abort call so that
+    /// this code won't run again on a removed instance. An error will occur otherwise.
+    pub fn with_mut<T>(&mut self, once: impl FnOnce(&mut NamedTempFile) -> T) -> std::io::Result<T> {
         match REGISTER.remove(&self.id) {
             Some((id, Some(mut t))) => {
                 let res = once(t.as_mut_tempfile().expect("correct runtime typing"));
                 expect_none(REGISTER.insert(id, Some(t)));
-                Ok((self, res))
+                Ok(res)
             }
             None | Some((_, None)) => Err(std::io::Error::new(
                 std::io::ErrorKind::Interrupted,

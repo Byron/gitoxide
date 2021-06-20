@@ -3,7 +3,7 @@ set -eu
 
 title plumbing "${kind}"
 snapshot="$snapshot/plumbing"
-title "gixp pack-receive"
+title "git-tempfile crate"
 (when "testing 'git-tempfile'"
   snapshot="$snapshot/git-tempfile"
   cd git-tempfile
@@ -21,8 +21,24 @@ title "gixp pack-receive"
       expect_run $WITH_FAILURE test -e "$TEMPFILE"
     }
   )
-
 )
+
+title "git-tempfile crate"
+(when "testing 'git-repository'"
+  snapshot="$snapshot/git-repository"
+  cd git-repository
+  ABORTED=143
+
+  (when "running the example program to check order of signal handlers"
+    it "fails as the process aborts" && {
+      expect_run $ABORTED cargo run --example interrupt-handler-allows-graceful-shutdown
+    }
+    it "cleans up the tempfile it created" && {
+      expect_run $WITH_FAILURE test -e "example-file.tmp"
+    }
+  )
+)
+
 title "gixp pack-receive"
 (when "running 'pack-receive'"
   snapshot="$snapshot/pack-receive"

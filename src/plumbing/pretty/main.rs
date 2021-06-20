@@ -10,7 +10,10 @@ use gitoxide_core::pack::verify;
 use std::{
     io::{stdin, BufReader},
     path::PathBuf,
-    sync::{atomic::AtomicBool, Arc},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 
 pub fn main() -> Result<()> {
@@ -23,7 +26,10 @@ pub fn main() -> Result<()> {
         cmd,
     } = Args::parse();
     let should_interrupt = Arc::new(AtomicBool::new(false));
-    git_repository::interrupt::init_handler(Arc::clone(&should_interrupt))?;
+    git_repository::interrupt::init_handler({
+        let should_interrupt = Arc::clone(&should_interrupt);
+        move || should_interrupt.store(true, Ordering::SeqCst)
+    })?;
 
     match cmd {
         Subcommands::PackCreate {

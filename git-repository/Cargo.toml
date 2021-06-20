@@ -52,3 +52,5 @@ quick-error = "2.0.0"
 
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools" }
+signal-hook = { version = "0.3.9", default-features = false }
+anyhow = "1"

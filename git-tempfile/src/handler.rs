@@ -1,3 +1,4 @@
+//!
 use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
 
 /// # Safety
@@ -19,7 +20,7 @@ pub fn cleanup_tempfiles() {
 
 /// On linux we can handle the actual signal as we know it.
 #[cfg(not(windows))]
-pub fn cleanup_tempfiles_nix(sig: &libc::siginfo_t) {
+pub(crate) fn cleanup_tempfiles_nix(sig: &libc::siginfo_t) {
     cleanup_tempfiles();
     let restore_original_behaviour = SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour as usize;
     if SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst) == restore_original_behaviour {
@@ -29,7 +30,7 @@ pub fn cleanup_tempfiles_nix(sig: &libc::siginfo_t) {
 
 /// On windows, assume sig-term and emulate sig-term unconditionally.
 #[cfg(windows)]
-pub fn cleanup_tempfiles_windows() {
+pub(crate) fn cleanup_tempfiles_windows() {
     cleanup_tempfiles();
     let restore_original_behaviour = SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour as usize;
     if SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst) == restore_original_behaviour {
