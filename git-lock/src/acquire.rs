@@ -112,6 +112,73 @@ fn lock_with_mode<T>(
     }
 }
 
+mod backoff {
+    use std::time::Duration;
+
+    struct Exponential {
+        multiplier: usize,
+        max_multiplier: usize,
+        exponent: usize,
+    }
+    impl Default for Exponential {
+        fn default() -> Self {
+            Exponential {
+                multiplier: 1,
+                max_multiplier: 1000,
+                exponent: 1,
+            }
+        }
+    }
+
+    impl Iterator for Exponential {
+        type Item = Duration;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let wait = Duration::from_millis(self.multiplier as u64);
+
+            self.multiplier += 2 * self.exponent + 1;
+            if self.multiplier > self.max_multiplier {
+                self.multiplier = self.max_multiplier;
+            } else {
+                self.exponent += 1;
+            }
+            Some(wait)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        #[test]
+        fn how_many_iterations_for_a_second_of_waittime() {
+            let mut remaining = Duration::from_millis(1000);
+            assert_eq!(
+                Exponential::default()
+                    .take_while(|d| {
+                        remaining = remaining.saturating_sub(*d);
+                        !remaining.is_zero()
+                    })
+                    .count(),
+                13
+            );
+        }
+
+        #[test]
+        fn output_with_default_settings() {
+            assert_eq!(
+                Exponential::default().take(33).collect::<Vec<_>>(),
+                vec![
+                    1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361, 400, 441, 484,
+                    529, 576, 625, 676, 729, 784, 841, 900, 961, 1000, 1000
+                ]
+                .into_iter()
+                .map(Duration::from_millis)
+                .collect::<Vec<_>>()
+            );
+        }
+    }
+}
+
 fn add_lock_suffix(resource_path: &Path) -> PathBuf {
     resource_path.with_extension(resource_path.extension().map_or_else(
         || DOT_SUFFIX.to_string(),
