@@ -105,7 +105,7 @@ impl Handle<Writable> {
 
     /// Create a registered tempfile within `containing_directory` with a name that won't clash, and clean it up as specified with `cleanup`.
     /// Control how to deal with intermediate directories with `directory`.
-    /// The temporary file is opened and can be written to using the [`map()`][Handle::map()] method.
+    /// The temporary file is opened and can be written to using the [`with_mut()`][Handle::with_mut()] method.
     pub fn new(
         containing_directory: impl AsRef<Path>,
         directory: ContainingDirectory,
