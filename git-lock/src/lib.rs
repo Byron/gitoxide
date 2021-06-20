@@ -18,7 +18,7 @@
 
 use git_tempfile::handle::{Closed, Writable};
 
-const SUFFIX: &str = ".lock";
+const DOT_SUFFIX: &str = ".lock";
 
 /// Locks a resource to eventually be overwritten with the content of this file.
 ///
@@ -36,7 +36,8 @@ pub struct Marker {
 }
 
 pub mod acquire {
-    use crate::{File, Marker};
+    use crate::{File, Marker, DOT_SUFFIX};
+    use git_tempfile::{AutoRemove, ContainingDirectory};
     use quick_error::quick_error;
     use std::{
         fmt,
@@ -80,8 +81,34 @@ pub mod acquire {
                 source(err)
             }
             PermanentlyLocked { resource_path: PathBuf, mode: Fail } {
-                display("The lock for resource '{} could not be obtained {}. The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, resource_path.display(), super::SUFFIX)
+                display("The lock for resource '{} could not be obtained {}. The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, resource_path.display(), super::DOT_SUFFIX)
             }
+        }
+    }
+
+    fn dir_cleanup(boundary: Option<PathBuf>) -> (ContainingDirectory, AutoRemove) {
+        match boundary {
+            None => (ContainingDirectory::Exists, AutoRemove::Tempfile),
+            Some(boundary_directory) => (
+                ContainingDirectory::CreateAllRaceProof(Default::default()),
+                AutoRemove::TempfileAndEmptyParentDirectoriesUntil { boundary_directory },
+            ),
+        }
+    }
+
+    fn lock_with_mode<T>(
+        resource: &Path,
+        mode: Fail,
+        boundary_directory: Option<PathBuf>,
+        try_lock: impl Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
+    ) -> Result<T, Error> {
+        let (directory, cleanup) = dir_cleanup(boundary_directory);
+        let lock_path = resource.with_extension(resource.extension().map_or(DOT_SUFFIX.to_string(), |ext| {
+            format!("{}{}", ext.to_string_lossy(), DOT_SUFFIX)
+        }));
+        match mode {
+            Fail::Immediately => try_lock(&lock_path, directory, cleanup).map_err(Error::from),
+            Fail::AfterDurationWithBackoff(_duration) => todo!("fail after timeout"),
         }
     }
 
@@ -91,11 +118,15 @@ pub mod acquire {
         /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
         /// a rollback. Otherwise the containing directory is expected to exist, even though the resource doesn't have to.
         pub fn acquire_to_update_resource(
-            _at_path: impl AsRef<Path>,
-            _mode: Fail,
-            _boundary_directory: Option<PathBuf>,
+            at_path: impl AsRef<Path>,
+            mode: Fail,
+            boundary_directory: Option<PathBuf>,
         ) -> Result<File, Error> {
-            todo!("acquire file")
+            Ok(File {
+                _inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+                    git_tempfile::writable_at(p, d, c)
+                })?,
+            })
         }
     }
 
@@ -106,11 +137,15 @@ pub mod acquire {
         /// If `boundary_directory` is given, non-existing directories will be created automatically and removed in the case of
         /// a rollback.
         pub fn acquire_to_hold_resource(
-            _at_path: impl AsRef<Path>,
-            _mode: Fail,
-            _boundary_directory: Option<PathBuf>,
+            at_path: impl AsRef<Path>,
+            mode: Fail,
+            boundary_directory: Option<PathBuf>,
         ) -> Result<Marker, Error> {
-            todo!("acquire marker")
+            Ok(Marker {
+                _inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+                    git_tempfile::mark_at(p, d, c)
+                })?,
+            })
         }
     }
 }
