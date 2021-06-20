@@ -130,7 +130,10 @@ mod at_path {
 
 mod new {
     use git_tempfile::{AutoRemove, ContainingDirectory};
-    use std::{io::Write, path::Path};
+    use std::{
+        io::{ErrorKind, Write},
+        path::Path,
+    };
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
         std::fs::read_dir(path).expect("valid dir").count()
@@ -179,6 +182,17 @@ mod new {
                 "a temp file was created, as well as the directory"
             );
             writable.with_mut(|tf| tf.write_all(b"hello world"))??;
+            assert_eq!(
+                writable
+                    .with_mut(|_tf| Err::<(), std::io::Error>(ErrorKind::Other.into()))?
+                    .unwrap_err()
+                    .kind(),
+                ErrorKind::Other,
+                "errors are propagated"
+            );
+            writable
+                .with_mut(|tf| assert!(tf.path().is_file()))
+                .expect("after seeing an error before the file still exists");
         }
         assert!(!containing_dir.is_dir(), "the now empty directory was deleted as well");
         assert!(dir.path().is_dir(), "it won't touch the containing directory");

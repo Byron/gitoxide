@@ -24,7 +24,7 @@ const DOT_SUFFIX: &str = ".lock";
 ///
 /// Dropping the file without [committing][File::commit] will delete it, leaving the underlying resource unchanged.
 pub struct File {
-    _inner: git_tempfile::Handle<Writable>,
+    inner: git_tempfile::Handle<Writable>,
 }
 
 /// Locks a resource for other markers or [files][File] that intend to update it.
@@ -103,13 +103,18 @@ pub mod acquire {
         try_lock: impl Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
     ) -> Result<T, Error> {
         let (directory, cleanup) = dir_cleanup(boundary_directory);
-        let lock_path = resource.with_extension(resource.extension().map_or(DOT_SUFFIX.to_string(), |ext| {
-            format!("{}{}", ext.to_string_lossy(), DOT_SUFFIX)
-        }));
+        let lock_path = add_lock_suffix(resource);
         match mode {
             Fail::Immediately => try_lock(&lock_path, directory, cleanup).map_err(Error::from),
             Fail::AfterDurationWithBackoff(_duration) => todo!("fail after timeout"),
         }
+    }
+
+    fn add_lock_suffix(resource_path: &Path) -> PathBuf {
+        resource_path.with_extension(resource_path.extension().map_or_else(
+            || DOT_SUFFIX.to_string(),
+            |ext| format!("{}{}", ext.to_string_lossy(), DOT_SUFFIX),
+        ))
     }
 
     impl File {
@@ -123,7 +128,7 @@ pub mod acquire {
             boundary_directory: Option<PathBuf>,
         ) -> Result<File, Error> {
             Ok(File {
-                _inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+                inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
                     git_tempfile::writable_at(p, d, c)
                 })?,
             })
@@ -152,17 +157,28 @@ pub mod acquire {
 
 ///
 pub mod file {
-    use crate::File;
+    use crate::{File, DOT_SUFFIX};
+    use std::path::{Path, PathBuf};
+
+    fn strip_lock_suffix(lock_path: &Path) -> PathBuf {
+        lock_path.with_extension(lock_path.extension().map_or("".to_string(), |ext| {
+            let ext = ext.to_string_lossy();
+            ext.split_at(ext.len().saturating_sub(DOT_SUFFIX.len())).0.to_string()
+        }))
+    }
 
     impl File {
         /// Obtain a mutable reference to the write handle and call `f(out)` with it.
-        pub fn with_mut<T>(&mut self, _f: impl FnOnce(&mut std::fs::File) -> std::io::Result<T>) -> std::io::Result<T> {
-            todo!("with mut")
+        pub fn with_mut<T>(&mut self, f: impl FnOnce(&mut std::fs::File) -> std::io::Result<T>) -> std::io::Result<T> {
+            self.inner.with_mut(|tf| f(tf.as_file_mut())).and_then(|res| res)
         }
         /// Commit the changes written to this lock file and overwrite the original resource atomically, returning the resource path
         /// on success.
         pub fn commit(self) -> std::io::Result<()> {
-            todo!("commit")
+            let tf = self.inner.take().expect("tempfile is always present");
+            let resource_path = strip_lock_suffix(tf.path());
+            tf.persist(resource_path)?;
+            Ok(())
         }
     }
 }

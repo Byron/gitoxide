@@ -9,7 +9,9 @@ fn fail_immediately() -> git_lock::acquire::Fail {
 fn lock_create_dir_write_commit() -> crate::Result {
     let dir = tempfile::tempdir()?;
     let resource = dir.path().join("a").join("resource-nonexisting.ext");
+    let resource_lock = resource.with_extension("ext.lock");
     let mut file = git_lock::File::acquire_to_update_resource(&resource, fail_immediately(), Some(dir.path().into()))?;
+    assert!(resource_lock.is_file());
     file.with_mut(|out| out.write_all(b"hello world"))?;
     file.commit()?;
     assert_eq!(
@@ -17,6 +19,7 @@ fn lock_create_dir_write_commit() -> crate::Result {
         &b"hello world"[..],
         "it created the resource and wrote the data"
     );
+    assert!(!resource_lock.is_file());
     Ok(())
 }
 
