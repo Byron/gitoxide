@@ -20,6 +20,7 @@ use git_tempfile::handle::{Closed, Writable};
 const DOT_SUFFIX: &str = ".lock";
 
 pub mod acquire;
+mod backoff;
 
 /// Locks a resource to eventually be overwritten with the content of this file.
 ///
