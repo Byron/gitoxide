@@ -152,6 +152,27 @@ mod backoff {
         }
     }
 
+    impl<Transform> Exponential<Transform>
+    where
+        Transform: Fn(usize) -> usize,
+    {
+        fn until_no_remaining(&mut self, time: Duration) -> impl Iterator<Item = Duration> + '_ {
+            let mut elapsed = Duration::default();
+            let mut stop_next_iteration = false;
+            self.take_while(move |d| {
+                if stop_next_iteration {
+                    false
+                } else {
+                    elapsed += *d;
+                    if elapsed > time {
+                        stop_next_iteration = true;
+                    }
+                    true
+                }
+            })
+        }
+    }
+
     impl<Transform> Iterator for Exponential<Transform>
     where
         Transform: Fn(usize) -> usize,
@@ -211,18 +232,16 @@ mod backoff {
 
         #[test]
         fn how_many_iterations_for_a_second_of_waittime() {
-            let mut total = Duration::default();
             let max = Duration::from_millis(1000);
+            assert_eq!(Exponential::default().until_no_remaining(max).count(), 14);
             assert_eq!(
                 Exponential::default()
-                    .take_while(|d| {
-                        total += *d;
-                        total < max
-                    })
-                    .count(),
-                13
+                    .until_no_remaining(max)
+                    .reduce(|acc, n| acc + n)
+                    .unwrap(),
+                Duration::from_millis(1015),
+                "a little overshoot"
             );
-            assert_eq!(total, Duration::from_millis(1015), "a little overshoot");
         }
 
         #[test]
