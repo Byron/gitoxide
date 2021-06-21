@@ -15,6 +15,7 @@ test = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+fastrand = "1.4.1"
 git-tempfile = { version = "^0.3.0", path = "../git-tempfile" }
 quick-error = "2.0.0"
 

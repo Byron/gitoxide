@@ -950,6 +950,7 @@ version = "0.0.0"
 name = "git-lock"
 version = "0.0.0"
 dependencies = [
+ "fastrand",
  "git-tempfile",
  "quick-error",
  "tempfile",
