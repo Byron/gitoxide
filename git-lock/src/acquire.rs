@@ -1,5 +1,5 @@
 //!
-use crate::{File, Marker, DOT_SUFFIX};
+use crate::{backoff, File, Marker, DOT_SUFFIX};
 use git_tempfile::{AutoRemove, ContainingDirectory};
 use quick_error::quick_error;
 use std::{
@@ -104,12 +104,32 @@ fn lock_with_mode<T>(
     boundary_directory: Option<PathBuf>,
     try_lock: impl Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
 ) -> Result<T, Error> {
+    use std::io::ErrorKind::*;
     let (directory, cleanup) = dir_cleanup(boundary_directory);
     let lock_path = add_lock_suffix(resource);
     match mode {
-        Fail::Immediately => try_lock(&lock_path, directory, cleanup).map_err(Error::from),
-        Fail::AfterDurationWithBackoff(_duration) => todo!("fail after timeout"),
+        Fail::Immediately => try_lock(&lock_path, directory, cleanup),
+        Fail::AfterDurationWithBackoff(time) => {
+            for wait in backoff::Exponential::default_with_random().until_no_remaining(time) {
+                match try_lock(&lock_path, directory, cleanup.clone()) {
+                    Ok(v) => return Ok(v),
+                    Err(err) if err.kind() == AlreadyExists => {
+                        std::thread::sleep(wait);
+                        continue;
+                    }
+                    Err(err) => return Err(Error::from(err)),
+                }
+            }
+            try_lock(&lock_path, directory, cleanup.clone())
+        }
     }
+    .map_err(|err| match err.kind() {
+        AlreadyExists => Error::PermanentlyLocked {
+            resource_path: resource.into(),
+            mode,
+        },
+        _ => Error::Io(err),
+    })
 }
 
 fn add_lock_suffix(resource_path: &Path) -> PathBuf {

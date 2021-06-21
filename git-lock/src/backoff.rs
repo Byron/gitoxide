@@ -9,7 +9,7 @@ pub fn randomize(backoff_ms: usize) -> usize {
     }
 }
 
-struct Exponential<Fn> {
+pub struct Exponential<Fn> {
     multiplier: usize,
     max_multiplier: usize,
     exponent: usize,
@@ -28,7 +28,7 @@ impl Default for Exponential<fn(usize) -> usize> {
 }
 
 impl Exponential<fn(usize) -> usize> {
-    fn default_with_random() -> Self {
+    pub fn default_with_random() -> Self {
         Exponential {
             multiplier: 1,
             max_multiplier: 1000,
@@ -42,7 +42,7 @@ impl<Transform> Exponential<Transform>
 where
     Transform: Fn(usize) -> usize,
 {
-    fn until_no_remaining(&mut self, time: Duration) -> impl Iterator<Item = Duration> + '_ {
+    pub fn until_no_remaining(&mut self, time: Duration) -> impl Iterator<Item = Duration> + '_ {
         let mut elapsed = Duration::default();
         let mut stop_next_iteration = false;
         self.take_while(move |d| {
