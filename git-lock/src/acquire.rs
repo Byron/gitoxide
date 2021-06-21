@@ -120,7 +120,7 @@ fn lock_with_mode<T>(
                     Err(err) => return Err(Error::from(err)),
                 }
             }
-            try_lock(&lock_path, directory, cleanup.clone())
+            try_lock(&lock_path, directory, cleanup)
         }
     }
     .map_err(|err| match err.kind() {
