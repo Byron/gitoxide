@@ -97,13 +97,13 @@ mod tests {
                 num_identities += 1;
             }
             assert!(
-                actual * 1000 >= expected * 750,
+                actual * 1000 >= (expected - 1) * 750,
                 "value too small: {} < {}",
                 actual,
                 expected
             );
             assert!(
-                actual * 1000 <= expected * 1250,
+                actual * 1000 <= (expected + 1) * 1250,
                 "value too big: {} > {}",
                 actual,
                 expected
