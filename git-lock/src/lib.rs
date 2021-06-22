@@ -25,6 +25,7 @@ mod backoff;
 /// Locks a resource to eventually be overwritten with the content of this file.
 ///
 /// Dropping the file without [committing][File::commit] will delete it, leaving the underlying resource unchanged.
+#[must_use = "A File that is immediately dropped doesn't allow resource updates"]
 pub struct File {
     inner: git_tempfile::Handle<Writable>,
 }
@@ -33,6 +34,7 @@ pub struct File {
 ///
 /// As opposed to the [File] type this one won't keep the tempfile open for writing and thus consumes no
 /// system resources, nor can it be persisted.
+#[must_use = "A Marker that is immediately dropped doesn't lock a resource meaningfully"]
 pub struct Marker {
     _inner: git_tempfile::Handle<Closed>,
 }

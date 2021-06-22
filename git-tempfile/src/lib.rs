@@ -145,6 +145,7 @@ impl AutoRemove {
 ///
 /// This kind of raciness exists whenever [`take()`][Handle::take()] is used and can't be circumvented.
 #[derive(Debug)]
+#[must_use = "A handle that is immediately dropped doesn't lock a resource meaningfully"]
 pub struct Handle<Marker: std::fmt::Debug> {
     id: usize,
     _marker: PhantomData<Marker>,
