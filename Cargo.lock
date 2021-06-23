@@ -948,7 +948,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-lock"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "fastrand",
  "git-tempfile",
