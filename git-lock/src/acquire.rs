@@ -45,8 +45,8 @@ quick_error! {
             from()
             source(err)
         }
-        PermanentlyLocked { resource_path: PathBuf, mode: Fail } {
-            display("The lock for resource '{} could not be obtained {}. The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, resource_path.display(), super::DOT_SUFFIX)
+        PermanentlyLocked { resource_path: PathBuf, mode: Fail, attempts: usize } {
+            display("The lock for resource '{} could not be obtained {} after {} attempt(s). The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, attempts, resource_path.display(), super::DOT_SUFFIX)
         }
     }
 }
@@ -107,10 +107,12 @@ fn lock_with_mode<T>(
     use std::io::ErrorKind::*;
     let (directory, cleanup) = dir_cleanup(boundary_directory);
     let lock_path = add_lock_suffix(resource);
+    let mut attempts = 1;
     match mode {
         Fail::Immediately => try_lock(&lock_path, directory, cleanup),
         Fail::AfterDurationWithBackoff(time) => {
             for wait in backoff::Exponential::default_with_random().until_no_remaining(time) {
+                attempts += 1;
                 match try_lock(&lock_path, directory, cleanup.clone()) {
                     Ok(v) => return Ok(v),
                     Err(err) if err.kind() == AlreadyExists => {
@@ -127,6 +129,7 @@ fn lock_with_mode<T>(
         AlreadyExists => Error::PermanentlyLocked {
             resource_path: resource.into(),
             mode,
+            attempts,
         },
         _ => Error::Io(err),
     })
