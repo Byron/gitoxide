@@ -16,7 +16,7 @@ test = true
 
 [dependencies]
 fastrand = "1.4.1"
-git-tempfile = { version = "^0.3.0", path = "../git-tempfile" }
+git-tempfile = { version = "^0.4.0", path = "../git-tempfile" }
 quick-error = "2.0.0"
 
 [dev-dependencies]
