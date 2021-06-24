@@ -57,8 +57,16 @@ pub mod transaction {
     /// |refs/tags/0.1.0      |oid    ||       |✔      | |   |          |
     /// |refs/tags/0.1.0      |oid    ||✔        |✔      |✔  |   |          |
     pub enum Update {
-        CreateNew(ObjectId),
-        Delete(),
+        /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
+        /// we function like `update`.
+        /// Otherwise it functions as `create-or-update`.
+        Update {
+            previous: Option<ObjectId>,
+            new: ObjectId,
+        },
+        Delete {
+            previous: Option<ObjectId>,
+        },
     }
 
     pub struct Transaction<T> {
