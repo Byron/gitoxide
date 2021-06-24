@@ -42,6 +42,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * [remote-ref-list](https://asciinema.org/a/359320)
       * [x] list all (or given) references from a remote at the given URL
 
+[skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
 [git-hours-discussion]: https://github.com/Byron/gitoxide/discussions/78
 
