@@ -48,25 +48,39 @@ pub mod transaction {
     ///     and it does validate certain invariants, too, but doesn't have to check for file refs.
     ///     - **it's probably a standard transaction passed to `store.apply_exclusive(…)` as opposed to `store.apply(…)`.**
     ///
-    /// |FIELD1               |Data   |Deref|Force Reflog|ref itself|reflog|referent|referent reflog|
-    /// |---------------------|-------|-----|------------|----------|------|--------|---------------|
-    /// |HEAD                 |oid    |✔ |       |     |✔  |✔    |✔           |
-    /// |HEAD to detached HEAD|oid    ||       |✔      |✔  |   |          |
-    /// |detached HEAD to HEAD|refpath||       |✔      |✔  |   |          |
-    /// |refs/heads/main      |       ||       |✔      |✔  |   |          |
-    /// |refs/tags/0.1.0      |oid    ||       |✔      | |   |          |
-    /// |refs/tags/0.1.0      |oid    ||✔        |✔      |✔  |   |          |
+    /// |                         |Update        |Kind    |Data       |Reflog Mode |Deref|ref itself|reflog|referent|referent reflog|
+    /// |-------------------------|--------------|--------|-----------|------------|-----|----------|------|--------|---------------|
+    /// |HEAD                     |CreateOrUpdate|symbolic|oid        |only-reflog |✔    |          |✔     |✔       |✔              |
+    /// |HEAD to detached HEAD    |CreateOrUpdate|symbolic|oid        |auto        |     |✔         |✔     |        |               |
+    /// |~~detached HEAD to HEAD~~|CreateOrUpdate|peeled  |~~refpath~~|auto        |     |✔         |✔     |        |               |
+    /// |HEAD                     |Delete        |any     |oid        |only-reflog |✔    |          |      |        |               |
+    /// |HEAD                     |Delete        |any     |oid        |auto        |✔    |✔         |✔     |        |               |
+    /// |refs/heads/main          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |✔     |        |               |
+    /// |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
+    /// |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
     pub enum Update {
         /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
         /// we function like `update`.
         /// Otherwise it functions as `create-or-update`.
         Update {
+            mode: Reflog,
             previous: Option<ObjectId>,
             new: ObjectId,
         },
         Delete {
             previous: Option<ObjectId>,
         },
+    }
+
+    pub enum Reflog {
+        /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
+        /// in this case and apply the change to it directly.
+        AutoAndNoDeref,
+        /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
+        /// referent.
+        OnlyAndDeref,
+        /// Create a reflog even if it otherwise wouldn't be created, as is the case for tags. Otherwise it acts like `AutoNoDeref`.
+        CreateUnconditionally,
     }
 
     pub struct Transaction<T> {
