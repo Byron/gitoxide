@@ -160,18 +160,29 @@ impl Capabilities {
 }
 
 #[cfg(feature = "blocking-client")]
-pub(crate) mod recv {
+pub mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use std::{io, io::BufRead};
 
+    /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {
+        /// The [`Capabilities`] the remote advertised.
         pub capabilities: Capabilities,
+        /// The remote refs as a [`io::BufRead`].
+        ///
+        /// This is `Some` only when protocol v1 is used. The [`io::BufRead`] must be exhausted by
+        /// the caller.
         pub refs: Option<Box<dyn io::BufRead + 'a>>,
+        /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }
 
     impl Capabilities {
-        pub(crate) fn from_lines_with_version_detection<T: io::Read>(
+        /// Read the capabilities and version advertisement from the given packetline reader.
+        ///
+        /// If [`Protocol::V1`] was requested, or the remote decided to downgrade, the remote refs
+        /// advertisement will also be included in the [`Outcome`].
+        pub fn from_lines_with_version_detection<T: io::Read>(
             rd: &mut git_packetline::StreamingPeekableIter<T>,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
@@ -210,19 +221,31 @@ pub(crate) mod recv {
 }
 
 #[cfg(feature = "async-client")]
-pub(crate) mod recv {
+#[allow(missing_docs)]
+pub mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use futures_io::{AsyncBufRead, AsyncRead};
     use futures_lite::{AsyncBufReadExt, StreamExt};
 
+    /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {
+        /// The [`Capabilities`] the remote advertised.
         pub capabilities: Capabilities,
+        /// The remote refs as an [`AsyncBufRead`].
+        ///
+        /// This is `Some` only when protocol v1 is used. The [`AsyncBufRead`] must be exhausted by
+        /// the caller.
         pub refs: Option<Box<dyn AsyncBufRead + Unpin + 'a>>,
+        /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }
 
     impl Capabilities {
-        pub(crate) async fn from_lines_with_version_detection<T: AsyncRead + Unpin>(
+        /// Read the capabilities and version advertisement from the given packetline reader.
+        ///
+        /// If [`Protocol::V1`] was requested, or the remote decided to downgrade, the remote refs
+        /// advertisement will also be included in the [`Outcome`].
+        pub async fn from_lines_with_version_detection<T: AsyncRead + Unpin>(
             rd: &mut git_packetline::StreamingPeekableIter<T>,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
