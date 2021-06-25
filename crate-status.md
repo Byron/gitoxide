@@ -1,3 +1,7 @@
+### git-actor
+
+* [x] read and write a signature that uniquely identifies an actor within a git repository
+
 ### git-hash
 * types to represent hash digests to identify git objects.
 * used to abstract over different kinds of hashes, like SHA1 and the upcoming SHA256

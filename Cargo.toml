@@ -91,6 +91,7 @@ build-override = { opt-level = 0 }
 
 [workspace]
 members = [
+    "git-actor",
     "git-url",
     "git-hash",
     "git-validate",
