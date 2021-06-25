@@ -55,24 +55,32 @@ pub mod transaction {
     //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
     //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 
-    use crate::mutable;
+    use crate::{mutable, SafeRefPath};
     use std::marker::PhantomData;
 
-    pub enum Update {
+    pub struct Update {
+        pub mode: Reflog,
+        pub previous: Option<mutable::Target>,
+        pub new: mutable::Target,
+        /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
+        /// instead of the referent reference.
+        parent_index: Option<usize>,
+    }
+
+    /// A description of an edit to perform on a reference
+    pub enum Edit {
         /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
         /// we function like `update`.
         /// Otherwise it functions as `create-or-update`.
-        Update {
-            mode: Reflog,
-            previous: Option<mutable::Target>,
-            new: mutable::Target,
-            /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
-            /// instead of the referent reference.
-            parent_index: Option<usize>,
-        },
+        Update(Update),
         Delete {
             previous: Option<mutable::Target>,
         },
+    }
+
+    pub struct RefEdit {
+        edit: Edit,
+        refpath: SafeRefPath,
     }
 
     pub enum Reflog {
@@ -87,7 +95,7 @@ pub mod transaction {
     }
 
     pub struct Transaction<T> {
-        updates: Vec<usize>,
+        updates: Vec<RefEdit>,
         _state: PhantomData<T>,
     }
 }
@@ -95,12 +103,12 @@ pub mod transaction {
 /// Indicate that the given BString is a validate reference name that can be used as path on disk or written as target
 /// of a symbolic reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct ValidatedRefname(bstr::BString);
+pub struct SafeRefPath(bstr::BString);
 
 pub mod mutable {
     //!
     #![allow(dead_code)]
-    use crate::ValidatedRefname;
+    use crate::SafeRefPath;
     use git_hash::ObjectId;
 
     /// Denotes a ref target, equivalent to [`Kind`][super::Kind], but with mutable data.
@@ -112,7 +120,7 @@ pub mod mutable {
         /// A ref that points to another reference by its validated name, adding a level of indirection.
         ///
         /// Note that this is an extension of gitoxide which will be helpful in logging all reference changes.
-        Symbolic(ValidatedRefname),
+        Symbolic(SafeRefPath),
     }
 }
 
