@@ -889,7 +889,6 @@ dependencies = [
  "pretty_assertions",
  "quick-error",
  "serde",
- "smallvec",
 ]
 
 [[package]]

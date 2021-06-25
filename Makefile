@@ -89,6 +89,7 @@ check: ## Build all code in suitable configurations
 	cd git-hash && cargo check --all-features \
 				&& cargo check
 	cd git-object && cargo check --all-features
+	cd git-actor && cargo check --features serde1
 	cd git-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \
 			   && cargo check --features pack-cache-lru-dynamic \

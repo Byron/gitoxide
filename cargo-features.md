@@ -175,6 +175,7 @@ What follows is feature toggles to control serialization of all public facing si
 
 The feature above is provided by the crates:
 
+* **git-actor**
 * **git-object**
 * **git-url**
 * **git-odb**
