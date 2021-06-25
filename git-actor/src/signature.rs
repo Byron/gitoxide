@@ -13,7 +13,7 @@ mod convert {
     }
 }
 
-mod signature {
+mod write {
     use crate::{Signature, SPACE};
     use bstr::{BStr, ByteSlice};
     use quick_error::quick_error;
