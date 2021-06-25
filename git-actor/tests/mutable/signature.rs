@@ -41,11 +41,11 @@ mod time {
 mod signature {
     mod write_to {
         mod invalid {
-            use git_actor::{mutable, Sign, Time};
+            use git_actor::{Sign, Signature, Time};
 
             #[test]
             fn name() {
-                let signature = mutable::Signature {
+                let signature = Signature {
                     name: "invalid < middlename".into(),
                     email: "ok".into(),
                     time: default_time(),
@@ -58,7 +58,7 @@ mod signature {
 
             #[test]
             fn email() {
-                let signature = mutable::Signature {
+                let signature = Signature {
                     name: "ok".into(),
                     email: "server>.example.com".into(),
                     time: default_time(),
@@ -71,7 +71,7 @@ mod signature {
 
             #[test]
             fn name_with_newline() {
-                let signature = mutable::Signature {
+                let signature = Signature {
                     name: "hello\nnewline".into(),
                     email: "name@example.com".into(),
                     time: default_time(),
@@ -93,7 +93,7 @@ mod signature {
     }
 
     use bstr::ByteSlice;
-    use git_actor::{immutable, mutable};
+    use git_actor::{immutable, Signature};
 
     #[test]
     fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
@@ -102,7 +102,7 @@ mod signature {
             ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
             ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
         ] {
-            let signature: mutable::Signature = immutable::Signature::from_bytes(input)?.into();
+            let signature: Signature = immutable::Signature::from_bytes(input)?.into();
             let mut output = Vec::new();
             signature.write_to(&mut output)?;
             assert_eq!(output.as_bstr(), input.as_bstr());

@@ -1,30 +1,10 @@
-//!
-pub(crate) const SPACE: &[u8; 1] = b" ";
-
-use crate::Time;
-use bstr::BString;
-
-/// A mutable signature is created by an actor at a certain time.
-///
-/// Note that this is not a cryptographical signature.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Signature {
-    /// The actors name.
-    pub name: BString,
-    /// The actor's email.
-    pub email: BString,
-    /// The time stamp at which the signature is performed.
-    pub time: Time,
-}
-
 mod convert {
-    use crate::{immutable, mutable};
+    use crate::{immutable, Signature};
 
-    impl From<immutable::Signature<'_>> for mutable::Signature {
-        fn from(other: immutable::Signature<'_>) -> mutable::Signature {
+    impl From<immutable::Signature<'_>> for Signature {
+        fn from(other: immutable::Signature<'_>) -> Signature {
             let immutable::Signature { name, email, time } = other;
-            mutable::Signature {
+            Signature {
                 name: name.to_owned(),
                 email: email.to_owned(),
                 time,
@@ -34,7 +14,7 @@ mod convert {
 }
 
 mod signature {
-    use crate::mutable::{Signature, SPACE};
+    use crate::{Signature, SPACE};
     use bstr::{BStr, ByteSlice};
     use quick_error::quick_error;
     use std::io;

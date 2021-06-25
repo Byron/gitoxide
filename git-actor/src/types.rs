@@ -1,26 +1,5 @@
-use crate::mutable::SPACE;
+use crate::{Sign, Time, SPACE};
 use std::io;
-
-/// Indicates if a number is positive or negative for use in [`Time`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
-pub enum Sign {
-    Plus,
-    Minus,
-}
-
-/// A timestamp with timezone.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Time {
-    /// time in seconds from epoch.
-    pub time: u32,
-    /// time offset in seconds, may be negative to match the `sign` field.
-    pub offset: i32,
-    /// the sign of `offset`, used to encode `-0000` which would otherwise loose sign information.
-    pub sign: Sign,
-}
 
 impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
