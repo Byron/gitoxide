@@ -7,11 +7,11 @@ use nom::{
     IResult,
 };
 
-use crate::bstr::ByteSlice;
 use crate::{
     immutable::{signature::decode, Signature},
     Sign, Time,
 };
+use bstr::ByteSlice;
 
 pub(crate) const SPACE: &[u8] = b" ";
 
@@ -68,11 +68,11 @@ pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, decode::Error
 #[cfg(test)]
 mod tests {
     mod parse_signature {
-        use crate::bstr::ByteSlice;
         use crate::{
-            immutable::{parse, Signature},
+            immutable::{decode, Signature},
             Sign, Time,
         };
+        use bstr::ByteSlice;
 
         fn signature(
             name: &'static str,
@@ -91,7 +91,7 @@ mod tests {
         #[test]
         fn tz_minus() {
             assert_eq!(
-                parse::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
+                decode::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0230")
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, -9000)
@@ -101,7 +101,7 @@ mod tests {
         #[test]
         fn tz_plus() {
             assert_eq!(
-                parse::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
+                decode::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 +0230")
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Plus, 9000)
@@ -111,7 +111,7 @@ mod tests {
         #[test]
         fn negative_offset_0000() {
             assert_eq!(
-                parse::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
+                decode::signature(b"Sebastian Thiel <byronimo@gmail.com> 1528473343 -0000")
                     .expect("parse to work")
                     .1,
                 signature("Sebastian Thiel", "byronimo@gmail.com", 1528473343, Sign::Minus, 0)
@@ -121,7 +121,7 @@ mod tests {
         #[test]
         fn empty_name_and_email() {
             assert_eq!(
-                parse::signature(b" <> 12345 -1215").expect("parse to work").1,
+                decode::signature(b" <> 12345 -1215").expect("parse to work").1,
                 signature("", "", 12345, Sign::Minus, -44100)
             );
         }
