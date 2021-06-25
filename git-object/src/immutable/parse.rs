@@ -79,7 +79,7 @@ pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, decode::Error
         take_while_m_n(2usize, 2, is_digit),
     ))(i)
     .map_err(decode::Error::context(
-        "tagger <name> <<email>> <time seconds since epoch> <+|-><HHMM>",
+        "<name> <<email>> <time seconds since epoch> <+|-><HHMM>",
     ))?;
 
     let sign = if tzsign[0] == b'-' { Sign::Minus } else { Sign::Plus };

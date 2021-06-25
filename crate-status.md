@@ -251,7 +251,10 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
   * [ ] handle environment variables
 * **Repository**    
   * [x] discovery
-     * [ ] handle other non-discovery modes and provide control over environment variable usage.
+    * [ ] handle other non-discovery modes and provide control over environment variable usage.
+  * [x] instantiation
+    * [ ] a way to handle `.git` files with `gitdir: <path>` in it
+    * [ ] handle `gitdir` and `commondir` files
 * [x] access to refs and objects
 * traverse 
     * [x] commit graphs
@@ -272,7 +275,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [ ] .gitignore handling
 * [ ] checkout/stage conversions clean + smudge as in .gitattributes
 * [ ] rev-parsing and ref history
-* [ ] worktree
+* [ ] worktrees
 * [ ] remotes with push and pull
 * [ ] configuration
 * [ ] merging
@@ -295,12 +298,18 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * Handle symbolic references and packed references
 * discover them in typical folder structures
 * **Stores**
+  * [ ] worktrees
   * **loose file**
     * [x] ref validation
     * [x] find single ref by name
     * [ ] find refs matching pattern
     * [ ] iterate
     * [ ] write ref
+    * **log**
+      * [ ] read
+      * [ ] write
+      * [ ] delete
+      * [ ] expire
     * **ref**
       * [x] peel to id
   * [ ] packed

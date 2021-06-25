@@ -173,3 +173,24 @@ impl<'a> Target<'a> {
         }
     }
 }
+
+mod parse {
+    use nom::{
+        branch::alt,
+        bytes::complete::{tag, take_while_m_n},
+        IResult,
+    };
+
+    fn is_hex_digit_lc(b: u8) -> bool {
+        matches!(b, b'0'..=b'9' | b'a'..=b'f')
+    }
+
+    /// Copy from https://github.com/Byron/gitoxide/blob/f270850ff92eab15258023b8e59346ec200303bd/git-object/src/immutable/parse.rs#L64
+    pub fn hex_sha1(i: &[u8]) -> IResult<&[u8], &[u8]> {
+        take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
+    }
+
+    pub fn newline(i: &[u8]) -> IResult<&[u8], &[u8]> {
+        alt((tag(b"\r\n"), tag(b"\n")))(i)
+    }
+}

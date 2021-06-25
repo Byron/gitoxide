@@ -141,20 +141,23 @@ pub mod peel {
 
 ///
 pub mod decode {
-    use crate::file::{reference::State, Reference, Store};
+    use crate::{
+        file::{reference::State, Reference, Store},
+        parse::{hex_sha1, newline},
+    };
     use bstr::BString;
     use git_hash::ObjectId;
     use nom::{
-        branch::alt,
-        bytes::complete::take_while,
-        bytes::complete::{tag, take_while_m_n},
+        bytes::complete::{tag, take_while},
         combinator::{map, opt},
         sequence::terminated,
         IResult,
     };
     use quick_error::quick_error;
-    use std::convert::TryInto;
-    use std::{convert::TryFrom, path::PathBuf};
+    use std::{
+        convert::{TryFrom, TryInto},
+        path::PathBuf,
+    };
 
     enum MaybeUnsafeState {
         Id(ObjectId),
@@ -209,18 +212,6 @@ pub mod decode {
                     .try_into()?,
             })
         }
-    }
-
-    fn is_hex_digit_lc(b: u8) -> bool {
-        matches!(b, b'0'..=b'9' | b'a'..=b'f')
-    }
-
-    fn hex_sha1(i: &[u8]) -> IResult<&[u8], &[u8]> {
-        take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
-    }
-
-    fn newline(i: &[u8]) -> IResult<&[u8], &[u8]> {
-        alt((tag(b"\r\n"), tag(b"\n")))(i)
     }
 
     fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
