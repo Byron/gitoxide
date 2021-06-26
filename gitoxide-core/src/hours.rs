@@ -1,6 +1,6 @@
 use anyhow::{anyhow, bail};
 use bstr::BString;
-use git_repository::{interrupt, object, odb, prelude::*, progress, Progress};
+use git_repository::{actor, interrupt, object, odb, prelude::*, progress, Progress};
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::{
@@ -75,13 +75,13 @@ where
 
     let start = Instant::now();
     #[allow(clippy::redundant_closure)]
-    let mut all_commits: Vec<object::git_actor::Signature> = all_commits
+    let mut all_commits: Vec<actor::Signature> = all_commits
         .into_par_iter()
         .map(|commit_data: Vec<u8>| {
             object::immutable::CommitIter::from_bytes(&commit_data)
                 .signatures()
                 .next()
-                .map(|author| object::git_actor::Signature::from(author))
+                .map(|author| actor::Signature::from(author))
         })
         .try_fold(
             || Vec::new(),
@@ -170,7 +170,7 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[object::git_actor::Signature]) -> WorkByEmail {
+fn estimate_hours(commits: &[actor::Signature]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -178,7 +178,7 @@ fn estimate_hours(commits: &[object::git_actor::Signature]) -> WorkByEmail {
     let hours = FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
         + commits.iter().rev().tuple_windows().fold(
             0_f32,
-            |hours, (cur, next): (&object::git_actor::Signature, &object::git_actor::Signature)| {
+            |hours, (cur, next): (&actor::Signature, &actor::Signature)| {
                 let change_in_minutes = (next.time.time - cur.time.time) as f32 / MINUTES_PER_HOUR;
                 if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
                     hours + change_in_minutes as f32 / MINUTES_PER_HOUR

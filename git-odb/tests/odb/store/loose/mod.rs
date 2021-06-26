@@ -1,9 +1,10 @@
-use git_object::{bstr::ByteSlice, immutable, Sign, Time};
+use git_actor::{Sign, Time};
+use git_object::bstr::ByteSlice;
 
 pub mod backend;
 
-fn signature(time: u32) -> imgit_actor::Signature<'static> {
-    imgit_actor::Signature {
+fn signature(time: u32) -> git_actor::immutable::Signature<'static> {
+    git_actor::immutable::Signature {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"byronimo@gmail.com".as_bstr(),
         time: Time {

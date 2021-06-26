@@ -27,6 +27,7 @@
 //! `git_repository::`
 //! * [`hash`]
 //! * [`url`]
+//! * [`actor`]
 //! * [`object`]
 //!   * [`bstr`][object::bstr]
 //! * [`odb`]
@@ -50,6 +51,7 @@ use std::path::PathBuf;
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
+pub use git_actor as actor;
 #[cfg(feature = "git-diff")]
 pub use git_diff as diff;
 pub use git_features::{parallel, progress, progress::Progress};
