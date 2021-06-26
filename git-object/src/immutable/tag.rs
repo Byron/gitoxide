@@ -4,6 +4,7 @@ use nom::{
     bytes::complete::{tag, take_until, take_while1},
     character::is_alphabetic,
     combinator::{all_consuming, opt, recognize},
+    error::context,
     sequence::{preceded, tuple},
     IResult,
 };
@@ -44,18 +45,23 @@ impl<'a> Tag<'a> {
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Tag<'_>, decode::Error> {
-    let (i, target) = parse::header_field(i, b"object", parse::hex_sha1)
-        .map_err(decode::Error::context("object <40 lowercase hex char>"))?;
+    let (i, target) = context("object <40 lowercase hex char>", |i| {
+        parse::header_field(i, b"object", parse::hex_sha1)
+    })(i)?;
 
-    let (i, kind) = parse::header_field(i, b"type", take_while1(is_alphabetic))
-        .map_err(decode::Error::context("type <object kind>"))?;
+    let (i, kind) = context("type <object kind>", |i| {
+        parse::header_field(i, b"type", take_while1(is_alphabetic))
+    })(i)?;
     let kind = crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(decode::Error::ParseKindError(e)))?;
 
-    let (i, tag_version) =
-        parse::header_field(i, b"tag", take_while1(|b| b != NL[0])).map_err(decode::Error::context("tag <version>"))?;
+    let (i, tag_version) = context("tag <version>", |i| {
+        parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
+    })(i)?;
 
-    let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))(i)
-        .map_err(decode::Error::context("tagger <signature>"))?;
+    let (i, signature) = context(
+        "tagger <signature>",
+        opt(|i| parse::header_field(i, b"tagger", parse::signature)),
+    )(i)?;
     let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
     Ok((
         i,
@@ -135,6 +141,7 @@ pub mod iter {
         bytes::complete::take_while1,
         character::is_alphabetic,
         combinator::{all_consuming, opt},
+        error::context,
     };
 
     enum State {
@@ -184,8 +191,9 @@ pub mod iter {
             use State::*;
             Ok(match state {
                 Target => {
-                    let (i, target) = parse::header_field(i, b"object", parse::hex_sha1)
-                        .map_err(decode::Error::context("object <40 lowercase hex char>"))?;
+                    let (i, target) = context("object <40 lowercase hex char>", |i| {
+                        parse::header_field(i, b"object", parse::hex_sha1)
+                    })(i)?;
                     *state = State::TargetKind;
                     (
                         i,
@@ -195,22 +203,26 @@ pub mod iter {
                     )
                 }
                 TargetKind => {
-                    let (i, kind) = parse::header_field(i, b"type", take_while1(is_alphabetic))
-                        .map_err(decode::Error::context("type <object kind>"))?;
+                    let (i, kind) = context("type <object kind>", |i| {
+                        parse::header_field(i, b"type", take_while1(is_alphabetic))
+                    })(i)?;
                     let kind =
                         crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(decode::Error::ParseKindError(e)))?;
                     *state = State::Name;
                     (i, Token::TargetKind(kind))
                 }
                 Name => {
-                    let (i, tag_version) = parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
-                        .map_err(decode::Error::context("tag <version>"))?;
+                    let (i, tag_version) = context("tag <version>", |i| {
+                        parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
+                    })(i)?;
                     *state = State::Tagger;
                     (i, Token::Name(tag_version.as_bstr()))
                 }
                 Tagger => {
-                    let (i, signature) = opt(|i| parse::header_field(i, b"tagger", parse::signature))(i)
-                        .map_err(decode::Error::context("tagger <signature>"))?;
+                    let (i, signature) = context(
+                        "tagger <signature>",
+                        opt(|i| parse::header_field(i, b"tagger", parse::signature)),
+                    )(i)?;
                     *state = State::Message;
                     (i, Token::Tagger(signature))
                 }

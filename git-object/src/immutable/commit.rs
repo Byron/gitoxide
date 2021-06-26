@@ -4,6 +4,7 @@ use nom::{
     branch::alt,
     bytes::{complete::is_not, complete::tag},
     combinator::{all_consuming, opt},
+    error::context,
     multi::many0,
     IResult,
 };
@@ -74,26 +75,37 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
             "commit message is missing",
         )));
     }
-    let (i, _) = tag(NL)(i).map_err(decode::Error::context("a newline separates headers from the message"))?;
+    let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
     Ok((&[], &i.as_bstr()))
 }
 
 fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, decode::Error> {
-    let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
-        .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
-    let (i, parents) = many0(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
-        .map_err(decode::Error::context("zero or more 'parent <40 lowercase hex char>'"))?;
-    let (i, author) =
-        parse::header_field(i, b"author", parse::signature).map_err(decode::Error::context("author <signature>"))?;
-    let (i, committer) = parse::header_field(i, b"committer", parse::signature)
-        .map_err(decode::Error::context("committer <signature>"))?;
-    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i)
-        .map_err(decode::Error::context("encoding <encoding>"))?;
-    let (i, extra_headers) = many0(alt((
-        |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
-        |i| parse::any_header_field(i, is_not(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr())))),
-    )))(i)
-    .map_err(decode::Error::context("<field> <single-line|multi-line>"))?;
+    let (i, tree) = context("tree <40 lowercase hex char>", |i| {
+        parse::header_field(i, b"tree", parse::hex_sha1)
+    })(i)?;
+    let (i, parents) = context(
+        "zero or more 'parent <40 lowercase hex char>'",
+        many0(|i| parse::header_field(i, b"parent", parse::hex_sha1)),
+    )(i)?;
+    let (i, author) = context("author <signature>", |i| {
+        parse::header_field(i, b"author", parse::signature)
+    })(i)?;
+    let (i, committer) = context("committer <signature>", |i| {
+        parse::header_field(i, b"committer", parse::signature)
+    })(i)?;
+    let (i, encoding) = context(
+        "encoding <encoding>",
+        opt(|i| parse::header_field(i, b"encoding", is_not(NL))),
+    )(i)?;
+    let (i, extra_headers) = context(
+        "<field> <single-line|multi-line>",
+        many0(alt((
+            |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
+            |i| {
+                parse::any_header_field(i, is_not(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+            },
+        ))),
+    )(i)?;
     let (i, message) = all_consuming(parse_message)(i)?;
 
     Ok((
@@ -136,6 +148,7 @@ pub mod iter {
         branch::alt,
         bytes::complete::is_not,
         combinator::{all_consuming, opt},
+        error::context,
     };
     use std::borrow::Cow;
 
@@ -207,8 +220,9 @@ pub mod iter {
             use State::*;
             Ok(match state {
                 Tree => {
-                    let (i, tree) = parse::header_field(i, b"tree", parse::hex_sha1)
-                        .map_err(decode::Error::context("tree <40 lowercase hex char>"))?;
+                    let (i, tree) = context("tree <40 lowercase hex char>", |i| {
+                        parse::header_field(i, b"tree", parse::hex_sha1)
+                    })(i)?;
                     *state = State::Parents;
                     (
                         i,
@@ -218,8 +232,10 @@ pub mod iter {
                     )
                 }
                 Parents => {
-                    let (i, parent) = opt(|i| parse::header_field(i, b"parent", parse::hex_sha1))(i)
-                        .map_err(decode::Error::context("commit <40 lowercase hex char>"))?;
+                    let (i, parent) = context(
+                        "commit <40 lowercase hex char>",
+                        opt(|i| parse::header_field(i, b"parent", parse::hex_sha1)),
+                    )(i)?;
                     match parent {
                         Some(parent) => (
                             i,
@@ -247,8 +263,7 @@ pub mod iter {
                             (&b"committer"[..], "committer <signature>")
                         }
                     };
-                    let (i, signature) = parse::header_field(i, field_name, parse::signature)
-                        .map_err(decode::Error::context(err_msg))?;
+                    let (i, signature) = context(err_msg, |i| parse::header_field(i, field_name, parse::signature))(i)?;
                     (
                         i,
                         match who {
@@ -258,8 +273,10 @@ pub mod iter {
                     )
                 }
                 Encoding => {
-                    let (i, encoding) = opt(|i| parse::header_field(i, b"encoding", is_not(NL)))(i)
-                        .map_err(decode::Error::context("encoding <encoding>"))?;
+                    let (i, encoding) = context(
+                        "encoding <encoding>",
+                        opt(|i| parse::header_field(i, b"encoding", is_not(NL))),
+                    )(i)?;
                     *state = State::ExtraHeaders;
                     match encoding {
                         Some(encoding) => (i, Token::Encoding(encoding.as_bstr())),
@@ -267,14 +284,19 @@ pub mod iter {
                     }
                 }
                 ExtraHeaders => {
-                    let (i, extra_header) = opt(alt((
-                        |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
-                        |i| {
-                            parse::any_header_field(i, is_not(NL))
-                                .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
-                        },
-                    )))(i)
-                    .map_err(decode::Error::context("<field> <single-line|multi-line>"))?;
+                    let (i, extra_header) = context(
+                        "<field> <single-line|multi-line>",
+                        opt(alt((
+                            |i| {
+                                parse::any_header_field_multi_line(i)
+                                    .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o))))
+                            },
+                            |i| {
+                                parse::any_header_field(i, is_not(NL))
+                                    .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+                            },
+                        ))),
+                    )(i)?;
                     match extra_header {
                         Some(extra_header) => (i, Token::ExtraHeader(extra_header)),
                         None => {

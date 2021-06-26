@@ -188,7 +188,7 @@ mod convert {
 ///
 pub mod decode {
     use git_actor::immutable::signature;
-    use nom::error::ParseError;
+    use nom::error::{ContextError, ParseError};
     use quick_error::quick_error;
 
     quick_error! {
@@ -213,16 +213,9 @@ pub mod decode {
         }
     }
 
-    impl Error {
-        fn set_parse_context(mut self, ctx: &'static str) -> Self {
-            if let Error::NomDetail(_, ref mut message) = self {
-                *message = ctx
-            }
-            self
-        }
-
-        pub(crate) fn context(msg: &'static str) -> impl Fn(nom::Err<Self>) -> nom::Err<Self> {
-            move |e: nom::Err<Self>| e.map(|e| e.set_parse_context(msg))
+    impl ContextError<&[u8]> for Error {
+        fn add_context(_input: &[u8], ctx: &'static str, _other_usually_internal_ignored: Self) -> Self {
+            Error::Nom(ctx.into())
         }
     }
 
