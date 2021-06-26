@@ -13,7 +13,7 @@ pub use commit::{iter::Iter as CommitIter, Commit};
 
 ///
 pub mod object;
-pub use object::{Object, Signature};
+pub use object::Object;
 
 ///
 pub mod tag;

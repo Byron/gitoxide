@@ -12,7 +12,7 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
-serde1 = ["serde", "bstr/serde1", "smallvec/serde", "git-hash/serde1"]
+serde1 = ["serde", "bstr/serde1", "smallvec/serde", "git-hash/serde1", "git-actor/serde1"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -20,6 +20,7 @@ all-features = true
 [dependencies]
 git-hash = { version = "^0.4.0", path = "../git-hash" }
 git-validate = { version = "^0.3.0", path = "../git-validate" }
+git-actor = { version = "^0.1.0", path = "../git-actor" }
 
 quick-error = "2.0.0"
 hex = "0.4.2"

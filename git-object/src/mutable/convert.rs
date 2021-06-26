@@ -1,16 +1,5 @@
 use crate::{immutable, mutable};
 
-impl From<immutable::Signature<'_>> for mutable::Signature {
-    fn from(other: immutable::Signature<'_>) -> mutable::Signature {
-        let immutable::Signature { name, email, time } = other;
-        mutable::Signature {
-            name: name.to_owned(),
-            email: email.to_owned(),
-            time,
-        }
-    }
-}
-
 impl From<immutable::Tag<'_>> for mutable::Tag {
     fn from(other: immutable::Tag<'_>) -> mutable::Tag {
         let immutable::Tag {

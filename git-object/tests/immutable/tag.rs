@@ -1,8 +1,4 @@
-use git_object::{
-    bstr::ByteSlice,
-    immutable::{Signature, Tag},
-    Kind, Sign, Time,
-};
+use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
 
 mod method {
     use crate::{hex_to_id, immutable::fixture_bytes};
@@ -20,7 +16,10 @@ mod method {
 }
 
 mod iter {
-    use crate::{hex_to_id, immutable::fixture_bytes, immutable::signature};
+    use crate::{
+        hex_to_id,
+        immutable::{fixture_bytes, signature},
+    };
     use git_object::{
         bstr::ByteSlice,
         immutable::{tag::iter::Token, TagIter},
@@ -113,7 +112,7 @@ KLMHist5yj0sw1E4hDTyQa0=
 }
 
 mod from_bytes {
-    use crate::{immutable::fixture_bytes, immutable::signature, immutable::tag::tag_fixture};
+    use crate::immutable::{fixture_bytes, signature, tag::tag_fixture};
     use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
 
     #[test]
@@ -229,13 +228,13 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 -----END PGP SIGNATURE-----"
                 .as_bstr(),
         ),
-        tagger: Some(Signature {
+        tagger: Some(git_actor::immutable::Signature {
             name: b"Sebastian Thiel".as_bstr(),
             email: b"byronimo@gmail.com".as_bstr(),
-            time: Time {
+            time: git_actor::Time {
                 time: 1528473343,
                 offset,
-                sign: Sign::Plus,
+                sign: git_actor::Sign::Plus,
             },
         }),
     }

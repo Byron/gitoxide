@@ -1,6 +1,6 @@
 use crate::{
     commit,
-    mutable::{self, encode, NL},
+    mutable::{encode, NL},
 };
 use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
@@ -15,12 +15,12 @@ pub struct Commit {
     /// Hash of each parent commit. Empty for the first commit in repository.
     pub parents: SmallVec<[git_hash::ObjectId; 1]>,
     /// Who wrote this commit.
-    pub author: mutable::Signature,
+    pub author: git_actor::Signature,
     /// Who committed this commit.
     ///
     /// This may be different from the `author` in case the author couldn't write to the repository themselves and
     /// is commonly encountered with contributed commits.
-    pub committer: mutable::Signature,
+    pub committer: git_actor::Signature,
     /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
     pub encoding: Option<BString>,
     /// The commit message documenting the change.

@@ -976,6 +976,7 @@ version = "0.10.0"
 dependencies = [
  "bstr",
  "btoi",
+ "git-actor",
  "git-hash",
  "git-testtools",
  "git-validate",

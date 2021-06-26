@@ -9,7 +9,7 @@ use nom::{
 };
 
 use crate::{
-    immutable::{object::decode, parse, parse::NL, Signature},
+    immutable::{object::decode, parse, parse::NL},
     BStr, ByteSlice,
 };
 
@@ -25,7 +25,7 @@ pub struct Tag<'a> {
     /// The name of the tag, e.g. "v1.0".
     pub name: &'a BStr,
     /// The author of the tag.
-    pub tagger: Option<Signature<'a>>,
+    pub tagger: Option<git_actor::immutable::Signature<'a>>,
     /// The message describing this release.
     pub message: &'a BStr,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
@@ -126,7 +126,6 @@ pub mod iter {
             object::decode,
             parse::NL,
             tag::{parse, parse_message},
-            Signature,
         },
         Kind,
     };
@@ -256,7 +255,7 @@ pub mod iter {
         },
         TargetKind(Kind),
         Name(&'a BStr),
-        Tagger(Option<Signature<'a>>),
+        Tagger(Option<git_actor::immutable::Signature<'a>>),
         Body {
             message: &'a BStr,
             pgp_signature: Option<&'a BStr>,

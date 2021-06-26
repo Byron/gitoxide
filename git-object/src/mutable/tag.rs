@@ -1,4 +1,4 @@
-use crate::mutable::{self, encode, NL};
+use crate::mutable::{encode, NL};
 use bstr::{BStr, BString};
 use quick_error::quick_error;
 use std::io;
@@ -37,7 +37,7 @@ pub struct Tag {
     /// The message describing the tag.
     pub message: BString,
     /// The tags author.
-    pub signature: Option<mutable::Signature>,
+    pub signature: Option<git_actor::Signature>,
     /// A pgp signature over all bytes of the encoded tag, excluding the pgp signature itself.
     pub pgp_signature: Option<BString>,
 }

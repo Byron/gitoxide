@@ -10,7 +10,7 @@ use nom::{
 use smallvec::SmallVec;
 
 use crate::{
-    immutable::{object::decode, parse, parse::NL, Signature},
+    immutable::{object::decode, parse, parse::NL},
     BStr, ByteSlice,
 };
 
@@ -29,12 +29,12 @@ pub struct Commit<'a> {
     /// HEX hash of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 2]>,
     /// Who wrote this commit.
-    pub author: Signature<'a>,
+    pub author: git_actor::immutable::Signature<'a>,
     /// Who committed this commit.
     ///
     /// This may be different from the `author` in case the author couldn't write to the repository themselves and
     /// is commonly encountered with contributed commits.
-    pub committer: Signature<'a>,
+    pub committer: git_actor::immutable::Signature<'a>,
     /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
     pub encoding: Option<&'a BStr>,
     /// The commit message documenting the change.
@@ -128,7 +128,7 @@ mod tests {
 pub mod iter {
     use crate::{
         bstr::ByteSlice,
-        immutable::{commit::parse_message, object::decode, parse, parse::NL, Signature},
+        immutable::{commit::parse_message, object::decode, parse, parse::NL},
     };
     use bstr::BStr;
     use git_hash::{oid, ObjectId};
@@ -192,7 +192,7 @@ pub mod iter {
         /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not
         /// if not exactly two signatures were iterable.
         /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
-        pub fn signatures(&'a mut self) -> impl Iterator<Item = Signature<'_>> + 'a {
+        pub fn signatures(&'a mut self) -> impl Iterator<Item = git_actor::immutable::Signature<'_>> + 'a {
             self.filter_map(Result::ok)
                 .skip_while(|t| !matches!(t, Token::Author { .. } | Token::Committer { .. }))
                 .filter_map(|t| match t {
@@ -327,11 +327,11 @@ pub mod iter {
         },
         /// A person who authored the content of the commit.
         Author {
-            signature: Signature<'a>,
+            signature: git_actor::immutable::Signature<'a>,
         },
         /// A person who committed the authors work to the repository.
         Committer {
-            signature: Signature<'a>,
+            signature: git_actor::immutable::Signature<'a>,
         },
         Encoding(&'a BStr),
         ExtraHeader((&'a BStr, Cow<'a, BStr>)),

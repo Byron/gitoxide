@@ -1,4 +1,4 @@
-use git_object::{immutable::Signature, Sign, Time};
+use git_actor::{Sign, Time};
 use std::path::PathBuf;
 
 mod commit;
@@ -22,9 +22,9 @@ fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
     fixup(super::fixture_bytes(PathBuf::from(kind).join(path).to_str().unwrap()))
 }
 
-fn signature(time: u32) -> Signature<'static> {
+fn signature(time: u32) -> git_actor::immutable::Signature<'static> {
     use git_object::bstr::ByteSlice;
-    Signature {
+    git_actor::immutable::Signature {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),
         time: Time {
@@ -35,9 +35,9 @@ fn signature(time: u32) -> Signature<'static> {
     }
 }
 
-fn linus_signature(time: u32) -> Signature<'static> {
+fn linus_signature(time: u32) -> git_actor::immutable::Signature<'static> {
     use git_object::bstr::ByteSlice;
-    Signature {
+    git_actor::immutable::Signature {
         name: b"Linus Torvalds".as_bstr(),
         email: b"torvalds@linux-foundation.org".as_bstr(),
         time: Time {

@@ -12,7 +12,7 @@ pub mod immutable;
 pub mod mutable;
 
 mod types;
-pub use types::{tree, Error, Kind, Sign, Time};
+pub use types::{tree, Error, Kind};
 
 ///
 pub mod commit;

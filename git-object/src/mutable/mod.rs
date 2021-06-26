@@ -40,10 +40,5 @@ mod blob {
 }
 pub use blob::Blob;
 
-///
-pub mod signature;
-#[doc(inline)]
-pub use signature::Signature;
-
 mod object;
 pub use object::Object;
