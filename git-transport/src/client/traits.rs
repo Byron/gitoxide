@@ -37,12 +37,15 @@ pub trait TransportWithoutIO {
 
     /// Returns true if the transport is inherently stateful, or false otherwise.
     /// Not being stateful implies that certain information has to be resent on each 'turn'
-    /// of the fetch negotiation.
+    /// of the fetch negotiation when using protocol version 1.
     ///
     /// # Implementation Details
     ///
     /// This answer should not be based on the [Protocol] itself, which might enforce stateless
     /// interactions despite the connections staying intact which might imply statefulness.
+    ///
+    /// This means that HTTP transports generally operate in a stateless fashion independent of the
+    /// protocol version.
     fn is_stateful(&self) -> bool;
 }
 
