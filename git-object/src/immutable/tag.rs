@@ -86,10 +86,7 @@ fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), decode::Err
     let (i, _) = tag(NL)(i)?;
     fn all_to_end(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), decode::Error> {
         if i.is_empty() {
-            return Err(nom::Err::Error(decode::Error::NomDetail(
-                i.into(),
-                "tag message is missing",
-            )));
+            return Err(nom::Err::Error(decode::Error::Parse("tag message is missing".into())));
         }
         // an empty signature message signals that there is none - the function signature is needed
         // to work with 'alt(…)'. PGP signatures are never empty

@@ -111,7 +111,12 @@ impl TryFrom<&[u8]> for tree::EntryMode {
             b"100755" => tree::EntryMode::BlobExecutable,
             b"120000" => tree::EntryMode::Link,
             b"160000" => tree::EntryMode::Commit,
-            _ => return Err(decode::Error::NomDetail(mode.into(), "unknown tree mode")),
+            _ => {
+                return Err(decode::Error::Parse(format!(
+                    "{}: unknown tree mode",
+                    mode.to_str_lossy()
+                )))
+            }
         })
     }
 }

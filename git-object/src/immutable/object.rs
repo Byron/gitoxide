@@ -187,6 +187,7 @@ mod convert {
 
 ///
 pub mod decode {
+    use crate::bstr::ByteSlice;
     use git_actor::immutable::signature;
     use nom::error::{ContextError, ParseError};
     use quick_error::quick_error;
@@ -198,9 +199,6 @@ pub mod decode {
         pub enum Error {
             Parse(err_msg: String) {
                 display("{}", err_msg)
-            }
-            NomDetail(input: crate::BString, msg: &'static str) {
-                display("{}: '{}' could not be parsed", msg, input)
             }
             ParseKindError(err: crate::types::Error) {
                 display("{}", err)
@@ -221,7 +219,7 @@ pub mod decode {
 
     impl ParseError<&[u8]> for Error {
         fn from_error_kind(input: &[u8], _kind: nom::error::ErrorKind) -> Self {
-            Error::NomDetail(input.into(), "parse error")
+            Error::Parse(format!("Could not parse: {:?}", input.to_str_lossy()))
         }
 
         fn append(_: &[u8], _: nom::error::ErrorKind, other: Self) -> Self {

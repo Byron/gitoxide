@@ -70,9 +70,8 @@ impl<'a> Commit<'a> {
 fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
     if i.is_empty() {
         // newline + [message]
-        return Err(nom::Err::Error(decode::Error::NomDetail(
-            i.into(),
-            "commit message is missing",
+        return Err(nom::Err::Error(decode::Error::Parse(
+            "commit message is missing".into(),
         )));
     }
     let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
