@@ -160,6 +160,7 @@ impl Capabilities {
 }
 
 #[cfg(feature = "blocking-client")]
+///
 pub mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use std::{io, io::BufRead};
@@ -222,6 +223,7 @@ pub mod recv {
 
 #[cfg(feature = "async-client")]
 #[allow(missing_docs)]
+///
 pub mod recv {
     use crate::{client, client::Capabilities, Protocol};
     use futures_io::{AsyncBufRead, AsyncRead};
