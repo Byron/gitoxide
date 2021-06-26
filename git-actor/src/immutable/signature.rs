@@ -14,7 +14,7 @@ pub mod decode {
                 display("{}: {:?}", msg, number)
                 source(err)
             }
-            Nom(err_msg: String) {
+            Parse(err_msg: String) {
                 display("{}", err_msg)
             }
         }
@@ -22,7 +22,7 @@ pub mod decode {
 
     impl ParseError<&[u8]> for Error {
         fn from_error_kind(input: &[u8], kind: nom::error::ErrorKind) -> Self {
-            Error::Nom(format!("{:?} failed at: {}", input.to_str_lossy(), kind.description()))
+            Error::Parse(format!("{:?} failed at: {}", input.to_str_lossy(), kind.description()))
         }
 
         fn append(_: &[u8], _: nom::error::ErrorKind, other: Self) -> Self {
@@ -32,7 +32,7 @@ pub mod decode {
 
     impl ContextError<&[u8]> for Error {
         fn add_context(input: &[u8], ctx: &'static str, _other_usually_internal_ignored: Self) -> Self {
-            Error::Nom(format!("{:?} did not match '{}'", input.to_str_lossy(), ctx))
+            Error::Parse(format!("{:?} did not match '{}'", input.to_str_lossy(), ctx))
         }
     }
 

@@ -196,7 +196,7 @@ pub mod decode {
         #[derive(Debug, Clone)]
         #[allow(missing_docs)]
         pub enum Error {
-            Nom(err_msg: String) {
+            Parse(err_msg: String) {
                 display("{}", err_msg)
             }
             NomDetail(input: crate::BString, msg: &'static str) {
@@ -215,7 +215,7 @@ pub mod decode {
 
     impl ContextError<&[u8]> for Error {
         fn add_context(_input: &[u8], ctx: &'static str, _other_usually_internal_ignored: Self) -> Self {
-            Error::Nom(ctx.into())
+            Error::Parse(ctx.into())
         }
     }
 
@@ -232,7 +232,7 @@ pub mod decode {
     impl From<nom::Err<Error>> for Error {
         fn from(e: nom::Err<Error>) -> Self {
             match e {
-                nom::Err::Error(err) | nom::Err::Failure(err) => Error::Nom(err.to_string()),
+                nom::Err::Error(err) | nom::Err::Failure(err) => Error::Parse(err.to_string()),
                 nom::Err::Incomplete(_) => unreachable!("we do not implement streaming parsers"),
             }
         }
@@ -240,7 +240,7 @@ pub mod decode {
 
     impl From<signature::decode::Error> for Error {
         fn from(e: signature::decode::Error) -> Self {
-            Error::Nom(e.to_string())
+            Error::Parse(e.to_string())
         }
     }
 }
