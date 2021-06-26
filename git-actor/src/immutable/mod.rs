@@ -2,8 +2,6 @@
 use crate::Time;
 use bstr::BStr;
 
-mod decode;
-
 /// A signature is created by an actor at a certain time.
 ///
 /// Note that this is not a cryptographical signature.
@@ -22,7 +20,7 @@ pub struct Signature<'a> {
 impl<'a> Signature<'a> {
     /// Deserialize a signature from the given `data`.
     pub fn from_bytes(data: &'a [u8]) -> Result<Signature<'a>, signature::decode::Error> {
-        decode::signature(data)
+        signature::decode(data)
             .map(|(_, t)| t)
             .map_err(signature::decode::Error::from)
     }
