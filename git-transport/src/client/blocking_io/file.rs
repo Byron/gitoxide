@@ -104,13 +104,6 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
         self.url.to_string()
     }
 
-    fn supported_protocol_versions(&self) -> &[Protocol] {
-        self.connection
-            .as_ref()
-            .expect("this is called after the handshake")
-            .supported_protocol_versions()
-    }
-
     fn is_stateful(&self) -> bool {
         true
     }
