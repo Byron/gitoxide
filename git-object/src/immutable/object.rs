@@ -196,10 +196,6 @@ pub mod decode {
         #[derive(Debug, Clone)]
         #[allow(missing_docs)]
         pub enum Error {
-            ParseIntegerError(msg: &'static str, number: crate::BString, err: btoi::ParseIntegerError) {
-                display("{}: {:?}", msg, number)
-                source(err)
-            }
             Nom(err_msg: String) {
                 display("{}", err_msg)
             }
