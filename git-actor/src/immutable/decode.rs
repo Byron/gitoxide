@@ -3,6 +3,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_until, take_while_m_n},
     character::is_digit,
+    error::context,
     sequence::{terminated, tuple},
     IResult,
 };
@@ -16,17 +17,17 @@ use bstr::ByteSlice;
 pub(crate) const SPACE: &[u8] = b" ";
 
 pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, decode::Error> {
-    let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = tuple((
-        terminated(take_until(&b" <"[..]), take(2usize)),
-        terminated(take_until(&b"> "[..]), take(2usize)),
-        terminated(take_until(SPACE), take(1usize)),
-        alt((tag(b"-"), tag(b"+"))),
-        take_while_m_n(2usize, 2, is_digit),
-        take_while_m_n(2usize, 2, is_digit),
-    ))(i)
-    .map_err(decode::Error::context(
+    let (i, (name, email, time_in_seconds, tzsign, tzhour, tzminute)) = context(
         "<name> <<email>> <time seconds since epoch> <+|-><HHMM>",
-    ))?;
+        tuple((
+            terminated(take_until(&b" <"[..]), take(2usize)),
+            terminated(take_until(&b"> "[..]), take(2usize)),
+            terminated(take_until(SPACE), take(1usize)),
+            alt((tag(b"-"), tag(b"+"))),
+            take_while_m_n(2usize, 2, is_digit),
+            take_while_m_n(2usize, 2, is_digit),
+        )),
+    )(i)?;
 
     let sign = if tzsign[0] == b'-' { Sign::Minus } else { Sign::Plus };
     let hours = btoi::<i32>(&tzhour).map_err(|e| {
@@ -69,7 +70,7 @@ pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], Signature<'_>, decode::Error
 mod tests {
     mod parse_signature {
         use crate::{
-            immutable::{decode, Signature},
+            immutable::{decode, signature, Signature},
             Sign, Time,
         };
         use bstr::ByteSlice;
@@ -123,6 +124,28 @@ mod tests {
             assert_eq!(
                 decode::signature(b" <> 12345 -1215").expect("parse to work").1,
                 signature("", "", 12345, Sign::Minus, -44100)
+            );
+        }
+
+        #[test]
+        fn invalid_signature() {
+            assert_eq!(
+                signature::decode::Error::from(
+                    decode::signature(b"hello < 12345 -1215").expect_err("parse fails as > is missing")
+                )
+                .to_string(),
+                r##""hello < 12345 -1215" did not match '<name> <<email>> <time seconds since epoch> <+|-><HHMM>'"##
+            );
+        }
+
+        #[test]
+        fn invalid_time() {
+            assert_eq!(
+                signature::decode::Error::from(
+                    decode::signature(b"hello <> abc -1215").expect_err("parse fails as > is missing")
+                )
+                .to_string(),
+                r##"Could parse to seconds: "abc""##
             );
         }
     }
