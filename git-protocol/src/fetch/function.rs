@@ -5,7 +5,7 @@ use crate::{
 use git_features::{progress, progress::Progress};
 use git_transport::{
     client,
-    client::{SetServiceResponse, TransportV2Ext},
+    client::{ProtocolDecision, SetServiceResponse, TransportV2Ext},
     Service,
 };
 use maybe_async::maybe_async;
@@ -71,6 +71,17 @@ where
             Err(err) => Err(err),
         }?;
 
+        match transport.supports_advertised_version(actual_protocol) {
+            ProtocolDecision::Continue => {}
+            ProtocolDecision::CloseConnectionImmediately => {
+                drop(refs);
+                transport.close().await;
+                return Err((Error::TransportProtocolPolicyViolation {
+                    actual_version: actual_protocol,
+                }));
+            }
+        }
+
         let parsed_refs = match refs {
             Some(mut refs) => {
                 assert_eq!(
@@ -87,14 +98,6 @@ where
         };
         (actual_protocol, parsed_refs, capabilities)
     }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
-
-    if transport.desired_protocol_version() != protocol_version {
-        progress.info(format!(
-            "server did not support protocol {} and downgraded to {}",
-            transport.desired_protocol_version() as usize,
-            protocol_version as usize,
-        ));
-    }
 
     let parsed_refs = match parsed_refs {
         Some(refs) => refs,

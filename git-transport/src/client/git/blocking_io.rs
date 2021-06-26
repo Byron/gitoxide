@@ -1,5 +1,5 @@
 use crate::{
-    client::{self, capabilities, git, Capabilities, SetServiceResponse},
+    client::{self, capabilities, git, Capabilities, ProtocolDecision, SetServiceResponse},
     Protocol, Service,
 };
 use bstr::BString;
@@ -35,8 +35,16 @@ where
         .to_string()
     }
 
-    fn desired_protocol_version(&self) -> Protocol {
-        self.desired_version
+    /// We implement this in a paranoid and safe way, not allowing downgrade to V1 which
+    /// could send large amounts of refs in case we didn't want to support V1.
+    fn supports_advertised_version(&self, actual_version: Protocol) -> ProtocolDecision {
+        if self.desired_version == actual_version {
+            ProtocolDecision::Continue
+        } else if actual_version == Protocol::V1 {
+            ProtocolDecision::CloseConnectionImmediately
+        } else {
+            ProtocolDecision::Continue
+        }
     }
 
     fn is_stateful(&self) -> bool {

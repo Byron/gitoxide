@@ -6,6 +6,17 @@ use crate::{
 };
 use std::ops::{Deref, DerefMut};
 
+/// Describes what to do right after the handshake when the servers supported protocol was advertised to the transport.
+pub enum ProtocolDecision {
+    /// Continue as normal, the server's protocol version is desired or acceptable.
+    Continue,
+    /// Close the connection immediately without reading any more.
+    ///
+    /// In V1 this means a potentially large list of advertised refs won't be read, instead the connection is closed
+    /// leaving the server with a client who unexpectedly terminated the connection.
+    CloseConnectionImmediately,
+}
+
 /// This trait represents all transport related functions that don't require any input/output to be done which helps
 /// implementation to share more code across blocking and async programs.
 pub trait TransportWithoutIO {
@@ -30,10 +41,13 @@ pub trait TransportWithoutIO {
     /// unicode conversion.
     fn to_url(&self) -> String;
 
-    /// Returns the protocol version that was initially desired upon connection
-    /// Please note that the actual protocol might differ after the handshake was conducted in case the server
-    /// did not support it.
-    fn desired_protocol_version(&self) -> Protocol;
+    /// Verifies the actual protocol version supported by the server is acceptable and returns a decision on what to do next.
+    ///
+    /// Please note that the actual version might differ after the handshake was conducted in case the server
+    /// did not support it and downgraded it instead.
+    fn supports_advertised_version(&self, _actual_version: Protocol) -> ProtocolDecision {
+        ProtocolDecision::Continue
+    }
 
     /// Returns true if the transport is inherently stateful, or false otherwise.
     /// Not being stateful implies that certain information has to be resent on each 'turn'
@@ -64,8 +78,8 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
         self.deref().to_url()
     }
 
-    fn desired_protocol_version(&self) -> Protocol {
-        self.deref().desired_protocol_version()
+    fn supports_advertised_version(&self, actual_version: Protocol) -> ProtocolDecision {
+        self.deref().supports_advertised_version(actual_version)
     }
 
     fn is_stateful(&self) -> bool {

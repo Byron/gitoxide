@@ -29,6 +29,9 @@ quick_error! {
         SymrefWithoutValue {
             display("A symref 'capability' is expected to have a value")
         }
+        TransportProtocolPolicyViolation{actual_version: git_transport::Protocol} {
+            display("The transport didn't accept the advertised server version {:?} and closed the connection client side", actual_version)
+        }
         Ref(err: refs::Error) {
             display("A reference could not be parsed or invariants were not met")
             from()

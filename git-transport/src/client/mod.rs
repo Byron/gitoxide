@@ -6,7 +6,7 @@ pub use async_io::{
 };
 
 mod traits;
-pub use traits::TransportWithoutIO;
+pub use traits::{ProtocolDecision, TransportWithoutIO};
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io;

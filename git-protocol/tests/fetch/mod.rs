@@ -130,13 +130,13 @@ pub fn oid(hex_sha: &str) -> git_hash::ObjectId {
 pub fn transport<'a, W: futures_io::AsyncWrite + Unpin>(
     out: W,
     path: &str,
-    version: git_transport::Protocol,
+    desired_version: git_transport::Protocol,
 ) -> git_transport::client::git::Connection<Cursor, W> {
     let response = fixture_bytes(path);
     git_transport::client::git::Connection::new(
         Cursor::new(response),
         out,
-        version,
+        desired_version,
         b"does/not/matter".as_bstr().to_owned(),
         None::<(&str, _)>,
         git_transport::client::git::ConnectMode::Process,

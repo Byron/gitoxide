@@ -53,3 +53,23 @@ async fn ls_remote() -> crate::Result {
     );
     Ok(())
 }
+
+#[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
+    let out = Vec::new();
+    let delegate = LsRemoteDelegate::default();
+
+    let err = match git_protocol::fetch(
+        transport(out, "v1/clone.response", Protocol::V2),
+        delegate,
+        git_protocol::credentials::helper,
+        progress::Discard,
+    )
+    .await
+    {
+        Ok(_) => panic!("the V1 is not allowed in this transport"),
+        Err(err) => err,
+    };
+    assert_eq!(err.to_string(), "the error");
+    Ok(())
+}
