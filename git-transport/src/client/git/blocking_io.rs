@@ -1,5 +1,5 @@
 use crate::{
-    client::{self, capabilities, git, Capabilities, ProtocolDecision, SetServiceResponse},
+    client::{self, capabilities, git, Capabilities, SetServiceResponse},
     Protocol, Service,
 };
 use bstr::BString;
@@ -37,13 +37,13 @@ where
 
     /// We implement this in a paranoid and safe way, not allowing downgrade to V1 which
     /// could send large amounts of refs in case we didn't want to support V1.
-    fn supports_advertised_version(&self, actual_version: Protocol) -> ProtocolDecision {
-        if self.desired_version == actual_version {
-            ProtocolDecision::Continue
-        } else if actual_version == Protocol::V1 {
-            ProtocolDecision::CloseConnectionImmediately
+    fn supported_protocol_versions(&self) -> &[Protocol] {
+        if self.desired_version == Protocol::V1 {
+            // allow any version
+            &[]
         } else {
-            ProtocolDecision::Continue
+            // only allow the specified one
+            &self.supported_versions
         }
     }
 
@@ -111,6 +111,7 @@ where
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,
+            supported_versions: [desired_version],
             mode,
         }
     }

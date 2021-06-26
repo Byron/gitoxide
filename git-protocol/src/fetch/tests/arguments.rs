@@ -20,7 +20,7 @@ mod impls {
     use crate::fetch::tests::arguments::Transport;
     use git_transport::{
         client,
-        client::{Error, Identity, MessageKind, ProtocolDecision, RequestWriter, SetServiceResponse, WriteMode},
+        client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
 
@@ -37,8 +37,8 @@ mod impls {
             self.inner.to_url()
         }
 
-        fn supports_advertised_version(&self, actual_version: Protocol) -> ProtocolDecision {
-            self.inner.supports_advertised_version(actual_version)
+        fn supported_protocol_versions(&self) -> &[Protocol] {
+            self.inner.supported_protocol_versions()
         }
 
         fn is_stateful(&self) -> bool {
@@ -79,8 +79,8 @@ mod impls {
             self.inner.to_url()
         }
 
-        fn desired_protocol_version(&self) -> Protocol {
-            self.inner.desired_protocol_version()
+        fn supported_protocol_versions(&self) -> &[Protocol] {
+            self.inner.supported_protocol_versions()
         }
 
         fn is_stateful(&self) -> bool {

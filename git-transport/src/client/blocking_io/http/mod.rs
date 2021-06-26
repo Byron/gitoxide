@@ -27,6 +27,7 @@ pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
     desired_version: crate::Protocol,
+    supported_versions: [crate::Protocol; 1],
     actual_version: crate::Protocol,
     http: H,
     service: Option<Service>,
@@ -42,6 +43,7 @@ impl Transport<Impl> {
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
             desired_version,
             actual_version: desired_version,
+            supported_versions: [desired_version],
             service: None,
             http: Impl::default(),
             line_provider: None,
@@ -151,8 +153,8 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         self.url.to_owned()
     }
 
-    fn desired_protocol_version(&self) -> Protocol {
-        self.desired_version
+    fn supported_protocol_versions(&self) -> &[Protocol] {
+        &self.supported_versions
     }
 
     fn is_stateful(&self) -> bool {

@@ -2,7 +2,6 @@ use std::process::{self, Command, Stdio};
 
 use bstr::{BString, ByteSlice};
 
-use crate::client::ProtocolDecision;
 use crate::{
     client::{self, git, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
     Protocol, Service,
@@ -105,11 +104,11 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
         self.url.to_string()
     }
 
-    fn supports_advertised_version(&self, actual_version: Protocol) -> ProtocolDecision {
+    fn supported_protocol_versions(&self) -> &[Protocol] {
         self.connection
             .as_ref()
             .expect("this is called after the handshake")
-            .supports_advertised_version(actual_version)
+            .supported_protocol_versions()
     }
 
     fn is_stateful(&self) -> bool {

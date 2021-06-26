@@ -70,6 +70,9 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
         Ok(_) => panic!("the V1 is not allowed in this transport"),
         Err(err) => err,
     };
-    assert_eq!(err.to_string(), "the error");
+    assert_eq!(
+        err.to_string(),
+        "The transport didn't accept the advertised server version V1 and closed the connection client side"
+    );
     Ok(())
 }

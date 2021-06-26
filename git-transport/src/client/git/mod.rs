@@ -20,6 +20,7 @@ pub struct Connection<R, W> {
     pub(in crate::client) path: BString,
     pub(in crate::client) virtual_host: Option<(String, Option<u16>)>,
     pub(in crate::client) desired_version: Protocol,
+    supported_versions: [Protocol; 1],
     pub(in crate::client) mode: ConnectMode,
 }
 

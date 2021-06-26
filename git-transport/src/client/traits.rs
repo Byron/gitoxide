@@ -6,17 +6,6 @@ use crate::{
 };
 use std::ops::{Deref, DerefMut};
 
-/// Describes what to do right after the handshake when the servers supported protocol was advertised to the transport.
-pub enum ProtocolDecision {
-    /// Continue as normal, the server's protocol version is desired or acceptable.
-    Continue,
-    /// Close the connection immediately without reading any more.
-    ///
-    /// In V1 this means a potentially large list of advertised refs won't be read, instead the connection is closed
-    /// leaving the server with a client who unexpectedly terminated the connection.
-    CloseConnectionImmediately,
-}
-
 /// This trait represents all transport related functions that don't require any input/output to be done which helps
 /// implementation to share more code across blocking and async programs.
 pub trait TransportWithoutIO {
@@ -41,12 +30,17 @@ pub trait TransportWithoutIO {
     /// unicode conversion.
     fn to_url(&self) -> String;
 
-    /// Verifies the actual protocol version supported by the server is acceptable and returns a decision on what to do next.
+    /// If the actually advertised server version is contained in the returned slice or empty, continue as normal,
+    /// assume the server's protocol version is desired or acceptable.
     ///
-    /// Please note that the actual version might differ after the handshake was conducted in case the server
-    /// did not support it and downgraded it instead.
-    fn supports_advertised_version(&self, _actual_version: Protocol) -> ProtocolDecision {
-        ProtocolDecision::Continue
+    /// Otherwise, abort the fetch operation with an error to avoid continuing any interaction with the transport.
+    ///
+    /// In V1 this means a potentially large list of advertised refs won't be read, instead the connection is ignored
+    /// leaving the server with a client who potentially unexpectedly terminated the connection.
+    ///
+    /// Note that `transport.close()` is not called explicitly.
+    fn supported_protocol_versions(&self) -> &[Protocol] {
+        &[]
     }
 
     /// Returns true if the transport is inherently stateful, or false otherwise.
@@ -78,8 +72,8 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
         self.deref().to_url()
     }
 
-    fn supports_advertised_version(&self, actual_version: Protocol) -> ProtocolDecision {
-        self.deref().supports_advertised_version(actual_version)
+    fn supported_protocol_versions(&self) -> &[Protocol] {
+        self.deref().supported_protocol_versions()
     }
 
     fn is_stateful(&self) -> bool {

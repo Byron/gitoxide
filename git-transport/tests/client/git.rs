@@ -178,7 +178,7 @@ async fn handshake_v2_downgrade_to_v1() -> crate::Result {
     );
     drop(res);
 
-    assert_eq!(c.desired_protocol_version(), Protocol::V2);
+    assert_eq!(c.supported_protocol_versions(), [Protocol::V2]);
     Ok(())
 }
 

@@ -5,7 +5,7 @@ use crate::{
 use git_features::{progress, progress::Progress};
 use git_transport::{
     client,
-    client::{ProtocolDecision, SetServiceResponse, TransportV2Ext},
+    client::{SetServiceResponse, TransportV2Ext},
     Service,
 };
 use maybe_async::maybe_async;
@@ -36,6 +36,7 @@ where
         progress.init(None, progress::steps());
         progress.set_name("handshake");
         progress.step();
+        let supported_versions: Vec<_> = transport.supported_protocol_versions().into();
         let result = transport.handshake(Service::UploadPack).await;
         let SetServiceResponse {
             actual_protocol,
@@ -71,15 +72,10 @@ where
             Err(err) => Err(err),
         }?;
 
-        match transport.supports_advertised_version(actual_protocol) {
-            ProtocolDecision::Continue => {}
-            ProtocolDecision::CloseConnectionImmediately => {
-                drop(refs);
-                transport.close().await;
-                return Err((Error::TransportProtocolPolicyViolation {
-                    actual_version: actual_protocol,
-                }));
-            }
+        if !supported_versions.is_empty() && !supported_versions.contains(&actual_protocol) {
+            return Err(Error::TransportProtocolPolicyViolation {
+                actual_version: actual_protocol,
+            });
         }
 
         let parsed_refs = match refs {
