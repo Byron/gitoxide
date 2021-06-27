@@ -307,7 +307,7 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
         actual_protocol,
         capabilities,
         refs,
-    } = c.handshake(Service::UploadPack, &[])?;
+    } = c.handshake(Service::UploadPack, &[("value-only", None), ("key", Some("value"))])?;
     assert_eq!(actual_protocol, Protocol::V2);
     assert!(
         refs.is_none(),
@@ -344,7 +344,7 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
 Host: 127.0.0.1:{}
 Accept: */*
 User-Agent: git/oxide-{}
-Git-Protocol: version=2
+Git-Protocol: version=2:value-only:key=value
 
 ",
             server.addr.port(),
