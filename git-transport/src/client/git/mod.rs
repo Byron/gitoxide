@@ -21,6 +21,7 @@ pub struct Connection<R, W> {
     pub(in crate::client) virtual_host: Option<(String, Option<u16>)>,
     pub(in crate::client) desired_version: Protocol,
     supported_versions: [Protocol; 1],
+    custom_url: Option<String>,
     pub(in crate::client) mode: ConnectMode,
 }
 
@@ -28,6 +29,16 @@ impl<R, W> Connection<R, W> {
     /// Return the inner reader and writer
     pub fn into_inner(self) -> (R, W) {
         (self.line_provider.into_inner(), self.writer)
+    }
+
+    /// Optionally set the URL to be returned when asked for it if `Some` or calculate a default for `None`.
+    ///
+    /// The URL is required as parameter for authentication helpers which are called in transports
+    /// that support authentication. Even though plain git transports don't support that, this
+    /// may well be the case in custom transports.
+    pub fn custom_url(mut self, url: Option<String>) -> Self {
+        self.custom_url = url;
+        self
     }
 }
 
@@ -60,7 +71,7 @@ pub(crate) mod message {
         // as extra lines in the reply, which we don't want to handle. Especially since an old server will not respond with that
         // line (is what I assume, at least), so it's an optional part in the response to understand and handle. There is no value
         // in that, so let's help V2 servers to respond in a way that assumes V1.
-        let needs_null_prefix = if version != Protocol::V1 {
+        let extra_params_need_null_prefix = if version != Protocol::V1 {
             out.push(0);
             out.push_str(format!("version={}", version as usize));
             out.push(0);
@@ -70,7 +81,7 @@ pub(crate) mod message {
         };
 
         if !extra_parameters.is_empty() {
-            if needs_null_prefix {
+            if extra_params_need_null_prefix {
                 out.push(0);
             }
             for (key, value) in extra_parameters {

@@ -20,7 +20,7 @@ use std::sync::{Arc, Mutex};
 async fn handshake_v1_and_request() -> crate::Result {
     let mut out = Vec::new();
     let server_response = fixture_bytes("v1/clone.response");
-    let mut c = git::Connection::new(
+    let c = git::Connection::new(
         server_response.as_slice(),
         &mut out,
         Protocol::V1,
@@ -29,6 +29,9 @@ async fn handshake_v1_and_request() -> crate::Result {
         git::ConnectMode::Daemon,
     );
     assert!(c.is_stateful(), "tcp connections are stateful");
+    let c = c.custom_url(Some("anything".into()));
+    assert_eq!(c.to_url(), "anything");
+    let mut c = c.custom_url(None);
     assert_eq!(c.to_url(), "file:///foo.git");
     let mut res = c.handshake(Service::UploadPack, &[]).await?;
     assert_eq!(res.actual_protocol, Protocol::V1);

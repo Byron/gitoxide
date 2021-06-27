@@ -116,6 +116,7 @@ where
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,
+            custom_url: None,
             supported_versions: [desired_version],
             mode,
         }
