@@ -172,16 +172,26 @@ impl<H: Http> client::Transport for Transport<H> {
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
         if self.desired_version != Protocol::V1 || !extra_parameters.is_empty() {
-            let version_str = format!("{}", self.desired_version as usize);
-            let parameters_encoded = std::iter::once(&("version", Some(version_str.as_str())))
-                .chain(extra_parameters)
-                .map(|(key, value)| match value {
-                    Some(value) => format!("{}={}", key, value),
-                    None => key.to_string(),
-                })
-                .collect::<Vec<_>>()
-                .join(":");
-            dynamic_headers.push(format!("Git-Protocol: {}", parameters_encoded).into());
+            let mut parameters = if self.desired_version != Protocol::V1 {
+                let mut p = format!("version={}", self.desired_version as usize);
+                if !extra_parameters.is_empty() {
+                    p.push(':');
+                }
+                p
+            } else {
+                String::new()
+            };
+            parameters.push_str(
+                &extra_parameters
+                    .iter()
+                    .map(|(key, value)| match value {
+                        Some(value) => format!("{}={}", key, value),
+                        None => key.to_string(),
+                    })
+                    .collect::<Vec<_>>()
+                    .join(":"),
+            );
+            dynamic_headers.push(format!("Git-Protocol: {}", parameters).into());
         }
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
         let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;

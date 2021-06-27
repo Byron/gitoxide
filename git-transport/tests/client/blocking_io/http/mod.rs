@@ -234,9 +234,14 @@ fn clone_v1() -> crate::Result {
         "path/not/important/due/to/mock",
         Protocol::V1,
     )?;
-    let SetServiceResponse { refs, .. } = c.handshake(Service::UploadPack, &[])?;
+    let SetServiceResponse { refs, .. } =
+        c.handshake(Service::UploadPack, &[("key", Some("value")), ("value-only", None)])?;
     io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
-    server.ignore_this_result();
+    assert_eq!(
+        server.received_as_string().lines().nth(4).expect("git-protocol header"),
+        "Git-Protocol: key=value:value-only",
+        "it writes extra-parameters without the version"
+    );
 
     server.next_read_and_respond_with(fixture_bytes("v1/http-clone.response"));
     let mut writer = c.request(

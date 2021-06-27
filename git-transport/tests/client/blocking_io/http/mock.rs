@@ -78,10 +78,6 @@ impl Server {
             .expect("thread to be waiting");
     }
 
-    pub fn ignore_this_result(&self) {
-        self.recv_result.recv().ok();
-    }
-
     pub fn received(&self) -> Vec<u8> {
         match self.recv_result.recv().expect("thread to be up") {
             CommandResult::ReadAndRespond(received) => received,
