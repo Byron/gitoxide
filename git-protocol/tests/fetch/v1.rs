@@ -9,7 +9,12 @@ async fn clone() -> crate::Result {
     let out = Vec::new();
     let dlg = CloneDelegate::default();
     let dlg = git_protocol::fetch(
-        transport(out, "v1/clone.response", Protocol::V1),
+        transport(
+            out,
+            "v1/clone.response",
+            Protocol::V1,
+            git_transport::client::git::ConnectMode::Daemon,
+        ),
         dlg,
         git_protocol::credentials::helper,
         progress::Discard,
@@ -25,7 +30,12 @@ async fn ls_remote() -> crate::Result {
     let out = Vec::new();
     let delegate = LsRemoteDelegate::default();
     let (delegate, out) = git_protocol::fetch(
-        transport(out, "v1/clone.response", Protocol::V1),
+        transport(
+            out,
+            "v1/clone.response",
+            Protocol::V1,
+            git_transport::client::git::ConnectMode::Daemon,
+        ),
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,
@@ -48,7 +58,7 @@ async fn ls_remote() -> crate::Result {
     );
     assert_eq!(
         out.into_inner().1.as_bstr(),
-        b"0000".as_bstr(),
+        b"003agit-upload-pack does/not/matter\0\0value-only\0key=value\00000".as_bstr(),
         "we dont have to send anything in V1, except for the final flush byte to indicate we are done"
     );
     Ok(())
@@ -60,7 +70,12 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
     let delegate = LsRemoteDelegate::default();
 
     let err = match git_protocol::fetch(
-        transport(out, "v1/clone.response", Protocol::V2),
+        transport(
+            out,
+            "v1/clone.response",
+            Protocol::V2,
+            git_transport::client::git::ConnectMode::Process,
+        ),
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,

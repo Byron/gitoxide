@@ -36,12 +36,14 @@ where
         progress.init(None, progress::steps());
         progress.set_name("handshake");
         progress.step();
-        let extra_parameters_owned = delegate.handshake_extra_parameters();
-        let extra_parameters: Vec<_> = extra_parameters_owned
+
+        let extra_parameters = delegate.handshake_extra_parameters();
+        let extra_parameters: Vec<_> = extra_parameters
             .iter()
             .map(|(k, v)| (k.as_str(), v.as_ref().map(|s| s.as_str())))
             .collect();
         let supported_versions: Vec<_> = transport.supported_protocol_versions().into();
+
         let result = transport.handshake(Service::UploadPack, &extra_parameters).await;
         let SetServiceResponse {
             actual_protocol,

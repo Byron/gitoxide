@@ -25,14 +25,19 @@ where
     }
 
     fn to_url(&self) -> String {
-        git_url::Url {
-            scheme: git_url::Scheme::File,
-            user: None,
-            host: None,
-            port: None,
-            path: self.path.clone(),
-        }
-        .to_string()
+        self.custom_url.as_ref().map_or_else(
+            || {
+                git_url::Url {
+                    scheme: git_url::Scheme::File,
+                    user: None,
+                    host: None,
+                    port: None,
+                    path: self.path.clone(),
+                }
+                .to_string()
+            },
+            |url| url.clone(),
+        )
     }
 
     /// We implement this in a paranoid and safe way, not allowing downgrade to V1 which

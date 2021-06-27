@@ -9,7 +9,12 @@ async fn ls_remote() -> crate::Result {
     let out = Vec::new();
     let delegate = LsRemoteDelegate::default();
     let (delegate, out) = git_protocol::fetch(
-        transport(out, "v2/clone.response", Protocol::V2),
+        transport(
+            out,
+            "v2/clone.response",
+            Protocol::V2,
+            git_transport::client::git::ConnectMode::Daemon,
+        ),
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,
@@ -33,7 +38,7 @@ async fn ls_remote() -> crate::Result {
     assert_eq!(
         out.into_inner().1.as_bstr(),
         format!(
-            "0014command=ls-refs
+            "0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00014command=ls-refs
 001aagent={}
 0001000csymrefs
 0009peel

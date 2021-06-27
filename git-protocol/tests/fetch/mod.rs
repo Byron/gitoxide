@@ -30,6 +30,9 @@ pub struct LsRemoteDelegate {
 }
 
 impl fetch::DelegateBlocking for LsRemoteDelegate {
+    fn handshake_extra_parameters(&self) -> Vec<(String, Option<String>)> {
+        vec![("value-only".into(), None), ("key".into(), Some("value".into()))]
+    }
     fn prepare_fetch(
         &mut self,
         _version: git_transport::Protocol,
@@ -131,6 +134,7 @@ pub fn transport<'a, W: futures_io::AsyncWrite + Unpin>(
     out: W,
     path: &str,
     desired_version: git_transport::Protocol,
+    mode: git_transport::client::git::ConnectMode,
 ) -> git_transport::client::git::Connection<Cursor, W> {
     let response = fixture_bytes(path);
     git_transport::client::git::Connection::new(
@@ -139,7 +143,7 @@ pub fn transport<'a, W: futures_io::AsyncWrite + Unpin>(
         desired_version,
         b"does/not/matter".as_bstr().to_owned(),
         None::<(&str, _)>,
-        git_transport::client::git::ConnectMode::Process,
+        mode,
     )
 }
 
@@ -148,6 +152,7 @@ pub fn transport<'a, W: std::io::Write>(
     out: W,
     path: &str,
     version: git_transport::Protocol,
+    mode: git_transport::client::git::ConnectMode,
 ) -> git_transport::client::git::Connection<Cursor, W> {
     let response = fixture_bytes(path);
     git_transport::client::git::Connection::new(
@@ -156,7 +161,7 @@ pub fn transport<'a, W: std::io::Write>(
         version,
         b"does/not/matter".as_bstr().to_owned(),
         None::<(&str, _)>,
-        git_transport::client::git::ConnectMode::Process,
+        mode,
     )
 }
 
