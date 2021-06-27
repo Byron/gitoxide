@@ -57,7 +57,11 @@ where
     R: AsyncRead + Unpin,
     W: AsyncWrite + Unpin,
 {
-    async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
+    async fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &[(&str, Option<&str>)],
+    ) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == git::ConnectMode::Daemon {
             let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
             line_writer
@@ -66,6 +70,7 @@ where
                     self.desired_version,
                     &self.path,
                     self.virtual_host.as_ref(),
+                    extra_parameters,
                 ))
                 .await?;
             line_writer.flush().await?;
