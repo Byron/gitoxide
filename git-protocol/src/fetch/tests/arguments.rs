@@ -47,8 +47,12 @@ mod impls {
     }
 
     impl<T: client::Transport> client::Transport for Transport<T> {
-        fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-            self.inner.handshake(service)
+        fn handshake<'a>(
+            &mut self,
+            service: Service,
+            extra_parameters: &'a [(&'a str, Option<&'a str>)],
+        ) -> Result<SetServiceResponse<'_>, Error> {
+            self.inner.handshake(service, extra_parameters)
         }
 
         fn close(&mut self) -> Result<(), Error> {
@@ -90,8 +94,12 @@ mod impls {
 
     #[async_trait(?Send)]
     impl<T: client::Transport + Send> client::Transport for Transport<T> {
-        async fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-            self.inner.handshake(service).await
+        async fn handshake<'a>(
+            &mut self,
+            service: Service,
+            extra_parameters: &'a [(&'a str, Option<&'a str>)],
+        ) -> Result<SetServiceResponse<'_>, Error> {
+            self.inner.handshake(service, extra_parameters).await
         }
 
         async fn close(&mut self) -> Result<(), Error> {

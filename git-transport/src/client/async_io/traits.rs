@@ -38,7 +38,7 @@ pub trait Transport: TransportWithoutIO {
     async fn handshake<'a>(
         &mut self,
         service: Service,
-        extra_parameters: &[(&str, Option<&str>)],
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
@@ -51,7 +51,7 @@ impl<T: Transport + ?Sized> Transport for Box<T> {
     async fn handshake<'a>(
         &mut self,
         service: Service,
-        extra_parameters: &[(&str, Option<&str>)],
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, Error> {
         self.deref_mut().handshake(service, extra_parameters).await
     }

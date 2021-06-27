@@ -17,6 +17,13 @@ pub enum Action {
 ///
 /// See [Delegate] for the complete trait.
 pub trait DelegateBlocking {
+    /// Return extra parameters to be provided during the handshake.
+    ///
+    /// Note that this method is only called once and the result is reused during subsequent handshakes which may happen
+    /// if there is an authentication failure.
+    fn handshake_extra_parameters(&self) -> Vec<(String, Option<String>)> {
+        Vec::new()
+    }
     /// Called before invoking 'ls-refs' on the server to allow providing it with additional `arguments` and to enable `features`.
     ///
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.

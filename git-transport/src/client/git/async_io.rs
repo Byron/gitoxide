@@ -65,7 +65,7 @@ where
     async fn handshake<'a>(
         &mut self,
         service: Service,
-        extra_parameters: &[(&str, Option<&str>)],
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == git::ConnectMode::Daemon {
             let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
