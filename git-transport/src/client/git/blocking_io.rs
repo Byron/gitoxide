@@ -57,7 +57,11 @@ where
     R: io::Read,
     W: io::Write,
 {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
+    fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<SetServiceResponse<'_>, client::Error> {
         if self.mode == git::ConnectMode::Daemon {
             let mut line_writer = git_packetline::Writer::new(&mut self.writer).binary_mode();
             line_writer.write_all(&git::message::connect(
@@ -65,6 +69,7 @@ where
                 self.desired_version,
                 &self.path,
                 self.virtual_host.as_ref(),
+                extra_parameters,
             ))?;
             line_writer.flush()?;
         }

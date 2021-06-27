@@ -40,6 +40,7 @@ pub(crate) mod message {
         version: Protocol,
         path: &[u8],
         virtual_host: Option<&(String, Option<u16>)>,
+        extra_parameters: &[(&str, Option<&str>)],
     ) -> BString {
         let mut out = bstr::BString::from(service.as_str());
         out.push(b' ');
@@ -59,10 +60,26 @@ pub(crate) mod message {
         // as extra lines in the reply, which we don't want to handle. Especially since an old server will not respond with that
         // line (is what I assume, at least), so it's an optional part in the response to understand and handle. There is no value
         // in that, so let's help V2 servers to respond in a way that assumes V1.
-        if version != Protocol::V1 {
+        let needs_null_prefix = if version != Protocol::V1 {
             out.push(0);
             out.push_str(format!("version={}", version as usize));
             out.push(0);
+            false
+        } else {
+            true
+        };
+
+        if !extra_parameters.is_empty() {
+            if needs_null_prefix {
+                out.push(0);
+            }
+            for (key, value) in extra_parameters {
+                match value {
+                    Some(value) => out.push_str(format!("{}={}", key, value)),
+                    None => out.push_str(key),
+                }
+                out.push(0);
+            }
         }
         out
     }
@@ -73,15 +90,28 @@ pub(crate) mod message {
         #[test]
         fn version_1_without_host_and_version() {
             assert_eq!(
-                git::message::connect(Service::UploadPack, Protocol::V1, b"hello/world", None),
+                git::message::connect(Service::UploadPack, Protocol::V1, b"hello/world", None, &[]),
                 "git-upload-pack hello/world\0"
             )
         }
         #[test]
         fn version_2_without_host_and_version() {
             assert_eq!(
-                git::message::connect(Service::UploadPack, Protocol::V2, b"hello\\world", None),
+                git::message::connect(Service::UploadPack, Protocol::V2, b"hello\\world", None, &[]),
                 "git-upload-pack hello\\world\0\0version=2\0"
+            )
+        }
+        #[test]
+        fn version_2_without_host_and_version_and_exta_parameters() {
+            assert_eq!(
+                git::message::connect(
+                    Service::UploadPack,
+                    Protocol::V2,
+                    b"/path/project.git",
+                    None,
+                    &[("key", Some("value")), ("value-only", None)]
+                ),
+                "git-upload-pack /path/project.git\0\0version=2\0key=value\0value-only\0"
             )
         }
         #[test]
@@ -91,9 +121,23 @@ pub(crate) mod message {
                     Service::UploadPack,
                     Protocol::V1,
                     b"hello\\world",
-                    Some(&("host".into(), None))
+                    Some(&("host".into(), None)),
+                    &[]
                 ),
                 "git-upload-pack hello\\world\0host=host\0"
+            )
+        }
+        #[test]
+        fn with_host_without_port_and_extra_parameters() {
+            assert_eq!(
+                git::message::connect(
+                    Service::UploadPack,
+                    Protocol::V1,
+                    b"hello\\world",
+                    Some(&("host".into(), None)),
+                    &[("key", Some("value")), ("value-only", None)]
+                ),
+                "git-upload-pack hello\\world\0host=host\0\0key=value\0value-only\0"
             )
         }
         #[test]
@@ -103,7 +147,8 @@ pub(crate) mod message {
                     Service::UploadPack,
                     Protocol::V1,
                     b"hello\\world",
-                    Some(&("host".into(), Some(404)))
+                    Some(&("host".into(), Some(404))),
+                    &[]
                 ),
                 "git-upload-pack hello\\world\0host=host:404\0"
             )

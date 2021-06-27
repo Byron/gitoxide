@@ -25,7 +25,7 @@ fn assert_error_status(
     let (server, mut client) =
         mock::serve_and_connect(&format!("http-{}.response", status), "path/not-important", Protocol::V1)?;
     let error = client
-        .handshake(Service::UploadPack)
+        .handshake(Service::UploadPack, &[])
         .err()
         .expect("non-200 status causes error");
     let error = error
@@ -47,7 +47,7 @@ fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted()
         username: "user".into(),
         password: "password".into(),
     })?;
-    client.handshake(Service::UploadPack)?;
+    client.handshake(Service::UploadPack, &[])?;
 
     assert_eq!(
         server.received_as_string().lines().collect::<Vec<_>>(),
@@ -112,7 +112,7 @@ fn handshake_v1() -> crate::Result {
         actual_protocol,
         capabilities,
         refs,
-    } = c.handshake(Service::UploadPack)?;
+    } = c.handshake(Service::UploadPack, &[])?;
     assert_eq!(actual_protocol, Protocol::V1);
     assert_eq!(
         capabilities
@@ -234,7 +234,7 @@ fn clone_v1() -> crate::Result {
         "path/not/important/due/to/mock",
         Protocol::V1,
     )?;
-    let SetServiceResponse { refs, .. } = c.handshake(Service::UploadPack)?;
+    let SetServiceResponse { refs, .. } = c.handshake(Service::UploadPack, &[])?;
     io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
     server.ignore_this_result();
 
@@ -307,7 +307,7 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
         actual_protocol,
         capabilities,
         refs,
-    } = c.handshake(Service::UploadPack)?;
+    } = c.handshake(Service::UploadPack, &[])?;
     assert_eq!(actual_protocol, Protocol::V2);
     assert!(
         refs.is_none(),

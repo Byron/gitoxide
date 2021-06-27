@@ -110,7 +110,11 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
 }
 
 impl client::Transport for SpawnProcessOnDemand {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, client::Error> {
+    fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<SetServiceResponse<'_>, client::Error> {
         assert!(
             self.connection.is_none(),
             "cannot handshake twice with the same connection"
@@ -142,7 +146,7 @@ impl client::Transport for SpawnProcessOnDemand {
             .connection
             .as_mut()
             .expect("connection to be there right after setting it");
-        c.handshake(service)
+        c.handshake(service, extra_parameters)
     }
 
     fn close(&mut self) -> Result<(), client::Error> {

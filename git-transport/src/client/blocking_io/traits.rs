@@ -21,13 +21,22 @@ pub struct SetServiceResponse<'a> {
 /// Thus the consumer of this trait will not have to deal with packet lines at all.
 /// **Note that**  whenever a `Read` trait or `Write` trait is produced, it must be exhausted.
 pub trait Transport: TransportWithoutIO {
-    /// Initiate connection to the given service.
+    /// Initiate connection to the given service and send the given `extra_parameters` along with it.
+    ///
+    /// `extra_parameters` are interpreted as `key=value` pairs if the second parameter is `Some` or as `key`
+    /// if it is None.
+    ///
     /// Returns the service capabilities according according to the actual [Protocol] it supports,
     /// and possibly a list of refs to be obtained.
-    /// This means that asking for an unsupported protocol will result in a protocol downgrade to the given one.
-    /// using the `read_line(…)` function of the given [BufReader][SetServiceResponse::refs].
-    /// It must be exhausted, that is, read to the end before the next method can be invoked.
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error>;
+    /// This means that asking for an unsupported protocol might result in a protocol downgrade to the given one
+    /// if [TransportWithoutIO::supported_protocol_versions()] includes it.
+    /// Exhaust the returned [BufReader][SetServiceResponse::refs] for a list of references in case of protocol V1
+    /// before making another request.
+    fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<SetServiceResponse<'_>, Error>;
 
     /// Closes the connection to indicate no further requests will be made.
     fn close(&mut self) -> Result<(), Error>;
@@ -35,8 +44,12 @@ pub trait Transport: TransportWithoutIO {
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
 impl<T: Transport + ?Sized> Transport for Box<T> {
-    fn handshake(&mut self, service: Service) -> Result<SetServiceResponse<'_>, Error> {
-        self.deref_mut().handshake(service)
+    fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<SetServiceResponse<'_>, Error> {
+        self.deref_mut().handshake(service, extra_parameters)
     }
 
     fn close(&mut self) -> Result<(), Error> {

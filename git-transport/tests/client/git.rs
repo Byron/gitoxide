@@ -30,7 +30,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     );
     assert!(c.is_stateful(), "tcp connections are stateful");
     assert_eq!(c.to_url(), "file:///foo.git");
-    let mut res = c.handshake(Service::UploadPack).await?;
+    let mut res = c.handshake(Service::UploadPack, &[]).await?;
     assert_eq!(res.actual_protocol, Protocol::V1);
     assert_eq!(
         res.capabilities
@@ -148,7 +148,7 @@ async fn handshake_v1_process_mode() -> crate::Result {
         Some(("example.org", None)),
         git::ConnectMode::Process,
     );
-    c.handshake(Service::UploadPack).await?;
+    c.handshake(Service::UploadPack, &[]).await?;
 
     assert_eq!(
         out.as_slice().as_bstr(),
@@ -170,7 +170,7 @@ async fn handshake_v2_downgrade_to_v1() -> crate::Result {
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
     );
-    let res = c.handshake(Service::UploadPack).await?;
+    let res = c.handshake(Service::UploadPack, &[]).await?;
     assert_eq!(res.actual_protocol, Protocol::V1);
     assert!(
         res.refs.is_some(),
@@ -215,7 +215,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
         c.is_stateful(),
         "tcp connections are stateful despite the protocol version"
     );
-    let res = c.handshake(Service::UploadPack).await?;
+    let res = c.handshake(Service::UploadPack, &[]).await?;
     assert_eq!(res.actual_protocol, Protocol::V2);
     assert!(
         res.refs.is_none(),

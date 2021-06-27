@@ -163,15 +163,18 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
 }
 
 impl<H: Http> client::Transport for Transport<H> {
-    fn handshake(&mut self, service: Service) -> Result<client::SetServiceResponse<'_>, client::Error> {
+    fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<client::SetServiceResponse<'_>, client::Error> {
         let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
         if self.desired_version != Protocol::V1 {
-            dynamic_headers.push(Cow::Owned(format!(
-                "Git-Protocol: version={}",
-                self.desired_version as usize
-            )));
+            let mut git_protocol = format!("Git-Protocol: version={}", self.desired_version as usize);
+            if !extra_parameters.is_empty() {}
+            dynamic_headers.push(Cow::Owned(git_protocol));
         }
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
         let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
