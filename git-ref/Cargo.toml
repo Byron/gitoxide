@@ -12,15 +12,21 @@ include = ["src/**/*"]
 doctest = false
 test = true
 
+[features]
+serde1 = ["serde", "bstr/serde1", "git-hash/serde1", "git-actor/serde1"]
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 git-hash = { version = "^0.4.0", path = "../git-hash" }
 git-validate = { version = "^0.3.0", path = "../git-validate" }
+git-actor = { version = "^0.1.0", path = "../git-actor" }
 
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "6", default-features = false, features = ["alloc"]}
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools" }

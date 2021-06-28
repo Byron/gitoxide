@@ -113,7 +113,6 @@ pub mod mutable {
 
     /// Denotes a ref target, equivalent to [`Kind`][super::Kind], but with mutable data.
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub enum Target {
         /// A ref that points to an object id
         Peeled(ObjectId),
@@ -142,7 +141,6 @@ pub enum Kind {
 
 /// Denotes a ref target, equivalent to [`Kind`], but with immutable data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Target<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),

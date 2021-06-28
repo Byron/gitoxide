@@ -177,6 +177,7 @@ The feature above is provided by the crates:
 
 * **git-actor**
 * **git-object**
+* **git-ref**
 * **git-url**
 * **git-odb**
 * **git-protocol**
