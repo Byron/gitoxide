@@ -66,7 +66,7 @@ mod decode {
     }
 
     #[cfg(test)]
-    mod tests {
+    mod line {
         use super::*;
         use bstr::ByteSlice;
         use git_actor::{Sign, Time};
@@ -89,15 +89,11 @@ mod decode {
         }
 
         #[test]
-        #[should_panic]
         fn completely_bogus_shows_error_with_context() {
-            assert_eq!(
-                line::<VerboseError<&[u8]>>(b"definitely not a log entry")
-                    .expect_err("this should fail")
-                    .map(|err| to_bstr_err(err).to_string())
-                    .to_string(),
-                "hello"
-            );
+            let err = line::<VerboseError<&[u8]>>(b"definitely not a log entry")
+                .expect_err("this should fail")
+                .map(|e| to_bstr_err(e).to_string());
+            assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
         }
 
         #[test]
