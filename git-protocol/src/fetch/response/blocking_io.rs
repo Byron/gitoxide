@@ -1,6 +1,6 @@
 use crate::fetch::{
     response,
-    response::{Acknowledgement, ShallowUpdate},
+    response::{Acknowledgement, ShallowUpdate, WantedRef},
     Response,
 };
 use git_transport::{client, Protocol};
@@ -78,6 +78,7 @@ impl Response {
                 Ok(Response {
                     acks,
                     shallows,
+                    wanted_refs: vec![],
                     has_pack,
                 })
             }
@@ -87,6 +88,7 @@ impl Response {
                 reader.reset(Protocol::V2);
                 let mut acks = Vec::<Acknowledgement>::new();
                 let mut shallows = Vec::<ShallowUpdate>::new();
+                let mut wanted_refs = Vec::<WantedRef>::new();
                 let has_pack = 'section: loop {
                     line.clear();
                     if reader.read_line(&mut line)? == 0 {
@@ -107,6 +109,11 @@ impl Response {
                                 break 'section false;
                             }
                         }
+                        "wanted-refs" => {
+                            if parse_v2_section(&mut line, reader, &mut wanted_refs, WantedRef::from_line)? {
+                                break 'section false;
+                            }
+                        }
                         "packfile" => {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
                             break 'section true;
@@ -117,6 +124,7 @@ impl Response {
                 Ok(Response {
                     acks,
                     shallows,
+                    wanted_refs,
                     has_pack,
                 })
             }

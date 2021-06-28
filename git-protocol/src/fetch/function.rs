@@ -1,6 +1,6 @@
 use crate::{
     credentials,
-    fetch::{refs, Action, Arguments, Command, Delegate, Error, Response},
+    fetch::{refs, Action, Arguments, Command, Delegate, Error, LsRefsAction, Response},
 };
 use git_features::{progress, progress::Progress};
 use git_transport::{
@@ -114,23 +114,28 @@ where
             let ls_refs = Command::LsRefs;
             let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
             let mut ls_args = ls_refs.initial_arguments(&ls_features);
-            delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
-            ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
+            let next = delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
+            // User has requested to skip ls-refs, perhaps because they're using want-ref
+            if next == LsRefsAction::Skip {
+                vec![]
+            } else {
+                ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
 
-            progress.step();
-            progress.set_name("list refs");
-            let mut remote_refs = transport
-                .invoke(
-                    ls_refs.as_str(),
-                    ls_features.into_iter(),
-                    if ls_args.is_empty() {
-                        None
-                    } else {
-                        Some(ls_args.into_iter())
-                    },
-                )
-                .await?;
-            refs::from_v2_refs(&mut remote_refs).await?
+                progress.step();
+                progress.set_name("list refs");
+                let mut remote_refs = transport
+                    .invoke(
+                        ls_refs.as_str(),
+                        ls_features.into_iter(),
+                        if ls_args.is_empty() {
+                            None
+                        } else {
+                            Some(ls_args.into_iter())
+                        },
+                    )
+                    .await?;
+                refs::from_v2_refs(&mut remote_refs).await?
+            }
         }
     };
 

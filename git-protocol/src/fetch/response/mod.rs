@@ -1,4 +1,5 @@
 use crate::fetch::command::Feature;
+use bstr::BString;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
 use std::io;
@@ -27,6 +28,9 @@ quick_error! {
         UnknownSectionHeader(header: String) {
             display("Unknown or unsupported header: '{}'", header)
         }
+        InvalidWantedRef(line: String) {
+            display("Invalid 'wanted-ref' in response: '{}'", line)
+        }
     }
 }
 
@@ -50,6 +54,16 @@ pub enum ShallowUpdate {
     Shallow(git_hash::ObjectId),
     /// Don't shallow the given `id` anymore.
     Unshallow(git_hash::ObjectId),
+}
+
+/// A wanted-ref line received from the server.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct WantedRef {
+    /// The object id of the wanted ref, as seen by the server.
+    pub id: git_hash::ObjectId,
+    /// The name of the ref, as requested by the client as a `want-ref` argument.
+    pub path: BString,
 }
 
 impl ShallowUpdate {
@@ -108,10 +122,25 @@ impl Acknowledgement {
     }
 }
 
+impl WantedRef {
+    /// Parse a `WantedRef` from a `line` as received from the server.
+    pub fn from_line(line: &str) -> Result<WantedRef, Error> {
+        match line.trim_end().split_once(' ') {
+            Some((id, path)) => {
+                let id =
+                    git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
+                Ok(WantedRef { id, path: path.into() })
+            }
+            None => Err(Error::InvalidWantedRef(line.to_owned())),
+        }
+    }
+}
+
 /// A representation of a complete fetch response
 pub struct Response {
     acks: Vec<Acknowledgement>,
     shallows: Vec<ShallowUpdate>,
+    wanted_refs: Vec<WantedRef>,
     has_pack: bool,
 }
 
@@ -154,6 +183,11 @@ impl Response {
     /// Return all shallow update lines [parsed previously][Response::from_line_reader()].
     pub fn shallow_updates(&self) -> &[ShallowUpdate] {
         &self.shallows
+    }
+
+    /// Return all wanted-refs [parsed previously][Response::from_line_reader()].
+    pub fn wanted_refs(&self) -> &[WantedRef] {
+        &self.wanted_refs
     }
 }
 

@@ -1,6 +1,6 @@
-use bstr::ByteSlice;
+use bstr::{BString, ByteSlice};
 
-use git_protocol::fetch::{self, Action, Arguments, Ref, Response};
+use git_protocol::fetch::{self, Action, Arguments, LsRefsAction, Ref, Response};
 use git_transport::client::Capabilities;
 
 use crate::fixture_bytes;
@@ -21,6 +21,62 @@ impl fetch::DelegateBlocking for CloneDelegate {
             arguments.want(r.unpack().1);
         }
         Action::Close
+    }
+}
+
+/// A delegate which bypasses refs negotiation entirely via `ref-in-want`.
+#[derive(Default)]
+pub struct CloneRefInWantDelegate {
+    /// Statically-known refs we want.
+    want_refs: Vec<BString>,
+
+    /// Number of bytes received of the final packfile.
+    pack_bytes: usize,
+
+    /// Refs advertised by `ls-refs` -- should always be empty, as we skip `ls-refs`.
+    refs: Vec<fetch::Ref>,
+
+    /// Refs advertised as `wanted-ref` -- should always match `want_refs`
+    wanted_refs: Vec<fetch::Ref>,
+}
+
+impl fetch::DelegateBlocking for CloneRefInWantDelegate {
+    fn prepare_ls_refs(
+        &mut self,
+        _server: &Capabilities,
+        _arguments: &mut Vec<BString>,
+        _features: &mut Vec<(&str, Option<&str>)>,
+    ) -> LsRefsAction {
+        LsRefsAction::Skip
+    }
+
+    fn prepare_fetch(
+        &mut self,
+        _version: git_transport::Protocol,
+        _server: &Capabilities,
+        _features: &mut Vec<(&str, Option<&str>)>,
+        refs: &[fetch::Ref],
+    ) -> Action {
+        self.refs = refs.to_owned();
+        Action::Continue
+    }
+
+    fn negotiate(&mut self, _refs: &[Ref], arguments: &mut Arguments, previous_result: Option<&Response>) -> Action {
+        match previous_result {
+            None => {
+                for wanted_ref in &self.want_refs {
+                    arguments.want_ref(wanted_ref.as_ref())
+                }
+                Action::Close
+            }
+            Some(resp) => {
+                if resp.wanted_refs().is_empty() {
+                    Action::Continue
+                } else {
+                    Action::Close
+                }
+            }
+        }
     }
 }
 
@@ -51,7 +107,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use crate::fetch::{CloneDelegate, LsRemoteDelegate};
+    use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
     use git_features::progress::Progress;
     use git_protocol::{
         fetch,
@@ -72,6 +128,25 @@ mod blocking_io {
         }
     }
 
+    impl fetch::Delegate for CloneRefInWantDelegate {
+        fn receive_pack(
+            &mut self,
+            mut input: impl io::BufRead,
+            _progress: impl Progress,
+            _refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            for wanted in previous.wanted_refs() {
+                self.wanted_refs.push(fetch::Ref::Direct {
+                    path: wanted.path.clone(),
+                    object: wanted.id.clone(),
+                });
+            }
+            self.pack_bytes = io::copy(&mut input, &mut io::sink())? as usize;
+            Ok(())
+        }
+    }
+
     impl fetch::Delegate for LsRemoteDelegate {
         fn receive_pack(
             &mut self,
@@ -87,7 +162,7 @@ mod blocking_io {
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use crate::fetch::{CloneDelegate, LsRemoteDelegate};
+    use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
@@ -106,6 +181,26 @@ mod async_io {
             _refs: &[Ref],
             _previous: &Response,
         ) -> io::Result<()> {
+            self.pack_bytes = futures_lite::io::copy(&mut input, &mut futures_lite::io::sink()).await? as usize;
+            Ok(())
+        }
+    }
+
+    #[async_trait(?Send)]
+    impl fetch::Delegate for CloneRefInWantDelegate {
+        async fn receive_pack(
+            &mut self,
+            mut input: impl AsyncBufRead + Unpin + 'async_trait,
+            _progress: impl Progress,
+            _refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            for wanted in previous.wanted_refs() {
+                self.wanted_refs.push(fetch::Ref::Direct {
+                    path: wanted.path.clone(),
+                    object: wanted.id.clone(),
+                });
+            }
             self.pack_bytes = futures_lite::io::copy(&mut input, &mut futures_lite::io::sink()).await? as usize;
             Ok(())
         }

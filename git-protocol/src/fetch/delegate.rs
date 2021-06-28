@@ -11,6 +11,18 @@ pub enum Action {
     Close,
 }
 
+/// What to do after [`DelegateBlocking::prepare_ls_refs`].
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum LsRefsAction {
+    /// Continue by sending a 'ls-refs' command.
+    Continue,
+    /// Skip 'ls-refs' entirely.
+    ///
+    /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
+    /// [`DelegateBlocking::negotiate`].
+    Skip,
+}
+
 /// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
 /// the IO parts.
 /// Async implementations must treat it as blocking and unblock it by evaluating it elsewhere.
@@ -28,13 +40,20 @@ pub trait DelegateBlocking {
     ///
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake which happened prior.
+    ///
+    /// If the delegate returns [`LsRefsAction::Skip`], no 'ls-refs` command is sent to the server. This is valid if the
+    /// 'ref-in-want' capability is supported by the server, and the client takes advantage of that by sending 'want-ref's
+    /// in [`DelegateBlocking::negotiate`]. The delegate must check for the presence of 'ref-in-want' in `features`, and
+    /// otherwise ensure that 'ls-refs` is executed.
+    ///
     /// Note that this is called only if we are using protocol version 2.
     fn prepare_ls_refs(
         &mut self,
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) {
+    ) -> LsRefsAction {
+        LsRefsAction::Continue
     }
 
     /// Called before invoking the 'fetch' interaction with `features` pre-filled for typical use
@@ -65,7 +84,7 @@ pub trait DelegateBlocking {
     ///
     /// ### If `previous` is `None`…
     ///
-    /// Given a list of `arguments` to populate with wants, shallows, filters and other contextual information to be
+    /// Given a list of `arguments` to populate with wants, want-refs, shallows, filters and other contextual information to be
     /// sent to the server. This method is called once.
     /// Send the objects you `have` have afterwards based on the tips of your refs, in preparation to walk down their parents
     /// with each call to `negotiate` to find the common base(s).
@@ -85,6 +104,13 @@ pub trait DelegateBlocking {
     /// This method is called until the other side signals they are ready to send a pack.
     /// Return `Action::Close` if you want to give up before finding a common base. This can happen if the remote repository
     /// has radically changed so there are no bases, or they are very far in the past, causing all objects to be sent.
+    ///
+    /// ### 'ref-in-want'
+    ///
+    /// The 'ref-in-want' feature requires special attention: 'want-refs' need to be
+    /// [added to the arguments][Arguments::want_ref()] on the **first** call of this method (when `previous` is
+    /// `None`). The `Action` must in this case be [`Action::Continue`], as the server's 'wanted-refs' response will be
+    /// available only on the next turn.
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
 }
 

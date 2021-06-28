@@ -5,7 +5,7 @@ use git_repository::{
     odb::pack,
     protocol,
     protocol::{
-        fetch::{Action, Arguments, Ref, Response},
+        fetch::{Action, Arguments, LsRefsAction, Ref, Response},
         transport,
         transport::client::Capabilities,
     },
@@ -35,10 +35,11 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         server: &Capabilities,
         arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) {
+    ) -> LsRefsAction {
         if server.contains("ls-refs") {
             arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
         }
+        LsRefsAction::Continue
     }
 
     fn prepare_fetch(

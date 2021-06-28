@@ -93,7 +93,7 @@ mod with_io {
                     .iter()
                     .map(|s| s.as_bytes().as_bstr().to_owned())
                     .chain(
-                        ["sideband-all", "ref-in-want", "packfile-uris"]
+                        ["sideband-all", "packfile-uris"]
                             .iter()
                             .filter(|f| features.iter().any(|(sf, _)| sf == *f))
                             .map(|f| f.as_bytes().as_bstr().to_owned()),
