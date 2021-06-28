@@ -1,4 +1,4 @@
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteVec};
 use std::fmt;
 
 /// The arguments passed to a server command.
@@ -79,7 +79,9 @@ impl Arguments {
     /// The server should respond with a corresponding 'wanted-refs' section if it will include the
     /// wanted ref in the packfile response.
     pub fn want_ref(&mut self, ref_path: &BStr) {
-        self.prefixed("want-ref ", ref_path)
+        let mut arg = BString::from("want-ref ");
+        arg.push_str(ref_path);
+        self.args.push(arg);
     }
     /// Add the given `id` pointing to a commit to the 'have' list.
     ///
