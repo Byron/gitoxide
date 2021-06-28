@@ -176,6 +176,7 @@ mod parse {
     use nom::{
         branch::alt,
         bytes::complete::{tag, take_while_m_n},
+        error::ParseError,
         IResult,
     };
 
@@ -184,7 +185,7 @@ mod parse {
     }
 
     /// Copy from https://github.com/Byron/gitoxide/blob/f270850ff92eab15258023b8e59346ec200303bd/git-object/src/immutable/parse.rs#L64
-    pub fn hex_sha1(i: &[u8]) -> IResult<&[u8], &[u8]> {
+    pub fn hex_sha1<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
     }
 

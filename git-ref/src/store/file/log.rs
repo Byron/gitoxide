@@ -23,7 +23,8 @@ mod decode {
             complete::tag,
             complete::{take_until, take_while},
         },
-        combinator::{map, map_res, opt},
+        combinator::opt,
+        combinator::{map, map_res},
         error::{context, FromExternalError},
         error::{ContextError, ParseError},
         sequence::{terminated, tuple},
@@ -38,37 +39,30 @@ mod decode {
         }
     }
 
-    pub fn line<'a>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>> {
-        let (i, (old, _, new, _, signature, _, message)) = context(
-            "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
-            tuple((
-                hex_sha1,
-                tag(b" "),
-                hex_sha1,
-                tag(b" "),
-                |i| {
-                    git_actor::immutable::signature::decode(i).map_err(|e| {
-                        nom::Err::Error(nom::error::Error::from_external_error(
-                            i,
-                            nom::error::ErrorKind::MapRes,
-                            e,
-                        ))
-                    })
-                },
-                opt(tag(b"\t")),
-                parse_message,
-            )),
-        )(bytes)?;
-
-        Ok((
-            i,
-            Line {
+    pub fn line<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>, E> {
+        map(
+            context(
+                "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
+                tuple((
+                    hex_sha1,
+                    tag(b" "),
+                    hex_sha1,
+                    tag(b" "),
+                    |i| {
+                        git_actor::immutable::signature::decode(i)
+                            .map_err(|e| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
+                    },
+                    opt(tag(b"\t")),
+                    parse_message,
+                )),
+            ),
+            |(old, _, new, _, signature, _, message)| Line {
                 previous_oid: ObjectId::from_hex(old).expect("parser validation"),
                 new_oid: ObjectId::from_hex(new).expect("parser validation"),
                 signature,
                 message,
             },
-        ))
+        )(bytes)
     }
 
     #[cfg(test)]
@@ -92,10 +86,11 @@ mod decode {
         #[should_panic]
         fn completely_bogus_shows_error_with_context() {
             assert_eq!(
-                line(b"definitely not a log entry")
+                line::<VerboseError<&[u8]>>(b"definitely not a log entry")
                     .expect_err("this should fail")
+                    // .map(|err| err.to_string())
                     .to_string(),
-                "tbd"
+                "hello"
             );
         }
 
@@ -105,7 +100,7 @@ mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
             for input in &[line_without_nl, line_with_nl] {
                 assert_eq!(
-                    line(input).expect("successful parsing").1,
+                    line::<nom::error::Error<_>>(input).expect("successful parsing").1,
                     Line {
                         previous_oid: ObjectId::null_sha1(),
                         new_oid: ObjectId::null_sha1(),
@@ -130,7 +125,7 @@ mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
 
             for input in &[line_without_nl, line_with_nl] {
-                let (remaining, res) = line(&input).expect("successful parsing");
+                let (remaining, res) = line::<nom::error::Error<_>>(&input).expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
                 assert_eq!(
                     res,
@@ -154,10 +149,10 @@ mod decode {
         #[test]
         fn two_lines_in_a_row_with_and_without_newline() {
             let lines = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000\t\n0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 two <foo@example.com> 1234567890 -0000\thello";
-            let (remainder, parsed) = line(lines).expect("parse single line");
+            let (remainder, parsed) = line::<nom::error::Error<_>>(lines).expect("parse single line");
             assert_eq!(parsed.message, b"".as_bstr(), "first message is empty");
 
-            let (remainder, parsed) = line(remainder).expect("parse single line");
+            let (remainder, parsed) = line::<nom::error::Error<_>>(remainder).expect("parse single line");
             assert_eq!(
                 parsed.message,
                 b"hello".as_bstr(),
