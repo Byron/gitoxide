@@ -82,13 +82,19 @@ mod decode {
             v
         }
 
+        fn to_bstr_err(err: VerboseError<&[u8]>) -> VerboseError<&BStr> {
+            VerboseError {
+                errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
+            }
+        }
+
         #[test]
         #[should_panic]
         fn completely_bogus_shows_error_with_context() {
             assert_eq!(
                 line::<VerboseError<&[u8]>>(b"definitely not a log entry")
                     .expect_err("this should fail")
-                    // .map(|err| err.to_string())
+                    .map(|err| to_bstr_err(err).to_string())
                     .to_string(),
                 "hello"
             );
