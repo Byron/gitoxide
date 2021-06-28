@@ -23,13 +23,14 @@ mod decode {
             complete::tag,
             complete::{take_until, take_while},
         },
-        combinator::opt,
+        combinator::{map, map_res, opt},
         error::{context, FromExternalError},
+        error::{ContextError, ParseError},
         sequence::{terminated, tuple},
         IResult,
     };
 
-    fn parse_message<'a>(i: &[u8]) -> IResult<&[u8], &BStr> {
+    fn parse_message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
@@ -76,6 +77,7 @@ mod decode {
         use bstr::ByteSlice;
         use git_actor::{Sign, Time};
         use git_hash::ObjectId;
+        use nom::error::VerboseError;
 
         fn hex_to_oid(hex: &str) -> ObjectId {
             ObjectId::from_hex(hex.as_bytes()).unwrap()
@@ -84,6 +86,17 @@ mod decode {
         fn with_newline(mut v: Vec<u8>) -> Vec<u8> {
             v.push(b'\n');
             v
+        }
+
+        #[test]
+        #[should_panic]
+        fn completely_bogus_shows_error_with_context() {
+            assert_eq!(
+                line(b"definitely not a log entry")
+                    .expect_err("this should fail")
+                    .to_string(),
+                "tbd"
+            );
         }
 
         #[test]
