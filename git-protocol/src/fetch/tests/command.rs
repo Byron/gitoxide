@@ -89,19 +89,12 @@ mod v2 {
                 assert_eq!(
                     Command::Fetch.initial_arguments(&Command::Fetch.default_features(
                         git_transport::Protocol::V2,
-                        &capabilities("fetch", "shallow filter ref-in-want sideband-all packfile-uris")
+                        &capabilities("fetch", "shallow filter sideband-all packfile-uris")
                     )),
-                    [
-                        "thin-pack",
-                        "include-tag",
-                        "ofs-delta",
-                        "sideband-all",
-                        "ref-in-want",
-                        "packfile-uris"
-                    ]
-                    .iter()
-                    .map(|s| s.as_bytes().as_bstr().to_owned())
-                    .collect::<Vec<_>>()
+                    ["thin-pack", "include-tag", "ofs-delta", "sideband-all", "packfile-uris"]
+                        .iter()
+                        .map(|s| s.as_bytes().as_bstr().to_owned())
+                        .collect::<Vec<_>>()
                 )
             }
         }

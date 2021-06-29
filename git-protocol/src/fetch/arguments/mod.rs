@@ -1,4 +1,4 @@
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteVec};
 use std::fmt;
 
 /// The arguments passed to a server command.
@@ -15,6 +15,7 @@ pub struct Arguments {
     deepen_since: bool,
     deepen_not: bool,
     deepen_relative: bool,
+    ref_in_want: bool,
 
     features_for_first_want: Option<Vec<String>>,
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
@@ -57,6 +58,12 @@ impl Arguments {
     pub fn can_use_deepen_relative(&self) -> bool {
         self.deepen_relative
     }
+    /// Return true if the 'ref-in-want' capability is supported.
+    ///
+    /// This can be used to bypass 'ls-refs' entirely in protocol v2.
+    pub fn can_use_ref_in_want(&self) -> bool {
+        self.ref_in_want
+    }
 
     /// Add the given `id` pointing to a commit to the 'want' list.
     ///
@@ -66,6 +73,15 @@ impl Arguments {
             Some(features) => self.prefixed("want ", format!("{} {}", id.as_ref(), features.join(" "))),
             None => self.prefixed("want ", id.as_ref()),
         }
+    }
+    /// Add the given ref to the 'want-ref' list.
+    ///
+    /// The server should respond with a corresponding 'wanted-refs' section if it will include the
+    /// wanted ref in the packfile response.
+    pub fn want_ref(&mut self, ref_path: &BStr) {
+        let mut arg = BString::from("want-ref ");
+        arg.push_str(ref_path);
+        self.args.push(arg);
     }
     /// Add the given `id` pointing to a commit to the 'have' list.
     ///
@@ -114,6 +130,7 @@ impl Arguments {
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");
         let shallow = has("shallow");
+        let ref_in_want = has("ref-in-want");
         let mut deepen_since = shallow;
         let mut deepen_not = shallow;
         let mut deepen_relative = shallow;
@@ -143,6 +160,7 @@ impl Arguments {
             shallow,
             deepen_not,
             deepen_relative,
+            ref_in_want,
             deepen_since,
             features_for_first_want,
         }

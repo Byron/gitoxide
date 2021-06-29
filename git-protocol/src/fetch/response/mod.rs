@@ -1,4 +1,5 @@
 use crate::fetch::command::Feature;
+use bstr::BString;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
 use std::io;
@@ -52,12 +53,21 @@ pub enum ShallowUpdate {
     Unshallow(git_hash::ObjectId),
 }
 
+/// A wanted-ref line received from the server.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct WantedRef {
+    /// The object id of the wanted ref, as seen by the server.
+    pub id: git_hash::ObjectId,
+    /// The name of the ref, as requested by the client as a `want-ref` argument.
+    pub path: BString,
+}
+
 impl ShallowUpdate {
     /// Parse a `ShallowUpdate` from a `line` as received to the server.
     pub fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
-        let mut tokens = line.trim_end().splitn(2, ' ');
-        match (tokens.next(), tokens.next()) {
-            (Some(prefix), Some(id)) => {
+        match line.trim_end().split_once(' ') {
+            Some((prefix, id)) => {
                 let id =
                     git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
                 Ok(match prefix {
@@ -66,7 +76,7 @@ impl ShallowUpdate {
                     _ => return Err(Error::UnknownLineType(line.to_owned())),
                 })
             }
-            _ => unreachable!("cannot have an entirely empty line"),
+            None => Err(Error::UnknownLineType(line.to_owned())),
         }
     }
 }
@@ -75,8 +85,8 @@ impl Acknowledgement {
     /// Parse an `Acknowledgement` from a `line` as received to the server.
     pub fn from_line(line: &str) -> Result<Acknowledgement, Error> {
         let mut tokens = line.trim_end().splitn(3, ' ');
-        Ok(match (tokens.next(), tokens.next(), tokens.next()) {
-            (Some(first), id, description) => match first {
+        match (tokens.next(), tokens.next(), tokens.next()) {
+            (Some(first), id, description) => Ok(match first {
                 "ready" => Acknowledgement::Ready, // V2
                 "NAK" => Acknowledgement::Nak,     // V1
                 "ACK" => {
@@ -95,9 +105,9 @@ impl Acknowledgement {
                     Acknowledgement::Common(id)
                 }
                 _ => return Err(Error::UnknownLineType(line.to_owned())),
-            },
-            (None, _, _) => unreachable!("cannot have an entirely empty line"),
-        })
+            }),
+            (None, _, _) => Err(Error::UnknownLineType(line.to_owned())),
+        }
     }
     /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
     pub fn id(&self) -> Option<&git_hash::ObjectId> {
@@ -108,10 +118,25 @@ impl Acknowledgement {
     }
 }
 
+impl WantedRef {
+    /// Parse a `WantedRef` from a `line` as received from the server.
+    pub fn from_line(line: &str) -> Result<WantedRef, Error> {
+        match line.trim_end().split_once(' ') {
+            Some((id, path)) => {
+                let id =
+                    git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
+                Ok(WantedRef { id, path: path.into() })
+            }
+            None => Err(Error::UnknownLineType(line.to_owned())),
+        }
+    }
+}
+
 /// A representation of a complete fetch response
 pub struct Response {
     acks: Vec<Acknowledgement>,
     shallows: Vec<ShallowUpdate>,
+    wanted_refs: Vec<WantedRef>,
     has_pack: bool,
 }
 
@@ -154,6 +179,11 @@ impl Response {
     /// Return all shallow update lines [parsed previously][Response::from_line_reader()].
     pub fn shallow_updates(&self) -> &[ShallowUpdate] {
         &self.shallows
+    }
+
+    /// Return all wanted-refs [parsed previously][Response::from_line_reader()].
+    pub fn wanted_refs(&self) -> &[WantedRef] {
+        &self.wanted_refs
     }
 }
 

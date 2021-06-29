@@ -291,4 +291,25 @@ mod v2 {
             );
         }
     }
+
+    #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+    async fn ref_in_want() {
+        let mut out = Vec::new();
+        let mut t = transport(&mut out, false);
+        let mut arguments = arguments_v2(["ref-in-want"].iter().copied());
+
+        arguments.want_ref(b"refs/heads/main".as_bstr());
+        arguments.send(&mut t, true).await.expect("sending to buffer to work");
+        assert_eq!(
+            out.as_bstr(),
+            b"0012command=fetch
+0001000ethin-pack
+0010include-tag
+000eofs-delta
+001dwant-ref refs/heads/main
+0009done
+0000"
+                .as_bstr()
+        )
+    }
 }

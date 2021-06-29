@@ -14,7 +14,7 @@ pub fn agent() -> (&'static str, Option<&'static str>) {
 pub mod delegate;
 #[cfg(any(feature = "async-client", feature = "blocking-client"))]
 pub use delegate::Delegate;
-pub use delegate::{Action, DelegateBlocking};
+pub use delegate::{Action, DelegateBlocking, LsRefsAction};
 
 mod error;
 pub use error::Error;
