@@ -8,7 +8,7 @@ use git_transport::Protocol;
 async fn clone() -> crate::Result {
     let out = Vec::new();
     let mut dlg = CloneDelegate::default();
-    git_protocol::fetch::<_, CloneDelegate, _, _, _>(
+    git_protocol::fetch(
         transport(
             out,
             "v1/clone.response",

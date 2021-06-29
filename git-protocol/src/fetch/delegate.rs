@@ -204,6 +204,30 @@ mod blocking_io {
             previous: &Response,
         ) -> io::Result<()>;
     }
+
+    impl<T: Delegate> Delegate for Box<T> {
+        fn receive_pack(
+            &mut self,
+            input: impl BufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            self.deref_mut().receive_pack(input, progress, refs, previous)
+        }
+    }
+
+    impl<T: Delegate> Delegate for &mut T {
+        fn receive_pack(
+            &mut self,
+            input: impl BufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            self.deref_mut().receive_pack(input, progress, refs, previous)
+        }
+    }
 }
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::Delegate;
