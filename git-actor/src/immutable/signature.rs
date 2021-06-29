@@ -8,7 +8,7 @@ mod decode {
         bytes::complete::{tag, take, take_until, take_while_m_n},
         character::is_digit,
         combinator::map_res,
-        error::{context, ContextError, FromExternalError, ParseError},
+        error::{context, ContextError, ParseError},
         sequence::{terminated, tuple},
         IResult,
     };
@@ -16,27 +16,31 @@ mod decode {
     pub(crate) const SPACE: &[u8] = b" ";
 
     /// Parse a signature from the bytes input `i` using `nom`.
-    pub fn signature<
-        'a,
-        E: ParseError<&'a [u8]>
-            + ContextError<&'a [u8]>
-            + FromExternalError<&'a [u8], btoi::ParseIntegerError>
-            + std::fmt::Debug,
-    >(
+    pub fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]> + std::fmt::Debug>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], Signature<'a>, E> {
+        fn conv<'a, E, T>(i: &'a [u8], res: Result<T, btoi::ParseIntegerError>) -> IResult<&'a [u8], T, nom::Err<E>>
+        where
+            E: ParseError<&'a [u8]> + ContextError<&'a [u8]> + std::fmt::Debug,
+        {
+            res.map(|v| (i, v))
+                .map_err(|err| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
+        };
         let (i, (name, email, time, tzsign, hours, minutes)) = context(
             "<name> <<email>> <timestamp> <+|-><HHMM>",
             tuple((
                 context("<name>", terminated(take_until(&b" <"[..]), take(2usize))),
                 context("<email>", terminated(take_until(&b"> "[..]), take(2usize))),
-                context(
-                    "<timestamp>",
-                    map_res(terminated(take_until(SPACE), take(1usize)), btoi::<u32>),
-                ),
+                context("<timestamp>", |i| {
+                    terminated(take_until(SPACE), take(1usize))(i).and_then(|(i, v)| conv(i, btoi::<u32>(v)))
+                }),
                 context("+|-", alt((tag(b"-"), tag(b"+")))),
-                context("HH", map_res(take_while_m_n(2usize, 2, is_digit), btoi::<i32>)),
-                context("MM", map_res(take_while_m_n(2usize, 2, is_digit), btoi::<i32>)),
+                context("HH", |i| {
+                    take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| conv(i, btoi::<i32>(v)))
+                }),
+                context("MM", |i| {
+                    take_while_m_n(2usize, 2, is_digit)(i).and_then(|(i, v)| conv(i, btoi::<i32>(v)))
+                }),
             )),
         )(i)?;
 

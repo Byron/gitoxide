@@ -46,10 +46,7 @@ mod decode {
                     tag(b" "),
                     hex_sha1,
                     tag(b" "),
-                    |i| {
-                        git_actor::immutable::signature::decode(i)
-                            .map_err(|e| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))
-                    },
+                    git_actor::immutable::signature::decode,
                     opt(tag(b"\t")),
                     parse_message,
                 )),
