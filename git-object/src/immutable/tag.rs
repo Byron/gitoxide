@@ -210,10 +210,8 @@ pub mod iter {
                         parse::header_field(i, b"type", take_while1(is_alphabetic))
                     })(i)?;
                     let kind = crate::Kind::from_bytes(kind).map_err(|_| {
-                        nom::Err::Error(object::decode::ParseError::from_error_kind(
-                            i,
-                            nom::error::ErrorKind::MapRes,
-                        ))
+                        let err = object::decode::ParseError::from_error_kind(i, nom::error::ErrorKind::MapRes);
+                        nom::Err::Error(err)
                     })?;
                     *state = State::Name;
                     (i, Token::TargetKind(kind))
