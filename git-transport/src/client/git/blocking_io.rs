@@ -90,12 +90,6 @@ where
             refs,
         })
     }
-
-    fn close(&mut self) -> Result<(), client::Error> {
-        git_packetline::encode::flush_to_write(&mut self.writer)?;
-        self.writer.flush()?;
-        Ok(())
-    }
 }
 
 impl<R, W> git::Connection<R, W>

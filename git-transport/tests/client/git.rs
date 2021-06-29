@@ -126,13 +126,12 @@ async fn handshake_v1_and_request() -> crate::Result {
         .into_inner()
         .expect("no poison");
     assert_eq!(sidebands.len(), 6, "…along with some status messages");
-    c.close().await?;
 
     assert_eq!(
         out.as_slice().as_bstr(),
         b"002egit-upload-pack /foo.git\0host=example.org\00000000ahello\n\
     000aworld\n\
-    0009done\n0000"
+    0009done\n"
             .as_bstr(),
         "it sends the correct request"
     );
@@ -329,7 +328,6 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
 
     let messages = Arc::try_unwrap(messages).expect("no other handle").into_inner()?;
     assert_eq!(messages.len(), 4);
-    c.close().await?;
 
     assert_eq!(
         out.as_slice().as_bstr(),
@@ -349,7 +347,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
 000eofs-delta
 0032want 808e50d724f604f69ab93c6da2919c014667bedb
 0009done
-00000000"
+0000"
             .as_bstr(),
         "it sends the correct request, including the adjusted version"
     );

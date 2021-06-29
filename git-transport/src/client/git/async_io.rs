@@ -92,12 +92,6 @@ where
             refs,
         })
     }
-
-    async fn close(&mut self) -> Result<(), client::Error> {
-        git_packetline::encode::flush_to_write(&mut self.writer).await?;
-        self.writer.flush().await?;
-        Ok(())
-    }
 }
 
 impl<R, W> git::Connection<R, W>

@@ -40,9 +40,6 @@ pub trait Transport: TransportWithoutIO {
         service: Service,
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, Error>;
-
-    /// Closes the connection to indicate no further requests will be made.
-    async fn close(&mut self) -> Result<(), Error>;
 }
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
@@ -55,10 +52,6 @@ impl<T: Transport + ?Sized> Transport for Box<T> {
     ) -> Result<SetServiceResponse<'_>, Error> {
         self.deref_mut().handshake(service, extra_parameters).await
     }
-
-    async fn close(&mut self) -> Result<(), Error> {
-        self.deref_mut().close().await
-    }
 }
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
@@ -70,10 +63,6 @@ impl<T: Transport + ?Sized> Transport for &mut T {
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<SetServiceResponse<'_>, Error> {
         self.deref_mut().handshake(service, extra_parameters).await
-    }
-
-    async fn close(&mut self) -> Result<(), Error> {
-        self.deref_mut().close().await
     }
 }
 

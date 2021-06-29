@@ -225,10 +225,6 @@ impl<H: Http> client::Transport for Transport<H> {
             refs,
         })
     }
-
-    fn close(&mut self) -> Result<(), client::Error> {
-        Ok(())
-    }
 }
 
 struct HeadersThenBody<H: Http, B: Unpin> {

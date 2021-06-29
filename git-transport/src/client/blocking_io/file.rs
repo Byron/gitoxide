@@ -148,14 +148,6 @@ impl client::Transport for SpawnProcessOnDemand {
             .expect("connection to be there right after setting it");
         c.handshake(service, extra_parameters)
     }
-
-    fn close(&mut self) -> Result<(), client::Error> {
-        if let Some(mut c) = self.connection.take() {
-            c.close()
-        } else {
-            Ok(())
-        }
-    }
 }
 
 /// Connect to a locally readable repository at `path` using the given `desired_version`.

@@ -54,10 +54,6 @@ mod impls {
         ) -> Result<SetServiceResponse<'_>, Error> {
             self.inner.handshake(service, extra_parameters)
         }
-
-        fn close(&mut self) -> Result<(), Error> {
-            self.inner.close()
-        }
     }
 }
 
@@ -100,10 +96,6 @@ mod impls {
             extra_parameters: &'a [(&'a str, Option<&'a str>)],
         ) -> Result<SetServiceResponse<'_>, Error> {
             self.inner.handshake(service, extra_parameters).await
-        }
-
-        async fn close(&mut self) -> Result<(), Error> {
-            self.inner.close().await
         }
     }
 }
