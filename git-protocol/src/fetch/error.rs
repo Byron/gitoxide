@@ -11,8 +11,8 @@ quick_error! {
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
-        PackIo(err: io::Error) {
-            display("Could not read streaming pack file")
+        Io(err: io::Error) {
+            display("Could not access repository or failed to read streaming pack file")
             from()
             source(err)
         }
