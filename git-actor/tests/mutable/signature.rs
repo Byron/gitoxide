@@ -102,7 +102,7 @@ mod signature {
             ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
             ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
         ] {
-            let signature: Signature = git_actor::immutable::Signature::from_bytes(input)?.into();
+            let signature: Signature = git_actor::immutable::Signature::from_bytes::<()>(input)?.into();
             let mut output = Vec::new();
             signature.write_to(&mut output)?;
             assert_eq!(output.as_bstr(), input.as_bstr());

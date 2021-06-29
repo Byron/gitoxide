@@ -23,10 +23,8 @@ mod decode {
             complete::tag,
             complete::{take_until, take_while},
         },
-        combinator::opt,
-        combinator::{map, map_res},
-        error::{context, FromExternalError},
-        error::{ContextError, ParseError},
+        combinator::{map, map_res, opt},
+        error::{context, ContextError, FromExternalError, ParseError},
         sequence::{terminated, tuple},
         IResult,
     };
