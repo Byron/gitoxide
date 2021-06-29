@@ -28,9 +28,6 @@ quick_error! {
         UnknownSectionHeader(header: String) {
             display("Unknown or unsupported header: '{}'", header)
         }
-        InvalidWantedRef(line: String) {
-            display("Invalid 'wanted-ref' in response: '{}'", line)
-        }
     }
 }
 
@@ -79,7 +76,7 @@ impl ShallowUpdate {
                     _ => return Err(Error::UnknownLineType(line.to_owned())),
                 })
             }
-            None => unreachable!("cannot have an entirely empty line"),
+            None => Err(Error::UnknownLineType(line.to_owned())),
         }
     }
 }
@@ -109,7 +106,7 @@ impl Acknowledgement {
                 }
                 _ => return Err(Error::UnknownLineType(line.to_owned())),
             },
-            (None, _, _) => unreachable!("cannot have an entirely empty line"),
+            (None, _, _) => return Err(Error::UnknownLineType(line.to_owned())),
         })
     }
     /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
@@ -130,7 +127,7 @@ impl WantedRef {
                     git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
                 Ok(WantedRef { id, path: path.into() })
             }
-            None => Err(Error::InvalidWantedRef(line.to_owned())),
+            None => Err(Error::UnknownLineType(line.to_owned())),
         }
     }
 }
