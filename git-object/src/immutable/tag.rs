@@ -1,18 +1,4 @@
-use nom::bytes::complete::take_while;
-use nom::{
-    branch::alt,
-    bytes::complete::{tag, take_until, take_while1},
-    character::is_alphabetic,
-    combinator::{all_consuming, opt, recognize},
-    error::context,
-    sequence::{preceded, tuple},
-    IResult,
-};
-
-use crate::{
-    immutable::{object::decode, parse, parse::NL},
-    BStr, ByteSlice,
-};
+use crate::{immutable::object, BStr};
 
 /// Represents a git tag, commonly indicating a software release.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -35,8 +21,10 @@ pub struct Tag<'a> {
 
 impl<'a> Tag<'a> {
     /// Deserialize a tag from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Tag<'a>, decode::Error> {
-        parse(data).map(|(_, t)| t).map_err(decode::Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<Tag<'a>, object::decode::Error> {
+        decode::git_tag(data)
+            .map(|(_, t)| t)
+            .map_err(object::decode::Error::from)
     }
     /// The object this tag points to as `Id`.
     pub fn target(&self) -> git_hash::ObjectId {
@@ -44,96 +32,114 @@ impl<'a> Tag<'a> {
     }
 }
 
-fn parse(i: &[u8]) -> IResult<&[u8], Tag<'_>, decode::Error> {
-    let (i, target) = context("object <40 lowercase hex char>", |i| {
-        parse::header_field(i, b"object", parse::hex_sha1)
-    })(i)?;
+mod decode {
+    use nom::bytes::complete::take_while;
+    use nom::{
+        branch::alt,
+        bytes::complete::{tag, take_until, take_while1},
+        character::is_alphabetic,
+        combinator::{all_consuming, opt, recognize},
+        error::context,
+        sequence::{preceded, tuple},
+        IResult,
+    };
 
-    let (i, kind) = context("type <object kind>", |i| {
-        parse::header_field(i, b"type", take_while1(is_alphabetic))
-    })(i)?;
-    let kind = crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(decode::Error::ParseKindError(e)))?;
+    use crate::immutable::Tag;
+    use crate::{
+        immutable::{parse, parse::NL},
+        BStr, ByteSlice,
+    };
+    use nom::error::{ContextError, ParseError};
 
-    let (i, tag_version) = context("tag <version>", |i| {
-        parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
-    })(i)?;
+    pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Tag<'a>, E> {
+        let (i, target) = context("object <40 lowercase hex char>", |i| {
+            parse::header_field(i, b"object", parse::hex_sha1)
+        })(i)?;
 
-    let (i, signature) = context(
-        "tagger <signature>",
-        opt(|i| parse::header_field(i, b"tagger", parse::signature)),
-    )(i)?;
-    let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
-    Ok((
-        i,
-        Tag {
-            target,
-            name: tag_version.as_bstr(),
-            target_kind: kind,
-            message,
-            tagger: signature,
-            pgp_signature,
-        },
-    ))
-}
+        let (i, kind) = context("type <object kind>", |i| {
+            parse::header_field(i, b"type", take_while1(is_alphabetic))
+        })(i)?;
+        let kind = crate::Kind::from_bytes(kind)
+            .map_err(|_| nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::MapRes)))?;
 
-fn parse_message(i: &[u8]) -> IResult<&[u8], (&BStr, Option<&BStr>), decode::Error> {
-    const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
-    const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
+        let (i, tag_version) = context("tag <version>", |i| {
+            parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
+        })(i)?;
 
-    if i.is_empty() {
-        return Ok((i, (i.as_bstr(), None)));
-    }
-    let (i, _) = tag(NL)(i)?;
-    fn all_to_end(i: &[u8]) -> IResult<&[u8], (&[u8], &[u8]), decode::Error> {
-        if i.is_empty() {
-            return Err(nom::Err::Error(decode::Error::Parse("tag message is missing".into())));
-        }
-        // an empty signature message signals that there is none - the function signature is needed
-        // to work with 'alt(…)'. PGP signatures are never empty
-        Ok((&[], (&i, &[])))
-    }
-    let (i, (message, signature)) = alt((
-        tuple((
-            take_until(PGP_SIGNATURE_BEGIN),
-            preceded(
-                tag(NL),
-                recognize(tuple((
-                    tag(&PGP_SIGNATURE_BEGIN[1..]),
-                    take_until(PGP_SIGNATURE_END),
-                    tag(PGP_SIGNATURE_END),
-                    take_while(|_| true),
-                ))),
-            ),
-        )),
-        all_to_end,
-    ))(i)?;
-    let (i, _) = opt(tag(NL))(i)?;
-    Ok((
-        i,
-        (
-            message.as_bstr(),
-            if signature.is_empty() {
-                None
-            } else {
-                Some(signature.as_bstr())
+        let (i, signature) = context(
+            "tagger <signature>",
+            opt(|i| parse::header_field(i, b"tagger", parse::signature)),
+        )(i)?;
+        let (i, (message, pgp_signature)) = all_consuming(message)(i)?;
+        Ok((
+            i,
+            Tag {
+                target,
+                name: tag_version.as_bstr(),
+                target_kind: kind,
+                message,
+                tagger: signature,
+                pgp_signature,
             },
-        ),
-    ))
+        ))
+    }
+
+    pub fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+        const PGP_SIGNATURE_BEGIN: &[u8] = b"\n-----BEGIN PGP SIGNATURE-----";
+        const PGP_SIGNATURE_END: &[u8] = b"-----END PGP SIGNATURE-----";
+
+        if i.is_empty() {
+            return Ok((i, (i.as_bstr(), None)));
+        }
+        let (i, _) = tag(NL)(i)?;
+        fn all_to_end<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a [u8], &'a [u8]), E> {
+            if i.is_empty() {
+                return Err(nom::Err::Error(E::from_error_kind(i, nom::error::ErrorKind::Eof)));
+            }
+            // an empty signature message signals that there is none - the function signature is needed
+            // to work with 'alt(…)'. PGP signatures are never empty
+            Ok((&[], (&i, &[])))
+        }
+        let (i, (message, signature)) = alt((
+            tuple((
+                take_until(PGP_SIGNATURE_BEGIN),
+                preceded(
+                    tag(NL),
+                    recognize(tuple((
+                        tag(&PGP_SIGNATURE_BEGIN[1..]),
+                        take_until(PGP_SIGNATURE_END),
+                        tag(PGP_SIGNATURE_END),
+                        take_while(|_| true),
+                    ))),
+                ),
+            )),
+            all_to_end,
+        ))(i)?;
+        let (i, _) = opt(tag(NL))(i)?;
+        Ok((
+            i,
+            (
+                message.as_bstr(),
+                if signature.is_empty() {
+                    None
+                } else {
+                    Some(signature.as_bstr())
+                },
+            ),
+        ))
+    }
 }
 
 ///
 pub mod iter {
     use crate::{
         bstr::ByteSlice,
-        immutable::{
-            object::decode,
-            parse::NL,
-            tag::{parse, parse_message},
-        },
+        immutable::{object, parse, parse::NL, tag::decode},
         Kind,
     };
     use bstr::BStr;
     use git_hash::{oid, ObjectId};
+    use nom::error::ParseError;
     use nom::{
         bytes::complete::take_while1,
         character::is_alphabetic,
@@ -184,7 +190,7 @@ pub mod iter {
     }
 
     impl<'a> Iter<'a> {
-        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
+        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
             use State::*;
             Ok(match state {
                 Target => {
@@ -203,8 +209,12 @@ pub mod iter {
                     let (i, kind) = context("type <object kind>", |i| {
                         parse::header_field(i, b"type", take_while1(is_alphabetic))
                     })(i)?;
-                    let kind =
-                        crate::Kind::from_bytes(kind).map_err(|e| nom::Err::Error(decode::Error::ParseKindError(e)))?;
+                    let kind = crate::Kind::from_bytes(kind).map_err(|_| {
+                        nom::Err::Error(object::decode::ParseError::from_error_kind(
+                            i,
+                            nom::error::ErrorKind::MapRes,
+                        ))
+                    })?;
                     *state = State::Name;
                     (i, Token::TargetKind(kind))
                 }
@@ -224,7 +234,7 @@ pub mod iter {
                     (i, Token::Tagger(signature))
                 }
                 Message => {
-                    let (i, (message, pgp_signature)) = all_consuming(parse_message)(i)?;
+                    let (i, (message, pgp_signature)) = all_consuming(decode::message)(i)?;
                     debug_assert!(
                         i.is_empty(),
                         "we should have consumed all data - otherwise iter may go forever"
@@ -236,7 +246,7 @@ pub mod iter {
     }
 
     impl<'a> Iterator for Iter<'a> {
-        type Item = Result<Token<'a>, decode::Error>;
+        type Item = Result<Token<'a>, object::decode::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             if self.data.is_empty() {

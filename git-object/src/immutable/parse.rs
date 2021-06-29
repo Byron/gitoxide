@@ -2,27 +2,33 @@ use bstr::{BStr, BString, ByteVec};
 use nom::{
     bytes::complete::{is_not, tag, take_until, take_while_m_n},
     combinator::{peek, recognize},
+    error::{context, ContextError, ParseError},
     multi::many1_count,
     sequence::{preceded, terminated, tuple},
     IResult,
 };
 
-use crate::{immutable::object::decode, ByteSlice};
+use crate::ByteSlice;
 
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
 pub(crate) const SPACE_OR_NL: &[u8] = b" \n";
 
-pub(crate) fn any_header_field_multi_line(i: &[u8]) -> IResult<&[u8], (&[u8], BString), decode::Error> {
-    let (i, (k, o)) = peek(tuple((
-        terminated(is_not(SPACE_OR_NL), tag(SPACE)),
-        recognize(tuple((
-            is_not(NL),
-            tag(NL),
-            many1_count(terminated(tuple((tag(SPACE), take_until(NL))), tag(NL))),
+pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+    i: &'a [u8],
+) -> IResult<&'a [u8], (&'a [u8], BString), E> {
+    let (i, (k, o)) = context(
+        "name <multi-line-value>",
+        peek(tuple((
+            terminated(is_not(SPACE_OR_NL), tag(SPACE)),
+            recognize(tuple((
+                is_not(NL),
+                tag(NL),
+                many1_count(terminated(tuple((tag(SPACE), take_until(NL))), tag(NL))),
+            ))),
         ))),
-    )))(i)?;
-    assert!(!o.is_empty());
+    )(i)?;
+    assert!(!o.is_empty(), "we have parsed more than one value here");
     let end = &o[o.len() - 1] as *const u8 as usize;
     let start_input = &i[0] as *const u8 as usize;
 
@@ -37,18 +43,18 @@ pub(crate) fn any_header_field_multi_line(i: &[u8]) -> IResult<&[u8], (&[u8], BS
     Ok((&i[end - start_input + 1..], (k, out)))
 }
 
-pub(crate) fn header_field<'a, T>(
+pub(crate) fn header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
     name: &'static [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, decode::Error>,
-) -> IResult<&'a [u8], T, decode::Error> {
+    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
+) -> IResult<&'a [u8], T, E> {
     terminated(preceded(terminated(tag(name), tag(SPACE)), parse_value), tag(NL))(i)
 }
 
-pub(crate) fn any_header_field<'a, T>(
+pub(crate) fn any_header_field<'a, T, E: ParseError<&'a [u8]>>(
     i: &'a [u8],
-    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, decode::Error>,
-) -> IResult<&'a [u8], (&'a [u8], T), decode::Error> {
+    parse_value: impl Fn(&'a [u8]) -> IResult<&'a [u8], T, E>,
+) -> IResult<&'a [u8], (&'a [u8], T), E> {
     terminated(
         tuple((terminated(is_not(SPACE_OR_NL), tag(SPACE)), parse_value)),
         tag(NL),
@@ -59,14 +65,12 @@ fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
 }
 
-pub(crate) fn hex_sha1(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
+pub(crate) fn hex_sha1<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
 }
 
-pub(crate) fn signature(i: &[u8]) -> IResult<&[u8], git_actor::immutable::Signature<'_>, decode::Error> {
-    git_actor::immutable::signature::decode(i).map_err(|err| {
-        nom::Err::Error(decode::Error::from(
-            git_actor::immutable::signature::decode::Error::from(err),
-        ))
-    })
+pub(crate) fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+    i: &'a [u8],
+) -> IResult<&'a [u8], git_actor::immutable::Signature<'a>, E> {
+    git_actor::immutable::signature::decode(i)
 }

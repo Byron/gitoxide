@@ -1,19 +1,7 @@
+use smallvec::SmallVec;
 use std::borrow::Cow;
 
-use nom::{
-    branch::alt,
-    bytes::{complete::is_not, complete::tag},
-    combinator::{all_consuming, opt},
-    error::context,
-    multi::many0,
-    IResult,
-};
-use smallvec::SmallVec;
-
-use crate::{
-    immutable::{object::decode, parse, parse::NL},
-    BStr, ByteSlice,
-};
+use crate::{immutable::object, BStr};
 
 /// A git commit parsed using [`from_bytes()`][Commit::from_bytes()].
 ///
@@ -46,8 +34,10 @@ pub struct Commit<'a> {
 
 impl<'a> Commit<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, decode::Error> {
-        parse(data).map(|(_, t)| t).map_err(decode::Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, object::decode::Error> {
+        decode::commit(data)
+            .map(|(_, t)| t)
+            .map_err(object::decode::Error::from)
     }
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> git_hash::ObjectId {
@@ -67,58 +57,85 @@ impl<'a> Commit<'a> {
     }
 }
 
-fn parse_message(i: &[u8]) -> IResult<&[u8], &BStr, decode::Error> {
-    if i.is_empty() {
-        // newline + [message]
-        return Err(nom::Err::Error(decode::Error::Parse(
-            "commit message is missing".into(),
-        )));
+mod decode {
+    use std::borrow::Cow;
+
+    use nom::{
+        branch::alt,
+        bytes::{complete::is_not, complete::tag},
+        combinator::{all_consuming, opt},
+        error::context,
+        error::{ContextError, ParseError},
+        multi::many0,
+        IResult,
+    };
+    use smallvec::SmallVec;
+
+    use crate::{
+        immutable::{parse, parse::NL, Commit},
+        BStr, ByteSlice,
+    };
+
+    pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&'a [u8], &'a BStr, E> {
+        if i.is_empty() {
+            // newline + [message]
+            return Err(nom::Err::Error(E::add_context(
+                i,
+                "newline + <message>",
+                E::from_error_kind(i, nom::error::ErrorKind::Eof),
+            )));
+        }
+        let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
+        Ok((&[], &i.as_bstr()))
     }
-    let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
-    Ok((&[], &i.as_bstr()))
-}
 
-fn parse(i: &[u8]) -> IResult<&[u8], Commit<'_>, decode::Error> {
-    let (i, tree) = context("tree <40 lowercase hex char>", |i| {
-        parse::header_field(i, b"tree", parse::hex_sha1)
-    })(i)?;
-    let (i, parents) = context(
-        "zero or more 'parent <40 lowercase hex char>'",
-        many0(|i| parse::header_field(i, b"parent", parse::hex_sha1)),
-    )(i)?;
-    let (i, author) = context("author <signature>", |i| {
-        parse::header_field(i, b"author", parse::signature)
-    })(i)?;
-    let (i, committer) = context("committer <signature>", |i| {
-        parse::header_field(i, b"committer", parse::signature)
-    })(i)?;
-    let (i, encoding) = context(
-        "encoding <encoding>",
-        opt(|i| parse::header_field(i, b"encoding", is_not(NL))),
-    )(i)?;
-    let (i, extra_headers) = context(
-        "<field> <single-line|multi-line>",
-        many0(alt((
-            |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
-            |i| {
-                parse::any_header_field(i, is_not(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+    pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&'a [u8], Commit<'_>, E> {
+        let (i, tree) = context("tree <40 lowercase hex char>", |i| {
+            parse::header_field(i, b"tree", parse::hex_sha1)
+        })(i)?;
+        let (i, parents) = context(
+            "zero or more 'parent <40 lowercase hex char>'",
+            many0(|i| parse::header_field(i, b"parent", parse::hex_sha1)),
+        )(i)?;
+        let (i, author) = context("author <signature>", |i| {
+            parse::header_field(i, b"author", parse::signature)
+        })(i)?;
+        let (i, committer) = context("committer <signature>", |i| {
+            parse::header_field(i, b"committer", parse::signature)
+        })(i)?;
+        let (i, encoding) = context(
+            "encoding <encoding>",
+            opt(|i| parse::header_field(i, b"encoding", is_not(NL))),
+        )(i)?;
+        let (i, extra_headers) = context(
+            "<field> <single-line|multi-line>",
+            many0(alt((
+                |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
+                |i| {
+                    parse::any_header_field(i, is_not(NL))
+                        .map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
+                },
+            ))),
+        )(i)?;
+        let (i, message) = all_consuming(message)(i)?;
+
+        Ok((
+            i,
+            Commit {
+                tree,
+                parents: SmallVec::from(parents),
+                author,
+                committer,
+                encoding: encoding.map(ByteSlice::as_bstr),
+                message,
+                extra_headers,
             },
-        ))),
-    )(i)?;
-    let (i, message) = all_consuming(parse_message)(i)?;
-
-    Ok((
-        i,
-        Commit {
-            tree,
-            parents: SmallVec::from(parents),
-            author,
-            committer,
-            encoding: encoding.map(ByteSlice::as_bstr),
-            message,
-            extra_headers,
-        },
-    ))
+        ))
+    }
 }
 
 #[cfg(test)]
@@ -139,7 +156,7 @@ mod tests {
 pub mod iter {
     use crate::{
         bstr::ByteSlice,
-        immutable::{commit::parse_message, object::decode, parse, parse::NL},
+        immutable::{commit::decode, object, parse, parse::NL},
     };
     use bstr::BStr;
     use git_hash::{oid, ObjectId};
@@ -215,7 +232,7 @@ pub mod iter {
     }
 
     impl<'a> Iter<'a> {
-        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), decode::Error> {
+        fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
             use State::*;
             Ok(match state {
                 Tree => {
@@ -305,7 +322,7 @@ pub mod iter {
                     }
                 }
                 Message => {
-                    let (i, message) = all_consuming(parse_message)(i)?;
+                    let (i, message) = all_consuming(decode::message)(i)?;
                     debug_assert!(
                         i.is_empty(),
                         "we should have consumed all data - otherwise iter may go forever"
@@ -317,7 +334,7 @@ pub mod iter {
     }
 
     impl<'a> Iterator for Iter<'a> {
-        type Item = Result<Token<'a>, decode::Error>;
+        type Item = Result<Token<'a>, object::decode::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             if self.data.is_empty() {

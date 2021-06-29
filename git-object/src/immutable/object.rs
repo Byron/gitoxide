@@ -187,58 +187,48 @@ mod convert {
 
 ///
 pub mod decode {
-    use crate::bstr::ByteSlice;
-    use git_actor::immutable::signature;
-    use nom::error::{ContextError, ParseError};
-    use quick_error::quick_error;
+    use crate::bstr::{BString, ByteSlice};
 
-    quick_error! {
-        /// An error returned by the [`Commit`][crate::immutable::Commit] method.
-        #[derive(Debug, Clone)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Parse(err_msg: String) {
-                display("{}", err_msg)
-            }
-            ParseKindError(err: crate::types::Error) {
-                display("{}", err)
-                source(err)
-            }
-            ObjectKind(err: crate::Error) {
-                from()
-                source(err)
-            }
-        }
+    /// The type to be used for parse errors.
+    pub type ParseError<'a, T = [u8]> = nom::error::Error<&'a T>;
+    /// The owned type to be used for parse errors.
+    pub type ParseErrorOwned = nom::error::Error<BString>;
+
+    /// A type to indicate errors during parsing and to abstract away details related to `nom`.
+    #[derive(Debug)]
+    pub struct Error {
+        /// The actual error
+        pub inner: ParseErrorOwned,
     }
 
-    impl ContextError<&[u8]> for Error {
-        fn add_context(_input: &[u8], ctx: &'static str, _other_usually_internal_ignored: Self) -> Self {
-            Error::Parse(ctx.into())
-        }
-    }
-
-    impl ParseError<&[u8]> for Error {
-        fn from_error_kind(input: &[u8], _kind: nom::error::ErrorKind) -> Self {
-            Error::Parse(format!("Could not parse: {:?}", input.to_str_lossy()))
-        }
-
-        fn append(_: &[u8], _: nom::error::ErrorKind, other: Self) -> Self {
-            other
-        }
-    }
-
-    impl From<nom::Err<Error>> for Error {
-        fn from(e: nom::Err<Error>) -> Self {
-            match e {
-                nom::Err::Error(err) | nom::Err::Failure(err) => Error::Parse(err.to_string()),
-                nom::Err::Incomplete(_) => unreachable!("we do not implement streaming parsers"),
+    impl Clone for Error {
+        fn clone(&self) -> Self {
+            use nom::error::ParseError;
+            Error {
+                inner: ParseErrorOwned::from_error_kind(self.inner.input.clone(), self.inner.code),
             }
         }
     }
 
-    impl From<signature::decode::Error> for Error {
-        fn from(e: signature::decode::Error) -> Self {
-            Error::Parse(e.to_string())
+    impl<'a> From<nom::Err<ParseError<'a, [u8]>>> for Error {
+        fn from(v: nom::Err<ParseError<'a>>) -> Self {
+            Error {
+                inner: match v {
+                    nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::Error {
+                        input: err.input.as_bstr().to_owned(),
+                        code: err.code,
+                    },
+                    nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                },
+            }
         }
     }
+
+    impl std::fmt::Display for Error {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.inner.fmt(f)
+        }
+    }
+
+    impl std::error::Error for Error {}
 }
