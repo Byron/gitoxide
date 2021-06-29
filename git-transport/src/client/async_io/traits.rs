@@ -61,6 +61,22 @@ impl<T: Transport + ?Sized> Transport for Box<T> {
     }
 }
 
+// Would be nice if the box implementation could auto-forward to all implemented traits.
+#[async_trait(?Send)]
+impl<T: Transport + ?Sized> Transport for &mut T {
+    async fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<SetServiceResponse<'_>, Error> {
+        self.deref_mut().handshake(service, extra_parameters).await
+    }
+
+    async fn close(&mut self) -> Result<(), Error> {
+        self.deref_mut().close().await
+    }
+}
+
 /// An extension trait to add more methods to everything implementing [`Transport`].
 #[async_trait(?Send)]
 pub trait TransportV2Ext {

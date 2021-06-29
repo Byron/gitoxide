@@ -80,3 +80,26 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
         self.deref().is_stateful()
     }
 }
+
+impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for &mut T {
+    fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+        self.deref_mut().set_identity(identity)
+    }
+
+    #[cfg(any(feature = "blocking-client", feature = "async-client"))]
+    fn request(&mut self, write_mode: WriteMode, on_into_read: MessageKind) -> Result<RequestWriter<'_>, Error> {
+        self.deref_mut().request(write_mode, on_into_read)
+    }
+
+    fn to_url(&self) -> String {
+        self.deref().to_url()
+    }
+
+    fn supported_protocol_versions(&self) -> &[Protocol] {
+        self.deref().supported_protocol_versions()
+    }
+
+    fn is_stateful(&self) -> bool {
+        self.deref().is_stateful()
+    }
+}

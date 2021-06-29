@@ -57,6 +57,20 @@ impl<T: Transport + ?Sized> Transport for Box<T> {
     }
 }
 
+impl<T: Transport + ?Sized> Transport for &mut T {
+    fn handshake<'a>(
+        &mut self,
+        service: Service,
+        extra_parameters: &'a [(&'a str, Option<&'a str>)],
+    ) -> Result<SetServiceResponse<'_>, Error> {
+        self.deref_mut().handshake(service, extra_parameters)
+    }
+
+    fn close(&mut self) -> Result<(), Error> {
+        self.deref_mut().close()
+    }
+}
+
 /// An extension trait to add more methods to everything implementing [`Transport`].
 pub trait TransportV2Ext {
     /// Invoke a protocol V2 style `command` with given `capabilities` and optional command specific `arguments`.

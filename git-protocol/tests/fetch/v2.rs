@@ -58,13 +58,15 @@ async fn ref_in_want() -> crate::Result {
         want_refs: vec!["refs/heads/main".into()],
         ..CloneRefInWantDelegate::default()
     };
-    let (delegate, out) = git_protocol::fetch(
-        transport(
-            out,
-            "v2/clone-ref-in-want.response",
-            Protocol::V2,
-            git_transport::client::git::ConnectMode::Daemon,
-        ),
+    let mut transport = transport(
+        out,
+        "v2/clone-ref-in-want.response",
+        Protocol::V2,
+        git_transport::client::git::ConnectMode::Daemon,
+    );
+
+    let (delegate, _) = git_protocol::fetch(
+        &mut transport,
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,
@@ -81,7 +83,7 @@ async fn ref_in_want() -> crate::Result {
     );
     assert_eq!(delegate.pack_bytes, 641, "Should get packfile");
     assert_eq!(
-        out.into_inner().1.as_bstr(),
+        transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00012command=fetch
 001aagent={}
