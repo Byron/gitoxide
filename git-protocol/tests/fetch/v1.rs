@@ -7,20 +7,19 @@ use git_transport::Protocol;
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn clone() -> crate::Result {
     let out = Vec::new();
-    let dlg = CloneDelegate::default();
-    let dlg = git_protocol::fetch(
+    let mut dlg = CloneDelegate::default();
+    git_protocol::fetch(
         transport(
             out,
             "v1/clone.response",
             Protocol::V1,
             git_transport::client::git::ConnectMode::Daemon,
         ),
-        dlg,
+        &mut dlg,
         git_protocol::credentials::helper,
         progress::Discard,
     )
-    .await?
-    .0;
+    .await?;
     assert_eq!(dlg.pack_bytes, 876, "It be able to read pack bytes");
     Ok(())
 }
@@ -28,15 +27,16 @@ async fn clone() -> crate::Result {
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
     let out = Vec::new();
-    let delegate = LsRemoteDelegate::default();
-    let (delegate, out) = git_protocol::fetch(
-        transport(
-            out,
-            "v1/clone.response",
-            Protocol::V1,
-            git_transport::client::git::ConnectMode::Daemon,
-        ),
-        delegate,
+    let mut delegate = LsRemoteDelegate::default();
+    let mut transport = transport(
+        out,
+        "v1/clone.response",
+        Protocol::V1,
+        git_transport::client::git::ConnectMode::Daemon,
+    );
+    git_protocol::fetch(
+        &mut transport,
+        &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
     )
@@ -57,7 +57,7 @@ async fn ls_remote() -> crate::Result {
         ]
     );
     assert_eq!(
-        out.into_inner().1.as_bstr(),
+        transport.into_inner().1.as_bstr(),
         b"003agit-upload-pack does/not/matter\0\0value-only\0key=value\00000".as_bstr(),
         "we dont have to send anything in V1, except for the final flush byte to indicate we are done"
     );

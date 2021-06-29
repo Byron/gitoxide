@@ -7,15 +7,16 @@ use git_transport::Protocol;
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
     let out = Vec::new();
-    let delegate = LsRemoteDelegate::default();
-    let (delegate, out) = git_protocol::fetch(
-        transport(
-            out,
-            "v2/clone.response",
-            Protocol::V2,
-            git_transport::client::git::ConnectMode::Daemon,
-        ),
-        delegate,
+    let mut delegate = LsRemoteDelegate::default();
+    let mut transport = transport(
+        out,
+        "v2/clone.response",
+        Protocol::V2,
+        git_transport::client::git::ConnectMode::Daemon,
+    );
+    git_protocol::fetch(
+        &mut transport,
+        &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
     )
@@ -36,7 +37,7 @@ async fn ls_remote() -> crate::Result {
         ]
     );
     assert_eq!(
-        out.into_inner().1.as_bstr(),
+        transport.into_inner().1.as_bstr(),
         format!(
             "0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00014command=ls-refs
 001aagent={}
@@ -54,7 +55,7 @@ async fn ls_remote() -> crate::Result {
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ref_in_want() -> crate::Result {
     let out = Vec::new();
-    let delegate = CloneRefInWantDelegate {
+    let mut delegate = CloneRefInWantDelegate {
         want_refs: vec!["refs/heads/main".into()],
         ..CloneRefInWantDelegate::default()
     };
@@ -65,9 +66,9 @@ async fn ref_in_want() -> crate::Result {
         git_transport::client::git::ConnectMode::Daemon,
     );
 
-    let (delegate, _) = git_protocol::fetch(
+    git_protocol::fetch(
         &mut transport,
-        delegate,
+        &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
     )

@@ -1,6 +1,7 @@
 use crate::fetch::{Arguments, Ref, Response};
 use bstr::BString;
 use git_transport::client::Capabilities;
+use std::ops::{Deref, DerefMut};
 
 /// Defines what to do next after certain [`Delegate`] operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -114,11 +115,72 @@ pub trait DelegateBlocking {
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
 }
 
+impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
+    fn handshake_extra_parameters(&self) -> Vec<(String, Option<String>)> {
+        self.deref().handshake_extra_parameters()
+    }
+
+    fn prepare_ls_refs(
+        &mut self,
+        _server: &Capabilities,
+        _arguments: &mut Vec<BString>,
+        _features: &mut Vec<(&str, Option<&str>)>,
+    ) -> LsRefsAction {
+        self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
+    }
+
+    fn prepare_fetch(
+        &mut self,
+        _version: git_transport::Protocol,
+        _server: &Capabilities,
+        _features: &mut Vec<(&str, Option<&str>)>,
+        _refs: &[Ref],
+    ) -> Action {
+        self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
+    }
+
+    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action {
+        self.deref_mut().negotiate(refs, arguments, previous)
+    }
+}
+
+impl<T: DelegateBlocking> DelegateBlocking for &mut T {
+    fn handshake_extra_parameters(&self) -> Vec<(String, Option<String>)> {
+        self.deref().handshake_extra_parameters()
+    }
+
+    fn prepare_ls_refs(
+        &mut self,
+        _server: &Capabilities,
+        _arguments: &mut Vec<BString>,
+        _features: &mut Vec<(&str, Option<&str>)>,
+    ) -> LsRefsAction {
+        self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
+    }
+
+    fn prepare_fetch(
+        &mut self,
+        _version: git_transport::Protocol,
+        _server: &Capabilities,
+        _features: &mut Vec<(&str, Option<&str>)>,
+        _refs: &[Ref],
+    ) -> Action {
+        self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
+    }
+
+    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action {
+        self.deref_mut().negotiate(refs, arguments, previous)
+    }
+}
+
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
     use crate::fetch::{DelegateBlocking, Ref, Response};
     use git_features::progress::Progress;
-    use std::io;
+    use std::{
+        io::{self, BufRead},
+        ops::DerefMut,
+    };
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -142,6 +204,30 @@ mod blocking_io {
             previous: &Response,
         ) -> io::Result<()>;
     }
+
+    impl<T: Delegate> Delegate for Box<T> {
+        fn receive_pack(
+            &mut self,
+            input: impl BufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            self.deref_mut().receive_pack(input, progress, refs, previous)
+        }
+    }
+
+    impl<T: Delegate> Delegate for &mut T {
+        fn receive_pack(
+            &mut self,
+            input: impl BufRead,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            self.deref_mut().receive_pack(input, progress, refs, previous)
+        }
+    }
 }
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::Delegate;
@@ -152,7 +238,7 @@ mod async_io {
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
-    use std::io;
+    use std::{io, ops::DerefMut};
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -177,6 +263,31 @@ mod async_io {
             refs: &[Ref],
             previous: &Response,
         ) -> io::Result<()>;
+    }
+    #[async_trait(?Send)]
+    impl<T: Delegate> Delegate for Box<T> {
+        async fn receive_pack(
+            &mut self,
+            input: impl AsyncBufRead + Unpin + 'async_trait,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            self.deref_mut().receive_pack(input, progress, refs, previous).await
+        }
+    }
+
+    #[async_trait(?Send)]
+    impl<T: Delegate> Delegate for &mut T {
+        async fn receive_pack(
+            &mut self,
+            input: impl AsyncBufRead + Unpin + 'async_trait,
+            progress: impl Progress,
+            refs: &[Ref],
+            previous: &Response,
+        ) -> io::Result<()> {
+            self.deref_mut().receive_pack(input, progress, refs, previous).await
+        }
     }
 }
 #[cfg(feature = "async-client")]

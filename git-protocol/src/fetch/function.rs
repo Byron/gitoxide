@@ -26,7 +26,7 @@ pub async fn fetch<F, D, T>(
     mut delegate: D,
     mut authenticate: F,
     mut progress: impl Progress,
-) -> Result<(D, T), Error>
+) -> Result<(), Error>
 where
     F: FnMut(credentials::Action<'_>) -> credentials::Result,
     D: Delegate,
@@ -146,7 +146,7 @@ where
 
     if next == Action::Close {
         transport.close().await?;
-        return Ok((delegate, transport));
+        return Ok(());
     }
 
     Response::check_required_features(protocol_version, &fetch_features)?;
@@ -179,7 +179,7 @@ where
             }
         }
     }
-    Ok((delegate, transport))
+    Ok(())
 }
 
 fn setup_remote_progress(
