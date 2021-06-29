@@ -186,6 +186,7 @@ mod convert {
 }
 
 ///
+#[cfg(feature = "verbose-object-parsing-errors")]
 pub mod decode {
     use crate::bstr::{BString, ByteSlice};
 
@@ -221,6 +222,41 @@ pub mod decode {
     impl std::fmt::Display for Error {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             self.inner.fmt(f)
+        }
+    }
+
+    impl std::error::Error for Error {}
+}
+
+///
+#[cfg(not(feature = "verbose-object-parsing-errors"))]
+pub mod decode {
+    /// The type to be used for parse errors, discards everything and is zero size
+    pub type ParseError<'a> = ();
+    /// The owned type to be used for parse errors, discards everything and is zero size
+    pub type ParseErrorOwned = ();
+
+    /// A type to indicate errors during parsing and to abstract away details related to `nom`.
+    #[derive(Debug, Clone)]
+    pub struct Error {
+        /// The actual error
+        pub inner: ParseErrorOwned,
+    }
+
+    impl<'a> From<nom::Err<ParseError<'a>>> for Error {
+        fn from(v: nom::Err<ParseError<'a>>) -> Self {
+            Error {
+                inner: match v {
+                    nom::Err::Error(err) | nom::Err::Failure(err) => err,
+                    nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                },
+            }
+        }
+    }
+
+    impl std::fmt::Display for Error {
+        fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Ok(())
         }
     }
 

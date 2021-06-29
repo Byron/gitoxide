@@ -88,7 +88,8 @@ check: ## Build all code in suitable configurations
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check
-	cd git-object && cargo check --all-features
+	cd git-object && cargo check --all-features \
+                  && cargo check --features verbose-object-parsing-errors
 	cd git-actor && cargo check --features serde1
 	cd git-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \
@@ -129,6 +130,7 @@ unit-tests: ## run all unit tests
 	cargo test --all
 	cd git-features && cargo test && cargo test --all-features
 	cd git-odb && cargo test && cargo test --all-features
+	cd git-object && cargo test && cargo test --features verbose-object-parsing-errors
 	cd git-pack && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-git-features-parallel"
 	cd git-packetline && cargo test \

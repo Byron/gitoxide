@@ -165,6 +165,14 @@ be selected.
       * If set, blocking command implementations are available and will use the blocking version of the `git-transport` crate.
     * **async-client**
       * As above, but provides async implementations instead.
+    
+### git-object
+
+* **verbose-object-parsing-errors**
+  - When parsing objects by default errors will only be available on the granularity of success or failure, and with the above flag enabled
+    details information about the error location will be collected.
+  - Use it in applications which expect broken or invalid objects or for debugging purposes. Incorrectly formatted objects aren't at all
+    common otherwise.
 
 ### Serialization Support
 
