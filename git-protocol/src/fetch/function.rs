@@ -145,11 +145,13 @@ where
     fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
 
     if next == Action::Cancel {
-        // An empty request marks the (early) end of the interaction.
-        transport
-            .request(client::WriteMode::Binary, client::MessageKind::Flush)?
-            .into_read()
-            .await?;
+        // An empty request marks the (early) end of the interaction. Only relevant in stateful transports though.
+        if transport.is_stateful() {
+            transport
+                .request(client::WriteMode::Binary, client::MessageKind::Flush)?
+                .into_read()
+                .await?;
+        }
         return Ok(());
     }
 
