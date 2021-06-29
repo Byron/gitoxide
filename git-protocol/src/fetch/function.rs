@@ -164,7 +164,7 @@ where
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         round += 1;
-        let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
+        let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref())?;
         let mut reader = arguments.send(&mut transport, action == Action::Cancel).await?;
         if sideband_all {
             setup_remote_progress(&mut progress, &mut reader);

@@ -55,7 +55,12 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         Action::Continue
     }
 
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous: Option<&Response>) -> Action {
+    fn negotiate(
+        &mut self,
+        refs: &[Ref],
+        arguments: &mut Arguments,
+        _previous: Option<&Response>,
+    ) -> io::Result<Action> {
         for r in refs {
             let (path, id) = r.unpack();
             match self.ref_filter {
@@ -67,7 +72,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
                 None => arguments.want(id),
             }
         }
-        Action::Cancel
+        Ok(Action::Cancel)
     }
 }
 

@@ -1,4 +1,5 @@
 use bstr::{BString, ByteSlice};
+use std::io;
 
 use git_protocol::fetch::{self, Action, Arguments, LsRefsAction, Ref, Response};
 use git_transport::client::Capabilities;
@@ -16,11 +17,16 @@ pub struct CloneDelegate {
 }
 
 impl fetch::DelegateBlocking for CloneDelegate {
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
+    fn negotiate(
+        &mut self,
+        refs: &[Ref],
+        arguments: &mut Arguments,
+        _previous_result: Option<&Response>,
+    ) -> io::Result<Action> {
         for r in refs {
             arguments.want(r.unpack().1);
         }
-        Action::Cancel
+        Ok(Action::Cancel)
     }
 }
 
@@ -61,19 +67,24 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         Action::Continue
     }
 
-    fn negotiate(&mut self, _refs: &[Ref], arguments: &mut Arguments, previous_result: Option<&Response>) -> Action {
+    fn negotiate(
+        &mut self,
+        _refs: &[Ref],
+        arguments: &mut Arguments,
+        previous_result: Option<&Response>,
+    ) -> io::Result<Action> {
         match previous_result {
             None => {
                 for wanted_ref in &self.want_refs {
                     arguments.want_ref(wanted_ref.as_ref())
                 }
-                Action::Cancel
+                Ok(Action::Cancel)
             }
             Some(resp) => {
                 if resp.wanted_refs().is_empty() {
-                    Action::Continue
+                    Ok(Action::Continue)
                 } else {
-                    Action::Cancel
+                    Ok(Action::Cancel)
                 }
             }
         }
@@ -100,7 +111,12 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         fetch::Action::Cancel
     }
 
-    fn negotiate(&mut self, _refs: &[Ref], _arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
+    fn negotiate(
+        &mut self,
+        _refs: &[Ref],
+        _arguments: &mut Arguments,
+        _previous_result: Option<&Response>,
+    ) -> io::Result<Action> {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
     }
 }
