@@ -69,9 +69,8 @@ pub struct WantedRef {
 impl ShallowUpdate {
     /// Parse a `ShallowUpdate` from a `line` as received to the server.
     pub fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
-        let mut tokens = line.trim_end().splitn(2, ' ');
-        match (tokens.next(), tokens.next()) {
-            (Some(prefix), Some(id)) => {
+        match line.trim_end().split_once(' ') {
+            Some((prefix, id)) => {
                 let id =
                     git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
                 Ok(match prefix {
@@ -80,7 +79,7 @@ impl ShallowUpdate {
                     _ => return Err(Error::UnknownLineType(line.to_owned())),
                 })
             }
-            _ => unreachable!("cannot have an entirely empty line"),
+            None => unreachable!("cannot have an entirely empty line"),
         }
     }
 }
