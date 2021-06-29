@@ -8,8 +8,8 @@ use std::ops::{Deref, DerefMut};
 pub enum Action {
     /// Continue the typical flow of operations in this flow.
     Continue,
-    /// Close the connection without making any further requests.
-    Close,
+    /// Return at the next possible opportunity without making further requests, possibly after closing the connection.
+    Cancel,
 }
 
 /// What to do after [`DelegateBlocking::prepare_ls_refs`].

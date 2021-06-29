@@ -67,7 +67,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
                 None => arguments.want(id),
             }
         }
-        Action::Close
+        Action::Cancel
     }
 }
 

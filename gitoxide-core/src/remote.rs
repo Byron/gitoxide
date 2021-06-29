@@ -26,7 +26,7 @@ pub mod refs {
             refs: &[Ref],
         ) -> Action {
             self.refs = refs.into();
-            Action::Close
+            Action::Cancel
         }
 
         fn negotiate(
@@ -80,9 +80,7 @@ pub mod refs {
                 move || {
                     futures_lite::future::block_on(async move {
                         let mut delegate = LsRemotes::default();
-                        let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)
-                            .await?
-                            .0;
+                        protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress).await?;
 
                         match ctx.format {
                             OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),
@@ -134,8 +132,8 @@ pub mod refs {
             ctx: Context<impl io::Write>,
         ) -> anyhow::Result<()> {
             let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
-            let delegate = LsRemotes::default();
-            let delegate = protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?.0;
+            let mut delegate = LsRemotes::default();
+            protocol::fetch(transport, &mut delegate, protocol::credentials::helper, progress)?;
 
             match ctx.format {
                 OutputFormat::Human => drop(print(ctx.out, &delegate.refs)),

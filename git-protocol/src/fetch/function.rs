@@ -144,7 +144,7 @@ where
     let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
     fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
 
-    if next == Action::Close {
+    if next == Action::Cancel {
         transport.close().await?;
         return Ok(());
     }
@@ -159,7 +159,7 @@ where
         progress.set_name(format!("negotiate (round {})", round));
         round += 1;
         let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
-        let mut reader = arguments.send(&mut transport, action == Action::Close).await?;
+        let mut reader = arguments.send(&mut transport, action == Action::Cancel).await?;
         if sideband_all {
             setup_remote_progress(&mut progress, &mut reader);
         }
@@ -174,7 +174,7 @@ where
             break 'negotiation;
         } else {
             match action {
-                Action::Close => break 'negotiation,
+                Action::Cancel => break 'negotiation,
                 Action::Continue => Some(response),
             }
         }

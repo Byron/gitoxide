@@ -20,7 +20,7 @@ impl fetch::DelegateBlocking for CloneDelegate {
         for r in refs {
             arguments.want(r.unpack().1);
         }
-        Action::Close
+        Action::Cancel
     }
 }
 
@@ -67,13 +67,13 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
                 for wanted_ref in &self.want_refs {
                     arguments.want_ref(wanted_ref.as_ref())
                 }
-                Action::Close
+                Action::Cancel
             }
             Some(resp) => {
                 if resp.wanted_refs().is_empty() {
                     Action::Continue
                 } else {
-                    Action::Close
+                    Action::Cancel
                 }
             }
         }
@@ -97,7 +97,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         refs: &[fetch::Ref],
     ) -> fetch::Action {
         self.refs = refs.to_owned();
-        fetch::Action::Close
+        fetch::Action::Cancel
     }
 
     fn negotiate(&mut self, _refs: &[Ref], _arguments: &mut Arguments, _previous_result: Option<&Response>) -> Action {
