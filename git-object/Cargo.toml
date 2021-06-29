@@ -13,6 +13,7 @@ doctest = false
 
 [features]
 serde1 = ["serde", "bstr/serde1", "smallvec/serde", "git-hash/serde1", "git-actor/serde1"]
+verbose-parsing-errors = ["nom/std"]
 
 [package.metadata.docs.rs]
 all-features = true

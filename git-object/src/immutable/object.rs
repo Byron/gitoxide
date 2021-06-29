@@ -190,33 +190,27 @@ pub mod decode {
     use crate::bstr::{BString, ByteSlice};
 
     /// The type to be used for parse errors.
-    pub type ParseError<'a, T = [u8]> = nom::error::Error<&'a T>;
+    pub type ParseError<'a> = nom::error::VerboseError<&'a [u8]>;
     /// The owned type to be used for parse errors.
-    pub type ParseErrorOwned = nom::error::Error<BString>;
+    pub type ParseErrorOwned = nom::error::VerboseError<BString>;
 
     /// A type to indicate errors during parsing and to abstract away details related to `nom`.
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Error {
         /// The actual error
         pub inner: ParseErrorOwned,
     }
 
-    impl Clone for Error {
-        fn clone(&self) -> Self {
-            use nom::error::ParseError;
-            Error {
-                inner: ParseErrorOwned::from_error_kind(self.inner.input.clone(), self.inner.code),
-            }
-        }
-    }
-
-    impl<'a> From<nom::Err<ParseError<'a, [u8]>>> for Error {
+    impl<'a> From<nom::Err<ParseError<'a>>> for Error {
         fn from(v: nom::Err<ParseError<'a>>) -> Self {
             Error {
                 inner: match v {
-                    nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::Error {
-                        input: err.input.as_bstr().to_owned(),
-                        code: err.code,
+                    nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::VerboseError {
+                        errors: err
+                            .errors
+                            .into_iter()
+                            .map(|(i, v)| (i.as_bstr().to_owned(), v))
+                            .collect(),
                     },
                     nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
                 },
