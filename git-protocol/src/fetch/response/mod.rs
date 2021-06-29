@@ -85,8 +85,8 @@ impl Acknowledgement {
     /// Parse an `Acknowledgement` from a `line` as received to the server.
     pub fn from_line(line: &str) -> Result<Acknowledgement, Error> {
         let mut tokens = line.trim_end().splitn(3, ' ');
-        Ok(match (tokens.next(), tokens.next(), tokens.next()) {
-            (Some(first), id, description) => match first {
+        match (tokens.next(), tokens.next(), tokens.next()) {
+            (Some(first), id, description) => Ok(match first {
                 "ready" => Acknowledgement::Ready, // V2
                 "NAK" => Acknowledgement::Nak,     // V1
                 "ACK" => {
@@ -105,9 +105,9 @@ impl Acknowledgement {
                     Acknowledgement::Common(id)
                 }
                 _ => return Err(Error::UnknownLineType(line.to_owned())),
-            },
-            (None, _, _) => return Err(Error::UnknownLineType(line.to_owned())),
-        })
+            }),
+            (None, _, _) => Err(Error::UnknownLineType(line.to_owned())),
+        }
     }
     /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
     pub fn id(&self) -> Option<&git_hash::ObjectId> {
