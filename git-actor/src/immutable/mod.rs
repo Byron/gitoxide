@@ -19,7 +19,7 @@ pub struct Signature<'a> {
 
 impl<'a> Signature<'a> {
     /// Deserialize a signature from the given `data`.
-    pub fn from_bytes<E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]> + std::fmt::Debug>(
+    pub fn from_bytes<E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>>(
         data: &'a [u8],
     ) -> Result<Signature<'a>, nom::Err<E>> {
         signature::decode(data).map(|(_, t)| t)

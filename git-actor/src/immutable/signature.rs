@@ -15,7 +15,7 @@ mod decode {
     pub(crate) const SPACE: &[u8] = b" ";
 
     /// Parse a signature from the bytes input `i` using `nom`.
-    pub fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]> + std::fmt::Debug>(
+    pub fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         i: &'a [u8],
     ) -> IResult<&'a [u8], Signature<'a>, E> {
         let (i, (name, email, time, tzsign, hours, minutes)) = context(
