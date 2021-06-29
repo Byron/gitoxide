@@ -9,7 +9,7 @@ use git_transport::{
     Service,
 };
 use maybe_async::maybe_async;
-use std::io;
+use std::{borrow::BorrowMut, io};
 
 /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
 /// **Note** that `delegate` has blocking operations and thus this entire call should be on an executor which can handle
@@ -21,23 +21,25 @@ use std::io;
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[maybe_async]
-pub async fn fetch<F, D, T>(
+pub async fn fetch<F, D, T, B, P>(
     mut transport: T,
-    mut delegate: D,
+    mut delegate: B,
     mut authenticate: F,
-    mut progress: impl Progress,
+    mut progress: P,
 ) -> Result<(), Error>
 where
     F: FnMut(credentials::Action<'_>) -> credentials::Result,
     D: Delegate,
+    B: BorrowMut<D>,
     T: client::Transport,
+    P: Progress,
 {
     let (protocol_version, parsed_refs, capabilities) = {
         progress.init(None, progress::steps());
         progress.set_name("handshake");
         progress.step();
 
-        let extra_parameters = delegate.handshake_extra_parameters();
+        let extra_parameters = delegate.borrow_mut().handshake_extra_parameters();
         let extra_parameters: Vec<_> = extra_parameters
             .iter()
             .map(|(k, v)| (k.as_str(), v.as_ref().map(|s| s.as_str())))
@@ -114,7 +116,9 @@ where
             let ls_refs = Command::LsRefs;
             let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
             let mut ls_args = ls_refs.initial_arguments(&ls_features);
-            let next = delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
+            let next = delegate
+                .borrow_mut()
+                .prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
             // User has requested to skip ls-refs, perhaps because they're using want-ref
             if next == LsRefsAction::Skip {
                 vec![]
@@ -141,7 +145,9 @@ where
 
     let fetch = Command::Fetch;
     let mut fetch_features = fetch.default_features(protocol_version, &capabilities);
-    let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
+    let next = delegate
+        .borrow_mut()
+        .prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
     fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
 
     if next == Action::Cancel {
@@ -164,7 +170,9 @@ where
         progress.step();
         progress.set_name(format!("negotiate (round {})", round));
         round += 1;
-        let action = delegate.negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
+        let action = delegate
+            .borrow_mut()
+            .negotiate(&parsed_refs, &mut arguments, previous_response.as_ref());
         let mut reader = arguments.send(&mut transport, action == Action::Cancel).await?;
         if sideband_all {
             setup_remote_progress(&mut progress, &mut reader);
@@ -176,7 +184,10 @@ where
             if !sideband_all {
                 setup_remote_progress(&mut progress, &mut reader);
             }
-            delegate.receive_pack(reader, progress, &parsed_refs, &response).await?;
+            delegate
+                .borrow_mut()
+                .receive_pack(reader, progress, &parsed_refs, &response)
+                .await?;
             break 'negotiation;
         } else {
             match action {
