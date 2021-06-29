@@ -34,7 +34,7 @@ pub mod refs {
             _refs: &[Ref],
             _arguments: &mut Arguments,
             _previous_result: Option<&Response>,
-        ) -> Action {
+        ) -> io::Result<Action> {
             unreachable!("not to be called due to Action::Close in `prepare_fetch`")
         }
     }

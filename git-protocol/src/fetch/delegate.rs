@@ -1,7 +1,10 @@
 use crate::fetch::{Arguments, Ref, Response};
 use bstr::BString;
 use git_transport::client::Capabilities;
-use std::ops::{Deref, DerefMut};
+use std::{
+    io,
+    ops::{Deref, DerefMut},
+};
 
 /// Defines what to do next after certain [`Delegate`] operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -112,7 +115,8 @@ pub trait DelegateBlocking {
     /// [added to the arguments][Arguments::want_ref()] on the **first** call of this method (when `previous` is
     /// `None`). The `Action` must in this case be [`Action::Continue`], as the server's 'wanted-refs' response will be
     /// available only on the next turn.
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action;
+    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>)
+        -> io::Result<Action>;
 }
 
 impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
@@ -139,7 +143,12 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
     }
 
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action {
+    fn negotiate(
+        &mut self,
+        refs: &[Ref],
+        arguments: &mut Arguments,
+        previous: Option<&Response>,
+    ) -> io::Result<Action> {
         self.deref_mut().negotiate(refs, arguments, previous)
     }
 }
@@ -168,7 +177,12 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
     }
 
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>) -> Action {
+    fn negotiate(
+        &mut self,
+        refs: &[Ref],
+        arguments: &mut Arguments,
+        previous: Option<&Response>,
+    ) -> io::Result<Action> {
         self.deref_mut().negotiate(refs, arguments, previous)
     }
 }
