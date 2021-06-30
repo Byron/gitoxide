@@ -202,7 +202,7 @@ async fn indicate_end_of_interaction(mut transport: impl client::Transport) -> R
             .into_read()
             .await?;
     }
-    return Ok(());
+    Ok(())
 }
 
 fn setup_remote_progress(
