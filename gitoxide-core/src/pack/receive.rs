@@ -35,11 +35,11 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         server: &Capabilities,
         arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> LsRefsAction {
+    ) -> io::Result<LsRefsAction> {
         if server.contains("ls-refs") {
             arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
         }
-        LsRefsAction::Continue
+        Ok(LsRefsAction::Continue)
     }
 
     fn prepare_fetch(
@@ -48,11 +48,11 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
-    ) -> Action {
+    ) -> io::Result<Action> {
         if version == transport::Protocol::V1 {
             self.ref_filter = Some(&FILTER);
         }
-        Action::Continue
+        Ok(Action::Continue)
     }
 
     fn negotiate(

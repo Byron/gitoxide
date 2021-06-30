@@ -140,7 +140,7 @@ where
                     refs::from_v2_refs(&mut remote_refs).await?
                 }
                 Err(err) => {
-                    indicate_end_of_interaction(transport)?;
+                    indicate_end_of_interaction(transport).await?;
                     return Err(err.into());
                 }
             }
@@ -150,12 +150,12 @@ where
     let fetch = Command::Fetch;
     let mut fetch_features = fetch.default_features(protocol_version, &capabilities);
     match delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs) {
-        Ok(Action::Cancel) => return indicate_end_of_interaction(transport),
+        Ok(Action::Cancel) => return indicate_end_of_interaction(transport).await,
         Ok(Action::Continue) => {
             fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
         }
         Err(err) => {
-            indicate_end_of_interaction(transport)?;
+            indicate_end_of_interaction(transport).await?;
             return Err(err.into());
         }
     }

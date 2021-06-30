@@ -24,9 +24,9 @@ pub mod refs {
             _server: &transport::client::Capabilities,
             _features: &mut Vec<(&str, Option<&str>)>,
             refs: &[Ref],
-        ) -> Action {
+        ) -> io::Result<Action> {
             self.refs = refs.into();
-            Action::Cancel
+            Ok(Action::Cancel)
         }
 
         fn negotiate(
