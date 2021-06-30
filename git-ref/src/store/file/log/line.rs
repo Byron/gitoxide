@@ -1,20 +1,5 @@
-#![allow(missing_docs, unused)]
-
-use bstr::BStr;
+use crate::store::file::log::Line;
 use git_hash::ObjectId;
-
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Line<'a> {
-    /// The previous object id in hexadecimal. Use [`Line::previous_oid()`] to get a more usable form.
-    pub previous_oid: &'a BStr,
-    /// The new object id in hexadecimal. Use [`Line::new_oid()`] to get a more usable form.
-    pub new_oid: &'a BStr,
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub signature: git_actor::immutable::Signature<'a>,
-    pub message: &'a BStr,
-    _prevent_initialization: (),
-}
 
 impl<'a> Line<'a> {
     pub fn previous_oid(&self) -> ObjectId {
@@ -41,7 +26,7 @@ mod decode {
         IResult,
     };
 
-    fn parse_message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+    fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
         } else {
@@ -57,7 +42,7 @@ mod decode {
                     context("<old-hexsha>", terminated(hex_sha1, tag(b" "))),
                     context("<new-hexsha>", terminated(hex_sha1, tag(b" "))),
                     context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
-                    context("<optional message>", preceded(opt(tag(b"\t")), parse_message)),
+                    context("<optional message>", preceded(opt(tag(b"\t")), message)),
                 )),
             ),
             |(old, new, signature, message)| Line {
@@ -71,7 +56,7 @@ mod decode {
     }
 
     #[cfg(test)]
-    mod line {
+    mod test {
         use super::*;
         use bstr::ByteSlice;
         use git_actor::{Sign, Time};
@@ -138,7 +123,7 @@ mod decode {
 
         #[test]
         fn entry_with_message_without_newline_and_with_newline() {
-            let line_without_nl: Vec<_>= b"a5828ae6b52137b913b978e16cd2334482eb4c1f 89b43f80a514aee58b662ad606e6352e03eaeee4 Sebastian Thiel <foo@example.com> 1618030561 +0800\tpull --ff-only: Fast-forward".to_vec();
+            let line_without_nl: Vec<_> = b"a5828ae6b52137b913b978e16cd2334482eb4c1f 89b43f80a514aee58b662ad606e6352e03eaeee4 Sebastian Thiel <foo@example.com> 1618030561 +0800\tpull --ff-only: Fast-forward".to_vec();
             let line_with_nl = with_newline(line_without_nl.clone());
 
             for input in &[line_without_nl, line_with_nl] {
@@ -167,6 +152,7 @@ mod decode {
                 assert_eq!(actual.new_oid(), hex_to_oid("89b43f80a514aee58b662ad606e6352e03eaeee4"));
             }
         }
+
         #[test]
         fn two_lines_in_a_row_with_and_without_newline() {
             let lines = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000\t\n0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 two <foo@example.com> 1234567890 -0000\thello";
