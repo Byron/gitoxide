@@ -51,10 +51,35 @@ pub mod decode {
 /// Note that `lines` are an entire reflog file.
 ///
 /// This iterator is useful when the ref log file is going to be rewritten which forces processing of the entire file.
+/// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
+/// abort or continue.
 pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
     lines.as_bstr().lines().enumerate().map(|(ln, line)| {
         log::line::decode::line::<()>(&line)
             .map(|(_, line)| line)
             .map_err(|_| decode::Error::new(line, decode::LineNumber::FromStart(ln)))
     })
+}
+
+/// An iterator yielding parsed lines in a file in reverse.
+#[allow(dead_code)]
+pub struct Reverse<'a> {
+    buf: &'a mut [u8],
+    file: Option<std::fs::File>,
+    iter: Option<std::iter::Peekable<bstr::SplitReverse<'a>>>,
+}
+
+/// An iterator over entries of the `log` file in reverse, using `buf` as sliding window.
+///
+/// Note that `buf` must be big enough to capture typical line length or else partial lines will be parsed and probably fail
+/// in the process.
+///
+/// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
+/// abort or continue.
+pub fn reverse(log: std::fs::File, buf: &mut [u8]) -> Reverse<'_> {
+    Reverse {
+        buf,
+        file: Some(log),
+        iter: None,
+    }
 }
