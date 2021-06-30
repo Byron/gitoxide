@@ -8,32 +8,23 @@ pub mod decode {
     /// The error returned by items in the [forward][super::forward()] iterator
     #[derive(Debug)]
     pub struct Error {
-        inner: nom::error::VerboseError<BString>,
+        input: BString,
         line: LineNumber,
     }
 
     impl std::fmt::Display for Error {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "In line {}: {}", self.line, self.inner)
+            write!(f, "In line {}: {:?} did not match '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>'", self.line, self.input)
         }
     }
 
     impl<'a> std::error::Error for Error {}
 
     impl Error {
-        pub(crate) fn new(err: nom::Err<nom::error::VerboseError<&[u8]>>, line: LineNumber) -> Self {
+        pub(crate) fn new(input: &[u8], line: LineNumber) -> Self {
             Error {
                 line,
-                inner: match err {
-                    nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::VerboseError {
-                        errors: err
-                            .errors
-                            .into_iter()
-                            .map(|(i, v)| (i.as_bstr().to_owned(), v))
-                            .collect(),
-                    },
-                    nom::Err::Incomplete(_) => unreachable!("we are not a streaming parser"),
-                },
+                input: input.as_bstr().to_owned(),
             }
         }
     }
@@ -62,8 +53,8 @@ pub mod decode {
 /// This iterator is useful when the ref log file is going to be rewritten which forces processing of the entire file.
 pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
     lines.as_bstr().lines().enumerate().map(|(ln, line)| {
-        log::line::decode::line(&line)
+        log::line::decode::line::<()>(&line)
             .map(|(_, line)| line)
-            .map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
+            .map_err(|_| decode::Error::new(line, decode::LineNumber::FromStart(ln)))
     })
 }

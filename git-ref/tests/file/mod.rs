@@ -118,7 +118,7 @@ mod log {
 
                 let mut iter = git_ref::file::log::iter::forward(log_first_broken.as_bytes());
                 let err = iter.next().expect("error is not none").expect_err("the line is broken");
-                assert_eq!(err.to_string(), "In line 1: Parse error:\nTakeWhileMN at: 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000\tcommit\nin section '<new-hexsha>', at: 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000\tcommit\nin section '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>', at: 0000000000000000000000000000000000000000 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000\tcommit\n");
+                assert_eq!(err.to_string(), "In line 1: \"0000000000000000000000000000000000000000 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000\\tcommit\" did not match '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>'");
                 assert!(iter.next().expect("a second line").is_ok(), "line parses ok");
                 assert!(iter.next().is_none(), "iterator exhausted");
             }
