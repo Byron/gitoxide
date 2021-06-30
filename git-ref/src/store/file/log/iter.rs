@@ -107,12 +107,12 @@ impl<F, const SIZE: usize> Iterator for Reverse<F, SIZE>
 where
     F: std::io::Read + std::io::Seek,
 {
-    type Item<'a> = std::io::Result<Result<log::Line<'a>, decode::Error>>;
+    type Item = std::io::Result<Result<log::mutable::Line, decode::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.range.take(), self.read_and_pos.take()) {
             (None, None) => None,
-            (None, Some((mut read, mut pos))) => {
+            (None, Some((mut read, pos))) => {
                 let npos = pos.saturating_sub(self.buf.len() as u64);
                 if let Err(err) = read.seek(std::io::SeekFrom::Start(npos)) {
                     return Some(Err(err));
@@ -134,13 +134,14 @@ where
                             buf,
                             decode::LineNumber::FromEnd(self.count),
                             log::line::decode::one::<()>(buf),
-                        )))
+                        )
+                        .map(Into::into)))
                     }
                 };
                 self.read_and_pos = Some((read, npos));
                 self.next()
             }
-            (Some(iter), None) => todo!("exhaust iteration in existing iterator"),
+            (Some(_), None) => todo!("exhaust iteration in existing iterator"),
             (Some(_), Some(_)) => todo!("exhaust iterator and potentially load more"),
         }
     }

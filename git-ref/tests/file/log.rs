@@ -13,24 +13,23 @@ mod iter {
     }
     mod backward {
         use bstr::B;
-        use git_ref::file::log::Line;
+        use git_ref::file::log::mutable::Line;
+        use git_testtools::hex_to_id;
 
         #[test]
-        fn a_single_line_with_trailing_newline_and_suitably_big_buffer() -> crate::Result {
+        #[should_panic]
+        fn a_single_line_with_trailing_newline_and_suitably_big_buffer() {
             let read = std::io::Cursor::new(b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n");
-            let mut buf = [0u8; 1024];
-            let mut iter = git_ref::file::log::iter::reverse(read, &mut buf[..])?;
+            let mut iter = git_ref::file::log::iter::reverse::<_, 1024>(read).unwrap();
             let Line {
                 previous_oid,
                 new_oid,
                 signature: _,
                 message,
-                ..
-            } = iter.next().expect("a single line")??;
+            } = iter.next().expect("a single line").unwrap().unwrap();
             assert_eq!(message, B("commit (initial): c1"));
-            assert_eq!(previous_oid, B("0000000000000000000000000000000000000000"));
-            assert_eq!(new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
-            Ok(())
+            assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
+            assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
         }
     }
     mod forward {
