@@ -53,6 +53,36 @@ async fn ls_remote() -> crate::Result {
 }
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
+    let out = Vec::new();
+    let mut delegate = LsRemoteDelegate::default();
+    delegate.abort_with = Some(std::io::Error::new(std::io::ErrorKind::Other, "hello world"));
+    let mut transport = transport(
+        out,
+        "v2/clone.response",
+        Protocol::V2,
+        git_transport::client::git::ConnectMode::Daemon,
+    );
+    let err = git_protocol::fetch(
+        &mut transport,
+        &mut delegate,
+        git_protocol::credentials::helper,
+        progress::Discard,
+    )
+    .await
+    .expect_err("ls-refs preparation is aborted");
+
+    assert!(delegate.refs.is_empty(), "no refs are fetched");
+    assert_eq!(
+        transport.into_inner().1.as_bstr(),
+        format!("0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00000",)
+            .as_bytes()
+            .as_bstr()
+    );
+    Ok(())
+}
+
+#[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ref_in_want() -> crate::Result {
     let out = Vec::new();
     let mut delegate = CloneRefInWantDelegate {

@@ -16,7 +16,7 @@ pub enum Action {
 }
 
 /// What to do after [`DelegateBlocking::prepare_ls_refs`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum LsRefsAction {
     /// Continue by sending a 'ls-refs' command.
     Continue,
@@ -25,6 +25,11 @@ pub enum LsRefsAction {
     /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
     /// [`DelegateBlocking::negotiate`].
     Skip,
+    /// Abort the operation immediately as the servers capabilities don't match our needs.
+    ///
+    /// The reason for this not being `std::io::Result<LsRefsAction>` is that side-effects are not anticipated here, the decision to
+    /// abort should be possible entirely on what's available.
+    Abort(Box<dyn std::error::Error + 'static>),
 }
 
 /// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
@@ -77,8 +82,8 @@ pub trait DelegateBlocking {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
-    ) -> Action {
-        Action::Continue
+    ) -> std::io::Result<Action> {
+        Ok(Action::Continue)
     }
 
     /// A method called repeatedly to negotiate the objects to receive in [`receive_pack(…)`][Delegate::receive_pack()].
@@ -139,7 +144,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
-    ) -> Action {
+    ) -> std::io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
     }
 
@@ -173,7 +178,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
-    ) -> Action {
+    ) -> std::io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
     }
 

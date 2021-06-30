@@ -94,6 +94,7 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
 #[derive(Default)]
 pub struct LsRemoteDelegate {
     refs: Vec<fetch::Ref>,
+    abort_with: Option<std::io::Error>,
 }
 
 impl fetch::DelegateBlocking for LsRemoteDelegate {
