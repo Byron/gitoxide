@@ -37,7 +37,7 @@ mod decode {
         },
         combinator::{map, map_res, opt},
         error::{context, ContextError, FromExternalError, ParseError},
-        sequence::{terminated, tuple},
+        sequence::{preceded, terminated, tuple},
         IResult,
     };
 
@@ -54,16 +54,13 @@ mod decode {
             context(
                 "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
                 tuple((
-                    hex_sha1,
-                    tag(b" "),
-                    hex_sha1,
-                    tag(b" "),
+                    terminated(hex_sha1, tag(b" ")),
+                    terminated(hex_sha1, tag(b" ")),
                     git_actor::immutable::signature::decode,
-                    opt(tag(b"\t")),
-                    parse_message,
+                    preceded(opt(tag(b"\t")), parse_message),
                 )),
             ),
-            |(old, _, new, _, signature, _, message)| Line {
+            |(old, new, signature, message)| Line {
                 previous_oid: old.as_bstr(),
                 new_oid: new.as_bstr(),
                 signature,
