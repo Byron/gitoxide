@@ -33,7 +33,7 @@ pub(crate) mod decode {
         }
     }
 
-    pub fn line<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>, E> {
+    pub fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>, E> {
         map(
             context(
                 "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
@@ -70,7 +70,7 @@ pub(crate) mod decode {
         }
 
         mod invalid {
-            use super::line;
+            use super::one;
 
             use bstr::{BStr, ByteSlice};
             use nom::error::VerboseError;
@@ -83,7 +83,7 @@ pub(crate) mod decode {
 
             #[test]
             fn completely_bogus_shows_error_with_context() {
-                let err = line::<VerboseError<&[u8]>>(b"definitely not a log entry")
+                let err = one::<VerboseError<&[u8]>>(b"definitely not a log entry")
                     .expect_err("this should fail")
                     .map(|e| to_bstr_err(e).to_string());
                 assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
@@ -98,7 +98,7 @@ pub(crate) mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
             for input in &[line_without_nl, line_with_nl] {
                 assert_eq!(
-                    line::<nom::error::Error<_>>(input).expect("successful parsing").1,
+                    one::<nom::error::Error<_>>(input).expect("successful parsing").1,
                     Line {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
@@ -123,7 +123,7 @@ pub(crate) mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
 
             for input in &[line_without_nl, line_with_nl] {
-                let (remaining, res) = line::<nom::error::Error<_>>(&input).expect("successful parsing");
+                let (remaining, res) = one::<nom::error::Error<_>>(&input).expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
                 let actual = Line {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
@@ -151,10 +151,10 @@ pub(crate) mod decode {
         #[test]
         fn two_lines_in_a_row_with_and_without_newline() {
             let lines = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000\t\n0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 two <foo@example.com> 1234567890 -0000\thello";
-            let (remainder, parsed) = line::<nom::error::Error<_>>(lines).expect("parse single line");
+            let (remainder, parsed) = one::<nom::error::Error<_>>(lines).expect("parse single line");
             assert_eq!(parsed.message, b"".as_bstr(), "first message is empty");
 
-            let (remainder, parsed) = line::<nom::error::Error<_>>(remainder).expect("parse single line");
+            let (remainder, parsed) = one::<nom::error::Error<_>>(remainder).expect("parse single line");
             assert_eq!(
                 parsed.message,
                 b"hello".as_bstr(),

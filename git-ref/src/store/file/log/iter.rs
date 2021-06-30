@@ -32,18 +32,26 @@ pub mod decode {
     #[derive(Debug)]
     pub(crate) enum LineNumber {
         FromStart(usize),
-        // FromEnd(usize),
+        FromEnd(usize),
     }
 
     impl std::fmt::Display for LineNumber {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             let (line, suffix) = match self {
                 LineNumber::FromStart(line) => (line, ""),
-                // LineNumber::FromEnd(line) => (line, " from the end"),
+                LineNumber::FromEnd(line) => (line, " from the end"),
             };
             write!(f, "{}{}", line + 1, suffix)
         }
     }
+}
+
+fn convert<'a, E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>>(
+    input: &'a [u8],
+    ln: decode::LineNumber,
+    parsed: nom::IResult<&'a [u8], log::Line<'a>, E>,
+) -> Result<log::Line<'a>, decode::Error> {
+    parsed.map(|(_, line)| line).map_err(|_| decode::Error::new(input, ln))
 }
 
 /// Returns a forward iterator over the given `lines`, starting from the first line in the file and ending at the last.
@@ -55,9 +63,11 @@ pub mod decode {
 /// abort or continue.
 pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
     lines.as_bstr().lines().enumerate().map(|(ln, line)| {
-        log::line::decode::line::<()>(&line)
-            .map(|(_, line)| line)
-            .map_err(|_| decode::Error::new(line, decode::LineNumber::FromStart(ln)))
+        convert(
+            &line,
+            decode::LineNumber::FromStart(ln),
+            log::line::decode::one::<()>(&line),
+        )
     })
 }
 
@@ -65,8 +75,9 @@ pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decod
 #[allow(dead_code)]
 pub struct Reverse<'a, F> {
     buf: &'a mut [u8],
+    count: usize,
     read_and_pos: Option<(F, u64)>,
-    iter: Option<std::iter::Peekable<bstr::SplitReverse<'a>>>,
+    range: Option<(Option<usize>, usize)>,
 }
 
 /// An iterator over entries of the `log` file in reverse, using `buf` as sliding window.
@@ -86,8 +97,9 @@ where
     let pos = log.seek(std::io::SeekFrom::End(0))?;
     Ok(Reverse {
         buf,
+        count: 0,
         read_and_pos: Some((log, pos)),
-        iter: None,
+        range: None,
     })
 }
 
@@ -98,7 +110,7 @@ where
     type Item = std::io::Result<Result<log::Line<'a>, decode::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match (self.iter.take(), self.read_and_pos.take()) {
+        match (self.range.take(), self.read_and_pos.take()) {
             (None, None) => None,
             (None, Some((mut read, mut pos))) => {
                 let npos = pos.saturating_sub(self.buf.len() as u64);
@@ -107,11 +119,24 @@ where
                 }
 
                 let n = (pos - npos) as usize;
-                if let Err(err) = read.read_exact(&mut self.buf[..n]) {
+                if n == 0 {
+                    return None;
+                }
+                let buf = &mut self.buf[..n];
+                if let Err(err) = read.read_exact(buf) {
                     return Some(Err(err));
                 };
 
-                self.iter = Some(self.buf[..n].as_bstr().rsplit_str(b"\n").peekable());
+                self.range = match buf.rfind_byte(b'\n') {
+                    Some(end) => Some((None, end)),
+                    None => {
+                        return Some(Ok(convert(
+                            buf,
+                            decode::LineNumber::FromEnd(self.count),
+                            log::line::decode::one::<()>(buf),
+                        )))
+                    }
+                };
                 self.read_and_pos = Some((read, npos));
                 self.next()
             }
