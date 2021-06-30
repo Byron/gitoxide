@@ -2,26 +2,26 @@ use crate::store::file::log::Line;
 use git_hash::ObjectId;
 
 impl<'a> Line<'a> {
+    /// The previous object id of the ref. It will be a null hash if there was no previous id as
+    /// this ref is being created.
     pub fn previous_oid(&self) -> ObjectId {
         ObjectId::from_hex(&self.previous_oid).expect("parse validation")
     }
+    /// The new object id of the ref, or a null hash if it is removed.
     pub fn new_oid(&self) -> ObjectId {
         ObjectId::from_hex(&self.new_oid).expect("parse validation")
     }
 }
 
 mod decode {
+    #![allow(unused)]
     use crate::{file::log::Line, parse::hex_sha1};
 
     use bstr::{BStr, ByteSlice};
-    use git_hash::ObjectId;
     use nom::{
-        bytes::{
-            complete::tag,
-            complete::{take_until, take_while},
-        },
-        combinator::{map, map_res, opt},
-        error::{context, ContextError, FromExternalError, ParseError},
+        bytes::{complete::tag, complete::take_while},
+        combinator::{map, opt},
+        error::{context, ContextError, ParseError},
         sequence::{preceded, terminated, tuple},
         IResult,
     };
