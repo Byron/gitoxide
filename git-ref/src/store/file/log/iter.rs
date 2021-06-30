@@ -65,7 +65,7 @@ pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decod
 #[allow(dead_code)]
 pub struct Reverse<'a, F> {
     buf: &'a mut [u8],
-    read: Option<F>,
+    read_and_pos: Option<(F, u64)>,
     iter: Option<std::iter::Peekable<bstr::SplitReverse<'a>>>,
 }
 
@@ -79,21 +79,44 @@ pub struct Reverse<'a, F> {
 ///
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn reverse<F>(log: F, buf: &mut [u8]) -> Reverse<'_, F>
+pub fn reverse<F>(mut log: F, buf: &mut [u8]) -> std::io::Result<Reverse<'_, F>>
 where
     F: std::io::Read + std::io::Seek,
 {
-    Reverse {
+    let pos = log.seek(std::io::SeekFrom::End(0))?;
+    Ok(Reverse {
         buf,
-        read: Some(log),
+        read_and_pos: Some((log, pos)),
         iter: None,
-    }
+    })
 }
 
-impl<'a, F> Iterator for Reverse<'a, F> {
-    type Item = Result<log::Line<'a>, decode::Error>;
+impl<'a, F> Iterator for Reverse<'a, F>
+where
+    F: std::io::Read + std::io::Seek,
+{
+    type Item = std::io::Result<Result<log::Line<'a>, decode::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!("reverse iteration")
+        match (self.iter.take(), self.read_and_pos.take()) {
+            (None, None) => None,
+            (None, Some((mut read, mut pos))) => {
+                let npos = pos.saturating_sub(self.buf.len() as u64);
+                if let Err(err) = read.seek(std::io::SeekFrom::Start(npos)) {
+                    return Some(Err(err));
+                }
+
+                let n = (pos - npos) as usize;
+                if let Err(err) = read.read_exact(&mut self.buf[..n]) {
+                    return Some(Err(err));
+                };
+
+                self.iter = Some(self.buf[..n].as_bstr().rsplit_str(b"\n").peekable());
+                self.read_and_pos = Some((read, npos));
+                self.next()
+            }
+            (Some(iter), None) => todo!("exhaust iteration in existing iterator"),
+            (Some(_), Some(_)) => todo!("exhaust iterator and potentially load more"),
+        }
     }
 }

@@ -16,21 +16,21 @@ mod iter {
         use git_ref::file::log::Line;
 
         #[test]
-        #[should_panic]
-        fn a_single_line_with_trailing_newline_and_suitably_big_buffer() {
+        fn a_single_line_with_trailing_newline_and_suitably_big_buffer() -> crate::Result {
             let read = std::io::Cursor::new(b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n");
             let mut buf = [0u8; 1024];
-            let mut iter = git_ref::file::log::iter::reverse(read, &mut buf[..]);
+            let mut iter = git_ref::file::log::iter::reverse(read, &mut buf[..])?;
             let Line {
                 previous_oid,
                 new_oid,
                 signature: _,
                 message,
                 ..
-            } = iter.next().expect("a single line").expect("no parse error");
+            } = iter.next().expect("a single line")??;
             assert_eq!(message, B("commit (initial): c1"));
             assert_eq!(previous_oid, B("0000000000000000000000000000000000000000"));
             assert_eq!(new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
+            Ok(())
         }
     }
     mod forward {
