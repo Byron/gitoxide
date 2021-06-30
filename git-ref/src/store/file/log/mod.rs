@@ -16,4 +16,6 @@ pub struct Line<'a> {
     _prevent_initialization: (),
 }
 
+///
+pub mod iter;
 mod line;

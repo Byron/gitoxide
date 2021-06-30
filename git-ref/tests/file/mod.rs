@@ -78,6 +78,45 @@ mod store {
     }
 }
 
+mod log {
+    mod iter {
+        mod forward {
+            use bstr::B;
+            use git_hash::ObjectId;
+            use std::path::PathBuf;
+
+            fn reflog_dir() -> crate::Result<PathBuf> {
+                Ok(
+                    git_testtools::scripted_fixture_repo_read_only("make_repo_for_reflog.sh")?
+                        .join(".git")
+                        .join("logs"),
+                )
+            }
+            fn reflog(name: &str) -> crate::Result<Vec<u8>> {
+                Ok(std::fs::read(reflog_dir()?.join(name))?)
+            }
+
+            #[test]
+            fn all_success() -> crate::Result {
+                let log = reflog("HEAD")?;
+                let iter = git_ref::file::log::iter::forward(&log);
+                assert_eq!(iter.count(), 5, "the log as a known amount of entries");
+
+                let mut iter = git_ref::file::log::iter::forward(&log);
+                let line = iter.next().unwrap()?;
+                // 0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1
+                assert_eq!(line.previous_oid(), ObjectId::null_sha1());
+                assert_eq!(line.new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
+                assert_eq!(line.message, B("commit (initial): c1"));
+                Ok(())
+            }
+
+            #[test]
+            fn a_single_failure_does_not_abort_iteration() {}
+        }
+    }
+}
+
 mod reference {
     mod peel {
         use crate::file;

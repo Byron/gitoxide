@@ -13,8 +13,7 @@ impl<'a> Line<'a> {
     }
 }
 
-mod decode {
-    #![allow(unused)]
+pub(crate) mod decode {
     use crate::{file::log::Line, parse::hex_sha1};
 
     use bstr::{BStr, ByteSlice};
@@ -61,7 +60,6 @@ mod decode {
         use bstr::ByteSlice;
         use git_actor::{Sign, Time};
         use git_hash::ObjectId;
-        use nom::error::VerboseError;
 
         fn hex_to_oid(hex: &str) -> ObjectId {
             ObjectId::from_hex(hex.as_bytes()).unwrap()

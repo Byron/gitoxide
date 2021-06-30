@@ -107,7 +107,6 @@ pub struct SafeRefPath(bstr::BString);
 
 pub mod mutable {
     //!
-    #![allow(dead_code)]
     use crate::SafeRefPath;
     use git_hash::ObjectId;
 
