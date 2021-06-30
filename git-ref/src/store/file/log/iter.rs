@@ -61,7 +61,7 @@ pub mod decode {
 ///
 /// This iterator is useful when the ref log file is going to be rewritten which forces processing of the entire file.
 pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
-    lines.as_bstr().lines_with_terminator().enumerate().map(|(ln, line)| {
+    lines.as_bstr().lines().enumerate().map(|(ln, line)| {
         log::line::decode::line(&line)
             .map(|(_, line)| line)
             .map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
