@@ -6,11 +6,23 @@ use git_hash::ObjectId;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Line<'a> {
-    pub previous_oid: ObjectId,
-    pub new_oid: ObjectId,
+    /// The previous object id in hexadecimal. Use [`Line::previous_oid()`] to get a more usable form.
+    pub previous_oid: &'a BStr,
+    /// The new object id in hexadecimal. Use [`Line::new_oid()`] to get a more usable form.
+    pub new_oid: &'a BStr,
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub signature: git_actor::immutable::Signature<'a>,
     pub message: &'a BStr,
+    _prevent_initialization: (),
+}
+
+impl<'a> Line<'a> {
+    pub fn previous_oid(&self) -> ObjectId {
+        ObjectId::from_hex(&self.previous_oid).expect("parse validation")
+    }
+    pub fn new_oid(&self) -> ObjectId {
+        ObjectId::from_hex(&self.new_oid).expect("parse validation")
+    }
 }
 
 mod decode {
@@ -52,10 +64,11 @@ mod decode {
                 )),
             ),
             |(old, _, new, _, signature, _, message)| Line {
-                previous_oid: ObjectId::from_hex(old).expect("parser validation"),
-                new_oid: ObjectId::from_hex(new).expect("parser validation"),
+                previous_oid: old.as_bstr(),
+                new_oid: new.as_bstr(),
                 signature,
                 message,
+                _prevent_initialization: (),
             },
         )(bytes)
     }
@@ -91,6 +104,8 @@ mod decode {
             assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
         }
 
+        const NULL_SHA1: &[u8] = b"0000000000000000000000000000000000000000";
+
         #[test]
         fn entry_with_empty_message() {
             let line_without_nl: Vec<_> = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 name <foo@example.com> 1234567890 -0000".to_vec();
@@ -99,8 +114,8 @@ mod decode {
                 assert_eq!(
                     line::<nom::error::Error<_>>(input).expect("successful parsing").1,
                     Line {
-                        previous_oid: ObjectId::null_sha1(),
-                        new_oid: ObjectId::null_sha1(),
+                        previous_oid: NULL_SHA1.as_bstr(),
+                        new_oid: NULL_SHA1.as_bstr(),
                         signature: git_actor::immutable::Signature {
                             name: b"name".as_bstr(),
                             email: b"foo@example.com".as_bstr(),
@@ -110,7 +125,8 @@ mod decode {
                                 sign: Sign::Minus
                             }
                         },
-                        message: b"".as_bstr()
+                        message: b"".as_bstr(),
+                        _prevent_initialization: ()
                     }
                 );
             }
@@ -124,23 +140,27 @@ mod decode {
             for input in &[line_without_nl, line_with_nl] {
                 let (remaining, res) = line::<nom::error::Error<_>>(&input).expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
-                assert_eq!(
-                    res,
-                    Line {
-                        previous_oid: hex_to_oid("a5828ae6b52137b913b978e16cd2334482eb4c1f"),
-                        new_oid: hex_to_oid("89b43f80a514aee58b662ad606e6352e03eaeee4"),
-                        signature: git_actor::immutable::Signature {
-                            name: b"Sebastian Thiel".as_bstr(),
-                            email: b"foo@example.com".as_bstr(),
-                            time: Time {
-                                time: 1618030561,
-                                offset: 28800,
-                                sign: Sign::Plus
-                            }
+                let actual = Line {
+                    previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
+                    new_oid: b"89b43f80a514aee58b662ad606e6352e03eaeee4".as_bstr(),
+                    signature: git_actor::immutable::Signature {
+                        name: b"Sebastian Thiel".as_bstr(),
+                        email: b"foo@example.com".as_bstr(),
+                        time: Time {
+                            time: 1618030561,
+                            offset: 28800,
+                            sign: Sign::Plus,
                         },
-                        message: b"pull --ff-only: Fast-forward".as_bstr()
-                    }
+                    },
+                    message: b"pull --ff-only: Fast-forward".as_bstr(),
+                    _prevent_initialization: (),
+                };
+                assert_eq!(res, actual);
+                assert_eq!(
+                    actual.previous_oid(),
+                    hex_to_oid("a5828ae6b52137b913b978e16cd2334482eb4c1f")
                 );
+                assert_eq!(actual.new_oid(), hex_to_oid("89b43f80a514aee58b662ad606e6352e03eaeee4"));
             }
         }
         #[test]
