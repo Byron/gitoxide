@@ -1,8 +1,52 @@
-use crate::fetch::{oid, transport, CloneRefInWantDelegate, LsRemoteDelegate};
+use crate::fetch::{oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 use bstr::ByteSlice;
 use git_features::progress;
 use git_protocol::fetch;
 use git_transport::Protocol;
+
+#[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+async fn clone_abort_prep() -> crate::Result {
+    let out = Vec::new();
+    let mut dlg = CloneDelegate::default();
+    dlg.abort_with = Some(std::io::Error::new(std::io::ErrorKind::Other, "hello world"));
+    let mut transport = transport(
+        out,
+        "v2/clone.response",
+        Protocol::V2,
+        git_transport::client::git::ConnectMode::Daemon,
+    );
+    let err = git_protocol::fetch(
+        &mut transport,
+        &mut dlg,
+        git_protocol::credentials::helper,
+        progress::Discard,
+    )
+    .await
+    .expect_err("fetch aborted");
+    assert_eq!(dlg.pack_bytes, 0, "we aborted before fetching");
+
+    assert_eq!(
+        transport.into_inner().1.as_bstr(),
+        format!(
+            "002fgit-upload-pack does/not/matter\0\0version=2\00014command=ls-refs
+001aagent={}
+0001000csymrefs
+0009peel
+00000000",
+            fetch::agent().1.expect("value set")
+        )
+        .as_bytes()
+        .as_bstr()
+    );
+    match err {
+        fetch::Error::Io(err) => {
+            assert_eq!(err.kind(), std::io::ErrorKind::Other);
+            assert_eq!(err.get_ref().expect("other error").to_string(), "hello world");
+        }
+        _ => panic!("should not have another error here"),
+    }
+    Ok(())
+}
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn ls_remote() -> crate::Result {
@@ -79,6 +123,13 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
             .as_bytes()
             .as_bstr()
     );
+    match err {
+        fetch::Error::Io(err) => {
+            assert_eq!(err.kind(), std::io::ErrorKind::Other);
+            assert_eq!(err.get_ref().expect("other error").to_string(), "hello world");
+        }
+        _ => panic!("should not have another error here"),
+    }
     Ok(())
 }
 

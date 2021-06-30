@@ -114,45 +114,50 @@ where
             let ls_refs = Command::LsRefs;
             let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
             let mut ls_args = ls_refs.initial_arguments(&ls_features);
-            let next = delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features);
-            // User has requested to skip ls-refs, perhaps because they're using want-ref
-            if next == LsRefsAction::Skip {
-                vec![]
-            } else {
-                ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
+            match delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features) {
+                Ok(LsRefsAction::Skip) => Vec::new(),
+                Ok(LsRefsAction::Continue) => {
+                    ls_refs.validate_argument_prefixes_or_panic(
+                        protocol_version,
+                        &capabilities,
+                        &ls_args,
+                        &ls_features,
+                    );
 
-                progress.step();
-                progress.set_name("list refs");
-                let mut remote_refs = transport
-                    .invoke(
-                        ls_refs.as_str(),
-                        ls_features.into_iter(),
-                        if ls_args.is_empty() {
-                            None
-                        } else {
-                            Some(ls_args.into_iter())
-                        },
-                    )
-                    .await?;
-                refs::from_v2_refs(&mut remote_refs).await?
+                    progress.step();
+                    progress.set_name("list refs");
+                    let mut remote_refs = transport
+                        .invoke(
+                            ls_refs.as_str(),
+                            ls_features.into_iter(),
+                            if ls_args.is_empty() {
+                                None
+                            } else {
+                                Some(ls_args.into_iter())
+                            },
+                        )
+                        .await?;
+                    refs::from_v2_refs(&mut remote_refs).await?
+                }
+                Err(err) => {
+                    indicate_end_of_interaction(transport)?;
+                    return Err(err.into());
+                }
             }
         }
     };
 
     let fetch = Command::Fetch;
     let mut fetch_features = fetch.default_features(protocol_version, &capabilities);
-    let next = delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs);
-    fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
-
-    if next == Action::Cancel {
-        // An empty request marks the (early) end of the interaction. Only relevant in stateful transports though.
-        if transport.is_stateful() {
-            transport
-                .request(client::WriteMode::Binary, client::MessageKind::Flush)?
-                .into_read()
-                .await?;
+    match delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs) {
+        Ok(Action::Cancel) => return indicate_end_of_interaction(transport),
+        Ok(Action::Continue) => {
+            fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
         }
-        return Ok(());
+        Err(err) => {
+            indicate_end_of_interaction(transport)?;
+            return Err(err.into());
+        }
     }
 
     Response::check_required_features(protocol_version, &fetch_features)?;
@@ -186,6 +191,18 @@ where
         }
     }
     Ok(())
+}
+
+#[maybe_async]
+async fn indicate_end_of_interaction(mut transport: impl client::Transport) -> Result<(), Error> {
+    // An empty request marks the (early) end of the interaction. Only relevant in stateful transports though.
+    if transport.is_stateful() {
+        transport
+            .request(client::WriteMode::Binary, client::MessageKind::Flush)?
+            .into_read()
+            .await?;
+    }
+    return Ok(());
 }
 
 fn setup_remote_progress(

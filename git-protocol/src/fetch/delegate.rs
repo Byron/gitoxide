@@ -25,11 +25,6 @@ pub enum LsRefsAction {
     /// This is valid if the 'ref-in-want' capability is taken advantage of. The delegate must then send 'want-ref's in
     /// [`DelegateBlocking::negotiate`].
     Skip,
-    /// Abort the operation immediately as the servers capabilities don't match our needs.
-    ///
-    /// The reason for this not being `std::io::Result<LsRefsAction>` is that side-effects are not anticipated here, the decision to
-    /// abort should be possible entirely on what's available.
-    Abort(Box<dyn std::error::Error + 'static>),
 }
 
 /// The non-IO protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation, sparing
@@ -46,6 +41,7 @@ pub trait DelegateBlocking {
         Vec::new()
     }
     /// Called before invoking 'ls-refs' on the server to allow providing it with additional `arguments` and to enable `features`.
+    /// If the server `capabilities` don't match the requirements abort with an error to abort the entire fetch operation.
     ///
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake which happened prior.
@@ -61,8 +57,8 @@ pub trait DelegateBlocking {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> LsRefsAction {
-        LsRefsAction::Continue
+    ) -> std::io::Result<LsRefsAction> {
+        Ok(LsRefsAction::Continue)
     }
 
     /// Called before invoking the 'fetch' interaction with `features` pre-filled for typical use
@@ -134,7 +130,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> LsRefsAction {
+    ) -> io::Result<LsRefsAction> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
 
@@ -144,7 +140,7 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
-    ) -> std::io::Result<Action> {
+    ) -> io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
     }
 
@@ -168,7 +164,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> LsRefsAction {
+    ) -> io::Result<LsRefsAction> {
         self.deref_mut().prepare_ls_refs(_server, _arguments, _features)
     }
 
@@ -178,7 +174,7 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
-    ) -> std::io::Result<Action> {
+    ) -> io::Result<Action> {
         self.deref_mut().prepare_fetch(_version, _server, _features, _refs)
     }
 

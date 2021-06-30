@@ -14,9 +14,22 @@ type Cursor = futures_lite::io::Cursor<Vec<u8>>;
 #[derive(Default)]
 pub struct CloneDelegate {
     pack_bytes: usize,
+    abort_with: Option<std::io::Error>,
 }
 
 impl fetch::DelegateBlocking for CloneDelegate {
+    fn prepare_fetch(
+        &mut self,
+        _version: git_transport::Protocol,
+        _server: &Capabilities,
+        _features: &mut Vec<(&str, Option<&str>)>,
+        _refs: &[fetch::Ref],
+    ) -> io::Result<Action> {
+        match self.abort_with.take() {
+            Some(err) => Err(err),
+            None => Ok(Action::Continue),
+        }
+    }
     fn negotiate(
         &mut self,
         refs: &[Ref],
@@ -52,8 +65,8 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         _server: &Capabilities,
         _arguments: &mut Vec<BString>,
         _features: &mut Vec<(&str, Option<&str>)>,
-    ) -> LsRefsAction {
-        LsRefsAction::Skip
+    ) -> io::Result<LsRefsAction> {
+        Ok(LsRefsAction::Skip)
     }
 
     fn prepare_fetch(
@@ -62,9 +75,9 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         refs: &[fetch::Ref],
-    ) -> Action {
+    ) -> io::Result<Action> {
         self.refs = refs.to_owned();
-        Action::Continue
+        Ok(Action::Continue)
     }
 
     fn negotiate(
@@ -101,15 +114,26 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
     fn handshake_extra_parameters(&self) -> Vec<(String, Option<String>)> {
         vec![("value-only".into(), None), ("key".into(), Some("value".into()))]
     }
+    fn prepare_ls_refs(
+        &mut self,
+        _server: &Capabilities,
+        _arguments: &mut Vec<BString>,
+        _features: &mut Vec<(&str, Option<&str>)>,
+    ) -> std::io::Result<LsRefsAction> {
+        match self.abort_with.take() {
+            Some(err) => Err(err),
+            None => Ok(LsRefsAction::Continue),
+        }
+    }
     fn prepare_fetch(
         &mut self,
         _version: git_transport::Protocol,
         _server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         refs: &[fetch::Ref],
-    ) -> fetch::Action {
+    ) -> io::Result<fetch::Action> {
         self.refs = refs.to_owned();
-        fetch::Action::Cancel
+        Ok(fetch::Action::Cancel)
     }
 
     fn negotiate(
