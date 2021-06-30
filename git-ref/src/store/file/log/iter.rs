@@ -50,7 +50,7 @@ pub mod decode {
                 LineNumber::FromStart(line) => (line, ""),
                 // LineNumber::FromEnd(line) => (line, " from the end"),
             };
-            write!(f, "{}{}", line, suffix)
+            write!(f, "{}{}", line + 1, suffix)
         }
     }
 }
