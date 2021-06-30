@@ -63,9 +63,9 @@ pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decod
 
 /// An iterator yielding parsed lines in a file in reverse.
 #[allow(dead_code)]
-pub struct Reverse<'a> {
+pub struct Reverse<'a, F> {
     buf: &'a mut [u8],
-    file: Option<std::fs::File>,
+    read: Option<F>,
     iter: Option<std::iter::Peekable<bstr::SplitReverse<'a>>>,
 }
 
@@ -74,12 +74,26 @@ pub struct Reverse<'a> {
 /// Note that `buf` must be big enough to capture typical line length or else partial lines will be parsed and probably fail
 /// in the process.
 ///
+/// This iterator is very expensive in terms of I/O operations and shouldn't be used to read more than the last few entries of the log.
+/// Use a forward iterator instead for these cases.
+///
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn reverse(log: std::fs::File, buf: &mut [u8]) -> Reverse<'_> {
+pub fn reverse<F>(log: F, buf: &mut [u8]) -> Reverse<'_, F>
+where
+    F: std::io::Read + std::io::Seek,
+{
     Reverse {
         buf,
-        file: Some(log),
+        read: Some(log),
         iter: None,
+    }
+}
+
+impl<'a, F> Iterator for Reverse<'a, F> {
+    type Item = Result<log::Line<'a>, decode::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!("reverse iteration")
     }
 }

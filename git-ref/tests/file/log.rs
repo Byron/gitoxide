@@ -1,19 +1,42 @@
 mod iter {
+    use std::path::PathBuf;
+
+    fn reflog_dir() -> crate::Result<PathBuf> {
+        Ok(
+            git_testtools::scripted_fixture_repo_read_only("make_repo_for_reflog.sh")?
+                .join(".git")
+                .join("logs"),
+        )
+    }
+    fn reflog(name: &str) -> crate::Result<Vec<u8>> {
+        Ok(std::fs::read(reflog_dir()?.join(name))?)
+    }
+    mod backward {
+        use bstr::B;
+        use git_ref::file::log::Line;
+
+        #[test]
+        #[should_panic]
+        fn a_single_line_with_trailing_newline_and_suitably_big_buffer() {
+            let read = std::io::Cursor::new(b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n");
+            let mut buf = [0u8; 1024];
+            let mut iter = git_ref::file::log::iter::reverse(read, &mut buf[..]);
+            let Line {
+                previous_oid,
+                new_oid,
+                signature: _,
+                message,
+                ..
+            } = iter.next().expect("a single line").expect("no parse error");
+            assert_eq!(message, B("commit (initial): c1"));
+            assert_eq!(previous_oid, B("0000000000000000000000000000000000000000"));
+            assert_eq!(new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
+        }
+    }
     mod forward {
+        use crate::file::log::iter::reflog;
         use bstr::B;
         use git_hash::ObjectId;
-        use std::path::PathBuf;
-
-        fn reflog_dir() -> crate::Result<PathBuf> {
-            Ok(
-                git_testtools::scripted_fixture_repo_read_only("make_repo_for_reflog.sh")?
-                    .join(".git")
-                    .join("logs"),
-            )
-        }
-        fn reflog(name: &str) -> crate::Result<Vec<u8>> {
-            Ok(std::fs::read(reflog_dir()?.join(name))?)
-        }
 
         #[test]
         fn all_success() -> crate::Result {
