@@ -49,7 +49,6 @@ pub(crate) mod decode {
                 new_oid: new.as_bstr(),
                 signature,
                 message,
-                _prevent_initialization: (),
             },
         )(bytes)
     }
@@ -113,7 +112,6 @@ pub(crate) mod decode {
                             }
                         },
                         message: b"".as_bstr(),
-                        _prevent_initialization: ()
                     }
                 );
             }
@@ -140,7 +138,6 @@ pub(crate) mod decode {
                         },
                     },
                     message: b"pull --ff-only: Fast-forward".as_bstr(),
-                    _prevent_initialization: (),
                 };
                 assert_eq!(res, actual);
                 assert_eq!(

@@ -3,6 +3,7 @@ use bstr::BStr;
 /// A parsed ref log line.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct Line<'a> {
     /// The previous object id in hexadecimal. Use [`Line::previous_oid()`] to get a more usable form.
     pub previous_oid: &'a BStr,
@@ -13,7 +14,6 @@ pub struct Line<'a> {
     pub signature: git_actor::immutable::Signature<'a>,
     /// The message providing details about the operation performed in this log line.
     pub message: &'a BStr,
-    _prevent_initialization: (),
 }
 
 ///
