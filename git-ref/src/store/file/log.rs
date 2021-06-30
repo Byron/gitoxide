@@ -54,10 +54,10 @@ mod decode {
             context(
                 "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
                 tuple((
-                    terminated(hex_sha1, tag(b" ")),
-                    terminated(hex_sha1, tag(b" ")),
-                    git_actor::immutable::signature::decode,
-                    preceded(opt(tag(b"\t")), parse_message),
+                    context("<old-hexsha>", terminated(hex_sha1, tag(b" "))),
+                    context("<new-hexsha>", terminated(hex_sha1, tag(b" "))),
+                    context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
+                    context("<optional message>", preceded(opt(tag(b"\t")), parse_message)),
                 )),
             ),
             |(old, new, signature, message)| Line {
@@ -87,18 +87,25 @@ mod decode {
             v
         }
 
-        fn to_bstr_err(err: VerboseError<&[u8]>) -> VerboseError<&BStr> {
-            VerboseError {
-                errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
-            }
-        }
+        mod invalid {
+            use super::line;
 
-        #[test]
-        fn completely_bogus_shows_error_with_context() {
-            let err = line::<VerboseError<&[u8]>>(b"definitely not a log entry")
-                .expect_err("this should fail")
-                .map(|e| to_bstr_err(e).to_string());
-            assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
+            use bstr::{BStr, ByteSlice};
+            use nom::error::VerboseError;
+
+            fn to_bstr_err(err: VerboseError<&[u8]>) -> VerboseError<&BStr> {
+                VerboseError {
+                    errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
+                }
+            }
+
+            #[test]
+            fn completely_bogus_shows_error_with_context() {
+                let err = line::<VerboseError<&[u8]>>(b"definitely not a log entry")
+                    .expect_err("this should fail")
+                    .map(|e| to_bstr_err(e).to_string());
+                assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
+            }
         }
 
         const NULL_SHA1: &[u8] = b"0000000000000000000000000000000000000000";
