@@ -13,12 +13,13 @@ mod iter {
     }
 
     mod backward {
-        mod with_suitable_buffer {
+        mod with_buffer_big_enough_for_largest_line {
             use git_ref::file::log::mutable::Line;
             use git_testtools::hex_to_id;
 
             #[test]
             fn single_line() -> crate::Result {
+                let mut buf = [0u8; 1024];
                 let two_lines: Vec<u8> = b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1".to_vec();
                 let two_lines_trailing_nl = {
                     let mut l = two_lines.clone();
@@ -27,7 +28,7 @@ mod iter {
                 };
                 for line in &[two_lines, two_lines_trailing_nl] {
                     let read = std::io::Cursor::new(line);
-                    let mut iter = git_ref::file::log::iter::reverse::<_, 1024>(read)?;
+                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
                     let Line {
                         previous_oid,
                         new_oid,
@@ -44,6 +45,7 @@ mod iter {
 
             #[test]
             fn two_lines() -> crate::Result {
+                let mut buf = [0u8; 1024];
                 let two_lines: Vec<u8> = b"1000000000000000000000000000000000000000 234385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c2\n0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1".to_vec();
                 let two_lines_trailing_nl = {
                     let mut l = two_lines.clone();
@@ -52,7 +54,7 @@ mod iter {
                 };
                 for line in &[two_lines, two_lines_trailing_nl] {
                     let read = std::io::Cursor::new(line);
-                    let mut iter = git_ref::file::log::iter::reverse::<_, 1024>(read)?;
+                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
                     let Line {
                         previous_oid,
                         new_oid,

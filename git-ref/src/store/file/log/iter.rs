@@ -74,8 +74,8 @@ pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decod
 
 /// An iterator yielding parsed lines in a file in reverse.
 #[allow(dead_code)]
-pub struct Reverse<F, const SIZE: usize> {
-    buf: [u8; SIZE],
+pub struct Reverse<'a, F> {
+    buf: &'a mut [u8],
     count: usize,
     read_and_pos: Option<(F, u64)>,
     last_nl_pos: Option<usize>,
@@ -91,20 +91,20 @@ pub struct Reverse<F, const SIZE: usize> {
 ///
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn reverse<F, const SIZE: usize>(mut log: F) -> std::io::Result<Reverse<F, SIZE>>
+pub fn reverse<F>(mut log: F, buf: &mut [u8]) -> std::io::Result<Reverse<'_, F>>
 where
     F: std::io::Read + std::io::Seek,
 {
     let pos = log.seek(std::io::SeekFrom::End(0))?;
     Ok(Reverse {
-        buf: [0; SIZE],
+        buf,
         count: 0,
         read_and_pos: Some((log, pos)),
         last_nl_pos: None,
     })
 }
 
-impl<F, const SIZE: usize> Iterator for Reverse<F, SIZE>
+impl<'a, F> Iterator for Reverse<'a, F>
 where
     F: std::io::Read + std::io::Seek,
 {
