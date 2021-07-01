@@ -81,7 +81,8 @@ impl Marker {
         boundary_directory: Option<PathBuf>,
     ) -> Result<Marker, Error> {
         Ok(Marker {
-            _inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+            created_from_file: false,
+            inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
                 git_tempfile::mark_at(p, d, c)
             })?,
         })
