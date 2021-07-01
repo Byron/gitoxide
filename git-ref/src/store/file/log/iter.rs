@@ -160,6 +160,12 @@ where
                         .map(Into::into)))
                     } else {
                         let npos = last_read_pos.saturating_sub((self.buf.len() - end) as u64);
+                        if npos == last_read_pos {
+                            return Some(Err(std::io::Error::new(
+                                std::io::ErrorKind::Other,
+                                "buffer too small for line size",
+                            )));
+                        }
                         let n = (last_read_pos - npos) as usize;
                         self.buf.copy_within(0..end, n);
                         if let Err(err) = read.seek(std::io::SeekFrom::Start(npos)) {

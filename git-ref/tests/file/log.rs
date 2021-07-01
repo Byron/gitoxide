@@ -13,6 +13,34 @@ mod iter {
     }
 
     mod backward {
+        mod with_buffer_too_small_for_single_line {
+            #[test]
+            fn single_line() -> crate::Result {
+                let mut buf = [0u8; 128];
+                let two_lines: Vec<u8> = b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1".to_vec();
+                let two_lines_trailing_nl = {
+                    let mut l = two_lines.clone();
+                    l.push(b'\n');
+                    l
+                };
+                for line in &[two_lines, two_lines_trailing_nl] {
+                    let read = std::io::Cursor::new(line);
+                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
+                    assert_eq!(
+                        iter.next()
+                            .expect("an error")
+                            .expect_err("buffer too small")
+                            .get_ref()
+                            .expect("inner error")
+                            .to_string(),
+                        "buffer too small for line size"
+                    );
+                    assert!(iter.next().is_none(), "iterator depleted");
+                }
+                Ok(())
+            }
+        }
+
         mod with_buffer_big_enough_for_largest_line {
             use git_ref::file::log::mutable::Line;
             use git_testtools::hex_to_id;
