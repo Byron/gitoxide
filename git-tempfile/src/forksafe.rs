@@ -40,6 +40,17 @@ impl ForksafeTempfile {
             TempfileOrTemppath::Temppath(path) => path,
         }
     }
+    pub fn close(self) -> Self {
+        if let TempfileOrTemppath::Tempfile(file) = self.inner {
+            ForksafeTempfile {
+                inner: TempfileOrTemppath::Temppath(file.into_temp_path()),
+                cleanup: self.cleanup,
+                owning_process_id: self.owning_process_id,
+            }
+        } else {
+            self
+        }
+    }
     pub fn into_tempfile(self) -> Option<NamedTempFile> {
         match self.inner {
             TempfileOrTemppath::Tempfile(file) => Some(file),

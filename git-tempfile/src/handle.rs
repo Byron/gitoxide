@@ -125,6 +125,28 @@ impl Handle<Writable> {
         std::mem::forget(self);
         res.and_then(|(_k, v)| v.map(|v| v.into_tempfile().expect("correct runtime typing")))
     }
+
+    /// Close the underlying file handle but keep track of the temporary file as before for automatic cleanup.
+    ///
+    /// This saves system resources in situations where one opens a tempfile file at a time, writes a new value, and closes
+    /// it right after to perform more updates of this kind in other tempfiles. When all succeed, they can be renamed one after
+    /// another.
+    pub fn close(self) -> std::io::Result<Handle<Closed>> {
+        match REGISTER.remove(&self.id) {
+            Some((id, Some(t))) => {
+                std::mem::forget(self);
+                expect_none(REGISTER.insert(id, Some(t.close())));
+                Ok(Handle::<Closed> {
+                    id,
+                    _marker: Default::default(),
+                })
+            }
+            None | Some((_, None)) => Err(std::io::Error::new(
+                std::io::ErrorKind::Interrupted,
+                format!("The tempfile with id {} wasn't available anymore", self.id),
+            )),
+        }
+    }
 }
 
 /// Mutation

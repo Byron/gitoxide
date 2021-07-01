@@ -53,6 +53,34 @@ mod mark_path {
 }
 mod at_path {
     use git_tempfile::{AutoRemove, ContainingDirectory};
+
+    #[test]
+    fn save_filehandles_by_converting_files_to_markers_and_persist_them() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let target = dir.path().join("a").join("file.tmp");
+        let new_filename = target.parent().unwrap().join("file.ext");
+        let mut file = git_tempfile::writable_at(
+            &target,
+            ContainingDirectory::CreateAllRaceProof(Default::default()),
+            AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
+                boundary_directory: dir.path().into(),
+            },
+        )?;
+        file.with_mut(|f| f.as_file_mut().write_all(b"hello world"))??;
+        let mark = file.close()?;
+        drop(mark.take().expect("still there").persist(&new_filename)?);
+        assert!(!target.exists(), "tempfile was renamed");
+        assert!(
+            new_filename.is_file(),
+            "new file was placed (and parent directories still exist)"
+        );
+        assert_eq!(
+            std::fs::read(new_filename)?,
+            &b"hello world"[..],
+            "written content is persisted, too"
+        );
+        Ok(())
+    }
     use std::io::{ErrorKind, Write};
 
     #[test]
