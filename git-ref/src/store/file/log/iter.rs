@@ -112,6 +112,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.last_nl_pos.take(), self.read_and_pos.take()) {
+            // Initial state - load first data block
             (None, Some((mut read, pos))) => {
                 let npos = pos.saturating_sub(self.buf.len() as u64);
                 if let Err(err) = read.seek(std::io::SeekFrom::Start(npos)) {
@@ -127,25 +128,12 @@ where
                     return Some(Err(err));
                 };
 
-                self.last_nl_pos = Some(if *buf.last().expect("we have read non-zero bytes before") != b'\n' {
-                    buf.len()
-                } else {
-                    match buf.rfind_byte(b'\n') {
-                        Some(end) => end,
-                        None => {
-                            return Some(Ok(convert(
-                                buf,
-                                LineNumber::FromStart(self.count),
-                                log::line::decode::one::<()>(buf),
-                            )
-                            .map(Into::into)));
-                        }
-                    }
-                });
+                let last_byte = *buf.last().expect("we have read non-zero bytes before");
+                self.last_nl_pos = Some(if last_byte != b'\n' { buf.len() } else { buf.len() - 1 });
                 self.read_and_pos = Some((read, npos));
                 self.next()
             }
-            // Has data block and can parse lines
+            // Has data block and can extract lines from it, load new blocks as needed
             (Some(end), Some(read_and_pos)) => match self.buf[..end].rfind_byte(b'\n') {
                 Some(start) => {
                     self.read_and_pos = Some(read_and_pos);
