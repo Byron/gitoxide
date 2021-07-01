@@ -308,10 +308,14 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * [x] find single ref by name
     * [ ] find refs matching pattern
     * [ ] iterate
-    * [ ] write ref
+    * **transactions**
+      * [ ] single ref
+      * [ ] multiple refs
     * **log**
-      * [ ] read
-      * [ ] write
+      * [x] forward iteration
+      * [x] backward iteration
+      * [x] serialization
+      * [ ] create
       * [ ] delete
       * [ ] expire
     * **ref**
