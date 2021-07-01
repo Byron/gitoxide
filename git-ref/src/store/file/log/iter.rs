@@ -1,4 +1,5 @@
 use crate::store::file::log;
+use crate::store::file::log::iter::decode::LineNumber;
 use bstr::ByteSlice;
 
 ///
@@ -77,7 +78,7 @@ pub struct Reverse<F, const SIZE: usize> {
     buf: [u8; SIZE],
     count: usize,
     read_and_pos: Option<(F, u64)>,
-    range: Option<(Option<usize>, usize)>,
+    last_nl_pos: Option<usize>,
 }
 
 /// An iterator over entries of the `log` file in reverse, using `buf` as sliding window.
@@ -99,7 +100,7 @@ where
         buf: [0; SIZE],
         count: 0,
         read_and_pos: Some((log, pos)),
-        range: None,
+        last_nl_pos: None,
     })
 }
 
@@ -110,8 +111,7 @@ where
     type Item = std::io::Result<Result<log::mutable::Line, decode::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match (self.range.take(), self.read_and_pos.take()) {
-            (None, None) => None,
+        match (self.last_nl_pos.take(), self.read_and_pos.take()) {
             (None, Some((mut read, pos))) => {
                 let npos = pos.saturating_sub(self.buf.len() as u64);
                 if let Err(err) = read.seek(std::io::SeekFrom::Start(npos)) {
@@ -127,12 +127,12 @@ where
                     return Some(Err(err));
                 };
 
-                self.range = match buf.rfind_byte(b'\n') {
-                    Some(end) => Some((None, end)),
+                self.last_nl_pos = match buf.rfind_byte(b'\n') {
+                    Some(end) => Some(end),
                     None => {
                         return Some(Ok(convert(
                             buf,
-                            decode::LineNumber::FromEnd(self.count),
+                            LineNumber::FromStart(self.count),
                             log::line::decode::one::<()>(buf),
                         )
                         .map(Into::into)))
@@ -141,8 +141,39 @@ where
                 self.read_and_pos = Some((read, npos));
                 self.next()
             }
-            (Some(_), None) => todo!("exhaust iteration in existing iterator"),
-            (Some(_), Some(_)) => todo!("exhaust iterator and potentially load more"),
+            // Has data block and can parse lines
+            (Some(end), Some(read_and_pos)) => match self.buf[..end].rfind_byte(b'\n') {
+                Some(start) => {
+                    self.read_and_pos = Some(read_and_pos);
+                    self.last_nl_pos = Some(start);
+                    let buf = &self.buf[start..end];
+                    let res = Some(Ok(convert(
+                        buf,
+                        LineNumber::FromEnd(self.count),
+                        log::line::decode::one::<()>(buf),
+                    )
+                    .map(Into::into)));
+                    self.count += 1;
+                    res
+                }
+                None => {
+                    let (_read, last_read_pos) = read_and_pos;
+                    if last_read_pos == 0 {
+                        let buf = &self.buf[..end];
+                        Some(Ok(convert(
+                            buf,
+                            LineNumber::FromEnd(self.count),
+                            log::line::decode::one::<()>(buf),
+                        )
+                        .map(Into::into)))
+                    } else {
+                        todo!("load more we are not yet done, handle remaining buffer content")
+                    }
+                }
+            },
+            // depleted
+            (None, None) => None,
+            (Some(_), None) => unreachable!("BUG: Invalid state: we never discard only our file, always both."),
         }
     }
 }
