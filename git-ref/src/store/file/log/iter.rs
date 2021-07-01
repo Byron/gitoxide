@@ -149,7 +149,7 @@ where
                     res
                 }
                 None => {
-                    let (_read, last_read_pos) = read_and_pos;
+                    let (mut read, last_read_pos) = read_and_pos;
                     if last_read_pos == 0 {
                         let buf = &self.buf[..end];
                         Some(Ok(convert(
@@ -159,7 +159,18 @@ where
                         )
                         .map(Into::into)))
                     } else {
-                        todo!("load more we are not yet done, handle remaining buffer content")
+                        let npos = last_read_pos.saturating_sub((self.buf.len() - end) as u64);
+                        let n = (last_read_pos - npos) as usize;
+                        self.buf.copy_within(0..end, n);
+                        if let Err(err) = read.seek(std::io::SeekFrom::Start(npos)) {
+                            return Some(Err(err));
+                        }
+                        if let Err(err) = read.read_exact(&mut self.buf[..n]) {
+                            return Some(Err(err));
+                        }
+                        self.read_and_pos = Some((read, npos));
+                        self.last_nl_pos = Some(n + end);
+                        self.next()
                     }
                 }
             },

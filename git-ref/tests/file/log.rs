@@ -52,7 +52,7 @@ mod iter {
                     l
                 };
                 let lines = [two_lines, two_lines_trailing_nl];
-                for buf_size in &[1024usize, 512] {
+                for buf_size in &[1024usize, 256] {
                     let mut buf = vec![0; *buf_size];
                     for line in &lines {
                         let read = std::io::Cursor::new(line);
