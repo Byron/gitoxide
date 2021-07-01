@@ -1,3 +1,29 @@
+mod close {
+
+    use git_lock::acquire::Fail;
+    use std::io::Write;
+
+    #[test]
+    fn acquire_close_commit_to_existing() -> crate::Result {
+        let dir = tempfile::tempdir()?;
+        let resource = dir.path().join("resource-existing.ext");
+        std::fs::write(&resource, b"old state")?;
+        let resource_lock = resource.with_extension("ext.lock");
+        let mut file = git_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None)?;
+        assert!(resource_lock.is_file());
+        file.with_mut(|out| out.write_all(b"hello world"))?;
+        let mark = file.close()?;
+        mark.commit()?;
+        assert_eq!(
+            std::fs::read(resource)?,
+            &b"hello world"[..],
+            "it created the resource and wrote the data"
+        );
+        assert!(!resource_lock.is_file());
+        Ok(())
+    }
+}
+
 mod acquire {
     use git_lock::acquire;
     use std::io::{ErrorKind, Write};

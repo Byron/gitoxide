@@ -23,6 +23,15 @@ impl File {
         tf.persist(resource_path)?;
         Ok(())
     }
+
+    /// Close the lock file to prevent further writes and to save system resources.
+    /// A call to [Marker::commit()] is allowed on the [`Marker`] to write changes back to the resource.
+    pub fn close(self) -> std::io::Result<Marker> {
+        Ok(Marker {
+            inner: self.inner.close()?,
+            created_from_file: true,
+        })
+    }
 }
 
 impl Marker {
