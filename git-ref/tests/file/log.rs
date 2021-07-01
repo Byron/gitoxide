@@ -1,3 +1,36 @@
+mod line {
+    mod write_to {
+        use bstr::ByteVec;
+        use git_ref::file::log;
+
+        #[test]
+        fn newlines_in_message_of_the_input_fails_and_we_trust_signature_writing_validation() -> crate::Result {
+            let line = "0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1";
+            let mut line = log::Line::from_bytes(line.as_bytes())?.to_mutable();
+            line.message.push_str("and here come\nthe newline");
+            let err = line
+                .write_to(&mut Vec::new())
+                .expect_err("newlines in messages are caught");
+            assert!(err.to_string().contains("newline"));
+            Ok(())
+        }
+
+        #[test]
+        fn round_trips() -> crate::Result {
+            let lines = &["0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n", 
+                         "0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	\n"];
+            for line in lines {
+                let line = log::Line::from_bytes(line.as_bytes())?;
+                let mut buf = Vec::new();
+                line.to_mutable().write_to(&mut buf)?;
+                let same_line = log::Line::from_bytes(&buf)?;
+                assert_eq!(line, same_line);
+            }
+            Ok(())
+        }
+    }
+}
+
 mod iter {
     use std::path::PathBuf;
 

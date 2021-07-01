@@ -20,7 +20,7 @@ mod write {
     use std::io;
 
     quick_error! {
-        /// The Error produced in by [`Signature::write_to()`].
+        /// The Error produced by [`Signature::write_to()`].
         #[derive(Debug)]
         #[allow(missing_docs)]
         enum Error {

@@ -45,6 +45,55 @@ pub mod mutable {
             }
         }
     }
+
+    impl<'a> super::Line<'a> {
+        /// Convert this instance into its mutable counterpart
+        pub fn to_mutable(&self) -> Line {
+            self.clone().into()
+        }
+    }
+
+    ///
+    pub mod write {
+        use super::Line;
+        use bstr::{BStr, ByteSlice};
+        use quick_error::quick_error;
+        use std::io;
+
+        quick_error! {
+            /// The Error produced by [`Line::write_to()`].
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            enum Error {
+                IllegalCharacter {
+                    display("Messages must not contain newlines\\n")
+                }
+            }
+        }
+
+        impl From<Error> for io::Error {
+            fn from(err: Error) -> Self {
+                io::Error::new(io::ErrorKind::Other, err)
+            }
+        }
+
+        /// Output
+        impl Line {
+            /// Serialize this instance to `out` in the git serialization format for ref log lines.
+            pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+                write!(out, "{} {} ", self.previous_oid, self.new_oid)?;
+                self.signature.write_to(&mut out)?;
+                writeln!(out, "\t{}", check_newlines(self.message.as_ref())?)
+            }
+        }
+
+        fn check_newlines(input: &BStr) -> Result<&BStr, Error> {
+            if input.find_byte(b'\n').is_some() {
+                return Err(Error::IllegalCharacter);
+            }
+            Ok(input)
+        }
+    }
 }
 
 ///

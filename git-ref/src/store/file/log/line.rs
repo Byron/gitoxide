@@ -2,13 +2,6 @@ use crate::store::file::log::Line;
 use git_hash::ObjectId;
 
 impl<'a> Line<'a> {
-    /// Decode a line from the given bytes which are expected to start at a hex sha.
-    pub fn from_bytes(input: &'a [u8]) -> Result<Line<'a>, decode::Error> {
-        decode::one::<()>(input)
-            .map(|(_, l)| l)
-            .map_err(|_| decode::Error::new(input))
-    }
-
     /// The previous object id of the ref. It will be a null hash if there was no previous id as
     /// this ref is being created.
     pub fn previous_oid(&self) -> ObjectId {
@@ -27,9 +20,9 @@ pub mod decode {
     use bstr::{BStr, ByteSlice};
     use nom::{
         bytes::{complete::tag, complete::take_while},
-        combinator::{map, opt},
+        combinator::opt,
         error::{context, ContextError, ParseError},
-        sequence::{preceded, terminated, tuple},
+        sequence::{terminated, tuple},
         IResult,
     };
 
@@ -65,6 +58,13 @@ pub mod decode {
     }
     pub use error::Error;
 
+    impl<'a> Line<'a> {
+        /// Decode a line from the given bytes which are expected to start at a hex sha.
+        pub fn from_bytes(input: &'a [u8]) -> Result<Line<'a>, Error> {
+            one::<()>(input).map(|(_, l)| l).map_err(|_| Error::new(input))
+        }
+    }
+
     fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
@@ -76,23 +76,38 @@ pub mod decode {
     pub(crate) fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         bytes: &'a [u8],
     ) -> IResult<&[u8], Line<'a>, E> {
-        map(
-            context(
-                "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
-                tuple((
-                    context("<old-hexsha>", terminated(hex_sha1, tag(b" "))),
-                    context("<new-hexsha>", terminated(hex_sha1, tag(b" "))),
-                    context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
-                    context("<optional message>", preceded(opt(tag(b"\t")), message)),
-                )),
-            ),
-            |(old, new, signature, message)| Line {
+        let (i, (old, new, signature, message_sep, message)) = context(
+            "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
+            tuple((
+                context("<old-hexsha>", terminated(hex_sha1, tag(b" "))),
+                context("<new-hexsha>", terminated(hex_sha1, tag(b" "))),
+                context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
+                opt(tag(b"\t")),
+                context("<optional message>", message),
+            )),
+        )(bytes)?;
+
+        if message_sep.is_none() {
+            if let Some(first) = message.first() {
+                if !first.is_ascii_whitespace() {
+                    return Err(nom::Err::Error(E::add_context(
+                        i,
+                        "log message must be separated from signature with whitespace",
+                        E::from_error_kind(i, nom::error::ErrorKind::MapRes),
+                    )));
+                }
+            }
+        }
+
+        Ok((
+            i,
+            Line {
                 previous_oid: old.as_bstr(),
                 new_oid: new.as_bstr(),
                 signature,
                 message,
             },
-        )(bytes)
+        ))
     }
 
     #[cfg(test)]
@@ -129,6 +144,17 @@ pub mod decode {
                     .expect_err("this should fail")
                     .map(|e| to_bstr_err(e).to_string());
                 assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
+            }
+
+            #[test]
+            fn missing_whitespace_between_signature_and_message() {
+                let line = "0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000message";
+                let err = one::<VerboseError<&[u8]>>(line.as_bytes())
+                    .expect_err("this should fail")
+                    .map(|e| to_bstr_err(e).to_string());
+                assert!(err
+                    .to_string()
+                    .contains("log message must be separated from signature with whitespace"));
             }
         }
 
