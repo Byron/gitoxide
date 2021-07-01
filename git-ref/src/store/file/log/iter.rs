@@ -1,32 +1,28 @@
-use crate::store::file::log;
-use crate::store::file::log::iter::decode::LineNumber;
+use crate::store::{file::log, file::log::iter::decode::LineNumber};
 use bstr::ByteSlice;
 
 ///
 pub mod decode {
-    use bstr::{BString, ByteSlice};
+    use crate::store::file::log;
 
-    /// The error returned by items in the [forward][super::forward()] iterator
+    /// The error returned by items in the [forward][super::forward()] and [reverse][super::reverse()] iterators
     #[derive(Debug)]
     pub struct Error {
-        input: BString,
+        inner: log::line::decode::Error,
         line: LineNumber,
     }
 
     impl std::fmt::Display for Error {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "In line {}: {:?} did not match '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>'", self.line, self.input)
+            write!(f, "In line {}: {}", self.line, self.inner)
         }
     }
 
     impl<'a> std::error::Error for Error {}
 
     impl Error {
-        pub(crate) fn new(input: &[u8], line: LineNumber) -> Self {
-            Error {
-                line,
-                input: input.as_bstr().to_owned(),
-            }
+        pub(crate) fn new(err: log::line::decode::Error, line: LineNumber) -> Self {
+            Error { line, inner: err }
         }
     }
 
@@ -47,14 +43,6 @@ pub mod decode {
     }
 }
 
-fn convert<'a, E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>>(
-    input: &'a [u8],
-    ln: decode::LineNumber,
-    parsed: nom::IResult<&'a [u8], log::Line<'a>, E>,
-) -> Result<log::Line<'a>, decode::Error> {
-    parsed.map(|(_, line)| line).map_err(|_| decode::Error::new(input, ln))
-}
-
 /// Returns a forward iterator over the given `lines`, starting from the first line in the file and ending at the last.
 ///
 /// Note that `lines` are an entire reflog file.
@@ -64,11 +52,7 @@ fn convert<'a, E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'
 /// abort or continue.
 pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
     lines.as_bstr().lines().enumerate().map(|(ln, line)| {
-        convert(
-            &line,
-            decode::LineNumber::FromStart(ln),
-            log::line::decode::one::<()>(&line),
-        )
+        log::Line::from_bytes(line).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
     })
 }
 
@@ -139,12 +123,9 @@ where
                     self.read_and_pos = Some(read_and_pos);
                     self.last_nl_pos = Some(start);
                     let buf = &self.buf[start + 1..end];
-                    let res = Some(Ok(convert(
-                        buf,
-                        LineNumber::FromEnd(self.count),
-                        log::line::decode::one::<()>(buf),
-                    )
-                    .map(Into::into)));
+                    let res = Some(Ok(log::Line::from_bytes(buf)
+                        .map_err(|err| decode::Error::new(err, LineNumber::FromEnd(self.count)))
+                        .map(Into::into)));
                     self.count += 1;
                     res
                 }
@@ -152,12 +133,9 @@ where
                     let (mut read, last_read_pos) = read_and_pos;
                     if last_read_pos == 0 {
                         let buf = &self.buf[..end];
-                        Some(Ok(convert(
-                            buf,
-                            LineNumber::FromEnd(self.count),
-                            log::line::decode::one::<()>(buf),
-                        )
-                        .map(Into::into)))
+                        Some(Ok(log::Line::from_bytes(buf)
+                            .map_err(|err| decode::Error::new(err, LineNumber::FromEnd(self.count)))
+                            .map(Into::into)))
                     } else {
                         let npos = last_read_pos.saturating_sub((self.buf.len() - end) as u64);
                         if npos == last_read_pos {

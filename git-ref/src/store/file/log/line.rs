@@ -2,6 +2,13 @@ use crate::store::file::log::Line;
 use git_hash::ObjectId;
 
 impl<'a> Line<'a> {
+    /// Decode a line from the given bytes which are expected to start at a hex sha.
+    pub fn from_bytes(input: &'a [u8]) -> Result<Line<'a>, decode::Error> {
+        decode::one::<()>(input)
+            .map(|(_, l)| l)
+            .map_err(|_| decode::Error::new(input))
+    }
+
     /// The previous object id of the ref. It will be a null hash if there was no previous id as
     /// this ref is being created.
     pub fn previous_oid(&self) -> ObjectId {
@@ -13,7 +20,8 @@ impl<'a> Line<'a> {
     }
 }
 
-pub(crate) mod decode {
+///
+pub mod decode {
     use crate::{file::log::Line, parse::hex_sha1};
 
     use bstr::{BStr, ByteSlice};
@@ -25,6 +33,38 @@ pub(crate) mod decode {
         IResult,
     };
 
+    ///
+    mod error {
+        use bstr::{BString, ByteSlice};
+
+        /// The error returned by [from_bytes(…)][super::Line::from_bytes()]
+        #[derive(Debug)]
+        pub struct Error {
+            pub input: BString,
+        }
+
+        impl std::fmt::Display for Error {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(
+                    f,
+                    "{:?} did not match '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>'",
+                    self.input
+                )
+            }
+        }
+
+        impl<'a> std::error::Error for Error {}
+
+        impl Error {
+            pub(crate) fn new(input: &[u8]) -> Self {
+                Error {
+                    input: input.as_bstr().to_owned(),
+                }
+            }
+        }
+    }
+    pub use error::Error;
+
     fn message<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
         if i.is_empty() {
             Ok((&[], i.as_bstr()))
@@ -33,7 +73,9 @@ pub(crate) mod decode {
         }
     }
 
-    pub fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>, E> {
+    pub(crate) fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+        bytes: &'a [u8],
+    ) -> IResult<&[u8], Line<'a>, E> {
         map(
             context(
                 "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
