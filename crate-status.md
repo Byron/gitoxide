@@ -252,10 +252,9 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [x] discovery
   * [ ] option to not cross file systems
   * [ ] handle git-common-dir
-  * [ ] handle environment variables
 * **Repository**    
   * [x] discovery
-    * [ ] handle other non-discovery modes and provide control over environment variable usage.
+    * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
   * [x] instantiation
     * [ ] a way to handle `.git` files with `gitdir: <path>` in it
     * [ ] handle `gitdir` and `commondir` files
@@ -279,6 +278,9 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [ ] .gitignore handling
 * [ ] checkout/stage conversions clean + smudge as in .gitattributes
 * [ ] rev-parsing and ref history
+* **refs**
+  * [ ] run transaction hooks and handle special repository states like quarantine
+  * [ ] support for different backends like `files` and `reftable`
 * [ ] worktrees
 * [ ] remotes with push and pull
 * [ ] configuration
@@ -311,6 +313,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * **transactions**
       * [ ] single ref
       * [ ] multiple refs
+      * [ ] disable transactions during [quarantine]
     * **log**
       * [x] forward iteration
       * [x] backward iteration
@@ -333,6 +336,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 [reftable-spec]: https://github.com/eclipse/jgit/blob/master/Documentation/technical/reftable.md
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
+[quarantine]: https://github.com/git/git/blob/master/Documentation/git-receive-pack.txt#L223:L223
 
 
 ### git-features
