@@ -127,17 +127,21 @@ where
                     return Some(Err(err));
                 };
 
-                self.last_nl_pos = match buf.rfind_byte(b'\n') {
-                    Some(end) => Some(end),
-                    None => {
-                        return Some(Ok(convert(
-                            buf,
-                            LineNumber::FromStart(self.count),
-                            log::line::decode::one::<()>(buf),
-                        )
-                        .map(Into::into)))
+                self.last_nl_pos = Some(if *buf.last().expect("we have read non-zero bytes before") != b'\n' {
+                    buf.len()
+                } else {
+                    match buf.rfind_byte(b'\n') {
+                        Some(end) => end,
+                        None => {
+                            return Some(Ok(convert(
+                                buf,
+                                LineNumber::FromStart(self.count),
+                                log::line::decode::one::<()>(buf),
+                            )
+                            .map(Into::into)));
+                        }
                     }
-                };
+                });
                 self.read_and_pos = Some((read, npos));
                 self.next()
             }
@@ -146,7 +150,7 @@ where
                 Some(start) => {
                     self.read_and_pos = Some(read_and_pos);
                     self.last_nl_pos = Some(start);
-                    let buf = &self.buf[start..end];
+                    let buf = &self.buf[start + 1..end];
                     let res = Some(Ok(convert(
                         buf,
                         LineNumber::FromEnd(self.count),

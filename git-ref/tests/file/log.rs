@@ -13,32 +13,68 @@ mod iter {
     }
 
     mod backward {
-        use bstr::B;
-        use git_ref::file::log::mutable::Line;
-        use git_testtools::hex_to_id;
+        mod with_suitable_buffer {
+            use git_ref::file::log::mutable::Line;
+            use git_testtools::hex_to_id;
 
-        #[test]
-        fn a_single_line_and_suitably_big_buffer() -> crate::Result {
-            let line: Vec<u8> = b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1".to_vec();
-            let line_with_nl = {
-                let mut l = line.clone();
-                l.push(b'\n');
-                l
-            };
-            for line in &[line, line_with_nl] {
-                let read = std::io::Cursor::new(line);
-                let mut iter = git_ref::file::log::iter::reverse::<_, 1024>(read)?;
-                let Line {
-                    previous_oid,
-                    new_oid,
-                    signature: _,
-                    message,
-                } = iter.next().expect("a single line")??;
-                assert_eq!(message, B("commit (initial): c1"));
-                assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
-                assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
+            #[test]
+            fn single_line() -> crate::Result {
+                let two_lines: Vec<u8> = b"0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1".to_vec();
+                let two_lines_trailing_nl = {
+                    let mut l = two_lines.clone();
+                    l.push(b'\n');
+                    l
+                };
+                for line in &[two_lines, two_lines_trailing_nl] {
+                    let read = std::io::Cursor::new(line);
+                    let mut iter = git_ref::file::log::iter::reverse::<_, 1024>(read)?;
+                    let Line {
+                        previous_oid,
+                        new_oid,
+                        signature: _,
+                        message,
+                    } = iter.next().expect("a single line")??;
+                    assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
+                    assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
+                    assert_eq!(message, "commit (initial): c1");
+                    assert!(iter.next().is_none(), "iterator depleted");
+                }
+                Ok(())
             }
-            Ok(())
+
+            #[test]
+            fn two_lines() -> crate::Result {
+                let two_lines: Vec<u8> = b"1000000000000000000000000000000000000000 234385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c2\n0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1".to_vec();
+                let two_lines_trailing_nl = {
+                    let mut l = two_lines.clone();
+                    l.push(b'\n');
+                    l
+                };
+                for line in &[two_lines, two_lines_trailing_nl] {
+                    let read = std::io::Cursor::new(line);
+                    let mut iter = git_ref::file::log::iter::reverse::<_, 1024>(read)?;
+                    let Line {
+                        previous_oid,
+                        new_oid,
+                        signature: _,
+                        message,
+                    } = iter.next().expect("a single line")??;
+                    assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
+                    assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
+                    assert_eq!(message, "commit (initial): c1");
+                    let Line {
+                        previous_oid,
+                        new_oid,
+                        signature: _,
+                        message,
+                    } = iter.next().expect("a single line")??;
+                    assert_eq!(message, "commit (initial): c2");
+                    assert_eq!(previous_oid, hex_to_id("1000000000000000000000000000000000000000"));
+                    assert_eq!(new_oid, hex_to_id("234385f6d781b7e97062102c6a483440bfda2a03"));
+                    assert!(iter.next().is_none(), "iterator depleted");
+                }
+                Ok(())
+            }
         }
     }
     mod forward {
