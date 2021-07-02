@@ -29,6 +29,12 @@ struct Edit {
     parent_index: Option<usize>,
 }
 
+impl std::borrow::Borrow<RefEdit> for Edit {
+    fn borrow(&self) -> &RefEdit {
+        &self.update
+    }
+}
+
 /// A transaction
 pub struct Transaction {
     updates: Vec<Edit>,
@@ -51,8 +57,7 @@ impl Transaction {
             State::Prepared => self,
             State::Open => {
                 self.updates
-                    .iter()
-                    .map(|e| &e.update)
+                    .as_slice()
                     .assure_one_name_has_one_edit()
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
                 todo!("transaction prep")

@@ -16,19 +16,17 @@ mod edit {
         #[test]
         fn reject_duplicates() {
             assert!(
-                &[named_edit("HEAD")].iter().assure_one_name_has_one_edit().is_ok(),
+                (&[named_edit("HEAD")][..]).assure_one_name_has_one_edit().is_ok(),
                 "there are no duplicates"
             );
             assert!(
-                &[named_edit("refs/foo"), named_edit("HEAD")]
-                    .iter()
+                (&[named_edit("refs/foo"), named_edit("HEAD")][..])
                     .assure_one_name_has_one_edit()
                     .is_ok(),
                 "there are no duplicates"
             );
             assert_eq!(
-                *&[named_edit("HEAD"), named_edit("refs/heads/main"), named_edit("HEAD")]
-                    .iter()
+                (&[named_edit("HEAD"), named_edit("refs/heads/main"), named_edit("HEAD")][..])
                     .assure_one_name_has_one_edit()
                     .expect_err("duplicate"),
                 "HEAD",

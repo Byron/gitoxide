@@ -66,15 +66,15 @@ pub struct RefEdit {
 /// An extension trait to perform commonly used operations on edits across different ref stores.
 pub trait RefEditsExt {
     /// Return true if each ref `name` has exactly one `edit` across multiple ref edits
-    fn assure_one_name_has_one_edit(&mut self) -> Result<(), BString>;
+    fn assure_one_name_has_one_edit(&self) -> Result<(), BString>;
 }
 
-impl<'a, I> RefEditsExt for I
+impl<E> RefEditsExt for &[E]
 where
-    I: Iterator<Item = &'a RefEdit>,
+    E: std::borrow::Borrow<RefEdit>,
 {
-    fn assure_one_name_has_one_edit(&mut self) -> Result<(), BString> {
-        let mut names: Vec<_> = self.map(|e| &e.name).collect();
+    fn assure_one_name_has_one_edit(&self) -> Result<(), BString> {
+        let mut names: Vec<_> = self.as_ref().iter().map(|e| &e.borrow().name).collect();
         names.sort();
         match names.windows(2).find(|v| v[0] == v[1]) {
             Some(name) => Err(name[0].as_ref().to_owned()),
