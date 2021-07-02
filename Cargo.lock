@@ -1080,6 +1080,7 @@ dependencies = [
  "bstr",
  "git-actor",
  "git-hash",
+ "git-lock",
  "git-testtools",
  "git-validate",
  "nom",

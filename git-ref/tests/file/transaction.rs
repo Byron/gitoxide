@@ -10,18 +10,25 @@ mod prepare {
                 let dir = tempfile::TempDir::new().unwrap();
                 let mut store: file::Store = dir.path().to_owned().into();
                 store.write_reflog = *reflog_writemode;
-                let _t = store.transaction(Some(edit::Reference {
-                    edit: edit::Change::Update(edit::Update::new(
-                        edit::Reflog::AutoAndNoDeref,
-                        Target::Symbolic("refs/heads/alt-main".try_into().unwrap()),
-                        None, // TODO: check failure if it doesn't exist
-                    )),
+                let t = store.transaction(Some(edit::RefEdit {
+                    edit: edit::Change::Update(edit::Update {
+                        mode: edit::Reflog::AutoAndNoDeref,
+                        new: Target::Symbolic("refs/heads/alt-main".try_into().unwrap()),
+                        previous: None, // TODO: check failure if it doesn't exist
+                    }),
                     name: "NEW_HEAD".try_into().unwrap(),
                 }));
+                let _edits = t.commit().unwrap();
                 todo!("figure out a way to split")
             }
         }
 
-        mod cancel {}
+        #[test]
+        #[should_panic]
+        fn referent_that_head_is_pointing_to() {
+            todo!("verify that HEAD gets a reflog update automatically")
+        }
+
+        mod cancel_after_preparation {}
     }
 }

@@ -63,12 +63,56 @@ pub mod transaction {
             }
         }
     }
+    use crate::edit::RefEdit;
     pub use error::Error;
+
+    struct Edit {
+        update: RefEdit,
+        lock: Option<git_lock::Marker>,
+        /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
+        /// instead of the referent reference.
+        parent_index: Option<usize>,
+    }
 
     /// A transaction
     pub struct Transaction {
-        updates: Vec<edit::Reference>,
+        updates: Vec<Edit>,
         state: State,
+    }
+
+    impl Transaction {
+        /// Discard the transaction and re-obtain the initial edits
+        pub fn into_edits(self) -> Vec<RefEdit> {
+            self.updates.into_iter().map(|e| e.update).collect()
+        }
+
+        /// Prepare for calling [`commit(…)`][Transaction::commit()] in a way that can be rolled back perfectly.
+        ///
+        /// If the operation succeeds, the transaction can be committed or dropped to cause a rollback automatically.
+        /// Rollbacks happen automatically on failure.
+        /// This method is idempotent.
+        pub fn prepare(mut self) -> Result<Self, Error> {
+            Ok(match self.state {
+                State::Prepared => self,
+                State::Open => todo!("transaction prep"),
+            })
+        }
+
+        /// Make all [prepared][Transaction::prepare()] permanent and return the performed edits which represent the current
+        /// state of the affected refs in the ref store in that instant. Please note that the obtained edits may have been
+        /// adjusted to contain more dependent edits or additional information.
+        ///
+        /// On error the transaction may have been performed partially and can be retried, depending on the nature of the error.
+        ///
+        /// Note that transactions will be prepared automatically as needed.
+        pub fn commit(mut self) -> Result<Vec<RefEdit>, Error> {
+            match self.state {
+                State::Open => self.prepare()?.commit(),
+                State::Prepared => {
+                    todo!("transaction commit")
+                }
+            }
+        }
     }
 
     /// The state of a [`Transaction`]
@@ -81,10 +125,18 @@ pub mod transaction {
     /// Edits
     impl Store {
         /// Open a transaction with the given `edits`.
-        pub fn transaction(&self, edits: impl IntoIterator<Item = edit::Reference>) -> Transaction {
-            // store.transaction(edits).prepare()?.commit()?;
-            // store.transaction(edits).commit()?;
-            todo!("open transaction")
+        pub fn transaction(&self, edits: impl IntoIterator<Item = RefEdit>) -> Transaction {
+            Transaction {
+                updates: edits
+                    .into_iter()
+                    .map(|update| Edit {
+                        update,
+                        lock: None,
+                        parent_index: None,
+                    })
+                    .collect(),
+                state: State::Open,
+            }
         }
     }
 }

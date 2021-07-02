@@ -22,6 +22,7 @@ serde1 = ["serde", "bstr/serde1", "git-hash/serde1", "git-actor/serde1"]
 git-hash = { version = "^0.4.0", path = "../git-hash" }
 git-validate = { version = "^0.3.0", path = "../git-validate" }
 git-actor = { version = "^0.1.0", path = "../git-actor" }
+git-lock = { version = "^0.1.0", path = "../git-lock" }
 
 quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }

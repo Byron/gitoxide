@@ -39,21 +39,6 @@ pub struct Update {
     pub previous: Option<Target>,
     /// The new state of the reference, either for updating an existing one or creating a new one.
     pub new: Target,
-    /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
-    /// instead of the referent reference.
-    parent_index: Option<usize>,
-}
-
-impl Update {
-    /// Create a new instance with reflog `mode`, the optional `previous` state of the reference as well as the `new` one.
-    pub fn new(mode: Reflog, new: Target, previous: Option<Target>) -> Update {
-        Update {
-            mode,
-            previous,
-            new,
-            parent_index: None,
-        }
-    }
 }
 
 /// A description of an edit to perform.
@@ -70,7 +55,7 @@ pub enum Change {
 }
 
 /// A reference that is to be changed
-pub struct Reference {
+pub struct RefEdit {
     /// The change itself
     pub edit: Change,
     /// The name of the reference to apply the change to
