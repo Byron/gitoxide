@@ -158,8 +158,11 @@ mod init {
     impl file::Store {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
-        pub fn at(git_dir: impl Into<PathBuf>) -> Self {
-            file::Store { base: git_dir.into() }
+        pub fn at(git_dir: impl Into<PathBuf>, write_reflog: crate::file::WriteReflog) -> Self {
+            file::Store {
+                base: git_dir.into(),
+                write_reflog,
+            }
         }
     }
 
@@ -168,7 +171,7 @@ mod init {
         P: Into<PathBuf>,
     {
         fn from(path: P) -> Self {
-            file::Store::at(path)
+            file::Store::at(path, Default::default())
         }
     }
 }

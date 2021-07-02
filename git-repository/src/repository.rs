@@ -42,7 +42,14 @@ pub mod discover {
             };
             Ok(Repository {
                 odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
-                refs: git_ref::file::Store::at(git_dir),
+                refs: git_ref::file::Store::at(
+                    git_dir,
+                    if working_tree.is_none() {
+                        git_ref::file::WriteReflog::Disable
+                    } else {
+                        git_ref::file::WriteReflog::Normal
+                    },
+                ),
                 working_tree,
             })
         }

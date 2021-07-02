@@ -1,4 +1,4 @@
-#![allow(missing_docs, dead_code)]
+#![allow(dead_code)]
 //! Research
 //!
 //!   * `RefLogOnly`
@@ -29,37 +29,43 @@
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 
 use crate::{mutable, ValidName};
-use std::marker::PhantomData;
 
+/// Update an existing or a new reference.
 pub struct Update {
     /// How to treat the reference log.
     pub mode: Reflog,
     /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
     /// updating it.
     pub previous: Option<mutable::Target>,
-    /// The new state of the reference
+    /// The new state of the reference, either for updating an existing one or creating a new one.
     pub new: mutable::Target,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
     /// instead of the referent reference.
     parent_index: Option<usize>,
 }
 
-/// A description of an edit to perform on a reference
-pub enum Edit {
+/// A description of an edit to perform.
+pub enum Change {
     /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
     /// we function like `update`.
     /// Otherwise it functions as `create-or-update`.
     Update(Update),
+    /// Delete a reference and optionally check if `previous` is its content.
     Delete {
+        /// The previous state of the reference
         previous: Option<mutable::Target>,
     },
 }
 
-pub struct RefEdit {
-    edit: Edit,
-    refpath: ValidName,
+/// A reference that is to be changed
+pub struct Reference {
+    /// The change itself
+    edit: Change,
+    /// The name of the reference to apply the change to
+    name: ValidName,
 }
 
+/// The way to deal with the Reflog in a particular edit
 pub enum Reflog {
     /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
     /// in this case and apply the change to it directly.
@@ -69,9 +75,4 @@ pub enum Reflog {
     OnlyAndDeref,
     /// Create a reflog even if it otherwise wouldn't be created, as is the case for tags. Otherwise it acts like `AutoNoDeref`.
     CreateUnconditionally,
-}
-
-pub struct Transaction<T> {
-    updates: Vec<RefEdit>,
-    _state: PhantomData<T>,
 }
