@@ -70,7 +70,6 @@ impl Transaction {
                     Self::lock_ref_and_write_change(edit)?;
                 }
                 self.state = State::Prepared;
-                todo!("transaction prep")
             }
         })
     }

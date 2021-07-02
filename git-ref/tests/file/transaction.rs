@@ -21,7 +21,8 @@ mod prepare {
                     }),
                     git_lock::acquire::Fail::Immediately,
                 );
-                let _edits = t.commit().unwrap();
+                let edits = t.commit().unwrap();
+                assert_eq!(edits.len(), 1, "no split was performed");
                 todo!("figure out a way to split")
             }
         }
@@ -40,6 +41,14 @@ mod prepare {
         #[should_panic]
         fn write_head_and_reference_transparently() {
             todo!("writing a head being a symbolic ref writes through to the referent in an extra refedit")
+        }
+    }
+
+    mod delete {
+        #[test]
+        #[should_panic]
+        fn delete_a_ref_which_is_gone() {
+            todo!("it's fine to do that")
         }
     }
 }
