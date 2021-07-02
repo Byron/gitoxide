@@ -29,7 +29,7 @@ pub mod edit;
 
 ///
 pub mod mutable {
-    use bstr::{BString, ByteSlice};
+    use bstr::{BStr, BString, ByteSlice};
     use git_hash::ObjectId;
     use std::convert::TryFrom;
 
@@ -43,6 +43,12 @@ pub mod mutable {
 
         fn try_from(value: &str) -> Result<Self, Self::Error> {
             Ok(ValidName(git_validate::refname(value.as_bytes().as_bstr())?.into()))
+        }
+    }
+
+    impl AsRef<BStr> for ValidName {
+        fn as_ref(&self) -> &BStr {
+            self.0.as_bstr()
         }
     }
 

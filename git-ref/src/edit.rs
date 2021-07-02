@@ -29,6 +29,7 @@
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 
 use crate::mutable::{Target, ValidName};
+use bstr::BString;
 
 /// Update an existing or a new reference.
 pub struct Update {
@@ -60,6 +61,26 @@ pub struct RefEdit {
     pub edit: Change,
     /// The name of the reference to apply the change to
     pub name: ValidName,
+}
+
+/// An extension trait to perform commonly used operations on edits across different ref stores.
+pub trait RefEditsExt {
+    /// Return true if each ref `name` has exactly one `edit` across multiple ref edits
+    fn assure_one_name_has_one_edit(&mut self) -> Result<(), BString>;
+}
+
+impl<'a, I> RefEditsExt for I
+where
+    I: Iterator<Item = &'a RefEdit>,
+{
+    fn assure_one_name_has_one_edit(&mut self) -> Result<(), BString> {
+        let mut names: Vec<_> = self.map(|e| &e.name).collect();
+        names.sort();
+        match names.windows(2).find(|v| v[0] == v[1]) {
+            Some(name) => Err(name[0].as_ref().to_owned()),
+            None => Ok(()),
+        }
+    }
 }
 
 /// The way to deal with the Reflog in a particular edit
