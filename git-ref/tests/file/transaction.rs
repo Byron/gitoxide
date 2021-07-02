@@ -10,14 +10,17 @@ mod prepare {
                 let dir = tempfile::TempDir::new().unwrap();
                 let mut store: file::Store = dir.path().to_owned().into();
                 store.write_reflog = *reflog_writemode;
-                let t = store.transaction(Some(edit::RefEdit {
-                    edit: edit::Change::Update(edit::Update {
-                        mode: edit::Reflog::AutoAndNoDeref,
-                        new: Target::Symbolic("refs/heads/alt-main".try_into().unwrap()),
-                        previous: None, // TODO: check failure if it doesn't exist
+                let t = store.transaction(
+                    Some(edit::RefEdit {
+                        edit: edit::Change::Update(edit::Update {
+                            mode: edit::Reflog::AutoAndNoDeref,
+                            new: Target::Symbolic("refs/heads/alt-main".try_into().unwrap()),
+                            previous: None, // TODO: check failure if it doesn't exist
+                        }),
+                        name: "NEW_HEAD".try_into().unwrap(),
                     }),
-                    name: "NEW_HEAD".try_into().unwrap(),
-                }));
+                    git_lock::acquire::Fail::Immediately,
+                );
                 let _edits = t.commit().unwrap();
                 todo!("figure out a way to split")
             }
@@ -30,5 +33,13 @@ mod prepare {
         }
 
         mod cancel_after_preparation {}
+    }
+
+    mod update {
+        #[test]
+        #[should_panic]
+        fn write_head_and_reference_transparently() {
+            todo!("writing a head being a symbolic ref writes through to the referent in an extra refedit")
+        }
     }
 }

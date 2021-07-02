@@ -42,6 +42,12 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    fn lock_ref_and_write_change(edit: &mut Edit) -> Result<(), Error> {
+        todo!("lock and write")
+    }
+}
+
+impl Transaction {
     /// Discard the transaction and re-obtain the initial edits
     pub fn into_edits(self) -> Vec<RefEdit> {
         self.updates.into_iter().map(|e| e.update).collect()
@@ -59,6 +65,11 @@ impl Transaction {
                 self.updates
                     .assure_one_name_has_one_edit()
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
+
+                for edit in self.updates.iter_mut() {
+                    Self::lock_ref_and_write_change(edit)?;
+                }
+                self.state = State::Prepared;
                 todo!("transaction prep")
             }
         })
@@ -90,8 +101,8 @@ pub enum State {
 
 /// Edits
 impl Store {
-    /// Open a transaction with the given `edits`.
-    pub fn transaction(&self, edits: impl IntoIterator<Item = RefEdit>) -> Transaction {
+    /// Open a transaction with the given `edits`, and determine how to fail if a `lock` cannot be obtained.
+    pub fn transaction(&self, edits: impl IntoIterator<Item = RefEdit>, lock: git_lock::acquire::Fail) -> Transaction {
         Transaction {
             updates: edits
                 .into_iter()
