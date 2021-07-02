@@ -806,6 +806,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ebd3504ad6116843b8375ad70df74e7bfe83cac77a1f3fe73200c844d43bfe0"
 
 [[package]]
+name = "fs_extra"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
+
+[[package]]
 name = "funty"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1121,6 +1127,7 @@ version = "0.3.0"
 dependencies = [
  "bstr",
  "crc",
+ "fs_extra",
  "git-hash",
  "once_cell",
  "tempfile",

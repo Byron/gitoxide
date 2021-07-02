@@ -49,7 +49,21 @@ pub mod log;
 
 ///
 pub mod transaction {
+    #![allow(unused)]
     use crate::{edit, store::file::Store};
+
+    mod error {
+        use quick_error::quick_error;
+        quick_error! {
+            /// The error returned by various [`Transaction`][super::Transaction] methods.
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            pub enum Error {
+                Tbd
+            }
+        }
+    }
+    pub use error::Error;
 
     /// A transaction
     pub struct Transaction {
@@ -67,9 +81,10 @@ pub mod transaction {
     /// Edits
     impl Store {
         /// Open a transaction with the given `edits`.
-        pub fn transaction(edits: impl IntoIterator<Item = edit::Reference>) -> Transaction {
-            // store.transaction(edits)?.prepare()?.commit()?;
-            todo!("prepared transaction")
+        pub fn transaction(&self, edits: impl IntoIterator<Item = edit::Reference>) -> Transaction {
+            // store.transaction(edits).prepare()?.commit()?;
+            // store.transaction(edits).commit()?;
+            todo!("open transaction")
         }
     }
 }

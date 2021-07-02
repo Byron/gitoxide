@@ -17,6 +17,33 @@ pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result
     scripted_fixture_repo_read_only_with_args(script_name, None)
 }
 
+pub fn scripted_fixture_repo_writable(
+    script_name: &str,
+) -> std::result::Result<tempfile::TempDir, Box<dyn std::error::Error>> {
+    scripted_fixture_repo_writable_with_args(script_name, None)
+}
+
+pub fn scripted_fixture_repo_writable_with_args(
+    script_name: &str,
+    args: impl IntoIterator<Item = &'static str>,
+) -> std::result::Result<tempfile::TempDir, Box<dyn std::error::Error>> {
+    let ro_dir = scripted_fixture_repo_read_only_with_args(script_name, args)?;
+    let dst = tempfile::TempDir::new()?;
+    fs_extra::copy_items(
+        &[ro_dir],
+        dst.path(),
+        &fs_extra::dir::CopyOptions {
+            overwrite: false,
+            skip_exist: false,
+            copy_inside: false,
+            content_only: true,
+            ..Default::default()
+        },
+    )
+    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+    Ok(dst)
+}
+
 /// Returns the directory at which the data is present
 pub fn scripted_fixture_repo_read_only_with_args(
     script_name: &str,

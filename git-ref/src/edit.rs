@@ -44,6 +44,18 @@ pub struct Update {
     parent_index: Option<usize>,
 }
 
+impl Update {
+    /// Create a new instance with reflog `mode`, the optional `previous` state of the reference as well as the `new` one.
+    pub fn new(mode: Reflog, new: mutable::Target, previous: Option<mutable::Target>) -> Update {
+        Update {
+            mode,
+            previous,
+            new,
+            parent_index: None,
+        }
+    }
+}
+
 /// A description of an edit to perform.
 pub enum Change {
     /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
@@ -60,9 +72,9 @@ pub enum Change {
 /// A reference that is to be changed
 pub struct Reference {
     /// The change itself
-    edit: Change,
+    pub edit: Change,
     /// The name of the reference to apply the change to
-    name: ValidName,
+    pub name: ValidName,
 }
 
 /// The way to deal with the Reflog in a particular edit
