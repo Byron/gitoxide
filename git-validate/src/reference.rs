@@ -71,7 +71,7 @@ fn validate(path: &BStr, mode: Mode) -> Result<&BStr, name::Error> {
     }
 
     if let Mode::Complete = mode {
-        if !saw_slash && path.iter().any(|c| !c.is_ascii_uppercase()) {
+        if !saw_slash && !path.iter().all(|c| c.is_ascii_uppercase() || *c == b'_') {
             return Err(name::Error::SomeLowercase);
         }
     }

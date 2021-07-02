@@ -36,7 +36,7 @@ pub fn scripted_fixture_repo_writable_with_args(
             overwrite: false,
             skip_exist: false,
             copy_inside: false,
-            content_only: true,
+            content_only: false,
             ..Default::default()
         },
     )

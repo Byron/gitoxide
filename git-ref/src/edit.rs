@@ -28,7 +28,7 @@
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 
-use crate::{mutable, ValidName};
+use crate::mutable::{Target, ValidName};
 
 /// Update an existing or a new reference.
 pub struct Update {
@@ -36,9 +36,9 @@ pub struct Update {
     pub mode: Reflog,
     /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
     /// updating it.
-    pub previous: Option<mutable::Target>,
+    pub previous: Option<Target>,
     /// The new state of the reference, either for updating an existing one or creating a new one.
-    pub new: mutable::Target,
+    pub new: Target,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
     /// instead of the referent reference.
     parent_index: Option<usize>,
@@ -46,7 +46,7 @@ pub struct Update {
 
 impl Update {
     /// Create a new instance with reflog `mode`, the optional `previous` state of the reference as well as the `new` one.
-    pub fn new(mode: Reflog, new: mutable::Target, previous: Option<mutable::Target>) -> Update {
+    pub fn new(mode: Reflog, new: Target, previous: Option<Target>) -> Update {
         Update {
             mode,
             previous,
@@ -65,7 +65,7 @@ pub enum Change {
     /// Delete a reference and optionally check if `previous` is its content.
     Delete {
         /// The previous state of the reference
-        previous: Option<mutable::Target>,
+        previous: Option<Target>,
     },
 }
 

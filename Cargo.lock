@@ -1085,6 +1085,7 @@ dependencies = [
  "nom",
  "quick-error",
  "serde",
+ "tempfile",
 ]
 
 [[package]]

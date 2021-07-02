@@ -16,6 +16,7 @@ mod name_partial {
         mktest!(refs_path_underscores_and_dashes, b"refs/heads/main-2nd_ext");
         mktest!(relative_path, b"etc/foo");
         mktest!(all_uppercase, b"MAIN");
+        mktest!(all_uppercase_with_underscore, b"NEW_HEAD");
         mktest!(partial_name_lowercase, b"main");
         mktest!(chinese_utf8, "heads/你好吗".as_bytes());
     }
@@ -90,6 +91,7 @@ mod name {
         mktest!(refs_path_underscores_and_dashes, b"refs/heads/main-2nd_ext");
         mktest!(relative_path, b"etc/foo");
         mktest!(all_uppercase, b"MAIN");
+        mktest!(all_uppercase_with_underscore, b"NEW_HEAD");
         mktest!(chinese_utf8, "refs/heads/你好吗".as_bytes());
     }
 

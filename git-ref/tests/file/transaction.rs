@@ -1,23 +1,24 @@
 mod prepare {
     mod create {
-        use crate::file::store_writable;
-        use git_hash::ObjectId;
-        use git_ref::edit;
-        use git_ref::mutable::Target;
+        use git_ref::{edit, file, mutable::Target};
+        use std::convert::TryInto;
 
         #[test]
         #[should_panic]
-        fn peeled() {
+        fn symbolic_missing_referent() {
             for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
-                let (_keep_dir, store) = store_writable().unwrap();
-                let t = store.transaction(Some(edit::Reference {
+                let dir = tempfile::TempDir::new().unwrap();
+                let mut store: file::Store = dir.path().to_owned().into();
+                store.write_reflog = *reflog_writemode;
+                let _t = store.transaction(Some(edit::Reference {
                     edit: edit::Change::Update(edit::Update::new(
                         edit::Reflog::AutoAndNoDeref,
-                        Target::Peeled(ObjectId::from_hex(b"12345678901234567890").unwrap()),
-                        None,
+                        Target::Symbolic("refs/heads/alt-main".try_into().unwrap()),
+                        None, // TODO: check failure if it doesn't exist
                     )),
-                    name: "refs/heads/newly-created".into(),
+                    name: "NEW_HEAD".try_into().unwrap(),
                 }));
+                todo!("figure out a way to split")
             }
         }
 

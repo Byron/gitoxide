@@ -27,15 +27,24 @@ pub use store::file;
 ///
 pub mod edit;
 
-/// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
-/// of a symbolic reference
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct ValidName(bstr::BString);
-
+///
 pub mod mutable {
-    //!
-    use crate::ValidName;
+    use bstr::{BString, ByteSlice};
     use git_hash::ObjectId;
+    use std::convert::TryFrom;
+
+    /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
+    /// of a symbolic reference
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    pub struct ValidName(BString);
+
+    impl TryFrom<&str> for ValidName {
+        type Error = git_validate::refname::Error;
+
+        fn try_from(value: &str) -> Result<Self, Self::Error> {
+            Ok(ValidName(git_validate::refname(value.as_bytes().as_bstr())?.into()))
+        }
+    }
 
     /// Denotes a ref target, equivalent to [`Kind`][super::Kind], but with mutable data.
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
