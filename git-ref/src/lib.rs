@@ -52,6 +52,13 @@ pub mod mutable {
         }
     }
 
+    impl ValidName {
+        /// Interpret this fully qualified reference name as partial name.
+        pub fn partial(&self) -> crate::ValidPartialName<'_> {
+            crate::ValidPartialName(self.0.as_bstr())
+        }
+    }
+
     /// Denotes a ref target, equivalent to [`Kind`][super::Kind], but with mutable data.
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     pub enum Target {
@@ -65,7 +72,7 @@ pub mod mutable {
 }
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
-pub struct SafePartialName<'a>(&'a BStr);
+pub struct ValidPartialName<'a>(&'a BStr);
 mod safe_name;
 
 /// Denotes the kind of reference.
@@ -105,7 +112,7 @@ impl<'a> Target<'a> {
         }
     }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
-    pub fn as_ref(&self) -> Option<&BStr> {
+    pub fn as_name(&self) -> Option<&BStr> {
         match self {
             Target::Symbolic(path) => Some(path),
             Target::Peeled(_) => None,

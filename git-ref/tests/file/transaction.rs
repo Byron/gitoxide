@@ -1,7 +1,9 @@
 mod prepare {
     mod create {
+        use bstr::ByteSlice;
         use git_ref::{edit, file, mutable::Target};
         use std::convert::TryInto;
+        use std::path::Path;
 
         #[test]
         #[should_panic]
@@ -23,7 +25,10 @@ mod prepare {
                 );
                 let edits = t.commit().unwrap();
                 assert_eq!(edits.len(), 1, "no split was performed");
-                todo!("figure out a way to split")
+                let written = store.find_one_existing(edits[0].name.partial()).unwrap();
+                assert_eq!(written.relative_path, Path::new("NEW_HEAD"));
+                assert_eq!(written.kind(), git_ref::Kind::Symbolic);
+                assert_eq!(written.target().as_name(), Some(b"refs/heads/alt-main".as_bstr()));
             }
         }
 

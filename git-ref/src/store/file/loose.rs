@@ -1,7 +1,8 @@
 ///
 pub mod find_one {
-    use crate::{file, SafePartialName};
+    use crate::{file, ValidPartialName};
     use quick_error::quick_error;
+    use std::convert::Infallible;
     use std::{convert::TryInto, io, io::Read, path::Path, path::PathBuf};
 
     quick_error! {
@@ -11,6 +12,7 @@ pub mod find_one {
         pub enum Error {
             RefnameValidation(err: crate::safe_name::Error) {
                 display("The input name or path is not a valid ref name")
+                from()
                 source(err)
             }
             ReadFileContents(err: io::Error) {
@@ -22,6 +24,12 @@ pub mod find_one {
                 display("The reference at '{}' could not be instantiated", relative_path.display())
                 source(err)
             }
+        }
+    }
+
+    impl From<Infallible> for Error {
+        fn from(_: Infallible) -> Self {
+            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
         }
     }
 
@@ -40,11 +48,12 @@ pub mod find_one {
         /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
         ///
         /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-        pub fn find_one<'a, Name>(&self, path: Name) -> Result<Option<file::Reference<'_>>, Error>
+        pub fn find_one<'a, Name, E>(&self, path: Name) -> Result<Option<file::Reference<'_>>, Error>
         where
-            Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
+            Name: TryInto<ValidPartialName<'a>, Error = E>,
+            Error: From<E>,
         {
-            let path = path.try_into().map_err(Error::RefnameValidation)?;
+            let path = path.try_into()?;
             self.find_one_with_verified_input(path.to_path().as_ref())
         }
 
@@ -112,7 +121,7 @@ pub mod find_one {
 
     ///
     pub mod existing {
-        use crate::{file, file::find_one, SafePartialName};
+        use crate::{file, file::find_one, ValidPartialName};
         use quick_error::quick_error;
         use std::{convert::TryInto, path::PathBuf};
 
@@ -134,13 +143,12 @@ pub mod find_one {
 
         impl file::Store {
             /// Similar to [`file::Store::find_one()`] but a non-existing ref is treated as error.
-            pub fn find_one_existing<'a, Name>(&self, path: Name) -> Result<file::Reference<'_>, Error>
+            pub fn find_one_existing<'a, Name, E>(&self, path: Name) -> Result<file::Reference<'_>, Error>
             where
-                Name: TryInto<SafePartialName<'a>, Error = crate::safe_name::Error>,
+                Name: TryInto<ValidPartialName<'a>, Error = E>,
+                find_one::Error: From<E>,
             {
-                let path = path
-                    .try_into()
-                    .map_err(|err| Error::Find(find_one::Error::RefnameValidation(err)))?;
+                let path = path.try_into().map_err(|err| Error::Find(err.into()))?;
                 match self.find_one_with_verified_input(path.to_path().as_ref()) {
                     Ok(Some(r)) => Ok(r),
                     Ok(None) => Err(Error::NotFound(path.to_path().into_owned())),

@@ -1,4 +1,4 @@
-use crate::SafePartialName;
+use crate::ValidPartialName;
 use bstr::{BStr, BString, ByteSlice};
 use quick_error::quick_error;
 use std::{borrow::Cow, convert::TryFrom, path::Path};
@@ -15,40 +15,40 @@ quick_error! {
     }
 }
 
-impl<'a> SafePartialName<'a> {
+impl<'a> ValidPartialName<'a> {
     /// Convert this name into the relative path identifying the reference location.
     pub fn to_path(&self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
     }
 }
 
-impl<'a> TryFrom<&'a BStr> for SafePartialName<'a> {
+impl<'a> TryFrom<&'a BStr> for ValidPartialName<'a> {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(SafePartialName(
+        Ok(ValidPartialName(
             git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
 
-impl<'a> TryFrom<&'a str> for SafePartialName<'a> {
+impl<'a> TryFrom<&'a str> for ValidPartialName<'a> {
     type Error = Error;
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(SafePartialName(
+        Ok(ValidPartialName(
             git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
 
-impl<'a> TryFrom<&'a String> for SafePartialName<'a> {
+impl<'a> TryFrom<&'a String> for ValidPartialName<'a> {
     type Error = Error;
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(SafePartialName(
+        Ok(ValidPartialName(
             git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }

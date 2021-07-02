@@ -1,6 +1,9 @@
 #![allow(unused)]
 
-use crate::{edit, store::file::Store};
+use crate::{
+    edit::{self, RefEdit, RefEditsExt},
+    store::file::Store,
+};
 
 mod error {
     use bstr::BString;
@@ -17,8 +20,7 @@ mod error {
         }
     }
 }
-
-use crate::edit::{RefEdit, RefEditsExt};
+use crate::store::file;
 pub use error::Error;
 
 struct Edit {
@@ -36,18 +38,19 @@ impl std::borrow::Borrow<RefEdit> for Edit {
 }
 
 /// A transaction
-pub struct Transaction {
+pub struct Transaction<'a> {
+    store: &'a file::Store,
     updates: Vec<Edit>,
     state: State,
 }
 
-impl Transaction {
+impl<'a> Transaction<'a> {
     fn lock_ref_and_write_change(edit: &mut Edit) -> Result<(), Error> {
         todo!("lock and write")
     }
 }
 
-impl Transaction {
+impl<'a> Transaction<'a> {
     /// Discard the transaction and re-obtain the initial edits
     pub fn into_edits(self) -> Vec<RefEdit> {
         self.updates.into_iter().map(|e| e.update).collect()
@@ -70,6 +73,7 @@ impl Transaction {
                     Self::lock_ref_and_write_change(edit)?;
                 }
                 self.state = State::Prepared;
+                self
             }
         })
     }
@@ -101,8 +105,13 @@ pub enum State {
 /// Edits
 impl Store {
     /// Open a transaction with the given `edits`, and determine how to fail if a `lock` cannot be obtained.
-    pub fn transaction(&self, edits: impl IntoIterator<Item = RefEdit>, lock: git_lock::acquire::Fail) -> Transaction {
+    pub fn transaction(
+        &self,
+        edits: impl IntoIterator<Item = RefEdit>,
+        lock: git_lock::acquire::Fail,
+    ) -> Transaction<'_> {
         Transaction {
+            store: self,
             updates: edits
                 .into_iter()
                 .map(|update| Edit {

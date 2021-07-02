@@ -97,7 +97,7 @@ mod parse {
                     let reference = Reference::try_from_path(&store, "name", $input).unwrap();
                     assert_eq!(reference.kind(), $kind);
                     assert_eq!(reference.target().as_id(), $id);
-                    assert_eq!(reference.target().as_ref(), $ref);
+                    assert_eq!(reference.target().as_name(), $ref);
                 }
             };
         }
