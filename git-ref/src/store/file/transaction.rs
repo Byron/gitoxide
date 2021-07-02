@@ -57,7 +57,6 @@ impl Transaction {
             State::Prepared => self,
             State::Open => {
                 self.updates
-                    .as_slice()
                     .assure_one_name_has_one_edit()
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
                 todo!("transaction prep")

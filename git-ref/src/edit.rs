@@ -69,12 +69,12 @@ pub trait RefEditsExt {
     fn assure_one_name_has_one_edit(&self) -> Result<(), BString>;
 }
 
-impl<E> RefEditsExt for &[E]
+impl<E> RefEditsExt for Vec<E>
 where
     E: std::borrow::Borrow<RefEdit>,
 {
     fn assure_one_name_has_one_edit(&self) -> Result<(), BString> {
-        let mut names: Vec<_> = self.as_ref().iter().map(|e| &e.borrow().name).collect();
+        let mut names: Vec<_> = self.iter().map(|e| &e.borrow().name).collect();
         names.sort();
         match names.windows(2).find(|v| v[0] == v[1]) {
             Some(name) => Err(name[0].as_ref().to_owned()),
