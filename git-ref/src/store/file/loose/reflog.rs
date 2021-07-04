@@ -1,13 +1,13 @@
 #![allow(missing_docs)]
 use crate::{
     store::{file, file::log, file::log::iter},
-    ValidName,
+    PartialName,
 };
 use std::{convert::TryInto, io::Read, path::PathBuf};
 
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
-    fn reflog_path(&self, name: ValidName<'_>) -> PathBuf {
+    fn reflog_path(&self, name: PartialName<'_>) -> PathBuf {
         self.base.join("logs").join(name.to_path())
     }
 }
@@ -23,10 +23,10 @@ impl file::Store {
         buf: &'b mut [u8],
     ) -> Result<Option<iter::Reverse<'b, std::fs::File>>, Error>
     where
-        FullName: TryInto<ValidName<'a>, Error = E>,
+        FullName: TryInto<PartialName<'a>, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: ValidName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: PartialName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let file = match std::fs::File::open(self.reflog_path(name)) {
             Ok(file) => file,
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -45,10 +45,10 @@ impl file::Store {
         buf: &'b mut Vec<u8>,
     ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, iter::decode::Error>>>, Error>
     where
-        FullName: TryInto<ValidName<'a>, Error = E>,
+        FullName: TryInto<PartialName<'a>, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: ValidName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: PartialName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         match std::fs::File::open(self.reflog_path(name)) {
             Ok(mut file) => {
                 buf.clear();

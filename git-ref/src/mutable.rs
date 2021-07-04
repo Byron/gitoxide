@@ -35,26 +35,26 @@ use std::convert::TryFrom;
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct ValidName(BString);
+pub struct FullName(BString);
 
-impl TryFrom<&str> for ValidName {
+impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(ValidName(git_validate::refname(value.as_bytes().as_bstr())?.into()))
+        Ok(FullName(git_validate::refname(value.as_bytes().as_bstr())?.into()))
     }
 }
 
-impl AsRef<BStr> for ValidName {
+impl AsRef<BStr> for FullName {
     fn as_ref(&self) -> &BStr {
         self.0.as_bstr()
     }
 }
 
-impl ValidName {
+impl FullName {
     /// Interpret this fully qualified reference name as partial name.
-    pub fn partial(&self) -> crate::ValidPartialName<'_> {
-        crate::ValidPartialName(self.0.as_bstr())
+    pub fn partial(&self) -> crate::FullName<'_> {
+        crate::FullName(self.0.as_bstr())
     }
 }
 
@@ -66,7 +66,7 @@ pub enum Target {
     /// A ref that points to another reference by its validated name, adding a level of indirection.
     ///
     /// Note that this is an extension of gitoxide which will be helpful in logging all reference changes.
-    Symbolic(ValidName),
+    Symbolic(FullName),
 }
 
 /// Update an existing or a new reference.
@@ -98,7 +98,7 @@ pub struct RefEdit {
     /// The change itself
     pub edit: Change,
     /// The name of the reference to apply the change to
-    pub name: ValidName,
+    pub name: FullName,
 }
 
 /// An extension trait to perform commonly used operations on edits across different ref stores.

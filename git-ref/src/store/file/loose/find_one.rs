@@ -1,4 +1,4 @@
-use crate::{file, ValidPartialName};
+use crate::{file, FullName};
 use std::{
     convert::TryInto,
     io::{self, Read},
@@ -22,7 +22,7 @@ impl file::Store {
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
     pub fn find_one<'a, Name, E>(&self, path: Name) -> Result<Option<file::Reference<'_>>, Error>
     where
-        Name: TryInto<ValidPartialName<'a>, Error = E>,
+        Name: TryInto<FullName<'a>, Error = E>,
         Error: From<E>,
     {
         let path = path.try_into()?;
@@ -93,14 +93,14 @@ impl file::Store {
 
 ///
 pub mod existing {
-    use crate::{file, file::find_one, ValidPartialName};
+    use crate::{file, file::find_one, FullName};
     use std::convert::TryInto;
 
     impl file::Store {
         /// Similar to [`file::Store::find_one()`] but a non-existing ref is treated as error.
         pub fn find_one_existing<'a, Name, E>(&self, path: Name) -> Result<file::Reference<'_>, Error>
         where
-            Name: TryInto<ValidPartialName<'a>, Error = E>,
+            Name: TryInto<FullName<'a>, Error = E>,
             find_one::Error: From<E>,
         {
             let path = path.try_into().map_err(|err| Error::Find(err.into()))?;
