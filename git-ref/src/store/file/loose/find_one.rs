@@ -100,7 +100,14 @@ impl file::Store {
             Err(err) => return Err(err),
             Ok(mut file) => {
                 if let Err(err) = file.read_to_end(&mut buf) {
+                    #[cfg(not(target_os = "windows"))]
                     if err.kind() == io::ErrorKind::Other {
+                        return Ok(None);
+                    } else {
+                        return Err(err);
+                    }
+                    #[cfg(target_os = "windows")]
+                    if err.kind() == io::ErrorKind::PermissionDenied {
                         return Ok(None);
                     } else {
                         return Err(err);
