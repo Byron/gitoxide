@@ -354,5 +354,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 
 ### git-tui
 * _a terminal user interface seeking to replace and improve on `tig`_
+* Can display complex history in novel ways to make them graspable. Maybe [this post] can be an inspiration.
 
 [tagname-validation]: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23
+[this post]: http://blog.danieljanus.pl/2021/07/01/commit-groups/
