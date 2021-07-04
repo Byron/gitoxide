@@ -5,7 +5,7 @@ fn store() -> crate::Result<git_ref::file::Store> {
     ))
 }
 
-mod iter {
+mod iter_and_iter_rev {
     use crate::file::store::reflog::store;
 
     #[test]

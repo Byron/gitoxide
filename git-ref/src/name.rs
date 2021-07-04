@@ -1,19 +1,6 @@
 use crate::{ValidName, ValidPartialName};
-use bstr::{BStr, BString, ByteSlice};
-use quick_error::quick_error;
+use bstr::{BStr, ByteSlice};
 use std::{borrow::Cow, convert::TryFrom, path::Path};
-
-quick_error! {
-    /// The error used in the [`ValidPartialName`]::try_from(…) implementations.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
-            display("The reference name '{}' is invalid", path)
-            source(err)
-        }
-    }
-}
 
 impl<'a> ValidPartialName<'a> {
     /// Convert this name into the relative path identifying the reference location.
@@ -92,3 +79,21 @@ impl<'a> TryFrom<&'a String> for ValidName<'a> {
         ))
     }
 }
+
+mod error {
+    use bstr::BString;
+    use quick_error::quick_error;
+
+    quick_error! {
+        /// The error used in the [`ValidPartialName`]::try_from(…) implementations.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
+                display("The reference name '{}' is invalid", path)
+                source(err)
+            }
+        }
+    }
+}
+pub use error::Error;
