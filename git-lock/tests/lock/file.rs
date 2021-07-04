@@ -35,8 +35,8 @@ mod acquire {
     #[test]
     fn lock_create_dir_write_commit() -> crate::Result {
         let dir = tempfile::tempdir()?;
-        let resource = dir.path().join("a").join("resource-nonexisting.ext");
-        let resource_lock = resource.with_extension("ext.lock");
+        let resource = dir.path().join("a").join("resource-nonexisting");
+        let resource_lock = resource.with_extension("lock");
         let mut file =
             git_lock::File::acquire_to_update_resource(&resource, fail_immediately(), Some(dir.path().into()))?;
         assert!(resource_lock.is_file());

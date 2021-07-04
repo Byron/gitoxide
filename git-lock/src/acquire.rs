@@ -1,5 +1,5 @@
 //!
-use crate::{backoff, File, Marker, DOT_SUFFIX};
+use crate::{backoff, File, Marker, DOT_LOCK_SUFFIX};
 use git_tempfile::{AutoRemove, ContainingDirectory};
 use quick_error::quick_error;
 use std::{
@@ -46,7 +46,7 @@ quick_error! {
             source(err)
         }
         PermanentlyLocked { resource_path: PathBuf, mode: Fail, attempts: usize } {
-            display("The lock for resource '{} could not be obtained {} after {} attempt(s). The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, attempts, resource_path.display(), super::DOT_SUFFIX)
+            display("The lock for resource '{} could not be obtained {} after {} attempt(s). The lockfile at '{}{}' might need manual deletion.", resource_path.display(), mode, attempts, resource_path.display(), super::DOT_LOCK_SUFFIX)
         }
     }
 }
@@ -138,7 +138,22 @@ fn lock_with_mode<T>(
 
 fn add_lock_suffix(resource_path: &Path) -> PathBuf {
     resource_path.with_extension(resource_path.extension().map_or_else(
-        || DOT_SUFFIX.to_string(),
-        |ext| format!("{}{}", ext.to_string_lossy(), DOT_SUFFIX),
+        || DOT_LOCK_SUFFIX.chars().skip(1).collect(),
+        |ext| format!("{}{}", ext.to_string_lossy(), DOT_LOCK_SUFFIX),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_lock_suffix_to_file_with_extension() {
+        assert_eq!(add_lock_suffix(Path::new("hello.ext")), Path::new("hello.ext.lock"));
+    }
+
+    #[test]
+    fn add_lock_suffix_to_file_without_extension() {
+        assert_eq!(add_lock_suffix(Path::new("hello")), Path::new("hello.lock"));
+    }
 }

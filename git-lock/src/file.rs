@@ -1,10 +1,12 @@
-use crate::{File, Marker, DOT_SUFFIX};
+use crate::{File, Marker, DOT_LOCK_SUFFIX};
 use std::path::{Path, PathBuf};
 
 fn strip_lock_suffix(lock_path: &Path) -> PathBuf {
     lock_path.with_extension(lock_path.extension().map_or("".to_string(), |ext| {
         let ext = ext.to_string_lossy();
-        ext.split_at(ext.len().saturating_sub(DOT_SUFFIX.len())).0.to_string()
+        ext.split_at(ext.len().saturating_sub(DOT_LOCK_SUFFIX.len()))
+            .0
+            .to_string()
     }))
 }
 

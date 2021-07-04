@@ -17,7 +17,7 @@
 
 use git_tempfile::handle::{Closed, Writable};
 
-const DOT_SUFFIX: &str = ".lock";
+const DOT_LOCK_SUFFIX: &str = ".lock";
 
 pub mod acquire;
 mod backoff;
