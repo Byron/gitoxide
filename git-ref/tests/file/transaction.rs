@@ -2,8 +2,7 @@ mod prepare {
     mod create {
         use bstr::ByteSlice;
         use git_ref::{edit, file, mutable::Target};
-        use std::convert::TryInto;
-        use std::path::Path;
+        use std::{convert::TryInto, path::Path};
 
         #[test]
         #[should_panic]
@@ -12,23 +11,28 @@ mod prepare {
                 let dir = tempfile::TempDir::new().unwrap();
                 let mut store: file::Store = dir.path().to_owned().into();
                 store.write_reflog = *reflog_writemode;
+                let referent = "refs/heads/alt-main";
+                assert!(
+                    store.find_one(referent).unwrap().is_none(),
+                    "the reference does not exist"
+                );
                 let t = store.transaction(
                     Some(edit::RefEdit {
                         edit: edit::Change::Update(edit::Update {
                             mode: edit::Reflog::AutoAndNoDeref,
-                            new: Target::Symbolic("refs/heads/alt-main".try_into().unwrap()),
+                            new: Target::Symbolic(referent.try_into().unwrap()),
                             previous: None, // TODO: check failure if it doesn't exist
                         }),
-                        name: "NEW_HEAD".try_into().unwrap(),
+                        name: "HEAD".try_into().unwrap(),
                     }),
                     git_lock::acquire::Fail::Immediately,
                 );
                 let edits = t.commit().unwrap();
                 assert_eq!(edits.len(), 1, "no split was performed");
                 let written = store.find_one_existing(edits[0].name.partial()).unwrap();
-                assert_eq!(written.relative_path, Path::new("NEW_HEAD"));
+                assert_eq!(written.relative_path, Path::new("HEAD"));
                 assert_eq!(written.kind(), git_ref::Kind::Symbolic);
-                assert_eq!(written.target().as_name(), Some(b"refs/heads/alt-main".as_bstr()));
+                assert_eq!(written.target().as_name(), Some(referent.as_bytes().as_bstr()));
             }
         }
 
