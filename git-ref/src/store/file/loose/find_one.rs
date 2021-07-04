@@ -1,4 +1,4 @@
-use crate::{file, FullName};
+use crate::{file, PartialName};
 use std::{
     convert::TryInto,
     io::{self, Read},
@@ -20,13 +20,13 @@ impl file::Store {
     /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn find_one<'a, Name, E>(&self, path: Name) -> Result<Option<file::Reference<'_>>, Error>
+    pub fn find_one<'a, Name, E>(&self, partial: Name) -> Result<Option<file::Reference<'_>>, Error>
     where
-        Name: TryInto<FullName<'a>, Error = E>,
+        Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
     {
-        let path = path.try_into()?;
-        self.find_one_with_verified_input(path.to_path().as_ref())
+        let path = partial.try_into()?;
+        self.find_one_with_verified_input(path.to_partial_path().as_ref())
     }
 
     pub(in crate::store::file) fn find_one_with_verified_input(
@@ -73,16 +73,9 @@ impl file::Store {
         .join(inbetween)
         .join(relative_path);
 
-        let ref_path = self.base.join(&relative_path);
-        if ref_path.is_dir() {
-            return Ok(None);
-        }
-
-        let mut contents = Vec::new();
-        match std::fs::File::open(ref_path) {
-            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err.into()),
-            Ok(mut file) => file.read_to_end(&mut contents)?,
+        let contents = match self.ref_contents(&relative_path)? {
+            None => return Ok(None),
+            Some(c) => c,
         };
         Ok(Some(
             file::Reference::try_from_path(self, &relative_path, &contents)
@@ -91,24 +84,52 @@ impl file::Store {
     }
 }
 
+impl file::Store {
+    /// Implements the logic required to transform a fully qualified refname into a filesystem path
+    pub(crate) fn ref_path(&self, name: &Path) -> PathBuf {
+        self.base.join(name)
+    }
+
+    /// Read the file contents with a verified full reference path and return it in the given vector if possible.
+    pub(crate) fn ref_contents(&self, relative_path: &Path) -> std::io::Result<Option<Vec<u8>>> {
+        let mut buf = Vec::new();
+        let ref_path = self.ref_path(&relative_path);
+
+        match std::fs::File::open(ref_path) {
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
+            Err(err) => return Err(err.into()),
+            Ok(mut file) => {
+                if let Err(err) = file.read_to_end(&mut buf) {
+                    if err.kind() == io::ErrorKind::Other {
+                        return Ok(None);
+                    } else {
+                        return Err(err);
+                    }
+                }
+            }
+        };
+        Ok(Some(buf))
+    }
+}
+
 ///
 pub mod existing {
-    use crate::{file, file::find_one, FullName};
+    use crate::{file, file::find_one, PartialName};
     use std::convert::TryInto;
 
     impl file::Store {
         /// Similar to [`file::Store::find_one()`] but a non-existing ref is treated as error.
-        pub fn find_one_existing<'a, Name, E>(&self, path: Name) -> Result<file::Reference<'_>, Error>
+        pub fn find_one_existing<'a, Name, E>(&self, partial: Name) -> Result<file::Reference<'_>, Error>
         where
-            Name: TryInto<FullName<'a>, Error = E>,
+            Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
-            let path = path
+            let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find_one::Error::RefnameValidation(err.into())))?;
-            match self.find_one_with_verified_input(path.to_path().as_ref()) {
+            match self.find_one_with_verified_input(path.to_partial_path().as_ref()) {
                 Ok(Some(r)) => Ok(r),
-                Ok(None) => Err(Error::NotFound(path.to_path().into_owned())),
+                Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
                 Err(err) => Err(err.into()),
             }
         }

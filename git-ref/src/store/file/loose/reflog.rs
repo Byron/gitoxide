@@ -5,13 +5,6 @@ use crate::{
 use std::{convert::TryInto, io::Read, path::PathBuf};
 
 impl file::Store {
-    /// Implements the logic required to transform a fully qualified refname into its log name
-    pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
-        self.base.join("logs").join(name.to_path())
-    }
-}
-
-impl file::Store {
     /// Return a reflog reverse iterator for the given fully qualified `name`, reading chunks from the back into the fixed buffer `buf`.
     ///
     /// The iterator will traverse log entries from most recent to oldest, reading the underlying file in chunks from the back.
@@ -57,6 +50,13 @@ impl file::Store {
             Err(err) => return Err(err.into()),
         };
         Ok(Some(log::iter::forward(buf)))
+    }
+}
+
+impl file::Store {
+    /// Implements the logic required to transform a fully qualified refname into its log name
+    pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
+        self.base.join("logs").join(name.to_path())
     }
 }
 

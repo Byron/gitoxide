@@ -30,7 +30,7 @@
 
 use bstr::{BStr, BString, ByteSlice};
 use git_hash::ObjectId;
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
@@ -53,8 +53,13 @@ impl AsRef<BStr> for FullName {
 
 impl FullName {
     /// Interpret this fully qualified reference name as partial name.
-    pub fn partial(&self) -> crate::FullName<'_> {
-        crate::FullName(self.0.as_bstr())
+    pub fn to_partial(&self) -> crate::PartialName<'_> {
+        crate::PartialName(self.0.as_bstr())
+    }
+
+    /// Convert this name into the relative path identifying the reference location relative to a repository
+    pub fn to_path(&self) -> Cow<'_, Path> {
+        self.0.to_path_lossy()
     }
 }
 

@@ -1,27 +1,9 @@
 #![allow(unused)]
 
 use crate::{
-    mutable::{self, RefEdit, RefEditsExt},
-    store::file::Store,
+    mutable::{self, Change, RefEdit, RefEditsExt, Target},
+    store::file,
 };
-
-mod error {
-    use bstr::BString;
-    use quick_error::quick_error;
-
-    quick_error! {
-        /// The error returned by various [`Transaction`][super::Transaction] methods.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            DuplicateRefEdits{ first_name: BString } {
-                display("Only one edit per reference must be provided, the first duplicate was {:?}", first_name)
-            }
-        }
-    }
-}
-use crate::store::file;
-pub use error::Error;
 
 struct Edit {
     update: RefEdit,
@@ -42,10 +24,58 @@ pub struct Transaction<'a> {
     store: &'a file::Store,
     updates: Vec<Edit>,
     state: State,
+    lock_fail_mode: git_lock::acquire::Fail,
 }
 
 impl<'a> Transaction<'a> {
-    fn lock_ref_and_write_change(edit: &mut Edit) -> Result<(), Error> {
+    fn lock_ref_and_apply_change(
+        store: &file::Store,
+        lock_fail_mode: git_lock::acquire::Fail,
+        change: &mut Edit,
+    ) -> Result<(), Error> {
+        assert!(
+            change.lock.is_none(),
+            "locks can only be acquired once and it's all or nothing"
+        );
+
+        let lock = match &mut change.update.edit {
+            Change::Delete { .. } => todo!("handle deletions"),
+            Change::Update(Update { mode, previous, new }) => {
+                let mut lock = git_lock::File::acquire_to_update_resource(
+                    store.ref_path(&change.update.name.to_path()),
+                    lock_fail_mode,
+                    Some(store.base.to_owned()),
+                )?;
+
+                let relative_path = change.update.name.to_path();
+                let existing_ref = store
+                    .ref_contents(relative_path.as_ref())
+                    .map_err(Error::from)
+                    .and_then(|opt| {
+                        opt.map(|buf| {
+                            file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from)
+                        })
+                        .transpose()
+                    });
+                match previous {
+                    Some(previous) => todo!("check previous value, if object id is not null"),
+                    None => {
+                        // if let Some(reference) = existing_ref? {
+                        //     *previous = Some(reference.target().into());
+                        // }
+                        todo!("read previous ref value if possible now that a lock is held and it's safe")
+                    }
+                }
+
+                lock.with_mut(|file| match new {
+                    Target::Peeled(oid) => file.write_all(oid.as_bytes()),
+                    Target::Symbolic(name) => file.write_all(b"ref: ").and_then(|_| file.write_all(name.as_ref())),
+                })?;
+
+                todo!("handle creation or update")
+            }
+        };
+        change.lock = Some(lock);
         todo!("lock and write")
     }
 }
@@ -70,7 +100,7 @@ impl<'a> Transaction<'a> {
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
 
                 for edit in self.updates.iter_mut() {
-                    Self::lock_ref_and_write_change(edit)?;
+                    Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, edit)?;
                 }
                 self.state = State::Prepared;
                 self
@@ -103,7 +133,7 @@ pub enum State {
 }
 
 /// Edits
-impl Store {
+impl file::Store {
     /// Open a transaction with the given `edits`, and determine how to fail if a `lock` cannot be obtained.
     pub fn transaction(
         &self,
@@ -121,6 +151,42 @@ impl Store {
                 })
                 .collect(),
             state: State::Open,
+            lock_fail_mode: lock,
         }
     }
 }
+
+mod error {
+    use crate::store::file;
+    use bstr::BString;
+    use quick_error::quick_error;
+
+    quick_error! {
+        /// The error returned by various [`Transaction`][super::Transaction] methods.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            DuplicateRefEdits{ first_name: BString } {
+                display("Only one edit per reference must be provided, the first duplicate was {:?}", first_name)
+            }
+            LockAcquire(err: git_lock::acquire::Error) {
+                display("A lock could not be obtained for a resource")
+                from()
+                source(err)
+            }
+            Io(err: std::io::Error) {
+                display("An IO error occurred while applying an edit")
+                from()
+                source(err)
+            }
+            ReferenceDecode(err: file::reference::decode::Error) {
+                display("Could not read reference")
+                from()
+                source(err)
+            }
+        }
+    }
+}
+use crate::mutable::Update;
+pub use error::Error;
+use std::io::Write;

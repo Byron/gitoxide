@@ -6,6 +6,24 @@ mod prepare {
 
         #[test]
         #[should_panic]
+        fn reference_with_equally_named_empty_directory_already_in_place() {
+            todo!("lock file renaming of a.lock to a but a is an empty directory")
+        }
+
+        #[test]
+        #[should_panic]
+        fn reference_with_equally_named_non_empty_directory_already_in_place() {
+            todo!("lock file renaming of a.lock to a but a is a non-empty directory")
+        }
+
+        #[test]
+        #[should_panic]
+        fn reference_without_old_value_must_not_exist_already_when_creating_it() {
+            todo!("lock file renaming of a.lock to a but a is a non-empty directory")
+        }
+
+        #[test]
+        #[should_panic]
         fn symbolic_missing_referent() {
             for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
                 let dir = tempfile::TempDir::new().unwrap();
@@ -29,7 +47,7 @@ mod prepare {
                 );
                 let edits = t.commit().unwrap();
                 assert_eq!(edits.len(), 1, "no split was performed");
-                let written = store.find_one_existing(edits[0].name.partial()).unwrap();
+                let written = store.find_one_existing(edits[0].name.to_partial()).unwrap();
                 assert_eq!(written.relative_path, Path::new("HEAD"));
                 assert_eq!(written.kind(), git_ref::Kind::Symbolic);
                 assert_eq!(written.target().as_name(), Some(referent.as_bytes().as_bstr()));

@@ -35,8 +35,9 @@ impl<'a> FullName<'a> {
 }
 
 impl<'a> PartialName<'a> {
-    /// Convert this name into the relative path identifying the reference location.
-    pub fn to_path(&self) -> Cow<'a, Path> {
+    /// Convert this name into the relative path possibly identifying the reference location.
+    /// Note that it may be only a partial path though.
+    pub fn to_partial_path(&self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
     }
 }
@@ -46,7 +47,7 @@ impl<'a> TryFrom<&'a BStr> for FullName<'a> {
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
         Ok(FullName(
-            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
@@ -56,7 +57,7 @@ impl<'a> TryFrom<&'a BStr> for PartialName<'a> {
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
         Ok(PartialName(
-            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
@@ -67,7 +68,7 @@ impl<'a> TryFrom<&'a str> for FullName<'a> {
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
         Ok(FullName(
-            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
@@ -78,7 +79,7 @@ impl<'a> TryFrom<&'a str> for PartialName<'a> {
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
         Ok(PartialName(
-            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
@@ -89,7 +90,7 @@ impl<'a> TryFrom<&'a String> for FullName<'a> {
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
         Ok(FullName(
-            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
@@ -100,7 +101,7 @@ impl<'a> TryFrom<&'a String> for PartialName<'a> {
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
         Ok(PartialName(
-            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
+            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
     }
 }
