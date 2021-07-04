@@ -9,6 +9,15 @@ mod reflog {
         assert_eq!(r.log_iter(&mut buf)?.expect("log exists").count(), 1);
         Ok(())
     }
+
+    #[test]
+    fn iter_rev() -> crate::Result {
+        let store = file::store()?;
+        let r = store.find_one_existing("HEAD")?;
+        let mut buf = [0u8; 256];
+        assert_eq!(r.log_iter_rev(&mut buf)?.expect("log exists").count(), 1);
+        Ok(())
+    }
 }
 
 mod peel {
