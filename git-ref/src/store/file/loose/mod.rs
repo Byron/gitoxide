@@ -1,7 +1,8 @@
 ///
 pub mod find_one;
 
-mod reflog;
+///
+pub mod reflog;
 
 mod init {
     use crate::file;

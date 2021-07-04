@@ -35,6 +35,26 @@ impl<'a> Reference<'a> {
     }
 }
 
+mod iter {
+    #![allow(missing_docs)]
+    use crate::store::file::{log, loose, Reference};
+    use bstr::ByteSlice;
+
+    impl<'a> Reference<'a> {
+        pub fn iter<'b>(
+            &self,
+            buf: &'b mut Vec<u8>,
+        ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
+        {
+            use os_str_bytes::OsStrBytes;
+            self.parent.reflog_iter(
+                crate::FullName(self.relative_path.as_path().to_raw_bytes().as_bstr()),
+                buf,
+            )
+        }
+    }
+}
+
 ///
 pub mod peel;
 

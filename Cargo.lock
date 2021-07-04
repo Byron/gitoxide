@@ -398,7 +398,7 @@ dependencies = [
  "clap_derive",
  "indexmap",
  "lazy_static",
- "os_str_bytes",
+ "os_str_bytes 2.4.0",
  "strsim",
  "termcolor",
  "textwrap 0.12.1",
@@ -1084,6 +1084,7 @@ dependencies = [
  "git-testtools",
  "git-validate",
  "nom",
+ "os_str_bytes 3.1.0",
  "quick-error",
  "serde",
  "tempfile",
@@ -1693,6 +1694,12 @@ name = "os_str_bytes"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afb2e1c3ee07430c2cf76151675e583e0f19985fa6efae47d6848a3e2c824f85"
+
+[[package]]
+name = "os_str_bytes"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6acbef58a60fe69ab50510a55bc8cdd4d6cf2283d27ad338f54cb52747a9cf2d"
 
 [[package]]
 name = "output_vt100"

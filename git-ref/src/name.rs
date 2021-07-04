@@ -5,6 +5,7 @@ use std::{borrow::Cow, convert::TryFrom, path::Path};
 mod error {
     use bstr::BString;
     use quick_error::quick_error;
+    use std::convert::Infallible;
 
     quick_error! {
         /// The error used in the [`ValidPartialName`]::try_from(…) implementations.
@@ -15,6 +16,12 @@ mod error {
                 display("The reference name '{}' is invalid", path)
                 source(err)
             }
+        }
+    }
+
+    impl From<Infallible> for Error {
+        fn from(_: Infallible) -> Self {
+            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
         }
     }
 }
