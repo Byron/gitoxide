@@ -97,7 +97,7 @@ impl file::Store {
 
         match std::fs::File::open(ref_path) {
             Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err.into()),
+            Err(err) => return Err(err),
             Ok(mut file) => {
                 if let Err(err) = file.read_to_end(&mut buf) {
                     if err.kind() == io::ErrorKind::Other {
