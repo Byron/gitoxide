@@ -95,25 +95,14 @@ impl file::Store {
         let mut buf = Vec::new();
         let ref_path = self.ref_path(&relative_path);
 
+        if ref_path.is_dir() {
+            return Ok(None);
+        }
+
         match std::fs::File::open(ref_path) {
             Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
             Err(err) => return Err(err),
-            Ok(mut file) => {
-                if let Err(err) = file.read_to_end(&mut buf) {
-                    #[cfg(not(target_os = "windows"))]
-                    if err.kind() == io::ErrorKind::Other {
-                        return Ok(None);
-                    } else {
-                        return Err(err);
-                    }
-                    #[cfg(target_os = "windows")]
-                    if err.kind() == io::ErrorKind::PermissionDenied {
-                        return Ok(None);
-                    } else {
-                        return Err(err);
-                    }
-                }
-            }
+            Ok(mut file) => file.read_to_end(&mut buf)?,
         };
         Ok(Some(buf))
     }
