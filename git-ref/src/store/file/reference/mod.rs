@@ -37,20 +37,33 @@ impl<'a> Reference<'a> {
 
 mod iter {
     #![allow(missing_docs)]
-    use crate::store::file::{log, loose, Reference};
+
+    use crate::{
+        store::file::{log, loose, Reference},
+        FullName,
+    };
     use bstr::ByteSlice;
+    use std::{convert::TryInto, io::Read};
 
     impl<'a> Reference<'a> {
-        pub fn iter<'b>(
+        pub fn log_iter<'b>(
             &self,
             buf: &'b mut Vec<u8>,
         ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
         {
+            // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
             use os_str_bytes::OsStrBytes;
-            self.parent.reflog_iter(
-                crate::FullName(self.relative_path.as_path().to_raw_bytes().as_bstr()),
-                buf,
-            )
+            let name = self.relative_path.as_path().to_raw_bytes();
+            let name: FullName<'_> = name.as_bstr().try_into().expect("infallible operation");
+            match std::fs::File::open(self.parent.reflog_path(name)) {
+                Ok(mut file) => {
+                    buf.clear();
+                    file.read_to_end(buf)?;
+                }
+                Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+                Err(err) => return Err(err.into()),
+            };
+            Ok(Some(log::iter::forward(buf)))
         }
     }
 }

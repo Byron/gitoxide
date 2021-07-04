@@ -6,7 +6,7 @@ use std::{convert::TryInto, io::Read, path::PathBuf};
 
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
-    fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
+    pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
         self.base.join("logs").join(name.to_path())
     }
 }

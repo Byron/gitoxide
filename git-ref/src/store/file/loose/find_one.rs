@@ -101,9 +101,11 @@ pub mod existing {
         pub fn find_one_existing<'a, Name, E>(&self, path: Name) -> Result<file::Reference<'_>, Error>
         where
             Name: TryInto<FullName<'a>, Error = E>,
-            find_one::Error: From<E>,
+            crate::name::Error: From<E>,
         {
-            let path = path.try_into().map_err(|err| Error::Find(err.into()))?;
+            let path = path
+                .try_into()
+                .map_err(|err| Error::Find(find_one::Error::RefnameValidation(err.into())))?;
             match self.find_one_with_verified_input(path.to_path().as_ref()) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_path().into_owned())),

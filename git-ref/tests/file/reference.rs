@@ -1,3 +1,16 @@
+mod reflog {
+    use crate::file;
+
+    #[test]
+    fn iter() -> crate::Result {
+        let store = file::store()?;
+        let r = store.find_one_existing("HEAD")?;
+        let mut buf = Vec::new();
+        assert_eq!(r.log_iter(&mut buf)?.expect("log exists").count(), 1);
+        Ok(())
+    }
+}
+
 mod peel {
     use crate::file;
     use git_testtools::hex_to_id;
