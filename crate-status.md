@@ -322,6 +322,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
       * [ ] create
       * [ ] delete
       * [ ] expire
+      * [ ] handling of all kinds of [log-paths]
     * **ref**
       * [x] peel to id
   * [ ] packed
@@ -338,6 +339,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
 [quarantine]: https://github.com/git/git/blob/master/Documentation/git-receive-pack.txt#L223:L223
+[log-paths]: https://github.com/git/git/blob/master/refs/files-backend.c#L163:L182
 
 
 ### git-features

@@ -73,7 +73,11 @@ pub mod mutable {
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
 pub struct ValidPartialName<'a>(&'a BStr);
-mod safe_name;
+/// A validated complete and fully qualified reference name, safe to use for all operations.
+pub struct ValidName<'a>(&'a BStr);
+
+///
+pub mod name;
 
 /// Denotes the kind of reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
