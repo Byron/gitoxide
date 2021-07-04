@@ -23,7 +23,6 @@ mod prepare {
         }
 
         #[test]
-        #[should_panic]
         fn symbolic_missing_referent() {
             for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
                 let dir = tempfile::TempDir::new().unwrap();

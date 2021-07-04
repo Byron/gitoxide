@@ -74,6 +74,15 @@ pub enum Target {
     Symbolic(FullName),
 }
 
+impl<'a> From<crate::Target<'a>> for Target {
+    fn from(src: crate::Target<'a>) -> Self {
+        match src {
+            crate::Target::Peeled(oid) => Target::Peeled(oid.to_owned()),
+            crate::Target::Symbolic(name) => Target::Symbolic(FullName(name.to_owned())),
+        }
+    }
+}
+
 /// Update an existing or a new reference.
 pub struct Update {
     /// How to treat the reference log.

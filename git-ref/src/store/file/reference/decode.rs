@@ -74,11 +74,12 @@ impl<'a> Reference<'a> {
 fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
     let is_space = |b: u8| b == b' ';
     if let (path, Some(_ref_prefix)) = opt(terminated(tag("ref: "), take_while(is_space)))(bytes)? {
-        map(terminated(take_while(|b| b != b'\r' && b != b'\n'), newline), |path| {
-            MaybeUnsafeState::UnvalidatedPath(path.into())
-        })(path)
+        map(
+            terminated(take_while(|b| b != b'\r' && b != b'\n'), opt(newline)),
+            |path| MaybeUnsafeState::UnvalidatedPath(path.into()),
+        )(path)
     } else {
-        map(terminated(hex_sha1, newline), |hex| {
+        map(terminated(hex_sha1, opt(newline)), |hex| {
             MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation"))
         })(bytes)
     }

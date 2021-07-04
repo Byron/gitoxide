@@ -1,7 +1,7 @@
-#![allow(unused)]
+// #![allow(unused)]
 
 use crate::{
-    mutable::{self, Change, RefEdit, RefEditsExt, Target},
+    mutable::{Change, RefEdit, RefEditsExt, Target},
     store::file,
 };
 
@@ -10,6 +10,7 @@ struct Edit {
     lock: Option<git_lock::Marker>,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
     /// instead of the referent reference.
+    #[allow(dead_code)]
     parent_index: Option<usize>,
 }
 
@@ -38,32 +39,29 @@ impl<'a> Transaction<'a> {
             "locks can only be acquired once and it's all or nothing"
         );
 
+        let relative_path = change.update.name.to_path();
+        let existing_ref = store
+            .ref_contents(relative_path.as_ref())
+            .map_err(Error::from)
+            .and_then(|opt| {
+                opt.map(|buf| file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from))
+                    .transpose()
+            });
         let lock = match &mut change.update.edit {
             Change::Delete { .. } => todo!("handle deletions"),
-            Change::Update(Update { mode, previous, new }) => {
+            Change::Update(Update { previous, new, .. }) => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.ref_path(&change.update.name.to_path()),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )?;
 
-                let relative_path = change.update.name.to_path();
-                let existing_ref = store
-                    .ref_contents(relative_path.as_ref())
-                    .map_err(Error::from)
-                    .and_then(|opt| {
-                        opt.map(|buf| {
-                            file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from)
-                        })
-                        .transpose()
-                    });
                 match previous {
-                    Some(previous) => todo!("check previous value, if object id is not null"),
+                    Some(_expected_target) => todo!("check previous value, if object id is not null"),
                     None => {
-                        // if let Some(reference) = existing_ref? {
-                        //     *previous = Some(reference.target().into());
-                        // }
-                        todo!("read previous ref value if possible now that a lock is held and it's safe")
+                        if let Some(reference) = existing_ref? {
+                            *previous = Some(reference.target().into());
+                        }
                     }
                 }
 
@@ -72,11 +70,11 @@ impl<'a> Transaction<'a> {
                     Target::Symbolic(name) => file.write_all(b"ref: ").and_then(|_| file.write_all(name.as_ref())),
                 })?;
 
-                todo!("handle creation or update")
+                lock.close()?
             }
         };
         change.lock = Some(lock);
-        todo!("lock and write")
+        Ok(())
     }
 }
 
@@ -119,7 +117,14 @@ impl<'a> Transaction<'a> {
         match self.state {
             State::Open => self.prepare()?.commit(),
             State::Prepared => {
-                todo!("transaction commit")
+                for edit in self.updates.iter_mut() {
+                    let lock = edit.lock.take().expect("each ref is locked");
+                    match &edit.update.edit {
+                        Change::Update(Update { .. }) => lock.commit()?,
+                        Change::Delete { .. } => todo!("commit deletion"),
+                    }
+                }
+                Ok(self.updates.into_iter().map(|edit| edit.update).collect())
             }
         }
     }
