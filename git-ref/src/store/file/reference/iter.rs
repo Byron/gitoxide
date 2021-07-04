@@ -6,6 +6,17 @@ use bstr::ByteSlice;
 use std::io::Read;
 
 impl<'a> Reference<'a> {
+    /// Returns true if a reflog exists.
+    ///
+    /// Please note that this method shouldn't be used to check if a log exists before trying to read it, but instead
+    /// is meant to be the fastest possible way to determine if a log exists or not.
+    /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
+    pub fn log_exists(&self) -> Result<bool, loose::reflog::Error> {
+        // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
+        use os_str_bytes::OsStrBytes;
+        let name = self.relative_path.as_path().to_raw_bytes();
+        Ok(self.parent.reflog_path(FullName(name.as_bstr())).is_file())
+    }
     /// Return a reflog reverse iterator for this ref, reading chunks from the back into the fixed buffer `buf`.
     ///
     /// The iterator will traverse log entries from most recent to oldest, reading the underlying file in chunks from the back.

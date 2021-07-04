@@ -33,6 +33,7 @@ mod prepare {
                 assert_eq!(written.relative_path, Path::new("HEAD"));
                 assert_eq!(written.kind(), git_ref::Kind::Symbolic);
                 assert_eq!(written.target().as_name(), Some(referent.as_bytes().as_bstr()));
+                assert!(!written.log_exists().unwrap(), "no revlog is written for symbolic ref");
             }
         }
 
