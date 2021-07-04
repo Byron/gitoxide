@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use crate::{
-    edit::{self, RefEdit, RefEditsExt},
+    mutable::{self, RefEdit, RefEditsExt},
     store::file::Store,
 };
 

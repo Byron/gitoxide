@@ -1,7 +1,7 @@
 mod prepare {
     mod create {
         use bstr::ByteSlice;
-        use git_ref::{edit, file, mutable::Target};
+        use git_ref::{file, mutable, mutable::Target};
         use std::{convert::TryInto, path::Path};
 
         #[test]
@@ -17,9 +17,9 @@ mod prepare {
                     "the reference does not exist"
                 );
                 let t = store.transaction(
-                    Some(edit::RefEdit {
-                        edit: edit::Change::Update(edit::Update {
-                            mode: edit::Reflog::AutoAndNoDeref,
+                    Some(mutable::RefEdit {
+                        edit: mutable::Change::Update(mutable::Update {
+                            mode: mutable::Reflog::AutoAndNoDeref,
                             new: Target::Symbolic(referent.try_into().unwrap()),
                             previous: None, // TODO: check failure if it doesn't exist
                         }),

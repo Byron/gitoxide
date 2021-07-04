@@ -28,8 +28,46 @@
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 
-use crate::mutable::{Target, ValidName};
-use bstr::BString;
+use bstr::{BStr, BString, ByteSlice};
+use git_hash::ObjectId;
+use std::convert::TryFrom;
+
+/// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
+/// of a symbolic reference
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct ValidName(BString);
+
+impl TryFrom<&str> for ValidName {
+    type Error = git_validate::refname::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(ValidName(git_validate::refname(value.as_bytes().as_bstr())?.into()))
+    }
+}
+
+impl AsRef<BStr> for ValidName {
+    fn as_ref(&self) -> &BStr {
+        self.0.as_bstr()
+    }
+}
+
+impl ValidName {
+    /// Interpret this fully qualified reference name as partial name.
+    pub fn partial(&self) -> crate::ValidPartialName<'_> {
+        crate::ValidPartialName(self.0.as_bstr())
+    }
+}
+
+/// Denotes a ref target, equivalent to [`Kind`][super::Kind], but with mutable data.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum Target {
+    /// A ref that points to an object id
+    Peeled(ObjectId),
+    /// A ref that points to another reference by its validated name, adding a level of indirection.
+    ///
+    /// Note that this is an extension of gitoxide which will be helpful in logging all reference changes.
+    Symbolic(ValidName),
+}
 
 /// Update an existing or a new reference.
 pub struct Update {
