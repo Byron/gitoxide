@@ -16,20 +16,20 @@ mod prepare_and_commit {
 
         mod reference_with_equally_named {
             #[test]
-            #[should_panic]
+            #[ignore]
             fn empty_directory_already_in_place() {
                 todo!("lock file renaming of a.lock to a but a is an empty directory")
             }
 
             #[test]
-            #[should_panic]
+            #[ignore]
             fn non_empty_directory_already_in_place() {
                 todo!("lock file renaming of a.lock to a but a is a non-empty directory")
             }
         }
 
         #[test]
-        #[should_panic]
+        #[ignore]
         fn reference_without_old_value_must_not_exist_already_when_creating_it() {
             todo!("lock file renaming of a.lock to a but a is a non-empty directory")
         }
@@ -63,7 +63,7 @@ mod prepare_and_commit {
         }
 
         #[test]
-        #[should_panic]
+        #[ignore]
         fn referent_that_head_is_pointing_to() {
             todo!("verify that HEAD gets a reflog update automatically")
         }
@@ -73,7 +73,7 @@ mod prepare_and_commit {
 
     mod update {
         #[test]
-        #[should_panic]
+        #[ignore]
         fn write_head_and_reference_transparently() {
             todo!("writing a head being a symbolic ref writes through to the referent in an extra refedit")
         }
@@ -90,7 +90,6 @@ mod prepare_and_commit {
         use std::convert::TryInto;
 
         #[test]
-        #[should_panic]
         fn delete_a_ref_which_is_gone_succeeds() {
             let store = empty_store(WriteReflog::Normal).unwrap();
             let edits = store
@@ -128,10 +127,16 @@ mod prepare_and_commit {
         }
 
         #[test]
-        #[should_panic]
+        #[ignore]
         fn delete_reflog_only() {
             let _store = store_writable("make_repo_for_reflog.sh").unwrap();
             todo!("assure it won't delete the ref")
+        }
+
+        #[test]
+        #[ignore]
+        fn delete_broken_ref_that_must_exist() {
+            todo!("this should definitely work")
         }
     }
 }

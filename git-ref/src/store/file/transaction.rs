@@ -47,10 +47,26 @@ impl<'a> Transaction<'a> {
                     .transpose()
             });
         let lock = match &mut change.update.change {
-            Change::Delete { .. } => todo!("handle deletions"),
+            Change::Delete { previous } => {
+                let lock = git_lock::Marker::acquire_to_hold_resource(
+                    store.ref_path(&relative_path),
+                    lock_fail_mode,
+                    Some(store.base.to_owned()),
+                )?;
+                match (previous, existing_ref?) {
+                    (None, None | Some(_)) => {}
+                    (Some(_previous), None) => {
+                        return Err(Error::DeletionReferenceMustExist(
+                            change.update.name.as_ref().to_owned(),
+                        ))
+                    }
+                    (Some(_previous), Some(_existing)) => todo!("compare existing value with desired previous one"),
+                }
+                lock
+            }
             Change::Update { previous, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
-                    store.ref_path(&change.update.name.to_path()),
+                    store.ref_path(&relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )?;
@@ -143,7 +159,16 @@ impl<'a> Transaction<'a> {
                 for edit in self.updates.iter_mut() {
                     match &edit.update.change {
                         Change::Update { .. } => {}
-                        Change::Delete { .. } => todo!("commit deletion"),
+                        Change::Delete { .. } => {
+                            let lock = edit.lock.take().expect("each ref is locked, even deletions");
+                            let path_for_deletion = self.store.ref_path(edit.update.name.to_path().as_ref());
+                            if let Err(err) = std::fs::remove_file(path_for_deletion) {
+                                if err.kind() != std::io::ErrorKind::NotFound {
+                                    todo!("return some sort of error to indicate deletion failed")
+                                }
+                            }
+                            drop(lock); // allow deletion of empty leading directories
+                        }
                     }
                 }
                 Ok(self.updates.into_iter().map(|edit| edit.update).collect())
@@ -205,6 +230,9 @@ mod error {
                 display("An IO error occurred while applying an edit")
                 from()
                 source(err)
+            }
+            DeletionReferenceMustExist(full_name: BString) {
+                display("The reference '{}' for deletion did not exist", full_name)
             }
             ReferenceDecode(err: file::reference::decode::Error) {
                 display("Could not read reference")
