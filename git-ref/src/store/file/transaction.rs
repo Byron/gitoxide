@@ -1,9 +1,8 @@
-// #![allow(unused)]
-
 use crate::{
-    mutable::{Change, RefEdit, RefEditsExt, Target},
     store::file,
+    transaction::{Change, RefEdit, RefEditsExt, Target, Update},
 };
+use std::io::Write;
 
 struct Edit {
     update: RefEdit,
@@ -117,10 +116,24 @@ impl<'a> Transaction<'a> {
         match self.state {
             State::Open => self.prepare()?.commit(),
             State::Prepared => {
+                // Perform updates first so live commits remain referenced
                 for edit in self.updates.iter_mut() {
-                    let lock = edit.lock.take().expect("each ref is locked");
                     match &edit.update.edit {
-                        Change::Update(Update { .. }) => lock.commit()?,
+                        Change::Update(Update { mode, new, .. }) => {
+                            let lock = edit.lock.take().expect("each ref is locked");
+                            match (new, mode) {
+                                (Target::Symbolic(_), _reflog_mode) => {} // skip any log for symbolic refs
+                                _ => todo!("commit other reflog write cases"),
+                            }
+                            lock.commit()?
+                        }
+                        Change::Delete { .. } => {}
+                    }
+                }
+
+                for edit in self.updates.iter_mut() {
+                    match &edit.update.edit {
+                        Change::Update(Update { .. }) => {}
                         Change::Delete { .. } => todo!("commit deletion"),
                     }
                 }
@@ -192,6 +205,4 @@ mod error {
         }
     }
 }
-use crate::mutable::Update;
 pub use error::Error;
-use std::io::Write;

@@ -11,7 +11,7 @@ mod prepare_and_commit {
     mod create {
         use crate::file::transaction::prepare_and_commit::empty_store;
         use bstr::ByteSlice;
-        use git_ref::{mutable, mutable::Target};
+        use git_ref::{transaction, transaction::Target};
         use std::{convert::TryInto, path::Path};
 
         mod reference_with_equally_named {
@@ -41,9 +41,9 @@ mod prepare_and_commit {
                 let referent = "refs/heads/alt-main";
                 assert!(store.find_one(referent)?.is_none(), "the reference does not exist");
                 let t = store.transaction(
-                    Some(mutable::RefEdit {
-                        edit: mutable::Change::Update(mutable::Update {
-                            mode: mutable::Reflog::AutoAndNoDeref,
+                    Some(transaction::RefEdit {
+                        edit: transaction::Change::Update(transaction::Update {
+                            mode: transaction::Reflog::AutoAndNoDeref,
                             new: Target::Symbolic(referent.try_into()?),
                             previous: None, // TODO: check failure if it doesn't exist
                         }),

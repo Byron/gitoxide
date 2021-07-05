@@ -3,7 +3,7 @@ type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 mod file;
 mod edit {
     mod refeditext {
-        use git_ref::mutable::{Change, RefEdit, RefEditsExt};
+        use git_ref::transaction::{Change, RefEdit, RefEditsExt};
         use std::convert::TryInto;
 
         fn named_edit(name: &str) -> RefEdit {

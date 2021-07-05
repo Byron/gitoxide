@@ -88,7 +88,7 @@ pub struct Update {
     /// How to treat the reference log.
     pub mode: Reflog,
     /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
-    /// updating it.
+    /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
     pub previous: Option<Target>,
     /// The new state of the reference, either for updating an existing one or creating a new one.
     pub new: Target,

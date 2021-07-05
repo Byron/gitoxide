@@ -25,7 +25,7 @@ mod store;
 pub use store::file;
 
 ///
-pub mod mutable;
+pub mod transaction;
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
 pub struct FullName<'a>(&'a BStr);
