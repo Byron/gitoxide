@@ -5,9 +5,8 @@ fn store() -> crate::Result<file::Store> {
     Ok(file::Store::from(path.join(".git")))
 }
 
-// TODO: actually use this in transaction testing
-fn _store_writable() -> crate::Result<(git_testtools::tempfile::TempDir, file::Store)> {
-    let dir = git_testtools::scripted_fixture_repo_writable("make_ref_repository.sh")?;
+fn store_writable(name: &str) -> crate::Result<(git_testtools::tempfile::TempDir, file::Store)> {
+    let dir = git_testtools::scripted_fixture_repo_writable(name)?;
     let git_dir = dir.path().join(".git");
     Ok((dir, file::Store::from(git_dir)))
 }

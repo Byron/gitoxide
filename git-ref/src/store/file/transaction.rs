@@ -46,7 +46,7 @@ impl<'a> Transaction<'a> {
                 opt.map(|buf| file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from))
                     .transpose()
             });
-        let lock = match &mut change.update.edit {
+        let lock = match &mut change.update.change {
             Change::Delete { .. } => todo!("handle deletions"),
             Change::Update(Update { previous, new, .. }) => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
@@ -127,7 +127,7 @@ impl<'a> Transaction<'a> {
             State::Prepared => {
                 // Perform updates first so live commits remain referenced
                 for edit in self.updates.iter_mut() {
-                    match &edit.update.edit {
+                    match &edit.update.change {
                         Change::Update(Update { mode, new, .. }) => {
                             let lock = edit.lock.take().expect("each ref is locked");
                             match (new, mode) {
@@ -141,7 +141,7 @@ impl<'a> Transaction<'a> {
                 }
 
                 for edit in self.updates.iter_mut() {
-                    match &edit.update.edit {
+                    match &edit.update.change {
                         Change::Update(Update { .. }) => {}
                         Change::Delete { .. } => todo!("commit deletion"),
                     }

@@ -42,7 +42,7 @@ mod prepare_and_commit {
                 assert!(store.find_one(referent)?.is_none(), "the reference does not exist");
                 let t = store.transaction(
                     Some(transaction::RefEdit {
-                        edit: transaction::Change::Update(transaction::Update {
+                        change: transaction::Change::Update(transaction::Update {
                             mode: transaction::Reflog::AutoAndNoDeref,
                             new: Target::Symbolic(referent.try_into()?),
                             previous: None, // TODO: check failure if it doesn't exist
@@ -80,16 +80,58 @@ mod prepare_and_commit {
     }
 
     mod delete {
+        use crate::file::store_writable;
+        use crate::file::transaction::prepare_and_commit::empty_store;
+        use git_hash::ObjectId;
+        use git_ref::{
+            file::WriteReflog,
+            transaction::{Change, RefEdit, Target},
+        };
+        use std::convert::TryInto;
+
         #[test]
         #[should_panic]
-        fn delete_a_ref_which_is_gone() {
-            todo!("it's fine to do that")
+        fn delete_a_ref_which_is_gone_succeeds() {
+            let store = empty_store(WriteReflog::Normal).unwrap();
+            let edits = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Delete { previous: None },
+                        name: "DOES_NOT_EXIST".try_into().unwrap(),
+                    }),
+                    git_lock::acquire::Fail::Immediately,
+                )
+                .commit()
+                .unwrap();
+            assert_eq!(edits.len(), 1);
+        }
+
+        #[test]
+        #[should_panic]
+        fn delete_a_ref_which_is_gone_but_must_exist_fails() {
+            let store = empty_store(WriteReflog::Normal).unwrap();
+            let res = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Delete {
+                            previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                        },
+                        name: "DOES_NOT_EXIST".try_into().unwrap(),
+                    }),
+                    git_lock::acquire::Fail::Immediately,
+                )
+                .commit();
+            match res {
+                Ok(_) => unreachable!("must exist, but it doesn't actually exist"),
+                Err(err) => assert_eq!(err.to_string(), "hello err"),
+            }
         }
 
         #[test]
         #[should_panic]
         fn delete_reflog_only() {
-            todo!("don't accidentally create the reference as well")
+            let _store = store_writable("make_repo_for_reflog.sh").unwrap();
+            todo!("assure it won't delete the ref")
         }
     }
 }

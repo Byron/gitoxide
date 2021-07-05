@@ -8,7 +8,7 @@ mod edit {
 
         fn named_edit(name: &str) -> RefEdit {
             RefEdit {
-                edit: Change::Delete { previous: None },
+                change: Change::Delete { previous: None },
                 name: name.try_into().expect("valid name"),
             }
         }

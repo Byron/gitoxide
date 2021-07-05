@@ -102,7 +102,8 @@ pub enum Change {
     Update(Update),
     /// Delete a reference and optionally check if `previous` is its content.
     Delete {
-        /// The previous state of the reference
+        /// The previous state of the reference. If set, the reference is expected to exist and match the given value.
+        /// If the value is a peeled null-id the reference is expected to exist but the value doesn't matter, neither peeled nor symbolic.
         previous: Option<Target>,
     },
 }
@@ -110,7 +111,7 @@ pub enum Change {
 /// A reference that is to be changed
 pub struct RefEdit {
     /// The change itself
-    pub edit: Change,
+    pub change: Change,
     /// The name of the reference to apply the change to
     pub name: FullName,
 }
@@ -143,6 +144,7 @@ pub enum Reflog {
     /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
     /// referent.
     OnlyAndDeref,
-    /// Create a reflog even if it otherwise wouldn't be created, as is the case for tags. Otherwise it acts like `AutoNoDeref`.
+    /// Create a reflog even if it otherwise wouldn't be created, as is the case for tags. Otherwise it acts like `AutoNoDeref`,
+    /// for example when deleting a reflog or when used with a reference that otherwise would want a reflog.
     CreateUnconditionally,
 }
