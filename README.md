@@ -90,6 +90,7 @@ Follow linked crate name for detailed status.
   * [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
         only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
         untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
+  * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfals. Think BFG, but more awesome, if that's possible.
     
 [syncthing]: https://github.com/syncthing/syncthing
 
