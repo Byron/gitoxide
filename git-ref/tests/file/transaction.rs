@@ -85,5 +85,11 @@ mod prepare_and_commit {
         fn delete_a_ref_which_is_gone() {
             todo!("it's fine to do that")
         }
+
+        #[test]
+        #[should_panic]
+        fn delete_reflog_only() {
+            todo!("don't accidentally create the reference as well")
+        }
     }
 }

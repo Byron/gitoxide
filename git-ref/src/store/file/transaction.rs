@@ -86,7 +86,7 @@ impl<'a> Transaction<'a> {
     /// Prepare for calling [`commit(…)`][Transaction::commit()] in a way that can be rolled back perfectly.
     ///
     /// If the operation succeeds, the transaction can be committed or dropped to cause a rollback automatically.
-    /// Rollbacks happen automatically on failure.
+    /// Rollbacks happen automatically on failure and they tend to be perfect.
     /// This method is idempotent.
     pub fn prepare(mut self) -> Result<Self, Error> {
         Ok(match self.state {
@@ -109,7 +109,16 @@ impl<'a> Transaction<'a> {
     /// state of the affected refs in the ref store in that instant. Please note that the obtained edits may have been
     /// adjusted to contain more dependent edits or additional information.
     ///
-    /// On error the transaction may have been performed partially and can be retried, depending on the nature of the error.
+    /// On error the transaction may have been performed partially, depending on the nature of the error, and no attempt to roll back
+    /// partial changes is made.
+    ///
+    /// In this stage, we perform the following operations:
+    ///
+    /// * write the ref log
+    /// * move updated refs into place
+    /// * delete reflogs
+    /// * delete their corresponding reference (if applicable)
+    ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
     pub fn commit(mut self) -> Result<Vec<RefEdit>, Error> {
