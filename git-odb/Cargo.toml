@@ -35,7 +35,7 @@ git-pack = { version = "^0.2", path = "../git-pack" }
 
 btoi = "0.4.2"
 tempfile = "3.1.0"
-thiserror = "1.0.20"
+thiserror = "1.0.26"
 
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools"}

@@ -23,7 +23,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 byteorder = "1.2.3"
 filebuffer = "0.4.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
-thiserror = "1.0.20"
+thiserror = "1.0.26"
 
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools" }
