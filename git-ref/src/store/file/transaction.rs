@@ -1,6 +1,6 @@
 use crate::{
     store::file,
-    transaction::{Change, RefEdit, RefEditsExt, Target, Update},
+    transaction::{Change, RefEdit, RefEditsExt, Target},
 };
 use std::io::Write;
 
@@ -48,7 +48,7 @@ impl<'a> Transaction<'a> {
             });
         let lock = match &mut change.update.change {
             Change::Delete { .. } => todo!("handle deletions"),
-            Change::Update(Update { previous, new, .. }) => {
+            Change::Update { previous, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.ref_path(&change.update.name.to_path()),
                     lock_fail_mode,
@@ -128,7 +128,7 @@ impl<'a> Transaction<'a> {
                 // Perform updates first so live commits remain referenced
                 for edit in self.updates.iter_mut() {
                     match &edit.update.change {
-                        Change::Update(Update { mode, new, .. }) => {
+                        Change::Update { mode, new, .. } => {
                             let lock = edit.lock.take().expect("each ref is locked");
                             match (new, mode) {
                                 (Target::Symbolic(_), _reflog_mode) => {} // skip any log for symbolic refs
@@ -142,7 +142,7 @@ impl<'a> Transaction<'a> {
 
                 for edit in self.updates.iter_mut() {
                     match &edit.update.change {
-                        Change::Update(Update { .. }) => {}
+                        Change::Update { .. } => {}
                         Change::Delete { .. } => todo!("commit deletion"),
                     }
                 }

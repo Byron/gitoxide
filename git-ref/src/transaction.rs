@@ -83,23 +83,20 @@ impl<'a> From<crate::Target<'a>> for Target {
     }
 }
 
-/// Update an existing or a new reference.
-pub struct Update {
-    /// How to treat the reference log.
-    pub mode: Reflog,
-    /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
-    /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
-    pub previous: Option<Target>,
-    /// The new state of the reference, either for updating an existing one or creating a new one.
-    pub new: Target,
-}
-
 /// A description of an edit to perform.
 pub enum Change {
     /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
     /// we function like `update`.
     /// Otherwise it functions as `create-or-update`.
-    Update(Update),
+    Update {
+        /// How to treat the reference log.
+        mode: Reflog,
+        /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
+        /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
+        previous: Option<Target>,
+        /// The new state of the reference, either for updating an existing one or creating a new one.
+        new: Target,
+    },
     /// Delete a reference and optionally check if `previous` is its content.
     Delete {
         /// The previous state of the reference. If set, the reference is expected to exist and match the given value.
