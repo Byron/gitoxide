@@ -12,7 +12,7 @@ mod prepare_and_commit {
         use crate::file::transaction::prepare_and_commit::empty_store;
         use bstr::ByteSlice;
         use git_lock::acquire::Fail;
-        use git_ref::transaction::{Change, RefEdit, Reflog, Target};
+        use git_ref::transaction::{Change, RefEdit, Target, UpdateMode};
         use std::{convert::TryInto, path::Path};
 
         mod reference_with_equally_named {
@@ -44,7 +44,9 @@ mod prepare_and_commit {
                 let t = store.transaction(
                     Some(RefEdit {
                         change: Change::Update {
-                            mode: Reflog::AutoAndNoDeref,
+                            mode: UpdateMode::RefAndRefLogAndNoDeref {
+                                create_unconditionally: false,
+                            },
                             new: Target::Symbolic(referent.try_into()?),
                             previous: None, // TODO: check failure if it doesn't exist
                         },
@@ -87,7 +89,7 @@ mod prepare_and_commit {
         use git_lock::acquire::Fail;
         use git_ref::{
             file::WriteReflog,
-            transaction::{Change, RefEdit, Target},
+            transaction::{Change, DeleteMode, RefEdit, Target},
         };
         use std::convert::TryInto;
 
@@ -97,7 +99,10 @@ mod prepare_and_commit {
             let edits = store
                 .transaction(
                     Some(RefEdit {
-                        change: Change::Delete { previous: None },
+                        change: Change::Delete {
+                            previous: None,
+                            mode: DeleteMode::RefAndRefLogAndNoDeref,
+                        },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
                     Fail::Immediately,
@@ -115,6 +120,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                            mode: DeleteMode::RefAndRefLogAndNoDeref,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
@@ -142,6 +148,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                            mode: DeleteMode::RefLogOnlyAndNoDeref,
                         },
                         name: head.name().into(),
                     }),

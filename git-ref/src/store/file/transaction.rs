@@ -47,7 +47,7 @@ impl<'a> Transaction<'a> {
                     .transpose()
             });
         let lock = match &mut change.update.change {
-            Change::Delete { previous } => {
+            Change::Delete { previous, mode: _ } => {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
                     store.ref_path(&relative_path),
                     lock_fail_mode,
@@ -64,7 +64,7 @@ impl<'a> Transaction<'a> {
                 }
                 lock
             }
-            Change::Update { previous, new, .. } => {
+            Change::Update { previous, new, mode: _ } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.ref_path(&relative_path),
                     lock_fail_mode,

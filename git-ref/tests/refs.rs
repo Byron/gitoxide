@@ -3,12 +3,15 @@ type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 mod file;
 mod edit {
     mod refeditext {
-        use git_ref::transaction::{Change, RefEdit, RefEditsExt};
+        use git_ref::transaction::{Change, DeleteMode, RefEdit, RefEditsExt};
         use std::convert::TryInto;
 
         fn named_edit(name: &str) -> RefEdit {
             RefEdit {
-                change: Change::Delete { previous: None },
+                change: Change::Delete {
+                    previous: None,
+                    mode: DeleteMode::RefAndRefLogAndNoDeref,
+                },
                 name: name.try_into().expect("valid name"),
             }
         }

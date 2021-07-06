@@ -84,13 +84,14 @@ impl<'a> From<crate::Target<'a>> for Target {
 }
 
 /// A description of an edit to perform.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Change {
     /// If previous is not `None`, the ref must exist and its `oid` must agree with the `previous`, and
     /// we function like `update`.
     /// Otherwise it functions as `create-or-update`.
     Update {
         /// How to treat the reference log.
-        mode: Reflog,
+        mode: UpdateMode,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
         previous: Option<Target>,
@@ -102,10 +103,13 @@ pub enum Change {
         /// The previous state of the reference. If set, the reference is expected to exist and match the given value.
         /// If the value is a peeled null-id the reference is expected to exist but the value doesn't matter, neither peeled nor symbolic.
         previous: Option<Target>,
+        /// How to thread the reference log during deletion.
+        mode: DeleteMode,
     },
 }
 
 /// A reference that is to be changed
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct RefEdit {
     /// The change itself
     pub change: Change,
@@ -133,15 +137,35 @@ where
     }
 }
 
+/// The way to deal with the Reflog in deletions.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum DeleteMode {
+    /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
+    /// in this case and apply the change to it and its reflog directly.
+    RefAndRefLogAndNoDeref,
+    /// As above, but delete the ref log only without dereferencing symbolic refs
+    RefLogOnlyAndNoDeref,
+    /// Only delete the reflog but require this to be a symbolic ref so the actual deletion can be performed on the
+    /// referent.
+    AutoAndDeref,
+}
+
 /// The way to deal with the Reflog in a particular edit
-pub enum Reflog {
+///
+/// If the `create_unconditionally` field is set, create a reflog even if it otherwise wouldn't be created,
+/// as is the case for tags.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum UpdateMode {
     /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
     /// in this case and apply the change to it directly.
-    AutoAndNoDeref,
+    RefAndRefLogAndNoDeref {
+        /// If set, update the reflog even if it otherwise wouldn't.
+        create_unconditionally: bool,
+    },
     /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
     /// referent.
-    OnlyAndDeref,
-    /// Create a reflog even if it otherwise wouldn't be created, as is the case for tags. Otherwise it acts like `AutoNoDeref`,
-    /// for example when deleting a reflog or when used with a reference that otherwise would want a reflog.
-    CreateUnconditionally,
+    RefLogOnlyAndDeref {
+        /// If set, update the reflog even if it otherwise wouldn't.
+        create_unconditionally: bool,
+    },
 }
