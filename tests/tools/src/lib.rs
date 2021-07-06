@@ -30,7 +30,9 @@ pub fn scripted_fixture_repo_writable_with_args(
     let ro_dir = scripted_fixture_repo_read_only_with_args(script_name, args)?;
     let dst = tempfile::TempDir::new()?;
     fs_extra::copy_items(
-        &[ro_dir],
+        &std::fs::read_dir(ro_dir)?
+            .map(|e| e.map(|e| e.path()))
+            .collect::<Result<Vec<_>, _>>()?,
         dst.path(),
         &fs_extra::dir::CopyOptions {
             overwrite: false,
