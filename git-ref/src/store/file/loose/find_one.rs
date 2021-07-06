@@ -159,6 +159,7 @@ mod error {
     use crate::file;
     use quick_error::quick_error;
     use std::{
+        convert::Infallible,
         io::{self},
         path::PathBuf,
     };
@@ -182,6 +183,12 @@ mod error {
                 display("The reference at '{}' could not be instantiated", relative_path.display())
                 source(err)
             }
+        }
+    }
+
+    impl From<Infallible> for Error {
+        fn from(_: Infallible) -> Self {
+            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
         }
     }
 }

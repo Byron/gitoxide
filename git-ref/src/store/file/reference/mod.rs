@@ -1,5 +1,5 @@
 use crate::transaction::FullName;
-use crate::{file::Reference, Kind, Target};
+use crate::{file::Reference, transaction, Kind, Target};
 use bstr::BString;
 use git_hash::{oid, ObjectId};
 use std::path::{Path, PathBuf};
@@ -33,6 +33,14 @@ impl<'a> Reference<'a> {
         match self.state {
             State::ValidatedPath(ref path) => Target::Symbolic(path.as_ref()),
             State::Id(ref oid) => Target::Peeled(oid.as_ref()),
+        }
+    }
+
+    /// Transform this reference into an owned `Target`
+    pub fn into_target(self) -> transaction::Target {
+        match self.state {
+            State::ValidatedPath(path) => transaction::Target::Symbolic(FullName(path)),
+            State::Id(oid) => transaction::Target::Peeled(oid),
         }
     }
 

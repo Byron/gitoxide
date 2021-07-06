@@ -38,6 +38,22 @@ pub struct Store {
     pub write_reflog: WriteReflog,
 }
 
+mod traits {
+    use crate::{
+        store::{file, file::find_one},
+        transaction::Target,
+        PartialName,
+    };
+
+    impl crate::traits::RefStore for file::Store {
+        type FindOneExistingError = find_one::existing::Error;
+
+        fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
+            self.find_one_existing(name).map(|r| r.into_target())
+        }
+    }
+}
+
 mod loose;
 pub use loose::find_one;
 

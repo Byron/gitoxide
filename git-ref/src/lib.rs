@@ -23,17 +23,29 @@ use git_hash::oid;
 
 mod store;
 pub use store::file;
-
+///
+pub mod name;
 ///
 pub mod transaction;
+
+mod traits {
+    use crate::{transaction::Target, PartialName};
+
+    /// A minimal trait to group useful operations for handling references across store implementations.
+    pub trait RefStore {
+        /// The error used in [`RefStore::find_one()`].
+        type FindOneExistingError;
+
+        /// Find the reference with the given `name`. Return `Ok(None)` if the reference doesn't exist.
+        fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError>;
+    }
+}
+pub use traits::RefStore;
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
 pub struct FullName<'a>(&'a BStr);
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 pub struct PartialName<'a>(&'a BStr);
-
-///
-pub mod name;
 
 /// Denotes the kind of reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -56,31 +68,37 @@ pub enum Target<'a> {
     Symbolic(&'a BStr),
 }
 
-impl<'a> Target<'a> {
-    /// Returns the kind of the target the ref is pointing to.
-    pub fn kind(&self) -> Kind {
-        match self {
-            Target::Symbolic(_) => Kind::Symbolic,
-            Target::Peeled(_) => Kind::Peeled,
+mod target {
+    use crate::{Kind, Target};
+    use bstr::BStr;
+    use git_hash::oid;
+
+    impl<'a> Target<'a> {
+        /// Returns the kind of the target the ref is pointing to.
+        pub fn kind(&self) -> Kind {
+            match self {
+                Target::Symbolic(_) => Kind::Symbolic,
+                Target::Peeled(_) => Kind::Peeled,
+            }
         }
-    }
-    /// Interpret this target as object id which maybe `None` if it is symbolic.
-    pub fn as_id(&self) -> Option<&oid> {
-        match self {
-            Target::Symbolic(_) => None,
-            Target::Peeled(oid) => Some(oid),
+        /// Interpret this target as object id which maybe `None` if it is symbolic.
+        pub fn as_id(&self) -> Option<&oid> {
+            match self {
+                Target::Symbolic(_) => None,
+                Target::Peeled(oid) => Some(oid),
+            }
         }
-    }
-    /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
-    pub fn as_name(&self) -> Option<&BStr> {
-        match self {
-            Target::Symbolic(path) => Some(path),
-            Target::Peeled(_) => None,
+        /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
+        pub fn as_name(&self) -> Option<&BStr> {
+            match self {
+                Target::Symbolic(path) => Some(path),
+                Target::Peeled(_) => None,
+            }
         }
-    }
-    /// Convert this instance into an owned version, without consuming it.
-    pub fn to_owned(self) -> crate::transaction::Target {
-        self.into()
+        /// Convert this instance into an owned version, without consuming it.
+        pub fn to_owned(self) -> crate::transaction::Target {
+            self.into()
+        }
     }
 }
 

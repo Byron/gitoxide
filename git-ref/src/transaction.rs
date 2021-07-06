@@ -28,6 +28,7 @@
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 
+use crate::RefStore;
 use bstr::{BStr, BString, ByteSlice};
 use git_hash::ObjectId;
 use std::{borrow::Cow, convert::TryFrom, fmt, path::Path};
@@ -160,8 +161,13 @@ pub trait RefEditsExt<T> {
 
     /// Split all symbolic refs into updates for the symbolic ref as well as all their referents if the update or delete mode allows
     /// dereferencing them.
+    ///
+    /// Note no action is performed if deref isn't specified.
+    /// If deref is specified and the reference isn't a symbolic reference, the deref mode will be changed
+    /// to match.
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
+        store: &impl RefStore,
         make_entry: impl FnMut(RefEdit) -> T,
     ) -> Result<(), std::io::Error>;
 }
@@ -178,12 +184,14 @@ where
             None => Ok(()),
         }
     }
-    /// Split all changes
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        mut make_entry: impl FnMut(RefEdit) -> E,
+        _store: &impl RefStore,
+        _make_entry: impl FnMut(RefEdit) -> E,
     ) -> Result<(), std::io::Error> {
-        self.push(make_entry(self[0].borrow().clone()));
+        let new_edits = Vec::new();
+        for _edit in self.iter() {}
+        self.extend(new_edits.into_iter());
         Ok(())
     }
 }

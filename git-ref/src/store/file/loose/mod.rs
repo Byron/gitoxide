@@ -5,7 +5,7 @@ pub mod find_one;
 pub mod reflog;
 
 mod init {
-    use crate::file;
+    use crate::store::file;
     use std::path::PathBuf;
 
     impl file::Store {
