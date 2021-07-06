@@ -79,8 +79,8 @@ impl<'a> Target<'a> {
         }
     }
     /// Convert this instance into an owned version, without consuming it.
-    pub fn to_owned(&self) -> crate::transaction::Target {
-        self.clone().into()
+    pub fn to_owned(self) -> crate::transaction::Target {
+        self.into()
     }
 }
 

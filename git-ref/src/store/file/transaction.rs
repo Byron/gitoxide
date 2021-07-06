@@ -68,15 +68,13 @@ impl<'a> Transaction<'a> {
                         })
                     }
                     (Some(previous), Some(existing)) => {
-                        if !previous.is_null() {
-                            if *previous != existing.target() {
-                                let expected = previous.clone();
-                                return Err(Error::DeleteReferenceOutOfDate {
-                                    full_name: change.name(),
-                                    expected,
-                                    actual: existing.target().to_owned(),
-                                });
-                            }
+                        if !previous.is_null() && *previous != existing.target() {
+                            let expected = previous.clone();
+                            return Err(Error::DeleteReferenceOutOfDate {
+                                full_name: change.name(),
+                                expected,
+                                actual: existing.target().to_owned(),
+                            });
                         }
                     }
                 }
