@@ -72,7 +72,10 @@ pub struct RefEdit {
 }
 
 mod ext {
-    use crate::{transaction::RefEdit, RefStore};
+    use crate::{
+        transaction::{Change, RefEdit, Target},
+        RefStore,
+    };
     use bstr::BString;
 
     /// An extension trait to perform commonly used operations on edits across different ref stores.
@@ -92,7 +95,7 @@ mod ext {
 
     impl<E> RefEditsExt<E> for Vec<E>
     where
-        E: std::borrow::Borrow<RefEdit>,
+        E: std::borrow::Borrow<RefEdit> + std::borrow::BorrowMut<RefEdit>,
     {
         fn assure_one_name_has_one_edit(&self) -> Result<(), BString> {
             let mut names: Vec<_> = self.iter().map(|e| &e.borrow().name).collect();
@@ -102,13 +105,29 @@ mod ext {
                 None => Ok(()),
             }
         }
+
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
-            _store: &impl RefStore,
+            store: &impl RefStore,
             _make_entry: impl FnMut(RefEdit) -> E,
         ) -> Result<(), std::io::Error> {
             let new_edits = Vec::new();
-            for _edit in self.iter() {}
+            for edit in self.iter_mut() {
+                let edit = edit.borrow_mut();
+                match edit.change {
+                    Change::Delete { ref mut deref, .. } | Change::Update { ref mut deref, .. } => {
+                        match store.find_one_existing(edit.name.to_partial()).ok() {
+                            Some(Target::Symbolic(_name)) => {
+                                // todo!("split into new edit")
+                            }
+                            Some(Target::Peeled(_)) => {
+                                *deref = false;
+                            }
+                            None => {}
+                        }
+                    }
+                }
+            }
             self.extend(new_edits.into_iter());
             Ok(())
         }

@@ -27,6 +27,11 @@ impl std::borrow::Borrow<RefEdit> for Edit {
     }
 }
 
+impl std::borrow::BorrowMut<RefEdit> for Edit {
+    fn borrow_mut(&mut self) -> &mut RefEdit {
+        &mut self.update
+    }
+}
 /// A transaction
 pub struct Transaction<'a> {
     store: &'a file::Store,

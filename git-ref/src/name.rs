@@ -32,6 +32,11 @@ impl<'a> FullName<'a> {
     pub fn to_path(&self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
     }
+
+    /// Return ourselves as byte string which is a valid refname
+    pub fn as_bstr(&self) -> &BStr {
+        self.0
+    }
 }
 
 impl<'a> PartialName<'a> {
@@ -39,6 +44,11 @@ impl<'a> PartialName<'a> {
     /// Note that it may be only a partial path though.
     pub fn to_partial_path(&self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
+    }
+
+    /// Provide the name as binary string which is known to be a valid partial ref name.
+    pub fn as_bstr(&self) -> &BStr {
+        self.0
     }
 }
 
