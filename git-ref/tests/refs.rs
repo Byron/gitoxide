@@ -10,7 +10,7 @@ mod edit {
             RefEdit {
                 change: Change::Delete {
                     previous: None,
-                    mode: DeleteMode::RefAndRefLogAndNoDeref,
+                    mode: DeleteMode::RefAndRefLogNoDeref,
                 },
                 name: name.try_into().expect("valid name"),
             }

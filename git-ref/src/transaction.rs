@@ -178,12 +178,13 @@ where
 pub enum DeleteMode {
     /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
     /// in this case and apply the change to it and its reflog directly.
-    RefAndRefLogAndNoDeref,
+    RefAndRefLogNoDeref,
     /// As above, but delete the ref log only without dereferencing symbolic refs
-    RefLogOnlyAndNoDeref,
-    /// Only delete the reflog but require this to be a symbolic ref so the actual deletion can be performed on the
-    /// referent.
-    AutoAndDeref,
+    RefLogOnlyNoDeref,
+    /// Delete the reference and the log, but also apply this to the referent, recursively.
+    RefAndRefLogDeref,
+    /// Delete only the reflog, also deleting the referents reflog, recursively.
+    RefLogOnlyDeref,
 }
 
 /// The way to deal with the Reflog in a particular edit

@@ -101,7 +101,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: DeleteMode::RefAndRefLogAndNoDeref,
+                            mode: DeleteMode::RefAndRefLogNoDeref,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
@@ -120,7 +120,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefAndRefLogAndNoDeref,
+                            mode: DeleteMode::RefAndRefLogNoDeref,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
@@ -148,7 +148,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefAndRefLogAndNoDeref,
+                            mode: DeleteMode::RefAndRefLogNoDeref,
                         },
                         name: head.name().into(),
                     }),
@@ -161,7 +161,7 @@ mod prepare_and_commit {
                 vec![RefEdit {
                     change: Change::Delete {
                         previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                        mode: DeleteMode::RefAndRefLogAndNoDeref,
+                        mode: DeleteMode::RefAndRefLogNoDeref,
                     },
                     name: head.name().into(),
                 }],
@@ -186,8 +186,8 @@ mod prepare_and_commit {
                 .transaction(
                     Some(RefEdit {
                         change: Change::Delete {
-                            previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefLogOnlyAndNoDeref,
+                            previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                            mode: DeleteMode::RefLogOnlyNoDeref,
                         },
                         name: head.name().into(),
                     }),
@@ -198,15 +198,47 @@ mod prepare_and_commit {
             assert_eq!(edits.len(), 1);
             let head = store.find_one_existing("HEAD")?;
             assert!(!head.log_exists().unwrap());
-            assert!(store.find_one("main")?.is_some(), "referent still exists");
+            let main = store.find_one_existing("main").expect("referent still exists");
+            assert!(main.log_exists()?, "log is untouched, too");
+            assert_eq!(
+                main.target(),
+                head.peel_one_level().expect("a symref")?.target(),
+                "head points to main"
+            );
             Ok(())
         }
 
         #[test]
-        #[ignore]
+        #[should_panic]
         fn delete_reflog_only_of_symbolic_with_deref() {
-            let _store = store_writable("make_repo_for_reflog.sh").unwrap();
-            todo!("assure it won't delete the ref")
+            let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
+            let head = store.find_one_existing("HEAD").unwrap();
+            assert!(head.log_exists().unwrap());
+
+            let edits = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Delete {
+                            previous: Some(Target::Symbolic("refs/heads/main".try_into().unwrap())),
+                            mode: DeleteMode::RefLogOnlyDeref,
+                        },
+                        name: head.name().into(),
+                    }),
+                    Fail::Immediately,
+                )
+                .commit()
+                .unwrap();
+
+            assert_eq!(edits.len(), 1);
+            let head = store.find_one_existing("HEAD").unwrap();
+            assert!(!head.log_exists().unwrap());
+            let main = store.find_one_existing("main").expect("referent still exists");
+            assert!(!main.log_exists().unwrap(), "log is untouched, too");
+            assert_eq!(
+                main.target(),
+                head.peel_one_level().expect("a symref").unwrap().target(),
+                "head points to main"
+            );
         }
 
         #[test]

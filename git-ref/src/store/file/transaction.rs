@@ -185,9 +185,9 @@ impl<'a> Transaction<'a> {
                         Change::Delete { previous: _, mode } => {
                             let lock = change.lock.take().expect("each ref is locked, even deletions");
                             let (rm_reflog, rm_ref) = match mode {
-                                DeleteMode::RefAndRefLogAndNoDeref => (true, true),
-                                DeleteMode::RefLogOnlyAndNoDeref => (true, false),
-                                DeleteMode::AutoAndDeref => {
+                                DeleteMode::RefAndRefLogNoDeref => (true, true),
+                                DeleteMode::RefLogOnlyNoDeref => (true, false),
+                                DeleteMode::RefAndRefLogDeref | DeleteMode::RefLogOnlyDeref => {
                                     unreachable!("AutoAndDeref mode is turned into splits and discarded")
                                 }
                             };
