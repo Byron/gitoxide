@@ -154,12 +154,19 @@ pub struct RefEdit {
 }
 
 /// An extension trait to perform commonly used operations on edits across different ref stores.
-pub trait RefEditsExt {
+pub trait RefEditsExt<T> {
     /// Return true if each ref `name` has exactly one `edit` across multiple ref edits
     fn assure_one_name_has_one_edit(&self) -> Result<(), BString>;
+
+    /// Split all symbolic refs into updates for the symbolic ref as well as all their referents if the update or delete mode allows
+    /// dereferencing them.
+    fn extend_with_splits_of_symbolic_refs(
+        &mut self,
+        make_entry: impl FnMut(RefEdit) -> T,
+    ) -> Result<(), std::io::Error>;
 }
 
-impl<E> RefEditsExt for Vec<E>
+impl<E> RefEditsExt<E> for Vec<E>
 where
     E: std::borrow::Borrow<RefEdit>,
 {
@@ -170,6 +177,14 @@ where
             Some(name) => Err(name[0].as_ref().to_owned()),
             None => Ok(()),
         }
+    }
+    /// Split all changes
+    fn extend_with_splits_of_symbolic_refs(
+        &mut self,
+        mut make_entry: impl FnMut(RefEdit) -> E,
+    ) -> Result<(), std::io::Error> {
+        self.push(make_entry(self[0].borrow().clone()));
+        Ok(())
     }
 }
 

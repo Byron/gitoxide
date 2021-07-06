@@ -134,6 +134,11 @@ impl<'a> Transaction<'a> {
                 self.updates
                     .assure_one_name_has_one_edit()
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
+                self.updates.extend_with_splits_of_symbolic_refs(|update| Edit {
+                    update,
+                    lock: None,
+                    parent_index: None,
+                })?;
 
                 for change in self.updates.iter_mut() {
                     Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
