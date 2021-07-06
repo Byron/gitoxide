@@ -40,8 +40,8 @@ pub struct Store {
 
 mod traits {
     use crate::{
+        mutable::Target,
         store::{file, file::find_one},
-        transaction::Target,
         PartialName,
     };
 

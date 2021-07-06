@@ -1,6 +1,7 @@
 use crate::{
+    mutable::Target,
     store::file,
-    transaction::{Change, DeleteMode, RefEdit, RefEditsExt, Target},
+    transaction::{Change, DeleteMode, RefEdit, RefEditsExt},
 };
 use bstr::BString;
 use std::io::Write;
@@ -264,7 +265,7 @@ impl file::Store {
 }
 
 mod error {
-    use crate::{store::file, transaction::Target};
+    use crate::{mutable::Target, store::file};
     use bstr::BString;
     use quick_error::quick_error;
 

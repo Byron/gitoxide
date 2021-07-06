@@ -12,7 +12,10 @@ mod prepare_and_commit {
         use crate::file::transaction::prepare_and_commit::empty_store;
         use bstr::ByteSlice;
         use git_lock::acquire::Fail;
-        use git_ref::transaction::{Change, RefEdit, Target, UpdateMode};
+        use git_ref::{
+            mutable::Target,
+            transaction::{Change, RefEdit, UpdateMode},
+        };
         use std::{convert::TryInto, path::Path};
 
         mod reference_with_equally_named {
@@ -89,7 +92,8 @@ mod prepare_and_commit {
         use git_lock::acquire::Fail;
         use git_ref::{
             file::WriteReflog,
-            transaction::{Change, DeleteMode, RefEdit, Target},
+            mutable::Target,
+            transaction::{Change, DeleteMode, RefEdit},
         };
         use std::convert::TryInto;
 
