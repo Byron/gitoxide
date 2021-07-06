@@ -55,7 +55,7 @@ impl<'a> Transaction<'a> {
                     .transpose()
             });
         let lock = match &mut change.update.change {
-            Change::Delete { previous, mode: _ } => {
+            Change::Delete { previous, .. } => {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
                     store.ref_path(&relative_path),
                     lock_fail_mode,
@@ -88,7 +88,7 @@ impl<'a> Transaction<'a> {
 
                 lock
             }
-            Change::Update { previous, new, mode: _ } => {
+            Change::Update { previous, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.ref_path(&relative_path),
                     lock_fail_mode,
@@ -189,20 +189,18 @@ impl<'a> Transaction<'a> {
                 for change in self.updates.iter_mut() {
                     match &change.update.change {
                         Change::Update { .. } => {}
-                        Change::Delete { previous: _, mode } => {
+                        Change::Delete { deref, mode, .. } => {
                             let lock = change.lock.take().expect("each ref is locked, even deletions");
+                            assert!(!deref, "Deref mode is turned into splits and turned off");
                             let (rm_reflog, rm_ref) = match mode {
-                                DeleteMode::RefAndRefLogNoDeref => (true, true),
-                                DeleteMode::RefLogOnlyNoDeref => (true, false),
-                                DeleteMode::RefAndRefLogDeref | DeleteMode::RefLogOnlyDeref => {
-                                    unreachable!("AutoAndDeref mode is turned into splits and discarded")
-                                }
+                                DeleteMode::RefAndRefLog => (true, true),
+                                DeleteMode::RefLogOnly => (true, false),
                             };
 
                             // Reflog deletion happens first in case it fails a ref without log is less terrible than
                             // a log without a reference.
                             if rm_reflog {
-                                let reflog_path = self.store.reflog_path(change.update.name.to_shared());
+                                let reflog_path = self.store.reflog_path(change.update.name.borrow());
                                 if let Err(err) = std::fs::remove_file(reflog_path) {
                                     if err.kind() != std::io::ErrorKind::NotFound {
                                         return Err(Error::DeleteReflog {

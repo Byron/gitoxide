@@ -47,11 +47,12 @@ mod prepare_and_commit {
                 let t = store.transaction(
                     Some(RefEdit {
                         change: Change::Update {
-                            mode: UpdateMode::RefAndRefLogAndNoDeref {
+                            mode: UpdateMode::RefAndRefLog {
                                 create_unconditionally: false,
                             },
                             new: Target::Symbolic(referent.try_into()?),
                             previous: None, // TODO: check failure if it doesn't exist
+                            deref: false,
                         },
                         name: "HEAD".try_into()?,
                     }),
@@ -105,7 +106,8 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: DeleteMode::RefAndRefLogNoDeref,
+                            mode: DeleteMode::RefAndRefLog,
+                            deref: false,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
@@ -124,7 +126,8 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefAndRefLogNoDeref,
+                            mode: DeleteMode::RefAndRefLog,
+                            deref: false,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
@@ -152,7 +155,8 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefAndRefLogNoDeref,
+                            mode: DeleteMode::RefAndRefLog,
+                            deref: false,
                         },
                         name: head.name().into(),
                     }),
@@ -165,7 +169,8 @@ mod prepare_and_commit {
                 vec![RefEdit {
                     change: Change::Delete {
                         previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                        mode: DeleteMode::RefAndRefLogNoDeref,
+                        mode: DeleteMode::RefAndRefLog,
+                        deref: false
                     },
                     name: head.name().into(),
                 }],
@@ -191,7 +196,8 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                            mode: DeleteMode::RefLogOnlyNoDeref,
+                            mode: DeleteMode::RefLogOnly,
+                            deref: false,
                         },
                         name: head.name().into(),
                     }),
@@ -224,7 +230,8 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Symbolic("refs/heads/main".try_into().unwrap())),
-                            mode: DeleteMode::RefLogOnlyDeref,
+                            mode: DeleteMode::RefLogOnly,
+                            deref: true,
                         },
                         name: head.name().into(),
                     }),
@@ -237,7 +244,7 @@ mod prepare_and_commit {
             let head = store.find_one_existing("HEAD").unwrap();
             assert!(!head.log_exists().unwrap());
             let main = store.find_one_existing("main").expect("referent still exists");
-            assert!(!main.log_exists().unwrap(), "log is untouched, too");
+            assert!(!main.log_exists().unwrap(), "log is removed");
             assert_eq!(
                 main.target(),
                 head.peel_one_level().expect("a symref").unwrap().target(),

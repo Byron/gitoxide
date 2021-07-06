@@ -27,11 +27,7 @@
 //! |refs/heads/main          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |✔     |        |               |
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
-use crate::{
-    mutable::{FullName, Target},
-    RefStore,
-};
-use bstr::BString;
+use crate::mutable::{FullName, Target};
 
 /// A description of an edit to perform.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -42,6 +38,9 @@ pub enum Change {
     Update {
         /// How to treat the reference log.
         mode: UpdateMode,
+        /// If set, symbolic references will be dereferenced so the change gets applied to their target. Has no effect if the reference
+        /// isn't symbolic.
+        deref: bool,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
         previous: Option<Target>,
@@ -57,6 +56,9 @@ pub enum Change {
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
         mode: DeleteMode,
+        /// If set, symbolic references will be dereferenced so the change gets applied to their target. Has no effect if the reference
+        /// isn't symbolic.
+        deref: bool,
     },
 }
 
@@ -69,60 +71,58 @@ pub struct RefEdit {
     pub name: FullName,
 }
 
-/// An extension trait to perform commonly used operations on edits across different ref stores.
-pub trait RefEditsExt<T> {
-    /// Return true if each ref `name` has exactly one `edit` across multiple ref edits
-    fn assure_one_name_has_one_edit(&self) -> Result<(), BString>;
+mod ext {
+    use crate::{transaction::RefEdit, RefStore};
+    use bstr::BString;
 
-    /// Split all symbolic refs into updates for the symbolic ref as well as all their referents if the update or delete mode allows
-    /// dereferencing them.
-    ///
-    /// Note no action is performed if deref isn't specified.
-    /// If deref is specified and the reference isn't a symbolic reference, the deref mode will be changed
-    /// to match.
-    fn extend_with_splits_of_symbolic_refs(
-        &mut self,
-        store: &impl RefStore,
-        make_entry: impl FnMut(RefEdit) -> T,
-    ) -> Result<(), std::io::Error>;
-}
+    /// An extension trait to perform commonly used operations on edits across different ref stores.
+    pub trait RefEditsExt<T> {
+        /// Return true if each ref `name` has exactly one `edit` across multiple ref edits
+        fn assure_one_name_has_one_edit(&self) -> Result<(), BString>;
 
-impl<E> RefEditsExt<E> for Vec<E>
-where
-    E: std::borrow::Borrow<RefEdit>,
-{
-    fn assure_one_name_has_one_edit(&self) -> Result<(), BString> {
-        let mut names: Vec<_> = self.iter().map(|e| &e.borrow().name).collect();
-        names.sort();
-        match names.windows(2).find(|v| v[0] == v[1]) {
-            Some(name) => Err(name[0].as_ref().to_owned()),
-            None => Ok(()),
+        /// Split all symbolic refs into updates for the symbolic ref as well as all their referents if the `deref` flag is enabled.
+        ///
+        /// Note no action is performed if deref isn't specified.
+        fn extend_with_splits_of_symbolic_refs(
+            &mut self,
+            store: &impl RefStore,
+            make_entry: impl FnMut(RefEdit) -> T,
+        ) -> Result<(), std::io::Error>;
+    }
+
+    impl<E> RefEditsExt<E> for Vec<E>
+    where
+        E: std::borrow::Borrow<RefEdit>,
+    {
+        fn assure_one_name_has_one_edit(&self) -> Result<(), BString> {
+            let mut names: Vec<_> = self.iter().map(|e| &e.borrow().name).collect();
+            names.sort();
+            match names.windows(2).find(|v| v[0] == v[1]) {
+                Some(name) => Err(name[0].as_ref().to_owned()),
+                None => Ok(()),
+            }
+        }
+        fn extend_with_splits_of_symbolic_refs(
+            &mut self,
+            _store: &impl RefStore,
+            _make_entry: impl FnMut(RefEdit) -> E,
+        ) -> Result<(), std::io::Error> {
+            let new_edits = Vec::new();
+            for _edit in self.iter() {}
+            self.extend(new_edits.into_iter());
+            Ok(())
         }
     }
-    fn extend_with_splits_of_symbolic_refs(
-        &mut self,
-        _store: &impl RefStore,
-        _make_entry: impl FnMut(RefEdit) -> E,
-    ) -> Result<(), std::io::Error> {
-        let new_edits = Vec::new();
-        for _edit in self.iter() {}
-        self.extend(new_edits.into_iter());
-        Ok(())
-    }
 }
+pub use ext::RefEditsExt;
 
 /// The way to deal with the Reflog in deletions.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum DeleteMode {
-    /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
-    /// in this case and apply the change to it and its reflog directly.
-    RefAndRefLogNoDeref,
-    /// As above, but delete the ref log only without dereferencing symbolic refs
-    RefLogOnlyNoDeref,
-    /// Delete the reference and the log, but also apply this to the referent, recursively.
-    RefAndRefLogDeref,
-    /// Delete only the reflog, also deleting the referents reflog, recursively.
-    RefLogOnlyDeref,
+    /// Delete the reference and the log
+    RefAndRefLog,
+    /// Delete only the reflog
+    RefLogOnly,
 }
 
 /// The way to deal with the Reflog in a particular edit
@@ -133,13 +133,13 @@ pub enum DeleteMode {
 pub enum UpdateMode {
     /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
     /// in this case and apply the change to it directly.
-    RefAndRefLogAndNoDeref {
+    RefAndRefLog {
         /// If set, update the reflog even if it otherwise wouldn't.
         create_unconditionally: bool,
     },
     /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
     /// referent.
-    RefLogOnlyAndDeref {
+    RefLogOnly {
         /// If set, update the reflog even if it otherwise wouldn't.
         create_unconditionally: bool,
     },

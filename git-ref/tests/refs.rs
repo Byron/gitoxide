@@ -1,8 +1,8 @@
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 mod file;
-mod edit {
-    mod refeditext {
+mod transaction {
+    mod refedit_ext {
         use git_ref::transaction::{Change, DeleteMode, RefEdit, RefEditsExt};
         use std::convert::TryInto;
 
@@ -10,7 +10,8 @@ mod edit {
             RefEdit {
                 change: Change::Delete {
                     previous: None,
-                    mode: DeleteMode::RefAndRefLogNoDeref,
+                    mode: DeleteMode::RefAndRefLog,
+                    deref: false,
                 },
                 name: name.try_into().expect("valid name"),
             }
@@ -35,6 +36,16 @@ mod edit {
                 "HEAD",
                 "a correctly named duplicate"
             );
+        }
+
+        mod splitting {
+            #[test]
+            #[ignore]
+            fn non_symbolic_refs_are_ignored_but_derefs_are_fixed() {}
+
+            #[test]
+            #[ignore]
+            fn symbolic_refs_are_split_into_referents_handling_the_reflog() {}
         }
     }
 }

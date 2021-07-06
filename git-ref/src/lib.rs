@@ -59,7 +59,7 @@ pub mod mutable {
         }
 
         /// Interpret this fully qualified reference as shared full name
-        pub fn to_shared(&self) -> crate::FullName<'_> {
+        pub fn borrow(&self) -> crate::FullName<'_> {
             crate::FullName(self.0.as_bstr())
         }
 
