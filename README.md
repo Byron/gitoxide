@@ -91,8 +91,15 @@ Follow linked crate name for detailed status.
         only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
         untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
   * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfals. Think BFG, but more awesome, if that's possible.
-    
+  * [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data.
+  * [ ] Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
+        be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
+        database.
+      * ~~A git-backend for `sqlite` which should allow embedding sqlite databases into git repositories, which in turn can be used for bug-trackers, wikis or other
+        features, making for a fully distributed github like experience, maybe.~~
+
 [syncthing]: https://github.com/syncthing/syncthing
+[fossil-scm]: https://www.fossil-scm.org
 
 ### Cargo features
 
