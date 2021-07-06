@@ -1,6 +1,8 @@
+use crate::transaction::FullName;
 use crate::{file::Reference, Kind, Target};
 use bstr::BString;
 use git_hash::{oid, ObjectId};
+use std::path::Path;
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -32,6 +34,18 @@ impl<'a> Reference<'a> {
             State::ValidatedPath(ref path) => Target::Symbolic(path.as_ref()),
             State::Id(ref oid) => Target::Peeled(oid.as_ref()),
         }
+    }
+
+    /// Return the full name of this reference as path
+    pub fn relative_path(&self) -> &Path {
+        &self.relative_path
+    }
+
+    /// Return the full validated name of the reference
+    pub fn name(&self) -> FullName {
+        use os_str_bytes::OsStrBytes;
+        let name = self.relative_path.as_path().to_raw_bytes();
+        FullName(name.to_vec().into())
     }
 }
 

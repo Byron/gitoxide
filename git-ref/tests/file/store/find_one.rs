@@ -11,7 +11,7 @@ mod existing {
         for (partial_name, expected_path) in &[("main", Some("refs/heads/main")), ("does-not-exist", None)] {
             let reference = store.find_one_existing(*partial_name);
             match expected_path {
-                Some(expected_path) => assert_eq!(reference?.relative_path, Path::new(expected_path)),
+                Some(expected_path) => assert_eq!(reference?.relative_path(), Path::new(expected_path)),
                 None => match reference {
                     Ok(_) => panic!("Expected error"),
                     Err(git_ref::file::find_one::existing::Error::NotFound(name)) => {
@@ -42,7 +42,7 @@ fn success() -> crate::Result {
         ("refs/heads/main", "refs/heads/main", git_ref::Kind::Peeled),
     ] {
         let reference = store.find_one(*partial_name)?.expect("exists");
-        assert_eq!(reference.relative_path, Path::new(expected_path));
+        assert_eq!(reference.relative_path(), Path::new(expected_path));
         assert_eq!(reference.target().kind(), *expected_ref_kind);
     }
     Ok(())

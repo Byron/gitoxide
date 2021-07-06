@@ -11,6 +11,7 @@ mod prepare_and_commit {
     mod create {
         use crate::file::transaction::prepare_and_commit::empty_store;
         use bstr::ByteSlice;
+        use git_lock::acquire::Fail;
         use git_ref::transaction::{Change, RefEdit, Reflog, Target};
         use std::{convert::TryInto, path::Path};
 
@@ -49,12 +50,12 @@ mod prepare_and_commit {
                         },
                         name: "HEAD".try_into()?,
                     }),
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
                 );
                 let edits = t.commit()?;
                 assert_eq!(edits.len(), 1, "no split was performed");
                 let written = store.find_one_existing(edits[0].name.to_partial())?;
-                assert_eq!(written.relative_path, Path::new("HEAD"));
+                assert_eq!(written.relative_path(), Path::new("HEAD"));
                 assert_eq!(written.kind(), git_ref::Kind::Symbolic);
                 assert_eq!(written.target().as_name(), Some(referent.as_bytes().as_bstr()));
                 assert!(!written.log_exists()?, "no revlog is written for symbolic ref");
@@ -83,6 +84,7 @@ mod prepare_and_commit {
         use crate::file::store_writable;
         use crate::file::transaction::prepare_and_commit::empty_store;
         use git_hash::ObjectId;
+        use git_lock::acquire::Fail;
         use git_ref::{
             file::WriteReflog,
             transaction::{Change, RefEdit, Target},
@@ -98,7 +100,7 @@ mod prepare_and_commit {
                         change: Change::Delete { previous: None },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
                 )
                 .commit()
                 .unwrap();
@@ -116,7 +118,7 @@ mod prepare_and_commit {
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                     }),
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
                 )
                 .commit();
             match res {
@@ -129,8 +131,33 @@ mod prepare_and_commit {
         }
 
         #[test]
+        #[should_panic]
+        fn delete_reflog_only_of_symbolic_no_deref() {
+            let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
+            let head = store.find_one_existing("HEAD").unwrap();
+            assert!(head.log_exists().unwrap());
+
+            let edits = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Delete {
+                            previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                        },
+                        name: head.name().into(),
+                    }),
+                    Fail::Immediately,
+                )
+                .commit()
+                .unwrap();
+
+            assert_eq!(edits.len(), 1);
+            let head = store.find_one_existing("HEAD").unwrap();
+            assert!(!head.log_exists().unwrap());
+        }
+
+        #[test]
         #[ignore]
-        fn delete_reflog_only() {
+        fn delete_reflog_only_of_symbolic_with_deref() {
             let _store = store_writable("make_repo_for_reflog.sh").unwrap();
             todo!("assure it won't delete the ref")
         }

@@ -20,7 +20,7 @@ impl Default for WriteReflog {
 pub struct Reference<'a> {
     parent: &'a Store,
     /// The path to uniquely identify this ref within its store.
-    pub relative_path: PathBuf,
+    relative_path: PathBuf,
     state: reference::State,
 }
 
