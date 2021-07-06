@@ -30,7 +30,7 @@
 
 use bstr::{BStr, BString, ByteSlice};
 use git_hash::ObjectId;
-use std::{borrow::Cow, convert::TryFrom, path::Path};
+use std::{borrow::Cow, convert::TryFrom, fmt, path::Path};
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
@@ -57,6 +57,11 @@ impl FullName {
         crate::PartialName(self.0.as_bstr())
     }
 
+    /// Interpret this fully qualified reference as shared full name
+    pub fn to_shared(&self) -> crate::FullName<'_> {
+        crate::FullName(self.0.as_bstr())
+    }
+
     /// Convert this name into the relative path identifying the reference location relative to a repository
     pub fn to_path(&self) -> Cow<'_, Path> {
         self.0.to_path_lossy()
@@ -74,11 +79,40 @@ pub enum Target {
     Symbolic(FullName),
 }
 
+impl Target {
+    /// Return true if this is a peeled target with a null hash
+    pub fn is_null(&self) -> bool {
+        match self {
+            Target::Peeled(oid) => oid.is_null(),
+            Target::Symbolic(_) => false,
+        }
+    }
+}
+
 impl<'a> From<crate::Target<'a>> for Target {
     fn from(src: crate::Target<'a>) -> Self {
         match src {
             crate::Target::Peeled(oid) => Target::Peeled(oid.to_owned()),
             crate::Target::Symbolic(name) => Target::Symbolic(FullName(name.to_owned())),
+        }
+    }
+}
+
+impl<'a> PartialEq<crate::Target<'a>> for Target {
+    fn eq(&self, other: &crate::Target<'a>) -> bool {
+        match (self, other) {
+            (Target::Peeled(lhs), crate::Target::Peeled(rhs)) => lhs == rhs,
+            (Target::Symbolic(lhs), crate::Target::Symbolic(rhs)) => lhs.as_ref() == *rhs,
+            _ => false,
+        }
+    }
+}
+
+impl fmt::Display for Target {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Target::Peeled(oid) => oid.fmt(f),
+            Target::Symbolic(name) => write!(f, "ref: {}", name.as_ref()),
         }
     }
 }

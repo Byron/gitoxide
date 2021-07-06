@@ -137,7 +137,6 @@ mod prepare_and_commit {
         }
 
         #[test]
-        #[should_panic]
         fn delete_reflog_only_of_symbolic_no_deref() {
             let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
             let head = store.find_one_existing("HEAD").unwrap();

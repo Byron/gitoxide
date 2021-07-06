@@ -47,6 +47,13 @@ impl ObjectId {
     pub const fn empty_tree() -> ObjectId {
         ObjectId::Sha1(*b"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04")
     }
+
+    /// Returns true if this hash consists of all null bytes
+    pub fn is_null(&self) -> bool {
+        match self {
+            ObjectId::Sha1(digest) => &digest[..] == Self::null_sha1().as_bytes(),
+        }
+    }
 }
 
 /// Sha1 hash specific methods

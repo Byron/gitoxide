@@ -2,7 +2,7 @@ use crate::transaction::FullName;
 use crate::{file::Reference, Kind, Target};
 use bstr::BString;
 use git_hash::{oid, ObjectId};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -39,6 +39,11 @@ impl<'a> Reference<'a> {
     /// Return the full name of this reference as path
     pub fn relative_path(&self) -> &Path {
         &self.relative_path
+    }
+
+    /// Return our relative path while consuming this instance
+    pub fn into_relative_path(self) -> PathBuf {
+        self.relative_path
     }
 
     /// Return the full validated name of the reference

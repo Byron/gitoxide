@@ -4,7 +4,6 @@
 #![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
-#[allow(missing_docs)]
 mod borrowed;
 pub use borrowed::oid;
 

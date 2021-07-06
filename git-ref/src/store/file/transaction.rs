@@ -1,7 +1,8 @@
 use crate::{
     store::file,
-    transaction::{Change, RefEdit, RefEditsExt, Target},
+    transaction::{Change, DeleteMode, RefEdit, RefEditsExt, Target},
 };
+use bstr::BString;
 use std::io::Write;
 
 struct Edit {
@@ -11,6 +12,12 @@ struct Edit {
     /// instead of the referent reference.
     #[allow(dead_code)]
     parent_index: Option<usize>,
+}
+
+impl Edit {
+    fn name(&self) -> BString {
+        self.update.name.0.clone()
+    }
 }
 
 impl std::borrow::Borrow<RefEdit> for Edit {
@@ -56,11 +63,22 @@ impl<'a> Transaction<'a> {
                 match (previous, existing_ref?) {
                     (None, None | Some(_)) => {}
                     (Some(_previous), None) => {
-                        return Err(Error::DeletionReferenceMustExist(
-                            change.update.name.as_ref().to_owned(),
-                        ))
+                        return Err(Error::DeleteReferenceMustExist {
+                            full_name: change.name(),
+                        })
                     }
-                    (Some(_previous), Some(_existing)) => todo!("compare existing value with desired previous one"),
+                    (Some(previous), Some(existing)) => {
+                        if !previous.is_null() {
+                            if *previous != existing.target() {
+                                let expected = previous.clone();
+                                return Err(Error::DeleteReferenceOutOfDate {
+                                    full_name: change.name(),
+                                    expected,
+                                    actual: existing.target().to_owned(),
+                                });
+                            }
+                        }
+                    }
                 }
                 lock
             }
@@ -112,8 +130,8 @@ impl<'a> Transaction<'a> {
                     .assure_one_name_has_one_edit()
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
 
-                for edit in self.updates.iter_mut() {
-                    Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, edit)?;
+                for change in self.updates.iter_mut() {
+                    Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
                 }
                 self.state = State::Prepared;
                 self
@@ -142,10 +160,10 @@ impl<'a> Transaction<'a> {
             State::Open => self.prepare()?.commit(),
             State::Prepared => {
                 // Perform updates first so live commits remain referenced
-                for edit in self.updates.iter_mut() {
-                    match &edit.update.change {
+                for change in self.updates.iter_mut() {
+                    match &change.update.change {
                         Change::Update { mode, new, .. } => {
-                            let lock = edit.lock.take().expect("each ref is locked");
+                            let lock = change.lock.take().expect("each ref is locked");
                             match (new, mode) {
                                 (Target::Symbolic(_), _reflog_mode) => {} // skip any log for symbolic refs
                                 _ => todo!("commit other reflog write cases"),
@@ -156,15 +174,41 @@ impl<'a> Transaction<'a> {
                     }
                 }
 
-                for edit in self.updates.iter_mut() {
-                    match &edit.update.change {
+                for change in self.updates.iter_mut() {
+                    match &change.update.change {
                         Change::Update { .. } => {}
-                        Change::Delete { .. } => {
-                            let lock = edit.lock.take().expect("each ref is locked, even deletions");
-                            let path_for_deletion = self.store.ref_path(edit.update.name.to_path().as_ref());
-                            if let Err(err) = std::fs::remove_file(path_for_deletion) {
-                                if err.kind() != std::io::ErrorKind::NotFound {
-                                    todo!("return some sort of error to indicate deletion failed")
+                        Change::Delete { previous: _, mode } => {
+                            let lock = change.lock.take().expect("each ref is locked, even deletions");
+                            let (rm_reflog, rm_ref) = match mode {
+                                DeleteMode::RefAndRefLogAndNoDeref => (true, true),
+                                DeleteMode::RefLogOnlyAndNoDeref => (true, false),
+                                DeleteMode::AutoAndDeref => {
+                                    unreachable!("AutoAndDeref mode is turned into splits and discarded")
+                                }
+                            };
+
+                            // Reflog deletion happens first in case it fails a ref without log is less terrible than
+                            // a log without a reference.
+                            if rm_reflog {
+                                let reflog_path = self.store.reflog_path(change.update.name.to_shared());
+                                if let Err(err) = std::fs::remove_file(reflog_path) {
+                                    if err.kind() != std::io::ErrorKind::NotFound {
+                                        return Err(Error::DeleteReflog {
+                                            err,
+                                            full_name: change.name(),
+                                        });
+                                    }
+                                }
+                            }
+                            if rm_ref {
+                                let reference_path = self.store.ref_path(change.update.name.to_path().as_ref());
+                                if let Err(err) = std::fs::remove_file(reference_path) {
+                                    if err.kind() != std::io::ErrorKind::NotFound {
+                                        return Err(Error::DeleteReference {
+                                            err,
+                                            full_name: change.name(),
+                                        });
+                                    }
                                 }
                             }
                             drop(lock); // allow deletion of empty leading directories
@@ -209,7 +253,7 @@ impl file::Store {
 }
 
 mod error {
-    use crate::store::file;
+    use crate::{store::file, transaction::Target};
     use bstr::BString;
     use quick_error::quick_error;
 
@@ -231,8 +275,19 @@ mod error {
                 from()
                 source(err)
             }
-            DeletionReferenceMustExist(full_name: BString) {
+            DeleteReferenceMustExist { full_name: BString } {
                 display("The reference '{}' for deletion did not exist", full_name)
+            }
+            DeleteReferenceOutOfDate { full_name: BString, expected: Target, actual: Target } {
+                display("The reference '{}' should have content {}, actual content was {}", full_name, expected, actual)
+            }
+            DeleteReference{ full_name: BString, err: std::io::Error } {
+                display("The reference '{}' could not be deleted", full_name)
+                source(err)
+            }
+            DeleteReflog{ full_name: BString, err: std::io::Error } {
+                display("The reflog of reference '{}' could not be deleted", full_name)
+                source(err)
             }
             ReferenceDecode(err: file::reference::decode::Error) {
                 display("Could not read reference")

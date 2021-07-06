@@ -46,12 +46,13 @@ quick_error! {
 
 /// Conversion
 impl oid {
-    pub fn try_from(value: &[u8]) -> Result<&Self, Error> {
-        match value.len() {
+    /// Try to create a shared object id from a slice of bytes representing a hash `digest`
+    pub fn try_from(digest: &[u8]) -> Result<&Self, Error> {
+        match digest.len() {
             20 => Ok(
                 #[allow(unsafe_code)]
                 unsafe {
-                    &*(value as *const [u8] as *const oid)
+                    &*(digest as *const [u8] as *const oid)
                 },
             ),
             len => Err(Error::InvalidByteSliceLength(len)),
@@ -83,6 +84,7 @@ impl oid {
     }
 
     #[inline]
+    /// Interpret this object id as raw byte slice.
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }

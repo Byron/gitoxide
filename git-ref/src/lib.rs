@@ -78,6 +78,10 @@ impl<'a> Target<'a> {
             Target::Peeled(_) => None,
         }
     }
+    /// Convert this instance into an owned version, without consuming it.
+    pub fn to_owned(&self) -> crate::transaction::Target {
+        self.clone().into()
+    }
 }
 
 mod parse {

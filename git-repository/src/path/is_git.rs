@@ -42,8 +42,8 @@ pub fn is_git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
     {
         let refs = git_ref::file::Store::at(&dot_git, Default::default());
         let head = refs.find_one_existing("HEAD")?;
-        if head.relative_path != Path::new("HEAD") {
-            return Err(Error::MisplacedHead(head.relative_path));
+        if head.relative_path() != Path::new("HEAD") {
+            return Err(Error::MisplacedHead(head.into_relative_path()));
         }
     }
 
