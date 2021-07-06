@@ -106,7 +106,6 @@ mod prepare_and_commit {
         }
 
         #[test]
-        #[should_panic]
         fn delete_a_ref_which_is_gone_but_must_exist_fails() {
             let store = empty_store(WriteReflog::Normal).unwrap();
             let res = store
@@ -122,7 +121,10 @@ mod prepare_and_commit {
                 .commit();
             match res {
                 Ok(_) => unreachable!("must exist, but it doesn't actually exist"),
-                Err(err) => assert_eq!(err.to_string(), "hello err"),
+                Err(err) => assert_eq!(
+                    err.to_string(),
+                    "The reference 'DOES_NOT_EXIST' for deletion did not exist"
+                ),
             }
         }
 

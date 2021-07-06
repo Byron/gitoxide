@@ -284,6 +284,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
   * [ ] support for different backends like `files` and `reftable`
 * [ ] worktrees
 * [ ] remotes with push and pull
+* [ ] mailmap   
 * [ ] configuration
 * [ ] merging
 * [ ] stashing
