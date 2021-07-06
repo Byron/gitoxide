@@ -60,7 +60,8 @@ impl<'a> Transaction<'a> {
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )?;
-                match (previous, existing_ref?) {
+                let existing_ref = existing_ref?;
+                match (&previous, &existing_ref) {
                     (None, None | Some(_)) => {}
                     (Some(_previous), None) => {
                         return Err(Error::DeleteReferenceMustExist {
@@ -78,6 +79,12 @@ impl<'a> Transaction<'a> {
                         }
                     }
                 }
+
+                // Keep the previous value for the caller only. Maybe they want to keep a log of sorts.
+                if let Some(existing) = existing_ref {
+                    *previous = Some(existing.target().into());
+                }
+
                 lock
             }
             Change::Update { previous, new, mode: _ } => {

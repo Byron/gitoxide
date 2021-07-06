@@ -137,9 +137,49 @@ mod prepare_and_commit {
         }
 
         #[test]
-        fn delete_reflog_only_of_symbolic_no_deref() {
-            let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
-            let head = store.find_one_existing("HEAD").unwrap();
+        fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
+            let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+            let head = store.find_one_existing("HEAD")?;
+            assert!(head.log_exists().unwrap());
+            let _main = store.find_one_existing("main")?;
+
+            let edits = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Delete {
+                            previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                            mode: DeleteMode::RefAndRefLogAndNoDeref,
+                        },
+                        name: head.name().into(),
+                    }),
+                    Fail::Immediately,
+                )
+                .commit()?;
+
+            assert_eq!(
+                edits,
+                vec![RefEdit {
+                    change: Change::Delete {
+                        previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                        mode: DeleteMode::RefAndRefLogAndNoDeref,
+                    },
+                    name: head.name().into(),
+                }],
+                "the previous value was updated with the actual one"
+            );
+            assert!(
+                store.reflog_iter_rev("HEAD", &mut [0u8; 128])?.is_none(),
+                "reflog was deleted"
+            );
+            assert!(store.find_one("HEAD")?.is_none(), "ref was deleted");
+            assert!(store.find_one("main")?.is_some(), "referent still exists");
+            Ok(())
+        }
+
+        #[test]
+        fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
+            let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+            let head = store.find_one_existing("HEAD")?;
             assert!(head.log_exists().unwrap());
 
             let edits = store
@@ -153,12 +193,13 @@ mod prepare_and_commit {
                     }),
                     Fail::Immediately,
                 )
-                .commit()
-                .unwrap();
+                .commit()?;
 
             assert_eq!(edits.len(), 1);
-            let head = store.find_one_existing("HEAD").unwrap();
+            let head = store.find_one_existing("HEAD")?;
             assert!(!head.log_exists().unwrap());
+            assert!(store.find_one("main")?.is_some(), "referent still exists");
+            Ok(())
         }
 
         #[test]

@@ -136,6 +136,8 @@ pub enum Change {
     Delete {
         /// The previous state of the reference. If set, the reference is expected to exist and match the given value.
         /// If the value is a peeled null-id the reference is expected to exist but the value doesn't matter, neither peeled nor symbolic.
+        ///
+        /// If a previous ref existed, this value will be filled in automatically and can be accessed if the transaction was committed successfully.
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
         mode: DeleteMode,
