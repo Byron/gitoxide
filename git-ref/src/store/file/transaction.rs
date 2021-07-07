@@ -138,14 +138,12 @@ impl<'a> Transaction<'a> {
             State::Prepared => self,
             State::Open => {
                 self.updates
-                    .assure_one_name_has_one_edit()
-                    .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
-                self.updates
-                    .extend_with_splits_of_symbolic_refs(self.store, |idx, update| Edit {
+                    .pre_process(self.store, |idx, update| Edit {
                         update,
                         lock: None,
                         parent_index: Some(idx),
-                    })?;
+                    })
+                    .map_err(|err| Error::PreprocessingFailed(err))?;
 
                 for change in self.updates.iter_mut() {
                     Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
@@ -277,8 +275,9 @@ mod error {
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
-            DuplicateRefEdits{ first_name: BString } {
-                display("Only one edit per reference must be provided, the first duplicate was {:?}", first_name)
+            PreprocessingFailed(err: std::io::Error) {
+                display("Edit preprocessing failed with error: {}", err.to_string())
+                source(err)
             }
             LockAcquire(err: git_lock::acquire::Error) {
                 display("A lock could not be obtained for a resource")

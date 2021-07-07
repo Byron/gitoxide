@@ -3,8 +3,44 @@ type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 mod file;
 mod transaction {
     mod refedit_ext {
-        use git_ref::transaction::{Change, RefEdit, RefEditsExt, RefLog};
-        use std::convert::TryInto;
+        use bstr::{BString, ByteSlice};
+        use git_ref::{
+            mutable::Target,
+            transaction::{Change, RefEdit, RefEditsExt, RefLog},
+            PartialName, RefStore,
+        };
+        use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
+
+        #[derive(Default)]
+        struct MockStore {
+            targets: RefCell<BTreeMap<BString, Target>>,
+        }
+
+        impl MockStore {
+            fn assert_empty(self) {
+                assert_eq!(self.targets.borrow().len(), 0, "all targets should be used");
+            }
+            fn with(targets: impl IntoIterator<Item = (&'static str, Target)>) -> Self {
+                MockStore {
+                    targets: {
+                        let mut h = BTreeMap::new();
+                        h.extend(targets.into_iter().map(|(k, v)| (k.as_bytes().as_bstr().to_owned(), v)));
+                        RefCell::new(h)
+                    },
+                }
+            }
+        }
+
+        impl RefStore for MockStore {
+            type FindOneExistingError = std::io::Error;
+
+            fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
+                self.targets
+                    .borrow_mut()
+                    .remove(name.as_bstr())
+                    .ok_or(std::io::ErrorKind::NotFound.into())
+            }
+        }
 
         fn named_edit(name: &str) -> RefEdit {
             RefEdit {
@@ -15,6 +51,36 @@ mod transaction {
                 name: name.try_into().expect("valid name"),
                 deref: false,
             }
+        }
+
+        #[test]
+        fn preprocessing_checks_duplicates_after_splits() {
+            let store = MockStore::with(Some(("HEAD", Target::Symbolic("refs/heads/main".try_into().unwrap()))));
+
+            let mut edits = vec![
+                RefEdit {
+                    change: Change::Delete {
+                        previous: None,
+                        mode: RefLog::AndReference,
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: true,
+                },
+                RefEdit {
+                    change: Change::Delete {
+                        previous: None,
+                        mode: RefLog::AndReference,
+                    },
+                    name: "refs/heads/main".try_into().unwrap(),
+                    deref: false,
+                },
+            ];
+
+            let err = edits.pre_process(&store, |_, e| e).expect_err("duplicate detected");
+            assert_eq!(
+                err.to_string(),
+                "A reference named 'refs/heads/main' has multiple edits"
+            );
         }
 
         #[test]
@@ -39,7 +105,7 @@ mod transaction {
         }
 
         mod splitting {
-            use bstr::{BString, ByteSlice};
+            use crate::transaction::refedit_ext::MockStore;
             use git_hash::ObjectId;
             use git_ref::{
                 mutable::Target,
@@ -47,39 +113,7 @@ mod transaction {
                 FullName, PartialName, RefStore,
             };
             use git_testtools::hex_to_id;
-            use std::cell::Cell;
-            use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
-
-            #[derive(Default)]
-            struct MockStore {
-                targets: RefCell<BTreeMap<BString, Target>>,
-            }
-
-            impl MockStore {
-                fn assert_empty(self) {
-                    assert_eq!(self.targets.borrow().len(), 0, "all targets should be used");
-                }
-                fn with(edits: impl IntoIterator<Item = (&'static str, Target)>) -> Self {
-                    MockStore {
-                        targets: {
-                            let mut h = BTreeMap::new();
-                            h.extend(edits.into_iter().map(|(k, v)| (k.as_bytes().as_bstr().to_owned(), v)));
-                            RefCell::new(h)
-                        },
-                    }
-                }
-            }
-
-            impl RefStore for MockStore {
-                type FindOneExistingError = std::io::Error;
-
-                fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
-                    self.targets
-                        .borrow_mut()
-                        .remove(name.as_bstr())
-                        .ok_or(std::io::ErrorKind::NotFound.into())
-                }
-            }
+            use std::{cell::Cell, convert::TryInto};
 
             fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
                 let name: FullName = name.try_into().unwrap();

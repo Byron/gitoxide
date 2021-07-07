@@ -88,7 +88,10 @@ mod ext {
     use bstr::BString;
 
     /// An extension trait to perform commonly used operations on edits across different ref stores.
-    pub trait RefEditsExt<T> {
+    pub trait RefEditsExt<T>
+    where
+        T: std::borrow::Borrow<RefEdit> + std::borrow::BorrowMut<RefEdit>,
+    {
         /// Return true if each ref `name` has exactly one `edit` across multiple ref edits
         fn assure_one_name_has_one_edit(&self) -> Result<(), BString>;
 
@@ -100,6 +103,23 @@ mod ext {
             store: &impl RefStore,
             make_entry: impl FnMut(usize, RefEdit) -> T,
         ) -> Result<(), std::io::Error>;
+
+        /// All processing steps in one and in the correct order.
+        ///
+        /// Users call this to assure derefs are honored and duplicate checks are done.
+        fn pre_process(
+            &mut self,
+            store: &impl RefStore,
+            make_entry: impl FnMut(usize, RefEdit) -> T,
+        ) -> Result<(), std::io::Error> {
+            self.extend_with_splits_of_symbolic_refs(store, make_entry)?;
+            self.assure_one_name_has_one_edit().map_err(|name| {
+                std::io::Error::new(
+                    std::io::ErrorKind::AlreadyExists,
+                    format!("A reference named '{}' has multiple edits", name),
+                )
+            })
+        }
     }
 
     impl<E> RefEditsExt<E> for Vec<E>

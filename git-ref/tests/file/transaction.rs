@@ -86,8 +86,7 @@ mod prepare_and_commit {
     }
 
     mod delete {
-        use crate::file::store_writable;
-        use crate::file::transaction::prepare_and_commit::empty_store;
+        use crate::file::{store_writable, transaction::prepare_and_commit::empty_store};
         use git_hash::ObjectId;
         use git_lock::acquire::Fail;
         use git_ref::{
