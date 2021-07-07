@@ -1,7 +1,7 @@
 use crate::{
     mutable::Target,
     store::file,
-    transaction::{Change, RefEdit, RefEditsExt, RefLogMode},
+    transaction::{Change, RefEdit, RefEditsExt, RefLog},
 };
 use bstr::BString;
 use std::io::Write;
@@ -198,8 +198,8 @@ impl<'a> Transaction<'a> {
                         Change::Delete { mode, .. } => {
                             let lock = change.lock.take().expect("each ref is locked, even deletions");
                             let (rm_reflog, rm_ref) = match mode {
-                                RefLogMode::RefAndRefLog => (true, true),
-                                RefLogMode::RefLogOnly => (true, false),
+                                RefLog::AndReference => (true, true),
+                                RefLog::Only => (true, false),
                             };
 
                             // Reflog deletion happens first in case it fails a ref without log is less terrible than

@@ -37,7 +37,7 @@ pub enum Change {
     /// Otherwise it functions as `create-or-update`.
     Update {
         /// How to treat the reference log.
-        mode: RefLogMode,
+        mode: RefLog,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
         previous: Option<Target>,
@@ -55,7 +55,7 @@ pub enum Change {
         /// If a previous ref existed, this value will be filled in automatically and can be accessed if the transaction was committed successfully.
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
-        mode: RefLogMode,
+        mode: RefLog,
     },
 }
 
@@ -73,16 +73,16 @@ pub struct RefEdit {
 
 /// The way to deal with the Reflog in deletions.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum RefLogMode {
-    /// Delete the reference and the log
-    RefAndRefLog,
-    /// Delete only the reflog
-    RefLogOnly,
+pub enum RefLog {
+    /// Delete or update the reference and the log
+    AndReference,
+    /// Delete or update only the reflog
+    Only,
 }
 
 mod ext {
     use crate::{
-        transaction::{Change, RefEdit, RefLogMode, Target},
+        transaction::{Change, RefEdit, RefLog, Target},
         RefStore,
     };
     use bstr::BString;
@@ -145,7 +145,7 @@ mod ext {
                                             deref: true,
                                         },
                                     ));
-                                    *mode = RefLogMode::RefLogOnly;
+                                    *mode = RefLog::Only;
                                 }
                                 Change::Update {
                                     mode,
@@ -166,7 +166,7 @@ mod ext {
                                             deref: true,
                                         },
                                     ));
-                                    *mode = RefLogMode::RefLogOnly;
+                                    *mode = RefLog::Only;
                                 }
                             };
                             edit.deref = false;
