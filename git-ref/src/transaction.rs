@@ -150,22 +150,25 @@ mod ext {
                         continue;
                     };
 
-                    match store.find_one_existing(edit.name.to_partial()).ok() {
-                        Some(Target::Symbolic(referent)) => {
+                    // we can't tell what happened and we are here because it's a non-existing ref or an invalid one.
+                    // In any case, we don't want the following algorithms to try dereffing it and assume they deal with
+                    // broken refs gracefully.
+                    edit.deref = false;
+                    if let Some(Target::Symbolic(referent)) = store.find_one_existing(edit.name.to_partial()).ok() {
+                        new_edits.push(make_entry(
+                            eid,
                             match &mut edit.change {
                                 Change::Delete { previous, mode } => {
-                                    new_edits.push(make_entry(
-                                        eid,
-                                        RefEdit {
-                                            change: Change::Delete {
-                                                previous: previous.clone(),
-                                                mode: *mode,
-                                            },
-                                            name: referent,
-                                            deref: true,
-                                        },
-                                    ));
+                                    let current_mode = *mode;
                                     *mode = RefLog::Only;
+                                    RefEdit {
+                                        change: Change::Delete {
+                                            previous: previous.clone(),
+                                            mode: current_mode,
+                                        },
+                                        name: referent,
+                                        deref: true,
+                                    }
                                 }
                                 Change::Update {
                                     mode,
@@ -173,33 +176,21 @@ mod ext {
                                     new,
                                     force_create_reflog,
                                 } => {
-                                    new_edits.push(make_entry(
-                                        eid,
-                                        RefEdit {
-                                            change: Change::Update {
-                                                previous: previous.clone(),
-                                                new: new.clone(),
-                                                mode: *mode,
-                                                force_create_reflog: *force_create_reflog,
-                                            },
-                                            name: referent,
-                                            deref: true,
-                                        },
-                                    ));
+                                    let current_mode = *mode;
                                     *mode = RefLog::Only;
+                                    RefEdit {
+                                        change: Change::Update {
+                                            previous: previous.clone(),
+                                            new: new.clone(),
+                                            mode: current_mode,
+                                            force_create_reflog: *force_create_reflog,
+                                        },
+                                        name: referent,
+                                        deref: true,
+                                    }
                                 }
-                            };
-                            edit.deref = false;
-                        }
-                        Some(Target::Peeled(_)) => {
-                            edit.deref = false;
-                        }
-                        None => {
-                            // we can't tell what happened and we are here because it's a non-existing ref or an invalid one.
-                            // In any case, we don't want the following algorithms to try dereffing it and assume they deal with
-                            // broken refs gracefully.
-                            edit.deref = false
-                        }
+                            },
+                        ));
                     }
                 }
                 if new_edits.is_empty() {

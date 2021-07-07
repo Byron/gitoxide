@@ -198,9 +198,9 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {}
 
 #[test]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
-fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() {
-    let (_keep, store) = empty_store(WriteReflog::Normal).unwrap();
-    std::fs::write(store.base.join("HEAD"), &b"broken").unwrap();
+fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Result {
+    let (_keep, store) = empty_store(WriteReflog::Normal)?;
+    std::fs::write(store.base.join("HEAD"), &b"broken")?;
     assert!(store.find_one("HEAD").is_err(), "the ref is truly broken");
 
     let edits = store
@@ -210,15 +210,14 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() {
                     previous: None,
                     mode: RefLog::AndReference,
                 },
-                name: "HEAD".try_into().unwrap(),
+                name: "HEAD".try_into()?,
                 deref: true,
             }),
             Fail::Immediately,
         )
-        .commit()
-        .unwrap();
+        .commit()?;
 
-    assert!(store.find_one("HEAD").unwrap().is_none(), "the ref was deleted");
+    assert!(store.find_one("HEAD")?.is_none(), "the ref was deleted");
     assert_eq!(
         edits,
         vec![RefEdit {
@@ -226,10 +225,11 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() {
                 previous: None,
                 mode: RefLog::AndReference,
             },
-            name: "HEAD".try_into().unwrap(),
+            name: "HEAD".try_into()?,
             deref: false,
         }]
     );
+    Ok(())
 }
 
 #[test]
