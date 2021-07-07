@@ -143,7 +143,7 @@ impl<'a> Transaction<'a> {
                         lock: None,
                         parent_index: Some(idx),
                     })
-                    .map_err(|err| Error::PreprocessingFailed(err))?;
+                    .map_err(Error::PreprocessingFailed)?;
 
                 for change in self.updates.iter_mut() {
                     Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
