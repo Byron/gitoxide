@@ -1,6 +1,7 @@
 use crate::file::transaction::prepare_and_commit::empty_store;
 use bstr::ByteSlice;
 use git_lock::acquire::Fail;
+use git_ref::transaction::LogChange;
 use git_ref::{
     mutable::Target,
     transaction::{Change, RefEdit, RefLog},
@@ -40,12 +41,16 @@ fn symbolic_head_missing_referent_then_update_referent() {
             store.find_one(referent).unwrap().is_none(),
             "the reference does not exist"
         );
+        let log_ignored = LogChange {
+            mode: RefLog::AndReference,
+            force_create_reflog: false,
+            message: "ignored".into(),
+        };
         let edits = store
             .transaction(
                 Some(RefEdit {
                     change: Change::Update {
-                        mode: RefLog::AndReference,
-                        force_create_reflog: false,
+                        log: log_ignored.clone(),
                         new: Target::Symbolic(referent.try_into().unwrap()),
                         previous: None, // TODO: check failure if it doesn't exist
                     },
@@ -60,8 +65,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
             edits,
             vec![RefEdit {
                 change: Change::Update {
-                    mode: RefLog::AndReference,
-                    force_create_reflog: false,
+                    log: log_ignored.clone(),
                     new: Target::Symbolic(referent.try_into().unwrap()),
                     previous: None,
                 },
@@ -78,12 +82,21 @@ fn symbolic_head_missing_referent_then_update_referent() {
         assert!(!written.log_exists().unwrap(), "no reflog is written for symbolic ref");
 
         let new = Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"));
+        let log = LogChange {
+            message: "an actual change".into(),
+            mode: RefLog::AndReference,
+            force_create_reflog: false,
+        };
+        let log_only = {
+            let mut l = log.clone();
+            l.mode = RefLog::Only;
+            l
+        };
         let edits = store
             .transaction(
                 Some(RefEdit {
                     change: Change::Update {
-                        mode: RefLog::AndReference,
-                        force_create_reflog: false,
+                        log: log,
                         new: new.clone(),
                         previous: None,
                     },
@@ -100,8 +113,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
             vec![
                 RefEdit {
                     change: Change::Update {
-                        mode: RefLog::Only,
-                        force_create_reflog: false,
+                        log: log_only.clone(),
                         new: new.clone(),
                         previous: None,
                     },
@@ -110,8 +122,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                 },
                 RefEdit {
                     change: Change::Update {
-                        mode: RefLog::AndReference,
-                        force_create_reflog: false,
+                        log: log_only.clone(),
                         new: new.clone(),
                         previous: None,
                     },

@@ -183,10 +183,14 @@ impl<'a> Transaction<'a> {
                     match &change.update.change {
                         // reflog first, then reference
                         Change::Update {
-                            mode,
+                            log:
+                                LogChange {
+                                    mode,
+                                    force_create_reflog: _,
+                                    message: _,
+                                },
                             new,
                             previous: _,
-                            force_create_reflog: _,
                         } => {
                             let lock = change.lock.take().expect("each ref is locked");
                             match (new, mode) {
@@ -324,4 +328,5 @@ mod error {
         }
     }
 }
+use crate::transaction::LogChange;
 pub use error::Error;

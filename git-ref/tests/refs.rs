@@ -108,6 +108,7 @@ mod transaction {
         mod splitting {
             use crate::transaction::refedit_ext::MockStore;
             use git_hash::ObjectId;
+            use git_ref::transaction::LogChange;
             use git_ref::{
                 mutable::Target,
                 transaction::{Change, RefEdit, RefEditsExt, RefLog},
@@ -209,8 +210,11 @@ mod transaction {
                     RefEdit {
                         change: Change::Update {
                             previous: None,
-                            mode: RefLog::AndReference,
-                            force_create_reflog: true,
+                            log: LogChange {
+                                mode: RefLog::AndReference,
+                                force_create_reflog: true,
+                                message: "the log message".into(),
+                            },
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
                         name: "refs/heads/update-symbolic-1".try_into()?,
@@ -256,6 +260,16 @@ mod transaction {
                         Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
                     ),
                 ]);
+                let log = LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: true,
+                    message: "the log message".into(),
+                };
+                let log_only = {
+                    let mut l = log.clone();
+                    l.mode = RefLog::Only;
+                    l
+                };
                 let mut edits = vec![
                     RefEdit {
                         change: Change::Delete {
@@ -268,8 +282,7 @@ mod transaction {
                     RefEdit {
                         change: Change::Update {
                             previous: None,
-                            mode: RefLog::AndReference,
-                            force_create_reflog: true,
+                            log: log.clone(),
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
                         name: "refs/heads/update-symbolic-1".try_into()?,
@@ -302,8 +315,7 @@ mod transaction {
                         RefEdit {
                             change: Change::Update {
                                 previous: None,
-                                mode: RefLog::Only,
-                                force_create_reflog: true,
+                                log: log_only.clone(),
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
                             name: "refs/heads/update-symbolic-1".try_into()?,
@@ -320,8 +332,7 @@ mod transaction {
                         RefEdit {
                             change: Change::Update {
                                 previous: None,
-                                mode: RefLog::Only,
-                                force_create_reflog: true,
+                                log: log_only.clone(),
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
                             name: "refs/heads/update-symbolic-2".try_into()?,
@@ -338,8 +349,7 @@ mod transaction {
                         RefEdit {
                             change: Change::Update {
                                 previous: None,
-                                mode: RefLog::AndReference,
-                                force_create_reflog: true,
+                                log: log.clone(),
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
                             name: "refs/heads/update-symbolic-3".try_into()?,

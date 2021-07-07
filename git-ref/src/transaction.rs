@@ -29,6 +29,18 @@
 //! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
 use crate::mutable::{FullName, Target};
 
+/// A change to the reflog.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct LogChange {
+    /// How to treat the reference log.
+    pub mode: RefLog,
+    /// If set, create a reflog even though it would otherwise not be the case as prohibited by general rules.
+    /// Note that ref-log writing might be prohibited in the entire repository which is when this flag has no effect either.
+    pub force_create_reflog: bool,
+    /// The message to put into the reference log. It must be a single line, hence newlines are forbidden.
+    pub message: BString,
+}
+
 /// A description of an edit to perform.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Change {
@@ -36,16 +48,13 @@ pub enum Change {
     /// we function like `update`.
     /// Otherwise it functions as `create-or-update`.
     Update {
-        /// How to treat the reference log.
-        mode: RefLog,
+        /// The desired change to the reference log.
+        log: LogChange,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
         previous: Option<Target>,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
-        /// If set, create a reflog even though it would otherwise not be the case as prohibited by general rules.
-        /// Note that ref-log writing might be prohibited in the entire repository which is when this flag has no effect either.
-        force_create_reflog: bool,
     },
     /// Delete a reference and optionally check if `previous` is its content.
     Delete {
@@ -63,9 +72,12 @@ impl Change {
     /// Return references to values that are in common between all variants.
     pub fn previous_and_mode(&self) -> (Option<crate::Target<'_>>, RefLog) {
         match self {
-            Change::Update { mode, previous, .. } | Change::Delete { mode, previous, .. } => {
-                (previous.as_ref().map(|t| t.borrow()), *mode)
+            Change::Update {
+                log: LogChange { mode, .. },
+                previous,
+                ..
             }
+            | Change::Delete { mode, previous, .. } => (previous.as_ref().map(|t| t.borrow()), *mode),
         }
     }
 }
@@ -92,6 +104,7 @@ pub enum RefLog {
 }
 
 mod ext {
+    use crate::transaction::LogChange;
     use crate::{
         transaction::{Change, RefEdit, RefLog, Target},
         RefStore,
@@ -181,20 +194,20 @@ mod ext {
                                         deref: true,
                                     }
                                 }
-                                Change::Update {
-                                    mode,
-                                    previous,
-                                    new,
-                                    force_create_reflog,
-                                } => {
-                                    let current_mode = *mode;
-                                    *mode = RefLog::Only;
+                                Change::Update { log, previous, new } => {
+                                    let current = std::mem::replace(
+                                        log,
+                                        LogChange {
+                                            message: log.message.clone(),
+                                            mode: RefLog::Only,
+                                            force_create_reflog: log.force_create_reflog,
+                                        },
+                                    );
                                     RefEdit {
                                         change: Change::Update {
                                             previous: previous.clone(),
                                             new: new.clone(),
-                                            mode: current_mode,
-                                            force_create_reflog: *force_create_reflog,
+                                            log: current,
                                         },
                                         name: referent,
                                         deref: true,
@@ -224,4 +237,5 @@ mod ext {
         }
     }
 }
+use bstr::BString;
 pub use ext::RefEditsExt;
