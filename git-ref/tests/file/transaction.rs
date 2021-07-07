@@ -97,8 +97,8 @@ mod prepare_and_commit {
         use std::convert::TryInto;
 
         #[test]
-        fn delete_a_ref_which_is_gone_succeeds() {
-            let store = empty_store(WriteReflog::Normal).unwrap();
+        fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
+            let store = empty_store(WriteReflog::Normal)?;
             let edits = store
                 .transaction(
                     Some(RefEdit {
@@ -106,14 +106,14 @@ mod prepare_and_commit {
                             previous: None,
                             mode: RefLog::AndReference,
                         },
-                        name: "DOES_NOT_EXIST".try_into().unwrap(),
+                        name: "DOES_NOT_EXIST".try_into()?,
                         deref: false,
                     }),
                     Fail::Immediately,
                 )
-                .commit()
-                .unwrap();
+                .commit()?;
             assert_eq!(edits.len(), 1);
+            Ok(())
         }
 
         #[test]
@@ -185,6 +185,35 @@ mod prepare_and_commit {
         }
 
         #[test]
+        fn delete_ref_with_incorrect_previous_value_fails() {
+            let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
+            let head = store.find_one_existing("HEAD").unwrap();
+            assert!(head.log_exists().unwrap());
+
+            let err = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Delete {
+                            previous: Some(Target::Symbolic("refs/heads/main".try_into().unwrap())),
+                            mode: RefLog::Only,
+                        },
+                        name: head.name().into(),
+                        deref: true,
+                    }),
+                    Fail::Immediately,
+                )
+                .commit()
+                .expect_err("mismatch is detected");
+
+            assert_eq!(err.to_string(), "The reference 'refs/heads/main' should have content ref: refs/heads/main, actual content was 02a7a22d90d7c02fb494ed25551850b868e634f0");
+            // everything stays as is
+            let head = store.find_one_existing("HEAD").unwrap();
+            assert!(head.log_exists().unwrap());
+            let main = store.find_one_existing("main").expect("referent still exists");
+            assert!(main.log_exists().unwrap());
+        }
+
+        #[test]
         fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
             let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
             let head = store.find_one_existing("HEAD")?;
@@ -239,7 +268,7 @@ mod prepare_and_commit {
                 .commit()
                 .unwrap();
 
-            assert_eq!(edits.len(), 1);
+            assert_eq!(edits.len(), 2);
             let head = store.find_one_existing("HEAD").unwrap();
             assert!(!head.log_exists().unwrap());
             let main = store.find_one_existing("main").expect("referent still exists");
