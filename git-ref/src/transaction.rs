@@ -154,7 +154,7 @@ mod ext {
                     // In any case, we don't want the following algorithms to try dereffing it and assume they deal with
                     // broken refs gracefully.
                     edit.deref = false;
-                    if let Some(Target::Symbolic(referent)) = store.find_one_existing(edit.name.to_partial()).ok() {
+                    if let Ok(Target::Symbolic(referent)) = store.find_one_existing(edit.name.to_partial()) {
                         new_edits.push(make_entry(
                             eid,
                             match &mut edit.change {
