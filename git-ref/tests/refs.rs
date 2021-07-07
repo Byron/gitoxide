@@ -151,7 +151,6 @@ mod transaction {
             fn symbolic_refs_cycles_are_handled_gracefully() {}
 
             #[test]
-            #[should_panic]
             fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() {
                 let store = MockStore::with(vec![
                     (
@@ -201,8 +200,19 @@ mod transaction {
                     },
                 ];
 
-                edits.extend_with_splits_of_symbolic_refs(&store, |_, e| e).unwrap();
+                let mut indices = Vec::new();
+                edits
+                    .extend_with_splits_of_symbolic_refs(&store, |idx, e| {
+                        indices.push(idx);
+                        e
+                    })
+                    .unwrap();
                 assert_eq!(edits.len(), 6, "it follows all symbolic links");
+                assert_eq!(
+                    indices,
+                    vec![0, 1, 2, 3],
+                    "the parent index is passed each time there is a split"
+                );
 
                 assert_eq!(
                     edits,

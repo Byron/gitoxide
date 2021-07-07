@@ -147,47 +147,50 @@ mod ext {
                     };
 
                     match store.find_one_existing(edit.name.to_partial()).ok() {
-                        Some(Target::Symbolic(referent)) => match &mut edit.change {
-                            Change::Delete { previous, mode } => {
-                                new_edits.push(make_entry(
-                                    eid,
-                                    RefEdit {
-                                        change: Change::Delete {
-                                            previous: previous.clone(),
-                                            mode: *mode,
+                        Some(Target::Symbolic(referent)) => {
+                            match &mut edit.change {
+                                Change::Delete { previous, mode } => {
+                                    new_edits.push(make_entry(
+                                        eid,
+                                        RefEdit {
+                                            change: Change::Delete {
+                                                previous: previous.clone(),
+                                                mode: *mode,
+                                            },
+                                            name: referent,
+                                            deref: true,
                                         },
-                                        name: referent,
-                                        deref: true,
-                                    },
-                                ));
-                                *mode = match *mode {
-                                    DeleteMode::RefLogOnly => DeleteMode::RefLogOnly,
-                                    DeleteMode::RefAndRefLog => DeleteMode::RefLogOnly,
-                                }
-                            }
-                            Change::Update { mode, previous, new } => {
-                                new_edits.push(make_entry(
-                                    eid,
-                                    RefEdit {
-                                        change: Change::Update {
-                                            previous: previous.clone(),
-                                            new: new.clone(),
-                                            mode: *mode,
-                                        },
-                                        name: referent,
-                                        deref: true,
-                                    },
-                                ));
-                                *mode = match *mode {
-                                    UpdateMode::RefLogOnly { create_unconditionally } => {
-                                        UpdateMode::RefLogOnly { create_unconditionally }
-                                    }
-                                    UpdateMode::RefAndRefLog { create_unconditionally } => {
-                                        UpdateMode::RefLogOnly { create_unconditionally }
+                                    ));
+                                    *mode = match *mode {
+                                        DeleteMode::RefLogOnly => DeleteMode::RefLogOnly,
+                                        DeleteMode::RefAndRefLog => DeleteMode::RefLogOnly,
                                     }
                                 }
-                            }
-                        },
+                                Change::Update { mode, previous, new } => {
+                                    new_edits.push(make_entry(
+                                        eid,
+                                        RefEdit {
+                                            change: Change::Update {
+                                                previous: previous.clone(),
+                                                new: new.clone(),
+                                                mode: *mode,
+                                            },
+                                            name: referent,
+                                            deref: true,
+                                        },
+                                    ));
+                                    *mode = match *mode {
+                                        UpdateMode::RefLogOnly { create_unconditionally } => {
+                                            UpdateMode::RefLogOnly { create_unconditionally }
+                                        }
+                                        UpdateMode::RefAndRefLog { create_unconditionally } => {
+                                            UpdateMode::RefLogOnly { create_unconditionally }
+                                        }
+                                    }
+                                }
+                            };
+                            edit.deref = false;
+                        }
                         Some(Target::Peeled(_)) => {
                             edit.deref = false;
                         }
