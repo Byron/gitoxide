@@ -117,8 +117,8 @@ mod prepare_and_commit {
         }
 
         #[test]
-        fn delete_a_ref_which_is_gone_but_must_exist_fails() {
-            let store = empty_store(WriteReflog::Normal).unwrap();
+        fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
+            let store = empty_store(WriteReflog::Normal)?;
             let res = store
                 .transaction(
                     Some(RefEdit {
@@ -126,7 +126,7 @@ mod prepare_and_commit {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
                             mode: RefLog::AndReference,
                         },
-                        name: "DOES_NOT_EXIST".try_into().unwrap(),
+                        name: "DOES_NOT_EXIST".try_into()?,
                         deref: false,
                     }),
                     Fail::Immediately,
@@ -139,6 +139,7 @@ mod prepare_and_commit {
                     "The reference 'DOES_NOT_EXIST' for deletion did not exist"
                 ),
             }
+            Ok(())
         }
 
         #[test]

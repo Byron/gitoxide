@@ -54,8 +54,8 @@ mod transaction {
         }
 
         #[test]
-        fn preprocessing_checks_duplicates_after_splits() {
-            let store = MockStore::with(Some(("HEAD", Target::Symbolic("refs/heads/main".try_into().unwrap()))));
+        fn preprocessing_checks_duplicates_after_splits() -> crate::Result {
+            let store = MockStore::with(Some(("HEAD", Target::Symbolic("refs/heads/main".try_into()?))));
 
             let mut edits = vec![
                 RefEdit {
@@ -63,7 +63,7 @@ mod transaction {
                         previous: None,
                         mode: RefLog::AndReference,
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: true,
                 },
                 RefEdit {
@@ -71,7 +71,7 @@ mod transaction {
                         previous: None,
                         mode: RefLog::AndReference,
                     },
-                    name: "refs/heads/main".try_into().unwrap(),
+                    name: "refs/heads/main".try_into()?,
                     deref: false,
                 },
             ];
@@ -81,6 +81,7 @@ mod transaction {
                 err.to_string(),
                 "A reference named 'refs/heads/main' has multiple edits"
             );
+            Ok(())
         }
 
         #[test]
@@ -177,8 +178,7 @@ mod transaction {
             }
 
             #[test]
-            #[ignore]
-            fn symbolic_refs_cycles_are_handled_gracefully() {
+            fn symbolic_refs_cycles_are_handled_gracefully() -> crate::Result {
                 #[derive(Default)]
                 struct Cycler {
                     next_item: Cell<bool>,
@@ -203,7 +203,7 @@ mod transaction {
                             previous: None,
                             mode: RefLog::AndReference,
                         },
-                        name: "refs/heads/delete-symbolic-1".try_into().unwrap(),
+                        name: "refs/heads/delete-symbolic-1".try_into()?,
                         deref: true,
                     },
                     RefEdit {
@@ -213,7 +213,7 @@ mod transaction {
                             force_create_reflog: true,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
-                        name: "refs/heads/update-symbolic-1".try_into().unwrap(),
+                        name: "refs/heads/update-symbolic-1".try_into()?,
                         deref: true,
                     },
                 ];
@@ -225,18 +225,19 @@ mod transaction {
                     err.to_string(),
                     "Could not follow all splits after 5 rounds, assuming reference cycle"
                 );
+                Ok(())
             }
 
             #[test]
-            fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() {
+            fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() -> crate::Result {
                 let store = MockStore::with(vec![
                     (
                         "refs/heads/delete-symbolic-1",
-                        Target::Symbolic("refs/heads/delete-symbolic-2".try_into().unwrap()),
+                        Target::Symbolic("refs/heads/delete-symbolic-2".try_into()?),
                     ),
                     (
                         "refs/heads/delete-symbolic-2",
-                        Target::Symbolic("refs/heads/delete-symbolic-3".try_into().unwrap()),
+                        Target::Symbolic("refs/heads/delete-symbolic-3".try_into()?),
                     ),
                     (
                         "refs/heads/delete-symbolic-3",
@@ -244,11 +245,11 @@ mod transaction {
                     ),
                     (
                         "refs/heads/update-symbolic-1",
-                        Target::Symbolic("refs/heads/update-symbolic-2".try_into().unwrap()),
+                        Target::Symbolic("refs/heads/update-symbolic-2".try_into()?),
                     ),
                     (
                         "refs/heads/update-symbolic-2",
-                        Target::Symbolic("refs/heads/update-symbolic-3".try_into().unwrap()),
+                        Target::Symbolic("refs/heads/update-symbolic-3".try_into()?),
                     ),
                     (
                         "refs/heads/update-symbolic-3",
@@ -261,7 +262,7 @@ mod transaction {
                             previous: None,
                             mode: RefLog::AndReference,
                         },
-                        name: "refs/heads/delete-symbolic-1".try_into().unwrap(),
+                        name: "refs/heads/delete-symbolic-1".try_into()?,
                         deref: true,
                     },
                     RefEdit {
@@ -271,18 +272,16 @@ mod transaction {
                             force_create_reflog: true,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
-                        name: "refs/heads/update-symbolic-1".try_into().unwrap(),
+                        name: "refs/heads/update-symbolic-1".try_into()?,
                         deref: true,
                     },
                 ];
 
                 let mut indices = Vec::new();
-                edits
-                    .extend_with_splits_of_symbolic_refs(&store, |idx, e| {
-                        indices.push(idx);
-                        e
-                    })
-                    .unwrap();
+                edits.extend_with_splits_of_symbolic_refs(&store, |idx, e| {
+                    indices.push(idx);
+                    e
+                })?;
                 assert_eq!(edits.len(), 6, "it follows all symbolic links");
                 assert_eq!(
                     indices,
@@ -298,7 +297,7 @@ mod transaction {
                                 previous: None,
                                 mode: RefLog::Only,
                             },
-                            name: "refs/heads/delete-symbolic-1".try_into().unwrap(),
+                            name: "refs/heads/delete-symbolic-1".try_into()?,
                             deref: false,
                         },
                         RefEdit {
@@ -308,7 +307,7 @@ mod transaction {
                                 force_create_reflog: true,
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
-                            name: "refs/heads/update-symbolic-1".try_into().unwrap(),
+                            name: "refs/heads/update-symbolic-1".try_into()?,
                             deref: false,
                         },
                         RefEdit {
@@ -316,7 +315,7 @@ mod transaction {
                                 previous: None,
                                 mode: RefLog::Only,
                             },
-                            name: "refs/heads/delete-symbolic-2".try_into().unwrap(),
+                            name: "refs/heads/delete-symbolic-2".try_into()?,
                             deref: false,
                         },
                         RefEdit {
@@ -326,7 +325,7 @@ mod transaction {
                                 force_create_reflog: true,
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
-                            name: "refs/heads/update-symbolic-2".try_into().unwrap(),
+                            name: "refs/heads/update-symbolic-2".try_into()?,
                             deref: false,
                         },
                         RefEdit {
@@ -334,7 +333,7 @@ mod transaction {
                                 previous: None,
                                 mode: RefLog::AndReference,
                             },
-                            name: "refs/heads/delete-symbolic-3".try_into().unwrap(),
+                            name: "refs/heads/delete-symbolic-3".try_into()?,
                             deref: false,
                         },
                         RefEdit {
@@ -344,11 +343,12 @@ mod transaction {
                                 force_create_reflog: true,
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
-                            name: "refs/heads/update-symbolic-3".try_into().unwrap(),
+                            name: "refs/heads/update-symbolic-3".try_into()?,
                             deref: false,
                         },
                     ]
-                )
+                );
+                Ok(())
             }
         }
     }
