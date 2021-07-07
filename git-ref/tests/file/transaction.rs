@@ -281,8 +281,35 @@ mod prepare_and_commit {
 
         #[test]
         #[ignore]
-        fn delete_broken_ref_that_must_exist() {
-            todo!("this should definitely work")
+        fn delete_broken_ref_that_dont_have_to_exist() {}
+
+        #[test]
+        #[ignore]
+        fn delete_broken_ref_that_must_exist() {}
+
+        #[test]
+        fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Result {
+            for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
+                let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
+                store.write_reflog = *reflog_writemode;
+                assert!(store.find_one_existing("HEAD")?.log_exists()?,);
+                let edits = store
+                    .transaction(
+                        Some(RefEdit {
+                            change: Change::Delete {
+                                previous: None,
+                                mode: RefLog::Only,
+                            },
+                            name: "HEAD".try_into()?,
+                            deref: false,
+                        }),
+                        Fail::Immediately,
+                    )
+                    .commit()?;
+                assert_eq!(edits.len(), 1);
+                assert!(!store.find_one_existing("HEAD")?.log_exists()?, "log was deleted");
+            }
+            Ok(())
         }
     }
 }
