@@ -5,6 +5,7 @@ use git_ref::{
     mutable::Target,
     transaction::{Change, RefEdit, RefLog},
 };
+use git_testtools::hex_to_id;
 use std::{convert::TryInto, path::Path};
 
 mod reference_with_equally_named {
@@ -23,43 +24,110 @@ mod reference_with_equally_named {
 
 #[test]
 #[ignore]
-fn reference_without_old_value_must_not_exist_already_when_creating_it() {
-    todo!("lock file renaming of a.lock to a but a is a non-empty directory")
-}
-
-#[test]
-fn symbolic_head_missing_referent() -> crate::Result {
-    for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
-        let (_keep, store) = empty_store(*reflog_writemode)?;
-        let referent = "refs/heads/alt-main";
-        assert!(store.find_one(referent)?.is_none(), "the reference does not exist");
-        let t = store.transaction(
-            Some(RefEdit {
-                change: Change::Update {
-                    mode: RefLog::AndReference,
-                    force_create_reflog: false,
-                    new: Target::Symbolic(referent.try_into()?),
-                    previous: None, // TODO: check failure if it doesn't exist
-                },
-                name: "HEAD".try_into()?,
-                deref: false,
-            }),
-            Fail::Immediately,
-        );
-        let edits = t.commit()?;
-        assert_eq!(edits.len(), 1, "no split was performed");
-        let written = store.find_one_existing(edits[0].name.to_partial())?;
-        assert_eq!(written.relative_path(), Path::new("HEAD"));
-        assert_eq!(written.kind(), git_ref::Kind::Symbolic);
-        assert_eq!(written.target().as_name(), Some(referent.as_bytes().as_bstr()));
-        assert!(!written.log_exists()?, "no revlog is written for symbolic ref");
-    }
-    Ok(())
-}
+fn reference_with_old_value_must_exist_when_creating_it() {}
 
 #[test]
 #[ignore]
+fn reference_without_old_value_must_not_exist_already_when_creating_it() {}
+
+#[test]
+#[should_panic]
+fn symbolic_head_missing_referent_then_update_referent() {
+    for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
+        let (_keep, store) = empty_store(*reflog_writemode).unwrap();
+        let referent = "refs/heads/alt-main";
+        assert!(
+            store.find_one(referent).unwrap().is_none(),
+            "the reference does not exist"
+        );
+        let edits = store
+            .transaction(
+                Some(RefEdit {
+                    change: Change::Update {
+                        mode: RefLog::AndReference,
+                        force_create_reflog: false,
+                        new: Target::Symbolic(referent.try_into().unwrap()),
+                        previous: None, // TODO: check failure if it doesn't exist
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: false,
+                }),
+                Fail::Immediately,
+            )
+            .commit()
+            .unwrap();
+        assert_eq!(
+            edits,
+            vec![RefEdit {
+                change: Change::Update {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: false,
+                    new: Target::Symbolic(referent.try_into().unwrap()),
+                    previous: None,
+                },
+                name: "HEAD".try_into().unwrap(),
+                deref: false,
+            }],
+            "no split was performed"
+        );
+
+        let written = store.find_one_existing(edits[0].name.to_partial()).unwrap();
+        assert_eq!(written.relative_path(), Path::new("HEAD"));
+        assert_eq!(written.kind(), git_ref::Kind::Symbolic);
+        assert_eq!(written.target().as_name(), Some(referent.as_bytes().as_bstr()));
+        assert!(!written.log_exists().unwrap(), "no reflog is written for symbolic ref");
+
+        let new = Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"));
+        let edits = store
+            .transaction(
+                Some(RefEdit {
+                    change: Change::Update {
+                        mode: RefLog::AndReference,
+                        force_create_reflog: false,
+                        new: new.clone(),
+                        previous: None,
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: true,
+                }),
+                Fail::Immediately,
+            )
+            .commit()
+            .unwrap();
+
+        assert_eq!(
+            edits,
+            vec![
+                RefEdit {
+                    change: Change::Update {
+                        mode: RefLog::Only,
+                        force_create_reflog: false,
+                        new: new.clone(),
+                        previous: None,
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: false,
+                },
+                RefEdit {
+                    change: Change::Update {
+                        mode: RefLog::AndReference,
+                        force_create_reflog: false,
+                        new: new.clone(),
+                        previous: None,
+                    },
+                    name: referent.try_into().unwrap(),
+                    deref: false,
+                }
+            ]
+        );
+        todo!("verify reflog, but log message should be controlled");
+    }
+}
+
+#[test]
+#[should_panic]
 fn referent_that_head_is_pointing_to() {
+    // for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {}
     todo!("verify that HEAD gets a reflog update automatically")
 }
 

@@ -181,11 +181,20 @@ impl<'a> Transaction<'a> {
                 // Perform updates first so live commits remain referenced
                 for change in self.updates.iter_mut() {
                     match &change.update.change {
-                        Change::Update { mode, new, .. } => {
+                        // reflog first, then reference
+                        Change::Update {
+                            mode,
+                            new,
+                            previous: _,
+                            force_create_reflog: _,
+                        } => {
                             let lock = change.lock.take().expect("each ref is locked");
                             match (new, mode) {
                                 (Target::Symbolic(_), _reflog_mode) => {} // skip any log for symbolic refs
-                                _ => todo!("commit other reflog write cases"),
+                                (Target::Peeled(_oid), _reflog_mode) => {
+                                    // self.store.create_or_append_reflog(change.)
+                                    todo!("commit other reflog write cases")
+                                }
                             }
                             lock.commit()?
                         }

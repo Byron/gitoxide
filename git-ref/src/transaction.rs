@@ -59,6 +59,17 @@ pub enum Change {
     },
 }
 
+impl Change {
+    /// Return references to values that are in common between all variants.
+    pub fn previous_and_mode(&self) -> (Option<crate::Target<'_>>, RefLog) {
+        match self {
+            Change::Update { mode, previous, .. } | Change::Delete { mode, previous, .. } => {
+                (previous.as_ref().map(|t| t.borrow()), *mode)
+            }
+        }
+    }
+}
+
 /// A reference that is to be changed
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct RefEdit {
