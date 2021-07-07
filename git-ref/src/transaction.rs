@@ -198,7 +198,7 @@ mod ext {
                         None => {}
                     }
                 }
-                if new_edits.len() == 0 {
+                if new_edits.is_empty() {
                     break Ok(());
                 }
                 if round == 5 {
