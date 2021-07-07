@@ -59,6 +59,15 @@ pub enum Change {
     },
 }
 
+impl Change {
+    /// Return the previous value specified in either update or deletion change.
+    pub fn previous(&self) -> Option<crate::Target<'_>> {
+        match self {
+            Change::Update { previous, .. } | Change::Delete { previous, .. } => previous.as_ref().map(|t| t.borrow()),
+        }
+    }
+}
+
 /// A reference that is to be changed
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct RefEdit {

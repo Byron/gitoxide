@@ -88,6 +88,14 @@ pub mod mutable {
                 Target::Symbolic(_) => false,
             }
         }
+
+        /// Interpret this owned Target as shared Target
+        pub fn borrow(&self) -> crate::Target<'_> {
+            match self {
+                Target::Peeled(oid) => crate::Target::Peeled(&oid),
+                Target::Symbolic(name) => crate::Target::Symbolic(name.0.as_bstr()),
+            }
+        }
     }
 
     impl<'a> From<crate::Target<'a>> for Target {
