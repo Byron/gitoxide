@@ -96,6 +96,11 @@ pub mod mutable {
                 Target::Symbolic(name) => crate::Target::Symbolic(name.0.as_bstr()),
             }
         }
+
+        /// Create an instance that signals that a reference should exist if this value is used in a [`Change`][crate::transaction::Change].
+        pub fn must_exist() -> Self {
+            Target::Peeled(ObjectId::null_sha1())
+        }
     }
 
     impl<'a> From<crate::Target<'a>> for Target {

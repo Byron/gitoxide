@@ -294,7 +294,7 @@ mod error {
                 source(err)
             }
             DeleteReferenceMustExist { full_name: BString } {
-                display("The reference '{}' for deletion did not exist", full_name)
+                display("The reference '{}' for deletion did not exist or could not be parsed", full_name)
             }
             DeleteReferenceOutOfDate { full_name: BString, expected: Target, actual: Target } {
                 display("The reference '{}' should have content {}, actual content was {}", full_name, expected, actual)

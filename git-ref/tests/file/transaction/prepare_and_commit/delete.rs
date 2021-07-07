@@ -1,5 +1,4 @@
 use crate::file::{store_writable, transaction::prepare_and_commit::empty_store};
-use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_ref::{
     file::WriteReflog,
@@ -35,7 +34,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
         .transaction(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                    previous: Some(Target::must_exist()),
                     mode: RefLog::AndReference,
                 },
                 name: "DOES_NOT_EXIST".try_into()?,
@@ -48,7 +47,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
         Ok(_) => unreachable!("must exist, but it doesn't actually exist"),
         Err(err) => assert_eq!(
             err.to_string(),
-            "The reference 'DOES_NOT_EXIST' for deletion did not exist"
+            "The reference 'DOES_NOT_EXIST' for deletion did not exist or could not be parsed"
         ),
     }
     Ok(())
@@ -65,7 +64,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         .transaction(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                    previous: Some(Target::must_exist()),
                     mode: RefLog::AndReference,
                 },
                 name: head.name().into(),
@@ -168,7 +167,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
         .transaction(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(ObjectId::null_sha1())),
+                    previous: Some(Target::must_exist()),
                     mode: RefLog::Only,
                 },
                 name: head.name().into(),
@@ -192,9 +191,31 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
-fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {}
+fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {
+    let (_keep, store) = empty_store(WriteReflog::Normal).unwrap();
+    std::fs::write(store.base.join("HEAD"), &b"broken").unwrap();
+    assert!(store.find_one("HEAD").is_err(), "the ref is truly broken");
+
+    let err = store
+        .transaction(
+            Some(RefEdit {
+                change: Change::Delete {
+                    previous: Some(Target::must_exist()),
+                    mode: RefLog::AndReference,
+                },
+                name: "HEAD".try_into().unwrap(),
+                deref: true,
+            }),
+            Fail::Immediately,
+        )
+        .commit()
+        .expect_err("if refs must exist they must be readable too");
+    assert_eq!(
+        err.to_string(),
+        "The reference 'HEAD' for deletion did not exist or could not be parsed"
+    );
+}
 
 #[test]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
