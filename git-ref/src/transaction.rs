@@ -99,7 +99,7 @@ pub enum UpdateMode {
 
 mod ext {
     use crate::{
-        transaction::{Change, RefEdit, Target},
+        transaction::{Change, DeleteMode, RefEdit, Target, UpdateMode},
         RefStore,
     };
     use bstr::BString;
@@ -115,7 +115,7 @@ mod ext {
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
             store: &impl RefStore,
-            make_entry: impl FnMut(RefEdit) -> T,
+            make_entry: impl FnMut(usize, RefEdit) -> T,
         ) -> Result<(), std::io::Error>;
     }
 
@@ -135,27 +135,71 @@ mod ext {
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
             store: &impl RefStore,
-            _make_entry: impl FnMut(RefEdit) -> E,
+            mut make_entry: impl FnMut(usize, RefEdit) -> E,
         ) -> Result<(), std::io::Error> {
-            let new_edits = Vec::new();
-            for edit in self.iter_mut() {
-                let edit = edit.borrow_mut();
-                match edit.change {
-                    Change::Delete { .. } | Change::Update { .. } => {
-                        match store.find_one_existing(edit.name.to_partial()).ok() {
-                            Some(Target::Symbolic(_name)) => {
-                                // todo!("split into new edit")
+            let mut new_edits = Vec::new();
+            let mut first = 0;
+            loop {
+                for (eid, edit) in self[first..].iter_mut().enumerate().map(|(eid, v)| (eid + first, v)) {
+                    let edit = edit.borrow_mut();
+                    if !edit.deref {
+                        continue;
+                    };
+
+                    match store.find_one_existing(edit.name.to_partial()).ok() {
+                        Some(Target::Symbolic(referent)) => match &mut edit.change {
+                            Change::Delete { previous, mode } => {
+                                new_edits.push(make_entry(
+                                    eid,
+                                    RefEdit {
+                                        change: Change::Delete {
+                                            previous: previous.clone(),
+                                            mode: *mode,
+                                        },
+                                        name: referent,
+                                        deref: true,
+                                    },
+                                ));
+                                *mode = match *mode {
+                                    DeleteMode::RefLogOnly => DeleteMode::RefLogOnly,
+                                    DeleteMode::RefAndRefLog => DeleteMode::RefLogOnly,
+                                }
                             }
-                            Some(Target::Peeled(_)) => {
-                                edit.deref = false;
+                            Change::Update { mode, previous, new } => {
+                                new_edits.push(make_entry(
+                                    eid,
+                                    RefEdit {
+                                        change: Change::Update {
+                                            previous: previous.clone(),
+                                            new: new.clone(),
+                                            mode: *mode,
+                                        },
+                                        name: referent,
+                                        deref: true,
+                                    },
+                                ));
+                                *mode = match *mode {
+                                    UpdateMode::RefLogOnly { create_unconditionally } => {
+                                        UpdateMode::RefLogOnly { create_unconditionally }
+                                    }
+                                    UpdateMode::RefAndRefLog { create_unconditionally } => {
+                                        UpdateMode::RefLogOnly { create_unconditionally }
+                                    }
+                                }
                             }
-                            None => {}
+                        },
+                        Some(Target::Peeled(_)) => {
+                            edit.deref = false;
                         }
+                        None => {}
                     }
                 }
+                if new_edits.len() == 0 {
+                    break Ok(());
+                }
+                first = self.len();
+                self.extend(new_edits.drain(..));
             }
-            self.extend(new_edits.into_iter());
-            Ok(())
         }
     }
 }

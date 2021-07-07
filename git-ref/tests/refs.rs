@@ -41,11 +41,13 @@ mod transaction {
         mod splitting {
             use bstr::{BString, ByteSlice};
             use git_hash::ObjectId;
+            use git_ref::transaction::UpdateMode;
             use git_ref::{
                 mutable::Target,
                 transaction::{Change, DeleteMode, RefEdit, RefEditsExt},
                 FullName, PartialName, RefStore,
             };
+            use git_testtools::hex_to_id;
             use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
             struct MockStore {
@@ -55,6 +57,11 @@ mod transaction {
             impl MockStore {
                 fn assert_empty(self) {
                     assert_eq!(self.targets.borrow().len(), 0, "all targets should be used");
+                }
+                fn empty() -> Self {
+                    MockStore {
+                        targets: Default::default(),
+                    }
                 }
                 fn with(edits: impl IntoIterator<Item = (&'static str, Target)>) -> Self {
                     MockStore {
@@ -119,7 +126,7 @@ mod transaction {
                     },
                 ];
 
-                edits.extend_with_splits_of_symbolic_refs(&store, |_| panic!("should not be called"))?;
+                edits.extend_with_splits_of_symbolic_refs(&store, |_, _| panic!("should not be called"))?;
                 assert_eq!(edits.len(), 3, "no edit was added");
                 assert!(
                     !find(&edits, "refs/heads/anything-but-not-symbolic").deref,
@@ -132,10 +139,134 @@ mod transaction {
                 store.assert_empty();
                 Ok(())
             }
+            #[test]
+            fn empty_inputs_are_ok() -> crate::Result {
+                Vec::<RefEdit>::new()
+                    .extend_with_splits_of_symbolic_refs(&MockStore::empty(), |_, e| e)
+                    .map_err(Into::into)
+            }
 
             #[test]
             #[ignore]
-            fn symbolic_refs_are_split_into_referents_handling_the_reflog() {}
+            fn symbolic_refs_cycles_are_handled_gracefully() {}
+
+            #[test]
+            #[should_panic]
+            fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() {
+                let store = MockStore::with(vec![
+                    (
+                        "refs/heads/delete-symbolic-1",
+                        Target::Symbolic("refs/heads/delete-symbolic-2".try_into().unwrap()),
+                    ),
+                    (
+                        "refs/heads/delete-symbolic-2",
+                        Target::Symbolic("refs/heads/delete-symbolic-3".try_into().unwrap()),
+                    ),
+                    (
+                        "refs/heads/delete-symbolic-3",
+                        Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
+                    ),
+                    (
+                        "refs/heads/update-symbolic-1",
+                        Target::Symbolic("refs/heads/update-symbolic-2".try_into().unwrap()),
+                    ),
+                    (
+                        "refs/heads/update-symbolic-2",
+                        Target::Symbolic("refs/heads/update-symbolic-3".try_into().unwrap()),
+                    ),
+                    (
+                        "refs/heads/update-symbolic-3",
+                        Target::Peeled(hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")),
+                    ),
+                ]);
+                let mut edits = vec![
+                    RefEdit {
+                        change: Change::Delete {
+                            previous: None,
+                            mode: DeleteMode::RefAndRefLog,
+                        },
+                        name: "refs/heads/delete-symbolic-1".try_into().unwrap(),
+                        deref: true,
+                    },
+                    RefEdit {
+                        change: Change::Update {
+                            previous: None,
+                            mode: UpdateMode::RefAndRefLog {
+                                create_unconditionally: true,
+                            },
+                            new: Target::Peeled(ObjectId::null_sha1()),
+                        },
+                        name: "refs/heads/update-symbolic-1".try_into().unwrap(),
+                        deref: true,
+                    },
+                ];
+
+                edits.extend_with_splits_of_symbolic_refs(&store, |_, e| e).unwrap();
+                assert_eq!(edits.len(), 6, "it follows all symbolic links");
+
+                assert_eq!(
+                    edits,
+                    vec![
+                        RefEdit {
+                            change: Change::Delete {
+                                previous: None,
+                                mode: DeleteMode::RefLogOnly,
+                            },
+                            name: "refs/heads/delete-symbolic-1".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: Change::Update {
+                                previous: None,
+                                mode: UpdateMode::RefLogOnly {
+                                    create_unconditionally: true,
+                                },
+                                new: Target::Peeled(ObjectId::null_sha1()),
+                            },
+                            name: "refs/heads/update-symbolic-1".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: Change::Delete {
+                                previous: None,
+                                mode: DeleteMode::RefLogOnly,
+                            },
+                            name: "refs/heads/delete-symbolic-2".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: Change::Update {
+                                previous: None,
+                                mode: UpdateMode::RefLogOnly {
+                                    create_unconditionally: true,
+                                },
+                                new: Target::Peeled(ObjectId::null_sha1()),
+                            },
+                            name: "refs/heads/update-symbolic-2".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: Change::Delete {
+                                previous: None,
+                                mode: DeleteMode::RefAndRefLog,
+                            },
+                            name: "refs/heads/delete-symbolic-3".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: Change::Update {
+                                previous: None,
+                                mode: UpdateMode::RefAndRefLog {
+                                    create_unconditionally: true,
+                                },
+                                new: Target::Peeled(ObjectId::null_sha1()),
+                            },
+                            name: "refs/heads/update-symbolic-3".try_into().unwrap(),
+                            deref: false,
+                        },
+                    ]
+                )
+            }
         }
     }
 }

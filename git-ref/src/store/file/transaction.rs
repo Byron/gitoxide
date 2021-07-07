@@ -141,10 +141,10 @@ impl<'a> Transaction<'a> {
                     .assure_one_name_has_one_edit()
                     .map_err(|first_name| Error::DuplicateRefEdits { first_name })?;
                 self.updates
-                    .extend_with_splits_of_symbolic_refs(self.store, |update| Edit {
+                    .extend_with_splits_of_symbolic_refs(self.store, |idx, update| Edit {
                         update,
                         lock: None,
-                        parent_index: None,
+                        parent_index: Some(idx),
                     })?;
 
                 for change in self.updates.iter_mut() {
