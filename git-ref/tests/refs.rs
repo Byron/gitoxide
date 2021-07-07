@@ -41,15 +41,16 @@ mod transaction {
         mod splitting {
             use bstr::{BString, ByteSlice};
             use git_hash::ObjectId;
-            use git_ref::transaction::UpdateMode;
             use git_ref::{
                 mutable::Target,
-                transaction::{Change, DeleteMode, RefEdit, RefEditsExt},
+                transaction::{Change, DeleteMode, RefEdit, RefEditsExt, UpdateMode},
                 FullName, PartialName, RefStore,
             };
             use git_testtools::hex_to_id;
+            use std::cell::Cell;
             use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
+            #[derive(Default)]
             struct MockStore {
                 targets: RefCell<BTreeMap<BString, Target>>,
             }
@@ -57,11 +58,6 @@ mod transaction {
             impl MockStore {
                 fn assert_empty(self) {
                     assert_eq!(self.targets.borrow().len(), 0, "all targets should be used");
-                }
-                fn empty() -> Self {
-                    MockStore {
-                        targets: Default::default(),
-                    }
                 }
                 fn with(edits: impl IntoIterator<Item = (&'static str, Target)>) -> Self {
                     MockStore {
@@ -142,13 +138,61 @@ mod transaction {
             #[test]
             fn empty_inputs_are_ok() -> crate::Result {
                 Vec::<RefEdit>::new()
-                    .extend_with_splits_of_symbolic_refs(&MockStore::empty(), |_, e| e)
+                    .extend_with_splits_of_symbolic_refs(&MockStore::default(), |_, e| e)
                     .map_err(Into::into)
             }
 
             #[test]
             #[ignore]
-            fn symbolic_refs_cycles_are_handled_gracefully() {}
+            fn symbolic_refs_cycles_are_handled_gracefully() {
+                #[derive(Default)]
+                struct Cycler {
+                    next_item: Cell<bool>,
+                }
+                impl RefStore for Cycler {
+                    type FindOneExistingError = std::convert::Infallible;
+
+                    fn find_one_existing(&self, _name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
+                        let item: bool = self.next_item.get();
+                        self.next_item.set(!item);
+                        Ok(Target::Symbolic(
+                            if item { "heads/refs/next" } else { "heads/refs/previous" }
+                                .try_into()
+                                .unwrap(),
+                        ))
+                    }
+                }
+
+                let mut edits = vec![
+                    RefEdit {
+                        change: Change::Delete {
+                            previous: None,
+                            mode: DeleteMode::RefAndRefLog,
+                        },
+                        name: "refs/heads/delete-symbolic-1".try_into().unwrap(),
+                        deref: true,
+                    },
+                    RefEdit {
+                        change: Change::Update {
+                            previous: None,
+                            mode: UpdateMode::RefAndRefLog {
+                                create_unconditionally: true,
+                            },
+                            new: Target::Peeled(ObjectId::null_sha1()),
+                        },
+                        name: "refs/heads/update-symbolic-1".try_into().unwrap(),
+                        deref: true,
+                    },
+                ];
+
+                let err = edits
+                    .extend_with_splits_of_symbolic_refs(&Cycler::default(), |_, e| e)
+                    .expect_err("cycle detected");
+                assert_eq!(
+                    err.to_string(),
+                    "Could not follow all splits after 5 rounds, assuming reference cycle"
+                );
+            }
 
             #[test]
             fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() {

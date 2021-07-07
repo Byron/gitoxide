@@ -139,6 +139,7 @@ mod ext {
         ) -> Result<(), std::io::Error> {
             let mut new_edits = Vec::new();
             let mut first = 0;
+            let mut round = 1;
             loop {
                 for (eid, edit) in self[first..].iter_mut().enumerate().map(|(eid, v)| (eid + first, v)) {
                     let edit = edit.borrow_mut();
@@ -200,7 +201,18 @@ mod ext {
                 if new_edits.len() == 0 {
                     break Ok(());
                 }
+                if round == 5 {
+                    break Err(std::io::Error::new(
+                        std::io::ErrorKind::WouldBlock,
+                        format!(
+                            "Could not follow all splits after {} rounds, assuming reference cycle",
+                            round
+                        ),
+                    ));
+                }
+                round += 1;
                 first = self.len();
+
                 self.extend(new_edits.drain(..));
             }
         }
