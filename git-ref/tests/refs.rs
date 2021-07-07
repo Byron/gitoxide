@@ -11,9 +11,9 @@ mod transaction {
                 change: Change::Delete {
                     previous: None,
                     mode: DeleteMode::RefAndRefLog,
-                    deref: false,
                 },
                 name: name.try_into().expect("valid name"),
+                deref: false,
             }
         }
 
@@ -78,12 +78,6 @@ mod transaction {
                 }
             }
 
-            fn is_deref(edit: &RefEdit) -> bool {
-                match edit.change {
-                    Change::Delete { deref, .. } | Change::Update { deref, .. } => deref,
-                }
-            }
-
             fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
                 let name: FullName = name.try_into().unwrap();
                 edits
@@ -103,36 +97,36 @@ mod transaction {
                         change: Change::Delete {
                             previous: None,
                             mode: DeleteMode::RefAndRefLog,
-                            deref: false,
                         },
                         name: "SYMBOLIC_PROBABLY_BUT_DEREF_IS_FALSE_SO_IGNORED".try_into()?,
+                        deref: false,
                     },
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
                             mode: DeleteMode::RefAndRefLog,
-                            deref: true,
                         },
                         name: "refs/heads/anything-but-not-symbolic".try_into()?,
+                        deref: true,
                     },
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
                             mode: DeleteMode::RefAndRefLog,
-                            deref: true,
                         },
                         name: "refs/heads/does-not-exist-and-deref-is-ignored".try_into()?,
+                        deref: true,
                     },
                 ];
 
                 edits.extend_with_splits_of_symbolic_refs(&store, |_| panic!("should not be called"))?;
                 assert_eq!(edits.len(), 3, "no edit was added");
                 assert!(
-                    !is_deref(find(&edits, "refs/heads/anything-but-not-symbolic")),
+                    !find(&edits, "refs/heads/anything-but-not-symbolic").deref,
                     "the algorithm corrects these flags"
                 );
                 assert!(
-                    is_deref(find(&edits, "refs/heads/does-not-exist-and-deref-is-ignored")),
+                    find(&edits, "refs/heads/does-not-exist-and-deref-is-ignored").deref,
                     "non-existing refs won't change the flag"
                 );
                 store.assert_empty();

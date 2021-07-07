@@ -192,11 +192,11 @@ impl<'a> Transaction<'a> {
                 }
 
                 for change in self.updates.iter_mut() {
+                    assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
                     match &change.update.change {
                         Change::Update { .. } => {}
-                        Change::Delete { deref, mode, .. } => {
+                        Change::Delete { mode, .. } => {
                             let lock = change.lock.take().expect("each ref is locked, even deletions");
-                            assert!(!deref, "Deref mode is turned into splits and turned off");
                             let (rm_reflog, rm_ref) = match mode {
                                 DeleteMode::RefAndRefLog => (true, true),
                                 DeleteMode::RefLogOnly => (true, false),

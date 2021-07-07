@@ -38,9 +38,6 @@ pub enum Change {
     Update {
         /// How to treat the reference log.
         mode: UpdateMode,
-        /// If set, symbolic references will be dereferenced so the change gets applied to their target. Has no effect if the reference
-        /// isn't symbolic.
-        deref: bool,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
         previous: Option<Target>,
@@ -56,9 +53,6 @@ pub enum Change {
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
         mode: DeleteMode,
-        /// If set, symbolic references will be dereferenced so the change gets applied to their target. Has no effect if the reference
-        /// isn't symbolic.
-        deref: bool,
     },
 }
 
@@ -69,6 +63,38 @@ pub struct RefEdit {
     pub change: Change,
     /// The name of the reference to apply the change to
     pub name: FullName,
+    /// If set, symbolic references  identified by `name`  will be dereferenced to have the `change` applied to their target.
+    /// This flag has no effect if the reference isn't symbolic.
+    pub deref: bool,
+}
+
+/// The way to deal with the Reflog in deletions.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum DeleteMode {
+    /// Delete the reference and the log
+    RefAndRefLog,
+    /// Delete only the reflog
+    RefLogOnly,
+}
+
+/// The way to deal with the Reflog in a particular edit
+///
+/// If the `create_unconditionally` field is set, create a reflog even if it otherwise wouldn't be created,
+/// as is the case for tags.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum UpdateMode {
+    /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
+    /// in this case and apply the change to it directly.
+    RefAndRefLog {
+        /// If set, update the reflog even if it otherwise wouldn't.
+        create_unconditionally: bool,
+    },
+    /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
+    /// referent.
+    RefLogOnly {
+        /// If set, update the reflog even if it otherwise wouldn't.
+        create_unconditionally: bool,
+    },
 }
 
 mod ext {
@@ -115,13 +141,13 @@ mod ext {
             for edit in self.iter_mut() {
                 let edit = edit.borrow_mut();
                 match edit.change {
-                    Change::Delete { ref mut deref, .. } | Change::Update { ref mut deref, .. } => {
+                    Change::Delete { .. } | Change::Update { .. } => {
                         match store.find_one_existing(edit.name.to_partial()).ok() {
                             Some(Target::Symbolic(_name)) => {
                                 // todo!("split into new edit")
                             }
                             Some(Target::Peeled(_)) => {
-                                *deref = false;
+                                edit.deref = false;
                             }
                             None => {}
                         }
@@ -134,32 +160,3 @@ mod ext {
     }
 }
 pub use ext::RefEditsExt;
-
-/// The way to deal with the Reflog in deletions.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum DeleteMode {
-    /// Delete the reference and the log
-    RefAndRefLog,
-    /// Delete only the reflog
-    RefLogOnly,
-}
-
-/// The way to deal with the Reflog in a particular edit
-///
-/// If the `create_unconditionally` field is set, create a reflog even if it otherwise wouldn't be created,
-/// as is the case for tags.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum UpdateMode {
-    /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
-    /// in this case and apply the change to it directly.
-    RefAndRefLog {
-        /// If set, update the reflog even if it otherwise wouldn't.
-        create_unconditionally: bool,
-    },
-    /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
-    /// referent.
-    RefLogOnly {
-        /// If set, update the reflog even if it otherwise wouldn't.
-        create_unconditionally: bool,
-    },
-}

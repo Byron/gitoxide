@@ -52,9 +52,9 @@ mod prepare_and_commit {
                             },
                             new: Target::Symbolic(referent.try_into()?),
                             previous: None, // TODO: check failure if it doesn't exist
-                            deref: false,
                         },
                         name: "HEAD".try_into()?,
+                        deref: false,
                     }),
                     Fail::Immediately,
                 );
@@ -107,9 +107,9 @@ mod prepare_and_commit {
                         change: Change::Delete {
                             previous: None,
                             mode: DeleteMode::RefAndRefLog,
-                            deref: false,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
+                        deref: false,
                     }),
                     Fail::Immediately,
                 )
@@ -127,9 +127,9 @@ mod prepare_and_commit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
                             mode: DeleteMode::RefAndRefLog,
-                            deref: false,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
+                        deref: false,
                     }),
                     Fail::Immediately,
                 )
@@ -156,9 +156,9 @@ mod prepare_and_commit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
                             mode: DeleteMode::RefAndRefLog,
-                            deref: false,
                         },
                         name: head.name().into(),
+                        deref: false,
                     }),
                     Fail::Immediately,
                 )
@@ -170,9 +170,9 @@ mod prepare_and_commit {
                     change: Change::Delete {
                         previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
                         mode: DeleteMode::RefAndRefLog,
-                        deref: false
                     },
                     name: head.name().into(),
+                    deref: false
                 }],
                 "the previous value was updated with the actual one"
             );
@@ -197,9 +197,9 @@ mod prepare_and_commit {
                         change: Change::Delete {
                             previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
                             mode: DeleteMode::RefLogOnly,
-                            deref: false,
                         },
                         name: head.name().into(),
+                        deref: false,
                     }),
                     Fail::Immediately,
                 )
@@ -231,9 +231,9 @@ mod prepare_and_commit {
                         change: Change::Delete {
                             previous: Some(Target::Symbolic("refs/heads/main".try_into().unwrap())),
                             mode: DeleteMode::RefLogOnly,
-                            deref: true,
                         },
                         name: head.name().into(),
+                        deref: true,
                     }),
                     Fail::Immediately,
                 )
