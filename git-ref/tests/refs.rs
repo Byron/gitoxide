@@ -164,8 +164,8 @@ mod transaction {
                     "the algorithm corrects these flags"
                 );
                 assert!(
-                    find(&edits, "refs/heads/does-not-exist-and-deref-is-ignored").deref,
-                    "non-existing refs won't change the flag"
+                    !find(&edits, "refs/heads/does-not-exist-and-deref-is-ignored").deref,
+                    "non-existing refs also disable the deref flag"
                 );
                 store.assert_empty();
                 Ok(())
@@ -282,7 +282,6 @@ mod transaction {
                     indices.push(idx);
                     e
                 })?;
-                assert_eq!(edits.len(), 6, "it follows all symbolic links");
                 assert_eq!(
                     indices,
                     vec![0, 1, 2, 3],

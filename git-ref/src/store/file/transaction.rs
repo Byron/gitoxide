@@ -58,6 +58,10 @@ impl<'a> Transaction<'a> {
             .and_then(|opt| {
                 opt.map(|buf| file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from))
                     .transpose()
+            })
+            .or_else(|err| match err {
+                Error::ReferenceDecode(_) => Ok(None),
+                other => Err(other),
             });
         let lock = match &mut change.update.change {
             Change::Delete { previous, .. } => {

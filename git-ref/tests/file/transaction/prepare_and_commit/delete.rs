@@ -197,7 +197,6 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
 fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {}
 
 #[test]
-#[should_panic]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() {
     let (_keep, store) = empty_store(WriteReflog::Normal).unwrap();
@@ -220,7 +219,6 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() {
         .unwrap();
 
     assert!(store.find_one("HEAD").unwrap().is_none(), "the ref was deleted");
-    assert_eq!(edits.len(), 1);
     assert_eq!(
         edits,
         vec![RefEdit {
@@ -232,7 +230,6 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() {
             deref: false,
         }]
     );
-    assert_eq!(edits[0].change.previous(), None, "the previous value could not be read");
 }
 
 #[test]
