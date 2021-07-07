@@ -14,7 +14,7 @@ mod prepare_and_commit {
         use git_lock::acquire::Fail;
         use git_ref::{
             mutable::Target,
-            transaction::{Change, RefEdit, UpdateMode},
+            transaction::{Change, RefEdit, RefLogMode},
         };
         use std::{convert::TryInto, path::Path};
 
@@ -47,9 +47,8 @@ mod prepare_and_commit {
                 let t = store.transaction(
                     Some(RefEdit {
                         change: Change::Update {
-                            mode: UpdateMode::RefAndRefLog {
-                                create_unconditionally: false,
-                            },
+                            mode: RefLogMode::RefAndRefLog,
+                            force_create_reflog: false,
                             new: Target::Symbolic(referent.try_into()?),
                             previous: None, // TODO: check failure if it doesn't exist
                         },
@@ -94,7 +93,7 @@ mod prepare_and_commit {
         use git_ref::{
             file::WriteReflog,
             mutable::Target,
-            transaction::{Change, DeleteMode, RefEdit},
+            transaction::{Change, RefEdit, RefLogMode},
         };
         use std::convert::TryInto;
 
@@ -106,7 +105,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: DeleteMode::RefAndRefLog,
+                            mode: RefLogMode::RefAndRefLog,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                         deref: false,
@@ -126,7 +125,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefAndRefLog,
+                            mode: RefLogMode::RefAndRefLog,
                         },
                         name: "DOES_NOT_EXIST".try_into().unwrap(),
                         deref: false,
@@ -155,7 +154,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Peeled(ObjectId::null_sha1())),
-                            mode: DeleteMode::RefAndRefLog,
+                            mode: RefLogMode::RefAndRefLog,
                         },
                         name: head.name().into(),
                         deref: false,
@@ -169,7 +168,7 @@ mod prepare_and_commit {
                 vec![RefEdit {
                     change: Change::Delete {
                         previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                        mode: DeleteMode::RefAndRefLog,
+                        mode: RefLogMode::RefAndRefLog,
                     },
                     name: head.name().into(),
                     deref: false
@@ -196,7 +195,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                            mode: DeleteMode::RefLogOnly,
+                            mode: RefLogMode::RefLogOnly,
                         },
                         name: head.name().into(),
                         deref: false,
@@ -230,7 +229,7 @@ mod prepare_and_commit {
                     Some(RefEdit {
                         change: Change::Delete {
                             previous: Some(Target::Symbolic("refs/heads/main".try_into().unwrap())),
-                            mode: DeleteMode::RefLogOnly,
+                            mode: RefLogMode::RefLogOnly,
                         },
                         name: head.name().into(),
                         deref: true,

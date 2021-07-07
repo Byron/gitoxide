@@ -37,12 +37,15 @@ pub enum Change {
     /// Otherwise it functions as `create-or-update`.
     Update {
         /// How to treat the reference log.
-        mode: UpdateMode,
+        mode: RefLogMode,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
         previous: Option<Target>,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
+        /// If set, create a reflog even though it would otherwise not be the case as prohibited by general rules.
+        /// Note that ref-log writing might be prohibited in the entire repository which is when this flag has no effect either.
+        force_create_reflog: bool,
     },
     /// Delete a reference and optionally check if `previous` is its content.
     Delete {
@@ -52,7 +55,7 @@ pub enum Change {
         /// If a previous ref existed, this value will be filled in automatically and can be accessed if the transaction was committed successfully.
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
-        mode: DeleteMode,
+        mode: RefLogMode,
     },
 }
 
@@ -70,36 +73,16 @@ pub struct RefEdit {
 
 /// The way to deal with the Reflog in deletions.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum DeleteMode {
+pub enum RefLogMode {
     /// Delete the reference and the log
     RefAndRefLog,
     /// Delete only the reflog
     RefLogOnly,
 }
 
-/// The way to deal with the Reflog in a particular edit
-///
-/// If the `create_unconditionally` field is set, create a reflog even if it otherwise wouldn't be created,
-/// as is the case for tags.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum UpdateMode {
-    /// As symbolic references only ever see this when you want to detach them, we won't try to dereference them
-    /// in this case and apply the change to it directly.
-    RefAndRefLog {
-        /// If set, update the reflog even if it otherwise wouldn't.
-        create_unconditionally: bool,
-    },
-    /// Only update the reflog but require this to be a symbolic ref so the actual update can be performed on the
-    /// referent.
-    RefLogOnly {
-        /// If set, update the reflog even if it otherwise wouldn't.
-        create_unconditionally: bool,
-    },
-}
-
 mod ext {
     use crate::{
-        transaction::{Change, DeleteMode, RefEdit, Target, UpdateMode},
+        transaction::{Change, RefEdit, RefLogMode, Target},
         RefStore,
     };
     use bstr::BString;
@@ -162,12 +145,14 @@ mod ext {
                                             deref: true,
                                         },
                                     ));
-                                    *mode = match *mode {
-                                        DeleteMode::RefLogOnly => DeleteMode::RefLogOnly,
-                                        DeleteMode::RefAndRefLog => DeleteMode::RefLogOnly,
-                                    }
+                                    *mode = RefLogMode::RefLogOnly;
                                 }
-                                Change::Update { mode, previous, new } => {
+                                Change::Update {
+                                    mode,
+                                    previous,
+                                    new,
+                                    force_create_reflog,
+                                } => {
                                     new_edits.push(make_entry(
                                         eid,
                                         RefEdit {
@@ -175,19 +160,13 @@ mod ext {
                                                 previous: previous.clone(),
                                                 new: new.clone(),
                                                 mode: *mode,
+                                                force_create_reflog: *force_create_reflog,
                                             },
                                             name: referent,
                                             deref: true,
                                         },
                                     ));
-                                    *mode = match *mode {
-                                        UpdateMode::RefLogOnly { create_unconditionally } => {
-                                            UpdateMode::RefLogOnly { create_unconditionally }
-                                        }
-                                        UpdateMode::RefAndRefLog { create_unconditionally } => {
-                                            UpdateMode::RefLogOnly { create_unconditionally }
-                                        }
-                                    }
+                                    *mode = RefLogMode::RefLogOnly;
                                 }
                             };
                             edit.deref = false;
