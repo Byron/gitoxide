@@ -21,4 +21,4 @@ signal-hook = { version = "0.3.9", default-features = false }
 signal-hook-registry = "1.4.0"
 tempfile = "3.2.0"
 [target.'cfg(not(windows))'.dependencies]
-libc = { version = "0.2.97", default-features = false }
+libc = { version = "0.2.98", default-features = false }
