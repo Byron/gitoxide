@@ -60,12 +60,44 @@ impl file::Store {
     }
 }
 
+///
+pub mod create_or_update {
+    use crate::{store::file, transaction::LogChange};
+    use git_hash::{oid, ObjectId};
+
+    impl file::Store {
+        pub(crate) fn create_or_append_reflog(
+            &self,
+            _lock: &git_lock::Marker,
+            _previous_oid: Option<ObjectId>,
+            _new: &oid,
+            _log: &LogChange,
+        ) -> Result<(), Error> {
+            todo!("implement creation or appending to a ref log")
+        }
+    }
+
+    mod error {
+        use quick_error::quick_error;
+
+        quick_error! {
+            /// The error returned when creating or appending to a reflog
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            pub enum Error {
+                TBD
+            }
+        }
+    }
+    pub use error::Error;
+}
+
 mod error {
     use quick_error::quick_error;
     use std::io;
 
     quick_error! {
-        /// The error returned by [file::Store::reflog_iter()].
+        /// The error returned by [crate::file::Store::reflog_iter()].
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {

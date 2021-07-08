@@ -59,6 +59,17 @@ pub enum Create {
     },
 }
 
+impl Create {
+    pub(crate) fn previous_oid(&self) -> Option<ObjectId> {
+        match self {
+            Create::OrUpdate {
+                previous: Some(Target::Peeled(oid)),
+            } => Some(*oid),
+            Create::Only | Create::OrUpdate { .. } => None,
+        }
+    }
+}
+
 /// A description of an edit to perform.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Change {
@@ -264,3 +275,4 @@ mod ext {
 }
 use bstr::BString;
 pub use ext::RefEditsExt;
+use git_hash::ObjectId;

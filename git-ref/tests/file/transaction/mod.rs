@@ -13,8 +13,8 @@ mod prepare_and_commit {
     mod update {
         #[test]
         #[ignore]
-        fn write_head_and_reference_transparently() {
-            todo!("writing a head being a symbolic ref writes through to the referent in an extra refedit")
+        fn write_head_via_reference_transparently() {
+            todo!("writing a ref which happens to be (special case) referred to by HEAD alters HEADs reflog, too.")
         }
     }
 

@@ -256,13 +256,17 @@ impl<'a> Transaction<'a> {
                     assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
                     match &change.update.change {
                         // reflog first, then reference
-                        Change::Update { log: _, new, mode: _ } => {
+                        Change::Update { log, new, mode } => {
                             let lock = change.lock.take().expect("each ref is locked");
                             match new {
-                                Target::Symbolic(_) => {} // look up the leaf/peel id to know what the old oid was
-                                Target::Peeled(_oid) => {
-                                    // self.store.create_or_append_reflog(&lock, change.)
-                                    todo!("commit other reflog write cases")
+                                Target::Symbolic(_) => {} // no reflog for symref changes
+                                Target::Peeled(oid) => {
+                                    self.store.create_or_append_reflog(
+                                        &lock,
+                                        mode.previous_oid().or(change.leaf_referent_previous_oid),
+                                        oid,
+                                        log,
+                                    )?;
                                 }
                             }
                             lock.commit()?
@@ -383,6 +387,11 @@ mod error {
             }
             DeleteReflog{ full_name: BString, err: std::io::Error } {
                 display("The reflog of reference '{}' could not be deleted", full_name)
+                source(err)
+            }
+            CreateOrUpdateRefLog(err: file::reflog::create_or_update::Error) {
+                display("The reflog could not be created or updated")
+                from()
                 source(err)
             }
             ReferenceDecode(err: file::reference::decode::Error) {
