@@ -119,13 +119,9 @@ impl<'a> Transaction<'a> {
 
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
-                    (Create::Only, None) => {}
-                    (Create::Only, Some(existing)) => {
-                        if existing.target() != new.borrow() {
-                            todo!("fail as we won't create the ref and it doesn't match our expected state")
-                        }
+                    (Create::Only, Some(existing)) if existing.target() != new.borrow() => {
+                        todo!("fail as we won't create the ref and it doesn't match our expected state")
                     }
-                    (Create::OrUpdate { previous: None }, None | Some(_)) => {} // we don't care
                     (
                         Create::OrUpdate {
                             previous: Some(previous),
@@ -144,6 +140,7 @@ impl<'a> Transaction<'a> {
                     ) => {
                         todo!("ref was supposed to have a given value or exist, but it did not")
                     }
+                    (Create::Only | Create::OrUpdate { previous: None }, None | Some(_)) => {}
                 }
 
                 *previous = match existing_ref {
