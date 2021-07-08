@@ -6,12 +6,22 @@ use crate::{
 use bstr::BString;
 use std::io::Write;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum Index {
     Parent(usize),
     Child(usize),
 }
 
+impl Index {
+    fn parent_index(&self) -> usize {
+        match self {
+            Index::Parent(idx) => *idx,
+            Index::Child(_) => unreachable!("caller made sure this can't happen"),
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Edit {
     update: RefEdit,
     lock: Option<git_lock::Marker>,
@@ -46,15 +56,28 @@ pub struct Transaction<'a> {
 }
 
 impl<'a> Transaction<'a> {
+    /// Find referents with parent links (from the back) as these have been pushed there during splitting. Then lookup its parent links
+    /// and point them to the children instead. This allows reflogs to be written so that the old oid is the peeled one, instead of
+    /// the actual reference value of the symbolic ref.
+    ///
+    /// This means later we can traverse down the chain for this lookup, but we can't traverse upwards anymore for instance to display
+    /// the original name instead of the name of the split referents names. This is intentional as it seems confusing to report the 'wrong'
+    /// ref name on error. Maybe that's something to change once its clear how these error messages should look like.
     fn invert_parent_links(changes: &mut Vec<Edit>) {
-        let mut leaf = changes.last().map(|c| (c.index, changes.len() - 1));
-        while let Some((link_index, child_array_index)) = leaf.take() {
-            match link_index {
-                Some(Index::Child(_)) => {
-                    unreachable!("leafs reachable through multiple paths/symbolic refs are considered duplicates and we skip them here")
-                }
-                Some(Index::Parent(parent_idx)) => {
-                    let mut next_child_index = child_array_index;
+        if changes.is_empty() {
+            return;
+        }
+        let mut leaf_cursor_index = changes.len();
+        loop {
+            let leaf = changes[..leaf_cursor_index]
+                .iter()
+                .enumerate()
+                .rfind(|(_cidx, c)| matches!(c.index, Some(Index::Parent(_))))
+                .map(|(cidx, c)| (c.index.expect("an index").parent_index(), cidx));
+            match leaf {
+                Some((parent_idx, child_index)) => {
+                    leaf_cursor_index = child_index;
+                    let mut next_child_index = child_index;
                     let mut parent_idx_cursor = Some(parent_idx);
                     while let Some((pidx, parent)) = parent_idx_cursor.take().map(|idx| (idx, &mut changes[idx])) {
                         match parent.index {
@@ -68,14 +91,10 @@ impl<'a> Transaction<'a> {
                         }
                     }
                 }
-                None => {}
+                None => break,
             }
-            leaf = changes[..child_array_index]
-                .iter()
-                .enumerate()
-                .rfind(|(_cidx, c)| matches!(c.index, Some(Index::Parent(_))))
-                .map(|(cidx, c)| (c.index, cidx));
         }
+        dbg!(changes);
     }
 
     fn lock_ref_and_apply_change(
