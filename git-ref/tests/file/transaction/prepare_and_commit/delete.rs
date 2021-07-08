@@ -15,7 +15,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: None,
-                    mode: RefLog::AndReference,
+                    log: RefLog::AndReference,
                 },
                 name: "DOES_NOT_EXIST".try_into()?,
                 deref: false,
@@ -35,7 +35,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::must_exist()),
-                    mode: RefLog::AndReference,
+                    log: RefLog::AndReference,
                 },
                 name: "DOES_NOT_EXIST".try_into()?,
                 deref: false,
@@ -65,7 +65,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::must_exist()),
-                    mode: RefLog::AndReference,
+                    log: RefLog::AndReference,
                 },
                 name: head.name().into(),
                 deref: false,
@@ -79,7 +79,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         vec![RefEdit {
             change: Change::Delete {
                 previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                mode: RefLog::AndReference,
+                log: RefLog::AndReference,
             },
             name: head.name().into(),
             deref: false
@@ -106,7 +106,7 @@ fn delete_ref_with_incorrect_previous_value_fails() {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::Symbolic("refs/heads/main".try_into().unwrap())),
-                    mode: RefLog::Only,
+                    log: RefLog::Only,
                 },
                 name: head.name().into(),
                 deref: true,
@@ -135,7 +135,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                    mode: RefLog::Only,
+                    log: RefLog::Only,
                 },
                 name: head.name().into(),
                 deref: false,
@@ -168,7 +168,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::must_exist()),
-                    mode: RefLog::Only,
+                    log: RefLog::Only,
                 },
                 name: head.name().into(),
                 deref: true,
@@ -202,7 +202,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::must_exist()),
-                    mode: RefLog::AndReference,
+                    log: RefLog::AndReference,
                 },
                 name: "HEAD".try_into().unwrap(),
                 deref: true,
@@ -229,7 +229,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
             Some(RefEdit {
                 change: Change::Delete {
                     previous: None,
-                    mode: RefLog::AndReference,
+                    log: RefLog::AndReference,
                 },
                 name: "HEAD".try_into()?,
                 deref: true,
@@ -244,7 +244,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
         vec![RefEdit {
             change: Change::Delete {
                 previous: None,
-                mode: RefLog::AndReference,
+                log: RefLog::AndReference,
             },
             name: "HEAD".try_into()?,
             deref: false,
@@ -264,7 +264,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
                 Some(RefEdit {
                     change: Change::Delete {
                         previous: None,
-                        mode: RefLog::Only,
+                        log: RefLog::Only,
                     },
                     name: "HEAD".try_into()?,
                     deref: false,

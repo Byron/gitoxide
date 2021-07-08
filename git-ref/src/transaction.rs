@@ -41,6 +41,24 @@ pub struct LogChange {
     pub message: BString,
 }
 
+/// A way to determine if a value should be created or created or updated. In the latter case the previous
+/// value can be specified to indicate to what extend the previous value matters.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum Create {
+    /// Create a ref only. This fails if the ref exists and does not match the desired new value.
+    Only,
+    /// Create or update the reference with the `previous` value being controlling how to deal with existing ref values.
+    ///
+    OrUpdate {
+        /// Interpret…
+        /// * `None` so that existing values do not matter at all. This is the mode that always creates or updates a reference to the
+        ///   desired new value.
+        /// * `Some(Target::Peeled(ObjectId::null_sha1())` so that the reference is required to exist even though its value doesn't matter.
+        /// * `Some(value)` so that the reference is required to exist and have the given `value`.
+        previous: Option<Target>,
+    },
+}
+
 /// A description of an edit to perform.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Change {
@@ -50,23 +68,10 @@ pub enum Change {
     Update {
         /// The desired change to the reference log.
         log: LogChange,
-        /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
-        /// updating it. It will also be filled in automatically for use in the reflog, if applicable, based on the stored value.
-        /// For symbolic refs, this will be the value of the symbolic ref, i.e. the name of the referent.
-        /// // TODO: How to clean that up?
-        ///
-        /// * If `None` and and there is **an existing value**, it must match the `new` value.
-        /// * If `None` and there is **no existing value**, that's ok as well.
-        ///
-        /// * If `Some(Target::Peeled(ObjectId::null_sha1()))` and there is **an existing value**, that's ok.
-        /// * If `Some(Target::Peeled(ObjectId::null_sha1()))` and there **no existing value**, that's not OK as the the is expected to exist.
-        ///
-        /// * If `Some(AnythingElse)` and there is **an existing value**, that's ok only if the value matches the given one.
-        /// * If `Some(AnythingElse)` and there is **no existing value**, the value is assumed to not exist.
-        ///
-        /// If a previous ref existed already, this value will be filled in automatically and can
-        /// be accessed if the transaction was committed successfully.
-        previous: Option<Target>,
+        /// The create mode.
+        /// If a ref was existing previously it will be updated to reflect the previous value for bookkeeping purposes
+        /// and for use in the reflog.
+        mode: Create,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
     },
@@ -80,20 +85,20 @@ pub enum Change {
         /// if the transaction was committed successfully.
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
-        mode: RefLog,
+        log: RefLog,
     },
 }
 
 impl Change {
     /// Return references to values that are in common between all variants.
-    pub fn previous_and_mode(&self) -> (Option<crate::Target<'_>>, RefLog) {
+    pub fn previous_value(&self) -> Option<crate::Target<'_>> {
         match self {
+            Change::Update { mode: Create::Only, .. } => None,
             Change::Update {
-                log: LogChange { mode, .. },
-                previous,
+                mode: Create::OrUpdate { previous },
                 ..
             }
-            | Change::Delete { mode, previous, .. } => (previous.as_ref().map(|t| t.borrow()), *mode),
+            | Change::Delete { previous, .. } => previous.as_ref().map(|t| t.borrow()),
         }
     }
 }
@@ -198,19 +203,23 @@ mod ext {
                         new_edits.push(make_entry(
                             eid,
                             match &mut edit.change {
-                                Change::Delete { previous, mode } => {
+                                Change::Delete { previous, log: mode } => {
                                     let current_mode = *mode;
                                     *mode = RefLog::Only;
                                     RefEdit {
                                         change: Change::Delete {
                                             previous: previous.clone(),
-                                            mode: current_mode,
+                                            log: current_mode,
                                         },
                                         name: referent,
                                         deref: true,
                                     }
                                 }
-                                Change::Update { log, previous, new } => {
+                                Change::Update {
+                                    log,
+                                    mode: previous,
+                                    new,
+                                } => {
                                     let current = std::mem::replace(
                                         log,
                                         LogChange {
@@ -221,7 +230,7 @@ mod ext {
                                     );
                                     RefEdit {
                                         change: Change::Update {
-                                            previous: previous.clone(),
+                                            mode: previous.clone(),
                                             new: new.clone(),
                                             log: current,
                                         },

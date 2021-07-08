@@ -46,7 +46,7 @@ mod transaction {
             RefEdit {
                 change: Change::Delete {
                     previous: None,
-                    mode: RefLog::AndReference,
+                    log: RefLog::AndReference,
                 },
                 name: name.try_into().expect("valid name"),
                 deref: false,
@@ -61,7 +61,7 @@ mod transaction {
                 RefEdit {
                     change: Change::Delete {
                         previous: None,
-                        mode: RefLog::AndReference,
+                        log: RefLog::AndReference,
                     },
                     name: "HEAD".try_into()?,
                     deref: true,
@@ -69,7 +69,7 @@ mod transaction {
                 RefEdit {
                     change: Change::Delete {
                         previous: None,
-                        mode: RefLog::AndReference,
+                        log: RefLog::AndReference,
                     },
                     name: "refs/heads/main".try_into()?,
                     deref: false,
@@ -108,7 +108,7 @@ mod transaction {
         mod splitting {
             use crate::transaction::refedit_ext::MockStore;
             use git_hash::ObjectId;
-            use git_ref::transaction::LogChange;
+            use git_ref::transaction::{Create, LogChange};
             use git_ref::{
                 mutable::Target,
                 transaction::{Change, RefEdit, RefEditsExt, RefLog},
@@ -135,7 +135,7 @@ mod transaction {
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: RefLog::AndReference,
+                            log: RefLog::AndReference,
                         },
                         name: "SYMBOLIC_PROBABLY_BUT_DEREF_IS_FALSE_SO_IGNORED".try_into()?,
                         deref: false,
@@ -143,7 +143,7 @@ mod transaction {
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: RefLog::AndReference,
+                            log: RefLog::AndReference,
                         },
                         name: "refs/heads/anything-but-not-symbolic".try_into()?,
                         deref: true,
@@ -151,7 +151,7 @@ mod transaction {
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: RefLog::AndReference,
+                            log: RefLog::AndReference,
                         },
                         name: "refs/heads/does-not-exist-and-deref-is-ignored".try_into()?,
                         deref: true,
@@ -202,14 +202,14 @@ mod transaction {
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: RefLog::AndReference,
+                            log: RefLog::AndReference,
                         },
                         name: "refs/heads/delete-symbolic-1".try_into()?,
                         deref: true,
                     },
                     RefEdit {
                         change: Change::Update {
-                            previous: None,
+                            mode: Create::Only,
                             log: LogChange {
                                 mode: RefLog::AndReference,
                                 force_create_reflog: true,
@@ -274,14 +274,14 @@ mod transaction {
                     RefEdit {
                         change: Change::Delete {
                             previous: None,
-                            mode: RefLog::AndReference,
+                            log: RefLog::AndReference,
                         },
                         name: "refs/heads/delete-symbolic-1".try_into()?,
                         deref: true,
                     },
                     RefEdit {
                         change: Change::Update {
-                            previous: None,
+                            mode: Create::Only,
                             log: log.clone(),
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
@@ -307,14 +307,14 @@ mod transaction {
                         RefEdit {
                             change: Change::Delete {
                                 previous: None,
-                                mode: RefLog::Only,
+                                log: RefLog::Only,
                             },
                             name: "refs/heads/delete-symbolic-1".try_into()?,
                             deref: false,
                         },
                         RefEdit {
                             change: Change::Update {
-                                previous: None,
+                                mode: Create::Only,
                                 log: log_only.clone(),
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
@@ -324,14 +324,14 @@ mod transaction {
                         RefEdit {
                             change: Change::Delete {
                                 previous: None,
-                                mode: RefLog::Only,
+                                log: RefLog::Only,
                             },
                             name: "refs/heads/delete-symbolic-2".try_into()?,
                             deref: false,
                         },
                         RefEdit {
                             change: Change::Update {
-                                previous: None,
+                                mode: Create::Only,
                                 log: log_only.clone(),
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },
@@ -341,14 +341,14 @@ mod transaction {
                         RefEdit {
                             change: Change::Delete {
                                 previous: None,
-                                mode: RefLog::AndReference,
+                                log: RefLog::AndReference,
                             },
                             name: "refs/heads/delete-symbolic-3".try_into()?,
                             deref: false,
                         },
                         RefEdit {
                             change: Change::Update {
-                                previous: None,
+                                mode: Create::Only,
                                 log: log.clone(),
                                 new: Target::Peeled(ObjectId::null_sha1()),
                             },

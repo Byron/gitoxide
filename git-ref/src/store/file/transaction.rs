@@ -1,7 +1,7 @@
 use crate::{
     mutable::Target,
     store::file,
-    transaction::{Change, RefEdit, RefEditsExt, RefLog},
+    transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
 };
 use bstr::BString;
 use std::io::Write;
@@ -104,7 +104,9 @@ impl<'a> Transaction<'a> {
 
                 lock
             }
-            Change::Update { previous, new, .. } => {
+            Change::Update {
+                mode: previous, new, ..
+            } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.ref_path(&relative_path),
                     lock_fail_mode,
@@ -115,13 +117,41 @@ impl<'a> Transaction<'a> {
                     full_name: "borrowchk wont allow change.name()".into(),
                 })?;
 
-                if let Some(_expected_target) = previous {
-                    todo!("check previous value, if object id is not null");
+                let existing_ref = existing_ref?;
+                match (&previous, &existing_ref) {
+                    (Create::Only, None) => {}
+                    (Create::Only, Some(existing)) => {
+                        if existing.target() != new.borrow() {
+                            todo!("fail as we won't create the ref and it doesn't match our expected state")
+                        }
+                    }
+                    (Create::OrUpdate { previous: None }, None | Some(_)) => {} // we don't care
+                    (
+                        Create::OrUpdate {
+                            previous: Some(previous),
+                        },
+                        Some(existing),
+                    ) => match previous {
+                        Target::Peeled(oid) if oid.is_null() => {}
+                        any_target if any_target.borrow() == existing.target() => {}
+                        _target_mismatch => todo!("abort because existing ref didn't have the correct value"),
+                    },
+                    (
+                        Create::OrUpdate {
+                            previous: Some(_previous),
+                        },
+                        None,
+                    ) => {
+                        todo!("ref was supposed to have a given value or exist, but it did not")
+                    }
                 }
 
-                if let Some(existing) = existing_ref? {
-                    *previous = Some(existing.target().into());
-                }
+                *previous = match existing_ref {
+                    None => Create::Only,
+                    Some(existing) => Create::OrUpdate {
+                        previous: Some(existing.target().into()),
+                    },
+                };
 
                 lock.with_mut(|file| match new {
                     Target::Peeled(oid) => file.write_all(oid.as_bytes()),
@@ -188,7 +218,7 @@ impl<'a> Transaction<'a> {
                     // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
                     // to help with their reflog entries
                     if let (Some(crate::Target::Peeled(oid)), Some(parent_idx)) =
-                        (change.update.change.previous_and_mode().0, change.parent_index)
+                        (change.update.change.previous_value(), change.parent_index)
                     {
                         let oid = oid.to_owned();
                         let mut parent_idx_cursor = Some(parent_idx);
@@ -229,11 +259,7 @@ impl<'a> Transaction<'a> {
                     assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
                     match &change.update.change {
                         // reflog first, then reference
-                        Change::Update {
-                            log: _,
-                            new,
-                            previous: _,
-                        } => {
+                        Change::Update { log: _, new, mode: _ } => {
                             let lock = change.lock.take().expect("each ref is locked");
                             match new {
                                 Target::Symbolic(_) => {} // look up the leaf/peel id to know what the old oid was
@@ -251,7 +277,7 @@ impl<'a> Transaction<'a> {
                 for change in self.updates.iter_mut() {
                     match &change.update.change {
                         Change::Update { .. } => {}
-                        Change::Delete { mode, .. } => {
+                        Change::Delete { log: mode, .. } => {
                             let lock = change.lock.take().expect("each ref is locked, even deletions");
                             let (rm_reflog, rm_ref) = match mode {
                                 RefLog::AndReference => (true, true),

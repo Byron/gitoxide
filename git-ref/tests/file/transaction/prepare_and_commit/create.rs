@@ -1,10 +1,9 @@
 use crate::file::transaction::prepare_and_commit::empty_store;
 use bstr::ByteSlice;
 use git_lock::acquire::Fail;
-use git_ref::transaction::LogChange;
 use git_ref::{
     mutable::Target,
-    transaction::{Change, RefEdit, RefLog},
+    transaction::{Change, Create, LogChange, RefEdit, RefLog},
 };
 use git_testtools::hex_to_id;
 use std::{convert::TryInto, path::Path};
@@ -53,7 +52,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                     change: Change::Update {
                         log: log_ignored.clone(),
                         new: new_head_value.clone(),
-                        previous: None, // TODO: check failure if it doesn't exist
+                        mode: Create::Only, // TODO: check failure if it doesn't exist
                     },
                     name: "HEAD".try_into().unwrap(),
                     deref: false,
@@ -68,7 +67,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                 change: Change::Update {
                     log: log_ignored.clone(),
                     new: new_head_value.clone(),
-                    previous: None,
+                    mode: Create::Only,
                 },
                 name: "HEAD".try_into().unwrap(),
                 deref: false,
@@ -97,9 +96,9 @@ fn symbolic_head_missing_referent_then_update_referent() {
             .transaction(
                 Some(RefEdit {
                     change: Change::Update {
-                        log: log,
+                        log,
                         new: new.clone(),
-                        previous: Some(new_head_value.clone()),
+                        mode: Create::OrUpdate { previous: None },
                     },
                     name: "HEAD".try_into().unwrap(),
                     deref: true,
@@ -116,7 +115,9 @@ fn symbolic_head_missing_referent_then_update_referent() {
                     change: Change::Update {
                         log: log_only.clone(),
                         new: new.clone(),
-                        previous: Some(new_head_value.clone()),
+                        mode: Create::OrUpdate {
+                            previous: Some(new_head_value.clone())
+                        },
                     },
                     name: "HEAD".try_into().unwrap(),
                     deref: false,
@@ -125,7 +126,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                     change: Change::Update {
                         log: log_only.clone(),
                         new: new.clone(),
-                        previous: None,
+                        mode: Create::Only,
                     },
                     name: referent.try_into().unwrap(),
                     deref: false,
