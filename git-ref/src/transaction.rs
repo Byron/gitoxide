@@ -51,7 +51,11 @@ pub enum Change {
         /// The desired change to the reference log.
         log: LogChange,
         /// The previous value of the ref, which will be used to assure the ref is still in the known `previous` state before
-        /// updating it. It will also be filled in automatically for use in the reflog, if applicable.
+        /// updating it. It will also be filled in automatically for use in the reflog, if applicable, based on the stored value.
+        /// For symbolic refs, this will be the value of the symbolic ref, i.e. the name of the referent.
+        /// // TODO: How to clean that up?
+        /// If `None` and the ref is an update, the previous value does not matter.
+        /// If `None` and the ref is a creation, a previous ref must not exist.
         previous: Option<Target>,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,

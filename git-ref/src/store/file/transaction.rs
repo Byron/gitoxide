@@ -72,7 +72,11 @@ impl<'a> Transaction<'a> {
                     store.ref_path(&relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
-                )?;
+                )
+                .map_err(|err| Error::LockAcquire {
+                    err,
+                    full_name: "borrowchk wont allow change.name()".into(),
+                })?;
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
                     (None, None | Some(_)) => {}
@@ -105,7 +109,11 @@ impl<'a> Transaction<'a> {
                     store.ref_path(&relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
-                )?;
+                )
+                .map_err(|err| Error::LockAcquire {
+                    err,
+                    full_name: "borrowchk wont allow change.name()".into(),
+                })?;
 
                 if let Some(_expected_target) = previous {
                     todo!("check previous value, if object id is not null");
@@ -154,7 +162,28 @@ impl<'a> Transaction<'a> {
 
                 for cid in 0..self.updates.len() {
                     let change = &mut self.updates[cid];
-                    Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
+                    if let Err(err) = Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change) {
+                        let err = match err {
+                            Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
+                                err,
+                                full_name: {
+                                    let mut cursor = change.parent_index;
+                                    let mut ref_name = change.name();
+                                    while let Some(parent_idx) = cursor {
+                                        let parent = &self.updates[parent_idx];
+                                        if parent.parent_index.is_none() {
+                                            ref_name = parent.name();
+                                        } else {
+                                            cursor = parent.parent_index;
+                                        }
+                                    }
+                                    ref_name
+                                },
+                            },
+                            other => other,
+                        };
+                        return Err(err);
+                    };
 
                     // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
                     // to help with their reflog entries
@@ -310,9 +339,8 @@ mod error {
                 display("Edit preprocessing failed with error: {}", err.to_string())
                 source(err)
             }
-            LockAcquire(err: git_lock::acquire::Error) {
-                display("A lock could not be obtained for a resource")
-                from()
+            LockAcquire{err: git_lock::acquire::Error, full_name: BString} {
+                display("A lock could not be obtained for reference {}", full_name)
                 source(err)
             }
             Io(err: std::io::Error) {
