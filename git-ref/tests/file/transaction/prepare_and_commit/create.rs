@@ -25,7 +25,7 @@ mod reference_with_equally_named {
 
 #[test]
 #[ignore]
-fn reference_with_old_value_must_exist_when_creating_it() {}
+fn reference_with_old_value_must_exist_when_creating_it_and_have_that_value() {}
 
 #[test]
 #[ignore]
@@ -46,12 +46,13 @@ fn symbolic_head_missing_referent_then_update_referent() {
             force_create_reflog: false,
             message: "ignored".into(),
         };
+        let new_head_value = Target::Symbolic(referent.try_into().unwrap());
         let edits = store
             .transaction(
                 Some(RefEdit {
                     change: Change::Update {
                         log: log_ignored.clone(),
-                        new: Target::Symbolic(referent.try_into().unwrap()),
+                        new: new_head_value.clone(),
                         previous: None, // TODO: check failure if it doesn't exist
                     },
                     name: "HEAD".try_into().unwrap(),
@@ -66,7 +67,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
             vec![RefEdit {
                 change: Change::Update {
                     log: log_ignored.clone(),
-                    new: Target::Symbolic(referent.try_into().unwrap()),
+                    new: new_head_value.clone(),
                     previous: None,
                 },
                 name: "HEAD".try_into().unwrap(),
@@ -98,7 +99,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                     change: Change::Update {
                         log: log,
                         new: new.clone(),
-                        previous: None,
+                        previous: Some(new_head_value.clone()),
                     },
                     name: "HEAD".try_into().unwrap(),
                     deref: true,
@@ -115,7 +116,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                     change: Change::Update {
                         log: log_only.clone(),
                         new: new.clone(),
-                        previous: None,
+                        previous: Some(new_head_value.clone()),
                     },
                     name: "HEAD".try_into().unwrap(),
                     deref: false,

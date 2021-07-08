@@ -6,28 +6,16 @@ use crate::{
 use bstr::BString;
 use std::io::Write;
 
-#[derive(Copy, Clone, Debug)]
-enum Index {
-    Parent(usize),
-    Child(usize),
-}
-
-impl Index {
-    fn parent_index(&self) -> usize {
-        match self {
-            Index::Parent(idx) => *idx,
-            Index::Child(_) => unreachable!("caller made sure this can't happen"),
-        }
-    }
-}
-
 #[derive(Debug)]
 struct Edit {
     update: RefEdit,
     lock: Option<git_lock::Marker>,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
     /// instead of the referent reference.
-    index: Option<Index>,
+    parent_index: Option<usize>,
+    /// For symbolic refs, this is the previous OID to put into the reflog instead of our own previous value. It's the
+    /// peeled value of the leaf referent.
+    leaf_referent_previous_oid: Option<ObjectId>,
 }
 
 impl Edit {
@@ -56,46 +44,6 @@ pub struct Transaction<'a> {
 }
 
 impl<'a> Transaction<'a> {
-    /// Find referents with parent links (from the back) as these have been pushed there during splitting. Then lookup its parent links
-    /// and point them to the children instead. This allows reflogs to be written so that the old oid is the peeled one, instead of
-    /// the actual reference value of the symbolic ref.
-    ///
-    /// This means later we can traverse down the chain for this lookup, but we can't traverse upwards anymore for instance to display
-    /// the original name instead of the name of the split referents names. This is intentional as it seems confusing to report the 'wrong'
-    /// ref name on error. Maybe that's something to change once its clear how these error messages should look like.
-    fn invert_parent_links(changes: &mut Vec<Edit>) {
-        if changes.is_empty() {
-            return;
-        }
-        let mut leaf_cursor_index = changes.len();
-        loop {
-            let leaf = changes[..leaf_cursor_index]
-                .iter()
-                .enumerate()
-                .rfind(|(_cidx, c)| matches!(c.index, Some(Index::Parent(_))))
-                .map(|(cidx, c)| (c.index.expect("an index").parent_index(), cidx));
-            match leaf {
-                Some((parent_idx, child_index)) => {
-                    leaf_cursor_index = child_index;
-                    let mut next_child_index = child_index;
-                    let mut parent_idx_cursor = Some(parent_idx);
-                    while let Some((pidx, parent)) = parent_idx_cursor.take().map(|idx| (idx, &mut changes[idx])) {
-                        match parent.index {
-                            Some(Index::Child(_)) => unreachable!("there is only one path to a child"),
-                            Some(Index::Parent(next_parent)) => {
-                                parent_idx_cursor = Some(next_parent);
-                            }
-                            None => {}
-                        }
-                        parent.index = Some(Index::Child(next_child_index));
-                        next_child_index = pidx;
-                    }
-                }
-                None => break,
-            }
-        }
-    }
-
     fn lock_ref_and_apply_change(
         store: &file::Store,
         lock_fail_mode: git_lock::acquire::Fail,
@@ -199,14 +147,28 @@ impl<'a> Transaction<'a> {
                     .pre_process(self.store, |idx, update| Edit {
                         update,
                         lock: None,
-                        index: Some(Index::Parent(idx)),
+                        parent_index: Some(idx),
+                        leaf_referent_previous_oid: None,
                     })
                     .map_err(Error::PreprocessingFailed)?;
 
-                for change in self.updates.iter_mut() {
+                for cid in 0..self.updates.len() {
+                    let change = &mut self.updates[cid];
                     Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
+
+                    // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
+                    // to help with their reflog entries
+                    if let (Some(crate::Target::Peeled(oid)), Some(parent_idx)) =
+                        (change.update.change.previous_and_mode().0, change.parent_index)
+                    {
+                        let oid = oid.to_owned();
+                        let mut parent_idx_cursor = Some(parent_idx);
+                        while let Some(parent) = parent_idx_cursor.take().map(|idx| &mut self.updates[idx]) {
+                            parent_idx_cursor = parent.parent_index;
+                            parent.leaf_referent_previous_oid = Some(oid);
+                        }
+                    }
                 }
-                Self::invert_parent_links(&mut self.updates);
                 self.state = State::Prepared;
                 self
             }
@@ -324,7 +286,8 @@ impl file::Store {
                 .map(|update| Edit {
                     update,
                     lock: None,
-                    index: None,
+                    parent_index: None,
+                    leaf_referent_previous_oid: None,
                 })
                 .collect(),
             state: State::Open,
@@ -380,3 +343,4 @@ mod error {
     }
 }
 pub use error::Error;
+use git_hash::ObjectId;
