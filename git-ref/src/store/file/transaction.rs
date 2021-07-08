@@ -6,13 +6,18 @@ use crate::{
 use bstr::BString;
 use std::io::Write;
 
+#[derive(Copy, Clone)]
+enum Index {
+    Parent(usize),
+    Child(usize),
+}
+
 struct Edit {
     update: RefEdit,
     lock: Option<git_lock::Marker>,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,
     /// instead of the referent reference.
-    #[allow(dead_code)]
-    parent_index: Option<usize>,
+    index: Option<Index>,
 }
 
 impl Edit {
@@ -41,6 +46,38 @@ pub struct Transaction<'a> {
 }
 
 impl<'a> Transaction<'a> {
+    fn invert_parent_links(changes: &mut Vec<Edit>) {
+        let mut leaf = changes.last().map(|c| (c.index, changes.len() - 1));
+        while let Some((link_index, child_array_index)) = leaf.take() {
+            match link_index {
+                Some(Index::Child(_)) => {
+                    unreachable!("leafs reachable through multiple paths/symbolic refs are considered duplicates and we skip them here")
+                }
+                Some(Index::Parent(parent_idx)) => {
+                    let mut next_child_index = child_array_index;
+                    let mut parent_idx_cursor = Some(parent_idx);
+                    while let Some((pidx, parent)) = parent_idx_cursor.take().map(|idx| (idx, &mut changes[idx])) {
+                        match parent.index {
+                            Some(Index::Child(_)) => unreachable!("there is only one path to a child"),
+                            Some(Index::Parent(next_parent)) => {
+                                parent.index = Some(Index::Child(next_child_index));
+                                next_child_index = pidx;
+                                parent_idx_cursor = Some(next_parent);
+                            }
+                            None => {}
+                        }
+                    }
+                }
+                None => {}
+            }
+            leaf = changes[..child_array_index]
+                .iter()
+                .enumerate()
+                .rfind(|(_cidx, c)| matches!(c.index, Some(Index::Parent(_))))
+                .map(|(cidx, c)| (c.index, cidx));
+        }
+    }
+
     fn lock_ref_and_apply_change(
         store: &file::Store,
         lock_fail_mode: git_lock::acquire::Fail,
@@ -144,13 +181,14 @@ impl<'a> Transaction<'a> {
                     .pre_process(self.store, |idx, update| Edit {
                         update,
                         lock: None,
-                        parent_index: Some(idx),
+                        index: Some(Index::Parent(idx)),
                     })
                     .map_err(Error::PreprocessingFailed)?;
 
                 for change in self.updates.iter_mut() {
                     Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change)?;
                 }
+                Self::invert_parent_links(&mut self.updates);
                 self.state = State::Prepared;
                 self
             }
@@ -246,9 +284,10 @@ impl<'a> Transaction<'a> {
 }
 
 /// The state of a [`Transaction`]
-#[allow(missing_docs)]
 pub enum State {
+    /// The transaction was just created but isn't prepared yet.
     Open,
+    /// The transaction is ready to be committed.
     Prepared,
 }
 
@@ -267,7 +306,7 @@ impl file::Store {
                 .map(|update| Edit {
                     update,
                     lock: None,
-                    parent_index: None,
+                    index: None,
                 })
                 .collect(),
             state: State::Open,
