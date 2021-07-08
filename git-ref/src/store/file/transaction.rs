@@ -90,7 +90,7 @@ impl<'a> Transaction<'a> {
                     }
                 }
 
-                // Keep the previous value for the caller only. Maybe they want to keep a log of sorts.
+                // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
                     *previous = Some(existing.target().into());
                 }
@@ -104,13 +104,12 @@ impl<'a> Transaction<'a> {
                     Some(store.base.to_owned()),
                 )?;
 
-                match previous {
-                    Some(_expected_target) => todo!("check previous value, if object id is not null"),
-                    None => {
-                        if let Some(reference) = existing_ref? {
-                            *previous = Some(reference.target().into());
-                        }
-                    }
+                if let Some(_expected_target) = previous {
+                    todo!("check previous value, if object id is not null");
+                }
+
+                if let Some(existing) = existing_ref? {
+                    *previous = Some(existing.target().into());
                 }
 
                 lock.with_mut(|file| match new {
@@ -180,23 +179,19 @@ impl<'a> Transaction<'a> {
             State::Prepared => {
                 // Perform updates first so live commits remain referenced
                 for change in self.updates.iter_mut() {
+                    assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
                     match &change.update.change {
                         // reflog first, then reference
                         Change::Update {
-                            log:
-                                LogChange {
-                                    mode,
-                                    force_create_reflog: _,
-                                    message: _,
-                                },
+                            log: _,
                             new,
                             previous: _,
                         } => {
                             let lock = change.lock.take().expect("each ref is locked");
-                            match (new, mode) {
-                                (Target::Symbolic(_), _reflog_mode) => {} // skip any log for symbolic refs
-                                (Target::Peeled(_oid), _reflog_mode) => {
-                                    // self.store.create_or_append_reflog(change.)
+                            match new {
+                                Target::Symbolic(_) => {} // look up the leaf/peel id to know what the old oid was
+                                Target::Peeled(_oid) => {
+                                    // self.store.create_or_append_reflog(&lock, change.)
                                     todo!("commit other reflog write cases")
                                 }
                             }
@@ -207,7 +202,6 @@ impl<'a> Transaction<'a> {
                 }
 
                 for change in self.updates.iter_mut() {
-                    assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
                     match &change.update.change {
                         Change::Update { .. } => {}
                         Change::Delete { mode, .. } => {
@@ -328,5 +322,4 @@ mod error {
         }
     }
 }
-use crate::transaction::LogChange;
 pub use error::Error;
