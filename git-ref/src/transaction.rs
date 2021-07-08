@@ -54,8 +54,18 @@ pub enum Change {
         /// updating it. It will also be filled in automatically for use in the reflog, if applicable, based on the stored value.
         /// For symbolic refs, this will be the value of the symbolic ref, i.e. the name of the referent.
         /// // TODO: How to clean that up?
-        /// If `None` and the ref is an update, the previous value does not matter.
-        /// If `None` and the ref is a creation, a previous ref must not exist.
+        ///
+        /// * If `None` and and there is **an existing value**, it must match the `new` value.
+        /// * If `None` and there is **no existing value**, that's ok as well.
+        ///
+        /// * If `Some(Target::Peeled(ObjectId::null_sha1()))` and there is **an existing value**, that's ok.
+        /// * If `Some(Target::Peeled(ObjectId::null_sha1()))` and there **no existing value**, that's not OK as the the is expected to exist.
+        ///
+        /// * If `Some(AnythingElse)` and there is **an existing value**, that's ok only if the value matches the given one.
+        /// * If `Some(AnythingElse)` and there is **no existing value**, the value is assumed to not exist.
+        ///
+        /// If a previous ref existed already, this value will be filled in automatically and can
+        /// be accessed if the transaction was committed successfully.
         previous: Option<Target>,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
@@ -64,8 +74,10 @@ pub enum Change {
     Delete {
         /// The previous state of the reference. If set, the reference is expected to exist and match the given value.
         /// If the value is a peeled null-id the reference is expected to exist but the value doesn't matter, neither peeled nor symbolic.
+        /// If `None`, the actual value does not matter.
         ///
-        /// If a previous ref existed, this value will be filled in automatically and can be accessed if the transaction was committed successfully.
+        /// If a previous ref existed, this value will be filled in automatically and can be accessed
+        /// if the transaction was committed successfully.
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
         mode: RefLog,
