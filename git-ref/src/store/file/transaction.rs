@@ -83,18 +83,17 @@ impl<'a> Transaction<'a> {
                         match parent.index {
                             Some(Index::Child(_)) => unreachable!("there is only one path to a child"),
                             Some(Index::Parent(next_parent)) => {
-                                parent.index = Some(Index::Child(next_child_index));
-                                next_child_index = pidx;
                                 parent_idx_cursor = Some(next_parent);
                             }
                             None => {}
                         }
+                        parent.index = Some(Index::Child(next_child_index));
+                        next_child_index = pidx;
                     }
                 }
                 None => break,
             }
         }
-        dbg!(changes);
     }
 
     fn lock_ref_and_apply_change(
