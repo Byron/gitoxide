@@ -310,20 +310,22 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
   * **loose file**
     * [x] ref validation
     * [x] find single ref by name
+    * [ ] [worktree support]
     * [ ] find refs matching pattern
     * [ ] iterate
-    * **transactions**
+    * [ ] rename or copy reference
+    * **transactions** _(create, update and delete)
       * [ ] single ref
       * [ ] multiple refs
+      * [ ] handle refs and/or their logs
       * [ ] disable transactions during [quarantine]
     * **log**
       * [x] forward iteration
       * [x] backward iteration
       * [x] serialization
-      * [ ] create
-      * [ ] delete
+      * [ ] create _(via transactions)_
+      * [x] delete _(via transactions)_
       * [ ] expire
-      * [ ] handling of all kinds of [log-paths]
     * **ref**
       * [x] peel to id
   * [ ] packed
@@ -340,7 +342,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
 [quarantine]: https://github.com/git/git/blob/master/Documentation/git-receive-pack.txt#L223:L223
-[log-paths]: https://github.com/git/git/blob/master/refs/files-backend.c#L163:L182
+[worktree support]: https://github.com/git/git/blob/master/refs/files-backend.c#L163:L182
 
 
 ### git-features
