@@ -56,7 +56,7 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
     pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
-        self.reflog_path_inner(&name.to_path()).1
+        self.reflog_path_inner(&name.to_path())
     }
 }
 
@@ -77,16 +77,21 @@ pub mod create_or_update {
             _message: &BStr,
             force_create_reflog: bool,
         ) -> Result<(), Error> {
-            let (base, log_path) = self.reflock_resource_to_log_path(lock);
+            let full_name = self.reflock_resource_full_name(lock);
             match self.write_reflog {
                 WriteReflog::Normal => {
-                    if force_create_reflog
-                        || self.should_autocreate_reflog(log_path.strip_prefix(base).expect("base to match path"))
-                    {
-                        todo!("implement creation or appending to a ref log")
-                    } else {
-                        Ok(())
-                    }
+                    let mut options = std::fs::OpenOptions::new();
+                    options.append(true).read(false);
+                    // let log_path = self.reflock_resource_to_log_path(lock);
+                    let _possibly_file: Option<std::fs::File> =
+                        if force_create_reflog || self.should_autocreate_reflog(&full_name) {
+                            // git_tempfile::create_dir::all()
+                            options.create(true);
+                            todo!("open with creation")
+                        } else {
+                            todo!("open without creation")
+                        };
+                    todo!("write actual content if file is set")
                 }
                 WriteReflog::Disable => Ok(()),
             }
@@ -99,7 +104,15 @@ pub mod create_or_update {
                 || full_name == Path::new("HEAD")
         }
 
-        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> (&Path, PathBuf) {
+        fn reflock_resource_full_name(&self, reflock: &git_lock::Marker) -> PathBuf {
+            reflock
+                .resource_path()
+                .strip_prefix(&self.base)
+                .expect("lock must be held within this store")
+                .to_owned()
+        }
+
+        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
             self.reflog_path_inner(
                 reflock
                     .resource_path()
@@ -109,8 +122,8 @@ pub mod create_or_update {
         }
 
         /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
-        pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> (&Path, PathBuf) {
-            (&self.base, self.base.join("logs").join(full_name))
+        pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
+            self.base.join("logs").join(full_name)
         }
     }
 
@@ -242,7 +255,7 @@ pub mod create_or_update {
                 // create onto existing directory
                 let full_name = "refs/heads/other";
                 let lock = reflock(&store, full_name).unwrap();
-                let reflog_path = store.reflog_path_inner(Path::new(full_name)).1;
+                let reflog_path = store.reflog_path_inner(Path::new(full_name));
                 std::fs::create_dir(&reflog_path).unwrap();
 
                 store
