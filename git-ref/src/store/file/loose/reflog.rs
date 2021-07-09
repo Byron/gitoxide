@@ -145,12 +145,12 @@ pub mod create_or_update {
 
         #[test]
         #[ignore]
-        fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists() {
+        fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append_log_lines() {
             for mode in WRITE_MODES {
                 let (_keep, store) = empty_store(*mode).unwrap();
                 let full_name = "refs/heads/main";
                 let lock = reflock(&store, full_name).unwrap();
-                let new = hex_to_id("12345678901234567890");
+                let new = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
                 let committer = Signature {
                     name: "committer".into(),
                     email: "commiter@example.com".into(),
@@ -165,51 +165,54 @@ pub mod create_or_update {
                     .unwrap();
 
                 let mut buf = Vec::new();
-                // match mode {
-                //     WriteReflog::Normal {
-                //
-                //     },
-                //     WriteReflog::Disable {
-                //
-                //     }
-                // }
-                assert_eq!(
-                    reflog_iter(&store, full_name, &mut buf).unwrap(),
-                    vec![log::mutable::Line {
-                        previous_oid: ObjectId::null_sha1(),
-                        new_oid: new,
-                        signature: committer.clone(),
-                        message: "the message".into()
-                    }]
-                );
-                let previous = hex_to_id("12345678901234567890");
-                store
-                    .reflog_create_or_append(
-                        &lock,
-                        Some(previous.clone()),
-                        &new,
-                        &committer,
-                        b"next message".as_bstr(),
-                        false,
-                    )
-                    .unwrap();
-                let lines = reflog_iter(&store, full_name, &mut buf).unwrap();
-                assert_eq!(lines.len(), 2, "now there is another line");
-                assert_eq!(
-                    lines.last().expect("non-empty"),
-                    &log::mutable::Line {
-                        previous_oid: previous,
-                        new_oid: new,
-                        signature: committer.clone(),
-                        message: "other message".into()
+                match mode {
+                    WriteReflog::Normal => {
+                        assert_eq!(
+                            reflog_iter(&store, full_name, &mut buf).unwrap(),
+                            vec![log::mutable::Line {
+                                previous_oid: ObjectId::null_sha1(),
+                                new_oid: new,
+                                signature: committer.clone(),
+                                message: "the message".into()
+                            }]
+                        );
+                        let previous = hex_to_id("0000000000000000000000111111111111111111");
+                        store
+                            .reflog_create_or_append(
+                                &lock,
+                                Some(previous.clone()),
+                                &new,
+                                &committer,
+                                b"next message".as_bstr(),
+                                false,
+                            )
+                            .unwrap();
+
+                        let lines = reflog_iter(&store, full_name, &mut buf).unwrap();
+                        assert_eq!(lines.len(), 2, "now there is another line");
+                        assert_eq!(
+                            lines.last().expect("non-empty"),
+                            &log::mutable::Line {
+                                previous_oid: previous,
+                                new_oid: new,
+                                signature: committer.clone(),
+                                message: "other message".into()
+                            }
+                        );
                     }
-                );
+                    WriteReflog::Disable => {
+                        assert!(
+                            store.reflog_iter(full_name, &mut buf).unwrap().is_none(),
+                            "there is no logs in disabled mode"
+                        );
+                    }
+                };
 
                 // create onto existing directory
                 let full_name = "refs/heads/other";
                 let lock = reflock(&store, full_name).unwrap();
                 let reflog_path = store.reflog_path_inner(Path::new(full_name));
-                std::fs::create_dir(reflog_path).unwrap();
+                std::fs::create_dir(&reflog_path).unwrap();
 
                 store
                     .reflog_create_or_append(
@@ -221,6 +224,27 @@ pub mod create_or_update {
                         false,
                     )
                     .unwrap();
+
+                match mode {
+                    WriteReflog::Normal => {
+                        assert_eq!(
+                            reflog_iter(&store, full_name, &mut buf).unwrap().len(),
+                            1,
+                            "reflog was written despite directory"
+                        );
+                        assert!(
+                            reflog_path.is_file(),
+                            "the empty directory was replaced with the reflog file"
+                        );
+                    }
+                    WriteReflog::Disable => {
+                        assert!(
+                            store.reflog_iter(full_name, &mut buf).unwrap().is_none(),
+                            "reflog still doesn't exist"
+                        );
+                        assert!(reflog_path.is_dir(), "reflog directory wasn't touched");
+                    }
+                }
             }
         }
     }
@@ -233,7 +257,7 @@ pub mod create_or_update {
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {
-                TBD
+                MessageWithNewlines
             }
         }
     }
