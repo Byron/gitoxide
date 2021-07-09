@@ -19,10 +19,11 @@ impl file::Store {
         crate::name::Error: From<E>,
     {
         let name: FullName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
-        let file = match std::fs::File::open(self.reflog_path(name)) {
+        let path = self.reflog_path(name);
+        let file = match std::fs::File::open(&path) {
             Ok(file) => file,
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err.into()),
+            Err(err) => return if path.is_dir() { Ok(None) } else { Err(err.into()) }, // TODO: a test to validate this
         };
         Ok(Some(log::iter::reverse(file, buf)?))
     }
@@ -41,13 +42,16 @@ impl file::Store {
         crate::name::Error: From<E>,
     {
         let name: FullName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
-        match std::fs::File::open(self.reflog_path(name)) {
+        let path = self.reflog_path(name);
+        match std::fs::File::open(&path) {
             Ok(mut file) => {
                 buf.clear();
-                file.read_to_end(buf)?;
+                if let Err(err) = file.read_to_end(buf) {
+                    return if path.is_dir() { Ok(None) } else { Err(err.into()) };
+                }
             }
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err.into()),
+            Err(err) => return if path.is_dir() { Ok(None) } else { Err(err.into()) },
         };
         Ok(Some(log::iter::forward(buf)))
     }
@@ -95,20 +99,31 @@ pub mod create_or_update {
                         options.create(true);
                     };
 
-                    let file_for_appending: Option<std::fs::File> = options
-                        .open(&log_path)
-                        .map(Some)
-                        .or_else(|err| {
-                            if err.kind() == std::io::ErrorKind::NotFound {
-                                Ok(None)
+                    let file_for_appending: Option<std::fs::File> = match options.open(&log_path) {
+                        Ok(f) => Some(f),
+                        Err(err) if err.kind() == std::io::ErrorKind::NotFound => None,
+                        Err(err) => {
+                            #[cfg(target_os = "windows")]
+                            let special_kind = std::io::ErrorKind::PermissionDenied;
+                            #[cfg(not(target_os = "windows"))]
+                            let special_kind = std::io::ErrorKind::Other;
+
+                            if err.kind() == special_kind {
+                                std::fs::remove_dir(&log_path)
+                                    .and_then(|_| options.open(&log_path))
+                                    .map(Some)
+                                    .map_err(|_| Error::Append {
+                                        err,
+                                        reflog_path: self.reflock_resource_to_log_path(lock),
+                                    })?
                             } else {
-                                Err(err)
+                                return Err(Error::Append {
+                                    err,
+                                    reflog_path: log_path,
+                                });
                             }
-                        })
-                        .map_err(|err| Error::Append {
-                            err,
-                            reflog_path: log_path,
-                        })?;
+                        }
+                    };
 
                     if let Some(mut file) = file_for_appending {
                         write!(
@@ -294,7 +309,7 @@ pub mod create_or_update {
                 let full_name = "refs/heads/other";
                 let lock = reflock(&store, full_name).unwrap();
                 let reflog_path = store.reflog_path_inner(Path::new(full_name));
-                std::fs::create_dir(&reflog_path).unwrap();
+                std::fs::create_dir_all(&reflog_path).unwrap();
 
                 store
                     .reflog_create_or_append(
