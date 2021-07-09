@@ -13,7 +13,8 @@ mod close {
         assert!(resource_lock.is_file());
         file.with_mut(|out| out.write_all(b"hello world"))?;
         let mark = file.close()?;
-        assert_eq!(resource_lock, mark.lock_path());
+        assert_eq!(mark.lock_path(), resource_lock);
+        assert_eq!(mark.resource_path(), resource);
         assert_eq!(mark.commit()?, resource, "returned and initial resource path match");
         assert_eq!(
             std::fs::read(resource)?,
@@ -40,7 +41,8 @@ mod acquire {
         let resource_lock = resource.with_extension("lock");
         let mut file =
             git_lock::File::acquire_to_update_resource(&resource, fail_immediately(), Some(dir.path().into()))?;
-        assert_eq!(resource_lock, file.lock_path());
+        assert_eq!(file.lock_path(), resource_lock);
+        assert_eq!(file.resource_path(), resource);
         assert!(resource_lock.is_file());
         file.with_mut(|out| out.write_all(b"hello world"))?;
         assert_eq!(file.commit()?, resource, "returned and computed resource path match");

@@ -9,6 +9,7 @@ mod acquire {
         let resource = dir.path().join("the-resource");
         let guard = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
         assert!(guard.lock_path().ends_with("the-resource.lock"));
+        assert!(guard.resource_path().ends_with("the-resource"));
         let err_str = git_lock::Marker::acquire_to_hold_resource(resource, Fail::Immediately, None)
             .expect_err("the lock is taken and there is a failure obtaining it again")
             .to_string();
