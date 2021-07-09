@@ -1,3 +1,4 @@
+use crate::file::transaction::prepare_and_commit::committer;
 use crate::file::{store_writable, transaction::prepare_and_commit::empty_store};
 use git_lock::acquire::Fail;
 use git_ref::{
@@ -22,7 +23,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
             }),
             Fail::Immediately,
         )
-        .commit()?;
+        .commit(&committer())?;
     assert_eq!(edits.len(), 1);
     Ok(())
 }
@@ -42,7 +43,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
             }),
             Fail::Immediately,
         )
-        .commit();
+        .commit(&committer());
     match res {
         Ok(_) => unreachable!("must exist, but it doesn't actually exist"),
         Err(err) => assert_eq!(
@@ -72,7 +73,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
             }),
             Fail::Immediately,
         )
-        .commit()?;
+        .commit(&committer())?;
 
     assert_eq!(
         edits,
@@ -113,7 +114,7 @@ fn delete_ref_with_incorrect_previous_value_fails() {
             }),
             Fail::Immediately,
         )
-        .commit()
+        .commit(&committer())
         .expect_err("mismatch is detected");
 
     assert_eq!(err.to_string(), "The reference 'refs/heads/main' should have content ref: refs/heads/main, actual content was 02a7a22d90d7c02fb494ed25551850b868e634f0");
@@ -142,7 +143,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
             }),
             Fail::Immediately,
         )
-        .commit()?;
+        .commit(&committer())?;
 
     assert_eq!(edits.len(), 1);
     let head = store.find_one_existing("HEAD")?;
@@ -175,7 +176,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
             }),
             Fail::Immediately,
         )
-        .commit()?;
+        .commit(&committer())?;
 
     assert_eq!(edits.len(), 2);
     let head = store.find_one_existing("HEAD")?;
@@ -209,7 +210,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {
             }),
             Fail::Immediately,
         )
-        .commit()
+        .commit(&committer())
         .expect_err("if refs must exist they must be readable too");
     assert_eq!(
         err.to_string(),
@@ -236,7 +237,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
             }),
             Fail::Immediately,
         )
-        .commit()?;
+        .commit(&committer())?;
 
     assert!(store.find_one("HEAD")?.is_none(), "the ref was deleted");
     assert_eq!(
@@ -271,7 +272,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
                 }),
                 Fail::Immediately,
             )
-            .commit()?;
+            .commit(&committer())?;
         assert_eq!(edits.len(), 1);
         assert!(!store.find_one_existing("HEAD")?.log_exists()?, "log was deleted");
     }

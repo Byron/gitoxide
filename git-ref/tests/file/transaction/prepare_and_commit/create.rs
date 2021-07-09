@@ -1,4 +1,4 @@
-use crate::file::transaction::prepare_and_commit::empty_store;
+use crate::file::transaction::prepare_and_commit::{committer, empty_store};
 use bstr::ByteSlice;
 use git_lock::acquire::Fail;
 use git_ref::{
@@ -59,7 +59,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                 }),
                 Fail::Immediately,
             )
-            .commit()
+            .commit(&committer())
             .unwrap();
         assert_eq!(
             edits,
@@ -105,7 +105,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                 }),
                 Fail::Immediately,
             )
-            .commit()
+            .commit(&committer())
             .unwrap();
 
         assert_eq!(

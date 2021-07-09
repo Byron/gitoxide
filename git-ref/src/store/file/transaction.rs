@@ -234,6 +234,7 @@ impl<'a> Transaction<'a> {
     /// Make all [prepared][Transaction::prepare()] permanent and return the performed edits which represent the current
     /// state of the affected refs in the ref store in that instant. Please note that the obtained edits may have been
     /// adjusted to contain more dependent edits or additional information.
+    /// `committer` is used in the reflog.
     ///
     /// On error the transaction may have been performed partially, depending on the nature of the error, and no attempt to roll back
     /// partial changes is made.
@@ -247,9 +248,9 @@ impl<'a> Transaction<'a> {
     ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
-    pub fn commit(mut self) -> Result<Vec<RefEdit>, Error> {
+    pub fn commit(mut self, committer: &git_actor::Signature) -> Result<Vec<RefEdit>, Error> {
         match self.state {
-            State::Open => self.prepare()?.commit(),
+            State::Open => self.prepare()?.commit(committer),
             State::Prepared => {
                 // Perform updates first so live commits remain referenced
                 for change in self.updates.iter_mut() {
@@ -258,18 +259,28 @@ impl<'a> Transaction<'a> {
                         // reflog first, then reference
                         Change::Update { log, new, mode } => {
                             let lock = change.lock.take().expect("each ref is locked");
-                            match new {
-                                Target::Symbolic(_) => {} // no reflog for symref changes
-                                Target::Peeled(oid) => {
-                                    self.store.create_or_append_reflog(
-                                        &lock,
-                                        mode.previous_oid().or(change.leaf_referent_previous_oid),
-                                        oid,
-                                        log,
-                                    )?;
+                            let (update_ref, update_reflog) = match log.mode {
+                                RefLog::Only => (false, true),
+                                RefLog::AndReference => (true, true),
+                            };
+                            if update_reflog {
+                                match new {
+                                    Target::Symbolic(_) => {} // no reflog for symref changes
+                                    Target::Peeled(oid) => {
+                                        self.store.reflog_create_or_append(
+                                            &lock,
+                                            mode.previous_oid().or(change.leaf_referent_previous_oid),
+                                            oid,
+                                            committer,
+                                            log.message.as_ref(),
+                                            log.force_create_reflog,
+                                        )?;
+                                    }
                                 }
                             }
-                            lock.commit()?;
+                            if update_ref {
+                                lock.commit()?;
+                            }
                         }
                         Change::Delete { .. } => {}
                     }

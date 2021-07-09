@@ -62,16 +62,20 @@ impl file::Store {
 
 ///
 pub mod create_or_update {
-    use crate::{store::file, transaction::LogChange};
+    use crate::store::file;
+    use bstr::BStr;
     use git_hash::{oid, ObjectId};
+    use std::path::{Path, PathBuf};
 
     impl file::Store {
-        pub(crate) fn create_or_append_reflog(
+        pub(crate) fn reflog_create_or_append(
             &self,
             _lock: &git_lock::Marker,
             _previous_oid: Option<ObjectId>,
             _new: &oid,
-            _log: &LogChange,
+            _committer: &git_actor::Signature,
+            _message: &BStr,
+            _force_create_reflog: bool,
         ) -> Result<(), Error> {
             todo!("implement creation or appending to a ref log")
         }
@@ -93,8 +97,11 @@ pub mod create_or_update {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use crate::{file::WriteReflog, FullName};
+        use crate::{file::WriteReflog, store::file::log, FullName};
+        use bstr::ByteSlice;
+        use git_actor::{Sign, Signature, Time};
         use git_lock::acquire::Fail;
+        use git_testtools::hex_to_id;
         use std::{convert::TryInto, path::Path};
         use tempfile::TempDir;
 
@@ -114,6 +121,14 @@ pub mod create_or_update {
             )
             .map_err(Into::into)
         }
+        fn reflog_iter(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Vec<log::mutable::Line>> {
+            store
+                .reflog_iter(name, buf)?
+                .expect("existing reflog")
+                .map(|l| l.map(log::mutable::Line::from))
+                .collect::<std::result::Result<Vec<_>, _>>()
+                .map_err(Into::into)
+        }
 
         const WRITE_MODES: &[WriteReflog] = &[WriteReflog::Normal, WriteReflog::Disable];
 
@@ -130,10 +145,82 @@ pub mod create_or_update {
 
         #[test]
         #[ignore]
-        fn missing_reflog_creates_it() {
+        fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists() {
             for mode in WRITE_MODES {
                 let (_keep, store) = empty_store(*mode).unwrap();
-                let lock = reflock(&store, "refs/heads/main").unwrap();
+                let full_name = "refs/heads/main";
+                let lock = reflock(&store, full_name).unwrap();
+                let new = hex_to_id("12345678901234567890");
+                let committer = Signature {
+                    name: "committer".into(),
+                    email: "commiter@example.com".into(),
+                    time: Time {
+                        time: 1234,
+                        offset: 1800,
+                        sign: Sign::Plus,
+                    },
+                };
+                store
+                    .reflog_create_or_append(&lock, None, &new, &committer, b"the message".as_bstr(), false)
+                    .unwrap();
+
+                let mut buf = Vec::new();
+                // match mode {
+                //     WriteReflog::Normal {
+                //
+                //     },
+                //     WriteReflog::Disable {
+                //
+                //     }
+                // }
+                assert_eq!(
+                    reflog_iter(&store, full_name, &mut buf).unwrap(),
+                    vec![log::mutable::Line {
+                        previous_oid: ObjectId::null_sha1(),
+                        new_oid: new,
+                        signature: committer.clone(),
+                        message: "the message".into()
+                    }]
+                );
+                let previous = hex_to_id("12345678901234567890");
+                store
+                    .reflog_create_or_append(
+                        &lock,
+                        Some(previous.clone()),
+                        &new,
+                        &committer,
+                        b"next message".as_bstr(),
+                        false,
+                    )
+                    .unwrap();
+                let lines = reflog_iter(&store, full_name, &mut buf).unwrap();
+                assert_eq!(lines.len(), 2, "now there is another line");
+                assert_eq!(
+                    lines.last().expect("non-empty"),
+                    &log::mutable::Line {
+                        previous_oid: previous,
+                        new_oid: new,
+                        signature: committer.clone(),
+                        message: "other message".into()
+                    }
+                );
+
+                // create onto existing directory
+                let full_name = "refs/heads/other";
+                let lock = reflock(&store, full_name).unwrap();
+                let reflog_path = store.reflog_path_inner(Path::new(full_name));
+                std::fs::create_dir(reflog_path).unwrap();
+
+                store
+                    .reflog_create_or_append(
+                        &lock,
+                        None,
+                        &new,
+                        &committer,
+                        b"more complicated reflog creation".as_bstr(),
+                        false,
+                    )
+                    .unwrap();
             }
         }
     }
@@ -151,7 +238,6 @@ pub mod create_or_update {
         }
     }
     pub use error::Error;
-    use std::path::{Path, PathBuf};
 }
 
 mod error {
