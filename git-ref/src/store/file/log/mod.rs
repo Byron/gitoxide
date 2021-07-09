@@ -1,5 +1,7 @@
 use bstr::BStr;
 
+pub use super::loose::reflog::{create_or_update, Error};
+
 /// A parsed ref log line.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

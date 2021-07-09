@@ -389,7 +389,7 @@ mod error {
                 display("The reflog of reference '{}' could not be deleted", full_name)
                 source(err)
             }
-            CreateOrUpdateRefLog(err: file::reflog::create_or_update::Error) {
+            CreateOrUpdateRefLog(err: file::log::create_or_update::Error) {
                 display("The reflog could not be created or updated")
                 from()
                 source(err)

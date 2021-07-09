@@ -55,7 +55,7 @@ mod traits {
 }
 
 mod loose;
-pub use loose::{find_one, reflog};
+pub use loose::find_one;
 
 ///
 pub mod reference;
