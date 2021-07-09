@@ -83,21 +83,21 @@ pub mod create_or_update {
                     let mut options = std::fs::OpenOptions::new();
                     options.append(true).read(false);
                     let log_path = self.reflock_resource_to_log_path(lock);
-                    let file_for_appending: Option<std::fs::File> =
-                        if force_create_reflog || self.should_autocreate_reflog(&full_name) {
-                            let parent_dir = log_path.parent().expect("always with parent directory");
-                            git_tempfile::create_dir::all(parent_dir, Default::default()).map_err(|err| {
-                                Error::CreateLeadingDirectories {
-                                    err,
-                                    reflog_directory: parent_dir.to_owned(),
-                                }
-                            })?;
-                            options.create(true);
-                            options.open(&log_path)
-                        } else {
-                            options.open(&log_path)
-                        }
-                        .map(|f| Some(f))
+
+                    if force_create_reflog || self.should_autocreate_reflog(&full_name) {
+                        let parent_dir = log_path.parent().expect("always with parent directory");
+                        git_tempfile::create_dir::all(parent_dir, Default::default()).map_err(|err| {
+                            Error::CreateLeadingDirectories {
+                                err,
+                                reflog_directory: parent_dir.to_owned(),
+                            }
+                        })?;
+                        options.create(true);
+                    };
+
+                    let file_for_appending: Option<std::fs::File> = options
+                        .open(&log_path)
+                        .map(Some)
                         .or_else(|err| {
                             if err.kind() == std::io::ErrorKind::NotFound {
                                 Ok(None)
@@ -109,6 +109,7 @@ pub mod create_or_update {
                             err,
                             reflog_path: log_path,
                         })?;
+
                     if let Some(mut file) = file_for_appending {
                         write!(
                             file,
