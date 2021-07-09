@@ -61,10 +61,12 @@ impl File {
         mode: Fail,
         boundary_directory: Option<PathBuf>,
     ) -> Result<File, Error> {
+        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+            git_tempfile::writable_at(p, d, c)
+        })?;
         Ok(File {
-            inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
-                git_tempfile::writable_at(p, d, c)
-            })?,
+            inner: handle,
+            lock_path,
         })
     }
 }
@@ -80,11 +82,13 @@ impl Marker {
         mode: Fail,
         boundary_directory: Option<PathBuf>,
     ) -> Result<Marker, Error> {
+        let (lock_path, handle) = lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
+            git_tempfile::mark_at(p, d, c)
+        })?;
         Ok(Marker {
             created_from_file: false,
-            inner: lock_with_mode(at_path.as_ref(), mode, boundary_directory, |p, d, c| {
-                git_tempfile::mark_at(p, d, c)
-            })?,
+            inner: handle,
+            lock_path,
         })
     }
 }
@@ -104,7 +108,7 @@ fn lock_with_mode<T>(
     mode: Fail,
     boundary_directory: Option<PathBuf>,
     try_lock: impl Fn(&Path, ContainingDirectory, AutoRemove) -> std::io::Result<T>,
-) -> Result<T, Error> {
+) -> Result<(PathBuf, T), Error> {
     use std::io::ErrorKind::*;
     let (directory, cleanup) = dir_cleanup(boundary_directory);
     let lock_path = add_lock_suffix(resource);
@@ -115,7 +119,7 @@ fn lock_with_mode<T>(
             for wait in backoff::Exponential::default_with_random().until_no_remaining(time) {
                 attempts += 1;
                 match try_lock(&lock_path, directory, cleanup.clone()) {
-                    Ok(v) => return Ok(v),
+                    Ok(v) => return Ok((lock_path, v)),
                     Err(err) if err.kind() == AlreadyExists => {
                         std::thread::sleep(wait);
                         continue;
@@ -126,6 +130,7 @@ fn lock_with_mode<T>(
             try_lock(&lock_path, directory, cleanup)
         }
     }
+    .map(|v| (lock_path, v))
     .map_err(|err| match err.kind() {
         AlreadyExists => Error::PermanentlyLocked {
             resource_path: resource.into(),

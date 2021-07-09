@@ -16,6 +16,7 @@
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
 use git_tempfile::handle::{Closed, Writable};
+use std::path::PathBuf;
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 
@@ -29,6 +30,7 @@ mod backoff;
 #[derive(Debug)]
 pub struct File {
     inner: git_tempfile::Handle<Writable>,
+    lock_path: PathBuf,
 }
 
 /// Locks a resource to allow related resources to be updated using [files][File].
@@ -40,6 +42,7 @@ pub struct File {
 pub struct Marker {
     inner: git_tempfile::Handle<Closed>,
     created_from_file: bool,
+    lock_path: PathBuf,
 }
 
 ///
