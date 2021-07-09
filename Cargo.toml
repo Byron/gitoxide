@@ -60,7 +60,7 @@ prodash-render-tui = ["prodash/render-tui"]
 prodash-render-line = ["prodash/render-line"]
 
 [dependencies]
-anyhow = "1.0.41"
+anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.9.0", path = "gitoxide-core" }
 git-features = { version = "^0.15.0", path = "git-features" }
