@@ -56,13 +56,13 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
     pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
-        self.reflog_path_inner(&name.to_path())
+        self.reflog_path_inner(&name.to_path()).1
     }
 }
 
 ///
 pub mod create_or_update {
-    use crate::store::file;
+    use crate::store::{file, file::WriteReflog};
     use bstr::BStr;
     use git_hash::{oid, ObjectId};
     use std::path::{Path, PathBuf};
@@ -70,17 +70,36 @@ pub mod create_or_update {
     impl file::Store {
         pub(crate) fn reflog_create_or_append(
             &self,
-            _lock: &git_lock::Marker,
+            lock: &git_lock::Marker,
             _previous_oid: Option<ObjectId>,
             _new: &oid,
             _committer: &git_actor::Signature,
             _message: &BStr,
-            _force_create_reflog: bool,
+            force_create_reflog: bool,
         ) -> Result<(), Error> {
-            todo!("implement creation or appending to a ref log")
+            let (base, log_path) = self.reflock_resource_to_log_path(lock);
+            match self.write_reflog {
+                WriteReflog::Normal => {
+                    if force_create_reflog
+                        || self.should_autocreate_reflog(log_path.strip_prefix(base).expect("base to match path"))
+                    {
+                        todo!("implement creation or appending to a ref log")
+                    } else {
+                        Ok(())
+                    }
+                }
+                WriteReflog::Disable => Ok(()),
+            }
         }
 
-        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
+        fn should_autocreate_reflog(&self, full_name: &Path) -> bool {
+            full_name.starts_with("refs/heads/")
+                || full_name.starts_with("refs/remotes/")
+                || full_name.starts_with("refs/notes/")
+                || full_name == Path::new("HEAD")
+        }
+
+        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> (&Path, PathBuf) {
             self.reflog_path_inner(
                 reflock
                     .resource_path()
@@ -89,8 +108,9 @@ pub mod create_or_update {
             )
         }
 
-        pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, name: &Path) -> PathBuf {
-            self.base.join("logs").join(name)
+        /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
+        pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> (&Path, PathBuf) {
+            (&self.base, self.base.join("logs").join(full_name))
         }
     }
 
@@ -140,6 +160,17 @@ pub mod create_or_update {
                     store.reflock_resource_to_log_path(&reflock(&store, name).unwrap()),
                     store.reflog_path_inner(Path::new(name))
                 );
+            }
+        }
+
+        #[test]
+        fn should_autocreate_is_unaffected_by_writemode() {
+            let (_keep, store) = empty_store(WriteReflog::Disable).unwrap();
+            for should_create_name in &["HEAD", "refs/heads/main", "refs/remotes/any", "refs/notes/any"] {
+                assert!(store.should_autocreate_reflog(Path::new(should_create_name)));
+            }
+            for should_not_create_name in &["FETCH_HEAD", "SOMETHING", "refs/special/this", "refs/tags/0.1.0"] {
+                assert!(!store.should_autocreate_reflog(Path::new(should_not_create_name)));
             }
         }
 
@@ -211,7 +242,7 @@ pub mod create_or_update {
                 // create onto existing directory
                 let full_name = "refs/heads/other";
                 let lock = reflock(&store, full_name).unwrap();
-                let reflog_path = store.reflog_path_inner(Path::new(full_name));
+                let reflog_path = store.reflog_path_inner(Path::new(full_name)).1;
                 std::fs::create_dir(&reflog_path).unwrap();
 
                 store

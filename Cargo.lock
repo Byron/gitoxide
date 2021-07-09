@@ -1081,6 +1081,7 @@ dependencies = [
  "git-actor",
  "git-hash",
  "git-lock",
+ "git-tempfile",
  "git-testtools",
  "git-validate",
  "nom",
