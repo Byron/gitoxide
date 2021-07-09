@@ -269,7 +269,7 @@ impl<'a> Transaction<'a> {
                                     )?;
                                 }
                             }
-                            lock.commit()?
+                            lock.commit()?;
                         }
                         Change::Delete { .. } => {}
                     }

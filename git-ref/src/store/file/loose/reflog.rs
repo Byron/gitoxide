@@ -56,7 +56,7 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
     pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
-        self.base.join("logs").join(name.to_path())
+        self.reflog_path_inner(&name.to_path())
     }
 }
 
@@ -75,6 +75,67 @@ pub mod create_or_update {
         ) -> Result<(), Error> {
             todo!("implement creation or appending to a ref log")
         }
+
+        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
+            self.reflog_path_inner(
+                reflock
+                    .resource_path()
+                    .strip_prefix(&self.base)
+                    .expect("lock must be held within this store"),
+            )
+        }
+
+        pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, name: &Path) -> PathBuf {
+            self.base.join("logs").join(name)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use crate::{file::WriteReflog, FullName};
+        use git_lock::acquire::Fail;
+        use std::{convert::TryInto, path::Path};
+        use tempfile::TempDir;
+
+        type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+        fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
+            let dir = TempDir::new()?;
+            let store = file::Store::at(dir.path(), writemode);
+            Ok((dir, store))
+        }
+        fn reflock(store: &file::Store, full_name: &str) -> Result<git_lock::Marker> {
+            let full_name: FullName<'_> = full_name.try_into()?;
+            git_lock::Marker::acquire_to_hold_resource(
+                store.ref_path(&full_name.to_path()),
+                Fail::Immediately,
+                Some(store.base.clone()),
+            )
+            .map_err(Into::into)
+        }
+
+        const WRITE_MODES: &[WriteReflog] = &[WriteReflog::Normal, WriteReflog::Disable];
+
+        #[test]
+        fn reflock_resource_to_log_path() {
+            let (_keep, store) = empty_store(WriteReflog::Normal).unwrap();
+            for name in &["HEAD", "refs/heads/main"] {
+                assert_eq!(
+                    store.reflock_resource_to_log_path(&reflock(&store, name).unwrap()),
+                    store.reflog_path_inner(Path::new(name))
+                );
+            }
+        }
+
+        #[test]
+        #[ignore]
+        fn missing_reflog_creates_it() {
+            for mode in WRITE_MODES {
+                let (_keep, store) = empty_store(*mode).unwrap();
+                let lock = reflock(&store, "refs/heads/main").unwrap();
+            }
+        }
     }
 
     mod error {
@@ -90,6 +151,7 @@ pub mod create_or_update {
         }
     }
     pub use error::Error;
+    use std::path::{Path, PathBuf};
 }
 
 mod error {
