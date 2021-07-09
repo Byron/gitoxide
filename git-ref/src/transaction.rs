@@ -38,6 +38,7 @@ pub struct LogChange {
     /// Note that ref-log writing might be prohibited in the entire repository which is when this flag has no effect either.
     pub force_create_reflog: bool,
     /// The message to put into the reference log. It must be a single line, hence newlines are forbidden.
+    /// The string can be empty to indicate there should be no message at all.
     pub message: BString,
 }
 

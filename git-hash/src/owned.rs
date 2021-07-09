@@ -54,6 +54,13 @@ impl ObjectId {
             ObjectId::Sha1(digest) => &digest[..] == Self::null_sha1().as_bytes(),
         }
     }
+
+    /// Returns an Digest representing a hash with whose memory is zeroed.
+    pub fn null_sha(kind: crate::Kind) -> ObjectId {
+        match kind {
+            crate::Kind::Sha1 => Self::null_sha1(),
+        }
+    }
 }
 
 /// Sha1 hash specific methods
@@ -110,6 +117,7 @@ impl ObjectId {
     }
 
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
+    /// TODO: remove this method replace its usage with `null_sha(kind)` to probably become hash independent.
     pub fn null_sha1() -> ObjectId {
         ObjectId::Sha1([0u8; 20])
     }

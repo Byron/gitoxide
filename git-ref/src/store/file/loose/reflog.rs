@@ -71,10 +71,10 @@ pub mod create_or_update {
         pub(crate) fn reflog_create_or_append(
             &self,
             lock: &git_lock::Marker,
-            _previous_oid: Option<ObjectId>,
-            _new: &oid,
-            _committer: &git_actor::Signature,
-            _message: &BStr,
+            previous_oid: Option<ObjectId>,
+            new: &oid,
+            committer: &git_actor::Signature,
+            message: &BStr,
             force_create_reflog: bool,
         ) -> Result<(), Error> {
             let full_name = self.reflock_resource_full_name(lock);
@@ -82,16 +82,54 @@ pub mod create_or_update {
                 WriteReflog::Normal => {
                     let mut options = std::fs::OpenOptions::new();
                     options.append(true).read(false);
-                    // let log_path = self.reflock_resource_to_log_path(lock);
-                    let _possibly_file: Option<std::fs::File> =
+                    let log_path = self.reflock_resource_to_log_path(lock);
+                    let file_for_appending: Option<std::fs::File> =
                         if force_create_reflog || self.should_autocreate_reflog(&full_name) {
-                            // git_tempfile::create_dir::all()
+                            let parent_dir = log_path.parent().expect("always with parent directory");
+                            git_tempfile::create_dir::all(parent_dir, Default::default()).map_err(|err| {
+                                Error::CreateLeadingDirectories {
+                                    err,
+                                    reflog_directory: parent_dir.to_owned(),
+                                }
+                            })?;
                             options.create(true);
-                            todo!("open with creation")
+                            options.open(&log_path)
                         } else {
-                            todo!("open without creation")
-                        };
-                    todo!("write actual content if file is set")
+                            options.open(&log_path)
+                        }
+                        .map(|f| Some(f))
+                        .or_else(|err| {
+                            if err.kind() == std::io::ErrorKind::NotFound {
+                                Ok(None)
+                            } else {
+                                Err(err)
+                            }
+                        })
+                        .map_err(|err| Error::Append {
+                            err,
+                            reflog_path: log_path,
+                        })?;
+                    if let Some(mut file) = file_for_appending {
+                        write!(
+                            file,
+                            "{} {} ",
+                            previous_oid.unwrap_or_else(|| ObjectId::null_sha(new.kind())),
+                            new
+                        )
+                        .and_then(|_| committer.write_to(&mut file))
+                        .and_then(|_| {
+                            if !message.is_empty() {
+                                writeln!(file, "\t{}", message)
+                            } else {
+                                writeln!(file)
+                            }
+                        })
+                        .map_err(|err| Error::Append {
+                            err,
+                            reflog_path: self.reflock_resource_to_log_path(lock),
+                        })?;
+                    }
+                    Ok(())
                 }
                 WriteReflog::Disable => Ok(()),
             }
@@ -188,7 +226,6 @@ pub mod create_or_update {
         }
 
         #[test]
-        #[ignore]
         fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append_log_lines() {
             for mode in WRITE_MODES {
                 let (_keep, store) = empty_store(*mode).unwrap();
@@ -240,7 +277,7 @@ pub mod create_or_update {
                                 previous_oid: previous,
                                 new_oid: new,
                                 signature: committer.clone(),
-                                message: "other message".into()
+                                message: "next message".into()
                             }
                         );
                     }
@@ -295,17 +332,29 @@ pub mod create_or_update {
 
     mod error {
         use quick_error::quick_error;
+        use std::path::PathBuf;
 
         quick_error! {
             /// The error returned when creating or appending to a reflog
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {
-                MessageWithNewlines
+                CreateLeadingDirectories { err: std::io::Error, reflog_directory: PathBuf } {
+                    display("Could create one or more directories in '{}' to contain reflog file", reflog_directory.display())
+                    source(err)
+                }
+                Append { err: std::io::Error, reflog_path: PathBuf } {
+                    display("Could not open reflog file at '{}' for appending", reflog_path.display())
+                    source(err)
+                }
+                MessageWithNewlines {
+                    display("tbd")
+                }
             }
         }
     }
     pub use error::Error;
+    use std::io::Write;
 }
 
 mod error {
