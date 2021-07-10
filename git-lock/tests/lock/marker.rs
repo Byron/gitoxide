@@ -46,6 +46,27 @@ mod commit {
     use git_lock::acquire::Fail;
 
     #[test]
+    fn failure_to_commit_does_return_a_registered_marker() {
+        let dir = tempfile::tempdir().unwrap();
+        let resource = dir.path().join("the-resource");
+        let file = git_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None).unwrap();
+        let mark = file.close().unwrap();
+        let resource_lock_path = mark.lock_path().to_owned();
+
+        std::fs::create_dir(&resource).unwrap();
+        let err = mark.commit().expect_err("it fails as the resource path is a directory");
+        assert!(
+            resource_lock_path.is_file(),
+            "the underlying lock wasn't consumed after all"
+        );
+        drop(err);
+        assert!(
+            !resource_lock_path.is_file(),
+            "and is linked to the err which makes the lock recoverable"
+        );
+    }
+
+    #[test]
     fn fails_for_ordinary_marker_that_was_never_writable() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let resource = dir.path().join("the-resource");

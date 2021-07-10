@@ -20,8 +20,11 @@ use std::path::PathBuf;
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 
+///
 pub mod acquire;
 mod backoff;
+///
+pub mod commit;
 
 /// Locks a resource to eventually be overwritten with the content of this file.
 ///

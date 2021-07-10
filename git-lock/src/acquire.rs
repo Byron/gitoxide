@@ -1,4 +1,3 @@
-//!
 use crate::{backoff, File, Marker, DOT_LOCK_SUFFIX};
 use git_tempfile::{AutoRemove, ContainingDirectory};
 use quick_error::quick_error;

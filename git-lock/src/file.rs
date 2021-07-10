@@ -15,17 +15,6 @@ impl File {
     pub fn with_mut<T>(&mut self, f: impl FnOnce(&mut std::fs::File) -> std::io::Result<T>) -> std::io::Result<T> {
         self.inner.with_mut(|tf| f(tf.as_file_mut())).and_then(|res| res)
     }
-    /// Commit the changes written to this lock file and overwrite the original resource atomically, returning the resource path
-    /// on success. It returns the written resource path.
-    ///
-    /// If a file is not committed, it will be deleted on drop or on signal.
-    pub fn commit(self) -> std::io::Result<PathBuf> {
-        let tf = self.inner.take().expect("tempfile is always present");
-        let resource_path = strip_lock_suffix(tf.path());
-        tf.persist(&resource_path)?;
-        Ok(resource_path)
-    }
-
     /// Close the lock file to prevent further writes and to save system resources.
     /// A call to [Marker::commit()] is allowed on the [`Marker`] to write changes back to the resource.
     pub fn close(self) -> std::io::Result<Marker> {
@@ -48,23 +37,6 @@ impl File {
 }
 
 impl Marker {
-    /// Commit the changes written to the previously open file and overwrite the original resource atomically, returning the resource path
-    /// on success. It will return the written resource path.
-    ///
-    /// This fails for markers which weren't created with [`File::close()`]
-    pub fn commit(self) -> std::io::Result<PathBuf> {
-        if !self.created_from_file {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "refusing to commit marker that was never opened",
-            ));
-        }
-        let temppath = self.inner.take().expect("tempfile is always present");
-        let resource_path = strip_lock_suffix(&temppath);
-        temppath.persist(&resource_path)?;
-        Ok(resource_path)
-    }
-
     /// Return the path at which the lock file resides
     pub fn lock_path(&self) -> &Path {
         &self.lock_path

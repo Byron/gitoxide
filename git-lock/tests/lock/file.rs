@@ -4,7 +4,7 @@ mod close {
     use std::io::Write;
 
     #[test]
-    fn acquire_close_commit_to_existing() -> crate::Result {
+    fn acquire_close_commit_to_existing_file() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let resource = dir.path().join("resource-existing.ext");
         std::fs::write(&resource, b"old state")?;
@@ -24,6 +24,11 @@ mod close {
         assert!(!resource_lock.is_file());
         Ok(())
     }
+}
+
+mod commit {
+    #[test]
+    fn failure_to_commit_does_return_a_registered_marker() {}
 }
 
 mod acquire {
