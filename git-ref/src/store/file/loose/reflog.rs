@@ -20,12 +20,12 @@ impl file::Store {
     {
         let name: FullName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
-        let file = match std::fs::File::open(&path) {
-            Ok(file) => file,
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return if path.is_dir() { Ok(None) } else { Err(err.into()) }, // TODO: a test to validate this
-        };
-        Ok(Some(log::iter::reverse(file, buf)?))
+        match std::fs::File::open(&path) {
+            Ok(file) => Ok(Some(log::iter::reverse(file, buf)?)),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(_err) if path.is_dir() => Ok(None), // TODO: a test to validate this
+            Err(err) => Err(err.into()),
+        }
     }
 
     /// Return a reflog forward iterator for the given fully qualified `name` and write its file contents into `buf`.
@@ -49,11 +49,12 @@ impl file::Store {
                 if let Err(err) = file.read_to_end(buf) {
                     return if path.is_dir() { Ok(None) } else { Err(err.into()) };
                 }
+                Ok(Some(log::iter::forward(buf)))
             }
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return if path.is_dir() { Ok(None) } else { Err(err.into()) },
-        };
-        Ok(Some(log::iter::forward(buf)))
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(_err) if path.is_dir() => Ok(None),
+            Err(err) => Err(err.into()),
+        }
     }
 }
 

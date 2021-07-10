@@ -96,15 +96,16 @@ impl file::Store {
         let ref_path = self.ref_path(&relative_path);
 
         match std::fs::File::open(&ref_path) {
-            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return if ref_path.is_dir() { Ok(None) } else { Err(err) },
             Ok(mut file) => {
                 if let Err(err) = file.read_to_end(&mut buf) {
                     return if ref_path.is_dir() { Ok(None) } else { Err(err) };
                 }
+                Ok(Some(buf))
             }
-        };
-        Ok(Some(buf))
+            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(_err) if ref_path.is_dir() => Ok(None),
+            Err(err) => Err(err),
+        }
     }
 }
 
