@@ -114,7 +114,7 @@ pub mod create_or_update {
                             let special_kind = std::io::ErrorKind::Other;
 
                             if err.kind() == special_kind {
-                                std::fs::remove_dir(&log_path)
+                                git_tempfile::remove_dir::empty_depth_first(&log_path)
                                     .and_then(|_| options.open(&log_path))
                                     .map(Some)
                                     .map_err(|_| Error::Append {

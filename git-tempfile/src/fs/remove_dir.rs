@@ -92,7 +92,6 @@ pub fn empty_depth_first(delete_dir: impl Into<PathBuf>) -> std::io::Result<()> 
         return Ok(());
     }
 
-    // TODO: VecDeque maybe?
     let mut stack = vec![delete_dir];
     let mut next_to_push = Vec::new();
     while let Some(dir_to_delete) = stack.pop() {
