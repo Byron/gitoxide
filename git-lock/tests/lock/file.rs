@@ -30,11 +30,11 @@ mod commit {
     use git_lock::acquire::Fail;
 
     #[test]
-    fn failure_to_commit_does_return_a_registered_marker() {
-        let dir = tempfile::tempdir().unwrap();
+    fn failure_to_commit_does_return_a_registered_marker() -> crate::Result {
+        let dir = tempfile::tempdir()?;
         let resource = dir.path().join("resource-existing.ext");
-        std::fs::create_dir(&resource).unwrap();
-        let mark = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None).unwrap();
+        std::fs::create_dir(&resource)?;
+        let mark = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
         let lock_path = mark.lock_path().to_owned();
         assert!(lock_path.is_file(), "the lock is placed");
 
@@ -48,14 +48,15 @@ mod commit {
             !lock_path.is_file(),
             "the lock file is still owned by the lock instance (and ideally still registered, but hard to test)"
         );
+        Ok(())
     }
 
     #[test]
-    fn failure_to_commit_does_return_a_registered_file() {
-        let dir = tempfile::tempdir().unwrap();
+    fn failure_to_commit_does_return_a_registered_file() -> crate::Result {
+        let dir = tempfile::tempdir()?;
         let resource = dir.path().join("resource-existing.ext");
-        std::fs::create_dir(&resource).unwrap();
-        let file = git_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None).unwrap();
+        std::fs::create_dir(&resource)?;
+        let file = git_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None)?;
         let lock_path = file.lock_path().to_owned();
         assert!(lock_path.is_file(), "the lock is placed");
 
@@ -63,8 +64,8 @@ mod commit {
             .commit()
             .expect_err("cannot commit onto existing directory, empty or not");
         assert!(err.instance.lock_path().is_file(), "the lock is still present");
-        std::fs::remove_dir(resource).unwrap();
-        let (resource, open_file) = err.instance.commit().unwrap();
+        std::fs::remove_dir(resource)?;
+        let (resource, open_file) = err.instance.commit()?;
         let mut open_file = open_file.expect("file to be present as no interrupt has messed with us");
 
         assert!(
@@ -73,13 +74,14 @@ mod commit {
         );
 
         use std::io::Write;
-        write!(open_file, "hello").unwrap();
+        write!(open_file, "hello")?;
         drop(open_file);
         assert_eq!(
-            std::fs::read(resource).unwrap(),
+            std::fs::read(resource)?,
             b"hello".to_vec(),
             "and committing returned a writable file handle"
         );
+        Ok(())
     }
 }
 

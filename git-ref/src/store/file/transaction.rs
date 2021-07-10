@@ -279,7 +279,9 @@ impl<'a> Transaction<'a> {
                                 }
                             }
                             if update_ref {
-                                lock.commit()?;
+                                if let Err(_err) = lock.commit() {
+                                    todo!("try deleting empty directories and retry commit")
+                                };
                             }
                         }
                         Change::Delete { .. } => {}
