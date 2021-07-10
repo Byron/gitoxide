@@ -46,6 +46,7 @@ mod commit {
     use git_lock::acquire::Fail;
 
     #[test]
+    #[ignore]
     fn failure_to_commit_does_return_a_registered_marker() {
         let dir = tempfile::tempdir().unwrap();
         let resource = dir.path().join("the-resource");

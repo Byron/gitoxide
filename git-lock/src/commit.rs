@@ -1,43 +1,47 @@
 use crate::{File, Marker};
 use std::path::PathBuf;
 
-pub mod marker {
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Persist { err: std::io::Error, marker: super::Marker } {
-                display("Failed to persist marker")
-                source(err)
-            }
-            NotCreatedFromFile {
-                display("refusing to commit marker that was never opened")
-            }
-        }
-    }
-}
+// pub mod marker {
+//     use quick_error::quick_error;
+//
+//     quick_error! {
+//         #[derive(Debug)]
+//         pub enum Error {
+//             Persist { err: std::io::Error, marker: super::Marker } {
+//                 display("Failed to persist marker")
+//                 source(err)
+//             }
+//             NotCreatedFromFile {
+//                 display("refusing to commit marker that was never opened")
+//             }
+//         }
+//     }
+// }
 
 impl Marker {
     /// Commit the changes written to the previously open file and overwrite the original file atomically, returning the resource path
     /// on success. It will return the written resource path.
     ///
     /// This fails for markers which weren't created with [`File::close()`]
-    pub fn commit(mut self) -> Result<PathBuf, marker::Error> {
+    pub fn commit(self) -> std::io::Result<PathBuf> {
         if !self.created_from_file {
-            return Err(marker::Error::NotCreatedFromFile);
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "refusing to commit marker that was never opened",
+            ));
         }
         let resource_path = self.resource_path();
         let temppath = self.inner.take().expect("tempfile is always present");
-        if let Err(err) = temppath.persist(&resource_path) {
-            self.inner = git_tempfile::Handle::<git_tempfile::handle::Closed>::from(err.path);
-            Err(marker::Error::Persist {
-                err: err.error,
-                marker: self,
-            })
-        } else {
-            Ok(resource_path)
-        }
+        temppath.persist(&resource_path)?;
+        // if let Err(err) = temppath.persist(&resource_path) {
+        //     self.inner = git_tempfile::Handle::<git_tempfile::handle::Closed>::from(err.path);
+        //     Err(marker::Error::Persist {
+        //         err: err.error,
+        //         marker: self,
+        //     })
+        // } else {
+        Ok(resource_path)
+        // }
     }
 }
 

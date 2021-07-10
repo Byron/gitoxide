@@ -28,6 +28,7 @@ mod close {
 
 mod commit {
     #[test]
+    #[ignore]
     fn failure_to_commit_does_return_a_registered_marker() {}
 }
 
