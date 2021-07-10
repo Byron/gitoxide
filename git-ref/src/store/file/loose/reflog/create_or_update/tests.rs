@@ -125,7 +125,10 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         // create onto existing directory
         let full_name = "refs/heads/other";
         let lock = reflock(&store, full_name).unwrap();
-        let reflog_path = store.reflog_path_inner(Path::new(full_name));
+        let reflog_path = store
+            .reflog_path_inner(Path::new(full_name))
+            .join("empty-a")
+            .join("empty-b");
         std::fs::create_dir_all(&reflog_path).unwrap();
 
         store
