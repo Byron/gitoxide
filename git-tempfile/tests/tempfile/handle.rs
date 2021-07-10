@@ -6,18 +6,22 @@ mod mark_path {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("a").join("b").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
-        drop(
-            git_tempfile::mark_at(
-                &target,
-                ContainingDirectory::CreateAllRaceProof(Default::default()),
-                AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
-                    boundary_directory: dir.path().into(),
-                },
-            )?
-            .take()
-            .expect("still there")
-            .persist(&new_filename)?,
-        );
+        let handle = git_tempfile::mark_at(
+            &target,
+            ContainingDirectory::CreateAllRaceProof(Default::default()),
+            AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
+                boundary_directory: dir.path().into(),
+            },
+        )?;
+
+        std::fs::create_dir(&new_filename)?;
+        let err = handle
+            .persist(&new_filename)
+            .expect_err("cannot persist onto directory");
+        let handle = err.handle;
+        std::fs::remove_dir(&new_filename)?;
+
+        drop(handle.take().expect("still there").persist(&new_filename)?);
         assert!(!target.exists(), "tempfile was renamed");
         assert!(
             new_filename.is_file(),
@@ -88,15 +92,25 @@ mod at_path {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("a").join("b").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
-        let mut file = git_tempfile::writable_at(
+        assert!(
+            !new_filename.is_file(),
+            "the filename for persistence doesn't exist yet"
+        );
+        let handle = git_tempfile::writable_at(
             &target,
             ContainingDirectory::CreateAllRaceProof(Default::default()),
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil {
                 boundary_directory: dir.path().into(),
             },
-        )?
-        .take()
-        .expect("still there");
+        )?;
+        std::fs::create_dir(&new_filename)?;
+        let err = handle
+            .persist(&new_filename)
+            .expect_err("cannot persist onto directory");
+        let handle = err.handle;
+        std::fs::remove_dir(&new_filename)?;
+
+        let mut file = handle.take().expect("still there");
         file.write_all(b"hello world")?;
         drop(file.persist(&new_filename)?);
         assert!(!target.exists(), "tempfile was renamed");

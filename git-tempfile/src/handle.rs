@@ -19,7 +19,7 @@ pub(crate) enum Mode {
 }
 
 /// Utilities
-impl<T: std::fmt::Debug> Handle<T> {
+impl Handle<()> {
     fn at_path(
         path: impl AsRef<Path>,
         directory: ContainingDirectory,
@@ -170,6 +170,88 @@ impl Handle<Writable> {
                 std::io::ErrorKind::Interrupted,
                 format!("The tempfile with id {} wasn't available anymore", self.id),
             )),
+        }
+    }
+}
+
+///
+pub mod persist {
+    use crate::{
+        handle::{expect_none, Closed, Writable},
+        Handle, REGISTER,
+    };
+    use std::path::Path;
+
+    mod error {
+        use crate::Handle;
+        use std::fmt::{self, Debug, Display};
+
+        /// The error returned by various [`persist(…)`][Handle<crate::handle::Writable>::persist()] methods
+        #[derive(Debug)]
+        pub struct Error<T: Debug> {
+            /// The io error that prevented the attempt to succeed
+            pub err: std::io::Error,
+            /// The registered handle to the tempfile which couldn't be persisted.
+            pub handle: Handle<T>,
+        }
+
+        impl<T: Debug> Display for Error<T> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                Display::fmt(&self.err, f)
+            }
+        }
+
+        impl<T: Debug> std::error::Error for Error<T> {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+                self.err.source()
+            }
+        }
+    }
+    pub use error::Error;
+
+    impl Handle<Writable> {
+        /// Persist this tempfile to replace the file at the given `path` if necessary, in a way that recovers the original instance
+        /// on error or returns the open now persisted former tempfile.
+        /// Note that it might not exist anymore if an interrupt handler managed to steal it and allowed the program to return to
+        /// its normal flow.
+        pub fn persist(self, path: impl AsRef<Path>) -> Result<Option<std::fs::File>, Error<Writable>> {
+            let res = REGISTER.remove(&self.id);
+
+            match res.and_then(|(_k, v)| v.map(|v| v.persist(path))) {
+                Some(Ok(Some(file))) => {
+                    std::mem::forget(self);
+                    Ok(Some(file))
+                }
+                None => {
+                    std::mem::forget(self);
+                    Ok(None)
+                }
+                Some(Err((err, tempfile))) => {
+                    expect_none(REGISTER.insert(self.id, Some(tempfile)));
+                    Err(Error::<Writable> { err, handle: self })
+                }
+                Some(Ok(None)) => unreachable!("no open files in an open handle"),
+            }
+        }
+    }
+
+    impl Handle<Closed> {
+        /// Persist this tempfile to replace the file at the given `path` if necessary, in a way that recovers the original instance
+        /// on error.
+        pub fn persist(self, path: impl AsRef<Path>) -> Result<(), Error<Closed>> {
+            let res = REGISTER.remove(&self.id);
+
+            match res.and_then(|(_k, v)| v.map(|v| v.persist(path))) {
+                None | Some(Ok(None)) => {
+                    std::mem::forget(self);
+                    Ok(())
+                }
+                Some(Err((err, tempfile))) => {
+                    expect_none(REGISTER.insert(self.id, Some(tempfile)));
+                    Err(Error::<Closed> { err, handle: self })
+                }
+                Some(Ok(Some(_file))) => unreachable!("no open files in a closed handle"),
+            }
         }
     }
 }

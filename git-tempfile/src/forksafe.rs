@@ -1,5 +1,6 @@
 use crate::{handle, AutoRemove};
 use std::io::Write;
+use std::path::Path;
 use tempfile::{NamedTempFile, TempPath};
 
 enum TempfileOrTemppath {
@@ -34,12 +35,6 @@ impl ForksafeTempfile {
             TempfileOrTemppath::Temppath(_) => None,
         }
     }
-    pub fn into_temppath(self) -> TempPath {
-        match self.inner {
-            TempfileOrTemppath::Tempfile(file) => file.into_temp_path(),
-            TempfileOrTemppath::Temppath(path) => path,
-        }
-    }
     pub fn close(self) -> Self {
         if let TempfileOrTemppath::Tempfile(file) = self.inner {
             ForksafeTempfile {
@@ -49,6 +44,31 @@ impl ForksafeTempfile {
             }
         } else {
             self
+        }
+    }
+    pub fn persist(mut self, path: impl AsRef<Path>) -> Result<Option<std::fs::File>, (std::io::Error, Self)> {
+        match self.inner {
+            TempfileOrTemppath::Tempfile(file) => match file.persist(path) {
+                Ok(file) => Ok(Some(file)),
+                Err(err) => Err((err.error, {
+                    self.inner = TempfileOrTemppath::Tempfile(err.file);
+                    self
+                })),
+            },
+            TempfileOrTemppath::Temppath(temppath) => match temppath.persist(path) {
+                Ok(_) => Ok(None),
+                Err(err) => Err((err.error, {
+                    self.inner = TempfileOrTemppath::Temppath(err.path);
+                    self
+                })),
+            },
+        }
+    }
+
+    pub fn into_temppath(self) -> TempPath {
+        match self.inner {
+            TempfileOrTemppath::Tempfile(file) => file.into_temp_path(),
+            TempfileOrTemppath::Temppath(path) => path,
         }
     }
     pub fn into_tempfile(self) -> Option<NamedTempFile> {
