@@ -27,9 +27,60 @@ mod close {
 }
 
 mod commit {
+    use git_lock::acquire::Fail;
+
     #[test]
-    #[ignore]
-    fn failure_to_commit_does_return_a_registered_marker() {}
+    fn failure_to_commit_does_return_a_registered_marker() {
+        let dir = tempfile::tempdir().unwrap();
+        let resource = dir.path().join("resource-existing.ext");
+        std::fs::create_dir(&resource).unwrap();
+        let mark = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None).unwrap();
+        let lock_path = mark.lock_path().to_owned();
+        assert!(lock_path.is_file(), "the lock is placed");
+
+        let err = mark
+            .commit()
+            .expect_err("cannot commit onto existing directory, empty or not");
+        assert!(err.instance.lock_path().is_file(), "the lock is still present");
+
+        drop(err);
+        assert!(
+            !lock_path.is_file(),
+            "the lock file is still owned by the lock instance (and ideally still registered, but hard to test)"
+        );
+    }
+
+    #[test]
+    fn failure_to_commit_does_return_a_registered_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let resource = dir.path().join("resource-existing.ext");
+        std::fs::create_dir(&resource).unwrap();
+        let file = git_lock::File::acquire_to_update_resource(&resource, Fail::Immediately, None).unwrap();
+        let lock_path = file.lock_path().to_owned();
+        assert!(lock_path.is_file(), "the lock is placed");
+
+        let err = file
+            .commit()
+            .expect_err("cannot commit onto existing directory, empty or not");
+        assert!(err.instance.lock_path().is_file(), "the lock is still present");
+        std::fs::remove_dir(resource).unwrap();
+        let (resource, open_file) = err.instance.commit().unwrap();
+        let mut open_file = open_file.expect("file to be present as no interrupt has messed with us");
+
+        assert!(
+            !lock_path.is_file(),
+            "the lock was moved into place, now it's the resource"
+        );
+
+        use std::io::Write;
+        write!(open_file, "hello").unwrap();
+        drop(open_file);
+        assert_eq!(
+            std::fs::read(resource).unwrap(),
+            b"hello".to_vec(),
+            "and committing returned a writable file handle"
+        );
+    }
 }
 
 mod acquire {
@@ -51,7 +102,7 @@ mod acquire {
         assert_eq!(file.resource_path(), resource);
         assert!(resource_lock.is_file());
         file.with_mut(|out| out.write_all(b"hello world"))?;
-        assert_eq!(file.commit()?, resource, "returned and computed resource path match");
+        assert_eq!(file.commit()?.0, resource, "returned and computed resource path match");
         assert_eq!(
             std::fs::read(resource)?,
             &b"hello world"[..],

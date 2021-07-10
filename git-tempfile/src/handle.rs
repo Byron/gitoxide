@@ -190,20 +190,20 @@ pub mod persist {
         #[derive(Debug)]
         pub struct Error<T: Debug> {
             /// The io error that prevented the attempt to succeed
-            pub err: std::io::Error,
+            pub error: std::io::Error,
             /// The registered handle to the tempfile which couldn't be persisted.
             pub handle: Handle<T>,
         }
 
         impl<T: Debug> Display for Error<T> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                Display::fmt(&self.err, f)
+                Display::fmt(&self.error, f)
             }
         }
 
         impl<T: Debug> std::error::Error for Error<T> {
             fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-                self.err.source()
+                self.error.source()
             }
         }
     }
@@ -228,7 +228,10 @@ pub mod persist {
                 }
                 Some(Err((err, tempfile))) => {
                     expect_none(REGISTER.insert(self.id, Some(tempfile)));
-                    Err(Error::<Writable> { err, handle: self })
+                    Err(Error::<Writable> {
+                        error: err,
+                        handle: self,
+                    })
                 }
                 Some(Ok(None)) => unreachable!("no open files in an open handle"),
             }
@@ -248,7 +251,10 @@ pub mod persist {
                 }
                 Some(Err((err, tempfile))) => {
                     expect_none(REGISTER.insert(self.id, Some(tempfile)));
-                    Err(Error::<Closed> { err, handle: self })
+                    Err(Error::<Closed> {
+                        error: err,
+                        handle: self,
+                    })
                 }
                 Some(Ok(Some(_file))) => unreachable!("no open files in a closed handle"),
             }

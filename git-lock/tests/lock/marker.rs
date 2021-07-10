@@ -46,7 +46,6 @@ mod commit {
     use git_lock::acquire::Fail;
 
     #[test]
-    #[ignore]
     fn failure_to_commit_does_return_a_registered_marker() {
         let dir = tempfile::tempdir().unwrap();
         let resource = dir.path().join("the-resource");
@@ -73,9 +72,9 @@ mod commit {
         let resource = dir.path().join("the-resource");
         let mark = git_lock::Marker::acquire_to_hold_resource(&resource, Fail::Immediately, None)?;
         let err = mark.commit().expect_err("should always fail");
-        assert_eq!(err.kind(), std::io::ErrorKind::Other);
+        assert_eq!(err.error.kind(), std::io::ErrorKind::Other);
         assert_eq!(
-            err.get_ref().expect("custom error").to_string(),
+            err.error.get_ref().expect("custom error").to_string(),
             "refusing to commit marker that was never opened"
         );
         Ok(())
