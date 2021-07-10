@@ -54,6 +54,8 @@ impl file::Store {
                 Ok(Some(log::iter::forward(buf)))
             }
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            #[cfg(target_os = "windows")]
+            Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(None),
             Err(err) => Err(err.into()),
         }
     }

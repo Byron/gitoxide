@@ -157,6 +157,10 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
                     store.reflog_iter(full_name, &mut buf).unwrap().is_none(),
                     "reflog still doesn't exist"
                 );
+                assert!(
+                    store.reflog_iter_rev(full_name, &mut buf).unwrap().is_none(),
+                    "reflog still doesn't exist"
+                );
                 assert!(reflog_path.is_dir(), "reflog directory wasn't touched");
             }
         }
