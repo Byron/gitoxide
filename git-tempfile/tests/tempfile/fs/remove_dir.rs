@@ -88,20 +88,21 @@ mod empty_depth_first {
     };
 
     #[test]
-    fn non_empty_anywhere_and_deletion_fails() {
-        let dir = tempfile::TempDir::new().unwrap();
+    fn non_empty_anywhere_and_deletion_fails() -> crate::Result {
+        let dir = tempfile::TempDir::new()?;
         let touch = |base: &Path, name: &str| create_dir_all(base).and_then(|_| std::fs::write(base.join(name), b""));
 
         let nested_parent = dir.path().join("a");
-        touch(&nested_parent, "hello.ext").unwrap();
+        touch(&nested_parent, "hello.ext")?;
 
         let tree_parent = dir.path().join("tree");
-        touch(&tree_parent.join("a").join("b"), "hello.ext").unwrap();
-        create_dir_all(tree_parent.join("one").join("two").join("empty")).unwrap();
+        touch(&tree_parent.join("a").join("b"), "hello.ext")?;
+        create_dir_all(tree_parent.join("one").join("two").join("empty"))?;
 
         for non_empty in &[nested_parent] {
             assert!(git_tempfile::remove_dir::empty_depth_first(non_empty).is_err());
         }
+        Ok(())
     }
 
     #[test]

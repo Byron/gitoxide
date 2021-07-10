@@ -1,6 +1,8 @@
 //!
 use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
 
+/// Remove all tempfiles still registered on our global registry.
+///
 /// # Safety
 /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
 /// We are usign lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.

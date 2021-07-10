@@ -55,7 +55,7 @@ mod at_path {
     use git_tempfile::{AutoRemove, ContainingDirectory};
 
     #[test]
-    fn save_filehandles_by_converting_files_to_markers_and_persist_them() -> crate::Result {
+    fn reduce_resource_usage_by_converting_files_to_markers_and_persist_them() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("a").join("file.tmp");
         let new_filename = target.parent().unwrap().join("file.ext");
