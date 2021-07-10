@@ -20,10 +20,12 @@ impl file::Store {
     {
         let name: FullName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
+        if path.is_dir() {
+            return Ok(None);
+        }
         match std::fs::File::open(&path) {
             Ok(file) => Ok(Some(log::iter::reverse(file, buf)?)),
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(_err) if path.is_dir() => Ok(None), // TODO: a test to validate this
             Err(err) => Err(err.into()),
         }
     }
@@ -52,7 +54,6 @@ impl file::Store {
                 Ok(Some(log::iter::forward(buf)))
             }
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(_err) if path.is_dir() => Ok(None),
             Err(err) => Err(err.into()),
         }
     }

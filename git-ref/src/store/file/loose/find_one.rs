@@ -103,7 +103,6 @@ impl file::Store {
                 Ok(Some(buf))
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
-            Err(_err) if ref_path.is_dir() => Ok(None),
             Err(err) => Err(err),
         }
     }

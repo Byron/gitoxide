@@ -9,13 +9,15 @@ mod iter_and_iter_rev {
     use crate::file::store::reflog::store;
 
     #[test]
-    fn non_existing_returns_none() -> crate::Result {
+    fn non_existing_and_directory_returns_none() -> crate::Result {
         let store = store()?;
         let mut buf = Vec::new();
-        assert!(
-            matches!(store.reflog_iter("FAILURE", &mut buf), Ok(None)),
-            "this one does not exist"
-        );
+        for name in &["FAILURE_NONEXISTING", "refs/heads"] {
+            assert!(
+                matches!(store.reflog_iter(*name, &mut buf), Ok(None)),
+                "this one does not exist"
+            );
+        }
         Ok(())
     }
 
@@ -37,13 +39,15 @@ mod iter_rev {
     use crate::file::store::reflog::store;
 
     #[test]
-    fn non_existing_returns_none() -> crate::Result {
+    fn non_existing_and_directory_returns_none() -> crate::Result {
         let store = store()?;
         let mut buf = [0u8; 256];
-        assert!(
-            matches!(store.reflog_iter_rev("FAILURE", &mut buf), Ok(None)),
-            "this one does not exist"
-        );
+        for name in &["FAILURE_NONEXISTING", "refs/heads"] {
+            assert!(
+                matches!(store.reflog_iter_rev(*name, &mut buf), Ok(None)),
+                "this one does not exist"
+            );
+        }
         Ok(())
     }
 
