@@ -7,7 +7,7 @@ mod error {
         fmt::{Debug, Display},
     };
 
-    /// The error returned by various [`persist(…)`][Handle<crate::handle::Writable>::persist()] methods
+    /// The error returned by various [`commit(…)`][super::Marker::commit()] methods
     #[derive(Debug)]
     pub struct Error<T: Debug> {
         /// The io error that prevented the attempt to succeed
