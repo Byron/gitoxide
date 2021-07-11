@@ -80,8 +80,44 @@ fn reference_with_old_value_must_exist_when_creating_it_and_have_that_value() {}
 fn reference_without_old_value_must_not_exist_already_when_creating_it() {}
 
 #[test]
-#[ignore]
-fn cancellation_after_preparation_leaves_no_change() {}
+fn cancellation_after_preparation_leaves_no_change() {
+    let (dir, store) = empty_store().unwrap();
+
+    let tx = store.transaction(
+        Some(RefEdit {
+            change: Change::Update {
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: false,
+                    message: Default::default(),
+                },
+                new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
+                mode: Create::Only,
+            },
+            name: "HEAD".try_into().unwrap(),
+            deref: false,
+        }),
+        Fail::Immediately,
+    );
+
+    assert_eq!(
+        std::fs::read_dir(dir.path()).unwrap().count(),
+        0,
+        "nothing happens before preparation"
+    );
+
+    let tx = tx.prepare().unwrap();
+
+    assert_eq!(
+        std::fs::read_dir(dir.path()).unwrap().count(),
+        1,
+        "the lock file was created"
+    );
+
+    drop(tx);
+
+    assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 0, "everything vanished");
+}
 
 #[test]
 fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
