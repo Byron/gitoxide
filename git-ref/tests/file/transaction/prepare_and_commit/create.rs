@@ -23,13 +23,13 @@ mod reference_with_equally_named {
     use std::convert::TryInto;
 
     #[test]
-    fn empty_or_non_empty_directory_already_in_place() {
+    fn empty_or_non_empty_directory_already_in_place() -> crate::Result {
         for is_empty in &[true, false] {
-            let (dir, store) = empty_store(WriteReflog::Normal).unwrap();
+            let (dir, store) = empty_store(WriteReflog::Normal)?;
             let head_dir = dir.path().join("HEAD");
-            std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty")).unwrap();
+            std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty"))?;
             if !*is_empty {
-                std::fs::write(head_dir.join("file.ext"), "".as_bytes()).unwrap();
+                std::fs::write(head_dir.join("file.ext"), "".as_bytes())?;
             }
 
             let edits = store
@@ -44,16 +44,16 @@ mod reference_with_equally_named {
                             mode: Create::Only,
                             new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
                         },
-                        name: "HEAD".try_into().unwrap(),
+                        name: "HEAD".try_into()?,
                         deref: false,
                     }),
                     Fail::Immediately,
                 )
                 .commit(&committer());
             if *is_empty {
-                let edits = edits.unwrap();
+                let edits = edits?;
                 assert!(
-                    store.find_one(edits[0].name.to_partial()).unwrap().is_some(),
+                    store.find_one(edits[0].name.to_partial())?.is_some(),
                     "HEAD was created despite a directory being in the way"
                 );
             } else {
@@ -68,6 +68,7 @@ mod reference_with_equally_named {
                 };
             }
         }
+        Ok(())
     }
 }
 
