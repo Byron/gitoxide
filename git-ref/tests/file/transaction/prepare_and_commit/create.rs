@@ -14,6 +14,7 @@ use std::{convert::TryInto, path::Path};
 mod reference_with_equally_named {
     use crate::file::transaction::prepare_and_commit::{committer, empty_store};
     use git_lock::acquire::Fail;
+    use git_ref::file::transaction;
     use git_ref::{
         file::WriteReflog,
         mutable::Target,
@@ -23,39 +24,50 @@ mod reference_with_equally_named {
 
     #[test]
     fn empty_or_non_empty_directory_already_in_place() {
-        let (dir, store) = empty_store(WriteReflog::Normal).unwrap();
-        let head_dir = dir.path().join("HEAD");
-        std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty")).unwrap();
+        for is_empty in &[true, false] {
+            let (dir, store) = empty_store(WriteReflog::Normal).unwrap();
+            let head_dir = dir.path().join("HEAD");
+            std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty")).unwrap();
+            if !*is_empty {
+                std::fs::write(head_dir.join("file.ext"), "".as_bytes()).unwrap();
+            }
 
-        let edits = store
-            .transaction(
-                Some(RefEdit {
-                    change: Change::Update {
-                        log: LogChange {
-                            mode: RefLog::AndReference,
-                            force_create_reflog: false,
-                            message: Default::default(),
+            let edits = store
+                .transaction(
+                    Some(RefEdit {
+                        change: Change::Update {
+                            log: LogChange {
+                                mode: RefLog::AndReference,
+                                force_create_reflog: false,
+                                message: Default::default(),
+                            },
+                            mode: Create::Only,
+                            new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
                         },
-                        mode: Create::Only,
-                        new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
-                    },
-                    name: "HEAD".try_into().unwrap(),
-                    deref: false,
-                }),
-                Fail::Immediately,
-            )
-            .commit(&committer())
-            .unwrap();
-        assert!(
-            store.find_one(edits[0].name.to_partial()).unwrap().is_some(),
-            "HEAD was created despite a directory being in the way"
-        );
-    }
-
-    #[test]
-    #[ignore]
-    fn non_empty_directory_already_in_place() {
-        todo!("lock file renaming of a.lock to a but a is a non-empty directory")
+                        name: "HEAD".try_into().unwrap(),
+                        deref: false,
+                    }),
+                    Fail::Immediately,
+                )
+                .commit(&committer());
+            if *is_empty {
+                let edits = edits.unwrap();
+                assert!(
+                    store.find_one(edits[0].name.to_partial()).unwrap().is_some(),
+                    "HEAD was created despite a directory being in the way"
+                );
+            } else {
+                let err = edits.unwrap_err();
+                match err {
+                    transaction::Error::LockCommit { err, full_name } => {
+                        assert_eq!(full_name, "HEAD");
+                        #[cfg(not(target_os = "windows"))]
+                        assert_eq!(err.to_string(), "Directory not empty");
+                    }
+                    _ => unreachable!("other errors shouldn't happen here"),
+                };
+            }
+        }
     }
 }
 

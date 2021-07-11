@@ -4,6 +4,7 @@ use crate::{
     transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
 };
 use bstr::BString;
+use git_hash::ObjectId;
 use std::io::Write;
 
 #[derive(Debug)]
@@ -438,4 +439,3 @@ mod error {
     }
 }
 pub use error::Error;
-use git_hash::ObjectId;
