@@ -4,7 +4,7 @@ use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_ref::{
-    file::WriteReflog,
+    file::{transaction, WriteReflog},
     mutable::Target,
     transaction::{Change, Create, LogChange, RefEdit, RefLog},
 };
@@ -76,12 +76,92 @@ mod reference_with_equally_named {
 fn reference_with_old_value_must_exist_when_creating_it_and_have_that_value() {}
 
 #[test]
-#[ignore]
-fn reference_without_old_value_must_not_exist_already_when_creating_it() {}
+fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
+    let head = store.find_one("HEAD").unwrap().expect("head exists already");
+    let target = head.target().to_owned();
+
+    let err = store
+        .transaction(
+            Some(
+                RefEdit {
+                    change: Change::Update {
+                        log: LogChange {
+                            mode: RefLog::AndReference,
+                            force_create_reflog: false,
+                            message: Default::default(),
+                        },
+                        new: Target::Peeled(ObjectId::null_sha1()),
+                        mode: Create::Only,
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: false,
+                }
+                .clone(),
+            ),
+            Fail::Immediately,
+        )
+        .commit(&committer())
+        .expect_err("cannot overwrite with a create-only edit");
+    match err {
+        transaction::Error::MustNotExist { full_name, actual, .. } => {
+            assert_eq!(full_name, "HEAD");
+            assert_eq!(actual, target);
+        }
+        err => unreachable!("unexpected error: {:?}", err),
+    }
+}
 
 #[test]
-fn cancellation_after_preparation_leaves_no_change() {
-    let (dir, store) = empty_store().unwrap();
+fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
+    let head = store.find_one("HEAD").unwrap().expect("head exists already");
+    let target = head.target().to_owned();
+
+    let edits = store
+        .transaction(
+            Some(
+                RefEdit {
+                    change: Change::Update {
+                        log: LogChange {
+                            mode: RefLog::AndReference,
+                            force_create_reflog: false,
+                            message: Default::default(),
+                        },
+                        new: target.clone(),
+                        mode: Create::Only,
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: false,
+                }
+                .clone(),
+            ),
+            Fail::Immediately,
+        )
+        .commit(&committer())
+        .unwrap();
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: false,
+                    message: Default::default(),
+                },
+                new: target.clone(),
+                mode: Create::OrUpdate { previous: Some(target) },
+            },
+            name: "HEAD".try_into().unwrap(),
+            deref: false,
+        }]
+    );
+}
+
+#[test]
+fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
+    let (dir, store) = empty_store()?;
 
     let tx = store.transaction(
         Some(RefEdit {
@@ -94,29 +174,24 @@ fn cancellation_after_preparation_leaves_no_change() {
                 new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
                 mode: Create::Only,
             },
-            name: "HEAD".try_into().unwrap(),
+            name: "HEAD".try_into()?,
             deref: false,
         }),
         Fail::Immediately,
     );
 
     assert_eq!(
-        std::fs::read_dir(dir.path()).unwrap().count(),
+        std::fs::read_dir(dir.path())?.count(),
         0,
         "nothing happens before preparation"
     );
 
-    let tx = tx.prepare().unwrap();
-
-    assert_eq!(
-        std::fs::read_dir(dir.path()).unwrap().count(),
-        1,
-        "the lock file was created"
-    );
+    let tx = tx.prepare()?;
+    assert_eq!(std::fs::read_dir(dir.path())?.count(), 1, "the lock file was created");
 
     drop(tx);
-
-    assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 0, "everything vanished");
+    assert_eq!(std::fs::read_dir(dir.path())?.count(), 0, "everything vanished");
+    Ok(())
 }
 
 #[test]
@@ -260,7 +335,9 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 }
 
 #[test]
-fn write_head_via_reference_does_not_happen_transparently() -> crate::Result {
+/// Writing a peeled ref to which head points to doesn't update HEAD on the fly even though that might be what's would
+/// be needed to keep the reflog consistent
+fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_though_it_should() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.find_one_existing("HEAD")?;
     let referent = head.target().as_name().expect("symbolic ref").to_owned();
@@ -289,6 +366,24 @@ fn write_head_via_reference_does_not_happen_transparently() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 1, "HEAD wasn't update");
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: false,
+                    message: "writes just the referent".into(),
+                },
+                mode: Create::OrUpdate {
+                    previous: Some(Target::Peeled(hex_to_id("02a7a22d90d7c02fb494ed25551850b868e634f0"))),
+                },
+                new: Target::Peeled(new_id),
+            },
+            name: referent.as_bstr().try_into()?,
+            deref: false,
+        }]
+    );
     assert_eq!(
         reflog_lines(&store, "HEAD")?,
         previous_head_reflog,

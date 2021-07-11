@@ -121,7 +121,12 @@ impl<'a> Transaction<'a> {
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
                     (Create::Only, Some(existing)) if existing.target() != new.borrow() => {
-                        todo!("fail as we won't create the ref and it doesn't match our expected state")
+                        let new = new.clone();
+                        return Err(Error::MustNotExist {
+                            full_name: change.name(),
+                            actual: existing.target().to_owned(),
+                            new,
+                        });
                     }
                     (
                         Create::OrUpdate {
@@ -429,6 +434,9 @@ mod error {
                 display("The reflog could not be created or updated")
                 from()
                 source(err)
+            }
+            MustNotExist { full_name: BString, actual: Target, new: Target } {
+                display("Reference '{}' was not supposed to exist when writing it with value {}, but actual content was {}", full_name, new, actual)
             }
             ReferenceDecode(err: file::reference::decode::Error) {
                 display("Could not read reference")
