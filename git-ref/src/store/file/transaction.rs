@@ -279,8 +279,26 @@ impl<'a> Transaction<'a> {
                                 }
                             }
                             if update_ref {
-                                if let Err(_err) = lock.commit() {
-                                    todo!("try deleting empty directories and retry commit")
+                                if let Err(err) = lock.commit() {
+                                    #[cfg(not(target_os = "windows"))]
+                                    let special_kind = std::io::ErrorKind::Other;
+                                    #[cfg(target_os = "windows")]
+                                    let special_kind = std::io::ErrorKind::PermissionDenied;
+                                    let err = if err.error.kind() == special_kind {
+                                        git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
+                                            .map_err(|io_err| std::io::Error::new(std::io::ErrorKind::Other, io_err))
+                                            .and_then(|_| err.instance.commit().map_err(|err| err.error))
+                                            .err()
+                                    } else {
+                                        Some(err.error)
+                                    };
+
+                                    if let Some(err) = err {
+                                        return Err(Error::LockCommit {
+                                            err,
+                                            full_name: change.name(),
+                                        });
+                                    }
                                 };
                             }
                         }
@@ -381,6 +399,10 @@ mod error {
             }
             LockAcquire{err: git_lock::acquire::Error, full_name: BString} {
                 display("A lock could not be obtained for reference {}", full_name)
+                source(err)
+            }
+            LockCommit{err: std::io::Error, full_name: BString} {
+                display("THe change for reference {} could not be committed", full_name)
                 source(err)
             }
             Io(err: std::io::Error) {

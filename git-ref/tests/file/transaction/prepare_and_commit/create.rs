@@ -12,10 +12,44 @@ use git_testtools::hex_to_id;
 use std::{convert::TryInto, path::Path};
 
 mod reference_with_equally_named {
+    use crate::file::transaction::prepare_and_commit::{committer, empty_store};
+    use git_lock::acquire::Fail;
+    use git_ref::{
+        file::WriteReflog,
+        mutable::Target,
+        transaction::{Change, Create, LogChange, RefEdit, RefLog},
+    };
+    use std::convert::TryInto;
+
     #[test]
-    #[ignore]
-    fn empty_directory_already_in_place() {
-        todo!("lock file renaming of a.lock to a but a is an empty directory")
+    fn empty_or_non_empty_directory_already_in_place() {
+        let (dir, store) = empty_store(WriteReflog::Normal).unwrap();
+        let head_dir = dir.path().join("HEAD");
+        std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty")).unwrap();
+
+        let edits = store
+            .transaction(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: LogChange {
+                            mode: RefLog::AndReference,
+                            force_create_reflog: false,
+                            message: Default::default(),
+                        },
+                        mode: Create::Only,
+                        new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: false,
+                }),
+                Fail::Immediately,
+            )
+            .commit(&committer())
+            .unwrap();
+        assert!(
+            store.find_one(edits[0].name.to_partial()).unwrap().is_some(),
+            "HEAD was created despite a directory being in the way"
+        );
     }
 
     #[test]
