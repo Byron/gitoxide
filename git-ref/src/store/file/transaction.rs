@@ -3,7 +3,7 @@ use crate::{
     store::file,
     transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
 };
-use bstr::{BStr, ByteSlice};
+use bstr::BString;
 use git_hash::ObjectId;
 use std::io::Write;
 
@@ -20,8 +20,8 @@ struct Edit {
 }
 
 impl Edit {
-    fn name(&self) -> &BStr {
-        self.update.name.0.as_ref()
+    fn name(&self) -> BString {
+        self.update.name.0.clone()
     }
 }
 
@@ -83,14 +83,14 @@ impl<'a> Transaction<'a> {
                     (None, None | Some(_)) => {}
                     (Some(_previous), None) => {
                         return Err(Error::DeleteReferenceMustExist {
-                            full_name: change.name().to_owned(),
+                            full_name: change.name(),
                         })
                     }
                     (Some(previous), Some(existing)) => {
                         if !previous.is_null() && *previous != existing.target() {
                             let expected = previous.clone();
                             return Err(Error::DeleteReferenceOutOfDate {
-                                full_name: change.name().to_owned(),
+                                full_name: change.name(),
                                 expected,
                                 actual: existing.target().to_owned(),
                             });
@@ -188,7 +188,6 @@ impl<'a> Transaction<'a> {
                     })
                     .map_err(Error::PreprocessingFailed)?;
 
-                let mut saw_head_ref = false;
                 for cid in 0..self.updates.len() {
                     let change = &mut self.updates[cid];
                     if let Err(err) = Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change) {
@@ -197,11 +196,11 @@ impl<'a> Transaction<'a> {
                                 err,
                                 full_name: {
                                     let mut cursor = change.parent_index;
-                                    let mut ref_name = change.name().to_owned();
+                                    let mut ref_name = change.name();
                                     while let Some(parent_idx) = cursor {
                                         let parent = &self.updates[parent_idx];
                                         if parent.parent_index.is_none() {
-                                            ref_name = parent.name().to_owned();
+                                            ref_name = parent.name();
                                         } else {
                                             cursor = parent.parent_index;
                                         }
@@ -213,22 +212,6 @@ impl<'a> Transaction<'a> {
                         };
                         return Err(err);
                     };
-                    let change_applies_to_head = change.name() == b"HEAD".as_bstr();
-                    saw_head_ref |= change_applies_to_head;
-                    if !saw_head_ref {
-                        saw_head_ref = ;
-                    }
-                    if let Change::Update {
-                        mode:
-                            Create::OrUpdate {
-                                previous: Some(Target::Peeled(oid)),
-                                ..
-                            },
-                        ..
-                    } = change.update.change
-                    {
-                        todo
-                    }
 
                     // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
                     // to help with their reflog entries
@@ -314,7 +297,7 @@ impl<'a> Transaction<'a> {
                                     if let Some(err) = err {
                                         return Err(Error::LockCommit {
                                             err,
-                                            full_name: change.name().to_owned(),
+                                            full_name: change.name(),
                                         });
                                     }
                                 };
@@ -342,7 +325,7 @@ impl<'a> Transaction<'a> {
                                     if err.kind() != std::io::ErrorKind::NotFound {
                                         return Err(Error::DeleteReflog {
                                             err,
-                                            full_name: change.name().to_owned(),
+                                            full_name: change.name(),
                                         });
                                     }
                                 }
@@ -353,7 +336,7 @@ impl<'a> Transaction<'a> {
                                     if err.kind() != std::io::ErrorKind::NotFound {
                                         return Err(Error::DeleteReference {
                                             err,
-                                            full_name: change.name().to_owned(),
+                                            full_name: change.name(),
                                         });
                                     }
                                 }
