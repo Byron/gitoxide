@@ -2,7 +2,6 @@ use crate::file::transaction::prepare_and_commit::committer;
 use crate::file::{store_writable, transaction::prepare_and_commit::empty_store};
 use git_lock::acquire::Fail;
 use git_ref::{
-    file::WriteReflog,
     mutable::Target,
     transaction::{Change, RefEdit, RefLog},
 };
@@ -10,7 +9,7 @@ use std::convert::TryInto;
 
 #[test]
 fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
-    let (_keep, store) = empty_store(WriteReflog::Normal)?;
+    let (_keep, store) = empty_store()?;
     let edits = store
         .transaction(
             Some(RefEdit {
@@ -30,7 +29,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
 
 #[test]
 fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
-    let (_keep, store) = empty_store(WriteReflog::Normal)?;
+    let (_keep, store) = empty_store()?;
     let res = store
         .transaction(
             Some(RefEdit {
@@ -194,7 +193,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
 #[test]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {
-    let (_keep, store) = empty_store(WriteReflog::Normal).unwrap();
+    let (_keep, store) = empty_store().unwrap();
     std::fs::write(store.base.join("HEAD"), &b"broken").unwrap();
     assert!(store.find_one("HEAD").is_err(), "the ref is truly broken");
 
@@ -221,7 +220,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() {
 #[test]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Result {
-    let (_keep, store) = empty_store(WriteReflog::Normal)?;
+    let (_keep, store) = empty_store()?;
     std::fs::write(store.base.join("HEAD"), &b"broken")?;
     assert!(store.find_one("HEAD").is_err(), "the ref is truly broken");
 

@@ -14,9 +14,8 @@ use std::{convert::TryInto, path::Path};
 mod reference_with_equally_named {
     use crate::file::transaction::prepare_and_commit::{committer, empty_store};
     use git_lock::acquire::Fail;
-    use git_ref::file::transaction;
     use git_ref::{
-        file::WriteReflog,
+        file::transaction,
         mutable::Target,
         transaction::{Change, Create, LogChange, RefEdit, RefLog},
     };
@@ -25,7 +24,7 @@ mod reference_with_equally_named {
     #[test]
     fn empty_or_non_empty_directory_already_in_place() -> crate::Result {
         for is_empty in &[true, false] {
-            let (dir, store) = empty_store(WriteReflog::Normal)?;
+            let (dir, store) = empty_store()?;
             let head_dir = dir.path().join("HEAD");
             std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty"))?;
             if !*is_empty {
@@ -87,7 +86,8 @@ fn cancellation_after_preparation_leaves_no_change() {}
 #[test]
 fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
     for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable] {
-        let (_keep, store) = empty_store(*reflog_writemode)?;
+        let (_keep, mut store) = empty_store()?;
+        store.write_reflog = *reflog_writemode;
         let referent = "refs/heads/alt-main";
         assert!(store.find_one(referent)?.is_none(), "the reference does not exist");
         let log_ignored = LogChange {

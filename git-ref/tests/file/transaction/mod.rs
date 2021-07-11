@@ -14,10 +14,9 @@ mod prepare_and_commit {
         Ok(res)
     }
 
-    fn empty_store(log_mode: git_ref::file::WriteReflog) -> crate::Result<(tempfile::TempDir, file::Store)> {
+    fn empty_store() -> crate::Result<(tempfile::TempDir, file::Store)> {
         let dir = tempfile::TempDir::new().unwrap();
-        let mut store: file::Store = dir.path().to_owned().into();
-        store.write_reflog = log_mode;
+        let store: file::Store = dir.path().to_owned().into();
         Ok((dir, store))
     }
 
