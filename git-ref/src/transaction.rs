@@ -42,6 +42,16 @@ pub struct LogChange {
     pub message: BString,
 }
 
+impl Default for LogChange {
+    fn default() -> Self {
+        LogChange {
+            mode: RefLog::AndReference,
+            force_create_reflog: false,
+            message: Default::default(),
+        }
+    }
+}
+
 /// A way to determine if a value should be created or created or updated. In the latter case the previous
 /// value can be specified to indicate to what extend the previous value matters.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

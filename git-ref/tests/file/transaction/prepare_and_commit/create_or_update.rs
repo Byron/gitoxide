@@ -17,7 +17,7 @@ mod reference_with_equally_named {
     use git_ref::{
         file::transaction,
         mutable::Target,
-        transaction::{Change, Create, LogChange, RefEdit, RefLog},
+        transaction::{Change, Create, LogChange, RefEdit},
     };
     use std::convert::TryInto;
 
@@ -35,11 +35,7 @@ mod reference_with_equally_named {
                 .transaction(
                     Some(RefEdit {
                         change: Change::Update {
-                            log: LogChange {
-                                mode: RefLog::AndReference,
-                                force_create_reflog: false,
-                                message: Default::default(),
-                            },
+                            log: LogChange::default(),
                             mode: Create::Only,
                             new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
                         },
@@ -72,13 +68,43 @@ mod reference_with_equally_named {
 }
 
 #[test]
-#[ignore]
-fn reference_with_old_value_must_exist_when_creating_it_and_have_that_value() {}
+fn reference_with_old_value_must_exist_when_creating_it() {
+    let (_keep, store) = empty_store().unwrap();
+
+    let err = store
+        .transaction(
+            Some(
+                RefEdit {
+                    change: Change::Update {
+                        log: LogChange::default(),
+                        new: Target::Peeled(ObjectId::null_sha1()),
+                        mode: Create::OrUpdate {
+                            previous: Some(Target::must_exist()),
+                        },
+                    },
+                    name: "HEAD".try_into().unwrap(),
+                    deref: false,
+                }
+                .clone(),
+            ),
+            Fail::Immediately,
+        )
+        .commit(&committer())
+        .expect_err("cannot create a ref that should exist but didn't");
+
+    match err {
+        transaction::Error::MustExist { full_name, expected } => {
+            assert_eq!(full_name, "HEAD");
+            assert_eq!(expected, Target::must_exist());
+        }
+        err => unreachable!("unexpected error: {:?}", err),
+    }
+}
 
 #[test]
-fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() {
-    let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
-    let head = store.find_one("HEAD").unwrap().expect("head exists already");
+fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.find_one("HEAD")?.expect("head exists already");
     let target = head.target().to_owned();
 
     let err = store
@@ -86,15 +112,11 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
             Some(
                 RefEdit {
                     change: Change::Update {
-                        log: LogChange {
-                            mode: RefLog::AndReference,
-                            force_create_reflog: false,
-                            message: Default::default(),
-                        },
+                        log: LogChange::default(),
                         new: Target::Peeled(ObjectId::null_sha1()),
                         mode: Create::Only,
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: false,
                 }
                 .clone(),
@@ -110,12 +132,13 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
         }
         err => unreachable!("unexpected error: {:?}", err),
     }
+    Ok(())
 }
 
 #[test]
-fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() {
-    let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
-    let head = store.find_one("HEAD").unwrap().expect("head exists already");
+fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.find_one("HEAD")?.expect("head exists already");
     let target = head.target().to_owned();
 
     let edits = store
@@ -123,40 +146,32 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
             Some(
                 RefEdit {
                     change: Change::Update {
-                        log: LogChange {
-                            mode: RefLog::AndReference,
-                            force_create_reflog: false,
-                            message: Default::default(),
-                        },
+                        log: LogChange::default(),
                         new: target.clone(),
                         mode: Create::Only,
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: false,
                 }
                 .clone(),
             ),
             Fail::Immediately,
         )
-        .commit(&committer())
-        .unwrap();
+        .commit(&committer())?;
 
     assert_eq!(
         edits,
         vec![RefEdit {
             change: Change::Update {
-                log: LogChange {
-                    mode: RefLog::AndReference,
-                    force_create_reflog: false,
-                    message: Default::default(),
-                },
+                log: LogChange::default(),
                 new: target.clone(),
                 mode: Create::OrUpdate { previous: Some(target) },
             },
-            name: "HEAD".try_into().unwrap(),
+            name: "HEAD".try_into()?,
             deref: false,
         }]
     );
+    Ok(())
 }
 
 #[test]
@@ -166,11 +181,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
     let tx = store.transaction(
         Some(RefEdit {
             change: Change::Update {
-                log: LogChange {
-                    mode: RefLog::AndReference,
-                    force_create_reflog: false,
-                    message: Default::default(),
-                },
+                log: LogChange::default(),
                 new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
                 mode: Create::Only,
             },
@@ -213,7 +224,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     change: Change::Update {
                         log: log_ignored.clone(),
                         new: new_head_value.clone(),
-                        mode: Create::Only, // TODO: check failure if it doesn't exist
+                        mode: Create::Only,
                     },
                     name: "HEAD".try_into()?,
                     deref: false,

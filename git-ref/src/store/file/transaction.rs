@@ -140,11 +140,13 @@ impl<'a> Transaction<'a> {
                     },
                     (
                         Create::OrUpdate {
-                            previous: Some(_previous),
+                            previous: Some(previous),
                         },
                         None,
                     ) => {
-                        todo!("ref was supposed to have a given value or exist, but it did not")
+                        let expected = previous.to_owned();
+                        let full_name = change.name();
+                        return Err(Error::MustExist { full_name, expected });
                     }
                     (Create::Only | Create::OrUpdate { previous: None }, None | Some(_)) => {}
                 }
@@ -437,6 +439,9 @@ mod error {
             }
             MustNotExist { full_name: BString, actual: Target, new: Target } {
                 display("Reference '{}' was not supposed to exist when writing it with value {}, but actual content was {}", full_name, new, actual)
+            }
+            MustExist { full_name: BString, expected: Target } {
+                display("Reference '{}' was supposed to exist with value {}, but didn't.", full_name, expected)
             }
             ReferenceDecode(err: file::reference::decode::Error) {
                 display("Could not read reference")
