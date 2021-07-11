@@ -205,7 +205,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             match reflog_writemode {
                 WriteReflog::Normal => {
                     let expected_line = log_line(ObjectId::null_sha1(), new_oid, "an actual change");
-                    assert_eq!(reflog_lines(&store, *ref_name, &mut buf)?, vec![expected_line]);
+                    assert_eq!(reflog_lines(&store, *ref_name)?, vec![expected_line]);
                 }
                 WriteReflog::Disable => {
                     assert!(
@@ -222,13 +222,11 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 mod cancel_after_preparation {}
 
 #[test]
-#[ignore]
-fn write_head_via_reference_transparently() {
+fn write_head_via_reference_does_not_happen_transparently() {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
     let head = store.find_one_existing("HEAD").unwrap();
-    let referent = head.name();
-    let mut buf = Vec::new();
-    let previous_reflog_count = head.log_iter(&mut buf).unwrap().expect("reflog exists").count();
+    let referent = head.target().as_name().expect("symbolic ref").to_owned();
+    let previous_head_reflog = reflog_lines(&store, "HEAD").unwrap();
 
     let new_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");
     let edits = store
@@ -238,14 +236,14 @@ fn write_head_via_reference_transparently() {
                     log: LogChange {
                         mode: RefLog::AndReference,
                         force_create_reflog: false,
-                        message: "writes HEAD's reflog too".into(),
+                        message: "writes just the referent".into(),
                     },
                     mode: Create::OrUpdate {
-                        previous: Some(head.target().into()),
+                        previous: Some(Target::must_exist()),
                     },
                     new: Target::Peeled(new_id),
                 },
-                name: referent.clone(),
+                name: referent.as_bstr().try_into().unwrap(),
                 deref: false,
             }),
             Fail::Immediately,
@@ -253,25 +251,20 @@ fn write_head_via_reference_transparently() {
         .commit(&committer())
         .unwrap();
 
-    assert_eq!(edits.len(), 2, "HEAD was updated too");
-    let head_lines = reflog_lines(&store, "HEAD", &mut buf).unwrap();
+    assert_eq!(edits.len(), 1, "HEAD wasn't update");
     assert_eq!(
-        head_lines.len(),
-        previous_reflog_count + 1,
-        "a new line was added to the log as well"
+        reflog_lines(&store, "HEAD").unwrap(),
+        previous_head_reflog,
+        "nothing changed in the heads reflog"
     );
+
     let expected_line = log_line(
-        hex_to_id("00000e00000000000773dae6da7aa4a5ac1cdbbc"),
+        hex_to_id("02a7a22d90d7c02fb494ed25551850b868e634f0"),
         new_id,
-        "writes HEAD's reflog too",
+        "writes just the referent",
     );
     assert_eq!(
-        head_lines.last().expect("more than one line"),
-        &expected_line,
-        "head line matches the expected one"
-    );
-    assert_eq!(
-        reflog_lines(&store, &referent.as_ref().to_string(), &mut buf)
+        reflog_lines(&store, &referent.to_string())
             .unwrap()
             .last()
             .expect("at least one line"),

@@ -46,6 +46,14 @@ pub mod mutable {
         }
     }
 
+    impl TryFrom<&BStr> for FullName {
+        type Error = git_validate::refname::Error;
+
+        fn try_from(value: &BStr) -> Result<Self, Self::Error> {
+            Ok(FullName(git_validate::refname(value)?.into()))
+        }
+    }
+
     impl AsRef<BStr> for FullName {
         fn as_ref(&self) -> &BStr {
             self.0.as_bstr()

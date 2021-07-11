@@ -4,13 +4,14 @@ mod prepare_and_commit {
     use git_hash::ObjectId;
     use git_ref::{file, file::log};
 
-    fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> crate::Result<Vec<log::mutable::Line>> {
-        store
-            .reflog_iter(name, buf)?
+    fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<log::mutable::Line>> {
+        let mut buf = Vec::new();
+        let res = store
+            .reflog_iter(name, &mut buf)?
             .expect("existing reflog")
             .map(|l| l.map(log::mutable::Line::from))
-            .collect::<std::result::Result<Vec<_>, _>>()
-            .map_err(Into::into)
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        Ok(res)
     }
 
     fn empty_store(log_mode: git_ref::file::WriteReflog) -> crate::Result<(tempfile::TempDir, file::Store)> {
