@@ -34,14 +34,11 @@ fn reference_with_old_value_must_exist_when_creating_it_and_have_that_value() {}
 fn reference_without_old_value_must_not_exist_already_when_creating_it() {}
 
 #[test]
-fn symbolic_head_missing_referent_then_update_referent() {
+fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
     for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable] {
-        let (_keep, store) = empty_store(*reflog_writemode).unwrap();
+        let (_keep, store) = empty_store(*reflog_writemode)?;
         let referent = "refs/heads/alt-main";
-        assert!(
-            store.find_one(referent).unwrap().is_none(),
-            "the reference does not exist"
-        );
+        assert!(store.find_one(referent)?.is_none(), "the reference does not exist");
         let log_ignored = LogChange {
             mode: RefLog::AndReference,
             force_create_reflog: false,
@@ -56,13 +53,12 @@ fn symbolic_head_missing_referent_then_update_referent() {
                         new: new_head_value.clone(),
                         mode: Create::Only, // TODO: check failure if it doesn't exist
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: false,
                 }),
                 Fail::Immediately,
             )
-            .commit(&committer())
-            .unwrap();
+            .commit(&committer())?;
         assert_eq!(
             edits,
             vec![RefEdit {
@@ -71,18 +67,18 @@ fn symbolic_head_missing_referent_then_update_referent() {
                     new: new_head_value.clone(),
                     mode: Create::Only,
                 },
-                name: "HEAD".try_into().unwrap(),
+                name: "HEAD".try_into()?,
                 deref: false,
             }],
             "no split was performed"
         );
 
-        let head = store.find_one_existing(edits[0].name.to_partial()).unwrap();
+        let head = store.find_one_existing(edits[0].name.to_partial())?;
         assert_eq!(head.relative_path(), Path::new("HEAD"));
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
         assert_eq!(head.target().as_name(), Some(referent.as_bytes().as_bstr()));
-        assert!(!head.log_exists().unwrap(), "no reflog is written for symbolic ref");
-        assert!(store.find_one(referent).unwrap().is_none(), "referent wasn't created");
+        assert!(!head.log_exists()?, "no reflog is written for symbolic ref");
+        assert!(store.find_one(referent)?.is_none(), "referent wasn't created");
 
         let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
         let new = Target::Peeled(new_oid);
@@ -104,13 +100,12 @@ fn symbolic_head_missing_referent_then_update_referent() {
                         new: new.clone(),
                         mode: Create::OrUpdate { previous: None },
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: true,
                 }),
                 Fail::Immediately,
             )
-            .commit(&committer())
-            .unwrap();
+            .commit(&committer())?;
 
         assert_eq!(
             edits,
@@ -123,7 +118,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
                             previous: Some(new_head_value.clone())
                         },
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: false,
                 },
                 RefEdit {
@@ -132,13 +127,13 @@ fn symbolic_head_missing_referent_then_update_referent() {
                         new: new.clone(),
                         mode: Create::Only,
                     },
-                    name: referent.try_into().unwrap(),
+                    name: referent.try_into()?,
                     deref: false,
                 }
             ]
         );
 
-        let head = store.find_one_existing("HEAD").unwrap();
+        let head = store.find_one_existing("HEAD")?;
         assert_eq!(
             head.kind(),
             git_ref::Kind::Symbolic,
@@ -150,7 +145,7 @@ fn symbolic_head_missing_referent_then_update_referent() {
             "it still points to the referent"
         );
 
-        let referent_ref = store.find_one_existing(referent).unwrap();
+        let referent_ref = store.find_one_existing(referent)?;
         assert_eq!(referent_ref.kind(), git_ref::Kind::Peeled, "referent is a peeled ref");
         assert_eq!(
             referent_ref.target().as_id(),
@@ -176,20 +171,18 @@ fn symbolic_head_missing_referent_then_update_referent() {
                         },
                         message: "an actual change".into(),
                     };
-                    assert_eq!(
-                        reflog_lines(&store, *ref_name, &mut buf).unwrap(),
-                        vec![expected_line.clone()]
-                    );
+                    assert_eq!(reflog_lines(&store, *ref_name, &mut buf)?, vec![expected_line.clone()]);
                 }
                 WriteReflog::Disable => {
                     assert!(
-                        store.reflog_iter(*ref_name, &mut buf).unwrap().is_none(),
+                        store.reflog_iter(*ref_name, &mut buf)?.is_none(),
                         "nothing is ever written if its disabled"
                     )
                 }
             }
         }
     }
+    Ok(())
 }
 
 #[test]
