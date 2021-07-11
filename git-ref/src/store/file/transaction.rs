@@ -89,7 +89,7 @@ impl<'a> Transaction<'a> {
                     (Some(previous), Some(existing)) => {
                         if !previous.is_null() && *previous != existing.target() {
                             let expected = previous.clone();
-                            return Err(Error::DeleteReferenceOutOfDate {
+                            return Err(Error::ReferenceOutOfDate {
                                 full_name: change.name(),
                                 expected,
                                 actual: existing.target().to_owned(),
@@ -136,7 +136,16 @@ impl<'a> Transaction<'a> {
                     ) => match previous {
                         Target::Peeled(oid) if oid.is_null() => {}
                         any_target if any_target.borrow() == existing.target() => {}
-                        _target_mismatch => todo!("abort because existing ref didn't have the correct value"),
+                        _target_mismatch => {
+                            let actual = existing.target().to_owned();
+                            let expected = previous.to_owned();
+                            let full_name = change.name();
+                            return Err(Error::ReferenceOutOfDate {
+                                full_name,
+                                actual,
+                                expected,
+                            });
+                        }
                     },
                     (
                         Create::OrUpdate {
@@ -149,7 +158,7 @@ impl<'a> Transaction<'a> {
                         return Err(Error::MustExist { full_name, expected });
                     }
                     (Create::Only | Create::OrUpdate { previous: None }, None | Some(_)) => {}
-                }
+                };
 
                 *previous = match existing_ref {
                     None => Create::Only,
@@ -421,9 +430,6 @@ mod error {
             DeleteReferenceMustExist { full_name: BString } {
                 display("The reference '{}' for deletion did not exist or could not be parsed", full_name)
             }
-            DeleteReferenceOutOfDate { full_name: BString, expected: Target, actual: Target } {
-                display("The reference '{}' should have content {}, actual content was {}", full_name, expected, actual)
-            }
             DeleteReference{ full_name: BString, err: std::io::Error } {
                 display("The reference '{}' could not be deleted", full_name)
                 source(err)
@@ -442,6 +448,9 @@ mod error {
             }
             MustExist { full_name: BString, expected: Target } {
                 display("Reference '{}' was supposed to exist with value {}, but didn't.", full_name, expected)
+            }
+            ReferenceOutOfDate { full_name: BString, expected: Target, actual: Target } {
+                display("The reference '{}' should have content {}, actual content was {}", full_name, expected, actual)
             }
             ReferenceDecode(err: file::reference::decode::Error) {
                 display("Could not read reference")

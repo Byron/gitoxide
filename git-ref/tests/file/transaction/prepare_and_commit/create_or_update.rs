@@ -68,8 +68,8 @@ mod reference_with_equally_named {
 }
 
 #[test]
-fn reference_with_old_value_must_exist_when_creating_it() {
-    let (_keep, store) = empty_store().unwrap();
+fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
+    let (_keep, store) = empty_store()?;
 
     let err = store
         .transaction(
@@ -82,7 +82,7 @@ fn reference_with_old_value_must_exist_when_creating_it() {
                             previous: Some(Target::must_exist()),
                         },
                     },
-                    name: "HEAD".try_into().unwrap(),
+                    name: "HEAD".try_into()?,
                     deref: false,
                 }
                 .clone(),
@@ -99,6 +99,43 @@ fn reference_with_old_value_must_exist_when_creating_it() {
         }
         err => unreachable!("unexpected error: {:?}", err),
     }
+    Ok(())
+}
+
+#[test]
+fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.find_one("HEAD")?.expect("head exists already");
+    let target = head.target().to_owned();
+
+    let err = store
+        .transaction(
+            Some(
+                RefEdit {
+                    change: Change::Update {
+                        log: LogChange::default(),
+                        new: Target::Peeled(ObjectId::null_sha1()),
+                        mode: Create::OrUpdate {
+                            previous: Some(Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"))),
+                        },
+                    },
+                    name: "HEAD".try_into()?,
+                    deref: false,
+                }
+                .clone(),
+            ),
+            Fail::Immediately,
+        )
+        .commit(&committer())
+        .expect_err("cannot overwrite with an edit that specifies a previous value that does not match");
+    match err {
+        transaction::Error::ReferenceOutOfDate { full_name, actual, .. } => {
+            assert_eq!(full_name, "HEAD");
+            assert_eq!(actual, target);
+        }
+        err => unreachable!("unexpected error: {:?}", err),
+    }
+    Ok(())
 }
 
 #[test]
