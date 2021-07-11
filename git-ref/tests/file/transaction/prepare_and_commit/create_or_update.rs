@@ -1,10 +1,10 @@
-use crate::file::transaction::prepare_and_commit::{committer, empty_store, reflog_lines};
+use crate::file::store_writable;
+use crate::file::transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines};
 use bstr::ByteSlice;
-use git_actor::{Sign, Time};
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_ref::{
-    file::{log, WriteReflog},
+    file::WriteReflog,
     mutable::Target,
     transaction::{Change, Create, LogChange, RefEdit, RefLog},
 };
@@ -204,21 +204,8 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         for ref_name in &["HEAD", referent] {
             match reflog_writemode {
                 WriteReflog::Normal => {
-                    let expected_line = log::mutable::Line {
-                        previous_oid: ObjectId::null_sha1(),
-                        new_oid,
-                        signature: git_actor::Signature {
-                            name: "committer".into(),
-                            email: "committer@example.com".into(),
-                            time: Time {
-                                time: 1234,
-                                offset: 1800,
-                                sign: Sign::Plus,
-                            },
-                        },
-                        message: "an actual change".into(),
-                    };
-                    assert_eq!(reflog_lines(&store, *ref_name, &mut buf)?, vec![expected_line.clone()]);
+                    let expected_line = log_line(ObjectId::null_sha1(), new_oid, "an actual change");
+                    assert_eq!(reflog_lines(&store, *ref_name, &mut buf)?, vec![expected_line]);
                 }
                 WriteReflog::Disable => {
                     assert!(
@@ -232,11 +219,63 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
     Ok(())
 }
 
-#[test]
-#[should_panic]
-fn referent_that_head_is_pointing_to() {
-    // for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {}
-    todo!("verify that HEAD gets a reflog update automatically")
-}
-
 mod cancel_after_preparation {}
+
+#[test]
+#[ignore]
+fn write_head_via_reference_transparently() {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
+    let head = store.find_one_existing("HEAD").unwrap();
+    let referent = head.name();
+    let mut buf = Vec::new();
+    let previous_reflog_count = head.log_iter(&mut buf).unwrap().expect("reflog exists").count();
+
+    let new_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");
+    let edits = store
+        .transaction(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange {
+                        mode: RefLog::AndReference,
+                        force_create_reflog: false,
+                        message: "writes HEAD's reflog too".into(),
+                    },
+                    mode: Create::OrUpdate {
+                        previous: Some(head.target().into()),
+                    },
+                    new: Target::Peeled(new_id),
+                },
+                name: referent.clone(),
+                deref: false,
+            }),
+            Fail::Immediately,
+        )
+        .commit(&committer())
+        .unwrap();
+
+    assert_eq!(edits.len(), 2, "HEAD was updated too");
+    let head_lines = reflog_lines(&store, "HEAD", &mut buf).unwrap();
+    assert_eq!(
+        head_lines.len(),
+        previous_reflog_count + 1,
+        "a new line was added to the log as well"
+    );
+    let expected_line = log_line(
+        hex_to_id("00000e00000000000773dae6da7aa4a5ac1cdbbc"),
+        new_id,
+        "writes HEAD's reflog too",
+    );
+    assert_eq!(
+        head_lines.last().expect("more than one line"),
+        &expected_line,
+        "head line matches the expected one"
+    );
+    assert_eq!(
+        reflog_lines(&store, &referent.as_ref().to_string(), &mut buf)
+            .unwrap()
+            .last()
+            .expect("at least one line"),
+        &expected_line,
+        "referent line matches the expected one"
+    );
+}

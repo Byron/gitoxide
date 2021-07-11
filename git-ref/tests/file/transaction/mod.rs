@@ -1,7 +1,8 @@
 mod prepare_and_commit {
+    use bstr::BString;
     use git_actor::{Sign, Time};
-    use git_ref::file;
-    use git_ref::file::log;
+    use git_hash::ObjectId;
+    use git_ref::{file, file::log};
 
     fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> crate::Result<Vec<log::mutable::Line>> {
         store
@@ -31,15 +32,16 @@ mod prepare_and_commit {
         }
     }
 
-    mod create;
-
-    mod update {
-        #[test]
-        #[ignore]
-        fn write_head_via_reference_transparently() {
-            todo!("writing a ref which happens to be (special case) referred to by HEAD alters HEADs reflog, too.")
+    fn log_line(previous: ObjectId, new: ObjectId, message: impl Into<BString>) -> log::mutable::Line {
+        log::mutable::Line {
+            previous_oid: previous,
+            new_oid: new,
+            signature: committer(),
+            message: message.into(),
         }
     }
+
+    mod create_or_update;
 
     mod delete;
 }
