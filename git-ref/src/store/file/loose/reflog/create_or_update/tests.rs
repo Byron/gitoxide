@@ -25,7 +25,7 @@ fn reflock(store: &file::Store, full_name: &str) -> Result<git_lock::Marker> {
     .map_err(Into::into)
 }
 
-fn reflog_iter(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Vec<log::mutable::Line>> {
+fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Vec<log::mutable::Line>> {
     store
         .reflog_iter(name, buf)?
         .expect("existing reflog")
@@ -82,7 +82,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         match mode {
             WriteReflog::Normal => {
                 assert_eq!(
-                    reflog_iter(&store, full_name, &mut buf)?,
+                    reflog_lines(&store, full_name, &mut buf)?,
                     vec![log::mutable::Line {
                         previous_oid: ObjectId::null_sha1(),
                         new_oid: new,
@@ -100,7 +100,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
                     false,
                 )?;
 
-                let lines = reflog_iter(&store, full_name, &mut buf)?;
+                let lines = reflog_lines(&store, full_name, &mut buf)?;
                 assert_eq!(lines.len(), 2, "now there is another line");
                 assert_eq!(
                     lines.last().expect("non-empty"),
@@ -139,7 +139,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         match mode {
             WriteReflog::Normal => {
                 assert_eq!(
-                    reflog_iter(&store, full_name, &mut buf)?.len(),
+                    reflog_lines(&store, full_name, &mut buf)?.len(),
                     1,
                     "reflog was written despite directory"
                 );

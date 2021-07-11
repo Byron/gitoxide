@@ -151,8 +151,8 @@ impl<'a> Transaction<'a> {
                 };
 
                 lock.with_mut(|file| match new {
-                    Target::Peeled(oid) => file.write_all(oid.as_bytes()),
-                    Target::Symbolic(name) => file.write_all(b"ref: ").and_then(|_| file.write_all(name.as_ref())),
+                    Target::Peeled(oid) => write!(file, "{}", oid),
+                    Target::Symbolic(name) => write!(file, "ref: {}", name.0),
                 })?;
 
                 lock.close()?

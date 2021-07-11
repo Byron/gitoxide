@@ -1,6 +1,16 @@
 mod prepare_and_commit {
     use git_actor::{Sign, Time};
     use git_ref::file;
+    use git_ref::file::log;
+
+    fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> crate::Result<Vec<log::mutable::Line>> {
+        store
+            .reflog_iter(name, buf)?
+            .expect("existing reflog")
+            .map(|l| l.map(log::mutable::Line::from))
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .map_err(Into::into)
+    }
 
     fn empty_store(log_mode: git_ref::file::WriteReflog) -> crate::Result<(tempfile::TempDir, file::Store)> {
         let dir = tempfile::TempDir::new().unwrap();
