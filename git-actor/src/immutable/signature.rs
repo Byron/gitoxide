@@ -66,21 +66,12 @@ mod decode {
     mod tests {
         mod parse_signature {
             use crate::{immutable::signature, immutable::Signature, Sign, Time};
-            use bstr::{BStr, ByteSlice};
-            use nom::{error::VerboseError, IResult};
+            use bstr::ByteSlice;
+            use git_testtools::to_bstr_err;
+            use nom::IResult;
 
             fn decode(i: &[u8]) -> IResult<&[u8], Signature<'_>, nom::error::VerboseError<&[u8]>> {
                 signature::decode(i)
-            }
-
-            fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
-                let err = match err {
-                    nom::Err::Error(err) | nom::Err::Failure(err) => err,
-                    nom::Err::Incomplete(_) => unreachable!("not a streaming parser"),
-                };
-                VerboseError {
-                    errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
-                }
             }
 
             fn signature(

@@ -129,20 +129,14 @@ pub mod decode {
         mod invalid {
             use super::one;
 
-            use bstr::{BStr, ByteSlice};
+            use git_testtools::to_bstr_err;
             use nom::error::VerboseError;
-
-            fn to_bstr_err(err: VerboseError<&[u8]>) -> VerboseError<&BStr> {
-                VerboseError {
-                    errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
-                }
-            }
 
             #[test]
             fn completely_bogus_shows_error_with_context() {
                 let err = one::<VerboseError<&[u8]>>(b"definitely not a log entry")
-                    .expect_err("this should fail")
-                    .map(|e| to_bstr_err(e).to_string());
+                    .map_err(to_bstr_err)
+                    .expect_err("this should fail");
                 assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
             }
 
@@ -150,8 +144,8 @@ pub mod decode {
             fn missing_whitespace_between_signature_and_message() {
                 let line = "0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000message";
                 let err = one::<VerboseError<&[u8]>>(line.as_bytes())
-                    .expect_err("this should fail")
-                    .map(|e| to_bstr_err(e).to_string());
+                    .map_err(to_bstr_err)
+                    .expect_err("this should fail");
                 assert!(err
                     .to_string()
                     .contains("log message must be separated from signature with whitespace"));

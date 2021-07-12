@@ -4,6 +4,7 @@ pub mod iter {}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Peeled {
+    Unspecified,
     Partial,
     Fully,
 }
@@ -16,14 +17,18 @@ struct Header {
 }
 
 mod decode {
-    use crate::parse::newline;
-    use crate::store::packed::Header;
-    use bstr::{BStr, ByteSlice};
-    use nom::bytes::complete::{tag, take_until, take_while};
-    use nom::combinator::opt;
-    use nom::error::VerboseError;
-    use nom::sequence::{delimited, preceded, terminated, tuple};
-    use nom::{error::ParseError, IResult};
+    use crate::{
+        parse::newline,
+        store::{packed::Header, packed::Peeled},
+    };
+    use bstr::ByteSlice;
+    use nom::{
+        bytes::complete::{tag, take_until, take_while},
+        combinator::opt,
+        error::ParseError,
+        sequence::{delimited, tuple},
+        IResult,
+    };
 
     fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
     where
@@ -37,18 +42,20 @@ mod decode {
             take_until("\n"),
             newline,
         )(input)?;
-        dbg!(traits.as_bstr());
-        todo!("parse a header line")
-    }
 
-    fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
-        let err = match err {
-            nom::Err::Error(err) | nom::Err::Failure(err) => err,
-            nom::Err::Incomplete(_) => unreachable!("not a streaming parser"),
-        };
-        VerboseError {
-            errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
+        let mut peeled = Peeled::Unspecified;
+        let mut sorted = false;
+        for token in traits.as_bstr().split_str(b" ") {
+            if token == b"fully-peeled" {
+                peeled = Peeled::Fully;
+            } else if token == b"peeled" {
+                peeled = Peeled::Partial;
+            } else if token == b"sorted" {
+                sorted = true;
+            }
         }
+
+        Ok((rest, Header { peeled, sorted }))
     }
 
     #[cfg(test)]
@@ -56,6 +63,7 @@ mod decode {
         use super::*;
         use crate::store::packed::Peeled;
         use bstr::ByteSlice;
+        use git_testtools::to_bstr_err;
 
         #[test]
         fn valid_header_fully_peeled_stored() {
@@ -82,6 +90,20 @@ mod decode {
                 header,
                 Header {
                     peeled: Peeled::Partial,
+                    sorted: false
+                }
+            );
+        }
+
+        #[test]
+        fn valid_header_empty() {
+            let input: &[u8] = b"\n\n# pack-refs with: \n";
+            let (rest, header) = header::<()>(input).unwrap();
+            assert!(rest.is_empty());
+            assert_eq!(
+                header,
+                Header {
+                    peeled: Peeled::Unspecified,
                     sorted: false
                 }
             );

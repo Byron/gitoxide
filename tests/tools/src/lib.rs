@@ -1,7 +1,9 @@
-pub use bstr;
+use bstr::{BStr, ByteSlice};
+use nom::error::VerboseError;
 use once_cell::sync::Lazy;
 use std::{collections::BTreeMap, path::Path, path::PathBuf, sync::Mutex};
 
+pub use bstr;
 pub use tempfile;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
@@ -51,7 +53,6 @@ pub fn scripted_fixture_repo_read_only_with_args(
     script_name: &str,
     args: impl IntoIterator<Item = &'static str>,
 ) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
-    use bstr::ByteSlice;
     let script_path = fixture_path(script_name);
 
     // keep this lock to assure we don't return unfinished directories for threaded callers
@@ -99,4 +100,14 @@ pub fn scripted_fixture_repo_read_only_with_args(
         );
     }
     Ok(script_result_directory)
+}
+
+pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
+    let err = match err {
+        nom::Err::Error(err) | nom::Err::Failure(err) => err,
+        nom::Err::Incomplete(_) => unreachable!("not a streaming parser"),
+    };
+    VerboseError {
+        errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
+    }
 }

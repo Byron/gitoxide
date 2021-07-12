@@ -1133,6 +1133,7 @@ dependencies = [
  "crc",
  "fs_extra",
  "git-hash",
+ "nom",
  "once_cell",
  "tempfile",
 ]
