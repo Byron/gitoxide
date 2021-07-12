@@ -139,7 +139,7 @@ pub mod existing {
         use std::path::PathBuf;
 
         quick_error! {
-            /// The error returned by [file::Store::find_one_existing()].
+            /// The error returned by [file::Store::find_one_existing()][crate::file::Store::find_one_existing()].
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {

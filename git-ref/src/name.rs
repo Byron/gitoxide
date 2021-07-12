@@ -8,7 +8,7 @@ mod error {
     use std::convert::Infallible;
 
     quick_error! {
-        /// The error used in the [`ValidPartialName`]::try_from(…) implementations.
+        /// The error used in the [`PartialName`][super::PartialName]::try_from(…) implementations.
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {

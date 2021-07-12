@@ -55,15 +55,14 @@ pub mod mutable {
         }
     }
 
-    ///
-    pub mod write {
+    mod write {
         use super::Line;
         use bstr::{BStr, ByteSlice};
         use quick_error::quick_error;
         use std::io;
 
         quick_error! {
-            /// The Error produced by [`Line::write_to()`].
+            /// The Error produced by [`Line::write_to()`] (but wrapped in an io error).
             #[derive(Debug)]
             #[allow(missing_docs)]
             enum Error {

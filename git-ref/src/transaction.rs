@@ -1,32 +1,17 @@
-#![allow(dead_code)]
-//! Research
+//! **Transactions** are the only way make changes to the ref store in order to increase the chance of consistency in a multi-threaded
+//! environment.
 //!
-//!   * `RefLogOnly`
-//!      - symbolic references don't actually change but one might still want to record the HEAD changes for convenience.
-//!      - Judging by how `reflog-transaction` hooks one transaction is scheduled for each ref, so the deref part is
-//!         actually not done automatically.
-//!   * `REF_FORCE_CREATE_REFLOG`
-//!      - required only for tags which otherwise wouldn't have a reflog. Otherwise it's up to the implementation
-//!                       which seems to have an automation on where to create a reflog or not.
-//!                       Reflogs are basic features of all stores.
-//!   * REF_NO_DEREF - Apparently dereffing is the default so detaching HEAD would need this flag to write HEAD directly
-//!                  opposedly this might mean that a change to HEAD will change the branch it points to and affect two reflogs
-//!                  automaticaly.
-//!   * Be able to delete broken refs (those with invalid content) - this is part of the ref iteration
-//!   * How to handle initial_ref_transaction_commit (to be a version that assumes no other writers)? It uses packed-refs essentially
-//!     and it does validate certain invariants, too, but doesn't have to check for file refs.
-//!     - **it's probably a standard transaction passed to `store.apply_exclusive(…)` as opposed to `store.apply(…)`.**
+//! Transactions currently allow to…
 //!
-//! |                         |Update        |Kind    |Data       |Reflog Mode |Deref|ref itself|reflog|referent|referent reflog|
-//! |-------------------------|--------------|--------|-----------|------------|-----|----------|------|--------|---------------|
-//! |HEAD                     |CreateOrUpdate|symbolic|oid        |only-reflog |✔    |          |✔     |✔       |✔              |
-//! |HEAD to detached HEAD    |CreateOrUpdate|symbolic|oid        |auto        |     |✔         |✔     |        |               |
-//! |detached HEAD to HEAD|CreateOrUpdate|peeled      |refpath    |auto        |     |✔         |✔     |        |               |
-//! |HEAD                     |Delete        |any     |oid        |only-reflog |✔    |          |      |        |               |
-//! |HEAD                     |Delete        |any     |oid        |auto        |✔    |✔         |✔     |        |               |
-//! |refs/heads/main          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |✔     |        |               |
-//! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |auto        |     |✔         |      |        |               |
-//! |refs/tags/0.1.0          |CreateOrUpdate|peeled  |oid        |force-reflog|     |✔         |✔     |        |               |
+//! * create or update reference
+//! * delete references
+//!
+//! The following guarantees are made:
+//!
+//! * transactions are prepared which is when other writers are prevented from changing them
+//!   - errors during preparations will cause a perfect rollback
+//! * prepared transactions are committed to finalize the change
+//!   - errors when committing while leave the ref store in an inconsistent, but operational state.
 use crate::mutable::{FullName, Target};
 
 /// A change to the reflog.

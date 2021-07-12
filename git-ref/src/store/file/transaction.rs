@@ -36,7 +36,7 @@ impl std::borrow::BorrowMut<RefEdit> for Edit {
         &mut self.update
     }
 }
-/// A transaction
+/// A transaction on a file store
 pub struct Transaction<'a> {
     store: &'a file::Store,
     updates: Vec<Edit>,
@@ -368,7 +368,7 @@ impl<'a> Transaction<'a> {
 }
 
 /// The state of a [`Transaction`]
-pub enum State {
+enum State {
     /// The transaction was just created but isn't prepared yet.
     Open,
     /// The transaction is ready to be committed.

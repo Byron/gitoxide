@@ -303,38 +303,31 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [x] [validate][tagname-validation] tag names
 
 ### git-ref
-* Handle symbolic references and packed references
-* discover them in typical folder structures
+* [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
 * **Stores**
-  * [ ] worktrees
+  * [ ] disable transactions during [quarantine]
   * **loose file**
     * [x] ref validation
     * [x] find single ref by name
-    * [ ] [worktree support]
     * [ ] find refs matching pattern
-    * [ ] iterate
-    * [ ] rename or copy reference
-    * **transactions** _(create, update and delete)
-      * [ ] single ref
-      * [ ] multiple refs
-      * [ ] handle refs and/or their logs
-      * [ ] disable transactions during [quarantine]
+    * [ ] iterate refs with optional prefix
+    * [ ] [worktree support]
+    * **transactions** 
+      * [x] delete, create or update single ref or multiple refs while handling the _reflog_
+      * [x] set any valid ref value (not just object ids)
+      * [ ] rename or copy references
     * **log**
       * [x] forward iteration
       * [x] backward iteration
-      * [x] serialization
-      * [ ] create _(via transactions)_
-      * [x] delete _(via transactions)_
       * [ ] expire
     * **ref**
       * [x] peel to id
-  * [ ] packed
-    * [ ] find single ref by name
-    * [ ] find refs matching pattern
-    * [ ] iterate
-    * [ ] write refs
-  * [ ] [reftable][reftable-spec], see [here for a Go/C implementation][reftable-impl]
-    * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2]
+    * **packed**
+      * [ ] find single ref by name
+      * [ ] iterate
+      * [ ] write refs
+  * [ ] **[reftable][reftable-spec]**, 
+    * see [here for a Go/C implementation][reftable-impl]
 * [x] API documentation
     * [ ] Some examples
 

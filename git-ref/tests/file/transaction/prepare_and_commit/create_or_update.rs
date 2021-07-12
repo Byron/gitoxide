@@ -177,6 +177,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.find_one("HEAD")?.expect("head exists already");
     let target = head.target().to_owned();
+    let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
     let edits = store
         .transaction(
@@ -207,6 +208,12 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
             name: "HEAD".try_into()?,
             deref: false,
         }]
+    );
+
+    assert_eq!(
+        reflog_lines(&store, "HEAD")?.len(),
+        previous_reflog_count,
+        "no new reflog is actually added"
     );
     Ok(())
 }
@@ -399,7 +406,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                     log: LogChange {
                         mode: RefLog::AndReference,
                         force_create_reflog: false,
-                        message: "writes just the referent".into(),
+                        message: "".into(),
                     },
                     mode: Create::OrUpdate {
                         previous: Some(Target::must_exist()),
@@ -421,7 +428,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                 log: LogChange {
                     mode: RefLog::AndReference,
                     force_create_reflog: false,
-                    message: "writes just the referent".into(),
+                    message: "".into(),
                 },
                 mode: Create::OrUpdate {
                     previous: Some(Target::Peeled(hex_to_id("02a7a22d90d7c02fb494ed25551850b868e634f0"))),
@@ -438,11 +445,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
         "nothing changed in the heads reflog"
     );
 
-    let expected_line = log_line(
-        hex_to_id("02a7a22d90d7c02fb494ed25551850b868e634f0"),
-        new_id,
-        "writes just the referent",
-    );
+    let expected_line = log_line(hex_to_id("02a7a22d90d7c02fb494ed25551850b868e634f0"), new_id, "");
     assert_eq!(
         reflog_lines(&store, &referent.to_string())?
             .last()
