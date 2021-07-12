@@ -22,7 +22,7 @@ use bstr::BStr;
 use git_hash::oid;
 
 mod store;
-pub use store::file;
+pub use store::{file, packed};
 ///
 pub mod name;
 ///

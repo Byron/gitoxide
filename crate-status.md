@@ -309,9 +309,12 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
   * **loose file**
     * [x] ref validation
     * [x] find single ref by name
+    * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
     * [ ] find refs matching pattern
     * [ ] iterate refs with optional prefix
     * [ ] [worktree support]
+    * ~~symbolic ref support, using symbolic links~~
+        * This is a legacy feature which is not in use anymore.
     * **transactions** 
       * [x] delete, create or update single ref or multiple refs while handling the _reflog_
       * [x] set any valid ref value (not just object ids)
