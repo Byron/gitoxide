@@ -1,27 +1,39 @@
+use crate::parse::hex_sha1;
 use crate::{
     parse::newline,
     store::{packed, packed::Peeled},
 };
-use bstr::ByteSlice;
+use bstr::{BStr, ByteSlice};
+use nom::combinator::map;
+use nom::sequence::{preceded, terminated};
 use nom::{
-    bytes::complete::{tag, take_until, take_while},
+    bytes::complete::{tag, take_while},
     combinator::opt,
     error::ParseError,
     sequence::{delimited, tuple},
     IResult,
 };
 
+fn until_newline<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E>
+where
+    E: ParseError<&'a [u8]>,
+{
+    map(
+        terminated(take_while(|b: u8| b != b'\r' && b != b'\n'), newline),
+        |not_newline| not_newline.as_bstr(),
+    )(input)
+}
+
 fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], packed::Header, E>
 where
     E: ParseError<&'a [u8]>,
 {
-    let (rest, traits) = delimited(
+    let (rest, traits) = preceded(
         tuple((
             opt(take_while(|c: u8| c.is_ascii_whitespace())),
             tag(b"# pack-refs with: "),
         )),
-        take_until("\n"),
-        newline,
+        until_newline,
     )(input)?;
 
     let mut peeled = Peeled::Unspecified;
@@ -39,8 +51,17 @@ where
     Ok((rest, packed::Header { peeled, sorted }))
 }
 
-fn reference<'a, E: ParseError<&'a [u8]>>(input: &[u8]) -> IResult<&[u8], packed::Reference<'a>, E> {
-    todo!("line parsing")
+fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
+    let (input, (target, full_name)) = tuple((terminated(hex_sha1, tag(b" ")), until_newline))(input)?;
+    let (rest, possibly_object_id) = opt(delimited(tag(b"^"), hex_sha1, newline))(input)?;
+    Ok((
+        rest,
+        packed::Reference {
+            full_name,
+            target: target.as_bstr(),
+            object: possibly_object_id.map(|id| id.as_bstr()),
+        },
+    ))
 }
 
 #[cfg(test)]
@@ -54,7 +75,6 @@ mod tests {
         use nom::error::VerboseError;
 
         #[test]
-        #[ignore]
         fn two_refs_in_a_row() {
             let input: &[u8] = b"d53c4b0f91f1b29769c9430f2d1c0bcab1170c75 refs/heads/alternates-after-packs-and-loose\n^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\neaae9c1bc723209d793eb93f5587fa2604d5cd92 refs/heads/avoid-double-lookup\n";
             let (input, parsed) = decode::reference::<VerboseError<_>>(input).unwrap();
@@ -69,7 +89,7 @@ mod tests {
             let (input, parsed) = decode::reference::<VerboseError<_>>(input).unwrap();
             assert!(input.is_empty(), "exhausted");
             assert_eq!(parsed.full_name, "refs/heads/avoid-double-lookup");
-            assert_eq!(parsed.target, "e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37");
+            assert_eq!(parsed.target, "eaae9c1bc723209d793eb93f5587fa2604d5cd92");
             assert!(parsed.object.is_none());
         }
     }
