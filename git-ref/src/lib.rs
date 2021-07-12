@@ -231,7 +231,7 @@ mod parse {
         take_while_m_n(40usize, 40, is_hex_digit_lc)(i)
     }
 
-    pub fn newline(i: &[u8]) -> IResult<&[u8], &[u8]> {
+    pub fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         alt((tag(b"\r\n"), tag(b"\n")))(i)
     }
 }
