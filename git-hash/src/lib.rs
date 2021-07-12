@@ -75,3 +75,12 @@ impl Default for Kind {
         Kind::Sha1
     }
 }
+
+impl Kind {
+    /// Returns the amount of ascii-characters needed to encode this has in hex
+    pub fn len_in_hex(&self) -> usize {
+        match self {
+            Kind::Sha1 => 40,
+        }
+    }
+}

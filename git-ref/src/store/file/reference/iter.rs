@@ -33,7 +33,7 @@ impl<'a> Reference<'a> {
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(err) => return Err(err.into()),
         };
-        Ok(Some(log::iter::reverse(file, buf)?))
+        Ok(Some(log::iter::reverse(file, buf, self.parent.hash)?))
     }
 
     /// Return a reflog forward iterator for this ref and write its file contents into `buf`.
@@ -56,6 +56,6 @@ impl<'a> Reference<'a> {
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(err) => return Err(err.into()),
         };
-        Ok(Some(log::iter::forward(buf)))
+        Ok(Some(log::iter::forward(buf, self.parent.hash)))
     }
 }

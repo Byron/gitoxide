@@ -84,7 +84,7 @@ mod parse {
     use git_ref::file::Store;
 
     fn store() -> Store {
-        Store::at("base doesnt matter", Default::default())
+        Store::at("base doesnt matter", Default::default(), git_hash::Kind::default())
     }
 
     mod invalid {
@@ -96,7 +96,7 @@ mod parse {
                 #[test]
                 fn $name() {
                     let store = store();
-                    let err = Reference::try_from_path(&store, "name", $input).unwrap_err();
+                    let err = Reference::try_from_path(&store, "name", $input, git_hash::Kind::default()).unwrap_err();
                     assert_eq!(err.to_string(), $err);
                 }
             };
@@ -116,7 +116,7 @@ mod parse {
                 #[test]
                 fn $name() {
                     let store = store();
-                    let reference = Reference::try_from_path(&store, "name", $input).unwrap();
+                    let reference = Reference::try_from_path(&store, "name", $input, git_hash::Kind::Sha1).unwrap();
                     assert_eq!(reference.kind(), $kind);
                     assert_eq!(reference.target().as_id(), $id);
                     assert_eq!(reference.target().as_name(), $ref);

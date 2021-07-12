@@ -1,4 +1,4 @@
-use crate::parse::hex_sha1;
+use crate::parse::hex_sha;
 use crate::{
     parse::newline,
     store::{packed, packed::Peeled},
@@ -45,9 +45,12 @@ where
     Ok((rest, packed::Header { peeled, sorted }))
 }
 
-fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
-    let (input, (target, full_name)) = tuple((terminated(hex_sha1, tag(b" ")), until_newline))(input)?;
-    let (rest, object) = opt(delimited(tag(b"^"), hex_sha1, newline))(input)?;
+fn reference<'a, E: ParseError<&'a [u8]>>(
+    input: &'a [u8],
+    hash: git_hash::Kind,
+) -> IResult<&'a [u8], packed::Reference<'a>, E> {
+    let (input, (target, full_name)) = tuple((terminated(hex_sha(hash), tag(b" ")), until_newline))(input)?;
+    let (rest, object) = opt(delimited(tag(b"^"), hex_sha(hash), newline))(input)?;
     Ok((
         rest,
         packed::Reference {
@@ -65,14 +68,15 @@ mod tests {
     mod reference {
         use crate::store::packed::decode;
         use bstr::ByteSlice;
+        use git_hash::Kind::Sha1;
         use git_testtools::hex_to_id;
         use nom::error::VerboseError;
 
         #[test]
         fn invalid() {
-            assert!(decode::reference::<()>(b"# what looks like a comment").is_err());
+            assert!(decode::reference::<()>(b"# what looks like a comment", Sha1).is_err());
             assert!(
-                decode::reference::<()>(b"^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\n").is_err(),
+                decode::reference::<()>(b"^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\n", Sha1).is_err(),
                 "lonely peel"
             );
         }
@@ -80,7 +84,7 @@ mod tests {
         #[test]
         fn two_refs_in_a_row() {
             let input: &[u8] = b"d53c4b0f91f1b29769c9430f2d1c0bcab1170c75 refs/heads/alternates-after-packs-and-loose\n^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\neaae9c1bc723209d793eb93f5587fa2604d5cd92 refs/heads/avoid-double-lookup\n";
-            let (input, parsed) = decode::reference::<VerboseError<_>>(input).unwrap();
+            let (input, parsed) = decode::reference::<VerboseError<_>>(input, Sha1).unwrap();
 
             assert_eq!(parsed.full_name, "refs/heads/alternates-after-packs-and-loose");
             assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
@@ -90,7 +94,7 @@ mod tests {
             );
             assert_eq!(parsed.object(), hex_to_id("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37"));
 
-            let (input, parsed) = decode::reference::<VerboseError<_>>(input).unwrap();
+            let (input, parsed) = decode::reference::<VerboseError<_>>(input, Sha1).unwrap();
             assert!(input.is_empty(), "exhausted");
             assert_eq!(parsed.full_name, "refs/heads/avoid-double-lookup");
             assert_eq!(parsed.target, "eaae9c1bc723209d793eb93f5587fa2604d5cd92");

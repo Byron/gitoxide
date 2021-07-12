@@ -50,9 +50,9 @@ pub mod decode {
 /// This iterator is useful when the ref log file is going to be rewritten which forces processing of the entire file.
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
-    lines.as_bstr().lines().enumerate().map(|(ln, line)| {
-        log::Line::from_bytes(line).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
+pub fn forward(lines: &[u8], hash: git_hash::Kind) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
+    lines.as_bstr().lines().enumerate().map(move |(ln, line)| {
+        log::Line::from_bytes(line, hash).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
     })
 }
 
@@ -63,6 +63,7 @@ pub struct Reverse<'a, F> {
     count: usize,
     read_and_pos: Option<(F, u64)>,
     last_nl_pos: Option<usize>,
+    hash: git_hash::Kind,
 }
 
 /// An iterator over entries of the `log` file in reverse, using `buf` as sliding window.
@@ -75,7 +76,7 @@ pub struct Reverse<'a, F> {
 ///
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn reverse<F>(mut log: F, buf: &mut [u8]) -> std::io::Result<Reverse<'_, F>>
+pub fn reverse<F>(mut log: F, buf: &mut [u8], hash: git_hash::Kind) -> std::io::Result<Reverse<'_, F>>
 where
     F: std::io::Read + std::io::Seek,
 {
@@ -85,6 +86,7 @@ where
         count: 0,
         read_and_pos: Some((log, pos)),
         last_nl_pos: None,
+        hash,
     })
 }
 
@@ -123,7 +125,7 @@ where
                     self.read_and_pos = Some(read_and_pos);
                     self.last_nl_pos = Some(start);
                     let buf = &self.buf[start + 1..end];
-                    let res = Some(Ok(log::Line::from_bytes(buf)
+                    let res = Some(Ok(log::Line::from_bytes(buf, self.hash)
                         .map_err(|err| decode::Error::new(err, LineNumber::FromEnd(self.count)))
                         .map(Into::into)));
                     self.count += 1;
@@ -133,7 +135,7 @@ where
                     let (mut read, last_read_pos) = read_and_pos;
                     if last_read_pos == 0 {
                         let buf = &self.buf[..end];
-                        Some(Ok(log::Line::from_bytes(buf)
+                        Some(Ok(log::Line::from_bytes(buf, self.hash)
                             .map_err(|err| decode::Error::new(err, LineNumber::FromEnd(self.count)))
                             .map(Into::into)))
                     } else {
