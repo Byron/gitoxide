@@ -41,52 +41,53 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::store::packed::Peeled;
-    use bstr::ByteSlice;
-    use git_testtools::to_bstr_err;
+    mod header {
+        use crate::store::packed::{decode, Header, Peeled};
+        use bstr::ByteSlice;
+        use git_testtools::to_bstr_err;
 
-    #[test]
-    fn valid_header_fully_peeled_stored() {
-        let input: &[u8] = b"  # pack-refs with: peeled fully-peeled sorted  \nsomething else";
-        let (rest, header) = header::<nom::error::VerboseError<_>>(input)
-            .map_err(to_bstr_err)
-            .unwrap();
-        assert_eq!(rest.as_bstr(), "something else", "remainder starts after newline");
-        assert_eq!(
-            header,
-            Header {
-                peeled: Peeled::Fully,
-                sorted: true
-            }
-        );
-    }
+        #[test]
+        fn valid_fully_peeled_stored() {
+            let input: &[u8] = b"  # pack-refs with: peeled fully-peeled sorted  \nsomething else";
+            let (rest, header) = decode::header::<nom::error::VerboseError<_>>(input)
+                .map_err(to_bstr_err)
+                .unwrap();
+            assert_eq!(rest.as_bstr(), "something else", "remainder starts after newline");
+            assert_eq!(
+                header,
+                Header {
+                    peeled: Peeled::Fully,
+                    sorted: true
+                }
+            );
+        }
 
-    #[test]
-    fn valid_header_peeled_unsorted() {
-        let input: &[u8] = b"\n\n# pack-refs with: peeled\n";
-        let (rest, header) = header::<()>(input).unwrap();
-        assert!(rest.is_empty());
-        assert_eq!(
-            header,
-            Header {
-                peeled: Peeled::Partial,
-                sorted: false
-            }
-        );
-    }
+        #[test]
+        fn valid_peeled_unsorted() {
+            let input: &[u8] = b"\n\n# pack-refs with: peeled\n";
+            let (rest, header) = decode::header::<()>(input).unwrap();
+            assert!(rest.is_empty());
+            assert_eq!(
+                header,
+                Header {
+                    peeled: Peeled::Partial,
+                    sorted: false
+                }
+            );
+        }
 
-    #[test]
-    fn valid_header_empty() {
-        let input: &[u8] = b"\n\n# pack-refs with: \n";
-        let (rest, header) = header::<()>(input).unwrap();
-        assert!(rest.is_empty());
-        assert_eq!(
-            header,
-            Header {
-                peeled: Peeled::Unspecified,
-                sorted: false
-            }
-        );
+        #[test]
+        fn valid_empty() {
+            let input: &[u8] = b"\n\n# pack-refs with: \n";
+            let (rest, header) = decode::header::<()>(input).unwrap();
+            assert!(rest.is_empty());
+            assert_eq!(
+                header,
+                Header {
+                    peeled: Peeled::Unspecified,
+                    sorted: false
+                }
+            );
+        }
     }
 }
