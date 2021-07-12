@@ -53,13 +53,13 @@ where
 
 fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
     let (input, (target, full_name)) = tuple((terminated(hex_sha1, tag(b" ")), until_newline))(input)?;
-    let (rest, possibly_object_id) = opt(delimited(tag(b"^"), hex_sha1, newline))(input)?;
+    let (rest, object) = opt(delimited(tag(b"^"), hex_sha1, newline))(input)?;
     Ok((
         rest,
         packed::Reference {
             full_name,
-            target: target.as_bstr(),
-            object: possibly_object_id.map(|id| id.as_bstr()),
+            target,
+            object,
         },
     ))
 }

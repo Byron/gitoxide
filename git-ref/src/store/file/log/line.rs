@@ -102,8 +102,8 @@ pub mod decode {
         Ok((
             i,
             Line {
-                previous_oid: old.as_bstr(),
-                new_oid: new.as_bstr(),
+                previous_oid: old,
+                new_oid: new,
                 signature,
                 message,
             },
