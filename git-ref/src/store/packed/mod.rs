@@ -3,8 +3,6 @@
 use bstr::BStr;
 use git_hash::ObjectId;
 
-pub mod iter {}
-
 #[derive(Debug, PartialEq, Eq)]
 enum Peeled {
     Unspecified,
@@ -17,6 +15,15 @@ enum Peeled {
 struct Header {
     peeled: Peeled,
     sorted: bool,
+}
+
+impl Default for Header {
+    fn default() -> Self {
+        Header {
+            peeled: Peeled::Unspecified,
+            sorted: false,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -48,3 +55,26 @@ impl<'a> Reference<'a> {
 }
 
 mod decode;
+
+///
+pub mod iter {
+    mod error {
+        use bstr::BString;
+        use quick_error::quick_error;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Reference{ invalid_line: BString, line_number: usize } {
+                    display("Invalid reference in line {}: '{}'", line_number, invalid_line)
+                }
+            }
+        }
+    }
+    pub use error::Error;
+
+    struct ForwardIter<'a> {
+        cursor: &'a [u8],
+        hash: git_hash::Kind,
+    }
+}
