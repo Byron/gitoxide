@@ -28,13 +28,7 @@ fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], packed::Header, E>
 where
     E: ParseError<&'a [u8]>,
 {
-    let (rest, traits) = preceded(
-        tuple((
-            opt(take_while(|c: u8| c.is_ascii_whitespace())),
-            tag(b"# pack-refs with: "),
-        )),
-        until_newline,
-    )(input)?;
+    let (rest, traits) = preceded(tag(b"# pack-refs with: "), until_newline)(input)?;
 
     let mut peeled = Peeled::Unspecified;
     let mut sorted = false;
@@ -75,9 +69,19 @@ mod tests {
         use nom::error::VerboseError;
 
         #[test]
+        fn invalid() {
+            assert!(decode::reference::<()>(b"# what looks like a comment").is_err());
+            assert!(
+                decode::reference::<()>(b"^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\n").is_err(),
+                "lonely peel"
+            );
+        }
+
+        #[test]
         fn two_refs_in_a_row() {
             let input: &[u8] = b"d53c4b0f91f1b29769c9430f2d1c0bcab1170c75 refs/heads/alternates-after-packs-and-loose\n^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\neaae9c1bc723209d793eb93f5587fa2604d5cd92 refs/heads/avoid-double-lookup\n";
             let (input, parsed) = decode::reference::<VerboseError<_>>(input).unwrap();
+
             assert_eq!(parsed.full_name, "refs/heads/alternates-after-packs-and-loose");
             assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
             assert_eq!(
@@ -106,12 +110,17 @@ mod tests {
                 "something the user put there"
             );
             assert!(decode::header::<()>(b"# pack-refs: ").is_err(), "looks right but isn't");
+            assert!(
+                decode::header::<()>(b" # pack-refs with: ").is_err(),
+                "does not start with #"
+            );
         }
 
         #[test]
-        fn valid_fully_peeled_stored_with_leading_spaces() -> Result {
-            let input: &[u8] = b"  # pack-refs with: peeled fully-peeled sorted  \nsomething else";
+        fn valid_fully_peeled_stored() -> Result {
+            let input: &[u8] = b"# pack-refs with: peeled fully-peeled sorted  \nsomething else";
             let (rest, header) = decode::header::<nom::error::VerboseError<_>>(input).map_err(to_bstr_err)?;
+
             assert_eq!(rest.as_bstr(), "something else", "remainder starts after newline");
             assert_eq!(
                 header,
@@ -124,9 +133,10 @@ mod tests {
         }
 
         #[test]
-        fn valid_peeled_unsorted_with_leading_newlines() -> Result {
-            let input: &[u8] = b"\n\n# pack-refs with: peeled\n";
+        fn valid_peeled_unsorted() -> Result {
+            let input: &[u8] = b"# pack-refs with: peeled\n";
             let (rest, header) = decode::header::<()>(input)?;
+
             assert!(rest.is_empty());
             assert_eq!(
                 header,
@@ -139,9 +149,10 @@ mod tests {
         }
 
         #[test]
-        fn valid_empty_without_leading_bytes() -> Result {
+        fn valid_empty() -> Result {
             let input: &[u8] = b"# pack-refs with: \n";
             let (rest, header) = decode::header::<()>(input)?;
+
             assert!(rest.is_empty());
             assert_eq!(
                 header,
