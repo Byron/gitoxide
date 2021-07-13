@@ -1078,6 +1078,7 @@ name = "git-ref"
 version = "0.5.0"
 dependencies = [
  "bstr",
+ "filebuffer",
  "git-actor",
  "git-hash",
  "git-lock",

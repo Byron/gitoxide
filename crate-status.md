@@ -319,6 +319,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
       * [x] delete, create or update single ref or multiple refs while handling the _reflog_
       * [x] set any valid ref value (not just object ids)
       * [ ] rename or copy references
+      * [ ] transparent handling of packed-refs
     * **log**
       * [x] forward iteration
       * [x] backward iteration
@@ -327,8 +328,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
       * [x] peel to id
     * **packed**
       * [ ] find single ref by name
-      * [ ] iterate
-      * [ ] write refs
+      * [x] iterate
   * [ ] **[reftable][reftable-spec]**, 
     * see [here for a Go/C implementation][reftable-impl]
 * [x] API documentation

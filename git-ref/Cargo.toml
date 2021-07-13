@@ -31,6 +31,9 @@ nom = { version = "6", default-features = false, features = ["alloc"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 os_str_bytes = "3.1.0"
 
+# packed refs
+filebuffer = "0.4.0"
+
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools" }
 tempfile = "3.2.0"

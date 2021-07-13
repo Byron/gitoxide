@@ -1,11 +1,13 @@
 use bstr::BStr;
+use filebuffer::FileBuffer;
 use git_hash::ObjectId;
 
-#[derive(Debug, PartialEq, Eq)]
-enum Peeled {
-    Unspecified,
-    Partial,
-    Fully,
+/// A buffer that is either memory mapped or fully in-memory depending on a cutoff.
+pub enum Buffer {
+    /// The buffer is loaded entirely in memory
+    InMemory(Vec<u8>),
+    /// The buffer is mapping the file on disk.
+    Mapped(FileBuffer),
 }
 
 /// A reference as parsed from the `packed-refs` file
@@ -48,3 +50,40 @@ mod decode;
 
 ///
 pub mod iter;
+
+/// The general functionality that can be reusable. Maybe put it into git-features so that one day WASM support can be achieved.
+mod buffer {
+    use crate::store::packed;
+    use filebuffer::FileBuffer;
+    use std::path::Path;
+
+    impl AsRef<[u8]> for packed::Buffer {
+        fn as_ref(&self) -> &[u8] {
+            match self {
+                packed::Buffer::InMemory(v) => &v,
+                packed::Buffer::Mapped(m) => &m,
+            }
+        }
+    }
+
+    /// Initialization
+    impl packed::Buffer {
+        /// Open the file at `path` and map it into memory if the file size is larger than `use_memory_map_if_larger_than_bytes`.
+        pub fn open(path: impl AsRef<Path>, use_memory_map_if_larger_than_bytes: u64) -> std::io::Result<Self> {
+            let path = path.as_ref();
+            if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
+                Ok(packed::Buffer::InMemory(std::fs::read(path)?))
+            } else {
+                Ok(packed::Buffer::Mapped(FileBuffer::open(path)?))
+            }
+        }
+    }
+
+    /// packed-refs specific functionality
+    impl packed::Buffer {
+        /// Return an iterator of references stored in this packed refs buffer.
+        pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
+            packed::Iter::new(self.as_ref())
+        }
+    }
+}

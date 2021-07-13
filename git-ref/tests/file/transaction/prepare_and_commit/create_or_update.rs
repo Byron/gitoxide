@@ -1,5 +1,7 @@
-use crate::file::store_writable;
-use crate::file::transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines};
+use crate::file::{
+    store_writable,
+    transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
+};
 use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;

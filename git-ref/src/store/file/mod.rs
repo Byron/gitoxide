@@ -57,6 +57,26 @@ mod traits {
 mod loose;
 pub use loose::find_one;
 
+mod packed {
+    use crate::store::{file, packed};
+    use std::path::PathBuf;
+
+    impl file::Store {
+        /// Return a buffer for the packed file
+        pub fn packed(&self) -> std::io::Result<Option<packed::Buffer>> {
+            match packed::Buffer::open(self.packed_refs_path(), 32 * 1024) {
+                Ok(buf) => Ok(Some(buf)),
+                Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                Err(err) => Err(err),
+            }
+        }
+
+        fn packed_refs_path(&self) -> PathBuf {
+            self.base.join("packed-refs")
+        }
+    }
+}
+
 ///
 pub mod reference;
 
