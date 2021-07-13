@@ -78,7 +78,7 @@ impl file::Store {
             Some(c) => c,
         };
         Ok(Some(
-            file::Reference::try_from_path(self, &relative_path, &contents, self.hash)
+            file::Reference::try_from_path(self, &relative_path, &contents)
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?,
         ))
     }

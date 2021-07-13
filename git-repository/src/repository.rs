@@ -49,7 +49,6 @@ pub mod discover {
                     } else {
                         git_ref::file::WriteReflog::Normal
                     },
-                    git_hash::Kind::default(), // TODO: figure out what it should be
                 ),
                 working_tree,
             })

@@ -1,13 +1,12 @@
 mod line {
     mod write_to {
         use bstr::ByteVec;
-        use git_hash::Kind::Sha1;
         use git_ref::file::log;
 
         #[test]
         fn newlines_in_message_of_the_input_fails_and_we_trust_signature_writing_validation() -> crate::Result {
             let line = "0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1";
-            let mut line = log::Line::from_bytes(line.as_bytes(), Sha1)?.to_mutable();
+            let mut line = log::Line::from_bytes(line.as_bytes())?.to_mutable();
             line.message.push_str("and here come\nthe newline");
             let err = line
                 .write_to(&mut Vec::new())
@@ -21,10 +20,10 @@ mod line {
             let lines = &["0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n", 
                          "0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	\n"];
             for line in lines {
-                let line = log::Line::from_bytes(line.as_bytes(), Sha1)?;
+                let line = log::Line::from_bytes(line.as_bytes())?;
                 let mut buf = Vec::new();
                 line.to_mutable().write_to(&mut buf)?;
-                let same_line = log::Line::from_bytes(&buf, Sha1)?;
+                let same_line = log::Line::from_bytes(&buf)?;
                 assert_eq!(line, same_line);
             }
             Ok(())
@@ -48,8 +47,6 @@ mod iter {
 
     mod backward {
         mod with_buffer_too_small_for_single_line {
-            use git_hash::Kind::Sha1;
-
             #[test]
             fn single_line() -> crate::Result {
                 let mut buf = [0u8; 128];
@@ -61,7 +58,7 @@ mod iter {
                 };
                 for line in &[two_lines, two_lines_trailing_nl] {
                     let read = std::io::Cursor::new(line);
-                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf, Sha1)?;
+                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
                     assert_eq!(
                         iter.next()
                             .expect("an error")
@@ -78,7 +75,6 @@ mod iter {
         }
 
         mod with_buffer_big_enough_for_largest_line {
-            use git_hash::Kind::Sha1;
             use git_ref::file::log::mutable::Line;
             use git_testtools::hex_to_id;
 
@@ -93,7 +89,7 @@ mod iter {
                 };
                 for line in &[two_lines, two_lines_trailing_nl] {
                     let read = std::io::Cursor::new(line);
-                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf, Sha1)?;
+                    let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
                     let Line {
                         previous_oid,
                         new_oid,
@@ -121,7 +117,7 @@ mod iter {
                     let mut buf = vec![0; *buf_size];
                     for line in &lines {
                         let read = std::io::Cursor::new(line);
-                        let mut iter = git_ref::file::log::iter::reverse(read, &mut buf, Sha1)?;
+                        let mut iter = git_ref::file::log::iter::reverse(read, &mut buf)?;
                         let Line {
                             previous_oid,
                             new_oid,
@@ -150,16 +146,15 @@ mod iter {
     mod forward {
         use crate::file::log::iter::reflog;
         use bstr::B;
-        use git_hash::Kind::Sha1;
         use git_hash::ObjectId;
 
         #[test]
         fn all_success() -> crate::Result {
             let log = reflog("HEAD")?;
-            let iter = git_ref::file::log::iter::forward(&log, Sha1);
+            let iter = git_ref::file::log::iter::forward(&log);
             assert_eq!(iter.count(), 5, "the log as a known amount of entries");
 
-            let mut iter = git_ref::file::log::iter::forward(&log, Sha1);
+            let mut iter = git_ref::file::log::iter::forward(&log);
             let line = iter.next().unwrap()?;
             assert_eq!(line.previous_oid(), ObjectId::null_sha1());
             assert_eq!(line.new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
@@ -173,7 +168,7 @@ mod iter {
             let log_first_broken = "0000000000000000000000000000000000000000 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit
 0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n";
 
-            let mut iter = git_ref::file::log::iter::forward(log_first_broken.as_bytes(), Sha1);
+            let mut iter = git_ref::file::log::iter::forward(log_first_broken.as_bytes());
             let err = iter.next().expect("error is not none").expect_err("the line is broken");
             assert_eq!(err.to_string(), "In line 1: \"0000000000000000000000000000000000000000 134385fbroken7062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000\\tcommit\" did not match '<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>'");
             assert!(iter.next().expect("a second line").is_ok(), "line parses ok");

@@ -36,8 +36,6 @@ pub struct Store {
     pub base: PathBuf,
     /// The way to handle reflog edits
     pub write_reflog: WriteReflog,
-    /// The kind of hash we are expecting to parse
-    pub hash: git_hash::Kind,
 }
 
 mod traits {

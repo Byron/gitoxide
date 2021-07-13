@@ -24,7 +24,7 @@ impl file::Store {
             return Ok(None);
         }
         match std::fs::File::open(&path) {
-            Ok(file) => Ok(Some(log::iter::reverse(file, buf, self.hash)?)),
+            Ok(file) => Ok(Some(log::iter::reverse(file, buf)?)),
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(err) => Err(err.into()),
         }
@@ -51,7 +51,7 @@ impl file::Store {
                 if let Err(err) = file.read_to_end(buf) {
                     return if path.is_dir() { Ok(None) } else { Err(err.into()) };
                 }
-                Ok(Some(log::iter::forward(buf, self.hash)))
+                Ok(Some(log::iter::forward(buf)))
             }
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
             #[cfg(target_os = "windows")]

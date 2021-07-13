@@ -2,7 +2,6 @@ fn store() -> crate::Result<git_ref::file::Store> {
     Ok(git_ref::file::Store::at(
         git_testtools::scripted_fixture_repo_read_only("make_repo_for_reflog.sh")?.join(".git"),
         git_ref::file::WriteReflog::Disable,
-        git_hash::Kind::Sha1,
     ))
 }
 

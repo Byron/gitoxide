@@ -60,10 +60,8 @@ impl<'a> Transaction<'a> {
             .ref_contents(relative_path.as_ref())
             .map_err(Error::from)
             .and_then(|opt| {
-                opt.map(|buf| {
-                    file::Reference::try_from_path(store, relative_path.as_ref(), &buf, store.hash).map_err(Error::from)
-                })
-                .transpose()
+                opt.map(|buf| file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from))
+                    .transpose()
             })
             .or_else(|err| match err {
                 Error::ReferenceDecode(_) => Ok(None),

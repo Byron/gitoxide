@@ -306,7 +306,6 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
 * **Stores**
   * [ ] disable transactions during [quarantine]
-  * [x] ready for different hash algorithms
   * **loose file**
     * [x] ref validation
     * [x] find single ref by name

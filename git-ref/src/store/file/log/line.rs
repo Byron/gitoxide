@@ -15,7 +15,7 @@ impl<'a> Line<'a> {
 
 ///
 pub mod decode {
-    use crate::{file::log::Line, parse::hex_sha};
+    use crate::{file::log::Line, parse::hex_sha1};
 
     use bstr::{BStr, ByteSlice};
     use nom::{
@@ -60,8 +60,8 @@ pub mod decode {
 
     impl<'a> Line<'a> {
         /// Decode a line from the given bytes which are expected to start at a hex sha.
-        pub fn from_bytes(input: &'a [u8], hash: git_hash::Kind) -> Result<Line<'a>, Error> {
-            one::<()>(input, hash).map(|(_, l)| l).map_err(|_| Error::new(input))
+        pub fn from_bytes(input: &'a [u8]) -> Result<Line<'a>, Error> {
+            one::<()>(input).map(|(_, l)| l).map_err(|_| Error::new(input))
         }
     }
 
@@ -75,13 +75,12 @@ pub mod decode {
 
     pub(crate) fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         bytes: &'a [u8],
-        hash: git_hash::Kind,
     ) -> IResult<&[u8], Line<'a>, E> {
         let (i, (old, new, signature, message_sep, message)) = context(
             "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
             tuple((
-                context("<old-hexsha>", terminated(hex_sha(hash), tag(b" "))),
-                context("<new-hexsha>", terminated(hex_sha(hash), tag(b" "))),
+                context("<old-hexsha>", terminated(hex_sha1, tag(b" "))),
+                context("<new-hexsha>", terminated(hex_sha1, tag(b" "))),
                 context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
                 opt(tag(b"\t")),
                 context("<optional message>", message),
@@ -116,7 +115,6 @@ pub mod decode {
         use super::*;
         use bstr::ByteSlice;
         use git_actor::{Sign, Time};
-        use git_hash::Kind::Sha1;
         use git_hash::ObjectId;
 
         fn hex_to_oid(hex: &str) -> ObjectId {
@@ -130,13 +128,13 @@ pub mod decode {
 
         mod invalid {
             use super::one;
-            use git_hash::Kind::Sha1;
+
             use git_testtools::to_bstr_err;
             use nom::error::VerboseError;
 
             #[test]
             fn completely_bogus_shows_error_with_context() {
-                let err = one::<VerboseError<&[u8]>>(b"definitely not a log entry", Sha1)
+                let err = one::<VerboseError<&[u8]>>(b"definitely not a log entry")
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
                 assert!(err.to_string().contains("<old-hexsha> <new-hexsha>"));
@@ -145,7 +143,7 @@ pub mod decode {
             #[test]
             fn missing_whitespace_between_signature_and_message() {
                 let line = "0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000message";
-                let err = one::<VerboseError<&[u8]>>(line.as_bytes(), Sha1)
+                let err = one::<VerboseError<&[u8]>>(line.as_bytes())
                     .map_err(to_bstr_err)
                     .expect_err("this should fail");
                 assert!(err
@@ -162,7 +160,7 @@ pub mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
             for input in &[line_without_nl, line_with_nl] {
                 assert_eq!(
-                    one::<nom::error::Error<_>>(input, Sha1).expect("successful parsing").1,
+                    one::<nom::error::Error<_>>(input).expect("successful parsing").1,
                     Line {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
@@ -187,7 +185,7 @@ pub mod decode {
             let line_with_nl = with_newline(line_without_nl.clone());
 
             for input in &[line_without_nl, line_with_nl] {
-                let (remaining, res) = one::<nom::error::Error<_>>(&input, Sha1).expect("successful parsing");
+                let (remaining, res) = one::<nom::error::Error<_>>(&input).expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
                 let actual = Line {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
@@ -215,10 +213,10 @@ pub mod decode {
         #[test]
         fn two_lines_in_a_row_with_and_without_newline() {
             let lines = b"0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 one <foo@example.com> 1234567890 -0000\t\n0000000000000000000000000000000000000000 0000000000000000000000000000000000000000 two <foo@example.com> 1234567890 -0000\thello";
-            let (remainder, parsed) = one::<nom::error::Error<_>>(lines, Sha1).expect("parse single line");
+            let (remainder, parsed) = one::<nom::error::Error<_>>(lines).expect("parse single line");
             assert_eq!(parsed.message, b"".as_bstr(), "first message is empty");
 
-            let (remainder, parsed) = one::<nom::error::Error<_>>(remainder, Sha1).expect("parse single line");
+            let (remainder, parsed) = one::<nom::error::Error<_>>(remainder).expect("parse single line");
             assert_eq!(
                 parsed.message,
                 b"hello".as_bstr(),

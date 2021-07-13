@@ -1,6 +1,6 @@
 use crate::{
     file::{reference::State, Reference, Store},
-    parse::{hex_sha, newline},
+    parse::{hex_sha1, newline},
 };
 use bstr::BString;
 use git_hash::ObjectId;
@@ -59,12 +59,11 @@ impl<'a> Reference<'a> {
         parent: &'a Store,
         relative_path: impl Into<PathBuf>,
         path_contents: &[u8],
-        hash: git_hash::Kind,
     ) -> Result<Self, Error> {
         Ok(Reference {
             parent,
             relative_path: relative_path.into(),
-            state: parse(path_contents, hash)
+            state: parse(path_contents)
                 .map_err(|_| Error::Parse(path_contents.into()))?
                 .1
                 .try_into()?,
@@ -72,7 +71,7 @@ impl<'a> Reference<'a> {
     }
 }
 
-fn parse(bytes: &[u8], hash: git_hash::Kind) -> IResult<&[u8], MaybeUnsafeState> {
+fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
     let is_space = |b: u8| b == b' ';
     if let (path, Some(_ref_prefix)) = opt(terminated(tag("ref: "), take_while(is_space)))(bytes)? {
         map(
@@ -80,7 +79,7 @@ fn parse(bytes: &[u8], hash: git_hash::Kind) -> IResult<&[u8], MaybeUnsafeState>
             |path| MaybeUnsafeState::UnvalidatedPath(path.into()),
         )(path)
     } else {
-        map(terminated(hex_sha(hash), opt(newline)), |hex| {
+        map(terminated(hex_sha1, opt(newline)), |hex| {
             MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation"))
         })(bytes)
     }

@@ -11,7 +11,7 @@ type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
     let dir = TempDir::new()?;
-    let store = file::Store::at(dir.path(), writemode, git_hash::Kind::Sha1);
+    let store = file::Store::at(dir.path(), writemode);
     Ok((dir, store))
 }
 
