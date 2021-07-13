@@ -1,18 +1,31 @@
-use crate::parse::hex_hash;
 use crate::{
-    parse::newline,
+    parse::{hex_hash, newline},
     store::{packed, packed::Peeled},
 };
 use bstr::{BStr, ByteSlice};
-use nom::combinator::map;
-use nom::sequence::{preceded, terminated};
 use nom::{
     bytes::complete::{tag, take_while},
-    combinator::opt,
+    combinator::{map, opt},
     error::ParseError,
-    sequence::{delimited, tuple},
+    sequence::{delimited, preceded, terminated, tuple},
     IResult,
 };
+
+/// Information parsed from the header of a packed ref file
+#[derive(Debug, PartialEq, Eq)]
+pub struct Header {
+    peeled: Peeled,
+    sorted: bool,
+}
+
+impl Default for Header {
+    fn default() -> Self {
+        Header {
+            peeled: Peeled::Unspecified,
+            sorted: false,
+        }
+    }
+}
 
 fn until_newline<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E>
 where
@@ -24,7 +37,7 @@ where
     )(input)
 }
 
-fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], packed::Header, E>
+pub fn header<'a, E>(input: &'a [u8]) -> IResult<&'a [u8], Header, E>
 where
     E: ParseError<&'a [u8]>,
 {
@@ -42,10 +55,10 @@ where
         }
     }
 
-    Ok((rest, packed::Header { peeled, sorted }))
+    Ok((rest, Header { peeled, sorted }))
 }
 
-fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
+pub fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
     let (input, (target, full_name)) = tuple((terminated(hex_hash, tag(b" ")), until_newline))(input)?;
     let (rest, object) = opt(delimited(tag(b"^"), hex_hash, newline))(input)?;
     Ok((
