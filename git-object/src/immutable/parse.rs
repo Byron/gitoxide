@@ -65,8 +65,13 @@ fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
 }
 
-pub(crate) fn hex_sha1<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
-    take_while_m_n(40usize, 40, is_hex_digit_lc)(i).map(|(i, o)| (i, o.as_bstr()))
+pub fn hex_sha1<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+    take_while_m_n(
+        git_hash::Kind::shortest().len_in_hex(),
+        git_hash::Kind::longest().len_in_hex(),
+        is_hex_digit_lc,
+    )(i)
+    .map(|(i, hex)| (i, hex.as_bstr()))
 }
 
 pub(crate) fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(

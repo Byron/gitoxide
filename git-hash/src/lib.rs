@@ -75,3 +75,22 @@ impl Default for Kind {
         Kind::Sha1
     }
 }
+
+impl Kind {
+    /// Returns the shortest hash we support
+    pub const fn shortest() -> Self {
+        Self::Sha1
+    }
+
+    /// Returns the longest hash we support
+    pub const fn longest() -> Self {
+        Self::Sha1
+    }
+
+    /// Returns the amount of ascii-characters needed to encode this has in hex
+    pub const fn len_in_hex(&self) -> usize {
+        match self {
+            Kind::Sha1 => 40,
+        }
+    }
+}
