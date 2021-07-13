@@ -25,7 +25,10 @@ impl<'a> Iterator for packed::Iter<'a> {
                 self.current_line += 1;
 
                 Some(Err(Error::Reference {
-                    invalid_line: failed_line.as_bstr().trim_end().into(),
+                    invalid_line: failed_line
+                        .get(..failed_line.len().saturating_sub(1))
+                        .unwrap_or(failed_line)
+                        .into(),
                     line_number,
                 }))
             }
