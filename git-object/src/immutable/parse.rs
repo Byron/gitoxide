@@ -65,7 +65,7 @@ fn is_hex_digit_lc(b: u8) -> bool {
     matches!(b, b'0'..=b'9' | b'a'..=b'f')
 }
 
-pub fn hex_sha1<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
     take_while_m_n(
         git_hash::Kind::shortest().len_in_hex(),
         git_hash::Kind::longest().len_in_hex(),

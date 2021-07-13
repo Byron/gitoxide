@@ -15,7 +15,7 @@ impl<'a> Line<'a> {
 
 ///
 pub mod decode {
-    use crate::{file::log::Line, parse::hex_sha1};
+    use crate::{file::log::Line, parse::hex_hash};
 
     use bstr::{BStr, ByteSlice};
     use nom::{
@@ -79,8 +79,8 @@ pub mod decode {
         let (i, (old, new, signature, message_sep, message)) = context(
             "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
             tuple((
-                context("<old-hexsha>", terminated(hex_sha1, tag(b" "))),
-                context("<new-hexsha>", terminated(hex_sha1, tag(b" "))),
+                context("<old-hexsha>", terminated(hex_hash, tag(b" "))),
+                context("<new-hexsha>", terminated(hex_hash, tag(b" "))),
                 context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
                 opt(tag(b"\t")),
                 context("<optional message>", message),

@@ -81,7 +81,7 @@ impl<'a> Iter<'a> {
         Ok(match state {
             Tree => {
                 let (i, tree) = context("tree <40 lowercase hex char>", |i| {
-                    parse::header_field(i, b"tree", parse::hex_sha1)
+                    parse::header_field(i, b"tree", parse::hex_hash)
                 })(i)?;
                 *state = State::Parents;
                 (
@@ -94,7 +94,7 @@ impl<'a> Iter<'a> {
             Parents => {
                 let (i, parent) = context(
                     "commit <40 lowercase hex char>",
-                    opt(|i| parse::header_field(i, b"parent", parse::hex_sha1)),
+                    opt(|i| parse::header_field(i, b"parent", parse::hex_hash)),
                 )(i)?;
                 match parent {
                     Some(parent) => (

@@ -1,6 +1,6 @@
 use crate::{
     file::{reference::State, Reference, Store},
-    parse::{hex_sha1, newline},
+    parse::{hex_hash, newline},
 };
 use bstr::BString;
 use git_hash::ObjectId;
@@ -79,7 +79,7 @@ fn parse(bytes: &[u8]) -> IResult<&[u8], MaybeUnsafeState> {
             |path| MaybeUnsafeState::UnvalidatedPath(path.into()),
         )(path)
     } else {
-        map(terminated(hex_sha1, opt(newline)), |hex| {
+        map(terminated(hex_hash, opt(newline)), |hex| {
             MaybeUnsafeState::Id(ObjectId::from_hex(hex).expect("prior validation"))
         })(bytes)
     }

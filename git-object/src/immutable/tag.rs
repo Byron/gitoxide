@@ -53,7 +53,7 @@ mod decode {
 
     pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Tag<'a>, E> {
         let (i, target) = context("object <40 lowercase hex char>", |i| {
-            parse::header_field(i, b"object", parse::hex_sha1)
+            parse::header_field(i, b"object", parse::hex_hash)
         })(i)?;
 
         let (i, kind) = context("type <object kind>", |i| {
@@ -195,7 +195,7 @@ pub mod iter {
             Ok(match state {
                 Target => {
                     let (i, target) = context("object <40 lowercase hex char>", |i| {
-                        parse::header_field(i, b"object", parse::hex_sha1)
+                        parse::header_field(i, b"object", parse::hex_hash)
                     })(i)?;
                     *state = State::TargetKind;
                     (

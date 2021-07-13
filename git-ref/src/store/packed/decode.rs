@@ -1,4 +1,4 @@
-use crate::parse::hex_sha1;
+use crate::parse::hex_hash;
 use crate::{
     parse::newline,
     store::{packed, packed::Peeled},
@@ -46,8 +46,8 @@ where
 }
 
 fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
-    let (input, (target, full_name)) = tuple((terminated(hex_sha1, tag(b" ")), until_newline))(input)?;
-    let (rest, object) = opt(delimited(tag(b"^"), hex_sha1, newline))(input)?;
+    let (input, (target, full_name)) = tuple((terminated(hex_hash, tag(b" ")), until_newline))(input)?;
+    let (rest, object) = opt(delimited(tag(b"^"), hex_hash, newline))(input)?;
     Ok((
         rest,
         packed::Reference {

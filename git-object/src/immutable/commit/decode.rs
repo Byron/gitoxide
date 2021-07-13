@@ -31,11 +31,11 @@ pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
 
 pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Commit<'_>, E> {
     let (i, tree) = context("tree <40 lowercase hex char>", |i| {
-        parse::header_field(i, b"tree", parse::hex_sha1)
+        parse::header_field(i, b"tree", parse::hex_hash)
     })(i)?;
     let (i, parents) = context(
         "zero or more 'parent <40 lowercase hex char>'",
-        many0(|i| parse::header_field(i, b"parent", parse::hex_sha1)),
+        many0(|i| parse::header_field(i, b"parent", parse::hex_hash)),
     )(i)?;
     let (i, author) = context("author <signature>", |i| {
         parse::header_field(i, b"author", parse::signature)
