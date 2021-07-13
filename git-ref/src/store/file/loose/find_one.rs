@@ -160,11 +160,7 @@ pub mod existing {
 mod error {
     use crate::file;
     use quick_error::quick_error;
-    use std::{
-        convert::Infallible,
-        io::{self},
-        path::PathBuf,
-    };
+    use std::{convert::Infallible, io, path::PathBuf};
 
     quick_error! {
         /// The error returned by [file::Store::find_one()].

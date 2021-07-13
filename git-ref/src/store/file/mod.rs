@@ -55,7 +55,7 @@ mod traits {
 }
 
 mod loose;
-pub use loose::find_one;
+pub use loose::{find_one, iter};
 
 mod packed {
     use crate::store::{file, packed};

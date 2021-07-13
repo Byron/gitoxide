@@ -106,7 +106,7 @@ pub mod create_or_update {
                         options.create(true);
                     };
 
-                    let file_for_appending: Option<std::fs::File> = match options.open(&log_path) {
+                    let file_for_appending = match options.open(&log_path) {
                         Ok(f) => Some(f),
                         Err(err) if err.kind() == std::io::ErrorKind::NotFound => None,
                         Err(err) => {

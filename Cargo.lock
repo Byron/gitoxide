@@ -1080,6 +1080,7 @@ dependencies = [
  "bstr",
  "filebuffer",
  "git-actor",
+ "git-features",
  "git-hash",
  "git-lock",
  "git-tempfile",

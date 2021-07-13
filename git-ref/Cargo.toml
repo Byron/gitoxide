@@ -19,6 +19,7 @@ serde1 = ["serde", "bstr/serde1", "git-hash/serde1", "git-actor/serde1"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+git-features = { version = "^0.15.0", path = "../git-features", features = ["walkdir"]}
 git-hash = { version = "^0.4.0", path = "../git-hash" }
 git-validate = { version = "^0.3.0", path = "../git-validate" }
 git-actor = { version = "^0.1.0", path = "../git-actor" }

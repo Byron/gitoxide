@@ -12,6 +12,7 @@ doctest = false
 test = false
 
 [features]
+default = []
 progress = ["prodash"]
 parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus", "jwalk"]
 fast-sha1 = ["fastsha1"]
