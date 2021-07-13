@@ -2,7 +2,7 @@ type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
     use super::Result;
-    use crate::store::packed::decode;
+    use crate::store::{packed, packed::decode};
     use bstr::ByteSlice;
     use git_testtools::hex_to_id;
     use nom::error::VerboseError;
@@ -21,12 +21,15 @@ mod reference {
         let input: &[u8] = b"d53c4b0f91f1b29769c9430f2d1c0bcab1170c75 refs/heads/alternates-after-packs-and-loose\n^e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37\neaae9c1bc723209d793eb93f5587fa2604d5cd92 refs/heads/avoid-double-lookup\n";
         let (input, parsed) = decode::reference::<VerboseError<_>>(input)?;
 
-        assert_eq!(parsed.full_name, "refs/heads/alternates-after-packs-and-loose");
-        assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
         assert_eq!(
-            parsed.object,
-            Some(b"e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37".as_bstr())
+            parsed,
+            packed::Reference {
+                full_name: "refs/heads/alternates-after-packs-and-loose".into(),
+                target: "d53c4b0f91f1b29769c9430f2d1c0bcab1170c75".into(),
+                object: Some("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37".into())
+            }
         );
+        assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
         assert_eq!(parsed.object(), hex_to_id("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37"));
 
         let (input, parsed) = decode::reference::<VerboseError<_>>(input)?;
