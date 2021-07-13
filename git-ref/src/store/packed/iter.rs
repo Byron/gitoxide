@@ -37,6 +37,7 @@ impl<'a> Iterator for packed::Iter<'a> {
 }
 
 impl<'a> packed::Iter<'a> {
+    /// Return a new iterator after successfully parsing the possibly existing first line of the given `packed` refs buffer.
     pub fn new(packed: &'a [u8]) -> Result<Self, Error> {
         if packed.is_empty() {
             Ok(packed::Iter {
@@ -65,7 +66,9 @@ mod error {
     use quick_error::quick_error;
 
     quick_error! {
+        /// The error returned by [`Iter::new(…)`][super::Iter::new()],
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             Header { invalid_first_line: BString } {
                 display("The header existed but could not be parsed: '{}'", invalid_first_line)

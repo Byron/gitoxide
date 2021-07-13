@@ -1,5 +1,3 @@
-#![allow(missing_docs, dead_code)]
-
 use bstr::BStr;
 use git_hash::ObjectId;
 
@@ -10,6 +8,7 @@ enum Peeled {
     Fully,
 }
 
+/// A reference as parsed from the `packed-refs` file
 #[derive(Debug, PartialEq, Eq)]
 pub struct Reference<'a> {
     /// The unvalidated full name of the reference.
@@ -28,7 +27,7 @@ impl<'a> Reference<'a> {
     }
 
     /// Decode the object this reference is ultimately pointing to. Note that this is
-    /// the [`target()`] if this is not a fully peeled reference like a tag.
+    /// the [`target()`][Reference::target()] if this is not a fully peeled reference like a tag.
     pub fn object(&self) -> ObjectId {
         self.object.map_or_else(
             || self.target(),
