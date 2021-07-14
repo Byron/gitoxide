@@ -69,6 +69,9 @@ mod buffer {
     /// Initialization
     impl packed::Buffer {
         /// Open the file at `path` and map it into memory if the file size is larger than `use_memory_map_if_larger_than_bytes`.
+        ///
+        /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
+        /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
         pub fn open(path: impl AsRef<Path>, use_memory_map_if_larger_than_bytes: u64) -> std::io::Result<Self> {
             let path = path.as_ref();
             if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
@@ -84,6 +87,16 @@ mod buffer {
         /// Return an iterator of references stored in this packed refs buffer.
         pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
             packed::Iter::new(self.as_ref())
+        }
+
+        /// Find a reference with the given `name` and return it.
+        pub fn find(&self, _name: &bstr::BStr) -> std::io::Result<Option<packed::Reference<'_>>> {
+            todo!("actual signature and impl")
+        }
+
+        /// Find a reference with the given `name` and return it.
+        pub fn find_existing(&self, _name: &bstr::BStr) -> std::io::Result<packed::Reference<'_>> {
+            todo!("actual signature and impl")
         }
     }
 }
