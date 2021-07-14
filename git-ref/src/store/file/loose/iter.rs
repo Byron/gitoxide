@@ -17,7 +17,7 @@ struct LoosePaths {
 
 impl LoosePaths {
     pub fn at_root(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
-        let file_walk = git_features::fs::WalkDir::new(path).into_iter();
+        let file_walk = git_features::fs::walkdir_new(path).into_iter();
         LoosePaths {
             base: base.into(),
             file_walk,
@@ -36,15 +36,14 @@ impl Iterator for LoosePaths {
                         continue;
                     }
                     let full_path = entry.path().to_owned();
-                    if git_validate::reference::name_partial(
-                        full_path
-                            .strip_prefix(&self.base)
-                            .expect("prefix-stripping cannot fail as prefix is our root")
-                            .to_raw_bytes()
-                            .as_bstr(),
-                    )
-                    .is_ok()
-                    {
+                    let full_name = full_path
+                        .strip_prefix(&self.base)
+                        .expect("prefix-stripping cannot fail as prefix is our root")
+                        .to_raw_bytes();
+                    #[cfg(windows)]
+                    let full_name: Vec<u8> = full_name.into_owned().replace(b"\\", b"/");
+
+                    if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
                         return Some(Ok(full_path));
                     } else {
                         continue;
