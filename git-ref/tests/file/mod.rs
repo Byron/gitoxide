@@ -4,7 +4,7 @@ fn store() -> crate::Result<file::Store> {
     store_at("make_ref_repository.sh")
 }
 
-fn store_with_pack() -> crate::Result<file::Store> {
+fn store_with_packed_refs() -> crate::Result<file::Store> {
     store_at("make_packed_ref_repository.sh")
 }
 

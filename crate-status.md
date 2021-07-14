@@ -310,7 +310,6 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * [x] ref validation
     * [x] find single ref by name
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
-    * [ ] find refs matching pattern
     * [ ] iterate refs with optional prefix
     * [ ] [worktree support]
     * ~~symbolic ref support, using symbolic links~~
@@ -318,8 +317,10 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * **transactions** 
       * [x] delete, create or update single ref or multiple refs while handling the _reflog_
       * [x] set any valid ref value (not just object ids)
+      * [x] reflog changes can be entirely disabled (i.e. for bare repos)
       * [ ] rename or copy references
       * [ ] transparent handling of packed-refs
+      * [ ] initial transaction optimization (a faster way to create clones with a lot of refs)
     * **log**
       * [x] forward iteration
       * [x] backward iteration

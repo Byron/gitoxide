@@ -11,19 +11,24 @@ pub mod iter {
     use bstr::ByteSlice;
     use git_features::fs::walkdir::DirEntryIter;
     use os_str_bytes::OsStrBytes;
-    use std::{io::Read, path::PathBuf};
+    use std::{
+        io::Read,
+        path::{Path, PathBuf},
+    };
 
     /// An iterator over all valid loose reference paths as seen from a particular base directory.
     struct LoosePaths {
-        root: PathBuf,
+        base: PathBuf,
         file_walk: DirEntryIter,
     }
 
     impl LoosePaths {
-        pub fn at_root(path: impl Into<PathBuf>) -> Self {
-            let path = path.into();
-            let file_walk = git_features::fs::WalkDir::new(&path).into_iter();
-            LoosePaths { root: path, file_walk }
+        pub fn at_root(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+            let file_walk = git_features::fs::WalkDir::new(path).into_iter();
+            LoosePaths {
+                base: base.into(),
+                file_walk,
+            }
         }
     }
 
@@ -40,7 +45,7 @@ pub mod iter {
                         let full_path = entry.path().to_owned();
                         if git_validate::reference::name_partial(
                             full_path
-                                .strip_prefix(&self.root)
+                                .strip_prefix(&self.base)
                                 .expect("prefix-stripping cannot fail as prefix is our root")
                                 .to_raw_bytes()
                                 .as_bstr(),
@@ -56,6 +61,68 @@ pub mod iter {
                 }
             }
             None
+        }
+    }
+
+    /// An iterator over all loose references as seen from a particular base directory.
+    pub struct Loose<'a> {
+        parent: &'a file::Store,
+        ref_paths: LoosePaths,
+        buf: Vec<u8>,
+    }
+
+    impl<'a> Loose<'a> {
+        pub fn at_root(store: &'a file::Store, root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+            Loose {
+                parent: store,
+                ref_paths: LoosePaths::at_root(root, base),
+                buf: Vec::new(),
+            }
+        }
+    }
+
+    impl<'a> Iterator for Loose<'a> {
+        type Item = Result<file::Reference<'a>, loose::Error>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.ref_paths.next().map(|res| {
+                res.map_err(loose::Error::Traversal).and_then(|validated_path| {
+                    std::fs::File::open(&validated_path)
+                        .and_then(|mut f| {
+                            self.buf.clear();
+                            f.read_to_end(&mut self.buf)
+                        })
+                        .map_err(loose::Error::ReadFileContents)
+                        .and_then(|_| {
+                            let relative_path = validated_path
+                                .strip_prefix(&self.ref_paths.base)
+                                .expect("root contains path");
+                            file::Reference::try_from_path(self.parent, relative_path, &self.buf).map_err(|err| {
+                                loose::Error::ReferenceCreation {
+                                    err,
+                                    relative_path: relative_path.into(),
+                                }
+                            })
+                        })
+                })
+            })
+        }
+    }
+
+    impl file::Store {
+        /// Return an iterator over all loose references, notably not including any packed ones, in file system order.
+        ///
+        /// See [`Store::packed()`][file::Store::packed()] for interacting with packed references.
+        pub fn loose_iter(&self) -> std::io::Result<Loose<'_>> {
+            let refs = self.refs_dir();
+            if !refs.is_dir() {
+                return Err(std::io::ErrorKind::NotFound.into());
+            }
+            Ok(Loose::at_root(self, refs, self.base.clone()))
+        }
+
+        fn refs_dir(&self) -> PathBuf {
+            self.base.join("refs")
         }
     }
 
@@ -86,68 +153,6 @@ pub mod iter {
             }
         }
         pub use error::Error;
-    }
-
-    /// An iterator over all loose references as seen from a particular base directory.
-    pub struct Loose<'a> {
-        parent: &'a file::Store,
-        ref_paths: LoosePaths,
-        buf: Vec<u8>,
-    }
-
-    impl<'a> Loose<'a> {
-        pub fn at_root(store: &'a file::Store, path: impl Into<PathBuf>) -> Self {
-            Loose {
-                parent: store,
-                ref_paths: LoosePaths::at_root(path),
-                buf: Vec::new(),
-            }
-        }
-    }
-
-    impl<'a> Iterator for Loose<'a> {
-        type Item = Result<file::Reference<'a>, loose::Error>;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            self.ref_paths.next().map(|res| {
-                res.map_err(loose::Error::Traversal).and_then(|validated_path| {
-                    std::fs::File::open(&validated_path)
-                        .and_then(|mut f| {
-                            self.buf.clear();
-                            f.read_to_end(&mut self.buf)
-                        })
-                        .map_err(loose::Error::ReadFileContents)
-                        .and_then(|_| {
-                            let relative_path = validated_path
-                                .strip_prefix(&self.ref_paths.root)
-                                .expect("root contains path");
-                            file::Reference::try_from_path(self.parent, relative_path, &self.buf).map_err(|err| {
-                                loose::Error::ReferenceCreation {
-                                    err,
-                                    relative_path: relative_path.into(),
-                                }
-                            })
-                        })
-                })
-            })
-        }
-    }
-
-    impl file::Store {
-        /// Return an iterator over all loose references, notably not including any packed ones, in file system order.
-        ///
-        /// See [`Store::packed()`][file::Store::packed()] for interacting with packed references.
-        pub fn loose_iter(&self) -> std::io::Result<Loose<'_>> {
-            let refs = self.refs_dir();
-            if !refs.is_dir() {
-                return Err(std::io::ErrorKind::NotFound.into());
-            }
-            Ok(Loose::at_root(self, refs))
-        }
-
-        fn refs_dir(&self) -> PathBuf {
-            self.base.join("refs")
-        }
     }
 }
 
