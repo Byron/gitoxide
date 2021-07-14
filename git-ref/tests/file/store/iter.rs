@@ -71,17 +71,15 @@ fn iter_loose_with_broken_refs() {
 }
 
 #[test]
-#[ignore]
 fn iter_loose_with_prefix_wont_allow_absolute_paths() {
     let store = store().unwrap();
     match store.loose_iter_prefixed("/hello") {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
-        Err(err) => assert_eq!(err.to_string(), "hello"),
+        Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
 }
 
 #[test]
-#[ignore]
 fn iter_loose_with_prefix() {
     let store = store().unwrap();
 

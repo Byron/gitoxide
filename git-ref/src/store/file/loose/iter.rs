@@ -119,7 +119,14 @@ impl file::Store {
     }
 
     pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose<'_>> {
-        todo!("prefixed search")
+        let prefix = prefix.as_ref();
+        if prefix.is_absolute() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "prefix must be a relative path, like 'refs/heads'",
+            ));
+        }
+        Ok(Loose::at_root(self, self.base.join(prefix), self.base.clone()))
     }
 
     fn refs_dir(&self) -> PathBuf {
