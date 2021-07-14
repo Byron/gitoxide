@@ -74,7 +74,12 @@ fn iter_loose_with_broken_refs() -> crate::Result {
 #[test]
 fn iter_loose_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     let store = store()?;
-    match store.loose_iter_prefixed("/hello") {
+    #[cfg(not(windows))]
+    let abs_path = "/hello";
+    #[cfg(windows)]
+    let abs_path = "\\hello";
+
+    match store.loose_iter_prefixed(abs_path) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
