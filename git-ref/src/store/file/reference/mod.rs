@@ -61,7 +61,7 @@ impl<'a> Reference<'a> {
     }
 }
 
-mod iter;
+mod logiter;
 
 ///
 pub mod peel;

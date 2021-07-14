@@ -69,3 +69,43 @@ fn iter_loose_with_broken_refs() {
         "all paths are as expected"
     );
 }
+
+#[test]
+#[ignore]
+fn iter_loose_with_prefix_wont_allow_absolute_paths() {
+    let store = store().unwrap();
+    match store.loose_iter_prefixed("/hello") {
+        Ok(_) => unreachable!("absolute paths aren't allowed"),
+        Err(err) => assert_eq!(err.to_string(), "hello"),
+    }
+}
+
+#[test]
+#[ignore]
+fn iter_loose_with_prefix() {
+    let store = store().unwrap();
+
+    let mut actual = store
+        .loose_iter_prefixed("refs/heads/")
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()
+        .expect("no broken ref in this subset")
+        .into_iter()
+        .map(|e| e.into_relative_path())
+        .collect::<Vec<_>>();
+    actual.sort();
+
+    assert_eq!(
+        actual,
+        vec![
+            "refs/heads/d1",
+            "refs/heads/dt1",
+            "refs/heads/main",
+            "refs/heads/multi-link-target1",
+        ]
+        .into_iter()
+        .map(PathBuf::from)
+        .collect::<Vec<_>>(),
+        "all paths are as expected"
+    );
+}
