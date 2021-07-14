@@ -35,9 +35,13 @@ fn iter_loose_with_broken_refs() -> crate::Result {
         first_error, 14,
         "there is exactly one invalid item, and it didn't abort the iterator most importantly"
     );
+    #[cfg(not(windows))]
+    let msg = "The reference at 'refs/broken' could not be instantiated";
+    #[cfg(windows)]
+    let msg = "The reference at 'refs\\broken' could not be instantiated";
     assert_eq!(
         actual[first_error].as_ref().expect_err("unparseable ref").to_string(),
-        "The reference at 'refs/broken' could not be instantiated"
+        msg
     );
     let mut ref_paths: Vec<_> = actual
         .drain(..first_error)
@@ -77,7 +81,7 @@ fn iter_loose_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     #[cfg(not(windows))]
     let abs_path = "/hello";
     #[cfg(windows)]
-    let abs_path = "\\hello";
+    let abs_path = "c:\\hello";
 
     match store.loose_iter_prefixed(abs_path) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
