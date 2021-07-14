@@ -19,10 +19,10 @@ fn packed_file_iter() -> crate::Result {
 }
 
 #[test]
-fn iter_loose_with_broken_refs() {
-    let store = store().unwrap();
+fn iter_loose_with_broken_refs() -> crate::Result {
+    let store = store()?;
 
-    let mut actual: Vec<_> = store.loose_iter().unwrap().collect();
+    let mut actual: Vec<_> = store.loose_iter()?.collect();
     actual.sort_by_key(|r| r.is_err());
     let first_error = actual
         .iter()
@@ -68,24 +68,25 @@ fn iter_loose_with_broken_refs() {
         .collect::<Vec<_>>(),
         "all paths are as expected"
     );
+    Ok(())
 }
 
 #[test]
-fn iter_loose_with_prefix_wont_allow_absolute_paths() {
-    let store = store().unwrap();
+fn iter_loose_with_prefix_wont_allow_absolute_paths() -> crate::Result {
+    let store = store()?;
     match store.loose_iter_prefixed("/hello") {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
+    Ok(())
 }
 
 #[test]
-fn iter_loose_with_prefix() {
-    let store = store().unwrap();
+fn iter_loose_with_prefix() -> crate::Result {
+    let store = store()?;
 
     let mut actual = store
-        .loose_iter_prefixed("refs/heads/")
-        .unwrap()
+        .loose_iter_prefixed("refs/heads/")?
         .collect::<Result<Vec<_>, _>>()
         .expect("no broken ref in this subset")
         .into_iter()
@@ -106,4 +107,5 @@ fn iter_loose_with_prefix() {
         .collect::<Vec<_>>(),
         "all paths are as expected"
     );
+    Ok(())
 }
