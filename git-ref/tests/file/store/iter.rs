@@ -23,6 +23,7 @@ fn iter_loose_with_broken_refs() -> crate::Result {
     let store = store()?;
 
     let mut actual: Vec<_> = store.loose_iter()?.collect();
+    assert_eq!(actual.len(), 15);
     actual.sort_by_key(|r| r.is_err());
     let first_error = actual
         .iter()
@@ -30,7 +31,6 @@ fn iter_loose_with_broken_refs() -> crate::Result {
         .find_map(|(idx, r)| if r.is_err() { Some(idx) } else { None })
         .expect("there is an error");
 
-    assert_eq!(actual.len(), 15);
     assert_eq!(
         first_error, 14,
         "there is exactly one invalid item, and it didn't abort the iterator most importantly"
