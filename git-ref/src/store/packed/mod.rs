@@ -2,7 +2,9 @@ use bstr::BStr;
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
 
-/// A buffer that is either memory mapped or fully in-memory depending on a cutoff.
+/// A buffer containing a packed-ref file that is either memory mapped or fully in-memory depending on a cutoff.
+///
+/// The buffer is garantueed to be sorted as per the packed-ref rules which allows some operations to be more efficient.
 pub enum Buffer {
     /// The buffer is loaded entirely in memory
     InMemory(Vec<u8>),
