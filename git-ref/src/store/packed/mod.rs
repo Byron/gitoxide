@@ -51,61 +51,8 @@ mod decode;
 ///
 pub mod iter;
 
-/// The general functionality that can be reusable. Maybe put it into git-features so that one day WASM support can be achieved.
-mod buffer {
-    use crate::store::packed;
-    use crate::PartialName;
-    use filebuffer::FileBuffer;
-    use std::convert::TryInto;
-    use std::path::Path;
+///
+pub mod buffer;
 
-    impl AsRef<[u8]> for packed::Buffer {
-        fn as_ref(&self) -> &[u8] {
-            match self {
-                packed::Buffer::InMemory(v) => &v,
-                packed::Buffer::Mapped(m) => &m,
-            }
-        }
-    }
-
-    /// Initialization
-    impl packed::Buffer {
-        /// Open the file at `path` and map it into memory if the file size is larger than `use_memory_map_if_larger_than_bytes`.
-        ///
-        /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
-        /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
-        pub fn open(path: impl AsRef<Path>, use_memory_map_if_larger_than_bytes: u64) -> std::io::Result<Self> {
-            let path = path.as_ref();
-            if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
-                Ok(packed::Buffer::InMemory(std::fs::read(path)?))
-            } else {
-                Ok(packed::Buffer::Mapped(FileBuffer::open(path)?))
-            }
-        }
-    }
-
-    /// packed-refs specific functionality
-    impl packed::Buffer {
-        /// Return an iterator of references stored in this packed refs buffer.
-        pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
-            packed::Iter::new(self.as_ref())
-        }
-
-        /// Find a reference with the given `name` and return it.
-        pub fn find<'a, Name, E>(&self, name: Name) -> std::io::Result<Option<packed::Reference<'_>>>
-        where
-            Name: TryInto<PartialName<'a>, Error = E>,
-            E: Into<Box<dyn std::error::Error + Send + Sync>>,
-        {
-            let name = name
-                .try_into()
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-            todo!("actual signature and impl")
-        }
-
-        /// Find a reference with the given `name` and return it.
-        pub fn find_existing(&self, _name: &bstr::BStr) -> std::io::Result<packed::Reference<'_>> {
-            todo!("actual signature and impl")
-        }
-    }
-}
+///
+pub mod find;

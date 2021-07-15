@@ -63,15 +63,16 @@ mod packed {
 
     impl file::Store {
         /// Return a buffer for the packed file
-        pub fn packed(&self) -> std::io::Result<Option<packed::Buffer>> {
+        pub fn packed(&self) -> Result<Option<packed::Buffer>, packed::buffer::open::Error> {
             match packed::Buffer::open(self.packed_refs_path(), 32 * 1024) {
                 Ok(buf) => Ok(Some(buf)),
-                Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                Err(packed::buffer::open::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
                 Err(err) => Err(err),
             }
         }
 
-        fn packed_refs_path(&self) -> PathBuf {
+        /// Return the path at which packed-refs would usually be stored
+        pub fn packed_refs_path(&self) -> PathBuf {
             self.base.join("packed-refs")
         }
     }

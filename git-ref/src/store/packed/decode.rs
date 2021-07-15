@@ -22,7 +22,7 @@ enum Peeled {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Header {
     peeled: Peeled,
-    sorted: bool,
+    pub sorted: bool,
 }
 
 impl Default for Header {
