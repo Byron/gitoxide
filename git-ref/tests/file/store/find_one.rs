@@ -35,6 +35,7 @@ fn success() -> crate::Result {
         ("heads/d1", "refs/heads/d1", git_ref::Kind::Peeled),
         ("HEAD", "HEAD", git_ref::Kind::Symbolic), // it finds shortest paths first
         ("origin", "refs/remotes/origin/HEAD", git_ref::Kind::Symbolic),
+        ("origin/HEAD", "refs/remotes/origin/HEAD", git_ref::Kind::Symbolic),
         ("origin/main", "refs/remotes/origin/main", git_ref::Kind::Peeled),
         ("t1", "refs/tags/t1", git_ref::Kind::Peeled),
         ("main", "refs/heads/main", git_ref::Kind::Peeled),

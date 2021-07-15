@@ -1,4 +1,4 @@
-use crate::{store::packed, PartialName};
+use crate::{store::packed, FullName, PartialName};
 use std::convert::TryInto;
 
 /// packed-refs specific functionality
@@ -10,7 +10,7 @@ impl packed::Buffer {
         Error: From<E>,
     {
         let name = name.try_into()?;
-        match self.binary_search_by(name) {
+        match self.binary_search_by(name.0.try_into().expect("our full names are never invalid")) {
             Ok(line_start) => Ok(Some(
                 packed::decode::reference::<()>(&self.as_ref()[line_start..])
                     .map_err(|_| Error::Parse)?
@@ -35,7 +35,8 @@ impl packed::Buffer {
 
     /// Perform a binary search where `Ok(pos)` is the beginning of the line that matches `name` perfectly and `Err(pos)`
     /// is the beginning of the line at which `name` could be inserted to still be in sort order.
-    fn binary_search_by(&self, name: PartialName<'_>) -> Result<usize, usize> {
+    /// TOOD: remove the runtime constraint once we do lookup correctly
+    fn binary_search_by(&self, full_name: FullName<'_>) -> Result<usize, usize> {
         let a = self.as_ref();
         let search_start_of_record = |ofs: usize| {
             a[..ofs]
@@ -50,7 +51,7 @@ impl packed::Buffer {
                 })
                 .unwrap_or(0)
         };
-        a.binary_search_by_key(&name.0.as_ref(), |b: &u8| {
+        a.binary_search_by_key(&full_name.0.as_ref(), |b: &u8| {
             let ofs = b as *const u8 as usize - a.as_ptr() as usize;
             packed::decode::reference::<()>(&a[search_start_of_record(ofs)..])
                 .map(|(_rest, r)| r.full_name.as_ref())

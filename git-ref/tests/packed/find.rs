@@ -69,4 +69,10 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 
 #[test]
 #[ignore]
+fn partial_name_to_full_name_conversion_rules_are_applied() {
+    todo!("see if these name gereration rules can be unified, it definitely needs some thought to be correct")
+}
+
+#[test]
+#[ignore]
 fn invalid_refs_within_a_file_do_not_lead_to_incorrect_results() {}
