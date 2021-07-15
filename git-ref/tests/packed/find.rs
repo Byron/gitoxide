@@ -72,19 +72,19 @@ fn partial_name_to_full_name_conversion_rules_are_applied() {
 }
 
 #[test]
-fn invalid_refs_within_a_file_do_not_lead_to_incorrect_results() {
+fn invalid_refs_within_a_file_do_not_lead_to_incorrect_results() -> crate::Result {
     let broken_packed_refs = b"# pack-refs with: peeled fully-peeled sorted
 916840c0e2f67d370291042cb5274a597f4fa9bc refs/tags/TEST-0.0.1
 bogus refs/tags/git-actor-v0.1.0
 ^13da90b54699a6b500ec5cd7d175f2cd5a1bed06
 0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/git-actor-v0.1.1\n";
-    let (_keep, path) = write_packed_refs_with(broken_packed_refs).unwrap();
+    let (_keep, path) = write_packed_refs_with(broken_packed_refs)?;
 
-    let buf = packed::Buffer::open(path, 1024).unwrap();
+    let buf = packed::Buffer::open(path, 1024)?;
 
     let name = "refs/tags/git-actor-v0.1.1";
     assert_eq!(
-        buf.find(name).unwrap().expect("reference exists"),
+        buf.find(name)?.expect("reference exists"),
         packed::Reference {
             full_name: name.into(),
             target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
@@ -100,4 +100,5 @@ bogus refs/tags/git-actor-v0.1.0
             "The reference could not be parsed"
         );
     }
+    Ok(())
 }
