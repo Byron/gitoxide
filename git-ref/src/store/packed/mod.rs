@@ -54,7 +54,9 @@ pub mod iter;
 /// The general functionality that can be reusable. Maybe put it into git-features so that one day WASM support can be achieved.
 mod buffer {
     use crate::store::packed;
+    use crate::PartialName;
     use filebuffer::FileBuffer;
+    use std::convert::TryInto;
     use std::path::Path;
 
     impl AsRef<[u8]> for packed::Buffer {
@@ -90,7 +92,14 @@ mod buffer {
         }
 
         /// Find a reference with the given `name` and return it.
-        pub fn find(&self, _name: &bstr::BStr) -> std::io::Result<Option<packed::Reference<'_>>> {
+        pub fn find<'a, Name, E>(&self, name: Name) -> std::io::Result<Option<packed::Reference<'_>>>
+        where
+            Name: TryInto<PartialName<'a>, Error = E>,
+            E: Into<Box<dyn std::error::Error + Send + Sync>>,
+        {
+            let name = name
+                .try_into()
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
             todo!("actual signature and impl")
         }
 

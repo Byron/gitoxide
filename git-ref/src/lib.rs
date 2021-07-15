@@ -155,8 +155,10 @@ mod traits {
 pub use traits::RefStore;
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
+#[derive(Debug)]
 pub struct FullName<'a>(&'a BStr);
 /// A validated complete and fully qualified reference name, safe to use for all operations.
+#[derive(Debug)]
 pub struct PartialName<'a>(&'a BStr);
 
 /// Denotes the kind of reference.
