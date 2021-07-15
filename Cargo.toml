@@ -38,7 +38,7 @@ small = ["lean-cli", "git-features/sha1", "git-features/zlib-rust-backend"]
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
-http-client-curl = ["git-transport/http-client-curl"]
+http-client-curl = ["git-transport-for-configuration-only/http-client-curl"]
 fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
 
 pretty-cli = ["clap",
@@ -66,8 +66,7 @@ gitoxide-core = { version = "^0.9.0", path = "gitoxide-core" }
 git-features = { version = "^0.15.0", path = "git-features" }
 git-repository = { version = "^0.6.0", path = "git-repository", default-features = false }
 
-# just for feature configuration
-git-transport = { optional = true, version = "^0.9.0", path = "git-transport" }
+git-transport-for-configuration-only = { package = "git-transport", optional = true, version = "^0.9.0", path = "git-transport" }
 
 clap = { version = "=3.0.0-beta.2", optional = true }
 argh = { version = "0.1.5", optional = true, default-features = false }
