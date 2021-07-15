@@ -16,7 +16,13 @@ impl packed::Buffer {
                     .map_err(|_| Error::Parse)?
                     .1,
             )),
-            Err(_line_to_insert) => Ok(None),
+            Err(parse_failure) => {
+                if parse_failure {
+                    Err(Error::Parse)
+                } else {
+                    Ok(None)
+                }
+            }
         }
     }
 
@@ -35,8 +41,8 @@ impl packed::Buffer {
 
     /// Perform a binary search where `Ok(pos)` is the beginning of the line that matches `name` perfectly and `Err(pos)`
     /// is the beginning of the line at which `name` could be inserted to still be in sort order.
-    /// TOOD: remove the runtime constraint once we do lookup correctly
-    fn binary_search_by(&self, full_name: FullName<'_>) -> Result<usize, usize> {
+    fn binary_search_by(&self, full_name: FullName<'_>) -> Result<usize, bool> {
+        // TODO: remove the runtime constraint once we do lookup correctly
         let a = self.as_ref();
         let search_start_of_record = |ofs: usize| {
             a[..ofs]
@@ -51,14 +57,19 @@ impl packed::Buffer {
                 })
                 .unwrap_or(0)
         };
+        let mut encountered_parse_failure = false;
         a.binary_search_by_key(&full_name.0.as_ref(), |b: &u8| {
             let ofs = b as *const u8 as usize - a.as_ptr() as usize;
             packed::decode::reference::<()>(&a[search_start_of_record(ofs)..])
                 .map(|(_rest, r)| r.full_name.as_ref())
+                .map_err(|err| {
+                    encountered_parse_failure = true;
+                    err
+                })
                 .unwrap_or(&[])
         })
         .map(search_start_of_record)
-        .map_err(search_start_of_record)
+        .map_err(|_| encountered_parse_failure)
     }
 }
 
