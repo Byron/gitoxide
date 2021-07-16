@@ -42,7 +42,7 @@ impl<R, W> Connection<R, W> {
     }
 }
 
-pub(crate) mod message {
+mod message {
     use crate::{Protocol, Service};
     use bstr::{BString, ByteVec};
 

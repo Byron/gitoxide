@@ -164,7 +164,7 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn verify_entry<P>(
+    fn verify_entry<P>(
         mode: Mode,
         encode_buf: &mut Vec<u8>,
         object_kind: git_object::Kind,

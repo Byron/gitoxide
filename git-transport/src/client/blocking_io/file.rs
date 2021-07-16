@@ -68,7 +68,7 @@ impl SpawnProcessOnDemand {
             desired_version: version,
         }
     }
-    pub(crate) fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
+    fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
             url: git_url::Url {
                 scheme: git_url::Scheme::File,

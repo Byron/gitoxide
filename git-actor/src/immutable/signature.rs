@@ -12,7 +12,7 @@ mod decode {
         IResult,
     };
 
-    pub(crate) const SPACE: &[u8] = b" ";
+    const SPACE: &[u8] = b" ";
 
     /// Parse a signature from the bytes input `i` using `nom`.
     pub fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(

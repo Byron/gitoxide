@@ -10,8 +10,8 @@ mod deflate_stream {
     /// Provide streaming decompression using the `std::io::Read` trait.
     /// If `std::io::BufReader` is used, an allocation for the input buffer will be performed.
     struct InflateReader<R> {
-        pub(crate) inner: R,
-        pub(crate) decompressor: Decompress,
+        inner: R,
+        decompressor: Decompress,
     }
 
     impl<R> InflateReader<R>

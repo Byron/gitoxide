@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[cfg(feature = "http-client-curl")]
-pub(crate) mod curl;
+mod curl;
 
 ///
 mod traits;

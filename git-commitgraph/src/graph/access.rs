@@ -52,7 +52,7 @@ impl Graph {
 
 /// Access fundamentals
 impl Graph {
-    pub(crate) fn lookup_by_id(&self, id: &git_hash::oid) -> Option<LookupByIdResult<'_>> {
+    fn lookup_by_id(&self, id: &git_hash::oid) -> Option<LookupByIdResult<'_>> {
         let mut current_file_start = 0;
         for file in &self.files {
             if let Some(lex_pos) = file.lookup(id) {
@@ -67,7 +67,7 @@ impl Graph {
         None
     }
 
-    pub(crate) fn lookup_by_pos(&self, pos: graph::Position) -> LookupByPositionResult<'_> {
+    fn lookup_by_pos(&self, pos: graph::Position) -> LookupByPositionResult<'_> {
         let mut remaining = pos.0;
         for (file_index, file) in self.files.iter().enumerate() {
             match remaining.checked_sub(file.num_commits()) {
@@ -86,14 +86,14 @@ impl Graph {
 }
 
 #[derive(Clone)]
-pub(crate) struct LookupByIdResult<'a> {
+struct LookupByIdResult<'a> {
     pub file: &'a File,
     pub graph_pos: graph::Position,
     pub file_pos: file::Position,
 }
 
 #[derive(Clone)]
-pub(crate) struct LookupByPositionResult<'a> {
+struct LookupByPositionResult<'a> {
     pub file: &'a File,
     pub file_index: usize,
     pub pos: file::Position,
