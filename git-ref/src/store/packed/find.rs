@@ -10,20 +10,40 @@ impl packed::Buffer {
         Error: From<E>,
     {
         let name = name.try_into()?;
-        match self.binary_search_by(name.0.try_into().expect("our full names are never invalid")) {
-            Ok(line_start) => Ok(Some(
-                packed::decode::reference::<()>(&self.as_ref()[line_start..])
-                    .map_err(|_| Error::Parse)?
-                    .1,
-            )),
-            Err(parse_failure) => {
-                if parse_failure {
-                    Err(Error::Parse)
-                } else {
-                    Ok(None)
+        for inbetween in &["", "tags", "heads", "remotes"] {
+            let name: Cow<'_, BStr> = if name.0.starts_with_str(b"refs/") {
+                name.0.into()
+            } else {
+                let mut full_name: BString = format!(
+                    "refs/{}",
+                    if inbetween.is_empty() {
+                        "".to_string()
+                    } else {
+                        format!("{}/", inbetween)
+                    }
+                )
+                .into();
+                full_name.extend_from_slice(name.0);
+                full_name.into()
+            };
+            match self.binary_search_by(name.as_ref().try_into().expect("our full names are never invalid")) {
+                Ok(line_start) => {
+                    return Ok(Some(
+                        packed::decode::reference::<()>(&self.as_ref()[line_start..])
+                            .map_err(|_| Error::Parse)?
+                            .1,
+                    ))
+                }
+                Err(parse_failure) => {
+                    if parse_failure {
+                        return Err(Error::Parse);
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
+        Ok(None)
     }
 
     /// Find a reference with the given `name` and return it.
@@ -91,8 +111,9 @@ mod error {
         }
     }
 }
-use bstr::ByteSlice;
+use bstr::{BStr, BString, ByteSlice};
 pub use error::Error;
+use std::borrow::Cow;
 
 ///
 pub mod existing {

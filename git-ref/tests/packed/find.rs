@@ -3,7 +3,7 @@ use crate::{
     packed::write_packed_refs_with,
 };
 use git_ref::{packed, PartialName};
-use std::convert::TryFrom;
+use std::{convert::TryFrom, path::Path};
 
 #[test]
 fn a_lock_file_would_not_be_a_valid_partial_name() {
@@ -70,7 +70,18 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 #[test]
 #[ignore]
 fn partial_name_to_full_name_conversion_rules_are_applied() {
-    let _store = store_at("make_packed_refs_for_lookup_rules.sh").unwrap();
+    let store = store_at("make_packed_refs_for_lookup_rules.sh").unwrap();
+    let packed = store.packed().unwrap().expect("packed-refs exists");
+
+    assert_eq!(
+        store.find_one_existing("origin").unwrap().relative_path(),
+        Path::new("refs/remotes/origin/HEAD"),
+        "a special that only applies to loose refs"
+    );
+    assert!(
+        packed.find("origin").unwrap().is_none(),
+        "packed refs don't have this special case as they don't store HEADs or symrefs"
+    );
     todo!("see if these name gereration rules can be unified, it definitely needs some thought to be correct")
 }
 
