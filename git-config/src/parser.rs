@@ -843,14 +843,11 @@ impl<'a> Parser<'a> {
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + FusedIterator {
-        // Can't impl IntoIter without allocating and using a generic associated type
-        // TODO: try harder?
-        let section_iter = self.sections.into_iter().flat_map(|section| {
-            vec![Event::SectionHeader(section.section_header)]
-                .into_iter()
-                .chain(section.events)
-        });
-        self.frontmatter.into_iter().chain(section_iter)
+        self.frontmatter.into_iter().chain(
+            self.sections.into_iter().flat_map(|section| {
+                std::iter::once(Event::SectionHeader(section.section_header)).chain(section.events)
+            }),
+        )
     }
 }
 
