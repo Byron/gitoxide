@@ -8,7 +8,7 @@ pub fn store_with_packed_refs() -> crate::Result<file::Store> {
     store_at("make_packed_ref_repository.sh")
 }
 
-fn store_at(name: &str) -> crate::Result<file::Store> {
+pub fn store_at(name: &str) -> crate::Result<file::Store> {
     let path = git_testtools::scripted_fixture_repo_read_only(name)?;
     Ok(file::Store::from(path.join(".git")))
 }

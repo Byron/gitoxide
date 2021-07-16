@@ -1,5 +1,7 @@
-use crate::file::store_with_packed_refs;
-use crate::packed::write_packed_refs_with;
+use crate::{
+    file::{store_at, store_with_packed_refs},
+    packed::write_packed_refs_with,
+};
 use git_ref::{packed, PartialName};
 use std::convert::TryFrom;
 
@@ -68,6 +70,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 #[test]
 #[ignore]
 fn partial_name_to_full_name_conversion_rules_are_applied() {
+    let _store = store_at("make_packed_refs_for_lookup_rules.sh").unwrap();
     todo!("see if these name gereration rules can be unified, it definitely needs some thought to be correct")
 }
 
