@@ -25,7 +25,7 @@ pub mod capabilities;
 #[doc(inline)]
 pub use capabilities::Capabilities;
 
-pub(crate) mod non_io_types;
+mod non_io_types;
 pub use non_io_types::{Error, Identity, MessageKind, WriteMode};
 
 ///

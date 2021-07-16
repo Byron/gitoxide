@@ -41,7 +41,7 @@ pub use fs::{create_dir, remove_dir};
 pub mod handler;
 
 mod forksafe;
-pub(crate) use forksafe::ForksafeTempfile;
+use forksafe::ForksafeTempfile;
 
 pub mod handle;
 use crate::handle::{Closed, Writable};
@@ -119,7 +119,7 @@ pub enum AutoRemove {
 }
 
 impl AutoRemove {
-    pub(crate) fn execute_best_effort(self, directory_to_potentially_delete: &Path) -> Option<PathBuf> {
+    fn execute_best_effort(self, directory_to_potentially_delete: &Path) -> Option<PathBuf> {
         match self {
             AutoRemove::Tempfile => None,
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil { boundary_directory } => {

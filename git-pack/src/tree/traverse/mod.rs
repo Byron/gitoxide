@@ -112,7 +112,7 @@ where
     }
 }
 
-pub(crate) struct Reducer<'a, P> {
+struct Reducer<'a, P> {
     item_count: usize,
     progress: &'a parking_lot::Mutex<P>,
     start: std::time::Instant,

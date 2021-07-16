@@ -73,9 +73,7 @@ pub mod decode {
         }
     }
 
-    pub(crate) fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
-        bytes: &'a [u8],
-    ) -> IResult<&[u8], Line<'a>, E> {
+    fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>, E> {
         let (i, (old, new, signature, message_sep, message)) = context(
             "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
             tuple((

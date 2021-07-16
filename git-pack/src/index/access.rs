@@ -28,7 +28,7 @@ pub struct Entry {
 
 /// Iteration and access
 impl index::File {
-    pub(crate) fn iter_v1(&self) -> impl Iterator<Item = Entry> + '_ {
+    fn iter_v1(&self) -> impl Iterator<Item = Entry> + '_ {
         match self.version {
             index::Version::V1 => self.data[V1_HEADER_SIZE..]
                 .chunks(N32_SIZE + SHA1_SIZE)
@@ -45,7 +45,7 @@ impl index::File {
         }
     }
 
-    pub(crate) fn iter_v2(&self) -> impl Iterator<Item = Entry> + '_ {
+    fn iter_v2(&self) -> impl Iterator<Item = Entry> + '_ {
         let pack64_offset = self.offset_pack_offset64_v2();
         match self.version {
             index::Version::V2 => izip!(

@@ -103,7 +103,7 @@ const FAN_LEN: usize = 256;
 
 /// A representation of a pack index file
 pub struct File {
-    pub(crate) data: FileBuffer,
+    data: FileBuffer,
     path: std::path::PathBuf,
     version: Version,
     num_objects: u32,
@@ -135,7 +135,7 @@ pub use access::Entry;
 
 ///
 pub mod traverse;
-pub(crate) mod util;
+mod util;
 ///
 pub mod verify;
 ///

@@ -6,7 +6,7 @@ use bstr::BString;
 pub mod immutable;
 mod signature;
 
-pub(crate) const SPACE: &[u8; 1] = b" ";
+const SPACE: &[u8; 1] = b" ";
 
 /// A mutable signature is created by an actor at a certain time.
 ///

@@ -4,8 +4,8 @@
 //! They either created using object [construction][Object] or by [deserializing existing objects][crate::immutable::Object::from_bytes()]
 //! and converting these [into mutable copies][crate::immutable::Object::into_mutable()] for adjustments.
 
-pub(crate) const NL: &[u8; 1] = b"\n";
-pub(crate) const SPACE: &[u8; 1] = b" ";
+const NL: &[u8; 1] = b"\n";
+const SPACE: &[u8; 1] = b" ";
 
 mod convert;
 mod encode;

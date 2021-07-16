@@ -6,7 +6,7 @@ use std::io;
 pub struct Writer<T> {
     /// the `Write` implementation to which to propagate packet lines
     inner: T,
-    pub(crate) binary: bool,
+    binary: bool,
 }
 
 impl<T: io::Write> Writer<T> {

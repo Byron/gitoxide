@@ -14,8 +14,8 @@ pin_project! {
     pub struct RequestWriter<'a> {
         on_into_read: MessageKind,
         #[pin]
-        pub(crate) writer: git_packetline::Writer<Box<dyn AsyncWrite + Unpin + 'a>>,
-        pub(crate) reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
+        writer: git_packetline::Writer<Box<dyn AsyncWrite + Unpin + 'a>>,
+        reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
     }
 }
 impl<'a> futures_io::AsyncWrite for RequestWriter<'a> {

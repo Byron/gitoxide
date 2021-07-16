@@ -12,7 +12,7 @@ use crate::ByteSlice;
 
 pub(crate) const NL: &[u8] = b"\n";
 pub(crate) const SPACE: &[u8] = b" ";
-pub(crate) const SPACE_OR_NL: &[u8] = b" \n";
+const SPACE_OR_NL: &[u8] = b" \n";
 
 pub(crate) fn any_header_field_multi_line<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     i: &'a [u8],

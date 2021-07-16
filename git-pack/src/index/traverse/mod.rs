@@ -10,7 +10,7 @@ mod indexed;
 mod reduce;
 ///
 pub mod with_lookup;
-pub(crate) use reduce::Reducer;
+use reduce::Reducer;
 
 mod error;
 pub use error::Error;
@@ -116,7 +116,7 @@ impl index::File {
         .map(|(a, b, p)| (a, b, p.into_inner()))
     }
 
-    pub(crate) fn possibly_verify<E>(
+    fn possibly_verify<E>(
         &self,
         pack: &crate::data::File,
         check: SafetyCheck,
@@ -149,7 +149,7 @@ impl index::File {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn decode_and_process_entry<C, P, E>(
+    fn decode_and_process_entry<C, P, E>(
         &self,
         check: SafetyCheck,
         pack: &crate::data::File,
@@ -201,7 +201,7 @@ impl index::File {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn process_entry<P, E>(
+fn process_entry<P, E>(
     check: SafetyCheck,
     object_kind: git_object::Kind,
     decompressed: &[u8],

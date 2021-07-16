@@ -21,7 +21,7 @@ impl Store {
     }
 }
 
-pub(crate) fn sha1_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
+fn sha1_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
     match id.kind() {
         git_hash::Kind::Sha1 => {
             let hex = id.to_sha1_hex();

@@ -6,8 +6,8 @@ use std::io;
 /// obtaining the response.
 pub struct RequestWriter<'a> {
     on_into_read: MessageKind,
-    pub(crate) writer: git_packetline::Writer<Box<dyn io::Write + 'a>>,
-    pub(crate) reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
+    writer: git_packetline::Writer<Box<dyn io::Write + 'a>>,
+    reader: Box<dyn ExtendedBufRead + Unpin + 'a>,
 }
 
 impl<'a> io::Write for RequestWriter<'a> {

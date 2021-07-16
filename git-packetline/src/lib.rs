@@ -3,13 +3,13 @@
 //! For reading the packet line format use the [`StreamingPeekableIter`], and for writing the `Writer`.
 #![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 
-pub(crate) const U16_HEX_BYTES: usize = 4;
-pub(crate) const MAX_DATA_LEN: usize = 65516;
-pub(crate) const MAX_LINE_LEN: usize = MAX_DATA_LEN + U16_HEX_BYTES;
-pub(crate) const FLUSH_LINE: &[u8] = b"0000";
-pub(crate) const DELIMITER_LINE: &[u8] = b"0001";
-pub(crate) const RESPONSE_END_LINE: &[u8] = b"0002";
-pub(crate) const ERR_PREFIX: &[u8] = b"ERR ";
+const U16_HEX_BYTES: usize = 4;
+const MAX_DATA_LEN: usize = 65516;
+const MAX_LINE_LEN: usize = MAX_DATA_LEN + U16_HEX_BYTES;
+const FLUSH_LINE: &[u8] = b"0000";
+const DELIMITER_LINE: &[u8] = b"0001";
+const RESPONSE_END_LINE: &[u8] = b"0002";
+const ERR_PREFIX: &[u8] = b"ERR ";
 
 /// One of three side-band types allowing to multiplex information over a single connection.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
