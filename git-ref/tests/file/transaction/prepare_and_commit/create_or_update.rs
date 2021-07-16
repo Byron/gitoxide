@@ -56,6 +56,7 @@ mod reference_with_equally_named {
             } else {
                 let err = edits.unwrap_err();
                 match err {
+                    #[cfg_attr(target_os = "windows", allow(unused_variables))]
                     transaction::Error::LockCommit { err, full_name } => {
                         assert_eq!(full_name, "HEAD");
                         #[cfg(not(target_os = "windows"))]
