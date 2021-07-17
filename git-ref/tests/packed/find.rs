@@ -158,3 +158,23 @@ bogus refs/tags/git-actor-v0.1.0
     }
     Ok(())
 }
+
+#[test]
+#[ignore]
+fn find_speed() {
+    let store = store_at("make_repository_with_lots_of_packed_refs.sh").unwrap();
+    let packed = store.packed().unwrap().expect("packed-refs present");
+    let start = std::time::Instant::now();
+    let mut num_refs = 0;
+    for r in packed.iter().unwrap() {
+        num_refs += 1;
+        drop(packed.find(r.unwrap().full_name).unwrap().expect("ref was found"));
+    }
+    let elapsed = start.elapsed().as_secs_f32();
+    eprintln!(
+        "Found {} refs in {}s ({} refs/s)",
+        num_refs,
+        elapsed,
+        num_refs as f32 / elapsed
+    );
+}

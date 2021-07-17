@@ -1,6 +1,5 @@
 use crate::file::store_at;
 use git_ref::packed;
-use std::time::Instant;
 
 #[test]
 fn empty() -> crate::Result {
@@ -81,16 +80,10 @@ buggy-hash refs/wrong
 }
 
 #[test]
-fn iteration_speed() {
-    let store = store_at("make_repository_with_lots_of_packed_refs.sh").unwrap();
-    let start = Instant::now();
-    let actual = store
-        .packed()
-        .unwrap()
-        .expect("packed-refs present")
-        .iter()
-        .unwrap()
-        .count();
+fn iteration_speed() -> crate::Result {
+    let store = store_at("make_repository_with_lots_of_packed_refs.sh")?;
+    let start = std::time::Instant::now();
+    let actual = store.packed()?.expect("packed-refs present").iter()?.count();
     assert_eq!(actual, 150003);
     let elapsed = start.elapsed().as_secs_f32();
     eprintln!(
@@ -99,4 +92,5 @@ fn iteration_speed() {
         elapsed,
         actual as f32 / elapsed
     );
+    Ok(())
 }
