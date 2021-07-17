@@ -22,25 +22,50 @@ fn packed_refs_with_header() -> crate::Result {
 }
 
 #[test]
-fn iter_prefix() {
-    let packed = store_with_packed_refs()
-        .unwrap()
-        .packed()
-        .unwrap()
-        .expect("packed-refs");
+fn iter_prefix() -> crate::Result {
+    let packed = store_with_packed_refs()?.packed()?.expect("packed-refs");
     assert_eq!(
         packed
-            .iter_prefixed("refs/heads/")
-            .unwrap()
+            .iter_prefixed("refs/heads/")?
             .map(|r| r.map(|r| r.full_name))
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap(),
+            .collect::<Result<Vec<_>, _>>()?,
         vec![
             "refs/heads/d1".as_bytes().as_bstr(),
             "refs/heads/dt1".into(),
             "refs/heads/main".into()
         ]
     );
+
+    assert_eq!(
+        packed
+            .iter_prefixed("refs/remotes/")?
+            .map(|r| r.map(|r| r.full_name))
+            .collect::<Result<Vec<_>, _>>()?,
+        vec![
+            "refs/remotes/origin/main".as_bytes().as_bstr(),
+            "refs/remotes/origin/multi-link-target3".into(),
+        ]
+    );
+
+    let last_ref_in_file = "refs/tags/t1";
+    assert_eq!(
+        packed
+            .iter_prefixed(last_ref_in_file)?
+            .map(|r| r.map(|r| r.full_name))
+            .collect::<Result<Vec<_>, _>>()?,
+        vec![last_ref_in_file.as_bytes().as_bstr()],
+        "prefixes which are a ref also work, this one is the last of the file"
+    );
+    let first_ref_in_file = "refs/d1";
+    assert_eq!(
+        packed
+            .iter_prefixed(first_ref_in_file)?
+            .map(|r| r.map(|r| r.full_name))
+            .collect::<Result<Vec<_>, _>>()?,
+        vec![first_ref_in_file.as_bytes().as_bstr()],
+        "prefixes which are a ref also work, and this one is at the end"
+    );
+    Ok(())
 }
 
 #[test]
