@@ -1,4 +1,4 @@
-use crate::{store::packed, FullName, PartialName};
+use crate::{store::packed, PartialName};
 use bstr::{BStr, BString, ByteSlice};
 use std::{borrow::Cow, convert::TryInto};
 
@@ -68,7 +68,7 @@ impl packed::Buffer {
         #[cfg(debug_assertions)]
         {
             use std::convert::TryFrom;
-            drop(FullName::try_from(full_name).expect("input names are always valid full names"));
+            drop(crate::FullName::try_from(full_name).expect("input names are always valid full names"));
         }
         let a = self.as_ref();
         let search_start_of_record = |ofs: usize| {

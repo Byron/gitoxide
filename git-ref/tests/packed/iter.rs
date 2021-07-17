@@ -1,4 +1,6 @@
+use crate::file::store_at;
 use git_ref::packed;
+use std::time::Instant;
 
 #[test]
 fn empty() -> crate::Result {
@@ -76,4 +78,25 @@ buggy-hash refs/wrong
     assert!(iter.next().expect("last ref").is_ok(), "last line is valid");
     assert!(iter.next().is_none(), "exhausted");
     Ok(())
+}
+
+#[test]
+fn iteration_speed() {
+    let store = store_at("make_repository_with_lots_of_packed_refs.sh").unwrap();
+    let start = Instant::now();
+    let actual = store
+        .packed()
+        .unwrap()
+        .expect("packed-refs present")
+        .iter()
+        .unwrap()
+        .count();
+    assert_eq!(actual, 150003);
+    let elapsed = start.elapsed().as_secs_f32();
+    eprintln!(
+        "Enumerated {} refs in {}s ({} refs/s)",
+        actual,
+        elapsed,
+        actual as f32 / elapsed
+    );
 }

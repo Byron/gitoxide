@@ -15,7 +15,6 @@ test = true
 [features]
 serde1 = ["serde", "bstr/serde1", "git-hash/serde1", "git-actor/serde1"]
 
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

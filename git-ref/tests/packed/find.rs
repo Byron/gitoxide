@@ -68,55 +68,55 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 }
 
 #[test]
-fn partial_name_to_full_name_conversion_rules_are_applied() {
-    let store = store_at("make_packed_refs_for_lookup_rules.sh").unwrap();
-    let packed = store.packed().unwrap().expect("packed-refs exists");
+fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
+    let store = store_at("make_packed_refs_for_lookup_rules.sh")?;
+    let packed = store.packed()?.expect("packed-refs exists");
 
     assert_eq!(
-        store.find_existing("origin").unwrap().relative_path(),
+        store.find_existing("origin")?.relative_path(),
         Path::new("refs/remotes/origin/HEAD"),
         "a special that only applies to loose refs"
     );
     assert!(
-        packed.find("origin").unwrap().is_none(),
+        packed.find("origin")?.is_none(),
         "packed refs don't have this special case as they don't store HEADs or symrefs"
     );
     assert_eq!(
-        store.find_existing("HEAD").unwrap().relative_path(),
+        store.find_existing("HEAD")?.relative_path(),
         Path::new("HEAD"),
         "HEAD can be found in loose stores"
     );
     assert!(
-        packed.find("HEAD").unwrap().is_none(),
+        packed.find("HEAD")?.is_none(),
         "packed refs definitely don't contain HEAD"
     );
     assert_eq!(
-        packed.find("head-or-tag").unwrap().expect("present").full_name,
+        packed.find("head-or-tag")?.expect("present").full_name,
         "refs/tags/head-or-tag",
         "it finds tags first"
     );
     assert_eq!(
-        packed.find("heads/head-or-tag").unwrap().expect("present").full_name,
+        packed.find("heads/head-or-tag")?.expect("present").full_name,
         "refs/heads/head-or-tag",
         "it finds heads when disambiguated"
     );
     assert_eq!(
-        packed.find("main").unwrap().expect("present").full_name,
+        packed.find("main")?.expect("present").full_name,
         "refs/heads/main",
         "it finds local heads before remote ones"
     );
     assert_eq!(
-        packed.find("origin/main").unwrap().expect("present").full_name,
+        packed.find("origin/main")?.expect("present").full_name,
         "refs/remotes/origin/main",
         "it finds remote heads when disambiguated"
     );
     assert_eq!(
-        packed.find("remotes/origin/main").unwrap().expect("present").full_name,
+        packed.find("remotes/origin/main")?.expect("present").full_name,
         "refs/remotes/origin/main",
         "more specification is possible, too"
     );
     assert_eq!(
-        packed.find("tag-object").unwrap().expect("present"),
+        packed.find("tag-object")?.expect("present"),
         packed::Reference {
             full_name: "refs/tags/tag-object".into(),
             target: "b3109a7e51fc593f85b145a76c70ddd1d133fafd".into(),
@@ -124,6 +124,7 @@ fn partial_name_to_full_name_conversion_rules_are_applied() {
         },
         "tag objects aren't special, but lets test a little more"
     );
+    Ok(())
 }
 
 #[test]
