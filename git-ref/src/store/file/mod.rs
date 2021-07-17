@@ -41,12 +41,12 @@ pub struct Store {
 mod traits {
     use crate::{
         mutable::Target,
-        store::{file, file::find_one},
+        store::{file, file::find},
         PartialName,
     };
 
     impl crate::traits::RefStore for file::Store {
-        type FindOneExistingError = find_one::existing::Error;
+        type FindOneExistingError = find::existing::Error;
 
         fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
             self.find_one_existing(name).map(|r| r.into_target())
@@ -55,7 +55,7 @@ mod traits {
 }
 
 mod loose;
-pub use loose::{find_one, iter};
+pub use loose::{find, iter};
 
 mod packed {
     use crate::store::{file, packed};

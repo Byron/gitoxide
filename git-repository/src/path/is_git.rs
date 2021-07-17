@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        FindHeadRef(err: git_ref::file::find_one::existing::Error) {
+        FindHeadRef(err: git_ref::file::find::existing::Error) {
             display("Could not find a valid HEAD reference")
             from()
             source(err)

@@ -14,7 +14,7 @@ mod existing {
                 Some(expected_path) => assert_eq!(reference?.relative_path(), Path::new(expected_path)),
                 None => match reference {
                     Ok(_) => panic!("Expected error"),
-                    Err(git_ref::file::find_one::existing::Error::NotFound(name)) => {
+                    Err(git_ref::file::find::existing::Error::NotFound(name)) => {
                         assert_eq!(name, Path::new(*partial_name));
                     }
                     Err(err) => panic!("Unexpected err: {:?}", err),

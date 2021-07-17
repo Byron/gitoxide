@@ -112,7 +112,7 @@ impl file::Store {
 
 ///
 pub mod existing {
-    use crate::{file, file::find_one, PartialName};
+    use crate::{file, file::find, PartialName};
     use std::convert::TryInto;
 
     impl file::Store {
@@ -124,7 +124,7 @@ pub mod existing {
         {
             let path = partial
                 .try_into()
-                .map_err(|err| Error::Find(find_one::Error::RefnameValidation(err.into())))?;
+                .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
             match self.find_one_with_verified_input(path.to_partial_path().as_ref()) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
@@ -134,7 +134,7 @@ pub mod existing {
     }
 
     mod error {
-        use crate::file::find_one;
+        use crate::file::find;
         use quick_error::quick_error;
         use std::path::PathBuf;
 
@@ -143,7 +143,7 @@ pub mod existing {
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {
-                Find(err: find_one::Error) {
+                Find(err: find::Error) {
                     display("An error occured while trying to find a reference")
                     from()
                     source(err)

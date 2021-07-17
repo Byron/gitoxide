@@ -1,4 +1,4 @@
-use crate::file::{self, find_one, reference::State, Reference};
+use crate::file::{self, find, reference::State, Reference};
 use bstr::ByteSlice;
 use quick_error::quick_error;
 
@@ -7,7 +7,7 @@ quick_error! {
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
-        FindExisting(err: find_one::existing::Error) {
+        FindExisting(err: find::existing::Error) {
             display("Could not resolve symbolic reference name that is expected to exist")
             source(err)
         }
@@ -29,10 +29,10 @@ impl<'a> Reference<'a> {
                 let path = relative_path.to_path_lossy();
                 match self.parent.find_one_with_verified_input(path.as_ref()) {
                     Ok(Some(next)) => Some(Ok(next)),
-                    Ok(None) => Some(Err(Error::FindExisting(find_one::existing::Error::NotFound(
+                    Ok(None) => Some(Err(Error::FindExisting(find::existing::Error::NotFound(
                         path.into_owned(),
                     )))),
-                    Err(err) => Some(Err(Error::FindExisting(find_one::existing::Error::Find(err)))),
+                    Err(err) => Some(Err(Error::FindExisting(find::existing::Error::Find(err)))),
                 }
             }
         }
