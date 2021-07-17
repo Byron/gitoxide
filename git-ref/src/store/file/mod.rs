@@ -46,10 +46,10 @@ mod traits {
     };
 
     impl crate::traits::RefStore for file::Store {
-        type FindOneExistingError = find::existing::Error;
+        type FindExistingError = find::existing::Error;
 
-        fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
-            self.find_one_existing(name).map(|r| r.into_target())
+        fn find_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
+            self.find_existing(name).map(|r| r.into_target())
         }
     }
 }

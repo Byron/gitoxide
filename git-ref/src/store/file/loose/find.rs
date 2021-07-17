@@ -20,7 +20,7 @@ impl file::Store {
     /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn find_one<'a, Name, E>(&self, partial: Name) -> Result<Option<file::Reference<'_>>, Error>
+    pub fn find<'a, Name, E>(&self, partial: Name) -> Result<Option<file::Reference<'_>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
@@ -116,8 +116,8 @@ pub mod existing {
     use std::convert::TryInto;
 
     impl file::Store {
-        /// Similar to [`file::Store::find_one()`] but a non-existing ref is treated as error.
-        pub fn find_one_existing<'a, Name, E>(&self, partial: Name) -> Result<file::Reference<'_>, Error>
+        /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+        pub fn find_existing<'a, Name, E>(&self, partial: Name) -> Result<file::Reference<'_>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,
@@ -163,7 +163,7 @@ mod error {
     use std::{convert::Infallible, io, path::PathBuf};
 
     quick_error! {
-        /// The error returned by [file::Store::find_one()].
+        /// The error returned by [file::Store::find()].
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {

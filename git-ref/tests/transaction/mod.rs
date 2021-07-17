@@ -28,9 +28,9 @@ mod refedit_ext {
     }
 
     impl RefStore for MockStore {
-        type FindOneExistingError = std::io::Error;
+        type FindExistingError = std::io::Error;
 
-        fn find_one_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
+        fn find_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
             self.targets
                 .borrow_mut()
                 .remove(name.as_bstr())
@@ -181,9 +181,9 @@ mod refedit_ext {
                 next_item: Cell<bool>,
             }
             impl RefStore for Cycler {
-                type FindOneExistingError = std::convert::Infallible;
+                type FindExistingError = std::convert::Infallible;
 
-                fn find_one_existing(&self, _name: PartialName<'_>) -> Result<Target, Self::FindOneExistingError> {
+                fn find_existing(&self, _name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
                     Ok(Target::Symbolic(

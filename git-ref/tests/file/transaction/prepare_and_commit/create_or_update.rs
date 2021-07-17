@@ -50,7 +50,7 @@ mod reference_with_equally_named {
             if *is_empty {
                 let edits = edits?;
                 assert!(
-                    store.find_one(edits[0].name.to_partial())?.is_some(),
+                    store.find(edits[0].name.to_partial())?.is_some(),
                     "HEAD was created despite a directory being in the way"
                 );
             } else {
@@ -108,7 +108,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
 #[test]
 fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_one("HEAD")?.expect("head exists already");
+    let head = store.find("HEAD")?.expect("head exists already");
     let target = head.target().to_owned();
 
     let err = store
@@ -144,7 +144,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 #[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_one("HEAD")?.expect("head exists already");
+    let head = store.find("HEAD")?.expect("head exists already");
     let target = head.target().to_owned();
 
     let err = store
@@ -178,7 +178,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
 #[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_one("HEAD")?.expect("head exists already");
+    let head = store.find("HEAD")?.expect("head exists already");
     let target = head.target().to_owned();
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
@@ -258,7 +258,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let (_keep, mut store) = empty_store()?;
         store.write_reflog = *reflog_writemode;
         let referent = "refs/heads/alt-main";
-        assert!(store.find_one(referent)?.is_none(), "the reference does not exist");
+        assert!(store.find(referent)?.is_none(), "the reference does not exist");
         let log_ignored = LogChange {
             mode: RefLog::AndReference,
             force_create_reflog: false,
@@ -293,12 +293,12 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "no split was performed"
         );
 
-        let head = store.find_one_existing(edits[0].name.to_partial())?;
+        let head = store.find_existing(edits[0].name.to_partial())?;
         assert_eq!(head.relative_path(), Path::new("HEAD"));
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
         assert_eq!(head.target().as_name(), Some(referent.as_bytes().as_bstr()));
         assert!(!head.log_exists()?, "no reflog is written for symbolic ref");
-        assert!(store.find_one(referent)?.is_none(), "referent wasn't created");
+        assert!(store.find(referent)?.is_none(), "referent wasn't created");
 
         let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
         let new = Target::Peeled(new_oid);
@@ -353,7 +353,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             ]
         );
 
-        let head = store.find_one_existing("HEAD")?;
+        let head = store.find_existing("HEAD")?;
         assert_eq!(
             head.kind(),
             git_ref::Kind::Symbolic,
@@ -365,7 +365,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "it still points to the referent"
         );
 
-        let referent_ref = store.find_one_existing(referent)?;
+        let referent_ref = store.find_existing(referent)?;
         assert_eq!(referent_ref.kind(), git_ref::Kind::Peeled, "referent is a peeled ref");
         assert_eq!(
             referent_ref.target().as_id(),
@@ -397,7 +397,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 /// be needed to keep the reflog consistent
 fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_though_it_should() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_one_existing("HEAD")?;
+    let head = store.find_existing("HEAD")?;
     let referent = head.target().as_name().expect("symbolic ref").to_owned();
     let previous_head_reflog = reflog_lines(&store, "HEAD")?;
 

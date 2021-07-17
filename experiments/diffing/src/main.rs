@@ -29,7 +29,7 @@ fn main() -> anyhow::Result<()> {
     let name = args.next().ok_or_else(|| {
         anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
     })?;
-    let commit_id = repo.refs.find_one_existing(&name)?.peel_to_id_in_place()?.to_owned();
+    let commit_id = repo.refs.find_existing(&name)?.peel_to_id_in_place()?.to_owned();
     let db = &repo.odb;
 
     let start = Instant::now();
