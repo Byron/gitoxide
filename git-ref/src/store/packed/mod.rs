@@ -6,10 +6,20 @@ use git_hash::ObjectId;
 ///
 /// The buffer is garantueed to be sorted as per the packed-ref rules which allows some operations to be more efficient.
 pub enum Buffer {
-    /// The buffer is loaded entirely in memory
-    InMemory(Vec<u8>),
-    /// The buffer is mapping the file on disk.
-    Mapped(FileBuffer),
+    /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
+    InMemory {
+        /// The storage for the packed-refs data
+        data: Vec<u8>,
+        /// The offset to the first record, how many bytes to skip past the header
+        offset: usize,
+    },
+    /// The buffer is mapping the file on disk, along with the offset to the first record past the header
+    Mapped {
+        /// The memory map holding the packed-refs data
+        map: FileBuffer,
+        /// The offset to the first record, how many bytes to skip past the header
+        offset: usize,
+    },
 }
 
 /// A reference as parsed from the `packed-refs` file

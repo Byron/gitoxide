@@ -3,8 +3,8 @@ use crate::store::packed;
 impl AsRef<[u8]> for packed::Buffer {
     fn as_ref(&self) -> &[u8] {
         match self {
-            packed::Buffer::InMemory(v) => &v,
-            packed::Buffer::Mapped(m) => &m,
+            packed::Buffer::InMemory { data, offset } => &data[*offset..],
+            packed::Buffer::Mapped { map, offset } => &map[*offset..],
         }
     }
 }
@@ -24,18 +24,31 @@ pub mod open {
         pub fn open(path: impl AsRef<Path>, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
             let path = path.as_ref();
             let buf = if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
-                packed::Buffer::InMemory(std::fs::read(path)?)
+                packed::Buffer::InMemory {
+                    data: std::fs::read(path)?,
+                    offset: 0,
+                }
             } else {
-                packed::Buffer::Mapped(FileBuffer::open(path)?)
+                packed::Buffer::Mapped {
+                    map: FileBuffer::open(path)?,
+                    offset: 0,
+                }
             };
 
-            let sorted = {
-                if *buf.as_ref().get(0).unwrap_or(&b' ') == b'#' {
-                    let (_records, header) =
-                        packed::decode::header::<()>(buf.as_ref()).map_err(|_| Error::HeaderParsing)?;
-                    header.sorted
+            let (buf, sorted) = {
+                let data = buf.as_ref();
+                if *data.get(0).unwrap_or(&b' ') == b'#' {
+                    let (records, header) = packed::decode::header::<()>(data).map_err(|_| Error::HeaderParsing)?;
+                    let offset = records.as_ptr() as usize - data.as_ptr() as usize;
+                    (
+                        match buf {
+                            packed::Buffer::Mapped { map, .. } => packed::Buffer::Mapped { map, offset },
+                            packed::Buffer::InMemory { data, .. } => packed::Buffer::InMemory { data, offset },
+                        },
+                        header.sorted,
+                    )
                 } else {
-                    false
+                    (buf, false)
                 }
             };
             if !sorted {

@@ -82,6 +82,15 @@ fn partial_name_to_full_name_conversion_rules_are_applied() {
         packed.find("origin").unwrap().is_none(),
         "packed refs don't have this special case as they don't store HEADs or symrefs"
     );
+    assert_eq!(
+        store.find_one_existing("HEAD").unwrap().relative_path(),
+        Path::new("HEAD"),
+        "HEAD can be found in loose stores"
+    );
+    assert!(
+        packed.find("HEAD").unwrap().is_none(),
+        "packed refs definitely don't contain HEAD"
+    );
     todo!("see if these name gereration rules can be unified, it definitely needs some thought to be correct")
 }
 
