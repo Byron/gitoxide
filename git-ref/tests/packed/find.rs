@@ -160,15 +160,19 @@ bogus refs/tags/git-actor-v0.1.0
 }
 
 #[test]
-#[ignore]
-fn find_speed() {
-    let store = store_at("make_repository_with_lots_of_packed_refs.sh").unwrap();
-    let packed = store.packed().unwrap().expect("packed-refs present");
+fn find_speed() -> crate::Result {
+    let store = store_at("make_repository_with_lots_of_packed_refs.sh")?;
+    let packed = store.packed()?.expect("packed-refs present");
     let start = std::time::Instant::now();
     let mut num_refs = 0;
-    for r in packed.iter().unwrap() {
+    for r in packed.iter()?.take(10_000) {
         num_refs += 1;
-        drop(packed.find(r.unwrap().full_name).unwrap().expect("ref was found"));
+        let r = r?;
+        assert_eq!(
+            packed.find(r.full_name)?.expect("ref was found"),
+            r,
+            "the refs are the same"
+        );
     }
     let elapsed = start.elapsed().as_secs_f32();
     eprintln!(
@@ -177,4 +181,5 @@ fn find_speed() {
         elapsed,
         num_refs as f32 / elapsed
     );
+    Ok(())
 }

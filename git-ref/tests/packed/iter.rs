@@ -80,7 +80,7 @@ buggy-hash refs/wrong
 }
 
 #[test]
-fn iteration_speed() -> crate::Result {
+fn performance() -> crate::Result {
     let store = store_at("make_repository_with_lots_of_packed_refs.sh")?;
     let start = std::time::Instant::now();
     let actual = store.packed()?.expect("packed-refs present").iter()?.count();
