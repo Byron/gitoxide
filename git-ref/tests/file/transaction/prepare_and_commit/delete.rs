@@ -258,7 +258,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
     for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
-        assert!(store.find_one_existing("HEAD")?.log_exists()?,);
+        assert!(store.find_existing("HEAD")?.log_exists()?,);
         let edits = store
             .transaction(
                 Some(RefEdit {

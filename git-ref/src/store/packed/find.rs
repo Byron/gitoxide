@@ -38,12 +38,10 @@ impl packed::Buffer {
                 Err(parse_failure) => {
                     if parse_failure {
                         return Err(Error::Parse);
+                    } else if was_absolute {
+                        return Ok(None);
                     } else {
-                        if was_absolute {
-                            return Ok(None);
-                        } else {
-                            continue;
-                        }
+                        continue;
                     }
                 }
             }
