@@ -1,5 +1,5 @@
 use crate::{store::packed, FullName, PartialName};
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 use std::{borrow::Cow, convert::TryInto};
 
 /// packed-refs specific functionality
@@ -27,7 +27,7 @@ impl packed::Buffer {
                 full_name.extend_from_slice(name.0);
                 (Cow::Owned(full_name), false)
             };
-            match self.binary_search_by(name.as_ref().try_into().expect("our full names are never invalid")) {
+            match self.binary_search_by(name.as_ref()) {
                 Ok(line_start) => {
                     return Ok(Some(
                         packed::decode::reference::<()>(&self.as_ref()[line_start..])
@@ -66,8 +66,12 @@ impl packed::Buffer {
 
     /// Perform a binary search where `Ok(pos)` is the beginning of the line that matches `name` perfectly and `Err(pos)`
     /// is the beginning of the line at which `name` could be inserted to still be in sort order.
-    fn binary_search_by(&self, full_name: FullName<'_>) -> Result<usize, bool> {
-        // TODO: remove the compile-time (FullName) constraint once we do lookup correctly
+    fn binary_search_by(&self, full_name: &BStr) -> Result<usize, bool> {
+        #[cfg(debug_assertions)]
+        {
+            use std::convert::TryFrom;
+            drop(FullName::try_from(full_name).expect("input names are always valid full names"));
+        }
         let a = self.as_ref();
         let search_start_of_record = |ofs: usize| {
             a[..ofs]
@@ -83,7 +87,7 @@ impl packed::Buffer {
                 .unwrap_or(0)
         };
         let mut encountered_parse_failure = false;
-        a.binary_search_by_key(&full_name.0.as_ref(), |b: &u8| {
+        a.binary_search_by_key(&full_name.as_ref(), |b: &u8| {
             let ofs = b as *const u8 as usize - a.as_ptr() as usize;
             let line = &a[search_start_of_record(ofs)..];
             packed::decode::reference::<()>(line)

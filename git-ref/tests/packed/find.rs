@@ -115,6 +115,15 @@ fn partial_name_to_full_name_conversion_rules_are_applied() {
         "refs/remotes/origin/main",
         "more specification is possible, too"
     );
+    assert_eq!(
+        packed.find("tag-object").unwrap().expect("present"),
+        packed::Reference {
+            full_name: "refs/tags/tag-object".into(),
+            target: "b3109a7e51fc593f85b145a76c70ddd1d133fafd".into(),
+            object: Some("134385f6d781b7e97062102c6a483440bfda2a03".into())
+        },
+        "tag objects aren't special, but lets test a little more"
+    );
 }
 
 #[test]
