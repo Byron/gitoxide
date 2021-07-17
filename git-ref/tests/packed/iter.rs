@@ -1,4 +1,5 @@
-use crate::file::store_at;
+use crate::file::{store_at, store_with_packed_refs};
+use bstr::ByteSlice;
 use git_ref::packed;
 
 #[test]
@@ -18,6 +19,28 @@ fn packed_refs_with_header() -> crate::Result {
     let iter = packed::Iter::new(&buf)?;
     assert_eq!(iter.count(), 8, "it finds the right amount of items");
     Ok(())
+}
+
+#[test]
+fn iter_prefix() {
+    let packed = store_with_packed_refs()
+        .unwrap()
+        .packed()
+        .unwrap()
+        .expect("packed-refs");
+    assert_eq!(
+        packed
+            .iter_prefixed("refs/heads/")
+            .unwrap()
+            .map(|r| r.map(|r| r.full_name))
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap(),
+        vec![
+            "refs/heads/d1".as_bytes().as_bstr(),
+            "refs/heads/dt1".into(),
+            "refs/heads/main".into()
+        ]
+    );
 }
 
 #[test]

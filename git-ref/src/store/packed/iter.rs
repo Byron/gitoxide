@@ -1,11 +1,18 @@
 use crate::store::{packed, packed::decode};
-use bstr::ByteSlice;
+use bstr::{BString, ByteSlice};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Return an iterator of references stored in this packed refs buffer.
     pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
         packed::Iter::new(self.as_ref())
+    }
+
+    /// Return an iterator yielding only references matching the given prefix.
+    pub fn iter_prefixed(&self, prefix: impl Into<BString>) -> Result<packed::Iter<'_>, packed::iter::Error> {
+        let prefix = prefix.into();
+        let first_record_with_prefix = self.binary_search_by(prefix.as_bstr()).unwrap_or_else(|(_, pos)| pos);
+        packed::Iter::new_with_prefix(&self.as_ref()[first_record_with_prefix..], Some(prefix))
     }
 }
 
@@ -21,6 +28,12 @@ impl<'a> Iterator for packed::Iter<'a> {
             Ok((rest, reference)) => {
                 self.cursor = rest;
                 self.current_line += 1;
+                if let Some(ref prefix) = self.prefix {
+                    if !reference.full_name.starts_with_str(prefix) {
+                        self.cursor = &[];
+                        return None;
+                    }
+                }
                 Some(Ok(reference))
             }
             Err(_) => {
@@ -47,9 +60,17 @@ impl<'a> Iterator for packed::Iter<'a> {
 impl<'a> packed::Iter<'a> {
     /// Return a new iterator after successfully parsing the possibly existing first line of the given `packed` refs buffer.
     pub fn new(packed: &'a [u8]) -> Result<Self, Error> {
+        Self::new_with_prefix(packed, None)
+    }
+
+    /// Returns an iterators whose references will only match the given prefix.
+    ///
+    /// It assumes that the underlying `packed` buffer is indeed sorted
+    pub(in crate::store::packed) fn new_with_prefix(packed: &'a [u8], prefix: Option<BString>) -> Result<Self, Error> {
         if packed.is_empty() {
             Ok(packed::Iter {
                 cursor: packed,
+                prefix,
                 current_line: 1,
             })
         } else if packed[0] == b'#' {
@@ -58,11 +79,13 @@ impl<'a> packed::Iter<'a> {
             })?;
             Ok(packed::Iter {
                 cursor: refs,
+                prefix,
                 current_line: 2,
             })
         } else {
             Ok(packed::Iter {
                 cursor: packed,
+                prefix,
                 current_line: 1,
             })
         }

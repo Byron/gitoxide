@@ -35,7 +35,7 @@ impl packed::Buffer {
                             .1,
                     ))
                 }
-                Err(parse_failure) => {
+                Err((parse_failure, _)) => {
                     if parse_failure {
                         return Err(Error::Parse);
                     } else if was_absolute {
@@ -64,12 +64,7 @@ impl packed::Buffer {
 
     /// Perform a binary search where `Ok(pos)` is the beginning of the line that matches `name` perfectly and `Err(pos)`
     /// is the beginning of the line at which `name` could be inserted to still be in sort order.
-    fn binary_search_by(&self, full_name: &BStr) -> Result<usize, bool> {
-        #[cfg(debug_assertions)]
-        {
-            use std::convert::TryFrom;
-            drop(crate::FullName::try_from(full_name).expect("input names are always valid full names"));
-        }
+    pub(in crate::store::packed) fn binary_search_by(&self, full_name: &BStr) -> Result<usize, (bool, usize)> {
         let a = self.as_ref();
         let search_start_of_record = |ofs: usize| {
             a[..ofs]
@@ -97,7 +92,7 @@ impl packed::Buffer {
                 .unwrap_or(&[])
         })
         .map(search_start_of_record)
-        .map_err(|_| encountered_parse_failure)
+        .map_err(|pos| (encountered_parse_failure, search_start_of_record(pos)))
     }
 }
 

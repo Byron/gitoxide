@@ -1,4 +1,4 @@
-use bstr::BStr;
+use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
 
@@ -56,6 +56,8 @@ pub struct Iter<'a> {
     cursor: &'a [u8],
     /// The next line, starting at 1
     current_line: usize,
+    /// If set, references returned will match the prefix, the first failed match will stop all iteration.
+    prefix: Option<BString>,
 }
 
 mod decode;
