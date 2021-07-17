@@ -1,5 +1,6 @@
 use crate::{store::packed, FullName, PartialName};
-use std::convert::TryInto;
+use bstr::{BString, ByteSlice};
+use std::{borrow::Cow, convert::TryInto};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
@@ -11,8 +12,8 @@ impl packed::Buffer {
     {
         let name = name.try_into()?;
         for inbetween in &["", "tags", "heads", "remotes"] {
-            let (name, was_absolute): (Cow<'_, BStr>, _) = if name.0.starts_with_str(b"refs/") {
-                (name.0.into(), true)
+            let (name, was_absolute) = if name.0.starts_with_str(b"refs/") {
+                (Cow::Borrowed(name.0), true)
             } else {
                 let mut full_name: BString = format!(
                     "refs/{}",
@@ -24,7 +25,7 @@ impl packed::Buffer {
                 )
                 .into();
                 full_name.extend_from_slice(name.0);
-                (full_name.into(), false)
+                (Cow::Owned(full_name), false)
             };
             match self.binary_search_by(name.as_ref().try_into().expect("our full names are never invalid")) {
                 Ok(line_start) => {
@@ -116,9 +117,7 @@ mod error {
         }
     }
 }
-use bstr::{BStr, BString, ByteSlice};
 pub use error::Error;
-use std::borrow::Cow;
 
 ///
 pub mod existing {
