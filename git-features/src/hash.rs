@@ -1,6 +1,6 @@
 //! Hash functions and hash utilities
 //!
-//! With the `fast-sha1` feature, the [`Sha1`] hash type will use a more elaborate implementation utilizing hardware support
+//! With the `fast-sha1` feature, the `Sha1` hash type will use a more elaborate implementation utilizing hardware support
 //! in case it is available. Otherwise the `sha1` feature should be set. `fast-sha1` will take precedence.
 //! Otherwise, a minimal yet performant implementation is used instead for a decent trade-off between compile times and run-time performance.
 #[cfg(all(feature = "sha1", not(feature = "fast-sha1")))]
@@ -24,6 +24,7 @@ mod _impl {
 }
 
 /// A 20 bytes digest produced by a [`Sha1`] hash implementation.
+#[cfg(any(feature = "fast-sha1", feature = "sha1"))]
 pub type Sha1Digest = [u8; 20];
 
 #[cfg(feature = "fast-sha1")]
