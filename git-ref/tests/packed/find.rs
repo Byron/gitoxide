@@ -68,7 +68,6 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 }
 
 #[test]
-#[ignore]
 fn partial_name_to_full_name_conversion_rules_are_applied() {
     let store = store_at("make_packed_refs_for_lookup_rules.sh").unwrap();
     let packed = store.packed().unwrap().expect("packed-refs exists");
@@ -91,7 +90,31 @@ fn partial_name_to_full_name_conversion_rules_are_applied() {
         packed.find("HEAD").unwrap().is_none(),
         "packed refs definitely don't contain HEAD"
     );
-    todo!("see if these name gereration rules can be unified, it definitely needs some thought to be correct")
+    assert_eq!(
+        packed.find("head-or-tag").unwrap().expect("present").full_name,
+        "refs/tags/head-or-tag",
+        "it finds tags first"
+    );
+    assert_eq!(
+        packed.find("heads/head-or-tag").unwrap().expect("present").full_name,
+        "refs/heads/head-or-tag",
+        "it finds heads when disambiguated"
+    );
+    assert_eq!(
+        packed.find("main").unwrap().expect("present").full_name,
+        "refs/heads/main",
+        "it finds local heads before remote ones"
+    );
+    assert_eq!(
+        packed.find("origin/main").unwrap().expect("present").full_name,
+        "refs/remotes/origin/main",
+        "it finds remote heads when disambiguated"
+    );
+    assert_eq!(
+        packed.find("remotes/origin/main").unwrap().expect("present").full_name,
+        "refs/remotes/origin/main",
+        "more specification is possible, too"
+    );
 }
 
 #[test]

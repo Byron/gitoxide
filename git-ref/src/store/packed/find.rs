@@ -11,8 +11,8 @@ impl packed::Buffer {
     {
         let name = name.try_into()?;
         for inbetween in &["", "tags", "heads", "remotes"] {
-            let name: Cow<'_, BStr> = if name.0.starts_with_str(b"refs/") {
-                name.0.into()
+            let (name, was_absolute): (Cow<'_, BStr>, _) = if name.0.starts_with_str(b"refs/") {
+                (name.0.into(), true)
             } else {
                 let mut full_name: BString = format!(
                     "refs/{}",
@@ -24,7 +24,7 @@ impl packed::Buffer {
                 )
                 .into();
                 full_name.extend_from_slice(name.0);
-                full_name.into()
+                (full_name.into(), false)
             };
             match self.binary_search_by(name.as_ref().try_into().expect("our full names are never invalid")) {
                 Ok(line_start) => {
@@ -38,7 +38,11 @@ impl packed::Buffer {
                     if parse_failure {
                         return Err(Error::Parse);
                     } else {
-                        continue;
+                        if was_absolute {
+                            return Ok(None);
+                        } else {
+                            continue;
+                        }
                     }
                 }
             }
