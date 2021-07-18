@@ -56,7 +56,10 @@ impl Iterator for SortedLoosePaths {
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
                         let name = match self.mode {
                             Paths => None,
+                            #[cfg(not(windows))]
                             PathsAndNames => Some(full_name.into_owned().into()),
+                            #[cfg(windows)]
+                            PathsAndNames => Some(full_name.into()),
                         };
                         return Some(Ok((full_path, name)));
                     } else {
