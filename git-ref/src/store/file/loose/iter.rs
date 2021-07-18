@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_variables, missing_docs)]
-
 use crate::store::file;
 use bstr::ByteSlice;
 use git_features::fs::walkdir::DirEntryIter;
@@ -64,6 +62,8 @@ pub struct Loose<'a> {
 }
 
 impl<'a> Loose<'a> {
+    /// Initialize a loose reference iterator owned by `store` at the given iteration `root`, where `base` is the
+    /// path to which resulting reference names should be relative to.
     pub fn at_root(store: &'a file::Store, root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Loose {
             parent: store,
@@ -117,6 +117,9 @@ impl file::Store {
         Ok(Loose::at_root(self, refs, self.base.clone()))
     }
 
+    /// Return an iterator over all loose references that start with the given `prefix`.
+    ///
+    /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
     pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose<'_>> {
         let prefix = prefix.as_ref();
         if prefix.is_absolute() {
@@ -133,6 +136,7 @@ impl file::Store {
     }
 }
 
+///
 pub mod loose {
     mod error {
         use crate::file;
