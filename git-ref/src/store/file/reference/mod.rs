@@ -43,7 +43,9 @@ impl<'a> Reference<'a> {
         }
     }
 
-    /// Return the full name of this reference as path
+    /// Return the full name of this reference as path.
+    ///
+    /// Use [`name()`][Reference::name()] if consistent component separators are required across platforms.
     pub fn relative_path(&self) -> &Path {
         &self.relative_path
     }
@@ -57,6 +59,8 @@ impl<'a> Reference<'a> {
     pub fn name(&self) -> FullName {
         use os_str_bytes::OsStrBytes;
         let name = self.relative_path.as_path().to_raw_bytes();
+        #[cfg(windows)]
+        let name = name.replace(b"\\", b"/");
         FullName(name.to_vec().into())
     }
 }
